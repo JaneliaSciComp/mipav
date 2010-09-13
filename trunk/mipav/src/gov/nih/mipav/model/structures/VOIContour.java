@@ -1268,7 +1268,7 @@ public class VOIContour extends VOIBase {
             float[] yPts) {
         double max = 0, avg = 0;
         int n = xPts.length;
-        Random r = new Random();
+        Random r = new Random(1); // use the same seed
         // note that a stop that yields a non-representative average is fine,
         // since worst case is more computations
         int stop = n < 100 ? (int) (n * 0.50) : (int) (n * 0.10);
