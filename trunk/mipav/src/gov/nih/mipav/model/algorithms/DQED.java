@@ -46,6 +46,8 @@ public abstract class DQED {
 	
 	private int lopt_dbols;
 	
+	private int iflag_dqedip = 0;
+	
 	
 	public DQED() {
 		
@@ -5693,6 +5695,973 @@ C     FROM THE ERROR PROCESSOR CALL.
 	  System.exit(-1);
 	} // dqedev
 	
+	private void dqedip (int mequa, int nvars, int mcon, int ind[], double bl[], double bu[], 
+			             double x[], double fjac[][], int ldfjac, double fb[], int igo[], int iopt[],
+			             double ropt[], int iwa[], double wa[], double dx[], double xb[],
+			             double b[], double bb[], double blb[], double bub[], int indb[] ) {
+
+			/*****************************************************************************80
+			!
+			!! DQEDIP carries out the work of DQEDGN.
+			!
+			!  Modified:
+			!
+			!    28 July 2006
+			!
+			*/
+
+			  double alb;
+			  double alfac = 0.0;
+			  double alpha = 0.0;
+			  double aub;
+			  double bboost = 0.0;
+			  double bold;
+			  double c1516 = 0.0;
+			  double chg = 0.0;
+			  double chgfac;
+			  double colnrm;
+			  double dxnrm;
+			  double fc = 0.0;
+			  //double fjac(ldfjac,*)
+			  double fl = 0.0;
+			  boolean fulnwt;
+			  double gval;
+			  int icase;
+			  int igotfc;
+			  int igotnc;
+			  int ipls = 0;
+			  int iprint = 0;
+			  int iters = 0;
+			  int itmax;
+			  int j;
+			  int jp;
+			  int k = 0;
+			  int kl = 0;
+			  int kp;
+			  int level;
+			  int lp;
+			  int lpdiff;
+			  int mode[] = new int[1];
+			  int nall = 0;
+			  int nerr;
+			  boolean newbst;
+			  boolean newopt;
+			  boolean passb = false;
+			  double pb;
+			  double pd;
+			  double pv[] = new double[1];
+			  double rb;
+			  double rdum;
+			  boolean retrea = false;
+			  double rg;
+			  double rnormc[] = new double[1];
+			  double semibg = 0.0;
+			  double t;
+			  double t2 = 0.0;
+			  boolean term = false;
+			  double told;
+			  double tolf;
+			  double tolp;
+			  double tolsnr;
+			  double tolx;
+			  String xmess;
+			  boolean do20 = false;
+			  boolean do30 = false;
+			  boolean do50 = false;
+			  boolean do60 = false;
+			  boolean do70 = false;
+			  boolean do90 = false;
+			  boolean do110 = false;
+			  boolean do120 = false;
+			  boolean do140 = false;
+			  boolean do170 = false;
+			  boolean do180 = false;
+			  boolean do185 = false;
+			  boolean do190 = false;
+			  boolean do250 = false;
+			  boolean do260 = false;
+			  boolean do270 = false;
+			  boolean do280 = false;
+			  boolean do300 = false;
+			  boolean do305 = false;
+			  boolean do310 = false;
+			  boolean do320 = false;
+			  boolean do330 = false;
+			  boolean do340 = false;
+			  boolean do350 = false;
+			  boolean do390 = false;
+			  boolean do400 = false;
+			  boolean do440 = false;
+			  boolean do450 = false;
+			  boolean do470 = false;
+			  double arr[];
+			  int iarr[];
+			  int m;
+			  DecimalFormat dfi3 = new DecimalFormat("##0");
+			  DecimalFormat dfi4 = new DecimalFormat("###0");
+			  DecimalFormat df10p4 = new DecimalFormat("0.0000E000");
+			  DecimalFormat df12p4 = new DecimalFormat("##0.0000E000");
+              DecimalFormat df12p5 = new DecimalFormat("#0.00000E000");
+              DecimalFormat df14p4 = new DecimalFormat("####0.0000E000");
+			//
+			//     OPTIONS:
+			//
+			//     1    SET THE PRINTED OUTPUT OFF/ON.  REQUIRES TWO ENTRIES
+			//          IN IOPT(*).  IF IOPT(*+1)=0, NO PRINTING; =1 PRINT.
+			//          (THIS PRINTOUT SHOWS VARIOUS QUANTITIES ASSOCIATED
+			//          WITH THE NONLINEAR PROBLEM BEING SOLVED. GOOD FOR
+			//          DEBUGGING A PROBLEM IN CASE OF TROUBLE.
+			//
+			//     2    SET THE MAXIMUM NUMBER OF INTERATIONS.  REQUIRES TWO ENTRIES
+			//          IN IOPT(*).  USE IOPT(*+1)= MAXIMUM NUMBER OF ITERATIONS.
+			//
+			//     3    PASS INITIAL BOUNDS FOR THE TRUST REGION TO THE NONLINEAR
+			//          SOLVER. REQUIRES TWO ENTRIES IN IOPT(*). USE IOPT(*+1) AS A
+			//          POINTER INTO ROPT(*) FOR START OF THE NVARS BOUNDS.
+			//
+			  rdum = 0.0;
+
+			  if (iflag_dqedip == 1) {
+				  do50 = true;
+			  }
+			  else { 
+			      //
+			      //  PROCESS OPTION ARRAY
+			      //
+			      do470 = true;
+			  }
+	loop:     while (true) {
+			      
+                  if (do20) {
+			          do20 = false;
+			          do30 = true;
+			          //
+			          //  SET SO X(*)-DX(*) UPDATE WILL BE CORRECT FIRST TIME.
+			          //
+			          for (j = 1; j <= nvars; j++) {
+			              dx[j] = 0.0;
+			          }
+			          k = 0;
+			          //
+			          //  FB = "INFINITY" ON THIS MACHINE.
+			          //
+			          fb[0] = Double.MAX_VALUE;
+			          dxnrm = fb[0];
+			          fl = 0.0;
+			          //
+			          //  LINEAR PROBLEM RESIDUAL.
+			          //
+			          pv[0] = 0.0;
+			          retrea = false;
+			          fulnwt = false;
+			          term = false;
+                  } // if (do20)
+                  
+                  if (do30) {
+			          do30 = false;
+
+			          if (! retrea) {
+			        	  iters = iters + 1;
+			          }
+			          if ( retrea) {
+			              //
+			              //  MUST RETREAT TO BEST X VALUES.
+			              //
+			              k = 0;
+			              kl = -1;
+			              fl = fb[0];
+			              for (j = 1; j <= nvars; j++) {
+			            	  x[j] = xb[j];
+			              }
+			          }
+			          else {
+			              kl = k;
+			              for (j = 1; j <= nvars; j++) {
+			            	  x[j] = x[j] - dx[j];
+			              }
+			              if ( term) {
+			                  iflag_dqedip = 0;
+			                  do390 = true;
+			              }
+			          }
+                      if (!do390) {
+			              igo[0] = 1;
+			              iflag_dqedip = 1;
+			              do440 = true;
+                      } // if (!do390)
+                  } // if (do30)
+
+			     if (do50) {
+			    	 do50 = false;
+			    	 do400 = true;
+			    	 arr = new double[mequa+1];
+			    	 for (j = 1; j <= mequa; j++) {
+			    		 arr[j] = fjac[mcon+j][nvars+1];
+			    	 }
+			         fc = dnrm2(mequa,arr,1);
+			         //
+			         //  TEST FOR CONVERGENCE
+			         //
+			         igotfc = 60;
+			     } // if (do50)
+
+			     if (do60) {
+
+			         if ( term) {
+			        	 do60 = false;
+			             iflag_dqedip = 0;
+			             do390 = true;
+			         }
+			         else {
+			             newbst = fc  <  fb[0] || (mcon > 0 && iters == 2);
+			             if ( newbst) {
+			            	 k = 0;
+			             }
+			         }
+			     } // if (do60)
+			     if ( k == 0 && do60) {
+			    	 do60 = false;
+			         rg = 0.0;
+			         pb = 0.0;
+			         pd = Double.MAX_VALUE;
+			         //
+			         //  WANT TO POSITION AT BEST X VALUES.
+			         //
+			         fb[0] = fc;
+			         
+			         switch(2 - kl) {
+			         case 1:
+			        	 do70 = true;
+			        	 break;
+			         case 2:
+			        	 do90 = true;
+			        	 break;
+			         case 3:
+			        	 do110 = true;
+			        	 break;
+			         default:
+			        	 do120 = true;
+			         }
+
+			         if (do70) {
+			             do70 = false;
+			             do140 = true;
+			             //
+			             //  IMMEDIATELY GOT A NEW BEST X.
+			             //
+			             if ( t2 <= 0.25 ) {
+			                 bboost = 1.0;
+			                 chg = Math.max ( 4.0 * t2, 0.1 );
+			             } // if ( t2 <= 0.25 )
+
+			             for (j = 1; j <= nvars; j++) {
+			                 bb[j] = chg*bb[j];
+			             } // for (j = 1; j <= nvars; j++)
+			             //
+			             //  THIS CODE FOR ALPHA HAS THE FOLLOWING EFFECT.
+			             //  IF FC .EQ. PV, THEN ALPHA=ALFAC.
+			             //  IF FC**2 .EQ. PV*FL THEN ALPHA=2.-1./ALFAC
+			             //  IF FC**2 IS MUCH LARGER THAN PV*FL, THEN ALPHA=1.
+			             //
+			             t = fc - pv[0];
+			             if ( t == 0.0 ) {
+			                 alpha = alfac;
+			             }
+			             else {
+			                 alpha = (pv[0]* (fl-pv[0]))/ (fc+pv[0])/ (alfac-1.0);
+			                 alpha = (Math.abs(t)+alfac*alpha)/ (Math.abs(t)+alpha);
+			             }
+
+			             alfac = 1.5 * alpha;
+			             bboost = Math.min(1.5*alpha*bboost,semibg);
+			         } // if (do70)
+
+			         if (do90) {
+			             do90 = false;
+			             do170 = true;
+			             //
+			             //  AT THE INITIAL X.
+			             //
+			             alfac = 256.0;
+
+			             for (j = 1; j <= nvars; j++) {
+			                 if ( ! passb) {
+			                	 bb[j] = -x[j];
+			                 }
+			                 if ( bb[j] == 0.0 ) {
+			                     arr = new double[mequa+1];
+			                     for (m = 1; m <= mequa; m++) {
+			                    	 arr[m] = fjac[mcon+m][j];
+			                     }
+			                     colnrm = dnrm2(mequa,arr,1);
+			                     if ( colnrm != 0.0 ) {
+			                    	 bb[j] = -fc/colnrm;
+			                     }
+			                 } // if (bb[j] == 0.0)
+
+			                 if ( bb[j] == 0.0 ) {
+			                	 bb[j] = -1.0;
+			                 }
+			                 xb[j] = x[j];
+			                 b[j] = bb[j];
+			             } // for (j = 1; j <= nvars; j++)
+
+			             alpha = 1.0;
+			             bboost = 0.5;
+			             do170 = true;
+			         } // if (do90)
+
+			         if (do110) {
+			             do110 = false;
+			             do140 = true;
+			             //
+			             //  RETREAT TO BEST X.
+			             //
+			             if ( alfac != 256.0 ) {
+			                 alpha = Math.min ( 1.0 / alfac, 0.25 );
+			                 alfac = 1.25;
+			             }
+			             else {
+			                 alpha = 0.25*alpha;
+			             }
+
+			             bboost = 0.25;
+			         } // if (do110)
+
+			         if (do120) {
+			             do120 = false;
+			             do140 = true;
+			             //
+			             //  NOT IMMEDIATELY A BEST X.
+			             //
+			             rb = 0.0;
+			             for (j = 1; j <= nvars; j++) {
+			                 rb = Math.max(rb,Math.abs((xb[j]-x[j])/bb[j]));
+			             } // for (j = 1; j <= nvars; j++)
+			             alpha = rb;
+			             alfac = 2.0;
+			             bboost = ( 8.0 / 7.0 + rg )/ ( 2.0 / 7.0 + rg );
+			         } // if (do120)
+
+			         if (do140) {
+			             do140 = false;
+			             do170 = true;
+
+			             for (j = 1; j <= nvars; j++) {
+			                 dx[j] = xb[j] - x[j];
+			                 if ( dx[j] == 0.0 ) {
+			                     b[j] = alpha*bb[j];
+			                 }
+			                 else {
+			                     xb[j] = x[j];
+			                     if (dx[j] >= 0) {
+			                    	 b[j] = Math.abs(alpha*bb[j]) + bboost*dx[j];
+			                     }
+			                     else {
+			                    	 b[j] = -Math.abs(alpha*bb[j]) + bboost*dx[j];
+			                     }
+			                 }
+                             if (b[j] >= 0.0) {
+                            	 bb[j] = Math.abs(Math.min(Math.sqrt(Double.MAX_VALUE),Math.abs(b[j])));
+                             }
+                             else {
+                            	 bb[j] = -Math.abs(Math.min(Math.sqrt(Double.MAX_VALUE),Math.abs(b[j])));	 
+                             }
+			             } // for (j = 1; j <= nvars; j++)
+			         } // if (do140)
+	          } // if (k == 0 && do60)
+			  else if(do60) {
+				  do60 = false;
+				  do170 = true;
+			      //
+			      //  COMPUTE A GAUGE FOR RETREATING IF DID NOT GET A NEW BEST.
+			      //
+			      if ( k == 1) {
+			          pb = pv[0];
+			          pd = 1.5 * (fb[0]+pb* (pb/fb[0])) - 4.0 * pb;
+			      }
+
+			      alpha = ( 0.5 * fc+fl)/ (fc+fl);
+			      chg = Math.min(alpha*chg,t2);
+			      chg = Math.max ( chg, 0.1 );
+
+			      for (j = 1; j <= nvars; j++) {
+			         b[j] = chg*b[j];
+			         if ( k == 1) {
+			        	 bb[j] = b[j];
+			         }
+			      } // 
+
+			  } // else if(do60)
+
+			  if (do170) {
+			      do170 = false;
+			      do400 = true;
+			      //
+			      //  TEST FOR CONVERGENCE
+			      //
+			      igotfc = 180;
+			  } // if (do170)
+
+			  if (do180) {
+                  do180 = false;
+			      if ( term) {
+			          iflag_dqedip = 0;
+			          do390 = true;
+			      }
+			      else {
+			    	  do185 = true;
+			      }
+			  }
+
+			  if (do185) {
+				  do185 = false;
+				  do190 = true;
+			      k = k + 1;
+			      //
+			      //  SOLVE LINEAR BOUNDED PROBLEM.
+			      //
+			      for (j = 1; j <= nvars; j++) {
+
+			          if ( b[j] < 0.0 ) {
+
+			              alb = b[j];
+			              if ( dx[j] == 0.0 ) {
+			                  //
+			                  //  THIS CASE IS REQD. TO AVOID USING BUB(*) AT THE INITIAL PT.
+			                  //
+			                  aub = -c1516*alb;
+			              }
+			              else {
+			                  aub = Math.min(-c1516*alb,-dx[j]+bub[j]);
+			              }
+			          } // if (b[j] < 0.0)
+			          else {
+			              aub = b[j];
+
+			              if ( dx[j] == 0.0) {
+			                  alb = -c1516*aub;
+			              }
+			              else {
+			                  alb = Math.max(-c1516*aub,-dx[j]+blb[j]);
+			              }
+
+			          } // else
+			          //
+			          //  RESTRICT THE STEP FURTHER IF USER GIVES BOUNDS.
+			          //
+			          icase = ind[j];
+
+			          if ( icase == 1 ) {
+			              aub = Math.min(aub,x[j]-bl[j]);
+			          }
+			          else if ( icase == 2 ) {
+			              alb = Math.max(alb,x[j]-bu[j]);
+			          }
+			          else if ( icase == 3 ) {
+			              aub = Math.min(aub,x[j]-bl[j]);
+			              alb = Math.max(alb,x[j]-bu[j]);
+			          }
+
+			          blb[j] = alb;
+			          //
+			          //  THIS NEXT LINE IS TO GUARANTEE THAT THE LOWER BOUND
+			          //  IS .LE. THE UPPER BOUND.
+			          //
+			          aub = Math.max(aub,alb);
+			          bub[j] = aub;
+			          indb[j] = 3;
+
+			      } // for (j = 1; j <= nvars; j++)
+			      //
+			      //  SEE IF USER HAS GIVEN GENERAL CONSTRAINTS.
+			      //
+			  } // if (do185)
+			  if (do190) {
+				  do190 = false;
+				  do300 = true;
+			      for (j = nvars + 1; j <= nall; j++) {
+
+			          icase = ind[j];
+			          gval = fjac[j-nvars][nvars+1];
+
+			          switch(icase) {
+			          case 1:
+			        	  do250 = true;
+			        	  break;
+			          case 2:
+			        	  do260 = true;
+			        	  break;
+			          case 3:
+			        	  do270 = true;
+			        	  break;
+			          case 4:
+			        	  do280 = true;
+			        	  break;
+			          default:
+			        	  do250 = true;
+			          } // switch(icase)
+
+			          if (do250) {
+                          do250 = false;
+			              blb[j] = - (gval-bl[j]);
+			              indb[j] = 1;
+			              continue;
+			          } // if (do250)
+
+			          if (do260) {
+                          do260 = false;
+			              bub[j] = - (gval-bu[j]);
+			              indb[j] = 2;
+			              continue;
+			          } // if (do260)
+
+			          if (do270) {
+                          do270 = false;
+			              blb[j] = - (gval-bl[j]);
+			              bub[j] = - (gval-bu[j]);
+			              indb[j] = 3;
+			              continue;
+			          } // if (do270)
+
+			          if (do280) {
+			        	  do280 = false;  
+			              indb[j] = 4;
+			          } // if (do280)
+			      } // for (j = nvars + 1; j <= nall; j++)
+			  } // if (do190)
+			 
+		      if (do300) {
+		    	  do300 = false;
+			      //  SOLVE THE LEAST SQUARES PROBLEM WITH BOUNDS AND LINEAR
+			      //  CONSTRAINTS.  THESE BOUNDS CAN COME FROM THE USER OR
+			      //  THE ALGORITHM.
+			      //
+		    	 iarr = new int[iopt.length-ipls + 1];
+		    	 for (m = ipls; m < iopt.length; m++) {
+		    	     iarr[m-ipls+1] = iopt[m];	 
+		    	 }
+			     dbocls(fjac,ldfjac,mcon,mequa,nvars,blb,bub,indb,iarr,
+			            dx,rnormc,pv,mode,wa,iwa);
+			     for (m = ipls; m < iopt.length; m++) {
+		    	     iopt[m] = iarr[m-ipls+1];	 
+		    	 }
+
+				  if ( iprint > 0) {
+					  Preferences.debug("iters= " + dfi3.format(iters) + " fc = " + df10p4.format(fc) + " pv[0] = " + df10p4.format(pv[0]) + 
+							     " k = " + dfi4.format(k) + " kl = " + dfi4.format(kl) + " fb = " + df10p4.format(fb) + "\n");
+					  Preferences.debug("            alpha = " + df14p4.format(alpha) + " bboost = " + df14p4.format(bboost) + "\n");
+				      Preferences.debug(" x = " + df12p4.format(x[1]));
+				      for (j = 2; j <= nvars; j++) {
+				    	  Preferences.debug("    " + df12p4.format(x[j]));
+				      }
+				      Preferences.debug("\n");
+				      Preferences.debug(" xb = " + df12p4.format(xb[1]));
+				      for (j = 2; j <= nvars; j++) {
+				    	  Preferences.debug("    " + df12p4.format(xb[j]));
+				      }
+				      Preferences.debug("\n");
+				      Preferences.debug(" dx = " + df12p4.format(dx[1]));
+				      for (j = 2; j <= nall; j++) {
+				    	  Preferences.debug("    " + df12p4.format(dx[j]));
+				      }
+				      Preferences.debug("\n");
+				      Preferences.debug(" b = " + df12p4.format(b[1]));
+				      for (j = 2; j <= nvars; j++) {
+				    	  Preferences.debug("    " + df12p4.format(b[j]));
+				      }
+				      Preferences.debug("\n");
+				      Preferences.debug(" blb = " + df12p4.format(blb[1]));
+				      for (j = 2; j <= nall; j++) {
+				    	  Preferences.debug("    " + df12p4.format(blb[j]));
+				      }
+				      Preferences.debug("\n");
+				      Preferences.debug(" bub = " + df12p4.format(bub[1]));
+				      for (j = 2; j <= nall; j++) {
+				    	  Preferences.debug("    " + df12p4.format(bub[j]));
+				      }
+				      Preferences.debug("\n");
+				      Preferences.debug("end of iteration\n");
+				  } // if (iprnt > 0)
+			      //
+			      //  TEST FOR NOISE IN LINEAR PROBLEM SOLN.
+			      //
+			      // NOTE THAT THIS CODE MAKES NO SENSE.  term is always false.
+			      term = ( mcon == 0 && (pv[0]>=fc) );
+			      term=false;
+			      if ( term) {
+			          if ( iprint > 0) {
+			              Preferences.debug("linear residual>=current f. quitting. pv[0] = " + df12p5.format(pv[0]) +
+			              		            "fc = " + df12p5.format(fc) + "\n");
+			          }
+                      for (j = 1; j <= nvars; j++) {
+                    	  x[j] = xb[j];
+                      }
+			          igo[0] = 4;
+			          iflag_dqedip = 0;
+			          do390 = true;
+		          } // if (term)
+			      else {
+			    	  do305 = true;
+			      }
+		      } // if (do300)
+
+			  /*if (do305) {
+				  do305 = false;
+		          rg = Math.max(rg, (pv[0]-pb)/pd);
+			      if ( ! retrea) {
+			          chg = 1.0;
+			          t2 = 0.0;
+
+			          for (j = 1; j <= nvars; j++) {
+
+			              bold = b[j];
+			              t = dx[j]/bold;
+			              //
+			              // IF USER GIVES BOUNDS, AND THESE BOUNDS ARE HIT,
+			              // DO NOT DETRACT FROM DECLARING A FULL NEWTON STEP.
+			              //
+			              icase = ind[j];
+			              switch (icase) {
+			              case 1:
+			            	  do310 = true;
+			            	  break;
+			              case 2:
+			            	  do320 = true;
+			            	  break;
+			              case 3:
+			            	  do330 = true;
+			            	  break;
+			              case 4:
+			            	  do340 = true;
+			            	  break;
+			              default:
+			            	  do310 = true;
+			              } // switch(icase)
+
+			              if (do310) {
+			            	  do310 = false;
+			                  alb = (x[j]-bl[j])/bold;
+			                  aub = -semibg;
+			                  do350 = true;
+			              } // if (do310)
+
+			              if (do320) {
+			            	  do320 = false;
+			                  aub = (x[j]-bu[j])/bold;
+			                  alb = -semibg;
+			                  do350 = true;
+			              } // if (do320)
+
+			              if (do330) {
+			            	  do330 = false;
+			                  alb = (x[j]-bl[j])/bold;
+			         aub = (x(j)-bu(j))/bold
+			         go to 350
+			              } // if (do33)
+
+			  340        continue
+			         alb = -semibg
+			         aub = -semibg
+
+			  350        continue
+
+			         if ( t == 1.0D+00 ) then
+			             t2 = 1.0D+00
+			             b(j) = bold + bold
+			             chg = chg*chgfac
+			         else
+			             if ( abs(t) < 0.25D+00 .and. dx(j)/= 0.0D+00 ) then
+			                 b(j) = sign(0.25D+00 * bold,dx(j)) + 3.0D+00 * dx(j)
+			             else
+			                 b(j) = sign(bold,dx(j))
+			             end if
+			         end if
+			!
+			!  THIS TEST AVOIDS THE USER BOUNDS IN DECLARING A NEWTON STEP.
+			!
+			         if ( abs(alb-t)>=0.01D+00*abs(t) .and. &
+			              abs(aub-t) >= 0.01D+00*abs(t)) then
+			             if ( t > 0.0D+00 ) then
+			                 t2 = max(t2,t)
+			             else
+			                 t2 = max(t2,-t/c1516)
+			             end if
+			         end if
+
+			          } // for (j = 1; j <= nvars; j++)
+
+			      fulnwt = t2  <  0.99D+00
+			      fl = fc
+			      dxnrm = abs(dx(idamax(nvars,dx,1)))
+			!
+			!  TEST FOR SMALL ABSOLUTE CHANGE IN X VALUES.
+			!
+			      term = dxnrm  <  told .and. fulnwt
+			      if ( term) then
+			          igo = 5
+
+			          go to 370
+
+			      end if
+
+			      term = dxnrm  <  dnrm2(nvars,x,1)*tolx .and. fulnwt
+			      term = term .and. (iters > 1)
+			      if ( term) then
+			          igo = 6
+
+			          go to 370
+
+			      end if
+
+			      go to 380
+
+			  370     continue
+			      go to 30
+
+			      } // if (!retrea)
+			  } // if (do305)
+
+			  380 continue
+			  go to 30
+
+			  390 continue
+			  go to 440
+			!
+			!  TEST FOR CONVERGENCE
+			!
+			  400 continue
+			!
+			!  TEST FOR SMALL FUNCTION NORM.
+			!
+			  term = fc <= tolf .or. term
+			!
+			!  IF HAVE CONSTRAINTS MUST ALLOW AT LEAST ONE MOVE.
+			!
+			  term = term .and. (mcon == 0 .or. iters > 1)
+			  if ( term) then
+			      igo = 2
+			      go to 420
+			  end if
+			!
+			!  TEST FOR NO CHANGE
+			!
+			  assign 410 to igotnc
+			  go to 430
+
+			  410 continue
+			  term = term .and. .not. retrea
+			  if ( term) then
+			      igo = 3
+			      go to 420
+			  end if
+
+			  term = iters >= itmax
+			  if ( term) then
+			      igo = 7
+			  end if
+
+			  420 continue
+			  if (igotfc == 60) {
+				  do60 = true;
+			  }
+			  else if (igotfc = 180) {
+				  do180 = true;
+			  }
+			  continue loop;
+			!
+			!  TEST FOR NO CHANGE
+			!
+			  430 continue
+			  t = sqrt(max( 0.0D+00, (fl-pv)* (fl+pv)))
+			  term = (abs(fb-fc)<=tolsnr*fb) .and. (t.le.pv*tolp)
+			  term = term .and. (abs(fc-fl)<=fb*tolsnr)
+			  term = term .and. fulnwt
+
+			  go to igotnc
+
+			  440 continue
+			  return
+			!
+			!  INITIALIZE OTHER VALUES
+			!
+			  450 continue
+
+			  iters = 0
+			  nall = mcon + nvars
+			  chgfac = 2.0D+00** (-one/ real ( nvars, kind = 8 ))
+			  c1516 = 15.0D+00 / 16.0D+00
+			  semibg = 1.0D+10
+			!
+			!  MAKE SURE THAT VARIABLES SATISFY THE BOUNDS AND CONSTRAINTS.
+			!
+			  do j = 1,nall
+			     blb(j) = bl(j)
+			     bub(j) = bu(j)
+			     indb(j) = ind(j)
+			  end do
+
+			  do20 = true;
+			!
+			!  PROCESS OPTION ARRAY
+			!
+			  470 continue
+			  iprint = 0
+			!
+			!  T = MACHINE REL. PREC.
+			!
+			  t = epsilon ( t )
+			  tolf = t
+			  tolx = tolf
+			  told = tolf
+			  tolsnr = 1.0D-03
+			  tolp = 1.0D-03
+			  itmax = 18
+			  passb = .false.
+			  level = 1
+			  ipls = 0
+			  lpdiff = 0
+			  lp = 1
+
+			  480 continue
+
+			  lp = lp + lpdiff
+			  lpdiff = 2
+			  kp = iopt(lp)
+			  newopt = kp  >  0
+			  jp = abs(kp)
+			!
+			!  SEE IF THIS IS THE LAST OPTION.
+			!
+			  if ( jp == 99) then
+			      if ( newopt) then
+			!
+			!  THE POINTER TO THE START OF OPTIONS FOR THE LINEAR
+			!  SOLVER MUST SATISFY THE REQUIREMENTS FOR THAT OPTION ARRAY.
+			!
+			          if ( ipls == 0) ipls = lp
+			          go to 490
+			      else
+			          lpdiff = 1
+			          go to 480
+			      end if
+			  end if
+			!
+			!  CHANGE PRINT OPTION.
+			!
+			  if ( jp == 1) then
+			      if ( newopt) iprint = iopt(lp+1)
+			      go to 480
+			  end if
+			!
+			!  SEE IF MAX. NUMBER OF ITERATIONS CHANGING.
+			!
+			  if ( jp == 2) then
+			      if ( newopt) itmax = iopt(lp+1)
+			      go to 480
+			  end if
+			!
+			!  SEE IF BOUNDS FOR THE TRUST REGION ARE BEING PASSED.
+			!
+			  if ( jp == 3) then
+			      if ( newopt) then
+			          call dcopy(nvars,ropt(iopt(lp+1)),1,bb,1)
+			          passb = .true.
+			      end if
+
+			      go to 480
+
+			  end if
+			!
+			!  CHANGE TOLERANCE ON THE LENGTH OF THE RESIDUALS.
+			!
+			  if ( jp == 4) then
+			      if ( newopt) tolf = ropt(iopt(lp+1))
+			      go to 480
+			  end if
+			!
+			!  CHANGE TOLERANCE ON THE NORM OF THE RELATIVE
+			!  CHANGE TO THE PARAMETERS.
+			!
+			  if ( jp == 5) then
+			      if ( newopt) tolx = ropt(iopt(lp+1))
+			      go to 480
+			  end if
+			!
+			!  CHANGE TOLERANCE ON ABSOLUTE CHANGE TO THE PARAMETERS.
+			!
+			  if ( jp == 6) then
+			      if ( newopt) told = ropt(iopt(lp+1))
+			      go to 480
+			  end if
+
+			  if ( jp == 7) then
+			!
+			!  CHANGE TOLERANCE FOR RELATIVE AGREEMENT BETWEEN
+			!  BEST FUNCTION NORM, LAST FUNCTION NORM AND THE
+			!  CURRENT FUNCTION NORM.
+			!
+			      if ( newopt) tolsnr = ropt(iopt(lp+1))
+			      go to 480
+			  end if
+
+			  if ( jp == 8) then
+			!
+			!  CHANGE TOLERANCE FOR AGREEMENT BETWEEN PREDICTED
+			!  VALUE OF RESIDUAL NORM AND THE PREVIOUS VALUE OF
+			!  THE RESIDUAL NORM.
+			!
+			      if ( newopt) tolp = ropt(iopt(lp+1))
+			      go to 480
+			  end if
+			!
+			!  CHANGE THE PRINT LEVEL IN THE ERROR PROCESSOR.
+			!
+			  if ( jp == 9) then
+			      if ( newopt) level = iopt(lp+1)
+			      go to 480
+
+			  end if
+			!
+			!  PASS AN OPTION ARRAY TO THE CONSTRAINED LINEAR SOLVER.
+			!  THIS OPTION IS A POINTER TO THE START OF THE OPTION
+			!  ARRAY FOR THE SUBPROGRAM.
+			!
+			  if ( jp == 10) then
+			      if ( newopt) ipls = iopt(lp+1)
+			      go to 480
+			  end if
+			!
+			!  MOVE THE PROCESSING POINTER BY THE VALUE IN THE
+			!  NEXT ENTRY OF THE OPTION ARRAY.  THIS DEVICE IS
+			!  INCLUDED SO THAT PASSING OPTIONS TO LOWER LEVEL
+			!  SUBROUTINES IS EASY TO DO.
+			!
+			  if ( jp == 11) then
+			      if ( newopt) lpdiff = iopt(lp+1)
+			      go to 480
+			  end if
+			!
+			!  SAW AN OPTION (OR GARBAGE) THAT IS NOT ON THE LIST.
+			!
+			  xmess = 'dqedip. invalid option processed. i1=iopt(*) entry. i2=iopt(i1).'
+			  nerr = 08
+			  igo = 16
+			  call xerrwv(xmess,nerr,level,2,lp,iopt(lp),0,rdum,rdum)
+			  iflag = 0
+
+			  go to 440
+
+			  490 continue
+			  do450 = true;*/
+	} // loop: while(true)
+
+			 /*9001 format (a4,1p10d12.4/ (4x,10d12.4))
+			 9011 format ('0+iter.=',i3,' fc=',1pd10.4,' pv=',1pd10.4,' k=',i4, &
+			   ' kl=',i4,' fb=',1pd10.4/12x,'al=',1pd14.4,' bb=',1pd14.4)
+			 9021 format (' linear residual>=current f. quitting.',1p2d12.5)*/
+    } // dqedip
+	
 	private void drot ( int n, double x[], int incx, double y[], int incy,
 			            double c, double s ) {
 
@@ -6493,7 +7462,7 @@ C     FROM THE ERROR PROCESSOR CALL.
     !
     !    Input, integer NR, the number of real values to be printed. (0 to 2)
     !
-    !    Input, real ( kind = 8 ) R1, R2, the first and second real values.
+    !    Input, double R1, R2, the first and second real values.
     */
       
       if (!outputMes) {
