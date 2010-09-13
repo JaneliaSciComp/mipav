@@ -87,6 +87,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
     /** Stores the geometric center of the contour of a VOI. */
     protected Vector3f gcPt = new Vector3f(0, 0, 0);
 
+    /** Stores the average of the contour of a VOI. */
+    protected Vector3f averagePt = new Vector3f(0, 0, 0);
+
     /** Stores the black and white center of mass of the contour of a VOI. */
     protected Vector3f cenMassPt = new Vector3f(0, 0, 0);
 
@@ -132,6 +135,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     protected boolean m_bUpdateBounds = true;    
     /** Set to true if the geometric center needs updating. */
     protected boolean m_bUpdateGeometricCenter = true;
+    /** Set to true if the geometric center needs updating. */
+    protected boolean m_bUpdateAverage = true;
     /** Set to true if the contour plane needs updating. */
     protected boolean m_bUpdatePlane = true;
 
@@ -816,6 +821,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
         return fMin;
     }
 
+    
+    public synchronized boolean equals(Object o)
+    {
+        if ( this == o )
+        {
+            return true;
+        }
+        return false;
+    }
+    
     /**
      * Exports the float arrays of the points of the curve.
      *
@@ -1316,7 +1331,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         //Profile.clear();
         //Profile.start();
         //long time = System.currentTimeMillis();
-        //System.out.println("getGeometricCenter " + getGroup().getName() + getLabel() );
+        System.out.println("getGeometricCenter " + getGroup().getName() + getLabel() );
         getMask();
         m_bUpdateGeometricCenter = false;
         //System.out.println(" ... " + (System.currentTimeMillis() - time));
@@ -1325,6 +1340,25 @@ public abstract class VOIBase extends Vector<Vector3f> {
         //Profile.setFileName( "profile_out_GC" );
         //Profile.shutdown();
         return new Vector3f(gcPt);
+    }
+
+    public Vector3f getAverage() {
+
+        if ( !m_bUpdateAverage )
+        {
+            return new Vector3f(averagePt);
+        }  
+        averagePt.Set(0,0,0);
+        for ( int i = 0; i < size(); i++ )
+        {
+            averagePt.Add(elementAt(i));
+        }
+        if ( size() > 0 )
+        {
+            float fScale = 1f/size();
+            averagePt.Scale(fScale);        
+        }
+        return new Vector3f(averagePt);
     }
 
     /**
@@ -2037,7 +2071,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         m_bUpdateBounds = true;
         m_bUpdatePlane = true;
         m_bUpdateGeometricCenter = true;
-
+        m_bUpdateAverage = true;
         if ( m_kVolumeVOI != null )
         {
             m_kVolumeVOI.setVOI(this);
@@ -2067,6 +2101,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         //System.err.println( "update mask set to true " + getGroup().getName() + getLabel() );
         m_bUpdateMask = true;
         gcPt.Add(kTranslate);
+        averagePt.Add(kTranslate);
         m_akImageMinMax[0].Add(kTranslate);
         m_akImageMinMax[1].Add(kTranslate);
         if ( m_kVolumeVOI != null )

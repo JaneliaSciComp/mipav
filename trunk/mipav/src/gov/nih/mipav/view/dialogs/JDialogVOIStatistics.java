@@ -1406,7 +1406,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             }
             int count = 0;
             int stop = 1;
-            String end = orientation + ";" + slice + ";";
+            String end = slice + ";";
 
             if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
                 stop = sortedContours[slice].size();
@@ -1417,7 +1417,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             for (int num = 0; num < stop; num++) {
 
                 if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
-                    end = orientation + ";" + slice + ";" + num;
+                    end = slice + ";" + sortedContours[slice].elementAt(num).getLabel();
                 }
                 
                 // first: set up row title:
