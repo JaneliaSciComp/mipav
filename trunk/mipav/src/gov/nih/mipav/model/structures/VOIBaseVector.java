@@ -43,6 +43,18 @@ public class VOIBaseVector extends Vector<VOIBase> {
         parent.fireVOIBaseAdded(obj);
     }
     
+    public int indexOf(Object o)
+    {
+        for ( int i = 0; i < size(); i++ )
+        {
+            if ( o == elementAt(i) )
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
     public void insertElementAt(VOIBase obj, int index)
     {
         super.insertElementAt(obj, index);

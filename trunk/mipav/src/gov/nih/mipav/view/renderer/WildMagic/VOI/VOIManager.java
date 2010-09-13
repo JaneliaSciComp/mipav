@@ -2756,7 +2756,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         gon = scalePolygon(kVOI);
 
-        if ( !m_bLeftMousePressed && !(m_iDrawType == LIVEWIRE) && !(m_iDrawType == POLYLINE)) 
+        if ( !m_bMouseDrag && !(m_iDrawType == LIVEWIRE) && !(m_iDrawType == POLYLINE)) 
         {
             if (kVOI.isActive()) {
                 if (kVOI.isClosed()) {
