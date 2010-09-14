@@ -1223,18 +1223,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             // if the mode is the default pointer button, determine if any contours are selected:
             else if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
             {    
-                // if near a point:
-                if ( m_iNearStatus == NearPoint )
-                {
-                    moveVOIPoint( kEvent.getX(), kEvent.getY() );
-                }
-                // if near the bounding-box control point:
-                else if ( m_iNearStatus == NearBoundPoint )
-                {
-                    scaleVOI( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
-                }
-                // if near a contour edge"
-                else if ( m_iNearStatus == NearLine )
+               if ( m_iNearStatus == NearLine )
                 {
                     m_kParent.saveVOIs("addVOIPoint");
                     addVOIPoint( kEvent.getX(), kEvent.getY() );
@@ -1244,12 +1233,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getAverage() );
                     m_kMouseOffset.Set ( kGC.X - kEvent.getX(), kGC.Y - kEvent.getY(), 0 );
+                    m_kParent.updateDisplay();
                 }
             }
-            // Call the default drag:
-            processLeftMouseDrag( kEvent );
         }
-        // If tthe right-button is pressed:
+        // If the right-button is pressed:
         else if ( kEvent.getButton() == MouseEvent.BUTTON3 )
         {
             // if a contour is selected:
@@ -4282,6 +4270,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
             else if ( m_bSelected )
             {
+                boolean bTempFirstDrag = m_bFirstDrag;
                 if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
                 {
                     m_kParent.saveVOIs( "moveVOI" );
@@ -4293,7 +4282,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 Vector3f kDiff = new Vector3f();
                 kDiff.Sub( kNewGC, kGC );
 
-                m_kParent.moveVOI( this, kDiff, m_iPlane, m_bFirstDrag );
+                m_kParent.moveVOI( this, kDiff, m_iPlane, bTempFirstDrag );
                 m_fMouseX = kEvent.getX();
                 m_fMouseY = kEvent.getY();
             }
