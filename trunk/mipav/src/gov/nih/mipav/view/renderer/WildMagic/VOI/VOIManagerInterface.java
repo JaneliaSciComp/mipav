@@ -4671,7 +4671,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     @Override
     public void addedCurve(VOIEvent added) {
-        added.getBase().getGeometricCenter();
         if ( m_kVOIDialog != null )
         {
             m_kVOIDialog.updateVOI( added.getVOI(), getActiveImage() );
