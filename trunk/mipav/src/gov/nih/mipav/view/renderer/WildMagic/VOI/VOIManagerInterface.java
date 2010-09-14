@@ -3996,7 +3996,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
             return;
         }
-
         chooser = new JFileChooser();
         chooser.setDialogTitle("Save VOI as");
         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
@@ -4004,16 +4003,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } else {
             chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml"}));
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml",".lbl"}));
 
         final int returnVal = chooser.showSaveDialog(m_kParent.getFrame());
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             fileName = chooser.getSelectedFile().getName();
-            if(!fileName.endsWith(".xml")) {
-                MipavUtil.displayError("VOI files must end in .xml");
-                return;
-            }
+            
             directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
             ViewUserInterface.getReference().setDefaultDirectory(directory);
 
@@ -4025,21 +4021,19 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         try {
 
-            if (fileName.endsWith(".voi") && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
-                doPoint = true;
-            } else if (fileName.endsWith(".lbl") || VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
+            if (fileName.endsWith(".lbl") || VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
                 doAnnotation = true;
                 if (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION && !fileName.endsWith(".lbl")) {
                     fileName += ".lbl";
                 }
-            } else if ( !fileName.endsWith(".voi") && !fileName.endsWith(".xml")) {
+            } else if (!fileName.endsWith(".xml")) {
                 fileName += ".xml";
             }
 
             final FileVOI fileVOI = new FileVOI(fileName, directory, kImage);
 
             if ( !doPoint && !doAnnotation) {
-
+            	
                 // use the MIPAV VOI format (not Nauges) since we
                 // need to save the curveType in order to correctly
                 // rebuild the VOIs when reading the VOI files.
