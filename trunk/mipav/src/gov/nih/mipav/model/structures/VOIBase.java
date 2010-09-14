@@ -898,6 +898,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         getImageBoundingBox();
         //long time = System.currentTimeMillis();
+        m_iPlane = getPlane();
         if ( m_iPlane == NOT_A_PLANE )
         {
             m_bUpdatePlane = true;
