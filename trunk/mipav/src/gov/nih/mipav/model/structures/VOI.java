@@ -1463,7 +1463,7 @@ public class VOI extends ModelSerialCloneable {
         float sumY = (float) 0.0;
         float sumZ = (float) 0.0;
 
-        if ((curveType == LINE) || (curveType == POLYLINE) || (curveType == PROTRACTOR)) {
+        if ((curveType == LINE) || (curveType == POLYLINE) || (curveType == PROTRACTOR) || (curveType == ANNOTATION)|| (curveType == POINT)) {
             return null;
         }
 
