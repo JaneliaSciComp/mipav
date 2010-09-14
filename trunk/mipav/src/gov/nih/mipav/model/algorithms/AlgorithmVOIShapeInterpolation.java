@@ -164,6 +164,8 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		imageSlice2.registerVOI(newVOI2);
 		//lets get original center for VOI2
 		geomCenter2 = VOI2.getGeometricCenter();
+		
+		//System.err.println( geomCenter1 + " " + geomCenter2 );
 
 		//get center of image...since imageSlice1 and imageSlice2 are slices from same image, get it from either
 		imageCenter = imageSlice1.getImageCenter();
@@ -183,6 +185,9 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		maskImage1.setImageName(imageSlice1.getImageName() + "_mask1");
 		maskImage2 = imageSlice2.generateBinaryImage(false, true);
 		maskImage2.setImageName(imageSlice2.getImageName() + "_mask2");
+
+        //new ViewJFrameImage((ModelImage)imageSlice1.clone());
+        //new ViewJFrameImage((ModelImage)imageSlice2.clone());
 
         //new ViewJFrameImage((ModelImage)maskImage1.clone());
         //new ViewJFrameImage((ModelImage)maskImage2.clone());
