@@ -1178,12 +1178,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         else if ( kCommand.equals("MoveUP") )
         {
             saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0, 1, 0 ), -1, true );
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0, -1, 0 ), -1, true );
         }
         else if ( kCommand.equals("MoveDown") )
         {
             saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0,-1, 0 ), -1, true  );
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0, 1, 0 ), -1, true  );
         }
         else if ( kCommand.equals("MoveLeft") )
         {
