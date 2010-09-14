@@ -668,7 +668,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 unit2DStr, unit3DStr, ignoreMin, ignoreMax, statProperty, sortedZ, q);
                         allStats.add( stats[q] );
                     }         
-                    if ( showTotals )
+                    if ( showTotals || (processType == PROCESS_PER_SLICE) )
                     {
                         printTotals( stats, statProperty, 
                                 unit2DStr, unit3DStr, new String( sortedZ + ";" ), ignoreMin, ignoreMax, largestDistance );
@@ -687,7 +687,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 unit2DStr, unit3DStr, ignoreMin, ignoreMax, statProperty, sortedX, q);
                         allStats.add( stats[q] );
                     }         
-                    if ( showTotals )
+                    if ( showTotals || (processType == PROCESS_PER_SLICE) )
                     {
                         printTotals( stats, statProperty, 
                                 unit2DStr, unit3DStr, new String( sortedX + ";" ), ignoreMin, ignoreMax, largestDistance );
@@ -706,7 +706,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 unit2DStr, unit3DStr, ignoreMin, ignoreMax, statProperty, sortedY, q);
                         allStats.add( stats[q] );
                     }         
-                    if ( showTotals )
+                    if ( showTotals || (processType == PROCESS_PER_SLICE) )
                     {
                         printTotals( stats, statProperty, 
                                 unit2DStr, unit3DStr, new String( sortedY + ";" ), ignoreMin, ignoreMax, largestDistance );
