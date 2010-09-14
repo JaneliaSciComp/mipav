@@ -48,6 +48,8 @@ public abstract class DQED {
 	
 	private int iflag_dqedip = 0;
 	
+	private int iflag_dqedmn = 0;
+	
 	
 	public DQED() {
 		
@@ -5695,6 +5697,172 @@ C     FROM THE ERROR PROCESSOR CALL.
 	  System.exit(-1);
 	} // dqedev
 	
+	private void dqedgn (int mequa, int nvars, int mcon, int ind[], double bl[], double bu[],
+			             double x[], double fjac[][], int ldfjac, double fnorm[], int igo[],
+			             int iopt[], double ropt[], int iwa[], double wa[] ) {
+
+			/*****************************************************************************80
+			!
+			!! DQEDGN is a simplified version of the QED algorithm for the model problem.
+			!
+			!***BEGIN PROLOGUE  DQEDGN
+			!***REFER TO  DQED
+			!***ROUTINES CALLED  DQEDIP
+			!***END PROLOGUE  DQEDGN
+			!  DQEDGN:
+			! GLOSSARY OF VARIABLES. NOTATION:
+			! DUMMY-ARG A dummy argument, that is an argument to this prog. unit.
+			! /S$A$V$E/ SAV Denotes that this variable is local to the routine
+			!               and is saved between calls to it.
+			! integer, REAL, real, LOGICAL, CHARACTER
+			!               The types of the variables.
+			! ADJ-ARR An adjustable array, that is an argument to this prog. unit.
+			! Name      Memory Status  Type     Argument   Uses and comments.
+			!                                    Status
+			! ----      -------------  ----     --------   ------------------
+			! BL         DUMMY-ARG     REAL      ADJ-ARY Model lower bounds
+			! BU         DUMMY-ARG     REAL      ADJ-ARY Model upper bounds
+			! FJAC       DUMMY-ARG     REAL      ADJ-ARY Model Jacobian array
+			! FNORM      DUMMY-ARG     REAL              Model residual norm
+			! IGO        DUMMY-ARG     integer           direct model action
+			! IND        DUMMY-ARG     integer   ADJ-ARY Model bound indicators
+			! IOPT       DUMMY-ARG     integer   ADJ-ARY Option array
+			! IWA        DUMMY-ARG     integer   ADJ-ARY Working array
+			! LDFJAC     DUMMY-ARG     integer           Row dim of FJAC(*,*)
+			! MB         /S$A$V$E/ SAV integer           Pointer to B(*)
+			! MBB        /S$A$V$E/ SAV integer           Pointer to BB(*)
+			! MBLB       /S$A$V$E/ SAV integer           Pointer to BLB(*)
+			! MBUB       /S$A$V$E/ SAV integer           Pointer to BLB(*)
+			! MCON       DUMMY-ARG     integer           Number, model constraints
+			! MDX        /S$A$V$E/ SAV integer           Pointer to DX(*)
+			! MEQUA      DUMMY-ARG     integer           Number, model equations
+			! MINDB      /S$A$V$E/ SAV integer           Pointer to INDB(*)
+			! MIWA       /S$A$V$E/ SAV integer           Pointer to IWA(*)
+			! MWA        /S$A$V$E/ SAV integer           Pointer to WA(*)
+			! MXB        /S$A$V$E/ SAV integer           Pointer to XB(*)
+			! NALL       /S$A$V$E/ SAV integer           NVARS+MEQUA
+			! NVARS      DUMMY-ARG     integer           Number, user variables
+			! ROPT       DUMMY-ARG     REAL      ADJ-ARY Option array data
+			! WA         DUMMY-ARG     REAL      ADJ-ARY Working array
+			*/
+
+			  //double fjac(ldfjac,*)
+			  int mb;
+			  int mbb;
+			  int mblb;
+			  int mbub;
+			  int mdx;
+			  int mindb;
+			  int miwa;
+			  int mwa;
+			  int mxb;
+			  int nall;
+			  int iarr[];
+			  int iarr2[];
+			  int j;
+			  double arr[];
+			  double arr2[];
+			  double arr3[];
+			  double arr4[];
+			  double arr5[];
+			  double arr6[];
+			  double arr7[];
+			//
+			//  ALLOCATE BLOCKS OF WORKING STORAGE TO LOGICAL ARRAYS.
+			//
+			  nall = mcon + nvars;
+			  mdx = 1;
+			  mxb = mdx + 2*nall + 2;
+			  mb = mxb + nvars;
+			  mbb = mb + nvars;
+			  mblb = mbb + nvars;
+			  mbub = mblb + nall;
+			  mwa = mbub + nall;
+
+			  mindb = 1;
+			  miwa = mindb + nall + nvars;
+              iarr = new int[miwa];
+              for (j = 1; j <= miwa - 1; j++) {
+            	  iarr[j] = iwa[j];
+              }
+              iarr2 = new int[iwa.length - miwa + 1];
+              for (j = 1; j <= iwa.length - miwa; j++) {
+            	  iarr2[j] = iwa[miwa + j - 1];
+              }
+              arr = new double[mxb];
+              for (j = 1; j <= mxb - 1; j++) {
+            	  arr[j] = wa[j];
+              }
+              arr2 = new double[mb - mxb + 1];
+              for (j = 1; j <= mb - mxb; j++) {
+            	  arr2[j] = wa[mxb+j-1];  
+              }
+              arr3 = new double[mbb - mb + 1];
+              for (j = 1; j <= mbb - mb; j++) {
+            	  arr3[j] = wa[mb+j-1];
+              }
+              arr4 = new double[mblb - mbb + 1];
+              for (j = 1; j <= mblb - mbb; j++) {
+            	  arr4[j] = wa[mbb+j-1];
+              }
+              arr5 = new double[mbub - mblb + 1];
+              for (j = 1; j <= mbub - mblb; j++) {
+            	  arr5[j] = wa[mblb+j-1];
+              }
+              arr6 = new double[mwa - mbub + 1];
+              for (j = 1; j <= mwa - mbub; j++) {
+            	  arr6[j] = wa[mbub+j-1];
+              }
+              arr7 = new double[wa.length - mwa + 1];
+              for (j = 1; j <= wa.length - mwa; j++) {
+            	  arr7[j] = wa[mwa+j-1];
+              }
+              
+			  dqedip(mequa,nvars,mcon,ind,bl,bu,x,fjac,ldfjac,fnorm,igo,
+			    iopt,ropt,iarr2,arr7,arr,arr2,arr3,
+			    arr4,arr5,arr6,iarr);
+			  for (j = 1; j <= miwa - 1; j++) {
+            	  iwa[j] = iarr[j];
+              }
+			  for (j = 1; j <= iwa.length - miwa; j++) {
+            	  iwa[miwa + j - 1] = iarr2[j];
+              }
+			  for (j = 1; j <= mxb - 1; j++) {
+            	  wa[j] = arr[j];
+              }
+			  for (j = 1; j <= mb - mxb; j++) {
+            	  wa[mxb+j-1] = arr2[j];  
+              }
+			  for (j = 1; j <= mbb - mb; j++) {
+            	  wa[mb+j-1] = arr3[j];
+              }
+			  for (j = 1; j <= mblb - mbb; j++) {
+            	  wa[mbb+j-1] = arr4[j];
+              }
+			  for (j = 1; j <= mbub - mblb; j++) {
+            	  wa[mblb+j-1] = arr5[j];
+              }
+			  for (j = 1; j <= mwa - mbub; j++) {
+            	  wa[mbub+j-1] = arr6[j];
+              }
+			  for (j = 1; j <= wa.length - mwa; j++) {
+            	  wa[mwa+j-1] = arr7[j];
+              }
+			  //
+			  //  THESE DEFINE THE AMOUNT OF STORAGE FOR THE double precision AND
+			  //  integer WORK ARRAYS, WA(*) AND IWA(*).
+			  //
+			  mwa = mwa + 6*nvars + 5*mcon;
+			  miwa = miwa + 2*nall;
+			  //
+			  //  TOTAL WORKING STORAGE IN WA(*)=
+			  //    9*NALL + 4*NVARS = 9*MCON + 13*NVARS.
+			  //  TOTAL WORKING STORAGE IN IWA(*)=
+			  //    3*NALL + NV      = 3*MCON +4*NVARS.
+			  //
+			  return;
+    } // dqedgn
+	
 	private void dqedip (int mequa, int nvars, int mcon, int ind[], double bl[], double bu[], 
 			             double x[], double fjac[][], int ldfjac, double fb[], int igo[], int iopt[],
 			             double ropt[], int iwa[], double wa[], double dx[], double xb[],
@@ -5710,60 +5878,59 @@ C     FROM THE ERROR PROCESSOR CALL.
 			!
 			*/
 
-			  double alb;
+			  double alb = 0.0;
 			  double alfac = 0.0;
 			  double alpha = 0.0;
-			  double aub;
+			  double aub = 0.0;
 			  double bboost = 0.0;
 			  double bold;
 			  double c1516 = 0.0;
 			  double chg = 0.0;
-			  double chgfac;
+			  double chgfac = 0.0;
 			  double colnrm;
 			  double dxnrm;
 			  double fc = 0.0;
 			  //double fjac(ldfjac,*)
 			  double fl = 0.0;
-			  boolean fulnwt;
+			  boolean fulnwt = false;
 			  double gval;
 			  int icase;
-			  int igotfc;
-			  int igotnc;
+			  int igotfc = 60;
 			  int ipls = 0;
 			  int iprint = 0;
 			  int iters = 0;
-			  int itmax;
+			  int itmax = 0;
 			  int j;
 			  int jp;
 			  int k = 0;
 			  int kl = 0;
 			  int kp;
-			  int level;
-			  int lp;
-			  int lpdiff;
+			  int level = 0;
+			  int lp = 0;
+			  int lpdiff = 0;
 			  int mode[] = new int[1];
 			  int nall = 0;
 			  int nerr;
 			  boolean newbst;
 			  boolean newopt;
 			  boolean passb = false;
-			  double pb;
-			  double pd;
+			  double pb = 0.0;
+			  double pd = 0.0;
 			  double pv[] = new double[1];
 			  double rb;
 			  double rdum;
 			  boolean retrea = false;
-			  double rg;
+			  double rg = 0.0;
 			  double rnormc[] = new double[1];
 			  double semibg = 0.0;
 			  double t;
 			  double t2 = 0.0;
 			  boolean term = false;
-			  double told;
-			  double tolf;
-			  double tolp;
-			  double tolsnr;
-			  double tolx;
+			  double told = 0.0;
+			  double tolf = 0.0;
+			  double tolp = 0.0;
+			  double tolsnr = 0.0;
+			  double tolx = 0.0;
 			  String xmess;
 			  boolean do20 = false;
 			  boolean do30 = false;
@@ -5789,11 +5956,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  boolean do330 = false;
 			  boolean do340 = false;
 			  boolean do350 = false;
-			  boolean do390 = false;
 			  boolean do400 = false;
-			  boolean do440 = false;
+			  boolean do410 = false;
+			  boolean do420 = false;
+			  boolean do430 = false;
 			  boolean do450 = false;
 			  boolean do470 = false;
+			  boolean do480 = false;
 			  double arr[];
 			  int iarr[];
 			  int m;
@@ -5881,14 +6050,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			              }
 			              if ( term) {
 			                  iflag_dqedip = 0;
-			                  do390 = true;
+			                  return;
 			              }
 			          }
-                      if (!do390) {
-			              igo[0] = 1;
-			              iflag_dqedip = 1;
-			              do440 = true;
-                      } // if (!do390)
+			          igo[0] = 1;
+			          iflag_dqedip = 1;
+			          return;
                   } // if (do30)
 
 			     if (do50) {
@@ -5910,7 +6077,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			         if ( term) {
 			        	 do60 = false;
 			             iflag_dqedip = 0;
-			             do390 = true;
+			             return;
 			         }
 			         else {
 			             newbst = fc  <  fb[0] || (mcon > 0 && iters == 2);
@@ -6107,11 +6274,9 @@ C     FROM THE ERROR PROCESSOR CALL.
                   do180 = false;
 			      if ( term) {
 			          iflag_dqedip = 0;
-			          do390 = true;
+			          return;
 			      }
-			      else {
-			    	  do185 = true;
-			      }
+			      do185 = true;
 			  }
 
 			  if (do185) {
@@ -6299,14 +6464,12 @@ C     FROM THE ERROR PROCESSOR CALL.
                       }
 			          igo[0] = 4;
 			          iflag_dqedip = 0;
-			          do390 = true;
+			          return;
 		          } // if (term)
-			      else {
-			    	  do305 = true;
-			      }
+			      do305 = true;
 		      } // if (do300)
 
-			  /*if (do305) {
+			  if (do305) {
 				  do305 = false;
 		          rg = Math.max(rg, (pv[0]-pb)/pd);
 			      if ( ! retrea) {
@@ -6356,23 +6519,1447 @@ C     FROM THE ERROR PROCESSOR CALL.
 			              if (do330) {
 			            	  do330 = false;
 			                  alb = (x[j]-bl[j])/bold;
-			         aub = (x(j)-bu(j))/bold
-			         go to 350
-			              } // if (do33)
+			                  aub = (x[j]-bu[j])/bold;
+			                  do350 = true;
+			              } // if (do330)
 
-			  340        continue
-			         alb = -semibg
-			         aub = -semibg
+			              if (do340) {
+			                  do340 = false;
+			                  alb = -semibg;
+			                  aub = -semibg;
+			                  do350 = true;
+			              } // if (do340)
 
-			  350        continue
+			              if (do350) {
+			                  do350 = false;
 
-			         if ( t == 1.0D+00 ) then
-			             t2 = 1.0D+00
+			                  if ( t == 1.0 ) {
+			                      t2 = 1.0;
+			                      b[j] = bold + bold;
+			                      chg = chg*chgfac;
+			                  } // if (t == 1.0)
+			                  else {
+			                      if ( Math.abs(t) < 0.25 && dx[j] != 0.0 ) {
+			                    	  if (dx[j] >= 0.0) {
+			                    		  b[j] = Math.abs(0.25 * bold) + 3.0*dx[j];
+			                    	  }
+			                    	  else {
+			                    		  b[j] = -Math.abs(0.25 * bold) + 3.0*dx[j];
+			                    	  }
+			                      } // if ( Math.abs(t) < 0.25 && dx[j] != 0.0 )
+			                      else {
+			                    	  if (dx[j] >= 0.0) {
+			                    		  b[j] = Math.abs(bold);
+			                    	  }
+			                    	  else {
+			                    		  b[j] = -Math.abs(bold);
+			                    	  }
+			                      } // else
+			                  } // else
+			                  //
+			                  //  THIS TEST AVOIDS THE USER BOUNDS IN DECLARING A NEWTON STEP.
+			                  //
+			                  if ( Math.abs(alb-t)>=0.01*Math.abs(t) &&
+			                       Math.abs(aub-t) >= 0.01*Math.abs(t)) {
+			                      if ( t > 0.0 ) {
+			                          t2 = Math.max(t2,t);
+			                      }
+			                      else {
+			                          t2 = Math.max(t2,-t/c1516);
+			                      }
+			                  } // if ( Math.abs(alb-t)>=0.01*Math.abs(t) &&
+			              } // if (do350)
+
+			          } // for (j = 1; j <= nvars; j++)
+
+			          fulnwt = t2  <  0.99;
+			          fl = fc;
+			          dxnrm = Math.abs(dx[idamax(nvars,dx,1)]);
+			          //
+			          //  TEST FOR SMALL ABSOLUTE CHANGE IN X VALUES.
+			          //
+			          term = dxnrm  <  told && fulnwt;
+			          if ( term) {
+			              igo[0] = 5;
+                          do30 = true;
+			              continue loop;
+			          } // if (term)
+
+			          term = dxnrm  <  dnrm2(nvars,x,1)*tolx && fulnwt;
+			          term = term && (iters > 1);
+			          if ( term) {
+			              igo[0] = 6;
+			          } // if (term)
+			      } // if (!retrea)
+			      do30 = true;
+			      continue loop;
+			  } // if (do305)
+
+			  //
+			  //  TEST FOR CONVERGENCE
+			  //
+			  if (do400) {
+			      do400 = false;
+			      //
+			      //  TEST FOR SMALL FUNCTION NORM.
+			      //
+			      term = fc <= tolf || term;
+			      //
+			      //  IF HAVE CONSTRAINTS MUST ALLOW AT LEAST ONE MOVE.
+			      //
+			      term = term && (mcon == 0 || iters > 1);
+			      if ( term) {
+			          igo[0] = 2;
+			          do420 = true;
+			      } // if (term)
+			      else {
+			          //
+			          //  TEST FOR NO CHANGE
+			          //
+			          do430 = true;
+			      } // else
+			  } // if (do400)
+
+			  if (do410) {
+			      do410 = false;
+			      do420 = true;
+			      term = term && (!retrea);
+			      if ( term) {
+			          igo[0] = 3;
+			      }
+			      else {
+			          term = iters >= itmax;
+			          if ( term) {
+			              igo[0] = 7;
+			          }
+			      } //else
+			  } // if (do410)
+
+			  if (do420) {
+			      do420 = false;
+			      if (igotfc == 60) {
+				      do60 = true;
+			      }
+			      else if (igotfc == 180) {
+				      do180 = true;
+			      }
+			      continue loop;
+			  } // if (do420)
+			  //
+			  //  TEST FOR NO CHANGE
+			  //
+			  if (do430) {
+			      do430 = false;
+			      t = Math.sqrt(Math.max( 0.0, (fl-pv[0])* (fl+pv[0])));
+			      term = (Math.abs(fb[0]-fc)<=tolsnr*fb[0]) && (t <= pv[0]*tolp);
+			      term = term && (Math.abs(fc-fl)<=fb[0]*tolsnr);
+			      term = term && fulnwt;
+
+			      do410 = true;
+			      continue loop;
+			  } // if (do430)
+
+			  //
+			  //  INITIALIZE OTHER VALUES
+			  //
+			  if (do450) {
+			      do450 = false;
+
+			      iters = 0;
+			      nall = mcon + nvars;
+			      chgfac = Math.pow(2.0, (-1.0/(double)nvars));
+			      c1516 = 15.0 / 16.0;
+			      semibg = 1.0D+10;
+			      //
+			      //  MAKE SURE THAT VARIABLES SATISFY THE BOUNDS AND CONSTRAINTS.
+			      //
+			      for (j = 1; j <= nall; j++) {
+			          blb[j] = bl[j];
+			          bub[j] = bu[j];
+			          indb[j] = ind[j];
+			      } // for (j = 1; j <= nall; j++)
+
+			      do20 = true;
+			      continue loop;
+			  } // if (do450)
+			  //
+			  //  PROCESS OPTION ARRAY
+			  //
+			  if (do470) {
+			      do470 = false;
+			      do480 = true;
+			      iprint = 0;
+			      //
+			      //  T = MACHINE REL. PREC.
+			      //
+			      t = epsilon;
+			      tolf = t;
+			      tolx = tolf;
+			      told = tolf;
+			      tolsnr = 1.0D-03;
+			      tolp = 1.0D-03;
+			      itmax = 18;
+			      passb = false;
+			      level = 1;
+			      ipls = 0;
+			      lpdiff = 0;
+			      lp = 1;
+			  } // if (do470)
+
+			  if (do480) {
+			      do480 = false;
+
+			      lp = lp + lpdiff;
+			      lpdiff = 2;
+			      kp = iopt[lp];
+			      newopt = kp  >  0;
+			      jp = Math.abs(kp);
+			      //
+			      //  SEE IF THIS IS THE LAST OPTION.
+			      //
+			      if ( jp == 99) {
+			          if ( newopt) {
+			              //
+			              //  THE POINTER TO THE START OF OPTIONS FOR THE LINEAR
+			              //  SOLVER MUST SATISFY THE REQUIREMENTS FOR THAT OPTION ARRAY.
+			              //
+			              if ( ipls == 0) {
+			            	  ipls = lp;
+			              }
+			              do450 = true;
+			              continue loop;
+			          } // if (newopt)
+			          else {
+			              lpdiff = 1;
+			              do480 = true;
+			              continue loop;
+			          }
+			      } // if (jp == 99)
+			      //
+			      //  CHANGE PRINT OPTION.
+			      //
+			      if ( jp == 1) {
+			          if ( newopt) {
+			        	  iprint = iopt[lp+1];
+			          }
+			      do480 = true;
+			      } // if (jp == 1)
+                  //
+			      //  SEE IF MAX. NUMBER OF ITERATIONS CHANGING.
+			      //
+			      if ( jp == 2) {
+			          if ( newopt) {
+			    	      itmax = iopt[lp+1];
+			          }
+			          do480 = true;
+			          continue loop;
+			      } // if (jp == 2)
+			      //
+			      //  SEE IF BOUNDS FOR THE TRUST REGION ARE BEING PASSED.
+			      //
+			      if ( jp == 3) {
+			          if ( newopt) {
+			              for (m = 1; m <= nvars; m++) {
+			        	      bb[m] = ropt[iopt[lp+1]+m-1];
+			              }
+			              passb = true;
+			          } // if (newopt)
+			          do480 = true;
+                      continue loop;
+			      } // if (jp == 3)
+			      //
+			      //  CHANGE TOLERANCE ON THE LENGTH OF THE RESIDUALS.
+			      //
+			      if ( jp == 4) {
+			          if ( newopt) { 
+			        	  tolf = ropt[iopt[lp+1]];
+			          }
+			          do480 = true;
+			          continue loop;
+			      } // if (jp == 4)
+			      //
+			      //  CHANGE TOLERANCE ON THE NORM OF THE RELATIVE
+			      //  CHANGE TO THE PARAMETERS.
+			      //
+			      if ( jp == 5) {
+			          if ( newopt) {
+			        	  tolx = ropt[iopt[lp+1]];
+			          }
+			          do480 = true;
+			          continue loop;
+			      } // if (jp == 5)
+			      //
+			      //  CHANGE TOLERANCE ON ABSOLUTE CHANGE TO THE PARAMETERS.
+			      //
+			      if ( jp == 6) {
+			          if ( newopt) {
+			        	  told = ropt[iopt[lp+1]];
+			          }
+			          do480 = true;
+			          continue loop;
+			      } // if (jp == 6)
+
+			      if ( jp == 7) {
+			          //
+			          //  CHANGE TOLERANCE FOR RELATIVE AGREEMENT BETWEEN
+			          //  BEST FUNCTION NORM, LAST FUNCTION NORM AND THE
+			          //  CURRENT FUNCTION NORM.
+			          //
+			          if ( newopt) {
+			        	  tolsnr = ropt[iopt[lp+1]];
+			          }
+			          do480 = true;
+			          continue loop;
+			      } // if (jp == 7)
+
+			      if ( jp == 8) {
+			          //
+			          //  CHANGE TOLERANCE FOR AGREEMENT BETWEEN PREDICTED
+			          //  VALUE OF RESIDUAL NORM AND THE PREVIOUS VALUE OF
+			          //  THE RESIDUAL NORM.
+			          //
+			          if ( newopt) {
+			        	  tolp = ropt[iopt[lp+1]];
+			          }
+			          do480 = true;
+			          continue loop;
+			      } // if (jp == 8)
+			      //
+			      //  CHANGE THE PRINT LEVEL IN THE ERROR PROCESSOR.
+			      //
+			      if ( jp == 9) {
+			          if ( newopt) {
+			        	  level = iopt[lp+1];
+			          }
+			          do480 = true;
+                      continue loop;
+			      } // if (jp == 9)
+			      //
+			      //  PASS AN OPTION ARRAY TO THE CONSTRAINED LINEAR SOLVER.
+			      //  THIS OPTION IS A POINTER TO THE START OF THE OPTION
+			      //  ARRAY FOR THE SUBPROGRAM.
+			      //
+			      if ( jp == 10) {
+			          if ( newopt) {
+			        	  ipls = iopt[lp+1];
+			          }
+			          do480 = true;
+			          continue loop;
+			      } // if (jp == 10)
+			      //
+			      //  MOVE THE PROCESSING POINTER BY THE VALUE IN THE
+			      //  NEXT ENTRY OF THE OPTION ARRAY.  THIS DEVICE IS
+			      //  INCLUDED SO THAT PASSING OPTIONS TO LOWER LEVEL
+			      //  SUBROUTINES IS EASY TO DO.
+			      //
+			      if ( jp == 11) {
+			          if ( newopt) {
+			    	      lpdiff = iopt[lp+1];
+			          }
+			          do480 = true;
+			          continue loop;
+			      } // if (jp == 11)
+			      //
+			      //  SAW AN OPTION (OR GARBAGE) THAT IS NOT ON THE LIST.
+			      //
+			      xmess = "dqedip. invalid option processed. i1=iopt(*) entry. i2=iopt(i1).";
+			      nerr = 8;
+			      igo[0] = 16;
+			      xerrwv(xmess,nerr,level,2,lp,iopt[lp],0,rdum,rdum);
+			      iflag_dqedip = 0;
+
+			      return;
+			  } // if (do480)*/
+
+	} // loop: while(true)
+
+			 
+    } // dqedip
+	
+	private void dqedmn (int dqedev, int mequa, int nvars, int mcon, int ind[], double bl[],
+			  double bu[], double x[], double fjac[][], int ldfjac, double fb, int igo[],
+			  int iopt[], double ropt[], int iwa[], double wa[], double dx[], double xb[],
+			  double b[], double bb[], double blb[], double bub[], int indb[], int npmax,
+			  double zp[][], double xp[][], double qc[][], int mdqc, double pj[],
+			  double wj[][], int ldwj, double gr[], double dxl[] ) {
+
+			/*****************************************************************************80
+			!
+			!! DQEDMN is the main solution routine called by DQED.
+			!
+			!  Modified:
+			!
+			!    28 July 2006
+			*/
+
+			  double ajn;
+			  double alb;
+			  double alfac;
+			  double alpha;
+			  double aub;
+			  double bboost;
+			  double bold;
+			  double c1516;
+			  double chg;
+			  double chgfac;
+			  double colnrm;
+			  double cond;
+			  double cosl;
+			  double cosm;
+			  double cosq;
+			  double dfn;
+			  //external dqedev
+			  double dxnrm;
+			  double fc;
+			  //double fjac(ldfjac,*)
+			  double fl;
+			  boolean fulnwt;
+			  int i;
+			  int icase;
+			  int igoelm;
+			  int igoeqm;
+			  int igotfc;
+			  int igow;
+			  int ipls;
+			  int iprint;
+			  int iters;
+			  int itmax;
+			  int j;
+			  boolean jactri;
+			  int jk;
+			  int jp;
+			  int k;
+			  int kl;
+			  int kp;
+			  int l;
+			  int level;
+			  boolean linmod;
+			  int lk;
+			  int lp;
+			  int lpdiff;
+			  int mconst;
+			  int me;
+			  int mk;
+			  boolean mustcn;
+			  int nall;
+			  int nerr;
+			  boolean newbst;
+			  boolean newopt;
+			  int nit;
+			  boolean noquad;
+			  int np;
+			  int nt;
+			  int ntterm;
+			  int nv;
+			  boolean passb;
+			  double pb;
+			  double pd;
+			  double pv;
+			  double pvl;
+			  //double qc(mdqc,npmax)
+			  double rb;
+			  double rc;
+			  double rcond;
+			  double rdum;
+			  boolean retrea;
+			  boolean revers;
+			  double rg;
+			  double sc;
+			  double semibg;
+			  double ss;
+			  double t;
+			  double t2;
+			  boolean term;
+			  double told;
+			  double tolf;
+			  double tolp;
+			  double tolsnr;
+			  double toluse;
+			  double tolx;
+			  double tt;
+			  boolean useq;
+			  boolean useql;
+			  //double wj(ldwj,*)
+			  String xmess;
+			  //double xp(nvars,npmax)
+			  double zn;
+			  //double zp(mequa,npmax)
+			  boolean do20 = false;
+			  boolean do30 = false;
+			  boolean do50 = false;
+			  boolean do1100 = false;
+
+			  rdum = 0.0;
+
+			  if ( iflag_dqedmn != 0 ) {
+			    do50 = true;
+			  }
+			  else {
+
+			      lk = Math.min ( mequa, nvars+1 );
+			      nt = Math.min ( nvars+1, mequa-1 );
+			      //
+			      //  PROCESS OPTION ARRAY
+			      //
+			      do1100 = true;
+			  } // else 
+			  
+     loop:  while (true) {
+    	        if (do20) {
+			        do20 = false;
+			        do30 = true;
+			        //
+			        //  SET SO X(*)-DX(*) UPDATE WILL BE CORRECT FIRST TIME.
+			        //
+			        for (j = 1; j <= nvars; j++) {
+			            dx[j] = 0.0;
+			        }
+			        k = 0;
+			        //
+			        //  Set "INFINITY" ON THIS MACHINE.
+			        //
+			        fb = Double.MAX_VALUE;
+			        dxnrm = fb;
+			        fl = 0.0;
+			        //
+			        //  MODEL PROBLEM RESIDUAL.
+			        //
+			        pv = 0.0;
+			        pvl = 0.0;
+			        retrea = false;
+			        fulnwt = false;
+			        term = false;
+    	        } // if (do20)
+
+			    /*if (do30) {
+    	            do30 = false;
+
+			  iters = iters + 1
+
+			  if ( retrea ) then
+			    x(1:nvars) = xb(1:nvars)
+			    k = 0
+			    kl = -1
+			    fl = fb
+			  else
+			    kl = k
+			    x(1:nvars) = x(1:nvars) - dx(1:nvars)
+			  end if
+
+			  if ( term) then
+			    iflag = 0
+			    go to 840
+			  end if
+
+			  iflag = 1
+			  igo = 1
+
+			  if ( np == npmax-1 .and. np < nvars ) then
+			    igo = -1
+			  end if
+			!
+			!  THERE ARE TWO POSSIBLE WAYS TO GET FUNCTION AND DERIVATIVE
+			!  VALUES FROM THE USER.  THE OPTIONAL WAY IS REVERSE COMMUNICATION.
+			!  THE NOMINAL WAY IS THROUGH FORWARD COMMUNICATION.
+			!
+			  if ( revers) then
+			    go to 1020
+			  else
+			    call dqedev ( x, fjac, ldfjac, igo, iopt, ropt )
+			  end if
+			    } // if (do30)
+
+			   50 continue
+			!
+			!  IF IGO HAS BEEN CHANGED BY THE USER TO A VALUE .GT. 1, THEN
+			!  THIS IS AN ABORT SIGNAL.  STOP UNLESS IT = 99.
+			!
+			  if ( igo == 99) then
+			!
+			!  IF IGO = 99 THE EVALUATION CAN'T BE PERFORMED.
+			!  WE FORCE A RETREAT AND RESTART IN THIS CASE.
+			!
+			      do i = mcon + 1, mcon + mequa
+			         fjac(i,nvars+1) = fc
+			         fjac(i,1:nvars) = 0.0D+00
+			      end do
+			!
+			!  A RETREAT IS FORCED TO OCCUR WITH THIS ASSIGNMENT.
+			!
+			      retrea = .true.
+
+			  end if
+
+			  fc = dnrm2(mequa,fjac(mcon+1,nvars+1),1)
+
+			  if ( igo > 1 .and. igo /= 99 ) then
+			    iflag = 0
+			    x(1:nvars) = xb(1:nvars)
+			    go to 1020
+			  end if
+			!
+			!  SAVE PAST FUNCTION AND VARIABLE VALUES.
+			!  DO NOT UPDATE THE PAST POINTS UNLESS THERE IS A
+			!  SIGNIFICANT CHANGE IN THE X(*) VALUES.
+			!
+			  if ( np >= 0 ) then
+			      if ( dxnrm > toluse*dnrm2(nvars,x,1)) then
+			          lp = nvars
+			          if ( .not. noquad) np = min(np,npmax-1,lp) + 1
+			          do j = np - 1,1,-1
+			             call dcopy(nvars,xp(1,j),1,xp(1,j+1),1)
+			             call dcopy(mequa,zp(1,j),1,zp(1,j+1),1)
+			          end do
+			      end if
+			  end if
+			!
+			!  PUT IN THE PRESENT VALUES OF THE VARIABLES and functions.
+			!
+			  xp(1:nvars,1) = x(1:nvars)
+
+			  call dcopy(mequa,fjac(mcon+1,nvars+1),1,zp(1,1),1)
+			!
+			!  THIS STATEMENT HAS THE EFFECT OF A FIRST TIME FLAG.
+			!
+			  np = max ( np, 0 )
+			!
+			!  COMPUTE THE COSINES OF THE PAST MOVES WITH THE MOST CURRENT MOVE.
+			!
+			  do l = 2,np
+			     qc(1:nvars,l) = xp(1:nvars,l) - xp(1:nvars,1)
+			  end do
+
+			  l = 3
+
+			  do while ( l <= np )
+			!
+			!  CALCULATE THE DIRECTION COSINES OF THE PAST MOVES.
+			!
+			    t = dot_product ( qc(1:nvars,2), qc(1:nvars,l) )
+
+			    tt = dnrm2 ( nvars, qc(1,2), 1 ) * dnrm2 ( nvars, qc(1,l), 1 )
+
+			    if ( tt > 0.0D+00 ) then
+			      t = t / tt
+			    else
+			      t = 1.0D+00
+			    end if
+
+			    if ( iprint > 0 ) then
+			      write (*, &
+			        '('' past move number, cosine of move'',i3,2x,f6.2)') l - 2, t
+			    end if
+
+			    if ( abs ( t ) > 0.98D+00 ) then
+			!
+			!  DISCARD PAST INFORMATION ASSOCIATED WITH THIS MOVE IF CLOSE TO
+			!  A PAST MOVE.
+			!
+			      do j = l,np - 1
+			        call dcopy(mequa,zp(1,j+1),1,zp(1,j),1)
+			        call dcopy(nvars,xp(1,j+1),1,xp(1,j),1)
+			        call dcopy(nvars,qc(1,j+1),1,qc(1,j),1)
+			      end do
+
+			      np = np - 1
+			      cycle
+			    end if
+
+			    l = l + 1
+
+			  end do
+			!
+			!  COMPUTE FUNCTION DIFFERENCES IN QC.
+			!
+			  do j = 1,np - 1
+			     qc(1:mequa,j+1) = zp(1:mequa,j+1) - zp(1:mequa,1)
+			  end do
+			!
+			!  NOW HAVE F(PAST)-F(CURRENT) IN QC( , ), COLS. 2,...,NP USED.
+			!  COMPUTE NORM OF DIFFERENCE OF FUNCTION VALUES.
+			!
+			  if ( np > 1) then
+			    dfn = dnrm2(mequa,qc(1,2),1)
+			  else
+			    dfn = 0.0D+00
+			  end if
+			!
+			!  NEXT ADD PRODUCT OF JACOBIAN AND PAST VARIABLE DIFFERENCES.
+			!
+			  do i = 1,np - 1
+			     do j = 1,nvars
+			        call daxpy(mequa,- (xp(j,i+1)-xp(j,1)),fjac(mcon+1,j),1,qc(1,i+1),1)
+			     end do
+			  end do
+
+			  250 continue
+			!
+			!  COMPUTE THE SYMMETRIC MATRIX WHOSE ENTRIES ARE THE
+			!  SQUARES OF THE DOT PRODUCTS OF THE PAST DIRECTIONS.
+			!  THIS MATRIX IS REQUIRED TO OBTAIN THE QUADRATIC TERMS
+			!  ASSOCIATED WITH INTERPOLATING TO PAST FUNCTION VALUES.
+			!
+			  do l = 2,np
+			    do j = l,np
+			      t = 0.0D+00
+			      do i = 1,nvars
+			        t = t + (xp(i,j)-xp(i,1)) * (xp(i,l)-xp(i,1))
+			      end do
+			      wj(l-1,j-1) = t
+			      wj(j-1,l-1) = t
+			    end do
+			  end do
+			!
+			!  COMPUTE NORM OF REMAINDER INCLUDING LINEAR TERMS,
+			!  USING THE LAST MOVE.
+			!
+			  useq = np  >  1 .and. .not. retrea
+
+			  zn = 1.0D+00
+
+			  if ( np > 1) then
+			      zn = dnrm2(mequa,qc(1,2),1)
+			!
+			!  COMPUTE RATIO OF Z TERMS TO CURRENT F VALUE..
+			!
+			      if ( useq) then
+			        useq = (zn  > 1.0D-04*dfn .and. zn  <  dfn*0.75D+00 ) .or. useql
+			      end if
+
+			      if ( dfn > 0.0D+00 ) then
+			        zn = zn / dfn
+			      else
+			        zn = 1.0D+00
+			      end if
+
+			      if ( iprint > 0) then
+			        call dvout(1,zn,'('' ratio of z term to past df norm'')',4)
+			      end if
+			!
+			!  SCALE THE MATRIX (MATRIX := D*MATRIX*D, WHERE D**2 = RECIPROCAL
+			!  OF THE DIAGONAL TERMS OF THE MATRIX.
+			!
+			      do i = 1,np - 1
+			         dxl(i) = wj(i,i)
+			         if ( dxl(i) == 0.0D+00 ) then
+			             np = i
+			             go to 250
+			         else
+			             dxl(i) = 1.0D+00 / dxl(i)
+			         end if
+			      end do
+
+			      do i = 1,np - 1
+			         do j = 1,np - 1
+			            wj(i,j) = (wj(i,j)*dxl(i))* (wj(i,j)*dxl(j))
+			         end do
+			      end do
+			!
+			!  USE THE LINPACK ROUTINES DGECO(), DGESL() TO OBTAIN
+			!  THE COEFFICIENTS OF THE QUADRATIC TERMS, ONE ROW AT A TIME.
+			!
+			      call dgeco(wj,ldwj,np-1,iwa,rcond,wa)
+
+			      if ( iprint > 0) then
+			        write(*,'('' rcond from dgeco() = '',2x,       1pd15.4)') rcond
+			      end if
+
+			      if ( cond * rcond < 1.0D+00 ) then
+			        np = np - 1
+			        go to 250
+			      end if
+			!
+			!  COPY A ROW OF THE INTERPOLATED DATA TO A WORKING ARRAY.
+			!  USE THIS ARRAY TO OBTAIN A ROW OF THE QUADRATIC TERMS.
+			!
+			!  SCALE THE RIGHT HAND SIDE DATA.
+			!
+			!  RESCALE THE SOLUTION DATA.
+			!
+			!  THE SIGN CHANGE COMES FROM A CHANGE
+			!  OF SIGN IN THE INNER LOOP MODEL PROBLEM.
+			!
+			      do i = 1, mequa
+
+			         call dcopy ( np-1, qc(i,2), mdqc, wa, 1 )
+
+			         wa(1:np-1) = wa(1:np-1) * dxl(1:np-1)
+
+			         call dgesl ( wj, ldwj, np-1, iwa, wa, 0 )
+
+			         wa(1:np-1) = -2.0D+00 * wa(1:np-1) * dxl(1:np-1)
+
+			         call dcopy ( np-1, wa, 1, qc(i,2), mdqc )
+
+			      end do
+
+			  end if
+
+			  350 continue
+			!
+			!  NOW HAVE THE QUADRATIC TERMS COMPUTED.
+			!  NEXT WILL TRIANGULARIZE THE JACOBIAN TO SAVE SPACE
+			!  WHEN USING THE QUADRATIC MODEL.
+			!
+			!  CONSTRUCT AND THEN APPLY PLANE ROTATIONS
+			!  TO ACHIEVE UPPER TRIANGULAR FORM.  THIS LOOP
+			!  AFFECTS THE JACOBIAN AND RIGHT HAND SIDE.
+			!
+			!  APPLY THE TRANSFORMATION TO THE QUADRATIC TERMS.
+			!
+			  if ( jactri) then
+
+			    do j = 1,nt
+			      do i = j + 1,mequa
+			        call drotg(fjac(mcon+j,j),fjac(mcon+i,j),sc,ss)
+			        call drot(nvars-j+1,fjac(mcon+j,j+1),ldfjac,fjac(mcon+i,j+1), &
+			          ldfjac,sc,ss)
+			        call drot(np-1,qc(j,2),mdqc,qc(i,2),mdqc,sc,ss)
+			        fjac(mcon+i,j) = 0.0D+00
+			      end do
+			    end do
+			!
+			!  NOW WE FINISH TRIANGULARIZING THE QUADRATIC TERMS.
+			!  NOTE THAT THIS DOES NOT AFFECT THE RIGHT HAND SIDE.
+			!
+			    do l = 1,np - 1
+			      do i=nvars+l+2,mequa
+			         call drotg(qc(nvars+l+1,l+1),qc(i,l+1),sc,ss)
+			         call drot(np-l-1,qc(nvars+l+1,min(l+2,npmax)),mdqc, &
+			                          qc(i,min(l+2,npmax)),mdqc,sc,ss)
+			         qc(i,l+1) = 0.0D+00
+			      end do
+			    end do
+
+			  end if
+			!
+			!  COMPUTE CURRENT NORM OF J**T*F(X).
+			!
+			  do j = 1,nvars
+
+			     if ( jactri) then
+			       jk = j
+			     else
+			       jk = mequa
+			     end if
+
+			     pj(j) = ddot ( jk, fjac(mcon+1,j), 1, fjac(mcon+1,nvars+1), 1 )
+
+			  end do
+
+			  ajn = dnrm2(nvars,pj,1)
+			!
+			!  SAVE J**T*F FOR DIRECTION TESTING WITH LINEAR AND QUADRATIC MOVES.
+			!
+			  if ( ajn > 0.0D+00 ) then
+			    call dscal(nvars,one/ajn,pj,1)
+			  end if
+
+			  call dcopy(nvars,pj,1,gr,1)
+			  newbst = fc  <  fb
+			  if ( newbst) k = 0
+			!
+			!  WANT TO POSITION AT BEST X VALUES.
+			!
+			  if ( k == 0) then
+
+			      pb = 0.0D+00
+			      pd = huge ( pd )
+
+			      if ( .not. retrea) then
+			          fb = fc
+			      end if
+
+			      go to (410,430,450),2 - kl
+
+			      go to 470
+
+			  410     continue
+			!
+			!  IMMEDIATELY GOT A NEW BEST X.
+			!
+			      rg = 0.0D+00
+			      if ( t2 <= 0.25D+00 ) then
+			          bboost = one
+			          chg = max ( 4.0D+00 * t2, 0.1D+00 )
+			      end if
+
+			      do j = 1,nvars
+			         bb(j) = chg*bb(j)
+			      end do
+			      t = 0.25D+00 / (alfac-1.0D+00 )
+			      alpha = (zn+alfac*t)/ (zn+t)
+			      alfac = 1.5D+00 * alpha
+			      bboost = min(1.5D+00 *alpha*bboost,semibg)
+			      go to 490
+
+			  430     continue
+			      useql = .false.
+			      rg = 0.0D+00
+			!
+			!  AT THE INITIAL X.
+			!
+			      alfac = 256.0D+00
+
+			      do j = 1,nvars
+
+			         if ( .not. passb) then
+			             bb(j) = -x(j)
+			         end if
+
+			         if ( bb(j) == 0.0D+00 ) then
+
+			             if ( jactri) then
+			                 jk = j
+			             else
+			                 jk = mequa
+			             end if
+
+			             colnrm = dnrm2(jk,fjac(mcon+1,j),1)
+
+			             if ( colnrm/= 0.0D+00 ) then
+			                 bb(j) = ddot(jk,fjac(mcon+1,j),1,fjac(mcon+1,nvars+1),1)
+			                 bb(j) = -max(abs(bb(j))/colnrm/colnrm,fc/colnrm)
+			             else
+			                 bb(j) = -one
+			             end if
+
+			         end if
+
+			         xb(j) = x(j)
+			         b(j) = bb(j)
+
+			      end do
+
+			      alpha = one
+			      bboost = 0.5D+00
+			      go to 520
+
+			  450     continue
+			!
+			!  RETREAT TO BEST X.
+			!
+			      if ( alfac /= 256.0D+00 ) then
+			        alpha = min ( 4.0D+00 / alfac, 0.25D+00 )
+			        alfac = 1.25D+00
+			      else
+			        alpha = 0.25D+00 * alpha
+			      end if
+
+			      bboost = 0.25D+00
+			      useql = .false.
+
+			      do j = 1,nvars
+			!
+			!  THE NEXT LINES HAVE THE EFFECT OF REDUCING THE BOUNDS
+			!  AT THE CURRENT BEST TO ABOUT 1/16 THEIR CURRENT VALUES
+			!  PROVIDED THE CURRENT BOUNDS ARE RELATIVELY SMALL.  IF
+			!  THE CURRENT BOUNDS ARE RELATIVELY LARGE, THE BOUNDS AT
+			!  THE BEST ARE LEFT ABOUT THE SAME.
+			!
+			         t = abs(b(j))
+			         tt = abs(bb(j))
+			         t = ( t + 0.25D+00 * tt ) / ( t + 4.0D+00 * tt )
+			         b(j) = t*bb(j)
+			         bb(j) = b(j)
+			         dx(j) = 0.0D+00
+
+			      end do
+
+			      go to 520
+
+			  470     continue
+			!
+			!  NOT IMMEDIATELY A BEST X.
+			!
+			      rb = 0.0D+00
+			      do j = 1,nvars
+			         rb = 0.125D+00 * max(rb,abs((xb(j)-x(j))/bb(j)))
+			      end do
+
+			      alpha = rb
+			      alfac = 2.0D+00
+			      bboost = ( 1.0D+00 + rg )/ ( 0.25D+00 + 2.0D+00 * rg )
+
+			  490     continue
+
+			      do j = 1,nvars
+			         dx(j) = xb(j) - x(j)
+			         if ( dx(j) == 0.0D+00 ) then
+			             b(j) = alpha*bb(j)
+			         else
+			             xb(j) = x(j)
+			             b(j) = sign(alpha*bb(j),dx(j)) + bboost*dx(j)
+			         end if
+			         bb(j) = sign(min(sqrt( huge ( bb(j) ) ),abs(b(j))),b(j))
+			      end do
+
+			  else
+			!
+			!  MUST MAKE SURE THAT PD GETS SET TO A REASONABLE VALUE.
+			!  COMPUTE A GAUGE FOR RETREATING IF DID NOT GET A NEW BEST.
+			!
+			      alpha = ( 0.5D+00 * zn + 1.0D+00 )/ ( zn + 1.0D+00 )
+			      chg = alpha*chg
+
+			      if ( k == 1) then
+			          chg = min(chg,t2)
+			          chg = max(chg, 0.1D+00 )
+			          pb = pv
+			          pd = 1.5D+00 * (fb+pb* (pb/fb)) - 4.0D+00 *pb
+			      end if
+
+			      do j = 1,nvars
+			         b(j) = chg*b(j)
+			         if ( k == 1) bb(j) = b(j)
+			      end do
+
+			  end if
+
+			  520 continue
+			!
+			!  TEST FOR CONVERGENCE
+			!
+			  assign 530 to igotfc
+			  go to 980
+
+			  530 continue
+
+			  if ( term) then
+			      iflag = 0
+			      go to 840
+			  end if
+
+			  k = k + 1
+			!
+			!  SOLVE MODEL BOUNDED PROBLEM.
+			!
+			  do j = 1,nvars
+
+			     if ( b(j) < 0.0D+00 ) then
+			         alb = b(j)
+			         if ( dx(j) == 0.0D+00 ) then
+			!
+			!  THIS CASE IS REQD. TO AVOID USING BUB(*) AT THE INITIAL PT.
+			!
+			             aub = -c1516*alb
+			         else
+			             aub = min(-c1516*alb,-dx(j)+bub(j))
+			         end if
+			     else
+			         aub = b(j)
+
+			         if ( dx(j) == 0.0D+00 ) then
+			             alb = -c1516*aub
+			         else
+			             alb = max(-c1516*aub,-dx(j)+blb(j))
+			         end if
+
+			     end if
+			!
+			!  THIS NEXT CODE, ENDING WITH ***, POINTS THE BOX TOWARDS THE BEST
+			!  VALUE OF X WHEN NOT AT A NEW BEST.
+			!
+			     if ( k>=2) then
+			         if ( xb(j) > x(j)) then
+			             bub(j) = bub(j) * 0.25D+00
+
+			             if ( x(j)-blb(j) > xb(j)) then
+			                 blb(j) = blb(j) * 0.75D+00
+			             else
+			                 blb(j) = min(blb(j),0.75D+00 * (x(j)-xb(j)))
+			             end if
+
+			         else
+
+			             blb(j) = blb(j) * 0.25D+00
+
+			             if ( x(j)-bub(j) < xb(j)) then
+			                 bub(j) = bub(j) * 0.75D+00 
+			             else
+			                 bub(j) = max(bub(j),0.75D+00 * (x(j)-xb(j)))
+			             end if
+
+			         end if
+
+			     end if
+			!
+			!  RESTRICT THE STEP FURTHER IF USER GIVES BOUNDS.
+			!
+			     icase = ind(j)
+			     go to (540,550,560,570),icase
+			  540    aub = min(aub,x(j)-bl(j))
+			     go to 580
+			  550    alb = max(alb,x(j)-bu(j))
+			     go to 580
+			  560    aub = min(aub,x(j)-bl(j))
+			     alb = max(alb,x(j)-bu(j))
+			     go to 580
+			  570    continue
+			  580    blb(j) = alb
+			!
+			!  THIS NEXT LINE IS TO GUARANTEE THAT THE LOWER BOUND
+			!  IS .LE. THE UPPER BOUND.
+			!
+			     aub = max(aub,alb)
+			     bub(j) = aub
+			     indb(j) = 3
+
+			  end do
+			!
+			!  COMPUTE JACOBIAN*DX AND COMPARE NORM WITH CURRENT FUNCTION.
+			!
+			  if ( np > 1) then
+
+			      pj(1:lk) = 0.0D+00
+
+			      do j = 1,nvars
+
+			         if ( jactri) then
+			             jk = j
+			         else
+			             jk = mequa
+			         end if
+
+			         call daxpy(jk,dx(j),fjac(mcon+1,j),1,pj,1)
+
+			      end do
+
+			      t = dnrm2(lk,pj,1)
+			!
+			!  THIS TEST SAYS TO USE THE QUADRATIC MODEL IF
+			!  THE LAST STEP IS APPROXIMATELY IN THE NULL SPACE OF THE JACOBIAN.
+			!
+			      useq = useq .or. t  <  dfn * 0.75D+00
+
+			      if ( dfn > 0.0D+00 ) then
+			          dfn = t/dfn
+			      else
+			          dfn = 0.0D+00
+			      end if
+
+			  end if
+
+			  if ( iprint > 0) then
+			      call dvout(1,dfn,'('' ratio of j*dx norm to past df norm'')',4)
+			  end if
+			!
+			!  CHECK IF QUAD. MODEL IS BEING SUPPRESSED.
+			!
+			  useq = useq .and. .not. noquad
+			!
+			!  START THE PROCESS USING THE LINEAR MODEL.
+			!
+			  linmod = .true.
+			  mconst = mcon
+
+			  610 continue
+			!
+			!  COMPUTE THE REQUIRED DIMENSIONS OF THE MODEL PROBLEM.
+			!
+			  if ( linmod) then
+			      mk = 0
+			      me = min(mequa,nvars+1)
+			!
+			!  SET THE INITIAL VALUES FOR THE LINEAR MODEL PROBLEM.
+			!
+			      dx(1:nvars) = 0.0D+00
+			  else if ( useq) then
+			      mk = min(mequa,nvars+np+1)
+			      me = nvars + mk
+			      call dcopy(mk,fjac(mcon+1,nvars+1),1,dx(nvars+1),1)
+			  else
+			      go to 730
+			  end if
+
+			  nv = nvars + mk
+			!
+			!  NOTE THAT THE RESIDUALS ARE FREE VARIABLES.
+			!
+			  do i = nvars + 1,nv
+			     indb(i) = 4
+			  end do
+
+			  nit = 0
+			!
+			!  THE JACOBIAN, RIGHT SIDE, QUAD. TERMS ARE AN
+			!  UPPER TRAPeZOIDAL DATA ARRAY.  THIS WILL MAKE SOLVING
+			!  THE MODEL PROBLEM MORE EFFICIENT.
+			!
+			  630 continue
+			!
+			!  CALL A SIMPLIFIED VERSION OF THE ALGORITHM TO SOLVE
+			!  THE MODEL PROBLEM.  THE FUNCTION AND JACOBIAN
+			!  ARE COMPUTED FOR THIS SUBPROBLEM DURING THE REVERSE
+			!  COMMUNICATION REQUESTS.
+			!
+			  call dqedgn(me,nv,mconst,indb,blb,bub,dx,wj,ldwj,pv,igow, &
+			    iopt(ipls),ropt,iwa,wa)
+			!
+			!  CHECK FOR AN ERROR THAT WAS SEEN IN THE LOW-LEVEL NONLINEAR SOLVER.
+			!
+			  if ( igow > 7) then
+			    igo = igow
+			    iflag = 0
+			    go to 1020
+			  end if
+			!
+			!  CLEAR OUT THE WJ(*,*) ARRAY THAT HOLDS
+			!  THE JACOBIAN FOR THE INNER LOOP PROBLEM.
+			!
+			  wj(1:ldwj,1:nv+1) = 0.0D+00
+
+			  if ( useq .and. .not. linmod ) wj(mconst+1,nvars+1) = one
+			!
+			!  PUT IN A UNIT MATRIX FOR THE PARTIALS
+			!  WITH RESPECT TO THE RESIDUALS.
+			!
+			  wj(mconst+2:mconst+mk,nvars+1) = wj(mconst+1,nvars+1)
+			!
+			!  THE FORM OF THE UPDATE BEING COMPUTED IS X(*)-DX(*).
+			!  THE VALUE OF DX IS ITSELF COMPUTED AS THE SOLUTION
+			!  TO A NONLINEAR PROBLEM WITH UPDATES OF THE FORM
+			!  DX(*)-D(DX)(*).
+			!
+			  do i = 1,mcon
+			     call dcopy(nvars,fjac(i,1),ldfjac,wj(i,1),ldwj)
+			     wj(i,nv+1) = fjac(i,nvars+1) - ddot(nvars,dx,1,wj(i,1),ldwj)
+			  end do
+			!
+			!  SEE IF USER HAS GIVEN GENERAL CONSTRAINTS.
+			!  USE THESE CONSTRAINTS TO PLACE EQUIVALENT CONSTRAINTS
+			!  ON THE CHANGES BEING COMPUTED.
+			!
+			  do j = 1,mcon
+			     blb(nv+j) = bl(j+nvars)
+			     bub(nv+j) = bu(j+nvars)
+			     indb(nv+j) = ind(j+nvars)
+			  end do
+			!
+			!  EVALUATE LINEAR MODEL
+			!
+
+			  assign 660 to igoelm
+			  go to 940
+
+			  660 continue
+			!
+			!  EVALUATE QUADRATIC MODEL
+			!
+			  assign 670 to igoeqm
+			  go to 850
+
+			  670 continue
+
+
+			  if ( igow > 1) then
+			      pv = dnrm2(me,wj(mconst+1,nv+1),1)
+			      if ( linmod) then
+			          pvl = pv
+			          dxl(1:nvars) = dx(1:nvars)
+			          linmod = .false.
+			          go to 610
+			!
+			!  IF THE PREDICTED NORM IS GREATER THAN THE CURRENT
+			!  RESIDUAL NORM, DROP THE QUADRATIC MODEL AND USE THE
+			!  LINEAR MODEL.
+			!
+			      else if ( (pv>=fc) .and. useq) then
+			          if ( iprint > 0) then
+			            write(*,*) 'Abandon quadratic model.'
+			          end if
+			          useq = .false.
+			      end if
+			      go to 730
+			  end if
+			!
+			!  FOR EITHER CASE TRANSFER THE JACOBIAN FOR THE MODEL
+			!  PROBLEM.  THE TRANSPOSE OF THIS MATRIX IS THE PARTIALS
+			!  WITH RESPECT TO THE RESIDUALS.
+			!
+			  do j = 1,nvars
+			     call dcopy(mk,wj(mconst+1,j),1,wj(mconst+mk+j,nvars+1),ldwj)
+			  end do
+			!
+			!  NOW UPDATE THE RESIDUALS FOR BOTH SETS OF MODEL EQUATIONS.
+			!  IN ROWS 1,...,MK THIS INVOLVES ADDING DX(NVARS+I) TO ROW I.
+			!  FOR ROWS MK+1,...,ME THIS REQUIRES ADDING MULTIPLES OF THE
+			!  COLS. OF THE TRANSPOSED JACOBIAN.
+			!
+			  do i = 1,mk
+			     t = dx(nvars+i)
+			     wj(mconst+i,nv+1) = wj(mconst+i,nv+1) + t
+			  end do
+			!
+			!  SYMMETRIZE THE SECOND DERIVATIVE MATRIX.  THIS
+			!  IS NOT REQUIRED WHEN THE MODEL IS LINEAR, BUT IT
+			!  DOES NOT HURT THEN.
+			!
+			  if ( useq .and. .not. linmod) then
+			      do j = 1,nvars
+			         do i = j,nvars
+			            wj(mconst+mk+i,j) = wj(mconst+mk+j,i)
+			         end do
+			      end do
+			  end if
+			!
+			!  COMPUTE RESIDUALS ON THE EQUATIONS K*R = 0.
+			!
+			  do j = nvars + 1,nv
+			     call daxpy(nvars,dx(j),wj(mconst+mk+1,j),1,wj(mconst+mk+1,nv+1),1)
+			  end do
+
+			  nit = nit + 1
+			  go to 630
+
+			  730 continue
+
+			!
+			!  COMPUTE THE ANGLES BETWEEN THE LINEAR AND QUADRATIC STEP.
+			!  TAKE THE ONE, IF THERE IS A CHOICE, CLOSEST TO THE GRADIENT.
+			!  IF THE QUADRATIC MOVE IS QUITE CLOSE TO THE GRADIENT, TAKE
+			!  THAT MOVE IN PREFERENCE TO THE LINEAR MOVE.
+			!
+			  cosl = dot_product ( gr(1:nvars), dxl(1:nvars) )
+
+			  t = dnrm2(nvars,dxl,1)
+			  if ( t > 0.0D+00 ) cosl = cosl/t
+			  cosq = -one
+			  cosm = -one
+			  tt = 0.0D+00
+
+
+			  if ( useq) then
+			      cosq = dot_product ( gr(1:nvars), dx(1:nvars) )
+			      tt = dnrm2(nvars,dx,1)
+			      if ( tt > 0.0D+00 ) cosq = cosq/tt
+			!
+			!  COMPUTE THE COSINE OF THE ANGLE BETWEEN THE QUAD. AND
+			!  LINEAR MOVES.
+			!
+			      if ( t > 0.0D+00 .and. tt > 0.0D+00 ) then
+			        cosm = dot_product ( dx(1:nvars), dxl(1:nvars) ) / t / tt
+			      end if
+
+			  end if
+
+			  if ( iprint > 0) then
+			    write(*,*)'cos of quad. move and grad., cos of lin. move ' &
+			      //'and grad., cosof each move'
+			    write(*,*)'flag for trying quad. move.'
+			    write(*,'(1p3d12.4,l6)') cosq,cosl,cosm,useq
+			  end if
+
+			  if ( iprint > 0)then
+			    write(*,*)'length of quad., then linear moves'
+			    write(*,'(1p2d12.4)') tt,t
+			  end if
+			!
+			!  CHOOSE MOVE PARTIALLY BASED ON ANGLE MOVES MAKE WITH EACH OTHER.
+			!
+			  useq = useq .and. (cosm > 0.0D+00 .or. cosl < cosm) .and. cosq > 0.0D+00
+			  useql = useq
+
+			  if ( .not. useq) then
+			      pv = pvl
+			      call dcopy(nvars,dxl,1,dx,1)
+			      ntterm = 0
+			  else
+			      ntterm = np - 1
+			  end if
+			!
+			!  TEST FOR NOISE IN MODEL PROBLEM SOLN.
+			!
+			  term = (pv>=fc) .and. .not. retrea .and. .not. useq
+			  term = term .and. mcon  ==  0
+			  term = .false.
+			  if ( term) then
+			      if ( iprint > 0) then
+			          write(*,9021) pv,fc
+			      end if
+			!
+			!  VALUE MEANS MODEL RES. .GE. NONLINEAR FUNCTION VALUE.
+			!
+			      igo = 5
+			      iflag = 0
+			      go to 840
+			  end if
+
+			  if ( pv > pb .and. pv + pd /= 0.0D+00 ) then
+			    rc = 4.0D+00 * (pv-pb)/ (pv+pd)
+			  else
+			    rc = 0.0D+00
+			  end if
+			!
+			!  IF USING A QUADRATIC MODEL AND RETREATING SEEMS TO BE
+			!  NECESSARY, SEE IF RETREATING WOULD BE NEEDED WITH A
+			!  LINEAR MODEL.  ONLY THEN RETREAT.
+			!
+			  if ( rc<=one .or. .not. useq) go to 750
+			!
+			!  EVALUATE LINEAR MODEL
+			!
+			  nv = nvars
+			  assign 740 to igoelm
+			  go to 940
+
+			  740 continue
+
+			  pvl = dnrm2(min(mequa,nvars+1),wj(mconst+1,nv+1),1)
+
+			  if ( pvl > pb ) rc = 4.0D+00 * (pvl-pb)/ (pvl+pd)
+
+			 750 continue
+
+			  rg = max(rg,rc)
+
+			  if ( iprint > 0) then
+			      write(*,9011) iters,fc,pv,rc,ajn,k,kl,fb,alpha,bboost,nit,useq,ntterm
+			      write(*,9001) '  x=', (x(j),j=1,nvars)
+			      write(*,9001) ' dx=', (dx(j),j=1,nvars)
+			      write(*,9001) '  b=', (b(j),j=1,nvars)
+			      write(*,9001) ' lb=', (blb(j),j=1,nall)
+			      write(*,9001) ' ub=', (bub(j),j=1,nall)
+			      write(*,'('' ///end of iteration.///'')')
+			  end if
+
+			  retrea = rc  >  1
+
+			  if ( .not. retrea) then
+			      chg = one
+			      t2 = 0.0D+00
+			      do 810 j = 1,nvars
+			         bold = b(j)
+			         t = dx(j)/bold
+			         alb = 2.0D+00
+			         aub = 2.0D+00
+			!
+			!  IF USER GIVES BOUNDS, AND THESE BOUNDS ARE HIT,
+			!  DO NOT DETRACT FROM DECLARING A FULL NEWTON STEP.
+			!
+			         icase = ind(j)
+
+			         if ( ind(j) == 1 ) then
+			           alb = (x(j)-bl(j))/bold
+			           aub = -semibg
+			         else if ( ind(j) == 2 ) then
+			           aub = (x(j)-bu(j))/bold
+			           alb = -semibg
+			         else if ( ind(j) == 3 ) then
+			           alb = (x(j)-bl(j))/bold
+			           aub = (x(j)-bu(j))/bold
+			         else if ( ind(j) == 4 ) then
+			           alb = -semibg
+			           aub = -semibg
+			         end if
+
+			         if ( t == one) then
+			             t2 = one
 			             b(j) = bold + bold
 			             chg = chg*chgfac
 			         else
 			             if ( abs(t) < 0.25D+00 .and. dx(j)/= 0.0D+00 ) then
-			                 b(j) = sign(0.25D+00 * bold,dx(j)) + 3.0D+00 * dx(j)
+			                 b(j) = sign ( 0.25D+00 * bold,dx(j)) + 3.0D+00 * dx(j)
 			             else
 			                 b(j) = sign(bold,dx(j))
 			             end if
@@ -6389,141 +7976,285 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             end if
 			         end if
 
-			          } // for (j = 1; j <= nvars; j++)
+			  810     continue
 
 			      fulnwt = t2  <  0.99D+00
-			      fl = fc
 			      dxnrm = abs(dx(idamax(nvars,dx,1)))
 			!
 			!  TEST FOR SMALL ABSOLUTE CHANGE IN X VALUES.
 			!
 			      term = dxnrm  <  told .and. fulnwt
 			      if ( term) then
-			          igo = 5
-
-			          go to 370
-
+			          igo = 6
+			!
+			!  VALUE MEANS CHANGE (IN PARAMETERS) WAS SMALL AND A
+			!  FULL STEP (NOT HITTING TRUST CONSTRAINTS) TAKEN.
+			!
+			          go to 820
 			      end if
 
 			      term = dxnrm  <  dnrm2(nvars,x,1)*tolx .and. fulnwt
 			      term = term .and. (iters > 1)
 			      if ( term) then
-			          igo = 6
-
-			          go to 370
-
+			          igo = 7
+			!
+			!  VALUE MEANS RELATIVE CHANGE IN PARAMETERS WAS SMALL AND A
+			!  FULL STEP (NOT HITTING CONSTRAINTS WITH AT LEAST 2 ITERATIONS)
+			!  WAS TAKEN.
+			!
+			          go to 820
 			      end if
 
-			      go to 380
+			      go to 830
 
-			  370     continue
+			  820     continue
+
 			      go to 30
 
-			      } // if (!retrea)
-			  } // if (do305)
+			  end if
 
-			  380 continue
+			  830 continue
+			  fl = fc
+
 			  go to 30
 
-			  390 continue
-			  go to 440
+			  840 continue
+			  go to 1020
+			!
+			!  EVALUATE QUADRATIC MODEL
+			!
+			  850 continue
+			!
+			!  IF THE MODEL IS GENUINELY QUADRATIC, ADD IN THE EXTRA
+			!  TERMS AND COMPUTE THE SECOND DERIVATIVE INFORMATION.
+			!
+			  if ( useq .and. .not. linmod ) then
+
+			!
+			!  COMPUTE THE DOT PRODUCT OF CURRENT PROPOSED STEP AND
+			!  PAST DIRECTIONS REPRESENTED IN THE MODEL.
+			!
+			      do l = 1,np - 1
+			         t = 0.0D+00
+			         do j = 1,nvars
+			            t = t + dx(j)* (xp(j,l+1)-xp(j,1))
+			         end do
+			         pj(l) = t
+			      end do
+			!
+			!  STORAGE LAYOUT, WITH K = J**T, OF WJ(*,*).
+			!    [J    :  I    : F+R ]
+			!    [H    :  K    : K*R ]
+			!  ADD IN THE QUADRATIC TERMS FOR THE FUNCTION.
+			!
+			      do l = 1,np - 1
+			         jk = min(nvars+l+1,mequa)
+			         call daxpy(jk,0.5D+00*pj(l)**2,qc(1,l+1),1,wj(mconst+1,nv+1),1)
+			      end do
+			!
+			!  ADD THE LINEAR TERMS TO THE INNER LOOP JACOBIAN.
+			!
+			      do l = 1,np - 1
+			         jk = min(nvars+l+1,mequa)
+			         do j = 1,nvars
+			            call daxpy(jk,pj(l)* (xp(j,l+1)-xp(j,1)),qc(1,l+1),1, &
+			                       wj(mconst+1,j),1)
+			         end do
+			      end do
+			!
+			!  COMPUTE THE UPPER TRIANGULAR PART OF THE SECOND DERIVATIVE TERMS.
+			!
+			      do i = 1,nvars
+			         do j = i,nvars
+			            do l = 1,np - 1
+			               jk = min(nvars+l+1,mequa)
+			               wj(mconst+mk+i,j) = wj(mconst+mk+i,j) + &
+			                 (xp(j,l+1)-xp(j,1))*(xp(i,l+1)-xp(i,1))* &
+			                 ddot (jk,dx(nvars+1),1,qc(1,l+1),1)
+			            end do
+			          end do
+			        end do
+
+			  end if
+
+			  go to igoeqm
+			!
+			!  EVALUATE LINEAR MODEL
+			!
+			  940 continue
+			!
+			!  TRANSFER THE JACOBIAN THAT WOULD RESULT FROM
+			!  USING JUST A LINEAR MODEL.
+			!
+			  do j = 1,nvars
+			    if ( jactri) then
+			      jk = j
+			    else
+			      jk = mequa
+			    end if
+
+			    call dcopy(jk,fjac(mcon+1,j),1,wj(mconst+1,j),1)
+			  end do
+			!
+			!  TRANSFER THE PRESENT VALUES OF THE FUNCTION.
+			!
+			  call dcopy(min(mequa,nvars+1),fjac(mcon+1,nvars+1),1,wj(mconst+1,nv+1),1)
+			!
+			!  CHANGE SIGN FOR THE MODEL PROBLEM.
+			!
+			  do i = 1,min(mequa,nvars+1)
+			    wj(mconst+i,nv+1) = -wj(mconst+i,nv+1)
+			  end do
+			!
+			!  COMPUTE THE LINEAR TERM OF THE MODEL.
+			!
+			  do j = 1,nvars
+			     if ( jactri) then
+			         jk = j
+			     else
+			         jk = mequa
+			     end if
+
+			     call daxpy(jk,dx(j),wj(mconst+1,j),1,wj(mconst+1,nv+1),1)
+			  end do
+
+			  go to igoelm
 			!
 			!  TEST FOR CONVERGENCE
 			!
-			  400 continue
+			  980 continue
+
+			  term = iters >= itmax
+			  if ( term) then
+			      igo = 8
+			!
+			!  VALUE MEANS THAT MAX. NUMBER OF ALLOWED ITERATIONS TAKEN.
+			!
+			      go to 1000
+			  end if
 			!
 			!  TEST FOR SMALL FUNCTION NORM.
 			!
-			  term = fc <= tolf .or. term
+			  term = fc <= tolf
 			!
 			!  IF HAVE CONSTRAINTS MUST ALLOW AT LEAST ONE MOVE.
 			!
 			  term = term .and. (mcon == 0 .or. iters > 1)
 			  if ( term) then
 			      igo = 2
-			      go to 420
+			!
+			!  VALUE MEANS FUNCTION NORM WAS SMALL.
+			!
+			      go to 1000
 			  end if
 			!
 			!  TEST FOR NO CHANGE
 			!
-			  assign 410 to igotnc
-			  go to 430
+			  go to 1010
 
-			  410 continue
+			  990 continue
+
 			  term = term .and. .not. retrea
 			  if ( term) then
 			      igo = 3
-			      go to 420
+			!
+			!  VALUE MEANS THE FUNCTION IS PROBABLY REACHING A LOCAL MINIMUM
+			!  BUT MOVES ARE STILL HITTING TRUST REGION CONSTRAINTS.
+			!
+			      if ( fulnwt) igo = 4
+			!
+			!  VALUE MEANS THAT FUNCTION IS REACHING A LOCAL MINIMUM
+			!  AND MOVES ARE NOT HITTING THE TRUST REGION CONSTRAINTS.
+			!
+			      if ( igo == 3) term = term .and. .not. mustcn
+			      go to 1000
 			  end if
 
-			  term = iters >= itmax
-			  if ( term) then
-			      igo = 7
-			  end if
-
-			  420 continue
-			  if (igotfc == 60) {
-				  do60 = true;
-			  }
-			  else if (igotfc = 180) {
-				  do180 = true;
-			  }
-			  continue loop;
+			 1000 continue
+			  go to igotfc
 			!
 			!  TEST FOR NO CHANGE
 			!
-			  430 continue
-			  t = sqrt(max( 0.0D+00, (fl-pv)* (fl+pv)))
-			  term = (abs(fb-fc)<=tolsnr*fb) .and. (t.le.pv*tolp)
+			 1010 continue
+
+			  term = (abs(fb-pv)<=tolsnr*fb) .and. (abs(fc-pv).le.fb*tolp)
 			  term = term .and. (abs(fc-fl)<=fb*tolsnr)
-			  term = term .and. fulnwt
+			  term = term .and. (abs(pvl-pv)<=fb*tolsnr)
 
-			  go to igotnc
+			  go to 990
 
-			  440 continue
+			 1020 continue
+
 			  return
 			!
 			!  INITIALIZE OTHER VALUES
 			!
-			  450 continue
+			 1030 continue
+			!
+			!  THE NUMBER OF PAST DIFFERENCES USED IN THE QUADRATIC MODEL.
+			!
+			  np = 0
+			!
+			!  IF NO MORE EQUATIONS THAN VARIABLES, NO NEED TO
+			!  PRETRIANGULARIZE THE JACOBIAN MATRIX.
+			!
+			  jactri = ( nvars < mequa )
+			!
+			!  MAKE SURE THAT VARIABLES SATISFY CONSTRAINTS.
+			!  GENERALLY THIS MAY TAKE A CALL TO DBOCLS().
+			!  AS LONG AS THE FUNCTIONS ARE DEFINED AT POINTS
+			!  THAT DO NOT SATISFY THE CONSTRAINTS, THE FIRST
+			!  ALGORITHM STEP WILL BRING IT ONTO THE CONSTRAINTS.
+			!
+			  do j = 1, nvars
+
+			    if ( ind(j) == 1 ) then
+			      x(j) = max ( x(j), bl(j) )
+			    else if ( ind(j) == 2 ) then
+			      x(j) = min ( x(j), bu(j) )
+			    else if ( ind(j) == 3 ) then
+			      x(j) = max(x(j),bl(j))
+			      x(j) = min(x(j),bu(j))
+			    else
+
+			    end if
+
+			  end do
 
 			  iters = 0
 			  nall = mcon + nvars
-			  chgfac = 2.0D+00** (-one/ real ( nvars, kind = 8 ))
+			  chgfac = 2.0D+00** ( -one / real ( nvars, kind = 8 ) )
 			  c1516 = 15.0D+00 / 16.0D+00
 			  semibg = 1.0D+10
-			!
-			!  MAKE SURE THAT VARIABLES SATISFY THE BOUNDS AND CONSTRAINTS.
-			!
-			  do j = 1,nall
-			     blb(j) = bl(j)
-			     bub(j) = bu(j)
-			     indb(j) = ind(j)
-			  end do
 
-			  do20 = true;
+			  go to 20
 			!
 			!  PROCESS OPTION ARRAY
 			!
-			  470 continue
+			 1100 continue
 			  iprint = 0
 			!
-			!  T = MACHINE REL. PREC.
+			!  D1MACH(4)=RELPR=MACHINE REL. PREC.
 			!
 			  t = epsilon ( t )
-			  tolf = t
+			  tolf = sqrt(t)
+			  toluse = tolf
 			  tolx = tolf
 			  told = tolf
-			  tolsnr = 1.0D-03
-			  tolp = 1.0D-03
-			  itmax = 18
-			  passb = .false.
+			  tolsnr = 1.0D-05
+			  tolp = 1.0D-05
+			  cond = 30.0D+00
+			  itmax = 75
 			  level = 1
 			  ipls = 0
-			  lpdiff = 0
+			  passb = .false.
+			  noquad = .false.
+			  revers = .false.
+			  mustcn = .false.
 			  lp = 1
+			  lpdiff = 0
 
-			  480 continue
+			 1110 continue
 
 			  lp = lp + lpdiff
 			  lpdiff = 2
@@ -6531,19 +8262,18 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  newopt = kp  >  0
 			  jp = abs(kp)
 			!
-			!  SEE IF THIS IS THE LAST OPTION.
+			!  SEE IF THIS IS THE LAST OPTION..
+			!
+			!  THE POINTER TO THE START OF OPTIONS FOR THE INNER LOOP
+			!  SOLVER MUST SATISFY THE REQUIREMENTS FOR THAT OPTION ARRAY.
 			!
 			  if ( jp == 99) then
 			      if ( newopt) then
-			!
-			!  THE POINTER TO THE START OF OPTIONS FOR THE LINEAR
-			!  SOLVER MUST SATISFY THE REQUIREMENTS FOR THAT OPTION ARRAY.
-			!
 			          if ( ipls == 0) ipls = lp
-			          go to 490
+			          go to 1030
 			      else
 			          lpdiff = 1
-			          go to 480
+			          go to 1110
 			      end if
 			  end if
 			!
@@ -6551,14 +8281,14 @@ C     FROM THE ERROR PROCESSOR CALL.
 			!
 			  if ( jp == 1) then
 			      if ( newopt) iprint = iopt(lp+1)
-			      go to 480
+			      go to 1110
 			  end if
 			!
 			!  SEE IF MAX. NUMBER OF ITERATIONS CHANGING.
 			!
 			  if ( jp == 2) then
 			      if ( newopt) itmax = iopt(lp+1)
-			      go to 480
+			      go to 1110
 			  end if
 			!
 			!  SEE IF BOUNDS FOR THE TRUST REGION ARE BEING PASSED.
@@ -6568,16 +8298,14 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          call dcopy(nvars,ropt(iopt(lp+1)),1,bb,1)
 			          passb = .true.
 			      end if
-
-			      go to 480
-
+			      go to 1110
 			  end if
 			!
 			!  CHANGE TOLERANCE ON THE LENGTH OF THE RESIDUALS.
 			!
 			  if ( jp == 4) then
 			      if ( newopt) tolf = ropt(iopt(lp+1))
-			      go to 480
+			      go to 1110
 			  end if
 			!
 			!  CHANGE TOLERANCE ON THE NORM OF THE RELATIVE
@@ -6585,51 +8313,66 @@ C     FROM THE ERROR PROCESSOR CALL.
 			!
 			  if ( jp == 5) then
 			      if ( newopt) tolx = ropt(iopt(lp+1))
-			      go to 480
+			      go to 1110
 			  end if
 			!
 			!  CHANGE TOLERANCE ON ABSOLUTE CHANGE TO THE PARAMETERS.
 			!
 			  if ( jp == 6) then
 			      if ( newopt) told = ropt(iopt(lp+1))
-			      go to 480
+			      go to 1110
 			  end if
-
-			  if ( jp == 7) then
 			!
 			!  CHANGE TOLERANCE FOR RELATIVE AGREEMENT BETWEEN
 			!  BEST FUNCTION NORM, LAST FUNCTION NORM AND THE
 			!  CURRENT FUNCTION NORM.
 			!
+			  if ( jp == 7) then
 			      if ( newopt) tolsnr = ropt(iopt(lp+1))
-			      go to 480
+			      go to 1110
 			  end if
-
-			  if ( jp == 8) then
 			!
 			!  CHANGE TOLERANCE FOR AGREEMENT BETWEEN PREDICTED
 			!  VALUE OF RESIDUAL NORM AND THE PREVIOUS VALUE OF
 			!  THE RESIDUAL NORM.
 			!
+			  if ( jp == 8) then
 			      if ( newopt) tolp = ropt(iopt(lp+1))
-			      go to 480
+			      go to 1110
+			  end if
+			!
+			!  CHANGE TOLERANCE SUCH THAT RELATIVE CHANGES IN THE
+			!  VALUES OF THE PARAMETERS IMPLY THAT THE PREVIOUS
+			!  VALUE OF THE FUNCTION WILL NOT BE USED IN THE
+			!  QUADRATIC MODEL.
+			!
+			  if ( jp == 9) then
+			    if ( newopt) toluse = ropt(iopt(lp+1))
+			    go to 1110
+			  end if
+			!
+			!  CHANGE THE LARGEST CONDITION NUMBER TO ALLOW WHEN
+			!  SOLVING FOR THE QUADRATIC COEFFICIENTS OF THE MODEL.
+			!
+			  if ( jp == 10) then
+			      if ( newopt) cond = ropt(iopt(lp+1))
+			      go to 1110
 			  end if
 			!
 			!  CHANGE THE PRINT LEVEL IN THE ERROR PROCESSOR.
 			!
-			  if ( jp == 9) then
+			  if ( jp == 11) then
 			      if ( newopt) level = iopt(lp+1)
-			      go to 480
-
+			      go to 1110
 			  end if
 			!
 			!  PASS AN OPTION ARRAY TO THE CONSTRAINED LINEAR SOLVER.
 			!  THIS OPTION IS A POINTER TO THE START OF THE OPTION
 			!  ARRAY FOR THE SUBPROGRAM.
 			!
-			  if ( jp == 10) then
+			  if ( jp == 12) then
 			      if ( newopt) ipls = iopt(lp+1)
-			      go to 480
+			      go to 1110
 			  end if
 			!
 			!  MOVE THE PROCESSING POINTER BY THE VALUE IN THE
@@ -6637,30 +8380,56 @@ C     FROM THE ERROR PROCESSOR CALL.
 			!  INCLUDED SO THAT PASSING OPTIONS TO LOWER LEVEL
 			!  SUBROUTINES IS EASY TO DO.
 			!
-			  if ( jp == 11) then
+			  if ( jp == 13) then
 			      if ( newopt) lpdiff = iopt(lp+1)
-			      go to 480
+			      go to 1110
+			  end if
+			!
+			!  OPTION TO SUPPRESS USING THE QUADRATIC MODEL, EVER.
+			!
+			  if ( jp == 14) then
+			      if ( newopt) noquad = iopt(lp+1)  ==  1
+			      go to 1110
+			  end if
+			!
+			!  MORE STORAGE WAS GIVEN FOR THE QUADRATIC MODEL ARRAYS.
+			!  THIS OPTION WAS PROCESSED BY THE INTERFACE UNIT.
+			!
+			  if ( jp == 15) go to 1110
+			!
+			!  USE FORWARD COMMUNICATION TO GET THE DERIVATIVES
+			!  AND FUNCTION VALUES.
+			!
+			  if ( jp == 16) then
+			      if ( newopt) revers = iopt(lp+1)  ==  1
+			      go to 1110
+			  end if
+			!
+			!  FORCE A FULL NEWTON STEP WHEN NEAR THE MINIMUM.
+			!  DO NOT ALLOW CONVERGENCE CLAIMS WHEN HITTING BOUNDS.
+			!
+			  if ( jp == 17) then
+			      if ( newopt) mustcn = iopt(lp+1)  ==  1
+			      go to 1110
 			  end if
 			!
 			!  SAW AN OPTION (OR GARBAGE) THAT IS NOT ON THE LIST.
 			!
-			  xmess = 'dqedip. invalid option processed. i1=iopt(*) entry. i2=iopt(i1).'
-			  nerr = 08
-			  igo = 16
+			  xmess ='dqedmn. invalid option processed. i1=iopt(*) entry. i2=iopt(i1).'
+			  nerr = 07
+			  igo = 15
 			  call xerrwv(xmess,nerr,level,2,lp,iopt(lp),0,rdum,rdum)
 			  iflag = 0
-
-			  go to 440
-
-			  490 continue
-			  do450 = true;*/
-	} // loop: while(true)
+			  go to 1020*/
+     } // loop: while(true)
 
 			 /*9001 format (a4,1p10d12.4/ (4x,10d12.4))
-			 9011 format ('0+iter.=',i3,' fc=',1pd10.4,' pv=',1pd10.4,' k=',i4, &
-			   ' kl=',i4,' fb=',1pd10.4/12x,'al=',1pd14.4,' bb=',1pd14.4)
-			 9021 format (' linear residual>=current f. quitting.',1p2d12.5)*/
-    } // dqedip
+			 9011 format ('0iter.=',i3,' fc=',1pd10.4,' pv=',1pd10.4,03x,' rc=', &
+			    1pd10.4,' j**t*f=',1pd10.4,/,' k=',i4,' kl=',i4,/10x,' fb=', &
+			    1pd10.4,' al=',1pd10.4,' bb=',1pd12.4/' inner iterations =',i5, &
+			    ' use quad. model?=',l5,' num. of terms =',i5)
+			 9021 format (' model residual>=current f. quitting.',1p2d12.5)*/
+    } // dqedmn
 	
 	private void drot ( int n, double x[], int incx, double y[], int incy,
 			            double c, double s ) {
