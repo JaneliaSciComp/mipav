@@ -1419,7 +1419,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
                     end = slice + ";" + sortedContours[slice].elementAt(num).getLabel();
                 }
-                
+                //System.err.println( end );
                 // first: set up row title:
                 rowData[0] = list.getElementAt(i).toString() + ", " + end;
                 totalData[0] = "Totals:";
