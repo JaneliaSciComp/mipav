@@ -5599,20 +5599,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             kVOI.setSelectedPoint(0);
             kVOI.update();
 
-            return new VOIContour( kVOI.isFixed(), kVOI.isClosed(), kPositions );
+            VOIContour kNew = new VOIContour( kVOI.isFixed(), kVOI.isClosed(), kPositions );
+            kNew.setGroup(kVOI.getGroup());
+            
+            return kNew;
         }
         return null;       
     }
 
 
-    private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, VOIBase kSplitVOI )
-    {
+    private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, VOIBase kSplitVOI ) {
         VOIVector kVOIs = m_kImageActive.getVOIs();
-        if ( !kSplitVOI.isSplit() || (kVOIs.size() == 0) )
-        {
+        if ( !kSplitVOI.isSplit() || (kVOIs.size() == 0) ) {
             return;
         }
-        Vector<VOIBase> kNewVOIs = new Vector<VOIBase>();
 
         Vector3f kStartPt = fileCoordinatesToPatient(kSplitVOI.get(0)); 
         Vector3f kEndPt = fileCoordinatesToPatient(kSplitVOI.get(1)); 
@@ -5622,42 +5622,39 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         int iEndSlice = bAllSlices? nSlices : m_kDrawingContext.getSlice() + 1;
 
 
-        for ( int i = 0; i < kVOIs.size(); i++ )
-        {
+voiItr: for ( int i = 0; i < kVOIs.size(); i++ ) { //iterate through all splittable VOIs
             VOI kVOI = kVOIs.get(i);
-            for ( int j = 0; j < kVOI.getCurves().size(); j++ )
-            {
-                VOIBase kVOI3D = kVOI.getCurves().get(j);
-                if ( m_iPlane != (m_iPlane & kVOI3D.getPlane() ))
-                {
-                    continue;
+            if(kVOI.getCurveType() == VOI.LINE) { //do not split the splitting contour
+                for(int j=0; j<kVOI.getCurves().size(); j++) {
+                    if(kVOI.getCurves().get(j).isSplit()) {
+                        continue voiItr;
+                    }
+                }
+            }
+            VOI kVOICloneVoi = (VOI)kVOI.clone();
+            kVOI.removeCurves();
+voiSp:      for ( int j = 0; j < kVOICloneVoi.getCurves().size(); j++ ) { //iterate through all splittable contours
+                VOIBase kVOI3D = kVOICloneVoi.getCurves().get(j);
+                if ( m_iPlane != (m_iPlane & kVOI3D.getPlane() )) {  //within same plane
+                    continue voiSp;
                 }
                 int iVOISlice = kVOI3D.slice();
-                if ( !((iVOISlice >= iStartSlice) && (iVOISlice < iEndSlice)) )
-                {
-                    continue;
+                if ( !((iVOISlice >= iStartSlice) && (iVOISlice < iEndSlice)) ) { //within same slice
+                    continue voiSp;
                 }
-                if ( !(!bOnlyActive || kVOI3D.isActive()) )
-                {
-                    continue;
+                if ( !(!bOnlyActive || kVOI3D.isActive()) ) {
+                    continue voiSp;
                 }
                 VOIBase kNew = split( kVOI3D, kStartPt, kEndPt );
-                if ( kNew != null )
-                {  
-                    //m_kParent.updateCurrentVOI( kVOI, kVOI );
-                    kNewVOIs.add(kNew);
-                }
+                kVOI.importCurve(kVOI3D);
+                if ( kNew != null ) {  
+                    kVOI.importCurve(kNew);
+                } 
             }
         }
         m_kParent.deleteVOI( kSplitVOI );  
         kSplitVOI.dispose();
         kSplitVOI = null;
-
-        for ( int i = 0; i < kNewVOIs.size(); i++ )
-        {
-            m_kParent.addVOI(kNewVOIs.get(i), false, true, true);
-        }
-        m_kCurrentVOI = null;
     }
 
     private void updateRectangle( int iX, int iMouseX, int iY, int iYStart )
