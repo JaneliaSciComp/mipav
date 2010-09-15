@@ -86,6 +86,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.text.DecimalFormat;
 import java.util.BitSet;
 import java.util.Vector;
 
@@ -2164,6 +2165,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         float[] resolutions = kImage.getResolutions(0);
 
         double length = kVOI.getLengthPtToPt(resolutions);
+        DecimalFormat dec = new DecimalFormat("0.##");
+        
+        
         String lineName = kVOI.getName();
         Vector<Vector3f> positions = new Vector<Vector3f>();
         Vector<ColorRGB> colors = new Vector<ColorRGB>();
@@ -2229,13 +2233,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewUserInterface.getReference()
             .setDataText(
                     "Red\t" + lineName + "\t" + rgbMeanIntenR + "\t"
-                    + rgbStdDevIntenR + "\t" + length + "\n");
+                    + rgbStdDevIntenR + "\t" + dec.format(length) + "\n");
             ViewUserInterface.getReference().setDataText(
                     "Green\t" + lineName + "\t" + rgbMeanIntenG + "\t" + rgbStdDevIntenG
-                    + "\t" + length +"\n");
+                    + "\t" + dec.format(length) +"\n");
             ViewUserInterface.getReference().setDataText(
                     "Blue\t" + lineName + "\t" + rgbMeanIntenB + "\t" + rgbStdDevIntenB
-                    + "\t" + length +"\n");
+                    + "\t" + dec.format(length) +"\n");
         } else {
             float[] pos = new float[pts];
             float[] inten = new float[pts];
@@ -2279,7 +2283,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewUserInterface.getReference().setDataText(
                     "Line\tname\tmin \tmax \ttotal \tmean \tstandard deviation\tlength " + "\n");
             ViewUserInterface.getReference().setDataText(
-            		"\t" + lineName + "\t" + min + "\t" + max + "\t" + totalInten + "\t" + rgbMeanIntenR + "\t" + rgbStdDevIntenR + "\t" + length +"\n");
+            		"\t" + lineName + "\t" + min + "\t" + max + "\t" + totalInten + "\t" + rgbMeanIntenR + "\t" + rgbStdDevIntenR + "\t" + dec.format(length) +"\n");
         }
     }
 
