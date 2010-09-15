@@ -1790,6 +1790,24 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         updateDisplay();
     }
+    
+    /**
+     * Increments the VOI uid for internal tracking, used during both creation and loading of a new VOI
+     */
+    private void advanceVOIUID() {
+        m_kCurrentVOIGroup = null;
+        voiUID++;
+        if (presetHue >= 0.0) {
+            Color color = Color.getHSBColor(presetHue, 1.0f, 1.0f);
+            toolbarBuilder.getVOIColorButton().setVOIColor(color);
+            toolbarBuilder.getVOIColorButton().setBackground(color);
+        }
+        else {
+            toolbarBuilder.getVOIColorButton().setVOIColor(voiUID);
+        }
+        setButtonColor(toolbarBuilder.getVOIColorButton(), 
+                toolbarBuilder.getVOIColorButton().getBackground() );
+    }
 
     /**
      * Initiate a new VOI.
@@ -1806,19 +1824,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             doVOI(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand());
         }
-        m_kCurrentVOIGroup = null;
-        voiUID++;
-        if (presetHue >= 0.0) {
-        	Color color = Color.getHSBColor(presetHue, 1.0f, 1.0f);
-        	toolbarBuilder.getVOIColorButton().setVOIColor(color);
-        	toolbarBuilder.getVOIColorButton().setBackground(color);
-        }
-        else {
-            toolbarBuilder.getVOIColorButton().setVOIColor(voiUID);
-        }
-        setButtonColor(toolbarBuilder.getVOIColorButton(), 
-                toolbarBuilder.getVOIColorButton().getBackground() );
-
+        
+        advanceVOIUID();
 
         short sID = (short)(m_kParent.getActiveImage().getVOIs().getUniqueID());
         m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
@@ -3172,10 +3179,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
                 VOIs = fileVOI.readVOI(isLabel.get(i));
 
+                if(m_kCurrentVOIGroup != null) {
+                    advanceVOIUID();
+                }
                 for (j = 0; j < VOIs.length; j++) {
+                    VOIs[j].setColor(toolbarBuilder.getVOIColorButton().getBackground());
                     currentImage.registerVOI(VOIs[j]);
                     VOIs[j].getGeometricCenter();
                     VOIs[j].addVOIListener(this);
+                    advanceVOIUID();
                 }
             }
 
@@ -3247,10 +3259,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             if ( newVOIs == null) {
                 return false;
             }
+            if(m_kCurrentVOIGroup != null) {
+                advanceVOIUID();
+            }
             for ( int i = 0; i < newVOIs.length; i++ )
             {
+                newVOIs[i].setColor(toolbarBuilder.getVOIColorButton().getBackground());
                 newVOIs[i].getGeometricCenter();
                 newVOIs[i].addVOIListener(this);
+                advanceVOIUID();
             }
         } catch (final OutOfMemoryError error) {
 
