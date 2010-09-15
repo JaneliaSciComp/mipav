@@ -2163,7 +2163,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         int[] unitsOfMeasure = kImage.getUnitsOfMeasure();
         float[] resolutions = kImage.getResolutions(0);
 
-        kVOI.getLengthPtToPt(resolutions);
+        double length = kVOI.getLengthPtToPt(resolutions);
+        String lineName = kVOI.getName();
         Vector<Vector3f> positions = new Vector<Vector3f>();
         Vector<ColorRGB> colors = new Vector<ColorRGB>();
 
@@ -2224,17 +2225,17 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
 
             ViewUserInterface.getReference().setDataText(
-                    "Line\tmean \tstandard deviation " + "\n");
+                    "Line\tname\tmean \tstandard deviation\tlength " + "\n");
             ViewUserInterface.getReference()
             .setDataText(
-                    "Red\t" + rgbMeanIntenR + "\t"
-                    + rgbStdDevIntenR + "\n");
+                    "Red\t" + lineName + "\t" + rgbMeanIntenR + "\t"
+                    + rgbStdDevIntenR + "\t" + length + "\n");
             ViewUserInterface.getReference().setDataText(
-                    "Green\t" + rgbMeanIntenG + "\t" + rgbStdDevIntenG
-                    + "\n");
+                    "Green\t" + lineName + "\t" + rgbMeanIntenG + "\t" + rgbStdDevIntenG
+                    + "\t" + length +"\n");
             ViewUserInterface.getReference().setDataText(
-                    "Blue\t" + rgbMeanIntenB + "\t" + rgbStdDevIntenB
-                    + "\n");
+                    "Blue\t" + lineName + "\t" + rgbMeanIntenB + "\t" + rgbStdDevIntenB
+                    + "\t" + length +"\n");
         } else {
             float[] pos = new float[pts];
             float[] inten = new float[pts];
@@ -2276,9 +2277,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
 
             ViewUserInterface.getReference().setDataText(
-                    "Line\tmin \tmax \ttotal \tmean \tstandard deviation " + "\n");
+                    "Line\tname\tmin \tmax \ttotal \tmean \tstandard deviation\tlength " + "\n");
             ViewUserInterface.getReference().setDataText(
-                    "\t" + min + "\t" + max + "\t" + totalInten + "\t" + rgbMeanIntenR + "\t" + rgbStdDevIntenR + "\n");
+            		"\t" + lineName + "\t" + min + "\t" + max + "\t" + totalInten + "\t" + rgbMeanIntenR + "\t" + rgbStdDevIntenR + "\t" + length +"\n");
         }
     }
 
@@ -4397,8 +4398,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
 
-    private void showVOIProperties() {
-
+    protected void showVOIProperties() {
         if (m_kVOIDialog == null) {
             m_kVOIDialog = new JDialogVOIStats( this, m_kParent.getActiveImage(), m_kCurrentVOIGroup );
             addVOIUpdateListener(m_kVOIDialog);

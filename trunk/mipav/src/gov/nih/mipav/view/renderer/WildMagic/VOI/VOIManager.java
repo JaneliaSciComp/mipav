@@ -22,6 +22,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJPopupPt;
 import gov.nih.mipav.view.ViewJPopupVOI;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogVOISplitter;
 
@@ -509,6 +510,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         else if (command.equals(SHOW_INTENSITY_GRAPH)) // handling the popup menu for the VOI intensity line
         {
             m_kParent.showIntensityGraph( m_kCurrentVOI );
+        }else if(command.equals("VOIProperties")) {
+        	m_kParent.showVOIProperties();
         }
     }
 
@@ -3839,6 +3842,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         popupMenu.add(menuItem);
         menuItem.addActionListener(this);
         menuItem.setActionCommand(SHOW_INTENSITY_GRAPH);
+        menuItem = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, this, false);
+        popupMenu.add(menuItem);
         int x = mouseEvent.getX();
         int y = mouseEvent.getY();
 
