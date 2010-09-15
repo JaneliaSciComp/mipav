@@ -2138,7 +2138,7 @@ public class VOI extends ModelSerialCloneable {
     }
     
     /**
-     * Clears VOI of all curves at a slice.
+     * Clears VOI of all curves.
      *
      * @param  slice  index of slice of curves to remove
      */
