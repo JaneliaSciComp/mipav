@@ -2678,7 +2678,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             return;
         }
-        if ( m_kCurrentVOIGroup != null && m_kCurrentVOIGroup.getCurveType() == kNew.getType() )
+        if ( m_kCurrentVOIGroup != null && (m_kCurrentVOIGroup.getCurveType() == kNew.getType() || !isFinished))
         {
             return;
         }
