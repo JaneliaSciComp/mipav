@@ -179,7 +179,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v2.4" + "\n");
+        outputTextArea.append("Running Algorithm v2.5" + "\n");
         final long begTime = System.currentTimeMillis();
 
         // rescale imageX intensity to imageY based on VOI
@@ -295,8 +295,8 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 
         
         TransMatrix intermMatrix1;
-        if(matrixAffine == null) {
-        	intermMatrix1 = matrixGreen;
+        if(matrixGreen == null) {
+        	intermMatrix1 = matrixAffine;
         	intermMatrix1.Inverse();
         }else {
         	intermMatrix1 = new TransMatrix(4);
