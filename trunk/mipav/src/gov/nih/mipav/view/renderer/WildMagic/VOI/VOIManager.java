@@ -4007,6 +4007,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {            
             return;
         }
+        if ( m_kCurrentVOI.getNearPoint() == -1 )
+        {
+            return;
+        }
         setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_kDrawingContext.getSlice() ); 
         m_kParent.setCursor(MipavUtil.crosshairCursor); 
         m_kParent.updateDisplay();
@@ -4091,6 +4095,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private boolean nearPoint( VOIBase kVOI, int iX, int iY, int iZ) {
 
         Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
+        kVOI.setNearPoint(-1);
         for ( int i = 0; i < kVOI.size(); i++ )
         {
             Vector3f kFilePos = kVOI.get(i);
