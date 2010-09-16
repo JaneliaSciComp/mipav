@@ -6,10 +6,12 @@ import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.ImageRegistrationGPU;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -70,7 +72,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * @author Neva Cherniavsky
  * @author Matthew McAuliffe
  */
-public class AlgorithmRegOAR3D extends AlgorithmBase {
+public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterface {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -343,6 +345,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
     private ImageRegistrationGPU m_kGPUCost = null;
     private boolean doJTEM;
+    private CountDownLatch doneSignal;  
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2045,27 +2048,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         }
 
         // Optimizing over translations and global scale
-        AlgorithmPowellOptBase powell = null;
         maxIter = baseNumIter * 2;
         int dofs = 3;
         if (DOF > 6) {
             // Global scale and x,y,z translations.
             dofs = 4;
         }
-        powell = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
-        powell.setUseJTEM(doJTEM);
-    	powell.setParallelPowell(multiThreadingEnabled);
-        if ( doJTEM )
-        {
-        	powell.setParallelPowell(false);
-        }
-        powell.setMinProgressValue((int) progressFrom);
-        powell.setMaxProgressValue((int) (progressFrom + 2 * (progressTo - progressFrom) / 3));
-        powell.setProgress(0);
-        powell.setProgressModulus(coarseNumX * coarseNumY * coarseNumZ * maxIter / 100);
-        this.linkProgressToAlgorithm(powell);
-        powell.setMultiThreadingEnabled(multiThreadingEnabled);
-        fireProgressStateChanged("Optimizing at coarse samples");
 
         final double[] initial = new double[12];
         /**
@@ -2090,13 +2078,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         initial[9] = initial[10] = initial[11] = 0;
 
         int index = 0;
+        /*
         Vectornd[] initials = new Vectornd[coarseNumY * coarseNumX * coarseNumZ];
         for (int i = 0; (i < coarseNumX); i++) {
             for (int j = 0; (j < coarseNumY); j++) {
                 for (int k = 0; (k < coarseNumZ); k++) {
-                    /**
-                     * Initial rotation
-                     */
+                     // Initial rotation
                     initial[0] = rotateBeginX + (i * coarseRateX);
                     initial[1] = rotateBeginY + (j * coarseRateY);
                     initial[2] = rotateBeginZ + (k * coarseRateZ);
@@ -2105,26 +2092,91 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                 }
             }
         }
-        powell.setPoints(initials);
-        powell.run();
+        AlgorithmPowellOptBase powellMT = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
+        powellMT.setUseJTEM(doJTEM);
+        powellMT.setParallelPowell(multiThreadingEnabled);
+        if ( doJTEM )
+        {
+            powellMT.setParallelPowell(false);
+        }
+        powellMT.setMultiThreadingEnabled(multiThreadingEnabled);
+        powellMT.setPoints(initials);
+        powellMT.run();
         fireProgressStateChanged((int) (progressFrom + 2 * (progressTo - progressFrom) / 3));
-        final double[][][][] transforms = new double[coarseNumX][coarseNumY][coarseNumZ][dofs];
+        */
 
+        
+        
+        
+        
+        
+        int numIterations = coarseNumY * coarseNumX;
+        doneSignal = new CountDownLatch(numIterations);  
+        AlgorithmPowellOpt3D[] powellMT = new AlgorithmPowellOpt3D[numIterations];
+
+        boolean bParallelLevel8 = true;
+        for (int i = 0; (i < coarseNumX); i++) {
+            for (int j = 0; (j < coarseNumY); j++) {
+                
+                powellMT[index] = new AlgorithmPowellOpt3D(null, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
+                powellMT[index].setUseJTEM(doJTEM);
+                powellMT[index].setParallelPowell(!bParallelLevel8);
+                if ( doJTEM )
+                {
+                    powellMT[index].setParallelPowell(false);
+                }
+                powellMT[index].setMultiThreadingEnabled(!bParallelLevel8);
+                
+                Vectornd[] initials = new Vectornd[coarseNumZ];
+                for (int k = 0; (k < coarseNumZ); k++) {
+                    
+                    // Initial rotation
+                    initial[0] = rotateBeginX + (i * coarseRateX);
+                    initial[1] = rotateBeginY + (j * coarseRateY);
+                    initial[2] = rotateBeginZ + (k * coarseRateZ);
+
+                    initials[k] = new Vectornd(initial, true);
+                }
+                
+                powellMT[index].setPoints(initials);  
+                powellMT[index].addListener(this);  
+                if ( bParallelLevel8 )
+                {
+                    ThreadUtil.mipavThreadPool.execute(powellMT[index]);
+                }
+                else
+                {
+                    powellMT[index].run();
+                }
+                index++;
+            }
+        }
+        try {
+            doneSignal.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        
+        
+        
         index = 0;
+        final double[][][][] transforms = new double[coarseNumX][coarseNumY][coarseNumZ][dofs];
         for (int i = 0; (i < coarseNumX); i++) {
             for (int j = 0; (j < coarseNumY); j++) {
                 for (int k = 0; (k < coarseNumZ); k++) {
-                    transforms[i][j][k] = powell.extractPoint(powell.getPoint(index++));
+                    transforms[i][j][k] = powellMT[index].extractPoint(powellMT[index].getPoint(k));
                 }
+                powellMT[index].disposeLocal();
+                index++;
             }
         }
 
         if (threadStopped) {
             return null;
         }
-        powell.disposeLocal();
         
-        powell = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
     	powell.setParallelPowell(multiThreadingEnabled);
         if ( doJTEM )
@@ -2189,7 +2241,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         if (index < 0) {
             index = -1 * (index + 1);
         }
-        initials = new Vectornd[index];
+        Vectornd[] initials = new Vectornd[index];
         index = 0;
         for (int i = 0; i < fineNumX; i++) {
             for (int j = 0; (j < fineNumY) && !threadStopped; j++) {
@@ -2952,6 +3004,15 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
     public void setLevel4FactorZ(final float level4FactorZ) {
         this.level4FactorZ = level4FactorZ;
+    }
+
+    @Override
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+        if ( doneSignal != null )
+        {
+            //System.err.println( "AlgorithmPerformed " + doneSignal.getCount() );
+            doneSignal.countDown();
+        }
     }
 
 }
