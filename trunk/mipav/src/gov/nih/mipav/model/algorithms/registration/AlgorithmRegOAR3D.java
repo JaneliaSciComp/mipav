@@ -2054,6 +2054,11 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         }
         powell = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
+    	powell.setParallelPowell(multiThreadingEnabled);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
         powell.setMinProgressValue((int) progressFrom);
         powell.setMaxProgressValue((int) (progressFrom + 2 * (progressTo - progressFrom) / 3));
         powell.setProgress(0);
@@ -2117,6 +2122,21 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         if (threadStopped) {
             return null;
         }
+        powell.disposeLocal();
+        
+        powell = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
+        powell.setUseJTEM(doJTEM);
+    	powell.setParallelPowell(multiThreadingEnabled);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
+        powell.setMinProgressValue((int) progressFrom);
+        powell.setMaxProgressValue((int) (progressFrom + 2 * (progressTo - progressFrom) / 3));
+        powell.setProgress(0);
+        powell.setProgressModulus(coarseNumX * coarseNumY * coarseNumZ * maxIter / 100);
+        this.linkProgressToAlgorithm(powell);
+        powell.setMultiThreadingEnabled(multiThreadingEnabled);
 
         final MatrixListItem[][][] matrixList = new MatrixListItem[fineNumX][fineNumY][fineNumZ];
 
@@ -2304,6 +2324,11 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         maxIter = baseNumIter * 2;
         powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
+    	powell.setParallelPowell(multiThreadingEnabled);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
         powell.setMultiThreadingEnabled(multiThreadingEnabled);
         powell.setMinProgressValue((int) (progressFrom + 5 * (progressTo - progressFrom) / 6));
         powell.setMaxProgressValue((int) progressTo);
@@ -2404,6 +2429,11 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         final AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree),
                 maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
+    	powell.setParallelPowell(multiThreadingEnabled);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
         powell.setMinProgressValue((int) progressFrom);
         powell.setMaxProgressValue((int) (progressFrom + (progressTo - progressFrom) / 5));
         powell.setMultiThreadingEnabled(multiThreadingEnabled);
@@ -2759,6 +2789,13 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree),
                 maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
+
+    	powell.setParallelPowell(multiThreadingEnabled);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
+        
         powell.setMultiThreadingEnabled(false);
         fireProgressStateChanged("Measuring costs of minima");
 
@@ -2809,7 +2846,14 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             initialPoints[0] = new Vectornd(item.initial);
             powell.setPoints(initialPoints);
             powell.setMultiThreadingEnabled(false);
-            powell.setParallelPowell(false);
+
+        	powell.setParallelPowell(multiThreadingEnabled);
+            if ( doJTEM )
+            {
+            	powell.setParallelPowell(false);
+            }
+            
+            //powell.setParallelPowell(false);
             powell.run();
             if (DOF > 9) {
                 fireProgressStateChanged((int) (progressFrom + 2 * (progressTo - progressFrom) / 3));
@@ -2835,7 +2879,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                 initialPoints[0] = new Vectornd(item.initial);
                 powell.setPoints(initialPoints);
                 powell.setMultiThreadingEnabled(false);
-                powell.setParallelPowell(false);
+                //powell.setParallelPowell(false);
+            	powell.setParallelPowell(multiThreadingEnabled);
+                if ( doJTEM )
+                {
+                	powell.setParallelPowell(false);
+                }
                 powell.run();
 
                 fireProgressStateChanged((int) (progressTo));
