@@ -929,6 +929,14 @@ public class FileVOI extends FileXML {
                     + "," + Integer.toString(voi.getColor().getBlue()));
 
             closedTag("Thickness", Integer.toString(voi.getThickness()));
+            
+            ArrayList<String> comments = voi.getComments();
+            if(comments.size() > 0) {
+            	for(int w=0;w<comments.size();w++) {
+            		closedTag("Comment", comments.get(w));
+            	}
+            }
+            
 
             if ( (voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE)
                     || (voi.getCurveType() == VOI.POINT)) {
@@ -1292,6 +1300,7 @@ public class FileVOI extends FileXML {
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
         }catch (SAXException e) {
+        	e.printStackTrace();
         	String msg = e.getMessage();
         	if(msg.contains("image")) {
         		MipavUtil.displayError("Error: This is not a valid VOI file and appears to be an image header file");
@@ -1648,7 +1657,10 @@ public class FileVOI extends FileXML {
 
             if (currentKey.equals("Unique-ID")) {
                 voi.setUID(Integer.parseInt(elementBuffer));
-            } else if (currentKey.equals("Curve-type")) {
+            }//else if (currentKey.equals("Comment")) {
+                //voi.setComments(elementBuffer);
+            //} 
+        	else if (currentKey.equals("Curve-type")) {
                 voi.setCurveType(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Color")) {
                 int a = 0, r = 0, g = 0, b = 0;
@@ -2110,7 +2122,10 @@ public class FileVOI extends FileXML {
                 } catch (final NumberFormatException nfex) {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
-            } else if (currentKey.equals("Color")) {
+            } else if (currentKey.equals("Comment")) {
+                voi.setComments(elementBuffer);
+            }
+            else if (currentKey.equals("Color")) {
                 int a = 0, r = 0, g = 0, b = 0;
                 final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
