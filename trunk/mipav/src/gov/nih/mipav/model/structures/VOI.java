@@ -166,6 +166,8 @@ public class VOI extends ModelSerialCloneable {
     /** VOIListeners that are updated when this VOI changes */
     public transient EventListenerList listenerList;
     
+    private ArrayList<String> comments = new ArrayList<String>();
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
 
@@ -2372,6 +2374,14 @@ public class VOI extends ModelSerialCloneable {
      */
     public void setUID(int uid) {
         this.UID = uid;
+    }
+    
+    public void setComments(String comment) {
+    	comments.add(comment);
+    }
+    
+    public ArrayList<String> getComments() {
+    	return comments;
     }
 
     /**
