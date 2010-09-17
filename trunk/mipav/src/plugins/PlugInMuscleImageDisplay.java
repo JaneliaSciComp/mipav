@@ -1836,7 +1836,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_CUT);
 	    voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_COPY);
 	    voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_PASTE);
-	
 	    
 	    //build the toolbar and add the custom button vectors
 	    controls.buildSimpleToolBar();
@@ -5122,7 +5121,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 *
 		 * @return  the new KeyLog String.
 		 */
-		protected String createNewLogfile() {
+		protected void createNewLogModel() {
 		    int i;
 		    FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
 		    String id = (String)fileInfo.getTagTable().getValue("0010,0020");
@@ -5184,10 +5183,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		            }
 		        }
 		    }
-		
-		    kl += "\n";
-		
-		    return kl;
 		}
 
 		/**
@@ -5421,7 +5416,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                            logText += logRowData[j] + "\t";
 	                        }
 
-	                        writeLogfileEntry(logText);
+	                        createNewLogModel();
 	                    } // end for contours
 	                }
 
@@ -5435,7 +5430,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                    	logText += logTotalData[j] + "\t";
 	                    }
 
-	                    writeLogfileEntry(logText);
+	                    createNewLogModel();
 	                }
 
 	                for (int k = 0; k < rowData.length; k++) {
@@ -5578,7 +5573,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                    logText += rowData[j] + "\t";
 	                }
 
-	                writeLogfileEntry(logText);
+	                createNewLogModel();
 
 	                for (int k = 0; k < rowData.length; k++) {
 	                    rowData[k] = "";
