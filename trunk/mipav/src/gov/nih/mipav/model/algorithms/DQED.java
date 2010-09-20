@@ -1856,8 +1856,8 @@ public abstract class DQED {
 			!     SELECTED VARIABLES.
 			*/
 
-			  //real ( kind = 8 ) bl(ncols)
-			  //real ( kind = 8 ) bu(ncols)
+			  //double bl(ncols)
+			  //double bu(ncols)
 			  boolean checkl;
 			  int i;
 			  int ibig;
@@ -1883,12 +1883,12 @@ public abstract class DQED {
 			  int mnew;
 			  int nerr;
 			  double rdum;
-			  //real ( kind = 8 ) rw(5*ncols)
+			  //double rw(5*ncols)
 			  double sa[] = new double[1];
 			  double sb[] = new double[1];
 			  double sc[] = new double[1];
 			  double ss[] = new double[1];
-			  //real ( kind = 8 ) w(mdw,ncols+1)
+			  //double w(mdw,ncols+1)
 			  double arr[];
 			  double arr2[];
 			  double blArr[];
@@ -2084,7 +2084,7 @@ public abstract class DQED {
 
 	                          igo_dbols = 0;
 	                          return;
-			              } // if ( iscale < 1 || 3 < iscale )
+			              } // if ( iscale_dbols < 1 || 3 < iscale_dbols )
 			          } // if (ip > 0)
 			          lds = 2;
 			          continue loop;
@@ -2422,7 +2422,11 @@ public abstract class DQED {
 					  for (k = 1; k <= ncols; k++) {
 						  rw[ncols+k] = rwArr[k];
 						  rw[2*ncols+k] = wwArr[k];
+						  iw[ncols+k] = ibbArr[k];
 					  }
+					  for (k = 1; k <= iopt.length - lopt_dbols; k++) {
+                    	  iopt[lopt_dbols+k-1] = ioptArr[k];
+                      }
 
 					  igo_dbols = 0;
 					  return;
@@ -2803,7 +2807,6 @@ public abstract class DQED {
 			  double fac = 0.0;
 			  boolean found = false;
 			  int i = 0;
-			  int icase;
 			  int idum = 0;
 			  int igopr = 0;
 			  //int ind(ncols)
@@ -2846,7 +2849,6 @@ public abstract class DQED {
 			  double xnew;
 			  boolean do50 = false;
 			  boolean do60 = false;
-			  boolean do70 = false;
 			  boolean do90 = false;
 			  boolean do100 = false;
 			  boolean do130 = false;
@@ -2907,7 +2909,7 @@ public abstract class DQED {
 			  for (j = 1; j <=ncols; j++) {
 			     if ( ind[j] < 1 || ind[j] > 4) {
 			         nerr = 34;
-			         xerrwv("dbolsm(). for j=(i1) the constraint indicator must be1-4.",
+			         xerrwv("dbolsm(). for j=(i1) the constraint indicator must be 1-4.",
 			                 nerr,level,2,j,ind[j],0,rdum,rdum);
 			         mode[0] = -nerr;
 			         return;
@@ -2982,12 +2984,6 @@ public abstract class DQED {
 			          do130 = true;
 			       } // else
 			  } // if (do60)
-	  
-
-			   if (do70) {
-			       mode[0] = -nerr;
-			       return;
-			   } // if (do70)
 
 			   if (do90) {
                    do90 = false;
@@ -3064,7 +3060,8 @@ public abstract class DQED {
 			      }
 			      rnorm[0] = dnrm2(mrows-Math.max(nsetb,mval),arr,1);
                   if (igopr == 1) {
-                	  do70 = true;
+                	  mode[0] = -nerr;
+                	  return;
                   }
                   else if (igopr == 2) {
                 	  do100 = true;
@@ -3209,7 +3206,7 @@ public abstract class DQED {
 
 			     } // else
 
-			  } // for (j = nsetb + 1; j <= ncols; j++)
+			  } // forLoop: for (j = nsetb + 1; j <= ncols; j++)
 
 			  if ( jbig == 0) {
 			      found = false;
@@ -3404,7 +3401,7 @@ public abstract class DQED {
 			        	 rw[j] = -rw[j];
 			         }
 			         arr = new double[j];
-			         for (n = 1; n <= j; n++) {
+			         for (n = 1; n <= j-1; n++) {
 			        	 arr[n] = w[n][j];
 			         }
 			         daxpy(j-1,-t,arr,1,rw,1);
