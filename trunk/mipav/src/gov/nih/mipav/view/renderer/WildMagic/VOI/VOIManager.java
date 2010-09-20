@@ -1107,6 +1107,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
     public void mouseDragged(MouseEvent kEvent) {
+        if ( !m_bMouseDrag && m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
+        { 
+            showSelectedVOI( kEvent.getX(), kEvent.getY() );
+        }       
+        
         m_bMouseDrag = true;
         m_kParent.setActive(this, m_kImageActive);
         if ( !isActive() )
@@ -4278,7 +4283,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 }
                 scaleVOI( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );        
             }
-            else if ( m_bSelected )
+            else if ( m_bSelected && ( m_iNearStatus == NearNone ) )
             {
                 boolean bTempFirstDrag = m_bFirstDrag;
                 if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
