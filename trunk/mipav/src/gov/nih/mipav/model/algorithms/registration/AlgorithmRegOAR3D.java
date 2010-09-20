@@ -2078,42 +2078,17 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         initial[9] = initial[10] = initial[11] = 0;
 
         int index = 0;
-        /*
-        Vectornd[] initials = new Vectornd[coarseNumY * coarseNumX * coarseNumZ];
-        for (int i = 0; (i < coarseNumX); i++) {
-            for (int j = 0; (j < coarseNumY); j++) {
-                for (int k = 0; (k < coarseNumZ); k++) {
-                     // Initial rotation
-                    initial[0] = rotateBeginX + (i * coarseRateX);
-                    initial[1] = rotateBeginY + (j * coarseRateY);
-                    initial[2] = rotateBeginZ + (k * coarseRateZ);
-
-                    initials[index++] = new Vectornd(initial, true);
-                }
-            }
-        }
-        AlgorithmPowellOptBase powellMT = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
-        powellMT.setUseJTEM(doJTEM);
-        powellMT.setParallelPowell(multiThreadingEnabled);
-        if ( doJTEM )
-        {
-            powellMT.setParallelPowell(false);
-        }
-        powellMT.setMultiThreadingEnabled(multiThreadingEnabled);
-        powellMT.setPoints(initials);
-        powellMT.run();
-        fireProgressStateChanged((int) (progressFrom + 2 * (progressTo - progressFrom) / 3));
-        */
-
-        
-        
-        
         
         
         int numIterations = coarseNumY * coarseNumX;
         doneSignal = new CountDownLatch(numIterations);  
         AlgorithmPowellOpt3D[] powellMT = new AlgorithmPowellOpt3D[numIterations];
-
+        // The following code calls Powells for the level8 search. 
+        // The search creates numIterations = coarseNumY * coarseNumX instances of the Powells search
+        // each of those searches has a constant value for rotationX and rotationY but a set of rotations in Z
+        // The powells instances can run as separate threads or sequentially. If they are run as parallel threads
+        // the AlgorithmPowellOpt3D does not use threads internally. If they are run sequentially, the AlgorithmPowellOpt3D
+        // can use threads internally.
         boolean bParallelLevel8 = true;
         for (int i = 0; (i < coarseNumX); i++) {
             for (int j = 0; (j < coarseNumY); j++) {
@@ -2157,9 +2132,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             e.printStackTrace();
         }
         
-        
-        
-        
+        // At this point all the iterations of powell have completed, either they ran sequentially or
+        // as multiple threads. This code gathers the results into the transforms[][][] data structure
+        // for use in the next pass.
         index = 0;
         final double[][][][] transforms = new double[coarseNumX][coarseNumY][coarseNumZ][dofs];
         for (int i = 0; (i < coarseNumX); i++) {
@@ -3008,6 +2983,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
 
     @Override
     public void algorithmPerformed(AlgorithmBase algorithm) {
+        // This is used in the levelEight when the multiple instance of powell used to search the
+        // different coarse rotations are multi-threaded. This is how the algorithms let the CountDownLatch
+        // know when all the multi-threaded search have completed.
         if ( doneSignal != null )
         {
             //System.err.println( "AlgorithmPerformed " + doneSignal.getCount() );
