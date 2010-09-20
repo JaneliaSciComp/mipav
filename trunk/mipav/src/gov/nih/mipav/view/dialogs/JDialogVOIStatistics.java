@@ -1051,11 +1051,9 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 contours = ((VOI) list.getElementAt(i)).getCurves();
                 updateDialogRow(new Vector[]{contours}, properties, list, i, rowData, totalData);
             } else if(processType == AlgorithmVOIProps.PROCESS_PER_VOI) {  
-                for (int j = 0; j < list.getSize(); j++) {
-                    rowData[0] = list.getElementAt(j).toString();
-                    logModel.addRow(updateRowStatistics(properties, rowData, totalData, "", 1));
-                }
-            } else {
+                rowData[0] = list.getElementAt(i).toString();
+                logModel.addRow(updateRowStatistics(properties, rowData, totalData, "", 1));
+            } else { //processType is by slice or by slice-and-contour
                 Vector<VOIBase>[] sortedContoursZ = ((VOI) list.getElementAt(i)).getSortedCurves( VOIBase.ZPLANE, image.getExtents()[2] );
                 updateDialogRow(sortedContoursZ, properties, list, i, rowData, totalData);
                 Vector<VOIBase>[] sortedContoursX = ((VOI) list.getElementAt(i)).getSortedCurves( VOIBase.XPLANE, image.getExtents()[0] );
