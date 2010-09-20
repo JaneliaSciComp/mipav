@@ -1054,11 +1054,11 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 rowData[0] = list.getElementAt(i).toString();
                 logModel.addRow(updateRowStatistics(properties, rowData, totalData, "", 1));
             } else { //processType is by slice or by slice-and-contour
-                Vector<VOIBase>[] sortedContoursZ = ((VOI) list.getElementAt(i)).getSortedCurves( VOIBase.ZPLANE, image.getExtents()[2] );
+                Vector<VOIBase>[] sortedContoursZ = ((VOI) list.getElementAt(i)).getSortedCurves(VOIBase.ZPLANE, image.getExtents()[2]);
                 updateDialogRow(sortedContoursZ, properties, list, i, rowData, totalData);
-                Vector<VOIBase>[] sortedContoursX = ((VOI) list.getElementAt(i)).getSortedCurves( VOIBase.XPLANE, image.getExtents()[0] );
+                Vector<VOIBase>[] sortedContoursX = ((VOI) list.getElementAt(i)).getSortedCurves(VOIBase.XPLANE, image.getExtents()[0]);
                 updateDialogRow(sortedContoursX, properties, list, i, rowData, totalData);
-                Vector<VOIBase>[] sortedContoursY = ((VOI) list.getElementAt(i)).getSortedCurves( VOIBase.YPLANE, image.getExtents()[1] );
+                Vector<VOIBase>[] sortedContoursY = ((VOI) list.getElementAt(i)).getSortedCurves(VOIBase.YPLANE, image.getExtents()[1]);
                 updateDialogRow(sortedContoursY, properties, list, i, rowData, totalData);
             }
 
@@ -1116,7 +1116,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      * Writes general statistics data for any VOI structure given a valid "end" modifier to specify
      * the property being fetched.
      */
-    private String[] updateRowStatistics(VOIStatisticalProperties properties, 
+    protected String[] updateRowStatistics(VOIStatisticalProperties properties, 
                                     String[] rowData, String[] totalData, String end, int count) {
         // for each column in the row, print the statistic:
         for (int k = 0; k < VOIStatisticList.statisticDescription.length; k++) {
@@ -1173,7 +1173,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     /**
      * Writes the column titles of selected statistics calculations to the logModel.
      */
-    private void writeLogHeader() {
+    protected void writeLogHeader() {
         logModel.addColumn("Name");
         if(processType == AlgorithmVOIProps.PROCESS_PER_SLICE || processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
             logModel.addColumn("Slice");
@@ -1233,7 +1233,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      * 
      * @return
      */
-    private StringBuffer writeLogModelToFile() {
+    protected StringBuffer writeLogModelToFile() {
         StringBuffer total = new StringBuffer();
         //get column names
         for(int i=0; i<logModel.getColumnCount(); i++) {
@@ -1258,7 +1258,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     /**
      * Writes out the statistics file based on the current logModel
      */
-    private void writeStatisticFile() {
+    protected void writeStatisticFile() {
         FileWriter statFW;
         final File statFile = new File(tableDestination.getAbsolutePath());
 
