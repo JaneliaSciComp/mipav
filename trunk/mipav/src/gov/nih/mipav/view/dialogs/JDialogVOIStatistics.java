@@ -455,7 +455,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         checkList = scriptParameters.getParams().getList("stat_checklist").getAsBooleanArray();
 
-        logFileText = new StringBuffer();
+        createNewLogModel();
 
         tableDestinationUsage = scriptParameters.getParams().getInt("output_writing_behavior");
         if (scriptParameters.getParams().containsParameter("voi_stats_output_file")) {
@@ -793,6 +793,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      * @return the new logModel.
      */
     protected void createNewLogModel() {
+        logFileText = new StringBuffer();
         logModel = new ViewTableModel();
         if(!isScriptRunning()) {
             logTable.setModel(logModel);
@@ -964,7 +965,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         }
 
         checkList = checkBoxPanel.getSelectedList();
-        logFileText = new StringBuffer();
+        createNewLogModel();
 
         // sets the VOIs with the selected exclude range, if it exists,
         // and does this for each VOI in the selected list.
@@ -1087,10 +1088,10 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         }
         
         //the stat log is always rewritten unless specified by user //TODO:add append option
-        logFileText = new StringBuffer();
+        createNewLogModel();
 
         VOIStatisticalProperties properties;
-        Vector contours;
+        Vector<VOIBase> contours;
 
         final ListModel list = selectedList.getModel();
         
@@ -1104,10 +1105,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 properties = calculator.getVOIProperties((VOI) list.getElementAt(i));
                 final String[] rowData = new String[logModel.getColumnCount()];
                 final String[] totalData = new String[logModel.getColumnCount()];
-
-                final String[] logRowData = new String[rowData.length];
-                final String[] logTotalData = new String[rowData.length];
-                
                 
                 if ( processType == AlgorithmVOIProps.PROCESS_PER_CONTOUR ) {   
                     contours = ((VOI) list.getElementAt(i)).getCurves();
@@ -1118,24 +1115,17 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                     // if not "calculate by contour" (ie., if we only want totals):
                     for (int num = 0; num < contours.size(); num++) {
                         // first: set up row title:
-                        rowData[0] = list.getElementAt(i).toString() + ", " + // VOI name
-                        //(slice) + ", " + // slice #, irrellevent to where contour is in image
-                        //((VOIBase) contours[slice].get(num)).getLabel(); // contour #, held in label
-                        ((VOIBase) contours.get(num)).getLabel(); // contour #, held in label
+                        rowData[0] = list.getElementAt(i).toString();
+                        rowData[1] = contours.get(num).getLabel(); // contour #, held in label
+                        count = 2;
                         totalData[0] = "Totals:";
-
-                        logRowData[0] = new String(rowData[0]);
-                        logTotalData[0] = new String(totalData[0]);
-
-                        if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_CONTOUR) {
-                            end = "" + num;
-                        }
+                        totalData[1] = "";
+                        
+                        end = "" + num;
 
                         // for each column in the row, print the statistic:
                         for (int k = 0; k < VOIStatisticList.statisticDescription.length; k++) {
-                            if (logModel.getColumnBaseIndex(VOIStatisticList.statisticDescription[k]) != -1) {
-                                count++;
-                            }
+                            
                             if (checkList[k]) {
                                 // if it's a color image and the property is min intensity, max intensity, avg
                                 // intensity, or standard deviation of intensity, those properties were entered as Red,
@@ -1146,46 +1136,44 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                                     temp += " G: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Green" + end);
                                     temp += " B: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Blue" + end);
                                     rowData[count] = temp;
-                                    logRowData[count] = temp;
 
                                     if (showTotals) {
                                         temp = " R: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "RedTotal");
                                         temp += " G: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "GreenTotal");
                                         temp += " B: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "BlueTotal");
                                         totalData[count] = temp;
-                                        logTotalData[count] = temp;
                                     }
                                 } else {
                                     if (k != 18) {
                                         // Exclude largest distance
                                         rowData[count] = properties.getProperty(
                                                 VOIStatisticList.statisticDescription[k] + end).replaceAll("\t", ", ");
-                                        logRowData[count] = properties.getProperty(VOIStatisticList.statisticDescription[k] + end);
                                     }
 
                                     if (showTotals) {
                                         totalData[count] = properties.getProperty(
                                                 VOIStatisticList.statisticDescription[k] + "Total").replaceAll("\t",
                                                 ", ");
-                                        logTotalData[count] = properties.getProperty(VOIStatisticList.statisticDescription[k] + "Total");
                                     }
                                 }
+                                count++;
                             }
-                        } // end for each column
-
+                        } // end for each row
+                        count = 0;
+                        end = "";
                         logModel.addRow(rowData);
                     } // end for contours
                 }
                 else {
                     Vector<VOIBase>[] sortedContoursZ = ((VOI) list.getElementAt(i)).getSortedCurves( VOIBase.ZPLANE, image.getExtents()[2] );
                     updateDialogSlice( sortedContoursZ, properties, list, i, 2, 
-                            rowData, totalData, logRowData, logTotalData );
+                            rowData, totalData);
                     Vector<VOIBase>[] sortedContoursX = ((VOI) list.getElementAt(i)).getSortedCurves( VOIBase.XPLANE, image.getExtents()[0] );
                     updateDialogSlice( sortedContoursX, properties, list, i, 0, 
-                            rowData, totalData, logRowData, logTotalData );
+                            rowData, totalData);
                     Vector<VOIBase>[] sortedContoursY = ((VOI) list.getElementAt(i)).getSortedCurves( VOIBase.YPLANE, image.getExtents()[1] );
                     updateDialogSlice( sortedContoursY, properties, list, i, 1, 
-                            rowData, totalData, logRowData, logTotalData );
+                            rowData, totalData);
                 }
 
                 if (showTotals) {
@@ -1249,7 +1237,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      */
     protected void updateDialogSlice(Vector<VOIBase>[] sortedContours, 
             VOIStatisticalProperties properties, ListModel list, int i, int orientation,
-            String[] rowData, String[] totalData, String[] logRowData, String[] logTotalData )
+            String[] rowData, String[] totalData)
     {
         for (int slice = 0; slice < sortedContours.length; slice++) {
             if ( sortedContours[slice].size() <= 0 )
@@ -1268,24 +1256,24 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             // if not "calculate by contour" (ie., if we only want totals):
             for (int num = 0; num < stop; num++) {
 
-                if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
-                    end = slice + ";" + sortedContours[slice].elementAt(num).getLabel();
+                rowData[count] = list.getElementAt(i).toString();
+                totalData[count] = "Totals:";
+                count++;
+                
+                if(processType == AlgorithmVOIProps.PROCESS_PER_SLICE || processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
+                    rowData[count] = String.valueOf(slice);
+                    totalData[count] = "";
+                    count++;
+                } 
+                if(processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
+                    rowData[count] = sortedContours[slice].elementAt(num).getLabel();
+                    totalData[count] = "";
+                    end += sortedContours[slice].elementAt(num).getLabel();
+                    count++;
                 }
-                //System.err.println( end );
-                // first: set up row title:
-                rowData[0] = list.getElementAt(i).toString() + ", " + end;
-                totalData[0] = "Totals:";
-
-                logRowData[0] = new String(rowData[0]);
-                logTotalData[0] = new String(totalData[0]);
-
 
                 // for each column in the row, print the statistic:
                 for (int k = 0; k < VOIStatisticList.statisticDescription.length; k++) {
-
-                    if (logModel.getColumnBaseIndex(VOIStatisticList.statisticDescription[k]) != -1) {
-                        count++;
-                    }
 
                     if (checkList[k]) {
 
@@ -1304,7 +1292,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                                     + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Blue"
                                             + end);
                             rowData[count] = temp;
-                            logRowData[count] = temp;
 
                             if (showTotals) {
                                 temp = " R: "
@@ -1317,29 +1304,27 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                                         + properties.getProperty(VOIStatisticList.statisticDescription[k]
                                                 + "BlueTotal");
                                 totalData[count] = temp;
-                                logTotalData[count] = temp;
                             }
                         } else {
                             if (k != 18) {
                                 // Exclude largest distance
                                 rowData[count] = properties.getProperty(
                                         VOIStatisticList.statisticDescription[k] + end).replaceAll("\t", ", ");
-                                logRowData[count] = properties
-                                        .getProperty(VOIStatisticList.statisticDescription[k] + end);
                             }
 
                             if (showTotals) {
                                 totalData[count] = properties.getProperty(
                                         VOIStatisticList.statisticDescription[k] + "Total").replaceAll("\t",
                                         ", ");
-                                logTotalData[count] = properties
-                                        .getProperty(VOIStatisticList.statisticDescription[k] + "Total");
                             }
                         }
+                        count++;
                     }
-                } // end for each column
-
+                } // end for each row
+                
                 logModel.addRow(rowData);
+                count = 0;
+                end = slice + ";";
             } // end for contours
         }
     }
@@ -1355,7 +1340,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         StringBuffer total = new StringBuffer();
         //get column names
         for(int i=0; i<logModel.getColumnCount(); i++) {
-            total.append(logModel.getColumnName(i));
+            total.append(logModel.getColumnName(i)).append("\t");
         }
         total.append(System.getProperty("line.separator"));
         
@@ -1365,7 +1350,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         for(int i=0; i<column.size(); i++) {
             row = (Vector<?>)column.get(i);
             for(int j=0; j<row.size(); j++) {
-                total.append(row.get(j).toString());
+                total.append(row.get(j).toString()).append("\t");
             }
             total.append(System.getProperty("line.separator"));
         }
@@ -2151,7 +2136,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 					if(image.getNDims() > 2) {
 						num = image.getExtents()[2];
 					}
-				} {
+				} else {
 					showTotals.setEnabled(true);
 				}
 
