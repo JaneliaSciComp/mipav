@@ -34,10 +34,10 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
     /** Original slice type - a 2D image is inserted. */
     public static final int ORIGINAL = 3;
 
-    /** Copy adjacient slice. */
+    /** Copy adjacent slice. */
     public static final int ADJACENT_DOWN = 4;
 
-    /** Copy adjacient slice. */
+    /** Copy adjacent slice. */
     public static final int ADJACENT_UP = 5;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -224,6 +224,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                         imageBuffer[i] = (imageBuffer[i] * weightPrevious) +
                                                          (imageBuffer2[i] * (1.0f - weightPrevious));
                                     }
+                                    imageBuffer2 = null;
 
                                     destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
                                 } else {
@@ -234,6 +235,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                         imageBuffer[i] = (imageBuffer[i] * weightPrevious) +
                                                          (imageBuffer2[i] * (1.0f - weightPrevious));
                                     }
+                                    imageBuffer2 = null;
 
                                     destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
                                 }
@@ -297,6 +299,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                     for (i = 0; i < (4 * sliceArea); i++) {
                                         imageBuffer[i] = (imageBuffer[i] + imageBuffer2[i]) / 2.0f;
                                     }
+                                    imageBuffer2 = null;
 
                                     destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
                                 } else {
@@ -306,6 +309,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                     for (i = 0; i < sliceArea; i++) {
                                         imageBuffer[i] = (imageBuffer[i] + imageBuffer2[i]) / 2.0f;
                                     }
+                                    imageBuffer2 = null;
 
                                     destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
                                 }
@@ -393,7 +397,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                 return;
                             }
                         }
-                    } // if (sliceType == ADJACIENT_DOWN)
+                    } // if (sliceType == ADJACENT_DOWN)
                     else if (sliceType == ADJACENT_UP) {
 
                         if (z == 0) {
@@ -440,6 +444,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                     // imageBuffer[i] = imageBuffer2[i];
                                     // }
                                     destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer2, false);
+                                    imageBuffer2 = null;
                                 } else {
                                     imageBuffer2 = new float[sliceArea];
                                     srcImage.exportSliceXY((t * oldZdim) + z, imageBuffer2);
@@ -448,6 +453,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                     // imageBuffer[i] = imageBuffer2[i];
                                     // }
                                     destImage.importData(tNewOffset + (z * sliceArea), imageBuffer2, false);
+                                    imageBuffer2 = null;
                                 }
                             } catch (IOException error) {
                                 imageBuffer = null;
@@ -463,7 +469,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                 return;
                             }
                         }
-                    } // if (sliceType == ADJACIENT_UP)
+                    } // if (sliceType == ADJACENT_UP)
                     else if (sliceType == BLANK) {
 
                         try {
