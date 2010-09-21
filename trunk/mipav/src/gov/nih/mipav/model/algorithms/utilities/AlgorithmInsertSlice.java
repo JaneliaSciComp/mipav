@@ -829,6 +829,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
 
                     Z++; // next slice position in the new image.
                 } // end of if (z != oldZdim)
+                System.gc();
             } // for (z = 0; z < (oldZdim+1); z++)
         } // for (t = 0; t < tDim; t++)
 
