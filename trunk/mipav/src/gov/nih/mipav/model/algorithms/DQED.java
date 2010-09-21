@@ -4699,7 +4699,7 @@ public abstract class DQED {
 	!
 	!  Parameters:
 	!
-	!    Input, real ( kind = 8 ) A(LDA,N), the output from DGECO or DGEFA.
+	!    Input, double A(LDA,N), the output from DGECO or DGEFA.
 	!
 	!    Input, integer LDA, the leading dimension of A.
 	!
@@ -5067,10 +5067,7 @@ public abstract class DQED {
 	  icol[1] = 'c';
 	  icol[2] = 'o';
 	  icol[3] = 'l';
-	  String iStr;
-	  int sLen;
-	  int padLen;
-	  int p;
+
 	  DecimalFormat dfi = new DecimalFormat("###0");
 	  DecimalFormat df1 = new DecimalFormat("###0.00000E000");
 	  DecimalFormat df2 = new DecimalFormat("###0.0000000000000E000");
@@ -6694,7 +6691,7 @@ public abstract class DQED {
 			        System.err.println("nvars must be greater than 0.");
 			        Preferences.debug("nvars must be greater than 0.\n");
 			        System.err.println("Input value is " + nvars);
-			        Preferences.debug("Input values is " + nvars + "\n");
+			        Preferences.debug("Input value is " + nvars + "\n");
 			        return;
 			      } // if (nvars <= 0)
 
@@ -6713,8 +6710,8 @@ public abstract class DQED {
 			         if ( i < 1 || 4 < i ) {
 			           System.err.println("DQED - Fatal error!");
 			           Preferences.debug("DQED - Fatal error!\n");
-			           System.err.println("ind(J) must be between 1 and 4.");
-			           Preferences.debug("ind(J) must be between 1 and 4.\n");
+			           System.err.println("ind(j) must be between 1 and 4.");
+			           Preferences.debug("ind(j) must be between 1 and 4.\n");
 			           System.err.println("Input value of ind["+j+"] is " +  ind[j]);
 			           Preferences.debug("Input value of ind["+j+"] is " +  ind[j] + "\n");
 			           return;
@@ -6859,8 +6856,8 @@ public abstract class DQED {
               for (i = 1; i <= mind - mindb; i++) {
             	  indb[i] = iwa[mindb + i - 1];
               }
-              iarr2 = new int[milast - mind + 1];
-              for (i = 1; i <= milast - mind; i++) {
+              iarr2 = new int[milast - mind + 2];
+              for (i = 1; i <= milast - mind + 1; i++) {
             	  iarr2[i] = iwa[mind + i - 1];
               }
               dx = new double[mxb - mdx + 1];
@@ -6931,8 +6928,8 @@ public abstract class DQED {
               for (i = 1; i <= mwa - mdxl; i++) {
             	  dxl[i] = wa[mdxl + i - 1];
               }
-              arr14 = new double[mwlast - mwa + 1];
-              for (i = 1; i <= mwlast - mwa; i++) {
+              arr14 = new double[mwlast - mwa + 2];
+              for (i = 1; i <= mwlast - mwa + 1; i++) {
             	  arr14[i] = wa[mwa + i - 1];
               }
 			  dqedmn ( dqedev, mequa, nvars, mcon, ind, bl, bu, x, fjac,
@@ -6943,7 +6940,7 @@ public abstract class DQED {
 			  for (i = 1; i <= mind - mindb; i++) {
             	  iwa[mindb + i - 1] = indb[i];
               }
-			  for (i = 1; i <= milast - mind; i++) {
+			  for (i = 1; i <= milast - mind + 1; i++) {
             	  iwa[mind + i - 1] = iarr2[i];
               }
 			  for (i = 1; i <= mxb - mdx; i++) {
@@ -7001,7 +6998,7 @@ public abstract class DQED {
 			  for (i = 1; i <= mwa - mdxl; i++) {
             	  wa[mdxl + i - 1] = dxl[i];
               }
-			  for (i = 1; i <= mwlast - mwa; i++) {
+			  for (i = 1; i <= mwlast - mwa + 1; i++) {
             	  wa[mwa + i - 1] = arr14[i];
               }
 
