@@ -102,6 +102,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private boolean doSubsample;
+    /** When true, the full version of JTEM Powell search is used in the registration algorithm. */
     private boolean doJTEM;
 
     /** DOCUMENT ME! */
@@ -190,6 +191,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private JCheckBox sampleCheckbox;
+    /** Turns on the JTEM full version of Powell's algorithm on or off */
     private JCheckBox jtemCheckbox;
 
     /** DOCUMENT ME! */
