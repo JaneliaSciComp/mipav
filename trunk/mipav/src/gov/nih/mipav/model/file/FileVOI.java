@@ -142,7 +142,8 @@ public class FileVOI extends FileXML {
     // --------------------------------------------------------------------------------------------------------
 
     /**
-     * This method read a VOI file that has been saved in the MIPAV VOI format.
+     * This method read a VOI file that has been saved in the MIPAV VOI format (MIPAV *.voi, Nuages,
+     * and MIPAV *.xml).
      * 
      * @param doLabel boolean telling to read the files as VOITexts (labels)
      * 
