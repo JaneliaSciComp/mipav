@@ -1,7 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.NumericalAnalysis.minimizing.BrentOnLine;
 import WildMagic.LibFoundation.NumericalAnalysis.minimizing.Powell;
 
 import gov.nih.mipav.model.structures.*;
@@ -583,117 +582,14 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
      * ) ..., the basis vectors. At the end, "point" is the best point found and functionAtBest is the value at "point".
      */
     public void runAlgorithm() {
-        int count = 0, currentDirection = 0, numFail = 0;
-        int boundGuess;
-        double[] pt = new double[nDims];
-        boolean keepGoing = true;
-
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
-
-        for (int i = 0; i < nDims; i++) {
-            pt[i] = point[i];
-        }
 
         double[][] xi = new double[nDims][nDims];
         for (int i = 0; i < nDims; i++) {
             xi[i][i] = 1.0;
         }
-
-
-        double tol = 0, sum = 0;
-        double[] unit_directions = new double[nDims];
-
-        for (int i = 0; i < nDims; i++) {
-            sum += xi[i][i] * xi[i][i];
-        }
-
-        for (int i = 0; i < nDims; i++) {
-            unit_directions[i] = xi[i][i] / (Math.sqrt(sum));
-
-            if (tolerance[i] > TINY) {
-                tol += Math.abs(unit_directions[i] / tolerance[i]);
-            }
-        }
-
-        double unit_tolerance = Math.abs(1 / tol);     
-        if ( useJTEM )
-        {
-            //System.err.println( "Full Powell search" );
-            Powell.search( point, xi, tolerance, bracketBound, trLimits, this, maxIterations, null );
-        }
-        else
-        {
-            while ((count < maxIterations) && keepGoing) {
-                keepGoing = false;
-
-                // Only terminate loop when point changes for ALL directions are less
-                // than their respective tolerances.  Will only stay false if ALL are false.
-                numFail = 0;
-                // Initialize numFail for this loop to 0.  If all dimensions fail the line minimization, won't keep going.
-
-                for (int i = 0; i < nDims; i++) {
-
-                    if (myProgressBar != null) {
-                        myProgressBar.updateValue(progressBegin +
-                                ((((nDims * count) + (i + 1)) * progressMax) / (nDims * maxIterations)),
-                                runningInSeparateThread);
-                    }
-
-                    // Initialize values for call to lineMinimization.
-                    boundGuess = bracketBound;
-                    currentDirection = i;
-                    //System.err.println( "MIPAV lineMinimization" );
-                    functionAtBest = lineMinimization(boundGuess, currentDirection);
-
-                    double[] directions = new double[nDims];
-                    for (int j = 0; j < nDims; j++) {
-                        directions[j] = 0;
-                    }
-                    directions[i] = 1;
-                    //BrentOnLine brentOnLine = new BrentOnLine(point, directions, this);
-                    //functionAtBest = brentOnLine.search(i, boundGuess, tolerance[i], tolerance[i], trLimits[0][i],trLimits[1][i]); //(ftol);
-
-
-                    // If lineMinimization couldn't bracket the minimum, it will return Double.MAX_VALUE
-                    // and the point value won't be changed.  Allow it to go on to other dimensions.
-                    if (functionAtBest == Double.MAX_VALUE) {
-                        numFail++;
-                    } else {
-
-                        if (Math.abs(point[i] - pt[i]) > tolerance[i]) {
-                            keepGoing = true;
-                        }
-                    }
-
-                    if (parent.isThreadStopped()) {
-                        return;
-                    }
-                } // end of nDims loop
-
-                count++;
-
-                if (numFail == nDims) {
-                    Preferences.debug("Looped through all dimensions and no change in point.\n");
-                    keepGoing = false;
-                    success = false;
-                }
-            } // end of while loop
-        }
-
-        if ((count == maxIterations) || (numFail == nDims)) {
-            Preferences.debug("Exited main Powell without finding the best minimum because ");
-
-            if (count == maxIterations) {
-                Preferences.debug("the Powell loop reached the maximum iterations, " + maxIterations + "\n");
-            }
-
-            if (numFail == nDims) {
-                Preferences.debug("for the given initial value, a better value could not be found in" + " any of the " +
-                        nDims + " dimensions.\n");
-            }
-        }
-
+        Powell.search( point, xi, tolerance, bracketBound, trLimits, this, maxIterations, null );
     }
 
     /**
@@ -723,14 +619,6 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
                 point[i] = initial[i]; // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
             }
         }
-    }
-
-    /**
-     * Turns the full version of Powell's algorithm on/off.
-     * @param bOn
-     */
-    public void setUseJTEM(boolean bOn) {
-        this.useJTEM = bOn;
     }
 
     /**
