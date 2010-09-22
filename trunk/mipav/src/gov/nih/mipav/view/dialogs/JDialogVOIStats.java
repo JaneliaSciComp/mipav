@@ -1405,7 +1405,12 @@ public class JDialogVOIStats extends JDialogBase
             }
 
             treeSelectionChange = true;
+            //TODO:Since fireVOISelectionChange is dead code, 
+            //setting the currentVOI->null is required for correct operation
             voiHandler.fireVOISelectionChange(currentVOI, null);
+            if(currentVOI == null) {
+                updateVOI(currentVOI, image);
+            }
             image.notifyImageDisplayListeners();
             // System.err.println("notifying of change");
         }
