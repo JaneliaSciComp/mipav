@@ -7405,14 +7405,10 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  boolean do140 = false;
 			  boolean do170 = false;
 			  boolean do180 = false;
-			  boolean do185 = false;
-			  boolean do190 = false;
 			  boolean do250 = false;
 			  boolean do260 = false;
 			  boolean do270 = false;
 			  boolean do280 = false;
-			  boolean do300 = false;
-			  boolean do305 = false;
 			  boolean do310 = false;
 			  boolean do320 = false;
 			  boolean do330 = false;
@@ -7541,11 +7537,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             iflag_dqedip = 0;
 			             return;
 			         }
-			         else {
-			             newbst = fc  <  fb[0] || (mcon > 0 && iters == 2);
-			             if ( newbst) {
-			            	 k = 0;
-			             }
+			         newbst = fc  <  fb[0] || (mcon > 0 && iters == 2);
+			         if ( newbst) {
+			             k = 0;
 			         }
 			     } // if (do60)
 			     if ( k == 0 && do60) {
@@ -7738,12 +7732,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          iflag_dqedip = 0;
 			          return;
 			      }
-			      do185 = true;
-			  }
-
-			  if (do185) {
-				  do185 = false;
-				  do190 = true;
 			      k = k + 1;
 			      //
 			      //  SOLVE LINEAR BOUNDED PROBLEM.
@@ -7803,10 +7791,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  SEE IF USER HAS GIVEN GENERAL CONSTRAINTS.
 			      //
-			  } // if (do185)
-			  if (do190) {
-				  do190 = false;
-				  do300 = true;
+			  
 			      for (j = nvars + 1; j <= nall; j++) {
 
 			          icase = ind[j];
@@ -7856,10 +7841,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			              indb[j] = 4;
 			          } // if (do280)
 			      } // for (j = nvars + 1; j <= nall; j++)
-			  } // if (do190)
-			 
-		      if (do300) {
-		    	  do300 = false;
+			  
 			      //  SOLVE THE LEAST SQUARES PROBLEM WITH BOUNDS AND LINEAR
 			      //  CONSTRAINTS.  THESE BOUNDS CAN COME FROM THE USER OR
 			      //  THE ALGORITHM.
@@ -7928,11 +7910,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          iflag_dqedip = 0;
 			          return;
 		          } // if (term)
-			      do305 = true;
-		      } // if (do300)
-
-			  if (do305) {
-				  do305 = false;
+			     
 		          rg = Math.max(rg, (pv[0]-pb)/pd);
 			      if ( ! retrea) {
 			          chg = 1.0;
@@ -8055,7 +8033,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      } // if (!retrea)
 			      do30 = true;
 			      continue loop;
-			  } // if (do305)
+			  } // if (do180)
 
 			  //
 			  //  TEST FOR CONVERGENCE
@@ -8204,7 +8182,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          if ( newopt) {
 			        	  iprint = iopt[lp+1];
 			          }
-			      do480 = true;
+			          do480 = true;
+			          continue loop;
 			      } // if (jp == 1)
                   //
 			      //  SEE IF MAX. NUMBER OF ITERATIONS CHANGING.
@@ -8379,7 +8358,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  int i;
 			  int icase;
 			  int igoelm = 850;
-			  int igoeqm;
 			  int igow[] = new int[1];
 			  int ipls = 0;
 			  int iprint = 0;
