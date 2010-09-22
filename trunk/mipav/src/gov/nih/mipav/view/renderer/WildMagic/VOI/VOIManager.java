@@ -5646,13 +5646,16 @@ voiItr: for ( int i = 0; i < kVOIs.size(); i++ ) { //iterate through all splitta
 voiSp:      for ( int j = 0; j < kVOICloneVoi.getCurves().size(); j++ ) { //iterate through all splittable contours
                 VOIBase kVOI3D = kVOICloneVoi.getCurves().get(j);
                 if ( m_iPlane != (m_iPlane & kVOI3D.getPlane() )) {  //within same plane
+                    kVOI.importCurve(kVOI3D);
                     continue voiSp;
                 }
                 int iVOISlice = kVOI3D.slice();
                 if ( !((iVOISlice >= iStartSlice) && (iVOISlice < iEndSlice)) ) { //within same slice
+                    kVOI.importCurve(kVOI3D);
                     continue voiSp;
                 }
                 if ( !(!bOnlyActive || kVOI3D.isActive()) ) {
+                    kVOI.importCurve(kVOI3D);
                     continue voiSp;
                 }
                 VOIBase kNew = split( kVOI3D, kStartPt, kEndPt );
