@@ -85,7 +85,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
 
     /** Number of pixels available for histogram formation. */
     private int histogramAvailable;
-    // Iterations of powell's algorithm
 
     /** Buffer holding calculation for noiseless U(x,y). */
     private double[] idealBuffer;
@@ -733,9 +732,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
      */
     private void powell(double[] p, double[][] xi, double ftol) {
         int ITMAX = 2000000000;
-        //double TOL = 2.0E-4;
         Powell.search( p, xi, ftol, this, ITMAX, null );
-    } // powell
+    }
 
     /**
      * DOCUMENT ME!
@@ -3971,8 +3969,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
 
     @Override
     public int getNumberOfVariables() {
-        // TODO Auto-generated method stub
-        return 0;
+        return nParams;
     }
 
 }

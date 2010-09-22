@@ -1,7 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.Mathematics.Matrix3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
@@ -154,9 +153,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
     /** If true subsample for levelEight, levelFour and levelTwo analyses. */
     private boolean doSubsample = true;
-
-    /** Turns the full version of Powell's algorithm on/off. When off the JTEM line minimization used.  */
-    private boolean doJTEM;
     
     /** Dummy initial values used to create a Powell's algorithm instance before setting initial. */
     private double[] dummy = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -917,7 +913,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
      * final "answer", or minimum, which will then be accessed by the dialog that called this algorithm.
      */
     public void runAlgorithm() {
-        long startTime = System.currentTimeMillis();
+        //long startTime = System.currentTimeMillis();
         int i;
 
         if (refImage.getNDims() != 3) {
@@ -1847,18 +1843,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         disposeLocal();
         finalize();
         setCompleted(true);
-        System.err.println( "Total registration time = " + (System.currentTimeMillis() - startTime) );
+        //System.err.println( "Total registration time = " + (System.currentTimeMillis() - startTime) );
     }
-
-    /**
-     * Turns the full version of Powell's algorithm on/off.
-     * @param bOn
-     */
-    public void setJTEM(boolean bOn)
-    {
-        doJTEM = bOn;
-    }
-
+    
     /**
      * DOCUMENT ME!
      *
@@ -2361,7 +2348,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         } else {
             powell = new AlgorithmConstPowellOpt3D(this, cog, 3, cost, initial, getTolerance(3), maxIter, bracketBound);
         }
-        powell.setUseJTEM(doJTEM);
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.setLimits(limits);
 
@@ -2613,7 +2599,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                                                bracketBound);
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.setLimits(limits);
-        powell.setUseJTEM(doJTEM);
 
         MatrixListItem item;
 
@@ -2711,7 +2696,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         AlgorithmConstPowellOpt3D powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, dummy,
                                                                          getTolerance(degree), maxIter, bracketBound);
         powell.setLimits(limits);
-        powell.setUseJTEM(doJTEM);
 
         for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = ((MatrixListItem) en.nextElement());
@@ -3118,7 +3102,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         AlgorithmConstPowellOpt3D powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial,
                                                                          getTolerance(degree), maxIter, bracketBound);
 
-        powell.setUseJTEM(doJTEM);
         linkProgressToAlgorithm(powell);
         powell.setProgressValues(generateProgressValues(60, 100));
 
@@ -3205,7 +3188,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         AlgorithmConstPowellOpt3D powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial,
                                                                          getTolerance(degree), maxIter, bracketBound);
         powell.setLimits(limits);
-        powell.setUseJTEM(doJTEM);
 
         fireProgressStateChanged("Measuring costs of minima");
 
@@ -3256,7 +3238,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             powell.disposeLocal();
             powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                                    bracketBound);
-            powell.setUseJTEM(doJTEM);
             linkProgressToAlgorithm(powell);
             powell.setProgressValues(generateProgressValues(43, 51));
             powell.setRunningInSeparateThread(runningInSeparateThread);
@@ -3278,7 +3259,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 powell.disposeLocal();
                 powell = new AlgorithmConstPowellOpt3D(this, cog, 12, cost, item.initial, getTolerance(12), maxIter,
                                                        bracketBound);
-                powell.setUseJTEM(doJTEM);
                 linkProgressToAlgorithm(powell);
                 powell.setProgressValues(generateProgressValues(51, 60));
                 powell.setRunningInSeparateThread(runningInSeparateThread);
