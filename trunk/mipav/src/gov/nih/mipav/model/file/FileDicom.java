@@ -753,25 +753,161 @@ public class FileDicom extends FileDicomBase {
                     else if (name.equals("0051,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
                     	isSiemensMRI2 = true;
                     }
-                    else if (name.equals("0019,100B") && isSiemensMRI) {
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("08") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "HeaderType", "Header Type"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("09") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "HeaderVersion", "Header Version"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("0B") && isSiemensMRI) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
 			                    "SliceMeasurementDuration", "Slice Measurement Duration"));	
                     }
-                    else if (name.equals("0019,100C") && isSiemensMRI) {
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("0C") && isSiemensMRI) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
 			                    "BValue", "B_Value"));	
                     }
-                    else if (name.equals("0019,100D") && isSiemensMRI) {
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("0D") && isSiemensMRI) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
 			                    "DiffusionDirectionality", "Diffusion Directionality"));	
                     }
-                    else if (name.equals("0019,100F") && isSiemensMRI) {
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("0F") && isSiemensMRI) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
 			                    "GradientMode", "Gradient Mode"));	
                     }
-                    else if (name.equals("0051,100B") && isSiemensMRI2) {
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("11") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "FlowCompensation", "Flow Compensation"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("14") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "ImaRelTablePosition", "Ima Rel Table Position"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("16") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "TimeAfterStart", "Time After Start"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("17") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "SliceResolution", "Slice Resolution"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("18") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "RealDwellTime", "Real Dwell Time"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("19") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelThickness", "Voxel Thickness"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("1A") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelPhaseFOV", "Voxel PhaseFOV"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("1B") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelReadoutFOV", "Voxel ReadoutFOV"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("1C") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelPositionSag", "Voxel PositionSag"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("1D") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelPositionCor", "Voxel PositionCor"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("1E") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelPositionTra", "Voxel PositionTra"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("1F") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelNormalSag", "Voxel Normal Sag"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("20") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelNormalCor", "Voxel Normal Cor"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("21") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelNormalTra", "Voxel Normal tra"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("22") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "VoxelInPlaneRot", "Voxel In Plane Rot"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("23") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "FMRIStimulInfo", "FMRI Stimul Info"));	
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("08") && isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "HeaderType", "Header Type"));	
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("09") && isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "HeaderVersion", "Header Version"));	
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("0A")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"MeasDuration", "Meas Duration"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("0B")&& isSiemensMRI2) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
                     			"MosaicMatrixSize", "Mosaic Matrix Size"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("0C")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"FieldOfView", "Field Of View"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("0D")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"SlicePosition", "Slice Position"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("0E")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"SliceOrientation", "Slice Orientation"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("0F")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"CoilString", "Coil String"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("11")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"PATModeText", "PAT Mode Text"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("12")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"RelTablePosition", "Rel Table Position"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("13")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"PositivePCSDirections", "Positive PCS Directions"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("14")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"FlowEncodingDirectionString", "Flow Encoding Direction String"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("15")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"SequenceMask", "Sequence Mask"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("16")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"ImageType", "Image Type"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("17")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"SliceThickness", "Slice Thickness"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("18")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"ScanOptions1", "Scan Options 1"));
+                    }
+                    else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("19")&& isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"ScanOptions2", "Scan Options 2"));
                     }
                     tagTable.setValue(key, strValue, elementLength);
 
@@ -828,7 +964,7 @@ public class FileDicom extends FileDicomBase {
                     }
                 } else if (type.equals(FileDicomBase.TYPE_SHORT)) {
                     data = getShort(tagVM, elementLength, endianess);
-                    if ((name.trim().equalsIgnoreCase("0019,100A")) && (isSiemensMRI)) {
+                    if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("0A") && (isSiemensMRI)) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
                     			                    "NumberOfImagesInMosaic", "Number Of Images in Mosaic"));
                     }
@@ -838,6 +974,14 @@ public class FileDicom extends FileDicomBase {
 
                 } else if (type.equals(FileDicomBase.TYPE_INT)) {
                     data = getInteger(tagVM, elementLength, endianess);
+                    if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("12") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "TablePositionOrigin", "Table Position Origin"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("13") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "ImaAbsTablePosition", "Ima Abs Table Position"));	
+                    }
 
                     tagTable.setValue(key, data, elementLength);
 
@@ -853,15 +997,31 @@ public class FileDicom extends FileDicomBase {
 
                 } else if (type.equals(FileDicomBase.TYPE_DOUBLE)) {
                     data = getDouble(tagVM, elementLength, endianess);
-                    if (name.equals("0019,100E") && isSiemensMRI) {
+                    if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("0E") && isSiemensMRI) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
 			                    "DiffusionGradientDirection", "Diffusion Gradient Direction"));	
                     }
-                    else if (name.equals("0019,1027") && isSiemensMRI) {
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("15") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"SlicePositionPCS", "SlicePosition PCS"));
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("24") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "FMRIStimulLevel", "FMRI Stimul Level"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("25") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "RBMoCoTrans", "RB MoCo Trans"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("26") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "RBMoCoRot", "RB MoCo Rot"));	
+                    }
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("27")&& isSiemensMRI) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
 			                    "BMatrix", "B_Matrix"));	
                     }
-                    else if (name.equals("0019,1028") && isSiemensMRI) {
+                    else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("28") && isSiemensMRI) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
 			                    "BandwidthPerPixelPhaseEncode", "Bandwidth Per Pixel Phase Encode"));	
                     }
