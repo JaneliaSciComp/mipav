@@ -34,8 +34,8 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
      * @param  bracketBound     DOCUMENT ME!
      */
     public AlgorithmConstPowellOpt3D(AlgorithmBase parent, Vector3f com, int degreeOfFreedom,
-                                     AlgorithmOptimizeFunctionBase costFunc, double[] initial, double[] tols,
-                                     int maxIter, int bracketBound) {
+            AlgorithmOptimizeFunctionBase costFunc, double[] initial, double[] tols,
+            int maxIter, int bracketBound) {
         super(parent, degreeOfFreedom, costFunc, initial, tols, maxIter, 3, bracketBound);
 
         if (degreeOfFreedom <= 12) {
@@ -77,7 +77,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
 
             for (int i = 0; i < degreeOfFreedom; i++) {
                 point[i] = initial[i]; // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-                                       // = 6 + 1 scale = 7 + 3 scales = 9 + 3 skews = 12
+                // = 6 + 1 scale = 7 + 3 scales = 9 + 3 skews = 12
                 trLimits[0][i] = -Float.MAX_VALUE;
                 trLimits[1][i] = Float.MAX_VALUE;
             }
@@ -151,7 +151,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
         TransMatrix matrix = new TransMatrix(4);
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
-        
+
         matrix.MultLeft(toOrigin);
         matrix.Mult(fromOrigin);
         //Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
@@ -240,7 +240,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
 
         matrix.MultLeft(toOrigin);
         matrix.Mult(fromOrigin);
-       //Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
+        //Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
         //matrix.convertFromMatrix(mtx);
 
@@ -370,6 +370,41 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
 
         return finalPoint;
     }
+    /**
+     * Accessor that returns the final point with translations, rotations, scales, and skews representing the best
+     * tranformation.
+     *
+     * @return  vector representing the best transformation in terms of translations, rotations, scales, and skews.
+     */
+    public double[] getFinal(double[] point) {
+
+        for (int i = 0; i < start.length; i++) {
+            finalPoint[i] = start[i];
+        }
+
+        if (nDims == 3) {
+            finalPoint[3] = point[0]; // translation x
+            finalPoint[4] = point[1]; // translation y
+            finalPoint[5] = point[2]; // translation z
+        } else if (nDims == 4) {
+            finalPoint[7] = finalPoint[8] = finalPoint[6] = point[0]; // global scaling factor
+            finalPoint[3] = point[1]; // translation x
+            finalPoint[4] = point[2]; // translation y
+            finalPoint[5] = point[3]; // translation z
+        } else if (nDims >= 6) {
+
+            for (int i = 0; i < nDims; i++) {
+                finalPoint[i] = point[i]; // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
+            }
+
+            if (nDims == 7) {
+                finalPoint[7] = finalPoint[8] = finalPoint[6];
+            }
+        }
+
+        return finalPoint;
+    }
+
 
     /**
      * Accessor that returns the final point with translations, rotations, scales, and skews representing the best
@@ -564,91 +599,87 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
         for (int i = 0; i < nDims; i++) {
             xi[i][i] = 1.0;
         }
-        //Powell.search( point, xi, 1.0e-6, this, maxIterations, null );
 
-        //Powell.search( point, xi, bracketBound, 1.0e-6, tolerance, trLimits, this, maxIterations, null );
 
-        /*
-        System.err.print("START  ");
-        for ( int i = 0; i < pt.length; i++ )
-        {
-        	System.err.print( pt[i] + " " );
-        }
-        System.err.println("");
+        double tol = 0, sum = 0;
+        double[] unit_directions = new double[nDims];
 
-        //System.err.println( "calling jtem powell" );
-        Powell.search( pt, xi, bracketBound, 1.0e-6, tolerance, trLimits, this, maxIterations, null );
-
-        System.err.print("JTEM   ");
-        for ( int i = 0; i < pt.length; i++ )
-        {
-        	System.err.print( pt[i] + " " );
-        }
-        System.err.println("");
-        
         for (int i = 0; i < nDims; i++) {
-            pt[i] = point[i];
+            sum += xi[i][i] * xi[i][i];
         }
-        
-*/
-        
-        //final double[] xit = new double[nDims];
 
-        //BrentOnLine brentOnLine = new BrentOnLine(point, xit, this);
-        
-        
-        while ((count < maxIterations) && keepGoing) {
-            keepGoing = false;
+        for (int i = 0; i < nDims; i++) {
+            unit_directions[i] = xi[i][i] / (Math.sqrt(sum));
 
-            // Only terminate loop when point changes for ALL directions are less
-            // than their respective tolerances.  Will only stay false if ALL are false.
-            numFail = 0;
-            // Initialize numFail for this loop to 0.  If all dimensions fail the line minimization, won't keep going.
-
-            for (int i = 0; i < nDims; i++) {
-
-                if (myProgressBar != null) {
-                    myProgressBar.updateValue(progressBegin +
-                                              ((((nDims * count) + (i + 1)) * progressMax) / (nDims * maxIterations)),
-                                              runningInSeparateThread);
-                }
-
-                // Initialize values for call to lineMinimization.
-                boundGuess = bracketBound;
-                currentDirection = i;
-                functionAtBest = lineMinimization(boundGuess, currentDirection);
-                
-
-                //for (int j = 0; j < nDims; j++)
-                //  xit[j] = xi[j][i];
-
-                //functionAtBest = brentOnLine.search(i, boundGuess, tolerance[i], trLimits[0][i],trLimits[1][i]); //(ftol);
-                
-
-                // If lineMinimization couldn't bracket the minimum, it will return Double.MAX_VALUE
-                // and the point value won't be changed.  Allow it to go on to other dimensions.
-                if (functionAtBest == Double.MAX_VALUE) {
-                    numFail++;
-                } else {
-
-                    if (Math.abs(point[i] - pt[i]) > tolerance[i]) {
-                        keepGoing = true;
-                    }
-                }
-
-                if (parent.isThreadStopped()) {
-                    return;
-                }
-            } // end of nDims loop
-
-            count++;
-
-            if (numFail == nDims) {
-                Preferences.debug("Looped through all dimensions and no change in point.\n");
-                keepGoing = false;
-                success = false;
+            if (tolerance[i] > TINY) {
+                tol += Math.abs(unit_directions[i] / tolerance[i]);
             }
-        } // end of while loop
+        }
+
+        double unit_tolerance = Math.abs(1 / tol);     
+        if ( useJTEM )
+        {
+            //System.err.println( "Full Powell search" );
+            Powell.search( point, xi, tolerance, bracketBound, trLimits, this, maxIterations, null );
+        }
+        else
+        {
+            while ((count < maxIterations) && keepGoing) {
+                keepGoing = false;
+
+                // Only terminate loop when point changes for ALL directions are less
+                // than their respective tolerances.  Will only stay false if ALL are false.
+                numFail = 0;
+                // Initialize numFail for this loop to 0.  If all dimensions fail the line minimization, won't keep going.
+
+                for (int i = 0; i < nDims; i++) {
+
+                    if (myProgressBar != null) {
+                        myProgressBar.updateValue(progressBegin +
+                                ((((nDims * count) + (i + 1)) * progressMax) / (nDims * maxIterations)),
+                                runningInSeparateThread);
+                    }
+
+                    // Initialize values for call to lineMinimization.
+                    boundGuess = bracketBound;
+                    currentDirection = i;
+                    //System.err.println( "MIPAV lineMinimization" );
+                    functionAtBest = lineMinimization(boundGuess, currentDirection);
+
+                    double[] directions = new double[nDims];
+                    for (int j = 0; j < nDims; j++) {
+                        directions[j] = 0;
+                    }
+                    directions[i] = 1;
+                    //BrentOnLine brentOnLine = new BrentOnLine(point, directions, this);
+                    //functionAtBest = brentOnLine.search(i, boundGuess, tolerance[i], tolerance[i], trLimits[0][i],trLimits[1][i]); //(ftol);
+
+
+                    // If lineMinimization couldn't bracket the minimum, it will return Double.MAX_VALUE
+                    // and the point value won't be changed.  Allow it to go on to other dimensions.
+                    if (functionAtBest == Double.MAX_VALUE) {
+                        numFail++;
+                    } else {
+
+                        if (Math.abs(point[i] - pt[i]) > tolerance[i]) {
+                            keepGoing = true;
+                        }
+                    }
+
+                    if (parent.isThreadStopped()) {
+                        return;
+                    }
+                } // end of nDims loop
+
+                count++;
+
+                if (numFail == nDims) {
+                    Preferences.debug("Looped through all dimensions and no change in point.\n");
+                    keepGoing = false;
+                    success = false;
+                }
+            } // end of while loop
+        }
 
         if ((count == maxIterations) || (numFail == nDims)) {
             Preferences.debug("Exited main Powell without finding the best minimum because ");
@@ -659,19 +690,10 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
 
             if (numFail == nDims) {
                 Preferences.debug("for the given initial value, a better value could not be found in" + " any of the " +
-                                  nDims + " dimensions.\n");
+                        nDims + " dimensions.\n");
             }
         }
-        
 
-/*
-        System.err.print("       ");
-        for ( int i = 0; i < point.length; i++ )
-        {
-        	System.err.print( point[i] + " " );
-        }
-        System.err.println("");
-*/
     }
 
     /**
@@ -704,6 +726,14 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
     }
 
     /**
+     * Turns the full version of Powell's algorithm on/off.
+     * @param bOn
+     */
+    public void setUseJTEM(boolean bOn) {
+        this.useJTEM = bOn;
+    }
+
+    /**
      * Sets the limits on rotation and translation.
      *
      * @param  limits  limits
@@ -720,7 +750,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
                 }
 
                 Preferences.debug("3D optimization.  For direction " + i + ", the minimum is: " + trLimits[0][i] +
-                                  " and the maximum is " + trLimits[1][i] + " pixels.\n");
+                        " and the maximum is " + trLimits[1][i] + " pixels.\n");
             }
         } else if (nDims == 4) {
             trLimits = new float[2][4];
@@ -743,7 +773,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
                 }
 
                 Preferences.debug("6D optimization.  For direction " + i + ", minimum is: " + trLimits[0][i] +
-                                  ", maximum is " + trLimits[1][i] + ".\n");
+                        ", maximum is " + trLimits[1][i] + ".\n");
             }
 
             for (int i = limits[0].length; i < nDims; i++) {

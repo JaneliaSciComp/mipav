@@ -81,7 +81,8 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * The flag for parallel powell's method
      */
     protected boolean parallelPowell = false;
-    
+
+    /** When true, JTEM Powell.search is used, otherwise, JTEM BrentOnline.search is used. */
     protected boolean useJTEM = false;
 
     /**
@@ -94,6 +95,8 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      */
     protected boolean pathRecorded = false;
     
+    /** The different searches change the number of variables in the transformation matrix that change. This
+      fills in the rest of the 'constant' portion of the matrix.*/
     double[] savedStartPoint;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -381,8 +384,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         }
 
         double unit_tolerance = Math.abs(1 / tol);        
-        
-        //System.err.println( "AlgorithmPowellOptBase " + unit_tolerance );
         savedStartPoint = new double[startPoint.length];
         for ( int i = 0; i < startPoint.length; i++ )
         {
@@ -795,20 +796,11 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
 
     @Override
     public double eval(double[] x) {
-/*
-        System.err.println("");
-        System.err.println("");
-        for ( int i = 0; i < x.length; i++ )
-        {
-        	System.err.print( x[i] + " " );
-        }
-        System.err.println("");
-*/
+        // The different searches change the number of variables in the
+        // transformation matrix that change. The savedStartPoint
+        // fills in the rest of the 'constant' portion of the matrix.
         double[]fullPoint = constructPoint(savedStartPoint, x);
         double r = costFunction.cost(convertToMatrix(fullPoint));
-        /*
-        System.err.println("cost = " + r);
-        */
         return r;
     }
 

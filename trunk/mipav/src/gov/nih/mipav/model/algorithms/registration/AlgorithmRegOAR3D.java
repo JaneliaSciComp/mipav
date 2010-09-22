@@ -344,6 +344,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
     private int weightedRefPixelsSub8 = 0;
 
     private ImageRegistrationGPU m_kGPUCost = null;
+    /** Turns the full version of Powell's algorithm on/off. When off the JTEM line minimization used.  */
     private boolean doJTEM;
     private CountDownLatch doneSignal;  
 
@@ -1700,6 +1701,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         // Profile.shutdown();
     }
 
+    /**
+     * Turns the full version of Powell's algorithm on/off.
+     * @param bOn
+     */
     public void setJTEM(boolean bOn)
     {
     	doJTEM = bOn;

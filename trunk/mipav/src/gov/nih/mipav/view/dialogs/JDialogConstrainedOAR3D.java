@@ -92,6 +92,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
     /** DOCUMENT ME! */
     private boolean doSubsample;
+    /** When true, the full version of JTEM Powell search is used in the registration algorithm. */
+    private boolean doJTEM;
 
     /** DOCUMENT ME! */
     private boolean fastMode;
@@ -204,6 +206,9 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
     /** DOCUMENT ME! */
     private JCheckBox sampleCheckbox;
 
+    /** Turns on the JTEM full version of Powell's algorithm on or off */
+    private JCheckBox jtemCheckbox;
+    
     /** DOCUMENT ME! */
     private JTextField textInput;
 
@@ -1275,6 +1280,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                                                  fastMode, calcCOG, bracketBound, maxIterations, numMinima);
         }
 
+        reg3.setJTEM(doJTEM);
         reg3.addListener(this);
 
         createProgressBar(matchImage.getImageName(), reg3);
@@ -1581,9 +1587,11 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         settingsPanel.add(sampleCheckbox, gbc);
         //settingsPanel.add(Box.createVerticalStrut(10));
         gbc.gridy = 5;
+        settingsPanel.add(jtemCheckbox, gbc);
+        gbc.gridy = 6;
         settingsPanel.add(fastModeCheckbox, gbc);
         //settingsPanel.add(Box.createVerticalStrut(10));
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         settingsPanel.add(calcCOGCheckbox, gbc);
 
         enableTranslationX(limitTrans);
@@ -1805,6 +1813,13 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         sampleCheckbox.setSelected(true);
         sampleCheckbox.setEnabled(true);
         sampleCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        jtemCheckbox = new JCheckBox("Full Powell's Method");
+        jtemCheckbox.setFont(serif12);
+        jtemCheckbox.setForeground(Color.black);
+        jtemCheckbox.setSelected(false);
+        jtemCheckbox.setEnabled(true);
+        jtemCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         fastModeCheckbox = new JCheckBox("Skip multilevel search.  Assume images are close to alignment.");
         fastModeCheckbox.setFont(serif12);
@@ -2744,6 +2759,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         } // if (voisOnly)
 
         doSubsample = sampleCheckbox.isSelected();
+        doJTEM = jtemCheckbox.isSelected();
         
         fillValue = Float.valueOf(valueText.getText()).floatValue();
         outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();

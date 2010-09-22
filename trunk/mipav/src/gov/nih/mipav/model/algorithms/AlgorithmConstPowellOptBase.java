@@ -48,7 +48,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
     private static final double GOLD = 1.618034;
 
     /** Used to prevent division by zero. */
-    private static final double TINY = 1.0 * Math.pow(10, -20);
+    protected static final double TINY = 1.0 * Math.pow(10, -20);
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -114,6 +114,9 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
 
     /** DOCUMENT ME! */
     private double minLimit1D;
+    
+    /** When true, JTEM Powell.search is used, otherwise, JTEM BrentOnline.search is used. */
+    protected boolean useJTEM = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -164,6 +167,14 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
      * @return  A vector representing the best transformation in terms of translations, rotations, scales, and skews.
      */
     public abstract double[] getFinal();
+
+    /**
+     * Returns the final point with translations, rotations, scales, and skews representing the best
+     * Transformation.
+     *
+     * @return  A vector representing the best transformation in terms of translations, rotations, scales, and skews.
+     */
+    public abstract double[] getFinal(double[] point);
 
     /**
      * Returns the matrix representing the best transformation.
@@ -594,13 +605,11 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
 
     @Override
     public double eval(double[] x) {
-        double r = costFunction.cost(convertToMatrix(x));
-        
-        //for ( int i = 0; i < x.length; i++ )
-        //{
-        //	System.err.print( x[i] + " " );
-        //}
-        //System.err.println(r);
+        // The different searches change the number of variables in the
+        // transformation matrix that change. The savedStartPoint
+        // fills in the rest of the 'constant' portion of the matrix.
+        double[]fullPoint = getFinal(x);
+        double r = costFunction.cost(convertToMatrix(fullPoint));
         return r;
     }
 
