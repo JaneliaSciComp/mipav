@@ -855,7 +855,7 @@ public class FileDicom extends FileDicomBase {
                     }
                     else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("0B")&& isSiemensMRI2) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
-                    			"MosaicMatrixSize", "Mosaic Matrix Size"));
+                    			"AcquisitionMatrix", "Acquisition Matrix"));
                     }
                     else if (name.substring(0,5).equals("0051,") && name.substring(7,9).equals("0C")&& isSiemensMRI2) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
