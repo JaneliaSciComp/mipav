@@ -46,7 +46,7 @@ import java.text.DecimalFormat;
  * function * exp(-realArg), so we obtain the log(Bessel) from the log(returned function) + realArg. For the scaled
  * Bessel function errors only start for x >= 32768. In finding the signal value that minimizes the negative of the
  * maximum likelihood equation, a one dimensional search method called Brent's method that uses inverse parabolic
- * ineterpolation calls the log of the maximum likelihood function. Brent's method is started with 3 points, 0.75 *
+ * interpolation calls the log of the maximum likelihood function. Brent's method is started with 3 points, 0.75 *
  * first moment calculated signal, the first moment calculated signal, and 1.25 * first moment calculated signal. This
  * assumes that the first moment result differs from the maximum likelihood moment by less than 25%.
  * </p>
@@ -258,7 +258,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
         if (validityTest) {
             testAlgorithm();
-
+            setCompleted(true);
             return;
         }
 
@@ -827,7 +827,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
      */
     private void testAlgorithm() {
         double signal = 100.0;
-        double stdDev = 1.0;
+        double stdDev = 2.0;
         int backgroundCount = 1000;
         int signalCount = 1000;
         int numReceivers = 1;
