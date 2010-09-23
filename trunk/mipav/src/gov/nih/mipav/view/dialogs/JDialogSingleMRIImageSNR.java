@@ -121,7 +121,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
-            //componentImage.getVOIHandler().setPresetHue(-1.0f);
+            componentImage.getVOIHandler().setPresetHue(-1.0f);
             dispose();
         } else if ((source == signalButton) || (source == signal2Button) || (source == backgroundButton)) {
 
@@ -179,7 +179,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
      * @param  event  DOCUMENT ME!
      */
     public void windowClosing(WindowEvent event) {
-        //componentImage.getVOIHandler().setPresetHue(-1.0f);
+        componentImage.getVOIHandler().setPresetHue(-1.0f);
         cancelFlag = true;
         dispose();
     }
@@ -191,7 +191,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
 
         try {
 
-            //componentImage.getVOIHandler().setPresetHue(-1.0f);
+            componentImage.getVOIHandler().setPresetHue(-1.0f);
 
             // Make algorithm
             snrAlgo = new AlgorithmSingleMRIImageSNR(image, signalIndex, signal2Index, backgroundIndex, numReceivers);

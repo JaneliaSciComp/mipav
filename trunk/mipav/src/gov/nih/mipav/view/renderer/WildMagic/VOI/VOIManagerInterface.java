@@ -1816,14 +1816,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
         selectAllVOIs(false);
         doVOI(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand());
+        m_kCurrentVOIGroup = null;
+        setPresetHue(presetHue);
+        advanceVOIUID();
         short sID = (short)(m_kParent.getActiveImage().getVOIs().getUniqueID());
         m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
         m_kCurrentVOIGroup.addVOIListener(this);
         m_kCurrentVOIGroup.setOpacity(1f);
-        
-        this.presetHue = presetHue;
-        advanceVOIUID();
-        //setPresetHue(presetHue);
     }
     
     /**
@@ -1843,7 +1842,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         
         advanceVOIUID();
-
         short sID = (short)(m_kParent.getActiveImage().getVOIs().getUniqueID());
         m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
         m_kCurrentVOIGroup.addVOIListener(this);
@@ -2118,15 +2116,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void setPresetHue(float presetHue) {
     	this.presetHue = presetHue;
-        int colorIncrement = Preferences.getVOIColorIncrement();
-        float hue;
-        if (presetHue >= 0.0f) {
-            hue = presetHue;
-        } else {
-            hue = (float) ((((voiUID++ + colorIncrement) * 35) % 360) / 360.0);
-        }
-
-        Color color = Color.getHSBColor(hue, 1.0f, 1.0f);
+    	if ( presetHue < 0 )
+    	{
+    	    return;
+    	}
+        Color color = Color.getHSBColor(presetHue, 1.0f, 1.0f);
         setButtonColor(toolbarBuilder.getVOIColorButton(), color );
     }
 
