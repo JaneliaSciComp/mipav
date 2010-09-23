@@ -3194,7 +3194,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                     advanceVOIUID();
                 }
                 for (j = 0; j < VOIs.length; j++) {
-                    VOIs[j].setColor(toolbarBuilder.getVOIColorButton().getBackground());
+                    if(VOIs[j].getColor() == null) {
+                        VOIs[j].setColor(toolbarBuilder.getVOIColorButton().getBackground());
+                    }
                     currentImage.registerVOI(VOIs[j]);
                     VOIs[j].getGeometricCenter();
                     VOIs[j].addVOIListener(this);
