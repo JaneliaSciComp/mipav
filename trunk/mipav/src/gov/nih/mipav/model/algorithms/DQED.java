@@ -8885,7 +8885,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            //  NOTE THAT THIS DOES NOT AFFECT THE RIGHT HAND SIDE.
 			            //
 			            for (l = 1; l <= np - 1; l++) {
-			                for (i=nvars+l+2; l <= mequa; l++) {
+			                for (i=nvars+l+2; i <= mequa; i++) {
 			                	sa[0] = qc[nvars+l+1][l+1];
 			                	sb[0] = qc[i][l+1];
 			                    drotg(sa,sb,sc,ss);
