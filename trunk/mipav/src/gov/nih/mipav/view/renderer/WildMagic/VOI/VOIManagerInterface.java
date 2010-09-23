@@ -1809,6 +1809,23 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 toolbarBuilder.getVOIColorButton().getBackground() );
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.VOIHandlerInterface#newVOI(float)
+     */
+    public void newVOI( float presetHue )
+    {
+        selectAllVOIs(false);
+        doVOI(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand());
+        short sID = (short)(m_kParent.getActiveImage().getVOIs().getUniqueID());
+        m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
+        m_kCurrentVOIGroup.addVOIListener(this);
+        m_kCurrentVOIGroup.setOpacity(1f);
+        
+        this.presetHue = presetHue;
+        advanceVOIUID();
+        //setPresetHue(presetHue);
+    }
+    
     /**
      * Initiate a new VOI.
      * @param bPropagate when true propagate the newVOI command to the VOIManagers.

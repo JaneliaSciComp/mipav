@@ -85,6 +85,14 @@ public interface VOIHandlerInterface extends ActionListener, MouseInputListener
      * @deprecated
      */
     public boolean isNewVoiNeeded(int voiType);
+    
+
+    /**
+     * Initiate a new VOI.
+     * @param presetHue new VOI color
+     */
+    public void newVOI( float presetHue );
+    
     /**
      * Propagates the selected VOI in a given direction. This function is deprecated,
      * replace with actionPerformed(ActionEvent) using CustomUIBuilder.PARAM_VOI_PROPAGATE_UP
@@ -136,6 +144,7 @@ public interface VOIHandlerInterface extends ActionListener, MouseInputListener
     /**
      * Sets the hue that will be used to draw the new VOI.
      * @param presetHue the hue to be used
+     * * @deprecated
      */
     public void setPresetHue(float presetHue);
     /**
