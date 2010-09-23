@@ -121,19 +121,22 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
-            componentImage.getVOIHandler().setPresetHue(-1.0f);
+            //componentImage.getVOIHandler().setPresetHue(-1.0f);
             dispose();
         } else if ((source == signalButton) || (source == signal2Button) || (source == backgroundButton)) {
 
             if (signalButton.isSelected()) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.getVOIHandler().setPresetHue(0.0f); // red
+                componentImage.getVOIHandler().newVOI(0.0f);
+                //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage.getVOIHandler().setPresetHue(0.0f); // red
             } else if (signal2Button.isSelected()) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
+                componentImage.getVOIHandler().newVOI(1.0f / 3.0f);
+                //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
             } else if (backgroundButton.isSelected()) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
+                componentImage.getVOIHandler().newVOI(2.0f / 3.0f);
+                //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
             }
         }
     }
@@ -176,7 +179,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
      * @param  event  DOCUMENT ME!
      */
     public void windowClosing(WindowEvent event) {
-        componentImage.getVOIHandler().setPresetHue(-1.0f);
+        //componentImage.getVOIHandler().setPresetHue(-1.0f);
         cancelFlag = true;
         dispose();
     }
@@ -188,7 +191,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
 
         try {
 
-            componentImage.getVOIHandler().setPresetHue(-1.0f);
+            //componentImage.getVOIHandler().setPresetHue(-1.0f);
 
             // Make algorithm
             snrAlgo = new AlgorithmSingleMRIImageSNR(image, signalIndex, signal2Index, backgroundIndex, numReceivers);
@@ -250,8 +253,9 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         signalButton.addActionListener(this);
         VOIGroup.add(signalButton);
         VOIPanel.add(signalButton, gbc4);
-        componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-        componentImage.getVOIHandler().setPresetHue(0.0f); // red
+        componentImage.getVOIHandler().newVOI(0.0f);
+        //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+        //componentImage.getVOIHandler().setPresetHue(0.0f); // red
 
         signal2Button = new JRadioButton("Add an optional second signal VOI", false);
         signal2Button.setForeground(Color.green.darker());
