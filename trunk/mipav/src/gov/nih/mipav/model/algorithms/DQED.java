@@ -70,10 +70,457 @@ public abstract class DQED {
 	private int npmax;
 	private double rdum;
 	
+	private int mode;
+	private double sigma[] = new double[9];
+	
+	private boolean testMode = true;
+	private int testCase;
+	private final int funcProb1Case = 101;
+	private final int fjaprxCase = 102;
 	
 	public DQED() {
 		
 	}
+	
+	private void test02 (double bl[], double bu[], double fj[][], int ind[], int iopt[],
+			             int iwa[], int ldfj, int liwa, int lwa, int mode, int nvars,
+			             double ropt[], double sigma[], double wa[], double x[] ) {
+
+			/*****************************************************************************80
+			!
+			!! TEST02 uses a finite-difference approximated jacobian.
+			!
+			!  Discussion:
+			!
+			!    The linear equations will not be constraints if MODE = 0.
+			!    Convergence is normally faster if the linear equations are used
+			!    as constraints, MODE = 1.
+			*/
+
+			  //double bl(nvars+2)
+			  //double bu(nvars+2)
+			  //double fj(ldfj,nvars+1)
+			  double fnorm[] = new double[1];
+			  int igo[] = new int[1];
+			  //int ind(nvars+2)
+			  //int iopt(28)
+			  //int iwa(liwa)
+			  int mcon;
+			  int mequa;
+			  int i;
+			  //double ropt(1)
+			  //double sigma(nvars)
+			  //double wa(lwa)
+			  //double x(nvars)
+
+			  Preferences.debug("\n");
+			  Preferences.debug("TEST02\n");
+			  Preferences.debug("Use an approximate jacobian.\n");
+			  Preferences.debug("MODE = " + mode + "\n");
+			//
+			//  Tell how much storage the solver has.
+			//
+			  iwa[1] = lwa;
+			  iwa[2] = liwa;
+			//
+			//  Set up print option.  (not used here).
+			//
+			  iopt[1] = -1;
+			  iopt[2] = 1;
+			//
+			//  Set up for linear model without any quadratic terms. (not used).
+			//
+			  iopt[3] = -14;
+			  iopt[4] = 1;
+			//
+			//  Do not allow convergence to be claimed on small steps.
+			//
+			  iopt[5] = 17;
+			  iopt[6] = 1;
+			  iopt[7] = 15;
+			//
+			//  Allow up to NVARS quadratic model terms.
+			//
+			  iopt[8] = nvars;
+			//
+			//  Change condition number for quadratic model degree.
+			//
+			  iopt[9] = 10;
+			  iopt[10] = 1;
+			  ropt[1] = 10000.0;
+			//
+			//  No more options.
+			//
+			  iopt[11] = 99;
+			//
+			//  MODE = 0, no constraints.
+			//
+			  if ( mode == 0 ) {
+
+			    mcon = 0;
+			  }
+			//
+			//  MODE = 1, there are constraints.
+			//  (The first two equations are linear, and can be used as
+			//  constraints instead).
+			//
+			  else {
+
+			    mcon = 2;
+			    ind[nvars+1] = 3;
+			    ind[nvars+2] = 3;
+			    bl[nvars+1] = sigma[1];
+			    bu[nvars+1] = sigma[1];
+			    bl[nvars+2] = sigma[2];
+			    bu[nvars+2] = sigma[2];
+
+			  }
+			 
+			  mequa = nvars - mcon;
+			//
+			//  All variables are otherwise free.
+			//
+			  for (i = 1; i <= nvars; i++) {
+			      ind[i] = 4;
+			  }
+
+			  dqed (fjaprxCase , mequa, nvars, mcon, ind, bl, bu, x, fj, ldfj, fnorm, 
+			    igo, iopt, ropt, iwa, wa );
+
+			  Preferences.debug("Computed minimizing x:\n");
+			  for (i = 1; i <= nvars; i++) {
+				  Preferences.debug("x[" + i + "] = " + x[i] + "\n");
+			  }
+			  Preferences.debug("Residual after the fit fnorm[0] = " + fnorm[0] + "\n");
+			  Preferences.debug("DQED output flag igo[0] = " + igo[0] + "\n");
+			 
+			  return;
+  } // test02
+	
+	private void dqedhd (double x[], double fj[][], int ldfj, int igo, int iopt[],
+			             double ropt[] ) {
+
+	/*****************************************************************************80
+	!
+	!! DQEDHD evaluates functions and derivatives for DQED.
+	!
+	!  Discussion:
+	!
+	!    The user problem has MCON constraint functions,
+	!    MEQUA least squares equations, and involves NVARS
+	!    unknown variables.
+	!
+	!    When this subprogram is entered, the general (near)
+	!    linear constraint partial derivatives, the derivatives
+	!    for the least squares equations, and the associated
+	!    function values are placed into the array FJ.
+	!    all partials and functions are evaluated at the point
+	!    in X.  then the subprogram returns to the calling
+	!    program unit. 
+	!
+	!    Typically one could do the following steps:
+	!
+	!    if ( igo /= 0 ) then
+	!      place the partials of the i-th constraint function with respect to 
+	!      variable j in the array fj(i,j), i = 1,...,mcon, j=1,...,nvars.
+	!
+	!    place the values of the i-th constraint equation into fj(i,nvars+1).
+	!
+	!    if ( igo /= 0 ) then
+	!      place the partials of the i-th least squares equation with respect 
+	!      to variable j in the array fj(i,j), i = 1,...,mequa, j = 1,...,nvars.
+	!
+	!    place the value of the i-th least squares equation into fj(i,nvars+1).
+	*/
+
+	  final int nvars = 8;
+
+	  //double fj(ldfj,nvars+1)
+	  int mcon;
+	  int mequa;
+	  //int mode
+	  //double x(nvars)
+	  double arr[] = new double[ldfj+1];
+	  int i;
+
+	  //common /mode/  mode
+
+	  if ( mode == 0 ) {
+	    mcon = 0;
+	  }
+	  else {
+	    mcon = 2;
+	  }
+
+	  mequa = nvars - mcon;
+
+	  if ( igo != 0 ) {
+	    jacProb1 ( fj, ldfj, nvars, x );
+	  }
+
+	  for (i = 1; i <= ldfj; i++) {
+		  arr[i] = fj[i][9];
+	  }
+	  funcProb1 ( arr, iopt, mcon, mequa, nvars, ropt, x );
+	  for (i = 1; i <= ldfj; i++) {
+		  fj[i][9] = arr[i];
+	  }
+
+	  return;
+	} // dqedhd
+	
+	private void fjaprx (double x[], double fj[][], int ldfj, int igo[], int iopt[], double ropt[] ) {
+
+	/*****************************************************************************80
+	!
+	!! FJAPRX uses DIFCEN to approximate the jacobian matrix.
+	*/
+
+	  final int nvars = 8;
+
+	  //double fj(ldfj,nvars+1)
+	  double fx[] = new double[9];
+	  int mcon;
+	  int mequa;
+	  //int mode
+	  //double x(nvars)
+
+	  //common /mode/  mode
+	  double arr[] = new double[ldfj+1];
+	  int i;
+
+	  if ( mode == 0 ) {
+	    mcon = 0;
+	  }
+	  else {
+	    mcon = 2;
+	  }
+
+	  mequa = nvars - mcon;
+
+	  difcen ( fj, funcProb1Case, fx, iopt, ldfj, mcon, mequa, nvars, ropt, x );
+	  
+      for (i = 1; i <= ldfj; i++) {
+    	  arr[i] = fj[i][nvars+1];
+      }
+	  funcProb1 ( arr, iopt, mcon, mequa, nvars, ropt, x );
+	  for (i = 1; i <= ldfj; i++) {
+    	  fj[i][nvars+1] = arr[i];
+      }
+
+	  return;
+	} // fjaprx
+	
+	private void funcProb1 (double fx[], int iopt[], int mcon, int mequa, int nvars, 
+			          double ropt[], double x[] ) {
+
+	/*****************************************************************************80
+	!
+	!! FUNC evaluates the functions.
+	!
+	!  Discussion:
+	!
+	!    The system of equations has the form:
+	!
+	!    x(1)+x(2) = sigma(1)
+	!
+	!    x(3)+x(4) = sigma(2)
+	!
+	!    x(1)*x(5)+x(2)*x(6)-x(3)*x(7)-x(4)*x(8) = sigma(3)
+	!
+	!    x(1)*x(7)+x(2)*x(8)+x(3)*x(5)+x(4)*x(6) = sigma(4)
+	!
+	!    x(1)*(x(5)**2-x(7)**2)+x(2)*(x(6)**2-x(8)**2)+x(3)*(-2.0*x(5)*x(7))
+	!      +x(4)*(-2.0*x(6)*x(8)) = sigma(5)
+	!
+	!    x(1)*(2.0*x(5)*x(7))+x(2)*(2.0*x(6)*x(8))+x(3)*(x(5)**2-x(7)**2)
+	!      +x(4)*(x(6)**2-x(8)**2) = sigma(6)
+	!
+	!    x(1)*(x(5)*(x(5)**2-3.0*x(7)**2))+x(2)*(x(6)*(x(6)**2-3.0*x(8)**2))
+	!      +x(3)*(x(7)*(x(7)**2-3.0*x(5)**2))+x(4)*(x(8)*(x(8)**2-3.0*x(6)**2))
+	!       = sigma(7)
+	!
+	!    x(1)*(-x(7)*(x(7)**2-3.0*x(5)**2))+x(2)*(-x(8)*(x(8)**2-3.0*x(6)**2))
+	!      +x(3)*(x(5)*(x(5)**2-3.0*x(7)**2))+x(4)*(x(6)*(x(6)**2-3.0*x(8)**2))
+	!       = sigma(8)
+	*/
+
+
+	  //double fx(mequa+mcon)
+	  //double sigma(8)
+	  //double x(nvars)
+
+	  //common /sigma/ sigma
+	  //common /mode/ mode
+	  //
+	  if ( mode == 0 ) {
+	    fx[1] = x[1] + x[2] - sigma[1];
+	  }
+	  else {
+	    fx[1] = x[1] + x[2];
+	  }
+
+	  if ( mode == 0 ) {
+	    fx[2] = x[3] + x[4] - sigma[2];
+	  }
+	  else {
+	    fx[2] = x[3] + x[4];
+	  }
+
+	  fx[3] = x[1]*x[5] + x[2]*x[6] - x[3]*x[7] - x[4]*x[8] - sigma[3];
+
+	  fx[4] = x[1]*x[7] + x[2]*x[8] + x[3]*x[5] + x[4]*x[6] - sigma[4];
+
+	  fx[5] = x[1]*(x[5]*x[5]-x[7]*x[7]) + x[2]*(x[6]*x[6]-x[8]*x[8])
+	    +x[3]*(-2.0*x[5]*x[7]) + x[4]*(-2.0*x[6]*x[8]) - sigma[5];
+
+	  fx[6] = x[1]*(2.0*x[5]*x[7]) + x[2]*(2.0*x[6]*x[8])
+	    + x[3]*(x[5]*x[5]-x[7]*x[7])
+	    + x[4]*(x[6]*x[6]-x[8]*x[8]) - sigma[6];
+
+	  fx[7] = x[1]*(x[5]*(x[5]*x[5]-3.0*x[7]*x[7]))
+	    + x[2]*(x[6]*(x[6]*x[6]-3.0*x[8]*x[8]))
+	    + x[3]*(x[7]*(x[7]*x[7]-3.0*x[5]*x[5]))
+	    + x[4]*(x[8]*(x[8]*x[8]-3.0*x[6]*x[6]))
+	    - sigma[7];
+
+	  fx[8] = x[1]*(-x[7]*(x[7]*x[7]-3.0*x[5]*x[5]))
+	    + x[2]*(-x[8]*(x[8]*x[8]-3.0*x[6]*x[6])) 
+	    + x[3]*(x[5]*(x[5]*x[5]-3.0*x[7]*x[7]))
+	    + x[4]*(x[6]*(x[6]*x[6]-3.0*x[8]*x[8])) - sigma[8];
+
+	  return;
+    } // funcProb1
+	
+	private void jacProb1 (double fj[][], int ldfj, int nvars, double x[] ) {
+
+	/*****************************************************************************80
+	!
+	!! jacProb1 evaluates the partial derivatives of the functions.
+	!
+	!  Parameters:
+	!
+	!    Output, double FJ(LDFJ,NVARS), the MCON+MEQUA by NVARS
+	!    matrix of partial derivatives.
+	!
+	!    Input, integer LDFJ, the leading dimension of FJ, which must be
+	!    at least MCON+MEQUA.
+	!
+	!    Input, integer NVARS, the number of variables.
+	!
+	!    Input, double X(NVARS), the point at which the partial derivatives
+	!    are to be evaluated.
+	*/
+
+	  //double fj(ldfj,nvars)
+	  //double x(nvars)
+	//
+	//  Equation #1: 
+	//
+	//    x(1)+x(2) = sigma(1)
+	//
+	  fj[1][1] = 1.0;
+	  fj[1][2] = 1.0;
+	  fj[1][3] = 0.0;
+	  fj[1][4] = 0.0;
+	  fj[1][5] = 0.0;
+	  fj[1][6] = 0.0;
+	  fj[1][7] = 0.0;
+	  fj[1][8] = 0.0;
+	//
+	//  Equation #2:
+	//
+	//    x(3)+x(4) = sigma(2)
+	//
+	  fj[2][1] = 0.0;
+	  fj[2][2] = 0.0;
+	  fj[2][3] = 1.0;
+	  fj[2][4] = 1.0;
+	  fj[2][5] = 0.0;
+	  fj[2][6] = 0.0;
+	  fj[2][7] = 0.0;
+	  fj[2][8] = 0.0;
+	//
+	//  Equation #3:
+	//    x(1)*x(5)+x(2)*x(6)-x(3)*x(7)-x(4)*x(8) = sigma(3)
+	//
+	  fj[3][1] = x[5];
+	  fj[3][2] = x[6];
+	  fj[3][3] = -x[7];
+	  fj[3][4] = -x[8];
+	  fj[3][5] = x[1];
+	  fj[3][6] = x[2];
+	  fj[3][7] = -x[3];
+	  fj[3][8] = -x[4];
+	//
+	//  Equation #4:
+	//    x(1)*x(7)+x(2)*x(8)+x(3)*x(5)+x(4)*x(6) = sigma(4)
+	//
+	  fj[4][1] = x[7];
+	  fj[4][2] = x[8];
+	  fj[4][3] = x[5];
+	  fj[4][4] = x[6];
+	  fj[4][5] = x[3];
+	  fj[4][6] = x[4];
+	  fj[4][7] = x[1];
+	  fj[4][8] = x[2];
+	//
+	//  Equation #5:
+	//    x(1)*(x(5)**2-x(7)**2)+x(2)*(x(6)**2-x(8)**2)+x(3)*(-2.0*x(5)*x(7))
+	//      +x(4)*(-2.0*x(6)*x(8)) = sigma(5)
+	//
+	  fj[5][1] = x[5]*x[5]-x[7]*x[7];
+	  fj[5][2] = x[6]*x[6]-x[8]*x[8];
+	  fj[5][3] = -2.0 *x[5]*x[7];
+	  fj[5][4] = -2.0 *x[6]*x[8];
+	  fj[5][5] = 2.0 *(x[1]*x[5]-x[3]*x[7]);
+	  fj[5][6] = 2.0 *(x[2]*x[6]-x[4]*x[8]);
+	  fj[5][7] = -2.0 *(x[1]*x[7]+x[3]*x[5]);
+	  fj[5][8] = -2.0 *(x[2]*x[8]+x[4]*x[6]);
+	//
+	//  Equation #6:
+	//    x(1)*(2.0*x(5)*x(7))+x(2)*(2.0*x(6)*x(8))+x(3)*(x(5)**2-x(7)**2)
+	//      +x(4)*(x(6)**2-x(8)**2) = sigma(6)
+	//
+	  fj[6][1] = 2.0 *x[5]*x[7];
+	  fj[6][2] = 2.0 *x[6]*x[8];
+	  fj[6][3] = x[5]*x[5]-x[7]*x[7];
+	  fj[6][4] = x[6]*x[6]-x[8]*x[8];
+	  fj[6][5] = 2.0 *(x[1]*x[7]+x[3]*x[5]);
+	  fj[6][6] = 2.0 *(x[2]*x[8]+x[4]*x[6]);
+	  fj[6][7] = 2.0 *(x[1]*x[5]-x[3]*x[7]);
+	  fj[6][8] = 2.0 *(x[2]*x[6]-x[4]*x[8]);
+	//
+	//  Equation #7:
+	//    x(1)*(x(5)*(x(5)**2-3.0*x(7)**2))+x(2)*(x(6)*(x(6)**2-3.0*x(8)**2))
+	//      +x(3)*(x(7)*(x(7)**2-3.0*x(5)**2))+x(4)*(x(8)*(x(8)**2-3.0*x(6)**2))
+	//       = sigma(7)
+	//
+	  fj[7][1] = x[5]*(x[5]*x[5]-3.0*x[7]*x[7]);
+	  fj[7][2] = x[6]*(x[6]*x[6]-3.0*x[8]*x[8]);
+	  fj[7][3] = x[7]*(x[7]*x[7]-3.0*x[5]*x[5]);
+	  fj[7][4] = x[8]*(x[8]*x[8]-3.0*x[6]*x[6]);
+	  fj[7][5] = 3.0*(x[1]*(x[5]*x[5]-x[7]*x[7])+x[3]*(-2.0*x[5]*x[7]));
+	  fj[7][6] = 3.0*(x[2]*(x[6]*x[6]-x[8]*x[8])+x[4]*(-2.0*x[6]*x[8]));
+	  fj[7][7] = -3.0*(x[1]*(2.0*x[5]*x[7])+x[3]*(x[5]*x[5]-x[7]*x[7]));
+	  fj[7][8] = -3.0*(x[2]*(2.0*x[6]*x[8])+x[4]*(x[6]*x[6]-x[8]*x[8]));
+	//
+	//  Equation #8:
+	//    x(1)*(-x(7)*(x(7)**2-3.0*x(5)**2))+x(2)*(-x(8)*(x(8)**2-3.0*x(6)**2))
+	//      +x(3)*(x(5)*(x(5)**2-3.0*x(7)**2))+x(4)*(x(6)*(x(6)**2-3.0*x(8)**2))
+	//       = sigma(8)
+	//
+	  fj[8][1] = -x[7]*(x[7]*x[7]-3.0*x[5]*x[5]);
+	  fj[8][2] = -x[8]*(x[8]*x[8]-3.0*x[6]*x[6]);
+	  fj[8][3] = x[5]*(x[5]*x[5]-3.0*x[7]*x[7]);
+	  fj[8][4] = x[6]*(x[6]*x[6]-3.0*x[8]*x[8]);
+	  fj[8][5] = 3.0*(x[1]*(2.0*x[5]*x[7])+x[3]*(x[5]*x[5]-x[7]*x[7]));
+	  fj[8][6] = 3.0*(x[2]*(2.0*x[6]*x[8])+x[4]*(x[6]*x[6]-x[8]*x[8]));
+	  fj[8][7] = 3.0*(x[1]*(x[5]*x[5]-x[7]*x[7])+x[3]*(-2.0*x[5]*x[7]));
+	  fj[8][8] = 3.0*(x[2]*(x[6]*x[6]-x[8]*x[8])+x[4]*(-2.0*x[6]*x[8]));
+
+	  return;
+    } // jacProb1
 	
 	private double damax(int n, double x[], int incx) {
 		/*****************************************************************************80
@@ -4799,7 +5246,7 @@ public abstract class DQED {
 	  return;
 	} // dgesl
 	
-	private void difcen (double fj[][], int func, double fx[], int iopt[], int ldfj, int mcon,
+	private void difcen (double fj[][], int funcCase, double fx[], int iopt[], int ldfj, int mcon,
 			             int mequa, int nvars, double ropt[], double x[] ) {
 
 	/*****************************************************************************80
@@ -4873,6 +5320,12 @@ public abstract class DQED {
 	      //
 	      //Evaluate F(XP).
 	      //
+	      if (testMode) {
+	    	  switch(funcCase) {
+	    	  case funcProb1Case:
+	    		  funcProb1(fx, iopt, mcon, mequa, nvars, ropt, x);
+	    	  }
+	      } // if (testMode)
 	      //func ( fx, iopt, mcon, mequa, nvars, ropt, x )
 	      //
 	      //  Save F(XP).
@@ -4887,6 +5340,12 @@ public abstract class DQED {
 	      //
 	      //  Evaluate F(XM).
 	      //
+	      if (testMode) {
+	    	  switch(funcCase) {
+	    	  case funcProb1Case:
+	    		  funcProb1(fx, iopt, mcon, mequa, nvars, ropt, x);
+	    	  }
+	      } // if (testMode)
 	      //func ( fx, iopt, mcon, mequa, nvars, ropt, x )
 	      //
 	      // Estimate the partial derivative d F/d X(J) by (F(XP)-F(XM))/(2*DXJ)
@@ -5562,8 +6021,8 @@ public abstract class DQED {
    } // dpchek
 	
 	
-	private void dqed (int dqedev, int mequa, int nvars, int mcon, int ind[], double bl[],
-			           double bu[], double x[], double fjac[][], int ldfjac, double fnorm, 
+	private void dqed (int dqedevCase, int mequa, int nvars, int mcon, int ind[], double bl[],
+			           double bu[], double x[], double fjac[][], int ldfjac, double fnorm[], 
 			           int igo[], int iopt[], double ropt[], int iwa[], double wa[] ) {
 
 			/*****************************************************************************80
@@ -6932,7 +7391,7 @@ public abstract class DQED {
               for (i = 1; i <= mwlast - mwa + 1; i++) {
             	  arr14[i] = wa[mwa + i - 1];
               }
-			  dqedmn ( dqedev, mequa, nvars, mcon, ind, bl, bu, x, fjac,
+			  dqedmn ( dqedevCase, mequa, nvars, mcon, ind, bl, bu, x, fjac,
 			    ldfjac, fnorm, igo, iopt, ropt, iarr2, arr14, dx, xb,
 			    b, bb, blb, bub, indb, npmax,
 			    zp, xp, qc, Math.max(mequa,nvars), pj,
@@ -8317,8 +8776,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			 
     } // dqedip
 	
-	private void dqedmn (int dqedev, int mequa, int nvars, int mcon, int ind[], double bl[],
-			  double bu[], double x[], double fjac[][], int ldfjac, double fb, int igo[],
+	private void dqedmn (int dqedevCase, int mequa, int nvars, int mcon, int ind[], double bl[],
+			  double bu[], double x[], double fjac[][], int ldfjac, double fb[], int igo[],
 			  int iopt[], double ropt[], int iwa[], double wa[], double dx[], double xb[],
 			  double b[], double bb[], double blb[], double bub[], int indb[], int npmax,
 			  double zp[][], double xp[][], double qc[][], int mdqc, double pj[],
@@ -8487,8 +8946,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        //  Set "INFINITY" ON THIS MACHINE.
 			        //
-			        fb = Double.MAX_VALUE;
-			        dxnrm = fb;
+			        fb[0] = Double.MAX_VALUE;
+			        dxnrm = fb[0];
 			        fl = 0.0;
 			        //
 			        //  MODEL PROBLEM RESIDUAL.
@@ -8511,7 +8970,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        	}
 			            k = 0;
 			            kl = -1;
-			            fl = fb;
+			            fl = fb[0];
 			        } // if (retrea)
 			        else {
 			            kl = k;
@@ -8538,7 +8997,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 		            if ( revers) {
 		                return;
 		            }
-	                dqedev ( x, fjac, ldfjac, igo, iopt, ropt );
+		            if (testMode) {
+		            	switch(dqedevCase) {
+		            	case fjaprxCase:
+		            		fjaprx(x, fjac, ldfjac, igo, iopt, ropt);
+		            	}
+		            }
+		            else {
+	                    dqedev ( x, fjac, ldfjac, igo, iopt, ropt );
+		            }
 	                do50 = true;
 			    } // if (do30)
 
@@ -8937,7 +9404,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        for (j = 1; j <= nvars; j++) {
 			        	gr[j] = pj[j];
 			        }
-			        newbst = fc  <  fb;
+			        newbst = fc  <  fb[0];
 			        if ( newbst) {
 			        	k = 0;
 			        }
@@ -8951,7 +9418,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        pd = Double.MAX_VALUE;
 
 			        if ( ! retrea) {
-			            fb = fc;
+			            fb[0] = fc;
 			        }
 
 			        switch(2 - kl) {
@@ -9136,7 +9603,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          chg = Math.min(chg,t2);
 			          chg = Math.max(chg, 0.1 );
 			          pb = pv[0];
-			          pd = 1.5 * (fb+pb* (pb/fb)) - 4.0 *pb;
+			          pd = 1.5 * (fb[0]+pb* (pb/fb[0])) - 4.0 *pb;
 			      } // if (k == 1)
 
 			      for (j = 1; j <= nvars; j++) {
@@ -9940,14 +10407,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 		            switch(igoelm) {
 		            case 850:
 		    	        do850 = true;
-		    	        break;
-		            case 670:
-		                do670 = true;
-		                break;
+		    	        continue loop;
 		            case 740:
 		    	        do740 = true;
+		    	        continue loop;
 		            }// switch(igoelm)
-		            do980 = true;
 			    } // if (do940)
 			//
 			//  TEST FOR CONVERGENCE
@@ -9970,6 +10434,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    } // if (do980
 			    
 			    if (do985) {
+			    	do985 = false;
 			        //
 			        //  TEST FOR SMALL FUNCTION NORM.
 			        //
@@ -10025,11 +10490,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    if (do1010) {
 			        do1010 = false;
 
-			        term = (Math.abs(fb-pv[0])<=tolsnr*fb) && (Math.abs(fc-pv[0]) <= fb*tolp);
-			        term = term && (Math.abs(fc-fl)<=fb*tolsnr);
-			        term = term && (Math.abs(pvl-pv[0])<=fb*tolsnr);
+			        term = (Math.abs(fb[0]-pv[0])<=tolsnr*fb[0]) && (Math.abs(fc-pv[0]) <= fb[0]*tolp);
+			        term = term && (Math.abs(fc-fl)<=fb[0]*tolsnr);
+			        term = term && (Math.abs(pvl-pv[0])<=fb[0]*tolsnr);
 
 			        do990 = true;
+			        continue loop;
 			    } // if (do1010)
 
 			 
@@ -10134,6 +10600,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            else {
 			                lpdiff = 1;
 			                do1110 = true;
+			                continue loop;
 			            }
 			        } // if (jp == 99)
 			        //
