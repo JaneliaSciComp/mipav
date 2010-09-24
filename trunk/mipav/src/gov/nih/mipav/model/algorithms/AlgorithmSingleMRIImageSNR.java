@@ -8,6 +8,9 @@ import gov.nih.mipav.view.*;
 import java.io.IOException;
 import java.text.DecimalFormat;
 
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfOneVariable;
+import WildMagic.LibFoundation.NumericalAnalysis.minimizing.Brent;
+
 
 /**
  * This program uses a mandatory signal 1 VOI, an optional signal 2 VOI, a mandatory noise background VOI, and the
@@ -157,7 +160,7 @@ import java.text.DecimalFormat;
  * 1F1(-1/2, 1, -pow) = exp(-pow/2) * [(1 + pow) * I0(pow/2) + pow * I1(pow/2)]
  * </p>
  */
-public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
+public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFunctionOfOneVariable {
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -236,7 +239,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double minimumSignal;
         double centralSignal;
         double maximumSignal;
-        double[] maxLikelihoodSignal = new double[1];
+        double[] maxLikelihoodSignal = new double[2];
         short[] mask;
         double backgroundStdDev;
         int backgroundCount = 0;
@@ -254,7 +257,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double cnrML;
         double tol = 1.0E-3;
         boolean test = false;
-        boolean validityTest = false;
+        boolean validityTest = true;
 
         if (validityTest) {
             testAlgorithm();
@@ -415,7 +418,8 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         centralSignal = snr * backgroundStdDev;
         minimumSignal = 0.75 * centralSignal;
         maximumSignal = 1.25 * centralSignal;
-        brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
+        //brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
+        Brent.search( minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, this, tol );
 
         if (useMaxLikelihood) {
             snrML = maxLikelihoodSignal[0] / backgroundStdDev;
@@ -444,7 +448,8 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
                 centralSignal = snr2 * backgroundStdDev;
                 minimumSignal = 0.75 * centralSignal;
                 maximumSignal = 1.25 * centralSignal;
-                brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
+                //brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
+                Brent.search( minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, this, tol );
 
                 if (useMaxLikelihood) {
                     snrML2 = maxLikelihoodSignal[0] / backgroundStdDev;
@@ -843,7 +848,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double minimumSignal;
         double centralSignal;
         double maximumSignal;
-        double[] maxLikelihoodSignal = new double[1];
+        //double[] maxLikelihoodSignal = new double[1];
         double tol = 1.0E-3;
 
         nf = new DecimalFormat("0.00E0");
@@ -888,12 +893,20 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         centralSignal = snr * backgroundStdDev;
         minimumSignal = 0.5 * centralSignal;
         maximumSignal = 1.5 * centralSignal;
-        brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
+        //brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
+        //snr = maxLikelihoodSignal[0] / backgroundStdDev;
+        double[] maxLikelihoodSignal = new double[2];
+        Brent.search(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, this, tol );
         snr = maxLikelihoodSignal[0] / backgroundStdDev;
         Preferences.debug("Maximum likelihood snr for signal 1 VOI = " + nf.format(snr) + "\n");
 
         return;
     } // testAlgorithm
+
+    @Override
+    public double eval(double x) {
+        return -receiverMaximumLikelihood(x);
+    }
 
     /**
      * This func is commented out because it only works for the case when the number of receivers equals one.
