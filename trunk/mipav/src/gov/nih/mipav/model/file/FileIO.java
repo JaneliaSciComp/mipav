@@ -11424,19 +11424,35 @@ public class FileIO {
         final int index = options.getFileName().indexOf(".");
         final String prefix = options.getFileName().substring(0, index); // Used for setting file name
         final String fileSuffix = options.getFileName().substring(index);
-        final int slice = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage()
-                .getSlice();
+        int slice = 0;
+        boolean isVis = UI.isAppFrameVisible();
+        try {
+        	slice = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getSlice();
+        }catch(NoSuchElementException e) {
+        	//put image in frame..set to invisible
+    		UI.setAppFrameVisible(false);
+    		new ViewJFrameImage(image);
+    		slice = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getSlice();  
+    	}
+        
         String name;
 
         final int beginSlice = options.getBeginSlice();
         final int endSlice = options.getEndSlice();
+        MemoryImageSource memImageA;
 
         for (int i = beginSlice; i <= endSlice; i++) {
+        	
+        	Image im;
+        	
 
-            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(i);
+	         ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(i);
+	
+	         im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage()
+	                    .getImage();
 
-            final Image im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage()
-                    .getImage();
+	             
+
 
             if ( (i < 9) && (endSlice != beginSlice)) {
                 name = options.getFileDirectory() + prefix + "00" + (i + 1) + fileSuffix;
@@ -11461,6 +11477,8 @@ public class FileIO {
 
         ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().show(0, slice, null, null,
                 true, -1);
+        
+        UI.setAppFrameVisible(isVis);
 
         return true;
     }
