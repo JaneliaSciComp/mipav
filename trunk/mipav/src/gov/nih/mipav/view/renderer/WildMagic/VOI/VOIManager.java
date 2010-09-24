@@ -493,7 +493,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     /** Whether the livewire properties (e.g. gradient magnitude) should be recalculated */
     private boolean m_bLiveWire = true;
 
-
+    private boolean m_bFirstScale = true;
+    private VOIBase m_kBackupVOI = null;
+    
     public VOIManager (VOIManagerInterface kParent )
     {
         m_kParent = kParent;
@@ -1236,6 +1238,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     m_kParent.saveVOIs("addVOIPoint");
                     addVOIPoint( kEvent.getX(), kEvent.getY() );
                 }
+               else if ( m_iNearStatus == NearBoundPoint )
+               {
+                   m_bFirstScale = true;
+               }
                 // otherwise determine if the pointer is inside a contour, show that the contour can be selected:
                 else if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown(), kEvent.isControlDown() ) != null )
                 {
@@ -4798,6 +4804,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return;
         }
+        if ( m_bFirstScale )
+        {
+            m_kBackupVOI = kVOI.clone();
+            m_bFirstScale = false;
+        }
+        
 
         int nearBound = kVOI.getNearBoundPoint();
         if ( nearBound == VOIBase.NOT_A_POINT )
@@ -4807,28 +4819,29 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         Vector3f kScreenBound = null;
         switch ( nearBound )
         {
-        case VOIBase.UPPER_LEFT: kScreenBound = getBoundingBoxUpperLeft( kVOI ); break;
-        case VOIBase.UPPER_RIGHT: kScreenBound = getBoundingBoxUpperRight( kVOI ); break;
-        case VOIBase.LOWER_LEFT: kScreenBound = getBoundingBoxLowerLeft( kVOI ); break;
-        case VOIBase.LOWER_RIGHT: kScreenBound = getBoundingBoxLowerRight( kVOI ); break;
+        case VOIBase.UPPER_LEFT: kScreenBound = getBoundingBoxUpperLeft( m_kBackupVOI ); break;
+        case VOIBase.UPPER_RIGHT: kScreenBound = getBoundingBoxUpperRight( m_kBackupVOI ); break;
+        case VOIBase.LOWER_LEFT: kScreenBound = getBoundingBoxLowerLeft( m_kBackupVOI ); break;
+        case VOIBase.LOWER_RIGHT: kScreenBound = getBoundingBoxLowerRight( m_kBackupVOI ); break;
 
-        case VOIBase.UPPER_MIDDLE: kScreenBound = getBoundingBoxUpperMiddle( kVOI ); break;
-        case VOIBase.RIGHT_MIDDLE: kScreenBound = getBoundingBoxRightMiddle( kVOI ); break;
-        case VOIBase.LEFT_MIDDLE: kScreenBound = getBoundingBoxLeftMiddle( kVOI ); break;
-        case VOIBase.LOWER_MIDDLE: kScreenBound = getBoundingBoxLowerMiddle( kVOI ); break;
+        case VOIBase.UPPER_MIDDLE: kScreenBound = getBoundingBoxUpperMiddle( m_kBackupVOI ); break;
+        case VOIBase.RIGHT_MIDDLE: kScreenBound = getBoundingBoxRightMiddle( m_kBackupVOI ); break;
+        case VOIBase.LEFT_MIDDLE: kScreenBound = getBoundingBoxLeftMiddle( m_kBackupVOI ); break;
+        case VOIBase.LOWER_MIDDLE: kScreenBound = getBoundingBoxLowerMiddle( m_kBackupVOI ); break;
         }
         if ( kScreenBound == null )
         {
             return;
         }
-        Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(kVOI) );
-        kScreenCenter.Add( getBoundingBoxUpperRight(kVOI) );
-        kScreenCenter.Add( getBoundingBoxLowerLeft(kVOI) );
-        kScreenCenter.Add( getBoundingBoxLowerRight(kVOI) );
+        Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(m_kBackupVOI) );
+        kScreenCenter.Add( getBoundingBoxUpperRight(m_kBackupVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerLeft(m_kBackupVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerRight(m_kBackupVOI) );
         kScreenCenter.Scale( 0.25f );
 
         Vector3f kScreenScale = new Vector3f( (iX-kScreenCenter.X) / (kScreenBound.X-kScreenCenter.X), 
                 (iY-kScreenCenter.Y) / (kScreenBound.Y-kScreenCenter.Y), 1 );
+        
 
         switch( nearBound )
         {
@@ -4842,11 +4855,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return;
         }
-
-        Vector<Vector3f> newPoints = new Vector<Vector3f>();
-        for ( int i = 0; i < kVOI.size(); i++ )
+        if( (kScreenScale.X <= 0) || (kScreenScale.Y <= 0) )
         {
-            Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( kVOI.elementAt(i) );
+            return;
+        }
+
+        
+        Vector<Vector3f> newPoints = new Vector<Vector3f>();
+        for ( int i = 0; i < m_kBackupVOI.size(); i++ )
+        {
+            Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( m_kBackupVOI.elementAt(i) );
             kScreen.Sub(kScreenCenter);
             kScreen.Mult( kScreenScale );
             kScreen.Add(kScreenCenter);
