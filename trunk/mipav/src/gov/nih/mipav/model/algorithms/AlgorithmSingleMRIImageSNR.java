@@ -257,7 +257,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
         double cnrML;
         double tol = 1.0E-3;
         boolean test = false;
-        boolean validityTest = true;
+        boolean validityTest = false;
 
         if (validityTest) {
             testAlgorithm();
@@ -832,7 +832,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
      */
     private void testAlgorithm() {
         double signal = 100.0;
-        double stdDev = 2.0;
+        double stdDev = 1.0;
         int backgroundCount = 1000;
         int signalCount = 1000;
         int numReceivers = 1;
