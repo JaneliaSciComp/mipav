@@ -10324,6 +10324,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  } // if (do670)
 			  
 			  if (do675) {
+				  do675 = false;
 			      //
 			      //  FOR EITHER CASE TRANSFER THE JACOBIAN FOR THE MODEL
 			      //  PROBLEM.  THE TRANSPOSE OF THIS MATRIX IS THE PARTIALS
