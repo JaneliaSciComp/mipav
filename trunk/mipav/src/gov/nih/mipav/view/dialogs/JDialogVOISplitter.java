@@ -9,6 +9,7 @@ import gov.nih.mipav.MipavMath;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.FileNotFoundException;
 
 import java.util.*;
 
@@ -404,10 +405,18 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
      */
     private void init() {
         setTitle("Split VOI");
+        try {
+        	setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        }catch(FileNotFoundException e) {
+        	 Preferences.debug("Exception ocurred while getting <" + e.getMessage()
+                     + ">.  Check that this file is available.\n");
+             System.err.println("Exception ocurred while getting <" + e.getMessage()
+                     + ">.  Check that this file is available.\n");
+        }
 
         JPanel mainPanel = new JPanel();
 
-        allSlicesBox = new JCheckBox("Split all slices", true);
+        allSlicesBox = new JCheckBox("Split all vois in all slices", true);
         
         onlyActiveBox = new JCheckBox("Only split active VOI(s)/contour(s)", false);
         
