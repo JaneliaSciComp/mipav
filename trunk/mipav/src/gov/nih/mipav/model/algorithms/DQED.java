@@ -77,10 +77,367 @@ public abstract class DQED {
 	private int testCase;
 	private final int funcProb1Case = 101;
 	private final int fjaprxCase = 102;
+	private final int dqedhdCase = 103;
 	
 	public DQED() {
-		
+	    dqedProb1();	
 	}
+	
+	private void dqedProb1() {
+	/*****************************************************************************80
+	!
+	!! MAIN is the main program for DQED_PRB1.
+	!
+	!  Discussion:
+	!
+	!    DQED_PRB1 tests DQED.
+	!
+	!    This routine illustrates the use of DQED, the Hanson-Krogh nonlinear least
+	!    squares solver, by solving a certain heart dipole moment equation.
+	!
+	!  Modified:
+	!
+	!    11 September 2002
+	!
+	!  Reference: 
+	!
+	!    John Dennis, David Gay, Phuong Vu.
+	!    A new nonlinear equations test problem, 
+	!    Rice University Department of Mathematics 
+	!    Report 83-16, 6/83, 6/85
+	*/
+
+	  final int ldfj = 8;
+	  final int liwa = 150;
+	  final int lwa = 2000;
+	  final int nvars = 8;
+
+	  double bl[] = new double[nvars+3];
+	  double bu[] = new double[nvars+3];
+	  double df[] = new double[nvars+1];
+	  //external dqedhd
+	  double fj[][] = new double[ldfj+1][nvars+2];
+	  int i;
+	  int ind[] = new int[nvars+3];
+	  int iopt[] = new int[29];
+	  int ios;
+	  int iwa[] = new int[liwa+1];
+	  int mode;
+	  double ropt[] = new double[2];
+	  double sigma[] = new double[nvars+1];
+	  String title = null;
+	  double wa[] = new double[lwa+1];
+	//
+	//  To have the jacobian checked, set WANT_PR to true.
+	//
+	  final boolean want_pr = false;
+	  double x[] = new double[nvars+1];
+	  double xsave[] = new double[nvars+1];
+	  double y[] = new double[nvars+1];
+	  long startTime;
+	  long endTime;
+	  double timeElapsed;
+	  int rep;
+
+	  //common /sigma/ sigma
+	  //common /mode/  mode
+
+	  startTime = System.currentTimeMillis();
+
+	  Preferences.debug("\n");
+	  Preferences.debug("dqedProb1\n");
+	  Preferences.debug("A set of tests for DQED, which can solve\n");
+	  Preferences.debug("bounded and constrained linear least squares problems\n");
+	  Preferences.debug("and systems of nonlinear equations.\n");
+	  
+	  for (rep = 1; rep <= 5; rep++) {
+	      switch(rep) {
+	      case 1:
+		      title = new String("Example 0121C");
+		      sigma[1] = -0.807;
+			  sigma[2] = -0.021;
+			  sigma[3] = -2.379;
+			  sigma[4] = -3.64;
+			  sigma[5] = -10.541;
+			  sigma[6] = -1.961;
+			  sigma[7] = -51.551;
+			  sigma[8] = 21.053;
+			  xsave[1] = -0.074;
+			  xsave[2] = -0.733;
+			  xsave[3] = 0.013;
+			  xsave[4] = -0.034;
+			  xsave[5] = -3.632;
+			  xsave[6] = 3.632;
+			  xsave[7] = -0.289;
+			  xsave[8] = 0.289;
+		      break;
+	      case 2:
+	    	  title = new String("Example 0121B");
+	    	  sigma[1] = -0.809;
+	    	  sigma[2] = -0.021;
+	    	  sigma[3] = -2.04;
+	    	  sigma[4] = -0.614;
+	    	  sigma[5] = -6.903;
+	    	  sigma[6] = -2.934;
+	    	  sigma[7] = -26.328;
+	    	  sigma[8] = 18.639;
+	    	  xsave[1] = -0.056;
+	    	  xsave[2] = -0.753;
+	    	  xsave[3] = 0.026;
+	    	  xsave[4] = -0.047;
+	    	  xsave[5] = -2.991;
+	    	  xsave[6] = 2.991;
+	    	  xsave[7] = -0.568;
+	    	  xsave[8] = 0.568;
+	          break;
+	      case 3:
+	    	  title = new String("Example 0121A");
+	    	  sigma[1] = -0.816;
+	    	  sigma[2] = -0.017;
+	    	  sigma[3] = -1.826;
+	    	  sigma[4] = -0.754;
+	    	  sigma[5] = -4.839;
+	    	  sigma[6] = -3.259;
+	    	  sigma[7] = -14.023;
+	    	  sigma[8] = 15.467;
+	    	  xsave[1] = -0.041;
+	    	  xsave[2] = -0.775;
+	    	  xsave[3] = 0.03;
+	    	  xsave[4] = -0.047;
+	    	  xsave[5] = -2.565;
+	    	  xsave[6] = 2.565;
+	    	  xsave[7] = -0.754;
+	    	  xsave[8] = 0.754;
+	    	  break;
+	      case 4:
+	    	  title = new String("Example 791226");
+	    	  sigma[1] = -0.690;
+	    	  sigma[2] = -0.044;
+	    	  sigma[3] = -1.57;
+	    	  sigma[4] = -1.31;
+	    	  sigma[5] = -2.65;
+	    	  sigma[6] = 2.00;
+	    	  sigma[7] = -12.6;
+	    	  sigma[8] = 9.48;
+	    	  xsave[1] = -0.300;
+	    	  xsave[2] = -0.390;
+	    	  xsave[3] = 0.300;
+	    	  xsave[4] = -0.344;
+	    	  xsave[5] = -1.20;
+	    	  xsave[6] = 2.69;
+	    	  xsave[7] = 1.59;
+	    	  xsave[8] = -1.50;
+	    	  break;
+	      case 5:
+	    	  title = new String("Example 791129");
+	    	  sigma[1] = 0.485;
+	    	  sigma[2] = -0.0019;
+	    	  sigma[3] = -0.0581;
+	    	  sigma[4] = 0.015;
+	    	  sigma[5] = 0.105;
+	    	  sigma[6] = 0.0406;
+	    	  sigma[7] = 0.167;
+	    	  sigma[8] = -0.399;
+	    	  xsave[1] = 0.299;
+	    	  xsave[2] = 0.186;
+	    	  xsave[3] = -0.0273;
+	    	  xsave[4] = 0.0254;
+	    	  xsave[5] = -0.474;
+	    	  xsave[6] = 0.474;
+	    	  xsave[7] = -0.0892;
+	    	  xsave[8] = 0.0892;
+	      } // switch(rep)
+		  	  
+		  Preferences.debug("title = " + title.trim() + "\n");
+		
+		  Preferences.debug("\n");
+		  Preferences.debug("The input SIGMA vector:\n");
+		  for (i = 1; i <= nvars; i++) {
+		      Preferences.debug("sigma["+ i + "] = " + sigma[i] + "\n");
+		  }
+
+	      Preferences.debug("\n");
+	      Preferences.debug("The initial estimate for x:\n");
+	      for (i = 1; i <= nvars; i++) {
+	          Preferences.debug("xsave[" + i + "] = " + xsave[i] + "\n"); 
+	      }
+	      //
+	      //  Test the partial derivative computation.
+	      //
+	      if ( want_pr ) {
+
+	          Preferences.debug("\n");
+	          Preferences.debug("Test the partial derivative computation:\n");
+	          dpchek ( df, dqedhdCase, fj, iopt, ldfj, nvars, ropt, xsave, y );
+	      }
+	      //
+	      //  Test 1, with all equations normal.
+	      //
+	      mode = 0;
+          for (i = 1; i <= nvars; i++) {
+	          x[i] = xsave[i];
+          }
+
+	      test01 ( bl, bu, fj, ind, iopt, iwa, ldfj, liwa, lwa, mode, nvars,
+	               ropt, sigma, wa, x );
+	      //
+	      //  Test 1, with first two linear equations used as constraints.
+	      //
+	     mode = 1;
+         for (i = 1; i <= nvars; i++) {
+	         x[i] = xsave[i];
+         }
+
+	     test01 ( bl, bu, fj, ind, iopt, iwa, ldfj, liwa, lwa, mode, nvars,
+	              ropt, sigma, wa, x );
+	     //
+	     //  Test 2, with all equations normal.
+	     //
+	     mode = 0;
+         for (i = 1; i <= nvars; i++) {
+	         x[i] = xsave[i];
+         }
+
+	     test02 ( bl, bu, fj, ind, iopt, iwa, ldfj, liwa, lwa, mode, nvars,
+	              ropt, sigma, wa, x );
+	     //
+	     //  Test 2, with first two linear equations used as constraints.
+	     //
+	     mode = 1;
+         for (i = 1; i <= nvars; i++) {
+	         x[i] = xsave[i];
+         }
+
+	     test02 ( bl, bu, fj, ind, iopt, iwa, ldfj, liwa, lwa, mode, nvars, 
+	              ropt, sigma, wa, x );
+
+	  } // for (rep = 1; rep <= 5; rep++)
+	  Preferences.debug("\n");
+	  Preferences.debug("DQED_PRB1\n");
+	  Preferences.debug("Normal end of execution.\n");
+
+	  endTime = System.currentTimeMillis();
+	  timeElapsed = (endTime - startTime)/1000.0;
+	  Preferences.debug("Seconds elapsed = " + timeElapsed + "\n");
+
+	  return;
+	} // dqedProb1
+	
+	private void test01 (double bl[], double bu[], double fj[][], int ind[], int iopt[],
+			             int iwa[], int ldfj, int liwa, int lwa, int mode, int nvars,
+			             double ropt[], double sigma[], double wa[], double x[] ) {
+
+			/*****************************************************************************80
+			!
+			!! TEST01 uses an analytic jacobian.
+			!
+			!  Discussion:
+			!
+			!    The linear equations will not be constraints if MODE = 0.
+			!    Convergence is normally faster if the linear equations are used
+			!    as constraints, MODE = 1.
+			*/
+
+			  //double bl(nvars+2)
+			  //double bu(nvars+2)
+			  //external dqedhd
+			  //double fj(ldfj,nvars+1)
+			  double fnorm[] = new double[1];
+			  int igo[] = new int[1];
+			  //int ind(nvars+2)
+			  //int iopt(28)
+			  //int iwa(liwa)
+			  int mcon;
+			  int mequa;
+			  //double ropt(1)
+			  //double sigma(nvars)
+			  //double wa(lwa)
+			  //double x(nvars)
+			  int i;
+
+			  Preferences.debug("\n");
+			  Preferences.debug("TEST01\n");
+			  Preferences.debug("Use an analytic jacobian.\n");
+			  Preferences.debug("mode = " + mode + "\n");
+			//
+			//  Tell how much storage the solver has.
+			//
+			  iwa[1] = lwa;
+			  iwa[2] = liwa;
+			//
+			//  Set up print option.  (not used here).
+			//
+			  iopt[1] = -1;
+			  iopt[2] = 1;
+			//
+			//  Set up for linear model without any quadratic terms. (not used).
+			//
+			  iopt[3] = -14;
+			  iopt[4] = 1;
+			//
+			//  Do not allow convergence to be claimed on small steps.
+			//
+			  iopt[5] = 17;
+			  iopt[6] = 1;
+			  iopt[7] = 15;
+			//
+			//  Allow up to NVARS quadratic model terms.
+			//
+			  iopt[8] = nvars;
+			//
+			//  Change condition number for quadratic model degree.
+			//
+			  iopt[9] = 10;
+			  iopt[10] = 1;
+			  ropt[1] = 1.0D+4;
+			//
+			//  No more options.
+			//
+			  iopt[11] = 99;
+			//
+			//  MODE = 0, no constraints.
+			//
+			  if ( mode == 0 ) {
+
+			    mcon = 0;
+			  }
+			//
+			//  MODE = 1, there are constraints.
+			//
+			//  (The first two equations are linear, and can be used as constraints).
+			//
+			  else {
+
+			    mcon = 2;
+			    ind[nvars+1] = 3;
+			    ind[nvars+2] = 3;
+			    bl[nvars+1] = sigma[1];
+			    bu[nvars+1] = sigma[1];
+			    bl[nvars+2] = sigma[2];
+			    bu[nvars+2] = sigma[2];
+
+			  } // else
+			 
+			  mequa = nvars - mcon;
+			//
+			//  All variables are otherwise free.
+			//
+			  for (i = 1; i <= nvars; i++) {
+			      ind[i] = 4;
+			  }
+
+			  dqed ( dqedhdCase, mequa, nvars, mcon, ind, bl, bu, x, fj, ldfj, fnorm,
+			    igo, iopt, ropt, iwa, wa );
+
+			  Preferences.debug("Computed minimizing x:\n");
+			  for (i = 1; i <= nvars; i++) {
+			      Preferences.debug("x[" + i + "] = " + x[i] + "\n");
+			  }
+			  Preferences.debug("Residual after the fit fnorm[0] = " + fnorm[0] + "\n");
+			  Preferences.debug("DQED output flag igo[0] = " + igo[0] + "\n");
+			 
+			  return;
+    } // private test01
 	
 	private void test02 (double bl[], double bu[], double fj[][], int ind[], int iopt[],
 			             int iwa[], int ldfj, int liwa, int lwa, int mode, int nvars,
@@ -197,7 +554,7 @@ public abstract class DQED {
 			  return;
   } // test02
 	
-	private void dqedhd (double x[], double fj[][], int ldfj, int igo, int iopt[],
+	private void dqedhd (double x[], double fj[][], int ldfj, int igo[], int iopt[],
 			             double ropt[] ) {
 
 	/*****************************************************************************80
@@ -254,7 +611,7 @@ public abstract class DQED {
 
 	  mequa = nvars - mcon;
 
-	  if ( igo != 0 ) {
+	  if ( igo[0] != 0 ) {
 	    jacProb1 ( fj, ldfj, nvars, x );
 	  }
 
@@ -5901,7 +6258,7 @@ public abstract class DQED {
 	  return norm;
 	} // dnrm2
 	
-	private void dpchek (double df[], int dqedev, double fj[][], int iopt[], int ldfj,
+	private void dpchek (double df[], int dqedevCase, double fj[][], int iopt[], int ldfj,
 			             int nvars, double ropt[], double x[], double y[] ) {
 
 	/*****************************************************************************80
@@ -5978,7 +6335,16 @@ public abstract class DQED {
 	      //  Evaluate F(YP).
 	      //
 	      igo[0] = 0;
-	      dqedev ( y, fj, ldfj, igo, iopt, ropt );
+	      if (testMode) {
+	          switch (dqedevCase) {
+	          case dqedhdCase:
+	        	  dqedhd ( y, fj, ldfj, igo, iopt, ropt );	
+	        	  break;
+	          }
+	      }
+	      else {
+	          dqedev ( y, fj, ldfj, igo, iopt, ropt );
+	      }
 	      //
 	      //  Save F(YP).
 	      //
@@ -5993,7 +6359,16 @@ public abstract class DQED {
 	      //  Evaluate F(YM).
 	      //
 	      igo[0] = 0;
-	      dqedev ( y, fj, ldfj, igo, iopt, ropt );
+	      if (testMode) {
+	          switch (dqedevCase) {
+	          case dqedhdCase:
+	        	  dqedhd ( y, fj, ldfj, igo, iopt, ropt );	
+	        	  break;
+	          }
+	      }
+	      else {
+	          dqedev ( y, fj, ldfj, igo, iopt, ropt );
+	      }
 	      //
 	      //  Estimate the partial derivative d F/d X(J) by (F(YP)-F(YM))/2*T
 	      //
@@ -6004,7 +6379,16 @@ public abstract class DQED {
 	      //  Evaluate the user's formula for the partial derivatives.
 	      //
 	      igo[0] = 1;
-	      dqedev ( x, fj, ldfj, igo, iopt, ropt );
+	      if (testMode) {
+	          switch (dqedevCase) {
+	          case dqedhdCase:
+	        	  dqedhd ( x, fj, ldfj, igo, iopt, ropt );	
+	        	  break;
+	          }
+	      }
+	      else {
+	          dqedev ( x, fj, ldfj, igo, iopt, ropt );
+	      }
 
 	      dvout(nvars,df,"Numerical derivative",-4);
 
@@ -9001,6 +9385,10 @@ C     FROM THE ERROR PROCESSOR CALL.
 		            	switch(dqedevCase) {
 		            	case fjaprxCase:
 		            		fjaprx(x, fjac, ldfjac, igo, iopt, ropt);
+		            		break;
+		            	case dqedhdCase:
+		            		dqedhd(x, fjac, ldfjac, igo, iopt, ropt);
+		            		break;
 		            	}
 		            }
 		            else {
