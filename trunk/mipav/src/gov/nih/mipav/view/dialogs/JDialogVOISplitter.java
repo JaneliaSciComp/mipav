@@ -416,7 +416,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
 
         JPanel mainPanel = new JPanel();
 
-        allSlicesBox = new JCheckBox("Split all vois in all slices", true);
+        allSlicesBox = new JCheckBox("Split all VOI(s) in all slices", true);
         
         onlyActiveBox = new JCheckBox("Only split active VOI(s)/contour(s)", false);
         
