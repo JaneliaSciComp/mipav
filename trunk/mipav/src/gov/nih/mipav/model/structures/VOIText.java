@@ -6,6 +6,7 @@ import gov.nih.mipav.view.Preferences;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.ArrayList;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -68,6 +69,8 @@ public class VOIText extends VOIBase {
     
     private int m_iTextWidth = 0;
     
+    private ArrayList<String> comments = new ArrayList<String>();
+    
     /**
      * default constructor.
      */
@@ -111,6 +114,7 @@ public class VOIText extends VOIBase {
         this.textString = new String( kVOI.textString );
         this.noteString = new String( kVOI.noteString );
         this.useMarker = kVOI.useMarker;    
+        this.comments = kVOI.comments;
         m_iVOIType = VOI.ANNOTATION;
     }
 
@@ -295,6 +299,16 @@ public class VOIText extends VOIBase {
     public void setFontSize(int fontSize) {
         this.fontSize = fontSize;
     }
+    
+    
+    public void setComments(String comment) {
+    	comments.add(comment);
+    }
+    
+    public ArrayList<String> getComments() {
+    	return comments;
+    }
+    
     
     /**
      * Sets the contained note.

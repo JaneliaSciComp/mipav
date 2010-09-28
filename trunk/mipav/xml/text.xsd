@@ -34,6 +34,7 @@
 						<xs:element name="FontName" type="xs:string"/>
 						<xs:element name="FontSize" type="xs:int"/>
 						<xs:element name="FontStyle" type="xs:string"/>
+						<xs:element name="Comment" type="xs:string"  minOccurs="0" maxOccurs="unbounded"/>
 					</xs:sequence>
 				</xs:complexType>
 			</xs:element>

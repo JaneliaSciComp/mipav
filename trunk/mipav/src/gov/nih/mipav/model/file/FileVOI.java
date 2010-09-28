@@ -374,6 +374,12 @@ public class FileVOI extends FileXML {
                             } else {
                                 closedTag("FontStyle", "");
                             }
+                            ArrayList<String> comments = vText.getComments();
+                            if(comments.size() > 0) {
+                            	for(int w=0;w<comments.size();w++) {
+                            		closedTag("Comment", comments.get(w));
+                            	}
+                            }
 
                             openTag("Label", false);
                         }
@@ -552,6 +558,13 @@ public class FileVOI extends FileXML {
                                     closedTag("FontStyle", "BOLDITALIC");
                                 } else {
                                     closedTag("FontStyle", "");
+                                }
+                                
+                                ArrayList<String> comments = vText.getComments();
+                                if(comments.size() > 0) {
+                                	for(int w=0;w<comments.size();w++) {
+                                		closedTag("Comment", comments.get(w));
+                                	}
                                 }
 
                                 openTag("Label", false);
@@ -1926,7 +1939,9 @@ public class FileVOI extends FileXML {
                 voiText.setText(elementBuffer);
             } else if (currentKey.equals("Note")) {
                 voiText.setNote(elementBuffer);
-            } else if (currentKey.equals("TextLocation") || currentKey.equals("ArrowLocation")) {
+            } else if (currentKey.equals("Comment")) {
+                voiText.setComments(elementBuffer);
+            }else if (currentKey.equals("TextLocation") || currentKey.equals("ArrowLocation")) {
                 float x = 0f, y = 0f, z = 0f;
                 final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
