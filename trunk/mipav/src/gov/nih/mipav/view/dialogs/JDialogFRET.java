@@ -192,29 +192,35 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
             if (donorButton.isSelected()) {
 
                 if (image.getNDims() == 2) {
-                    componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                    componentPostImage.getVOIHandler().setPresetHue(0.0f); // red
+                    componentPostImage.getVOIHandler().newVOI(0.0f); // red
+                    //componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                    //componentPostImage.getVOIHandler().setPresetHue(0.0f); // red
                 } else {
-                    componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                    componentImage.getVOIHandler().setPresetHue(0.0f); // red
+                    componentImage.getVOIHandler().newVOI(0.0f); // red
+                    //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                    //componentImage.getVOIHandler().setPresetHue(0.0f); // red
                 }
             } else if (backgroundButton.isSelected()) {
 
                 if (image.getNDims() == 2) {
-                    componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                    componentPostImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
+                    componentPostImage.getVOIHandler().newVOI(2.0f / 3.0f); // blue
+                    //componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                    //componentPostImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
                 } else {
-                    componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                    componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
+                    componentImage.getVOIHandler().newVOI(2.0f / 3.0f); // blue
+                    //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                    //componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
                 }
             } else if (signalButton.isSelected()) {
 
                 if (image.getNDims() == 2) {
-                    componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                    componentPostImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
+                    componentPostImage.getVOIHandler().newVOI(1.0f / 3.0f); // green
+                    //componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                    //componentPostImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
                 } else {
-                    componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                    componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
+                    componentImage.getVOIHandler().newVOI(1.0f / 3.0f); // green
+                    //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                    //componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
                 }
 
             }
@@ -553,12 +559,14 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
         VOIPanel.add(donorButton, gbc4);
 
         if (image.getNDims() == 2) {
-            componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-            componentPostImage.getVOIHandler().setPresetHue(0.0f); // red
+            componentPostImage.getVOIHandler().newVOI(0.0f); // red
+            //componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+            //componentPostImage.getVOIHandler().setPresetHue(0.0f); // red
         } // if (image.getNDims() == 2)
         else {
-            componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-            componentImage.getVOIHandler().setPresetHue(0.0f); // red
+            componentImage.getVOIHandler().newVOI(0.0f); // red
+            //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+            //componentImage.getVOIHandler().setPresetHue(0.0f); // red
         }
 
         backgroundButton = new JRadioButton("Add optional background VOI", false);

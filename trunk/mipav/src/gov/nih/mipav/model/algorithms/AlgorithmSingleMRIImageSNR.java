@@ -121,9 +121,7 @@ import WildMagic.LibFoundation.NumericalAnalysis.minimizing.Brent;
  * 852-857. Erratum in Magnetic Resonance in Medicine, July, 2004, 52(1), p. 219. 3.) I. S. Gradshteyn and I. M. Rhyzik,
  * Tables of integrals, series, and products, Sixth edition. 4.) Tohru Sato, Liviu F. Chibotaru, and Arnout Ceulemans,
  * The Exe dynamic Jahn-Teller problem: A new insight from the strong coupling limit, The Journal of Chemical Physics,
- * Vol. 122, 054104, 2005, Appendix C. 5.) Numerical Recipes in C The Art of Scientific Computing Second Edition,
- * William H. Press, Saul A. Teukolsky, William T. Vetterling, and Brian P. Flannery, Cambridge University Press, 1992,
- * pp. 402-405.
+ * Vol. 122, 054104, 2005, Appendix C.
  * </p>
  * 
  * <p>
@@ -418,7 +416,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
         centralSignal = snr * backgroundStdDev;
         minimumSignal = 0.75 * centralSignal;
         maximumSignal = 1.25 * centralSignal;
-        //brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
         Brent.search( minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, this, tol );
 
         if (useMaxLikelihood) {
@@ -448,7 +445,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
                 centralSignal = snr2 * backgroundStdDev;
                 minimumSignal = 0.75 * centralSignal;
                 maximumSignal = 1.25 * centralSignal;
-                //brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
                 Brent.search( minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, this, tol );
 
                 if (useMaxLikelihood) {
@@ -473,207 +469,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
 
         return;
     }
-
-    /**
-     * Port of routine brent from Numerical Recipes in C, pp. 404-405 One dimesional search algorithm
-     * 
-     * @param ax Minimum value of search range for parameter
-     * @param bx Value bracketed by ax and cx
-     * @param cx Maximum value of search range of parameter
-     * @param xmin Value of parameter that minimzes the function
-     * @param tol Minimum isolated to a fractional precision of tol
-     * 
-     * @return function value at xmin
-     */
-    private double brent(double ax, double bx, double cx, double[] xmin, double tol) {
-        double ITMAX_BRENT = 100;
-        double CGOLD = 0.3819660;
-        double ZEPS = 1.0E-10;
-
-        // This will be the distance moved on the step before last
-        double e = 0.0;
-        double a;
-        double b;
-        double x;
-        double w;
-        double v;
-        double fw;
-        double fv;
-        double fx;
-        int iterations;
-        double xm;
-        double tol1;
-        double tol2;
-        double r;
-        double q;
-        double p;
-        double etemp;
-        double d = 0.0;
-        double u;
-        double fu;
-
-        // a and b must be in ascending order, but input abscissas need not be.
-        if (ax < cx) {
-            a = ax;
-        } // if (ax < cx)
-        else {
-            a = cx;
-        } // else
-
-        if (ax > cx) {
-            b = ax;
-        } // if (ax > cx)
-        else {
-            b = cx;
-        } // else
-
-        x = w = v = bx;
-
-        fx = -receiverMaximumLikelihood(x);
-
-        if ( !useMaxLikelihood) {
-
-            // receiverMaximumLikelihood Bessel function call failed
-            return fx;
-        }
-
-        fw = fv = fx;
-
-        for (iterations = 1; iterations <= ITMAX_BRENT; iterations++) {
-
-            // Main program loop
-            xm = 0.5 * (a + b);
-            tol1 = (tol * Math.abs(x)) + ZEPS;
-            tol2 = 2.0 * tol1;
-
-            // Test for done here
-            if (Math.abs(x - xm) <= (tol2 - (0.5 * (b - a)))) {
-                xmin[0] = x;
-
-                return fx;
-            } // if (Math.abs(x - xm) <= (tol2 - 0.5*(b-a)))
-
-            if (Math.abs(e) > tol1) {
-
-                // Construct a trial parabolic fit
-                r = (x - w) * (fx - fv);
-                q = (x - v) * (fx - fw);
-                p = ( (x - v) * q) - ( (x - w) * r);
-                q = 2.0 * (q - r);
-
-                if (q > 0.0) {
-                    p = -p;
-                } // if (q > 0.0)
-
-                q = Math.abs(q);
-                etemp = e;
-                e = d;
-
-                if ( (Math.abs(p) >= Math.abs(0.5 * q * etemp)) || (p <= (q * (a - x))) || (p >= (q * (b - x)))) {
-
-                    if (x >= xm) {
-                        e = a - x;
-                    } // if (x >= xm)
-                    else {
-                        e = b - x;
-                    } // else
-
-                    d = CGOLD * e;
-                } // if ((Math.abs(p) >= Math.abs(0.5*q*etemp)) || (p <= q*(a - x)) ||
-
-                // The above conditions determine the acceptability of the parabolic
-                // fit. Here we take the golden section step into the larger of the
-                // two segments.
-                else {
-
-                    // Take the parabolic step
-                    d = p / q;
-                    u = x + d;
-
-                    if ( ( (u - a) < tol2) || ( (b - u) < tol2)) {
-
-                        if ( (xm - x) >= 0.0) {
-                            d = Math.abs(tol1);
-                        } // if ((xm - x) >= 0.0)
-                        else {
-                            d = -Math.abs(tol1);
-                        } // else
-                    } // if ((u - a) < tol2 || (b - u) < tol2)
-                } // else
-            } // if (Math.abs(e) > tol1)
-            else {
-
-                if (x >= xm) {
-                    e = a - x;
-                } // if (x >= xm)
-                else {
-                    e = b - x;
-                } // else
-
-                d = CGOLD * e;
-            } // else
-
-            if (Math.abs(d) >= tol1) {
-                u = x + d;
-            } // if (Math.abs(d) >= tol1)
-            else if (d >= 0.0) {
-                u = x + Math.abs(tol1);
-            } // else if (d >= 0.0)
-            else {
-                u = x - Math.abs(tol1);
-            } // else
-
-            fu = -receiverMaximumLikelihood(u);
-
-            if ( !useMaxLikelihood) {
-
-                // receiverMaximumLikelihood Bessel function call failed
-                return fx;
-            }
-
-            if (fu <= fx) {
-
-                if (u >= x) {
-                    a = x;
-                } // if (u >= x)
-                else {
-                    b = x;
-                } // else
-
-                v = w;
-                w = x;
-                x = u;
-                fv = fw;
-                fw = fx;
-                fx = fu;
-            } // if (fu <= fx)
-            else {
-
-                if (u < x) {
-                    a = u;
-                } // if (u < x)
-                else {
-                    b = u;
-                } // else
-
-                if ( (fu <= fw) || (w == x)) {
-                    v = w;
-                    w = u;
-                    fv = fw;
-                    fw = fu;
-                } // if (fu <= fw || w == x)
-                else if ( (fu <= fv) || (v == x) || (v == w)) {
-                    v = u;
-                    fv = fu;
-                } // else if (fu <= fv || v == x || v == w)
-            } // else
-        } // for (iterations = 1; iterations <= ITMAX_BRENT; iterations++)
-
-        MipavUtil.displayError("Too many iterations in brent");
-        xmin[0] = x;
-
-        return fx;
-    } // brent
 
     /**
      * This routine iterates to find the solution to the first moment equation for the Generalized Rice distribution.
@@ -893,8 +688,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
         centralSignal = snr * backgroundStdDev;
         minimumSignal = 0.5 * centralSignal;
         maximumSignal = 1.5 * centralSignal;
-        //brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
-        //snr = maxLikelihoodSignal[0] / backgroundStdDev;
         double[] maxLikelihoodSignal = new double[2];
         Brent.search(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, this, tol );
         snr = maxLikelihoodSignal[0] / backgroundStdDev;

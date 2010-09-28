@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
+import WildMagic.LibFoundation.NumericalAnalysis.minimizing.NelderMead;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
@@ -20,7 +22,7 @@ import javax.swing.*;
  * @version  1.0 June, 2000
  * @author   Delia McGarry
  */
-public class AlgorithmRegVOILandmark extends AlgorithmBase {
+public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFunctionOfSeveralVariables {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -54,7 +56,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
     private int opt, costFunc;
 
     /** DOCUMENT ME! */
-    private AlgorithmSimplexOpt simplex;
+    //private AlgorithmSimplexOpt simplex;
 
     /** DOCUMENT ME! */
     private int simplexDim;
@@ -76,6 +78,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
 
     private float [] sigmas;
     private boolean maskFlag;
+    private CostFunction func = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -268,7 +271,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
 
         for (i = 0; i < (simplexDim + 1); i++) {
 
-            for (j = 0; j < simplexDim; j++) {
+            for (j = 0; j < (simplexDim + 1); j++) {
                 p[i][j] = 0f;
             }
         }
@@ -281,7 +284,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
 
         for (i = 0; i < (simplexDim + 1); i++) {
 
-            for (j = 0; j < simplexDim; j++) {
+            for (j = 0; j < (simplexDim + 1); j++) {
                 Preferences.debug("p[" + i + "][" + j + "]=" + p[i][j] + "\n");
             }
         }
@@ -301,7 +304,6 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         Preferences.debug("Search:\n");
 
         TransMatrix xfrm;
-        CostFunction func = null;
         float increment;
         float[] imgBuf = null;
         float[] tImgBuf = null;
@@ -316,7 +318,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
             p = new double[simplexDim + 1][simplexDim];
             y = new double[simplexDim + 1];
             increment = 90.0f / (tdim - 2);
-            simplex = new AlgorithmSimplexOpt(p, y, simplexDim, func);
+            //simplex = new AlgorithmSimplexOpt(p, y, simplexDim, func);
            
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Reg Kidney:  Out of Memory");
@@ -336,12 +338,19 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
             if (opt == EXHAUSTIVEOPT) {
                 exhaustiveSearch(p, func);
             } else {
-                InitializePandY(p, y, func);
-                simplex.setP(p);
-                simplex.setY(y);
-                simplex.setRunningInSeparateThread(runningInSeparateThread);
-                simplex.run();
-                Preferences.debug("cost = " + y[0] + "\n");
+                //p = new double[simplexDim + 1][simplexDim + 1];
+                //y = new double[simplexDim + 1];
+                //InitializePandY(p, y, func);
+                double[] initialPoint = new double[simplexDim];
+                double dCost = NelderMead.search( initialPoint, 0.0000001, this );
+                Preferences.debug("cost = " + dCost + "\n");
+                p[0] = initialPoint;
+                //NelderMead.search( y, p, 0.0000001, this, 5000, null );
+                //simplex.setP(p);
+                //simplex.setY(y);
+                //simplex.setRunningInSeparateThread(runningInSeparateThread);
+                //simplex.run();
+                //Preferences.debug("cost = " + y[0] + "\n");
             }
 
             xfrm = getTransform(p[0]); // lowest cost row
@@ -512,9 +521,19 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
          *
          * @param  t  DOCUMENT ME!
          */
-        private void setSlice(int t) {
+        protected void setSlice(int t) {
             slice = t;
         }
+    }
+
+    @Override
+    public double eval(double[] x) {
+        return func.cost(x);
+    }
+
+    @Override
+    public int getNumberOfVariables() {
+        return simplexDim;
     }
 
 }
