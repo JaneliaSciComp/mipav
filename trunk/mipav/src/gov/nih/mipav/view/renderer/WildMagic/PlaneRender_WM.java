@@ -2263,6 +2263,30 @@ public class PlaneRender_WM extends GPURenderBase
         return screenToFile(kScreen,kFile);
     }
 
+
+    @Override
+    public float getResolutionX() {
+        return m_afResolutions[0];
+    }
+
+
+    @Override
+    public float getResolutionY() {
+        return m_afResolutions[1];
+    }
+
+
+    @Override
+    public float getZoomX() {
+        return m_fZoomScale;
+    }
+
+
+    @Override
+    public float getZoomY() {
+        return m_fZoomScale;
+    }
+
     /*
     @Override
     public Vector3f fileToScreenVOI(Vector3f kFile) {

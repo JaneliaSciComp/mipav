@@ -495,6 +495,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private boolean m_bFirstScale = true;
     private VOIBase m_kBackupVOI = null;
+    private boolean m_bFirstKey = true;
     
     public VOIManager (VOIManagerInterface kParent )
     {
@@ -965,11 +966,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bQuickLUT = true;
         }
         final int keyCode = e.getKeyCode();        
+        if ( (keyCode == KeyEvent.VK_UP) || (keyCode == KeyEvent.VK_DOWN) ||
+                (keyCode == KeyEvent.VK_LEFT) || (keyCode == KeyEvent.VK_RIGHT) )
+        {
+            m_bFirstKey = false;
+            m_kParent.saveVOIs("moveVOI");
+        }
         switch (keyCode) {
-        case KeyEvent.VK_UP:     m_kParent.doVOI("MoveUP"); return;
-        case KeyEvent.VK_DOWN:   m_kParent.doVOI("MoveDown"); return;
-        case KeyEvent.VK_LEFT:   m_kParent.doVOI("MoveLeft"); return;
-        case KeyEvent.VK_RIGHT:  m_kParent.doVOI("MoveRight"); return;
+        case KeyEvent.VK_UP:     m_kParent.moveVOI("MoveUP", m_kDrawingContext.getZoomY()*m_kDrawingContext.getResolutionY()); return;
+        case KeyEvent.VK_DOWN:   m_kParent.moveVOI("MoveDown", m_kDrawingContext.getZoomY()*m_kDrawingContext.getResolutionY()); return;
+        case KeyEvent.VK_LEFT:   m_kParent.moveVOI("MoveLeft", m_kDrawingContext.getZoomX()*m_kDrawingContext.getResolutionX()); return;
+        case KeyEvent.VK_RIGHT:  m_kParent.moveVOI("MoveRight", m_kDrawingContext.getZoomX()*m_kDrawingContext.getResolutionX()); return;
         }
         KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
         String command = Preferences.getShortcutCommand(ks);
@@ -982,6 +989,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @see java.awt.event.KeyListener#keyReleased(java.awt.event.KeyEvent)
      */
     public void keyReleased(KeyEvent e) {
+        m_bFirstKey = true;
         if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
         {
             m_bQuickLUT = false;
@@ -1109,7 +1117,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
     public void mouseDragged(MouseEvent kEvent) {
-        if ( !m_bMouseDrag && m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
+        if ( !m_bMouseDrag && m_kParent.getPointerButton().isSelected() && !m_bDrawVOI && (m_iNearStatus == NearPoint) )
         { 
             showSelectedVOI( kEvent.getX(), kEvent.getY() );
         }       
@@ -1327,6 +1335,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             JDialogVOISplitter kSplitDialog = new JDialogVOISplitter(m_kImageActive) ;
             if ( !kSplitDialog.isCancelled()) {
                 splitVOIs( kSplitDialog.getAllSlices(), kSplitDialog.getOnlyActive(), m_kCurrentVOI );
+                m_kCurrentVOI = null;
             }
             kSplitDialog = null;
             m_bDrawVOI = false;
@@ -1446,7 +1455,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     Vector3f kLocal = m_kDrawingContext.fileToScreenVOI( kPos );
                     kLocal.Add( kDiff );
                     Vector3f kVolumePt = new Vector3f();
-                    m_kDrawingContext.screenToFileVOI( (int)kLocal.X, (int)kLocal.Y, (int)kLocal.Z, kVolumePt );
+                    m_kDrawingContext.screenToFileVOI( kLocal, kVolumePt );
                     kVolumeDiff.Sub( kVolumePt, kPos );
                     kVOI.set( i, kVolumePt );
                 }
@@ -1583,7 +1592,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @param akMinMax the VOI group bounding-box.
      * @return true if the move remains in-bounds, false otherwise.
      */
-    public boolean testMove( Vector3f kDiff, Vector3f[] akMinMax )
+    public boolean testMove( Vector3f kDiff, Vector3f[] akMinMax, boolean bUseMouse )
     {            
         Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( akMinMax[0] );
         kScreenMin.Add(kDiff);
@@ -1594,7 +1603,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         kScreenMin.Min( kScreenMax );
         kScreenMax.Max( kTemp );
 
-        if ( !kScreenMin.equals(kScreenMax) && 
+        if ( bUseMouse && !kScreenMin.equals(kScreenMax) && 
                 (m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
                         m_fMouseY < kScreenMin.Y || m_fMouseY > kScreenMax.Y )  )
         {
@@ -4103,6 +4112,24 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return false;
     }
 
+    private boolean nearLine( VOIBase kVOI, int iX, int iY, int iZ) {
+        VOIBase kBase = kVOI.clone();
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            Vector3f kFilePos = kVOI.get(i);
+            Vector3f kPos = m_kDrawingContext.fileToScreenVOI(kFilePos);
+            kBase.set(i, kPos);
+        }
+        if ( kBase.nearLine( iX, iY, iZ ) )
+        {
+            kVOI.setNearPoint( kBase.getNearPoint() );
+            kBase = null;
+            return true;
+        }
+        kBase = null;
+        return false;
+    }
+
     private boolean nearPoint( VOIBase kVOI, int iX, int iY, int iZ) {
 
         Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
@@ -4303,7 +4330,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 Vector3f kDiff = new Vector3f();
                 kDiff.Sub( kNewGC, kGC );
 
-                m_kParent.moveVOI( this, kDiff, m_iPlane, bTempFirstDrag );
+                m_kParent.moveVOI( this, kDiff, m_iPlane, bTempFirstDrag, true );
                 m_fMouseX = kEvent.getX();
                 m_fMouseY = kEvent.getY();
             }
@@ -5240,7 +5267,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 m_kParent.updateDisplay();
                 return;
             }
-            else if ( m_kCurrentVOI.nearLine( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z ) )
+            else if ( nearLine( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )
             {
                 if ( (m_kCurrentVOI.getType() == VOI.CONTOUR) ||
                         (m_kCurrentVOI.getType() == VOI.POLYLINE) )
