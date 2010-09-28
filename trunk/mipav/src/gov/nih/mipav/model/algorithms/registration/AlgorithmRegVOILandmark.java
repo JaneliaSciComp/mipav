@@ -41,19 +41,19 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private float baseVOIGradMagSum;
+    protected float baseVOIGradMagSum;
 
     /** DOCUMENT ME! */
     private AlgorithmGradientMagnitude gradientMagAlgo;
 
     /** DOCUMENT ME! */
-    private float[] gradMagBuf = null;
+    protected float[] gradMagBuf = null;
 
     /** DOCUMENT ME! */
     private double minTx, maxTx, minTy, maxTy, minRz, maxRz, step;
 
     /** DOCUMENT ME! */
-    private int opt, costFunc;
+    protected int opt, costFunc;
 
     /** DOCUMENT ME! */
     //private AlgorithmSimplexOpt simplex;
@@ -62,19 +62,19 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
     private int simplexDim;
 
     /** DOCUMENT ME! */
-    private int VOIlength;
+    protected int VOIlength;
 
     /** DOCUMENT ME! */
-    private Vector3f[] VOIposition = null; // positions (x,y) of VOI in first slice
+    protected VOIBase VOIposition = null; // positions (x,y) of VOI in first slice
 
     /** DOCUMENT ME! */
-    private int volLength, sliceSize;
+    protected int volLength, sliceSize;
 
     /** DOCUMENT ME! */
-    private ModelImage volume, gradMagVol;
+    protected ModelImage volume, gradMagVol;
 
     /** DOCUMENT ME! */
-    private int xdim, ydim, tdim;
+    protected int xdim, ydim, tdim;
 
     private float [] sigmas;
     private boolean maskFlag;
@@ -101,7 +101,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
      * @param  costFunc    DOCUMENT ME!
      */
     public AlgorithmRegVOILandmark(ModelImage volume, ModelImage gradMagVol, float[] sigmas, boolean maskFlag,
-    		Vector3f[] position, double minTx, double maxTx, double minTy, double maxTy,
+    		VOIBase position, double minTx, double maxTx, double minTy, double maxTy,
     		double minRz, double maxRz, double step, int opt, int costFunc) {
         super(volume, gradMagVol);
         this.volume = volume;
@@ -119,7 +119,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         xdim = volume.getExtents()[0];
         ydim = volume.getExtents()[1];
         tdim = volume.getExtents()[2];
-        VOIlength = position.length;
+        VOIlength = position.size();
         VOIposition = position;
 
         // VOIintensity = intensity;
@@ -166,7 +166,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         }
 
         for (i = 0; i < VOIlength; i++) {
-            baseVOIGradMagSum += gradMagBuf[(int) (VOIposition[i].X + (VOIposition[i].Y * xdim))];
+            baseVOIGradMagSum += gradMagBuf[(int) (VOIposition.elementAt(i).X + (VOIposition.elementAt(i).Y * xdim))];
         }
 
         Preferences.debug("baseVOIGradMagSum = " + baseVOIGradMagSum + "\n");
@@ -177,18 +177,6 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         }
         new ViewJFrameImage(volume);
         setCompleted(true);
-    }
-
-    /**
-     * displayError - displays the error.
-     *
-     * @param  error  the error
-     * @param  title  DOCUMENT ME!
-     */
-    private void displayError(String error, String title) {
-        JOptionPane.showMessageDialog(null, error, title, JOptionPane.ERROR_MESSAGE);
-
-        return;
     }
 
     /**
@@ -213,11 +201,11 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
             }
         }
 
-        for (Y = minTy; Y < maxTy; Y += step) {
+        for (Y = minTy; Y <= maxTy; Y += step) {
 
-            for (X = minTx; X < maxTx; X += step) {
+            for (X = minTx; X <= maxTx; X += step) {
 
-                for (R = minRz; R < maxRz; R++) {
+                for (R = minRz; R <= maxRz; R++) {
                     p[0][0] = X;
                     p[0][1] = Y;
                     p[0][2] = R;
@@ -246,55 +234,10 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
      *
      * @return  DOCUMENT ME!
      */
-    private TransMatrix getTransform(double[] x) {
+    protected TransMatrix getTransform(double[] x) {
         TransMatrix xfrm = new TransMatrix(3);
         xfrm.setTransform(x[0], x[1], x[2]);
-
-        // xfrm.setTranslate(x[0], x[1]);
-        // xfrm.setRotate(x[2]);
-        // xfrm.print();
         return xfrm;
-    }
-
-    /**
-     * InitializePandY p[i][j] = each i is a simplex vertex; each j is a parameter tx, ty, or r y[i] = cost of position
-     * corresponding to row i of p[][].
-     *
-     * @param  p     DOCUMENT ME!
-     * @param  y     DOCUMENT ME!
-     * @param  func  DOCUMENT ME!
-     */
-    private void InitializePandY(double[][] p, double[] y, CostFunction func) {
-        Preferences.debug("InitializePandY:\n");
-
-        int i, j;
-
-        for (i = 0; i < (simplexDim + 1); i++) {
-
-            for (j = 0; j < (simplexDim + 1); j++) {
-                p[i][j] = 0f;
-            }
-        }
-
-        p[0][0] = 5f; // Tx
-        p[1][1] = 5f; // Ty
-
-        // p[2][0] = -5f; //Tx again
-        p[2][2] = 5f; // Rot about z-axis (degrees)
-
-        for (i = 0; i < (simplexDim + 1); i++) {
-
-            for (j = 0; j < (simplexDim + 1); j++) {
-                Preferences.debug("p[" + i + "][" + j + "]=" + p[i][j] + "\n");
-            }
-        }
-
-        for (i = 0; i < (simplexDim + 1); i++) {
-            y[i] = func.cost(p[i]);
-            Preferences.debug("y[" + i + "] = " + y[i] + "\n");
-        }
-
-        Preferences.debug("InitializePandY done\n");
     }
 
     /**
@@ -308,17 +251,13 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         float[] imgBuf = null;
         float[] tImgBuf = null;
         double[][] p = null;
-        double[] y = null;
-        // Matrix inverseXfrm = new Matrix(3,3);
-
+        
         try {
             func = new CostFunction();
             imgBuf = new float[sliceSize];
             tImgBuf = new float[sliceSize];
             p = new double[simplexDim + 1][simplexDim];
-            y = new double[simplexDim + 1];
             increment = 90.0f / (tdim - 2);
-            //simplex = new AlgorithmSimplexOpt(p, y, simplexDim, func);
            
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Reg Kidney:  Out of Memory");
@@ -332,33 +271,24 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
 
             fireProgressStateChanged( ((increment * t)/(increment * tdim)), null, null);
         
-
             func.setSlice(t);
 
             if (opt == EXHAUSTIVEOPT) {
                 exhaustiveSearch(p, func);
             } else {
-                //p = new double[simplexDim + 1][simplexDim + 1];
-                //y = new double[simplexDim + 1];
-                //InitializePandY(p, y, func);
                 double[] initialPoint = new double[simplexDim];
-                double dCost = NelderMead.search( initialPoint, 0.0000001, this );
+                double[][] xi = new double[][]{{5,0,0,},{0,5,0},{0,0,5}};
+                double dCost = NelderMead.search(initialPoint, xi, //NelderMead.getStandardBasis(initialPoint.length), 
+                        0.0000001, this, 50000, null);
                 Preferences.debug("cost = " + dCost + "\n");
                 p[0] = initialPoint;
-                //NelderMead.search( y, p, 0.0000001, this, 5000, null );
-                //simplex.setP(p);
-                //simplex.setY(y);
-                //simplex.setRunningInSeparateThread(runningInSeparateThread);
-                //simplex.run();
-                //Preferences.debug("cost = " + y[0] + "\n");
             }
 
             xfrm = getTransform(p[0]); // lowest cost row
             xfrm.Inverse();
-            Preferences.debug("Transformation for slice " + t + " =\n");
-
-            // xfrm.print()
-            transformSlice(t, xfrm, imgBuf, tImgBuf);
+            Preferences.debug("Transformation for slice " + t + " =\n" + xfrm);
+            
+            transformSlice(t, xfrm, imgBuf, tImgBuf, volume.getImageCentermm(false));
             Preferences.debug(xfrm.toString());
 
             // Preferences.debug( "Transformed slice "+t+"\n");
@@ -374,7 +304,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
      * @param  imgBuf   DOCUMENT ME!
      * @param  tImgBuf  DOCUMENT ME!
      */
-    private void transformSlice(int slice, TransMatrix xfrm, float[] imgBuf, float[] tImgBuf) {
+    private void transformSlice(int slice, TransMatrix xfrm, float[] imgBuf, float[] tImgBuf, Vector3f center) {
         // float xres = volume.getFileInfo(0).getResolutions()[0]; float yres =
         // volume.getFileInfo(0).getResolutions()[1]; float tres = volume.getFileInfo(0).getResolutions()[2];
 
@@ -382,13 +312,24 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
 
         try {
             volume.exportData(sliceIndex, sliceSize, imgBuf); // copy volume into 1D array
+            int[] extentsTemp = new int[]{xdim,ydim};
+            ModelImage volumeTemp = new ModelImage( volume.getType(), extentsTemp, volume.getImageName()+"_"+slice );
+            volumeTemp.importData(imgBuf);
 
-            AlgorithmTransform.transformBilinear(imgBuf, tImgBuf, xfrm, xdim, ydim,
-                                                 volume.getFileInfo(0).getResolutions()[0],
-                                                 volume.getFileInfo(0).getResolutions()[1], xdim, ydim,
-                                                 volume.getFileInfo(0).getResolutions()[0],
-                                                 volume.getFileInfo(0).getResolutions()[1], null);
+            AlgorithmTransform algoTrans = new AlgorithmTransform(volumeTemp, xfrm, AlgorithmTransform.BILINEAR, 
+                    volume.getFileInfo(0).getResolutions()[0], volume.getFileInfo(0).getResolutions()[1], 
+                    xdim, ydim, volume.getFileInfo(0).getUnitsOfMeasure(), false, true,
+                    false, true, center);
+            algoTrans.setFillValue((float)volume.getMin());
+            algoTrans.setUpdateOriginFlag(true);
+            algoTrans.run();
+            ModelImage resultImage = algoTrans.getTransformedImage();
+            resultImage.exportData(0, sliceSize, tImgBuf);
+            
             volume.importData(sliceIndex, tImgBuf, false); // copy imgBuff back into image
+            
+            resultImage.disposeLocal();
+            volumeTemp.disposeLocal();
             System.gc();
         } catch (IOException error) {
             displayError("Algorithm: Image(s) locked");
@@ -461,12 +402,23 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
             xfrm = getTransform(x);
 
             Vector3f[] matchVOIposition = new Vector3f[VOIlength];
+            Vector3f[] VOIpositionTemp = new Vector3f[VOIlength];
 
+            Vector3f gcPt = VOIposition.getGeometricCenter();
             for (i = 0; i < VOIlength; i++) {
                 matchVOIposition[i] = new Vector3f();
+                VOIpositionTemp[i] = new Vector3f(VOIposition.elementAt(i));
+                VOIpositionTemp[i].Sub(gcPt);
             }
 
-            xfrm.transformAsVector3Df(VOIposition, matchVOIposition);
+            xfrm.transformAsVector3Df(VOIpositionTemp, matchVOIposition);
+            for (i = 0; i < VOIlength; i++) {
+                matchVOIposition[i].Add(gcPt);
+                matchVOIposition[i].Z = slice;
+            }
+            //VOI kNewVOI = new VOI((short)slice, new String( "Contour" + x[2]) );
+            //kNewVOI.importCurve(matchVOIposition);
+            //volume.registerVOI(kNewVOI);
 
             for (i = 0; i < VOIlength; i++) {
                 value = 0;
@@ -501,19 +453,6 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
             } // minimize difference between sums under VOI
 
             return Cost;
-        }
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param   es  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
-         */
-        public double cost(double[][] es) {
-            double value = 0;
-
-            return value;
         }
 
         /**
