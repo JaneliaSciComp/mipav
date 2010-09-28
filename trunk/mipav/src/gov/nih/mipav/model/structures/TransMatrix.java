@@ -1280,6 +1280,32 @@ public class TransMatrix extends Matrix4f
 
         return;
     }
+    
+    /**
+     * Takes an array of Vector3Df 2D vectors and multiplies them with the 2d
+     * transformation matrix.
+     *
+     * @param  vects   float vectors to be transformed
+     * @param  tVects  transformed vectors
+     */
+    public final void transformAsVector3Df(VOIBase vects, Vector3f[] tVects) {
+        int n;
+        int length = vects.size();
+
+        for (n = 0; n < length; n++) {
+            tVects[n].X = (float) (((double) vects.elementAt(n).X * M00) +
+                                   ((double) vects.elementAt(n).Y * M01) +
+                                   M02);
+
+            tVects[n].Y = (float) (((double) vects.elementAt(n).X * M10) +
+                                   ((double) vects.elementAt(n).Y * M11) +
+                                   M12);
+
+            tVects[n].Z = 1;
+        }
+
+        return;
+    }
 
     /**
      * Takes a 3D or 2D point (as a double array) and premultiplies it by the

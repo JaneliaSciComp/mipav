@@ -57,7 +57,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
     private JRadioButton minDiff, maxSum;
 
     /** DOCUMENT ME! */
-    private Vector3f[] position = null;
+    private VOIContour position = null;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -337,10 +337,10 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
 
                 Preferences.debug("actual VOI length = " + length + "\n");
 
-                position = new Vector3f[length];
+                position = new VOIContour(false, true);
 
                 for (i = 0; i < length; i++) {
-                    position[i] = new Vector3f(tmpPosition[i].X, tmpPosition[i].Y, tmpPosition[i].Z);
+                    position.add( new Vector3f(tmpPosition[i].X, tmpPosition[i].Y, tmpPosition[i].Z) );
                 }
 
                 // Hide dialog
