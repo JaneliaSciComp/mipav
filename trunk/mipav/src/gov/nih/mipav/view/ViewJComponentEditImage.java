@@ -6752,6 +6752,4 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
         return bClipped;
     }
-
-
 }

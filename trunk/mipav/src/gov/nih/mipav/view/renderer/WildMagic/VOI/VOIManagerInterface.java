@@ -1176,26 +1176,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             paste();
             setDefaultCursor();
         }
-        else if ( kCommand.equals("MoveUP") )
-        {
-            saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0, -1, 0 ), -1, true );
-        }
-        else if ( kCommand.equals("MoveDown") )
-        {
-            saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0, 1, 0 ), -1, true  );
-        }
-        else if ( kCommand.equals("MoveLeft") )
-        {
-            saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f(-1, 0, 0 ), -1, true  );
-        }
-        else if ( kCommand.equals("MoveRight") )
-        {
-            saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 1, 0, 0 ), -1, true  );
-        }        
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_FRONT.getActionCommand())) {
             changeVOIOrder(false, VOI.FRONT);
         } 
@@ -1737,6 +1717,31 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void mouseReleased(MouseEvent e) {}
 
+    
+    public void moveVOI( String kCommand, float fScale )
+    {
+        if ( fScale < 1 )
+        {
+            fScale = 1;
+        }
+        if ( kCommand.equals("MoveUP") )
+        {
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0, -fScale, 0 ), -1, true, false );
+        }
+        else if ( kCommand.equals("MoveDown") )
+        {
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0, fScale, 0 ), -1, true, false  );
+        }
+        else if ( kCommand.equals("MoveLeft") )
+        {
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f(-fScale, 0, 0 ), -1, true, false  );
+        }
+        else if ( kCommand.equals("MoveRight") )
+        {
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f(fScale, 0, 0 ), -1, true, false  );
+        }        
+    }
+    
     /**
      * Called from the VOIManager class when multiple contours are selected and moved as
      * a group. This function calculates the group bounding box and tests the move to ensure
@@ -1746,7 +1751,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @param iPlane the plane of the VOIManager (equivalent to Axial, Coronal, Sagittal)
      * @param bFirstMove true if this is the first move for the selected group of contours.
      */
-    public void moveVOI( VOIManager kActive, Vector3f kDiff, int iPlane, boolean bFirstMove )
+    public void moveVOI( VOIManager kActive, Vector3f kDiff, int iPlane, boolean bFirstMove, boolean bUseMouse )
     {
         if ( bFirstMove )
         {
@@ -1776,7 +1781,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
         }
 
-        if ( kActive.testMove( kDiff, m_akBounds ) )
+        if ( kActive.testMove( kDiff, m_akBounds, bUseMouse ) )
         {
             for ( int i = 0; i < m_kActiveList.size(); i++ )
             {
