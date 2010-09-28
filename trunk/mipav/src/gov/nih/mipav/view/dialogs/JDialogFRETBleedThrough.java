@@ -279,11 +279,13 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
         } else if ((source == activeButton) || (source == backgroundButton)) {
 
             if (activeButton.isSelected()) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.getVOIHandler().setPresetHue(-1.0f); // no preset color
+                componentImage.getVOIHandler().newVOI(-1.0f); // no preset color
+                //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage.getVOIHandler().setPresetHue(-1.0f); // no preset color
             } else if (backgroundButton.isSelected()) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
+                componentImage.getVOIHandler().newVOI(2.0f / 3.0f); // blue
+                //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
             }
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("10096");
@@ -577,8 +579,9 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
         VOIGroup.add(backgroundButton);
         gbc4.gridy = 0;
         VOIPanel.add(backgroundButton, gbc4);
-        componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-        componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
+        componentImage.getVOIHandler().newVOI(2.0f / 3.0f); // blue
+        //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+        //componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
 
         activeButton = new JRadioButton("Add active VOI", false);
         activeButton.setForeground(Color.red);

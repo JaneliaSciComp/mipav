@@ -144,7 +144,6 @@ public interface VOIHandlerInterface extends ActionListener, MouseInputListener
     /**
      * Sets the hue that will be used to draw the new VOI.
      * @param presetHue the hue to be used
-     * * @deprecated
      */
     public void setPresetHue(float presetHue);
     /**

@@ -158,15 +158,19 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         } else if ((source == signalButton) || (source == signal2Button)) {
 
             if (signalButton.isSelected()) {
-                componentImage2.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage2.getVOIHandler().setPresetHue(0.0f); // red
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.getVOIHandler().setPresetHue(0.0f); // red
+                componentImage2.getVOIHandler().newVOI(0.0f); // red
+                //componentImage2.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage2.getVOIHandler().setPresetHue(0.0f); // red
+                componentImage.getVOIHandler().newVOI(0.0f); // red
+                //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage.getVOIHandler().setPresetHue(0.0f); // red
             } else if (signal2Button.isSelected()) {
-                componentImage2.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage2.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
+                componentImage2.getVOIHandler().newVOI(1.0f / 3.0f); // green
+                //componentImage2.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage2.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
+                componentImage.getVOIHandler().newVOI(1.0f / 3.0f); // green
+                //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
             }
         }
     }
@@ -443,10 +447,12 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         VOIGroup.add(signalButton);
         VOIPanel.add(signalButton, gbc4);
 
-        componentImage2.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-        componentImage2.getVOIHandler().setPresetHue(0.0f); // red
-        componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-        componentImage.getVOIHandler().setPresetHue(0.0f); // red
+        componentImage2.getVOIHandler().newVOI(0.0f); // red
+        //componentImage2.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+        //componentImage2.getVOIHandler().setPresetHue(0.0f); // red
+        componentImage.getVOIHandler().newVOI(0.0f); // red
+        //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+        //componentImage.getVOIHandler().setPresetHue(0.0f); // red
 
 
         signal2Button = new JRadioButton("Add an optional second signal VOI", false);

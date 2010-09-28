@@ -210,11 +210,13 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             //MipavUtil.showHelp("");
         } else if ((source == sagittalSinusButton) || (source == processRegionButton)) {
             if (sagittalSinusButton.isSelected()) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.getVOIHandler().setPresetHue(0.0f); // red
+                componentImage.getVOIHandler().newVOI(0.0f); // red
+                //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage.getVOIHandler().setPresetHue(0.0f); // red
             } else if (processRegionButton.isSelected()) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
+                componentImage.getVOIHandler().newVOI(1.0f / 3.0f); // green
+                //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                //componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
             } 
         } else if (command.equals("TissueFile")) {
 
@@ -1197,8 +1199,9 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridy = 15;
         gbc.gridx = 0;
         mainPanel.add(sagittalSinusButton, gbc);
-        componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-        componentImage.getVOIHandler().setPresetHue(0.0f); // red
+        componentImage.getVOIHandler().newVOI(0.0f); // red
+        //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+        //componentImage.getVOIHandler().setPresetHue(0.0f); // red
 
         processRegionButton = new JRadioButton("Draw optional region VOI", false);
         processRegionButton.setForeground(Color.green.darker());
