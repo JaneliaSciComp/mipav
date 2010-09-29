@@ -171,11 +171,11 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                 opt = AlgorithmRegVOILandmark.SIMPLEXOPT;
             }
 
-            if (minDiff.isSelected()) {
-                costFunc = AlgorithmRegVOILandmark.MINDIFF;
-            } else {
-                costFunc = AlgorithmRegVOILandmark.MAXSUM;
-            }
+            //if (minDiff.isSelected()) {
+            //    costFunc = AlgorithmRegVOILandmark.MINDIFF;
+            //} else {
+            //    costFunc = AlgorithmRegVOILandmark.MAXSUM;
+            //}
 
             tmpStr = textStep.getText();
 
@@ -447,7 +447,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-
+/*
         if (source == comboBoxOpt) {
 
             if (comboBoxOpt.getSelectedIndex() == 0) {
@@ -482,6 +482,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                 textStep.setEnabled(false);
             }
         }
+        */
     }
 
     /**
@@ -533,18 +534,18 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
         textStep.setText("0.5");
         textStep.setFont(serif12);
 
-        ButtonGroup costGroup = new ButtonGroup();
-        minDiff = new JRadioButton("Min. diff between Gradient Mag. sums under VOI", false);
-        minDiff.setFont(serif12);
-        minDiff.setEnabled(true);
-        costGroup.add(minDiff);
-        minDiff.addItemListener(this);
+        //ButtonGroup costGroup = new ButtonGroup();
+        //minDiff = new JRadioButton("Min. diff between Gradient Mag. sums under VOI", false);
+        //minDiff.setFont(serif12);
+        //minDiff.setEnabled(true);
+        //costGroup.add(minDiff);
+        //minDiff.addItemListener(this);
 
-        maxSum = new JRadioButton("Max. Gradient Mag. sum under VOI", true);
-        maxSum.setFont(serif12);
-        maxSum.setEnabled(true);
-        costGroup.add(maxSum);
-        maxSum.addItemListener(this);
+        //maxSum = new JRadioButton("Max. Gradient Mag. sum under VOI", true);
+        //maxSum.setFont(serif12);
+        //maxSum.setEnabled(true);
+        //costGroup.add(maxSum);
+        //maxSum.addItemListener(this);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
@@ -564,9 +565,9 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
-        optionPanel.add(minDiff, gbc);
+        //optionPanel.add(minDiff, gbc);
         gbc.gridy = 3;
-        optionPanel.add(maxSum, gbc);
+        //optionPanel.add(maxSum, gbc);
 
 
         JPanel rangePanel = new JPanel(new GridLayout(3, 4));

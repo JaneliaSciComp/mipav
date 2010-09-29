@@ -12,8 +12,6 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
-import javax.swing.*;
-
 
 /**
  * AlgorithmRegVOILandmark First slice is template (base image) to which subsequent slices are registered. Trace kidney
@@ -79,7 +77,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
     private float [] sigmas;
     private boolean maskFlag;
     private CostFunction func = null;
-    
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -101,8 +99,8 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
      * @param  costFunc    DOCUMENT ME!
      */
     public AlgorithmRegVOILandmark(ModelImage volume, ModelImage gradMagVol, float[] sigmas, boolean maskFlag,
-    		VOIBase position, double minTx, double maxTx, double minTy, double maxTy,
-    		double minRz, double maxRz, double step, int opt, int costFunc) {
+            VOIBase position, double minTx, double maxTx, double minTy, double maxTy,
+            double minRz, double maxRz, double step, int opt, int costFunc) {
         super(volume, gradMagVol);
         this.volume = volume;
         this.gradMagVol = gradMagVol;
@@ -116,6 +114,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         this.minRz = minRz;
         this.maxRz = maxRz;
         this.sigmas = sigmas;
+        this.maskFlag = maskFlag;
         xdim = volume.getExtents()[0];
         ydim = volume.getExtents()[1];
         tdim = volume.getExtents()[2];
@@ -127,7 +126,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         sliceSize = xdim * ydim;
         volLength = sliceSize * tdim;
         simplexDim = 3;
-        
+
 
     }
 
@@ -147,11 +146,10 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         int i;
         gradientMagAlgo = new AlgorithmGradientMagnitude(gradMagVol, volume, sigmas, maskFlag, true);
         gradientMagAlgo.setProgressValues(generateProgressValues(0,10));
-        
+
         try {
             gradientMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
             gradientMagAlgo.run();
-            gradMagVol.convertToFloat();
             gradMagBuf = new float[volLength];
             gradMagVol.exportData(0, volLength, gradMagBuf); // copy volume into 1D array
         } catch (IOException error) {
@@ -168,13 +166,13 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         for (i = 0; i < VOIlength; i++) {
             baseVOIGradMagSum += gradMagBuf[(int) (VOIposition.elementAt(i).X + (VOIposition.elementAt(i).Y * xdim))];
         }
-
         Preferences.debug("baseVOIGradMagSum = " + baseVOIGradMagSum + "\n");
-        Search();
+        search();
         if(gradMagVol != null) {
         	gradMagVol.disposeLocal();
         	gradMagVol = null;
         }
+        //new ViewJFrameImage(gradMagVol);
         new ViewJFrameImage(volume);
         setCompleted(true);
     }
@@ -185,8 +183,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
      * @param  p     DOCUMENT ME!
      * @param  func  DOCUMENT ME!
      */
-    private void exhaustiveSearch(double[][] p, CostFunction func) {
-        int i, j;
+    private void exhaustiveSearch(double[] p, CostFunction func) {
         double minCost = Double.MAX_VALUE;
         double cost = 0f;
         double X, Y, R;
@@ -194,11 +191,8 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         double minY = 0f;
         double minR = 0f;
 
-        for (i = 0; i < (simplexDim + 1); i++) { // initialize p matrix to 0
-
-            for (j = 0; j < simplexDim; j++) {
-                p[i][j] = 0f;
-            }
+        for (int i = 0; i < simplexDim; i++) {
+            p[i] = 0f;
         }
 
         for (Y = minTy; Y <= maxTy; Y += step) {
@@ -206,11 +200,10 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
             for (X = minTx; X <= maxTx; X += step) {
 
                 for (R = minRz; R <= maxRz; R++) {
-                    p[0][0] = X;
-                    p[0][1] = Y;
-                    p[0][2] = R;
-                    cost = func.cost(p[0]);
-
+                    p[0] = X;
+                    p[1] = Y;
+                    p[2] = R;                    
+                    cost = func.cost(p);
                     if (cost < minCost) {
                         minCost = cost;
                         minX = X;
@@ -220,10 +213,9 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
                 }
             }
         }
-
-        p[0][0] = minX;
-        p[0][1] = minY;
-        p[0][2] = minR;
+        p[0] = minX;
+        p[1] = minY;
+        p[2] = minR;
         Preferences.debug(" mincost = " + minCost + "\n");
     }
 
@@ -243,22 +235,20 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
     /**
      * Search.
      */
-    private void Search() {
+    private void search() {
         Preferences.debug("Search:\n");
 
         TransMatrix xfrm;
         float increment;
         float[] imgBuf = null;
         float[] tImgBuf = null;
-        double[][] p = null;
-        
+
         try {
             func = new CostFunction();
             imgBuf = new float[sliceSize];
             tImgBuf = new float[sliceSize];
-            p = new double[simplexDim + 1][simplexDim];
             increment = 90.0f / (tdim - 2);
-           
+
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Reg Kidney:  Out of Memory");
             setCompleted(false);
@@ -266,28 +256,55 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         }
 
         fireProgressStateChanged(-1, null, "Registering ...");
-        
+
         for (int t = 1; t < tdim; t++) {
 
             fireProgressStateChanged( ((increment * t)/(increment * tdim)), null, null);
-        
+
             func.setSlice(t);
 
+            double[] initialPoint = new double[]{0,0,0};
             if (opt == EXHAUSTIVEOPT) {
-                exhaustiveSearch(p, func);
+                exhaustiveSearch(initialPoint, func);
             } else {
-                double[] initialPoint = new double[]{5,5,5};
-                double dCost = NelderMead.search(initialPoint, NelderMead.getStandardBasis(initialPoint.length), 
+                double scale = 1.0/0.00024;
+                double[][] xi = new double[][]{{scale * (maxTx - minTx),0,0},
+                        {0,scale*(maxTy-minTy),0},{0,0,scale*(maxRz-minRz)}};
+                double dCost = NelderMead.search(initialPoint, xi,//NelderMead.getStandardBasis(initialPoint.length), 
                         0.0000001, this, 50000, null);
                 Preferences.debug("cost = " + dCost + "\n");
-                p[0] = initialPoint;
             }
 
-            xfrm = getTransform(p[0]); // lowest cost row
-            xfrm.Inverse();
+            xfrm = getTransform(initialPoint); // lowest cost row
+            //System.err.println( initialPoint[0] + " " + initialPoint[1] + " " + initialPoint[2] );
+            /*
             Preferences.debug("Transformation for slice " + t + " =\n" + xfrm);
             
-            transformSlice(t, xfrm, imgBuf, tImgBuf, volume.getImageCentermm(false));
+            Vector3f[] matchVOIposition = new Vector3f[VOIlength];
+            Vector3f[] VOIpositionTemp = new Vector3f[VOIlength];
+
+            Vector3f gcPt = volume.getImageCenter();
+            System.err.println( gcPt );
+            for (int i = 0; i < VOIlength; i++) {
+                matchVOIposition[i] = new Vector3f();
+                VOIpositionTemp[i] = new Vector3f(VOIposition.elementAt(i));
+                VOIpositionTemp[i].Sub(gcPt);
+            }
+
+            xfrm.transformAsVector3Df(VOIpositionTemp, matchVOIposition);
+            for (int i = 0; i < VOIlength; i++) {
+                matchVOIposition[i].Add(gcPt);
+                matchVOIposition[i].Z = t;
+            }
+            VOI kNewVOI = new VOI((short)t, new String( "Contour" + t) );
+            kNewVOI.importCurve(matchVOIposition);
+            gradMagVol.registerVOI(kNewVOI);
+            //System.err.println( func.cost(matchVOIposition ) );
+            System.err.println( func.cost(initialPoint ) );
+             */
+            
+            xfrm.Inverse();                     
+            transformSlice(t, xfrm, imgBuf, tImgBuf, volume.getImageCenter());
             Preferences.debug(xfrm.toString());
 
             // Preferences.debug( "Transformed slice "+t+"\n");
@@ -324,9 +341,9 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
             algoTrans.run();
             ModelImage resultImage = algoTrans.getTransformedImage();
             resultImage.exportData(0, sliceSize, tImgBuf);
-            
+
             volume.importData(sliceIndex, tImgBuf, false); // copy imgBuff back into image
-            
+
             resultImage.disposeLocal();
             volumeTemp.disposeLocal();
             System.gc();
@@ -403,7 +420,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
             Vector3f[] matchVOIposition = new Vector3f[VOIlength];
             Vector3f[] VOIpositionTemp = new Vector3f[VOIlength];
 
-            Vector3f gcPt = VOIposition.getGeometricCenter();
+            Vector3f gcPt = volume.getImageCentermm(false);
             for (i = 0; i < VOIlength; i++) {
                 matchVOIposition[i] = new Vector3f();
                 VOIpositionTemp[i] = new Vector3f(VOIposition.elementAt(i));
@@ -435,24 +452,82 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
                         Y0pos = (int) Y * xdim;
                         X1pos = X0pos + 1;
                         Y1pos = Y0pos + xdim;
-                        value = (x1 * y1 * gradMagBuf[Y0pos + X0pos + slicePos]) +
-                                (x0 * y1 * gradMagBuf[Y0pos + X1pos + slicePos]) +
-                                (x1 * y0 * gradMagBuf[Y1pos + X0pos + slicePos]) +
-                                (x0 * y0 * gradMagBuf[Y1pos + X1pos + slicePos]);
-                        //  volIndex = (int)matchVOIposition[i].x +        (int)matchVOIposition[i].y*xdim +
-                        // slice*sliceSize;
+                        float transVal = (x1 * y1 * gradMagBuf[Y0pos + X0pos + slicePos]) +
+                        (x0 * y1 * gradMagBuf[Y0pos + X1pos + slicePos]) +
+                        (x1 * y0 * gradMagBuf[Y1pos + X0pos + slicePos]) +
+                        (x0 * y0 * gradMagBuf[Y1pos + X1pos + slicePos]);
+
+                        float origVal = gradMagBuf[(int) (VOIposition.elementAt(i).X + (VOIposition.elementAt(i).Y * xdim))];
+                        //float transVal = gradMagBuf[(int) (matchVOIposition[i].X + (matchVOIposition[i].Y * xdim)) + slicePos];
+                        value = origVal - transVal;
+                        value *= value;
                     }
                 }
 
-                Cost -= value; // cost = -(sum of Grad. Mag. intensities under transformed VOI)
+                Cost += value; // cost = -(sum of Grad. Mag. intensities under transformed VOI)
             }
 
             if (costFunc == MINDIFF) {
-                Cost = Math.abs(baseVOIGradMagSum + Cost);
+                //Cost = Math.abs(baseVOIGradMagSum + Cost);
             } // minimize difference between sums under VOI
 
             return Cost;
         }
+
+        /**
+         * Cost cost = intensity sum of errors = sum_i(I[i] - I'[i]) x[] = row of p[][].
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double cost(Vector3f[] matchVOIposition) {
+            int slicePos = slice * sliceSize;
+            double Cost = 0;
+            int X0pos, Y0pos;
+            int X1pos, Y1pos;
+            float X, Y;
+            float x0, y0;
+            float x1, y1;
+            float value = 0;
+
+            for (int i = 0; i < VOIlength; i++) {
+                X = matchVOIposition[i].X;
+
+                if ((X >= 0) && (X < (xdim - 1))) {
+                    Y = matchVOIposition[i].Y;
+
+                    if ((Y >= 0) && (Y < (ydim - 1))) {
+                        x0 = X - (int) X; // bilinear interp
+                        y0 = Y - (int) Y;
+                        x1 = 1 - x0;
+                        y1 = 1 - y0;
+                        X0pos = (int) X;
+                        Y0pos = (int) Y * xdim;
+                        X1pos = X0pos + 1;
+                        Y1pos = Y0pos + xdim;
+                        float transVal = (x1 * y1 * gradMagBuf[Y0pos + X0pos + slicePos]) +
+                        (x0 * y1 * gradMagBuf[Y0pos + X1pos + slicePos]) +
+                        (x1 * y0 * gradMagBuf[Y1pos + X0pos + slicePos]) +
+                        (x0 * y0 * gradMagBuf[Y1pos + X1pos + slicePos]);
+
+
+                        int origIndex = (int) (VOIposition.elementAt(i).X + (VOIposition.elementAt(i).Y * xdim));
+                        //int transIndex = (int) (matchVOIposition[i].X + (matchVOIposition[i].Y * xdim));
+                        //System.err.println( origIndex + " " + transIndex + " " + slicePos );
+                        float origVal = gradMagBuf[(int) (VOIposition.elementAt(i).X + (VOIposition.elementAt(i).Y * xdim))];
+                        //float transVal = gradMagBuf[(int) (matchVOIposition[i].X + (matchVOIposition[i].Y * xdim)) + slicePos];
+                        value = origVal - transVal;
+                        value *= value;
+                        System.err.println( origVal + " " + transVal + " " +  value );
+                    }
+                }
+
+                Cost += value; // cost = -(sum of Grad. Mag. intensities under transformed VOI)
+            }
+            return Cost;
+        }
+
 
         /**
          * DOCUMENT ME!
