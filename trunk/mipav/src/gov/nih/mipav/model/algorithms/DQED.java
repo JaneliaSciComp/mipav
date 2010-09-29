@@ -47,8 +47,20 @@ public abstract class DQED {
 	private int lopt_dbols;
 	
 	private int iflag_dqedip = 0;
+	private int ipls_dqedip = 0;
+	private int iprint_dqedip = 0;
 	private int iters_dqedip = 0;
 	private int itmax_dqedip = 0;
+	private int level_dqedip = 0;
+	private int lp_dqedip = 0;
+	private int lpdiff_dqedip = 0;
+	private boolean newopt_dqedip = false;
+	private boolean passb_dqedip = false;
+	private double told_dqedip = 0.0;
+	private double tolf_dqedip = 0.0;
+	private double tolp_dqedip = 0.0;
+	private double tolsnr_dqedip = 0.0;
+	private double tolx_dqedip = 0.0;
 	
 	private int iflag_dqedmn = 0;
 	
@@ -2063,15 +2075,15 @@ public abstract class DQED {
 					  for (i = iiw; i < iw.length && i < iiw + 2*ncols; i++) {
 						  iwArr[i - iiw + 1] = iw[i];
 					  }
-					  wArr = new double[mdw+1][ncols+2];
-					  for (i = 1; i <= mdw; i++) {
+					  wArr = new double[mdw-mcon+1][ncols+2];
+					  for (i = 1; i <= mdw-mcon; i++) {
 						  for (j = 1; j <= ncols+1; j++) {
 							  wArr[i][j] = w[mcon+i][j];
 						  }
 					  }
 			          dbols(wArr,mdw,mout,ncols,bl,bu,ind,jopt,x,rnorm,
 			                mode,rwArr,iwArr);
-					  for (i = 1; i <= mdw; i++) {
+					  for (i = 1; i <= mdw-mcon; i++) {
 						  for (j = 1; j <= ncols+1; j++) {
 							  w[mcon+i][j] = wArr[i][j];
 						  }
@@ -3894,8 +3906,8 @@ public abstract class DQED {
 			          arr = new double[mrows-nsetb+1];
 			          arr2 = new double[mrows-nsetb+1];
 			          for (n = 1; n <= mrows - nsetb; n++) {
-			        	  arr[j] = w[Math.min(nsetb+1, mrows) + n - 1][j];
-			        	  arr2[j] = w[Math.min(nsetb+1,mrows) + n - 1][ncols+1];
+			        	  arr[n] = w[Math.min(nsetb+1, mrows) + n - 1][j];
+			        	  arr2[n] = w[Math.min(nsetb+1,mrows) + n - 1][ncols+1];
 			          }
 			          ww[j] = ddot(mrows-nsetb,arr,1,arr2,1)*Math.abs(scl[jcol]);
 			      } // for (j = nsetb + 1; j <= ncols; j++)
@@ -8203,22 +8215,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  double gval;
 			  int icase;
 			  int igotfc = 60;
-			  int ipls = 0;
-			  int iprint = 0;
 			  int j;
 			  int jp;
 			  int k = 0;
 			  int kl = 0;
 			  int kp;
-			  int level = 0;
-			  int lp = 0;
-			  int lpdiff = 0;
 			  int mode[] = new int[1];
 			  int nall = 0;
 			  int nerr;
 			  boolean newbst;
-			  boolean newopt;
-			  boolean passb = false;
 			  double pb = 0.0;
 			  double pd = 0.0;
 			  double pv[] = new double[1];
@@ -8231,11 +8236,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  double t;
 			  double t2 = 0.0;
 			  boolean term = false;
-			  double told = 0.0;
-			  double tolf = 0.0;
-			  double tolp = 0.0;
-			  double tolsnr = 0.0;
-			  double tolx = 0.0;
 			  String xmess;
 			  boolean do20 = false;
 			  boolean do30 = false;
@@ -8451,7 +8451,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             alfac = 256.0;
 
 			             for (j = 1; j <= nvars; j++) {
-			                 if ( ! passb) {
+			                 if ( ! passb_dqedip) {
 			                	 bb[j] = -x[j];
 			                 }
 			                 if ( bb[j] == 0.0 ) {
@@ -8689,19 +8689,19 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  CONSTRAINTS.  THESE BOUNDS CAN COME FROM THE USER OR
 			      //  THE ALGORITHM.
 			      //
-		    	 iarr = new int[iopt.length-ipls + 1];
-		    	 for (m = ipls; m < iopt.length; m++) {
-		    	     iarr[m-ipls+1] = iopt[m];	 
+		    	 iarr = new int[iopt.length-ipls_dqedip + 1];
+		    	 for (m = ipls_dqedip; m < iopt.length; m++) {
+		    	     iarr[m-ipls_dqedip+1] = iopt[m];	 
 		    	 }
 			     dbocls(fjac,ldfjac,mcon,mequa,nvars,blb,bub,indb,iarr,
 			            dx,rnormc,pv,mode,wa,iwa);
-			     for (m = ipls; m < iopt.length; m++) {
-		    	     iopt[m] = iarr[m-ipls+1];	 
+			     for (m = ipls_dqedip; m < iopt.length; m++) {
+		    	     iopt[m] = iarr[m-ipls_dqedip+1];	 
 		    	 }
 
-				  if ( iprint > 0) {
+				  if ( iprint_dqedip > 0) {
 					  Preferences.debug("iters_dqedip= " + dfi3.format(iters_dqedip) + " fc = " + df10p4.format(fc) + " pv[0] = " + df10p4.format(pv[0]) + 
-							     " k = " + dfi4.format(k) + " kl = " + dfi4.format(kl) + " fb = " + df10p4.format(fb) + "\n");
+							     " k = " + dfi4.format(k) + " kl = " + dfi4.format(kl) + " fb[0] = " + df10p4.format(fb[0]) + "\n");
 					  Preferences.debug("            alpha = " + df14p4.format(alpha) + " bboost = " + df14p4.format(bboost) + "\n");
 				      Preferences.debug(" x = " + df12p4.format(x[1]));
 				      for (j = 2; j <= nvars; j++) {
@@ -8742,7 +8742,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      term = ( mcon == 0 && (pv[0]>=fc) );
 			      term=false;
 			      if ( term) {
-			          if ( iprint > 0) {
+			          if ( iprint_dqedip > 0) {
 			              Preferences.debug("linear residual>=current f. quitting. pv[0] = " + df12p5.format(pv[0]) +
 			              		            "fc = " + df12p5.format(fc) + "\n");
 			          }
@@ -8861,14 +8861,14 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          //
 			          //  TEST FOR SMALL ABSOLUTE CHANGE IN X VALUES.
 			          //
-			          term = dxnrm  <  told && fulnwt;
+			          term = dxnrm  <  told_dqedip && fulnwt;
 			          if ( term) {
 			              igo[0] = 5;
                           do30 = true;
 			              continue loop;
 			          } // if (term)
 
-			          term = dxnrm  <  dnrm2(nvars,x,1)*tolx && fulnwt;
+			          term = dxnrm  <  dnrm2(nvars,x,1)*tolx_dqedip && fulnwt;
 			          term = term && (iters_dqedip > 1);
 			          if ( term) {
 			              igo[0] = 6;
@@ -8886,7 +8886,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  TEST FOR SMALL FUNCTION NORM.
 			      //
-			      term = fc <= tolf || term;
+			      term = fc <= tolf_dqedip || term;
 			      //
 			      //  IF HAVE CONSTRAINTS MUST ALLOW AT LEAST ONE MOVE.
 			      //
@@ -8934,8 +8934,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  if (do430) {
 			      do430 = false;
 			      t = Math.sqrt(Math.max( 0.0, (fl-pv[0])* (fl+pv[0])));
-			      term = (Math.abs(fb[0]-fc)<=tolsnr*fb[0]) && (t <= pv[0]*tolp);
-			      term = term && (Math.abs(fc-fl)<=fb[0]*tolsnr);
+			      term = (Math.abs(fb[0]-fc)<=tolsnr_dqedip*fb[0]) && (t <= pv[0]*tolp_dqedip);
+			      term = term && (Math.abs(fc-fl)<=fb[0]*tolsnr_dqedip);
 			      term = term && fulnwt;
 
 			      do410 = true;
@@ -8971,49 +8971,49 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  if (do470) {
 			      do470 = false;
 			      do480 = true;
-			      iprint = 0;
+			      iprint_dqedip = 0;
 			      //
 			      //  T = MACHINE REL. PREC.
 			      //
 			      t = epsilon;
-			      tolf = t;
-			      tolx = tolf;
-			      told = tolf;
-			      tolsnr = 1.0D-03;
-			      tolp = 1.0D-03;
+			      tolf_dqedip = t;
+			      tolx_dqedip = tolf_dqedip;
+			      told_dqedip = tolf_dqedip;
+			      tolsnr_dqedip = 1.0D-03;
+			      tolp_dqedip = 1.0D-03;
 			      itmax_dqedip = 18;
-			      passb = false;
-			      level = 1;
-			      ipls = 0;
-			      lpdiff = 0;
-			      lp = 1;
+			      passb_dqedip = false;
+			      level_dqedip = 1;
+			      ipls_dqedip = 0;
+			      lpdiff_dqedip = 0;
+			      lp_dqedip = 1;
 			  } // if (do470)
 
 			  if (do480) {
 			      do480 = false;
 
-			      lp = lp + lpdiff;
-			      lpdiff = 2;
-			      kp = iopt[lp];
-			      newopt = kp  >  0;
+			      lp_dqedip = lp_dqedip + lpdiff_dqedip;
+			      lpdiff_dqedip = 2;
+			      kp = iopt[lp_dqedip];
+			      newopt_dqedip = kp  >  0;
 			      jp = Math.abs(kp);
 			      //
 			      //  SEE IF THIS IS THE LAST OPTION.
 			      //
 			      if ( jp == 99) {
-			          if ( newopt) {
+			          if ( newopt_dqedip) {
 			              //
 			              //  THE POINTER TO THE START OF OPTIONS FOR THE LINEAR
 			              //  SOLVER MUST SATISFY THE REQUIREMENTS FOR THAT OPTION ARRAY.
 			              //
-			              if ( ipls == 0) {
-			            	  ipls = lp;
+			              if ( ipls_dqedip == 0) {
+			            	  ipls_dqedip = lp_dqedip;
 			              }
 			              do450 = true;
 			              continue loop;
 			          } // if (newopt)
 			          else {
-			              lpdiff = 1;
+			              lpdiff_dqedip = 1;
 			              do480 = true;
 			              continue loop;
 			          }
@@ -9022,8 +9022,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  CHANGE PRINT OPTION.
 			      //
 			      if ( jp == 1) {
-			          if ( newopt) {
-			        	  iprint = iopt[lp+1];
+			          if ( newopt_dqedip) {
+			        	  iprint_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
 			          continue loop;
@@ -9032,8 +9032,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  SEE IF MAX. NUMBER OF ITERATIONS CHANGING.
 			      //
 			      if ( jp == 2) {
-			          if ( newopt) {
-			    	      itmax_dqedip = iopt[lp+1];
+			          if ( newopt_dqedip) {
+			    	      itmax_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
 			          continue loop;
@@ -9042,11 +9042,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  SEE IF BOUNDS FOR THE TRUST REGION ARE BEING PASSED.
 			      //
 			      if ( jp == 3) {
-			          if ( newopt) {
+			          if ( newopt_dqedip) {
 			              for (m = 1; m <= nvars; m++) {
-			        	      bb[m] = ropt[iopt[lp+1]+m-1];
+			        	      bb[m] = ropt[iopt[lp_dqedip+1]+m-1];
 			              }
-			              passb = true;
+			              passb_dqedip = true;
 			          } // if (newopt)
 			          do480 = true;
                       continue loop;
@@ -9055,8 +9055,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  CHANGE TOLERANCE ON THE LENGTH OF THE RESIDUALS.
 			      //
 			      if ( jp == 4) {
-			          if ( newopt) { 
-			        	  tolf = ropt[iopt[lp+1]];
+			          if ( newopt_dqedip) { 
+			        	  tolf_dqedip = ropt[iopt[lp_dqedip+1]];
 			          }
 			          do480 = true;
 			          continue loop;
@@ -9066,8 +9066,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  CHANGE TO THE PARAMETERS.
 			      //
 			      if ( jp == 5) {
-			          if ( newopt) {
-			        	  tolx = ropt[iopt[lp+1]];
+			          if ( newopt_dqedip) {
+			        	  tolx_dqedip = ropt[iopt[lp_dqedip+1]];
 			          }
 			          do480 = true;
 			          continue loop;
@@ -9076,8 +9076,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  CHANGE TOLERANCE ON ABSOLUTE CHANGE TO THE PARAMETERS.
 			      //
 			      if ( jp == 6) {
-			          if ( newopt) {
-			        	  told = ropt[iopt[lp+1]];
+			          if ( newopt_dqedip) {
+			        	  told_dqedip = ropt[iopt[lp_dqedip+1]];
 			          }
 			          do480 = true;
 			          continue loop;
@@ -9089,8 +9089,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          //  BEST FUNCTION NORM, LAST FUNCTION NORM AND THE
 			          //  CURRENT FUNCTION NORM.
 			          //
-			          if ( newopt) {
-			        	  tolsnr = ropt[iopt[lp+1]];
+			          if ( newopt_dqedip) {
+			        	  tolsnr_dqedip = ropt[iopt[lp_dqedip+1]];
 			          }
 			          do480 = true;
 			          continue loop;
@@ -9102,8 +9102,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          //  VALUE OF RESIDUAL NORM AND THE PREVIOUS VALUE OF
 			          //  THE RESIDUAL NORM.
 			          //
-			          if ( newopt) {
-			        	  tolp = ropt[iopt[lp+1]];
+			          if ( newopt_dqedip) {
+			        	  tolp_dqedip = ropt[iopt[lp_dqedip+1]];
 			          }
 			          do480 = true;
 			          continue loop;
@@ -9112,8 +9112,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  CHANGE THE PRINT LEVEL IN THE ERROR PROCESSOR.
 			      //
 			      if ( jp == 9) {
-			          if ( newopt) {
-			        	  level = iopt[lp+1];
+			          if ( newopt_dqedip) {
+			        	  level_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
                       continue loop;
@@ -9124,8 +9124,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  ARRAY FOR THE SUBPROGRAM.
 			      //
 			      if ( jp == 10) {
-			          if ( newopt) {
-			        	  ipls = iopt[lp+1];
+			          if ( newopt_dqedip) {
+			        	  ipls_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
 			          continue loop;
@@ -9137,8 +9137,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  SUBROUTINES IS EASY TO DO.
 			      //
 			      if ( jp == 11) {
-			          if ( newopt) {
-			    	      lpdiff = iopt[lp+1];
+			          if ( newopt_dqedip) {
+			    	      lpdiff_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
 			          continue loop;
@@ -9149,7 +9149,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      xmess = "dqedip. invalid option processed. i1=iopt(*) entry. i2=iopt(i1).";
 			      nerr = 8;
 			      igo[0] = 16;
-			      xerrwv(xmess,nerr,level,2,lp,iopt[lp],0,rdum,rdum);
+			      xerrwv(xmess,nerr,level_dqedip,2,lp_dqedip,iopt[lp_dqedip],0,rdum,rdum);
 			      iflag_dqedip = 0;
 
 			      return;
