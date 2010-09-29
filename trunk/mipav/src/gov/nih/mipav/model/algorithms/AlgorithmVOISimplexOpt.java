@@ -3,10 +3,12 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.structures.*;
-
-import java.awt.*;
+import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
+
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
+import WildMagic.LibFoundation.NumericalAnalysis.minimizing.NelderMead;
 
 
 /**
@@ -17,7 +19,7 @@ import java.io.*;
  * @version  1.0 July, 2003
  * @author   Evan McCreedy
  */
-public class AlgorithmVOISimplexOpt extends AlgorithmBase {
+public class AlgorithmVOISimplexOpt extends AlgorithmBase implements RealFunctionOfSeveralVariables  {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -30,22 +32,22 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The sum of the gradient magnitude along the polygon. */
-    private float baseVOIGradMagSum;
+    protected float baseVOIGradMagSum;
 
     /** Which cost function to use (MINDIFF or MAXSUM). */
-    private int costFunc;
+    protected int costFunc;
 
     /** The slice number the VOI is in. */
     private int currentSlice = 0;
 
     /** The gradient magnitude of the slice. */
-    private float[] gradMagBuf = null;
+    protected float[] gradMagBuf = null;
 
     /** The source image. */
     private ModelImage image;
 
     /** The polygon of the VOI we are fitting. */
-    private VOIContour inputGon;
+    protected VOIContour inputGon;
 
     /** the kernel size to use in calculating the gradient magnitude image. */
     private float[] sigmas;
@@ -60,11 +62,13 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
     private float[] sliceBuf;
 
     /** The slice size in the x dimension. */
-    private int xDim;
+    protected int xDim;
 
     /** The slice size in the y dimension. */
-    private int yDim;
+    protected int yDim;
 
+    private CostFunction func = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -208,7 +212,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
      *
      * @return  the transformation matrix corresponding to <code>x</code>
      */
-    private TransMatrix getTransform(double[] x) {
+    protected TransMatrix getTransform(double[] x) {
         TransMatrix xfrm = new TransMatrix(3);
         xfrm.setTransform(x[0], x[1], x[2]);
         xfrm.setZoom(x[3], x[4]);
@@ -275,13 +279,13 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
      * @return  the optimized polygon
      */
     private VOIContour Search() {
+        /*
         TransMatrix xfrm;
         CostFunction func = null;
         double[][] p = null;
         double[] y = null;
 
         try {
-            func = new CostFunction();
             p = new double[simplexDim + 1][simplexDim];
             y = new double[simplexDim + 1];
             simplex = new AlgorithmSimplexOpt(p, y, simplexDim, func);
@@ -299,7 +303,14 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
         simplex.run();
         xfrm = getTransform(p[0]); // lowest cost row
         xfrm.Inverse();
-
+         */
+        func = new CostFunction();
+        double[] initialPoint = new double[]{0,0,0,1,1};
+        double dCost = NelderMead.search(initialPoint, NelderMead.getStandardBasis(initialPoint.length), 
+                0.0000001, this, 50000, null);
+        TransMatrix xfrm = getTransform(initialPoint);
+        xfrm.Inverse();
+        
         return new VOIContour( inputGon, xfrm );
     }
 
@@ -370,5 +381,15 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
 
             return cost;
         }
+    }
+
+    @Override
+    public double eval(double[] x) {
+        return func.cost(x);
+    }
+
+    @Override
+    public int getNumberOfVariables() {
+        return simplexDim;
     }
 }
