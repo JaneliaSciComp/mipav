@@ -276,9 +276,8 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
             if (opt == EXHAUSTIVEOPT) {
                 exhaustiveSearch(p, func);
             } else {
-                double[] initialPoint = new double[simplexDim];
-                double[][] xi = new double[][]{{5,0,0,},{0,5,0},{0,0,5}};
-                double dCost = NelderMead.search(initialPoint, xi, //NelderMead.getStandardBasis(initialPoint.length), 
+                double[] initialPoint = new double[]{5,5,5};
+                double dCost = NelderMead.search(initialPoint, NelderMead.getStandardBasis(initialPoint.length), 
                         0.0000001, this, 50000, null);
                 Preferences.debug("cost = " + dCost + "\n");
                 p[0] = initialPoint;
