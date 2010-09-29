@@ -159,7 +159,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             setVisible(true);
             validate();
         } else {
-            return;
+            if (JDialogStandalonePlugin.isExitRequired()) {
+                System.exit(0);
+                // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            } else {
+                return;
+            }
         }
 
         final Thread thread = new WebServiceThread(this);
