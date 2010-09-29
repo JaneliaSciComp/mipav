@@ -47,6 +47,8 @@ public abstract class DQED {
 	private int lopt_dbols;
 	
 	private int iflag_dqedip = 0;
+	private int iters_dqedip = 0;
+	private int itmax_dqedip = 0;
 	
 	private int iflag_dqedmn = 0;
 	
@@ -8203,8 +8205,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  int igotfc = 60;
 			  int ipls = 0;
 			  int iprint = 0;
-			  int iters = 0;
-			  int itmax = 0;
 			  int j;
 			  int jp;
 			  int k = 0;
@@ -8331,7 +8331,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          do30 = false;
 
 			          if (! retrea) {
-			        	  iters = iters + 1;
+			        	  iters_dqedip = iters_dqedip + 1;
 			          }
 			          if ( retrea) {
 			              //
@@ -8380,7 +8380,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             iflag_dqedip = 0;
 			             return;
 			         }
-			         newbst = fc  <  fb[0] || (mcon > 0 && iters == 2);
+			         newbst = fc  <  fb[0] || (mcon > 0 && iters_dqedip == 2);
 			         if ( newbst) {
 			             k = 0;
 			         }
@@ -8700,7 +8700,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 		    	 }
 
 				  if ( iprint > 0) {
-					  Preferences.debug("iters= " + dfi3.format(iters) + " fc = " + df10p4.format(fc) + " pv[0] = " + df10p4.format(pv[0]) + 
+					  Preferences.debug("iters_dqedip= " + dfi3.format(iters_dqedip) + " fc = " + df10p4.format(fc) + " pv[0] = " + df10p4.format(pv[0]) + 
 							     " k = " + dfi4.format(k) + " kl = " + dfi4.format(kl) + " fb = " + df10p4.format(fb) + "\n");
 					  Preferences.debug("            alpha = " + df14p4.format(alpha) + " bboost = " + df14p4.format(bboost) + "\n");
 				      Preferences.debug(" x = " + df12p4.format(x[1]));
@@ -8869,7 +8869,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          } // if (term)
 
 			          term = dxnrm  <  dnrm2(nvars,x,1)*tolx && fulnwt;
-			          term = term && (iters > 1);
+			          term = term && (iters_dqedip > 1);
 			          if ( term) {
 			              igo[0] = 6;
 			          } // if (term)
@@ -8890,7 +8890,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  IF HAVE CONSTRAINTS MUST ALLOW AT LEAST ONE MOVE.
 			      //
-			      term = term && (mcon == 0 || iters > 1);
+			      term = term && (mcon == 0 || iters_dqedip > 1);
 			      if ( term) {
 			          igo[0] = 2;
 			          do420 = true;
@@ -8911,7 +8911,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          igo[0] = 3;
 			      }
 			      else {
-			          term = iters >= itmax;
+			          term = iters_dqedip >= itmax_dqedip;
 			          if ( term) {
 			              igo[0] = 7;
 			          }
@@ -8948,7 +8948,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  if (do450) {
 			      do450 = false;
 
-			      iters = 0;
+			      iters_dqedip = 0;
 			      nall = mcon + nvars;
 			      chgfac = Math.pow(2.0, (-1.0/(double)nvars));
 			      c1516 = 15.0 / 16.0;
@@ -8981,7 +8981,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      told = tolf;
 			      tolsnr = 1.0D-03;
 			      tolp = 1.0D-03;
-			      itmax = 18;
+			      itmax_dqedip = 18;
 			      passb = false;
 			      level = 1;
 			      ipls = 0;
@@ -9033,7 +9033,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      if ( jp == 2) {
 			          if ( newopt) {
-			    	      itmax = iopt[lp+1];
+			    	      itmax_dqedip = iopt[lp+1];
 			          }
 			          do480 = true;
 			          continue loop;
