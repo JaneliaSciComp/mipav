@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -89,9 +91,31 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
             if ((RGBAlgo.isCompleted() == true) && (resultImageB != null)) {
                 // The algorithm has completed and produced a new image to be displayed.
 
-                updateFileInfo(imageA, resultImageR);
-                updateFileInfo(imageA, resultImageG);
-                updateFileInfo(imageA, resultImageB);
+            	if ((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM)  {
+                	FileInfoDicom fileInfoBuffer; // buffer of type DICOM
+                	for (int n = 0; n < imageA.getFileInfo().length; n++) {
+                		fileInfoBuffer = (FileInfoDicom) imageA.getFileInfo(n).clone(); // copy into buffer
+                		fileInfoBuffer.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                		fileInfoBuffer.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
+                		fileInfoBuffer.setDataType(resultImageR.getType());
+                		resultImageR.setFileInfo(fileInfoBuffer, n);
+                		fileInfoBuffer = (FileInfoDicom) imageA.getFileInfo(n).clone(); // copy into buffer
+                		fileInfoBuffer.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                		fileInfoBuffer.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
+                		fileInfoBuffer.setDataType(resultImageG.getType());
+                		resultImageG.setFileInfo(fileInfoBuffer, n);
+                		fileInfoBuffer = (FileInfoDicom) imageA.getFileInfo(n).clone(); // copy into buffer
+                		fileInfoBuffer.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                		fileInfoBuffer.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
+                		fileInfoBuffer.setDataType(resultImageB.getType());
+                		resultImageB.setFileInfo(fileInfoBuffer, n);
+                	}
+                }
+            	else {
+	                updateFileInfo(imageA, resultImageR);
+	                updateFileInfo(imageA, resultImageG);
+	                updateFileInfo(imageA, resultImageB);
+            	}
 
                 try {
                     new ViewJFrameImage(resultImageR, null, new Dimension(610, 200));
