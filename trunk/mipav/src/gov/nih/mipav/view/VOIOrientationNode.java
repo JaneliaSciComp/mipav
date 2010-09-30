@@ -16,17 +16,16 @@ import javax.swing.tree.*;
  *
  * @author  David Parsons
  */
-public class VOIFrameNode extends DefaultMutableTreeNode {
+public class VOIOrientationNode extends DefaultMutableTreeNode {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -6795049606234900885L;
+    
+    
+    private String orientation;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** The slice number of the VOI component */
-    private int frameNumber;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -36,12 +35,12 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
      * @param  node     File for tree leaf.
      * @param  fNumber  The slice number of this VOI component
      */
-    public VOIFrameNode(Vector node, int fNumber) {
-        setUserObject(node);
+    public VOIOrientationNode(String orientation,Vector<VOIBase>[] sortedCurves) {
+    	this.orientation = orientation;
+        setUserObject(sortedCurves);
 
         // unless we drop in information about the VOIbase here...
         setAllowsChildren(true);
-        frameNumber = fNumber;
         explore();
     }
 
@@ -57,32 +56,23 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
      * <p>Implementation of this is different from the Sun Books' code.</p>
      */
     public void explore() {
-        Vector curves = (Vector) getUserObject();
+    	Vector<VOIBase>[] sortedCurves = (Vector<VOIBase>[])getUserObject();
+    	
+    	
+    	for(int i=0;i<sortedCurves.length;i++) {
+    		Vector<VOIBase> contours = sortedCurves[i];
+    		if(contours != null && contours.size() > 0) {
+    			add(new VOIFrameNode(contours,i));
+    			
+    			
+    		}
+    	}
+    	
 
-        for (int i = 0; i < curves.size(); i++) {
-            add(new VOINode((VOIBase) curves.elementAt(i)));
-        }
     }
 
-    /**
-     * Gets the slice number of this VOI.  Note that slice number is zero based
-     *
-     * @return  DOCUMENT ME!
-     */
-    public int getFrameNumber() {
-        return this.frameNumber;
-    }
 
-    /**
-     * the string returned is the name of the VOI returns the name of the VOI if the VOI exists, or <code>null</code> if
-     * it doesn't.
-     *
-     * @return  The slice number of this VOI.
-     */
-    public String getName() {
 
-        return "Slice " + Integer.toString(frameNumber);
-    }
 
 
     /**
@@ -93,20 +83,36 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
      *
      * @see  gov.nih.mipav.structures.VOI
      */
-    public VOIBase getVOI() {
-        return (VOIBase) super.getUserObject();
+    public Vector<VOIBase>[] getVOI() {
+        return (Vector<VOIBase>[])super.getUserObject();
     }
 
-
+    /**
+     * the string returned is the name of the VOI returns the name of the VOI if the VOI exists, or <code>null</code> if
+     * it doesn't.
+     *
+     * <p>Explicitly calls DefaultMutableTreeNode.toString()</p>
+     *
+     * @return  Name of the file.
+     *
+     * @see     javax.swing.tree.DefaultMutableTreeNode#toString()
+     */
+    public String getName() {
+        return orientation;
+    }
+    
     /**
      * the string returned is the name of the VOI returns the name of the VOI if it exists, or <code>null</code> if it
      * doesn't.
      *
-     * @return  The File's name.
+     * @return  Name of the file.
+     *
+     * @see     javax.swing.tree.DefaultMutableTreeNode#toString()
      */
     public String toString() {
         return getName();
     }
+    
 
 
 }

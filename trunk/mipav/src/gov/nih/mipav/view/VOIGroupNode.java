@@ -22,9 +22,25 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2278502889235734935L;
+    
+    
+    private int[] extents;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Loads a File into the tree-leaf.
+     *
+     * @param  node  File for tree leaf.
+     */
+    public VOIGroupNode(VOI node,int[] extents) {
+    	this.extents = extents;
+        setUserObject(node);
+        setAllowsChildren(true);
+        explore();
+    }
+
+    
     /**
      * Loads a File into the tree-leaf.
      *
@@ -35,7 +51,6 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
         setAllowsChildren(true);
         explore();
     }
-
     /**
      * Creates a new VOIGroupNode object.
      *
@@ -59,11 +74,52 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
     public void explore() {
 
         // load all contours into the Tree as children of the VOI node.
-        Vector curveList = ((VOI) getUserObject()).getCurves();
+    	
+    	Vector<VOIBase>[] xCurveSortedCurves = null;
+    	Vector<VOIBase>[] yCurveSortedCurves = null;
+    	Vector<VOIBase>[] zCurveSortedCurves = null;
+    	
+    	
+    	
+    	if(extents.length > 2) {
+    	
+    	
+	    	xCurveSortedCurves = ((VOI) getUserObject()).getSortedCurves(VOIBase.XPLANE, extents[0]);
+	    	
+	    	yCurveSortedCurves = ((VOI) getUserObject()).getSortedCurves(VOIBase.YPLANE, extents[1]);
+	
+	    	zCurveSortedCurves = ((VOI) getUserObject()).getSortedCurves(VOIBase.ZPLANE, extents[2]);
+	
+	    	
+	    	
+	    	if(xCurveSortedCurves!= null) {
+	    		add(new VOIOrientationNode("X Plane",xCurveSortedCurves));
+	    	}
+	    	if(yCurveSortedCurves != null) {
+	    		add(new VOIOrientationNode("Y Plane",yCurveSortedCurves));
+	    	}
+	    	if(zCurveSortedCurves!= null) {
+	    		add(new VOIOrientationNode("Z Plane",zCurveSortedCurves));
+	    		
+	    	}
+    	}else {
+    		Vector curveList = ((VOI) getUserObject()).getCurves();
+    		if (curveList.size() > 0) {
+    			add(new VOIFrameNode(curveList, 0));
+    		}
+    	}
+
+    	
+    	
+       // load all contours into the Tree as children of the VOI node.
+       /* Vector curveList = ((VOI) getUserObject()).getCurves();
 
         if (curveList.size() > 0) {
             add(new VOIFrameNode(curveList, 0));
-        }
+        }*/
+    	
+    	
+    	
     }
 
     /**
