@@ -1107,7 +1107,7 @@ public abstract class DQED {
 		  return;	
 	} // daxpy
 	
-	private void dbocls ( double w[][], int mdw, int mcon, int mrows, int ncols, double bl[], double bu[],
+	private void dbocls ( double w[][], int mdw, int mcon[], int mrows[], int ncols, double bl[], double bu[],
 			              int ind[], int iopt[], double x[], double rnormc[], double rnorm[], int mode[],
 			              double rw[], int iw[] ) {
 
@@ -1558,7 +1558,7 @@ public abstract class DQED {
 			  int mdwl;
 			  int mnew = 0;
 			  int modec[] = new int[1];;
-			  int mout = 0;
+			  int mout[] = new int[1];
 			  int nerr;
 			  boolean pretri = false;
 			  double rdum;
@@ -1571,6 +1571,7 @@ public abstract class DQED {
 			  int ioptArr[];
 			  int iwArr[];
 			  double wArr[][];
+			  int iArr[];
 
 			  idum = 0;
 			  rdum = 0.0;
@@ -1599,10 +1600,10 @@ public abstract class DQED {
 			//
 			//  See that number of constraints is nonnegative.
 			//
-			      if ( mcon < 0) {
+			      if ( mcon[0] < 0) {
 			          nerr = 54;
 			          xerrwv("dbocls(). mcon=(i1) must be nonnegative.",
-			                      nerr,level,1,mcon,idum,0,rdum,rdum);
+			                      nerr,level,1,mcon[0],idum,0,rdum,rdum);
 				      if ( 0 <= mode[0] ) {
 				          mode[0] = -nerr;
 					  }
@@ -1629,7 +1630,7 @@ public abstract class DQED {
 			//
 			//  See that constraint indicators are all well-defined.
 			//
-			      for (j = 1; j <= ncols + mcon; j++) {
+			      for (j = 1; j <= ncols + mcon[0]; j++) {
 			          if ( ind[j] < 1 || ind[j] > 4) {
 			              nerr = 56;
 			              xerrwv("dbocls(). for j=(i1), ind(j)=(i2) must be 1-4.",
@@ -1646,7 +1647,7 @@ public abstract class DQED {
 			//
 			//  See that bounds are consistent.
 			//
-			      for (j = 1; j <= ncols + mcon; j++) {
+			      for (j = 1; j <= ncols + mcon[0]; j++) {
 			          if ( ind[j] == 3) {
 			              if ( bl[j] > bu[j]) {
 			                  nerr = 57;
@@ -1670,7 +1671,7 @@ public abstract class DQED {
 			      drelpr = epsilon;
 			      checkl = false;
 			      filter = true;
-			      lenx = 2* (ncols+mcon) + 2;
+			      lenx = 2* (ncols+mcon[0]) + 2;
 			      iscale = 1;
 			      igo_dbocls = 1;
 			      accum = false;
@@ -1701,12 +1702,12 @@ public abstract class DQED {
 			//
 			//  Change pretriangularization factor in DBOLSM().
 			//
-			          idope[1] = ncols + mcon + 1;
+			          idope[1] = ncols + mcon[0] + 1;
 			//
 			//  Pass weight to DBOLSM() for rank test.
 			//
-			          idope[2] = ncols + mcon + 2;
-			          idope[3] = mcon;
+			          idope[2] = ncols + mcon[0] + 2;
+			          idope[3] = mcon[0];
 			          break loop;
 			      } // if (ip == 99)
 			      else if ( jp == 99) {
@@ -1749,7 +1750,7 @@ public abstract class DQED {
 			//                  END IF
 			//              END LOOP
 			//
-			              iopt[locacc+1] = mcon + 1;
+			              iopt[locacc+1] = mcon[0] + 1;
 			              accum = true;
 			              iopt[locacc] = igo_dbocls;
 			          } // if (ip > 0)
@@ -1928,13 +1929,13 @@ public abstract class DQED {
 			//  ARRAYS ARE LONG ENOUGH FOR THE INTENDED PROBLEM SIZE AND USE.
 			//
 			       if ( filter && (!accum)) {
-			         mdwl=mcon+Math.max(mrows,ncols);
+			         mdwl=mcon[0]+Math.max(mrows[0],ncols);
 			       }
 			       else if ( accum) {
-			         mdwl=mcon+ncols+1;
+			         mdwl=mcon[0]+ncols+1;
 			       }
 			       else {
-			         mdwl=mcon+ncols;
+			         mdwl=mcon[0]+ncols;
 			       }
 
 			          if ( lmdw < mdwl) {
@@ -1949,10 +1950,10 @@ public abstract class DQED {
 
 				          return;
 			          } // if (lmdw < mdwl)
-			          if ( lndw < ncols+mcon+1) {
+			          if ( lndw < ncols+mcon[0]+1) {
 			              nerr = 42;
 			              xerrwv("dbocls(). the column dimension of w(,)=(i1)\nmust be >= ncols+mcon+1=(i2).",
-			              nerr,level,2,lndw,ncols+mcon+1,0,rdum,rdum);
+			              nerr,level,2,lndw,ncols+mcon[0]+1,0,rdum,rdum);
 			              if ( 0 <= mode[0] ) {
 						      mode[0] = -nerr;
 					      }
@@ -1961,10 +1962,10 @@ public abstract class DQED {
 
 					      return;
 			          } // if ( lndw < ncols+mcon+1)
-			          if ( llb < ncols+mcon) {
+			          if ( llb < ncols+mcon[0]) {
 			              nerr = 43;
 			              xerrwv("dbocls(). the dimensions of the arrays bl()\nbu(), and ind()=(i1) must be >= ncols+mcon=(i2).",
-			                nerr,level,2,llb,ncols+mcon,0,rdum,rdum);
+			                nerr,level,2,llb,ncols+mcon[0],0,rdum,rdum);
 			              if ( 0 <= mode[0] ) {
 						      mode[0] = -nerr;
 					      }
@@ -1987,10 +1988,10 @@ public abstract class DQED {
 					      return;
 			          } // if (llx < lenx)
 
-			          if ( llrw < 6*ncols+5*mcon) {
+			          if ( llrw < 6*ncols+5*mcon[0]) {
 			              nerr = 45;
 			              xerrwv("dbocls(). the dimension of rw()=(i1) must be\n>= 6*ncols+5*mcon=(i2).",
-			            		  nerr,level,2,llrw,6*ncols+5*mcon,0,rdum,rdum);
+			            		  nerr,level,2,llrw,6*ncols+5*mcon[0],0,rdum,rdum);
 			              if ( 0 <= mode[0] ) {
 						      mode[0] = -nerr;
 					      }
@@ -1998,12 +1999,12 @@ public abstract class DQED {
 						  igo_dbocls = 0;
 
 					      return;
-			          } // if ( llrw < 6*ncols+5*mcon)
+			          } // if ( llrw < 6*ncols+5*mcon[0])
 
-			          if ( lliw < 2*ncols+2*mcon) {
+			          if ( lliw < 2*ncols+2*mcon[0]) {
 			              nerr = 46;
 			              xerrwv("dbocls() the dimension of iw()=(i1) must be\n>= 2*ncols+2*mcon=(i2).",
-			            		  nerr,level,2,lliw, 2*ncols+2*mcon,0,rdum,rdum);
+			            		  nerr,level,2,lliw, 2*ncols+2*mcon[0],0,rdum,rdum);
 			              if ( 0 <= mode[0] ) {
 						      mode[0] = -nerr;
 					      }
@@ -2034,13 +2035,13 @@ public abstract class DQED {
 			//  Accumulate least squares equations.
 			//
 			  if ( accum) {
-			      mrows = iopt[locacc+1] - 1 - mcon;
+			      mrows[0] = iopt[locacc+1] - 1 - mcon[0];
 			      inrows = iopt[locacc+2];
-			      mnew = mrows + inrows;
-			      if ( mnew < 0 || mnew+mcon > mdw) {
+			      mnew = mrows[0] + inrows;
+			      if ( mnew < 0 || mnew+mcon[0] > mdw) {
 			          nerr = 52;
 			          xerrwv("dbocls(). no. of rows=(i1) must be >= 0\n.and. <=mdw-mcon=(i2)",
-			        		  nerr,level,2,mnew,mdw-mcon,0,rdum,rdum);
+			        		  nerr,level,2,mnew,mdw-mcon[0],0,rdum,rdum);
 			          if ( 0 <= mode[0] ) {
 			              mode[0] = -nerr;
 		              }
@@ -2058,7 +2059,7 @@ public abstract class DQED {
 			//
 			  jopt[1] = 1;
 			  jopt[2] = 2;
-			  jopt[4] = mrows;
+			  jopt[4] = mrows[0];
 			  jopt[5] = 99;
 			  irw = ncols + 1;
 			  iiw = 1;
@@ -2075,17 +2076,17 @@ public abstract class DQED {
 					  for (i = iiw; i < iw.length && i < iiw + 2*ncols; i++) {
 						  iwArr[i - iiw + 1] = iw[i];
 					  }
-					  wArr = new double[mdw-mcon+1][ncols+2];
-					  for (i = 1; i <= mdw-mcon; i++) {
+					  wArr = new double[mdw-mcon[0]+1][ncols+2];
+					  for (i = 1; i <= mdw-mcon[0]; i++) {
 						  for (j = 1; j <= ncols+1; j++) {
-							  wArr[i][j] = w[mcon+i][j];
+							  wArr[i][j] = w[mcon[0]+i][j];
 						  }
 					  }
 			          dbols(wArr,mdw,mout,ncols,bl,bu,ind,jopt,x,rnorm,
 			                mode,rwArr,iwArr);
-					  for (i = 1; i <= mdw-mcon; i++) {
+					  for (i = 1; i <= mdw-mcon[0]; i++) {
 						  for (j = 1; j <= ncols+1; j++) {
-							  w[mcon+i][j] = wArr[i][j];
+							  w[mcon[0]+i][j] = wArr[i][j];
 						  }
 					  }
 					  for (i = irw; i < rw.length && i < irw + 5*ncols; i++) {
@@ -2096,13 +2097,13 @@ public abstract class DQED {
 					  }
 			  }
 			  else {
-			      mout = mrows;
+			      mout[0] = mrows[0];
 			  }
 
 			  if ( accum) {
 			    accum = (iopt[locacc]  ==  1);
-			    iopt[locacc+1] = jopt[3] + mcon;
-			    mrows = Math.min(ncols+1,mnew);
+			    iopt[locacc+1] = jopt[3] + mcon[0];
+			    mrows[0] = Math.min(ncols+1,mnew);
 			  }
 
 			  if ( accum) {
@@ -2113,27 +2114,27 @@ public abstract class DQED {
 			//
 			// MOVE RIGHT HAND SIDE OF LEAST SQUARES EQUATIONS.
 			//
-			  for (i = 1; i <= mout; i++) {
-				  w[mcon+i][ncols+mcon+1] = w[mcon+i][ncols+1];
+			  for (i = 1; i <= mout[0]; i++) {
+				  w[mcon[0]+i][ncols+mcon[0]+1] = w[mcon[0]+i][ncols+1];
 			  }
-			  if ( mcon > 0 && filter) {
+			  if ( mcon[0] > 0 && filter) {
 			//
 			//  PROJECT THE LINEAR CONSTRAINTS INTO A REACHABLE SET.
 			//
-			      for (i = 1; i <= mcon; i++) {
+			      for (i = 1; i <= mcon[0]; i++) {
 			    	for (j = 1; j <= ncols; j++) {
-			    	    w[mcon+j][ncols+i] = w[i][j];
+			    	    w[mcon[0]+j][ncols+i] = w[i][j];
 			    	}
 			      } // for (i = 1; i <= mcon; i++)
 			//
 			//  PLACE (-)IDENTITY MATRIX AFTER CONSTRAINT DATA.
 			//
-			      for (j = ncols + 1; j <= ncols + mcon + 1; j++) {
-			    	for (i = 1; i <= mcon; i++) {
+			      for (j = ncols + 1; j <= ncols + mcon[0] + 1; j++) {
+			    	for (i = 1; i <= mcon[0]; i++) {
 			            w[i][j] = 0.0;
 			    	}
 			      }
-                  for (i = 1; i <= mcon; i++) {
+                  for (i = 1; i <= mcon[0]; i++) {
 			          w[i][ncols+1] = -1.0;
                   }
 			//
@@ -2146,32 +2147,32 @@ public abstract class DQED {
 			//  NOTE THAT DBOLS() WAS CALLED BY DBOCLS()
 			//
 			          idope[5]=0;
-			          rwArr = new double[5*(ncols+mcon) + 1];
-					  for (i = irw; i < rw.length && i < irw + 5*(ncols + mcon); i++) {
+			          rwArr = new double[5*(ncols+mcon[0]) + 1];
+					  for (i = irw; i < rw.length && i < irw + 5*(ncols + mcon[0]); i++) {
 						  rwArr[i - irw + 1] = rw[i];
 					  }
-					  iwArr = new int[2*(ncols+mcon) + 1];
-					  for (i = iiw; i < iw.length && i < iiw + 2*(ncols + mcon); i++) {
+					  iwArr = new int[2*(ncols+mcon[0]) + 1];
+					  for (i = iiw; i < iw.length && i < iiw + 2*(ncols + mcon[0]); i++) {
 						  iwArr[i - iiw + 1] = iw[i];
 					  }
-			          dbols(w,mdw,mcon,ncols+mcon,bl,bu,ind,jopt,x,rnormc,
+			          dbols(w,mdw,mcon,ncols+mcon[0],bl,bu,ind,jopt,x,rnormc,
 			                modec,rwArr,iwArr);
-					  for (i = irw; i < rw.length && i < irw + 5*(ncols + mcon); i++) {
+					  for (i = irw; i < rw.length && i < irw + 5*(ncols + mcon[0]); i++) {
 						  rw[i] = rwArr[i - irw + 1];
 					  }
-					  for (i = iiw; i < iw.length && i < iiw + 2*(ncols + mcon); i++) {
+					  for (i = iiw; i < iw.length && i < iiw + 2*(ncols + mcon[0]); i++) {
 						  iw[i] = iwArr[i - iiw + 1];
 					  }
 			//
 			//  ENLARGE THE BOUNDS SET, IF REQUIRED, TO INCLUDE POINTS THAT
 			//  CAN BE REACHED.
 			//
-			     for (j = ncols + 1; j <= ncols + mcon; j++) {
+			     for (j = ncols + 1; j <= ncols + mcon[0]; j++) {
 			          icase = ind[j];
 			          if ( icase < 4) {
 			        	  t = 0.0;
 			        	  for (i = 1; i <= ncols; i++) {
-			        		  t += w[mcon+i][j]*x[i];
+			        		  t += w[mcon[0]+i][j]*x[i];
 			        	  }
 			          } // if (icase < 4)
 			          switch(icase) {
@@ -2189,29 +2190,29 @@ public abstract class DQED {
 			//
 			//  MOVE CONSTRAINT DATA BACK TO THE ORIGINAL AREA.
 			//
-			      for (j = ncols + 1; j <= ncols + mcon; j++) {
+			      for (j = ncols + 1; j <= ncols + mcon[0]; j++) {
 			    	  for (i = 1; i <= ncols; i++) {
-			    		  w[j-ncols][i] = w[mcon+i][j];
+			    		  w[j-ncols][i] = w[mcon[0]+i][j];
 			    	  }
 			      } // for (j = ncols + 1; j <= ncols + mcon; j++)
 
 			  } // if ( mcon > 0 && filter)
 
-			  if ( mcon > 0) {
-			      for (j = ncols + 1; j <= ncols + mcon; j++) {
-			    	for (i = 1; i <= mout; i++) {
-			          w[mcon+i][j] = 0.0;
+			  if ( mcon[0] > 0) {
+			      for (j = ncols + 1; j <= ncols + mcon[0]; j++) {
+			    	for (i = 1; i <= mout[0]; i++) {
+			          w[mcon[0]+i][j] = 0.0;
 			    	}
 			      } // for (j = ncols + 1; j <= ncols + mcon; j++)
 			//
 			//  PUT IN (-)IDENTITY MATRIX (POSSIBLY) ONCE AGAIN.
 		    //
-			      for (j = ncols + 1; j <= ncols + mcon + 1; j++) {
-			    	for (i = 1; i <= mcon; i++) {
+			      for (j = ncols + 1; j <= ncols + mcon[0] + 1; j++) {
+			    	for (i = 1; i <= mcon[0]; i++) {
 			            w[i][j] = 0.0;
 			    	}
 			      } // for (j = ncols + 1; j <= ncols + mcon + 1; j++)
-                  for (i = 1; i <= mcon; i++) {
+                  for (i = 1; i <= mcon[0]; i++) {
 			          w[i][ncols+1] = -1.0;
                   }
 
@@ -2223,12 +2224,12 @@ public abstract class DQED {
 			  anorm = 0.0;
 			  for (j = 1; j <= ncols; j++) {
 				  t1 = 0.0;
-				  for (i = 1; i <= mcon; i++) {
+				  for (i = 1; i <= mcon[0]; i++) {
 					  t1 += Math.abs(w[i][j]);
 				  }
 			      t2 = 0.0;
-			      for (i = 1; i <= mout; i++) {
-			    	  t2 += Math.abs(w[mcon+i][1]);
+			      for (i = 1; i <= mout[0]; i++) {
+			    	  t2 += Math.abs(w[mcon[0]+i][1]);
 			      }
 			      t = t1 + t2;
 			      if ( t == 0.0 ) {
@@ -2236,7 +2237,7 @@ public abstract class DQED {
 			      }
 			      cnorm = Math.max(cnorm,t1);
 			      anorm = Math.max(anorm,t2);
-			      x[ncols+mcon+j] = 1.0/t;
+			      x[ncols+mcon[0]+j] = 1.0/t;
 			  } // for (j = 1; j <= ncols; j++)
 
 			  switch (iscale) {
@@ -2245,16 +2246,16 @@ public abstract class DQED {
 			//  SCALE COLS. (BEFORE WEIGHTING) TO HAVE LENGTH ONE.
 			//
 
-			    arr = new double[mcon+mout+1];
+			    arr = new double[mcon[0]+mout[0]+1];
 				for (j = 1; j <= ncols; j++) {
-				    for (i = 1; i <= mcon+mout; i++) {
+				    for (i = 1; i <= mcon[0]+mout[0]; i++) {
 				    	arr[i] = w[i][j];
 				    }
-				    t = dnrm2(mcon+mout,arr,1);
+				    t = dnrm2(mcon[0]+mout[0],arr,1);
 				    if ( t == 0.0 ) {
 				    	t = 1.0;
 				    }
-				    x[ncols+mcon+j] = 1.0/t;
+				    x[ncols+mcon[0]+j] = 1.0/t;
 			  } // for (j = 1; j <= ncols; j++)
 			  break;
 			//
@@ -2262,7 +2263,7 @@ public abstract class DQED {
 			//
 			  case 3:
                   for (i = 1; i <= ncols; i++) {
-			          x[ncols+mcon+i] = 1.0;
+			          x[ncols+mcon[0]+i] = 1.0;
                   }
                   break;
 			//
@@ -2270,12 +2271,12 @@ public abstract class DQED {
 			//
 			  case 4:
 				  for (i = 1; i <= ncols; i++) {
-					  x[ncols+mcon+i] = rw[i];
+					  x[ncols+mcon[0]+i] = rw[i];
 				  }
 			  } // switch (iscale)
 
-			  for (j = ncols + 1; j <= ncols + mcon; j++) {
-			    x[ncols+mcon+j] = 1.0;
+			  for (j = ncols + 1; j <= ncols + mcon[0]; j++) {
+			    x[ncols+mcon[0]+j] = 1.0;
 			  }
 			//
 			//  WEIGHT THE LEAST SQUARES EQUATIONS.
@@ -2288,47 +2289,49 @@ public abstract class DQED {
 				  wt = wt*cnorm;
 			  }
 
-			  for (i = 1; i <= mout; i++) {
+			  for (i = 1; i <= mout[0]; i++) {
 				  for (j = 1; j <= ncols; j++) {
-					  w[i+mcon][j] = wt * w[i+mcon][j];
+					  w[i+mcon[0]][j] = wt * w[i+mcon[0]][j];
 				  }
 			  } // for (i = 1; i <= mout; i++)
-			  for (i = 1; i <= mout; i++) {
-				  w[mcon+i][mcon+ncols+1] = wt*w[mcon+i][mcon+ncols+1];
+			  for (i = 1; i <= mout[0]; i++) {
+				  w[mcon[0]+i][mcon[0]+ncols+1] = wt*w[mcon[0]+i][mcon[0]+ncols+1];
 			  }
 			  lrw = 1;
 			  liw = 1;
 			//
 			//  SET THE NEW TRIANGULARIZATION FACTOR.
 			//
-			  x[ncols+mcon+idope[1]]= 0.0;
+			  x[ncols+mcon[0]+idope[1]]= 0.0;
 			//
 			//  SET THE WEIGHT TO USE IN COMPONENTS .GT. MCON,
 			//  WHEN MAKING LINEAR INDEPENDENCE TEST.
 			//
-			  x[ncols+mcon+idope[2]] = 1.0/wt;
+			  x[ncols+mcon[0]+idope[2]] = 1.0/wt;
 			  idope[5] = 1;
 			  ioptArr = new int[iopt.length + 1 - lopt];
 			  for (i = lopt; i < iopt.length; i++) {
 				  ioptArr[i - lopt + 1] = iopt[i];
 			  }
-			  rwArr = new double[5*(ncols+mcon) + 1];
-			  for (i = lrw; i < rw.length && i < lrw + 5*(ncols+mcon); i++) {
+			  rwArr = new double[5*(ncols+mcon[0]) + 1];
+			  for (i = lrw; i < rw.length && i < lrw + 5*(ncols+mcon[0]); i++) {
 				  rwArr[i - lrw + 1] = rw[i];
 			  }
-			  iwArr = new int[2*(ncols+mcon) + 1];
-			  for (i = liw; i < iw.length && i < liw + 2*(ncols+mcon); i++) {
+			  iwArr = new int[2*(ncols+mcon[0]) + 1];
+			  for (i = liw; i < iw.length && i < liw + 2*(ncols+mcon[0]); i++) {
 				  iwArr[i - liw + 1] = iw[i];
 			  }
-			  dbols(w,mdw,mout+mcon,ncols+mcon,bl,bu,ind,ioptArr,x,
+			  iArr = new int[1];
+			  iArr[0] = mout[0] + mcon[0];
+			  dbols(w,mdw,iArr,ncols+mcon[0],bl,bu,ind,ioptArr,x,
 			        rnorm,mode,rwArr,iwArr);
 			  for (i = lopt; i < iopt.length; i++) {
 				  iopt[i] = ioptArr[i - lopt + 1];
 			  }
-			  for (i = lrw; i < rw.length && i < lrw + 5*(ncols+mcon); i++) {
+			  for (i = lrw; i < rw.length && i < lrw + 5*(ncols+mcon[0]); i++) {
 				  rw[i] = rwArr[i - lrw + 1];
 			  }
-			  for (i = liw; i < iw.length && i < liw + 2*(ncols+mcon); i++) {
+			  for (i = liw; i < iw.length && i < liw + 2*(ncols+mcon[0]); i++) {
 				  iw[i] = iwArr[i - liw + 1];
 			  }
 
@@ -2341,7 +2344,7 @@ public abstract class DQED {
 			  return;
     } // dbocls
 	
-	private void dbols ( double w[][], int mdw, int mrows, int ncols, double bl[], double bu[],
+	private void dbols ( double w[][], int mdw, int mrows[], int ncols, double bl[], double bu[],
 			int ind[], int iopt[], double x[], double rnorm[], int mode[], double rw[], int iw[] ) {
 
 			/*****************************************************************************80
@@ -3005,10 +3008,10 @@ public abstract class DQED {
 			//  THIS FEATURE ALLOWS THE USER TO MAKE SURE THAT THE
 			//  ARRAYS ARE LONG ENOUGH FOR THE INTENDED PROBLEM SIZE AND USE.
 			//
-			          if ( lmdw < mrows) {
+			          if ( lmdw < mrows[0]) {
 			              nerr = 11;
 			              xerrwv("dbols(). the row dimension of w(,)=(i1)\nmust be >=the number of rows=(i2).",
-			            		  nerr,level,2,lmdw,mrows,0,rdum,rdum);
+			            		  nerr,level,2,lmdw,mrows[0],0,rdum,rdum);
 			              if ( 0 <= mode[0] ) {
 		                      mode[0] = -nerr;
 		                  }
@@ -3094,9 +3097,9 @@ public abstract class DQED {
 				  //
 				  //  ACCUMULATE LEAST SQUARES EQUATIONS
 				  //
-					  mrows = iopt[locacc_dbols+1] - 1;
+					  mrows[0] = iopt[locacc_dbols+1] - 1;
 					  inrows = iopt[locacc_dbols+2];
-					  mnew = mrows + inrows;
+					  mnew = mrows[0] + inrows;
 
 					  if ( mnew < 0 || mnew > mdw) {
 					      nerr = 10;
@@ -3111,7 +3114,7 @@ public abstract class DQED {
 					  } // if ( mnew < 0 || mnew > mdw)
 
 					  for (j = 1; j <= Math.min(ncols+1,mnew); j++) {
-					      for (i = mnew; i >= Math.max(mrows,j) + 1; i--) {
+					      for (i = mnew; i >= Math.max(mrows[0],j) + 1; i--) {
 					    	  arr = new double[i-j+1];
 					    	  for (k = 1; k <= i-j; k++) {
 					    		  arr[k] = w[j+k][j];
@@ -3140,8 +3143,8 @@ public abstract class DQED {
 					      } // for (i = mnew; i >= Math.max(mrows,j) + 1, i--)
 					  } // for (j = 1; j <= Math.min(ncols+1,mnew); j++)
 
-					  mrows = Math.min(ncols+1,mnew);
-					  iopt[locacc_dbols+1] = mrows + 1;
+					  mrows[0] = Math.min(ncols+1,mnew);
+					  iopt[locacc_dbols+1] = mrows[0] + 1;
 					  igo_dbols = iopt[locacc_dbols];
 
 					  if ( igo_dbols == 2) {
@@ -3159,11 +3162,11 @@ public abstract class DQED {
 					//  COL. HAS MAX. NORM EQUAL TO ONE.
 					//
 					    if ( iscale_dbols == 1 ) {
-                          arr = new double[mrows+1];
-                          for (k = 1; k <= mrows; k++) {
+                          arr = new double[mrows[0]+1];
+                          for (k = 1; k <= mrows[0]; k++) {
                         	  arr[k] = w[k][j];
                           }
-					      ibig = idamax(mrows,arr,1);
+					      ibig = idamax(mrows[0],arr,1);
 					      rw[j] = Math.abs(w[ibig][j]);
 					      if ( rw[j] == 0.0) {
 					          rw[j] = 1.0;
@@ -3177,11 +3180,11 @@ public abstract class DQED {
 					//  HAVE EUCLIDEAN LENGTH EQUAL TO ONE.
 					//
 					    else if ( iscale_dbols == 2 ) {
-                          arr = new double[mrows+1];
-                          for (k = 1; k <= mrows; k++) {
+                          arr = new double[mrows[0]+1];
+                          for (k = 1; k <= mrows[0]; k++) {
                         	  arr[k] = w[k][j];
                           }
-					      rw[j] = dnrm2(mrows,arr,1);
+					      rw[j] = dnrm2(mrows[0],arr,1);
 					      if ( rw[j] == 0.0 ) {
 					          rw[j] = 1.0;
 					      }
@@ -3235,7 +3238,7 @@ public abstract class DQED {
                       for (k = 1; k <= iopt.length - lopt_dbols; k++) {
                     	  ioptArr[k] = iopt[lopt_dbols+k-1];
                       }
-					  dbolsm(w,mdw,mrows,ncols,blArr,buArr,ind,
+					  dbolsm(w,mdw,mrows[0],ncols,blArr,buArr,ind,
 					    ioptArr,x,rnorm,mode,rwArr,wwArr,rw,iw,ibbArr);
 					  for (k = 1; k <= ncols; k++) {
 						  rw[ncols+k] = rwArr[k];
@@ -8016,7 +8019,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 	  System.exit(-1);
 	} // dqedev
 	
-	private void dqedgn (int mequa, int nvars, int mcon, int ind[], double bl[], double bu[],
+	private void dqedgn (int mequa[], int nvars, int mcon[], int ind[], double bl[], double bu[],
 			             double x[], double fjac[][], int ldfjac, double fnorm[], int igo[],
 			             int iopt[], double ropt[], int iwa[], double wa[] ) {
 
@@ -8089,7 +8092,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			//
 			//  ALLOCATE BLOCKS OF WORKING STORAGE TO LOGICAL ARRAYS.
 			//
-			  nall = mcon + nvars;
+			  nall = mcon[0] + nvars;
 			  mdx = 1;
 			  mxb = mdx + 2*nall + 2;
 			  mb = mxb + nvars;
@@ -8171,7 +8174,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  //  THESE DEFINE THE AMOUNT OF STORAGE FOR THE double precision AND
 			  //  integer WORK ARRAYS, WA(*) AND IWA(*).
 			  //
-			  mwa = mwa + 6*nvars + 5*mcon;
+			  mwa = mwa + 6*nvars + 5*mcon[0];
 			  miwa = miwa + 2*nall;
 			  //
 			  //  TOTAL WORKING STORAGE IN WA(*)=
@@ -8182,7 +8185,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  return;
     } // dqedgn
 	
-	private void dqedip (int mequa, int nvars, int mcon, int ind[], double bl[], double bu[], 
+	private void dqedip (int mequa[], int nvars, int mcon[], int ind[], double bl[], double bu[], 
 			             double x[], double fjac[][], int ldfjac, double fb[], int igo[], int iopt[],
 			             double ropt[], int iwa[], double wa[], double dx[], double xb[],
 			             double b[], double bb[], double blb[], double bub[], int indb[] ) {
@@ -8362,11 +8365,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			     if (do50) {
 			    	 do50 = false;
 			    	 do400 = true;
-			    	 arr = new double[mequa+1];
-			    	 for (j = 1; j <= mequa; j++) {
-			    		 arr[j] = fjac[mcon+j][nvars+1];
+			    	 arr = new double[mequa[0]+1];
+			    	 for (j = 1; j <= mequa[0]; j++) {
+			    		 arr[j] = fjac[mcon[0]+j][nvars+1];
 			    	 }
-			         fc = dnrm2(mequa,arr,1);
+			         fc = dnrm2(mequa[0],arr,1);
 			         //
 			         //  TEST FOR CONVERGENCE
 			         //
@@ -8380,7 +8383,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             iflag_dqedip = 0;
 			             return;
 			         }
-			         newbst = fc  <  fb[0] || (mcon > 0 && iters_dqedip == 2);
+			         newbst = fc  <  fb[0] || (mcon[0] > 0 && iters_dqedip == 2);
 			         if ( newbst) {
 			             k = 0;
 			         }
@@ -8455,11 +8458,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                	 bb[j] = -x[j];
 			                 }
 			                 if ( bb[j] == 0.0 ) {
-			                     arr = new double[mequa+1];
-			                     for (m = 1; m <= mequa; m++) {
-			                    	 arr[m] = fjac[mcon+m][j];
+			                     arr = new double[mequa[0]+1];
+			                     for (m = 1; m <= mequa[0]; m++) {
+			                    	 arr[m] = fjac[mcon[0]+m][j];
 			                     }
-			                     colnrm = dnrm2(mequa,arr,1);
+			                     colnrm = dnrm2(mequa[0],arr,1);
 			                     if ( colnrm != 0.0 ) {
 			                    	 bb[j] = -fc/colnrm;
 			                     }
@@ -8739,7 +8742,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  TEST FOR NOISE IN LINEAR PROBLEM SOLN.
 			      //
 			      // NOTE THAT THIS CODE MAKES NO SENSE.  term is always false.
-			      term = ( mcon == 0 && (pv[0]>=fc) );
+			      term = ( mcon[0] == 0 && (pv[0]>=fc) );
 			      term=false;
 			      if ( term) {
 			          if ( iprint_dqedip > 0) {
@@ -8890,7 +8893,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  IF HAVE CONSTRAINTS MUST ALLOW AT LEAST ONE MOVE.
 			      //
-			      term = term && (mcon == 0 || iters_dqedip > 1);
+			      term = term && (mcon[0] == 0 || iters_dqedip > 1);
 			      if ( term) {
 			          igo[0] = 2;
 			          do420 = true;
@@ -8949,7 +8952,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      do450 = false;
 
 			      iters_dqedip = 0;
-			      nall = mcon + nvars;
+			      nall = mcon[0] + nvars;
 			      chgfac = Math.pow(2.0, (-1.0/(double)nvars));
 			      c1516 = 15.0 / 16.0;
 			      semibg = 1.0D+10;
@@ -9219,8 +9222,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  int lk = 0;
 			  int lp = 0;
 			  int lpdiff = 0;
-			  int mconst = 0;
-			  int me = 0;
+			  int mconst[] = new int[1];
+			  int me[] = new int[1];
 			  int mk = 0;
 			  boolean mustcn = false;
 			  int nall = 0;
@@ -10154,7 +10157,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  START THE PROCESS USING THE LINEAR MODEL.
 			      //
 			      linmod = true;
-			      mconst = mcon;
+			      mconst[0] = mcon;
 			      do610 = true;
 			  } // if (do530)
 
@@ -10165,7 +10168,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      if ( linmod) {
 			          mk = 0;
-			          me = Math.min(mequa,nvars+1);
+			          me[0] = Math.min(mequa,nvars+1);
 			          //
 			          //  SET THE INITIAL VALUES FOR THE LINEAR MODEL PROBLEM.
 			          //
@@ -10176,7 +10179,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      } // if (linmod)
 			      else if ( useq) {
 			          mk = Math.min(mequa,nvars+np+1);
-			          me = nvars + mk;
+			          me[0] = nvars + mk;
 			          for (j = 1; j <= mk; j++) {
 			        	  dx[nvars+j] = fjac[mcon+j][nvars+1];
 			          }
@@ -10244,14 +10247,14 @@ C     FROM THE ERROR PROCESSOR CALL.
 		          }
 
 			      if ( useq && (! linmod) ) {
-			    	  wj[mconst+1][nvars+1] = 1.0;
+			    	  wj[mconst[0]+1][nvars+1] = 1.0;
 			      }
 			      //
 			      //  PUT IN A UNIT MATRIX FOR THE PARTIALS
 			      //  WITH RESPECT TO THE RESIDUALS.
 			      //
-			      for (i = mconst+2; i <= mconst+mk; i++) {
-			    	  wj[i][nvars+1] = wj[mconst+1][nvars+1];
+			      for (i = mconst[0]+2; i <= mconst[0]+mk; i++) {
+			    	  wj[i][nvars+1] = wj[mconst[0]+1][nvars+1];
 			      }
 			      //
 			      //  THE FORM OF THE UPDATE BEING COMPUTED IS X(*)-DX(*).
@@ -10291,11 +10294,11 @@ C     FROM THE ERROR PROCESSOR CALL.
                   do670 = false;
 
 			      if ( igow[0] > 1) {
-			    	  arr = new double[me+1];
-			    	  for (j = 1; j <= me; j++) {
-			    		  arr[j] = wj[mconst+j][nv+1];
+			    	  arr = new double[me[0]+1];
+			    	  for (j = 1; j <= me[0]; j++) {
+			    		  arr[j] = wj[mconst[0]+j][nv+1];
 			    	  }
-			          pv[0] = dnrm2(me,arr,1);
+			          pv[0] = dnrm2(me[0],arr,1);
 			          if ( linmod) {
 			              pvl = pv[0];
 			              for (j = 1; j <= nvars; j++) {
@@ -10332,7 +10335,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      for (j = 1; j <= nvars; j++) {
 			    	  for (i = 1; i <= mk; i++) {
-			    		  wj[mconst+mk+j][nvars+i] = wj[mconst+i][j];
+			    		  wj[mconst[0]+mk+j][nvars+i] = wj[mconst[0]+i][j];
 			    	  }
 			      } // for (j = 1; j <= nvars; j++)
 			      //
@@ -10343,7 +10346,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      for (i = 1; i <= mk; i++) {
 			          t = dx[nvars+i];
-			          wj[mconst+i][nv+1] = wj[mconst+i][nv+1] + t;
+			          wj[mconst[0]+i][nv+1] = wj[mconst[0]+i][nv+1] + t;
 			      } // for (i = 1; i <= mk; i++)
 			      //
 			      //  SYMMETRIZE THE SECOND DERIVATIVE MATRIX.  THIS
@@ -10353,7 +10356,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      if ( useq && (! linmod)) {
 			          for (j = 1; j <= nvars; j++) {
 			              for (i = j; i <= nvars; i++) {
-			                  wj[mconst+mk+i][j] = wj[mconst+mk+j][i];
+			                  wj[mconst[0]+mk+i][j] = wj[mconst[0]+mk+j][i];
 			              } // for (i = j; i <= nvars; i++)
 			          } // for (j = 1; j <= nvars; j++)
 			      } // if ( useq && (! linmod))
@@ -10364,12 +10367,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    	  arr = new double[nvars+1];
 			    	  arr2 = new double[nvars+1];
 			    	  for (i = 1; i <= nvars; i++) {
-			    		  arr[i] = wj[mconst+mk+i][j];
-			    		  arr2[i] = wj[mconst+mk+i][nv+1];
+			    		  arr[i] = wj[mconst[0]+mk+i][j];
+			    		  arr2[i] = wj[mconst[0]+mk+i][nv+1];
 			    	  }
 			          daxpy(nvars,dx[j],arr,1,arr2,1);
 			          for (i = 1; i <= nvars; i++) {
-			        	  wj[mconst+mk+i][nv+1] = arr2[i];  
+			        	  wj[mconst[0]+mk+i][nv+1] = arr2[i];  
 			          }
 			      } // for (j = nvars + 1; j <= nv; j++)
 
@@ -10497,7 +10500,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        do740 = false;
                     arr = new double[Math.min(mequa,nvars+1)+1];
                     for (j = 1; j <= Math.min(mequa,nvars+1); j++) {
-                    	arr[j] = wj[mconst+j][nv+1];
+                    	arr[j] = wj[mconst[0]+j][nv+1];
                     }
 			        pvl = dnrm2(Math.min(mequa,nvars+1),arr,1);
 
@@ -10688,11 +10691,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                arr2 = new double[jk+1];
 			                for (j = 1; j <= jk; j++) {
 			                	arr[j] = qc[j][l+1];
-			                	arr2[j] = wj[mconst+j][nv+1];
+			                	arr2[j] = wj[mconst[0]+j][nv+1];
 			                }
 			                daxpy(jk,0.5*pj[l]*pj[l],arr,1,arr2,1);
 			                for (j = 1; j <= jk; j++) {
-			                	wj[mconst+j][nv+1] = arr2[j];
+			                	wj[mconst[0]+j][nv+1] = arr2[j];
 			                }
 			            } // for (l = 1; l <= np - 1; l++)
 			            //
@@ -10705,11 +10708,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                for (j = 1; j <= nvars; j++) {
 			                	for (m = 1; m <= jk;  m++) {
 			                		arr[m] = qc[m][l+1];
-			                		arr2[m] = wj[mconst+m][j];
+			                		arr2[m] = wj[mconst[0]+m][j];
 			                	}
 			                    daxpy(jk,pj[l]* (xp[j][l+1]-xp[j][1]),arr,1,arr2,1);
 			                    for (m = 1; m <= jk; m++) {
-			                        wj[mconst+m][j] = arr2[m];	
+			                        wj[mconst[0]+m][j] = arr2[m];	
 			                    }
 			                } // for (j = 1; j <= nvars; j++)
 			            } // for (l = 1; l <= np - 1; l++)
@@ -10726,7 +10729,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                        	arr[m] = dx[nvars+m];
 			                        	arr2[m] = qc[m][l+1];
 			                        }
-			                        wj[mconst+mk+i][j] = wj[mconst+mk+i][j] + 
+			                        wj[mconst[0]+mk+i][j] = wj[mconst[0]+mk+i][j] + 
 			                                             (xp[j][l+1]-xp[j][1])*(xp[i][l+1]-xp[i][1])*
 			                                              ddot (jk,arr,1,arr2,1);
 			                    } // for (l = 1; l <= np - 1; l++)
@@ -10755,20 +10758,20 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                jk = mequa;
 			            }
                         for (i = 1; i <= jk; i++) {
-                        	wj[mconst+i][j] = fjac[mcon+i][j];
+                        	wj[mconst[0]+i][j] = fjac[mcon+i][j];
                         }
 			        } // for (j = 1; j <= nvars; j++)
 			        //
 			        //  TRANSFER THE PRESENT VALUES OF THE FUNCTION.
 			        //
 			        for (i = 1; i <= Math.min(mequa, nvars+1); i++) {
-			        	wj[mconst+i][nv+1] = fjac[mcon+i][nvars+1];
+			        	wj[mconst[0]+i][nv+1] = fjac[mcon+i][nvars+1];
 			        }
 			        //
 			        //  CHANGE SIGN FOR THE MODEL PROBLEM.
 			        //
 			        for (i = 1; i <= Math.min(mequa,nvars+1); i++) {
-			            wj[mconst+i][nv+1] = -wj[mconst+i][nv+1];
+			            wj[mconst[0]+i][nv+1] = -wj[mconst[0]+i][nv+1];
 			        }
 			        //
 			        //  COMPUTE THE LINEAR TERM OF THE MODEL.
@@ -10784,12 +10787,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            arr = new double[jk+1];
 			            arr2 = new double[jk+1];
 			            for (i = 1; i <= jk; i++) {
-			            	arr[i] = wj[mconst+i][j];
-			            	arr2[i] = wj[mconst+i][nv+1];
+			            	arr[i] = wj[mconst[0]+i][j];
+			            	arr2[i] = wj[mconst[0]+i][nv+1];
 			            }
 			            daxpy(jk,dx[j],arr,1,arr2,1);
 			            for (i = 1; i <= jk; i++) {
-			            	wj[mconst+i][nv+1] = arr2[i];	
+			            	wj[mconst[0]+i][nv+1] = arr2[i];	
 			            }
 			        } // for (j = 1; j <= nvars; j++)
 
