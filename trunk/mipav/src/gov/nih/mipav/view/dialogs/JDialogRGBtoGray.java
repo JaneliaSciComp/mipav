@@ -359,10 +359,22 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
 
                 // get some important information from imageA and put it in
                 // the result image
-                for (int n = 0; n < imageA.getFileInfo().length; n++) {
-                    fInfoBase = (FileInfoBase) (imageA.getFileInfo(n).clone());
-                    fInfoBase.setDataType(resultImage.getType());
-                    resultImage.setFileInfo(fInfoBase, n);
+                if ((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM)  {
+                	FileInfoDicom fileInfoBuffer; // buffer of type DICOM
+                	for (int n = 0; n < imageA.getFileInfo().length; n++) {
+                		fileInfoBuffer = (FileInfoDicom) imageA.getFileInfo(n).clone(); // copy into buffer
+                		fileInfoBuffer.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                		fileInfoBuffer.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
+                		fileInfoBuffer.setDataType(resultImage.getType());
+                		resultImage.setFileInfo(fileInfoBuffer, n);
+                	}
+                }
+                else {
+	                for (int n = 0; n < imageA.getFileInfo().length; n++) {
+	                    fInfoBase = (FileInfoBase) (imageA.getFileInfo(n).clone());
+	                    fInfoBase.setDataType(resultImage.getType());
+	                    resultImage.setFileInfo(fInfoBase, n);
+	                }
                 }
 
                 // Make algorithm
