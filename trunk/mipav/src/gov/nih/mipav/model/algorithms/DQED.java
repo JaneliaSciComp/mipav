@@ -46,6 +46,8 @@ public abstract class DQED {
 	
 	private int lopt_dbols;
 	
+	private double c1516_dqedip = 0.0;
+	private double chgfac_dqedip = 0.0;
 	private int iflag_dqedip = 0;
 	private int ipls_dqedip = 0;
 	private int iprint_dqedip = 0;
@@ -54,8 +56,10 @@ public abstract class DQED {
 	private int level_dqedip = 0;
 	private int lp_dqedip = 0;
 	private int lpdiff_dqedip = 0;
+	private int nall_dqedip = 0;
 	private boolean newopt_dqedip = false;
 	private boolean passb_dqedip = false;
+	private double semibg_dqedip = 0.0;
 	private double told_dqedip = 0.0;
 	private double tolf_dqedip = 0.0;
 	private double tolp_dqedip = 0.0;
@@ -8206,9 +8210,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  double aub = 0.0;
 			  double bboost = 0.0;
 			  double bold;
-			  double c1516 = 0.0;
 			  double chg = 0.0;
-			  double chgfac = 0.0;
 			  double colnrm;
 			  double dxnrm;
 			  double fc = 0.0;
@@ -8224,7 +8226,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  int kl = 0;
 			  int kp;
 			  int mode[] = new int[1];
-			  int nall = 0;
 			  int nerr;
 			  boolean newbst;
 			  double pb = 0.0;
@@ -8235,7 +8236,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  boolean retrea = false;
 			  double rg = 0.0;
 			  double rnormc[] = new double[1];
-			  double semibg = 0.0;
 			  double t;
 			  double t2 = 0.0;
 			  boolean term = false;
@@ -8442,7 +8442,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             }
 
 			             alfac = 1.5 * alpha;
-			             bboost = Math.min(1.5*alpha*bboost,semibg);
+			             bboost = Math.min(1.5*alpha*bboost,semibg_dqedip);
 			         } // if (do70)
 
 			         if (do90) {
@@ -8591,20 +8591,20 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                  //
 			                  //  THIS CASE IS REQD. TO AVOID USING BUB(*) AT THE INITIAL PT.
 			                  //
-			                  aub = -c1516*alb;
+			                  aub = -c1516_dqedip*alb;
 			              }
 			              else {
-			                  aub = Math.min(-c1516*alb,-dx[j]+bub[j]);
+			                  aub = Math.min(-c1516_dqedip*alb,-dx[j]+bub[j]);
 			              }
 			          } // if (b[j] < 0.0)
 			          else {
 			              aub = b[j];
 
 			              if ( dx[j] == 0.0) {
-			                  alb = -c1516*aub;
+			                  alb = -c1516_dqedip*aub;
 			              }
 			              else {
-			                  alb = Math.max(-c1516*aub,-dx[j]+blb[j]);
+			                  alb = Math.max(-c1516_dqedip*aub,-dx[j]+blb[j]);
 			              }
 
 			          } // else
@@ -8638,7 +8638,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  SEE IF USER HAS GIVEN GENERAL CONSTRAINTS.
 			      //
 			  
-			      for (j = nvars + 1; j <= nall; j++) {
+			      for (j = nvars + 1; j <= nall_dqedip; j++) {
 
 			          icase = ind[j];
 			          gval = fjac[j-nvars][nvars+1];
@@ -8686,7 +8686,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        	  do280 = false;  
 			              indb[j] = 4;
 			          } // if (do280)
-			      } // for (j = nvars + 1; j <= nall; j++)
+			      } // for (j = nvars + 1; j <= nall_dqedip; j++)
 			  
 			      //  SOLVE THE LEAST SQUARES PROBLEM WITH BOUNDS AND LINEAR
 			      //  CONSTRAINTS.  THESE BOUNDS CAN COME FROM THE USER OR
@@ -8717,7 +8717,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 				      }
 				      Preferences.debug("\n");
 				      Preferences.debug(" dx = " + df12p4.format(dx[1]));
-				      for (j = 2; j <= nall; j++) {
+				      for (j = 2; j <= nall_dqedip; j++) {
 				    	  Preferences.debug("    " + df12p4.format(dx[j]));
 				      }
 				      Preferences.debug("\n");
@@ -8727,12 +8727,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 				      }
 				      Preferences.debug("\n");
 				      Preferences.debug(" blb = " + df12p4.format(blb[1]));
-				      for (j = 2; j <= nall; j++) {
+				      for (j = 2; j <= nall_dqedip; j++) {
 				    	  Preferences.debug("    " + df12p4.format(blb[j]));
 				      }
 				      Preferences.debug("\n");
 				      Preferences.debug(" bub = " + df12p4.format(bub[1]));
-				      for (j = 2; j <= nall; j++) {
+				      for (j = 2; j <= nall_dqedip; j++) {
 				    	  Preferences.debug("    " + df12p4.format(bub[j]));
 				      }
 				      Preferences.debug("\n");
@@ -8791,14 +8791,14 @@ C     FROM THE ERROR PROCESSOR CALL.
 			              if (do310) {
 			            	  do310 = false;
 			                  alb = (x[j]-bl[j])/bold;
-			                  aub = -semibg;
+			                  aub = -semibg_dqedip;
 			                  do350 = true;
 			              } // if (do310)
 
 			              if (do320) {
 			            	  do320 = false;
 			                  aub = (x[j]-bu[j])/bold;
-			                  alb = -semibg;
+			                  alb = -semibg_dqedip;
 			                  do350 = true;
 			              } // if (do320)
 
@@ -8811,8 +8811,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			              if (do340) {
 			                  do340 = false;
-			                  alb = -semibg;
-			                  aub = -semibg;
+			                  alb = -semibg_dqedip;
+			                  aub = -semibg_dqedip;
 			                  do350 = true;
 			              } // if (do340)
 
@@ -8822,7 +8822,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                  if ( t == 1.0 ) {
 			                      t2 = 1.0;
 			                      b[j] = bold + bold;
-			                      chg = chg*chgfac;
+			                      chg = chg*chgfac_dqedip;
 			                  } // if (t == 1.0)
 			                  else {
 			                      if ( Math.abs(t) < 0.25 && dx[j] != 0.0 ) {
@@ -8851,7 +8851,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                          t2 = Math.max(t2,t);
 			                      }
 			                      else {
-			                          t2 = Math.max(t2,-t/c1516);
+			                          t2 = Math.max(t2,-t/c1516_dqedip);
 			                      }
 			                  } // if ( Math.abs(alb-t)>=0.01*Math.abs(t) &&
 			              } // if (do350)
@@ -8952,18 +8952,18 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      do450 = false;
 
 			      iters_dqedip = 0;
-			      nall = mcon[0] + nvars;
-			      chgfac = Math.pow(2.0, (-1.0/(double)nvars));
-			      c1516 = 15.0 / 16.0;
-			      semibg = 1.0D+10;
+			      nall_dqedip = mcon[0] + nvars;
+			      chgfac_dqedip = Math.pow(2.0, (-1.0/(double)nvars));
+			      c1516_dqedip = 15.0 / 16.0;
+			      semibg_dqedip = 1.0D+10;
 			      //
 			      //  MAKE SURE THAT VARIABLES SATISFY THE BOUNDS AND CONSTRAINTS.
 			      //
-			      for (j = 1; j <= nall; j++) {
+			      for (j = 1; j <= nall_dqedip; j++) {
 			          blb[j] = bl[j];
 			          bub[j] = bu[j];
 			          indb[j] = ind[j];
-			      } // for (j = 1; j <= nall; j++)
+			      } // for (j = 1; j <= nall_dqedip; j++)
 
 			      do20 = true;
 			      continue loop;
