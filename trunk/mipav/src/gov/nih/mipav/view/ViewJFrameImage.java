@@ -2678,8 +2678,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // componentImage.deactivateAllVOI();
             setTitle();
             // need to get all other images in sync if there are other matching images and if shift was down
-            if (linkedScrolling) {
-                Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
+            if (linkedScrolling || isShiftDown) {
+                /*Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
                 if(getImageA().is4DImage()) {
                 	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
                 	 for (int i = 0; i < registeredFramedImages2.size(); i++) {
@@ -2693,7 +2693,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     framedImg.setSlice(componentImage.getSlice(), false);
                 }
 
-                registeredFramedImages = null;
+                registeredFramedImages = null;*/
                 
                 
                 
@@ -2741,13 +2741,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                         break;
                                     }
                                 case 3:
-                                    if (image.getExtents()[2] != activeImageNumSlices) {
+                                    //if (image.getExtents()[2] != activeImageNumSlices) {
                                     	int currentSlice = image.getParentFrame().getComponentImage().getSlice();
                                     	if(currentSlice > 0) {
                                     		image.setSlice(currentSlice-1);
                                     	}
                                         break;
-                                    }
+                                    //}
 
                             }
                         }
@@ -3353,8 +3353,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setTitle();
 
             // need to get all other images in sync if there are other matching images and if shift was down
-            if (linkedScrolling) {
-                Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
+            if (linkedScrolling || isShiftDown) {
+                /*Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
                 if(getImageA().is4DImage()) {
                 	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
                 	 for (int i = 0; i < registeredFramedImages2.size(); i++) {
@@ -3369,7 +3369,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     framedImg.updateImages();
                 }
 
-                registeredFramedImages = null;
+                registeredFramedImages = null;*/
                 //setShiftDown(false);
                 
                 
@@ -3417,13 +3417,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                         break;
                                     }
                                 case 3:
-                                    if (image.getExtents()[2] != activeImageNumSlices) {
+                                    //if (image.getExtents()[2] != activeImageNumSlices) {
                                     	int currentSlice = image.getParentFrame().getComponentImage().getSlice();
                                     	if(currentSlice < image.getExtents()[2]-1) {
                                     		image.setSlice(currentSlice+1);
                                     	}
                                         break;
-                                    }
+                                    //}
 
                             }
                         }
