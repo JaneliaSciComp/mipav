@@ -12,8 +12,6 @@ public abstract class DQED {
 	
 	private int idope[] = new int[6];
 	
-	private int igo_dbocls = 0;
-	
 	private final double one = 1.0;
 	
 	private boolean outputMes = true;
@@ -38,28 +36,155 @@ public abstract class DQED {
     } // while(true)*/
 	private double epsilon = Math.pow(2.0, -52.0);
 	
+	private boolean accum_dbocls = false;
+	private double anorm_dbocls;
+	private boolean checkl_dbocls;
+	private double cnorm_dbocls;
+	private double drelpr_dbocls = epsilon;
+	private boolean filter_dbocls = false;
+	private int icase_dbocls;
+	private int idum_dbocls;
+	private int igo_dbocls = 0;
+	private int iiw_dbocls;
+	private int inrows_dbocls;
+	private int ip_dbocls;
+	private int irw_dbocls;
+	private int iscale_dbocls = 0;
+	private int jopt_dbocls[] = new int[6];
+	private int jp_dbocls;
+	private int lds_dbocls;
+	private int lenx_dbocls;
+	private int level_dbocls;
+	private int liopt_dbocls = 0;
+	private int liw_dbocls = 0;
+	private int llb_dbocls = 0;
+	private int lliw_dbocls = 0;
+	private int llrw_dbocls = 0;
+	private int llx_dbocls = 0;
+	private int lmdw_dbocls = 0;
+	private int lndw_dbocls = 0;
+	private int locacc_dbocls = 0;
+	private int locdim_dbocls;
+	private int lopt_dbocls = 0;
+	private int lp_dbocls;
+	private int lrw_dbocls;
+	private int mdwl_dbocls;
+	private int mnew_dbocls = 0;
+	private int modec_dbocls[] = new int[1];
+	private int mout_dbocls[] = new int[1];
+	private int nerr_dbocls;
+	private boolean pretri_dbocls = false;
+	private double rdum_dbocls;
+	private double t_dbocls = 0.0;
+	private double t1_dbocls;
+	private double t2_dbocls;
+	private double wt_dbocls;
+	
+	private boolean checkl_dbols;
+	private int ibig_dbols;
+	private int idum_dbols;
 	private int igo_dbols = 0;
-	
+	private int inrows_dbols;
+	private int ip_dbols;
 	private int iscale_dbols;
-	
 	private int locacc_dbols;
-	
 	private int lopt_dbols;
+	private int jp_dbols;
+	private int lds_dbols;
+	private int lenx_dbols;
+	private int level_dbols;
+	private int liopt_dbols = 0;
+	private int llb_dbols = 0;
+	private int lliw_dbols = 0;
+	private int llrw_dbols = 0;
+	private int llx_dbols = 0;
+	private int lmdw_dbols = 0;
+	private int lndw_dbols = 0;
+	private int locdim_dbols;
+	private int lp_dbols;
+	private int mnew_dbols;
+	private int nerr_dbols;
+	private double rdum_dbols;
+	private double sa_dbols[] = new double[1];
+	private double sb_dbols[] = new double[1];
+	private double sc_dbols[] = new double[1];
+	private double ss_dbols[] = new double[1];
 	
+	private double alpha_dbolsm = 0.0;
+	private double beta_dbolsm = 0.0;
+	private double big_dbolsm = Double.MAX_VALUE;
+	private double bou_dbolsm;
+	private double cl1_dbolsm[] = new double[1];
+	private double cl2_dbolsm[] = new double[1];
+	private double cl3_dbolsm;
+	private boolean cnz_dbolsm;
+	private double colabv_dbolsm;
+	private double colblo_dbolsm;
+	private boolean constr_dbolsm;
+	private double fac_dbolsm = 0.0;
+	private boolean found_dbolsm = false;
+	private int idum_dbolsm = 0;
+	private int igopr_dbolsm = 0;
+	private int ioff_dbolsm;
+	private int ip_dbolsm;
+	private int iprint_dbolsm = 0;
+	private int itemp_dbolsm;
+	private int iter_dbolsm = 0;
+	private int itmax_dbolsm = 0;
+	private int jbig_dbolsm = 0;
+	private int jcol_dbolsm;
+	private int jdrop_dbolsm;
+	private int jdrop1_dbolsm = 0;
+	private int jdrop2_dbolsm = 0;
+	private int jp_dbolsm;
+	private int lds_dbolsm;
+	private int level_dbolsm;
+	
+	private double alb_dqedip = 0.0;
+	private double alfac_dqedip = 0.0;
+	private double alpha_dqedip = 0.0;
+	private double aub_dqedip = 0.0;
+	private double bboost_dqedip = 0.0;
+	private double bold_dqedip = 0.0;
 	private double c1516_dqedip = 0.0;
+	private double chg_dqedip = 0.0;
 	private double chgfac_dqedip = 0.0;
+	private double colnrm_dqedip;
+	private double dxnrm_dqedip;
+	private double fc_dqedip = 0.0;
+	private double fl_dqedip = 0.0;
+	private boolean fulnwt_dqedip = false;
+    private double gval_dqedip;
 	private int iflag_dqedip = 0;
+	private int igotfc_dqedip = 60;
 	private int ipls_dqedip = 0;
 	private int iprint_dqedip = 0;
 	private int iters_dqedip = 0;
 	private int itmax_dqedip = 0;
+	private int jp_dqedip;
+	private int k_dqedip = 0;
+	private int kl_dqedip = 0;
 	private int level_dqedip = 0;
 	private int lp_dqedip = 0;
 	private int lpdiff_dqedip = 0;
+	private int mode_dqedip[] = new int[1];
 	private int nall_dqedip = 0;
+	private boolean newbst_dqedip;
+	private int nerr_dqedip;
 	private boolean newopt_dqedip = false;
 	private boolean passb_dqedip = false;
+	private double pb_dqedip = 0.0;
+	private double pd_dqedip = 0.0;
+	private double pv_dqedip[] = new double[1];
+	private double rb_dqedip;
+	private double rdum_dqedip;
+	private boolean retrea_dqedip = false;
+	private double rg_dqedip = 0.0;
+	private double rnormc_dqedip[] = new double[1];
 	private double semibg_dqedip = 0.0;
+	private double t_dqedip;
+	private double t2_dqedip = 0.0;
+	private boolean term_dqedip = false;
 	private double told_dqedip = 0.0;
 	private double tolf_dqedip = 0.0;
 	private double tolp_dqedip = 0.0;
@@ -1526,50 +1651,8 @@ public abstract class DQED {
 			!       CALL DBOCLS( )
 			*/
 
-			  boolean accum = false;
-			  double anorm;
-			  boolean checkl;
-			  double cnorm;
-			  double drelpr = epsilon;
-			  boolean filter = false;
 			  int i;
-			  int icase;
-			  int idum;
-			  int iiw;
-			  int inrows;
-			  int ip;
-			  int irw;
-			  int iscale = 0;
 			  int j;
-			  int jopt[] = new int[6];
-			  int jp;
-			  int lds;
-			  int lenx;
-			  int level;
-			  int liopt = 0;
-			  int liw;
-			  int llb = 0;
-			  int lliw = 0;
-			  int llrw = 0;
-			  int llx = 0;
-			  int lmdw = 0;
-			  int lndw = 0;
-			  int locacc = 0;
-			  int locdim;
-			  int lopt = 0;
-			  int lp;
-			  int lrw;
-			  int mdwl;
-			  int mnew = 0;
-			  int modec[] = new int[1];;
-			  int mout[] = new int[1];
-			  int nerr;
-			  boolean pretri = false;
-			  double rdum;
-			  double t = 0.0;
-			  double t1;
-			  double t2;
-			  double wt;
 			  double arr[];
 			  double rwArr[];
 			  int ioptArr[];
@@ -1577,11 +1660,11 @@ public abstract class DQED {
 			  double wArr[][];
 			  int iArr[];
 
-			  idum = 0;
-			  rdum = 0.0;
-			  nerr = 0;
+			  idum_dbocls = 0;
+			  rdum_dbocls = 0.0;
+			  nerr_dbocls = 0;
 			  mode[0] = 0;
-			  level = 1;
+			  level_dbocls = 1;
 
 			  if ( igo_dbocls == 0) {
 			//
@@ -1590,11 +1673,11 @@ public abstract class DQED {
 			//  See that mdw is .gt.0. gross check only.
 			//
 			      if ( mdw<=0) {
-			          nerr = 53;
+			          nerr_dbocls = 53;
 			          xerrwv("dbocls(). mdw=(i1) must be positive.",
-			                      nerr,level,1,mdw,idum,0,rdum,rdum);
+			                      nerr_dbocls,level_dbocls,1,mdw,idum_dbocls,0,rdum_dbocls,rdum_dbocls);
 				      if ( 0 <= mode[0] ) {
-					    mode[0] = -nerr;
+					    mode[0] = -nerr_dbocls;
 				      }
 	
 					  igo_dbocls = 0;
@@ -1605,11 +1688,11 @@ public abstract class DQED {
 			//  See that number of constraints is nonnegative.
 			//
 			      if ( mcon[0] < 0) {
-			          nerr = 54;
+			          nerr_dbocls = 54;
 			          xerrwv("dbocls(). mcon=(i1) must be nonnegative.",
-			                      nerr,level,1,mcon[0],idum,0,rdum,rdum);
+			                      nerr_dbocls,level_dbocls,1,mcon[0],idum_dbocls,0,rdum_dbocls,rdum_dbocls);
 				      if ( 0 <= mode[0] ) {
-				          mode[0] = -nerr;
+				          mode[0] = -nerr_dbocls;
 					  }
 			
 				      igo_dbocls = 0;
@@ -1620,11 +1703,11 @@ public abstract class DQED {
 			//  See that number of unknowns is positive.
 			//
 			      if ( ncols<=0) {
-			          nerr = 55;
+			          nerr_dbocls = 55;
 			          xerrwv("dbocls(). ncols=(i1) the no. of variables must be positive.",
-			                      nerr,level,1,ncols,idum,0,rdum,rdum);
+			                      nerr_dbocls,level_dbocls,1,ncols,idum_dbocls,0,rdum_dbocls,rdum_dbocls);
 			          if ( 0 <= mode[0] ) {
-			              mode[0] = -nerr;
+			              mode[0] = -nerr_dbocls;
 		              }
 
 			          igo_dbocls = 0;
@@ -1636,11 +1719,11 @@ public abstract class DQED {
 			//
 			      for (j = 1; j <= ncols + mcon[0]; j++) {
 			          if ( ind[j] < 1 || ind[j] > 4) {
-			              nerr = 56;
+			              nerr_dbocls = 56;
 			              xerrwv("dbocls(). for j=(i1), ind(j)=(i2) must be 1-4.",
-			                          nerr,level,2,j,ind[j],0,rdum,rdum);
+			                          nerr_dbocls,level_dbocls,2,j,ind[j],0,rdum_dbocls,rdum_dbocls);
 			              if ( 0 <= mode[0] ) {
-					          mode[0] = -nerr;
+					          mode[0] = -nerr_dbocls;
 				          }
 	
 					      igo_dbocls = 0;
@@ -1654,11 +1737,11 @@ public abstract class DQED {
 			      for (j = 1; j <= ncols + mcon[0]; j++) {
 			          if ( ind[j] == 3) {
 			              if ( bl[j] > bu[j]) {
-			                  nerr = 57;
+			                  nerr_dbocls = 57;
 			                  xerrwv("dbocls(). for j=(i1), bound bl(j)=(r1) is  >  bu(j)=(r2).",
-			                         nerr,level,1,j,idum,2,bl[j],bu[j]);
+			                         nerr_dbocls,level_dbocls,1,j,idum_dbocls,2,bl[j],bu[j]);
 			                  if ( 0 <= mode[0] ) {
-					              mode[0] = -nerr;
+					              mode[0] = -nerr_dbocls;
 				              }
 	
 					          igo_dbocls = 0;
@@ -1672,28 +1755,28 @@ public abstract class DQED {
 			//
 			      
 			        
-			      drelpr = epsilon;
-			      checkl = false;
-			      filter = true;
-			      lenx = 2* (ncols+mcon[0]) + 2;
-			      iscale = 1;
+			      drelpr_dbocls = epsilon;
+			      checkl_dbocls = false;
+			      filter_dbocls = true;
+			      lenx_dbocls = 2* (ncols+mcon[0]) + 2;
+			      iscale_dbocls = 1;
 			      igo_dbocls = 1;
-			      accum = false;
-			      pretri = true;
-			      lopt = 0;
-			      lp = 0;
-			      lds = 0;
+			      accum_dbocls = false;
+			      pretri_dbocls = true;
+			      lopt_dbocls = 0;
+			      lp_dbocls = 0;
+			      lds_dbocls = 0;
 
 		loop:     while (true) {
-			      lp = lp + lds;
-			      ip = iopt[lp+1];
-			      jp = Math.abs(ip);
+			      lp_dbocls = lp_dbocls + lds_dbocls;
+			      ip_dbocls = iopt[lp_dbocls+1];
+			      jp_dbocls = Math.abs(ip_dbocls);
 			//
 			//  Test for no more options to change.
 			//
-			      if ( ip == 99) {
-			          if ( lopt == 0) {
-			        	  lopt = lp+1;
+			      if ( ip_dbocls == 99) {
+			          if ( lopt_dbocls == 0) {
+			        	  lopt_dbocls = lp_dbocls+1;
 			          }
 			//
 			// Send column scaling to DBOLS().
@@ -1713,18 +1796,18 @@ public abstract class DQED {
 			          idope[2] = ncols + mcon[0] + 2;
 			          idope[3] = mcon[0];
 			          break loop;
-			      } // if (ip == 99)
-			      else if ( jp == 99) {
-			          lds = 1;
+			      } // if (ip_dbocls == 99)
+			      else if ( jp_dbocls == 99) {
+			          lds_dbocls = 1;
 			          break loop;
-			      } // else if (jp == 99)
-			      else if ( jp == 1) {
-			          if ( ip > 0) {
+			      } // else if (jp_dbocls == 99)
+			      else if ( jp_dbocls == 1) {
+			          if ( ip_dbocls > 0) {
 			//
 			//  Set up direction flag location, row stacking pointer
 			//  location, and location for number of new rows.
 			//
-			              locacc = lp + 2;
+			              locacc_dbocls = lp_dbocls + 2;
 			//
 			//                  IOPT(LOCACC-1)=option number for seq. accumulation.
 			//     Contents..   IOPT(LOCACC  )=user direction flag, 1 or 2.
@@ -1754,19 +1837,19 @@ public abstract class DQED {
 			//                  END IF
 			//              END LOOP
 			//
-			              iopt[locacc+1] = mcon[0] + 1;
-			              accum = true;
-			              iopt[locacc] = igo_dbocls;
+			              iopt[locacc_dbocls+1] = mcon[0] + 1;
+			              accum_dbocls = true;
+			              iopt[locacc_dbocls] = igo_dbocls;
 			          } // if (ip > 0)
-			          lds = 4;
+			          lds_dbocls = 4;
 			          continue loop;
-			      } // else if (jp == 1)
-			      else if ( jp == 2) {
-			          if ( ip > 0) {
+			      } // else if (jp_dbocls == 1)
+			      else if ( jp_dbocls == 2) {
+			          if ( ip_dbocls > 0) {
 			//
 			//  GET ACTUAL LENGTHS OF ARRAYS FOR CHECKING AGAINST NEEDS.
 			//
-			              locdim = lp + 2;
+			              locdim_dbocls = lp_dbocls + 2;
 			//
 			//  LMDW.GE.MCON+MAX(MOUT,NCOLS), IF MCON.GT.0 .AND FILTER
 			//  LMDW.GE.MCON+MOUT, OTHERWISE
@@ -1778,34 +1861,34 @@ public abstract class DQED {
 			//  LLIW.GE.2*(NCOLS+MCON)
 			//  LIOP.GE. AMOUNT REQD. FOR OPTION ARRAY.
 			//
-			              lmdw = iopt[locdim];
-			              lndw = iopt[locdim+1];
-			              llb = iopt[locdim+2];
-			              llx = iopt[locdim+3];
-			              llrw = iopt[locdim+4];
-			              lliw = iopt[locdim+5];
-			              liopt = iopt[locdim+6];
-			              checkl = true;
+			              lmdw_dbocls = iopt[locdim_dbocls];
+			              lndw_dbocls = iopt[locdim_dbocls+1];
+			              llb_dbocls = iopt[locdim_dbocls+2];
+			              llx_dbocls = iopt[locdim_dbocls+3];
+			              llrw_dbocls = iopt[locdim_dbocls+4];
+			              lliw_dbocls = iopt[locdim_dbocls+5];
+			              liopt_dbocls = iopt[locdim_dbocls+6];
+			              checkl_dbocls = true;
 			          } // if (ip > 0)
-			          lds = 8;
+			          lds_dbocls = 8;
 			          continue loop;
-			      } // else if (jp == 2)
+			      } // else if (jp_dbocls == 2)
 			//
 			//  OPTION TO MODIFY THE COLUMN SCALING.
 			//
 			     
-			      else if ( jp == 3) {
-			          if ( ip > 0) {
-			              iscale = iopt[lp+2];
+			      else if ( jp_dbocls == 3) {
+			          if ( ip_dbocls > 0) {
+			              iscale_dbocls = iopt[lp_dbocls+2];
 			//
 			//     SEE THAT ISCALE IS 1 THRU 3.
 			//
-			              if ( iscale < 1 || iscale > 3) {
-			                  nerr = 48;
+			              if ( iscale_dbocls < 1 || iscale_dbocls > 3) {
+			                  nerr_dbocls = 48;
 			                  xerrwv("dbocls(). iscale option=(i1) must be 1-3.",
-			                    nerr,level,1,iscale,idum,0,rdum,rdum);
+			                    nerr_dbocls,level_dbocls,1,iscale_dbocls,idum_dbocls,0,rdum_dbocls,rdum_dbocls);
 			                  if ( 0 <= mode[0] ) {
-					              mode[0] = -nerr;
+					              mode[0] = -nerr_dbocls;
 				              }
 	
 					          igo_dbocls = 0;
@@ -1813,22 +1896,22 @@ public abstract class DQED {
 				              return;
 			              } // if ( iscale < 1 || iscale > 3)
 			          } // if (ip > 0)
-			          lds = 2;
+			          lds_dbocls = 2;
 			          continue loop;
-			      } // else if (jp == 3)
+			      } // else if (jp_dbocls == 3)
 			//
 			//  IN THIS OPTION THE USER HAS PROVIDED SCALING.  THE
 			//  SCALE FACTORS FOR THE COLUMNS BEGIN IN X(NCOLS+IOPT(LP+2)).
 			//
-			      else if ( jp == 4) {
-			          if ( ip > 0) {
-			              iscale = 4;
-			              if ( iopt[lp+2]<=0) {
-			                  nerr = 49;
+			      else if ( jp_dbocls == 4) {
+			          if ( ip_dbocls > 0) {
+			              iscale_dbocls = 4;
+			              if ( iopt[lp_dbocls+2]<=0) {
+			                  nerr_dbocls = 49;
 			                  xerrwv("dbocls(). offset past x(ncols) (i1) for\nuser-provided column scaling must be positive.",
-			                    nerr,level,1,iopt[lp+2],idum,0,rdum,rdum);
+			                    nerr_dbocls,level_dbocls,1,iopt[lp_dbocls+2],idum_dbocls,0,rdum_dbocls,rdum_dbocls);
 			                  if ( 0 <= mode[0] ) {
-					              mode[0] = -nerr;
+					              mode[0] = -nerr_dbocls;
 				              }
 	
 					          igo_dbocls = 0;
@@ -1836,16 +1919,16 @@ public abstract class DQED {
 				              return;
 			              } // if ( iopt[lp+2]<=0)
 			              for (i = 1; i <= ncols; i++) {
-			            	  rw[i] = x[ncols + iopt[lp+2] + i - 1];
+			            	  rw[i] = x[ncols + iopt[lp_dbocls+2] + i - 1];
 			              }
-			              lenx = lenx + ncols;
+			              lenx_dbocls = lenx_dbocls + ncols;
 			              for (j = 1; j <= ncols; j++) {
 			                  if ( rw[j] <= 0.0 ) {
-			                      nerr = 50;
+			                      nerr_dbocls = 50;
 			                      xerrwv("dbocls(). each provided col. scale\nfactor must be positive. comp. (i1)   now = (r1).",
-			                        nerr,level,1,j,idum,1,rw[j],rdum);
+			                        nerr_dbocls,level_dbocls,1,j,idum_dbocls,1,rw[j],rdum_dbocls);
 			                      if ( 0 <= mode[0] ) {
-							          mode[0] = -nerr;
+							          mode[0] = -nerr_dbocls;
 						          }
 			
 							      igo_dbocls = 0;
@@ -1854,69 +1937,69 @@ public abstract class DQED {
 			                  } // if (rw[j] <= 0.0)
 			              } // for (j = 1; j <= ncols; j++)
 			          } // if (ip > 0)
-			          lds = 2;
+			          lds_dbocls = 2;
 			          continue loop;
-			      } // else if (jp == 4)
+			      } // else if (jp_dbocls == 4)
 			//
 			//  IN THIS OPTION AN OPTION ARRAY IS PROVIDED TO DBOLS().
 			//
-			      else if ( jp == 5) {
-			          if ( ip > 0) {
-			              lopt = iopt[lp+2];
+			      else if ( jp_dbocls == 5) {
+			          if ( ip_dbocls > 0) {
+			              lopt_dbocls = iopt[lp_dbocls+2];
 			          } // if (ip > 0)
-			          lds = 2;
+			          lds_dbocls = 2;
 			          continue loop;
-			      } // else if (jp == 5)
+			      } // else if (jp_dbocls == 5)
 			//
 			//  IN THIS OPTION AN OPTION ARRAY IS PROVIDED TO DBOLSM().
 			//  (NO LONGER USED.) OPTION NOW MUST BE PASSED IMBEDDED IN
 			//  OPTION ARRAY FOR DBOLS().
 			//
-			      else if ( jp == 6) {
-			          lds = 2;
+			      else if ( jp_dbocls == 6) {
+			          lds_dbocls = 2;
 			          continue loop;
 			      }
 			//
 			//  THIS OPTION USES THE NEXT LOC OF IOPT(*) AS A
 			//  POINTER VALUE TO SKIP TO NEXT.
 			//
-			      else if ( jp == 7) {
-			          if ( ip > 0) {
-			              lp = iopt[lp+2]-1;
-			              lds = 0;
+			      else if ( jp_dbocls == 7) {
+			          if ( ip_dbocls > 0) {
+			              lp_dbocls = iopt[lp_dbocls+2]-1;
+			              lds_dbocls = 0;
 			          }
 			          else {
-			              lds = 2;
+			              lds_dbocls = 2;
 			          }
 			          continue loop;
-			      } // else if (jp == 7)
+			      } // else if (jp_dbocls == 7)
 			//
 			//  THIS OPTION AVOIDS THE CONSTRAINT RESOLVING PHASE FOR
 			//  THE LINEAR CONSTRAINTS C*X=Y.
 			//
-			      else if ( jp == 8) {
-			          filter = ! (ip > 0);
-			          lds = 1;
+			      else if ( jp_dbocls == 8) {
+			          filter_dbocls = ! (ip_dbocls > 0);
+			          lds_dbocls = 1;
 			          continue loop;
-			      } // else if (jp = 8)
+			      } // else if (jp_dbocls = 8)
 			//
 			//  THIS OPTION SUPPRESSES PRETRIANGULARIZATION OF THE LEAST
 			//  SQUARES EQUATIONS.
 			//
-			      else if ( jp == 9) {
-			          pretri = ! (ip > 0);
-			          lds = 1;
+			      else if ( jp_dbocls == 9) {
+			          pretri_dbocls = ! (ip_dbocls > 0);
+			          lds_dbocls = 1;
 			          continue loop;
-			      } // else if (jp == 9)
+			      } // else if (jp_dbocls == 9)
 			//
 			//  NO VALID OPTION NUMBER WAS NOTED. THIS IS AN ERROR CONDITION.
 			//
 			      else {
-			          nerr = 51;
+			          nerr_dbocls = 51;
 			          xerrwv("dbocls(). the option number=(i1) is not defined.",
-			            nerr,level,1,jp,idum,0,rdum,rdum);
+			            nerr_dbocls,level_dbocls,1,jp_dbocls,idum_dbocls,0,rdum_dbocls,rdum_dbocls);
 			          if ( 0 <= mode[0] ) {
-				          mode[0] = -nerr;
+				          mode[0] = -nerr_dbocls;
 				      }
 			
 					  igo_dbocls = 0;
@@ -1925,53 +2008,53 @@ public abstract class DQED {
 			      } // else 
 		} // loop: while (do)
 
-			      if ( checkl) {
+			      if ( checkl_dbocls) {
 			//
 			//  CHECK LENGTHS OF ARRAYS
 			//
 			//  THIS FEATURE ALLOWS THE USER TO MAKE SURE THAT THE
 			//  ARRAYS ARE LONG ENOUGH FOR THE INTENDED PROBLEM SIZE AND USE.
 			//
-			       if ( filter && (!accum)) {
-			         mdwl=mcon[0]+Math.max(mrows[0],ncols);
+			       if ( filter_dbocls && (!accum_dbocls)) {
+			         mdwl_dbocls=mcon[0]+Math.max(mrows[0],ncols);
 			       }
-			       else if ( accum) {
-			         mdwl=mcon[0]+ncols+1;
+			       else if ( accum_dbocls) {
+			         mdwl_dbocls=mcon[0]+ncols+1;
 			       }
 			       else {
-			         mdwl=mcon[0]+ncols;
+			         mdwl_dbocls=mcon[0]+ncols;
 			       }
 
-			          if ( lmdw < mdwl) {
-			              nerr = 41;
+			          if ( lmdw_dbocls < mdwl_dbocls) {
+			              nerr_dbocls = 41;
 			              xerrwv("dbocls(). the row dimension of w(,)=(i1)\nmust be >= the number of effective rows=(i2).",
-			                nerr,level,2,lmdw,mdwl,0,rdum,rdum);
+			                nerr_dbocls,level_dbocls,2,lmdw_dbocls,mdwl_dbocls,0,rdum_dbocls,rdum_dbocls);
 			              if ( 0 <= mode[0] ) {
-					           mode[0] = -nerr;
+					           mode[0] = -nerr_dbocls;
 				          }
 	
 					      igo_dbocls = 0;
 
 				          return;
 			          } // if (lmdw < mdwl)
-			          if ( lndw < ncols+mcon[0]+1) {
-			              nerr = 42;
+			          if ( lndw_dbocls < ncols+mcon[0]+1) {
+			              nerr_dbocls = 42;
 			              xerrwv("dbocls(). the column dimension of w(,)=(i1)\nmust be >= ncols+mcon+1=(i2).",
-			              nerr,level,2,lndw,ncols+mcon[0]+1,0,rdum,rdum);
+			              nerr_dbocls,level_dbocls,2,lndw_dbocls,ncols+mcon[0]+1,0,rdum_dbocls,rdum_dbocls);
 			              if ( 0 <= mode[0] ) {
-						      mode[0] = -nerr;
+						      mode[0] = -nerr_dbocls;
 					      }
 		
 						  igo_dbocls = 0;
 
 					      return;
 			          } // if ( lndw < ncols+mcon+1)
-			          if ( llb < ncols+mcon[0]) {
-			              nerr = 43;
+			          if ( llb_dbocls < ncols+mcon[0]) {
+			              nerr_dbocls = 43;
 			              xerrwv("dbocls(). the dimensions of the arrays bl()\nbu(), and ind()=(i1) must be >= ncols+mcon=(i2).",
-			                nerr,level,2,llb,ncols+mcon[0],0,rdum,rdum);
+			                nerr_dbocls,level_dbocls,2,llb_dbocls,ncols+mcon[0],0,rdum_dbocls,rdum_dbocls);
 			              if ( 0 <= mode[0] ) {
-						      mode[0] = -nerr;
+						      mode[0] = -nerr_dbocls;
 					      }
 		
 						  igo_dbocls = 0;
@@ -1979,12 +2062,12 @@ public abstract class DQED {
 					      return;
 			          } // if ( llb < ncols+mcon)
 
-			          if ( llx < lenx) {
-			              nerr = 44;
+			          if ( llx_dbocls < lenx_dbocls) {
+			              nerr_dbocls = 44;
 			              xerrwv("dbocls(). the dimension of x()=(i1) must be\n>= the reqd. length=(i2).",
-			            		  nerr,level,2,llx,lenx,0,rdum,rdum);
+			            		  nerr_dbocls,level_dbocls,2,llx_dbocls,lenx_dbocls,0,rdum_dbocls,rdum_dbocls);
 			              if ( 0 <= mode[0] ) {
-						      mode[0] = -nerr;
+						      mode[0] = -nerr_dbocls;
 					      }
 		
 						  igo_dbocls = 0;
@@ -1992,12 +2075,12 @@ public abstract class DQED {
 					      return;
 			          } // if (llx < lenx)
 
-			          if ( llrw < 6*ncols+5*mcon[0]) {
-			              nerr = 45;
+			          if ( llrw_dbocls < 6*ncols+5*mcon[0]) {
+			              nerr_dbocls = 45;
 			              xerrwv("dbocls(). the dimension of rw()=(i1) must be\n>= 6*ncols+5*mcon=(i2).",
-			            		  nerr,level,2,llrw,6*ncols+5*mcon[0],0,rdum,rdum);
+			            		  nerr_dbocls,level_dbocls,2,llrw_dbocls,6*ncols+5*mcon[0],0,rdum_dbocls,rdum_dbocls);
 			              if ( 0 <= mode[0] ) {
-						      mode[0] = -nerr;
+						      mode[0] = -nerr_dbocls;
 					      }
 		
 						  igo_dbocls = 0;
@@ -2005,12 +2088,12 @@ public abstract class DQED {
 					      return;
 			          } // if ( llrw < 6*ncols+5*mcon[0])
 
-			          if ( lliw < 2*ncols+2*mcon[0]) {
-			              nerr = 46;
+			          if ( lliw_dbocls < 2*ncols+2*mcon[0]) {
+			              nerr_dbocls = 46;
 			              xerrwv("dbocls() the dimension of iw()=(i1) must be\n>= 2*ncols+2*mcon=(i2).",
-			            		  nerr,level,2,lliw, 2*ncols+2*mcon[0],0,rdum,rdum);
+			            		  nerr_dbocls,level_dbocls,2,lliw_dbocls, 2*ncols+2*mcon[0],0,rdum_dbocls,rdum_dbocls);
 			              if ( 0 <= mode[0] ) {
-						      mode[0] = -nerr;
+						      mode[0] = -nerr_dbocls;
 					      }
 		
 						  igo_dbocls = 0;
@@ -2018,12 +2101,12 @@ public abstract class DQED {
 					      return;
 			          } // if ( lliw < 2*ncols+2*mcon)
 
-			          if ( liopt < lp+17) {
-			              nerr = 47;
+			          if ( liopt_dbocls < lp_dbocls+17) {
+			              nerr_dbocls = 47;
 			              xerrwv("dbocls(). the dimension of iopt()=(i1) must be\n>= the reqd. len.=(i2).",
-			            		  nerr,level,2,liopt,lp+17, 0,rdum,rdum);
+			            		  nerr_dbocls,level_dbocls,2,liopt_dbocls,lp_dbocls+17, 0,rdum_dbocls,rdum_dbocls);
 			              if ( 0 <= mode[0] ) {
-						    mode[0] = -nerr;
+						    mode[0] = -nerr_dbocls;
 					      }
 		
 						  igo_dbocls = 0;
@@ -2038,16 +2121,16 @@ public abstract class DQED {
 			//
 			//  Accumulate least squares equations.
 			//
-			  if ( accum) {
-			      mrows[0] = iopt[locacc+1] - 1 - mcon[0];
-			      inrows = iopt[locacc+2];
-			      mnew = mrows[0] + inrows;
-			      if ( mnew < 0 || mnew+mcon[0] > mdw) {
-			          nerr = 52;
+			  if ( accum_dbocls) {
+			      mrows[0] = iopt[locacc_dbocls+1] - 1 - mcon[0];
+			      inrows_dbocls = iopt[locacc_dbocls+2];
+			      mnew_dbocls = mrows[0] + inrows_dbocls;
+			      if ( mnew_dbocls < 0 || mnew_dbocls+mcon[0] > mdw) {
+			          nerr_dbocls = 52;
 			          xerrwv("dbocls(). no. of rows=(i1) must be >= 0\n.and. <=mdw-mcon=(i2)",
-			        		  nerr,level,2,mnew,mdw-mcon[0],0,rdum,rdum);
+			        		  nerr_dbocls,level_dbocls,2,mnew_dbocls,mdw-mcon[0],0,rdum_dbocls,rdum_dbocls);
 			          if ( 0 <= mode[0] ) {
-			              mode[0] = -nerr;
+			              mode[0] = -nerr_dbocls;
 		              }
 
 			          igo_dbocls = 0;
@@ -2061,24 +2144,24 @@ public abstract class DQED {
 			// OF PROCESSING POINTERS BETWEEN THE CALLING AND CALLED (DBOLS())
 			// PROGRAM UNITS.
 			//
-			  jopt[1] = 1;
-			  jopt[2] = 2;
-			  jopt[4] = mrows[0];
-			  jopt[5] = 99;
-			  irw = ncols + 1;
-			  iiw = 1;
-			  if ( accum || pretri) {
+			  jopt_dbocls[1] = 1;
+			  jopt_dbocls[2] = 2;
+			  jopt_dbocls[4] = mrows[0];
+			  jopt_dbocls[5] = 99;
+			  irw_dbocls = ncols + 1;
+			  iiw_dbocls = 1;
+			  if ( accum_dbocls || pretri_dbocls) {
 			//
 			//  NOTE THAT DBOLS() WAS CALLED BY DBOCLS()
 			//
 			          idope[5]=0;
 			          rwArr = new double[5*ncols + 1];
-					  for (i = irw; i < rw.length && i < irw + 5*ncols; i++) {
-						  rwArr[i - irw + 1] = rw[i];
+					  for (i = irw_dbocls; i < rw.length && i < irw_dbocls + 5*ncols; i++) {
+						  rwArr[i - irw_dbocls + 1] = rw[i];
 					  }
 					  iwArr = new int[2*ncols + 1];
-					  for (i = iiw; i < iw.length && i < iiw + 2*ncols; i++) {
-						  iwArr[i - iiw + 1] = iw[i];
+					  for (i = iiw_dbocls; i < iw.length && i < iiw_dbocls + 2*ncols; i++) {
+						  iwArr[i - iiw_dbocls + 1] = iw[i];
 					  }
 					  wArr = new double[mdw-mcon[0]+1][ncols+2];
 					  for (i = 1; i <= mdw-mcon[0]; i++) {
@@ -2086,31 +2169,31 @@ public abstract class DQED {
 							  wArr[i][j] = w[mcon[0]+i][j];
 						  }
 					  }
-			          dbols(wArr,mdw,mout,ncols,bl,bu,ind,jopt,x,rnorm,
+			          dbols(wArr,mdw,mout_dbocls,ncols,bl,bu,ind,jopt_dbocls,x,rnorm,
 			                mode,rwArr,iwArr);
 					  for (i = 1; i <= mdw-mcon[0]; i++) {
 						  for (j = 1; j <= ncols+1; j++) {
 							  w[mcon[0]+i][j] = wArr[i][j];
 						  }
 					  }
-					  for (i = irw; i < rw.length && i < irw + 5*ncols; i++) {
-						  rw[i] = rwArr[i - irw + 1];
+					  for (i = irw_dbocls; i < rw.length && i < irw_dbocls + 5*ncols; i++) {
+						  rw[i] = rwArr[i - irw_dbocls + 1];
 					  }
-					  for (i = iiw; i < iw.length && i < iiw + 2*ncols; i++) {
-						  iw[i] = iwArr[i - iiw + 1];
+					  for (i = iiw_dbocls; i < iw.length && i < iiw_dbocls + 2*ncols; i++) {
+						  iw[i] = iwArr[i - iiw_dbocls + 1];
 					  }
 			  }
 			  else {
-			      mout[0] = mrows[0];
+			      mout_dbocls[0] = mrows[0];
 			  }
 
-			  if ( accum) {
-			    accum = (iopt[locacc]  ==  1);
-			    iopt[locacc+1] = jopt[3] + mcon[0];
-			    mrows[0] = Math.min(ncols+1,mnew);
+			  if ( accum_dbocls) {
+			    accum_dbocls = (iopt[locacc_dbocls]  ==  1);
+			    iopt[locacc_dbocls+1] = jopt_dbocls[3] + mcon[0];
+			    mrows[0] = Math.min(ncols+1,mnew_dbocls);
 			  }
 
-			  if ( accum) {
+			  if ( accum_dbocls) {
 				  return;
 			  }
 			//
@@ -2118,10 +2201,10 @@ public abstract class DQED {
 			//
 			// MOVE RIGHT HAND SIDE OF LEAST SQUARES EQUATIONS.
 			//
-			  for (i = 1; i <= mout[0]; i++) {
+			  for (i = 1; i <= mout_dbocls[0]; i++) {
 				  w[mcon[0]+i][ncols+mcon[0]+1] = w[mcon[0]+i][ncols+1];
 			  }
-			  if ( mcon[0] > 0 && filter) {
+			  if ( mcon[0] > 0 && filter_dbocls) {
 			//
 			//  PROJECT THE LINEAR CONSTRAINTS INTO A REACHABLE SET.
 			//
@@ -2144,52 +2227,52 @@ public abstract class DQED {
 			//
 			//  OBTAIN A 'FEASIBLE POINT' FOR THE LINEAR CONSTRAINTS.
 			//
-			      jopt[1] = 99;
-			      irw = ncols + 1;
-			      iiw = 1;
+			      jopt_dbocls[1] = 99;
+			      irw_dbocls = ncols + 1;
+			      iiw_dbocls = 1;
 			//
 			//  NOTE THAT DBOLS() WAS CALLED BY DBOCLS()
 			//
 			          idope[5]=0;
 			          rwArr = new double[5*(ncols+mcon[0]) + 1];
-					  for (i = irw; i < rw.length && i < irw + 5*(ncols + mcon[0]); i++) {
-						  rwArr[i - irw + 1] = rw[i];
+					  for (i = irw_dbocls; i < rw.length && i < irw_dbocls + 5*(ncols + mcon[0]); i++) {
+						  rwArr[i - irw_dbocls + 1] = rw[i];
 					  }
 					  iwArr = new int[2*(ncols+mcon[0]) + 1];
-					  for (i = iiw; i < iw.length && i < iiw + 2*(ncols + mcon[0]); i++) {
-						  iwArr[i - iiw + 1] = iw[i];
+					  for (i = iiw_dbocls; i < iw.length && i < iiw_dbocls + 2*(ncols + mcon[0]); i++) {
+						  iwArr[i - iiw_dbocls + 1] = iw[i];
 					  }
-			          dbols(w,mdw,mcon,ncols+mcon[0],bl,bu,ind,jopt,x,rnormc,
-			                modec,rwArr,iwArr);
-					  for (i = irw; i < rw.length && i < irw + 5*(ncols + mcon[0]); i++) {
-						  rw[i] = rwArr[i - irw + 1];
+			          dbols(w,mdw,mcon,ncols+mcon[0],bl,bu,ind,jopt_dbocls,x,rnormc,
+			                modec_dbocls,rwArr,iwArr);
+					  for (i = irw_dbocls; i < rw.length && i < irw_dbocls + 5*(ncols + mcon[0]); i++) {
+						  rw[i] = rwArr[i - irw_dbocls + 1];
 					  }
-					  for (i = iiw; i < iw.length && i < iiw + 2*(ncols + mcon[0]); i++) {
-						  iw[i] = iwArr[i - iiw + 1];
+					  for (i = iiw_dbocls; i < iw.length && i < iiw_dbocls + 2*(ncols + mcon[0]); i++) {
+						  iw[i] = iwArr[i - iiw_dbocls + 1];
 					  }
 			//
 			//  ENLARGE THE BOUNDS SET, IF REQUIRED, TO INCLUDE POINTS THAT
 			//  CAN BE REACHED.
 			//
 			     for (j = ncols + 1; j <= ncols + mcon[0]; j++) {
-			          icase = ind[j];
-			          if ( icase < 4) {
-			        	  t = 0.0;
+			          icase_dbocls = ind[j];
+			          if ( icase_dbocls < 4) {
+			        	  t_dbocls = 0.0;
 			        	  for (i = 1; i <= ncols; i++) {
-			        		  t += w[mcon[0]+i][j]*x[i];
+			        		  t_dbocls += w[mcon[0]+i][j]*x[i];
 			        	  }
 			          } // if (icase < 4)
-			          switch(icase) {
+			          switch(icase_dbocls) {
 			              case 1:
-			                  bl[j] = Math.min(t,bl[j]);
+			                  bl[j] = Math.min(t_dbocls,bl[j]);
 			                  break;
 			              case 2:
-			                  bu[j] = Math.max(t,bu[j]);
+			                  bu[j] = Math.max(t_dbocls,bu[j]);
 			                  break;
 			              case 3:
-			                  bl[j] = Math.min(t,bl[j]);
-			                  bu[j] = Math.max(t,bu[j]);
-			          } // switch(icase)
+			                  bl[j] = Math.min(t_dbocls,bl[j]);
+			                  bu[j] = Math.max(t_dbocls,bu[j]);
+			          } // switch(icase_dbocls)
 			     } // for (j = ncols + 1; j <= ncols + mcon; j++)
 			//
 			//  MOVE CONSTRAINT DATA BACK TO THE ORIGINAL AREA.
@@ -2204,7 +2287,7 @@ public abstract class DQED {
 
 			  if ( mcon[0] > 0) {
 			      for (j = ncols + 1; j <= ncols + mcon[0]; j++) {
-			    	for (i = 1; i <= mout[0]; i++) {
+			    	for (i = 1; i <= mout_dbocls[0]; i++) {
 			          w[mcon[0]+i][j] = 0.0;
 			    	}
 			      } // for (j = ncols + 1; j <= ncols + mcon; j++)
@@ -2224,42 +2307,42 @@ public abstract class DQED {
 			//
 			//  COMPUTE NOMINAL COLUMN SCALING FOR THE UNWEIGHTED MATRIX.
 			//
-			  cnorm = 0.0;
-			  anorm = 0.0;
+			  cnorm_dbocls = 0.0;
+			  anorm_dbocls = 0.0;
 			  for (j = 1; j <= ncols; j++) {
-				  t1 = 0.0;
+				  t1_dbocls = 0.0;
 				  for (i = 1; i <= mcon[0]; i++) {
-					  t1 += Math.abs(w[i][j]);
+					  t1_dbocls += Math.abs(w[i][j]);
 				  }
-			      t2 = 0.0;
-			      for (i = 1; i <= mout[0]; i++) {
-			    	  t2 += Math.abs(w[mcon[0]+i][1]);
+			      t2_dbocls = 0.0;
+			      for (i = 1; i <= mout_dbocls[0]; i++) {
+			    	  t2_dbocls += Math.abs(w[mcon[0]+i][1]);
 			      }
-			      t = t1 + t2;
-			      if ( t == 0.0 ) {
-			    	  t = 1.0;
+			      t_dbocls = t1_dbocls + t2_dbocls;
+			      if ( t_dbocls == 0.0 ) {
+			    	  t_dbocls = 1.0;
 			      }
-			      cnorm = Math.max(cnorm,t1);
-			      anorm = Math.max(anorm,t2);
-			      x[ncols+mcon[0]+j] = 1.0/t;
+			      cnorm_dbocls = Math.max(cnorm_dbocls,t1_dbocls);
+			      anorm_dbocls = Math.max(anorm_dbocls,t2_dbocls);
+			      x[ncols+mcon[0]+j] = 1.0/t_dbocls;
 			  } // for (j = 1; j <= ncols; j++)
 
-			  switch (iscale) {
+			  switch (iscale_dbocls) {
 			  case 2:
 			//
 			//  SCALE COLS. (BEFORE WEIGHTING) TO HAVE LENGTH ONE.
 			//
 
-			    arr = new double[mcon[0]+mout[0]+1];
+			    arr = new double[mcon[0]+mout_dbocls[0]+1];
 				for (j = 1; j <= ncols; j++) {
-				    for (i = 1; i <= mcon[0]+mout[0]; i++) {
+				    for (i = 1; i <= mcon[0]+mout_dbocls[0]; i++) {
 				    	arr[i] = w[i][j];
 				    }
-				    t = dnrm2(mcon[0]+mout[0],arr,1);
-				    if ( t == 0.0 ) {
-				    	t = 1.0;
+				    t_dbocls = dnrm2(mcon[0]+mout_dbocls[0],arr,1);
+				    if ( t_dbocls == 0.0 ) {
+				    	t_dbocls = 1.0;
 				    }
-				    x[ncols+mcon[0]+j] = 1.0/t;
+				    x[ncols+mcon[0]+j] = 1.0/t_dbocls;
 			  } // for (j = 1; j <= ncols; j++)
 			  break;
 			//
@@ -2285,24 +2368,24 @@ public abstract class DQED {
 			//
 			//  WEIGHT THE LEAST SQUARES EQUATIONS.
 			//
-			  wt = Math.sqrt(drelpr);
-			  if ( anorm > 0.0 ) {
-				  wt = wt/anorm;
+			  wt_dbocls = Math.sqrt(drelpr_dbocls);
+			  if ( anorm_dbocls > 0.0 ) {
+				  wt_dbocls = wt_dbocls/anorm_dbocls;
 			  }
-			  if ( cnorm > 0.0) {
-				  wt = wt*cnorm;
+			  if ( cnorm_dbocls > 0.0) {
+				  wt_dbocls = wt_dbocls*cnorm_dbocls;
 			  }
 
-			  for (i = 1; i <= mout[0]; i++) {
+			  for (i = 1; i <= mout_dbocls[0]; i++) {
 				  for (j = 1; j <= ncols; j++) {
-					  w[i+mcon[0]][j] = wt * w[i+mcon[0]][j];
+					  w[i+mcon[0]][j] = wt_dbocls * w[i+mcon[0]][j];
 				  }
 			  } // for (i = 1; i <= mout; i++)
-			  for (i = 1; i <= mout[0]; i++) {
-				  w[mcon[0]+i][mcon[0]+ncols+1] = wt*w[mcon[0]+i][mcon[0]+ncols+1];
+			  for (i = 1; i <= mout_dbocls[0]; i++) {
+				  w[mcon[0]+i][mcon[0]+ncols+1] = wt_dbocls*w[mcon[0]+i][mcon[0]+ncols+1];
 			  }
-			  lrw = 1;
-			  liw = 1;
+			  lrw_dbocls = 1;
+			  liw_dbocls = 1;
 			//
 			//  SET THE NEW TRIANGULARIZATION FACTOR.
 			//
@@ -2311,36 +2394,36 @@ public abstract class DQED {
 			//  SET THE WEIGHT TO USE IN COMPONENTS .GT. MCON,
 			//  WHEN MAKING LINEAR INDEPENDENCE TEST.
 			//
-			  x[ncols+mcon[0]+idope[2]] = 1.0/wt;
+			  x[ncols+mcon[0]+idope[2]] = 1.0/wt_dbocls;
 			  idope[5] = 1;
-			  ioptArr = new int[iopt.length + 1 - lopt];
-			  for (i = lopt; i < iopt.length; i++) {
-				  ioptArr[i - lopt + 1] = iopt[i];
+			  ioptArr = new int[iopt.length + 1 - lopt_dbocls];
+			  for (i = lopt_dbocls; i < iopt.length; i++) {
+				  ioptArr[i - lopt_dbocls + 1] = iopt[i];
 			  }
 			  rwArr = new double[5*(ncols+mcon[0]) + 1];
-			  for (i = lrw; i < rw.length && i < lrw + 5*(ncols+mcon[0]); i++) {
-				  rwArr[i - lrw + 1] = rw[i];
+			  for (i = lrw_dbocls; i < rw.length && i < lrw_dbocls + 5*(ncols+mcon[0]); i++) {
+				  rwArr[i - lrw_dbocls + 1] = rw[i];
 			  }
 			  iwArr = new int[2*(ncols+mcon[0]) + 1];
-			  for (i = liw; i < iw.length && i < liw + 2*(ncols+mcon[0]); i++) {
-				  iwArr[i - liw + 1] = iw[i];
+			  for (i = liw_dbocls; i < iw.length && i < liw_dbocls + 2*(ncols+mcon[0]); i++) {
+				  iwArr[i - liw_dbocls + 1] = iw[i];
 			  }
 			  iArr = new int[1];
-			  iArr[0] = mout[0] + mcon[0];
+			  iArr[0] = mout_dbocls[0] + mcon[0];
 			  dbols(w,mdw,iArr,ncols+mcon[0],bl,bu,ind,ioptArr,x,
 			        rnorm,mode,rwArr,iwArr);
-			  for (i = lopt; i < iopt.length; i++) {
-				  iopt[i] = ioptArr[i - lopt + 1];
+			  for (i = lopt_dbocls; i < iopt.length; i++) {
+				  iopt[i] = ioptArr[i - lopt_dbocls + 1];
 			  }
-			  for (i = lrw; i < rw.length && i < lrw + 5*(ncols+mcon[0]); i++) {
-				  rw[i] = rwArr[i - lrw + 1];
+			  for (i = lrw_dbocls; i < rw.length && i < lrw_dbocls + 5*(ncols+mcon[0]); i++) {
+				  rw[i] = rwArr[i - lrw_dbocls + 1];
 			  }
-			  for (i = liw; i < iw.length && i < liw + 2*(ncols+mcon[0]); i++) {
-				  iw[i] = iwArr[i - liw + 1];
+			  for (i = liw_dbocls; i < iw.length && i < liw_dbocls + 2*(ncols+mcon[0]); i++) {
+				  iw[i] = iwArr[i - liw_dbocls + 1];
 			  }
 
 			  if ( 0 <= mode[0] ) {
-			    mode[0] = -nerr;
+			    mode[0] = -nerr_dbocls;
 			  }
 
 			  igo_dbocls = 0;
@@ -2683,36 +2766,11 @@ public abstract class DQED {
 
 			  //double bl(ncols)
 			  //double bu(ncols)
-			  boolean checkl;
 			  int i;
-			  int ibig;
-			  int idum;
 			  //integer ind(ncols)
-			  int inrows;
-			  int ip;
 			  //integer iw(2*ncols)
 			  int j;
-			  int jp;
-			  int lds;
-			  int lenx;
-			  int level;
-			  int liopt = 0;
-			  int llb = 0;
-			  int lliw = 0;
-			  int llrw = 0;
-			  int llx = 0;
-			  int lmdw = 0;
-			  int lndw = 0;
-			  int locdim;
-			  int lp;
-			  int mnew;
-			  int nerr;
-			  double rdum;
 			  //double rw(5*ncols)
-			  double sa[] = new double[1];
-			  double sb[] = new double[1];
-			  double sc[] = new double[1];
-			  double ss[] = new double[1];
 			  //double w(mdw,ncols+1)
 			  double arr[];
 			  double arr2[];
@@ -2724,11 +2782,11 @@ public abstract class DQED {
 			  int ibbArr[];
 			  int k;
 
-			  idum = 0;
-			  rdum = 0.0;
-			  nerr = 0;
+			  idum_dbols = 0;
+			  rdum_dbols = 0.0;
+			  nerr_dbols = 0;
 			  mode[0] = 0;
-			  level = 1;
+			  level_dbols = 1;
 
 			  if ( igo_dbols == 0 ) {
 			//
@@ -2737,11 +2795,11 @@ public abstract class DQED {
 			//  SEE THAT MDW IS .GT.0. GROSS CHECK ONLY.
 			//
 			      if ( mdw<=0) {
-			          nerr = 2;
+			          nerr_dbols = 2;
 			          xerrwv("dbols(). mdw=(i1) must be positive.",
-			            nerr,level,1,mdw,idum,0,rdum,rdum);
+			            nerr_dbols,level_dbols,1,mdw,idum_dbols,0,rdum_dbols,rdum_dbols);
 			          if ( 0 <= mode[0] ) {
-			              mode[0] = -nerr;
+			              mode[0] = -nerr_dbols;
 			          }
 
 			          igo_dbols = 0;
@@ -2751,11 +2809,11 @@ public abstract class DQED {
 			//  SEE THAT NUMBER OF UNKNOWNS IS POSITIVE.
 			//
 			      if ( ncols<=0) {
-			          nerr = 3;
+			          nerr_dbols = 3;
 			          xerrwv("dbols(). ncols=(i1) the no. of variables must be positive.",
-			                  nerr,level,1,ncols,idum,0,rdum,rdum);
+			                  nerr_dbols,level_dbols,1,ncols,idum_dbols,0,rdum_dbols,rdum_dbols);
 			          if ( 0 <= mode[0] ) {
-		                  mode[0] = -nerr;
+		                  mode[0] = -nerr_dbols;
 		              }
 
 		              igo_dbols = 0;
@@ -2766,11 +2824,11 @@ public abstract class DQED {
 			//
 			      for (j = 1; j <= ncols; j++) {
 			          if ( ind[j] < 1 || ind[j] > 4) {
-			              nerr = 4;
+			              nerr_dbols = 4;
 			              xerrwv("dbols(). for j=(i1), ind(j)=(i2) must be 1-4.",
-			                      nerr,level,2,j,ind[j],0,rdum,rdum);
+			                      nerr_dbols,level_dbols,2,j,ind[j],0,rdum_dbols,rdum_dbols);
 			              if ( 0 <= mode[0] ) {
-		                      mode[0] = -nerr;
+		                      mode[0] = -nerr_dbols;
 		                  }
 
 		                  igo_dbols = 0;
@@ -2783,11 +2841,11 @@ public abstract class DQED {
 			      for (j = 1; j <= ncols; j++) {
 			          if ( ind[j] == 3) {
 			              if ( bl[j] > bu[j]) {
-			                  nerr = 5;
+			                  nerr_dbols = 5;
 			                  xerrwv("dbols(). for j=(i1), bound bl(j)=(r1) is  >  bu(j)=(r2).",
-			                         nerr,level,1,j,idum,2,bl[j],bu[j]);
+			                         nerr_dbols,level_dbols,1,j,idum_dbols,2,bl[j],bu[j]);
 			                  if ( 0 <= mode[0] ) {
-		                          mode[0] = -nerr;
+		                          mode[0] = -nerr_dbols;
 		                      }
 
 		                      igo_dbols = 0;
@@ -2798,39 +2856,39 @@ public abstract class DQED {
 			//
 			//  PROCESS OPTION ARRAY
 			//
-			      checkl = false;
-			      lenx = ncols;
+			      checkl_dbols = false;
+			      lenx_dbols = ncols;
 			      iscale_dbols = idope[4];
 			      igo_dbols = 2;
 			      lopt_dbols = 0;
-			      lp = 0;
-			      lds = 0;
+			      lp_dbols = 0;
+			      lds_dbols = 0;
 
 			loop: while (true) {
 
-			      lp = lp + lds;
-			      ip = iopt[lp+1];
-			      jp = Math.abs(ip);
+			      lp_dbols = lp_dbols + lds_dbols;
+			      ip_dbols = iopt[lp_dbols+1];
+			      jp_dbols = Math.abs(ip_dbols);
 			//
 			//  TEST FOR NO MORE OPTIONS.
 			//
-			      if ( ip == 99) {
+			      if ( ip_dbols == 99) {
 			          if ( lopt_dbols == 0) {
-			            lopt_dbols = lp + 1;
+			            lopt_dbols = lp_dbols + 1;
 			          } // if (lopt == 0)
 			          break loop;
-			      } // if (ip == 99)
-			      else if ( jp == 99) {
-			          lds = 1;
+			      } // if (ip_dbols == 99)
+			      else if ( jp_dbols == 99) {
+			          lds_dbols = 1;
 			          continue loop;
-			      } // else if (jp == 99)
-			      else if ( jp == 1) {
-			          if ( ip > 0) {
+			      } // else if (jp_dbols == 99)
+			      else if ( jp_dbols == 1) {
+			          if ( ip_dbols > 0) {
 			//
 			//  SET UP DIRECTION FLAG, ROW STACKING POINTER
 			//  LOCATION, AND LOCATION FOR NUMBER OF NEW ROWS.
 			//
-			              locacc_dbols = lp + 2;
+			              locacc_dbols = lp_dbols + 2;
 			//
 			//                  IOPT(LOCACC-1)=OPTION NUMBER FOR SEQ. ACCUMULATION.
 			//     CONTENTS..   IOPT(LOCACC  )=USER DIRECTION FLAG, 1 OR 2.
@@ -2859,16 +2917,16 @@ public abstract class DQED {
 			//              CALL DBOLS( )
 			              iopt[locacc_dbols+1] = 1;
 			              igo_dbols = 1;
-			          } // if (ip > 0)
-			          lds = 4;
+			          } // if (ip_dbols > 0)
+			          lds_dbols = 4;
 			          continue loop;
-			      } // else if (jp == 1)
-			      else if ( jp == 2) {
-			          if ( ip > 0) {
+			      } // else if (jp_dbols == 1)
+			      else if ( jp_dbols == 2) {
+			          if ( ip_dbols > 0) {
 			//
 			//  GET ACTUAL LENGTHS OF ARRAYS FOR CHECKING AGAINST NEEDS.
 			//
-			              locdim = lp + 2;
+			              locdim_dbols = lp_dbols + 2;
 			//
 			//  LMDW.GE.MROWS
 			//  LNDW.GE.NCOLS+1
@@ -2878,126 +2936,126 @@ public abstract class DQED {
 			//  LLIW.GE.2*NCOLS
 			//  LIOP.GE. AMOUNT REQD. FOR IOPTION ARRAY.
 			//
-			              lmdw = iopt[locdim];
-			              lndw = iopt[locdim+1];
-			              llb = iopt[locdim+2];
-			              llx = iopt[locdim+3];
-			              llrw = iopt[locdim+4];
-			              lliw = iopt[locdim+5];
-			              liopt = iopt[locdim+6];
-			              checkl = true;
-			          } // if (ip > 0)
-			          lds = 8;
+			              lmdw_dbols = iopt[locdim_dbols];
+			              lndw_dbols = iopt[locdim_dbols+1];
+			              llb_dbols = iopt[locdim_dbols+2];
+			              llx_dbols = iopt[locdim_dbols+3];
+			              llrw_dbols = iopt[locdim_dbols+4];
+			              lliw_dbols = iopt[locdim_dbols+5];
+			              liopt_dbols = iopt[locdim_dbols+6];
+			              checkl_dbols = true;
+			          } // if (ip_dbols > 0)
+			          lds_dbols = 8;
 			          continue loop;
-			      } // else if (jp == 2)
+			      } // else if (jp_dbols == 2)
 			//
 			//  OPTION TO MODIFY THE COLUMN SCALING.
 			//
-			      else if ( jp == 3) {
-			          if ( ip > 0) {
-			              iscale_dbols = iopt[lp+2];
+			      else if ( jp_dbols == 3) {
+			          if ( ip_dbols > 0) {
+			              iscale_dbols = iopt[lp_dbols+2];
 			//
 			//  SEE THAT ISCALE IS 1 THRU 3.
 			//
 			              if ( iscale_dbols < 1 || 3 < iscale_dbols ) {
-			                  nerr = 7;
+			                  nerr_dbols = 7;
 			                  xerrwv("dbols(). iscale option=(i1) must be 1-3.",
-			                          nerr,level,1,iscale_dbols,idum,0,rdum,rdum);
+			                          nerr_dbols,level_dbols,1,iscale_dbols,idum_dbols,0,rdum_dbols,rdum_dbols);
 			                  if ( 0 <= mode[0] ) {
-	                              mode[0] = -nerr;
+	                              mode[0] = -nerr_dbols;
 	                          }
 
 	                          igo_dbols = 0;
 	                          return;
 			              } // if ( iscale_dbols < 1 || 3 < iscale_dbols )
-			          } // if (ip > 0)
-			          lds = 2;
+			          } // if (ip_dbols > 0)
+			          lds_dbols = 2;
 			          continue loop;
-			      } // else if (jp == 3)
+			      } // else if (jp_dbols == 3)
 			//
 			//  IN THIS OPTION THE USER HAS PROVIDED SCALING.  THE
 			//  SCALE FACTORS FOR THE COLUMNS BEGIN IN X(NCOLS+IOPT(LP+2)).
 			//
-			      else if ( jp == 4) {
-			          if ( ip > 0) {
+			      else if ( jp_dbols == 4) {
+			          if ( ip_dbols > 0) {
 			              iscale_dbols = 4;
-			              if ( iopt[lp+2]<=0) {
-			                  nerr = 8;
+			              if ( iopt[lp_dbols+2]<=0) {
+			                  nerr_dbols = 8;
 			                  xerrwv("dbols(). offset past x(ncols) (i1)\nfor user-provided column scaling must be positive.",
-			                         nerr,level,1,iopt[lp+2],idum,0,rdum,rdum);
+			                         nerr_dbols,level_dbols,1,iopt[lp_dbols+2],idum_dbols,0,rdum_dbols,rdum_dbols);
 			                  if ( 0 <= mode[0] ) {
-				                  mode[0] = -nerr;
+				                  mode[0] = -nerr_dbols;
 				              }
 
 				              igo_dbols = 0;
 				              return;
 			              } // if (iopt[lp+2] <= 0)
 			              for (i = 1; i <= ncols; i++) {
-			            	  rw[i] = x[ncols + iopt[lp+2] + i - 1];
+			            	  rw[i] = x[ncols + iopt[lp_dbols+2] + i - 1];
 			              }
-			              lenx = lenx + ncols;
+			              lenx_dbols = lenx_dbols + ncols;
 			              for (j = 1; j <= ncols; j++) {
 			                  if ( rw[j]<= 0.0 ) {
-			                      nerr = 9;
+			                      nerr_dbols = 9;
 			                      xerrwv("dbols(). each provided col. scale factor\nmust be positive. component (i1) now = (r1).",
-			                              nerr,level,1,j,idum,1,rw[j],rdum);
+			                              nerr_dbols,level_dbols,1,j,idum_dbols,1,rw[j],rdum_dbols);
 			                      if ( 0 <= mode[0] ) {
-				                      mode[0] = -nerr;
+				                      mode[0] = -nerr_dbols;
 				                  }
 
 				                  igo_dbols = 0;
 				                  return;
 			                  } // if (rw[j] <= 0.0)
 			              } // for (j = 1; j <= ncols; j++)
-			          } // if (ip > 0)
-			          lds = 2;
+			          } // if (ip_dbols > 0)
+			          lds_dbols = 2;
 			          continue loop;
-			      } // else if (jp == 4)
+			      } // else if (jp_dbols == 4)
 			//
 			//  IN THIS OPTION AN OPTION ARRAY IS PROVIDED TO DBOLSM().
 			//
-			      else if ( jp == 5) {
-			          if ( ip > 0) {
-			              lopt_dbols = iopt[lp+2];
-			          } // if (ip > 0)
-			          lds = 2;
+			      else if ( jp_dbols == 5) {
+			          if ( ip_dbols > 0) {
+			              lopt_dbols = iopt[lp_dbols+2];
+			          } // if (ip_dbols > 0)
+			          lds_dbols = 2;
 			          continue loop;
-			      } // else if (jp == 5)
+			      } // else if (jp_dbols == 5)
 			//
 			//  THIS OPTION USES THE NEXT LOC OF IOPT(*) AS THE PLACE TO
 			//  MOVE AT THE NEXT STEP OF PROCESSESING.
 			//
-			      else if ( jp == 6) {
-			          if ( ip > 0) {
-			              lp = iopt[lp+2]-1;
-			              lds = 0;
+			      else if ( jp_dbols == 6) {
+			          if ( ip_dbols > 0) {
+			              lp_dbols = iopt[lp_dbols+2]-1;
+			              lds_dbols = 0;
 			          }
 			          else {
-			              lds = 2;
+			              lds_dbols = 2;
 			          }
 			          continue loop;
-			      } // else if (jp == 6)
+			      } // else if (jp_dbols == 6)
 			//
 			//  THIS OPTION PROVIDES INFORMATION ABOUT WHO CALLED DBOLS.
 			//  IT WAS EITHER DBOCLS() OR THE USER.
 
-			      else if ( jp == 7) {
-			          lds=1;
-			          if ( ip > 0) {
+			      else if ( jp_dbols == 7) {
+			          lds_dbols=1;
+			          if ( ip_dbols > 0) {
 			            idope[5]=0;
 			            iscale_dbols=1;
-			          } // if (ip > 0)
+			          } // if (ip_dbols > 0)
 			          continue loop;
-			      } // else if (jp == 7)
+			      } // else if (jp_dbols == 7)
 			//
 			//  NO VALID OPTION NUMBER WAS NOTED. THIS IS AN ERROR CONDITION.
 			//
 			      else {
-			          nerr = 6;
+			          nerr_dbols = 6;
 			          xerrwv("dbols(). the option number=(i1) is not defined.",
-			                  nerr,level,1,jp,idum,0,rdum,rdum);
+			                  nerr_dbols,level_dbols,1,jp_dbols,idum_dbols,0,rdum_dbols,rdum_dbols);
 			          if ( 0 <= mode[0] ) {
-				          mode[0] = -nerr;
+				          mode[0] = -nerr_dbols;
 				      }
 
 				      igo_dbols = 0;
@@ -3005,90 +3063,90 @@ public abstract class DQED {
 			      }
 			} // loop: while (true)
 
-			      if ( checkl) {
+			      if ( checkl_dbols) {
 			//
 			//  CHECK LENGTHS OF ARRAYS
 			//
 			//  THIS FEATURE ALLOWS THE USER TO MAKE SURE THAT THE
 			//  ARRAYS ARE LONG ENOUGH FOR THE INTENDED PROBLEM SIZE AND USE.
 			//
-			          if ( lmdw < mrows[0]) {
-			              nerr = 11;
+			          if ( lmdw_dbols < mrows[0]) {
+			              nerr_dbols = 11;
 			              xerrwv("dbols(). the row dimension of w(,)=(i1)\nmust be >=the number of rows=(i2).",
-			            		  nerr,level,2,lmdw,mrows[0],0,rdum,rdum);
+			            		  nerr_dbols,level_dbols,2,lmdw_dbols,mrows[0],0,rdum_dbols,rdum_dbols);
 			              if ( 0 <= mode[0] ) {
-		                      mode[0] = -nerr;
+		                      mode[0] = -nerr_dbols;
 		                  }
 
 		                  igo_dbols = 0;
 		                  return;
 			          } // if (lmdw < mrows)
-			          if ( lndw < ncols+1) {
-			              nerr = 12;
+			          if ( lndw_dbols < ncols+1) {
+			              nerr_dbols = 12;
 			              xerrwv("dbols(). the column dimension of w(,)=(i1)\nmust be >= ncols+1=(i2).",
-			            		  nerr,level,2,lndw,ncols+1,0,rdum,rdum);
+			            		  nerr_dbols,level_dbols,2,lndw_dbols,ncols+1,0,rdum_dbols,rdum_dbols);
 			              if ( 0 <= mode[0] ) {
-			                  mode[0] = -nerr;
+			                  mode[0] = -nerr_dbols;
 			              }
 
 			              igo_dbols = 0;
 			              return;
-			          } // if (lndw < ncols + 1)
-			          if ( llb < ncols) {
-			              nerr = 13;
+			          } // if (lndw_dbols < ncols + 1)
+			          if ( llb_dbols < ncols) {
+			              nerr_dbols = 13;
 			              xerrwv("dbols(). the dimensions of the arrays bl(),bu(),\nand ind()=(i1) must be >= ncols=(i2).",
-			                      nerr,level,2,llb,ncols,0,rdum,rdum);
+			                      nerr_dbols,level_dbols,2,llb_dbols,ncols,0,rdum_dbols,rdum_dbols);
 			              if ( 0 <= mode[0] ) {
-			                  mode[0] = -nerr;
+			                  mode[0] = -nerr_dbols;
 			              }
 
 			              igo_dbols = 0;
 			              return;
 			          } // if (llb < ncols)
-			          if ( llx < lenx) {
-			              nerr = 14;
+			          if ( llx_dbols < lenx_dbols) {
+			              nerr_dbols = 14;
 			              xerrwv("dbols(). the dimension of x()=(i1) must be\n>= the reqd. length=(i2).",
-			            		  nerr,level,2,llx,lenx,0,rdum,rdum);
+			            		  nerr_dbols,level_dbols,2,llx_dbols,lenx_dbols,0,rdum_dbols,rdum_dbols);
 			              if ( 0 <= mode[0] ) {
-			                  mode[0] = -nerr;
+			                  mode[0] = -nerr_dbols;
 			              }
 
 			              igo_dbols = 0;
 			              return;
-			          } // if (llx < lenx)
-			          if ( llrw < 5*ncols) {
-			              nerr = 15;
+			          } // if (llx_dbols < lenx_dbols)
+			          if ( llrw_dbols < 5*ncols) {
+			              nerr_dbols = 15;
 			              xerrwv("dbols(). the dimension of rw()=(i1) must be >= 5*ncols=(i2).",
-			            		  nerr,level,2,llrw,5*ncols,0,rdum,rdum);
+			            		  nerr_dbols,level_dbols,2,llrw_dbols,5*ncols,0,rdum_dbols,rdum_dbols);
 			              if ( 0 <= mode[0] ) {
-			                  mode[0] = -nerr;
+			                  mode[0] = -nerr_dbols;
 			              }
 
 			              igo_dbols = 0;
 			              return;
-			          } // if (llrw < 5*ncols)
-			          if ( lliw < 2*ncols) {
-			              nerr = 16;
+			          } // if (llrw_dbols < 5*ncols)
+			          if ( lliw_dbols < 2*ncols) {
+			              nerr_dbols = 16;
 			              xerrwv("dbols() the dimension of iw()=(i1) must be >= 2*ncols=(i2).",
-			            		  nerr,level,2,lliw,2*ncols,0,rdum,rdum);
+			            		  nerr_dbols,level_dbols,2,lliw_dbols,2*ncols,0,rdum_dbols,rdum_dbols);
 			              if ( 0 <= mode[0] ) {
-			                  mode[0] = -nerr;
+			                  mode[0] = -nerr_dbols;
 			              }
 
 			              igo_dbols = 0;
 			              return;
-			          } // if (lliw < 2*ncols)
-			          if ( liopt < lp+1) {
-			              nerr = 17;
+			          } // if (lliw_dbols < 2*ncols)
+			          if ( liopt_dbols < lp_dbols+1) {
+			              nerr_dbols = 17;
 			              xerrwv("dbols(). the dimension of iopt()=(i1) must be\n>= the reqd. len.=(i2).",
-			            		  nerr,level,2,liopt,lp+1,0,rdum,rdum);
+			            		  nerr_dbols,level_dbols,2,liopt_dbols,lp_dbols+1,0,rdum_dbols,rdum_dbols);
 			              if ( 0 <= mode[0] ) {
-			                  mode[0] = -nerr;
+			                  mode[0] = -nerr_dbols;
 			              }
 
 			              igo_dbols = 0;
 			              return;
-			          } // if (liopt < 2*ncols)
+			          } // if (liopt_dbols < lp_dbols+1)
 
 			      } // if (checkl)
 			  } // if (igo_dbols == 0)
@@ -3102,52 +3160,52 @@ public abstract class DQED {
 				  //  ACCUMULATE LEAST SQUARES EQUATIONS
 				  //
 					  mrows[0] = iopt[locacc_dbols+1] - 1;
-					  inrows = iopt[locacc_dbols+2];
-					  mnew = mrows[0] + inrows;
+					  inrows_dbols = iopt[locacc_dbols+2];
+					  mnew_dbols = mrows[0] + inrows_dbols;
 
-					  if ( mnew < 0 || mnew > mdw) {
-					      nerr = 10;
+					  if ( mnew_dbols < 0 || mnew_dbols > mdw) {
+					      nerr_dbols = 10;
 					      xerrwv("dbols(). no. of rows=(i1) must be >= 0 .and. <= mdw=(i2).",
-					              nerr,level,2,mnew,mdw,0,rdum,rdum);
+					              nerr_dbols,level_dbols,2,mnew_dbols,mdw,0,rdum_dbols,rdum_dbols);
 					      if ( 0 <= mode[0] ) {
-			                  mode[0] = -nerr;
+			                  mode[0] = -nerr_dbols;
 			              }
 
 			              igo_dbols = 0;
 			              return;
 					  } // if ( mnew < 0 || mnew > mdw)
 
-					  for (j = 1; j <= Math.min(ncols+1,mnew); j++) {
-					      for (i = mnew; i >= Math.max(mrows[0],j) + 1; i--) {
+					  for (j = 1; j <= Math.min(ncols+1,mnew_dbols); j++) {
+					      for (i = mnew_dbols; i >= Math.max(mrows[0],j) + 1; i--) {
 					    	  arr = new double[i-j+1];
 					    	  for (k = 1; k <= i-j; k++) {
 					    		  arr[k] = w[j+k][j];
 					    	  }
-					          ibig = idamax(i-j,arr,1) + j - 1;
+					          ibig_dbols = idamax(i-j,arr,1) + j - 1;
 					//
 					//  PIVOT FOR INCREASED STABILITY.
 					//
-					          sa[0] = w[ibig][j];
-					          sb[0] = w[i][j];
-					          drotg(sa,sb,sc,ss);
-					          w[ibig][j] = sa[0];
-					          w[i][j] = sb[0];
+					          sa_dbols[0] = w[ibig_dbols][j];
+					          sb_dbols[0] = w[i][j];
+					          drotg(sa_dbols,sb_dbols,sc_dbols,ss_dbols);
+					          w[ibig_dbols][j] = sa_dbols[0];
+					          w[i][j] = sb_dbols[0];
 					          arr = new double[ncols+2-j];
 					          arr2 = new double[ncols+2-j];
 					          for (k = 1; k <= ncols+1-j; k++) {
-					        	  arr[k] = w[ibig][j+k];
+					        	  arr[k] = w[ibig_dbols][j+k];
 					        	  arr2[k] = w[i][j+k];
 					          }
-					          drot(ncols+1-j,arr,1,arr2,1,sc[0],ss[0]);
+					          drot(ncols+1-j,arr,1,arr2,1,sc_dbols[0],ss_dbols[0]);
 					          for (k = 1; k <= ncols+1-j; k++) {
-					        	  w[ibig][j+k] = arr[k];
+					        	  w[ibig_dbols][j+k] = arr[k];
 					        	  w[i][j+k] = arr2[k];
 					          }
 					          w[i][j] = 0.0;
 					      } // for (i = mnew; i >= Math.max(mrows,j) + 1, i--)
 					  } // for (j = 1; j <= Math.min(ncols+1,mnew); j++)
 
-					  mrows[0] = Math.min(ncols+1,mnew);
+					  mrows[0] = Math.min(ncols+1,mnew_dbols);
 					  iopt[locacc_dbols+1] = mrows[0] + 1;
 					  igo_dbols = iopt[locacc_dbols];
 
@@ -3170,8 +3228,8 @@ public abstract class DQED {
                           for (k = 1; k <= mrows[0]; k++) {
                         	  arr[k] = w[k][j];
                           }
-					      ibig = idamax(mrows[0],arr,1);
-					      rw[j] = Math.abs(w[ibig][j]);
+					      ibig_dbols = idamax(mrows[0],arr,1);
+					      rw[j] = Math.abs(w[ibig_dbols][j]);
 					      if ( rw[j] == 0.0) {
 					          rw[j] = 1.0;
 					      }
@@ -3616,40 +3674,11 @@ public abstract class DQED {
 			!     WITH BOUNDS ON SELECTED X VALUES.
 			*/
 
-			  double alpha = 0.0;
-			  double beta = 0.0;
-			  double big = Double.MAX_VALUE;
 			  //double bl(ncols)
-			  double bou;
 			  //double bu(ncols)
-			  double cl1[] = new double[1];
-			  double cl2[] = new double[1];
-			  double cl3;
-			  boolean cnz;
-			  double colabv;
-			  double colblo;
-			  boolean constr;
-			  double fac = 0.0;
-			  boolean found = false;
 			  int i = 0;
-			  int idum = 0;
-			  int igopr = 0;
-			  //int ind(ncols)
-			  int ioff;
-			  int ip;
-			  int iprint = 0;
-			  int itemp;
-			  int iter = 0;
-			  int itmax = 0;
+			  //int ind(ncols)		  
 			  int j;
-			  int jbig = 0;
-			  int jcol;
-			  int jdrop;
-			  int jdrop1 = 0;
-			  int jdrop2 = 0;
-			  int jp;
-			  int lds = 0;
-			  int level;
 			  int lgopr = 0;
 			  int lp = 0;
 			  int mrows = 0;
@@ -3700,14 +3729,14 @@ public abstract class DQED {
 			//
 			  //inext[idum] = Math.min(idum+1,mrows);
 
-			  level = 1;
+			  level_dbolsm = 1;
 			//
 			//  VERIFY THAT THE PROBLEM DIMENSIONS ARE DEFINED PROPERLY.
 			//
 			  if ( minput<=0) {
 			    nerr = 31;
 			    xerrwv("dbolsm(). the number of rows=(i1) must be positive.",
-			      nerr,level,1,minput,idum,0,rdum,rdum);
+			      nerr,level_dbolsm,1,minput,idum_dbolsm,0,rdum,rdum);
 			    mode[0] = -nerr;
 				return;
 			  } // if (minput <= 0)
@@ -3715,7 +3744,7 @@ public abstract class DQED {
 			  if ( ncols<=0) {
 			      nerr = 32;
 			      xerrwv("dbolsm(). the number of cols.=(i1) must be positive.",
-			             nerr,level,1,ncols,idum,0,rdum,rdum);
+			             nerr,level_dbolsm,1,ncols,idum_dbolsm,0,rdum,rdum);
 			      mode[0] = -nerr;
 			      return;
 			  } // if (ncols <= 0)
@@ -3723,7 +3752,7 @@ public abstract class DQED {
 			  if ( mdw < minput) {
 			      nerr = 33;
 			      xerrwv("dbolsm(). the row dimension of w(,)=(i1) must be >= the number of rows=(i2).",
-			    		  nerr,level,2,mdw,mrows,0,rdum,rdum);
+			    		  nerr,level_dbolsm,2,mdw,mrows,0,rdum,rdum);
 			      
 			      mode[0] = -nerr;
 				  return;
@@ -3735,7 +3764,7 @@ public abstract class DQED {
 			     if ( ind[j] < 1 || ind[j] > 4) {
 			         nerr = 34;
 			         xerrwv("dbolsm(). for j=(i1) the constraint indicator must be 1-4.",
-			                 nerr,level,2,j,ind[j],0,rdum,rdum);
+			                 nerr,level_dbolsm,2,j,ind[j],0,rdum,rdum);
 			         mode[0] = -nerr;
 			         return;
 			     } // if (ind[j] < 1 || ind[j] > 4)
@@ -3746,7 +3775,7 @@ public abstract class DQED {
 			         if ( bu[j] < bl[j]) {
 			             nerr = 35;
 			             xerrwv("dbolsm(). for j=(i1) the lower bound=(r1) is >  the upper bound=(r2).",
-			            		 nerr,level,1,j,idum,2,bl[j],bu[j]);
+			            		 nerr,level_dbolsm,1,j,idum_dbolsm,2,bl[j],bu[j]);
 			             mode[0] = -nerr;
 			             return;
 			         } // if (bu[j] < bl[j])
@@ -3759,7 +3788,7 @@ public abstract class DQED {
 			     if ( ibasis[j] < 1 || ibasis[j] > ncols) {
 			         nerr = 36;
 			         xerrwv("dbolsm(). the input order of columns=(i1) is not between 1 and ncols=(i2).",
-			        		 nerr,level,2,ibasis[j],ncols,0,rdum,rdum);
+			        		 nerr,level_dbolsm,2,ibasis[j],ncols,0,rdum,rdum);
 			         mode[0] = -nerr;
 			         return;
 			     } // if ( ibasis[j] < 1 || ibasis[j] > ncols)
@@ -3767,7 +3796,7 @@ public abstract class DQED {
 			     if ( ibb[j]<=0) {
 			         nerr = 37;
 			         xerrwv("dbolsm(). the bound polarity flag in component j=(i1) must be positive. now=(i2).",
-			        		nerr,level,2,j,ibb[j], 0,rdum,rdum);
+			        		nerr,level_dbolsm,2,j,ibb[j], 0,rdum,rdum);
 			         mode[0] = -nerr;
 				     return;
 
@@ -3785,7 +3814,7 @@ public abstract class DQED {
 			  if (do50) {
 				  do50 = false;
 				  do60 = true;
-				  if ( iprint > 0) {
+				  if ( iprint_dbolsm > 0) {
 				      dmout(mrows,ncols+1,mdw,w,"pretri. input matrix",-4);
 				      dvout(ncols,bl,"lower bounds",-4);
 				      dvout(ncols,bu,"upper bounds",-4);
@@ -3794,25 +3823,25 @@ public abstract class DQED {
 
 			  if (do60) {
 		          do60 = false;
-			      iter = iter + 1;
-			      if ( iter<=itmax) {
+			      iter_dbolsm = iter_dbolsm + 1;
+			      if ( iter_dbolsm<=itmax_dbolsm) {
 				      do180 = true;
 			      }
 			      else {
 			          nerr = 22;
 			          xerrwv("dbolsm(). more than (i1)=itmax iterations solving bounded least squares problem.",
-			                  nerr,level,1,itmax,idum,0,rdum,rdum);
+			                  nerr,level_dbolsm,1,itmax_dbolsm,idum_dbolsm,0,rdum,rdum);
 			          //
 			          // RESCALE AND TRANSLATE VARIABLES
 			          //
-			          igopr = 1;
+			          igopr_dbolsm = 1;
 			          do130 = true;
 			       } // else
 			  } // if (do60)
 
 			   if (do90) {
                    do90 = false;
-			       if ( found ) {
+			       if ( found_dbolsm ) {
 			    	   //
 					   //  SOLVE THE TRIANGULAR SYSTEM
 					   //
@@ -3823,7 +3852,7 @@ public abstract class DQED {
 			           //
 			           // RESCALE AND TRANSLATE VARIABLES
 			           // 
-			           igopr = 2;
+			           igopr_dbolsm = 2;
 			           do130 = true;
 			       } // else   
 			   } // if (do90)
@@ -3847,8 +3876,8 @@ public abstract class DQED {
                   }
 
 			      for (j = 1; j <= nsetb; j++) {
-			          jcol = Math.abs(ibasis[j]);
-			          x[jcol] = rw[j]*Math.abs(scl[jcol]);
+			          jcol_dbolsm = Math.abs(ibasis[j]);
+			          x[jcol_dbolsm] = rw[j]*Math.abs(scl[jcol_dbolsm]);
 			      } // for (j = 1; j <= nsetb; j++)
 
 			      for (j = 1; j <= ncols; j++) {
@@ -3858,9 +3887,9 @@ public abstract class DQED {
 			      } // for (j = 1; j <= ncols; j++)
 
 			      for (j = 1; j <= ncols; j++) {
-			          jcol = ibasis[j];
-			          if ( jcol < 0) {
-			        	  x[-jcol] = bl[-jcol] + x[-jcol];
+			          jcol_dbolsm = ibasis[j];
+			          if ( jcol_dbolsm < 0) {
+			        	  x[-jcol_dbolsm] = bl[-jcol_dbolsm] + x[-jcol_dbolsm];
 			          }
 			      } // for (j = 1; j <= ncols; j++)
 
@@ -3884,11 +3913,11 @@ public abstract class DQED {
 			    	  arr[j] = w[Math.min((Math.max(nsetb,mval) + 1),mrows) + j - 1][ncols+1];
 			      }
 			      rnorm[0] = dnrm2(mrows-Math.max(nsetb,mval),arr,1);
-                  if (igopr == 1) {
+                  if (igopr_dbolsm == 1) {
                 	  mode[0] = -nerr;
                 	  return;
                   }
-                  else if (igopr == 2) {
+                  else if (igopr_dbolsm == 2) {
                 	  do100 = true;
                   }
                   else {
@@ -3909,21 +3938,21 @@ public abstract class DQED {
 		          }
 
 			      for (j = nsetb + 1; j <= ncols; j++) {
-			          jcol = Math.abs ( ibasis[j] );
+			          jcol_dbolsm = Math.abs ( ibasis[j] );
 			          arr = new double[mrows-nsetb+1];
 			          arr2 = new double[mrows-nsetb+1];
 			          for (n = 1; n <= mrows - nsetb; n++) {
 			        	  arr[n] = w[Math.min(nsetb+1, mrows) + n - 1][j];
 			        	  arr2[n] = w[Math.min(nsetb+1,mrows) + n - 1][ncols+1];
 			          }
-			          ww[j] = ddot(mrows-nsetb,arr,1,arr2,1)*Math.abs(scl[jcol]);
+			          ww[j] = ddot(mrows-nsetb,arr,1,arr2,1)*Math.abs(scl[jcol_dbolsm]);
 			      } // for (j = nsetb + 1; j <= ncols; j++)
 
-			      if ( iprint > 0) {
+			      if ( iprint_dbolsm > 0) {
 			          dvout(ncols,ww,"Gradient values",-4);
 			          ivout(ncols,ibasis,"internal variable order",-4);
 			          ivout(ncols,ibb,"bound polarity",-4);
-			      } // if (iprint > 0)
+			      } // if (iprint_dbolsm > 0)
 			  } // if (do180)
 
 			  if (do200) {
@@ -3932,7 +3961,7 @@ public abstract class DQED {
 			      //  IF ACTIVE SET = NUMBER OF TOTAL ROWS, QUIT.
 			      //
 			  if ( nsetb == mrows) {
-			      found = false;
+			      found_dbolsm = false;
 			      do90 = true;
 			      continue loop;
 			  }
@@ -3940,9 +3969,9 @@ public abstract class DQED {
 			  //  CHOOSE AN EXTREMAL COMPONENT OF GRADIENT VECTOR
 			  //  FOR A CANDIDATE TO BECOME NON-ACTIVE.
 			  //
-			  wlarge = -big;
-			  jbig = 0;
-			  cnz = false;
+			  wlarge = -big_dbolsm;
+			  jbig_dbolsm = 0;
+			  cnz_dbolsm = false;
 
 			  forLoop: for (j = nsetb + 1; j <= ncols; j++) {
 
@@ -3950,49 +3979,49 @@ public abstract class DQED {
 			    //
 			    // SKIP LOOKING AT COMPONENTS FLAGGED AS NON-CANDIDATES.
 			    //
-			    if ( t == big) {
+			    if ( t == big_dbolsm) {
 			      continue forLoop;
 			    }
 
-			    itemp = ibasis[j];
-			    jcol = Math.abs(itemp);
+			    itemp_dbolsm = ibasis[j];
+			    jcol_dbolsm = Math.abs(itemp_dbolsm);
 			    if ( nsetb < mval) {
 			    	 arr = new double[nsetb+1];
 			    	 for (n = 1; n <= nsetb; n++) {
 			    		 arr[n] = w[n][j];
 			    	 }
-			         cl1[0] = dnrm2(nsetb,arr,1);
+			         cl1_dbolsm[0] = dnrm2(nsetb,arr,1);
 			         arr = new double[mval-nsetb+1];
 			         for (n = 1; n <= mval-nsetb; n++) {
 			        	 arr[n] = w[Math.min(nsetb+1,mrows)+n-1][j];
 			         }
-			         cl2[0] = dnrm2(mval-nsetb,arr,1);
-			         colabv = cl1[0];
-			         colblo = cl2[0];
+			         cl2_dbolsm[0] = dnrm2(mval-nsetb,arr,1);
+			         colabv_dbolsm = cl1_dbolsm[0];
+			         colblo_dbolsm = cl2_dbolsm[0];
 			    } // if
 			    else {
 			    	 arr = new double[mval+1];
 			    	 for (n = 1; n <= mval; n++) {
 			    		 arr[n] = w[n][j];
 			    	 }
-			         cl1[0] = dnrm2(mval,arr,1);
+			         cl1_dbolsm[0] = dnrm2(mval,arr,1);
 			         arr = new double[nsetb-mval+1];
 			         for (n = 1; n <= nsetb-mval; n++) {
 			        	 arr[n] = w[Math.min(mval+1,mrows)+n-1][j];
 			         }
-			         cl2[0] = Math.abs(wt)*dnrm2(nsetb-mval,arr,1);
+			         cl2_dbolsm[0] = Math.abs(wt)*dnrm2(nsetb-mval,arr,1);
 			         arr = new double[mrows-nsetb+1];
 			         for (n = 1; n <= mrows-nsetb; n++) {
 			        	 arr[n] = w[Math.min(nsetb+1, mrows)+n-1][j];
 			         }
-			         cl3 = Math.abs(wt)*dnrm2(mrows-nsetb,arr,1);
-			         drotg(cl1,cl2,sc,ss);
-			         colabv = Math.abs(cl1[0]);
-			         colblo = cl3;
+			         cl3_dbolsm = Math.abs(wt)*dnrm2(mrows-nsetb,arr,1);
+			         drotg(cl1_dbolsm,cl2_dbolsm,sc,ss);
+			         colabv_dbolsm = Math.abs(cl1_dbolsm[0]);
+			         colblo_dbolsm = cl3_dbolsm;
 			    } // else
 
-			    if ( itemp < 0) {
-			      if ((ibb[jcol] % 2) == 0) {
+			    if ( itemp_dbolsm < 0) {
+			      if ((ibb[jcol_dbolsm] % 2) == 0) {
 			    	  t = -t;
 			      }
 			    
@@ -4009,33 +4038,33 @@ public abstract class DQED {
 			//  COLUMN MASS ON AND BELOW THE PIVOT LINE RELATIVE TO THAT
 			//  STRICTLY ABOVE THE PIVOT LINE.
 			//
-			     if ( (colabv == 0.0) && (!cnz)) {
-			         t = colblo*Math.abs(scl[jcol]);
+			     if ( (colabv_dbolsm == 0.0) && (!cnz_dbolsm)) {
+			         t = colblo_dbolsm*Math.abs(scl[jcol_dbolsm]);
 			         if ( wlarge < t) {
 			             wlarge = t;
-			             jbig = j;
+			             jbig_dbolsm = j;
 			         } // if (wlarge < t)
-			     } // if ( (colabv == 0.0) && (!cnz))
+			     } // if ( (colabv_dbolsm == 0.0) && (!cnz_dbolsm))
 			     else {
-			         if (!cnz) {
+			         if (!cnz_dbolsm) {
 			             wla = 0.0;
 			             wlb = 0.0;
-			             cnz = true;
-			         } // if (!cnz)
+			             cnz_dbolsm = true;
+			         } // if (!cnz_dbolsm)
 
-			       if ( Math.sqrt(colblo)*Math.sqrt(wla) >= Math.sqrt(colabv)*Math.sqrt(wlb)) {
-			            wlb=colblo;
-			            wla=colabv;
-			            jbig=j;
+			       if ( Math.sqrt(colblo_dbolsm)*Math.sqrt(wla) >= Math.sqrt(colabv_dbolsm)*Math.sqrt(wlb)) {
+			            wlb=colblo_dbolsm;
+			            wla=colabv_dbolsm;
+			            jbig_dbolsm=j;
 			       } 
 
 			     } // else
 
 			  } // forLoop: for (j = nsetb + 1; j <= ncols; j++)
 
-			  if ( jbig == 0) {
-			      found = false;
-			      if ( iprint > 0) {
+			  if ( jbig_dbolsm == 0) {
+			      found_dbolsm = false;
+			      if ( iprint_dbolsm > 0) {
 			        Preferences.debug("Found no variable to enter.\n");
 			      }
 
@@ -4047,42 +4076,42 @@ public abstract class DQED {
 			  //  SEE IF THE INCOMING COL. IS SUFFICIENTLY INDEPENDENT.
 			  //  THIS TEST IS MADE BEFORE AN ELIMINATION IS PERFORMED.
 			  //
-			  if ( iprint > 0) {
-			    Preferences.debug("Try to bring in column " +  jbig + "\n");
+			  if ( iprint_dbolsm > 0) {
+			    Preferences.debug("Try to bring in column " +  jbig_dbolsm + "\n");
 			  }
 
-			  if ( cnz) {
+			  if ( cnz_dbolsm) {
 
 			    if ( wlb<=wla*tolind) {
-			      found = false;
-			      if ( iprint > 0) {
+			      found_dbolsm = false;
+			      if ( iprint_dbolsm > 0) {
 			        Preferences.debug("Variable is dependent, not used.\n");
 			      }
 
-			      ww[jbig] = big;
+			      ww[jbig_dbolsm] = big_dbolsm;
 			      do200 = true;
 			      continue loop;
 
 			    } // if ( wlb<=wla*tolind)
 
-			  } // if (cnz)
+			  } // if (cnz_dbolsm)
 			  //
 			  //  SWAP MATRIX COLS. NSETB+1 AND JBIG, PLUS POINTER INFO., AND
 			  //  GRADIENT VALUES.
 			  //
 			  nsetb = nsetb + 1;
-			  if ( nsetb != jbig) {
+			  if ( nsetb != jbig_dbolsm) {
 				  for (n = 1; n <= mrows; n++) {
 			          temp = w[n][nsetb];
-			          w[n][nsetb] = w[n][jbig];
-			          w[n][jbig] = temp;
+			          w[n][nsetb] = w[n][jbig_dbolsm];
+			          w[n][jbig_dbolsm] = temp;
 				  }
 			      temp = ww[nsetb];
-			      ww[nsetb] = ww[jbig];
-			      ww[jbig] = temp;
-			      itemp = ibasis[nsetb];
-			      ibasis[nsetb] = ibasis[jbig];
-			      ibasis[jbig] = itemp;
+			      ww[nsetb] = ww[jbig_dbolsm];
+			      ww[jbig_dbolsm] = temp;
+			      itemp_dbolsm = ibasis[nsetb];
+			      ibasis[nsetb] = ibasis[jbig_dbolsm];
+			      ibasis[jbig_dbolsm] = itemp_dbolsm;
 			  } // if (nsetb != jbig)
 			  //
 			  //  ELIMINATE ENTRIES BELOW THE PIVOT LINE IN COL. NSETB.
@@ -4118,7 +4147,7 @@ public abstract class DQED {
 			              t = wt*w[mval+1][nsetb]/t;
 			          }
 			          else {
-			              t = big;
+			              t = big_dbolsm;
 			          }
 
 			          if ( tolind*Math.abs(t) > 1.0) {
@@ -4158,9 +4187,9 @@ public abstract class DQED {
 			  } // if (mrows > nsetb)
 
 			  if ( w[nsetb][nsetb] == 0.0 ) {
-			      ww[nsetb] = big;
+			      ww[nsetb] = big_dbolsm;
 			      nsetb = nsetb - 1;
-			      if ( iprint > 0) {
+			      if ( iprint_dbolsm > 0) {
 			        Preferences.debug("Pivot is zero, not used.\n");
 			      }
 
@@ -4170,11 +4199,11 @@ public abstract class DQED {
 			  //
 			  //  CHECK THAT NEW VARIABLE IS MOVING IN THE RIGHT DIRECTION.
 			  //
-			  itemp = ibasis[nsetb];
-			  jcol = Math.abs(itemp);
-			  xnew = (w[nsetb][ncols+1]/w[nsetb][nsetb])/Math.abs(scl[jcol]);
+			  itemp_dbolsm = ibasis[nsetb];
+			  jcol_dbolsm = Math.abs(itemp_dbolsm);
+			  xnew = (w[nsetb][ncols+1]/w[nsetb][nsetb])/Math.abs(scl[jcol_dbolsm]);
 
-			  if ( itemp < 0) {
+			  if ( itemp_dbolsm < 0) {
 			      if ( ww[nsetb]>= 0.0 && xnew<= 0.0 ) {
 			    	  do230 = true;
 			      }
@@ -4192,9 +4221,9 @@ public abstract class DQED {
 
 			  if (do230) {
 				  do230 = false;
-			      ww[nsetb] = big;
+			      ww[nsetb] = big_dbolsm;
 			      nsetb = nsetb - 1;
-			      if ( iprint > 0) {
+			      if ( iprint_dbolsm > 0) {
 			          Preferences.debug("Variable has bad direction, not used.\n");
 			      }
 
@@ -4204,7 +4233,7 @@ public abstract class DQED {
 
 			  if (do240) {
 				  do240 = false;
-			      found = true;
+			      found_dbolsm = true;
 			      do90 = true;
 			      continue loop;
 			  } // if (do240)
@@ -4220,9 +4249,9 @@ public abstract class DQED {
 
 			     for (j = nsetb; j >= 1; j--) {
 			         rw[j] = rw[j]/w[j][j];
-			         jcol = Math.abs(ibasis[j]);
+			         jcol_dbolsm = Math.abs(ibasis[j]);
 			         t = rw[j];
-			         if ((ibb[jcol] % 2) == 0) {
+			         if ((ibb[jcol_dbolsm] % 2) == 0) {
 			        	 rw[j] = -rw[j];
 			         }
 			         arr = new double[j];
@@ -4230,13 +4259,13 @@ public abstract class DQED {
 			        	 arr[n] = w[n][j];
 			         }
 			         daxpy(j-1,-t,arr,1,rw,1);
-			         rw[j] = rw[j]/Math.abs(scl[jcol]);
+			         rw[j] = rw[j]/Math.abs(scl[jcol_dbolsm]);
 			     } // for (j = nsetb; j >= 1; j--)
 
-			     if ( iprint > 0) {
+			     if ( iprint_dbolsm > 0) {
 			         dvout(nsetb,rw,"soln. values",-4);
 			         ivout(nsetb,ibasis,"cols. used",-4);
-			     } // if (iprint > 0)
+			     } // if (iprint_dbolsm > 0)
 
 			     if (lgopr == 1) {
 			    	 do290 = true;
@@ -4260,55 +4289,55 @@ public abstract class DQED {
 			      //  SEE IF THE UNCONSTRAINED SOL. (OBTAINED BY SOLVING THE
 			      //  TRIANGULAR SYSTEM) SATISFIES THE PROBLEM BOUNDS.
 			      //
-			      alpha = 2.0;
-			      beta = 2.0;
+			      alpha_dbolsm = 2.0;
+			      beta_dbolsm = 2.0;
 			      x[nsetb] = 0.0;
 
 			      for (j = 1; j <= nsetb; j++) {
 
-			          itemp = ibasis[j];
-			          jcol = Math.abs(itemp);
+			          itemp_dbolsm = ibasis[j];
+			          jcol_dbolsm = Math.abs(itemp_dbolsm);
 			          t1 = 2.0;
 			          t2 = 2.0;
 
-			          if ( itemp < 0) {
-			              bou = 0.0;
+			          if ( itemp_dbolsm < 0) {
+			              bou_dbolsm = 0.0;
 			          }
 			          else {
-			              bou = bl[jcol];
+			              bou_dbolsm = bl[jcol_dbolsm];
 			          } // else
 
-			          if ( (-bou) != big) {
-			        	  bou = bou/Math.abs(scl[jcol]);
+			          if ( (-bou_dbolsm) != big_dbolsm) {
+			        	  bou_dbolsm = bou_dbolsm/Math.abs(scl[jcol_dbolsm]);
 			          }
-			          if ( rw[j]<=bou) {
-			        	  t1 = (x[j]-bou)/ (x[j]-rw[j]);
+			          if ( rw[j]<=bou_dbolsm) {
+			        	  t1 = (x[j]-bou_dbolsm)/ (x[j]-rw[j]);
 			          }
-			          bou = bu[jcol];
-			          if ( bou != big){
-			        	  bou = bou/Math.abs(scl[jcol]);
+			          bou_dbolsm = bu[jcol_dbolsm];
+			          if ( bou_dbolsm != big_dbolsm){
+			        	  bou_dbolsm = bou_dbolsm/Math.abs(scl[jcol_dbolsm]);
 			          }
-			          if ( rw[j]>=bou) {
-			        	  t2 = (bou-x[j])/ (rw[j]-x[j]);
+			          if ( rw[j]>=bou_dbolsm) {
+			        	  t2 = (bou_dbolsm-x[j])/ (rw[j]-x[j]);
 			          }
 			          //
 			          // IF NOT, THEN COMPUTE A STEP LENGTH SO THAT THE
 			          // VARIABLES REMAIN FEASIBLE.
 			          //
-			          if ( t1 < alpha) {
-			              alpha = t1;
-			              jdrop1 = j;
+			          if ( t1 < alpha_dbolsm) {
+			              alpha_dbolsm = t1;
+			              jdrop1_dbolsm = j;
 			          } // if (t1 < alpha)
 
-			          if ( t2 < beta) {
-			              beta = t2;
-			              jdrop2 = j;
+			          if ( t2 < beta_dbolsm) {
+			              beta_dbolsm = t2;
+			              jdrop2_dbolsm = j;
 			          } // if (t2 < beta)
 
 			      } // for (j = 1; j <= nsetb; j++)
 
-			      constr = (alpha < 2.0) || (beta < 2.0);
-			      if ( constr) {
+			      constr_dbolsm = (alpha_dbolsm < 2.0) || (beta_dbolsm < 2.0);
+			      if ( constr_dbolsm) {
 			    	  do310 = true;
 			      }
 			      else {
@@ -4333,20 +4362,20 @@ public abstract class DQED {
 			      //  VARIABLES REMAINING FEASIBLE.
 			      //
 			      for (j = 1; j <= nsetb; j++) {
-			          x[j] = x[j] + Math.min(alpha,beta)* (rw[j]-x[j]);
+			          x[j] = x[j] + Math.min(alpha_dbolsm,beta_dbolsm)* (rw[j]-x[j]);
 			      } // for (j = 1; j <= nsetb; j++)
 
-			      if ( alpha<=beta) {
-			          jdrop2 = 0;
+			      if ( alpha_dbolsm<=beta_dbolsm) {
+			          jdrop2_dbolsm = 0;
 			      }
 			      else {
-			          jdrop1 = 0;
+			          jdrop1_dbolsm = 0;
 			      }
 			  } // if (do310)
 
 			  if (do330) {
 				  do330 = false;
-			      if ( jdrop1+jdrop2 > 0 && nsetb > 0) {
+			      if ( jdrop1_dbolsm+jdrop2_dbolsm > 0 && nsetb > 0) {
 			    	  do340 = true;
 			      }
 			      else {
@@ -4357,28 +4386,28 @@ public abstract class DQED {
 
 			  if (do340) {
                   do340 = false;
-			      jdrop = jdrop1 + jdrop2;
-			      itemp = ibasis[jdrop];
-			      jcol = Math.abs(itemp);
-			      if ( jdrop2 > 0) {
+			      jdrop_dbolsm = jdrop1_dbolsm + jdrop2_dbolsm;
+			      itemp_dbolsm = ibasis[jdrop_dbolsm];
+			      jcol_dbolsm = Math.abs(itemp_dbolsm);
+			      if ( jdrop2_dbolsm > 0) {
 			          //
 			          //  VARIABLE IS AT AN UPPER BOUND.  SUBTRACT MULTIPLE OF THIS COL.
 			          //  FROM RIGHT HAND SIDE.
 			          //
-			          t = bu[jcol];
-			          if ( itemp > 0) {
+			          t = bu[jcol_dbolsm];
+			          if ( itemp_dbolsm > 0) {
 
-			              bu[jcol] = t - bl[jcol];
-			              bl[jcol] = -t;
-			              itemp = -itemp;
-			              scl[jcol] = -scl[jcol];
-			              for (j = 1; j <= jdrop; j++) {
-			                  w[j][jdrop] = -w[j][jdrop];
+			              bu[jcol_dbolsm] = t - bl[jcol_dbolsm];
+			              bl[jcol_dbolsm] = -t;
+			              itemp_dbolsm = -itemp_dbolsm;
+			              scl[jcol_dbolsm] = -scl[jcol_dbolsm];
+			              for (j = 1; j <= jdrop_dbolsm; j++) {
+			                  w[j][jdrop_dbolsm] = -w[j][jdrop_dbolsm];
 			              }
-			          } // if (itemp > 0)
+			          } // if (itemp_dbolsm > 0)
 			          else {
-			              ibb[jcol] = ibb[jcol] + 1;
-			              if ((ibb[jcol] % 2) == 0) {
+			              ibb[jcol_dbolsm] = ibb[jcol_dbolsm] + 1;
+			              if ((ibb[jcol_dbolsm] % 2) == 0) {
 			            	  t = -t;
 			              }
 			          } // else
@@ -4388,35 +4417,35 @@ public abstract class DQED {
 			    	  //
 			          //  VARIABLE IS AT A LOWER BOUND.
 			          // 
-			          if ( itemp < 0.0 ) {
+			          if ( itemp_dbolsm < 0.0 ) {
 			              t = 0.0;
 			          }
 			          else {
-			              t = -bl[jcol];
-			              bu[jcol] = bu[jcol] + t;
-			              itemp = -itemp;
+			              t = -bl[jcol_dbolsm];
+			              bu[jcol_dbolsm] = bu[jcol_dbolsm] + t;
+			              itemp_dbolsm = -itemp_dbolsm;
 			          } // else
 
 			      } // else
 
-			      arr = new double[jdrop+1];
-			      arr2 = new double[jdrop+1];
-			      for (j = 1; j <= jdrop; j++) {
-			    	  arr[j] = w[j][jdrop];
+			      arr = new double[jdrop_dbolsm+1];
+			      arr2 = new double[jdrop_dbolsm+1];
+			      for (j = 1; j <= jdrop_dbolsm; j++) {
+			    	  arr[j] = w[j][jdrop_dbolsm];
 			    	  arr2[j] = w[j][ncols+1];
 			      }
-			      daxpy(jdrop,t,arr,1,arr2,1);
-			      for (j = 1; j <= jdrop; j++) {
+			      daxpy(jdrop_dbolsm,t,arr,1,arr2,1);
+			      for (j = 1; j <= jdrop_dbolsm; j++) {
 			    	  w[j][ncols+1] = arr2[j];
 			      }
 			      // 
 			      //  MOVE CERTAIN COLS. LEFT TO ACHIEVE UPPER HESSENBERG FORM.
 			      // 
-			      for (j = 1; j <= jdrop; j++) {
-			    	  rw[j] = w[j][jdrop];
+			      for (j = 1; j <= jdrop_dbolsm; j++) {
+			    	  rw[j] = w[j][jdrop_dbolsm];
 			      }
 
-			      for (j = jdrop + 1; j <= nsetb; j++) {
+			      for (j = jdrop_dbolsm + 1; j <= nsetb; j++) {
 			          ibasis[j-1] = ibasis[j];
 			          x[j-1] = x[j];
 			          for (n = 1; n <= j; n++) {
@@ -4424,13 +4453,13 @@ public abstract class DQED {
 			          }
 			      } // for (j = jdrop + 1; j <= nsetb; j++)
 
-			      ibasis[nsetb] = itemp;
+			      ibasis[nsetb] = itemp_dbolsm;
 			      w[1][nsetb] = 0.0;
-		          for (j = jdrop+1; j <= mrows; j++) {
+		          for (j = jdrop_dbolsm+1; j <= mrows; j++) {
 		        	  w[j][nsetb] = 0.0;
 		          }
 
-			      for (j = 1; j <= jdrop; j++) {
+			      for (j = 1; j <= jdrop_dbolsm; j++) {
 			    	  w[j][nsetb] = rw[j];
 			      }
 			      //
@@ -4439,17 +4468,17 @@ public abstract class DQED {
 			      //
 			      nsetb = nsetb - 1;
 
-			      f2loop: for (i = jdrop; i <= nsetb; i++) {
+			      f2loop: for (i = jdrop_dbolsm; i <= nsetb; i++) {
 			          //
 			          //  LOOK FOR SMALL PIVOTS AND AVOID MIXING WEIGHTED AND NONWEIGHTED ROWS.
 			          // 
 			          if ( i == mval){
 			              t = 0.0;
 			              for (j = i; j <= nsetb; j++) {
-			                  jcol = Math.abs(ibasis[j]);
-			                  t1 = Math.abs(w[i][j]*scl[jcol]);
+			                  jcol_dbolsm = Math.abs(ibasis[j]);
+			                  t1 = Math.abs(w[i][j]*scl[jcol_dbolsm]);
 			                  if ( t1 > t) {
-			                      jbig = j;
+			                      jbig_dbolsm = j;
 			                      t = t1;
 			                  } // if (t1 > t)
 			              } // for (j = i; j <= nsetb; j++)
@@ -4489,20 +4518,20 @@ public abstract class DQED {
 			      //
 				  for (j = 1; j <= mrows; j++) {
 					  temp = w[j][i];
-					  w[j][i] = w[j][jbig];
-					  w[j][jbig] = temp;
+					  w[j][i] = w[j][jbig_dbolsm];
+					  w[j][jbig_dbolsm] = temp;
 				  }
 				  temp = ww[i];
-				  ww[i] = ww[jbig];
-				  ww[jbig] = temp;
+				  ww[i] = ww[jbig_dbolsm];
+				  ww[jbig_dbolsm] = temp;
 	              temp = x[i];
-	              x[i] = x[jbig];
-	              x[jbig] = temp;
-			      itemp = ibasis[i];
-			      ibasis[i] = ibasis[jbig];
-			      ibasis[jbig] = itemp;
-			      jbig = i;
-			      for (j = jbig; j <= nsetb; j++) {
+	              x[i] = x[jbig_dbolsm];
+	              x[jbig_dbolsm] = temp;
+			      itemp_dbolsm = ibasis[i];
+			      ibasis[i] = ibasis[jbig_dbolsm];
+			      ibasis[jbig_dbolsm] = itemp_dbolsm;
+			      jbig_dbolsm = i;
+			      for (j = jbig_dbolsm; j <= nsetb; j++) {
 			          for (i = j + 1; i <= mrows; i++) {
 			        	  arr = new double[1];
 			        	  arr[0] = w[j][j];
@@ -4534,8 +4563,8 @@ public abstract class DQED {
 			      //  NOT FEASIBLE WILL BE SET TO THEIR BOUNDS AND
 			      //  APPROPRIATELY TRANSLATED.
 			      // 
-			      jdrop1 = 0;
-			      jdrop2 = 0;
+			      jdrop1_dbolsm = 0;
+			      jdrop2_dbolsm = 0;
 			      //
 			      // SOLVE THE TRIANGULAR SYSTEM
 			      // 
@@ -4552,33 +4581,33 @@ public abstract class DQED {
 
 			      f3loop: for (j = 1; j <= nsetb; j++) {
 
-			          itemp = ibasis[j];
-			          jcol = Math.abs(itemp);
+			          itemp_dbolsm = ibasis[j];
+			          jcol_dbolsm = Math.abs(itemp_dbolsm);
 
-			          if ( itemp < 0) {
-			              bou = 0.0;
+			          if ( itemp_dbolsm < 0) {
+			              bou_dbolsm = 0.0;
 			          }
 			          else {
-			              bou = bl[jcol];
+			              bou_dbolsm = bl[jcol_dbolsm];
 			          }
 
-			          if ( (-bou) != big) {
-			    	      bou = bou/Math.abs(scl[jcol]);
+			          if ( (-bou_dbolsm) != big_dbolsm) {
+			    	      bou_dbolsm = bou_dbolsm/Math.abs(scl[jcol_dbolsm]);
 			          }
 
-			          if ( x[j] <=bou){
-			              jdrop1 = j;
+			          if ( x[j] <=bou_dbolsm){
+			              jdrop1_dbolsm = j;
 			              break f3loop;
 			          } // if ( x[j] <=bou)
 
-			          bou = bu[jcol];
+			          bou_dbolsm = bu[jcol_dbolsm];
 
-			          if ( bou !=big ) {
-			        	  bou = bou/Math.abs(scl[jcol]);
+			          if ( bou_dbolsm !=big_dbolsm ) {
+			        	  bou_dbolsm = bou_dbolsm/Math.abs(scl[jcol_dbolsm]);
 			          }
 
-			          if ( x[j]>=bou) {
-			              jdrop2 = j;
+			          if ( x[j]>=bou_dbolsm) {
+			              jdrop2_dbolsm = j;
 			              break f3loop;
 			          } // if ( x[j]>=bou)
 
@@ -4597,7 +4626,7 @@ public abstract class DQED {
 			      //  PRETRIANGULARIZE RECTANGULAR ARRAYS OF CERTAIN SIZES
 			      //  FOR INCREASED EFFICIENCY.
 			      // 
-			      if ( fac*minput > ncols) {
+			      if ( fac_dbolsm*minput > ncols) {
 			          for (j = 1; j <= ncols + 1; j++) {
 			              for (i = minput; i >= j + mval + 1; i--) {
 			            	  arr = new double[1];
@@ -4637,22 +4666,22 @@ public abstract class DQED {
 			      //  THE COL. SCALING IS DEFINED IN THE CALLING PROGRAM UNIT.
 			      //  'BIG' IS PLUS INFINITY ON THIS MACHINE.
 			      //
-			  big = Double.MAX_VALUE;
+			  big_dbolsm = Double.MAX_VALUE;
 
 			  for (j = 1; j <= ncols; j++) {
 
 			    if ( ind[j] == 1 ) {
-			      bu[j] = big;
+			      bu[j] = big_dbolsm;
 			    }
 			    else if ( ind[j] == 2 ) {
-			      bl[j] = -big;
+			      bl[j] = -big_dbolsm;
 			    }
 			    else if ( ind[j] == 3 ) {
 			    	
 			    }
 			    else if ( ind[j] == 4 ) {
-			      bl[j] = -big;
-			      bu[j] = big;
+			      bl[j] = -big_dbolsm;
+			      bu[j] = big_dbolsm;
 			    }
 
 			  } // for (j = 1; j <= ncols; j++)
@@ -4691,7 +4720,7 @@ public abstract class DQED {
 			  } // for (j = 1; j <= ncols; j++)
 
 			  nsetb = 0;
-			  iter = 0;
+			  iter_dbolsm = 0;
 
 			  do50 = true;
 			  continue loop;
@@ -4703,176 +4732,176 @@ public abstract class DQED {
                   do570 = false;
                   do580 = true;
 			      if ( idope[5] == 1) {
-			          fac = x[ncols+idope[1]];
+			          fac_dbolsm = x[ncols+idope[1]];
 			          wt = x[ncols+idope[2]];
 			          mval = idope[3];
 			      } // if (idope[5] == 1)
 			      else {
-			          fac = 0.0;
+			          fac_dbolsm = 0.0;
 			          wt = 1.0;
 			          mval = 0;
 			      }
 
 			      tolind = Math.sqrt( epsilon);
 			      tolsze = Math.sqrt( epsilon);
-			      itmax = 5 * Math.max ( minput, ncols );
-			      iprint = 0;
+			      itmax_dbolsm = 5 * Math.max ( minput, ncols );
+			      iprint_dbolsm = 0;
 			      //
 			      //  CHANGES TO SOME PARAMETERS CAN OCCUR THROUGH THE OPTION
 			      //  ARRAY, IOPT(*).  PROCESS THIS ARRAY LOOKING CAREFULLY
 			      //  FOR INPUT DATA ERRORS.
 			      //
 			      lp = 0;
-			      lds = 0;
+			      lds_dbolsm = 0;
 			  } // if (do570)
 
 			  if (do580) {
                   do580 = false;
-			      lp = lp + lds;
+			      lp = lp + lds_dbolsm;
 			      //
 			      //  TEST FOR NO MORE OPTIONS.
 			      //
-			      ip = iopt[lp+1];
-			      jp = Math.abs(ip);
-			      if ( ip == 99) {
+			      ip_dbolsm = iopt[lp+1];
+			      jp_dbolsm = Math.abs(ip_dbolsm);
+			      if ( ip_dbolsm == 99) {
 			          do460 = true;
 			          continue loop;
 			      }
-			      else if ( jp == 99) {
-			          lds = 1;
+			      else if ( jp_dbolsm == 99) {
+			          lds_dbolsm = 1;
 			          do580 = true;
 			          continue loop;
 			      }
-			      else if ( jp == 1) {
+			      else if ( jp_dbolsm == 1) {
 			          //
 			          //  MOVE THE IOPT(*) PROCESSING POINTER.
 			          //
-			          if ( ip > 0) {
+			          if ( ip_dbolsm > 0) {
 			              lp = iopt[lp+2] - 1;
-			              lds = 0;
+			              lds_dbolsm = 0;
 			          }
 			          else {
-			              lds = 2;
+			              lds_dbolsm = 2;
 			          }
 
 			          do580 = true;
 			          continue loop;
-			      } // else if (jp == 1)
-			      else if ( jp == 2) {
+			      } // else if (jp_dbolsm == 1)
+			      else if ( jp_dbolsm == 2) {
 			          //
 			          //  CHANGE TOLERANCE FOR RANK DETERMINATION.
 			          //
-			          if (ip > 0) {
-			              ioff = iopt[lp+2];
-			              if ( ioff<=0) {
+			          if (ip_dbolsm > 0) {
+			              ioff_dbolsm = iopt[lp+2];
+			              if ( ioff_dbolsm<=0) {
 			                  nerr = 24;
 			                  xerrwv("dbolsm(). the offset=(i1) beyond postion\nncols=(i2) must be positive for option number 2.",
-			                         nerr,level,2,ioff,ncols,0,rdum,rdum);
+			                         nerr,level_dbolsm,2,ioff_dbolsm,ncols,0,rdum,rdum);
 			                  mode[0] = -nerr;
 			                  return;
-			              } // if (ioff <= 0)
+			              } // if (ioff_dbolsm <= 0)
 
-			              tolind = x[ncols+ioff];
+			              tolind = x[ncols+ioff_dbolsm];
 			              if (tolind < epsilon) {
 			                  nerr = 25;
 			                  nlevel = 0;
 			                  xerrwv("dbolsm(). the tolerance for rank\ndetermination=(r1) is less than machine precision=(r2).",
-			                         nerr,nlevel,0,idum,idum,2,tolind, epsilon);
+			                         nerr,nlevel,0,idum_dbolsm,idum_dbolsm,2,tolind, epsilon);
 			              } // if (tolind < epsilon)
-			          } // if (ip > 0)
+			          } // if (ip_dbolsm > 0)
 
-			          lds = 2;
+			          lds_dbolsm = 2;
 			          do580 = true;
 			          continue loop;
-			      } // else if (jp == 2)
-			      else if ( jp == 3) {
+			      } // else if (jp_dbolsm == 2)
+			      else if ( jp_dbolsm == 3) {
 			          //
 			          //  CHANGE BLOWUP FACTOR FOR ALLOWING VARIABLES TO BECOME INACTIVE.
 			          //
-			          if ( ip > 0) {
-			              ioff = iopt[lp+2];
-			              if ( ioff<=0) {
+			          if ( ip_dbolsm > 0) {
+			              ioff_dbolsm = iopt[lp+2];
+			              if ( ioff_dbolsm<=0) {
 			                  nerr = 26;
 			                  xerrwv("dbolsm(). the offset=(i1) beyond position\nncols=(i2) must be postive for option number 3.",
-			                         nerr,level,2,ioff,ncols,0,rdum,rdum);
+			                         nerr,level_dbolsm,2,ioff_dbolsm,ncols,0,rdum,rdum);
 			                  mode[0] = -nerr;
 					          return;
 			              } // if (ioff <= 0)
 
-			              tolsze = x[ncols+ioff];
+			              tolsze = x[ncols+ioff_dbolsm];
 			              if ( tolsze<= 0.0 ) {
 			                  nerr = 27;
 			                  xerrwv("dbolsm(). the reciprocal of the blow-up factor\nfor rejecting variables must be positive. now=(r1).",
-			                         nerr,level,0,idum,idum,1,tolsze,rdum);
+			                         nerr,level_dbolsm,0,idum_dbolsm,idum_dbolsm,1,tolsze,rdum);
 			                  mode[0] = -nerr;
 					          return;
 			              } // if (tolsze <= 0.0)
-			          } // if (ip > 0)
+			          } // if (ip_dbolsm > 0)
 
-			          lds = 2;
+			          lds_dbolsm = 2;
 			          do580 = true;
 			          continue loop;
-			      } // else if (jp == 3)
-			      else if ( jp == 4) {
+			      } // else if (jp_dbolsm == 3)
+			      else if ( jp_dbolsm == 4) {
 			          //
 			          //  Change the maximum number of iterations allowed.
 			          //
-			          if ( ip > 0) {
-			              itmax = iopt[lp+2];
-			              if ( itmax<=0) {
+			          if ( ip_dbolsm > 0) {
+			              itmax_dbolsm = iopt[lp+2];
+			              if ( itmax_dbolsm<=0) {
 			                  nerr = 28;
 			                  xerrwv("dbolsm(). the maximum number of iterations=(i1) must be positive.",
-			                		  nerr,level,1,itmax,idum,0,rdum,rdum);
+			                		  nerr,level_dbolsm,1,itmax_dbolsm,idum_dbolsm,0,rdum,rdum);
 			                  mode[0] = -nerr;
 					          return;
 			              } // if (itmax <= 0)
-			          } // if (ip > 0)
+			          } // if (ip_dbolsm > 0)
 
-			          lds = 2;
+			          lds_dbolsm = 2;
 			          do580 = true;
 			          continue loop;
-			      } // else if (jp == 4)
-			      else if ( jp == 5) {
+			      } // else if (jp_dbolsm == 4)
+			      else if ( jp_dbolsm == 5) {
 			          //
 			          //  CHANGE THE FACTOR FOR PRETRIANGULARIZING THE DATA MATRIX.
 			          //
-			          if ( ip > 0) {
-			              ioff = iopt[lp+2];
-			              if ( ioff<=0) {
+			          if ( ip_dbolsm > 0) {
+			              ioff_dbolsm = iopt[lp+2];
+			              if ( ioff_dbolsm<=0) {
 			                  nerr = 29;
 			                  xerrwv("dbolsm(). the offset=(i1) beyond position\nncols=(i2) must be postive for option number 5.",
-			                         nerr,level,2,ioff,ncols,0,rdum,rdum);
+			                         nerr,level_dbolsm,2,ioff_dbolsm,ncols,0,rdum,rdum);
 			                  mode[0] = -nerr;
 					          return;
-			              } // if (ioff <= 0)
+			              } // if (ioff_dbolsm <= 0)
 
-			              fac = x[ncols+ioff];
-			              if ( fac < 0.0 ) {
+			              fac_dbolsm = x[ncols+ioff_dbolsm];
+			              if ( fac_dbolsm < 0.0 ) {
 			                  nerr = 30;
 			                  nlevel = 0;
 			                  xerrwv("dbolsm(). the factor (ncols/mrows) where pre-triangularizing is performed must be nonnegative.\nnow=(r1).",
-			                		  nerr,nlevel,0,idum,idum,1,fac,rdum);
+			                		  nerr,nlevel,0,idum_dbolsm,idum_dbolsm,1,fac_dbolsm,rdum);
 			                  mode[0] = -nerr;
 					          return;
 			              } // if (fac < 0.0)
-			          } // if (ip > 0)
+			          } // if (ip_dbolsm > 0)
 
-			          lds = 2;
+			          lds_dbolsm = 2;
 			          do580 = true;
 			          continue loop;
-			      } // else if (jp == 5)
-			      else if ( jp == 6) {
+			      } // else if (jp_dbolsm == 5)
+			      else if ( jp_dbolsm == 6) {
 			          // 
 			          //  CHANGE THE WEIGHTING FACTOR (FROM ONE) TO APPLY TO COMPONENTS
 			          //  NUMBERED .GT. MVAL (INITIALLY SET TO 1.)  THIS TRICK IS NEEDED
 			          //  FOR APPLICATIONS OF THIS SUBPROGRAM TO THE HEAVILY WEIGHTED
 			          //  LEAST SQUARES PROBLEM THAT COME FROM EQUALITY CONSTRAINTS.
 			          //
-			          if ( ip > 0) {
-			              ioff = iopt[lp+2];
+			          if ( ip_dbolsm > 0) {
+			              ioff_dbolsm = iopt[lp+2];
 			              mval = iopt[lp+3];
-			              wt = x[ncols+ioff];
-			          } // if (ip > 0)
+			              wt = x[ncols+ioff_dbolsm];
+			          } // if (ip_dbolsm > 0)
 
 			          if ( mval < 0 || mval > minput || wt<= 0.0 ) {
 			              nerr = 38;
@@ -4883,25 +4912,25 @@ public abstract class DQED {
 					      return;
 			          } // if ( mval < 0 || mval > minput || wt<= 0.0 )
 
-			          lds = 3;
+			          lds_dbolsm = 3;
 			          do580 = true;
 			          continue loop;
-			      } // else if (jp == 6)
+			      } // else if (jp_dbolsm == 6)
 			      //
 			      //  TURN ON DEBUG OUTPUT.
 			      //
-			      else if ( jp == 7) {
-			          if ( ip > 0) {
-			    	      iprint = 1;
+			      else if ( jp_dbolsm == 7) {
+			          if ( ip_dbolsm > 0) {
+			    	      iprint_dbolsm = 1;
 			          }
-			          lds = 1;
+			          lds_dbolsm = 1;
 			          do580 = true;
 			          continue loop;
-			      } // else if (jp == 7)
+			      } // else if (jp_dbolsm == 7)
 			      else {
 			          nerr = 23;
 			          xerrwv("dbolsm. the option number=(i1) is not defined.",
-			                  nerr,level,1,ip,idum,0,rdum,rdum);
+			                  nerr,level_dbolsm,1,ip_dbolsm,idum_dbolsm,0,rdum,rdum);
 			          mode[0] = -nerr;
 				      return;
 			      } // else
@@ -8204,41 +8233,10 @@ C     FROM THE ERROR PROCESSOR CALL.
 			!
 			*/
 
-			  double alb = 0.0;
-			  double alfac = 0.0;
-			  double alpha = 0.0;
-			  double aub = 0.0;
-			  double bboost = 0.0;
-			  double bold;
-			  double chg = 0.0;
-			  double colnrm;
-			  double dxnrm;
-			  double fc = 0.0;
 			  //double fjac(ldfjac,*)
-			  double fl = 0.0;
-			  boolean fulnwt = false;
-			  double gval;
 			  int icase;
-			  int igotfc = 60;
 			  int j;
-			  int jp;
-			  int k = 0;
-			  int kl = 0;
 			  int kp;
-			  int mode[] = new int[1];
-			  int nerr;
-			  boolean newbst;
-			  double pb = 0.0;
-			  double pd = 0.0;
-			  double pv[] = new double[1];
-			  double rb;
-			  double rdum;
-			  boolean retrea = false;
-			  double rg = 0.0;
-			  double rnormc[] = new double[1];
-			  double t;
-			  double t2 = 0.0;
-			  boolean term = false;
 			  String xmess;
 			  boolean do20 = false;
 			  boolean do30 = false;
@@ -8292,7 +8290,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			//          SOLVER. REQUIRES TWO ENTRIES IN IOPT(*). USE IOPT(*+1) AS A
 			//          POINTER INTO ROPT(*) FOR START OF THE NVARS BOUNDS.
 			//
-			  rdum = 0.0;
+			  rdum_dqedip = 0.0;
 
 			  if (iflag_dqedip == 1) {
 				  do50 = true;
@@ -8314,45 +8312,45 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          for (j = 1; j <= nvars; j++) {
 			              dx[j] = 0.0;
 			          }
-			          k = 0;
+			          k_dqedip = 0;
 			          //
 			          //  FB = "INFINITY" ON THIS MACHINE.
 			          //
 			          fb[0] = Double.MAX_VALUE;
-			          dxnrm = fb[0];
-			          fl = 0.0;
+			          dxnrm_dqedip = fb[0];
+			          fl_dqedip = 0.0;
 			          //
 			          //  LINEAR PROBLEM RESIDUAL.
 			          //
-			          pv[0] = 0.0;
-			          retrea = false;
-			          fulnwt = false;
-			          term = false;
+			          pv_dqedip[0] = 0.0;
+			          retrea_dqedip = false;
+			          fulnwt_dqedip = false;
+			          term_dqedip = false;
                   } // if (do20)
                   
                   if (do30) {
 			          do30 = false;
 
-			          if (! retrea) {
+			          if (! retrea_dqedip) {
 			        	  iters_dqedip = iters_dqedip + 1;
 			          }
-			          if ( retrea) {
+			          if ( retrea_dqedip) {
 			              //
 			              //  MUST RETREAT TO BEST X VALUES.
 			              //
-			              k = 0;
-			              kl = -1;
-			              fl = fb[0];
+			              k_dqedip = 0;
+			              kl_dqedip = -1;
+			              fl_dqedip = fb[0];
 			              for (j = 1; j <= nvars; j++) {
 			            	  x[j] = xb[j];
 			              }
 			          }
 			          else {
-			              kl = k;
+			              kl_dqedip = k_dqedip;
 			              for (j = 1; j <= nvars; j++) {
 			            	  x[j] = x[j] - dx[j];
 			              }
-			              if ( term) {
+			              if ( term_dqedip) {
 			                  iflag_dqedip = 0;
 			                  return;
 			              }
@@ -8369,36 +8367,36 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    	 for (j = 1; j <= mequa[0]; j++) {
 			    		 arr[j] = fjac[mcon[0]+j][nvars+1];
 			    	 }
-			         fc = dnrm2(mequa[0],arr,1);
+			         fc_dqedip = dnrm2(mequa[0],arr,1);
 			         //
 			         //  TEST FOR CONVERGENCE
 			         //
-			         igotfc = 60;
+			         igotfc_dqedip = 60;
 			     } // if (do50)
 
 			     if (do60) {
 
-			         if ( term) {
+			         if ( term_dqedip) {
 			        	 do60 = false;
 			             iflag_dqedip = 0;
 			             return;
 			         }
-			         newbst = fc  <  fb[0] || (mcon[0] > 0 && iters_dqedip == 2);
-			         if ( newbst) {
-			             k = 0;
+			         newbst_dqedip = fc_dqedip  <  fb[0] || (mcon[0] > 0 && iters_dqedip == 2);
+			         if ( newbst_dqedip) {
+			             k_dqedip = 0;
 			         }
 			     } // if (do60)
-			     if ( k == 0 && do60) {
+			     if ( k_dqedip == 0 && do60) {
 			    	 do60 = false;
-			         rg = 0.0;
-			         pb = 0.0;
-			         pd = Double.MAX_VALUE;
+			         rg_dqedip = 0.0;
+			         pb_dqedip = 0.0;
+			         pd_dqedip = Double.MAX_VALUE;
 			         //
 			         //  WANT TO POSITION AT BEST X VALUES.
 			         //
-			         fb[0] = fc;
+			         fb[0] = fc_dqedip;
 			         
-			         switch(2 - kl) {
+			         switch(2 - kl_dqedip) {
 			         case 1:
 			        	 do70 = true;
 			        	 break;
@@ -8418,13 +8416,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             //
 			             //  IMMEDIATELY GOT A NEW BEST X.
 			             //
-			             if ( t2 <= 0.25 ) {
-			                 bboost = 1.0;
-			                 chg = Math.max ( 4.0 * t2, 0.1 );
+			             if ( t2_dqedip <= 0.25 ) {
+			                 bboost_dqedip = 1.0;
+			                 chg_dqedip = Math.max ( 4.0 * t2_dqedip, 0.1 );
 			             } // if ( t2 <= 0.25 )
 
 			             for (j = 1; j <= nvars; j++) {
-			                 bb[j] = chg*bb[j];
+			                 bb[j] = chg_dqedip*bb[j];
 			             } // for (j = 1; j <= nvars; j++)
 			             //
 			             //  THIS CODE FOR ALPHA HAS THE FOLLOWING EFFECT.
@@ -8432,17 +8430,17 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             //  IF FC**2 .EQ. PV*FL THEN ALPHA=2.-1./ALFAC
 			             //  IF FC**2 IS MUCH LARGER THAN PV*FL, THEN ALPHA=1.
 			             //
-			             t = fc - pv[0];
-			             if ( t == 0.0 ) {
-			                 alpha = alfac;
+			             t_dqedip = fc_dqedip - pv_dqedip[0];
+			             if ( t_dqedip == 0.0 ) {
+			                 alpha_dqedip = alfac_dqedip;
 			             }
 			             else {
-			                 alpha = (pv[0]* (fl-pv[0]))/ (fc+pv[0])/ (alfac-1.0);
-			                 alpha = (Math.abs(t)+alfac*alpha)/ (Math.abs(t)+alpha);
+			                 alpha_dqedip = (pv_dqedip[0]* (fl_dqedip-pv_dqedip[0]))/ (fc_dqedip+pv_dqedip[0])/ (alfac_dqedip-1.0);
+			                 alpha_dqedip = (Math.abs(t_dqedip)+alfac_dqedip*alpha_dqedip)/ (Math.abs(t_dqedip)+alpha_dqedip);
 			             }
 
-			             alfac = 1.5 * alpha;
-			             bboost = Math.min(1.5*alpha*bboost,semibg_dqedip);
+			             alfac_dqedip = 1.5 * alpha_dqedip;
+			             bboost_dqedip = Math.min(1.5*alpha_dqedip*bboost_dqedip,semibg_dqedip);
 			         } // if (do70)
 
 			         if (do90) {
@@ -8451,7 +8449,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             //
 			             //  AT THE INITIAL X.
 			             //
-			             alfac = 256.0;
+			             alfac_dqedip = 256.0;
 
 			             for (j = 1; j <= nvars; j++) {
 			                 if ( ! passb_dqedip) {
@@ -8462,9 +8460,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                     for (m = 1; m <= mequa[0]; m++) {
 			                    	 arr[m] = fjac[mcon[0]+m][j];
 			                     }
-			                     colnrm = dnrm2(mequa[0],arr,1);
-			                     if ( colnrm != 0.0 ) {
-			                    	 bb[j] = -fc/colnrm;
+			                     colnrm_dqedip = dnrm2(mequa[0],arr,1);
+			                     if ( colnrm_dqedip != 0.0 ) {
+			                    	 bb[j] = -fc_dqedip/colnrm_dqedip;
 			                     }
 			                 } // if (bb[j] == 0.0)
 
@@ -8475,8 +8473,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                 b[j] = bb[j];
 			             } // for (j = 1; j <= nvars; j++)
 
-			             alpha = 1.0;
-			             bboost = 0.5;
+			             alpha_dqedip = 1.0;
+			             bboost_dqedip = 0.5;
 			             do170 = true;
 			         } // if (do90)
 
@@ -8486,15 +8484,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             //
 			             //  RETREAT TO BEST X.
 			             //
-			             if ( alfac != 256.0 ) {
-			                 alpha = Math.min ( 1.0 / alfac, 0.25 );
-			                 alfac = 1.25;
+			             if ( alfac_dqedip != 256.0 ) {
+			                 alpha_dqedip = Math.min ( 1.0 / alfac_dqedip, 0.25 );
+			                 alfac_dqedip = 1.25;
 			             }
 			             else {
-			                 alpha = 0.25*alpha;
+			                 alpha_dqedip = 0.25*alpha_dqedip;
 			             }
 
-			             bboost = 0.25;
+			             bboost_dqedip = 0.25;
 			         } // if (do110)
 
 			         if (do120) {
@@ -8503,13 +8501,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             //
 			             //  NOT IMMEDIATELY A BEST X.
 			             //
-			             rb = 0.0;
+			             rb_dqedip = 0.0;
 			             for (j = 1; j <= nvars; j++) {
-			                 rb = Math.max(rb,Math.abs((xb[j]-x[j])/bb[j]));
+			                 rb_dqedip = Math.max(rb_dqedip,Math.abs((xb[j]-x[j])/bb[j]));
 			             } // for (j = 1; j <= nvars; j++)
-			             alpha = rb;
-			             alfac = 2.0;
-			             bboost = ( 8.0 / 7.0 + rg )/ ( 2.0 / 7.0 + rg );
+			             alpha_dqedip = rb_dqedip;
+			             alfac_dqedip = 2.0;
+			             bboost_dqedip = ( 8.0 / 7.0 + rg_dqedip )/ ( 2.0 / 7.0 + rg_dqedip );
 			         } // if (do120)
 
 			         if (do140) {
@@ -8519,15 +8517,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 			             for (j = 1; j <= nvars; j++) {
 			                 dx[j] = xb[j] - x[j];
 			                 if ( dx[j] == 0.0 ) {
-			                     b[j] = alpha*bb[j];
+			                     b[j] = alpha_dqedip*bb[j];
 			                 }
 			                 else {
 			                     xb[j] = x[j];
 			                     if (dx[j] >= 0) {
-			                    	 b[j] = Math.abs(alpha*bb[j]) + bboost*dx[j];
+			                    	 b[j] = Math.abs(alpha_dqedip*bb[j]) + bboost_dqedip*dx[j];
 			                     }
 			                     else {
-			                    	 b[j] = -Math.abs(alpha*bb[j]) + bboost*dx[j];
+			                    	 b[j] = -Math.abs(alpha_dqedip*bb[j]) + bboost_dqedip*dx[j];
 			                     }
 			                 }
                              if (b[j] >= 0.0) {
@@ -8545,18 +8543,18 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  COMPUTE A GAUGE FOR RETREATING IF DID NOT GET A NEW BEST.
 			      //
-			      if ( k == 1) {
-			          pb = pv[0];
-			          pd = 1.5 * (fb[0]+pb* (pb/fb[0])) - 4.0 * pb;
+			      if ( k_dqedip == 1) {
+			          pb_dqedip = pv_dqedip[0];
+			          pd_dqedip = 1.5 * (fb[0]+pb_dqedip* (pb_dqedip/fb[0])) - 4.0 * pb_dqedip;
 			      }
 
-			      alpha = ( 0.5 * fc+fl)/ (fc+fl);
-			      chg = Math.min(alpha*chg,t2);
-			      chg = Math.max ( chg, 0.1 );
+			      alpha_dqedip = ( 0.5 * fc_dqedip+fl_dqedip)/ (fc_dqedip+fl_dqedip);
+			      chg_dqedip = Math.min(alpha_dqedip*chg_dqedip,t2_dqedip);
+			      chg_dqedip = Math.max ( chg_dqedip, 0.1 );
 
 			      for (j = 1; j <= nvars; j++) {
-			         b[j] = chg*b[j];
-			         if ( k == 1) {
+			         b[j] = chg_dqedip*b[j];
+			         if ( k_dqedip == 1) {
 			        	 bb[j] = b[j];
 			         }
 			      } // 
@@ -8569,16 +8567,16 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  TEST FOR CONVERGENCE
 			      //
-			      igotfc = 180;
+			      igotfc_dqedip = 180;
 			  } // if (do170)
 
 			  if (do180) {
                   do180 = false;
-			      if ( term) {
+			      if ( term_dqedip) {
 			          iflag_dqedip = 0;
 			          return;
 			      }
-			      k = k + 1;
+			      k_dqedip = k_dqedip + 1;
 			      //
 			      //  SOLVE LINEAR BOUNDED PROBLEM.
 			      //
@@ -8586,25 +8584,25 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			          if ( b[j] < 0.0 ) {
 
-			              alb = b[j];
+			              alb_dqedip = b[j];
 			              if ( dx[j] == 0.0 ) {
 			                  //
 			                  //  THIS CASE IS REQD. TO AVOID USING BUB(*) AT THE INITIAL PT.
 			                  //
-			                  aub = -c1516_dqedip*alb;
+			                  aub_dqedip = -c1516_dqedip*alb_dqedip;
 			              }
 			              else {
-			                  aub = Math.min(-c1516_dqedip*alb,-dx[j]+bub[j]);
+			                  aub_dqedip = Math.min(-c1516_dqedip*alb_dqedip,-dx[j]+bub[j]);
 			              }
 			          } // if (b[j] < 0.0)
 			          else {
-			              aub = b[j];
+			              aub_dqedip = b[j];
 
 			              if ( dx[j] == 0.0) {
-			                  alb = -c1516_dqedip*aub;
+			                  alb_dqedip = -c1516_dqedip*aub_dqedip;
 			              }
 			              else {
-			                  alb = Math.max(-c1516_dqedip*aub,-dx[j]+blb[j]);
+			                  alb_dqedip = Math.max(-c1516_dqedip*aub_dqedip,-dx[j]+blb[j]);
 			              }
 
 			          } // else
@@ -8614,23 +8612,23 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          icase = ind[j];
 
 			          if ( icase == 1 ) {
-			              aub = Math.min(aub,x[j]-bl[j]);
+			              aub_dqedip = Math.min(aub_dqedip,x[j]-bl[j]);
 			          }
 			          else if ( icase == 2 ) {
-			              alb = Math.max(alb,x[j]-bu[j]);
+			              alb_dqedip = Math.max(alb_dqedip,x[j]-bu[j]);
 			          }
 			          else if ( icase == 3 ) {
-			              aub = Math.min(aub,x[j]-bl[j]);
-			              alb = Math.max(alb,x[j]-bu[j]);
+			              aub_dqedip = Math.min(aub_dqedip,x[j]-bl[j]);
+			              alb_dqedip = Math.max(alb_dqedip,x[j]-bu[j]);
 			          }
 
-			          blb[j] = alb;
+			          blb[j] = alb_dqedip;
 			          //
 			          //  THIS NEXT LINE IS TO GUARANTEE THAT THE LOWER BOUND
 			          //  IS .LE. THE UPPER BOUND.
 			          //
-			          aub = Math.max(aub,alb);
-			          bub[j] = aub;
+			          aub_dqedip = Math.max(aub_dqedip,alb_dqedip);
+			          bub[j] = aub_dqedip;
 			          indb[j] = 3;
 
 			      } // for (j = 1; j <= nvars; j++)
@@ -8641,7 +8639,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      for (j = nvars + 1; j <= nall_dqedip; j++) {
 
 			          icase = ind[j];
-			          gval = fjac[j-nvars][nvars+1];
+			          gval_dqedip = fjac[j-nvars][nvars+1];
 
 			          switch(icase) {
 			          case 1:
@@ -8662,22 +8660,22 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			          if (do250) {
                           do250 = false;
-			              blb[j] = - (gval-bl[j]);
+			              blb[j] = - (gval_dqedip-bl[j]);
 			              indb[j] = 1;
 			              continue;
 			          } // if (do250)
 
 			          if (do260) {
                           do260 = false;
-			              bub[j] = - (gval-bu[j]);
+			              bub[j] = - (gval_dqedip-bu[j]);
 			              indb[j] = 2;
 			              continue;
 			          } // if (do260)
 
 			          if (do270) {
                           do270 = false;
-			              blb[j] = - (gval-bl[j]);
-			              bub[j] = - (gval-bu[j]);
+			              blb[j] = - (gval_dqedip-bl[j]);
+			              bub[j] = - (gval_dqedip-bu[j]);
 			              indb[j] = 3;
 			              continue;
 			          } // if (do270)
@@ -8697,15 +8695,17 @@ C     FROM THE ERROR PROCESSOR CALL.
 		    	     iarr[m-ipls_dqedip+1] = iopt[m];	 
 		    	 }
 			     dbocls(fjac,ldfjac,mcon,mequa,nvars,blb,bub,indb,iarr,
-			            dx,rnormc,pv,mode,wa,iwa);
+			            dx,rnormc_dqedip,pv_dqedip,mode_dqedip,wa,iwa);
 			     for (m = ipls_dqedip; m < iopt.length; m++) {
 		    	     iopt[m] = iarr[m-ipls_dqedip+1];	 
 		    	 }
 
 				  if ( iprint_dqedip > 0) {
-					  Preferences.debug("iters_dqedip= " + dfi3.format(iters_dqedip) + " fc = " + df10p4.format(fc) + " pv[0] = " + df10p4.format(pv[0]) + 
-							     " k = " + dfi4.format(k) + " kl = " + dfi4.format(kl) + " fb[0] = " + df10p4.format(fb[0]) + "\n");
-					  Preferences.debug("            alpha = " + df14p4.format(alpha) + " bboost = " + df14p4.format(bboost) + "\n");
+					  Preferences.debug("iters_dqedip= " + dfi3.format(iters_dqedip) + " fc_dqedip = " +
+							     df10p4.format(fc_dqedip) + " pv_dqedip[0] = " + df10p4.format(pv_dqedip[0]) + 
+							     " k_dqedip = " + dfi4.format(k_dqedip) + " kl_dqedip = " + dfi4.format(kl_dqedip) + " fb[0] = " + df10p4.format(fb[0]) + "\n");
+					  Preferences.debug("            alpha_dqedip = " + df14p4.format(alpha_dqedip) + " bboost_dqedip = " +
+					  df14p4.format(bboost_dqedip) + "\n");
 				      Preferences.debug(" x = " + df12p4.format(x[1]));
 				      for (j = 2; j <= nvars; j++) {
 				    	  Preferences.debug("    " + df12p4.format(x[j]));
@@ -8742,12 +8742,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  TEST FOR NOISE IN LINEAR PROBLEM SOLN.
 			      //
 			      // NOTE THAT THIS CODE MAKES NO SENSE.  term is always false.
-			      term = ( mcon[0] == 0 && (pv[0]>=fc) );
-			      term=false;
-			      if ( term) {
+			      term_dqedip = ( mcon[0] == 0 && (pv_dqedip[0]>=fc_dqedip) );
+			      term_dqedip=false;
+			      if ( term_dqedip) {
 			          if ( iprint_dqedip > 0) {
-			              Preferences.debug("linear residual>=current f. quitting. pv[0] = " + df12p5.format(pv[0]) +
-			              		            "fc = " + df12p5.format(fc) + "\n");
+			              Preferences.debug("linear residual>=current f. quitting. pv_dqedip[0] = " + df12p5.format(pv_dqedip[0]) +
+			              		            "fc_dqedip = " + df12p5.format(fc_dqedip) + "\n");
 			          }
                       for (j = 1; j <= nvars; j++) {
                     	  x[j] = xb[j];
@@ -8757,15 +8757,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          return;
 		          } // if (term)
 			     
-		          rg = Math.max(rg, (pv[0]-pb)/pd);
-			      if ( ! retrea) {
-			          chg = 1.0;
-			          t2 = 0.0;
+		          rg_dqedip = Math.max(rg_dqedip, (pv_dqedip[0]-pb_dqedip)/pd_dqedip);
+			      if ( ! retrea_dqedip) {
+			          chg_dqedip = 1.0;
+			          t2_dqedip = 0.0;
 
 			          for (j = 1; j <= nvars; j++) {
 
-			              bold = b[j];
-			              t = dx[j]/bold;
+			              bold_dqedip = b[j];
+			              t_dqedip = dx[j]/bold_dqedip;
 			              //
 			              // IF USER GIVES BOUNDS, AND THESE BOUNDS ARE HIT,
 			              // DO NOT DETRACT FROM DECLARING A FULL NEWTON STEP.
@@ -8790,90 +8790,90 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			              if (do310) {
 			            	  do310 = false;
-			                  alb = (x[j]-bl[j])/bold;
-			                  aub = -semibg_dqedip;
+			                  alb_dqedip = (x[j]-bl[j])/bold_dqedip;
+			                  aub_dqedip = -semibg_dqedip;
 			                  do350 = true;
 			              } // if (do310)
 
 			              if (do320) {
 			            	  do320 = false;
-			                  aub = (x[j]-bu[j])/bold;
-			                  alb = -semibg_dqedip;
+			                  aub_dqedip = (x[j]-bu[j])/bold_dqedip;
+			                  alb_dqedip = -semibg_dqedip;
 			                  do350 = true;
 			              } // if (do320)
 
 			              if (do330) {
 			            	  do330 = false;
-			                  alb = (x[j]-bl[j])/bold;
-			                  aub = (x[j]-bu[j])/bold;
+			                  alb_dqedip = (x[j]-bl[j])/bold_dqedip;
+			                  aub_dqedip = (x[j]-bu[j])/bold_dqedip;
 			                  do350 = true;
 			              } // if (do330)
 
 			              if (do340) {
 			                  do340 = false;
-			                  alb = -semibg_dqedip;
-			                  aub = -semibg_dqedip;
+			                  alb_dqedip = -semibg_dqedip;
+			                  aub_dqedip = -semibg_dqedip;
 			                  do350 = true;
 			              } // if (do340)
 
 			              if (do350) {
 			                  do350 = false;
 
-			                  if ( t == 1.0 ) {
-			                      t2 = 1.0;
-			                      b[j] = bold + bold;
-			                      chg = chg*chgfac_dqedip;
+			                  if ( t_dqedip == 1.0 ) {
+			                      t2_dqedip = 1.0;
+			                      b[j] = bold_dqedip + bold_dqedip;
+			                      chg_dqedip = chg_dqedip*chgfac_dqedip;
 			                  } // if (t == 1.0)
 			                  else {
-			                      if ( Math.abs(t) < 0.25 && dx[j] != 0.0 ) {
+			                      if ( Math.abs(t_dqedip) < 0.25 && dx[j] != 0.0 ) {
 			                    	  if (dx[j] >= 0.0) {
-			                    		  b[j] = Math.abs(0.25 * bold) + 3.0*dx[j];
+			                    		  b[j] = Math.abs(0.25 * bold_dqedip) + 3.0*dx[j];
 			                    	  }
 			                    	  else {
-			                    		  b[j] = -Math.abs(0.25 * bold) + 3.0*dx[j];
+			                    		  b[j] = -Math.abs(0.25 * bold_dqedip) + 3.0*dx[j];
 			                    	  }
 			                      } // if ( Math.abs(t) < 0.25 && dx[j] != 0.0 )
 			                      else {
 			                    	  if (dx[j] >= 0.0) {
-			                    		  b[j] = Math.abs(bold);
+			                    		  b[j] = Math.abs(bold_dqedip);
 			                    	  }
 			                    	  else {
-			                    		  b[j] = -Math.abs(bold);
+			                    		  b[j] = -Math.abs(bold_dqedip);
 			                    	  }
 			                      } // else
 			                  } // else
 			                  //
 			                  //  THIS TEST AVOIDS THE USER BOUNDS IN DECLARING A NEWTON STEP.
 			                  //
-			                  if ( Math.abs(alb-t)>=0.01*Math.abs(t) &&
-			                       Math.abs(aub-t) >= 0.01*Math.abs(t)) {
-			                      if ( t > 0.0 ) {
-			                          t2 = Math.max(t2,t);
+			                  if ( Math.abs(alb_dqedip-t_dqedip)>=0.01*Math.abs(t_dqedip) &&
+			                       Math.abs(aub_dqedip-t_dqedip) >= 0.01*Math.abs(t_dqedip)) {
+			                      if ( t_dqedip > 0.0 ) {
+			                          t2_dqedip = Math.max(t2_dqedip,t_dqedip);
 			                      }
 			                      else {
-			                          t2 = Math.max(t2,-t/c1516_dqedip);
+			                          t2_dqedip = Math.max(t2_dqedip,-t_dqedip/c1516_dqedip);
 			                      }
 			                  } // if ( Math.abs(alb-t)>=0.01*Math.abs(t) &&
 			              } // if (do350)
 
 			          } // for (j = 1; j <= nvars; j++)
 
-			          fulnwt = t2  <  0.99;
-			          fl = fc;
-			          dxnrm = Math.abs(dx[idamax(nvars,dx,1)]);
+			          fulnwt_dqedip = t2_dqedip  <  0.99;
+			          fl_dqedip = fc_dqedip;
+			          dxnrm_dqedip = Math.abs(dx[idamax(nvars,dx,1)]);
 			          //
 			          //  TEST FOR SMALL ABSOLUTE CHANGE IN X VALUES.
 			          //
-			          term = dxnrm  <  told_dqedip && fulnwt;
-			          if ( term) {
+			          term_dqedip = dxnrm_dqedip  <  told_dqedip && fulnwt_dqedip;
+			          if ( term_dqedip) {
 			              igo[0] = 5;
                           do30 = true;
 			              continue loop;
 			          } // if (term)
 
-			          term = dxnrm  <  dnrm2(nvars,x,1)*tolx_dqedip && fulnwt;
-			          term = term && (iters_dqedip > 1);
-			          if ( term) {
+			          term_dqedip = dxnrm_dqedip  <  dnrm2(nvars,x,1)*tolx_dqedip && fulnwt_dqedip;
+			          term_dqedip = term_dqedip && (iters_dqedip > 1);
+			          if ( term_dqedip) {
 			              igo[0] = 6;
 			          } // if (term)
 			      } // if (!retrea)
@@ -8889,12 +8889,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  TEST FOR SMALL FUNCTION NORM.
 			      //
-			      term = fc <= tolf_dqedip || term;
+			      term_dqedip = fc_dqedip <= tolf_dqedip || term_dqedip;
 			      //
 			      //  IF HAVE CONSTRAINTS MUST ALLOW AT LEAST ONE MOVE.
 			      //
-			      term = term && (mcon[0] == 0 || iters_dqedip > 1);
-			      if ( term) {
+			      term_dqedip = term_dqedip && (mcon[0] == 0 || iters_dqedip > 1);
+			      if ( term_dqedip) {
 			          igo[0] = 2;
 			          do420 = true;
 			      } // if (term)
@@ -8909,13 +8909,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  if (do410) {
 			      do410 = false;
 			      do420 = true;
-			      term = term && (!retrea);
-			      if ( term) {
+			      term_dqedip = term_dqedip && (!retrea_dqedip);
+			      if ( term_dqedip) {
 			          igo[0] = 3;
 			      }
 			      else {
-			          term = iters_dqedip >= itmax_dqedip;
-			          if ( term) {
+			          term_dqedip = iters_dqedip >= itmax_dqedip;
+			          if ( term_dqedip) {
 			              igo[0] = 7;
 			          }
 			      } //else
@@ -8923,10 +8923,10 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			  if (do420) {
 			      do420 = false;
-			      if (igotfc == 60) {
+			      if (igotfc_dqedip == 60) {
 				      do60 = true;
 			      }
-			      else if (igotfc == 180) {
+			      else if (igotfc_dqedip == 180) {
 				      do180 = true;
 			      }
 			      continue loop;
@@ -8936,10 +8936,10 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  //
 			  if (do430) {
 			      do430 = false;
-			      t = Math.sqrt(Math.max( 0.0, (fl-pv[0])* (fl+pv[0])));
-			      term = (Math.abs(fb[0]-fc)<=tolsnr_dqedip*fb[0]) && (t <= pv[0]*tolp_dqedip);
-			      term = term && (Math.abs(fc-fl)<=fb[0]*tolsnr_dqedip);
-			      term = term && fulnwt;
+			      t_dqedip = Math.sqrt(Math.max( 0.0, (fl_dqedip-pv_dqedip[0])* (fl_dqedip+pv_dqedip[0])));
+			      term_dqedip = (Math.abs(fb[0]-fc_dqedip)<=tolsnr_dqedip*fb[0]) && (t_dqedip <= pv_dqedip[0]*tolp_dqedip);
+			      term_dqedip = term_dqedip && (Math.abs(fc_dqedip-fl_dqedip)<=fb[0]*tolsnr_dqedip);
+			      term_dqedip = term_dqedip && fulnwt_dqedip;
 
 			      do410 = true;
 			      continue loop;
@@ -8978,8 +8978,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  T = MACHINE REL. PREC.
 			      //
-			      t = epsilon;
-			      tolf_dqedip = t;
+			      t_dqedip = epsilon;
+			      tolf_dqedip = t_dqedip;
 			      tolx_dqedip = tolf_dqedip;
 			      told_dqedip = tolf_dqedip;
 			      tolsnr_dqedip = 1.0D-03;
@@ -8999,11 +8999,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      lpdiff_dqedip = 2;
 			      kp = iopt[lp_dqedip];
 			      newopt_dqedip = kp  >  0;
-			      jp = Math.abs(kp);
+			      jp_dqedip = Math.abs(kp);
 			      //
 			      //  SEE IF THIS IS THE LAST OPTION.
 			      //
-			      if ( jp == 99) {
+			      if ( jp_dqedip == 99) {
 			          if ( newopt_dqedip) {
 			              //
 			              //  THE POINTER TO THE START OF OPTIONS FOR THE LINEAR
@@ -9020,31 +9020,31 @@ C     FROM THE ERROR PROCESSOR CALL.
 			              do480 = true;
 			              continue loop;
 			          }
-			      } // if (jp == 99)
+			      } // if (jp_dqedip == 99)
 			      //
 			      //  CHANGE PRINT OPTION.
 			      //
-			      if ( jp == 1) {
+			      if ( jp_dqedip == 1) {
 			          if ( newopt_dqedip) {
 			        	  iprint_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
 			          continue loop;
-			      } // if (jp == 1)
+			      } // if (jp_dqedip == 1)
                   //
 			      //  SEE IF MAX. NUMBER OF ITERATIONS CHANGING.
 			      //
-			      if ( jp == 2) {
+			      if ( jp_dqedip == 2) {
 			          if ( newopt_dqedip) {
 			    	      itmax_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
 			          continue loop;
-			      } // if (jp == 2)
+			      } // if (jp_dqedip == 2)
 			      //
 			      //  SEE IF BOUNDS FOR THE TRUST REGION ARE BEING PASSED.
 			      //
-			      if ( jp == 3) {
+			      if ( jp_dqedip == 3) {
 			          if ( newopt_dqedip) {
 			              for (m = 1; m <= nvars; m++) {
 			        	      bb[m] = ropt[iopt[lp_dqedip+1]+m-1];
@@ -9053,40 +9053,40 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          } // if (newopt)
 			          do480 = true;
                       continue loop;
-			      } // if (jp == 3)
+			      } // if (jp_dqedip == 3)
 			      //
 			      //  CHANGE TOLERANCE ON THE LENGTH OF THE RESIDUALS.
 			      //
-			      if ( jp == 4) {
+			      if ( jp_dqedip == 4) {
 			          if ( newopt_dqedip) { 
 			        	  tolf_dqedip = ropt[iopt[lp_dqedip+1]];
 			          }
 			          do480 = true;
 			          continue loop;
-			      } // if (jp == 4)
+			      } // if (jp_dqedip == 4)
 			      //
 			      //  CHANGE TOLERANCE ON THE NORM OF THE RELATIVE
 			      //  CHANGE TO THE PARAMETERS.
 			      //
-			      if ( jp == 5) {
+			      if ( jp_dqedip == 5) {
 			          if ( newopt_dqedip) {
 			        	  tolx_dqedip = ropt[iopt[lp_dqedip+1]];
 			          }
 			          do480 = true;
 			          continue loop;
-			      } // if (jp == 5)
+			      } // if (jp_dqedip == 5)
 			      //
 			      //  CHANGE TOLERANCE ON ABSOLUTE CHANGE TO THE PARAMETERS.
 			      //
-			      if ( jp == 6) {
+			      if ( jp_dqedip == 6) {
 			          if ( newopt_dqedip) {
 			        	  told_dqedip = ropt[iopt[lp_dqedip+1]];
 			          }
 			          do480 = true;
 			          continue loop;
-			      } // if (jp == 6)
+			      } // if (jp_dqedip == 6)
 
-			      if ( jp == 7) {
+			      if ( jp_dqedip == 7) {
 			          //
 			          //  CHANGE TOLERANCE FOR RELATIVE AGREEMENT BETWEEN
 			          //  BEST FUNCTION NORM, LAST FUNCTION NORM AND THE
@@ -9097,9 +9097,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          }
 			          do480 = true;
 			          continue loop;
-			      } // if (jp == 7)
+			      } // if (jp_dqedip == 7)
 
-			      if ( jp == 8) {
+			      if ( jp_dqedip == 8) {
 			          //
 			          //  CHANGE TOLERANCE FOR AGREEMENT BETWEEN PREDICTED
 			          //  VALUE OF RESIDUAL NORM AND THE PREVIOUS VALUE OF
@@ -9110,49 +9110,49 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          }
 			          do480 = true;
 			          continue loop;
-			      } // if (jp == 8)
+			      } // if (jp_dqedip == 8)
 			      //
 			      //  CHANGE THE PRINT LEVEL IN THE ERROR PROCESSOR.
 			      //
-			      if ( jp == 9) {
+			      if ( jp_dqedip == 9) {
 			          if ( newopt_dqedip) {
 			        	  level_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
                       continue loop;
-			      } // if (jp == 9)
+			      } // if (jp_dqedip == 9)
 			      //
 			      //  PASS AN OPTION ARRAY TO THE CONSTRAINED LINEAR SOLVER.
 			      //  THIS OPTION IS A POINTER TO THE START OF THE OPTION
 			      //  ARRAY FOR THE SUBPROGRAM.
 			      //
-			      if ( jp == 10) {
+			      if ( jp_dqedip == 10) {
 			          if ( newopt_dqedip) {
 			        	  ipls_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
 			          continue loop;
-			      } // if (jp == 10)
+			      } // if (jp_dqedip == 10)
 			      //
 			      //  MOVE THE PROCESSING POINTER BY THE VALUE IN THE
 			      //  NEXT ENTRY OF THE OPTION ARRAY.  THIS DEVICE IS
 			      //  INCLUDED SO THAT PASSING OPTIONS TO LOWER LEVEL
 			      //  SUBROUTINES IS EASY TO DO.
 			      //
-			      if ( jp == 11) {
+			      if ( jp_dqedip == 11) {
 			          if ( newopt_dqedip) {
 			    	      lpdiff_dqedip = iopt[lp_dqedip+1];
 			          }
 			          do480 = true;
 			          continue loop;
-			      } // if (jp == 11)
+			      } // if (jp_dqedip == 11)
 			      //
 			      //  SAW AN OPTION (OR GARBAGE) THAT IS NOT ON THE LIST.
 			      //
 			      xmess = "dqedip. invalid option processed. i1=iopt(*) entry. i2=iopt(i1).";
-			      nerr = 8;
+			      nerr_dqedip = 8;
 			      igo[0] = 16;
-			      xerrwv(xmess,nerr,level_dqedip,2,lp_dqedip,iopt[lp_dqedip],0,rdum,rdum);
+			      xerrwv(xmess,nerr_dqedip,level_dqedip,2,lp_dqedip,iopt[lp_dqedip],0,rdum_dqedip,rdum_dqedip);
 			      iflag_dqedip = 0;
 
 			      return;
