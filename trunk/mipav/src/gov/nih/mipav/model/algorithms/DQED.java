@@ -139,6 +139,26 @@ public abstract class DQED {
 	private int jp_dbolsm;
 	private int lds_dbolsm;
 	private int level_dbolsm;
+	private int lgopr_dbolsm = 0;
+	private int lp_dbolsm = 0;
+	private int mrows_dbolsm = 0;
+	private int mval_dbolsm = 0;
+	private int nerr_dbolsm = 0;
+	private int nlevel_dbolsm;
+	private int nsetb_dbolsm = 0;
+	private double rdum_dbolsm = 0.0;
+	private double sc_dbolsm[] = new double[1];
+	private double ss_dbolsm[] = new double[1];
+	private double t_dbolsm;
+	private double t1_dbolsm;
+	private double t2_dbolsm;
+	private double tolind_dbolsm = 0.0;
+	private double tolsze_dbolsm;
+	private double wlarge_dbolsm;
+	private double wla_dbolsm = 0.0;
+	private double wlb_dbolsm = 0.0;
+	private double wt_dbolsm = 1.0;
+	private double xnew_dbolsm;
 	
 	private double alb_dqedip = 0.0;
 	private double alfac_dqedip = 0.0;
@@ -3679,28 +3699,8 @@ public abstract class DQED {
 			  int i = 0;
 			  //int ind(ncols)		  
 			  int j;
-			  int lgopr = 0;
-			  int lp = 0;
-			  int mrows = 0;
-			  int mval = 0;
 			  int n;
-			  int nerr = 0;
-			  int nlevel;
-			  int nsetb = 0;
-			  double rdum = 0.0;
-			  double sc[] = new double[1];
-			  double ss[] = new double[1];
-			  double t;
-			  double t1;
-			  double t2;
-			  double tolind = 0.0;
-			  double tolsze;
 			  //double w(mdw,*)
-			  double wlarge;
-			  double wla = 0.0;
-			  double wlb = 0.0;
-			  double wt = 1.0;
-			  double xnew;
 			  boolean do50 = false;
 			  boolean do60 = false;
 			  boolean do90 = false;
@@ -3734,27 +3734,27 @@ public abstract class DQED {
 			//  VERIFY THAT THE PROBLEM DIMENSIONS ARE DEFINED PROPERLY.
 			//
 			  if ( minput<=0) {
-			    nerr = 31;
+			    nerr_dbolsm = 31;
 			    xerrwv("dbolsm(). the number of rows=(i1) must be positive.",
-			      nerr,level_dbolsm,1,minput,idum_dbolsm,0,rdum,rdum);
-			    mode[0] = -nerr;
+			      nerr_dbolsm,level_dbolsm,1,minput,idum_dbolsm,0,rdum_dbolsm,rdum_dbolsm);
+			    mode[0] = -nerr_dbolsm;
 				return;
 			  } // if (minput <= 0)
 
 			  if ( ncols<=0) {
-			      nerr = 32;
+			      nerr_dbolsm = 32;
 			      xerrwv("dbolsm(). the number of cols.=(i1) must be positive.",
-			             nerr,level_dbolsm,1,ncols,idum_dbolsm,0,rdum,rdum);
-			      mode[0] = -nerr;
+			             nerr_dbolsm,level_dbolsm,1,ncols,idum_dbolsm,0,rdum_dbolsm,rdum_dbolsm);
+			      mode[0] = -nerr_dbolsm;
 			      return;
 			  } // if (ncols <= 0)
 
 			  if ( mdw < minput) {
-			      nerr = 33;
+			      nerr_dbolsm = 33;
 			      xerrwv("dbolsm(). the row dimension of w(,)=(i1) must be >= the number of rows=(i2).",
-			    		  nerr,level_dbolsm,2,mdw,mrows,0,rdum,rdum);
+			    		  nerr_dbolsm,level_dbolsm,2,mdw,mrows_dbolsm,0,rdum_dbolsm,rdum_dbolsm);
 			      
-			      mode[0] = -nerr;
+			      mode[0] = -nerr_dbolsm;
 				  return;
 	          } // if (mdw < minput)
 			//
@@ -3762,10 +3762,10 @@ public abstract class DQED {
 			//
 			  for (j = 1; j <=ncols; j++) {
 			     if ( ind[j] < 1 || ind[j] > 4) {
-			         nerr = 34;
+			         nerr_dbolsm = 34;
 			         xerrwv("dbolsm(). for j=(i1) the constraint indicator must be 1-4.",
-			                 nerr,level_dbolsm,2,j,ind[j],0,rdum,rdum);
-			         mode[0] = -nerr;
+			                 nerr_dbolsm,level_dbolsm,2,j,ind[j],0,rdum_dbolsm,rdum_dbolsm);
+			         mode[0] = -nerr_dbolsm;
 			         return;
 			     } // if (ind[j] < 1 || ind[j] > 4)
 			  } // for (j = 1; j <= ncols; j++)
@@ -3773,10 +3773,10 @@ public abstract class DQED {
 			  for (j = 1; j <= ncols; j++) {
 			     if ( ind[j] == 3) {
 			         if ( bu[j] < bl[j]) {
-			             nerr = 35;
+			             nerr_dbolsm = 35;
 			             xerrwv("dbolsm(). for j=(i1) the lower bound=(r1) is >  the upper bound=(r2).",
-			            		 nerr,level_dbolsm,1,j,idum_dbolsm,2,bl[j],bu[j]);
-			             mode[0] = -nerr;
+			            		 nerr_dbolsm,level_dbolsm,1,j,idum_dbolsm,2,bl[j],bu[j]);
+			             mode[0] = -nerr_dbolsm;
 			             return;
 			         } // if (bu[j] < bl[j])
 			     } // if (ind[j] == 3)
@@ -3786,18 +3786,18 @@ public abstract class DQED {
 			//
 			  for (j = 1; j <= ncols; j++) {
 			     if ( ibasis[j] < 1 || ibasis[j] > ncols) {
-			         nerr = 36;
+			         nerr_dbolsm = 36;
 			         xerrwv("dbolsm(). the input order of columns=(i1) is not between 1 and ncols=(i2).",
-			        		 nerr,level_dbolsm,2,ibasis[j],ncols,0,rdum,rdum);
-			         mode[0] = -nerr;
+			        		 nerr_dbolsm,level_dbolsm,2,ibasis[j],ncols,0,rdum_dbolsm,rdum_dbolsm);
+			         mode[0] = -nerr_dbolsm;
 			         return;
 			     } // if ( ibasis[j] < 1 || ibasis[j] > ncols)
 
 			     if ( ibb[j]<=0) {
-			         nerr = 37;
+			         nerr_dbolsm = 37;
 			         xerrwv("dbolsm(). the bound polarity flag in component j=(i1) must be positive. now=(i2).",
-			        		nerr,level_dbolsm,2,j,ibb[j], 0,rdum,rdum);
-			         mode[0] = -nerr;
+			        		nerr_dbolsm,level_dbolsm,2,j,ibb[j], 0,rdum_dbolsm,rdum_dbolsm);
+			         mode[0] = -nerr_dbolsm;
 				     return;
 
 			     } // if (ibb[j] <= 0)
@@ -3815,7 +3815,7 @@ public abstract class DQED {
 				  do50 = false;
 				  do60 = true;
 				  if ( iprint_dbolsm > 0) {
-				      dmout(mrows,ncols+1,mdw,w,"pretri. input matrix",-4);
+				      dmout(mrows_dbolsm,ncols+1,mdw,w,"pretri. input matrix",-4);
 				      dvout(ncols,bl,"lower bounds",-4);
 				      dvout(ncols,bu,"upper bounds",-4);
 				  }
@@ -3828,9 +3828,9 @@ public abstract class DQED {
 				      do180 = true;
 			      }
 			      else {
-			          nerr = 22;
+			          nerr_dbolsm = 22;
 			          xerrwv("dbolsm(). more than (i1)=itmax iterations solving bounded least squares problem.",
-			                  nerr,level_dbolsm,1,itmax_dbolsm,idum_dbolsm,0,rdum,rdum);
+			                  nerr_dbolsm,level_dbolsm,1,itmax_dbolsm,idum_dbolsm,0,rdum_dbolsm,rdum_dbolsm);
 			          //
 			          // RESCALE AND TRANSLATE VARIABLES
 			          //
@@ -3845,7 +3845,7 @@ public abstract class DQED {
 			    	   //
 					   //  SOLVE THE TRIANGULAR SYSTEM
 					   //
-					   lgopr = 1;
+					   lgopr_dbolsm = 1;
 					   do260 = true;
 			       }
 			       else {
@@ -3858,7 +3858,7 @@ public abstract class DQED {
 			   } // if (do90)
 
 			  if (do100) {
-			      mode[0] = nsetb;
+			      mode[0] = nsetb_dbolsm;
 			      return;
 			  }
 
@@ -3867,7 +3867,7 @@ public abstract class DQED {
 			  //
 			  if (do130) {
                   do130 = false;
-                  for (j = 1; j <= nsetb; j++) {
+                  for (j = 1; j <= nsetb_dbolsm; j++) {
                 	  rw[j] = x[j];
                   }
                   
@@ -3875,7 +3875,7 @@ public abstract class DQED {
                 	  x[j] = 0.0;
                   }
 
-			      for (j = 1; j <= nsetb; j++) {
+			      for (j = 1; j <= nsetb_dbolsm; j++) {
 			          jcol_dbolsm = Math.abs(ibasis[j]);
 			          x[jcol_dbolsm] = rw[j]*Math.abs(scl[jcol_dbolsm]);
 			      } // for (j = 1; j <= nsetb; j++)
@@ -3899,22 +3899,22 @@ public abstract class DQED {
 			          }
 			      } // (j = 1; j <= ncols; j++)
 
-			      arr = new double[mrows-mval+1];
-			      for (j = 1; j <= mrows - mval; j++) {
-			    	  arr[j] = w[Math.min(mval+1,mrows)+j-1][ncols+1];
+			      arr = new double[mrows_dbolsm-mval_dbolsm+1];
+			      for (j = 1; j <= mrows_dbolsm - mval_dbolsm; j++) {
+			    	  arr[j] = w[Math.min(mval_dbolsm+1,mrows_dbolsm)+j-1][ncols+1];
 			      }
-			      dscal ( mrows-mval, wt, arr, 1 );
-			      for (j = 1; j <= mrows - mval; j++) {
-			    	  w[Math.min(mval+1,mrows)+j-1][ncols+1] = arr[j];
+			      dscal ( mrows_dbolsm-mval_dbolsm, wt_dbolsm, arr, 1 );
+			      for (j = 1; j <= mrows_dbolsm - mval_dbolsm; j++) {
+			    	  w[Math.min(mval_dbolsm+1,mrows_dbolsm)+j-1][ncols+1] = arr[j];
 			      }
 
-			      arr = new double[mrows - Math.max(nsetb,mval) + 1];
-			      for (j = 1; j <= mrows - Math.max(nsetb,mval); j++) {
-			    	  arr[j] = w[Math.min((Math.max(nsetb,mval) + 1),mrows) + j - 1][ncols+1];
+			      arr = new double[mrows_dbolsm - Math.max(nsetb_dbolsm,mval_dbolsm) + 1];
+			      for (j = 1; j <= mrows_dbolsm - Math.max(nsetb_dbolsm,mval_dbolsm); j++) {
+			    	  arr[j] = w[Math.min((Math.max(nsetb_dbolsm,mval_dbolsm) + 1),mrows_dbolsm) + j - 1][ncols+1];
 			      }
-			      rnorm[0] = dnrm2(mrows-Math.max(nsetb,mval),arr,1);
+			      rnorm[0] = dnrm2(mrows_dbolsm-Math.max(nsetb_dbolsm,mval_dbolsm),arr,1);
                   if (igopr_dbolsm == 1) {
-                	  mode[0] = -nerr;
+                	  mode[0] = -nerr_dbolsm;
                 	  return;
                   }
                   else if (igopr_dbolsm == 2) {
@@ -3937,15 +3937,15 @@ public abstract class DQED {
 		        	  ww[j] = 0.0;
 		          }
 
-			      for (j = nsetb + 1; j <= ncols; j++) {
+			      for (j = nsetb_dbolsm + 1; j <= ncols; j++) {
 			          jcol_dbolsm = Math.abs ( ibasis[j] );
-			          arr = new double[mrows-nsetb+1];
-			          arr2 = new double[mrows-nsetb+1];
-			          for (n = 1; n <= mrows - nsetb; n++) {
-			        	  arr[n] = w[Math.min(nsetb+1, mrows) + n - 1][j];
-			        	  arr2[n] = w[Math.min(nsetb+1,mrows) + n - 1][ncols+1];
+			          arr = new double[mrows_dbolsm-nsetb_dbolsm+1];
+			          arr2 = new double[mrows_dbolsm-nsetb_dbolsm+1];
+			          for (n = 1; n <= mrows_dbolsm - nsetb_dbolsm; n++) {
+			        	  arr[n] = w[Math.min(nsetb_dbolsm+1, mrows_dbolsm) + n - 1][j];
+			        	  arr2[n] = w[Math.min(nsetb_dbolsm+1,mrows_dbolsm) + n - 1][ncols+1];
 			          }
-			          ww[j] = ddot(mrows-nsetb,arr,1,arr2,1)*Math.abs(scl[jcol_dbolsm]);
+			          ww[j] = ddot(mrows_dbolsm-nsetb_dbolsm,arr,1,arr2,1)*Math.abs(scl[jcol_dbolsm]);
 			      } // for (j = nsetb + 1; j <= ncols; j++)
 
 			      if ( iprint_dbolsm > 0) {
@@ -3960,7 +3960,7 @@ public abstract class DQED {
 			      //
 			      //  IF ACTIVE SET = NUMBER OF TOTAL ROWS, QUIT.
 			      //
-			  if ( nsetb == mrows) {
+			  if ( nsetb_dbolsm == mrows_dbolsm) {
 			      found_dbolsm = false;
 			      do90 = true;
 			      continue loop;
@@ -3969,66 +3969,66 @@ public abstract class DQED {
 			  //  CHOOSE AN EXTREMAL COMPONENT OF GRADIENT VECTOR
 			  //  FOR A CANDIDATE TO BECOME NON-ACTIVE.
 			  //
-			  wlarge = -big_dbolsm;
+			  wlarge_dbolsm = -big_dbolsm;
 			  jbig_dbolsm = 0;
 			  cnz_dbolsm = false;
 
-			  forLoop: for (j = nsetb + 1; j <= ncols; j++) {
+			  forLoop: for (j = nsetb_dbolsm + 1; j <= ncols; j++) {
 
-			    t = ww[j];
+			    t_dbolsm = ww[j];
 			    //
 			    // SKIP LOOKING AT COMPONENTS FLAGGED AS NON-CANDIDATES.
 			    //
-			    if ( t == big_dbolsm) {
+			    if ( t_dbolsm == big_dbolsm) {
 			      continue forLoop;
 			    }
 
 			    itemp_dbolsm = ibasis[j];
 			    jcol_dbolsm = Math.abs(itemp_dbolsm);
-			    if ( nsetb < mval) {
-			    	 arr = new double[nsetb+1];
-			    	 for (n = 1; n <= nsetb; n++) {
+			    if ( nsetb_dbolsm < mval_dbolsm) {
+			    	 arr = new double[nsetb_dbolsm+1];
+			    	 for (n = 1; n <= nsetb_dbolsm; n++) {
 			    		 arr[n] = w[n][j];
 			    	 }
-			         cl1_dbolsm[0] = dnrm2(nsetb,arr,1);
-			         arr = new double[mval-nsetb+1];
-			         for (n = 1; n <= mval-nsetb; n++) {
-			        	 arr[n] = w[Math.min(nsetb+1,mrows)+n-1][j];
+			         cl1_dbolsm[0] = dnrm2(nsetb_dbolsm,arr,1);
+			         arr = new double[mval_dbolsm-nsetb_dbolsm+1];
+			         for (n = 1; n <= mval_dbolsm-nsetb_dbolsm; n++) {
+			        	 arr[n] = w[Math.min(nsetb_dbolsm+1,mrows_dbolsm)+n-1][j];
 			         }
-			         cl2_dbolsm[0] = dnrm2(mval-nsetb,arr,1);
+			         cl2_dbolsm[0] = dnrm2(mval_dbolsm-nsetb_dbolsm,arr,1);
 			         colabv_dbolsm = cl1_dbolsm[0];
 			         colblo_dbolsm = cl2_dbolsm[0];
 			    } // if
 			    else {
-			    	 arr = new double[mval+1];
-			    	 for (n = 1; n <= mval; n++) {
+			    	 arr = new double[mval_dbolsm+1];
+			    	 for (n = 1; n <= mval_dbolsm; n++) {
 			    		 arr[n] = w[n][j];
 			    	 }
-			         cl1_dbolsm[0] = dnrm2(mval,arr,1);
-			         arr = new double[nsetb-mval+1];
-			         for (n = 1; n <= nsetb-mval; n++) {
-			        	 arr[n] = w[Math.min(mval+1,mrows)+n-1][j];
+			         cl1_dbolsm[0] = dnrm2(mval_dbolsm,arr,1);
+			         arr = new double[nsetb_dbolsm-mval_dbolsm+1];
+			         for (n = 1; n <= nsetb_dbolsm-mval_dbolsm; n++) {
+			        	 arr[n] = w[Math.min(mval_dbolsm+1,mrows_dbolsm)+n-1][j];
 			         }
-			         cl2_dbolsm[0] = Math.abs(wt)*dnrm2(nsetb-mval,arr,1);
-			         arr = new double[mrows-nsetb+1];
-			         for (n = 1; n <= mrows-nsetb; n++) {
-			        	 arr[n] = w[Math.min(nsetb+1, mrows)+n-1][j];
+			         cl2_dbolsm[0] = Math.abs(wt_dbolsm)*dnrm2(nsetb_dbolsm-mval_dbolsm,arr,1);
+			         arr = new double[mrows_dbolsm-nsetb_dbolsm+1];
+			         for (n = 1; n <= mrows_dbolsm-nsetb_dbolsm; n++) {
+			        	 arr[n] = w[Math.min(nsetb_dbolsm+1, mrows_dbolsm)+n-1][j];
 			         }
-			         cl3_dbolsm = Math.abs(wt)*dnrm2(mrows-nsetb,arr,1);
-			         drotg(cl1_dbolsm,cl2_dbolsm,sc,ss);
+			         cl3_dbolsm = Math.abs(wt_dbolsm)*dnrm2(mrows_dbolsm-nsetb_dbolsm,arr,1);
+			         drotg(cl1_dbolsm,cl2_dbolsm,sc_dbolsm,ss_dbolsm);
 			         colabv_dbolsm = Math.abs(cl1_dbolsm[0]);
 			         colblo_dbolsm = cl3_dbolsm;
 			    } // else
 
 			    if ( itemp_dbolsm < 0) {
 			      if ((ibb[jcol_dbolsm] % 2) == 0) {
-			    	  t = -t;
+			    	  t_dbolsm = -t_dbolsm;
 			      }
 			    
 			    //
 			    //  SKIP LOOKING AT COMPONENTS THAT WOULD NOT DECREASE OBJECTIVE.
 			    //
-			      if ( t < 0.0 ) {
+			      if ( t_dbolsm < 0.0 ) {
 			        continue forLoop;
 			      }
 
@@ -4039,22 +4039,22 @@ public abstract class DQED {
 			//  STRICTLY ABOVE THE PIVOT LINE.
 			//
 			     if ( (colabv_dbolsm == 0.0) && (!cnz_dbolsm)) {
-			         t = colblo_dbolsm*Math.abs(scl[jcol_dbolsm]);
-			         if ( wlarge < t) {
-			             wlarge = t;
+			         t_dbolsm = colblo_dbolsm*Math.abs(scl[jcol_dbolsm]);
+			         if ( wlarge_dbolsm < t_dbolsm) {
+			             wlarge_dbolsm = t_dbolsm;
 			             jbig_dbolsm = j;
-			         } // if (wlarge < t)
+			         } // if (wlarge_dbolsm < t_dbolsm)
 			     } // if ( (colabv_dbolsm == 0.0) && (!cnz_dbolsm))
 			     else {
 			         if (!cnz_dbolsm) {
-			             wla = 0.0;
-			             wlb = 0.0;
+			             wla_dbolsm = 0.0;
+			             wlb_dbolsm = 0.0;
 			             cnz_dbolsm = true;
 			         } // if (!cnz_dbolsm)
 
-			       if ( Math.sqrt(colblo_dbolsm)*Math.sqrt(wla) >= Math.sqrt(colabv_dbolsm)*Math.sqrt(wlb)) {
-			            wlb=colblo_dbolsm;
-			            wla=colabv_dbolsm;
+			       if ( Math.sqrt(colblo_dbolsm)*Math.sqrt(wla_dbolsm) >= Math.sqrt(colabv_dbolsm)*Math.sqrt(wlb_dbolsm)) {
+			            wlb_dbolsm=colblo_dbolsm;
+			            wla_dbolsm=colabv_dbolsm;
 			            jbig_dbolsm=j;
 			       } 
 
@@ -4082,7 +4082,7 @@ public abstract class DQED {
 
 			  if ( cnz_dbolsm) {
 
-			    if ( wlb<=wla*tolind) {
+			    if ( wlb_dbolsm<=wla_dbolsm*tolind_dbolsm) {
 			      found_dbolsm = false;
 			      if ( iprint_dbolsm > 0) {
 			        Preferences.debug("Variable is dependent, not used.\n");
@@ -4092,122 +4092,122 @@ public abstract class DQED {
 			      do200 = true;
 			      continue loop;
 
-			    } // if ( wlb<=wla*tolind)
+			    } // if ( wlb_dbolsm<=wla_dbolsm*tolind_dbolsm)
 
 			  } // if (cnz_dbolsm)
 			  //
 			  //  SWAP MATRIX COLS. NSETB+1 AND JBIG, PLUS POINTER INFO., AND
 			  //  GRADIENT VALUES.
 			  //
-			  nsetb = nsetb + 1;
-			  if ( nsetb != jbig_dbolsm) {
-				  for (n = 1; n <= mrows; n++) {
-			          temp = w[n][nsetb];
-			          w[n][nsetb] = w[n][jbig_dbolsm];
+			  nsetb_dbolsm = nsetb_dbolsm + 1;
+			  if ( nsetb_dbolsm != jbig_dbolsm) {
+				  for (n = 1; n <= mrows_dbolsm; n++) {
+			          temp = w[n][nsetb_dbolsm];
+			          w[n][nsetb_dbolsm] = w[n][jbig_dbolsm];
 			          w[n][jbig_dbolsm] = temp;
 				  }
-			      temp = ww[nsetb];
-			      ww[nsetb] = ww[jbig_dbolsm];
+			      temp = ww[nsetb_dbolsm];
+			      ww[nsetb_dbolsm] = ww[jbig_dbolsm];
 			      ww[jbig_dbolsm] = temp;
-			      itemp_dbolsm = ibasis[nsetb];
-			      ibasis[nsetb] = ibasis[jbig_dbolsm];
+			      itemp_dbolsm = ibasis[nsetb_dbolsm];
+			      ibasis[nsetb_dbolsm] = ibasis[jbig_dbolsm];
 			      ibasis[jbig_dbolsm] = itemp_dbolsm;
-			  } // if (nsetb != jbig)
+			  } // if (nsetb_dbolsm != jbig)
 			  //
 			  //  ELIMINATE ENTRIES BELOW THE PIVOT LINE IN COL. NSETB.
 			  //
-			  if ( mrows > nsetb) {
+			  if ( mrows_dbolsm > nsetb_dbolsm) {
 
-			      for (i = mrows; i >= nsetb + 1; i--) {
-			         if ( i != mval+1 ) {
+			      for (i = mrows_dbolsm; i >= nsetb_dbolsm + 1; i--) {
+			         if ( i != mval_dbolsm+1 ) {
 			           arr = new double[1];
-			           arr[0] = w[i-1][nsetb];
+			           arr[0] = w[i-1][nsetb_dbolsm];
 			           arr2 = new double[1];
-			           arr2[0] = w[i][nsetb];
-			           drotg(arr,arr2,sc,ss);
-			           w[i-1][nsetb] = arr[0];
-			           w[i][nsetb] = 0.0;
-			           arr = new double[ncols-nsetb+2];
-			           arr2 = new double[ncols-nsetb+2];
-			           for (n = 1; n <= ncols-nsetb+1; n++) {
-			        	   arr[n] = w[i-1][nsetb + n];
-			        	   arr2[n] = w[i][nsetb+n];
+			           arr2[0] = w[i][nsetb_dbolsm];
+			           drotg(arr,arr2,sc_dbolsm,ss_dbolsm);
+			           w[i-1][nsetb_dbolsm] = arr[0];
+			           w[i][nsetb_dbolsm] = 0.0;
+			           arr = new double[ncols-nsetb_dbolsm+2];
+			           arr2 = new double[ncols-nsetb_dbolsm+2];
+			           for (n = 1; n <= ncols-nsetb_dbolsm+1; n++) {
+			        	   arr[n] = w[i-1][nsetb_dbolsm + n];
+			        	   arr2[n] = w[i][nsetb_dbolsm+n];
 			           }
-			           drot(ncols-nsetb+1,arr,1,arr2,1,sc[0],ss[0]);
-			           for (n = 1; n <= ncols-nsetb+1; n++) {
-			        	   w[i-1][nsetb + n] = arr[n];
-			        	   w[i][nsetb+n] = arr2[n];;
+			           drot(ncols-nsetb_dbolsm+1,arr,1,arr2,1,sc_dbolsm[0],ss_dbolsm[0]);
+			           for (n = 1; n <= ncols-nsetb_dbolsm+1; n++) {
+			        	   w[i-1][nsetb_dbolsm + n] = arr[n];
+			        	   w[i][nsetb_dbolsm+n] = arr2[n];;
 			           }
-			         } // (i != mval+1)
-			      } // for (i = mrows; i >= nsetb + 1; i--)
+			         } // (i != mval_dbolsm+1)
+			      } // for (i = mrows_dbolsm; i >= nsetb_dbolsm + 1; i--)
 
-			      if ( (mval>=nsetb) && (mval < mrows)) {
-			          t = w[nsetb][nsetb];
-			          if ( t != 0.0 ) {
-			              t = wt*w[mval+1][nsetb]/t;
+			      if ( (mval_dbolsm>=nsetb_dbolsm) && (mval_dbolsm < mrows_dbolsm)) {
+			          t_dbolsm = w[nsetb_dbolsm][nsetb_dbolsm];
+			          if ( t_dbolsm != 0.0 ) {
+			              t_dbolsm = wt_dbolsm*w[mval_dbolsm+1][nsetb_dbolsm]/t_dbolsm;
 			          }
 			          else {
-			              t = big_dbolsm;
+			              t_dbolsm = big_dbolsm;
 			          }
 
-			          if ( tolind*Math.abs(t) > 1.0) {
-			        	  for (n = 1; n <= ncols-nsetb+2; n++) {
-			        		  temp = w[nsetb][nsetb+n-1];
-			        		  w[nsetb][nsetb+n-1] = w[mval+1][nsetb+n-1];
-			        		  w[mval+1][nsetb+n-1] = temp;
+			          if ( tolind_dbolsm*Math.abs(t_dbolsm) > 1.0) {
+			        	  for (n = 1; n <= ncols-nsetb_dbolsm+2; n++) {
+			        		  temp = w[nsetb_dbolsm][nsetb_dbolsm+n-1];
+			        		  w[nsetb_dbolsm][nsetb_dbolsm+n-1] = w[mval_dbolsm+1][nsetb_dbolsm+n-1];
+			        		  w[mval_dbolsm+1][nsetb_dbolsm+n-1] = temp;
 			        	  }
-			        	  for (n = 1; n <= ncols-nsetb+2; n++) {
-			        		  w[nsetb][nsetb+n-1] = wt * w[nsetb][nsetb+n-1];
+			        	  for (n = 1; n <= ncols-nsetb_dbolsm+2; n++) {
+			        		  w[nsetb_dbolsm][nsetb_dbolsm+n-1] = wt_dbolsm * w[nsetb_dbolsm][nsetb_dbolsm+n-1];
 			        	  }
-			              for (n = 1; n <= ncols-nsetb+2; n++) {
-			            	  w[mval+1][nsetb+n-1] = 1.0/wt * w[mval+1][nsetb+n-1];
+			              for (n = 1; n <= ncols-nsetb_dbolsm+2; n++) {
+			            	  w[mval_dbolsm+1][nsetb_dbolsm+n-1] = 1.0/wt_dbolsm * w[mval_dbolsm+1][nsetb_dbolsm+n-1];
 			              }
 			          } // if ( tolind*Math.abs(t) > 1.0)
 
 			          arr = new double[1];
-			          arr[0] = w[nsetb][nsetb];
+			          arr[0] = w[nsetb_dbolsm][nsetb_dbolsm];
 			          arr2 = new double[1];
-			          arr2[0] = w[mval+1][nsetb];
-			          drotg(arr,arr2,sc,ss);
-			          w[nsetb][nsetb] = arr[0];
-			          w[mval+1][nsetb] = 0.0;
-			          arr = new double[ncols-nsetb+2];
-			          arr2 = new double[ncols-nsetb+2];
-			          for (n = 1; n <= ncols-nsetb+1; n++) {
-			        	  arr[n] = w[nsetb][nsetb+n];
-			        	  arr2[n] = w[mval+1][nsetb+n];
+			          arr2[0] = w[mval_dbolsm+1][nsetb_dbolsm];
+			          drotg(arr,arr2,sc_dbolsm,ss_dbolsm);
+			          w[nsetb_dbolsm][nsetb_dbolsm] = arr[0];
+			          w[mval_dbolsm+1][nsetb_dbolsm] = 0.0;
+			          arr = new double[ncols-nsetb_dbolsm+2];
+			          arr2 = new double[ncols-nsetb_dbolsm+2];
+			          for (n = 1; n <= ncols-nsetb_dbolsm+1; n++) {
+			        	  arr[n] = w[nsetb_dbolsm][nsetb_dbolsm+n];
+			        	  arr2[n] = w[mval_dbolsm+1][nsetb_dbolsm+n];
 			          }
-			          drot(ncols-nsetb+1,arr,1,arr2,1,sc[0],ss[0]);
-			          for (n = 1; n <= ncols-nsetb+1; n++) {
-			        	  w[nsetb][nsetb+n] = arr[n];
-			        	  w[mval+1][nsetb+n] = arr2[n];
+			          drot(ncols-nsetb_dbolsm+1,arr,1,arr2,1,sc_dbolsm[0],ss_dbolsm[0]);
+			          for (n = 1; n <= ncols-nsetb_dbolsm+1; n++) {
+			        	  w[nsetb_dbolsm][nsetb_dbolsm+n] = arr[n];
+			        	  w[mval_dbolsm+1][nsetb_dbolsm+n] = arr2[n];
 			          }
-			      } // if ( (mval>=nsetb) && (mval < mrows))
+			      } // if ( (mval_dbolsm>=nsetb_dbolsm) && (mval_dbolsm < mrows_dbolsm))
 
-			  } // if (mrows > nsetb)
+			  } // if (mrows_dbolsm > nsetb_dbolsm)
 
-			  if ( w[nsetb][nsetb] == 0.0 ) {
-			      ww[nsetb] = big_dbolsm;
-			      nsetb = nsetb - 1;
+			  if ( w[nsetb_dbolsm][nsetb_dbolsm] == 0.0 ) {
+			      ww[nsetb_dbolsm] = big_dbolsm;
+			      nsetb_dbolsm = nsetb_dbolsm - 1;
 			      if ( iprint_dbolsm > 0) {
 			        Preferences.debug("Pivot is zero, not used.\n");
 			      }
 
 			      do200 = true;
 			      continue loop;
-			  } // if ( w[nsetb][nsetb] == 0.0 )
+			  } // if ( w[nsetb_dbolsm][nsetb_dbolsm] == 0.0 )
 			  //
 			  //  CHECK THAT NEW VARIABLE IS MOVING IN THE RIGHT DIRECTION.
 			  //
-			  itemp_dbolsm = ibasis[nsetb];
+			  itemp_dbolsm = ibasis[nsetb_dbolsm];
 			  jcol_dbolsm = Math.abs(itemp_dbolsm);
-			  xnew = (w[nsetb][ncols+1]/w[nsetb][nsetb])/Math.abs(scl[jcol_dbolsm]);
+			  xnew_dbolsm = (w[nsetb_dbolsm][ncols+1]/w[nsetb_dbolsm][nsetb_dbolsm])/Math.abs(scl[jcol_dbolsm]);
 
 			  if ( itemp_dbolsm < 0) {
-			      if ( ww[nsetb]>= 0.0 && xnew<= 0.0 ) {
+			      if ( ww[nsetb_dbolsm]>= 0.0 && xnew_dbolsm<= 0.0 ) {
 			    	  do230 = true;
 			      }
-			      else if ( ww[nsetb]<= 0.0 && xnew>= 0.0 ) {
+			      else if ( ww[nsetb_dbolsm]<= 0.0 && xnew_dbolsm>= 0.0 ) {
 			    	  do230 = true;
 			      }
 			      else {
@@ -4221,8 +4221,8 @@ public abstract class DQED {
 
 			  if (do230) {
 				  do230 = false;
-			      ww[nsetb] = big_dbolsm;
-			      nsetb = nsetb - 1;
+			      ww[nsetb_dbolsm] = big_dbolsm;
+			      nsetb_dbolsm = nsetb_dbolsm - 1;
 			      if ( iprint_dbolsm > 0) {
 			          Preferences.debug("Variable has bad direction, not used.\n");
 			      }
@@ -4243,14 +4243,14 @@ public abstract class DQED {
 			  //
 			  if (do260) {
 		          do260 = false;
-		          for (j = 1; j <= nsetb; j++) {
+		          for (j = 1; j <= nsetb_dbolsm; j++) {
 		        	  rw[j] = w[j][ncols+1];
 		          }
 
-			     for (j = nsetb; j >= 1; j--) {
+			     for (j = nsetb_dbolsm; j >= 1; j--) {
 			         rw[j] = rw[j]/w[j][j];
 			         jcol_dbolsm = Math.abs(ibasis[j]);
-			         t = rw[j];
+			         t_dbolsm = rw[j];
 			         if ((ibb[jcol_dbolsm] % 2) == 0) {
 			        	 rw[j] = -rw[j];
 			         }
@@ -4258,26 +4258,26 @@ public abstract class DQED {
 			         for (n = 1; n <= j-1; n++) {
 			        	 arr[n] = w[n][j];
 			         }
-			         daxpy(j-1,-t,arr,1,rw,1);
+			         daxpy(j-1,-t_dbolsm,arr,1,rw,1);
 			         rw[j] = rw[j]/Math.abs(scl[jcol_dbolsm]);
-			     } // for (j = nsetb; j >= 1; j--)
+			     } // for (j = nsetb_dbolsm; j >= 1; j--)
 
 			     if ( iprint_dbolsm > 0) {
-			         dvout(nsetb,rw,"soln. values",-4);
-			         ivout(nsetb,ibasis,"cols. used",-4);
+			         dvout(nsetb_dbolsm,rw,"soln. values",-4);
+			         ivout(nsetb_dbolsm,ibasis,"cols. used",-4);
 			     } // if (iprint_dbolsm > 0)
 
-			     if (lgopr == 1) {
+			     if (lgopr_dbolsm == 1) {
 			    	 do290 = true;
 			     }
-			     else if (lgopr == 2) {
+			     else if (lgopr_dbolsm == 2) {
 			    	 do430 = true;
 			     }
 			     else {
 			    	  //
 				      //  SOLVE THE TRIANGULAR SYSTEM
 				      //
-				      lgopr = 1;
+				      lgopr_dbolsm = 1;
 				      do260 = true;
 				      continue loop;
 			     }
@@ -4291,14 +4291,14 @@ public abstract class DQED {
 			      //
 			      alpha_dbolsm = 2.0;
 			      beta_dbolsm = 2.0;
-			      x[nsetb] = 0.0;
+			      x[nsetb_dbolsm] = 0.0;
 
-			      for (j = 1; j <= nsetb; j++) {
+			      for (j = 1; j <= nsetb_dbolsm; j++) {
 
 			          itemp_dbolsm = ibasis[j];
 			          jcol_dbolsm = Math.abs(itemp_dbolsm);
-			          t1 = 2.0;
-			          t2 = 2.0;
+			          t1_dbolsm = 2.0;
+			          t2_dbolsm = 2.0;
 
 			          if ( itemp_dbolsm < 0) {
 			              bou_dbolsm = 0.0;
@@ -4311,30 +4311,30 @@ public abstract class DQED {
 			        	  bou_dbolsm = bou_dbolsm/Math.abs(scl[jcol_dbolsm]);
 			          }
 			          if ( rw[j]<=bou_dbolsm) {
-			        	  t1 = (x[j]-bou_dbolsm)/ (x[j]-rw[j]);
+			        	  t1_dbolsm = (x[j]-bou_dbolsm)/ (x[j]-rw[j]);
 			          }
 			          bou_dbolsm = bu[jcol_dbolsm];
 			          if ( bou_dbolsm != big_dbolsm){
 			        	  bou_dbolsm = bou_dbolsm/Math.abs(scl[jcol_dbolsm]);
 			          }
 			          if ( rw[j]>=bou_dbolsm) {
-			        	  t2 = (bou_dbolsm-x[j])/ (rw[j]-x[j]);
+			        	  t2_dbolsm = (bou_dbolsm-x[j])/ (rw[j]-x[j]);
 			          }
 			          //
 			          // IF NOT, THEN COMPUTE A STEP LENGTH SO THAT THE
 			          // VARIABLES REMAIN FEASIBLE.
 			          //
-			          if ( t1 < alpha_dbolsm) {
-			              alpha_dbolsm = t1;
+			          if ( t1_dbolsm < alpha_dbolsm) {
+			              alpha_dbolsm = t1_dbolsm;
 			              jdrop1_dbolsm = j;
-			          } // if (t1 < alpha)
+			          } // if (t1_dbolsm < alpha_dbolsm)
 
-			          if ( t2 < beta_dbolsm) {
-			              beta_dbolsm = t2;
+			          if ( t2_dbolsm < beta_dbolsm) {
+			              beta_dbolsm = t2_dbolsm;
 			              jdrop2_dbolsm = j;
-			          } // if (t2 < beta)
+			          } // if (t2_dbolsm < beta_dbolsm)
 
-			      } // for (j = 1; j <= nsetb; j++)
+			      } // for (j = 1; j <= nsetb_dbolsm; j++)
 
 			      constr_dbolsm = (alpha_dbolsm < 2.0) || (beta_dbolsm < 2.0);
 			      if ( constr_dbolsm) {
@@ -4345,7 +4345,7 @@ public abstract class DQED {
 			          // ACCEPT THE CANDIDATE BECAUSE IT SATISFIES THE STATED BOUNDS
 			          // ON THE VARIABLES.
 			          //
-			    	  for (j = 1; j <= nsetb; j++) {
+			    	  for (j = 1; j <= nsetb_dbolsm; j++) {
 			              x[j] = rw[j];
 			    	  }
 
@@ -4361,9 +4361,9 @@ public abstract class DQED {
 			      //  TAKE A STEP THAT IS AS LARGE AS POSSIBLE WITH ALL
 			      //  VARIABLES REMAINING FEASIBLE.
 			      //
-			      for (j = 1; j <= nsetb; j++) {
+			      for (j = 1; j <= nsetb_dbolsm; j++) {
 			          x[j] = x[j] + Math.min(alpha_dbolsm,beta_dbolsm)* (rw[j]-x[j]);
-			      } // for (j = 1; j <= nsetb; j++)
+			      } // for (j = 1; j <= nsetb_dbolsm; j++)
 
 			      if ( alpha_dbolsm<=beta_dbolsm) {
 			          jdrop2_dbolsm = 0;
@@ -4375,7 +4375,7 @@ public abstract class DQED {
 
 			  if (do330) {
 				  do330 = false;
-			      if ( jdrop1_dbolsm+jdrop2_dbolsm > 0 && nsetb > 0) {
+			      if ( jdrop1_dbolsm+jdrop2_dbolsm > 0 && nsetb_dbolsm > 0) {
 			    	  do340 = true;
 			      }
 			      else {
@@ -4394,11 +4394,11 @@ public abstract class DQED {
 			          //  VARIABLE IS AT AN UPPER BOUND.  SUBTRACT MULTIPLE OF THIS COL.
 			          //  FROM RIGHT HAND SIDE.
 			          //
-			          t = bu[jcol_dbolsm];
+			          t_dbolsm = bu[jcol_dbolsm];
 			          if ( itemp_dbolsm > 0) {
 
-			              bu[jcol_dbolsm] = t - bl[jcol_dbolsm];
-			              bl[jcol_dbolsm] = -t;
+			              bu[jcol_dbolsm] = t_dbolsm - bl[jcol_dbolsm];
+			              bl[jcol_dbolsm] = -t_dbolsm;
 			              itemp_dbolsm = -itemp_dbolsm;
 			              scl[jcol_dbolsm] = -scl[jcol_dbolsm];
 			              for (j = 1; j <= jdrop_dbolsm; j++) {
@@ -4408,7 +4408,7 @@ public abstract class DQED {
 			          else {
 			              ibb[jcol_dbolsm] = ibb[jcol_dbolsm] + 1;
 			              if ((ibb[jcol_dbolsm] % 2) == 0) {
-			            	  t = -t;
+			            	  t_dbolsm = -t_dbolsm;
 			              }
 			          } // else
 			          
@@ -4418,11 +4418,11 @@ public abstract class DQED {
 			          //  VARIABLE IS AT A LOWER BOUND.
 			          // 
 			          if ( itemp_dbolsm < 0.0 ) {
-			              t = 0.0;
+			              t_dbolsm = 0.0;
 			          }
 			          else {
-			              t = -bl[jcol_dbolsm];
-			              bu[jcol_dbolsm] = bu[jcol_dbolsm] + t;
+			              t_dbolsm = -bl[jcol_dbolsm];
+			              bu[jcol_dbolsm] = bu[jcol_dbolsm] + t_dbolsm;
 			              itemp_dbolsm = -itemp_dbolsm;
 			          } // else
 
@@ -4434,7 +4434,7 @@ public abstract class DQED {
 			    	  arr[j] = w[j][jdrop_dbolsm];
 			    	  arr2[j] = w[j][ncols+1];
 			      }
-			      daxpy(jdrop_dbolsm,t,arr,1,arr2,1);
+			      daxpy(jdrop_dbolsm,t_dbolsm,arr,1,arr2,1);
 			      for (j = 1; j <= jdrop_dbolsm; j++) {
 			    	  w[j][ncols+1] = arr2[j];
 			      }
@@ -4445,43 +4445,43 @@ public abstract class DQED {
 			    	  rw[j] = w[j][jdrop_dbolsm];
 			      }
 
-			      for (j = jdrop_dbolsm + 1; j <= nsetb; j++) {
+			      for (j = jdrop_dbolsm + 1; j <= nsetb_dbolsm; j++) {
 			          ibasis[j-1] = ibasis[j];
 			          x[j-1] = x[j];
 			          for (n = 1; n <= j; n++) {
 			        	  w[n][j-1] = w[n][j];
 			          }
-			      } // for (j = jdrop + 1; j <= nsetb; j++)
+			      } // for (j = jdrop + 1; j <= nsetb_dbolsm; j++)
 
-			      ibasis[nsetb] = itemp_dbolsm;
-			      w[1][nsetb] = 0.0;
-		          for (j = jdrop_dbolsm+1; j <= mrows; j++) {
-		        	  w[j][nsetb] = 0.0;
+			      ibasis[nsetb_dbolsm] = itemp_dbolsm;
+			      w[1][nsetb_dbolsm] = 0.0;
+		          for (j = jdrop_dbolsm+1; j <= mrows_dbolsm; j++) {
+		        	  w[j][nsetb_dbolsm] = 0.0;
 		          }
 
 			      for (j = 1; j <= jdrop_dbolsm; j++) {
-			    	  w[j][nsetb] = rw[j];
+			    	  w[j][nsetb_dbolsm] = rw[j];
 			      }
 			      //
 			      //  TRANSFORM THE MATRIX FROM UPPER HESSENBERG FORM TO
 			      //  UPPER TRIANGULAR FORM.
 			      //
-			      nsetb = nsetb - 1;
+			      nsetb_dbolsm = nsetb_dbolsm - 1;
 
-			      f2loop: for (i = jdrop_dbolsm; i <= nsetb; i++) {
+			      f2loop: for (i = jdrop_dbolsm; i <= nsetb_dbolsm; i++) {
 			          //
 			          //  LOOK FOR SMALL PIVOTS AND AVOID MIXING WEIGHTED AND NONWEIGHTED ROWS.
 			          // 
-			          if ( i == mval){
-			              t = 0.0;
-			              for (j = i; j <= nsetb; j++) {
+			          if ( i == mval_dbolsm){
+			              t_dbolsm = 0.0;
+			              for (j = i; j <= nsetb_dbolsm; j++) {
 			                  jcol_dbolsm = Math.abs(ibasis[j]);
-			                  t1 = Math.abs(w[i][j]*scl[jcol_dbolsm]);
-			                  if ( t1 > t) {
+			                  t1_dbolsm = Math.abs(w[i][j]*scl[jcol_dbolsm]);
+			                  if ( t1_dbolsm > t_dbolsm) {
 			                      jbig_dbolsm = j;
-			                      t = t1;
-			                  } // if (t1 > t)
-			              } // for (j = i; j <= nsetb; j++)
+			                      t_dbolsm = t1_dbolsm;
+			                  } // if (t1_dbolsm > t_dbolsm)
+			              } // for (j = i; j <= nsetb_dbolsm; j++)
 			              do390 = true;
 			              break f2loop;
 			          } // if (i == mval)
@@ -4489,7 +4489,7 @@ public abstract class DQED {
                       arr[0] = w[i][i];
                       arr2 = new double[1];
                       arr2[0] = w[i+1][i];
-			          drotg(arr,arr2,sc,ss);
+			          drotg(arr,arr2,sc_dbolsm,ss_dbolsm);
 			          w[i][i] = arr[0];
 			          w[i+1][i] = 0.0;
 			          arr = new double[ncols-i+2];
@@ -4498,12 +4498,12 @@ public abstract class DQED {
 			        	  arr[j] = w[i][i+j];
 			        	  arr2[j] = w[i+1][i+j];
 			          }
-			          drot(ncols-i+1,arr,1,arr2,1,sc[0],ss[0]);
+			          drot(ncols-i+1,arr,1,arr2,1,sc_dbolsm[0],ss_dbolsm[0]);
 			          for (j = 1; j <= ncols-i+1; j++) {
 			        	  w[i][i+j] = arr[j];
 			        	  w[i+1][i+j] = arr2[j];
 			          }
-			      } // for (i = jdrop; i <= nsetb; i++)
+			      } // for (i = jdrop; i <= nsetb_dbolsm; i++)
                   if (!do390) {
                 	  do420 = true;
                   }
@@ -4516,7 +4516,7 @@ public abstract class DQED {
 			      //  THE TRIANGULARIZATION IS COMPLETED BY GIVING UP
 			      //  THE HESSENBERG FORM AND TRIANGULARIZING A RECTANGULAR MATRIX.
 			      //
-				  for (j = 1; j <= mrows; j++) {
+				  for (j = 1; j <= mrows_dbolsm; j++) {
 					  temp = w[j][i];
 					  w[j][i] = w[j][jbig_dbolsm];
 					  w[j][jbig_dbolsm] = temp;
@@ -4531,13 +4531,13 @@ public abstract class DQED {
 			      ibasis[i] = ibasis[jbig_dbolsm];
 			      ibasis[jbig_dbolsm] = itemp_dbolsm;
 			      jbig_dbolsm = i;
-			      for (j = jbig_dbolsm; j <= nsetb; j++) {
-			          for (i = j + 1; i <= mrows; i++) {
+			      for (j = jbig_dbolsm; j <= nsetb_dbolsm; j++) {
+			          for (i = j + 1; i <= mrows_dbolsm; i++) {
 			        	  arr = new double[1];
 			        	  arr[0] = w[j][j];
 			        	  arr2 = new double[1];
 			        	  arr2[0] = w[i][j];
-			              drotg(arr,arr2,sc,ss);
+			              drotg(arr,arr2,sc_dbolsm,ss_dbolsm);
 			              w[j][j] = arr[0];
 			              w[i][j] = 0.0;
 			              arr = new double[ncols-j+2];
@@ -4546,13 +4546,13 @@ public abstract class DQED {
 			            	  arr[n] = w[j][j+n];
 			            	  arr2[n] = w[i][j+n];
 			              }
-			              drot(ncols-j+1,arr,1,arr2,1,sc[0],ss[0]);
+			              drot(ncols-j+1,arr,1,arr2,1,sc_dbolsm[0],ss_dbolsm[0]);
 			              for (n = 1; n <= ncols-j+1; n++) {
 			            	  w[j][j+n] = arr[n];
 			            	  w[i][j+n] = arr2[n];
 			              }
-			          } // for (i = j + 1; i <= mrows; i++) 
-			      } // for (j = jbig; j <= nsetb; j++)
+			          } // for (i = j + 1; i <= mrows_dbolsm; i++) 
+			      } // for (j = jbig; j <= nsetb_dbolsm; j++)
 			  } // if (do390)
 
 			  if (do420) {
@@ -4568,18 +4568,18 @@ public abstract class DQED {
 			      //
 			      // SOLVE THE TRIANGULAR SYSTEM
 			      // 
-			      lgopr = 2;
+			      lgopr_dbolsm = 2;
 			      do260 = true;
 			      continue loop;
 			  } // if (do420)
 
 			  if (do430) {
 				  do430 = false;
-				  for (j = 1; j <= nsetb; j++) {
+				  for (j = 1; j <= nsetb_dbolsm; j++) {
 					  x[j] = rw[j];
 				  }
 
-			      f3loop: for (j = 1; j <= nsetb; j++) {
+			      f3loop: for (j = 1; j <= nsetb_dbolsm; j++) {
 
 			          itemp_dbolsm = ibasis[j];
 			          jcol_dbolsm = Math.abs(itemp_dbolsm);
@@ -4611,7 +4611,7 @@ public abstract class DQED {
 			              break f3loop;
 			          } // if ( x[j]>=bou)
 
-			      } // for (j = 1; j <= nsetb; j++)
+			      } // for (j = 1; j <= nsetb_dbolsm; j++)
 
 			      do330 = true;
 			      continue loop;
@@ -4628,12 +4628,12 @@ public abstract class DQED {
 			      // 
 			      if ( fac_dbolsm*minput > ncols) {
 			          for (j = 1; j <= ncols + 1; j++) {
-			              for (i = minput; i >= j + mval + 1; i--) {
+			              for (i = minput; i >= j + mval_dbolsm + 1; i--) {
 			            	  arr = new double[1];
 			            	  arr[0] = w[i-1][j];
 			            	  arr2 = new double[1];
 			            	  arr2[0] = w[i][j];
-			                  drotg(arr,arr2,sc,ss);
+			                  drotg(arr,arr2,sc_dbolsm,ss_dbolsm);
 			                  w[i-1][j] = arr[0];
 			                  w[i][j] = 0.0;
 			                  arr = new double[ncols-j+2];
@@ -4642,17 +4642,17 @@ public abstract class DQED {
 			                	  arr[n] = w[i-1][j+n];
 			                	  arr2[n] = w[i][j+n];
 			                  }
-			                  drot(ncols-j+1,arr,1,arr2,1,sc[0],ss[0]);
+			                  drot(ncols-j+1,arr,1,arr2,1,sc_dbolsm[0],ss_dbolsm[0]);
 			                  for (n = 1; n <= ncols-j+1; n++) {
 			                	  w[i-1][j+n] = arr[n];
 			                	  w[i][j+n] = arr2[n];
 			                  }
-			              } // for (i = minput; i >= j + mval + 1; i--)
+			              } // for (i = minput; i >= j + mval_dbolsm + 1; i--)
 			          } // for (j = 1; j <= ncols + 1; j++)
-			          mrows = ncols + mval + 1;
+			          mrows_dbolsm = ncols + mval_dbolsm + 1;
 			      } // if (fac*minput > ncols)
 			      else {
-			          mrows = minput;
+			          mrows_dbolsm = minput;
 			      }
 			      //
 			      //  SET THE X(*) ARRAY TO ZERO SO ALL COMPONENTS ARE DEFINED.
@@ -4690,11 +4690,11 @@ public abstract class DQED {
 
 			     if ( (bl[j]<= 0.0 && 0.0 <= bu[j] &&
 			        Math.abs(bu[j]) < Math.abs(bl[j])) || bu[j] < 0.0 ) {
-			         t = bu[j];
+			         t_dbolsm = bu[j];
 			         bu[j] = -bl[j];
-			         bl[j] = -t;
+			         bl[j] = -t_dbolsm;
 			         scl[j] = -scl[j];
-			         for (n = 1; n <= mrows; n++) {
+			         for (n = 1; n <= mrows_dbolsm; n++) {
 			             w[n][j] = -w[n][j];
 			         }
 			     }
@@ -4703,23 +4703,23 @@ public abstract class DQED {
 			     //
 			     if ( bl[j]>=0.0 ) {
 			         ibasis[j] = -ibasis[j];
-			         t = -bl[j];
-			         bu[j] = bu[j] + t;
-			         arr = new double[mrows+1];
-			         arr2 = new double[mrows+1];
-			         for (n = 1; n <= mrows; n++) {
+			         t_dbolsm = -bl[j];
+			         bu[j] = bu[j] + t_dbolsm;
+			         arr = new double[mrows_dbolsm+1];
+			         arr2 = new double[mrows_dbolsm+1];
+			         for (n = 1; n <= mrows_dbolsm; n++) {
 			        	 arr[n] = w[n][j];
 			        	 arr2[n] = w[n][ncols+1];
 			         }
-			         daxpy(mrows,t,arr,1,arr2,1);
-			         for (n = 1; n <= mrows; n++) {
+			         daxpy(mrows_dbolsm,t_dbolsm,arr,1,arr2,1);
+			         for (n = 1; n <= mrows_dbolsm; n++) {
 			        	 w[n][ncols+1] = arr2[n];
 			         }
 			     }
 
 			  } // for (j = 1; j <= ncols; j++)
 
-			  nsetb = 0;
+			  nsetb_dbolsm = 0;
 			  iter_dbolsm = 0;
 
 			  do50 = true;
@@ -4733,17 +4733,17 @@ public abstract class DQED {
                   do580 = true;
 			      if ( idope[5] == 1) {
 			          fac_dbolsm = x[ncols+idope[1]];
-			          wt = x[ncols+idope[2]];
-			          mval = idope[3];
+			          wt_dbolsm = x[ncols+idope[2]];
+			          mval_dbolsm = idope[3];
 			      } // if (idope[5] == 1)
 			      else {
 			          fac_dbolsm = 0.0;
-			          wt = 1.0;
-			          mval = 0;
+			          wt_dbolsm = 1.0;
+			          mval_dbolsm = 0;
 			      }
 
-			      tolind = Math.sqrt( epsilon);
-			      tolsze = Math.sqrt( epsilon);
+			      tolind_dbolsm = Math.sqrt( epsilon);
+			      tolsze_dbolsm = Math.sqrt( epsilon);
 			      itmax_dbolsm = 5 * Math.max ( minput, ncols );
 			      iprint_dbolsm = 0;
 			      //
@@ -4751,17 +4751,17 @@ public abstract class DQED {
 			      //  ARRAY, IOPT(*).  PROCESS THIS ARRAY LOOKING CAREFULLY
 			      //  FOR INPUT DATA ERRORS.
 			      //
-			      lp = 0;
+			      lp_dbolsm = 0;
 			      lds_dbolsm = 0;
 			  } // if (do570)
 
 			  if (do580) {
                   do580 = false;
-			      lp = lp + lds_dbolsm;
+			      lp_dbolsm = lp_dbolsm + lds_dbolsm;
 			      //
 			      //  TEST FOR NO MORE OPTIONS.
 			      //
-			      ip_dbolsm = iopt[lp+1];
+			      ip_dbolsm = iopt[lp_dbolsm+1];
 			      jp_dbolsm = Math.abs(ip_dbolsm);
 			      if ( ip_dbolsm == 99) {
 			          do460 = true;
@@ -4777,7 +4777,7 @@ public abstract class DQED {
 			          //  MOVE THE IOPT(*) PROCESSING POINTER.
 			          //
 			          if ( ip_dbolsm > 0) {
-			              lp = iopt[lp+2] - 1;
+			              lp_dbolsm = iopt[lp_dbolsm+2] - 1;
 			              lds_dbolsm = 0;
 			          }
 			          else {
@@ -4792,22 +4792,22 @@ public abstract class DQED {
 			          //  CHANGE TOLERANCE FOR RANK DETERMINATION.
 			          //
 			          if (ip_dbolsm > 0) {
-			              ioff_dbolsm = iopt[lp+2];
+			              ioff_dbolsm = iopt[lp_dbolsm+2];
 			              if ( ioff_dbolsm<=0) {
-			                  nerr = 24;
+			                  nerr_dbolsm = 24;
 			                  xerrwv("dbolsm(). the offset=(i1) beyond postion\nncols=(i2) must be positive for option number 2.",
-			                         nerr,level_dbolsm,2,ioff_dbolsm,ncols,0,rdum,rdum);
-			                  mode[0] = -nerr;
+			                         nerr_dbolsm,level_dbolsm,2,ioff_dbolsm,ncols,0,rdum_dbolsm,rdum_dbolsm);
+			                  mode[0] = -nerr_dbolsm;
 			                  return;
 			              } // if (ioff_dbolsm <= 0)
 
-			              tolind = x[ncols+ioff_dbolsm];
-			              if (tolind < epsilon) {
-			                  nerr = 25;
-			                  nlevel = 0;
+			              tolind_dbolsm = x[ncols+ioff_dbolsm];
+			              if (tolind_dbolsm < epsilon) {
+			                  nerr_dbolsm = 25;
+			                  nlevel_dbolsm = 0;
 			                  xerrwv("dbolsm(). the tolerance for rank\ndetermination=(r1) is less than machine precision=(r2).",
-			                         nerr,nlevel,0,idum_dbolsm,idum_dbolsm,2,tolind, epsilon);
-			              } // if (tolind < epsilon)
+			                         nerr_dbolsm,nlevel_dbolsm,0,idum_dbolsm,idum_dbolsm,2,tolind_dbolsm, epsilon);
+			              } // if (tolind_dbolsm < epsilon)
 			          } // if (ip_dbolsm > 0)
 
 			          lds_dbolsm = 2;
@@ -4819,23 +4819,23 @@ public abstract class DQED {
 			          //  CHANGE BLOWUP FACTOR FOR ALLOWING VARIABLES TO BECOME INACTIVE.
 			          //
 			          if ( ip_dbolsm > 0) {
-			              ioff_dbolsm = iopt[lp+2];
+			              ioff_dbolsm = iopt[lp_dbolsm+2];
 			              if ( ioff_dbolsm<=0) {
-			                  nerr = 26;
+			                  nerr_dbolsm = 26;
 			                  xerrwv("dbolsm(). the offset=(i1) beyond position\nncols=(i2) must be postive for option number 3.",
-			                         nerr,level_dbolsm,2,ioff_dbolsm,ncols,0,rdum,rdum);
-			                  mode[0] = -nerr;
+			                         nerr_dbolsm,level_dbolsm,2,ioff_dbolsm,ncols,0,rdum_dbolsm,rdum_dbolsm);
+			                  mode[0] = -nerr_dbolsm;
 					          return;
 			              } // if (ioff <= 0)
 
-			              tolsze = x[ncols+ioff_dbolsm];
-			              if ( tolsze<= 0.0 ) {
-			                  nerr = 27;
+			              tolsze_dbolsm = x[ncols+ioff_dbolsm];
+			              if ( tolsze_dbolsm<= 0.0 ) {
+			                  nerr_dbolsm = 27;
 			                  xerrwv("dbolsm(). the reciprocal of the blow-up factor\nfor rejecting variables must be positive. now=(r1).",
-			                         nerr,level_dbolsm,0,idum_dbolsm,idum_dbolsm,1,tolsze,rdum);
-			                  mode[0] = -nerr;
+			                         nerr_dbolsm,level_dbolsm,0,idum_dbolsm,idum_dbolsm,1,tolsze_dbolsm,rdum_dbolsm);
+			                  mode[0] = -nerr_dbolsm;
 					          return;
-			              } // if (tolsze <= 0.0)
+			              } // if (tolsze_dbolsm <= 0.0)
 			          } // if (ip_dbolsm > 0)
 
 			          lds_dbolsm = 2;
@@ -4847,14 +4847,14 @@ public abstract class DQED {
 			          //  Change the maximum number of iterations allowed.
 			          //
 			          if ( ip_dbolsm > 0) {
-			              itmax_dbolsm = iopt[lp+2];
+			              itmax_dbolsm = iopt[lp_dbolsm+2];
 			              if ( itmax_dbolsm<=0) {
-			                  nerr = 28;
+			                  nerr_dbolsm = 28;
 			                  xerrwv("dbolsm(). the maximum number of iterations=(i1) must be positive.",
-			                		  nerr,level_dbolsm,1,itmax_dbolsm,idum_dbolsm,0,rdum,rdum);
-			                  mode[0] = -nerr;
+			                		  nerr_dbolsm,level_dbolsm,1,itmax_dbolsm,idum_dbolsm,0,rdum_dbolsm,rdum_dbolsm);
+			                  mode[0] = -nerr_dbolsm;
 					          return;
-			              } // if (itmax <= 0)
+			              } // if (itmax_dbolsm <= 0)
 			          } // if (ip_dbolsm > 0)
 
 			          lds_dbolsm = 2;
@@ -4866,22 +4866,22 @@ public abstract class DQED {
 			          //  CHANGE THE FACTOR FOR PRETRIANGULARIZING THE DATA MATRIX.
 			          //
 			          if ( ip_dbolsm > 0) {
-			              ioff_dbolsm = iopt[lp+2];
+			              ioff_dbolsm = iopt[lp_dbolsm+2];
 			              if ( ioff_dbolsm<=0) {
-			                  nerr = 29;
+			                  nerr_dbolsm = 29;
 			                  xerrwv("dbolsm(). the offset=(i1) beyond position\nncols=(i2) must be postive for option number 5.",
-			                         nerr,level_dbolsm,2,ioff_dbolsm,ncols,0,rdum,rdum);
-			                  mode[0] = -nerr;
+			                         nerr_dbolsm,level_dbolsm,2,ioff_dbolsm,ncols,0,rdum_dbolsm,rdum_dbolsm);
+			                  mode[0] = -nerr_dbolsm;
 					          return;
 			              } // if (ioff_dbolsm <= 0)
 
 			              fac_dbolsm = x[ncols+ioff_dbolsm];
 			              if ( fac_dbolsm < 0.0 ) {
-			                  nerr = 30;
-			                  nlevel = 0;
+			                  nerr_dbolsm = 30;
+			                  nlevel_dbolsm = 0;
 			                  xerrwv("dbolsm(). the factor (ncols/mrows) where pre-triangularizing is performed must be nonnegative.\nnow=(r1).",
-			                		  nerr,nlevel,0,idum_dbolsm,idum_dbolsm,1,fac_dbolsm,rdum);
-			                  mode[0] = -nerr;
+			                		  nerr_dbolsm,nlevel_dbolsm,0,idum_dbolsm,idum_dbolsm,1,fac_dbolsm,rdum_dbolsm);
+			                  mode[0] = -nerr_dbolsm;
 					          return;
 			              } // if (fac < 0.0)
 			          } // if (ip_dbolsm > 0)
@@ -4898,19 +4898,19 @@ public abstract class DQED {
 			          //  LEAST SQUARES PROBLEM THAT COME FROM EQUALITY CONSTRAINTS.
 			          //
 			          if ( ip_dbolsm > 0) {
-			              ioff_dbolsm = iopt[lp+2];
-			              mval = iopt[lp+3];
-			              wt = x[ncols+ioff_dbolsm];
+			              ioff_dbolsm = iopt[lp_dbolsm+2];
+			              mval_dbolsm = iopt[lp_dbolsm+3];
+			              wt_dbolsm = x[ncols+ioff_dbolsm];
 			          } // if (ip_dbolsm > 0)
 
-			          if ( mval < 0 || mval > minput || wt<= 0.0 ) {
-			              nerr = 38;
-			              nlevel = 0;
+			          if ( mval_dbolsm < 0 || mval_dbolsm > minput || wt_dbolsm<= 0.0 ) {
+			              nerr_dbolsm = 38;
+			              nlevel_dbolsm = 0;
 			              xerrwv("dbolsm(). the row separator to apply weighting (i1)\nmust lie between 0 and mrows (i2). weight (r1) must be positive.",
-			                      nerr,nlevel,2,mval,minput,1,wt,rdum);
-			              mode[0] = -nerr;
+			                      nerr_dbolsm,nlevel_dbolsm,2,mval_dbolsm,minput,1,wt_dbolsm,rdum_dbolsm);
+			              mode[0] = -nerr_dbolsm;
 					      return;
-			          } // if ( mval < 0 || mval > minput || wt<= 0.0 )
+			          } // if ( mval_dbolsm < 0 || mval_dbolsm > minput || wt_dbolsm<= 0.0 )
 
 			          lds_dbolsm = 3;
 			          do580 = true;
@@ -4928,10 +4928,10 @@ public abstract class DQED {
 			          continue loop;
 			      } // else if (jp_dbolsm == 7)
 			      else {
-			          nerr = 23;
+			          nerr_dbolsm = 23;
 			          xerrwv("dbolsm. the option number=(i1) is not defined.",
-			                  nerr,level_dbolsm,1,ip_dbolsm,idum_dbolsm,0,rdum,rdum);
-			          mode[0] = -nerr;
+			                  nerr_dbolsm,level_dbolsm,1,ip_dbolsm,idum_dbolsm,0,rdum_dbolsm,rdum_dbolsm);
+			          mode[0] = -nerr_dbolsm;
 				      return;
 			      } // else
 			  } // if (do580)
