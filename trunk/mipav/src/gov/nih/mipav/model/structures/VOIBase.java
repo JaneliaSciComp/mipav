@@ -2035,6 +2035,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
         return nearBoundPoint;
     }
 
+    
+    public void setPlane( int iPlane )
+    {
+        m_iPlane = iPlane;
+        m_bUpdatePlane = false;
+    }
+    
     /**
      * Sets the selected point.
      * @param i

@@ -2151,13 +2151,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             m_kCurrentVOIGroup.setAllActive(bSelectAll);
         }
-        m_kCurrentVOIGroup.setActive(true);
         setButtonColor(toolbarBuilder.getVOIColorButton(), 
                 m_kCurrentVOIGroup.getColor());
-
-
         m_fOpacity = m_kCurrentVOIGroup.getOpacity();
-        fireVOISelectionChange(m_kCurrentVOIGroup);
     }
 
     /* (non-Javadoc)
@@ -4739,7 +4735,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     @Override
     public void selectedVOI(VOIEvent selection) {
-        //System.err.println( "selectedVOI " + this );
+        //System.err.println( "VOIManagerInterface.selectedVOI" );
         if ( m_kVOIDialog != null )
         {
             m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
@@ -4782,7 +4778,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     @Override
     public void vectorSelected(VOIVectorEvent selection) {
-        //System.err.println( "vectorSelected " + this );
+        //System.err.println( "VOIManagerInterface.vectorSelected" );
         if ( m_kVOIDialog != null )
         {
             m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
