@@ -285,9 +285,8 @@ public abstract class DQED {
 	  int iopt[] = new int[29];
 	  int ios;
 	  int iwa[] = new int[liwa+1];
-	  int mode;
 	  double ropt[] = new double[2];
-	  double sigma[] = new double[nvars+1];
+	  sigma = new double[nvars+1];
 	  String title = null;
 	  double wa[] = new double[lwa+1];
 	//
