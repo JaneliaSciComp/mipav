@@ -152,11 +152,6 @@ public class VOIProtractor extends VOIBase {
     {
         allSlices = bValue;
     }
-        
-    public void setPlane( int iPlane )
-    {
-        plane = iPlane;
-    }
 
     /**
      * Used to set the flag to show length of one protractor arm.

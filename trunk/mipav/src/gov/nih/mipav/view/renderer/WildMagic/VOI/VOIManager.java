@@ -1914,7 +1914,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         case SPLITLINE:
             kVOI = new VOILine(); break;
         case PROTRACTOR:
-            kVOI = new VOIProtractor(); ((VOIProtractor)kVOI).setPlane(m_iPlane); break;           
+            kVOI = new VOIProtractor(); break;           
         }
 
         if ( kVOI == null )
@@ -1928,6 +1928,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kDrawingContext.screenToFileVOI( kPositions.elementAt(i), kVolumePt );
             kVOI.add( kVolumePt );
         }
+        kVOI.setPlane(m_iPlane);
         return kVOI;
     }
 

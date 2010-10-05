@@ -162,6 +162,7 @@ public class JDialogVOIStats extends JDialogBase
 
     /** DOCUMENT ME! */
     private boolean treeSelectionChange = false;
+    private boolean updateTree = false;
 
     /** The selected VOI when the VOIStats dialogue was created */
     private VOI voi;
@@ -1292,6 +1293,24 @@ public class JDialogVOIStats extends JDialogBase
         validate();
     }
 
+    
+    private void printTree( TreeModel model, Object parent )
+    {
+        if ( model.isLeaf(parent) && parent instanceof VOINode )
+        {
+            VOIBase contour = ((VOINode)parent).getVOI();
+            if ( contour != null )
+            {
+                contour.setActive(false);
+            }
+            return;
+        }
+        int childCount = model.getChildCount(parent);
+        for ( int i = 0; i < childCount; i++ )
+        {
+            printTree( model, model.getChild(parent,i) );
+        }
+    }
 
     /**
      * Updates the ViewJFrameImage when a VOI/contour is selected.
@@ -1299,7 +1318,15 @@ public class JDialogVOIStats extends JDialogBase
      * @param  e  TreeSelectionEvent
      */
     public void valueChanged(TreeSelectionEvent e) {
-        //System.err.println( "JDialogVOIStats.valueChanged" );
+        if ( updateTree )
+        {
+            return;
+        }
+        TreeModel model = voiTree.getModel();
+        if ( !updateTree )
+        {
+            printTree( model, model.getRoot() );
+        }
         
         TreePath leadPath = e.getNewLeadSelectionPath();
 
@@ -1313,9 +1340,12 @@ public class JDialogVOIStats extends JDialogBase
 
                 if (frameFollowsSelection && (image.getNDims() > 2)) {
                     voiHandler.setCenter(leadBase.getGeometricCenter(), true );
+                    //System.err.println( "frameFollowsSelection " + leadBase );
+                    leadBase.setActive(true);
                 }
 
                 updateContourPane(leadBase);
+                updateVOI(leadBase.getGroup(), image);
 
             } else if (leadObjects[leadObjects.length - 1] instanceof VOIFrameNode) {
                 curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
@@ -1326,154 +1356,7 @@ public class JDialogVOIStats extends JDialogBase
             }
 
         }
-
-        // look for all selection paths
-        TreePath[] tPaths = voiTree.getSelectionPaths();
-
-        if ((tPaths != null) && (tPaths.length > 0)) {
-
-            // System.err.println("Length of paths: " + tPaths.length);
-
-            TreePath currentPath = null;
-
-            Object[] currentObjects = null;
-
-            VOI currentVOI = null;
-
-            Vector selectedVector = new Vector();
-
-            for (int i = 0; i < tPaths.length; i++) {
-                currentPath = tPaths[i];
-
-                currentObjects = currentPath.getPath();
-
-                for (int y = 0; y < currentObjects.length; y++) {
-
-                    // do nothing for root...
-
-                    if (currentObjects[y] instanceof VOIGroupNode) {
-                        currentVOI = ((VOIGroupNode) currentObjects[y]).getVOIgroup();
-                        if (!selectedVector.contains(currentObjects[y])) {
-                            selectedVector.addElement(currentObjects[y]);
-                        }
-
-                    } else if (currentObjects[y] instanceof VOINode) {
-
-                        if (!selectedVector.contains(((VOINode) currentObjects[y]).getParent())) {
-
-                            selectedVector.addElement(((VOINode) currentObjects[y]).getParent());
-                        }
-
-                        selectedVector.addElement(currentObjects[y]);
-                    }
-
-                }
-            }
-
-            // make un-selected VOI nodes inactive
-            Enumeration en = root.children();
-            Enumeration orientationEnum = null;
-            Enumeration frameEnum = null;
-            Enumeration nodeChildren = null;
-
-            VOIGroupNode groupNode = null;
-            VOIOrientationNode orientationNode = null;
-            TreeNode tempNode = null;
-            VOINode voiNode = null;
-            
-            if(image.getNDims() < 3) {
-
-	            while (en.hasMoreElements()) {
-	                groupNode = (VOIGroupNode) en.nextElement();
-	
-	                groupNode.getVOIgroup().setActive(selectedVector.contains(groupNode));
-	                
-	                
-	
-	                frameEnum = groupNode.children();
-	
-	                while (frameEnum.hasMoreElements()) {
-	                    tempNode = (TreeNode) frameEnum.nextElement();
-	
-	                    if (tempNode instanceof VOIFrameNode) {
-	                        nodeChildren = tempNode.children();
-	
-	                        while (nodeChildren.hasMoreElements()) {
-	                            voiNode = (VOINode) nodeChildren.nextElement();
-	
-	                            voiNode.getVOI().setActive(selectedVector.contains(voiNode));
-	                        }
-	                    }
-	                }
-	            }
-            
-            }else {
-            	while (en.hasMoreElements()) {
-                    groupNode = (VOIGroupNode) en.nextElement();
-
-                    groupNode.getVOIgroup().setActive(selectedVector.contains(groupNode));
-                    
-                    
-
-                    orientationEnum = groupNode.children();
-
-                    while (orientationEnum.hasMoreElements()) {
-                    	orientationNode = (VOIOrientationNode)orientationEnum.nextElement();
-                    	
-                    	frameEnum = orientationNode.children();
-                    	
-
-                        while (frameEnum.hasMoreElements()) {
-                            tempNode = (TreeNode) frameEnum.nextElement();
-
-                            if (tempNode instanceof VOIFrameNode) {
-                                nodeChildren = tempNode.children();
-
-                                while (nodeChildren.hasMoreElements()) {
-                                    voiNode = (VOINode) nodeChildren.nextElement();
-    								
-                                    voiNode.getVOI().setActive(selectedVector.contains(voiNode));
-                                    
-                                }
-                            }
-                        }
-                    }
-                }	
-            }
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-
-            treeSelectionChange = true;
-            //TODO:Since fireVOISelectionChange is dead code, 
-            //setting the currentVOI->null is required for correct operation
-            voiHandler.fireVOISelectionChange(currentVOI, null);
-            if(currentVOI == null) {
-                updateVOI(currentVOI, image);
-            }
-            image.notifyImageDisplayListeners();
-            // System.err.println("notifying of change");
-        }
-
+        treeSelectionChange = true;
     }
 
     /**
@@ -1946,14 +1829,11 @@ public class JDialogVOIStats extends JDialogBase
      * DOCUMENT ME!
      */
     public void updateTree() {
-        //System.err.println("updateTree");
-        //if (treeSelectionChange) {
-        //    treeSelectionChange = false;
-
-        //    System.err.println("treeSelectionChange " + treeSelectionChange);
-        //    return;
-        //}
-
+        if (treeSelectionChange) {
+            treeSelectionChange = false;
+            return;
+        }
+        updateTree = true;
         if (this.isVisible()) {
             root.removeAllChildren();
 
@@ -2012,19 +1892,26 @@ public class JDialogVOIStats extends JDialogBase
 
                                 tempNode = (TreeNode) voiFrameEnum.nextElement();
 
-                                if (tempNode instanceof VOIFrameNode) {
+                                if (tempNode instanceof VOIOrientationNode) {
 
                                     voiNodeEnum = tempNode.children();
 
                                     // find the child that matches this selected contour
                                     while (voiNodeEnum.hasMoreElements()) {
-                                        currentVOINode = (VOINode) voiNodeEnum.nextElement();
+                                        
+                                        VOIFrameNode currentFrameNode = (VOIFrameNode) voiNodeEnum.nextElement();
+                                        Enumeration voiFrameEnum2 = currentFrameNode.children();
+                                        
+                                        // find the child that matches this selected contour
+                                        while (voiFrameEnum2.hasMoreElements()) {
+                                            currentVOINode = (VOINode) voiFrameEnum2.nextElement();
 
-                                        if (currentVOINode.getVOI().equals(voiBase)) {
-                                            treePaths.addElement(new TreePath(new Object[] {
-                                                    root, currentNode, tempNode,
-                                                    currentVOINode
-                                            }));
+                                            if (currentVOINode.getVOI().equals(voiBase)) {
+                                                treePaths.addElement(new TreePath(new Object[] {
+                                                        root, currentNode, tempNode, currentFrameNode,
+                                                        currentVOINode
+                                                }));
+                                            }
                                         }
                                     }
 
@@ -2037,7 +1924,6 @@ public class JDialogVOIStats extends JDialogBase
 
                 root.add(currentNode);
             }
-
             voiModel.reload();
 
             if (treePaths.size() > 0) {
@@ -2046,15 +1932,20 @@ public class JDialogVOIStats extends JDialogBase
                 for (int i = 0; i < tPaths.length; i++) {
                     tPaths[i] = (TreePath) treePaths.elementAt(i);
                 }
-
                 voiTree.setSelectionPaths(tPaths);
-            } else {
-                voiTree.setSelectionPath(new TreePath(root));
-            }
 
+                for (int i = 0; i < tPaths.length; i++) {
+                    voiTree.expandPath( tPaths[i] );
+                }
+            } else {
+                TreePath path = new TreePath(root);
+                voiTree.setSelectionPath(path);
+                voiTree.expandPath(path);
+            }
             voiTreePane.validate();
         }
 
+        updateTree = false;
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
