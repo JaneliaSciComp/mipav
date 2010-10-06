@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
+import WildMagic.LibFoundation.NumericalAnalysis.minimizing.NelderMead;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -16,7 +18,7 @@ import java.io.*;
  * @version  1.0 April, 2000
  * @author   Delia McGarry
  */
-public class AlgorithmRegChamfer extends AlgorithmBase {
+public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOfSeveralVariables {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -45,9 +47,6 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
     private int N; // # match pts
 
     /** DOCUMENT ME! */
-    private AlgorithmSimplexOpt simplex;
-
-    /** DOCUMENT ME! */
     private int simplexDim;
 
     /** DOCUMENT ME! */
@@ -67,6 +66,8 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float xresB, yresB, zresB, xresM, yresM, zresM;
+    
+    private CostFunction func;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -639,43 +640,30 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
      *  return; } volume.calcMinMax(); }*/
 
     /**
-     * InitializePandY p[i][j] = each i is a simplex vertex; each j is a parameter tx, ty, or r y[i] = cost of position
-     * corresponding to row i of p[][].
-     *
-     * @param  p     DOCUMENT ME!
-     * @param  y     DOCUMENT ME!
-     * @param  func  DOCUMENT ME!
      */
-    private void InitializePandY(double[][] p, double[] y, CostFunction func) {
+    private void initializeNelderMead(double[][] xi, double[] initialPoint) {
         Preferences.debug("InitializePandY:\n");
 
         int i, j;
 
-        for (i = 0; i < (simplexDim + 1); i++) {
-
+        for (i = 0; i < simplexDim; i++) {
+            initialPoint[i] = 0;
             for (j = 0; j < simplexDim; j++) {
-                p[i][j] = 0f;
+                xi[i][j] = 0f;
             }
         }
 
-        p[0][0] = 3f; // Tx
-        p[1][1] = -2f; // Ty
+        double scale = 1.0/0.00024;
+        xi[0][0] = scale * 2 * 3f; // Tx
+        xi[1][1] = scale * 2 * 2f; // Ty
 
         if (DIM == 2) {
-            p[2][2] = 5f; // Rot about z-axis (degrees)
-
-            // p[3][2] = -5f;
+            xi[2][2] = scale * 2 * 5f; // Rot about z-axis (degrees)
         } else if (DIM == 3) {
-            p[2][2] = 1f; // Tz
-            p[3][3] = 1f; // Rot about x-axis (degrees)
-            p[4][4] = 1f; // Rot about y-axis (degrees)
-            p[5][5] = 1f; // Rot about z-axis (degrees)
-        }
-
-        /*  for (i = 0;  i<simplexDim+1; i++)
-         * for (j = 0; j<simplexDim; j++)*/
-        for (i = 0; i < (simplexDim + 1); i++) {
-            y[i] = func.cost(p[i]);
+            xi[2][2] = scale * 2 * 1f; // Tz
+            xi[3][3] = scale * 2 * 1f; // Rot about x-axis (degrees)
+            xi[4][4] = scale * 2 * 1f; // Rot about y-axis (degrees)
+            xi[5][5] = scale * 2 * 1f; // Rot about z-axis (degrees)
         }
     }
 
@@ -710,26 +698,20 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
      * @param  xfrm  Transformation matrix.
      */
     private void search(TransMatrix xfrm) {
+        // This function has not been fully tested.
+        // When it is ready to test, see AlgorithmRegVOILandmark for how
+        // to use the NelderMead class.
         Preferences.debug("Search:\n");
 
-        CostFunction func = new CostFunction();
-        double[][] p = new double[simplexDim + 1][simplexDim];
-        double[] y = new double[simplexDim + 1];
+        func = new CostFunction();
+        double[][] xi = new double[simplexDim][simplexDim];
+        double[] initialPoint = new double[simplexDim];
 
-        simplex = new AlgorithmSimplexOpt(p, y, simplexDim, func);
-        InitializePandY(p, y, func);
-        simplex.setP(p);
-        simplex.setY(y);
-        simplex.setRunningInSeparateThread(runningInSeparateThread);
-        simplex.run();
+        initializeNelderMead(xi, initialPoint);
+        NelderMead.search(initialPoint, xi,
+                0.0000001, this, 50000, null);
 
-        // for (int i = 0;  i<simplexDim+1; i++)
-        // for (int j = 0; j<simplexDim; j++)
-        for (int i = 0; i < (simplexDim + 1); i++) {
-            y[i] = func.cost(p[i]);
-        }
-
-        getTransformFromX(p[0], xfrm); // lowest cost row
+        getTransformFromX(initialPoint, xfrm); // lowest cost row
 
         return;
     }
@@ -921,5 +903,15 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
 
             return value;
         }
+    }
+
+    @Override
+    public double eval(double[] x) {
+        return func.cost(x);
+    }
+
+    @Override
+    public int getNumberOfVariables() {
+        return simplexDim;
     }
 }
