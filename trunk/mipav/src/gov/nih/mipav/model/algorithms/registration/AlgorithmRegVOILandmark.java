@@ -262,7 +262,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
                 double scale = 1.0/0.00024;
                 double[][] xi = new double[][]{{scale * (maxTx - minTx),0,0},
                         {0,scale*(maxTy-minTy),0},{0,0,scale*(maxRz-minRz)}};
-                double dCost = NelderMead.search(initialPoint, xi,//NelderMead.getStandardBasis(initialPoint.length), 
+                double dCost = NelderMead.search(initialPoint, xi,
                         0.0000001, this, 50000, null);
                 Preferences.debug("cost = " + dCost + "\n");
             }

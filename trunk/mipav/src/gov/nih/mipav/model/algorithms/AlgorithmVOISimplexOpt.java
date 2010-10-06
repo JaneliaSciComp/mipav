@@ -52,9 +52,6 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase implements RealFunctio
     /** the kernel size to use in calculating the gradient magnitude image. */
     private float[] sigmas;
 
-    /** The algorithm which takes our cost function and other parameters and performs the optimization. */
-    private AlgorithmSimplexOpt simplex;
-
     /** Size of the simplex vertex array (5 == tx, ty, rot, zoomx, zoomy). */
     private int simplexDim;
 
@@ -119,11 +116,6 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase implements RealFunctio
     public void finalize() {
         image = null;
 
-        if (simplex != null) {
-            simplex.finalize();
-        }
-
-        simplex = null;
         gradMagBuf = null;
 
         super.finalize();
@@ -159,7 +151,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase implements RealFunctio
             baseVOIGradMagSum += gradMagBuf[(int) (inputGon.elementAt(i).X + (inputGon.elementAt(i).Y * xDim))];
         }
 
-        return Search();
+        return search();
     }
 
     /**
@@ -184,7 +176,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase implements RealFunctio
         }
 
         goOptimize(sliceBuf, inputGon);
-        Search();
+        search();
     }
 
     /**
@@ -220,93 +212,16 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase implements RealFunctio
         return xfrm;
     }
 
-    /**
-     * Set up the array of simplex vertices and the cost array.
-     *
-     * @param  p     the array of simplex vertices p[i][j] where each i is a simplex vertex and each j is a parameter
-     *               tx, ty, rot, zoomx, zoomy
-     * @param  y     the cost array
-     * @param  func  the cost function to use to set up the cost array
-     */
-    private void InitializePandY(double[][] p, double[] y, CostFunction func) {
-        int i, j;
-
-        for (i = 0; i < (simplexDim + 1); i++) {
-
-            for (j = 0; j < simplexDim; j++) {
-                p[i][j] = 0f;
-            }
-        }
-
-        p[0][0] = 5f; // Tx
-        p[0][1] = 5f; // Ty
-        p[0][2] = 0f; // Rot about z-axis (degrees)
-        p[0][3] = 1f; // ZoomX
-        p[0][4] = 1f; // ZoomY
-
-        p[1][0] = -5f;
-        p[1][1] = -5f;
-        p[1][2] = 0f;
-        p[1][3] = 1f;
-        p[1][4] = 1f;
-
-        p[2][0] = 0f;
-        p[2][1] = 0f;
-        p[2][2] = 1f;
-        p[2][3] = 0.95f;
-        p[2][4] = 0.95f;
-
-        p[3][0] = 1f;
-        p[3][1] = 1f;
-        p[3][2] = 1f;
-        p[3][3] = 1.05f;
-        p[3][4] = 1.05f;
-
-        p[4][0] = 0f;
-        p[4][1] = 0f;
-        p[4][2] = 0f;
-        p[4][3] = 1f;
-        p[4][4] = 1f;
-
-        for (i = 0; i < simplexDim; i++) {
-            y[i] = func.cost(p[i]);
-        }
-    }
 
     /**
      * Find the best fit for the VOI polygon we have loaded into this algorithm.
      *
      * @return  the optimized polygon
      */
-    private VOIContour Search() {
-        /*
-        TransMatrix xfrm;
-        CostFunction func = null;
-        double[][] p = null;
-        double[] y = null;
-
-        try {
-            p = new double[simplexDim + 1][simplexDim];
-            y = new double[simplexDim + 1];
-            simplex = new AlgorithmSimplexOpt(p, y, simplexDim, func);
-        } catch (OutOfMemoryError e) {
-            displayError("Algorithm VOI Simplex:  Out of Memory");
-            setCompleted(false);
-
-            return null;
-        }
-
-        InitializePandY(p, y, func);
-        simplex.setP(p);
-        simplex.setY(y);
-        simplex.setRunningInSeparateThread(runningInSeparateThread);
-        simplex.run();
-        xfrm = getTransform(p[0]); // lowest cost row
-        xfrm.Inverse();
-         */
+    private VOIContour search() {
         func = new CostFunction();
-        double[] initialPoint = new double[]{0,0,0,1,1};
-        double dCost = NelderMead.search(initialPoint, NelderMead.getStandardBasis(initialPoint.length), 
+        double[] initialPoint = new double[]{0,0,1,1,1};
+        NelderMead.search(initialPoint, NelderMead.getStandardBasis(initialPoint.length), 
                 0.0000001, this, 50000, null);
         TransMatrix xfrm = getTransform(initialPoint);
         xfrm.Inverse();
