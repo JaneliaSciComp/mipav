@@ -814,7 +814,8 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Active contour", "Snake", 0, null, false),
                                         menuBuilder.buildMenuItem("Active GVF", "AGVF", 0, null, false),
                                         menuBuilder.buildMenuItem("Spline active contour", "BSnake", 0, null, false),
-                                        menuBuilder.buildMenuItem("Spline GVF", "GVF", 0, null, false)}),
+                                        menuBuilder.buildMenuItem("Spline GVF", "GVF", 0, null, false),
+                                        menuBuilder.buildMenuItem("User-defined", "EvolveConstant", 0, null, false)}),
                                 menuBuilder.makeMenu("Flip VOI", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPY, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPX, true),
