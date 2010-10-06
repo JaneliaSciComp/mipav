@@ -54,6 +54,7 @@ import gov.nih.mipav.view.dialogs.JDialogAGVF;
 import gov.nih.mipav.view.dialogs.JDialogBSmooth;
 import gov.nih.mipav.view.dialogs.JDialogBSnake;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogEvolveBoundaryManual;
 import gov.nih.mipav.view.dialogs.JDialogFlip;
 import gov.nih.mipav.view.dialogs.JDialogGVF;
 import gov.nih.mipav.view.dialogs.JDialogIntensityThreshold;
@@ -750,9 +751,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kParent.paintToShortMask();
         } 
         
-        else if (command.equals("Snake") || 
-        		command.equals("AGVF") || 
-        		command.equals("GVF") || command.equals("BSnake")) {
+        else if (command.equals("Snake") || command.equals("AGVF") || 
+        		command.equals("GVF") || command.equals("BSnake") || command.equals("EvolveConstant")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
@@ -2678,10 +2678,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     		JDialogGVF kEvolve = new JDialogGVF(m_kParent.getFrame(), m_kTempImage);
     		kEvolve.setVOIManager(this);
     	}
-    	else if (command.equals("BSnake")) {
-    		JDialogBSnake kEvolve = new JDialogBSnake(m_kParent.getFrame(), m_kTempImage);
-    		kEvolve.setVOIManager(this);
-    	}
+        else if (command.equals("BSnake")) {
+            JDialogBSnake kEvolve = new JDialogBSnake(m_kParent.getFrame(), m_kTempImage);
+            kEvolve.setVOIManager(this);
+        }
+        else if (command.equals("EvolveConstant")) {
+            JDialogEvolveBoundaryManual kEvolve = new JDialogEvolveBoundaryManual(m_kParent.getFrame(), m_kTempImage);
+            kEvolve.setVOIManager(this);
+        }
     }
 
     private void findCompatibleType( ModelImage kImage, VOIBase kNew, boolean isFinished)
