@@ -269,6 +269,13 @@ public abstract class DQED {
 	!    Rice University Department of Mathematics 
 	!    Report 83-16, 6/83, 6/85
 	*/
+    // 17 of the 20 cases give excellent matches between FORTRAN and the MIPAV port.
+    // 0121B test01 mode = 0 don't match at all.  The FORTRAN stops after hitting an itmax set to 8,000 iterations.
+	// 0121A test01 mode = 1 are a fairly close but not a perfect match.
+    // 0121A test02 mode = 0 don't match at all.  At ninth call into dqedip, a divergence in the execution of the 2
+	// programs occurs due to small numerical differences, because FORTRAN gives a dxnrm = 6.3757E-16 while MIPAV
+	// gives a dxnrm = 8.24E-16.
+		
 
 	  final int ldfj = 8;
 	  final int liwa = 150;
