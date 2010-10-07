@@ -152,7 +152,7 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
                 return;
             }
 
-            //boundaryDir = boundaryDirBox.getSelectedIndex();
+            boundaryDir = boundaryDirBox.getSelectedIndex();
 
             VOIBaseVector curves = srcVOI.getCurves();
             VOIBase srcContour = null;
@@ -210,10 +210,13 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
         int[] extentsSlice = new int[]{extents[0],extents[1]};
         ModelImage maskImage = new ModelImage(ModelStorageBase.BOOLEAN, extentsSlice, "Binary Image");
         for (int i = 0; i < size; i++) {
-            if (mask.get(i) == true) {
-                maskImage.set(i, true);
-            } else {
-                maskImage.set(i, false);
+            if ( boundaryDir == 0 )
+            {
+                maskImage.set(i, mask.get(i) );
+            }
+            else
+            {
+                maskImage.set(i, !mask.get(i) );
             }
         }
 
@@ -256,6 +259,26 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
         }
         resultImage.clearMask();
         
+        if ( boundaryDir == 1 )
+        {
+            //Subtract the inverted and expanded mask from the original.
+            for ( int i = 0; i < size; i++ )
+            {
+                if ( mask.get(i) == false )
+                {
+                    resultImage.set(i, false);
+                }
+                else if ( mask.get(i) && resultImage.getBoolean(i) )
+                {
+                    resultImage.set(i, false);
+                }
+                else if ( mask.get(i) )
+                {
+                    resultImage.set(i, true);
+                }
+            }
+        }
+        
         final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(resultImage);
         VOIExtractionAlgo.run();
         VOIVector resultVOIs = resultImage.getVOIs();
@@ -274,13 +297,18 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
                 {
                     kCurve.elementAt(k).Z = slice;
                 }
+                kCurve.update();
                 resultVOI.importCurve( kCurve );
+            }
+            if (removeOriginal) {
+                resultVOI.setColor(voiColor);
+                image.getVOIs().removeElementAt(groupNum);
             }
             image.registerVOI( resultVOI );
         }
         resultImage.disposeLocal();
         maskImage.disposeLocal();
-        
+        mask = null;        
     }
 
     /**
@@ -305,17 +333,17 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
         textChangeX.setFont(serif12);
         scalePanel.add(textChangeX);
         
-        //JLabel labelBoundaryDir = new JLabel("Move boundary "); // make & set a label
-        //labelBoundaryDir.setForeground(Color.black);
-        //labelBoundaryDir.setFont(serif12);
-        //scalePanel.add(labelBoundaryDir); // add kernel label
+        JLabel labelBoundaryDir = new JLabel("Move boundary "); // make & set a label
+        labelBoundaryDir.setForeground(Color.black);
+        labelBoundaryDir.setFont(serif12);
+        scalePanel.add(labelBoundaryDir); // add kernel label
 
-        //boundaryDirBox = new JComboBox();
-        //boundaryDirBox.setFont(serif12);
-        //boundaryDirBox.setBackground(Color.white);
-        //boundaryDirBox.addItem("Outward");
-        //boundaryDirBox.addItem("Inward");
-        //scalePanel.add(boundaryDirBox);
+        boundaryDirBox = new JComboBox();
+        boundaryDirBox.setFont(serif12);
+        boundaryDirBox.setBackground(Color.white);
+        boundaryDirBox.addItem("Outward");
+        boundaryDirBox.addItem("Inward");
+        scalePanel.add(boundaryDirBox);
 
         //JPanel imageVOIPanel = new JPanel(new GridLayout(1, 1));
         //imageVOIPanel.setForeground(Color.black);
