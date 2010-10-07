@@ -3,13 +3,18 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
+import java.util.BitSet;
 
 import javax.swing.*;
 
@@ -147,7 +152,7 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
                 return;
             }
 
-            boundaryDir = boundaryDirBox.getSelectedIndex();
+            //boundaryDir = boundaryDirBox.getSelectedIndex();
 
             VOIBaseVector curves = srcVOI.getCurves();
             VOIBase srcContour = null;
@@ -188,59 +193,94 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
     
     private void evolveContour ( VOIBase srcContour )
     {
-
-        if ( srcContour == null )
+        if ( srcContour == null || (srcContour.size() == 0) )
         {
             return;
         }
-        VOIBase resultContour = srcContour.clone();
-
-        Vector3f minPt = resultContour.getImageBoundingBox()[0];
-        Vector3f maxPt = resultContour.getImageBoundingBox()[1];
-        Vector3f minScanner = new Vector3f();
-        Vector3f maxScanner = new Vector3f();
-        MipavCoordinateSystems.fileToScanner(minPt, minScanner, image);
-        MipavCoordinateSystems.fileToScanner(maxPt, maxScanner, image);
-        float minX = Math.min( minScanner.X, maxScanner.X );
-        float maxX = Math.max( minScanner.X, maxScanner.X );
-        float minY = Math.min( minScanner.Y, maxScanner.Y );
-        float maxY = Math.max( minScanner.Y, maxScanner.Y );
-        float minZ = Math.min( minScanner.Z, maxScanner.Z );
-        float maxZ = Math.max( minScanner.Z, maxScanner.Z );
-        if ( boundaryDir == 1 )
+        int slice = (int)srcContour.elementAt(0).Z;
+        int size = image.getDataSize();
+        if ( image.isColorImage() )
         {
-            scaleX *= -1;
+            size /= 4;
         }
-        float sX = ((maxX - minX) + scaleX ) / (maxX - minX);
-        float sY = ((maxY - minY) + scaleX ) / (maxY - minY);
-        float sZ = ((maxZ - minZ) + scaleX ) / (maxZ - minZ);
-        Vector3f gcPt = resultContour.getGeometricCenter();
-        float scale = Math.min( Math.abs(sX), Math.min( Math.abs(sY), Math.abs(sZ) ) );
+        BitSet mask = new BitSet( size );
+        int[] extents = image.getExtents();
+        srcContour.setMaskSlice( mask, extents[0], Preferences.is(Preferences.PREF_USE_VOI_XOR), VOI.ADDITIVE ); 
         
-        int size = resultContour.size();
+        int[] extentsSlice = new int[]{extents[0],extents[1]};
+        ModelImage maskImage = new ModelImage(ModelStorageBase.BOOLEAN, extentsSlice, "Binary Image");
         for (int i = 0; i < size; i++) {
-            resultContour.elementAt(i).Sub(gcPt);
-            resultContour.elementAt(i).Scale(scale, scale, 1);
-            resultContour.elementAt(i).Add(gcPt);
-        }
-        resultContour.update();
-
-        // The algorithm has completed and produced a new image to be displayed.
-        short sID = (short)(image.getVOIs().getUniqueID());
-        String kName = srcContour.getClass().getName();
-        int index = kName.lastIndexOf('.') + 1;
-        kName = kName.substring(index);
-        VOI resultVOI = new VOI(sID, kName + "_" + sID, srcContour.getType(), -1 );
-        resultVOI.importCurve( resultContour );
-
-        if (removeOriginal) {
-            resultVOI.setColor(voiColor);
-            image.getVOIs().removeElementAt(groupNum);
+            if (mask.get(i) == true) {
+                maskImage.set(i, true);
+            } else {
+                maskImage.set(i, false);
+            }
         }
 
-        image.registerVOI(resultVOI);
-        srcContour.setActive(false);
-        resultContour.setActive(false);
+        float[] resolutions = image.getResolutions(slice);
+        float sigmaX = scaleX * resolutions[0] / 4;
+        float sigmaY = scaleX * resolutions[1] / 4;
+        System.err.println( sigmaX + " " + sigmaY );
+
+        // Make algorithm
+        float[] sigmas = new float[]{sigmaX,sigmaY,0};
+        AlgorithmGaussianBlurSep gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(maskImage, sigmas, true, true);
+        gaussianBlurSepAlgo.run();
+        
+
+        final String name = JDialogBase.makeImageName(image.getImageName(), "_gblur");
+        ModelImage resultImage = (ModelImage) maskImage.clone();
+        resultImage.setImageName(name);
+
+        if ( (resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+            // For 2D Dicom set secondary capture tags only for fileinfo(0)
+            if (resultImage.getExtents().length == 2) {
+                ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+            } else {
+                for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                    ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                }
+            }
+        }
+        try {
+            resultImage.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);
+        } catch (final IOException e) {
+            resultImage.disposeLocal();
+            MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
+            return;
+        }
+        // The algorithm has completed and produced a new image to
+        // be displayed.
+        if (resultImage.isColorImage()) {
+            JDialogBase.updateFileInfo(image, resultImage);
+        }
+        resultImage.clearMask();
+        
+        final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(resultImage);
+        VOIExtractionAlgo.run();
+        VOIVector resultVOIs = resultImage.getVOIs();
+        for ( int i = 0; i < resultVOIs.size(); i++ )
+        {
+            // The algorithm has completed and produced a new image to be displayed.
+            short sID = (short)(image.getVOIs().getUniqueID());
+            String kName = srcContour.getClass().getName();
+            int index = kName.lastIndexOf('.') + 1;
+            kName = kName.substring(index);
+            VOI resultVOI = new VOI(sID, kName + "_" + sID, srcContour.getType(), -1 );
+            for ( int j = 0; j < resultVOIs.elementAt(i).getCurves().size(); j++ )
+            {
+                VOIBase kCurve = resultVOIs.elementAt(i).getCurves().elementAt(j);
+                for ( int k = 0; k < kCurve.size(); k++ )
+                {
+                    kCurve.elementAt(k).Z = slice;
+                }
+                resultVOI.importCurve( kCurve );
+            }
+            image.registerVOI( resultVOI );
+        }
+        resultImage.disposeLocal();
+        maskImage.disposeLocal();
+        
     }
 
     /**
@@ -265,34 +305,33 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
         textChangeX.setFont(serif12);
         scalePanel.add(textChangeX);
         
-        JLabel labelBoundaryDir = new JLabel("Move boundary "); // make & set a label
-        labelBoundaryDir.setForeground(Color.black);
-        labelBoundaryDir.setFont(serif12);
-        scalePanel.add(labelBoundaryDir); // add kernel label
+        //JLabel labelBoundaryDir = new JLabel("Move boundary "); // make & set a label
+        //labelBoundaryDir.setForeground(Color.black);
+        //labelBoundaryDir.setFont(serif12);
+        //scalePanel.add(labelBoundaryDir); // add kernel label
 
-        boundaryDirBox = new JComboBox();
-        boundaryDirBox.setFont(serif12);
-        boundaryDirBox.setBackground(Color.white);
-        boundaryDirBox.addItem("Outward");
-        boundaryDirBox.addItem("Inward");
-        scalePanel.add(boundaryDirBox);
+        //boundaryDirBox = new JComboBox();
+        //boundaryDirBox.setFont(serif12);
+        //boundaryDirBox.setBackground(Color.white);
+        //boundaryDirBox.addItem("Outward");
+        //boundaryDirBox.addItem("Inward");
+        //scalePanel.add(boundaryDirBox);
 
+        //JPanel imageVOIPanel = new JPanel(new GridLayout(1, 1));
+        //imageVOIPanel.setForeground(Color.black);
+        //imageVOIPanel.setBorder(buildTitledBorder("Evolve Boundary"));
 
-        JPanel imageVOIPanel = new JPanel(new GridLayout(3, 1));
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Evolve Boundary"));
-
-        ButtonGroup imageVOIGroup = new ButtonGroup();
-        singleSlice = new JRadioButton("Single slice", true);
-        singleSlice.setFont(serif12);
-        imageVOIGroup.add(singleSlice);
-        imageVOIPanel.add(singleSlice);
+        //ButtonGroup imageVOIGroup = new ButtonGroup();
+        //singleSlice = new JRadioButton("Single slice", true);
+        //singleSlice.setFont(serif12);
+        //imageVOIGroup.add(singleSlice);
+        //imageVOIPanel.add(singleSlice);
 
         removeOriginalCheckBox = new JCheckBox("Replace Original Contour");
         removeOriginalCheckBox.setFont(serif12);
         removeOriginalCheckBox.setForeground(Color.black);
         removeOriginalCheckBox.setSelected(false);
-        imageVOIPanel.add(removeOriginalCheckBox);
+        scalePanel.add(removeOriginalCheckBox);
 
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
@@ -308,8 +347,8 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(scalePanel, gbc);
-        gbc.gridy++;
-        mainPanel.add(imageVOIPanel, gbc);
+        //gbc.gridy++;
+        //mainPanel.add(imageVOIPanel, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();

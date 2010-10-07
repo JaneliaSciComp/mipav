@@ -2010,6 +2010,32 @@ public abstract class VOIBase extends Vector<Vector3f> {
             } 
         }
     }
+
+    public void setMaskSlice( BitSet kMask, int xDim, boolean XOR, int polarity )
+    {
+        if ( m_bUpdateMask )
+        {
+            getMask();
+        }
+        for ( int i = 0; i < m_kMaskPositions.size(); i++ )
+        {
+            Vector3f kPos = m_kMaskPositions.elementAt(i);
+            int x = (int)kPos.X;
+            int y = (int)kPos.Y;
+            int index = y * xDim + x;
+
+            if (polarity == VOI.ADDITIVE) {
+                if (XOR && kMask.get(index)) {
+                    kMask.clear(index);
+                } else {
+                    kMask.set(index);
+                }
+            }
+            else if (polarity == VOI.SUBTRACTIVE) {
+                kMask.clear(index);
+            } 
+        }
+    }
             
             
     /**
