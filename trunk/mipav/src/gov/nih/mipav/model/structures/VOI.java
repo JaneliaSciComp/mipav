@@ -942,6 +942,57 @@ public class VOI extends ModelSerialCloneable {
                     }
                 }
             }
+        } else if ((process == true) && (curveType == LINE)) {
+        	 double x0, x1, y0, y1;
+        	 double distance;
+        	 int i, j;
+             int indexX, indexY;
+             double myY, myX, yInc, xInc;
+             int len;
+             VOIBase vBase;
+             Vector3f vf0;
+             Vector3f vf1;
+             for (i = 0; i < curves.size(); i++) {
+        	     vBase = curves.elementAt(i);
+        	     vf0 = (Vector3f)vBase.get(0);
+        	     vf1 = (Vector3f)vBase.get(1);
+        	     x0 = vf0.X;
+                 y0 = vf0.Y;
+                 x1 = vf1.X;
+                 y1 = vf1.Y;
+                 distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
+                 myY = y0;
+                 myX = x0;
+                 xInc = (x1 - x0) / (2 * distance);
+                 yInc = (y1 - y0) / (2 * distance);
+
+                 len = (int) Math.round(2 * distance);
+                 indexX = -1;
+                 indexY = -1;
+                 for (j = 0; j < len; j++) {
+
+	                 if ((indexX != Math.round(myX)) || (indexY != Math.round(myY))) {
+	                     indexY = (int) Math.round(myY);
+	                     indexX = (int) Math.round(myX);
+	                     int offset = Math.round(vf0.Z) * xDim * yDim + (indexY * xDim) + indexX;
+	                     if (polarity == ADDITIVE) {
+	
+	                         if (XOR && mask.get(offset)) {
+	                             mask.clear(offset);
+	                         } else {
+	                             mask.set(offset);
+	                         }
+	                     } else if (polarity == SUBTRACTIVE) {
+	                         mask.clear(offset);
+	                     } else {
+	                         // mask[0].clear(offset + x);
+	                     }
+	                 }
+	
+	                 myX = myX + xInc;
+	                 myY = myY + yInc;
+                 } // for (j = 0; j < len; j++)
+             } // for (i = 0; i < curves.size(); i++)
         }
     }
 
