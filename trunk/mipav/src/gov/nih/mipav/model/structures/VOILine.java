@@ -93,8 +93,8 @@ public class VOILine extends VOIBase {
         distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
         myY = y0;
         myX = x0;
-        xInc = (x1 - x0) / (1 * distance);
-        yInc = (y1 - y0) / (1 * distance);
+        xInc = (x1 - x0) / (2 * distance);
+        yInc = (y1 - y0) / (2 * distance);
 
         int pt = 0;
         len = (int) Math.round(2 * distance);
