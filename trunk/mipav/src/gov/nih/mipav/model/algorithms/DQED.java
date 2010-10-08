@@ -211,7 +211,19 @@ public abstract class DQED {
 	private double tolsnr_dqedip = 0.0;
 	private double tolx_dqedip = 0.0;
 	
+	private boolean fulnwt_dqedmn = false;
 	private int iflag_dqedmn = 0;
+	private boolean jactri_dqedmn = false;
+	private boolean linmod_dqedmn = false;
+	private boolean mustcn_dqedmn = false;
+	private boolean newbst_dqedmn;
+	private boolean newopt_dqedmn;
+	private boolean passb_dqedmn = false;
+	private boolean retrea_dqedmn = false;
+	private boolean revers_dqedmn = false;
+	private boolean term_dqedmn = false;
+	private boolean useq_dqedmn = false;
+	private boolean useql_dqedmn = false;
 	
 	// dqed variables
 	private int iflag = 0;
@@ -241,9 +253,17 @@ public abstract class DQED {
 	private final int funcProb1Case = 101;
 	private final int fjaprxCase = 102;
 	private final int dqedhdCase = 103;
+	private final int dqedhd2Case = 104;
+	private final int dqedReverseCase = 105;
+	
+	// Problem 2
+	private double f2[] = null;
+	private double t2[] = null;
 	
 	public DQED() {
-	    dqedProb1();	
+	    //dqedProb1();
+	    dqedProb2();
+		//dqedProb3();
 	}
 	
 	private void dqedProb1() {
@@ -1047,6 +1067,485 @@ public abstract class DQED {
 
 	  return;
     } // jacProb1
+	
+	private void dqedProb2() {
+
+	/*****************************************************************************80
+	!
+	!! MAIN is the main program for DQED_PRB2.
+	!
+	!  Discussion:
+	!
+	!    DQED_PRB2 tests DQED.
+	!
+	!    The program illustrates the use of the Hanson-Krogh nonlinear least 
+	!    squares solver QED for fitting two exponentials to data.
+	! 
+	!    The problem is to find values for the four variables x(1),...,x(4),
+	!    which specify the model function
+	! 
+	!      h(t) = x(1)*exp(x(2)*t) + x(3)*exp(x(4)*t)
+	!
+	!    which mininize the sum of the squares of the error between h(t) and
+	!    recorded values of h at five values of t:
+	!
+	!      t = 0.05, 0.1, 0.4, 0.5, and 1.0.
+	!
+	!    We also have problem constraints that 
+	!
+	!          0 < =  x(1)
+	!      -25.0 < =  x(2) <= 0
+	!          0 < =  x(3)
+	!      -25.0 < =  x(4) <= 0. 
+	!
+	!    and a minimal separation requirement between x(2) and x(4) that
+	!    can be expressed as
+	!
+	!       0.05 < =  x(2) - x(4)
+	!
+	!
+	!  Output:
+	! 
+	!    model is h(t) = x(1)*exp(-t*x(2)) + x(3)*exp(t*x(4))
+	!    x(1),x(2),x(3),x(4)  = 
+	!       1.999475    -.999801     .500057   -9.953988
+	!     residual after the fit =   4.2408d-04
+	!     output flag from solver =                      4
+	*/ 
+    // dqedProb2 produces the correct answer.
+
+	  final int liwork = 84;
+	  final int lwork = 640;
+	  final int mcon = 1;
+	  final int mequa = 5;
+	  final int nvars = 4;
+
+	  final int ldfj = mcon + mequa;
+
+	  double bl[] = new double[nvars+mcon+1];
+	  double bu[] = new double[nvars+mcon+1];
+	  double fj[][] = new double[ldfj+1][nvars+2];
+	  double fnorm[] = new double[1];
+	  int igo[] = new int[1];
+	  int ind[] = new int[nvars+mcon+1];
+	  int iopt[] = new int[25];
+	  int iwork[] = new int[liwork+1];
+	  double ropt[] = new double[2];
+	  //external dqedhd2
+	  double work[] = new double[lwork+1];
+	  double x[] = new double[nvars+1];
+	  double x_expected[] = new double[]{0.0, 1.999475, -0.999801, 0.500057, -9.953988};
+	  long startTime;
+	  long endTime;
+	  double timeElapsed;
+	  int i;
+
+	  startTime = System.currentTimeMillis();
+
+	  Preferences.debug("\n");
+	  Preferences.debug("DQED_PRB2\n");
+	  Preferences.debug("Java version\n");
+	  Preferences.debug("A sample calling program for DQED.\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("The problem is to find values for the four variables\n");
+	  Preferences.debug("x[1], x[2], x[3], x[4], which specify the model function:\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("h(t) = x[1] * exp(x[2]*t) + x[3] * exp(x[4]*t)\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("which mininize the sum of the squares of the error\n");
+	  Preferences.debug("between h(t) and recorded values at five values of t:\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("t = 0.05, 0.1, 0.4, 0.5, and 1.0.\n");
+	//
+	//  Define the bounding constraints on the variables X(1) through X(4),
+	//  and then the linear constraints on the separation condition.
+	//
+	//  1: 0.0 <= X(1)
+	//
+	  ind[1] = 1;
+	  bl[1] = 0.0;
+	  bu[1] = 0.0;
+	//
+	//  2: -25.0 <= X(2) <= 0.0
+	//
+	  ind[2] = 3;
+	  bl[2] = -25.0;
+	  bu[2] = 0.0;
+	//
+	//  3: 0.0 <= X(3)
+	//
+	  ind[3] = 1;
+	  bl[3] = 0.0;
+	  bu[3] = 0.0;
+	//
+	//  4: -25.0 <= X(4) <= 0.0
+	//
+	  ind[4] = 3;
+	  bl[4] = -25.0;
+	  bu[4] = 0.0;
+	//
+	//  5: 0.05 <= X(2) - X(4)
+	//
+	  ind[5] = 1;
+	  bl[5] = 0.05;
+	  bu[5] = 0.0;
+	//
+	//  Define the initial values of the variables.
+	//  We don't know anything more, so all variables are set zero.
+	//
+	  for (i = 1; i <= nvars; i++) {
+	      x[i] = 0.0;
+	  }
+	//
+	//  Tell how much storage we gave the solver.
+	//
+	  iwork[1] = lwork;
+	  iwork[2] = liwork;
+	//
+	//  No additional options are in use.
+	//
+	  iopt[1] = 99;
+	//
+	//  Call the program.
+	//
+	  dqed ( dqedhd2Case, mequa, nvars, mcon, ind, bl, bu, x, fj, ldfj,
+	    fnorm, igo, iopt, ropt, iwork, work );
+
+	  Preferences.debug("\n");
+	  Preferences.debug("h(t) = x[1]*exp(t*x[2]*t) + x[3]*exp(t*x[4])\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("Output flag from dqed, igo[0] = " + igo[0] + "\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("Computed X:\n");
+	  Preferences.debug("\n");
+	  for (i = 1; i <= nvars; i++) {
+	      Preferences.debug("x[" + i + "] = " + x[i] + "\n");
+	  }
+	  Preferences.debug("\n");
+	  Preferences.debug("L2 norm of the residual fnorm[0] = " + fnorm[0] + "\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("Expected X:\n");
+	  Preferences.debug("\n");
+	  for (i = 1; i <= nvars; i++) {
+	      Preferences.debug("x_expected[" + i + "] = " + x_expected[i] + "\n");
+	  }
+	 
+	  Preferences.debug("\n");
+	  Preferences.debug("DQED_PRB2\n");
+	  Preferences.debug("Normal end of execution.\n");
+
+	  Preferences.debug("\n");
+	  endTime = System.currentTimeMillis();
+	  timeElapsed = (endTime - startTime)/1000.0;
+	  Preferences.debug("Seconds elapsed = " + timeElapsed + "\n");
+
+	  return;
+	} // dqedProb2
+	
+	private void dqedhd2 (double x[], double fj[][], int ldfj, int igo[],
+			              int iopt[], double ropt[] ) {
+
+	/*****************************************************************************80
+	!
+	!! DQEDHD2 evaluates the functions and derivatives for DQED.
+	!
+	!  Discussion:
+	!
+	!    The user problem has MCON constraint functions,
+	!    MEQUA least squares equations, and involves NVARS
+	!    unknown variables.
+	! 
+	!    When this subprogram is entered, the general (near)
+	!    linear constraint partial derivatives, the derivatives
+	!    for the least squares equations, and the associated
+	!    function values are placed into the array FJ(*,*).
+	!
+	!    All partials and functions are evaluated at the point
+	!    in X(*).  Then the subprogram returns to the calling
+	!    program unit.  Typically one could do the following
+	!    steps:
+	! 
+	!      step 1. Place the partials of the i-th constraint
+	!      function with respect to variable j in the
+	!      array FJ(i,j), i = 1,...,MCON, j=1,...,NVARS.
+	!
+	!      step 2. Place the values of the i-th constraint
+	!      equation into FJ(i,NVARS+1).
+	!
+	!      step 3. Place the partials of the i-th least squares
+	!      equation with respect to variable j in the
+	!      array FJ(MCON+i,j), i = 1,...,MEQUA,
+	!      j = 1,...,NVARS.
+	!
+	!      step 4. Place the value of the i-th least squares
+	!      equation into FJ(MCON+i,NVARS+1).
+	!
+	!      step 5. Return to the calling program unit.
+	*/
+
+	  final int mcon = 1;
+	  final int mequa = 5;
+	  final int nvars = 4;
+
+	  f2 = new double[]{0.0, 2.206, 1.994, 1.350, 1.216, 0.7358};
+	  //double fj(ldfj,nvars+1)
+	  int i;
+	  t2 = new double[]{0.0, 0.05, 0.10, 0.40, 0.50, 1.00};
+	  //double x(nvars)
+	// 
+	//  Set the value of the constraint.
+	//
+	  fj[1][nvars+1] = x[2] - x[4];
+	// 
+	//  Set the value of the residual functions.
+	//
+	  for (i = 1; i <= mequa; i++) {
+
+	    fj[mcon+i][nvars+1] = x[1] * Math.exp ( x[2] * t2[i] ) 
+	      + x[3] * Math.exp ( x[4] * t2[i] ) - f2[i];
+
+	  } // for (i = 1; i <= mequa; i++) 
+	//
+	//  If IGO is nonzero, compute the derivatives.
+	//
+	  if ( igo[0] != 0 ) {
+
+	    fj[1][1] = 0.0;
+	    fj[1][2] = 1.0;
+	    fj[1][3] = 0.0;
+	    fj[1][4] = -1.0;
+
+	    for (i = 1; i <= mequa; i++) {
+
+	      fj[mcon+i][1] = Math.exp ( x[2] * t2[i] );
+	      fj[mcon+i][2] = x[1] * t2[i] * Math.exp ( x[2] * t2[i] );
+	      fj[mcon+i][3] = Math.exp ( x[4] * t2[i] );
+	      fj[mcon+i][4] = x[3] * t2[i] * Math.exp ( x[4] * t2[i] );
+
+	    } // for (i = 1; i <= mequa; i++)
+
+	  } // if (igo[0] != 0)
+
+	  return;
+	} // dqedhd2
+	
+	private void dqedProb3() {
+
+	/*****************************************************************************80
+	!
+	!! MAIN is the main program for DQED_PRB3.
+	!
+	!  Discussion:
+	!
+	!    DQED_PRB3 tests DQED.
+	!
+	!    This program illustrates the use of the Hanson-Krogh nonlinear 
+	!    least squares solver DQED for fitting two exponentials to data.
+	! 
+	!    The problem is to find values for the four variables x(1),...,x(4),
+	!    which specify the model function
+	! 
+	!      h(t) = x(1)*exp(x(2)*t) + x(3)*exp(x(4)*t)
+	!
+	!    which mininize the sum of the squares of the error between h(t) and
+	!    recorded values of h at five values of t:
+	!
+	!      t = 0.05, 0.1, 0.4, 0.5, and 1.0.
+	!
+	!    We also have problem constraints that 
+	!
+	!          0 < =  x(1)
+	!      -25.0 < =  x(2) <= 0
+	!          0 < =  x(3)
+	!      -25.0 < =  x(4) <= 0. 
+	!
+	!    and a minimal separation requirement between x(2) and x(4) that
+	!    can be expressed as
+	!
+	!       0.05 < =  x(2) - x(4)
+	!
+	!
+	!  Output:
+	! 
+	!    model is h(t) = x(1)*exp(-t*x(2)) + x(3)*exp(t*x(4))
+	!    x(1),x(2),x(3),x(4)  = 
+	!        1.999475    -.999801     .500057   -9.953988
+	!     residual after the fit =   4.2408d-04
+	!     number of evaluations of parameter model =    14
+	!     output flag from solver =                      4
+	*/
+		
+	  final int liwork = 84;
+	  final int lwork = 640;
+	  final int mcon = 1;
+	  final int mequa = 5;
+	  final int nvars = 4;
+
+	  final int ldfj = mcon + mequa;
+
+	  double bl[] = new double[nvars+mcon+1];
+	  double bu[] = new double[nvars+mcon+1];
+	  double f[] = new double[] {0.0, 2.206, 1.994, 1.350, 1.216, 0.7358};
+	  double fj[][] = new double[ldfj+1][nvars+2];
+	  double fnorm[] = new double[1];
+	  int i;
+	  int igo[] = new int[1];
+	  int ind[] = new int[nvars+mcon+1];
+	  int iopt[] = new int[25];
+	  int iwork[] = new int[liwork+1];
+	  int niters;
+	  double ropt[] = new double[2];
+	  //external dqedev
+	  double t[] = new double[]{0.0, 0.05, 0.10, 0.40, 0.50, 1.00};
+	  double work[] = new double[lwork+1];
+	  double x[] = new double[nvars+1];
+	  double x_expected[] = new double[]{0.0, 1.999475, -0.999801, 0.500057, -9.953988};
+	  long startTime;
+	  long endTime;
+	  double timeElapsed;
+
+      startTime = System.currentTimeMillis();
+
+	  Preferences.debug("\n");
+	  Preferences.debug("DQED_PRB3\n");
+	  Preferences.debug("Java version\n");
+	  Preferences.debug("A test for DQED\n");
+	//
+	//  Define the bounding constraints on the variables X(1) through X(4),
+	//  and then the linear constraints on the separation condition.
+	//
+	//  1: 0.0 < =  X(1)
+	//
+	  ind[1] = 1;
+	  bl[1] = 0.0;
+	  bu[1] = 0.0;
+	//
+	//  2: -25.0 < =  X(2) <= 0.0
+	//
+	  ind[2] = 3;
+	  bl[2] = -25.0;
+	  bu[2] = 0.0;
+	//
+	//  3: 0.0 < =  X(3)
+	//
+	  ind[3] = 1;
+	  bl[3] = 0.0;
+	  bu[3] = 0.0;
+	//
+	//  4: -25.0 < =  X(4) <= 0.0
+	//
+	  ind[4] = 3;
+	  bl[4] = -25.0;
+	  bu[4] = 0.0;
+	//
+	//  5: 0.05 < =  X(2) - X(4)
+	//
+	  ind[5] = 1;
+	  bl[5] = 0.05;
+	  bu[5] = 0.0;
+	//
+	//  Define the initial values of the variables.
+	//  We don't know anything at all, so all variables are set zero.
+	//
+	  for (i = 1; i <= nvars; i++) {
+	      x[i] = 0.0;
+	  }
+	//
+	//  Tell how much storage we gave the solver.
+	//
+	  iwork[1] = lwork;
+	  iwork[2] = liwork;
+	//
+	//  Initialize the call counter.
+	//
+	  niters = 0;
+	//
+	//  Use reverse commumication to evaluate the derivatives.
+	//
+	  iopt[1] = 16;
+	  iopt[2] = 1;
+	//
+	//  No more options.
+	//
+	  iopt[3] = 99;
+
+	  do {
+
+	    dqed ( dqedReverseCase, mequa, nvars, mcon, ind, bl, bu, x, fj, ldfj, fnorm,
+	      igo, iopt, ropt, iwork, work );
+
+	    if ( 1 < igo[0] ) {
+	      break;
+	    }
+	//
+	//  Count function evaluations.
+	//
+	    niters = niters + 1;
+	// 
+	//  Set the value of the constraint, and the residual functions.
+	//
+	    fj[1][5] = x[2] - x[4];
+
+	    for  (i = 1; i <= mequa; i++) {
+
+	      fj[mcon+i][5] = x[1]*Math.exp(x[2]*t[i]) + x[3]*Math.exp(x[4]*t[i]) - f[i];
+
+	    }
+	//
+	// If IGO is nonzero, compute the derivatives.
+	//
+	    if ( igo[0] != 0 ) {
+	 
+	      fj[1][1] = 0.0;
+	      fj[1][2] = 1.0;
+	      fj[1][3] = 0.0;
+	      fj[1][4] = -1.0;
+
+	      for (i = 1; i <= mequa; i++) {
+
+	        fj[mcon+i][1] = Math.exp(x[2]*t[i]);
+	        fj[mcon+i][2] = x[1]*t[i]*Math.exp(x[2]*t[i]);
+	        fj[mcon+i][3] = Math.exp(x[4]*t[i]);
+	        fj[mcon+i][4] = x[3]*t[i]*Math.exp(x[4]*t[i]);
+
+	      } // for (i = 1; i <= mequa; i++)
+
+	    } // if (igo[0] != 0)
+
+	  } while (true);
+
+	  Preferences.debug("\n");
+	  Preferences.debug("Model:\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("h(t) = x[1]*exp(-t*x[2]) + x[3]*exp(t*x[4])\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("Constrained minimizing X:\n");
+	  Preferences.debug("\n");
+	  for (i = 1; i <= nvars; i++) {
+	      Preferences.debug("x[" + i + "] = " + x[i] + "\n");
+	  }
+	  Preferences.debug("\n");
+	  Preferences.debug("Residual of the fitted data fnorm[0] = " + fnorm[0] + "\n");
+	  Preferences.debug("Number of model evaluations niters = " + niters + "\n");
+	  Preferences.debug("DQED output flag igo[0] = " + igo[0] + "\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("Expected X:\n");
+	  Preferences.debug("\n");
+	  for (i = 1; i <= nvars; i++) {
+	      Preferences.debug("x_expected[" + i + "] = " + x_expected[i] + "\n");
+	  }
+
+	  Preferences.debug("\n");
+	  Preferences.debug("DQED_PRB3\n");
+	  Preferences.debug("Normal end of execution.\n");
+
+	  Preferences.debug("\n");
+	  endTime = System.currentTimeMillis();
+	  timeElapsed = (endTime - startTime)/1000.0;
+	  Preferences.debug("Seconds elapsed = " + timeElapsed + "\n");
+
+	  return;
+	} // dqedProb3
 	
 	private double damax(int n, double x[], int incx) {
 		/*****************************************************************************80
@@ -6396,6 +6895,9 @@ public abstract class DQED {
 	          case dqedhdCase:
 	        	  dqedhd ( y, fj, ldfj, igo, iopt, ropt );	
 	        	  break;
+	          case dqedhd2Case:
+	        	  dqedhd2 ( y, fj, ldfj, igo, iopt, ropt );	
+	        	  break;
 	          }
 	      }
 	      else {
@@ -6420,6 +6922,9 @@ public abstract class DQED {
 	          case dqedhdCase:
 	        	  dqedhd ( y, fj, ldfj, igo, iopt, ropt );	
 	        	  break;
+	          case dqedhd2Case:
+	        	  dqedhd2 ( y, fj, ldfj, igo, iopt, ropt );	
+	        	  break;
 	          }
 	      }
 	      else {
@@ -6439,6 +6944,9 @@ public abstract class DQED {
 	          switch (dqedevCase) {
 	          case dqedhdCase:
 	        	  dqedhd ( x, fj, ldfj, igo, iopt, ropt );	
+	        	  break;
+	          case dqedhd2Case:
+	        	  dqedhd2 ( x, fj, ldfj, igo, iopt, ropt );	
 	        	  break;
 	          }
 	      }
@@ -9206,7 +9714,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  double fc = 0.0;
 			  //double fjac(ldfjac,*)
 			  double fl = 0.0;
-			  boolean fulnwt = false;
 			  int i;
 			  int icase;
 			  int igoelm = 850;
@@ -9216,7 +9723,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  int iters = 0;
 			  int itmax = 0;
 			  int j;
-			  boolean jactri = false;
 			  int jk;
 			  int jp;
 			  int k = 0;
@@ -9224,25 +9730,20 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  int kp;
 			  int l;
 			  int level = 0;
-			  boolean linmod = false;
 			  int lk = 0;
 			  int lp = 0;
 			  int lpdiff = 0;
 			  int mconst[] = new int[1];
 			  int me[] = new int[1];
 			  int mk = 0;
-			  boolean mustcn = false;
 			  int nall = 0;
 			  int nerr;
-			  boolean newbst;
-			  boolean newopt;
 			  int nit = 0;
 			  boolean noquad = false;
 			  int np = 0;
 			  int nt = 0;
 			  int ntterm = 0;
 			  int nv = 0;
-			  boolean passb = false;
 			  double pb = 0.0;
 			  double pd = 0.0;
 			  double pv[] = new double[1];
@@ -9252,8 +9753,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  double rc = 0.0;
 			  double rcond[] = new double[1];
 			  double rdum;
-			  boolean retrea = false;
-			  boolean revers = false;
 			  double rg = 0.0;
 			  double sa[] = new double[1];
 			  double sb[] = new double[1];
@@ -9262,7 +9761,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  double ss[] = new double[1];
 			  double t;
 			  double t2 = 0.0;
-			  boolean term = false;
 			  double told = 0.0;
 			  double tolf = 0.0;
 			  double tolp = 0.0;
@@ -9270,8 +9768,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  double toluse = 0.0;
 			  double tolx = 0.0;
 			  double tt;
-			  boolean useq = false;
-			  boolean useql = false;
 			  //double wj(ldwj,*)
 			  String xmess;
 			  //double xp(nvars,npmax)
@@ -9347,9 +9843,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        pv[0] = 0.0;
 			        pvl = 0.0;
-			        retrea = false;
-			        fulnwt = false;
-			        term = false;
+			        retrea_dqedmn = false;
+			        fulnwt_dqedmn = false;
+			        term_dqedmn = false;
     	        } // if (do20)
 
 			    if (do30) {
@@ -9357,7 +9853,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			        iters = iters + 1;
 
-			        if ( retrea ) {
+			        if ( retrea_dqedmn ) {
 			        	for (j = 1; j <= nvars; j++) {
 			                x[j] = xb[j];
 			        	}
@@ -9372,7 +9868,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            }
 			        } // else
 
-			        if ( term) {
+			        if ( term_dqedmn) {
 			            iflag_dqedmn = 0;
 			            return;
 			        } // if (term)
@@ -9387,7 +9883,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 		            //  VALUES FROM THE USER.  THE OPTIONAL WAY IS REVERSE COMMUNICATION.
 		            //  THE NOMINAL WAY IS THROUGH FORWARD COMMUNICATION.
 		            //
-		            if ( revers) {
+		            if ( revers_dqedmn) {
 		                return;
 		            }
 		            if (testMode) {
@@ -9397,6 +9893,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 		            		break;
 		            	case dqedhdCase:
 		            		dqedhd(x, fjac, ldfjac, igo, iopt, ropt);
+		            		break;
+		            	case dqedhd2Case:
+		            		dqedhd2(x, fjac, ldfjac, igo, iopt, ropt);
 		            		break;
 		            	}
 		            }
@@ -9426,7 +9925,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            //
 			            //  A RETREAT IS FORCED TO OCCUR WITH THIS ASSIGNMENT.
 			            //
-			            retrea = true;
+			            retrea_dqedmn = true;
 
 			        } // if (igo[0] == 99)
 
@@ -9604,7 +10103,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  COMPUTE NORM OF REMAINDER INCLUDING LINEAR TERMS,
 			        //  USING THE LAST MOVE.
 			        //
-			        useq = np  >  1 && (! retrea);
+			        useq_dqedmn = np  >  1 && (! retrea_dqedmn);
 
 			        zn[0] = 1.0;
 
@@ -9618,8 +10117,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 				        //
 				        //  COMPUTE RATIO OF Z TERMS TO CURRENT F VALUE..
 				        //
-				        if ( useq) {
-				            useq = (zn[0]  > 1.0D-4*dfn[0] && zn[0]  <  dfn[0]*0.75 ) || useql;
+				        if ( useq_dqedmn) {
+				            useq_dqedmn = (zn[0]  > 1.0D-4*dfn[0] && zn[0]  <  dfn[0]*0.75 ) || useql_dqedmn;
 				        }
 	
 				        if ( dfn[0] > 0.0 ) {
@@ -9710,7 +10209,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        //  APPLY THE TRANSFORMATION TO THE QUADRATIC TERMS.
 			        //
-			        if ( jactri) {
+			        if ( jactri_dqedmn) {
 
 			            for (j = 1; j <= nt; j++) {
 			                for (i = j + 1; i <= mequa; i++) {
@@ -9776,7 +10275,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        for (j = 1; j <= nvars; j++) {
 
-			            if ( jactri) {
+			            if ( jactri_dqedmn) {
 			                jk = j;
 			            }
 			            else {
@@ -9801,8 +10300,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        for (j = 1; j <= nvars; j++) {
 			        	gr[j] = pj[j];
 			        }
-			        newbst = fc  <  fb[0];
-			        if ( newbst) {
+			        newbst_dqedmn = fc  <  fb[0];
+			        if ( newbst_dqedmn) {
 			        	k = 0;
 			        }
 			    } // if (do350)
@@ -9814,7 +10313,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        pb = 0.0;
 			        pd = Double.MAX_VALUE;
 
-			        if ( ! retrea) {
+			        if ( ! retrea_dqedmn) {
 			            fb[0] = fc;
 			        }
 
@@ -9857,7 +10356,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			        if (do430) {
 			        	do430 = false;
-			            useql = false;
+			            useql_dqedmn = false;
 			            rg = 0.0;
 			            //
 			            //  AT THE INITIAL X.
@@ -9866,13 +10365,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			            for (j = 1; j <= nvars; j++) {
 
-			                if ( ! passb) {
+			                if ( ! passb_dqedmn) {
 			                    bb[j] = -x[j];
 			                }
 
 			                if ( bb[j] == 0.0 ) {
 
-			                    if ( jactri) {
+			                    if ( jactri_dqedmn) {
 			                        jk = j;
 			                    }
 			                    else {
@@ -9922,7 +10421,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            }
 
 			            bboost = 0.25;
-			            useql = false;
+			            useql_dqedmn = false;
 
 			            for (j = 1; j <= nvars; j++) {
 			                //
@@ -10015,7 +10514,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  if (do530) {
 			      do530 = false;
 
-			      if ( term) {
+			      if ( term_dqedmn) {
 			          iflag_dqedmn = 0;
 			          return;
 			      } // if (term)
@@ -10121,7 +10620,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			          for (j = 1; j <= nvars; j++) {
 
-			              if ( jactri) {
+			              if ( jactri_dqedmn) {
 			                  jk = j;
 			              }
 			              else {
@@ -10141,7 +10640,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          //  THIS TEST SAYS TO USE THE QUADRATIC MODEL IF
 			          //  THE LAST STEP IS APPROXIMATELY IN THE NULL SPACE OF THE JACOBIAN.
 			          //
-			          useq = useq || t  <  dfn[0] * 0.75;
+			          useq_dqedmn = useq_dqedmn || t  <  dfn[0] * 0.75;
 
 			          if ( dfn[0] > 0.0 ) {
 			              dfn[0] = t/dfn[0];
@@ -10158,11 +10657,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  CHECK IF QUAD. MODEL IS BEING SUPPRESSED.
 			      //
-			      useq = useq && (! noquad);
+			      useq_dqedmn = useq_dqedmn && (! noquad);
 			      //
 			      //  START THE PROCESS USING THE LINEAR MODEL.
 			      //
-			      linmod = true;
+			      linmod_dqedmn = true;
 			      mconst[0] = mcon;
 			      do610 = true;
 			  } // if (do530)
@@ -10172,7 +10671,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  COMPUTE THE REQUIRED DIMENSIONS OF THE MODEL PROBLEM.
 			      //
-			      if ( linmod) {
+			      if ( linmod_dqedmn) {
 			          mk = 0;
 			          me[0] = Math.min(mequa,nvars+1);
 			          //
@@ -10183,7 +10682,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          }
 			          do615 = true;
 			      } // if (linmod)
-			      else if ( useq) {
+			      else if ( useq_dqedmn) {
 			          mk = Math.min(mequa,nvars+np+1);
 			          me[0] = nvars + mk;
 			          for (j = 1; j <= mk; j++) {
@@ -10252,7 +10751,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 		        	  }
 		          }
 
-			      if ( useq && (! linmod) ) {
+			      if ( useq_dqedmn && (! linmod_dqedmn) ) {
 			    	  wj[mconst[0]+1][nvars+1] = 1.0;
 			      }
 			      //
@@ -10305,12 +10804,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    		  arr[j] = wj[mconst[0]+j][nv+1];
 			    	  }
 			          pv[0] = dnrm2(me[0],arr,1);
-			          if ( linmod) {
+			          if ( linmod_dqedmn) {
 			              pvl = pv[0];
 			              for (j = 1; j <= nvars; j++) {
 			                  dxl[j] = dx[j];
 			              }
-			              linmod = false;
+			              linmod_dqedmn = false;
 			              do610 = true;
 			              continue loop;
 			          } // if (linmod)
@@ -10319,12 +10818,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          //  RESIDUAL NORM, DROP THE QUADRATIC MODEL AND USE THE
 			          //  LINEAR MODEL.
 			          //
-			          else if ( (pv[0]>=fc) && useq) {
+			          else if ( (pv[0]>=fc) && useq_dqedmn) {
 			              if ( iprint > 0) {
 			                  Preferences.debug("Abandon quadratic model.\n");
 			              }
-			              useq = false;
-			          } // else if ( (pv[0]>=fc) && useq)
+			              useq_dqedmn = false;
+			          } // else if ( (pv[0]>=fc) && useq_dqedmn)
 			          do730 = true;
 			      } // if (igow[0] > 1)
 			      else {
@@ -10359,13 +10858,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  IS NOT REQUIRED WHEN THE MODEL IS LINEAR, BUT IT
 			      //  DOES NOT HURT THEN.
 			      //
-			      if ( useq && (! linmod)) {
+			      if ( useq_dqedmn && (! linmod_dqedmn)) {
 			          for (j = 1; j <= nvars; j++) {
 			              for (i = j; i <= nvars; i++) {
 			                  wj[mconst[0]+mk+i][j] = wj[mconst[0]+mk+j][i];
 			              } // for (i = j; i <= nvars; i++)
 			          } // for (j = 1; j <= nvars; j++)
-			      } // if ( useq && (! linmod))
+			      } // if ( useq_dqedmn && (! linmod))
 			      //
 			      //  COMPUTE RESIDUALS ON THE EQUATIONS K*R = 0.
 			      //
@@ -10410,7 +10909,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      tt = 0.0;
 
 
-			      if ( useq) {
+			      if ( useq_dqedmn) {
 			    	  cosq = 0.0;
 			    	  for (j = 1; j <= nvars; j++) {
 			    		  cosq += gr[j] * dx[j];
@@ -10431,13 +10930,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        	  cosm = cosm/t/tt;
 			          } // if ( t > 0.0 && tt > 0.0 )
 
-			      } // if (useq)
+			      } // if (useq_dqedmn)
 
 			      if ( iprint > 0) {
 			    	  Preferences.debug("cos of quad. move and grad. cosq = " + cosq + "\n");
 			    	  Preferences.debug("cos of lin. move and grad. cosl = " + cosl + "\n");
 			    	  Preferences.debug("cos of each move cosm = " + cosm + "\n");
-			    	  Preferences.debug("flag for trying quad. move useq = " + useq + "\n");
+			    	  Preferences.debug("flag for trying quad. move useq_dqedmn = " + useq_dqedmn + "\n");
 			          Preferences.debug("length of quad. move tt = " + tt + "\n");
 			          Preferences.debug("length of linear move t = " + t + "\n");
 			      } // if (iprint > 0)
@@ -10445,27 +10944,27 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  CHOOSE MOVE PARTIALLY BASED ON ANGLE MOVES MAKE WITH EACH OTHER.
 			      //
-			      useq = useq && (cosm > 0.0 || cosl < cosm) && cosq > 0.0;
-			      useql = useq;
+			      useq_dqedmn = useq_dqedmn && (cosm > 0.0 || cosl < cosm) && cosq > 0.0;
+			      useql_dqedmn = useq_dqedmn;
 
-			      if (! useq) {
+			      if (! useq_dqedmn) {
 			          pv[0] = pvl;
 			          for (j = 1; j <= nvars; j++) {
 			        	  dx[j] = dxl[j];
 			          }
 			          ntterm = 0;
-			      } // if (!useq)
+			      } // if (!useq_dqedmn)
 			      else {
 			          ntterm = np - 1;
 			      }
 			      //
 			      //  TEST FOR NOISE IN MODEL PROBLEM SOLN.
 			      //
-			      term = (pv[0]>=fc) && (! retrea) && (! useq);
-			      term = term && mcon  ==  0;
+			      term_dqedmn = (pv[0]>=fc) && (! retrea_dqedmn) && (! useq_dqedmn);
+			      term_dqedmn = term_dqedmn && mcon  ==  0;
 			      // Code as written does not make sense
-			      term = false;
-			      if ( term) {
+			      term_dqedmn = false;
+			      if ( term_dqedmn) {
 			          if ( iprint > 0) {
 			        	  Preferences.debug(" model residual>=current f. quitting.\n");
 			        	  Preferences.debug("pv[0] = " + pv[0] + " fc = " + fc + "\n");
@@ -10489,7 +10988,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  NECESSARY, SEE IF RETREATING WOULD BE NEEDED WITH A
 			      //  LINEAR MODEL.  ONLY THEN RETREAT.
 			      //
-			      if ( rc<=1.0 || (! useq)) {
+			      if ( rc<=1.0 || (! useq_dqedmn)) {
 			          do750 = true;
 			      }
 			      else {
@@ -10533,7 +11032,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        	Preferences.debug("alpha = " + alpha + "\n");
 			        	Preferences.debug("bboost = " + bboost + "\n");
 			        	Preferences.debug("inner iterations nit = " + nit + "\n");
-			        	Preferences.debug("use quad model useq = " + useq + "\n");
+			        	Preferences.debug("use quad model useq_dqedmn = " + useq_dqedmn + "\n");
 			        	Preferences.debug("number of terms ntterm = " + ntterm + "\n");
 			      
 			            for (j = 1; j <= nvars; j++) {
@@ -10554,9 +11053,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            Preferences.debug("end of iteration.\n");
 			        } // if (iprint > 0)
 
-			        retrea = rc  >  1;
+			        retrea_dqedmn = rc  >  1;
 
-			        if (! retrea) {
+			        if (! retrea_dqedmn) {
 			            chg = 1.0;
 			            t2 = 0.0;
 			            for (j = 1; j <= nvars; j++) {
@@ -10625,13 +11124,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			            } // for (j = 1; j <= nvars; j++)
 
-			            fulnwt = t2  <  0.99;
+			            fulnwt_dqedmn = t2  <  0.99;
 			            dxnrm = Math.abs(dx[idamax(nvars,dx,1)]);
 			            //
 			            //  TEST FOR SMALL ABSOLUTE CHANGE IN X VALUES.
 			            //
-			            term = dxnrm  <  told && fulnwt;
-			            if ( term) {
+			            term_dqedmn = dxnrm  <  told && fulnwt_dqedmn;
+			            if ( term_dqedmn) {
 			                igo[0] = 6;
 			                //
 			                //  VALUE MEANS CHANGE (IN PARAMETERS) WAS SMALL AND A
@@ -10641,9 +11140,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                continue loop;
 			            } // if (term)
 			            else {
-			                term = dxnrm  <  dnrm2(nvars,x,1)*tolx && fulnwt;
-			                term = term && (iters > 1);
-			                if ( term) {
+			                term_dqedmn = dxnrm  <  dnrm2(nvars,x,1)*tolx && fulnwt_dqedmn;
+			                term_dqedmn = term_dqedmn && (iters > 1);
+			                if ( term_dqedmn) {
 			                    igo[0] = 7;
 			                    //
 			                    //  VALUE MEANS RELATIVE CHANGE IN PARAMETERS WAS SMALL AND A
@@ -10672,7 +11171,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  IF THE MODEL IS GENUINELY QUADRATIC, ADD IN THE EXTRA
 			        //  TERMS AND COMPUTE THE SECOND DERIVATIVE INFORMATION.
 			        //
-			        if ( useq && (! linmod) ) {
+			        if ( useq_dqedmn && (! linmod_dqedmn) ) {
 
 			            //
 			            //  COMPUTE THE DOT PRODUCT OF CURRENT PROPOSED STEP AND
@@ -10742,7 +11241,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                } // for (j = i; j <= nvars; j++)
 			            } // for (i = 1; i <= nvars; i++)
 
-			        } // if ( useq && (! linmod) )
+			        } // if ( useq_dqedmn && (! linmod) )
 
 			        do670 = true;
 			        continue loop;
@@ -10757,7 +11256,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  USING JUST A LINEAR MODEL.
 			        //
 			        for (j = 1; j <= nvars; j++) {
-			            if ( jactri) {
+			            if ( jactri_dqedmn) {
 			                jk = j;
 			            }
 			            else {
@@ -10783,7 +11282,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  COMPUTE THE LINEAR TERM OF THE MODEL.
 			        //
 			        for (j = 1; j <= nvars; j++) {
-			            if ( jactri) {
+			            if ( jactri_dqedmn) {
 			                jk = j;
 			            }
 			            else {
@@ -10817,8 +11316,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    if (do980) {
 			        do980 = false;
 
-			        term = iters >= itmax;
-			        if ( term) {
+			        term_dqedmn = iters >= itmax;
+			        if ( term_dqedmn) {
 			            igo[0] = 8;
 			            //
 			            //  VALUE MEANS THAT MAX. NUMBER OF ALLOWED ITERATIONS TAKEN.
@@ -10836,12 +11335,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        //  TEST FOR SMALL FUNCTION NORM.
 			        //
-			        term = fc <= tolf;
+			        term_dqedmn = fc <= tolf;
 			        //
 			        //  IF HAVE CONSTRAINTS MUST ALLOW AT LEAST ONE MOVE.
 			        //
-			        term = term && (mcon == 0 || iters > 1);
-			        if ( term) {
+			        term_dqedmn = term_dqedmn && (mcon == 0 || iters > 1);
+			        if ( term_dqedmn) {
 			            igo[0] = 2;
 			            //
 			            //  VALUE MEANS FUNCTION NORM WAS SMALL.
@@ -10860,14 +11359,14 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    if (do990) {
 			        do990 = false;
 
-			        term = term && (! retrea);
-			        if ( term) {
+			        term_dqedmn = term_dqedmn && (! retrea_dqedmn);
+			        if ( term_dqedmn) {
 			            igo[0] = 3;
 			            //
 			            //  VALUE MEANS THE FUNCTION IS PROBABLY REACHING A LOCAL MINIMUM
 			            //  BUT MOVES ARE STILL HITTING TRUST REGION CONSTRAINTS.
 			            //
-			            if ( fulnwt) {
+			            if ( fulnwt_dqedmn) {
 			            	igo[0] = 4;
 			            }
 			            //
@@ -10875,7 +11374,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            //  AND MOVES ARE NOT HITTING THE TRUST REGION CONSTRAINTS.
 			            //
 			            if ( igo[0] == 3) {
-			            	term = term && (! mustcn);
+			            	term_dqedmn = term_dqedmn && (! mustcn_dqedmn);
 			            }
 			        } // if (term)
 			        do530 = true;
@@ -10888,9 +11387,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    if (do1010) {
 			        do1010 = false;
 
-			        term = (Math.abs(fb[0]-pv[0])<=tolsnr*fb[0]) && (Math.abs(fc-pv[0]) <= fb[0]*tolp);
-			        term = term && (Math.abs(fc-fl)<=fb[0]*tolsnr);
-			        term = term && (Math.abs(pvl-pv[0])<=fb[0]*tolsnr);
+			        term_dqedmn = (Math.abs(fb[0]-pv[0])<=tolsnr*fb[0]) && (Math.abs(fc-pv[0]) <= fb[0]*tolp);
+			        term_dqedmn = term_dqedmn && (Math.abs(fc-fl)<=fb[0]*tolsnr);
+			        term_dqedmn = term_dqedmn && (Math.abs(pvl-pv[0])<=fb[0]*tolsnr);
 
 			        do990 = true;
 			        continue loop;
@@ -10910,7 +11409,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  IF NO MORE EQUATIONS THAN VARIABLES, NO NEED TO
 			        //  PRETRIANGULARIZE THE JACOBIAN MATRIX.
 			        //
-			        jactri = ( nvars < mequa );
+			        jactri_dqedmn = ( nvars < mequa );
 			        //
 			        //  MAKE SURE THAT VARIABLES SATISFY CONSTRAINTS.
 			        //  GENERALLY THIS MAY TAKE A CALL TO DBOCLS().
@@ -10964,10 +11463,10 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        itmax = 75;
 			        level = 1;
 			        ipls = 0;
-			        passb = false;
+			        passb_dqedmn = false;
 			        noquad = false;
-			        revers = false;
-			        mustcn = false;
+			        revers_dqedmn = false;
+			        mustcn_dqedmn = false;
 			        lp = 1;
 			        lpdiff = 0;
 			        do1110 = true;
@@ -10979,7 +11478,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        lp = lp + lpdiff;
 			        lpdiff = 2;
 			        kp = iopt[lp];
-			        newopt = kp  >  0;
+			        newopt_dqedmn = kp  >  0;
 			        jp = Math.abs(kp);
 			        //
 			        //  SEE IF THIS IS THE LAST OPTION..
@@ -10988,7 +11487,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  SOLVER MUST SATISFY THE REQUIREMENTS FOR THAT OPTION ARRAY.
 			        //
 			        if ( jp == 99) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			                if ( ipls == 0) {
 			                	ipls = lp;
 			                }
@@ -11005,7 +11504,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  CHANGE PRINT OPTION.
 			        //
 			        if ( jp == 1) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			    	        iprint = iopt[lp+1];
 			            }
 			          do1110 = true;
@@ -11015,7 +11514,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  SEE IF MAX. NUMBER OF ITERATIONS CHANGING.
 			        //
 			        if ( jp == 2) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	itmax = iopt[lp+1];
 			            }
 			            do1110 = true;
@@ -11025,11 +11524,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  SEE IF BOUNDS FOR THE TRUST REGION ARE BEING PASSED.
 			        //
 			        if ( jp == 3) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	for (j = 1; j <= nvars; j++) {
 			            		bb[j] = ropt[iopt[lp+1]+j-1];
 			            	}
-			                passb = true;
+			                passb_dqedmn = true;
 			            } // if (newopt)
 			            do1110 = true;
 			            continue loop;
@@ -11038,7 +11537,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  CHANGE TOLERANCE ON THE LENGTH OF THE RESIDUALS.
 			        //
 			        if ( jp == 4) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	tolf = ropt[iopt[lp+1]];
 			            }
 			            do1110 = true;
@@ -11049,7 +11548,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  CHANGE TO THE PARAMETERS.
 			        //
 			        if ( jp == 5) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	tolx = ropt[iopt[lp+1]];
 			            }
 			            do1110 = true;
@@ -11059,7 +11558,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  CHANGE TOLERANCE ON ABSOLUTE CHANGE TO THE PARAMETERS.
 			        //
 			        if ( jp == 6) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	told = ropt[iopt[lp+1]];
 			            }
 			            do1110 = true;
@@ -11071,7 +11570,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  CURRENT FUNCTION NORM.
 			        //
 			        if ( jp == 7) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	tolsnr = ropt[iopt[lp+1]];
 			            }
 			            do1110 = true;
@@ -11083,7 +11582,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  THE RESIDUAL NORM.
 			        //
 			        if ( jp == 8) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	tolp = ropt[iopt[lp+1]];
 			            }
 			            do1110 = true;
@@ -11096,7 +11595,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  QUADRATIC MODEL.
 			        //
 			        if ( jp == 9) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	toluse = ropt[iopt[lp+1]];
 			            }
 			            do1110 = true;
@@ -11107,7 +11606,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  SOLVING FOR THE QUADRATIC COEFFICIENTS OF THE MODEL.
 			        //
 			        if ( jp == 10) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	cond = ropt[iopt[lp+1]];
 			            }
 			            do1110 = true;
@@ -11117,7 +11616,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  CHANGE THE PRINT LEVEL IN THE ERROR PROCESSOR.
 			        //
 			        if ( jp == 11) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	level = iopt[lp+1];
 			            }
 			            do1110 = true;
@@ -11129,7 +11628,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  ARRAY FOR THE SUBPROGRAM.
 			        //
 			        if ( jp == 12) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	ipls = iopt[lp+1];
 			            }
 			            do1110 = true;
@@ -11142,7 +11641,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  SUBROUTINES IS EASY TO DO.
 			        //
 			        if ( jp == 13) {
-			            if ( newopt){
+			            if ( newopt_dqedmn){
 			            	lpdiff = iopt[lp+1];
 			            }
 			            do1110 = true;
@@ -11152,7 +11651,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  OPTION TO SUPPRESS USING THE QUADRATIC MODEL, EVER.
 			        //
 			        if ( jp == 14) {
-			            if ( newopt) {
+			            if ( newopt_dqedmn) {
 			            	noquad = iopt[lp+1]  ==  1;
 			            }	
 			            do1110 = true;
@@ -11171,8 +11670,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  AND FUNCTION VALUES.
 			        //
 			        if ( jp == 16) {
-			            if ( newopt) {
-			            	revers = iopt[lp+1]  ==  1;
+			            if ( newopt_dqedmn) {
+			            	revers_dqedmn = iopt[lp+1]  ==  1;
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11182,8 +11681,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  DO NOT ALLOW CONVERGENCE CLAIMS WHEN HITTING BOUNDS.
 			        //
 			        if ( jp == 17) {
-			            if ( newopt) {
-			            	mustcn = iopt[lp+1]  ==  1;
+			            if ( newopt_dqedmn) {
+			            	mustcn_dqedmn = iopt[lp+1]  ==  1;
 			            }
 			            do1110 = true;
 			            continue loop;
