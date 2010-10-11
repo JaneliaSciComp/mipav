@@ -15,6 +15,9 @@ import java.text.*;
 
 import java.util.*;
 
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfOneVariable;
+import WildMagic.LibFoundation.NumericalAnalysis.integration.RungeKuttaFehlbergIntegrator;
+
 
 /**
  * Fluorescence Recovery after PhotoBleaching Only 1 color will be used from a color image.
@@ -4964,7 +4967,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
-    class FitFullIntModel extends Integration {
+    class FitFullIntModel extends Integration implements RealFunctionOfOneVariable {
 
         /** DOCUMENT ME! */
         double arg;
@@ -5064,6 +5067,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             return feq * Math.exp(-x * time) * i2 * mk / x;
         }
+
+		@Override
+		public double eval(double x) {
+			return intFunc(x);
+		}
 
     }
 
@@ -7635,6 +7643,19 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         imod = new FitFullIntModel(xData[i], a[0], a[1], a[0], upper, routine, eps);
                         imod.driver();
                         result[i] = 1.0 - imod.getIntegral();
+                        
+                        double dIntegral = imod.getIntegral();
+                        
+
+
+                        RungeKuttaFehlbergIntegrator kIntegrator = new RungeKuttaFehlbergIntegrator(imod);
+                        kIntegrator.setEps(eps);
+                        double dResultRKF = kIntegrator.integrate(a[0], upper);
+                        System.err.println( "AlgorithmFRAP: comparison of Integration and RungeKuttaFehlbergIntegrator: " +
+                        		dIntegral + " vs. " + dResultRKF );
+                        
+                        
+                        
                         residuals[i] = result[i] - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
@@ -7913,7 +7934,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * && (x != 2.0/3.0)) { function = Math.pow(Math.abs(x - 1.0/7.0), -0.25) * Math.pow(Math.abs(x - 2.0/3.0), -0.55);
      * } return function; } public void driver() { super.driver(); } }.
      */
-    class IntModel extends Integration {
+    class IntModel extends Integration implements RealFunctionOfOneVariable {
 
         /**
          * Creates a new IntModel object.
@@ -7948,6 +7969,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             return function;
         }
+
+
+		@Override
+		public double eval(double x) {
+			return intFunc(x);
+		}
 
     }
 
