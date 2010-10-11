@@ -8,6 +8,9 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 import java.util.*;
 
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfOneVariable;
+import WildMagic.LibFoundation.NumericalAnalysis.integration.RungeKuttaFehlbergIntegrator;
+
 /**
  * This module draws uniformly randomly positioned spheres with a specified radius.
   
@@ -972,6 +975,15 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            numInt = meanTorquatoModel.getIntegral();
            Preferences.debug("In Integration.MIDINF numerical Integral for Torquato90 model = " + 
                    numInt + " after " + steps + " steps used\n");
+           
+
+           RungeKuttaFehlbergIntegrator kIntegrator = new RungeKuttaFehlbergIntegrator(meanTorquatoModel);
+           kIntegrator.setEps(eps);
+           double dResultRKF = kIntegrator.integrate(1.0, 1.0E30);
+           Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for Torquato90 model = " + 
+        		   dResultRKF + "\n");
+           
+           
            bound = 1.0;
            meanTorquatoModel2 = new IntTorquatoModelMean2(bound, routine, inf, epsabs, epsrel, limit, volumeFraction);
            meanTorquatoModel2.driver();
@@ -1019,6 +1031,15 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            numInt = meanTorquato95Model.getIntegral();
            Preferences.debug("In Integration.MIDINF numerical Integral for Torquato95 model = " + 
                    numInt + " after " + steps + " steps used\n");
+           
+           
+           kIntegrator = new RungeKuttaFehlbergIntegrator(meanTorquato95Model);
+           kIntegrator.setEps(eps);
+           dResultRKF = kIntegrator.integrate(1.0, 1.0E30);
+           Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for Torquato95 model = " + 
+        		   dResultRKF + "\n");
+           
+           
            bound = 1.0;
            meanTorquato95Model2 = new IntTorquato95ModelMean2(bound, routine, inf, epsabs, epsrel, limit, volumeFraction);
            meanTorquato95Model2.driver();
@@ -1124,7 +1145,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        return;
     }
     
-    class IntModelMean extends Integration {
+    class IntModelMean extends Integration implements RealFunctionOfOneVariable {
         double density;
         /**
          * Creates a new IntModel object.
@@ -1160,9 +1181,15 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
 
             return function;
         }
+
+
+		@Override
+		public double eval(double x) {
+			return intFunc(x);
+		}
     }
     
-    class IntModelMeanSquared extends Integration {
+    class IntModelMeanSquared extends Integration implements RealFunctionOfOneVariable {
         double density;
         /**
          * Creates a new IntModel object.
@@ -1198,6 +1225,12 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
 
             return function;
         }
+
+
+		@Override
+		public double eval(double x) {
+			return intFunc(x);
+		}
     }
     
     
@@ -1263,7 +1296,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         }
     }
     
-    class IntTorquatoModelMean extends Integration {
+    class IntTorquatoModelMean extends Integration implements RealFunctionOfOneVariable {
         double volumeFraction;
         /**
          * Creates a new IntModel object.
@@ -1308,6 +1341,12 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
 
             return function;
         }
+
+
+		@Override
+		public double eval(double x) {
+			return intFunc(x);
+		}
     }
     
     class IntTorquatoModelMean2 extends Integration2 {
@@ -1350,7 +1389,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         }
     }
     
-    class IntTorquato95ModelMean extends Integration {
+    class IntTorquato95ModelMean extends Integration implements RealFunctionOfOneVariable {
         double volumeFraction;
         /**
          * Creates a new IntModel object.
@@ -1410,6 +1449,12 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
 
             return function;
         }
+
+
+		@Override
+		public double eval(double x) {
+			return intFunc(x);
+		}
     }
     
     class IntTorquato95ModelMean2 extends Integration2 {

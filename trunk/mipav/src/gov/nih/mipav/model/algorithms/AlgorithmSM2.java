@@ -12,6 +12,9 @@ import java.io.*;
 import java.util.BitSet;
 import java.util.concurrent.*;
 
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfOneVariable;
+import WildMagic.LibFoundation.NumericalAnalysis.integration.RungeKuttaFehlbergIntegrator;
+
 
 /**
  * Based on the document provided by Daniel Reich: Notes on DCE with SM2 (standard model, aka Tofts model,
@@ -483,6 +486,16 @@ public class AlgorithmSM2 extends AlgorithmBase {
                         imod.driver();
                         steps = imod.getStepsUsed();
                         numInt = imod.getIntegral();
+                        
+                        
+
+                        RungeKuttaFehlbergIntegrator kIntegrator = new RungeKuttaFehlbergIntegrator(imod);
+                        kIntegrator.setEps(eps);
+                        double dResultRKF = kIntegrator.integrate(0.0, timeVals[t]);
+                        System.err.println( "AlgorithmSM2: comparison of Integration and RungeKuttaFehlbergIntegrator: " +
+                        		numInt + " vs. " + dResultRKF );
+                        
+                        
                         y_array[t - 1] = (ktransActual * numInt + vpActual * r1ptj[t]) / (1.0 - h);
 
                         /*
@@ -2971,7 +2984,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         }
     }
 
-    class IntModel extends Integration {
+    class IntModel extends Integration implements RealFunctionOfOneVariable {
         double ktrans;
 
         double ve;
@@ -3011,6 +3024,11 @@ public class AlgorithmSM2 extends AlgorithmBase {
 
             return function;
         }
+
+		@Override
+		public double eval(double x) {
+			return intFunc(x);
+		}
 
     }
 
