@@ -7,6 +7,9 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 import java.util.*;
 
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfOneVariable;
+import WildMagic.LibFoundation.NumericalAnalysis.integration.RungeKuttaFehlbergIntegrator;
+
 /**
  * This module draws uniformly randomly positioned circles with a specified radius.
  See http://www.indiana.edu/~statmath for skewness, kurtosis, and Jarque-Bera Test that uses skewness
@@ -898,8 +901,18 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        erfc.driver();
        steps = erfc.getStepsUsed();
        numInt = erfc.getIntegral();
+       
+       RungeKuttaFehlbergIntegrator kIntegrator = new RungeKuttaFehlbergIntegrator(erfc);
+       kIntegrator.setEps(eps);
+       double dResultRKF = kIntegrator.integrate(bound, 1.0E30);
+
+       
        Preferences.debug("In Integration.MIDINF numerical Integral for erfc = " + 
                numInt + " after " + steps + " steps used\n");
+       
+       Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for erfc = " + 
+    		   dResultRKF + "\n");
+       
        erfc2 = new erfcModel2(bound, routine, inf, epsabs, epsrel, limit);
        erfc2.driver();
        numInt2 = erfc2.getIntegral();
@@ -946,6 +959,17 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        numInt = meanTorquato95Model.getIntegral();
        Preferences.debug("In Integration.MIDINF numerical Integral for Torquato95 model = " + 
                numInt + " after " + steps + " steps used\n");
+       
+
+       
+       kIntegrator = new RungeKuttaFehlbergIntegrator(meanTorquato95Model);
+       kIntegrator.setEps(eps);
+       dResultRKF = kIntegrator.integrate(1.0, 1.0E30);
+       Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for Torquato95 model = " + 
+    		   dResultRKF + "\n");
+       
+       
+       
        bound = 1.0;
        meanTorquato95Model2 = new IntTorquato95ModelMean2(bound, routine, inf, epsabs, epsrel, limit, areaFraction);
        meanTorquato95Model2.driver();
@@ -1002,7 +1026,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        return;
     }
     
-    class erfcModel extends Integration {
+    class erfcModel extends Integration implements RealFunctionOfOneVariable {
         double scale = 2.0/Math.sqrt(Math.PI);
         /**
          * Creates a new IntModel object.
@@ -1037,6 +1061,12 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
 
             return function;
         }
+
+
+		@Override
+		public double eval(double x) {
+			return intFunc(x);
+		}
     }
     
     class erfcModel2 extends Integration2 {
@@ -1069,7 +1099,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         }
     }
     
-    class IntTorquato95ModelMean extends Integration {
+    class IntTorquato95ModelMean extends Integration implements RealFunctionOfOneVariable {
         double areaFraction;
         /**
          * Creates a new IntModel object.
@@ -1119,6 +1149,12 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
 
             return function;
         }
+
+
+		@Override
+		public double eval(double x) {
+			return intFunc(x);
+		}
     }
     
     class IntTorquato95ModelMean2 extends Integration2 {
