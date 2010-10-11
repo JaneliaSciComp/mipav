@@ -211,17 +211,54 @@ public abstract class DQED {
 	private double tolsnr_dqedip = 0.0;
 	private double tolx_dqedip = 0.0;
 	
+	private double ajn_dqedmn = 0.0;
+	private double alb_dqedmn;
+	private double alfac_dqedmn = 0.0;
+	private double alpha_dqedmn = 0.0;
+	private double aub_dqedmn;
+	private double bboost_dqedmn = 0.0;
+	private double c1516_dqedmn = 0.0;
+	private double chg_dqedmn = 0.0;
+	private double chgfac_dqedmn = 0.0;
+	private double cond_dqedmn = 0.0;
+	private double fc_dqedmn = 0.0;
 	private boolean fulnwt_dqedmn = false;
 	private int iflag_dqedmn = 0;
+	private int igow_dqedmn[] = new int[1];
+	private int igoelm_dqedmn = 850;
+	private int iters_dqedmn = 0;
+	private int itmax_dqedmn = 0;
 	private boolean jactri_dqedmn = false;
+	private int ipls_dqedmn = 0;
+	private int k_dqedmn = 0;
+	private int kl_dqedmn = 0;
+	private int level_dqedmn = 0;
 	private boolean linmod_dqedmn = false;
+	private int lp_dqedmn = 0;
 	private boolean mustcn_dqedmn = false;
 	private boolean newbst_dqedmn;
 	private boolean newopt_dqedmn;
+	private int lpdiff_dqedmn = 0;
+	private int nall_dqedmn = 0;
+	private int nit_dqedmn = 0;
+	private boolean noquad_dqedmn = false;
+	private int ntterm_dqedmn = 0;
+	private int nv_dqedmn = 0;
 	private boolean passb_dqedmn = false;
+	private double pv_dqedmn[] = new double[1];
+	private double rc_dqedmn = 0.0;
 	private boolean retrea_dqedmn = false;
 	private boolean revers_dqedmn = false;
+	private double semibg_dqedmn = 1.0E10;
+	private double t_dqedmn;
+	private double t2_dqedmn = 0.0;
 	private boolean term_dqedmn = false;
+	private double told_dqedmn = 0.0;
+	private double tolf_dqedmn = 0.0;
+	private double tolp_dqedmn = 0.0;
+	private double tolsnr_dqedmn = 0.0;
+	private double toluse_dqedmn = 0.0;
+	private double tolx_dqedmn = 0.0;
 	private boolean useq_dqedmn = false;
 	private boolean useql_dqedmn = false;
 	
@@ -9693,80 +9730,43 @@ C     FROM THE ERROR PROCESSOR CALL.
 			!    28 July 2006
 			*/
 
-			  double ajn = 0.0;
-			  double alb;
-			  double alfac = 0.0;
-			  double alpha = 0.0;
-			  double aub;
-			  double bboost = 0.0;
 			  double bold;
-			  double c1516 = 0.0;
-			  double chg = 0.0;
-			  double chgfac = 0.0;
 			  double colnrm;
-			  double cond = 0.0;
 			  double cosl;
 			  double cosm;
 			  double cosq;
 			  double dfn[] = new double[1];
 			  //external dqedev
 			  double dxnrm = 0.0;
-			  double fc = 0.0;
 			  //double fjac(ldfjac,*)
 			  double fl = 0.0;
 			  int i;
 			  int icase;
-			  int igoelm = 850;
-			  int igow[] = new int[1];
-			  int ipls = 0;
 			  int iprint = 0;
-			  int iters = 0;
-			  int itmax = 0;
 			  int j;
 			  int jk;
 			  int jp;
-			  int k = 0;
-			  int kl = 0;
 			  int kp;
 			  int l;
-			  int level = 0;
 			  int lk = 0;
-			  int lp = 0;
-			  int lpdiff = 0;
 			  int mconst[] = new int[1];
 			  int me[] = new int[1];
 			  int mk = 0;
-			  int nall = 0;
 			  int nerr;
-			  int nit = 0;
-			  boolean noquad = false;
 			  int np = 0;
 			  int nt = 0;
-			  int ntterm = 0;
-			  int nv = 0;
 			  double pb = 0.0;
 			  double pd = 0.0;
-			  double pv[] = new double[1];
 			  double pvl = 0.0;
 			  //double qc(mdqc,npmax)
 			  double rb;
-			  double rc = 0.0;
 			  double rcond[] = new double[1];
 			  double rdum;
 			  double rg = 0.0;
 			  double sa[] = new double[1];
 			  double sb[] = new double[1];
 			  double sc[] = new double[1];
-			  double semibg = 1.0E10;
 			  double ss[] = new double[1];
-			  double t;
-			  double t2 = 0.0;
-			  double told = 0.0;
-			  double tolf = 0.0;
-			  double tolp = 0.0;
-			  double tolsnr = 0.0;
-			  double toluse = 0.0;
-			  double tolx = 0.0;
 			  double tt;
 			  //double wj(ldwj,*)
 			  String xmess;
@@ -9831,7 +9831,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        for (j = 1; j <= nvars; j++) {
 			            dx[j] = 0.0;
 			        }
-			        k = 0;
+			        k_dqedmn = 0;
 			        //
 			        //  Set "INFINITY" ON THIS MACHINE.
 			        //
@@ -9841,7 +9841,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        //  MODEL PROBLEM RESIDUAL.
 			        //
-			        pv[0] = 0.0;
+			        pv_dqedmn[0] = 0.0;
 			        pvl = 0.0;
 			        retrea_dqedmn = false;
 			        fulnwt_dqedmn = false;
@@ -9851,18 +9851,18 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    if (do30) {
     	            do30 = false;
 
-			        iters = iters + 1;
+			        iters_dqedmn = iters_dqedmn + 1;
 
 			        if ( retrea_dqedmn ) {
 			        	for (j = 1; j <= nvars; j++) {
 			                x[j] = xb[j];
 			        	}
-			            k = 0;
-			            kl = -1;
+			            k_dqedmn = 0;
+			            kl_dqedmn = -1;
 			            fl = fb[0];
 			        } // if (retrea)
 			        else {
-			            kl = k;
+			            kl_dqedmn = k_dqedmn;
 			            for (j = 1; j <= nvars; j++) {
 			                x[j] = x[j] - dx[j];
 			            }
@@ -9917,7 +9917,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            //  WE FORCE A RETREAT AND RESTART IN THIS CASE.
 			            //
 			            for (i = mcon + 1; i <= mcon + mequa; i++) {
-			                fjac[i][nvars+1] = fc;
+			                fjac[i][nvars+1] = fc_dqedmn;
 			                for (j = 1; j <= nvars; j++) {
 			                    fjac[i][j] = 0.0;
 			                }
@@ -9933,7 +9933,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        for (j = 1; j <= mequa; j++) {
 			        	arr[j] = fjac[mcon+j][nvars+1];
 			        }
-			        fc = dnrm2(mequa,arr,1);
+			        fc_dqedmn = dnrm2(mequa,arr,1);
 
 			        if ( igo[0] > 1 && igo[0] != 99 ) {
 			            iflag_dqedmn = 0;
@@ -9948,10 +9948,10 @@ C     FROM THE ERROR PROCESSOR CALL.
 		            //  SIGNIFICANT CHANGE IN THE X(*) VALUES.
 		            //
 		            if ( np >= 0 ) {
-		                if ( dxnrm > toluse*dnrm2(nvars,x,1)) {
-		                    lp = nvars;
-		                    if ( ! noquad) {
-		                    	np = Math.min(np,Math.min(npmax-1,lp)) + 1;
+		                if ( dxnrm > toluse_dqedmn*dnrm2(nvars,x,1)) {
+		                    lp_dqedmn = nvars;
+		                    if ( ! noquad_dqedmn) {
+		                    	np = Math.min(np,Math.min(npmax-1,lp_dqedmn)) + 1;
 		                    }
 		                    for (j = np - 1; j >= 1; j--) {
 		                    	for (i = 1; i <= nvars; i++) {
@@ -9961,7 +9961,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 		                    		zp[i][j+1] = zp[i][j];
 		                    	}
 		                    } // for (j = np - 1; j >= 1; j--)
-		                } //  if ( dxnrm > toluse*dnrm2(nvars,x,1))
+		                } //  if ( dxnrm > toluse_dqedmn*dnrm2(nvars,x,1))
 		            } // if (np >= 0)
 		            //
 		            // PUT IN THE PRESENT VALUES OF THE VARIABLES and functions.
@@ -9992,9 +9992,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 		                //
 		                //  CALCULATE THE DIRECTION COSINES OF THE PAST MOVES.
 		                //
-		            	t = 0.0;
+		            	t_dqedmn = 0.0;
 		            	for (j = 1; j <= nvars; j++) {
-		            		t += qc[j][2] * qc[j][l];
+		            		t_dqedmn += qc[j][2] * qc[j][l];
 		            	}
 
 		                arr = new double[nvars+1];
@@ -10006,18 +10006,18 @@ C     FROM THE ERROR PROCESSOR CALL.
 		            	tt = dnrm2 ( nvars, arr, 1 ) * dnrm2 ( nvars, arr2, 1 );
 
 		                if ( tt > 0.0 ) {
-		                    t = t / tt;
+		                    t_dqedmn = t_dqedmn / tt;
 		                }
 		                else {
-		                    t = 1.0;
+		                    t_dqedmn = 1.0;
 		                }
 
 		                if ( iprint > 0 ) {
 		                    Preferences.debug("Past move number = " + (l - 2) + "\n");
-		                    Preferences.debug("Cosine of move = " + t + "\n");
+		                    Preferences.debug("Cosine of move = " + t_dqedmn + "\n");
 		                } // if (iprint > 0)
 
-		                if ( Math.abs ( t ) > 0.98 ) {
+		                if ( Math.abs ( t_dqedmn ) > 0.98 ) {
 		                    //
 		                    //  DISCARD PAST INFORMATION ASSOCIATED WITH THIS MOVE IF CLOSE TO
 		                    //  A PAST MOVE.
@@ -10091,12 +10091,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        for (l = 2; l <= np; l++) {
 			            for (j = l; j <= np; j++) {
-			                t = 0.0;
+			                t_dqedmn = 0.0;
 			                for (i = 1; i <= nvars; i++) {
-			                    t = t + (xp[i][j]-xp[i][1]) * (xp[i][l]-xp[i][1]);
+			                    t_dqedmn = t_dqedmn + (xp[i][j]-xp[i][1]) * (xp[i][l]-xp[i][1]);
 			                } // for (i = 1; i <= nvars; i++)
-			                wj[l-1][j-1] = t;
-			                wj[j-1][l-1] = t;
+			                wj[l-1][j-1] = t_dqedmn;
+			                wj[j-1][l-1] = t_dqedmn;
 			            } // for (j = l; j <= np; j++)
 			        } // for (l = 2; l <= np; l++)
 			        //
@@ -10162,7 +10162,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 				            Preferences.debug("rcond[0] from dgeco() = " + rcond[0] + "\n");
 				        }
 	
-				        if ( cond * rcond[0] < 1.0 ) {
+				        if ( cond_dqedmn * rcond[0] < 1.0 ) {
 				            np = np - 1;
 				            do250 = true;
 				            continue loop;
@@ -10289,35 +10289,35 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			        } // for (j = 1; j <= nvars; j++)
 
-			        ajn = dnrm2(nvars,pj,1);
+			        ajn_dqedmn = dnrm2(nvars,pj,1);
 			        //
 			        //  SAVE J**T*F FOR DIRECTION TESTING WITH LINEAR AND QUADRATIC MOVES.
 			        //
-			        if ( ajn > 0.0 ) {
-			            dscal(nvars,1.0/ajn,pj,1);
+			        if ( ajn_dqedmn > 0.0 ) {
+			            dscal(nvars,1.0/ajn_dqedmn,pj,1);
 			        }
 
 			        for (j = 1; j <= nvars; j++) {
 			        	gr[j] = pj[j];
 			        }
-			        newbst_dqedmn = fc  <  fb[0];
+			        newbst_dqedmn = fc_dqedmn  <  fb[0];
 			        if ( newbst_dqedmn) {
-			        	k = 0;
+			        	k_dqedmn = 0;
 			        }
 			    } // if (do350)
 			    //
 			    //  WANT TO POSITION AT BEST X VALUES.
 			    //
-			    if ( (k == 0) && do350) {
+			    if ( (k_dqedmn == 0) && do350) {
                     do350 = false;
 			        pb = 0.0;
 			        pd = Double.MAX_VALUE;
 
 			        if ( ! retrea_dqedmn) {
-			            fb[0] = fc;
+			            fb[0] = fc_dqedmn;
 			        }
 
-			        switch(2 - kl) {
+			        switch(2 - kl_dqedmn) {
 			        case 1:
 			        	do410 = true;
 			        	break;
@@ -10329,7 +10329,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        	break;
 			        default:
 			        	do470 = true;
-			        } // switch(2-kl)
+			        } // switch(2-kl_dqedmn)
 
 			   
 
@@ -10339,18 +10339,18 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            //  IMMEDIATELY GOT A NEW BEST X.
 			            //
 			            rg = 0.0;
-			            if ( t2 <= 0.25 ) {
-			                bboost = 1.0;
-			                chg = Math.max ( 4.0 * t2, 0.1 );
-			            } // if (t2 <= 0.25)
+			            if ( t2_dqedmn <= 0.25 ) {
+			                bboost_dqedmn = 1.0;
+			                chg_dqedmn = Math.max ( 4.0 * t2_dqedmn, 0.1 );
+			            } // if (t2_dqedmn <= 0.25)
 
 			            for (j = 1; j <= nvars; j++) {
-			                bb[j] = chg*bb[j];
+			                bb[j] = chg_dqedmn*bb[j];
 			            }
-			            t = 0.25 / (alfac-1.0 );
-			            alpha = (zn[0]+alfac*t)/ (zn[0]+t);
-			            alfac = 1.5 * alpha;
-			            bboost = Math.min(1.5 *alpha*bboost,semibg);
+			            t_dqedmn = 0.25 / (alfac_dqedmn-1.0 );
+			            alpha_dqedmn = (zn[0]+alfac_dqedmn*t_dqedmn)/ (zn[0]+t_dqedmn);
+			            alfac_dqedmn = 1.5 * alpha_dqedmn;
+			            bboost_dqedmn = Math.min(1.5 *alpha_dqedmn*bboost_dqedmn,semibg_dqedmn);
 			            do490 = true;
 			        } // if (do410)
 
@@ -10361,7 +10361,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            //
 			            //  AT THE INITIAL X.
 			            //
-			            alfac = 256.0;
+			            alfac_dqedmn = 256.0;
 
 			            for (j = 1; j <= nvars; j++) {
 
@@ -10389,7 +10389,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                    	for (m = 1; m <= jk; m++) {
 			                    		bb[j] += fjac[mcon+m][j] * fjac[mcon+m][nvars+1];
 			                    	}
-			                        bb[j] = -Math.max(Math.abs(bb[j])/colnrm/colnrm,fc/colnrm);
+			                        bb[j] = -Math.max(Math.abs(bb[j])/colnrm/colnrm,fc_dqedmn/colnrm);
 			                    } // if (colnrm != 0.0)
 			                    else {
 			                        bb[j] = -1.0;
@@ -10402,8 +10402,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			            } // for (j = 1; j <= nvars; j++)
 
-			            alpha = 1.0;
-			            bboost = 0.5;
+			            alpha_dqedmn = 1.0;
+			            bboost_dqedmn = 0.5;
 			            do980 = true;
 			        } // if (do430)
 
@@ -10412,15 +10412,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            //
 			            //  RETREAT TO BEST X.
 			            //
-			            if ( alfac != 256.0 ) {
-			                alpha = Math.min ( 4.0 / alfac, 0.25 );
-			                alfac = 1.25;
+			            if ( alfac_dqedmn != 256.0 ) {
+			                alpha_dqedmn = Math.min ( 4.0 / alfac_dqedmn, 0.25 );
+			                alfac_dqedmn = 1.25;
 			            }
 			            else {
-			                alpha = 0.25 * alpha;
+			                alpha_dqedmn = 0.25 * alpha_dqedmn;
 			            }
 
-			            bboost = 0.25;
+			            bboost_dqedmn = 0.25;
 			            useql_dqedmn = false;
 
 			            for (j = 1; j <= nvars; j++) {
@@ -10431,10 +10431,10 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                //  THE CURRENT BOUNDS ARE RELATIVELY LARGE, THE BOUNDS AT
 			                //  THE BEST ARE LEFT ABOUT THE SAME.
 			                //
-			                t = Math.abs(b[j]);
+			                t_dqedmn = Math.abs(b[j]);
 			                tt = Math.abs(bb[j]);
-			                t = ( t + 0.25 * tt ) / ( t + 4.0 * tt );
-			                b[j] = t*bb[j];
+			                t_dqedmn = ( t_dqedmn + 0.25 * tt ) / ( t_dqedmn + 4.0 * tt );
+			                b[j] = t_dqedmn*bb[j];
 			                bb[j] = b[j];
 			                dx[j] = 0.0;
 
@@ -10453,9 +10453,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                rb = 0.125 * Math.max(rb,Math.abs((xb[j]-x[j])/bb[j]));
 			            }
 
-			            alpha = rb;
-			            alfac = 2.0;
-			            bboost = ( 1.0 + rg )/ ( 0.25 + 2.0 * rg );
+			            alpha_dqedmn = rb;
+			            alfac_dqedmn = 2.0;
+			            bboost_dqedmn = ( 1.0 + rg )/ ( 0.25 + 2.0 * rg );
 			            do490 = true;
 			        } // if (do470)
 
@@ -10465,15 +10465,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            for (j = 1; j <= nvars; j++) {
 			                dx[j] = xb[j] - x[j];
 			                if ( dx[j] == 0.0 ) {
-			                    b[j] = alpha*bb[j];
+			                    b[j] = alpha_dqedmn*bb[j];
 			                }
 			                else {
 			                    xb[j] = x[j];
 			                    if (dx[j] >= 0.0) {
-			                    	b[j] = Math.abs(alpha*bb[j]) + bboost*dx[j];
+			                    	b[j] = Math.abs(alpha_dqedmn*bb[j]) + bboost_dqedmn*dx[j];
 			                    }
 			                    else {
-			                    	b[j] = -Math.abs(alpha*bb[j]) + bboost*dx[j];
+			                    	b[j] = -Math.abs(alpha_dqedmn*bb[j]) + bboost_dqedmn*dx[j];
 			                    }
 			                }
 			                if (b[j] >= 0.0) {
@@ -10492,19 +10492,19 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  MUST MAKE SURE THAT PD GETS SET TO A REASONABLE VALUE.
 			      //  COMPUTE A GAUGE FOR RETREATING IF DID NOT GET A NEW BEST.
 			      //
-			      alpha = ( 0.5 * zn[0] + 1.0 )/ ( zn[0] + 1.0 );
-			      chg = alpha*chg;
+			      alpha_dqedmn = ( 0.5 * zn[0] + 1.0 )/ ( zn[0] + 1.0 );
+			      chg_dqedmn = alpha_dqedmn*chg_dqedmn;
 
-			      if ( k == 1) {
-			          chg = Math.min(chg,t2);
-			          chg = Math.max(chg, 0.1 );
-			          pb = pv[0];
+			      if ( k_dqedmn == 1) {
+			          chg_dqedmn = Math.min(chg_dqedmn,t2_dqedmn);
+			          chg_dqedmn = Math.max(chg_dqedmn, 0.1 );
+			          pb = pv_dqedmn[0];
 			          pd = 1.5 * (fb[0]+pb* (pb/fb[0])) - 4.0 *pb;
-			      } // if (k == 1)
+			      } // if (k_dqedmn == 1)
 
 			      for (j = 1; j <= nvars; j++) {
-			         b[j] = chg*b[j];
-			         if ( k == 1) {
+			         b[j] = chg_dqedmn*b[j];
+			         if ( k_dqedmn == 1) {
 			        	 bb[j] = b[j];
 			         }
 			      }
@@ -10519,34 +10519,34 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          return;
 			      } // if (term)
 			      
-			      k = k + 1;
+			      k_dqedmn = k_dqedmn + 1;
 			      //
 			      //  SOLVE MODEL BOUNDED PROBLEM.
 			      //
 			      for (j = 1; j <= nvars; j++) {
 
 			          if ( b[j] < 0.0 ) {
-			              alb = b[j];
+			              alb_dqedmn = b[j];
 			          
 			              if ( dx[j] == 0.0 ) {
 			                  //
 			                  //  THIS CASE IS REQD. TO AVOID USING BUB(*) AT THE INITIAL PT.
 			                  //
-			                  aub = -c1516*alb;
+			                  aub_dqedmn = -c1516_dqedmn*alb_dqedmn;
 			              }
 			              else {
-			                  aub = Math.min(-c1516*alb,-dx[j]+bub[j]);
+			                  aub_dqedmn = Math.min(-c1516_dqedmn*alb_dqedmn,-dx[j]+bub[j]);
 			              }
 			           
 			          } // if (b[j] < 0.0)
 			          else {
-			              aub = b[j];
+			              aub_dqedmn = b[j];
 
 			              if ( dx[j] == 0.0 ) {
-			                  alb = -c1516*aub;
+			                  alb_dqedmn = -c1516_dqedmn*aub_dqedmn;
 			              }
 			              else {
-			                  alb = Math.max(-c1516*aub,-dx[j]+blb[j]);
+			                  alb_dqedmn = Math.max(-c1516_dqedmn*aub_dqedmn,-dx[j]+blb[j]);
 			              }
 
 			          } // else
@@ -10554,7 +10554,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          //  THIS NEXT CODE, ENDING WITH ***, POINTS THE BOX TOWARDS THE BEST
 			          //  VALUE OF X WHEN NOT AT A NEW BEST.
 			          //
-			         if ( k>=2) {
+			         if ( k_dqedmn>=2) {
 			             if ( xb[j] > x[j]) {
 			                 bub[j] = bub[j] * 0.25;
 
@@ -10578,35 +10578,35 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			             } // else
 
-			          } // if (k >= 2)
+			          } // if (k_dqedmn >= 2)
 				      //
 				      //  RESTRICT THE STEP FURTHER IF USER GIVES BOUNDS.
 				      //
 				     icase = ind[j];
 				     switch(icase) {
 				     case 1:
-				    	 aub = Math.min(aub,x[j]-bl[j]);
+				    	 aub_dqedmn = Math.min(aub_dqedmn,x[j]-bl[j]);
 				    	 break;
 				     case 2:
-				    	 alb = Math.max(alb,x[j]-bu[j]);
+				    	 alb_dqedmn = Math.max(alb_dqedmn,x[j]-bu[j]);
 				    	 break;
 				     case 3:
-				    	 aub = Math.min(aub,x[j]-bl[j]);
-					     alb = Math.max(alb,x[j]-bu[j]);
+				    	 aub_dqedmn = Math.min(aub_dqedmn,x[j]-bl[j]);
+					     alb_dqedmn = Math.max(alb_dqedmn,x[j]-bu[j]);
 				    	 break;
 				     case 4:
 	                     break;
 				     default:
-				    	 aub = Math.min(aub,x[j]-bl[j]);	 
+				    	 aub_dqedmn = Math.min(aub_dqedmn,x[j]-bl[j]);	 
 				     } // switch(icase)
 				    
-				     blb[j] = alb;
+				     blb[j] = alb_dqedmn;
 				     //
 				     //  THIS NEXT LINE IS TO GUARANTEE THAT THE LOWER BOUND
 				     //  IS .LE. THE UPPER BOUND.
 				     //
-				     aub = Math.max(aub,alb);
-				     bub[j] = aub;
+				     aub_dqedmn = Math.max(aub_dqedmn,alb_dqedmn);
+				     bub[j] = aub_dqedmn;
 				     indb[j] = 3;
 
 			      } // for (j = 1; j <= nvars; j++)
@@ -10635,15 +10635,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			          } // for (j = 1; j <= nvars; j++)
 
-			          t = dnrm2(lk,pj,1);
+			          t_dqedmn = dnrm2(lk,pj,1);
 			          //
 			          //  THIS TEST SAYS TO USE THE QUADRATIC MODEL IF
 			          //  THE LAST STEP IS APPROXIMATELY IN THE NULL SPACE OF THE JACOBIAN.
 			          //
-			          useq_dqedmn = useq_dqedmn || t  <  dfn[0] * 0.75;
+			          useq_dqedmn = useq_dqedmn || t_dqedmn  <  dfn[0] * 0.75;
 
 			          if ( dfn[0] > 0.0 ) {
-			              dfn[0] = t/dfn[0];
+			              dfn[0] = t_dqedmn/dfn[0];
 			          }
 			          else {
 			              dfn[0] = 0.0;
@@ -10657,7 +10657,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  CHECK IF QUAD. MODEL IS BEING SUPPRESSED.
 			      //
-			      useq_dqedmn = useq_dqedmn && (! noquad);
+			      useq_dqedmn = useq_dqedmn && (! noquad_dqedmn);
 			      //
 			      //  START THE PROCESS USING THE LINEAR MODEL.
 			      //
@@ -10699,15 +10699,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 			  if (do615) {
 				  do615 = false;
 			  
-			      nv = nvars + mk;
+			      nv_dqedmn = nvars + mk;
 			      //
 			      //  NOTE THAT THE RESIDUALS ARE FREE VARIABLES.
 			      //
-			      for (i = nvars + 1; i <= nv; i++) {
+			      for (i = nvars + 1; i <= nv_dqedmn; i++) {
 			          indb[i] = 4;
 			      }
 
-			      nit = 0;
+			      nit_dqedmn = 0;
 			      do630 = true;
 			  } // if (do615)
 			  //
@@ -10723,20 +10723,20 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  ARE COMPUTED FOR THIS SUBPROBLEM DURING THE REVERSE
 			      //  COMMUNICATION REQUESTS.
 			      //
-			      iarr = new int[iopt.length - ipls + 1];
-			      for (j = ipls; j < iopt.length; j++) {
-			    	  iarr[j-ipls+1] = iopt[j];
+			      iarr = new int[iopt.length - ipls_dqedmn + 1];
+			      for (j = ipls_dqedmn; j < iopt.length; j++) {
+			    	  iarr[j-ipls_dqedmn+1] = iopt[j];
 			      }
-			      dqedgn(me,nv,mconst,indb,blb,bub,dx,wj,ldwj,pv,igow,
+			      dqedgn(me,nv_dqedmn,mconst,indb,blb,bub,dx,wj,ldwj,pv_dqedmn,igow_dqedmn,
 			             iarr,ropt,iwa,wa);
-			      for (j = ipls; j < iopt.length; j++) {
-			    	   iopt[j] = iarr[j-ipls+1];
+			      for (j = ipls_dqedmn; j < iopt.length; j++) {
+			    	   iopt[j] = iarr[j-ipls_dqedmn+1];
 			      }
 			      //
 			      //  CHECK FOR AN ERROR THAT WAS SEEN IN THE LOW-LEVEL NONLINEAR SOLVER.
 			      //
-			      if ( igow[0] > 7) {
-			          igo[0] = igow[0];
+			      if ( igow_dqedmn[0] > 7) {
+			          igo[0] = igow_dqedmn[0];
 			          iflag_dqedmn = 0;
 			          return;
 			      }
@@ -10746,7 +10746,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  THE JACOBIAN FOR THE INNER LOOP PROBLEM.
 			      //
 		          for (i = 1; i <= ldwj; i++) {
-		        	  for (j = 1; j <= nv+1; j++) {
+		        	  for (j = 1; j <= nv_dqedmn+1; j++) {
 		        		  wj[i][j] = 0.0;
 		        	  }
 		          }
@@ -10775,7 +10775,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    	  for (j = 1; j <= nvars; j++) {
 			    		  arr[j] = wj[i][j];
 			    	  }
-			          wj[i][nv+1] = fjac[i][nvars+1] - ddot(nvars,dx,1,arr,1);
+			          wj[i][nv_dqedmn+1] = fjac[i][nvars+1] - ddot(nvars,dx,1,arr,1);
 			      } // for (i = 1; i <= mcon; i++)
 			      //
 			      //  SEE IF USER HAS GIVEN GENERAL CONSTRAINTS.
@@ -10783,29 +10783,29 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  ON THE CHANGES BEING COMPUTED.
 			      //
 			      for (j = 1; j <= mcon; j++) {
-			          blb[nv+j] = bl[j+nvars];
-			          bub[nv+j] = bu[j+nvars];
-			          indb[nv+j] = ind[j+nvars];
+			          blb[nv_dqedmn+j] = bl[j+nvars];
+			          bub[nv_dqedmn+j] = bu[j+nvars];
+			          indb[nv_dqedmn+j] = ind[j+nvars];
 			      } // for (j = 1; j <= mcon; j++)
 			      //
 			      //  EVALUATE LINEAR MODEL
 			      //
 
-			      igoelm = 850;
+			      igoelm_dqedmn = 850;
 			      do940 = true;
 			  } // if (do630)
 
 			  if (do670) {
                   do670 = false;
 
-			      if ( igow[0] > 1) {
+			      if ( igow_dqedmn[0] > 1) {
 			    	  arr = new double[me[0]+1];
 			    	  for (j = 1; j <= me[0]; j++) {
-			    		  arr[j] = wj[mconst[0]+j][nv+1];
+			    		  arr[j] = wj[mconst[0]+j][nv_dqedmn+1];
 			    	  }
-			          pv[0] = dnrm2(me[0],arr,1);
+			          pv_dqedmn[0] = dnrm2(me[0],arr,1);
 			          if ( linmod_dqedmn) {
-			              pvl = pv[0];
+			              pvl = pv_dqedmn[0];
 			              for (j = 1; j <= nvars; j++) {
 			                  dxl[j] = dx[j];
 			              }
@@ -10818,14 +10818,14 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          //  RESIDUAL NORM, DROP THE QUADRATIC MODEL AND USE THE
 			          //  LINEAR MODEL.
 			          //
-			          else if ( (pv[0]>=fc) && useq_dqedmn) {
+			          else if ( (pv_dqedmn[0]>=fc_dqedmn) && useq_dqedmn) {
 			              if ( iprint > 0) {
 			                  Preferences.debug("Abandon quadratic model.\n");
 			              }
 			              useq_dqedmn = false;
-			          } // else if ( (pv[0]>=fc) && useq_dqedmn)
+			          } // else if ( (pv_dqedmn[0]>=fc_dqedmn) && useq_dqedmn)
 			          do730 = true;
-			      } // if (igow[0] > 1)
+			      } // if (igow_dqedmn[0] > 1)
 			      else {
 			    	  do675 = true;
 			      }
@@ -10850,8 +10850,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //  COLS. OF THE TRANSPOSED JACOBIAN.
 			      //
 			      for (i = 1; i <= mk; i++) {
-			          t = dx[nvars+i];
-			          wj[mconst[0]+i][nv+1] = wj[mconst[0]+i][nv+1] + t;
+			          t_dqedmn = dx[nvars+i];
+			          wj[mconst[0]+i][nv_dqedmn+1] = wj[mconst[0]+i][nv_dqedmn+1] + t_dqedmn;
 			      } // for (i = 1; i <= mk; i++)
 			      //
 			      //  SYMMETRIZE THE SECOND DERIVATIVE MATRIX.  THIS
@@ -10868,20 +10868,20 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      //
 			      //  COMPUTE RESIDUALS ON THE EQUATIONS K*R = 0.
 			      //
-			      for (j = nvars + 1; j <= nv; j++) {
+			      for (j = nvars + 1; j <= nv_dqedmn; j++) {
 			    	  arr = new double[nvars+1];
 			    	  arr2 = new double[nvars+1];
 			    	  for (i = 1; i <= nvars; i++) {
 			    		  arr[i] = wj[mconst[0]+mk+i][j];
-			    		  arr2[i] = wj[mconst[0]+mk+i][nv+1];
+			    		  arr2[i] = wj[mconst[0]+mk+i][nv_dqedmn+1];
 			    	  }
 			          daxpy(nvars,dx[j],arr,1,arr2,1);
 			          for (i = 1; i <= nvars; i++) {
-			        	  wj[mconst[0]+mk+i][nv+1] = arr2[i];  
+			        	  wj[mconst[0]+mk+i][nv_dqedmn+1] = arr2[i];  
 			          }
 			      } // for (j = nvars + 1; j <= nv; j++)
 
-			      nit = nit + 1;
+			      nit_dqedmn = nit_dqedmn + 1;
 			      do630 = true;
 			      continue loop;
 			  } // if (do675)
@@ -10900,9 +10900,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    	  cosl += gr[j]*dxl[j];
 			      }
 
-			      t = dnrm2(nvars,dxl,1);
-			      if ( t > 0.0 ) {
-			    	  cosl = cosl/t;
+			      t_dqedmn = dnrm2(nvars,dxl,1);
+			      if ( t_dqedmn > 0.0 ) {
+			    	  cosl = cosl/t_dqedmn;
 			      }
 			      cosq = -1.0;
 			      cosm = -1.0;
@@ -10922,13 +10922,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 			          //  COMPUTE THE COSINE OF THE ANGLE BETWEEN THE QUAD. AND
 			          //  LINEAR MOVES.
 			          //
-			          if ( t > 0.0 && tt > 0.0 ) {
+			          if ( t_dqedmn > 0.0 && tt > 0.0 ) {
 			        	  cosm = 0.0;
 			        	  for (j = 1; j <= nvars; j++) {
 			        		  cosm += dx[j] * dxl[j];
 			        	  }
-			        	  cosm = cosm/t/tt;
-			          } // if ( t > 0.0 && tt > 0.0 )
+			        	  cosm = cosm/t_dqedmn/tt;
+			          } // if ( t_dqedmn > 0.0 && tt > 0.0 )
 
 			      } // if (useq_dqedmn)
 
@@ -10938,7 +10938,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    	  Preferences.debug("cos of each move cosm = " + cosm + "\n");
 			    	  Preferences.debug("flag for trying quad. move useq_dqedmn = " + useq_dqedmn + "\n");
 			          Preferences.debug("length of quad. move tt = " + tt + "\n");
-			          Preferences.debug("length of linear move t = " + t + "\n");
+			          Preferences.debug("length of linear move t_dqedmn = " + t_dqedmn + "\n");
 			      } // if (iprint > 0)
  
 			      //
@@ -10948,26 +10948,26 @@ C     FROM THE ERROR PROCESSOR CALL.
 			      useql_dqedmn = useq_dqedmn;
 
 			      if (! useq_dqedmn) {
-			          pv[0] = pvl;
+			          pv_dqedmn[0] = pvl;
 			          for (j = 1; j <= nvars; j++) {
 			        	  dx[j] = dxl[j];
 			          }
-			          ntterm = 0;
+			          ntterm_dqedmn = 0;
 			      } // if (!useq_dqedmn)
 			      else {
-			          ntterm = np - 1;
+			          ntterm_dqedmn = np - 1;
 			      }
 			      //
 			      //  TEST FOR NOISE IN MODEL PROBLEM SOLN.
 			      //
-			      term_dqedmn = (pv[0]>=fc) && (! retrea_dqedmn) && (! useq_dqedmn);
+			      term_dqedmn = (pv_dqedmn[0]>=fc_dqedmn) && (! retrea_dqedmn) && (! useq_dqedmn);
 			      term_dqedmn = term_dqedmn && mcon  ==  0;
 			      // Code as written does not make sense
 			      term_dqedmn = false;
 			      if ( term_dqedmn) {
 			          if ( iprint > 0) {
 			        	  Preferences.debug(" model residual>=current f. quitting.\n");
-			        	  Preferences.debug("pv[0] = " + pv[0] + " fc = " + fc + "\n");
+			        	  Preferences.debug("pv[0] = " + pv_dqedmn[0] + " fc_dqedmn = " + fc_dqedmn + "\n");
 			          }
 			          //
 			          //  VALUE MEANS MODEL RES. .GE. NONLINEAR FUNCTION VALUE.
@@ -10977,26 +10977,26 @@ C     FROM THE ERROR PROCESSOR CALL.
 			         return;
 			      } // if (term)
 			      
-			      if ( pv[0] > pb && pv[0] + pd != 0.0 ) {
-			          rc = 4.0 * (pv[0]-pb)/ (pv[0]+pd);
+			      if ( pv_dqedmn[0] > pb && pv_dqedmn[0] + pd != 0.0 ) {
+			          rc_dqedmn = 4.0 * (pv_dqedmn[0]-pb)/ (pv_dqedmn[0]+pd);
 			      }
 			      else {
-			          rc = 0.0;
+			          rc_dqedmn = 0.0;
 			      }
 			      //
 			      //  IF USING A QUADRATIC MODEL AND RETREATING SEEMS TO BE
 			      //  NECESSARY, SEE IF RETREATING WOULD BE NEEDED WITH A
 			      //  LINEAR MODEL.  ONLY THEN RETREAT.
 			      //
-			      if ( rc<=1.0 || (! useq_dqedmn)) {
+			      if ( rc_dqedmn<=1.0 || (! useq_dqedmn)) {
 			          do750 = true;
 			      }
 			      else {
 			          //
 			          //  EVALUATE LINEAR MODEL
 			          //
-			          nv = nvars;
-			          igoelm = 740;
+			          nv_dqedmn = nvars;
+			          igoelm_dqedmn = 740;
 			          do940 = true;
 			      } // else
 			  } // if (do730)
@@ -11005,12 +11005,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        do740 = false;
                     arr = new double[Math.min(mequa,nvars+1)+1];
                     for (j = 1; j <= Math.min(mequa,nvars+1); j++) {
-                    	arr[j] = wj[mconst[0]+j][nv+1];
+                    	arr[j] = wj[mconst[0]+j][nv_dqedmn+1];
                     }
 			        pvl = dnrm2(Math.min(mequa,nvars+1),arr,1);
 
 			        if ( pvl > pb ) {
-			        	rc = 4.0 * (pvl-pb)/ (pvl+pd);
+			        	rc_dqedmn = 4.0 * (pvl-pb)/ (pvl+pd);
 			        }
 			        do750 = true;
 			    } // if (do740)
@@ -11018,22 +11018,22 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    if (do750) {
 			        do750 = false;
 
-			        rg = Math.max(rg,rc);
+			        rg = Math.max(rg,rc_dqedmn);
 
 			        if ( iprint > 0) {
-			        	Preferences.debug("iters = " + iters + "\n");
-			        	Preferences.debug("fc = " + fc + "\n");
-			        	Preferences.debug("pv[0] = " + pv[0] + "\n");
-			        	Preferences.debug("rc = " + rc + "\n");
-			        	Preferences.debug("ajn = j**t*f = " + ajn + "\n");
-			        	Preferences.debug("k = " + k + "\n");
-			        	Preferences.debug("kl = " + kl + "\n");
+			        	Preferences.debug("iters_dqedmn = " + iters_dqedmn + "\n");
+			        	Preferences.debug("fc_dqedmn = " + fc_dqedmn + "\n");
+			        	Preferences.debug("pv_dqedmn[0] = " + pv_dqedmn[0] + "\n");
+			        	Preferences.debug("rc_dqedmn = " + rc_dqedmn + "\n");
+			        	Preferences.debug("ajn = j**t*f = " + ajn_dqedmn + "\n");
+			        	Preferences.debug("k_dqedmn = " + k_dqedmn + "\n");
+			        	Preferences.debug("kl_dqedmn = " + kl_dqedmn + "\n");
 			        	Preferences.debug("fb = " + fb + "\n");
-			        	Preferences.debug("alpha = " + alpha + "\n");
-			        	Preferences.debug("bboost = " + bboost + "\n");
-			        	Preferences.debug("inner iterations nit = " + nit + "\n");
+			        	Preferences.debug("alpha_dqedmn = " + alpha_dqedmn + "\n");
+			        	Preferences.debug("bboost_dqedmn = " + bboost_dqedmn + "\n");
+			        	Preferences.debug("inner iterations nit_dqedmn = " + nit_dqedmn + "\n");
 			        	Preferences.debug("use quad model useq_dqedmn = " + useq_dqedmn + "\n");
-			        	Preferences.debug("number of terms ntterm = " + ntterm + "\n");
+			        	Preferences.debug("number of terms ntterm_dqedmn = " + ntterm_dqedmn + "\n");
 			      
 			            for (j = 1; j <= nvars; j++) {
 			            	Preferences.debug("x["+j+"] = " + x[j] + "\n");
@@ -11044,25 +11044,25 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            for (j = 1; j <= nvars; j++) {
 			            	Preferences.debug("b["+j+"] = " + b[j] + "\n");
 			            }
-			            for (j = 1; j <= nall; j++) {
+			            for (j = 1; j <= nall_dqedmn; j++) {
 			            	Preferences.debug("blb["+j+"] = " + blb[j] + "\n");
 			            }
-			            for (j = 1; j <= nall; j++) {
+			            for (j = 1; j <= nall_dqedmn; j++) {
 			            	Preferences.debug("bub["+j+"] = " + bub[j] + "\n");
 			            }
 			            Preferences.debug("end of iteration.\n");
 			        } // if (iprint > 0)
 
-			        retrea_dqedmn = rc  >  1;
+			        retrea_dqedmn = rc_dqedmn  >  1;
 
 			        if (! retrea_dqedmn) {
-			            chg = 1.0;
-			            t2 = 0.0;
+			            chg_dqedmn = 1.0;
+			            t2_dqedmn = 0.0;
 			            for (j = 1; j <= nvars; j++) {
 			                bold = b[j];
-			                t = dx[j]/bold;
-			                alb = 2.0;
-			                aub = 2.0;
+			                t_dqedmn = dx[j]/bold;
+			                alb_dqedmn = 2.0;
+			                aub_dqedmn= 2.0;
 			                //
 			                //  IF USER GIVES BOUNDS, AND THESE BOUNDS ARE HIT,
 			                //  DO NOT DETRACT FROM DECLARING A FULL NEWTON STEP.
@@ -11070,29 +11070,29 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                icase = ind[j];
 
 			                if ( ind[j] == 1 ) {
-			                    alb = (x[j]-bl[j])/bold;
-			                    aub = -semibg;
+			                    alb_dqedmn = (x[j]-bl[j])/bold;
+			                    aub_dqedmn = -semibg_dqedmn;
 			                }
 			                else if ( ind[j] == 2 ) {
-			                    aub = (x[j]-bu[j])/bold;
-			                    alb = -semibg;
+			                    aub_dqedmn = (x[j]-bu[j])/bold;
+			                    alb_dqedmn = -semibg_dqedmn;
 			                }
 			                else if ( ind[j] == 3 ) {
-			                    alb = (x[j]-bl[j])/bold;
-			                    aub = (x[j]-bu[j])/bold;
+			                    alb_dqedmn = (x[j]-bl[j])/bold;
+			                    aub_dqedmn = (x[j]-bu[j])/bold;
 			                }
 			                else if ( ind[j] == 4 ) {
-			                    alb = -semibg;
-			                    aub = -semibg;
+			                    alb_dqedmn = -semibg_dqedmn;
+			                    aub_dqedmn = -semibg_dqedmn;
 			                }
 
-			                if ( t == 1.0) {
-			                    t2 = 1.0;
+			                if ( t_dqedmn == 1.0) {
+			                    t2_dqedmn = 1.0;
 			                    b[j] = bold + bold;
-			                    chg = chg*chgfac;
+			                    chg_dqedmn = chg_dqedmn*chgfac_dqedmn;
 			                }
 			                else {
-			                    if ( Math.abs(t) < 0.25 && dx[j] != 0.0 ) {
+			                    if ( Math.abs(t_dqedmn) < 0.25 && dx[j] != 0.0 ) {
 			                    	if (dx[j] >= 0.0) {
 			                    		b[j] = Math.abs(0.25 * bold) + 3.0 * dx[j];
 			                    	}
@@ -11112,24 +11112,24 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                //
 			                //  THIS TEST AVOIDS THE USER BOUNDS IN DECLARING A NEWTON STEP.
 			                //
-			                if ( Math.abs(alb-t)>=0.01*Math.abs(t) &&
-			                     Math.abs(aub-t) >= 0.01*Math.abs(t)) {
-			                    if ( t > 0.0 ) {
-			                        t2 = Math.max(t2,t);
+			                if ( Math.abs(alb_dqedmn-t_dqedmn)>=0.01*Math.abs(t_dqedmn) &&
+			                     Math.abs(aub_dqedmn-t_dqedmn) >= 0.01*Math.abs(t_dqedmn)) {
+			                    if ( t_dqedmn > 0.0 ) {
+			                        t2_dqedmn = Math.max(t2_dqedmn,t_dqedmn);
 			                    }
 			                    else {
-			                        t2 = Math.max(t2,-t/c1516);
+			                        t2_dqedmn = Math.max(t2_dqedmn,-t_dqedmn/c1516_dqedmn);
 			                    }
 			                }
 
 			            } // for (j = 1; j <= nvars; j++)
 
-			            fulnwt_dqedmn = t2  <  0.99;
+			            fulnwt_dqedmn = t2_dqedmn  <  0.99;
 			            dxnrm = Math.abs(dx[idamax(nvars,dx,1)]);
 			            //
 			            //  TEST FOR SMALL ABSOLUTE CHANGE IN X VALUES.
 			            //
-			            term_dqedmn = dxnrm  <  told && fulnwt_dqedmn;
+			            term_dqedmn = dxnrm  <  told_dqedmn && fulnwt_dqedmn;
 			            if ( term_dqedmn) {
 			                igo[0] = 6;
 			                //
@@ -11140,8 +11140,8 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                continue loop;
 			            } // if (term)
 			            else {
-			                term_dqedmn = dxnrm  <  dnrm2(nvars,x,1)*tolx && fulnwt_dqedmn;
-			                term_dqedmn = term_dqedmn && (iters > 1);
+			                term_dqedmn = dxnrm  <  dnrm2(nvars,x,1)*tolx_dqedmn && fulnwt_dqedmn;
+			                term_dqedmn = term_dqedmn && (iters_dqedmn > 1);
 			                if ( term_dqedmn) {
 			                    igo[0] = 7;
 			                    //
@@ -11152,12 +11152,12 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                    do30 = true;
 			                    continue loop;
 			                } // if (term)
-                            fl = fc;
+                            fl = fc_dqedmn;
                             do30 = true;
                             continue loop;
 			            } // else
 			        } // if (!retrea)
-			        fl = fc;
+			        fl = fc_dqedmn;
                     do30 = true;
                     continue loop;
 			    } // if (do750)
@@ -11178,11 +11178,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            //  PAST DIRECTIONS REPRESENTED IN THE MODEL.
 			            //
 			            for (l = 1; l <= np - 1; l++) {
-			                t = 0.0;
+			                t_dqedmn = 0.0;
 			                for (j = 1; j <= nvars; j++) {
-			                    t = t + dx[j]* (xp[j][l+1]-xp[j][1]);
+			                    t_dqedmn = t_dqedmn + dx[j]* (xp[j][l+1]-xp[j][1]);
 			                } // for (j = 1; j <= nvars; j++)
-			                pj[l] = t;
+			                pj[l] = t_dqedmn;
 			            } // for (l = 1; l <= np - 1; l++)
 			            //
 			            //  STORAGE LAYOUT, WITH K = J**T, OF WJ(*,*).
@@ -11196,11 +11196,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			                arr2 = new double[jk+1];
 			                for (j = 1; j <= jk; j++) {
 			                	arr[j] = qc[j][l+1];
-			                	arr2[j] = wj[mconst[0]+j][nv+1];
+			                	arr2[j] = wj[mconst[0]+j][nv_dqedmn+1];
 			                }
 			                daxpy(jk,0.5*pj[l]*pj[l],arr,1,arr2,1);
 			                for (j = 1; j <= jk; j++) {
-			                	wj[mconst[0]+j][nv+1] = arr2[j];
+			                	wj[mconst[0]+j][nv_dqedmn+1] = arr2[j];
 			                }
 			            } // for (l = 1; l <= np - 1; l++)
 			            //
@@ -11270,13 +11270,13 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //  TRANSFER THE PRESENT VALUES OF THE FUNCTION.
 			        //
 			        for (i = 1; i <= Math.min(mequa, nvars+1); i++) {
-			        	wj[mconst[0]+i][nv+1] = fjac[mcon+i][nvars+1];
+			        	wj[mconst[0]+i][nv_dqedmn+1] = fjac[mcon+i][nvars+1];
 			        }
 			        //
 			        //  CHANGE SIGN FOR THE MODEL PROBLEM.
 			        //
 			        for (i = 1; i <= Math.min(mequa,nvars+1); i++) {
-			            wj[mconst[0]+i][nv+1] = -wj[mconst[0]+i][nv+1];
+			            wj[mconst[0]+i][nv_dqedmn+1] = -wj[mconst[0]+i][nv_dqedmn+1];
 			        }
 			        //
 			        //  COMPUTE THE LINEAR TERM OF THE MODEL.
@@ -11293,15 +11293,15 @@ C     FROM THE ERROR PROCESSOR CALL.
 			            arr2 = new double[jk+1];
 			            for (i = 1; i <= jk; i++) {
 			            	arr[i] = wj[mconst[0]+i][j];
-			            	arr2[i] = wj[mconst[0]+i][nv+1];
+			            	arr2[i] = wj[mconst[0]+i][nv_dqedmn+1];
 			            }
 			            daxpy(jk,dx[j],arr,1,arr2,1);
 			            for (i = 1; i <= jk; i++) {
-			            	wj[mconst[0]+i][nv+1] = arr2[i];	
+			            	wj[mconst[0]+i][nv_dqedmn+1] = arr2[i];	
 			            }
 			        } // for (j = 1; j <= nvars; j++)
 
-		            switch(igoelm) {
+		            switch(igoelm_dqedmn) {
 		            case 850:
 		    	        do850 = true;
 		    	        continue loop;
@@ -11316,7 +11316,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    if (do980) {
 			        do980 = false;
 
-			        term_dqedmn = iters >= itmax;
+			        term_dqedmn = iters_dqedmn >= itmax_dqedmn;
 			        if ( term_dqedmn) {
 			            igo[0] = 8;
 			            //
@@ -11335,11 +11335,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        //  TEST FOR SMALL FUNCTION NORM.
 			        //
-			        term_dqedmn = fc <= tolf;
+			        term_dqedmn = fc_dqedmn <= tolf_dqedmn;
 			        //
 			        //  IF HAVE CONSTRAINTS MUST ALLOW AT LEAST ONE MOVE.
 			        //
-			        term_dqedmn = term_dqedmn && (mcon == 0 || iters > 1);
+			        term_dqedmn = term_dqedmn && (mcon == 0 || iters_dqedmn > 1);
 			        if ( term_dqedmn) {
 			            igo[0] = 2;
 			            //
@@ -11387,9 +11387,9 @@ C     FROM THE ERROR PROCESSOR CALL.
 			    if (do1010) {
 			        do1010 = false;
 
-			        term_dqedmn = (Math.abs(fb[0]-pv[0])<=tolsnr*fb[0]) && (Math.abs(fc-pv[0]) <= fb[0]*tolp);
-			        term_dqedmn = term_dqedmn && (Math.abs(fc-fl)<=fb[0]*tolsnr);
-			        term_dqedmn = term_dqedmn && (Math.abs(pvl-pv[0])<=fb[0]*tolsnr);
+			        term_dqedmn = (Math.abs(fb[0]-pv_dqedmn[0])<=tolsnr_dqedmn*fb[0]) && (Math.abs(fc_dqedmn-pv_dqedmn[0]) <= fb[0]*tolp_dqedmn);
+			        term_dqedmn = term_dqedmn && (Math.abs(fc_dqedmn-fl)<=fb[0]*tolsnr_dqedmn);
+			        term_dqedmn = term_dqedmn && (Math.abs(pvl-pv_dqedmn[0])<=fb[0]*tolsnr_dqedmn);
 
 			        do990 = true;
 			        continue loop;
@@ -11434,11 +11434,11 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 			        } // for (j = 1; j <= nvars; j++)
 
-			        iters = 0;
-			        nall = mcon + nvars;
-			        chgfac = Math.pow(2.0, ( -1.0 / (double)nvars));
-			        c1516 = 15.0 / 16.0;
-			        semibg = 1.0D+10;
+			        iters_dqedmn = 0;
+			        nall_dqedmn = mcon + nvars;
+			        chgfac_dqedmn = Math.pow(2.0, ( -1.0 / (double)nvars));
+			        c1516_dqedmn = 15.0 / 16.0;
+			        semibg_dqedmn = 1.0D+10;
 
 			        do20 = true;
 			        continue loop;
@@ -11452,32 +11452,32 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        //  D1MACH(4)=RELPR=MACHINE REL. PREC.
 			        //
-			        t = epsilon;
-			        tolf = Math.sqrt(t);
-			        toluse = tolf;
-			        tolx = tolf;
-			        told = tolf;
-			        tolsnr = 1.0D-5;
-			        tolp = 1.0D-5;
-			        cond = 30.0;
-			        itmax = 75;
-			        level = 1;
-			        ipls = 0;
+			        t_dqedmn = epsilon;
+			        tolf_dqedmn = Math.sqrt(t_dqedmn);
+			        toluse_dqedmn = tolf_dqedmn;
+			        tolx_dqedmn = tolf_dqedmn;
+			        told_dqedmn = tolf_dqedmn;
+			        tolsnr_dqedmn = 1.0D-5;
+			        tolp_dqedmn = 1.0D-5;
+			        cond_dqedmn = 30.0;
+			        itmax_dqedmn = 75;
+			        level_dqedmn = 1;
+			        ipls_dqedmn = 0;
 			        passb_dqedmn = false;
-			        noquad = false;
+			        noquad_dqedmn = false;
 			        revers_dqedmn = false;
 			        mustcn_dqedmn = false;
-			        lp = 1;
-			        lpdiff = 0;
+			        lp_dqedmn = 1;
+			        lpdiff_dqedmn = 0;
 			        do1110 = true;
 			    } // if (do1100)
 
 			   if (do1110) {
 			    	do1110 = false;
 
-			        lp = lp + lpdiff;
-			        lpdiff = 2;
-			        kp = iopt[lp];
+			        lp_dqedmn = lp_dqedmn + lpdiff_dqedmn;
+			        lpdiff_dqedmn = 2;
+			        kp = iopt[lp_dqedmn];
 			        newopt_dqedmn = kp  >  0;
 			        jp = Math.abs(kp);
 			        //
@@ -11488,14 +11488,14 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 99) {
 			            if ( newopt_dqedmn) {
-			                if ( ipls == 0) {
-			                	ipls = lp;
+			                if ( ipls_dqedmn == 0) {
+			                	ipls_dqedmn = lp_dqedmn;
 			                }
 			                do1030 = true;
 			                continue loop;
 			            }
 			            else {
-			                lpdiff = 1;
+			                lpdiff_dqedmn = 1;
 			                do1110 = true;
 			                continue loop;
 			            }
@@ -11505,7 +11505,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 1) {
 			            if ( newopt_dqedmn) {
-			    	        iprint = iopt[lp+1];
+			    	        iprint = iopt[lp_dqedmn+1];
 			            }
 			          do1110 = true;
 			          continue loop;
@@ -11515,7 +11515,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 2) {
 			            if ( newopt_dqedmn) {
-			            	itmax = iopt[lp+1];
+			            	itmax_dqedmn = iopt[lp_dqedmn+1];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11526,7 +11526,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        if ( jp == 3) {
 			            if ( newopt_dqedmn) {
 			            	for (j = 1; j <= nvars; j++) {
-			            		bb[j] = ropt[iopt[lp+1]+j-1];
+			            		bb[j] = ropt[iopt[lp_dqedmn+1]+j-1];
 			            	}
 			                passb_dqedmn = true;
 			            } // if (newopt)
@@ -11538,7 +11538,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 4) {
 			            if ( newopt_dqedmn) {
-			            	tolf = ropt[iopt[lp+1]];
+			            	tolf_dqedmn = ropt[iopt[lp_dqedmn+1]];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11549,7 +11549,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 5) {
 			            if ( newopt_dqedmn) {
-			            	tolx = ropt[iopt[lp+1]];
+			            	tolx_dqedmn = ropt[iopt[lp_dqedmn+1]];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11559,7 +11559,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 6) {
 			            if ( newopt_dqedmn) {
-			            	told = ropt[iopt[lp+1]];
+			            	told_dqedmn = ropt[iopt[lp_dqedmn+1]];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11571,7 +11571,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 7) {
 			            if ( newopt_dqedmn) {
-			            	tolsnr = ropt[iopt[lp+1]];
+			            	tolsnr_dqedmn = ropt[iopt[lp_dqedmn+1]];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11583,7 +11583,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 8) {
 			            if ( newopt_dqedmn) {
-			            	tolp = ropt[iopt[lp+1]];
+			            	tolp_dqedmn = ropt[iopt[lp_dqedmn+1]];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11596,7 +11596,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 9) {
 			            if ( newopt_dqedmn) {
-			            	toluse = ropt[iopt[lp+1]];
+			            	toluse_dqedmn = ropt[iopt[lp_dqedmn+1]];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11607,7 +11607,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 10) {
 			            if ( newopt_dqedmn) {
-			            	cond = ropt[iopt[lp+1]];
+			            	cond_dqedmn = ropt[iopt[lp_dqedmn+1]];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11617,7 +11617,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 11) {
 			            if ( newopt_dqedmn) {
-			            	level = iopt[lp+1];
+			            	level_dqedmn = iopt[lp_dqedmn+1];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11629,7 +11629,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 12) {
 			            if ( newopt_dqedmn) {
-			            	ipls = iopt[lp+1];
+			            	ipls_dqedmn = iopt[lp_dqedmn+1];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11642,7 +11642,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 13) {
 			            if ( newopt_dqedmn){
-			            	lpdiff = iopt[lp+1];
+			            	lpdiff_dqedmn = iopt[lp_dqedmn+1];
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11652,7 +11652,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 14) {
 			            if ( newopt_dqedmn) {
-			            	noquad = iopt[lp+1]  ==  1;
+			            	noquad_dqedmn = iopt[lp_dqedmn+1]  ==  1;
 			            }	
 			            do1110 = true;
 			            continue loop;
@@ -11671,7 +11671,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 16) {
 			            if ( newopt_dqedmn) {
-			            	revers_dqedmn = iopt[lp+1]  ==  1;
+			            	revers_dqedmn = iopt[lp_dqedmn+1]  ==  1;
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11682,7 +11682,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        //
 			        if ( jp == 17) {
 			            if ( newopt_dqedmn) {
-			            	mustcn_dqedmn = iopt[lp+1]  ==  1;
+			            	mustcn_dqedmn = iopt[lp_dqedmn+1]  ==  1;
 			            }
 			            do1110 = true;
 			            continue loop;
@@ -11693,7 +11693,7 @@ C     FROM THE ERROR PROCESSOR CALL.
 			        xmess ="dqedmn. invalid option processed. i1=iopt(*) entry. i2=iopt(i1).";
 			        nerr = 7;
 			        igo[0] = 15;
-			        xerrwv(xmess,nerr,level,2,lp,iopt[lp],0,rdum,rdum);
+			        xerrwv(xmess,nerr,level_dqedmn,2,lp_dqedmn,iopt[lp_dqedmn],0,rdum,rdum);
 			        iflag_dqedmn = 0;
 			        return;
 			    } // if (do1110)*/
