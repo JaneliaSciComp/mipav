@@ -3393,7 +3393,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 while (regImages.hasMoreElements()) {
                     final ModelImage image = (ModelImage) regImages.nextElement();
-
                     // check if it is a framed image...and if its not the active image...also make sure its just imageA
                     if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(getImageA().getImageName()))
                             && ( ( (image.getParentFrame())).getImageA() == image)) {
@@ -3446,6 +3445,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             //////
 
             if (linkFrame != null) {
+            	System.out.println("here");
                 linkFrame.incSlice();
             }
 
@@ -4155,7 +4155,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (updateLinkedImages && linkedScrolling) {
                 final Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
                 
-                if(getImageA().is4DImage()) {
+               /* if(getImageA().is4DImage()) {
                 	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
                 	 for (int i = 0; i < registeredFramedImages2.size(); i++) {
                 		 registeredFramedImages.add((ModelImage) registeredFramedImages2.get(i));
@@ -4167,7 +4167,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     final ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
                     framedImg.setSlice(componentImage.getSlice(), false);
                     framedImg.updateImages();
-                }
+                }*/
             }
 
             // livewire grad mag. should be recalculated for the new slice
