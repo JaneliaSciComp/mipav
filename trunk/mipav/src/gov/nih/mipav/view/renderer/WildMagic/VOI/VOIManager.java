@@ -541,21 +541,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kParent.deleteVOI( kVOI );
     }
 
-    public int deleteVOIActivePt( VOIBase kVOI )
-    {
-        int iPos = kVOI.getSelectedPoint();
-        if ( iPos < 0 )
-        {
-            return kVOI.size();
-        }
-        kVOI.delete( kVOI.getSelectedPoint() );      
-        if ( (kVOI.size() == 0) && (kVOI == m_kCurrentVOI) )
-        {
-            m_kCurrentVOI = null;
-        }
-        return kVOI.size();
-    }
-
     public void dispose() 
     {
         m_kCurrentVOI = null;
@@ -5155,6 +5140,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     {
                         m_kCurrentVOI = null;
                     }
+                    m_kCurrentVOI.setPlane(m_iPlane);
                     return m_kCurrentVOI;
                 }
             }

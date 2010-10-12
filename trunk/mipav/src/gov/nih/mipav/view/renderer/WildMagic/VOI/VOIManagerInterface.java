@@ -2634,19 +2634,28 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         for ( int i = 0; i < activeList.size(); i++ )
         {
             VOIBase kCurrentVOI = activeList.get(i);
-            VOIManager kManager = m_kVOIManagers.elementAt(0);
-            for ( int j = 0; j < m_kVOIManagers.size(); j++ )
+
+            int iPos = kCurrentVOI.getSelectedPoint();
+            if ( iPos >= 0 )
             {
-                if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(j).getPlane() )
-                {
-                    kManager = m_kVOIManagers.elementAt(j);
-                    break;
-                }
+            	kCurrentVOI.delete( kCurrentVOI.getSelectedPoint() );      
+            	if ( kCurrentVOI.size() == 0 )
+            	{
+            		deleteList.add( kCurrentVOI );
+            	}            
+            	else if ( (kCurrentVOI.getType() == VOI.LINE) && (kCurrentVOI.size() <= 1) )
+            	{
+            		deleteList.add( kCurrentVOI );
+            	}            
+            	else if ( (kCurrentVOI.getType() == VOI.ANNOTATION) && (kCurrentVOI.size() <= 2) )
+            	{
+            		deleteList.add( kCurrentVOI );
+            	}            
+            	else if ( (kCurrentVOI.getType() == VOI.PROTRACTOR) && (kCurrentVOI.size() <= 2) )
+            	{
+            		deleteList.add( kCurrentVOI );
+            	}
             }
-            if ( kManager.deleteVOIActivePt( kCurrentVOI ) <= 0 )
-            {
-                deleteList.add( kCurrentVOI );
-            }            
         }
 
         while ( deleteList.size() > 0 )
@@ -3412,7 +3421,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             VOIManager kManager = m_kVOIManagers.elementAt(0);
             for ( int j = 0; j < m_kVOIManagers.size(); j++ )
             {
-                if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(j).getPlane() )
+            	int iPlane = m_kVOIManagers.elementAt(j).getPlane();
+                if ( iPlane == (iPlane & kCurrentVOI.getPlane()) )
                 {
                     kManager = m_kVOIManagers.elementAt(j);
                     break;
@@ -3448,7 +3458,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             VOIManager kManager = m_kVOIManagers.elementAt(0);
             for ( int j = 0; j < m_kVOIManagers.size(); j++ )
             {
-                if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(j).getPlane() )
+            	int iPlane = m_kVOIManagers.elementAt(j).getPlane();
+                if ( iPlane == (iPlane & kCurrentVOI.getPlane()) )
                 {
                     kManager = m_kVOIManagers.elementAt(j);
                     break;
@@ -3469,7 +3480,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             VOIManager kManager = m_kVOIManagers.elementAt(0);
             for ( int j = 0; j < m_kVOIManagers.size(); j++ )
             {
-                if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(j).getPlane() )
+            	int iPlane = m_kVOIManagers.elementAt(j).getPlane();
+            	System.err.println( iPlane + " " + kCurrentVOI.getPlane() + " " + (iPlane & kCurrentVOI.getPlane()));
+                if ( iPlane == (iPlane & kCurrentVOI.getPlane()) )
                 {
                     kManager = m_kVOIManagers.elementAt(j);
                     break;

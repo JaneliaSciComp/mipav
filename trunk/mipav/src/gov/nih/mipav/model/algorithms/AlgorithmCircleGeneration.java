@@ -897,21 +897,12 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        a2 = 4.0 * areaFraction/af2;
        b2 = a2 * (2.0 + areaFraction);
        bound = b2/(2.0 * Math.sqrt(a2));
-       erfc = new erfcModel(bound, 1.0E30, Integration.MIDINF, eps);
-       erfc.driver();
-       steps = erfc.getStepsUsed();
-       numInt = erfc.getIntegral();
-       
+       erfc = new erfcModel();       
        RungeKuttaFehlbergIntegrator kIntegrator = new RungeKuttaFehlbergIntegrator(erfc);
        kIntegrator.setEps(eps);
-       double dResultRKF = kIntegrator.integrate(bound, 1.0E30);
-
-       
-       Preferences.debug("In Integration.MIDINF numerical Integral for erfc = " + 
-               numInt + " after " + steps + " steps used\n");
-       
+       numInt = kIntegrator.integrate(bound, 1.0E30);       
        Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for erfc = " + 
-    		   dResultRKF + "\n");
+    		   numInt + "\n");
        
        erfc2 = new erfcModel2(bound, routine, inf, epsabs, epsrel, limit);
        erfc2.driver();
@@ -953,20 +944,12 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        Preferences.debug("\nCalculations using 1995 Torquato model\n");
        System.out.println("\nCalculations using 1995 Torquato model");
        // Calculate analytical mean
-       meanTorquato95Model = new IntTorquato95ModelMean(1.0, 1.0E30, Integration.MIDINF, eps, areaFraction);
-       meanTorquato95Model.driver();
-       steps = meanTorquato95Model.getStepsUsed();
-       numInt = meanTorquato95Model.getIntegral();
-       Preferences.debug("In Integration.MIDINF numerical Integral for Torquato95 model = " + 
-               numInt + " after " + steps + " steps used\n");
-       
-
-       
+       meanTorquato95Model = new IntTorquato95ModelMean(areaFraction);             
        kIntegrator = new RungeKuttaFehlbergIntegrator(meanTorquato95Model);
        kIntegrator.setEps(eps);
-       dResultRKF = kIntegrator.integrate(1.0, 1.0E30);
+       numInt = kIntegrator.integrate(1.0, 1.0E30);
        Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for Torquato95 model = " + 
-    		   dResultRKF + "\n");
+    		   numInt + "\n");
        
        
        
@@ -1026,27 +1009,17 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        return;
     }
     
-    class erfcModel extends Integration implements RealFunctionOfOneVariable {
+    class erfcModel implements RealFunctionOfOneVariable {
         double scale = 2.0/Math.sqrt(Math.PI);
+
         /**
          * Creates a new IntModel object.
          *
          * @param  lower    DOCUMENT ME!
          * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
          * @param  eps      DOCUMENT ME!
          */
-        public erfcModel(double lower, double upper, int routine, double eps) {
-            super(lower, upper, routine, eps);
-        }
-
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
-        }
+        public erfcModel() {}
 
         /**
          * DOCUMENT ME!
@@ -1099,29 +1072,16 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         }
     }
     
-    class IntTorquato95ModelMean extends Integration implements RealFunctionOfOneVariable {
+    class IntTorquato95ModelMean implements RealFunctionOfOneVariable {
         double areaFraction;
+        
         /**
-         * Creates a new IntModel object.
-         *
-         * @param  lower    DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  eps      DOCUMENT ME!
+         * Creates a new IntTorquato95ModelMean object.
          */
-        public IntTorquato95ModelMean(double lower, double upper, int routine, double eps, double areaFraction) {
-            super(lower, upper, routine, eps);
+        public IntTorquato95ModelMean(double areaFraction) {
             this.areaFraction = areaFraction;
         }
-
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
-        }
-
+        
         /**
          * DOCUMENT ME!
          *

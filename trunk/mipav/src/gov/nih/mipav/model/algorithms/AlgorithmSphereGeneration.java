@@ -969,19 +969,12 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            Preferences.debug("\nCalculations using 1990 Torquato, Lu, and Rubinstein model\n");
            System.out.println("\nCalculations using 1990 Torquato, Lu, and Rubinstein model");
            // Calculate analytical mean
-           meanTorquatoModel = new IntTorquatoModelMean(1.0, 1.0E30, Integration.MIDINF, eps, volumeFraction);
-           meanTorquatoModel.driver();
-           steps = meanTorquatoModel.getStepsUsed();
-           numInt = meanTorquatoModel.getIntegral();
-           Preferences.debug("In Integration.MIDINF numerical Integral for Torquato90 model = " + 
-                   numInt + " after " + steps + " steps used\n");
-           
-
+           meanTorquatoModel = new IntTorquatoModelMean(volumeFraction);
            RungeKuttaFehlbergIntegrator kIntegrator = new RungeKuttaFehlbergIntegrator(meanTorquatoModel);
            kIntegrator.setEps(eps);
-           double dResultRKF = kIntegrator.integrate(1.0, 1.0E30);
+           numInt = kIntegrator.integrate(1.0, 1.0E30);
            Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for Torquato90 model = " + 
-        		   dResultRKF + "\n");
+        		   numInt + "\n");
            
            
            bound = 1.0;
@@ -1025,19 +1018,12 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            Preferences.debug("\nCalculations using 1995 Torquato model\n");
            System.out.println("\nCalculations using 1995 Torquato model");
            // Calculate analytical mean
-           meanTorquato95Model = new IntTorquato95ModelMean(1.0, 1.0E30, Integration.MIDINF, eps, volumeFraction);
-           meanTorquato95Model.driver();
-           steps = meanTorquato95Model.getStepsUsed();
-           numInt = meanTorquato95Model.getIntegral();
-           Preferences.debug("In Integration.MIDINF numerical Integral for Torquato95 model = " + 
-                   numInt + " after " + steps + " steps used\n");
-           
-           
+           meanTorquato95Model = new IntTorquato95ModelMean(volumeFraction);
            kIntegrator = new RungeKuttaFehlbergIntegrator(meanTorquato95Model);
            kIntegrator.setEps(eps);
-           dResultRKF = kIntegrator.integrate(1.0, 1.0E30);
+           numInt = kIntegrator.integrate(1.0, 1.0E30);
            Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for Torquato95 model = " + 
-        		   dResultRKF + "\n");
+        		   numInt + "\n");
            
            
            bound = 1.0;
@@ -1145,27 +1131,13 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        return;
     }
     
-    class IntModelMean extends Integration implements RealFunctionOfOneVariable {
+    class IntModelMean implements RealFunctionOfOneVariable {
         double density;
         /**
-         * Creates a new IntModel object.
-         *
-         * @param  lower    DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  eps      DOCUMENT ME!
+         * Creates a new IntModelMean object.
          */
-        public IntModelMean(double lower, double upper, int routine, double eps, double density) {
-            super(lower, upper, routine, eps);
+        public IntModelMean(double density) {
             this.density = density;
-        }
-
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
         }
 
         /**
@@ -1189,29 +1161,15 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
 		}
     }
     
-    class IntModelMeanSquared extends Integration implements RealFunctionOfOneVariable {
+    class IntModelMeanSquared implements RealFunctionOfOneVariable {
         double density;
         /**
-         * Creates a new IntModel object.
-         *
-         * @param  lower    DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  eps      DOCUMENT ME!
+         * Creates a new IntModelMeanSquared object.
          */
-        public IntModelMeanSquared(double lower, double upper, int routine, double eps, double density) {
-            super(lower, upper, routine, eps);
+        public IntModelMeanSquared(double density) {
             this.density = density;
         }
-
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
-        }
-
+        
         /**
          * DOCUMENT ME!
          *
@@ -1296,29 +1254,15 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         }
     }
     
-    class IntTorquatoModelMean extends Integration implements RealFunctionOfOneVariable {
+    class IntTorquatoModelMean implements RealFunctionOfOneVariable {
         double volumeFraction;
         /**
-         * Creates a new IntModel object.
-         *
-         * @param  lower    DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  eps      DOCUMENT ME!
+         * Creates a new IntTorquatoModelMean object.
          */
-        public IntTorquatoModelMean(double lower, double upper, int routine, double eps, double volumeFraction) {
-            super(lower, upper, routine, eps);
+        public IntTorquatoModelMean(double volumeFraction) {
             this.volumeFraction = volumeFraction;
         }
-
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
-        }
-
+        
         /**
          * DOCUMENT ME!
          *
@@ -1389,27 +1333,13 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         }
     }
     
-    class IntTorquato95ModelMean extends Integration implements RealFunctionOfOneVariable {
+    class IntTorquato95ModelMean implements RealFunctionOfOneVariable {
         double volumeFraction;
         /**
-         * Creates a new IntModel object.
-         *
-         * @param  lower    DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  eps      DOCUMENT ME!
+         * Creates a new IntTorquato95ModelMean object.
          */
-        public IntTorquato95ModelMean(double lower, double upper, int routine, double eps, double volumeFraction) {
-            super(lower, upper, routine, eps);
+        public IntTorquato95ModelMean(double volumeFraction) {
             this.volumeFraction = volumeFraction;
-        }
-
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
         }
 
         /**

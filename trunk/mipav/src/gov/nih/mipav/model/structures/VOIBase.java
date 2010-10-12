@@ -1692,6 +1692,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public int getSelectedPoint()
     {
+    	if ( (lastPoint < 0) || (lastPoint > (size()-1)) )
+    	{
+    		lastPoint = size() - 1;
+    	}
         return lastPoint;
     }
 
