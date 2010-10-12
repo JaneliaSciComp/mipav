@@ -51,9 +51,11 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private JCheckBox allSlicesBox;
+    private JRadioButton allSlicesRadio;
     
-    private JCheckBox onlyActiveBox;
+    private JRadioButton onlyActiveRadio;
+    
+    private ButtonGroup radioGroup;
     
     private Vector3f startPt;
     private Vector3f endPt;
@@ -118,12 +120,12 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     
     public boolean getAllSlices()
     {
-        return allSlicesBox.isSelected();
+        return allSlicesRadio.isSelected();
     }
     
     public boolean getOnlyActive()
     {
-        return onlyActiveBox.isSelected();
+        return onlyActiveRadio.isSelected();
     }
 
     private void calcSlopeAndB() {
@@ -155,9 +157,9 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
      *
      */
     private void splitVOI() {
-    	boolean doAllSlices = allSlicesBox.isSelected();
+    	boolean doAllSlices = allSlicesRadio.isSelected();
     	    	
-    	boolean onlyActive = onlyActiveBox.isSelected();
+    	boolean onlyActive = onlyActiveRadio.isSelected();
     	
     	int nVOI = image.getVOIs().size();
     	
@@ -416,9 +418,13 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
 
         JPanel mainPanel = new JPanel();
 
-        allSlicesBox = new JCheckBox("Split all VOI(s) in all slices", true);
+        allSlicesRadio = new JRadioButton("Split all VOI(s) in all slices", true);
         
-        onlyActiveBox = new JCheckBox("Only split active VOI(s)/contour(s)", false);
+        onlyActiveRadio = new JRadioButton("Only split active VOI(s)/contour(s)", false);
+        
+        radioGroup = new ButtonGroup();
+        radioGroup.add(allSlicesRadio);
+        radioGroup.add(onlyActiveRadio);
         
         JButton splitButton = new JButton("Split");
         splitButton.addActionListener(this);
@@ -436,11 +442,11 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
         gbc.gridy = 0;
 
         if (image.getNDims() >2 ) {
-        	mainPanel.add(allSlicesBox, gbc);
+        	mainPanel.add(allSlicesRadio, gbc);
         	gbc.gridy++;
         }
         
-        mainPanel.add(onlyActiveBox, gbc);
+        mainPanel.add(onlyActiveRadio, gbc);
 
        
 
