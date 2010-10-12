@@ -8,6 +8,16 @@ import gov.nih.mipav.view.*;
  * This is a port of FORTRAN numerical integration routines in QUADPACK found at http://www.netlib.org/quadpack
  * Reference: R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner Quadpack: a Subroutine Package for Automatic
  * Integration Springer Verlag, 1983. Series in Computational Mathematics v. 1
+ * The original dqage, dqagie, dqagpe, and dqagse routines were written by Robert Piessens and Elise de Doncker.
+ * The original dqng routine was written by Robert Piessens and Elise de Doncker and modified by David Kahaner.
+ * The original dqelg, dqk15, dqk15i, dqk21, dqk31, dqk41, dqk51, dqk61, and dqpsrt routines were written
+ * by Robert Piessens and Elise de Doncker.
+ * The names of the copyright holders or contributors may not be used to endorse
+ * or promote any derived software without prior permission;
+ * The Quadpack software is provided "as is", without warranties;
+ * Quadpack and the authors deny any liability for situations resulting from the use of this software.
+
+ * Porting was performed by William Gandler.
  *
  * <p>Title:</p>
  *
@@ -611,7 +621,27 @@ public abstract class Integration2 {
     public abstract double intFunc(double x);
 
     /**
-     * DOCUMENT ME!
+     * This is a port of the orginal FORTRAN code whose header is given below:
+     * c***begin prologue  dqagie
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a3a1,h2a4a1
+	 c***keywords  automatic integrator, infinite intervals,
+	 c             general-purpose, transformation, extrapolation,
+	 c             globally adaptive
+	 c***author  piessens,robert,appl. math & progr. div - k.u.leuven
+	 c           de doncker,elise,appl. math & progr. div - k.u.leuven
+	 c***purpose  the routine calculates an approximation result to a given
+	 c            integral   i = integral of f over (bound,+infinity)
+	 c            or i = integral of f over (-infinity,bound)
+	 c            or i = integral of f over (-infinity,+infinity),
+	 c            hopefully satisfying following claim for accuracy
+	 c            abs(i-result).le.max(epsabs,epsrel*abs(i))
+	 c***description
+	 c
+	 c integration over infinite intervals
+     c standard fortran subroutine
+
      */
     public void dqagie() {
 
@@ -1169,6 +1199,27 @@ loop:
 
     /**
      * dqagpe.
+     * This is a port of the original FORTRAN code whose header is given below:
+     * c***begin prologue  dqagie
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a3a1,h2a4a1
+	 c***keywords  automatic integrator, infinite intervals,
+	 c             general-purpose, transformation, extrapolation,
+	 c             globally adaptive
+	 c***author  piessens,robert,appl. math & progr. div - k.u.leuven
+	 c           de doncker,elise,appl. math & progr. div - k.u.leuven
+	 c***purpose  the routine calculates an approximation result to a given
+	 c            integral   i = integral of f over (bound,+infinity)
+	 c            or i = integral of f over (-infinity,bound)
+	 c            or i = integral of f over (-infinity,+infinity),
+	 c            hopefully satisfying following claim for accuracy
+	 c            abs(i-result).le.max(epsabs,epsrel*abs(i))
+	 c***description
+	 c
+	 c integration over infinite intervals
+	 c standard fortran subroutine
+
      */
     public void dqagpe() {
         double[] res31a;
@@ -1843,6 +1894,26 @@ loop:
     }
 
     /**
+     * This is a port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqage
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a1a1
+	 c***keywords  automatic integrator, general-purpose,
+	 c             integrand examinator, globally adaptive,
+	 c             gauss-kronrod
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  the routine calculates an approximation result to a given
+	 c            definite integral   i = integral of f over (a,b),
+	 c            hopefully satisfying following claim for accuracy
+	 c            abs(i-reslt).le.max(epsabs,epsrel*abs(i)).
+	 c***description
+	 c
+	 c        computation of a definite integral
+	 c        standard fortran subroutine
+	 c        double precision version
+
      * Calculates an integral over (lower, upper), hopefully satisfying the abs(actual integral - result) <= max(epsabs,
      * epsresl * abs(actual integral)).
      */
@@ -2131,6 +2202,26 @@ loop:
     }
 
     /**
+     * This is a port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqagse
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a1a1
+	 c***keywords  automatic integrator, general-purpose,
+	 c             (end point) singularities, extrapolation,
+	 c             globally adaptive
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  the routine calculates an approximation result to a given
+	 c            definite integral i = integral of f over (a,b),
+	 c            hopefully satisfying following claim for accuracy
+	 c            abs(i-result).le.max(epsabs,epsrel*abs(i)).
+	 c***description
+	 c
+	 c        computation of a definite integral
+	 c        standard fortran subroutine
+	 c        double precision version
+
      * This routine calculates the integral of intFunc over (lower, upper) and can handle end-point singularities at
      * lower and upper. It tries to satisfy the claim for accuracy abs(actual integral - result) <= max(epsabs, esprel *
      * abs(actual integral))
@@ -2644,6 +2735,27 @@ loop:
     }
 
     /**
+     * This is a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqelg
+	 c***refer to  dqagie,dqagoe,dqagpe,dqagse
+	 c***routines called  d1mach
+	 c***revision date  830518   (yymmdd)
+	 c***keywords  epsilon algorithm, convergence acceleration,
+	 c             extrapolation
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math & progr. div. - k.u.leuven
+	 c***purpose  the routine determines the limit of a given sequence of
+	 c            approximations, by means of the epsilon algorithm of
+	 c            p.wynn. an estimate of the absolute error is also given.
+	 c            the condensed epsilon table is computed. only those
+	 c            elements needed for the computation of the next diagonal
+	 c            are preserved.
+	 c***description
+	 c
+	 c           epsilon algorithm
+	 c           standard fortran subroutine
+	 c           double precision version
+
      * This routine determines the limit of a given sequence of approximations, by means of the epsilon algorithm of P.
      * Wynn. An estimate of the absolute error is also given. The condensed epsilon table is computed. Only those
      * elements needed for the computation of the next diagonal are preserved.
@@ -2834,6 +2946,23 @@ loop:
     }
 
     /**
+     * The is a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqk15
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a1a2
+	 c***keywords  15-point gauss-kronrod rules
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div - k.u.leuven
+	 c***purpose  to compute i = integral of f over (a,b), with error
+	 c                           estimate
+	 c                       j = integral of abs(f) over (a,b)
+	 c***description
+	 c
+	 c           integration rules
+	 c           standard fortran subroutine
+	 c           double precision version
+
      * This routine computes theintegral of the intFunc over (a, b) and the integral of the abs(intFunc) over (a, b).
      *
      * @param  a       lower limit for integration
@@ -2969,6 +3098,25 @@ loop:
     }
 
     /**
+     * This is a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqk15i
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a3a2,h2a4a2
+	 c***keywords  15-point transformed gauss-kronrod rules
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  the original (infinite integration range is mapped
+	 c            onto the interval (0,1) and (a,b) is a part of (0,1).
+	 c            it is the purpose to compute
+	 c            i = integral of transformed integrand over (a,b),
+	 c            j = integral of abs(transformed integrand) over (a,b).
+	 c***description
+	 c
+	 c           integration rule
+	 c           standard fortran subroutine
+	 c           double precision version
+
      * The original infinite integration range is mapped onto the interval (0, 1) and (a, b) is a part of (0, 1). This
      * routine computes the integral of the transformed integrand over (a, b) and the integral of the abs(transformed
      * integrand) over (a, b).
@@ -3123,6 +3271,23 @@ loop:
     }
 
     /**
+     * This is a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqk21
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a1a2
+	 c***keywords  21-point gauss-kronrod rules
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f over (a,b), with error
+	 c                           estimate
+	 c                       j = integral of abs(f) over (a,b)
+	 c***description
+	 c
+	 c           integration rules
+	 c           standard fortran subroutine
+	 c           double precision version
+
      * Computes integral of function over (a,b), with error estimate and computes integral of abs(function) over (a,b).
      *
      * @param  a       lower limit of integration
@@ -3265,6 +3430,23 @@ loop:
     }
 
     /**
+     * This is a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqk31
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a1a2
+	 c***keywords  31-point gauss-kronrod rules
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f over (a,b) with error
+	 c                           estimate
+	 c                       j = integral of abs(f) over (a,b)
+	 c***description
+	 c
+	 c           integration rules
+	 c           standard fortran subroutine
+     c           double precision version
+
      * This routine computes theintegral of the intFunc over (a, b) and the integral of the abs(intFunc) over (a, b).
      *
      * @param  a       lower limit for integration
@@ -3412,6 +3594,23 @@ loop:
     }
 
     /**
+     * This is a port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqk41
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a1a2
+	 c***keywords  41-point gauss-kronrod rules
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f over (a,b), with error
+	 c                           estimate
+	 c                       j = integral of abs(f) over (a,b)
+	 c***description
+	 c
+	 c           integration rules
+	 c           standard fortran subroutine
+	 c           double precision version
+
      * This routine computes theintegral of the intFunc over (a, b) and the integral of the abs(intFunc) over (a, b).
      *
      * @param  a       lower limit for integration
@@ -3566,6 +3765,23 @@ loop:
     }
 
     /**
+     * This is a port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqk51
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a1a2
+	 c***keywords  51-point gauss-kronrod rules
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f over (a,b) with error
+	 c                           estimate
+	 c                       j = integral of abs(f) over (a,b)
+	 c***description
+	 c
+	 c           integration rules
+	 c           standard fortran subroutine
+	 c           double precision version
+
      * This routine computes theintegral of the intFunc over (a, b) and the integral of the abs(intFunc) over (a, b).
      *
      * @param  a       lower limit for integration
@@ -3729,7 +3945,24 @@ loop:
     }
 
     /**
-     * This routine computes theintegral of the intFunc over (a, b) and the integral of the abs(intFunc) over (a, b).
+     * This is a port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqk61
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a1a2
+	 c***keywords  61-point gauss-kronrod rules
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f over (a,b) with error
+	 c                           estimate
+	 c                       j = integral of dabs(f) over (a,b)
+	 c***description
+	 c
+	 c        integration rule
+	 c        standard fortran subroutine
+	 c        double precision version
+
+     * This routine computes the integral of the intFunc over (a, b) and the integral of the abs(intFunc) over (a, b).
      *
      * @param  a       lower limit for integration
      * @param  b       upper limit for integration
@@ -3897,6 +4130,26 @@ loop:
 
 
     /**
+     * This is a port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqng
+	 c***date written   800101   (yymmdd)
+	 c***revision date  810101   (yymmdd)
+	 c***category no.  h2a1a1
+	 c***keywords  automatic integrator, smooth integrand,
+	 c             non-adaptive, gauss-kronrod(patterson)
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl math & progr. div. - k.u.leuven
+	 c           kahaner,david,nbs - modified (2/82)
+	 c***purpose  the routine calculates an approximation result to a
+	 c            given definite integral i = integral of f over (a,b),
+	 c            hopefully satisfying following claim for accuracy
+	 c            abs(i-result).le.max(epsabs,epsrel*abs(i)).
+	 c***description
+	 c
+	 c non-adaptive integration
+	 c standard fortran subroutine
+	 c double precision version
+
      * Calculates an integral over (lower, upper), hopefully satisfying the abs(actual integral - result) <= max(epsabs,
      * epsresl * abs(actual integral)) Result is obtained by applying the 21-point gauss-kronrod rule (res21) obtained
      * by optimal addition of abscissae to the 10-point gauss rule (res10), or by applying the 43-point rule (res43)
@@ -4216,6 +4469,26 @@ loop:
     }
 
     /**
+     * This is a port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqpsrt
+	 c***refer to  dqage,dqagie,dqagpe,dqawse
+	 c***routines called  (none)
+	 c***revision date  810101   (yymmdd)
+	 c***keywords  sequential sorting
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  this routine maintains the descending ordering in the
+	 c            list of the local error estimated resulting from the
+	 c            interval subdivision process. at each call two error
+	 c            estimates are inserted using the sequential search
+	 c            method, top-down for the largest error estimate and
+	 c            bottom-up for the smallest error estimate.
+	 c***description
+	 c
+	 c           ordering routine
+	 c           standard fortran subroutine
+	 c           double precision version
+
      * This routine maintains the descending ordering in the list of the local error estimated resulting from the
      * interval subdivision process. At each call two error estimates are inserted using the sequential search method,
      * top-down for the largest error estimate and bottom-up for the smallest error estimate.
