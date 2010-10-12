@@ -40,7 +40,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
     private GridBagConstraints gbc;
 
     /** main panel * */
-    private JPanel mainPanel, optionsPanel, processPanel, interpPanel, rescalePanel, averagingOptionsPanel;
+    private JPanel mainPanel, optionsPanel, processPanel, interpPanel, rescalePanel, averagingOptionsPanel, mirroredImgPanel;
 
     /** images * */
     private ModelImage imageX, imageXRegistered, imageY, resultImage, redChannelsImage, greenChannelsImage,
@@ -66,11 +66,11 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
     /** boolean indicating average or closest z * */
     // private boolean doAverage = true;
     /** button group * */
-    private ButtonGroup processGroup, interpGroup, rescaleGroup, ignoreBGGroup;
+    private ButtonGroup processGroup, interpGroup, rescaleGroup, ignoreBGGroup, mirroredImgGroup;
 
     /** radio buttons * */
     private JRadioButton doAverageRadio, doClosestZRadio, doSqRtRadio, doTrilinearRadio, doBsplineRadio,
-            doRescaleRadio, noRescaleRadio, ignoreBGRadio, includeBGRadio;
+            doRescaleRadio, noRescaleRadio, ignoreBGRadio, includeBGRadio, createMirroredImgRadio, doNotCreateMirroredImgRadio;
 
     /** 2.5 d */
     private boolean have25D = false;
@@ -138,12 +138,12 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
      */
     public void init() {
         setForeground(Color.black);
-        setTitle("Drosophila Retinal Registration v2.5");
+        setTitle("Drosophila Retinal Registration v2.8");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
 
         final JLabel imageXLabel = new JLabel("Image H");
-        imageXFilePathTextField = new JTextField(35);
+        imageXFilePathTextField = new JTextField(55);
         imageXFilePathTextField.setEditable(false);
         imageXFilePathTextField.setBackground(Color.white);
         imageXBrowseButton = new JButton("Browse");
@@ -151,7 +151,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         imageXBrowseButton.setActionCommand("imageXBrowse");
 
         final JLabel imageXRegisteredLabel = new JLabel("Image H - Registered");
-        imageXRegisteredFilePathTextField = new JTextField(35);
+        imageXRegisteredFilePathTextField = new JTextField(55);
         imageXRegisteredFilePathTextField.setEditable(false);
         imageXRegisteredFilePathTextField.setBackground(Color.white);
         imageXRegisteredBrowseButton = new JButton("Browse");
@@ -159,7 +159,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         imageXRegisteredBrowseButton.setActionCommand("imageXRegisteredBrowse");
 
         final JLabel imageYLabel = new JLabel("Image F");
-        imageYFilePathTextField = new JTextField(35);
+        imageYFilePathTextField = new JTextField(55);
         imageYFilePathTextField.setEditable(false);
         imageYFilePathTextField.setBackground(Color.white);
         imageYBrowseButton = new JButton("Browse");
@@ -167,7 +167,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         imageYBrowseButton.setActionCommand("imageYBrowse");
 
         final JLabel transform1Label = new JLabel("Transformation 1 - Green (optional)");
-        transform1FilePathTextField = new JTextField(35);
+        transform1FilePathTextField = new JTextField(55);
         transform1FilePathTextField.setEditable(false);
         transform1FilePathTextField.setBackground(Color.white);
         transform1BrowseButton = new JButton("Browse");
@@ -175,7 +175,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         transform1BrowseButton.setActionCommand("transform1Browse");
 
         final JLabel transform2Label = new JLabel("Transformation 2 - Affine");
-        transform2FilePathTextField = new JTextField(35);
+        transform2FilePathTextField = new JTextField(55);
         transform2FilePathTextField.setEditable(false);
         transform2FilePathTextField.setBackground(Color.white);
         transform2BrowseButton = new JButton("Browse");
@@ -183,7 +183,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         transform2BrowseButton.setActionCommand("transform2Browse");
 
         final JLabel transform3Label = new JLabel("Transformation 3 - Nonlinear (optional)");
-        transform3FilePathTextField = new JTextField(35);
+        transform3FilePathTextField = new JTextField(55);
         transform3FilePathTextField.setEditable(false);
         transform3FilePathTextField.setBackground(Color.white);
         transform3BrowseButton = new JButton("Browse");
@@ -218,6 +218,13 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         doRescaleRadio.setSelected(true);
         rescaleGroup.add(doRescaleRadio);
         rescaleGroup.add(noRescaleRadio);
+        
+        mirroredImgGroup = new ButtonGroup();
+        doNotCreateMirroredImgRadio = new JRadioButton("Do not create additional mirrored image");
+        doNotCreateMirroredImgRadio.setSelected(true);
+        createMirroredImgRadio = new JRadioButton("Create additional mirrored image");
+        mirroredImgGroup.add(doNotCreateMirroredImgRadio);
+        mirroredImgGroup.add(createMirroredImgRadio);
 
         ignoreBGGroup = new ButtonGroup();
         ignoreBGRadio = new JRadioButton("Ignore background pixels");
@@ -246,12 +253,14 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         processPanel = new JPanel(new GridBagLayout());
         interpPanel = new JPanel(new GridBagLayout());
         rescalePanel = new JPanel(new GridBagLayout());
+        mirroredImgPanel  = new JPanel(new GridBagLayout());
         averagingOptionsPanel = new JPanel(new GridBagLayout());
         processPanel.setBorder(new TitledBorder("Process using"));
         interpPanel.setBorder(new TitledBorder("Interpolation"));
         rescalePanel.setBorder(new TitledBorder("Rescale H to F"));
         averagingOptionsPanel.setBorder(new TitledBorder("Averaging Options"));
-
+        mirroredImgPanel.setBorder(new TitledBorder("Mirrored Image"));
+        
         processPanel.add(doAverageRadio, gbc);
         gbc.gridy = 1;
         processPanel.add(doSqRtRadio, gbc);
@@ -267,11 +276,16 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         averagingOptionsPanel.add(ignoreBGRadio, gbc);
         gbc.gridy = 1;
         averagingOptionsPanel.add(includeBGRadio, gbc);
+        gbc.gridy = 0;
+        mirroredImgPanel.add(doNotCreateMirroredImgRadio, gbc);
+        gbc.gridy = 1;
+        mirroredImgPanel.add(createMirroredImgRadio, gbc);
 
         optionsPanel.add(processPanel);
         optionsPanel.add(interpPanel);
         optionsPanel.add(rescalePanel);
         optionsPanel.add(averagingOptionsPanel);
+        optionsPanel.add(mirroredImgPanel);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -494,9 +508,10 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
      * calls algorithm
      */
     protected void callAlgorithm() {
+    	boolean createMirroredImg = createMirroredImgRadio.isSelected();
         alg = new PlugInAlgorithmDrosophilaRetinalRegistration(imageX, imageXRegistered, imageY, vjfX, vjfY,
                 outputTextArea, matrixGreen, matrixAffine, doTrilinearRadio, doAverageRadio, doRescaleRadio,
-                ignoreBGRadio, doSqRtRadio, transform3FilePathTextField, numControlPoints, splineDegree, controlMat);
+                ignoreBGRadio, doSqRtRadio, transform3FilePathTextField, numControlPoints, splineDegree, controlMat, createMirroredImg);
 
         alg.addListener(this);
         setCursor(new Cursor(Cursor.WAIT_CURSOR));

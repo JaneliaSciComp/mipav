@@ -1,6 +1,7 @@
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -121,6 +122,8 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 
     /** control mat * */
     private final float[][] controlMat;
+    
+    private boolean createMirroredImg;
 
     /**
      * constructr
@@ -149,7 +152,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             final JRadioButton doTrilinearRadio, final JRadioButton doAverageRadio, final JRadioButton doRescaleRadio,
             final JRadioButton ignoreBGRadio, final JRadioButton doSqRtRadio,
             final JTextField transform3FilePathTextField, final int numControlPoints, final int splineDegree,
-            final float[][] controlMat) {
+            final float[][] controlMat, boolean createMirroredImg) {
         this.imageX = imageX;
         this.imageXRegistered = imageXRegistered;
         this.imageY = imageY;
@@ -167,6 +170,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         this.numControlPoints = numControlPoints;
         this.splineDegree = splineDegree;
         this.controlMat = controlMat;
+        this.createMirroredImg = createMirroredImg;
 
         imageYRes = imageY.getResolutions(0);
         imageYEnd = imageY.getFileInfo()[0].getEndianess();
@@ -179,7 +183,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v2.5" + "\n");
+        outputTextArea.append("Running Algorithm v2.8" + "\n");
         final long begTime = System.currentTimeMillis();
 
         // rescale imageX intensity to imageY based on VOI
@@ -1074,7 +1078,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         } else {
             bgString = "_includeBG";
         }
-        final FileIO fileIO = new FileIO();
+        FileIO fileIO = new FileIO();
         fileIO.setQuiet(true);
         FileWriteOptions opts = new FileWriteOptions(true);
         opts.setFileType(FileUtility.ICS);
@@ -1088,6 +1092,42 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         outputTextArea.append("saving combined result image as: \n");
         outputTextArea.append(dir + resultImageFileName + ".ics" + "\n");
         outputTextArea.append("\n");
+        
+        if(createMirroredImg) {
+        	ModelImage clonedResultImage = (ModelImage)resultImage.clone();
+        	
+        	AlgorithmFlip flipAlgo = new AlgorithmFlip(clonedResultImage, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE, false);
+        	flipAlgo.run();
+        	
+        	
+        	opts = new FileWriteOptions(true);
+            opts.setFileType(FileUtility.ICS);
+            opts.setFileDirectory(dir);
+            resultImageFileName = resultImageFileName + processString + interpString + rescaleString + bgString + "_MIRRORED";
+            opts.setFileName(resultImageFileName + ".ics");
+            opts.setBeginSlice(0);
+            opts.setEndSlice(511);
+            opts.setOptionsSet(true);
+            fileIO.writeImage(clonedResultImage, opts);
+            outputTextArea.append("saving mirrored result image as: \n");
+            outputTextArea.append(dir + resultImageFileName + ".ics" + "\n");
+            outputTextArea.append("\n");
+            
+            if (clonedResultImage != null) {
+            	clonedResultImage.disposeLocal();
+            	clonedResultImage = null;
+            }
+            
+            flipAlgo.finalize();
+            flipAlgo = null;
+            
+        	
+        }
+        
+        
+        
+        
+        
 
         if (resultImage != null) {
             resultImage.disposeLocal();
