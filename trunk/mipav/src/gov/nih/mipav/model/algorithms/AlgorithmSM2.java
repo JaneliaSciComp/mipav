@@ -482,19 +482,10 @@ public class AlgorithmSM2 extends AlgorithmBase {
                         double numInt;
                         final double eps = 1.0e-8;
                         final double intSum;
-                        imod = new IntModel(0.0, timeVals[t], Integration.TRAPZD, eps, ktransActual, veActual);
-                        imod.driver();
-                        steps = imod.getStepsUsed();
-                        numInt = imod.getIntegral();
-                        
-                        
-
+                        imod = new IntModel(timeVals[t], ktransActual, veActual);
                         RungeKuttaFehlbergIntegrator kIntegrator = new RungeKuttaFehlbergIntegrator(imod);
                         kIntegrator.setEps(eps);
-                        double dResultRKF = kIntegrator.integrate(0.0, timeVals[t]);
-                        System.err.println( "AlgorithmSM2: comparison of Integration and RungeKuttaFehlbergIntegrator: " +
-                        		numInt + " vs. " + dResultRKF );
-                        
+                        numInt = kIntegrator.integrate(0.0, timeVals[t]);
                         
                         y_array[t - 1] = (ktransActual * numInt + vpActual * r1ptj[t]) / (1.0 - h);
 
@@ -2984,33 +2975,19 @@ public class AlgorithmSM2 extends AlgorithmBase {
         }
     }
 
-    class IntModel extends Integration implements RealFunctionOfOneVariable {
+    class IntModel implements RealFunctionOfOneVariable {
         double ktrans;
-
+        double upper;
         double ve;
 
         /**
          * Creates a new IntModel object.
-         * 
-         * @param lower DOCUMENT ME!
-         * @param upper DOCUMENT ME!
-         * @param routine DOCUMENT ME!
-         * @param eps DOCUMENT ME!
          */
-        public IntModel(final double lower, final double upper, final int routine, final double eps,
-                final double ktrans, final double ve) {
-            super(lower, upper, routine, eps);
+        public IntModel(final double upper, final double ktrans, final double ve) {
             this.ktrans = ktrans;
+            this.upper = upper;
             this.ve = ve;
         }
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
-        }
-
         /**
          * DOCUMENT ME!
          * 

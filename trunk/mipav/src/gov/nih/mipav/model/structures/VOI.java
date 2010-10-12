@@ -1339,47 +1339,7 @@ public class VOI extends ModelSerialCloneable {
         }
 
     }
-    /**
-     * Finds the active Contour and returns it.
-     *
-     * @param   slice  indicates slice where active Contour can be found.
-     *
-     * @return  Contour that is active or null if no contour is active in the indicated slice.
-     */
-    public VOIBase getActiveContour(int slice) {
-        if ((curveType != CONTOUR) && (curveType != POLYLINE)) {
-            return null;
-        }
-
-        for (int i = 0; i < curves.size(); i++) {
-            if (curves.elementAt(i).isActive() && curves.elementAt(i).slice() == slice) {
-                return (curves.elementAt(i));
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Finds the active Contour and returns it.
-     *
-     * @param   slice  indicates slice where active Contour can be found.
-     *
-     * @return  index of Contour that is active or -1 if not contour is active in the indicated slice.
-     */
-    public int getActiveContourIndex(int slice) {
-        if ((curveType != CONTOUR) && (curveType != POLYLINE) && (curveType != POINT)) {
-            return -1;
-        }
-
-        for (int i = 0; i < curves.size(); i++) {
-            if (curves.elementAt(i).isActive() && curves.elementAt(i).slice() == slice) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
+    
     /**
      * Accessor that returns the bounding box flag.
      *
@@ -1743,7 +1703,22 @@ public class VOI extends ModelSerialCloneable {
                 
         for ( int i = 0; i < curves.size(); i++ )
         {
-            if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane )
+        	if ( curves.elementAt(i) instanceof VOIPoint )
+        	{
+        		if ( (iPlane == VOIBase.XPLANE) && curves.elementAt(i).elementAt(0).X < iDim )
+        		{
+                    kTemp[(int)curves.elementAt(i).elementAt(0).X].add( curves.elementAt(i) );
+        		}
+        		else if ( (iPlane == VOIBase.YPLANE) && curves.elementAt(i).elementAt(0).Y < iDim )
+        		{
+                    kTemp[(int)curves.elementAt(i).elementAt(0).Y].add( curves.elementAt(i) );
+        		}
+        		else if ( (iPlane == VOIBase.ZPLANE) && curves.elementAt(i).elementAt(0).Z < iDim )
+        		{
+                    kTemp[(int)curves.elementAt(i).elementAt(0).Z].add( curves.elementAt(i) );
+        		}
+        	}
+        	else if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane )
             {
                 int slice = curves.elementAt(i).slice();
                 kTemp[slice].add( curves.elementAt(i) );

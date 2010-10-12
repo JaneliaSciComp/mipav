@@ -4967,7 +4967,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
-    class FitFullIntModel extends Integration implements RealFunctionOfOneVariable {
+    class FitFullIntModel implements RealFunctionOfOneVariable {
 
         /** DOCUMENT ME! */
         double arg;
@@ -5013,26 +5013,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
          *
          * @param  time     DOCUMENT ME!
          * @param  kon      DOCUMENT ME!
-         * @param  koff     DOCUMENT ME!
-         * @param  lower    DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  eps      DOCUMENT ME!
          */
-        public FitFullIntModel(double time, double kon, double koff, double lower, double upper, int routine,
-                               double eps) {
-            super(lower, upper, routine, eps);
+        public FitFullIntModel(double time, double kon, double koff) {
             this.time = time;
             this.kon = kon;
             this.koff = koff;
         }
 
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
-        }
 
         /**
          * DOCUMENT ME!
@@ -7640,22 +7627,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 if ((ctrl == -1) || (ctrl == 1)) {
 
                     for (i = 0; i < result.length; i++) {
-                        imod = new FitFullIntModel(xData[i], a[0], a[1], a[0], upper, routine, eps);
-                        imod.driver();
-                        result[i] = 1.0 - imod.getIntegral();
-                        
-                        double dIntegral = imod.getIntegral();
-                        
-
-
+                        imod = new FitFullIntModel(xData[i], a[0], a[1]);         
                         RungeKuttaFehlbergIntegrator kIntegrator = new RungeKuttaFehlbergIntegrator(imod);
                         kIntegrator.setEps(eps);
-                        double dResultRKF = kIntegrator.integrate(a[0], upper);
-                        System.err.println( "AlgorithmFRAP: comparison of Integration and RungeKuttaFehlbergIntegrator: " +
-                        		dIntegral + " vs. " + dResultRKF );
-                        
-                        
-                        
+                        result[i] = 1.0 - kIntegrator.integrate(a[0], upper);
                         residuals[i] = result[i] - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
@@ -7934,27 +7909,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * && (x != 2.0/3.0)) { function = Math.pow(Math.abs(x - 1.0/7.0), -0.25) * Math.pow(Math.abs(x - 2.0/3.0), -0.55);
      * } return function; } public void driver() { super.driver(); } }.
      */
-    class IntModel extends Integration implements RealFunctionOfOneVariable {
+    class IntModel implements RealFunctionOfOneVariable {
 
         /**
          * Creates a new IntModel object.
-         *
-         * @param  lower    DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  eps      DOCUMENT ME!
          */
-        public IntModel(double lower, double upper, int routine, double eps) {
-            super(lower, upper, routine, eps);
-        }
+        public IntModel() {}
 
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
-        }
 
         /**
          * DOCUMENT ME!
