@@ -324,7 +324,8 @@ public abstract class DQED {
 	public DQED() {
 	    //dqedProb1();
 	    //dqedProb2();
-		dqedProb3();
+		//dqedProb3();
+		dqedProb4();
 	}
 	
 	private void dqedProb1() {
@@ -1607,6 +1608,313 @@ public abstract class DQED {
 
 	  return;
 	} // dqedProb3
+	
+	private void dqedProb4() {
+
+	/*****************************************************************************80
+	!
+	!! DQED_PRB4 tests DQED.
+	!
+	!  Discussion:
+	!
+	!    This program illustrates the use of the Hanson-Krogh nonlinear least
+	!    squares solver DQED.
+	! 
+	!    The variables X(1:6) represent the dietary proportion of 6 prey
+	!    animals in the diet of an alligator.
+	!
+	!    The percentages of isotopic Carbon 13 and Nitrogen 15 are known
+	!    for each of these prey animals, as well as for the alligator.
+	!
+	!    The problem is to find values for the variables x(1:6)
+	!    so that the carbon and nitrogen levels in the alligator can be
+	!    explained purely in terms of diet.  In other words, we know
+	!    C1 through C6 and CA, N1 through N6 and NA, and we seek X1 through
+	!    X6 so that, as closely as possible, it is true that:
+	!
+	!                              (X1)
+	!                              (X2)
+	!      ( C1 C2 C3 C4 C5 C6 ) * (X3)  = (CA NA)
+	!      ( N1 N2 N3 N4 N5 N6 )   (X4)
+	!                              (X5)
+	!                              (X6)
+	!
+	!    We have constraints on our variables, namely, that each X is nonnegative,
+	!    and that the X's sum to 1.
+	!
+	!    The impetus for this problem, and the field data, came from
+	!
+	!    Matt Aresco,
+	!    Biology Department,
+	!    Florida State University,
+	!    aresco@bio.fsu.edu
+	!
+	!  Modified:
+	!
+	!    21 October 2002
+	!
+	!  Author:
+	!
+	!    John Burkardt
+	!
+	!  Reference:
+	!
+	!    Laurel Saito, Brett Johnson, John Bartholow, Blair Hanna,
+	!    Assessing Ecosystem Effects of Reservoir Operations Using Food
+	!      Web-Energy Transfer and Water Quality Models,
+	!    Ecosystems, 
+	!    Volume 4, Number 2, pages 105-125, 2001.
+	*/
+    // Starting from x[1] = x[2] = x[3] = x[4] = x[5] = x[6] = 1/6 MIPAV gives:
+	//x[1] = 0.0
+    //x[2] = 0.3192595996958189
+    //x[3] = 0.1982444041708924
+    //x[4] = 0.0024840160223074618
+    //x[5] = 0.35716506738283477
+    //x[6] = 0.12284691272814657
+    //The residual of the fitted data fnorm[0] = 1.1102230246251565E-16
+    //Sum of variables = 1.0000000000000002
+    //Number of model evaluations niters = 3
+    //DQED output flag igo[0] = 2
+		
+    // Starting from x(1) = x(2) = x(3) = x(4) = x(5) = x(6) = 1/6 FORTRAN gives:
+	// x(1) = 0.0
+    // x(2) = 0.335465
+	// x(3) = 0.186226
+    // x(4) = 0.00000
+	// x(5) = 0.351095
+	// x(6) = 0.127213
+	// fnorm = 3.66205E-15
+    // Sum of variables = 1.00000
+    // Number of model evaluations niters = 3
+    // DQED output flag igo = 2
+		
+	// Starting from the MIPAV final answer FORTRAN gives:
+    // x(1) = 1.59711E-8
+	// x(2) = 0.319260
+	// x(3) = 0.198244
+    // x(4) = 2.48409E-3
+	// x(5) = 0.357165
+    // x(6) = 0.122847
+	// fnorm = 3.55271E-15
+    // Sum of variables = 1.00000
+	// Number of model evaluations niters = 2
+	// DQED output flag igo = 2
+		
+    // so the MIPAV performance seems to be better than the FORTRAN performance.
+
+	  final int mcon = 1;
+	  final int mequa = 2;
+	  final int npmax = 5;
+	  final int nvars = 6;
+
+	  final int nall = mcon + 2 * nvars + npmax + 1;
+
+	  final int nplus = 3 * nall + 2;
+
+	  final int liwork = 3 * mcon + 9 * nvars + 4 * npmax + nall + 11;
+	  final int ldfj = mcon + mequa;
+	  final int lwork = nall * nall + 4 * nall + nvars * npmax 
+	                    + 33 * nvars + mequa * npmax + nvars * npmax + 13 * npmax
+	                    + 9 * mcon + 26 + nplus;
+
+	  double bl[] = new double[nvars+mcon+1];
+	  double bu[] = new double[nvars+mcon+1];
+	  double c[] = new double[]{0.0, -27.60, -25.40, -25.63, -27.17, -24.81, -26.22};
+	  double c_total = -25.34;
+	  double fj[][] = new double[ldfj+1][nvars+2];
+	  double fnorm[] = new double[1];
+	  int i;
+	  int igo[] = new int[1];
+	  int ind[] = new int[nvars+mcon+1];
+	  int iopt[] = new int[25];
+	  int iwork[] = new int[liwork+1];
+	  double n[] = new double[]{0.0, 2.79, 6.93, 8.21, 8.34, 1.97, 4.36};
+	  double n_total = 5.10;
+	  int niters;
+	  double ropt[] = new double[2];
+	  //external dqedev
+	  double work[] = new double[lwork+1];
+	  double x[] = new double[nvars+1];
+	  long startTime;
+	  long endTime;
+	  double timeElapsed;
+	  double sum;    
+
+
+      startTime = System.currentTimeMillis();
+
+	  Preferences.debug("\n");
+	  Preferences.debug("DQED_PRB4\n");
+	  Preferences.debug("FORTRAN90 version\n");
+	  Preferences.debug("A test for DQED\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("This example uses reverse communication.\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("The stable isotope problem for the alligator.\n");
+	  Preferences.debug("We assume an alligator has 6 kinds of prey, and\n");
+	  Preferences.debug("that the concentrations of isotopic C13 and N15\n");
+	  Preferences.debug("are known in the prey and in the alligator.\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("We want to determine dietary proportions X1 through X6\n");
+	  Preferences.debug("so that the isotope values in the alligator can\n");
+	  Preferences.debug("be explained\n");
+	  Preferences.debug("in terms of how much of what prey it eats.\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("Our model:\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("(C_All) = (C1 C2 C3 C4 C5 C6 ) * (X1 X2 X3 X4 X5 X6)'\n");
+	  Preferences.debug("(N_All) = (N1 N2 N3 N4 N5 N6 )\n");
+	//
+	//  Define the bounding constraints on the variables.
+	//
+	//  1: 0.0 <= X(1)
+	//
+	  ind[1] = 1;
+	  bl[1] = 0.0;
+	  bu[1] = 0.0;
+	//
+	//  2: 0.0 <= X(2)
+	//
+	  ind[2] = 1;
+	  bl[2] = 0.0;
+	  bu[2] = 0.0;
+	//
+	//  3: 0.0 <= X(3)
+	//
+	  ind[3] = 1;
+	  bl[3] = 0.0;
+	  bu[3] = 0.0;
+	//
+	//  4: 0.0 <= X(4)
+	//
+	  ind[4] = 1;
+	  bl[4] = 0.0;
+	  bu[4] = 0.0;
+	//
+	//  5: 0.0 <= X(5)
+	//
+	  ind[5] = 1;
+	  bl[5] = 0.0;
+	  bu[5] = 0.0;
+	//
+	//  6: 0.0 <= X(6)
+	//
+	  ind[6] = 1;
+	  bl[6] = 0.0;
+	  bu[6] = 0.0;
+	//
+	//  7: the linear constraint 1 = X(1) + X(2) + X(3) + X(4) + X(5) + X(6)
+	//
+	  ind[7] = 3;
+	  bl[7] = 1.0;
+	  bu[7] = 1.0;
+	//
+	//  Define the initial values of the variables.
+	//  We don't know anything at all, so all variables are set equal.
+	//
+	  for (i = 1; i <= nvars; i++) {
+	      x[i] = 1.0 / (double) nvars;
+	  }
+	//
+	//  Tell how much storage we gave the solver.
+	//
+	  iwork[1] = lwork;
+	  iwork[2] = liwork;
+	//
+	//  Initialize the call counter.
+	//
+	  niters = 0;
+	//
+	//  Use reverse commumication to evaluate the derivatives.
+	//
+	  iopt[1] = 16;
+	  iopt[2] = 1;
+	//
+	//  No more options.
+	//
+	  iopt[3] = 99;
+
+	  do {
+
+	    dqed ( dqedReverseCase, mequa, nvars, mcon, ind, bl, bu, x, fj, ldfj, fnorm,
+	      igo, iopt, ropt, iwork, work );
+
+	    if ( 1 < igo[0] ) {
+	      break;
+	    }
+	//
+	//  Count function evaluations.
+	//
+	    niters = niters + 1;
+	// 
+	//  Set the value of the constraint.
+	//
+	    fj[1][nvars+1] = x[1];
+	    for (i = 2; i <= nvars; i++) {
+	    	fj[1][nvars+1] += x[i];
+	    }
+	// 
+	//  Set the value of the residual functions.
+	//
+	    fj[mcon+1][nvars+1] = x[1]*c[1] - c_total;
+	    fj[mcon+2][nvars+1] = x[1]*n[1] - n_total;
+	    for (i = 2; i <= nvars; i++) {
+	    	fj[mcon+1][nvars+1] += x[i]*c[i];
+	    	fj[mcon+2][nvars+1] += x[i]*n[i];
+	    }
+	   
+	//
+	//  If IGO is nonzero, compute the derivatives.
+	//
+	    if ( igo[0] == 0 ) {
+	      continue;
+	    }
+	//
+	//  Partial derivatives of the constraint equation.
+	//
+	    for (i = 1; i <= nvars; i++) {
+	        fj[1][i] = 1.0;
+	    }
+	//
+	//  Partial derivatives of the least squares equations.
+	//
+	    for (i = 1; i <= nvars; i++) {
+	        fj[mcon+1][i] = c[i];
+	        fj[mcon+2][i] = n[i];
+	    }
+
+	  } while(true);
+
+	  Preferences.debug("\n");
+	  Preferences.debug("Our computed answer X:\n");
+	  Preferences.debug("\n");
+	  for (i = 1; i <= nvars; i++) {
+	      Preferences.debug("x[" + i + "] = " + x[i] + "\n");
+	  }
+	  Preferences.debug("\n");
+	  Preferences.debug("The residual of the fitted data fnorm[0] = " + fnorm[0] + "\n");
+	  Preferences.debug("\n");
+	  sum = x[1];
+	  for (i = 2; i <= nvars; i++) {
+		  sum += x[i];
+	  }
+	  Preferences.debug("Sum of variables = " + sum + "\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("Number of model evaluations niters = " + niters + "\n");
+	  Preferences.debug("DQED output flag igo[0] = " + igo[0] + "\n");
+
+	  Preferences.debug("\n");
+	  Preferences.debug("DQED_PRB4\n");
+	  Preferences.debug("Normal end of execution.\n");
+
+	  Preferences.debug("\n");
+	  endTime = System.currentTimeMillis();
+	  timeElapsed = (endTime - startTime)/1000.0;
+	  Preferences.debug("Seconds elapsed = " + timeElapsed + "\n");
+
+	  return;
+	} // private dqedProb4
 	
 	private double damax(int n, double x[], int incx) {
 		/*****************************************************************************80
