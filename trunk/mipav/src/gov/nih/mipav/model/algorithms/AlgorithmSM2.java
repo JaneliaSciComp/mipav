@@ -226,6 +226,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         final boolean selfTest = false;
         final boolean selfTest2 = false;
         final boolean nl2solTest = false;
+        final boolean dqedTest = false;
         int voiCount;
         double delT;
         long normalTerminations = 0;
@@ -593,6 +594,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
             new FitAllNL2();
             setCompleted(false);
             return;
+        }
+        
+        if (dqedTest) {
+        	new FitAllDQED();
+        	setCompleted(false);
+        	return;
         }
 
         if (srcImage.getNDims() != 4) {
@@ -2884,6 +2891,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 final int uiparm[], final double urparm[]) {
 
         }
+    }
+    
+    class FitAllDQED extends DQED {
+    	public FitAllDQED() {
+    		super();
+    	}
     }
 
     class FitAllEP extends NLConstrainedEngineEP {
