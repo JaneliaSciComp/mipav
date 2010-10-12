@@ -1137,7 +1137,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                     temp += " B: "
                             + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Blue"
                                     + end);
-                    rowData[count] = temp;
+                    rowData[count] = temp.replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":");
 
                     if (showTotals) {
                         temp = " R: "
@@ -1149,19 +1149,19 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                         temp += " B: "
                                 + properties.getProperty(VOIStatisticList.statisticDescription[k]
                                         + "BlueTotal");
-                        totalData[count] = temp;
+                        totalData[count] = temp.replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":");
                     }
                 } else {
                     if (k != 18) {
                         // Exclude largest distance
                         rowData[count] = properties.getProperty(
-                                VOIStatisticList.statisticDescription[k] + end).replaceAll("\t", ", ");
+                                VOIStatisticList.statisticDescription[k] + end).replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":");
                     }
 
                     if (showTotals) {
                         totalData[count] = properties.getProperty(
-                                VOIStatisticList.statisticDescription[k] + "Total").replaceAll("\t",
-                                ", ");
+                                VOIStatisticList.statisticDescription[k] + "Total").replaceAll("[\\t+]",
+                                ", ").replaceAll("[\\n\\r+]", ":");
                     }
                 }
                 count++;
@@ -1235,21 +1235,28 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      */
     protected StringBuffer writeLogModelToFile() {
         StringBuffer total = new StringBuffer();
+        String newLine = System.getProperty("line.separator");
         //get column names
         for(int i=0; i<logModel.getColumnCount(); i++) {
             total.append(logModel.getColumnName(i)).append("\t");
         }
-        total.append(System.getProperty("line.separator"));
+        total.append(newLine);
         
         //get total data
         Vector<Vector<?>> column = logModel.getDataVector();
         Vector<?> row;
+        String cellEntry;
         for(int i=0; i<column.size(); i++) {
             row = (Vector<?>)column.get(i);
             for(int j=0; j<row.size(); j++) {
-                total.append(row.get(j).toString()).append("\t");
+                if(row.get(j) == null || row.get(j).toString().length() == 0) {
+                    cellEntry = " ";
+                } else {
+                    cellEntry = row.get(j).toString();
+                }
+                total.append(cellEntry).append("\t");
             }
-            total.append(System.getProperty("line.separator"));
+            total.append(newLine);
         }
         
         return total;
