@@ -12,6 +12,7 @@ public class PlugInDrosophilaStandardColumnRegistration implements PlugInGeneric
 	
 
 	
+	
 	public void run() {
 		new PlugInDialogDrosophilaStandardColumnRegistration(false);
 

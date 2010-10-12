@@ -115,7 +115,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     private ButtonGroup eyeGroup;
     
     /** radio buttons * */
-    private JRadioButton leftEyeRadio, rightEyeRadio;
+    //private JRadioButton leftEyeRadio, rightEyeRadio;
     
     
     
@@ -158,7 +158,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v2.9");
+        setTitle("Drosophila Standard Column Registration v3.0");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -205,7 +205,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         flipPanel.add(flipYCB);
         flipPanel.add(flipZCB);
         
-        eyeGroup = new ButtonGroup();
+        /*eyeGroup = new ButtonGroup();
         leftEyeRadio = new JRadioButton("Left eye");
         leftEyeRadio.setSelected(true);
         rightEyeRadio = new JRadioButton("Right eye");
@@ -213,7 +213,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         eyeGroup.add(rightEyeRadio);
         JPanel eyePanel = new JPanel();
         eyePanel.add(leftEyeRadio);
-        eyePanel.add(rightEyeRadio);
+        eyePanel.add(rightEyeRadio);*/
         
         rigidOnlyCB = new JCheckBox("Rigid Body Registration Only");
         
@@ -298,9 +298,9 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(flipPanel,gbc);
         
-        gbc.gridy = 5;
+        /*gbc.gridy = 5;
         gbc.gridx = 1;
-        mainPanel.add(eyePanel,gbc);
+        mainPanel.add(eyePanel,gbc);*/
         
         gbc.gridy = 6;
         gbc.gridx = 1;
@@ -651,7 +651,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	protected void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
 
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,outputFilename,outputFilename_auto,outputFilename_regionGrow,rigidOnlyCB.isSelected(),doSWC,leftEyeRadio.isSelected());
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,outputFilename,outputFilename_auto,outputFilename_regionGrow,rigidOnlyCB.isSelected(),doSWC);
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		
