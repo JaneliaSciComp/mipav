@@ -8,7 +8,7 @@ import java.text.DecimalFormat;
     simple bounds or linear constraints on variables.  DQED was written by Richard Hanson and Fred Krogh
     of Sandia National Laboratory. */
 
-public abstract class DQED {
+public class DQED {
 	
 	private int idope[] = new int[6];
 	
@@ -321,11 +321,14 @@ public abstract class DQED {
 	private double f2[] = null;
 	private double t2[] = null;
 	
-	public DQED() {
-	    //dqedProb1();
-	    //dqedProb2();
-		//dqedProb3();
-		dqedProb4();
+	public DQED(boolean selfTest) {
+		if (selfTest) {
+		    //dqedProb1();
+		    //dqedProb2();
+			//dqedProb3();
+			//dqedProb4();
+			dqedProb5();
+		}
 	}
 	
 	private void dqedProb1() {
@@ -1915,6 +1918,174 @@ public abstract class DQED {
 
 	  return;
 	} // private dqedProb4
+
+	private void dqedProb5() {
+		
+		// Test program for SLATEC routine DBOLS
+		// by Steve White
+
+	/*****************************************************************************80
+	!
+	!! MAIN is the main program for DQED_PRB5.
+	!
+	!  Discussion:
+	!
+	!    DQED_PRB5 demonstrates how to call the DBOLS routine directly,
+	!    bypassing the DQED routine, if the system to be solved is simply
+	!    a constrained linear system of equations.
+	!
+	!  Modified:
+	!
+	!    03 September 2007
+	!
+	!  Author:
+	!
+	!    Steve White wrote the original version of this example.
+	!    John Burkardt made some modifications.
+	!
+	!  Local Parameters:
+	!
+	!    Local, integer IOPT(NI+1), contains a final value of '99', preceded
+	!    by NI values indicating user options.  When calling DBOLS directly,
+	!    the option '7' must be specified.
+	!
+	!    Local, integer MDW, the allocated row dimension of W.
+	!
+	!    Local, integer MROWS, the number of rows in W.
+	!
+	!    Local, integer NCOLS, the number of columns in W.
+	!
+	!    Local, integer NI, the number of options in the IOPT array.
+	*/
+		// The correct answer is obtained:
+		//The solution X:
+
+	    //1.5406427867441717
+	    //3.010471193960309
+	    //0.14012547850523754
+
+	    //The L2 norm of the residual vector E*X-F = 9.886066509764431
+
+	    //The error return flag is mode[0] = 3
+
+
+	  int mrows[] = new int[]{5};
+	  final int ncols = 3;
+	  final int ni = 1;
+	  final int nx = 0;
+
+	  final int mdw = mrows[0];
+
+	  double bl[] = new double[]{0.0, 0.0, 0.0, 0.0};
+	  double bu[] = new double[]{0.0, 0.0, 0.0, 0.0};
+	  int col;
+	  int ind[] = new int[]{0, 1, 1, 1};
+	  int iopt[] = new int[]{0, 7, 99};
+	  int iw[] = new int[2*ncols+1];
+	  int mode[] = new int[1];
+	  double rnorm[] = new double[1];
+	  int row;
+	  double rw[] = new double[5*ncols+1];
+	  double w[][] = new double[mdw+1][ncols+2];
+	  w[0][0] = 0.0;
+	  w[1][0] = 0.0;
+	  w[2][0] = 0.0;
+	  w[3][0] = 0.0;
+	  w[4][0] = 0.0;
+	  w[5][0] = 0.0;
+	  w[0][1] = 0.0;
+	  w[1][1] = 4.0;
+	  w[2][1] = 3.0;
+	  w[3][1] = -7.0;
+	  w[4][1] = 7.0;
+	  w[5][1] = -1.0;
+	  w[0][2] = 0.0;
+	  w[1][2] = -7.0;
+	  w[2][2] = -4.0;
+	  w[3][2] = 3.0;
+	  w[4][2] = 7.0;
+	  w[5][2] = 7.0;
+	  w[0][3] = 0.0;
+	  w[1][3] = -7.0;
+	  w[2][3] = 0.0;
+	  w[3][3] = -3.0;
+	  w[4][3] = 1.0;
+	  w[5][3] = 6.0;
+	  w[0][4] = 0.0;
+	  w[1][4] = -22.0;
+	  w[2][4] = -6.0;
+	  w[3][4] = -2.0;
+	  w[4][4] = 34.0;
+	  w[5][4] = 13.0;
+	  double x[] = new double[ncols+nx+1];
+	  long startTime;
+	  long endTime;
+	  double timeElapsed;
+	  int i;
+	  DecimalFormat df = new DecimalFormat("########0.00");
+
+	  startTime = System.currentTimeMillis();
+	  Preferences.debug("\n");
+	  Preferences.debug("DQED_PRB5\n");
+	  Preferences.debug("Demonstrate how to call the DBOLS routine directly\n");
+	  Preferences.debug("if the nonlinear constrained system to be solved\n");
+	  Preferences.debug("is actually simply a LINEAR constrained system.\n");
+
+	  Preferences.debug("\n");
+	  Preferences.debug("The linear system E*X=F is stored as a single\n");
+	  Preferences.debug("array W = [ E | F ].\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("The order of E is " + mrows[0] + " rows by " +  ncols +  " columns.\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("The E matrix:\n");
+	  Preferences.debug("\n");
+	  for (row = 1; row <= mrows[0]; row++) {
+		  for (i = 1; i <= ncols; i++) {
+	          Preferences.debug(df.format(w[row][i]) + "  "); 
+		  }
+		  Preferences.debug("\n");
+	  }
+	  Preferences.debug("\n");
+	  Preferences.debug("The F right hand side:\n");
+	  Preferences.debug("\n");
+	  for (row = 1; row <= mrows[0]; row++) {
+	    Preferences.debug(w[row][ncols+1] + "\n");
+	  }
+	  Preferences.debug("\n");
+	  Preferences.debug("Lower bounds on the solution X:\n");
+	  Preferences.debug("\n");
+	  for (col = 1; col <= ncols; col++) {
+	    Preferences.debug(bl[col] + "\n");
+	  }
+
+	  Preferences.debug("\n");
+	  Preferences.debug("Call DBOLS for least squares solution minimizing\n");
+	  Preferences.debug("the norm of the constrained linear system.\n");
+
+	  dbols ( w, mdw, mrows, ncols, bl, bu, ind, iopt, x, rnorm, mode, rw, iw );
+
+	  Preferences.debug("\n");
+	  Preferences.debug("The solution X:\n");
+	  Preferences.debug("\n");
+	  for (col = 1; col <= ncols; col++) {
+	    Preferences.debug(x[col] + "\n");
+	  }
+
+	  Preferences.debug("\n");
+	  Preferences.debug("The L2 norm of the residual vector E*X-F = " +  rnorm[0] + "\n");
+	  Preferences.debug("\n");
+	  Preferences.debug("The error return flag is mode[0] = " + mode[0] + "\n");
+
+	  Preferences.debug("\n");
+	  Preferences.debug("DQED_PRB5:\n");
+	  Preferences.debug("Normal end of execution.\n");
+	  Preferences.debug("\n");
+	  endTime = System.currentTimeMillis();
+	  timeElapsed = (endTime - startTime)/1000.0;
+	  Preferences.debug("Seconds elapsed = " + timeElapsed + "\n");
+
+	  return;
+	} // dqedProb5()
 	
 	private double damax(int n, double x[], int incx) {
 		/*****************************************************************************80
@@ -7338,7 +7509,7 @@ public abstract class DQED {
    } // dpchek
 	
 	
-	private void dqed (int dqedevCase, int mequa, int nvars, int mcon, int ind[], double bl[],
+	public void dqed (int dqedevCase, int mequa, int nvars, int mcon, int ind[], double bl[],
 			           double bu[], double x[], double fjac[][], int ldfjac, double fnorm[], 
 			           int igo[], int iopt[], double ropt[], int iwa[], double wa[] ) {
 
