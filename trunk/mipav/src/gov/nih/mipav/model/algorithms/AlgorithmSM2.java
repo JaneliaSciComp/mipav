@@ -157,6 +157,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
     
     private final int nl2solEngine = 2;
     
+    private final int dqedEngine = 3;
+    
     private int fittingEngine = elsuncEngine;
 
     // ~ Constructors
@@ -411,12 +413,65 @@ public class AlgorithmSM2 extends AlgorithmBase {
             int falseConvergence = 0;
             int functionEvaluationLimit = 0;
             int iterationLimit = 0;
+            // Below variables used in DQED
+            int mcon = 0;
+            int npmax = 5;
+            int nvars = 3;
+            int nall = mcon + 2*nvars + npmax + 1;
+            int mequa = tDim - 1;
+            int nplus;
+            if (mcon == 0) {
+            	nplus = 0;
+            }
+            else {
+            	nplus = 3*nall+2;
+            }
+            int liwork = 3*mcon + 9*nvars + 4*npmax + nall + 11;
+            int lwork = nall*nall + 4*nall + nvars*npmax + 33*nvars 
+                      + mequa*npmax + Math.max(mequa, nvars)*npmax + 13*npmax 
+                      + 9*mcon + 26 + nplus;
+            int ldfj = mcon + mequa;
+            double bl[] = null;
+            double bu[] = null;
+            double fj[][] = null;
+            double fnorm[] = null;
+            int igo[] = null;
+            int ind[] = null;
+            int iopt[] = null;
+            int iwork[] = null;
+            int niters;
+            double ropt[] = null;
+            double work[] = null;
+            final int dqedReverseCase = 105;
+            DQED dq;
             if (fittingEngine == nl2solEngine) {
             	x = new double[4]; 
             	// 61 + number of coefficients
             	iv = new int[64];
             	vLength = 94 + (tDim-1)*3 + 3*(tDim-1) + 3*(3*3 + 33)/2;
             	v = new double[vLength];
+            }
+            if (fittingEngine == dqedEngine) {
+                bl = new double[nvars+mcon+1];
+                bu = new double[nvars+mcon+1];
+                fj = new double[ldfj+1][nvars+2];
+                fnorm = new double[1];
+                igo = new int[1];
+                ind = new int[nvars+mcon+1];
+                iopt = new int[25];
+                iwork = new int[liwork+1];
+                ropt = new double[2];
+                work = new double[lwork+1];
+                ind[1] = 3; // 3 means upper and lower bounds
+                bl[1] = min_constr[0];
+                bu[1] = max_constr[0];
+                ind[2] = 3;
+                bl[2] = min_constr[1];
+                bu[2] = max_constr[1];
+                ind[3] = 3;
+                bl[3] = min_constr[2];
+                bu[3] = max_constr[2];
+                x = new double[4];
             }
             for (i = 0; i < 100; i++) {
                 timeVals[i] = i;
@@ -556,6 +611,117 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	                        }
 	                    }
                     } // else if (fittingEngine == nl2solEngine)
+                    else if (fittingEngine == dqedEngine) {
+                    	// Set initial values of variables
+                    	x[1] = 0.495;
+                        x[2] = 0.495;
+                        x[3] = 0.495;
+                        // Tell how much storage we gave the solver
+                        iwork[1] = lwork;
+                        iwork[2] = liwork;
+                        // Initialize the call counter
+                        niters = 0;
+                        // User reverse communication to evaluate the derivatives.
+                        iopt[1] = 16;
+                        iopt[2] = 1;
+                        // No more options
+                        iopt[3] = 99;
+                        boolean dqedSelfTest = false;
+                        dq = new DQED (dqedSelfTest);
+                        do {
+                        	
+                            dq.dqed( dqedReverseCase, mequa, nvars, mcon, ind, bl, bu, x, fj, ldfj, fnorm,
+                        		      igo, iopt, ropt, iwork, work );
+                		    if ( 1 < igo[0] ) {
+                		      break;
+                		    }
+                		    //
+                		    //  Count function evaluations.
+                		    //
+                		    niters = niters + 1;
+                		    
+                		    double ktrans;
+                            double ve;
+                            double vp;
+                            double intSum;
+                            
+                        	ktrans = x[1];
+                            ve = x[2];
+                            vp = x[3];
+                            ktransDivVe = ktrans / ve;
+                            for (j = 0; j <= tDim - 1; j++) {
+                                for (m = 0; m <= tDim - 1; m++) {
+                                    exparray[j][m] = Math.exp( (timeVals[j] - timeVals[m]) * ktransDivVe);
+                                }
+                            }
+
+                            for (m = 2; m <= tDim; m++) {
+                                intSum = 0.0;
+                                for (j = 2; j <= m; j++) {
+                                    intSum += trapezoidConstant[j - 2] * (exparray[j - 1][m - 1] - exparray[j - 2][m - 1]) * ve;
+                                    intSum += trapezoidSlope[j - 2]
+                                            * ( (exparray[j - 1][m - 1] * (timeVals[j - 1] - 1.0 / ktransDivVe)) - (exparray[j - 2][m - 1] * (timeVals[j - 2] - 1.0 / ktransDivVe)))
+                                            * ve;
+                                } // for (j = 2; j <= m; j++)
+                                ymodel[m - 2] = (intSum + vp * r1ptj[m - 1]) / (1.0 - h);
+                            } // for (m = 2; m <= tDim; m++)
+                            // evaluate the residuals[j] = ymodel[j] - ySeries[j]
+                            for (j = 1; j <= mequa; j++) {
+                                fj[mcon+j][4] = ymodel[j-1] - y_array[j-1];
+                            }
+                            
+                            if (igo[0] != 0) {
+                                double intSumDerivKtrans;
+                                double intSumDerivVe;
+                            	// Calculate the Jacobian analytically
+                                for (m = 2; m <= tDim; m++) {
+                                    intSumDerivKtrans = 0.0;
+                                    intSumDerivVe = 0.0;
+                                    for (j = 2; j <= m; j++) {
+                                        intSumDerivKtrans += trapezoidConstant[j - 2]
+                                                * ( (timeVals[j - 1] - timeVals[m - 1]) * exparray[j - 1][m - 1] - (timeVals[j - 2] - timeVals[m - 1])
+                                                        * exparray[j - 2][m - 1]);
+                                        intSumDerivKtrans += trapezoidSlope[j - 2]
+                                                * ( (exparray[j - 1][m - 1] * (timeVals[j - 1] - timeVals[m - 1]) * (timeVals[j - 1] - 1.0 / ktransDivVe)) - (exparray[j - 2][m - 1]
+                                                        * (timeVals[j - 2] - timeVals[m - 1]) * (timeVals[j - 2] - 1.0 / ktransDivVe)));
+                                        intSumDerivKtrans += trapezoidSlope[j - 2]
+                                                * (exparray[j - 1][m - 1] - exparray[j - 2][m - 1]) * ve * ve / (ktrans * ktrans);
+                                        intSumDerivVe += trapezoidConstant[j - 2]
+                                                * ( (timeVals[j - 1] - timeVals[m - 1]) * exparray[j - 1][m - 1] - (timeVals[j - 2] - timeVals[m - 1])
+                                                        * exparray[j - 2][m - 1]) * ( -ktrans / ve);
+                                        intSumDerivVe += trapezoidConstant[j - 2]
+                                                * (exparray[j - 1][m - 1] - exparray[j - 2][m - 1]);
+                                        intSumDerivVe += trapezoidSlope[j - 2]
+                                                * ( (exparray[j - 1][m - 1] * (timeVals[j - 1] - timeVals[m - 1]) * (timeVals[j - 1] - 1.0 / ktransDivVe)) - (exparray[j - 2][m - 1]
+                                                        * (timeVals[j - 2] - timeVals[m - 1]) * (timeVals[j - 2] - 1.0 / ktransDivVe)))
+                                                * ( -ktrans / ve);
+                                        intSumDerivVe += trapezoidSlope[j - 2] * (exparray[j - 1][m - 1] - exparray[j - 2][m - 1])
+                                                * ( -2.0 * ve / ktrans);
+                                        intSumDerivVe += trapezoidSlope[j - 2]
+                                                * ( (exparray[j - 1][m - 1] * timeVals[j - 1]) - (exparray[j - 2][m - 1] * timeVals[j - 2]));
+                                    } // for (j = 2; j <= m; j++)
+                                    fj[mcon + m - 1][1] = intSumDerivKtrans / (1.0 - h);
+                                    fj[mcon + m - 1][2] = intSumDerivVe / (1.0 - h);
+                                    fj[mcon + m - 1][3] = r1ptj[m - 1] / (1.0 - h);
+                                }
+                            } // if (igo[0] != 0)
+                        } while(true);
+                        Preferences.debug("Actual ktrans = " + ktransActual + " Calculated ktrans = " + x[1] + "\n");
+	                    Preferences.debug("Actual ve = " + veActual + " Calculated ve = " + x[2] + "\n");
+	                    Preferences.debug("Actual vp = " + vpActual + " Calculated vp = " + x[3] + "\n");
+	                    Preferences.debug("Number of iterations: " + String.valueOf(niters) + "\n");
+	                    Preferences.debug("Residual after the fit fnorm[0] = " + fnorm[0] + "\n");
+	      			    Preferences.debug("DQED output flag igo[0] = " + igo[0] + "\n");
+	                    if ( (Math.abs(ktransActual - x[1]) <= 1.0E-7) && (Math.abs(veActual - x[2]) <= 1.0E-5)
+	                            && (Math.abs(vpActual - x[3]) <= 1.0E-5)) {
+	                        success++;
+	                    } else {
+	                        failure++;
+	                        if (ktransActual == 0.0) {
+	                        	ktransequalszero++;
+	                        }
+	                    }
+                    } // else if (fittingEngine == dqedEngine)
                 } // for (ktransIndex = 0; ktransIndex < 6; ktransIndex++)
             } // for (yIndex = 0; yIndex < 18; yIndex++)
             Preferences.debug("Number of successes = " + success + "\n");
@@ -597,7 +763,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
         }
         
         if (dqedTest) {
-        	new FitAllDQED();
+        	boolean dqedSelfTest = true;
+        	new DQED(dqedSelfTest);
         	setCompleted(false);
         	return;
         }
@@ -2891,12 +3058,6 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 final int uiparm[], final double urparm[]) {
 
         }
-    }
-    
-    class FitAllDQED extends DQED {
-    	public FitAllDQED() {
-    		super();
-    	}
     }
 
     class FitAllEP extends NLConstrainedEngineEP {
