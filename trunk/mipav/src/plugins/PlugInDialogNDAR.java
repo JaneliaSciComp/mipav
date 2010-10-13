@@ -2554,7 +2554,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             
             JMenuItem itemOpen = new JMenuItem(shortname);
             itemOpen.addActionListener(this);
-            itemOpen.setActionCommand("remove");
+            itemOpen.setActionCommand("add");
             itemOpen.setFont(MipavUtil.font12B);
             addMenu.add(itemOpen);
             
