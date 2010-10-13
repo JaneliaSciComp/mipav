@@ -9,6 +9,8 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
+import WildMagic.LibFoundation.NumericalAnalysis.Eigenf;
+
 
 /**
  * <p>Algorithm to apply Coherence Enhancing Anisotropic Diffusion</p>
@@ -94,7 +96,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
     private float[] dzKernelZ;
 
     /** Eigensystem solver. */
-    private AlgorithmEigensolver eigenSystemAlgo = null;
+    private Eigenf eigenSystemAlgo = null;
 
     /** Whether to process the entire image, or just the portion within the currently selected VOI. */
     private boolean entireImage = true;
@@ -151,7 +153,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         }
 
         init();
-        eigenSystemAlgo = new AlgorithmEigensolver(2);
+        eigenSystemAlgo = new Eigenf(2);
     }
 
 
@@ -186,7 +188,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         }
 
         init();
-        eigenSystemAlgo = new AlgorithmEigensolver(2);
+        eigenSystemAlgo = new Eigenf(2);
 
     } // end AlgorithmCoherenceEnhancingDiffusion(...)
 
@@ -1687,7 +1689,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             float r;
 
             // make a 3X3 eigenSolver
-            eigenSystemAlgo = new AlgorithmEigensolver(3);
+            eigenSystemAlgo = new Eigenf(3);
 
             double[][] evecs = new double[3][3];
             Matrix rot;
@@ -1711,21 +1713,21 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
                     for (int x = 0; x < xDim; x++, idx++) {
 
-                        if (entireImage || mask.get(idx)) {
-                            eigenSystemAlgo.setMatrix(0, 0, s11[idx]);
-                            eigenSystemAlgo.setMatrix(0, 1, s12[idx]);
-                            eigenSystemAlgo.setMatrix(0, 2, s13[idx]);
+                        if (entireImage || mask.get(idx)) {                          
+                            eigenSystemAlgo.SetData(0, 0, s11[idx]);
+                            eigenSystemAlgo.SetData(0, 1, s12[idx]);
+                            eigenSystemAlgo.SetData(0, 2, s13[idx]);
 
-                            eigenSystemAlgo.setMatrix(1, 0, s12[idx]);
-                            eigenSystemAlgo.setMatrix(1, 1, s22[idx]);
-                            eigenSystemAlgo.setMatrix(1, 2, s23[idx]);
+                            eigenSystemAlgo.SetData(1, 0, s12[idx]);
+                            eigenSystemAlgo.SetData(1, 1, s22[idx]);
+                            eigenSystemAlgo.SetData(1, 2, s23[idx]);
 
-                            eigenSystemAlgo.setMatrix(2, 0, s13[idx]);
-                            eigenSystemAlgo.setMatrix(2, 1, s23[idx]);
-                            eigenSystemAlgo.setMatrix(2, 2, s33[idx]);
+                            eigenSystemAlgo.SetData(2, 0, s13[idx]);
+                            eigenSystemAlgo.SetData(2, 1, s23[idx]);
+                            eigenSystemAlgo.SetData(2, 2, s33[idx]);
 
                             // OK, solve the eigen system
-                            eigenSystemAlgo.solve();
+                            eigenSystemAlgo.IncrSortEigenStuff();
 
                             // extract the eigen values from the AlgorithmEigensolver
                             // The eigenvalues are stored in increasing order and may be
@@ -1735,21 +1737,22 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                             // Eigenvectors are accessed by getEigenvector(iRow,iCol).
                             // The eigenvectors are normalized to unit length.
                             // lambdaOne is the largest eigenvalue.
-                            lambdaOne = (float) eigenSystemAlgo.getEigenvalue(2);
-                            lambdaTwo = (float) eigenSystemAlgo.getEigenvalue(1);
-                            lambdaThree = (float) eigenSystemAlgo.getEigenvalue(0);
+                            lambdaOne = eigenSystemAlgo.GetEigenvalue(2);
+                            lambdaTwo = eigenSystemAlgo.GetEigenvalue(1);
+                            lambdaThree = eigenSystemAlgo.GetEigenvalue(0);
 
-                            evecs[0][0] = eigenSystemAlgo.getEigenvector(0, 2);
-                            evecs[1][0] = eigenSystemAlgo.getEigenvector(1, 2);
-                            evecs[2][0] = eigenSystemAlgo.getEigenvector(2, 2);
+                            evecs[0][0] = eigenSystemAlgo.GetEigenvector(0, 2);
+                            evecs[1][0] = eigenSystemAlgo.GetEigenvector(1, 2);
+                            evecs[2][0] = eigenSystemAlgo.GetEigenvector(2, 2);
 
-                            evecs[0][1] = eigenSystemAlgo.getEigenvector(0, 1);
-                            evecs[1][1] = eigenSystemAlgo.getEigenvector(1, 1);
-                            evecs[2][1] = eigenSystemAlgo.getEigenvector(2, 1);
+                            evecs[0][1] = eigenSystemAlgo.GetEigenvector(0, 1);
+                            evecs[1][1] = eigenSystemAlgo.GetEigenvector(1, 1);
+                            evecs[2][1] = eigenSystemAlgo.GetEigenvector(2, 1);
 
-                            evecs[0][2] = eigenSystemAlgo.getEigenvector(0, 0);
-                            evecs[1][2] = eigenSystemAlgo.getEigenvector(1, 0);
-                            evecs[2][2] = eigenSystemAlgo.getEigenvector(2, 0);
+                            evecs[0][2] = eigenSystemAlgo.GetEigenvector(0, 0);
+                            evecs[1][2] = eigenSystemAlgo.GetEigenvector(1, 0);
+                            evecs[2][2] = eigenSystemAlgo.GetEigenvector(2, 0);
+                            	
 
                             // The columns of the rotation matrix are the eigenvectors
                             // of the structure tensor.
@@ -2253,7 +2256,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             float r;
 
             // make a 3X3 eigenSolver
-            eigenSystemAlgo = new AlgorithmEigensolver(3);
+            eigenSystemAlgo = new Eigenf(3);
 
             double[][] evecs = new double[3][3];
             Matrix rot;
@@ -2278,20 +2281,20 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                     for (int x = 0; x < xDim; x++, idx++) {
 
                         if (entireImage || mask.get(idx)) {
-                            eigenSystemAlgo.setMatrix(0, 0, s11[idx]);
-                            eigenSystemAlgo.setMatrix(0, 1, s12[idx]);
-                            eigenSystemAlgo.setMatrix(0, 2, s13[idx]);
+                            eigenSystemAlgo.SetData(0, 0, s11[idx]);
+                            eigenSystemAlgo.SetData(0, 1, s12[idx]);
+                            eigenSystemAlgo.SetData(0, 2, s13[idx]);
 
-                            eigenSystemAlgo.setMatrix(1, 0, s12[idx]);
-                            eigenSystemAlgo.setMatrix(1, 1, s22[idx]);
-                            eigenSystemAlgo.setMatrix(1, 2, s23[idx]);
+                            eigenSystemAlgo.SetData(1, 0, s12[idx]);
+                            eigenSystemAlgo.SetData(1, 1, s22[idx]);
+                            eigenSystemAlgo.SetData(1, 2, s23[idx]);
 
-                            eigenSystemAlgo.setMatrix(2, 0, s13[idx]);
-                            eigenSystemAlgo.setMatrix(2, 1, s23[idx]);
-                            eigenSystemAlgo.setMatrix(2, 2, s33[idx]);
+                            eigenSystemAlgo.SetData(2, 0, s13[idx]);
+                            eigenSystemAlgo.SetData(2, 1, s23[idx]);
+                            eigenSystemAlgo.SetData(2, 2, s33[idx]);
 
                             // OK, solve the eigen system
-                            eigenSystemAlgo.solve();
+                            eigenSystemAlgo.IncrSortEigenStuff();
 
                             // extract the eigen values from the AlgorithmEigensolver
                             // The eigenvalues are stored in increasing order and may be
@@ -2301,22 +2304,22 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                             // Eigenvectors are accessed by getEigenvector(iRow,iCol).
                             // The eigenvectors are normalized to unit length.
                             // lambdaOne is the largest eigenvalue.
-                            lambdaOne = (float) eigenSystemAlgo.getEigenvalue(2);
-                            lambdaTwo = (float) eigenSystemAlgo.getEigenvalue(1);
-                            lambdaThree = (float) eigenSystemAlgo.getEigenvalue(0);
+                            lambdaOne = eigenSystemAlgo.GetEigenvalue(2);
+                            lambdaTwo = eigenSystemAlgo.GetEigenvalue(1);
+                            lambdaThree = eigenSystemAlgo.GetEigenvalue(0);
 
-                            evecs[0][0] = eigenSystemAlgo.getEigenvector(0, 2);
-                            evecs[1][0] = eigenSystemAlgo.getEigenvector(1, 2);
-                            evecs[2][0] = eigenSystemAlgo.getEigenvector(2, 2);
+                            evecs[0][0] = eigenSystemAlgo.GetEigenvector(0, 2);
+                            evecs[1][0] = eigenSystemAlgo.GetEigenvector(1, 2);
+                            evecs[2][0] = eigenSystemAlgo.GetEigenvector(2, 2);
 
-                            evecs[0][1] = eigenSystemAlgo.getEigenvector(0, 1);
-                            evecs[1][1] = eigenSystemAlgo.getEigenvector(1, 1);
-                            evecs[2][1] = eigenSystemAlgo.getEigenvector(2, 1);
+                            evecs[0][1] = eigenSystemAlgo.GetEigenvector(0, 1);
+                            evecs[1][1] = eigenSystemAlgo.GetEigenvector(1, 1);
+                            evecs[2][1] = eigenSystemAlgo.GetEigenvector(2, 1);
 
-                            evecs[0][2] = eigenSystemAlgo.getEigenvector(0, 0);
-                            evecs[1][2] = eigenSystemAlgo.getEigenvector(1, 0);
-                            evecs[2][2] = eigenSystemAlgo.getEigenvector(2, 0);
-
+                            evecs[0][2] = eigenSystemAlgo.GetEigenvector(0, 0);
+                            evecs[1][2] = eigenSystemAlgo.GetEigenvector(1, 0);
+                            evecs[2][2] = eigenSystemAlgo.GetEigenvector(2, 0);
+                            
                             // The columns of the rotation matrix are the eigenvectors
                             // of the structure tensor.
                             rot = new Matrix(evecs);

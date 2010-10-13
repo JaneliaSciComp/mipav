@@ -14,6 +14,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.NumericalAnalysis.Eigenf;
 
 
 /**
@@ -133,7 +134,7 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         ModelImage colorImage;
         AlgorithmHessian hessianAlgo;
         double[][] hess = null;
-        AlgorithmEigensolver eigenSystemAlgo = null;
+        Eigenf eigenSystemAlgo = null;
         double[] evals = new double[3];
         double[] magEvals = new double[3];
         double lambda1;
@@ -452,7 +453,7 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         sigmas[1] = 0.5f;
         sigmas[2] = 0.5f;
         colorImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), "colorImage");
-        eigenSystemAlgo = new AlgorithmEigensolver(3);
+        eigenSystemAlgo = new Eigenf(3);
         similarity = new double[length];
         cost = new double[length];
         normX = new float[length];
@@ -495,30 +496,30 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
                                 // get the Hessian at this point
                                 hess = hessianAlgo.hessian3D(colorBuffer, srcImage.getExtents(), x, y, z);
     
-                                // fill up the eigenSolver matrix with the hessian
-                                eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
-                                eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
-                                eigenSystemAlgo.setMatrix(0, 2, hess[0][2]);
+                                // fill up the eigenSolver matrix with the hessian                               
+                                eigenSystemAlgo.SetData(0, 0, (float)hess[0][0]);
+                                eigenSystemAlgo.SetData(0, 1, (float)hess[0][1]);
+                                eigenSystemAlgo.SetData(0, 2, (float)hess[0][2]);
     
-                                eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
-                                eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
-                                eigenSystemAlgo.setMatrix(1, 2, hess[1][2]);
+                                eigenSystemAlgo.SetData(1, 0, (float)hess[1][0]);
+                                eigenSystemAlgo.SetData(1, 1, (float)hess[1][1]);
+                                eigenSystemAlgo.SetData(1, 2, (float)hess[1][2]);
     
-                                eigenSystemAlgo.setMatrix(2, 0, hess[2][0]);
-                                eigenSystemAlgo.setMatrix(2, 1, hess[2][1]);
-                                eigenSystemAlgo.setMatrix(2, 2, hess[2][2]);
+                                eigenSystemAlgo.SetData(2, 0, (float)hess[2][0]);
+                                eigenSystemAlgo.SetData(2, 1, (float)hess[2][1]);
+                                eigenSystemAlgo.SetData(2, 2, (float)hess[2][2]);
     
                                 // OK, solve the eigen system
-                                eigenSystemAlgo.solve();
+                                eigenSystemAlgo.IncrSortEigenStuff();
                                 
                                 // extract the eigenvalues from the AlgorithmEigensolver
-                                evals[0] = eigenSystemAlgo.getEigenvalue(0);
+                                evals[0] = eigenSystemAlgo.GetEigenvalue(0);
                                 magEvals[0] = Math.abs(evals[0]);
     
-                                evals[1] = eigenSystemAlgo.getEigenvalue(1);
+                                evals[1] = eigenSystemAlgo.GetEigenvalue(1);
                                 magEvals[1] = Math.abs(evals[1]);
     
-                                evals[2] = eigenSystemAlgo.getEigenvalue(2);
+                                evals[2] = eigenSystemAlgo.GetEigenvalue(2);
                                 magEvals[2] = Math.abs(evals[2]);
                                 
                                 // magLamda1 >= magLambda2 >= magLambda3

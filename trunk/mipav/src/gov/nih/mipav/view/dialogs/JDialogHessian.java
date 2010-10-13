@@ -13,6 +13,8 @@ import java.text.*;
 
 import javax.swing.*;
 
+import WildMagic.LibFoundation.NumericalAnalysis.Eigenf;
+
 
 /**
  * Dialog to get user input, then call the algorithm. It should be noted that the algorithms are executed in their own
@@ -52,7 +54,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
     JTextField textLocX, textLocY, textLocZ, textGaussScale;
 
     /** DOCUMENT ME! */
-    private AlgorithmEigensolver eigenSystemAlgo = null;
+    private Eigenf eigenSystemAlgo = null;
 
     /** DOCUMENT ME! */
     private AlgorithmHessian hessianAlgo = null;
@@ -473,7 +475,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         hessianAlgo = new AlgorithmHessian(image, sigmas);
 
         // make a 3X3 eigenSolver
-        eigenSystemAlgo = new AlgorithmEigensolver(2);
+        eigenSystemAlgo = new Eigenf(2);
 
         double[] evals = new double[2];
         double[] magEvals = new double[2];
@@ -489,26 +491,26 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         hess11.setText(fltFmt.format(hess[1][1]));
 
         // fill up the eigenSolver matrix with the hessian
-        eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
-        eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
+        eigenSystemAlgo.SetData(0, 0, (float)hess[0][0]);
+        eigenSystemAlgo.SetData(0, 1, (float)hess[0][1]);
 
-        eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
-        eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
+        eigenSystemAlgo.SetData(1, 0, (float)hess[1][0]);
+        eigenSystemAlgo.SetData(1, 1, (float)hess[1][1]);
 
         // OK, solve the eigen system
-        eigenSystemAlgo.solve();
+        eigenSystemAlgo.IncrSortEigenStuff();
 
         // extract the eigenvalues and vectors from the AlgorithmEigensolver
-        evals[0] = eigenSystemAlgo.getEigenvalue(0);
+        evals[0] = eigenSystemAlgo.GetEigenvalue(0);
         magEvals[0] = Math.abs(evals[0]);
-        evals[1] = eigenSystemAlgo.getEigenvalue(1);
+        evals[1] = eigenSystemAlgo.GetEigenvalue(1);
         magEvals[1] = Math.abs(evals[1]);
 
-        evecs[0][0] = eigenSystemAlgo.getEigenvector(0, 0);
-        evecs[1][0] = eigenSystemAlgo.getEigenvector(1, 0);
+        evecs[0][0] = eigenSystemAlgo.GetEigenvector(0, 0);
+        evecs[1][0] = eigenSystemAlgo.GetEigenvector(1, 0);
 
-        evecs[0][1] = eigenSystemAlgo.getEigenvector(0, 1);
-        evecs[1][1] = eigenSystemAlgo.getEigenvector(1, 1);
+        evecs[0][1] = eigenSystemAlgo.GetEigenvector(0, 1);
+        evecs[1][1] = eigenSystemAlgo.GetEigenvector(1, 1);
 
         double tmp;
 
@@ -557,7 +559,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         hessianAlgo = new AlgorithmHessian(image, sigmas);
 
         // make a 3X3 eigenSolver
-        eigenSystemAlgo = new AlgorithmEigensolver(3);
+        eigenSystemAlgo = new Eigenf(3);
 
         double[] evals = new double[2];
         double[] magEvals = new double[2];
@@ -587,27 +589,27 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         hess22.setText(fltFmt.format(hess[2][2]));
 
         // fill up the eigenSolver matrix with the hessian
-        eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
-        eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
-        eigenSystemAlgo.setMatrix(0, 2, hess[0][2]);
+        eigenSystemAlgo.SetData(0, 0, (float)hess[0][0]);
+        eigenSystemAlgo.SetData(0, 1, (float)hess[0][1]);
+        eigenSystemAlgo.SetData(0, 2, (float)hess[0][2]);
 
-        eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
-        eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
-        eigenSystemAlgo.setMatrix(1, 2, hess[1][2]);
+        eigenSystemAlgo.SetData(1, 0, (float)hess[1][0]);
+        eigenSystemAlgo.SetData(1, 1, (float)hess[1][1]);
+        eigenSystemAlgo.SetData(1, 2, (float)hess[1][2]);
 
-        eigenSystemAlgo.setMatrix(2, 0, hess[2][0]);
-        eigenSystemAlgo.setMatrix(2, 1, hess[2][1]);
-        eigenSystemAlgo.setMatrix(2, 2, hess[2][2]);
+        eigenSystemAlgo.SetData(2, 0, (float)hess[2][0]);
+        eigenSystemAlgo.SetData(2, 1, (float)hess[2][1]);
+        eigenSystemAlgo.SetData(2, 2, (float)hess[2][2]);
 
         // OK, solve the eigen system
-        eigenSystemAlgo.solve();
+        eigenSystemAlgo.IncrSortEigenStuff();
 
         // extract the eigen values from the AlgorithmEigensolver
-        evals[0] = eigenSystemAlgo.getEigenvalue(0);
+        evals[0] = eigenSystemAlgo.GetEigenvalue(0);
         magEvals[0] = Math.abs(evals[0]);
-        evals[1] = eigenSystemAlgo.getEigenvalue(1);
+        evals[1] = eigenSystemAlgo.GetEigenvalue(1);
         magEvals[1] = Math.abs(evals[1]);
-        evals[2] = eigenSystemAlgo.getEigenvalue(2);
+        evals[2] = eigenSystemAlgo.GetEigenvalue(2);
         magEvals[2] = Math.abs(evals[2]);
 
         int[] lut = new int[3];
