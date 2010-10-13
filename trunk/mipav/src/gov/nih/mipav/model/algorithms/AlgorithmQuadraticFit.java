@@ -3,6 +3,8 @@ package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.NumericalAnalysis.Eigenf;
+
 import java.util.*;
 
 
@@ -80,13 +82,13 @@ public class AlgorithmQuadraticFit {
      * @param  kPoints  a vector of points, each vector element is of type Point3f
      */
     public AlgorithmQuadraticFit(Vector kPoints) {
-        AlgorithmEigensolver kES = new AlgorithmEigensolver(10);
+        Eigenf kES = new Eigenf(10);
         int iRow, iCol;
 
         for (iRow = 0; iRow < 10; iRow++) {
 
             for (iCol = 0; iCol < 10; iCol++) {
-                kES.setMatrix(iRow, iCol, 0.0f);
+                kES.SetData(iRow, iCol, 0.0f);
             }
         }
 
@@ -127,79 +129,80 @@ public class AlgorithmQuadraticFit {
             float fXZ3 = fX * fZ3;
             float fYZ3 = fY * fZ3;
 
-            kES.updateMatrix(0, 1, fX);
-            kES.updateMatrix(0, 2, fY);
-            kES.updateMatrix(0, 3, fZ);
-            kES.updateMatrix(0, 4, fX2);
-            kES.updateMatrix(0, 5, fY2);
-            kES.updateMatrix(0, 6, fZ2);
-            kES.updateMatrix(0, 7, fXY);
-            kES.updateMatrix(0, 8, fXZ);
-            kES.updateMatrix(0, 9, fYZ);
-            kES.updateMatrix(1, 4, fX3);
-            kES.updateMatrix(1, 5, fXY2);
-            kES.updateMatrix(1, 6, fXZ2);
-            kES.updateMatrix(1, 7, fX2Y);
-            kES.updateMatrix(1, 8, fX2Z);
-            kES.updateMatrix(1, 9, fXYZ);
-            kES.updateMatrix(2, 5, fY3);
-            kES.updateMatrix(2, 6, fYZ2);
-            kES.updateMatrix(2, 9, fY2Z);
-            kES.updateMatrix(3, 6, fZ3);
-            kES.updateMatrix(4, 4, fX4);
-            kES.updateMatrix(4, 5, fX2Y2);
-            kES.updateMatrix(4, 6, fX2Z2);
-            kES.updateMatrix(4, 7, fX3Y);
-            kES.updateMatrix(4, 8, fX3Z);
-            kES.updateMatrix(4, 9, fX2YZ);
-            kES.updateMatrix(5, 5, fY4);
-            kES.updateMatrix(5, 6, fY2Z2);
-            kES.updateMatrix(5, 7, fXY3);
-            kES.updateMatrix(5, 8, fXY2Z);
-            kES.updateMatrix(5, 9, fY3Z);
-            kES.updateMatrix(6, 6, fZ4);
-            kES.updateMatrix(6, 7, fXYZ2);
-            kES.updateMatrix(6, 8, fXZ3);
-            kES.updateMatrix(6, 9, fYZ3);
-            kES.updateMatrix(9, 9, fY2Z2);
+            kES.AddToData(0, 1, fX);
+            kES.AddToData(0, 2, fY);
+            kES.AddToData(0, 3, fZ);
+            kES.AddToData(0, 4, fX2);
+            kES.AddToData(0, 5, fY2);
+            kES.AddToData(0, 6, fZ2);
+            kES.AddToData(0, 7, fXY);
+            kES.AddToData(0, 8, fXZ);
+            kES.AddToData(0, 9, fYZ);
+            kES.AddToData(1, 4, fX3);
+            kES.AddToData(1, 5, fXY2);
+            kES.AddToData(1, 6, fXZ2);
+            kES.AddToData(1, 7, fX2Y);
+            kES.AddToData(1, 8, fX2Z);
+            kES.AddToData(1, 9, fXYZ);
+            kES.AddToData(2, 5, fY3);
+            kES.AddToData(2, 6, fYZ2);
+            kES.AddToData(2, 9, fY2Z);
+            kES.AddToData(3, 6, fZ3);
+            kES.AddToData(4, 4, fX4);
+            kES.AddToData(4, 5, fX2Y2);
+            kES.AddToData(4, 6, fX2Z2);
+            kES.AddToData(4, 7, fX3Y);
+            kES.AddToData(4, 8, fX3Z);
+            kES.AddToData(4, 9, fX2YZ);
+            kES.AddToData(5, 5, fY4);
+            kES.AddToData(5, 6, fY2Z2);
+            kES.AddToData(5, 7, fXY3);
+            kES.AddToData(5, 8, fXY2Z);
+            kES.AddToData(5, 9, fY3Z);
+            kES.AddToData(6, 6, fZ4);
+            kES.AddToData(6, 7, fXYZ2);
+            kES.AddToData(6, 8, fXZ3);
+            kES.AddToData(6, 9, fYZ3);
+            kES.AddToData(9, 9, fY2Z2);
+
         }
 
-        kES.setMatrix(0, 0, (float) kPoints.size());
-        kES.setMatrix(1, 1, kES.getMatrix(0, 4));
-        kES.setMatrix(1, 2, kES.getMatrix(0, 7));
-        kES.setMatrix(1, 3, kES.getMatrix(0, 8));
-        kES.setMatrix(2, 2, kES.getMatrix(0, 5));
-        kES.setMatrix(2, 3, kES.getMatrix(0, 9));
-        kES.setMatrix(2, 4, kES.getMatrix(1, 7));
-        kES.setMatrix(2, 7, kES.getMatrix(1, 5));
-        kES.setMatrix(2, 8, kES.getMatrix(1, 9));
-        kES.setMatrix(3, 3, kES.getMatrix(0, 6));
-        kES.setMatrix(3, 4, kES.getMatrix(1, 8));
-        kES.setMatrix(3, 5, kES.getMatrix(2, 9));
-        kES.setMatrix(3, 7, kES.getMatrix(1, 9));
-        kES.setMatrix(3, 8, kES.getMatrix(1, 6));
-        kES.setMatrix(3, 9, kES.getMatrix(2, 6));
-        kES.setMatrix(7, 7, kES.getMatrix(4, 5));
-        kES.setMatrix(7, 8, kES.getMatrix(4, 9));
-        kES.setMatrix(7, 9, kES.getMatrix(5, 8));
-        kES.setMatrix(8, 8, kES.getMatrix(4, 6));
-        kES.setMatrix(8, 9, kES.getMatrix(6, 7));
-        kES.setMatrix(9, 9, kES.getMatrix(5, 6));
+        kES.SetData(0, 0, (float) kPoints.size());
+        kES.SetData(1, 1, kES.GetData(0, 4));
+        kES.SetData(1, 2, kES.GetData(0, 7));
+        kES.SetData(1, 3, kES.GetData(0, 8));
+        kES.SetData(2, 2, kES.GetData(0, 5));
+        kES.SetData(2, 3, kES.GetData(0, 9));
+        kES.SetData(2, 4, kES.GetData(1, 7));
+        kES.SetData(2, 7, kES.GetData(1, 5));
+        kES.SetData(2, 8, kES.GetData(1, 9));
+        kES.SetData(3, 3, kES.GetData(0, 6));
+        kES.SetData(3, 4, kES.GetData(1, 8));
+        kES.SetData(3, 5, kES.GetData(2, 9));
+        kES.SetData(3, 7, kES.GetData(1, 9));
+        kES.SetData(3, 8, kES.GetData(1, 6));
+        kES.SetData(3, 9, kES.GetData(2, 6));
+        kES.SetData(7, 7, kES.GetData(4, 5));
+        kES.SetData(7, 8, kES.GetData(4, 9));
+        kES.SetData(7, 9, kES.GetData(5, 8));
+        kES.SetData(8, 8, kES.GetData(4, 6));
+        kES.SetData(8, 9, kES.GetData(6, 7));
+        kES.SetData(9, 9, kES.GetData(5, 6));
 
         for (iRow = 0; iRow < 10; iRow++) {
 
             for (iCol = 0; iCol < iRow; iCol++) {
-                kES.setMatrix(iRow, iCol, kES.getMatrix(iCol, iRow));
-            }
+                kES.SetData(iRow, iCol, kES.GetData(iCol, iRow));
+             }
         }
 
-        kES.solve();
+        kES.IncrSortEigenStuff();
 
         // compute the coefficients of the quadratic equation
         m_afCoeff = new float[10];
 
         for (iRow = 0; iRow < 10; iRow++) {
-            m_afCoeff[iRow] = (float) kES.getEigenvector(iRow, 0);
+            m_afCoeff[iRow] = (float) kES.GetEigenvector(iRow, 0);
         }
 
         m_kCenter = new Vector3f();
@@ -220,41 +223,33 @@ public class AlgorithmQuadraticFit {
         m_fConstant = (m_kCenter.X * kB.X) + (m_kCenter.Y * kB.Y) + (m_kCenter.Z * kB.Z) - m_afCoeff[0];
 
         // factor A = R*D*R^T where R is a rotation and D is diagonal
-        kES = new AlgorithmEigensolver(3);
-        kES.setMatrix(0, 0, kA.M00);
-        kES.setMatrix(0, 1, kA.M01);
-        kES.setMatrix(0, 2, kA.M02);
-        kES.setMatrix(1, 0, kA.M10);
-        kES.setMatrix(1, 1, kA.M11);
-        kES.setMatrix(1, 2, kA.M12);
-        kES.setMatrix(2, 0, kA.M20);
-        kES.setMatrix(2, 1, kA.M21);
-        kES.setMatrix(2, 2, kA.M22);
-        kES.solve();
+        kES = new Eigenf(3);
+        kES.SetData(0, 0, kA.M00);
+        kES.SetData(0, 1, kA.M01);
+        kES.SetData(0, 2, kA.M02);
+        kES.SetData(1, 0, kA.M10);
+        kES.SetData(1, 1, kA.M11);
+        kES.SetData(1, 2, kA.M12);
+        kES.SetData(2, 0, kA.M20);
+        kES.SetData(2, 1, kA.M21);
+        kES.SetData(2, 2, kA.M22);
+        kES.IncrSortEigenStuff();
 
         // the orientation is determined by the eigenvectors
-        m_kOrient.M00 = (float) kES.getEigenvector(0, 0);
-        m_kOrient.M01 = (float) kES.getEigenvector(0, 1);
-        m_kOrient.M02 = (float) kES.getEigenvector(0, 2);
-        m_kOrient.M10 = (float) kES.getEigenvector(1, 0);
-        m_kOrient.M11 = (float) kES.getEigenvector(1, 1);
-        m_kOrient.M12 = (float) kES.getEigenvector(1, 2);
-        m_kOrient.M20 = (float) kES.getEigenvector(2, 0);
-        m_kOrient.M21 = (float) kES.getEigenvector(2, 1);
-        m_kOrient.M22 = (float) kES.getEigenvector(2, 2);
-
-        if (m_kOrient.Determinant() < 0.0f) {
-
-            // remove reflection by flipping direction of first eigenvector
-            m_kOrient.M00 = -m_kOrient.M00;
-            m_kOrient.M10 = -m_kOrient.M10;
-            m_kOrient.M20 = -m_kOrient.M20;
-        }
+        m_kOrient.M00 = (float) kES.GetEigenvector(0, 0);
+        m_kOrient.M01 = (float) kES.GetEigenvector(0, 1);
+        m_kOrient.M02 = (float) kES.GetEigenvector(0, 2);
+        m_kOrient.M10 = (float) kES.GetEigenvector(1, 0);
+        m_kOrient.M11 = (float) kES.GetEigenvector(1, 1);
+        m_kOrient.M12 = (float) kES.GetEigenvector(1, 2);
+        m_kOrient.M20 = (float) kES.GetEigenvector(2, 0);
+        m_kOrient.M21 = (float) kES.GetEigenvector(2, 1);
+        m_kOrient.M22 = (float) kES.GetEigenvector(2, 2);
 
         // get the diagonal components
-        m_afDiagonal[0] = (float) kES.getEigenvalue(0);
-        m_afDiagonal[1] = (float) kES.getEigenvalue(1);
-        m_afDiagonal[2] = (float) kES.getEigenvalue(2);
+        m_afDiagonal[0] = kES.GetEigenvalue(0);
+        m_afDiagonal[1] = kES.GetEigenvalue(1);
+        m_afDiagonal[2] = kES.GetEigenvalue(2);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

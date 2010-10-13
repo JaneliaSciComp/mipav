@@ -10,6 +10,8 @@ import java.io.*;
 
 import java.text.*;
 
+import WildMagic.LibFoundation.NumericalAnalysis.Eigenf;
+
 
 /**
  * DOCUMENT ME!
@@ -22,7 +24,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
     private int algorID = 0; // 2 means run on the image, 3 means run batch
 
     /** DOCUMENT ME! */
-    private AlgorithmEigensolver eigenSystemAlgo = null;
+    private Eigenf eigenSystemAlgo = null;
 
     /** DOCUMENT ME! */
     private AlgorithmHessian hessianAlgo = null;
@@ -45,7 +47,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
         // make a 3X3 eigenSolver
-        eigenSystemAlgo = new AlgorithmEigensolver(3);
+        eigenSystemAlgo = new Eigenf(3);
 
     } // end AlgorithmImageHessian(...)
 
@@ -67,7 +69,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
         // make a 3X3 eigenSolver
-        eigenSystemAlgo = new AlgorithmEigensolver(3);
+        eigenSystemAlgo = new Eigenf(3);
 
     } // end AlgorithmImageHessian(...)
 
@@ -86,9 +88,9 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
         if (sigmas.length == 2) {
-            eigenSystemAlgo = new AlgorithmEigensolver(2);
+            eigenSystemAlgo = new Eigenf(2);
         } else if (sigmas.length == 3) {
-            eigenSystemAlgo = new AlgorithmEigensolver(3);
+            eigenSystemAlgo = new Eigenf(3);
         }
 
     } // end AlgorithmImageHessian(...)
@@ -214,20 +216,20 @@ public class AlgorithmImageHessian extends AlgorithmBase {
                 hess = hessianAlgo.hessian2D(sourceBuffer, extents, col, row);
 
                 // fill up the eigenSolver matrix with the hessian
-                eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
-                eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
+                eigenSystemAlgo.SetData(0, 0, (float)hess[0][0]);
+                eigenSystemAlgo.SetData(0, 1, (float)hess[0][1]);
 
-                eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
-                eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
+                eigenSystemAlgo.SetData(1, 0, (float)hess[1][0]);
+                eigenSystemAlgo.SetData(1, 1, (float)hess[1][1]);
 
                 // OK, solve the eigen system
-                eigenSystemAlgo.solve();
+                eigenSystemAlgo.IncrSortEigenStuff();
 
                 // extract the eigenvalues from the AlgorithmEigensolver
-                evals[0] = eigenSystemAlgo.getEigenvalue(0);
+                evals[0] = eigenSystemAlgo.GetEigenvalue(0);
                 magEvals[0] = Math.abs(evals[0]);
 
-                evals[1] = eigenSystemAlgo.getEigenvalue(1);
+                evals[1] = eigenSystemAlgo.GetEigenvalue(1);
                 magEvals[1] = Math.abs(evals[1]);
 
                 // put the smallest magnitude eigenvalue in element zero
@@ -401,29 +403,29 @@ public class AlgorithmImageHessian extends AlgorithmBase {
                         hess = hessianAlgo.hessian3D(sourceBuffer, extents, col, row, plane);
 
                         // fill up the eigenSolver matrix with the hessian
-                        eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
-                        eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
-                        eigenSystemAlgo.setMatrix(0, 2, hess[0][2]);
+                        eigenSystemAlgo.SetData(0, 0, (float)hess[0][0]);
+                        eigenSystemAlgo.SetData(0, 1, (float)hess[0][1]);
+                        eigenSystemAlgo.SetData(0, 2, (float)hess[0][2]);
 
-                        eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
-                        eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
-                        eigenSystemAlgo.setMatrix(1, 2, hess[1][2]);
+                        eigenSystemAlgo.SetData(1, 0, (float)hess[1][0]);
+                        eigenSystemAlgo.SetData(1, 1, (float)hess[1][1]);
+                        eigenSystemAlgo.SetData(1, 2, (float)hess[1][2]);
 
-                        eigenSystemAlgo.setMatrix(2, 0, hess[2][0]);
-                        eigenSystemAlgo.setMatrix(2, 1, hess[2][1]);
-                        eigenSystemAlgo.setMatrix(2, 2, hess[2][2]);
+                        eigenSystemAlgo.SetData(2, 0, (float)hess[2][0]);
+                        eigenSystemAlgo.SetData(2, 1, (float)hess[2][1]);
+                        eigenSystemAlgo.SetData(2, 2, (float)hess[2][2]);
 
                         // OK, solve the eigen system
-                        eigenSystemAlgo.solve();
+                        eigenSystemAlgo.IncrSortEigenStuff();
 
                         // extract the eigenvalues from the AlgorithmEigensolver
-                        evals[0] = eigenSystemAlgo.getEigenvalue(0);
+                        evals[0] = eigenSystemAlgo.GetEigenvalue(0);
                         magEvals[0] = Math.abs(evals[0]);
 
-                        evals[1] = eigenSystemAlgo.getEigenvalue(1);
+                        evals[1] = eigenSystemAlgo.GetEigenvalue(1);
                         magEvals[1] = Math.abs(evals[1]);
 
-                        evals[2] = eigenSystemAlgo.getEigenvalue(2);
+                        evals[2] = eigenSystemAlgo.GetEigenvalue(2);
                         magEvals[2] = Math.abs(evals[2]);
 
                         // reset the eigen value look-up table
@@ -629,26 +631,26 @@ public class AlgorithmImageHessian extends AlgorithmBase {
                     hess = hessianAlgo.hessian2D(sourceBuffer, extents, col, row);
 
                     // fill up the eigenSolver matrix with the hessian
-                    eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
-                    eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
+                    eigenSystemAlgo.SetData(0, 0, (float)hess[0][0]);
+                    eigenSystemAlgo.SetData(0, 1, (float)hess[0][1]);
 
-                    eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
-                    eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
+                    eigenSystemAlgo.SetData(1, 0, (float)hess[1][0]);
+                    eigenSystemAlgo.SetData(1, 1, (float)hess[1][1]);
 
                     // OK, solve the eigen system
-                    eigenSystemAlgo.solve();
+                    eigenSystemAlgo.IncrSortEigenStuff();
 
                     // extract the eigenvalues and vectors from the AlgorithmEigensolver
-                    evals[0] = eigenSystemAlgo.getEigenvalue(0);
+                    evals[0] = eigenSystemAlgo.GetEigenvalue(0);
                     magEvals[0] = Math.abs(evals[0]);
-                    evals[1] = eigenSystemAlgo.getEigenvalue(1);
+                    evals[1] = eigenSystemAlgo.GetEigenvalue(1);
                     magEvals[1] = Math.abs(evals[1]);
 
-                    evecs[0][0] = eigenSystemAlgo.getEigenvector(0, 0);
-                    evecs[1][0] = eigenSystemAlgo.getEigenvector(1, 0);
+                    evecs[0][0] = eigenSystemAlgo.GetEigenvector(0, 0);
+                    evecs[1][0] = eigenSystemAlgo.GetEigenvector(1, 0);
 
-                    evecs[0][1] = eigenSystemAlgo.getEigenvector(0, 1);
-                    evecs[1][1] = eigenSystemAlgo.getEigenvector(1, 1);
+                    evecs[0][1] = eigenSystemAlgo.GetEigenvector(0, 1);
+                    evecs[1][1] = eigenSystemAlgo.GetEigenvector(1, 1);
 
                     double tmp;
 
@@ -921,31 +923,31 @@ public class AlgorithmImageHessian extends AlgorithmBase {
                         hess = hessianAlgo.hessian3D(sourceBuffer, extents, col, row, plane);
 
                         // fill up the eigenSolver matrix with the hessian
-                        eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
-                        eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
-                        eigenSystemAlgo.setMatrix(0, 2, hess[0][2]);
+                        eigenSystemAlgo.SetData(0, 0, (float)hess[0][0]);
+                        eigenSystemAlgo.SetData(0, 1, (float)hess[0][1]);
+                        eigenSystemAlgo.SetData(0, 2, (float)hess[0][2]);
 
-                        eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
-                        eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
-                        eigenSystemAlgo.setMatrix(1, 2, hess[1][2]);
+                        eigenSystemAlgo.SetData(1, 0, (float)hess[1][0]);
+                        eigenSystemAlgo.SetData(1, 1, (float)hess[1][1]);
+                        eigenSystemAlgo.SetData(1, 2, (float)hess[1][2]);
 
-                        eigenSystemAlgo.setMatrix(2, 0, hess[2][0]);
-                        eigenSystemAlgo.setMatrix(2, 1, hess[2][1]);
-                        eigenSystemAlgo.setMatrix(2, 2, hess[2][2]);
+                        eigenSystemAlgo.SetData(2, 0, (float)hess[2][0]);
+                        eigenSystemAlgo.SetData(2, 1, (float)hess[2][1]);
+                        eigenSystemAlgo.SetData(2, 2, (float)hess[2][2]);
 
                         // OK, solve the eigen system
-                        eigenSystemAlgo.solve();
+                        eigenSystemAlgo.IncrSortEigenStuff();
 
                         // extract the eigenvalues from the AlgorithmEigensolver
-                        evals[0] = eigenSystemAlgo.getEigenvalue(0);
+                        evals[0] = eigenSystemAlgo.GetEigenvalue(0);
                         magEvals[0] = Math.abs(evals[0]);
 
-                        evals[1] = eigenSystemAlgo.getEigenvalue(1);
+                        evals[1] = eigenSystemAlgo.GetEigenvalue(1);
                         magEvals[1] = Math.abs(evals[1]);
 
-                        evals[2] = eigenSystemAlgo.getEigenvalue(2);
+                        evals[2] = eigenSystemAlgo.GetEigenvalue(2);
                         magEvals[2] = Math.abs(evals[2]);
-
+                        
                         // reset the eigen value look-up table
                         lut[0] = 0;
                         lut[1] = 1;
@@ -1200,31 +1202,31 @@ public class AlgorithmImageHessian extends AlgorithmBase {
                         hess = hessianAlgo.hessian3D(sourceBuffer, extents, col, row, plane);
 
                         // fill up the eigenSolver matrix with the hessian
-                        eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
-                        eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
-                        eigenSystemAlgo.setMatrix(0, 2, hess[0][2]);
+                        eigenSystemAlgo.SetData(0, 0, (float)hess[0][0]);
+                        eigenSystemAlgo.SetData(0, 1, (float)hess[0][1]);
+                        eigenSystemAlgo.SetData(0, 2, (float)hess[0][2]);
 
-                        eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
-                        eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
-                        eigenSystemAlgo.setMatrix(1, 2, hess[1][2]);
+                        eigenSystemAlgo.SetData(1, 0, (float)hess[1][0]);
+                        eigenSystemAlgo.SetData(1, 1, (float)hess[1][1]);
+                        eigenSystemAlgo.SetData(1, 2, (float)hess[1][2]);
 
-                        eigenSystemAlgo.setMatrix(2, 0, hess[2][0]);
-                        eigenSystemAlgo.setMatrix(2, 1, hess[2][1]);
-                        eigenSystemAlgo.setMatrix(2, 2, hess[2][2]);
+                        eigenSystemAlgo.SetData(2, 0, (float)hess[2][0]);
+                        eigenSystemAlgo.SetData(2, 1, (float)hess[2][1]);
+                        eigenSystemAlgo.SetData(2, 2, (float)hess[2][2]);
 
                         // OK, solve the eigen system
-                        eigenSystemAlgo.solve();
+                        eigenSystemAlgo.IncrSortEigenStuff();
 
                         // extract the eigenvalues from the AlgorithmEigensolver
-                        evals[0] = eigenSystemAlgo.getEigenvalue(0);
+                        evals[0] = eigenSystemAlgo.GetEigenvalue(0);
                         magEvals[0] = Math.abs(evals[0]);
 
-                        evals[1] = eigenSystemAlgo.getEigenvalue(1);
+                        evals[1] = eigenSystemAlgo.GetEigenvalue(1);
                         magEvals[1] = Math.abs(evals[1]);
 
-                        evals[2] = eigenSystemAlgo.getEigenvalue(2);
+                        evals[2] = eigenSystemAlgo.GetEigenvalue(2);
                         magEvals[2] = Math.abs(evals[2]);
-
+                        
                         // reset the eigen value look-up table
                         lut[0] = 0;
                         lut[1] = 1;
@@ -1444,29 +1446,30 @@ public class AlgorithmImageHessian extends AlgorithmBase {
                         hess = hessianAlgo.hessian3D(sourceBuffer, extents, col, row, plane);
 
                         // fill up the eigenSolver matrix with the hessian
-                        eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
-                        eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
-                        eigenSystemAlgo.setMatrix(0, 2, hess[0][2]);
+                        eigenSystemAlgo.SetData(0, 0, (float)hess[0][0]);
+                        eigenSystemAlgo.SetData(0, 1, (float)hess[0][1]);
+                        eigenSystemAlgo.SetData(0, 2, (float)hess[0][2]);
 
-                        eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
-                        eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
-                        eigenSystemAlgo.setMatrix(1, 2, hess[1][2]);
+                        eigenSystemAlgo.SetData(1, 0, (float)hess[1][0]);
+                        eigenSystemAlgo.SetData(1, 1, (float)hess[1][1]);
+                        eigenSystemAlgo.SetData(1, 2, (float)hess[1][2]);
 
-                        eigenSystemAlgo.setMatrix(2, 0, hess[2][0]);
-                        eigenSystemAlgo.setMatrix(2, 1, hess[2][1]);
-                        eigenSystemAlgo.setMatrix(2, 2, hess[2][2]);
+                        eigenSystemAlgo.SetData(2, 0, (float)hess[2][0]);
+                        eigenSystemAlgo.SetData(2, 1, (float)hess[2][1]);
+                        eigenSystemAlgo.SetData(2, 2, (float)hess[2][2]);
 
                         // OK, solve the eigen system
-                        eigenSystemAlgo.solve();
+                        eigenSystemAlgo.IncrSortEigenStuff();
 
+                        
                         // extract the eigenvalues from the AlgorithmEigensolver
-                        evals[0] = eigenSystemAlgo.getEigenvalue(0);
+                        evals[0] = eigenSystemAlgo.GetEigenvalue(0);
                         magEvals[0] = Math.abs(evals[0]);
 
-                        evals[1] = eigenSystemAlgo.getEigenvalue(1);
+                        evals[1] = eigenSystemAlgo.GetEigenvalue(1);
                         magEvals[1] = Math.abs(evals[1]);
 
-                        evals[2] = eigenSystemAlgo.getEigenvalue(2);
+                        evals[2] = eigenSystemAlgo.GetEigenvalue(2);
                         magEvals[2] = Math.abs(evals[2]);
 
                         // reset the eigen value look-up table
