@@ -58,6 +58,13 @@ public class JDialogVOIStats extends JDialogBase
 
     /** DOCUMENT ME! */
     private static Icon ICON_MEDICAL_FRAME = MipavUtil.getIcon("med_frame.gif");
+    /** DOCUMENT ME! */
+    private static Icon ICON_X_AXIS = MipavUtil.getIcon("xalign.gif");
+    /** DOCUMENT ME! */
+    private static Icon ICON_Y_AXIS = MipavUtil.getIcon("yalign.gif");
+    /** DOCUMENT ME! */
+    private static Icon ICON_Z_AXIS = MipavUtil.getIcon("zalign.gif");
+    
 
     /** DOCUMENT ME! */
     private static Icon ICON_PROTRACTOR = MipavUtil.getIcon("protractor.gif");
@@ -2523,6 +2530,17 @@ public class JDialogVOIStats extends JDialogBase
                 setIcon(null);
                 setBorder(null);
                 setFont(MipavUtil.font12);
+            } else if (value instanceof VOIOrientationNode) {
+            	if(((VOIOrientationNode)value).getName().equals("X Plane")) {
+            		setIcon(ICON_X_AXIS);
+            	}else if(((VOIOrientationNode)value).getName().equals("Y Plane")) {
+            		setIcon(ICON_Y_AXIS);
+            	}else if(((VOIOrientationNode)value).getName().equals("Z Plane")) {
+            		setIcon(ICON_Z_AXIS);
+            	}
+            	
+                setFont(MipavUtil.font12);
+                setBorder(null);
             } else {
 
                 // setForeground(Color.white);
