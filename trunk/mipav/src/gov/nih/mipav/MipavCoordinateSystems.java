@@ -197,7 +197,9 @@ public class MipavCoordinateSystems {
 
             kOutput.X = scannerPoint[0] * afRes[axisOrder[0]];
             kOutput.Y = scannerPoint[1] * afRes[axisOrder[1]];
-            kOutput.Z = scannerPoint[2] * afRes[axisOrder[2]];
+            if (afRes.length >= 3) {
+                kOutput.Z = scannerPoint[2] * afRes[axisOrder[2]];
+            }
         }
 
         // Returned point represents the current position in coronal, sagittal, axial order (L/R, A/P, I/S axis space)
