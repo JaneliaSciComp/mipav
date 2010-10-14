@@ -7,8 +7,8 @@ import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
 
-import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
-import WildMagic.LibFoundation.NumericalAnalysis.minimizing.NelderMead;
+import de.jtem.numericalMethods.calculus.function.RealFunctionOfSeveralVariables;
+import de.jtem.numericalMethods.calculus.minimizing.NelderMead;
 
 
 /**

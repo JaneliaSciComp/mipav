@@ -12,8 +12,8 @@ import java.io.*;
 import java.util.BitSet;
 import java.util.concurrent.*;
 
-import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfOneVariable;
-import WildMagic.LibFoundation.NumericalAnalysis.integration.RungeKuttaFehlbergIntegrator;
+import de.jtem.numericalMethods.calculus.function.RealFunctionOfOneVariable;
+import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrator;
 
 
 /**

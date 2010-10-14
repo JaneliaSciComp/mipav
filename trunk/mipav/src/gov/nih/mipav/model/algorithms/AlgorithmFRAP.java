@@ -15,8 +15,8 @@ import java.text.*;
 
 import java.util.*;
 
-import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfOneVariable;
-import WildMagic.LibFoundation.NumericalAnalysis.integration.RungeKuttaFehlbergIntegrator;
+import de.jtem.numericalMethods.calculus.function.RealFunctionOfOneVariable;
+import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrator;
 
 
 /**

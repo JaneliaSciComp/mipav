@@ -8,8 +8,8 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 import java.util.*;
 
-import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfOneVariable;
-import WildMagic.LibFoundation.NumericalAnalysis.integration.RungeKuttaFehlbergIntegrator;
+import de.jtem.numericalMethods.calculus.function.RealFunctionOfOneVariable;
+import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrator;
 
 /**
  * This module draws uniformly randomly positioned spheres with a specified radius.

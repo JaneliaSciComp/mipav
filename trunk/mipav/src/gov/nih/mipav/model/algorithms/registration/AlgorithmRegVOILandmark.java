@@ -1,8 +1,8 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
-import WildMagic.LibFoundation.NumericalAnalysis.minimizing.NelderMead;
+import de.jtem.numericalMethods.calculus.function.RealFunctionOfSeveralVariables;
+import de.jtem.numericalMethods.calculus.minimizing.NelderMead;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
