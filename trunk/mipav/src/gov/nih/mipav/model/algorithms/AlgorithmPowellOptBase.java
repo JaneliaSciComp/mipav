@@ -2,9 +2,9 @@ package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.*;
 
-import WildMagic.LibFoundation.NumericalAnalysis.minimizing.Powell;
-import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
-import WildMagic.LibFoundation.NumericalAnalysis.minimizing.BrentOnLine;
+import de.jtem.numericalMethods.calculus.minimizing.Powell;
+import de.jtem.numericalMethods.calculus.function.RealFunctionOfSeveralVariables;
+import de.jtem.numericalMethods.calculus.minimizing.BrentOnLine;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.ThreadUtil;
 

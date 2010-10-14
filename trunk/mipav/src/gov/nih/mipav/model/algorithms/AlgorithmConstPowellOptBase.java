@@ -1,7 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
+import de.jtem.numericalMethods.calculus.function.RealFunctionOfSeveralVariables;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;

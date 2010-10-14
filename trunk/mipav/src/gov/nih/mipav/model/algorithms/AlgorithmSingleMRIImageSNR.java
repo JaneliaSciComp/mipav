@@ -8,8 +8,8 @@ import gov.nih.mipav.view.*;
 import java.io.IOException;
 import java.text.DecimalFormat;
 
-import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfOneVariable;
-import WildMagic.LibFoundation.NumericalAnalysis.minimizing.Brent;
+import de.jtem.numericalMethods.calculus.function.RealFunctionOfOneVariable;
+import de.jtem.numericalMethods.calculus.minimizing.Brent;
 
 
 /**
