@@ -496,6 +496,10 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         scriptParameters.getParams().put(
                 ParameterFactory.newParameter("output_writing_behavior", tableDestinationUsage));
     }
+    
+    protected void buildCheckBoxPanel() {
+        checkBoxPanel = new JPanelStatisticsList();
+    }
 
     /**
      * Builds main dialog.
@@ -516,7 +520,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 "Choose VOIs and statistics file", JDialogVOIStatistics.VOI_TAB);
 
         final JPanel statPanel = new JPanel(new BorderLayout());
-        checkBoxPanel = new JPanelStatisticsList();
+        buildCheckBoxPanel();
         
         try {
             checkBoxPanel.setSliceCount(image.getExtents()[2]);
@@ -1049,17 +1053,17 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             
             if ( processType == AlgorithmVOIProps.PROCESS_PER_CONTOUR ) {   
                 contours = ((VOI) list.getElementAt(i)).getCurves();
-                updateDialogRow(new Vector[]{contours}, properties, list, i, rowData, totalData);
+                updateDialogRow((VOI) list.getElementAt(i), new Vector[]{contours}, properties, list, i, rowData, totalData);
             } else if(processType == AlgorithmVOIProps.PROCESS_PER_VOI) {  
                 rowData[0] = list.getElementAt(i).toString();
-                logModel.addRow(updateRowStatistics(properties, rowData, totalData, "", 1));
+                logModel.addRow(updateRowStatistics((VOI) list.getElementAt(i), properties, rowData, totalData, "", 1));
             } else { //processType is by slice or by slice-and-contour
                 Vector<VOIBase>[] sortedContoursZ = ((VOI) list.getElementAt(i)).getSortedCurves(VOIBase.ZPLANE, image.getExtents()[2]);
-                updateDialogRow(sortedContoursZ, properties, list, i, rowData, totalData);
+                updateDialogRow((VOI) list.getElementAt(i), sortedContoursZ, properties, list, i, rowData, totalData);
                 Vector<VOIBase>[] sortedContoursX = ((VOI) list.getElementAt(i)).getSortedCurves(VOIBase.XPLANE, image.getExtents()[0]);
-                updateDialogRow(sortedContoursX, properties, list, i, rowData, totalData);
+                updateDialogRow((VOI) list.getElementAt(i), sortedContoursX, properties, list, i, rowData, totalData);
                 Vector<VOIBase>[] sortedContoursY = ((VOI) list.getElementAt(i)).getSortedCurves(VOIBase.YPLANE, image.getExtents()[1]);
-                updateDialogRow(sortedContoursY, properties, list, i, rowData, totalData);
+                updateDialogRow((VOI) list.getElementAt(i), sortedContoursY, properties, list, i, rowData, totalData);
             }
 
             if (showTotals) {
@@ -1070,8 +1074,9 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     
     /**
      * Writes the statistic data for contours
+     * @param voi 
      */
-    protected void updateDialogRow(Vector<VOIBase>[] contours, 
+    protected void updateDialogRow(VOI voi, Vector<VOIBase>[] contours, 
             VOIStatisticalProperties properties, ListModel list, int i, 
             String[] rowData, String[] totalData) {
         for (int slice = 0; slice < contours.length; slice++) {
@@ -1105,7 +1110,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                     count++;
                 }
                 
-                logModel.addRow(updateRowStatistics(properties, rowData, totalData, end, count));
+                logModel.addRow(updateRowStatistics(voi, properties, rowData, totalData, end, count));
                 count = 0;
                 end = new String();
             } // end for contours
@@ -1115,8 +1120,9 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     /**
      * Writes general statistics data for any VOI structure given a valid "end" modifier to specify
      * the property being fetched.
+     * @param voi 
      */
-    protected String[] updateRowStatistics(VOIStatisticalProperties properties, 
+    protected String[] updateRowStatistics(VOI voi, VOIStatisticalProperties properties, 
                                     String[] rowData, String[] totalData, String end, int count) {
         // for each column in the row, print the statistic:
         for (int k = 0; k < VOIStatisticList.statisticDescription.length; k++) {
@@ -1233,7 +1239,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      * 
      * @return
      */
-    protected StringBuffer writeLogModelToFile() {
+    protected StringBuffer writeLogModelToString() {
         StringBuffer total = new StringBuffer();
         String newLine = System.getProperty("line.separator");
         //get column names
@@ -1324,7 +1330,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             } else { // WRITE
                 statFW = new FileWriter(statFile.getAbsolutePath());
             }
-            logFileText = writeLogModelToFile();
+            logFileText = writeLogModelToString();
             statFW.write(logFileText.toString());
             statFW.flush();
             statFW.close();
