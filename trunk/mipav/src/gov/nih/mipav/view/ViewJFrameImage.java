@@ -172,7 +172,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     
 
 
-    ButtonGroup VOIGroup = new ButtonGroup();
+    protected ButtonGroup VOIGroup = new ButtonGroup();
     protected JMenu voiMenu;
     protected VOIManagerInterface voiManager;
 

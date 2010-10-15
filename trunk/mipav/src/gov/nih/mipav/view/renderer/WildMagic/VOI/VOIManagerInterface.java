@@ -242,7 +242,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private String voiSavedFileName = null;
     
     /** Statistics dialog VOI->Statistics generator... */
-    private JDialogVOIStatistics imageStatList;
+    protected JDialogVOIStatistics imageStatList;
     
     private float presetHue = -1.0f;
     
@@ -4435,10 +4435,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     /**
      * Opens a JDialogStatistics to allow computation ofROI statistics.
      */
-    private void showStatisticsCalculator() {
-
+    protected void showStatisticsCalculator() {
+        
         if (imageStatList == null) {
-
+            
             if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() != 0)) {
                 imageStatList = new JDialogVOIStatistics(getActiveImage().getVOIs());
                 imageStatList.setVisible(true);
