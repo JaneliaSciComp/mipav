@@ -2463,8 +2463,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			voiPromptBuffer.removeAllElements();
 			
 			voiExists = voiBuffer.get(objectName).getCreated();
+			muscleFrame.getVOIManager().setSelectedVOI(voiBuffer.get(objectName), false, true);
 			if(voiExists)
 				voiInvestigated = ((PlugInSelectableVOI)voiBuffer.get(objectName).clone());
+			
 			
 			for(int i=0; i<buttonGroup.length; i++) {
 		    	if(buttonGroup[i].getText().contains(HIDE_ONE)) {
@@ -2560,28 +2562,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    boolean curveReplace = false;
 		    for(int i=0; i<srcVOI.size(); i++) {
 		        if(srcVOI.get(i).getName().equals(objectName)) {
-		            if(srcVOI.get(i).getSliceSize(getViewableSlice()) > 0) {
+		            if(srcVOI.get(i).getCurves().size() > 0) {
 		            	goodVOI = (VOI)srcVOI.get(i).clone();
 		            	countQualifiedVOIs++;
 		            	curveReplace = true;
 		            } 
-		        }
-		    }
-		    if(countQualifiedVOIs != 1) {
-		        //else VOI no longer exists, look for a VOI that doesn't fit to call objectName
-		        for(int i=0; i<srcVOI.size(); i++) {
-		        	if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI.INVALID_LOC_NUMBER) {
-		    			goodVOI = srcVOI.get(i);
-		    			countQualifiedVOIs++;
-		        	}
+		            System.out.println("Original VOI found.");
 		        }
 		    }
 		    
-		    if(countQualifiedVOIs != 1) {
-		        String error = countQualifiedVOIs > 1 ? "You have created too many VOIs." : 
-		                                                        "You haven't created any VOIs.";
-		        MipavUtil.displayError(error);
-		        return null;  
+		    if(goodVOI == null) {
+		        for(int i=0; i<srcVOI.size(); i++) {
+                    if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI.INVALID_LOC_NUMBER) {
+                        goodVOI = srcVOI.get(i);
+                        break;
+                    }
+                }
+		        System.out.println("New VOI found");
 		    }
 		    
 		    int zDim = muscleFrame.getActiveImage().getExtents().length > 2 ? 
@@ -2627,6 +2624,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                 voiBuffer.get(objectName).getCurves().removeAllElements();
 			for(int i=0; i<curves.length; i++) { 
 				for(int j=0; j<curves[i].size(); j++) {
+				    if(!((VOIContour)curves[i].get(j)).isEmpty())
 				    voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j));
 				}
 			}
