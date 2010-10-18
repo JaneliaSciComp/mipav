@@ -10,6 +10,8 @@ import java.awt.Color;
 import java.io.*;
 import java.util.*;
 
+import de.jtem.ellipticFunctions.Jacobi;
+
 /**
  * This program performs the conformal mapping of an ellipse to a circle.
  * Consider the original ellipse as having a tilt theta with the x axis.
@@ -277,6 +279,18 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
             eInt = new EllipticIntegral(smid, first, second);
             eInt.run();
             kdenom = first[0];
+            
+            
+
+            de.jtem.mfc.field.Complex kComplex = new de.jtem.mfc.field.Complex(Math.sqrt(1.0 - smid*smid));
+            de.jtem.mfc.field.Complex kPrimeComplex = Jacobi.K_from_k(kComplex);
+            System.err.println( "TESTING JTEM " + knum + " == ? " + kPrimeComplex.getRe() + " " + kPrimeComplex.getIm() );
+            
+            de.jtem.mfc.field.Complex kComplex2 = new de.jtem.mfc.field.Complex(smid);
+            de.jtem.mfc.field.Complex kPrimeComplex2 = Jacobi.K_from_k(kComplex2);
+            System.err.println( "TESTING2 JTEM " + kdenom + " == ? "  + kPrimeComplex2.getRe() + " " + kPrimeComplex2.getIm() );
+            
+            
             usmid = pihf * knum/kdenom;
             eps = Math.abs((usmid - us)/us);
             if (eps < 1.0E-8) {
@@ -360,6 +374,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
                     if (error[0] == 1) {
                         numErrors++;
                     }
+                                        
                     // Multiply by PI/(2*K(s)) = coef;
                     firstr[0] = coef * firstr[0];
                     firsti[0] = coef * firsti[0];
