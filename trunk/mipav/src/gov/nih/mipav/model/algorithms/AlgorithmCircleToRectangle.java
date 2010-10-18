@@ -6,6 +6,8 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
+import de.jtem.ellipticFunctions.Jacobi;
+
 
 /**
  
@@ -191,6 +193,15 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         ei = new EllipticIntegral(Math.sqrt(1.0 - modulus*modulus), first, second);
         ei.run();
         Kp = first[0];
+
+        de.jtem.mfc.field.Complex kComplex = new de.jtem.mfc.field.Complex(modulus);
+        de.jtem.mfc.field.Complex kPrimeComplex = Jacobi.K_from_k(kComplex);
+        System.err.println( "TESTING JTEM " + K + " == ? " + kPrimeComplex.getRe() + " " + kPrimeComplex.getIm() );
+        
+        de.jtem.mfc.field.Complex kComplex2 = new de.jtem.mfc.field.Complex(Math.sqrt(1.0 - modulus*modulus));
+        de.jtem.mfc.field.Complex kPrimeComplex2 = Jacobi.K_from_k(kComplex2);
+        System.err.println( "TESTING2 JTEM " + Kp + " == ? "  + kPrimeComplex2.getRe() + " " + kPrimeComplex2.getIm() );
+        
         for (j = 0; j < yDimDest; j++) {
             fireProgressStateChanged(100 * j / yDimDest);
             index1 = j * xDimDest;
