@@ -1292,12 +1292,18 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 break;
             }
         }
-
-        if (allCompleted) {
-            finishButton.setEnabled(true);
-        } else {
-            finishButton.setEnabled(false);
+        
+        if(sourceTableModel.getRowCount() == 0) {
+        	finishButton.setEnabled(false);
+        }else {
+        	if (allCompleted) {
+                finishButton.setEnabled(true);
+            } else {
+                finishButton.setEnabled(false);
+            }
         }
+        
+        
 
     }
 
