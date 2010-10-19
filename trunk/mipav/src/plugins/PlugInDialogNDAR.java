@@ -38,6 +38,7 @@ import com.sun.jimi.core.*;
 public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener,
         TreeSelectionListener, MouseListener, PreviewImageContainer {
 
+
     /** Scrolling text area for log output */
     private WidgetFactory.ScrollTextArea logOutputArea;
 
@@ -50,8 +51,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private JButton addSourceButton, finishButton, removeSourceButton, completeDataElementsButton, outputDirButton;
 
     private JPanel outputDirPanel;
+    
+    private JPanel previewPanel;
 
-    private JPanel previewPanel, leftPanel;
+    private JPanel leftPanel;
 
     private JTextField outputDirTextField;
 
@@ -63,20 +66,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     /** Length of the NDAR GUID */
     private static final int GUID_LENGTH = 12;
 
-    private Hashtable<File, Boolean> multiFileTable = null;
+    /** List of info data that is to be written out in xml...it is linked to same order as the table **/
+    private ArrayList<LinkedHashMap<String, String>> infoList = new ArrayList<LinkedHashMap<String, String>>();
 
-    /** this is the hashtabele of file and associated dataStructure(s) actual user data that gets saved to the xml file**/
-    private Hashtable<File, Hashtable<String, LinkedHashMap<String, String>>> infoTable = null;
-    
-    /** this is a hastable of file and arraylist of selected data structure names **/
-    private Hashtable<File, ArrayList<String>> selectedFileDataStructureNames = null;
-    
     /** this is an arraylist of selected DataStruct Objects **/
-    private ArrayList<DataStruct> selectedFileDataStructures = null;
-
-    private Hashtable<File, String> outputFileNameBaseTable = null;
-
-    //private DataStruct imageDataStruct;
+    private ArrayList<DataStruct> dataStructures = null;
 
     /** tab level counter for writing xml header. */
     protected int tabLevel = 0;
@@ -98,9 +92,16 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
     private String namespace;
 
-    private final ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
+    private  ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
+    
+    private  ArrayList<File> imageFiles = new ArrayList<File>();
+    
+    private  ArrayList<ArrayList<File>> allOtherFilesAL = new ArrayList<ArrayList<File>>();
+    
+    private  ArrayList<Boolean> multifiles = new ArrayList<Boolean>();
 
-    private final ArrayList<float[]> previewImagesWinLevs = new ArrayList<float[]>();
+    private ArrayList<TreeMap<JLabel, JComponent>> labelsAndCompsList = new ArrayList<TreeMap<JLabel, JComponent>>();
+
 
     /** DOCUMENT ME! */
     private final int origBrightness = 0;
@@ -128,6 +129,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     protected VToolSimpleAccessionClient client;
     
     private OMElement publishedDataStructs = null;
+
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
     public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that pertain to the collection\n"
@@ -198,92 +200,50 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         // System.err.println("size : " + this.getSize());
 
-        if (command.equals("AddSource")) {
-            final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
-            fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
+        if (command.equalsIgnoreCase("AddSource")) {
 
-            final JFileChooser chooser = fileChooser.getFileChooser();
-            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-
-            // default to TECH filter
-            int filter = ViewImageFileFilter.TECH;
-
-            try {
-                filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
-            } catch (final NumberFormatException nfe) {
-
-                // an invalid value was set in preferences -- so don't use it!
-                filter = -1;
-            }
-
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
-
-            if (filter != -1) {
-                // it seems that the set command adds the filter again...
-                // chooser.addChoosableFileFilter(new ViewImageFileFilter(filter));
-
-                // if filter is something we already added, then remove it before
-                // setting it..... (kludgy, kludgy....)
-                final javax.swing.filechooser.FileFilter found = ViewOpenFileUI.findFilter(chooser, filter);
-
-                if (found != null) {
-                    chooser.removeChoosableFileFilter(found);
-                }
-
-                // initially set to the preferences
-                chooser.setFileFilter(new ViewImageFileFilter(filter));
-            }
-
-            final int returnVal = chooser.showOpenDialog(this);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                final boolean isMultiFile = fileChooser.isMulti();
-
-                final File[] files = chooser.getSelectedFiles();
-                ViewUserInterface.getReference().setDefaultDirectory(files[0].getParent());
-                for (int i = 0; i < files.length; i++) {
-
-                    // if ( !sourceModel.contains(files[i])) {
-                    if ( !contains(files[i])) {
-                    	
-                    	
-                    	
-
-	                    	FileIO fileIO = new FileIO();
-	                        fileIO.setQuiet(true);
-	                        ModelImage srcImage = fileIO.readImage(files[i].getName(), files[i].getParent()
-	                                + File.separator, isMultiFile, null);
-	                        
-	                        if(srcImage != null) {
-	                        	new ChooseDataStructDialog(this, files[i], isMultiFile, srcImage);
-	                        }
-
-
-                        //new InfoDialog(this, files[i], false);
-                    }
-                }
-            }
+        	new ChooseDataStructDialog(this);
+        	
             removeSourceButton.setEnabled(sourceTableModel.getRowCount() > 0);
             completeDataElementsButton.setEnabled(sourceTableModel.getRowCount() > 0);
-            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " image(s) "));
+            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Data Structure(s) "));
 
-        } else if (command.equals("RemoveSource")) {
+        } else if (command.equalsIgnoreCase("RemoveSource")) {
             final int selected = sourceTable.getSelectedRow();
-
-            final File f = (File) sourceTableModel.getValueAt(selected, 0);
+            String key = (String)sourceTable.getValueAt(selected, 0);
             sourceTableModel.removeRow(selected);
-            multiFileTable.remove(f);
-            infoTable.remove(f);
-            selectedFileDataStructureNames.remove(f);
-            selectedFileDataStructures.remove(f);
-            outputFileNameBaseTable.remove(f);
-
             previewImages.remove(selected);
+            imageFiles.remove(selected);
+            multifiles.remove(selected);
+            infoList.remove(selected);
+            
             previewPanel.removeAll();
             previewPanel.repaint();
+            
+            
+            if(sourceTable.getRowCount() >= 1) {
+            	
+            		if(selected == 0) {
+            			sourceTable.setRowSelectionInterval(0, 0);
+            		}else {
+            			sourceTable.setRowSelectionInterval(selected-1, selected-1);
+            		}
+            	
+            	   
+            	   
+            	   if(previewImages.get(sourceTable.getSelectedRow()) != null) {
+                   	   previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
+                       previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
+                       previewPanel.validate();
+                       previewPanel.repaint();
+                   }
+            }
+
+
+            
+            
+            
+            
 
             removeSourceButton.setEnabled(sourceTableModel.getRowCount() > 0);
             completeDataElementsButton.setEnabled(sourceTableModel.getRowCount() > 0);
@@ -296,20 +256,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 } else {
                     sourceTable.setRowSelectionInterval(selected, selected);
                 }
-                previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
-                previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
-                previewPanel.validate();
-                previewPanel.repaint();
+
             } else {
                 finishButton.setEnabled(false);
 
             }
-            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " image(s) "));
-        } else if (command.equals("Help")) {
+            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Data Structure(s) "));
+        } else if (command.equalsIgnoreCase("Help")) {
 
             // MipavUtil.showHelp("ISPImages01");
 
-        } else if (command.equals("Finish")) {
+        } else if (command.equalsIgnoreCase("Finish")) {
             final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
                 public Object doInBackground() {
                     createSubmissionFiles();
@@ -320,34 +277,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             final int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?",
                     "Done adding image datasets?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
-            final ArrayList<String> incolmpleteFileNames = new ArrayList<String>();
-            for (int i = 0; i < sourceTableModel.getRowCount(); i++) {
-                final File f1 = (File) sourceTableModel.getValueAt(i, 0);
-                // see if there is
-                final Set keySet = infoTable.keySet();
-                final Iterator iter = keySet.iterator();
-                boolean found = false;
-                while (iter.hasNext()) {
-                    final File f2 = (File) iter.next();
-
-                    if (f1.getName().equals(f2.getName())) {
-                        found = true;
-                        break;
-                    }
-                }
-                if ( !found) {
-                    incolmpleteFileNames.add(f1.getName());
-                }
+            int numRows = sourceTableModel.getRowCount();
+            boolean areAllCompleted = true;
+            for(int i=0;i<numRows;i++) {
+            	if(((String)sourceTableModel.getValueAt(i, 1)).equalsIgnoreCase("No")) {
+            		areAllCompleted = false;
+            		break;
+            	}
             }
-            if (incolmpleteFileNames.size() > 0) {
-                final StringBuffer names = new StringBuffer();
-                for (int i = 0; i < incolmpleteFileNames.size(); i++) {
-                    names.append(" - " + incolmpleteFileNames.get(i) + "\n");
-                }
-                MipavUtil.displayError("Please complete required fields for the following images: \n"
-                        + names.toString());
-                return;
+            
+            if(!areAllCompleted) {
+            	
+            	 MipavUtil.displayError("Please complete required fields for all Data Structures");
+                 return;
+            	
             }
+            
 
             if (response == JOptionPane.YES_OPTION) {
                 worker.execute();
@@ -359,14 +304,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             }
 
-        } else if (command.equals("completeDataElements")) {
-            final File f = (File) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
-            final String completed = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 1);
-            if (completed.equals("No")) {
-                new InfoDialog(this, f, false);
-            } else {
-                new InfoDialog(this, f, true);
-            }
+        } else if (command.equalsIgnoreCase("completeDataElements")) {
+        	
+            String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
+            new InfoDialog(this, dsName, true);
+
         } else if (command.equalsIgnoreCase("outputDirBrowse")) {
             final JFileChooser chooser = new JFileChooser();
 
@@ -416,13 +358,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private void init() {
         setTitle("NDAR Image Submission Package Creation Tool v1.0");
 
-        multiFileTable = new Hashtable<File, Boolean>();
+        dataStructures = new ArrayList<DataStruct>();
         
-        infoTable = new Hashtable<File, Hashtable<String, LinkedHashMap<String, String>>>();
-        selectedFileDataStructureNames = new Hashtable<File, ArrayList<String>>();
-        selectedFileDataStructures = new ArrayList<DataStruct>();
-        
-        outputFileNameBaseTable = new Hashtable<File, String>();
         final JPanel topPanel = new JPanel(new GridBagLayout());
         final GridBagConstraints gbc2 = new GridBagConstraints();
         final GridBagConstraints gbc3 = new GridBagConstraints();
@@ -430,18 +367,18 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         buildBrightnessContrastPanel();
 
-        /*
-         * leftPanel = new JPanel(new GridBagLayout()); leftPanel.setBorder(buildTitledBorder("Preview image"));
-         * leftPanel.setPreferredSize(new Dimension(200, 350));
-         */
+        
+         leftPanel = new JPanel(new GridBagLayout()); leftPanel.setBorder(buildTitledBorder("Preview image"));
+         leftPanel.setPreferredSize(new Dimension(200, 350));
+         
 
         previewPanel = new JPanel();
         previewPanel.setBorder(buildTitledBorder("Preview image"));
         previewPanel.setPreferredSize(new Dimension(200, 300));
-        /*
-         * gbc3.gridy = 0; gbc3.gridx = 0; gbc3.fill = GridBagConstraints.BOTH; leftPanel.add(previewPanel, gbc3);
-         * gbc3.gridy = 1; leftPanel.add(brightnessContrastPanel, gbc3);
-         */
+        
+          gbc3.gridy = 0; gbc3.gridx = 0; gbc3.fill = GridBagConstraints.BOTH; leftPanel.add(previewPanel, gbc3);
+          gbc3.gridy = 1; leftPanel.add(brightnessContrastPanel, gbc3);
+         
 
         gbc2.gridy = 0;
         gbc2.gridx = 0;
@@ -514,15 +451,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     }
 
     private JScrollPane buildSourcePanel() {
-        // final GridBagConstraints gbc = new GridBagConstraints();
-
-        // gbc.anchor = GridBagConstraints.NORTHWEST;
-        // gbc.weightx = 1;
-        // gbc.weighty = 1;
-        // gbc.fill = GridBagConstraints.BOTH;
-
         sourceTableModel = new ViewTableModel();
-        sourceTableModel.addColumn("Image Name");
+        sourceTableModel.addColumn("Data Structure Name");
         sourceTableModel.addColumn("Completed?");
 
         sourceTable = new JTable(sourceTableModel);
@@ -537,7 +467,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         sourceTable.getColumn("Completed?").setCellRenderer(new MyRightCellRenderer());
 
         listPane = WidgetFactory.buildScrollPane(sourceTable);
-        listPane.setBorder(buildTitledBorder(0 + " image(s) "));
+        listPane.setBorder(buildTitledBorder(0 + " Data Structure(s) "));
 
         return listPane;
     }
@@ -726,61 +656,151 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             outputDirFile.mkdirs();
 
         }
-        final int numImages = sourceTableModel.getRowCount();
-        for (int i = 0; i < numImages; i++) {
-            final File imageFile = (File) sourceTableModel.getValueAt(i, 0);
-            final String guid = outputFileNameBaseTable.get(imageFile);
-            printlnToLog("Opening: " + imageFile + ", multifile: " + multiFileTable.get(imageFile));
+        final int numDataStructs = sourceTableModel.getRowCount();
+        for (int i = 0; i < numDataStructs; i++) {
+        	int collisionCounter = 1;
+        	String name = (String)sourceTableModel.getValueAt(i, 0);
+        	String guid = name.substring(name.lastIndexOf("_")+1, name.length());
+        	
+        	File imageFile = imageFiles.get(i);
+        	String outputFileNameBase;
+        	
+        	if(imageFile != null) {
+        		//this means we are working with the image datastructure
+        		printlnToLog("Creating submission file for " + name);
+        		printlnToLog("Opening: " + imageFile + ", multifile: " + multifiles.get(i));
+        		
+        		FileIO fileIO = new FileIO();
+                fileIO.setQuiet(true);
+                ModelImage origImage = fileIO.readImage(imageFile.getName(), imageFile.getParent() + File.separator,
+                		multifiles.get(i), null);
+        		
+                List<String> origFiles = FileUtility.getFileNameList(origImage);
+                
+                int modality = origImage.getFileInfo(0).getModality();
+                String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
+                String dsName = name.substring(0, name.lastIndexOf("_"));
+                
+                outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
+                
+                //NEED TO ASK EVAN ABOUT THIS
+                /*if (modality == FileInfoBase.UNKNOWN_MODALITY) {
+                	outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
+                } else {
+                    outputFileNameBase = guid + "_" + modalityString + "_" + System.currentTimeMillis();
+                }*/
 
-            final FileIO fileIO = new FileIO();
-            fileIO.setQuiet(true);
-            final ModelImage origImage = fileIO.readImage(imageFile.getName(), imageFile.getParent() + File.separator,
-                    multiFileTable.get(imageFile), null);
+                final String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
 
-            final List<String> origFiles = FileUtility.getFileNameList(origImage);
-
-            final int modality = origImage.getFileInfo(0).getModality();
-            final String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
-
-            String outputFileNameBase;
-            if (modality == FileInfoBase.UNKNOWN_MODALITY) {
-                outputFileNameBase = guid + "_" + System.currentTimeMillis();
-            } else {
-                outputFileNameBase = guid + "_" + modalityString + "_" + System.currentTimeMillis();
-            }
-
-            final String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
-
-            ModelImage thumbnailImage = createThumbnailImage(origImage);
-
-            // write out thumbnail image
-            final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
-            writeThumbnailJIMI(thumbnailImage, opts);
-            if (thumbnailImage != null) {
-                thumbnailImage.disposeLocal();
-                thumbnailImage = null;
-            }
-            printlnToLog("Creating thumbnail image:\t" + outputDirBase + outputFileNameBase + ".jpg");
-            try {
-                printlnToLog("Creating ZIP file:\t" + zipFilePath);
-                for (final String file : origFiles) {
-                    printlnToLog("Adding file to ZIP:\t" + file);
+                ModelImage thumbnailImage = createThumbnailImage(origImage);
+                
+                final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
+                writeThumbnailJIMI(thumbnailImage, opts);
+                if (thumbnailImage != null) {
+                    thumbnailImage.disposeLocal();
+                    thumbnailImage = null;
                 }
+                printlnToLog("Creating thumbnail image:\t" + outputDirBase + outputFileNameBase + ".jpg");
+                try {
+                    printlnToLog("Creating ZIP file:\t" + zipFilePath);
+                    for (final String file : origFiles) {
+                        printlnToLog("Adding file to ZIP:\t" + file);
+                    }
 
-                makeZipFile(zipFilePath, origFiles);
-            } catch (final IOException ioe) {
-                ioe.printStackTrace();
-                MipavUtil.displayError("Unable to write original image dataset files to ZIP package:\n"
-                        + ioe.getMessage());
-                continue;
-            }
+                    makeZipFile(zipFilePath, origFiles);
+                } catch (final IOException ioe) {
+                    ioe.printStackTrace();
+                    MipavUtil.displayError("Unable to write original image dataset files to ZIP package:\n"
+                            + ioe.getMessage());
+                    continue;
+                }
+                
+                writeXMLFile(outputDirBase, outputFileNameBase, imageFile, origImage, i);
 
-            // now we need to write out the xml...nish
-            writeXMLFile(outputDirBase, outputFileNameBase, imageFile, origImage);
+                origImage.disposeLocal();
 
-            origImage.disposeLocal();
+                printlnToLog("");
+ 
+        		
+        	}else {
+        		//this means that this is another data structure besides image
+        		
+        		printlnToLog("Creating submission file for " + name);
+        		
+        		String dsName = name.substring(0, name.lastIndexOf("_"));
+        		
+        		outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
+        		
+        		
+        		//copy all other file to this new dir
+        		File allOtherFilesFile = new File(outputDirBase + outputFileNameBase);
+        		if(allOtherFilesFile.mkdir()) {
+        			ArrayList<File> files = allOtherFilesAL.get(i);
+        			if(files != null && files.size() > 0) {
+        				for(int k=0;k<files.size();k++) {
+        					File f = files.get(k);
+        					File destFile = new File(outputDirBase + outputFileNameBase + File.separator + f.getName());
+        					//check for collision
+        					if(destFile.exists()) {
+        						//collision!
+        						String prefix = f.getName().substring(0, f.getName().lastIndexOf("."));
+        						String suffix = f.getName().substring(f.getName().lastIndexOf(".") + 1, f.getName().length());
+        						destFile = new File(outputDirBase + outputFileNameBase + File.separator + prefix + "_" + collisionCounter + "." + suffix);
+        						
+        						LinkedHashMap<String, String> infoMap = infoList.get(i);
+        						
+        						 Set keySet = infoMap.keySet();
+        		                    final Iterator iter = keySet.iterator();
+        		                    String key;
+        		                    String value;
+        		                    while (iter.hasNext()) {
+        		                        key = (String) iter.next();
+        		                        value = infoMap.get(key);
+        		                        if(value.equals(f.getAbsolutePath())) {
+        		                        	prefix = value.substring(0, value.lastIndexOf("."));
+        	        						suffix = value.substring(value.lastIndexOf(".") + 1, value.length());
+        		                        	infoMap.put(key, prefix + "_" + collisionCounter + "." + suffix);
+        		                        	break;
+        		                        	
+        		                        }
+        		                        
+        		                        
 
-            printlnToLog("");
+        		                        
+        		                    }
+        						
+        						collisionCounter++;
+        					}
+
+        					printlnToLog("Copying " + f.getName() + " to " + destFile.getAbsolutePath());
+        					
+        					try {
+	        					InputStream in = new FileInputStream(f);
+	        					OutputStream out = new FileOutputStream(destFile); 
+	        					
+	        					byte[] buf = new byte[1024];
+	        				      int len;
+	        				      while ((len = in.read(buf)) > 0){
+	        				        out.write(buf, 0, len);
+	        				      }
+	        				      in.close();
+	        				      out.close();
+        					}catch(Exception e) {
+        						e.printStackTrace();
+        					}	
+        				}
+        				
+        				
+        				
+        			}
+        		}
+        		
+        		 writeXMLFile(outputDirBase, outputFileNameBase, imageFile, null, i);
+        		 
+        		 printlnToLog("");
+        		 
+        	}
+
         }
 
         printlnToLog("*** Submission package processing complete. ***");
@@ -796,13 +816,21 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * @param origImage
      */
     private void writeXMLFile(final String outputDirBase, final String outputFileNameBase, final File imageFile,
-            final ModelImage origImage) {
-        final String xmlFileName = outputFileNameBase + ".xml";
-        final String xmlHeader = "<?xml version=\"1.0\" ?>";
-        final String xmlSchema = "http://www.w3.org/2001/XMLSchema-instance";
-        final String xsd = "schema.xsd";
+        final ModelImage origImage, int counter) {
+    	
+
 
         try {
+        	
+        	String name = (String)sourceTableModel.getValueAt(counter, 0);
+        	String dsName = name.substring(0,name.lastIndexOf("_"));
+        	
+        	String xmlFileName = outputFileNameBase + ".xml";
+            
+            final String xmlHeader = "<?xml version=\"1.0\" ?>";
+            final String xmlSchema = "http://www.w3.org/2001/XMLSchema-instance";
+            final String xsd = "schema.xsd";
+        	
             final File xmlFile = new File(outputDirBase + xmlFileName);
             fw = new FileWriter(xmlFile);
             bw = new BufferedWriter(fw);
@@ -811,42 +839,25 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             openTag("data_set xmlns:xsi=\"" + xmlSchema + "\" xsi:noNamespaceSchemaLocation=\"" + xsd + "\"", true);
             // TODO: temporarily changed data structure name to lower case, since that's what the Validation Tool
             // expects
-            
-            ArrayList<String> selectedDSNames = selectedFileDataStructureNames.get(imageFile);
-            Hashtable<String, LinkedHashMap<String, String>> infoMaps = infoTable.get(imageFile);
-            
-            for(int i=0;i<selectedDSNames.size();i++) {
-            	  for(int k=0;k<selectedFileDataStructures.size();k++) {
-            		  DataStruct ds = selectedFileDataStructures.get(k);
-            		  String shortname = ds.getShortname();
-            		  if(selectedDSNames.get(i).equals(shortname)) {
-            			  LinkedHashMap<String, String> infoMap = infoMaps.get(shortname);
-            			  String n = selectedFileDataStructures.get(i).getName().toLowerCase();
-            			  String v = selectedFileDataStructures.get(i).getVersion().replaceFirst("^0", "");
-            			  openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
-            			  parse(ds, imageFile, outputFileNameBase, infoMap);
-            			  openTag("data_structure", false);
-            			  break;
-            		  }
-            		  
-            	  }
-            	
-            }
+
+    	  for(int k=0;k<dataStructures.size();k++) {
+    		  DataStruct ds = dataStructures.get(k);
+    		  String shortname = ds.getShortname();
+    		  if(dsName.equalsIgnoreCase(shortname)) {
+    			  LinkedHashMap<String, String> infoMap = infoList.get(counter);
+    			  String n = ds.getName().toLowerCase();
+    			  String v = ds.getVersion().replaceFirst("^0", "");
+    			  openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
+    			  parse(ds, outputFileNameBase, infoMap);
+    			  openTag("data_structure", false);
+    			  break;
+    		  }
+    		  
+    	  }
+    
             
             openTag("data_set", false);
-            
-            
-            /*for(int i=0;i<selectedFileDataStructures.size();i++) {
-            	String n = selectedFileDataStructures.get(i).getName().toLowerCase();
-                // TODO: temporarily changed data structure version to remove leading zero, which was also causing
-                // Validation Tool problems
-                String v = selectedFileDataStructures.get(i).getVersion().replaceFirst("^0", "");
-                openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
-                parse(selectedFileDataStructures.get(i), imageFile, outputFileNameBase);
-                openTag("data_structure", false);
-                openTag("data_set", false);
-            }
-            */
+
             
             bw.close();
         } catch (final Exception e) {
@@ -858,7 +869,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * 
      * @param ds
      */
-    private void parse(final DataStruct ds2, final File imageFile, final String outputFileNameBase, LinkedHashMap<String, String> infoMap) {
+    private void parse(final DataStruct ds2, final String outputFileNameBase, LinkedHashMap<String, String> infoMap) {
         Vector<XMLAttributes> attr;
         XMLAttributes xmlAttributes;
 
@@ -872,9 +883,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 final String name = de.getName();
                 String value = "";
                 String v;
-                if (name.equals("image_file")) {
+                if (name.equalsIgnoreCase("image_file")) {
                     value = outputFileNameBase + ".zip";
-                } else if (name.equals("image_thumbnail_file")) {
+                } else if (name.equalsIgnoreCase("image_thumbnail_file")) {
                     value = outputFileNameBase + ".jpg";
                 } else {
                     // need to get appropriat value
@@ -884,14 +895,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     String key;
                     while (iter.hasNext()) {
                         key = (String) iter.next();
-                        if (key.equals(name)) {
+                        if (key.equalsIgnoreCase(name)) {
                             v = infoMap.get(key);
                             value = v;
                             break;
                         }
                     }
                 }
-                if ( !value.trim().equals("")) {
+                if ( !value.trim().equalsIgnoreCase("")) {
+                	
+                	 File f = new File(value);
+                     if(f.isFile()) {
+                    	 String filename = f.getName();
+                    	 value = outputFileNameBase + File.separator + filename;
+                    	 
+                     }
+                	
                     attr = new Vector<XMLAttributes>();
                     xmlAttributes = new XMLAttributes("name", name);
                     attr.add(xmlAttributes);
@@ -899,14 +918,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     attr.add(xmlAttributes);
                     closedTag("data_element", attr);
                 }
-            }/* else {
-                final DataStruct ds3 = (DataStruct) o1;
-                final String n = ds3.getName();
-                final String v = ds3.getVersion();
-                openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
-                parse(ds3, imageFile, outputFileNameBase);
-                openTag("data_structure", false);
-            }*/
+            }
 
         }
     }
@@ -1061,20 +1073,34 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
 
-        addSourceButton = WidgetFactory.buildTextButton("Add images", "Add image datasets", "AddSource", this);
+        addSourceButton = new JButton("Add Data Structure");
+        addSourceButton.setToolTipText("Add Data Structure");
+        addSourceButton.addActionListener(this);
+        addSourceButton.setActionCommand("AddSource");
         
-        removeSourceButton = WidgetFactory.buildTextButton("Remove image", "Remove the selected image dataset",
-                "RemoveSource", this);
-        finishButton = WidgetFactory.buildTextButton("Finish", "Finish", "Finish", this);
-        completeDataElementsButton = WidgetFactory.buildTextButton("Edit Data Elements",
-                "Edit data elements for selected image dataset", "completeDataElements", this);
-        // helpButton = WidgetFactory.buildTextButton("Help", "Show MIPAV help", "Help", this);
+        
+        removeSourceButton = new JButton("Remove Data Structure");
+        removeSourceButton.setToolTipText("Remove the selected Data Structure");
+        removeSourceButton.addActionListener(this);
+        removeSourceButton.setActionCommand("RemoveSource");
+        
+        finishButton = new JButton("Finish");
+        finishButton.setToolTipText("Finish");
+        finishButton.addActionListener(this);
+        finishButton.setActionCommand("Finish");
+        
+        
+        
+        completeDataElementsButton = new JButton("Edit Data Elements");
+        completeDataElementsButton.setToolTipText("Edit data elements for selected Data Structure");
+        completeDataElementsButton.addActionListener(this);
+        completeDataElementsButton.setActionCommand("completeDataElements");
+        
 
         addSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
         removeSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
         finishButton.setPreferredSize(MipavUtil.defaultButtonSize);
         completeDataElementsButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        // helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
         addSourceButton.setEnabled(false);
         removeSourceButton.setEnabled(false);
@@ -1196,30 +1222,29 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             if (sourceTable.getSelectedRow() == -1) {
                 completeDataElementsButton.setEnabled(false);
                 removeSourceButton.setEnabled(false);
-                previewPanel.removeAll();
-                previewPanel.repaint();
                 return;
             } else {
                 completeDataElementsButton.setEnabled(true);
                 removeSourceButton.setEnabled(true);
             }
-            final File f = (File) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
 
             previewPanel.removeAll();
             previewPanel.repaint();
 
-            previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
-            previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
-            previewPanel.validate();
-            previewPanel.repaint();
+            if(previewImages.get(sourceTable.getSelectedRow()) != null) {
+            	previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
+                previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
+                previewPanel.validate();
+                previewPanel.repaint();
+            }
+            
+            
 
             if (e.getClickCount() == 2) {
-                final String completed = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 1);
-                if (completed.equals("No")) {
-                    new InfoDialog(this, f, false);
-                } else {
-                    new InfoDialog(this, f, true);
-                }
+
+                String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
+                new InfoDialog(this, dsName, true);
+
             }
         }
     }
@@ -1249,7 +1274,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         for (int i = 0; i < sourceTableModel.getRowCount(); i++) {
             final File f1 = (File) sourceTableModel.getValueAt(i, 0);
-            if (f1.getAbsolutePath().equals(f.getAbsolutePath())) {
+            if (f1.getAbsolutePath().equalsIgnoreCase(f.getAbsolutePath())) {
                 contains = true;
                 break;
             }
@@ -1262,7 +1287,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         for (int i = 0; i < sourceTableModel.getRowCount(); i++) {
             final String completed = (String) sourceTableModel.getValueAt(i, 1);
-            if (completed.equals("No")) {
+            if (completed.equalsIgnoreCase("No")) {
                 allCompleted = false;
                 break;
             }
@@ -1427,7 +1452,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             final Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             setHorizontalAlignment(SwingConstants.CENTER);
 
-            if (column == 1 && value.equals("No")) {
+            if (column == 1 && ((String)value).equalsIgnoreCase("No")) {
                 setForeground(Color.red);
             } else {
                 setForeground(Color.black);
@@ -1441,7 +1466,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     
     private class ChooseDataStructDialog extends JDialog implements ActionListener {
     	private final PlugInDialogNDAR owner;
-    	 private final File file;
+    	 //private final File file;
     	 private ViewTableModel structsModel;
     	 private JTable structsTable;
     	 private QName qName = null;
@@ -1456,20 +1481,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     	 private ArrayList<String>  versionAL = new ArrayList<String>();
     	 private ArrayList<String>  statusAL = new ArrayList<String>();
     	 private JScrollPane structsScrollPane;
-    	 private boolean isMultiFile;
-    	 private ModelImage srcImage;
+
     	 
-    	public ChooseDataStructDialog(PlugInDialogNDAR owner, final File file, boolean isMultiFile, ModelImage srcImage) {
+    	public ChooseDataStructDialog(PlugInDialogNDAR owner) {
     		super(owner, true);
 
             this.owner = owner;
-            this.file = file;
-            this.isMultiFile = isMultiFile;
-            this.srcImage = srcImage;
-            
-            
-            
-            
 
 	       qName    = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "short_name");
 	       qStatus    = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "status");
@@ -1488,44 +1505,36 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          * init
          */
         private void init() {
-            setTitle("Choose Data Structure(s) for " + file.getName());
+            setTitle("Choose Data Structure");
             int numColumns = 5;
-            String[] columnNames = {" ", "Short Name" , "Description", "Version", "Status"};
-            structsModel = new ViewTableModel() {
-                public boolean isCellEditable(final int row, final int column) {
-                    if (column == 0) {
-                        return true;
-                    }
-                    return false;
-                }
+            String[] columnNames = {"Short Name" , "Description","Status"};
+            structsModel = new ViewTableModel();
+            structsTable = new JTable(structsModel) {
+            	public String getToolTipText(MouseEvent e) {
+            		String tip = "";
+            		
+            		 java.awt.Point p = e.getPoint();
+            	     int rowIndex = rowAtPoint(p);
+            	     int colIndex = columnAtPoint(p);
+
+            	     tip = (String)structsModel.getValueAt(rowIndex, colIndex);  
+            		
+            		return tip;
+            	}
             };
-            structsTable = new JTable(structsModel);
             
             for (int i = 0; i < columnNames.length; i++) {
             	structsModel.addColumn(columnNames[i]);
             }
-            
-            
-            
-            structsTable.getColumn(" ").setMinWidth(50);
-            structsTable.getColumn(" ").setMaxWidth(50);
+
             structsTable.getColumn("Short Name").setMinWidth(150);
             structsTable.getColumn("Description").setMinWidth(300);
-            
-            structsTable.getColumn("Version").setMinWidth(50);
-            structsTable.getColumn("Version").setMaxWidth(50);
-            structsTable.getColumn(" ").setCellRenderer(new CheckBoxRenderer());
-            structsTable.getColumn(" ").setCellEditor(new CheckBoxEditor());
 
-            
-            
-            
-            
             Iterator<OMElement> iter2 = publishedDataStructs.getChildElements();
             while(iter2.hasNext()) {
             	OMElement e = iter2.next();
             	
-            	if (e.getLocalName().equals("data_structure"))
+            	if (e.getLocalName().equalsIgnoreCase("data_structure"))
             	 {
             	  String shortname = e.getAttributeValue(qName);
             	  String version = e.getAttributeValue(qVersion); // This can also be obtained using the last two characters of short name
@@ -1533,37 +1542,33 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             	  String dataType = e.getAttributeValue(qDataType);
             	  String desc = e.getAttributeValue(qDescription);
             	  String parent = e.getAttributeValue(qParentDataStructure);
-            	if(dataType.equals("Imaging")) {
-            		if(parent.trim().equals("")) {
+            	if(dataType.equalsIgnoreCase("Imaging")) {
+
                 	  descAL.add(desc);
                 	  shortNameAL.add(shortname);
                 	  versionAL.add(version);
                 	  statusAL.add(status);
-            		}
                 	  
             	 }
-            	  
-            	 
-            	  // TODO: Store or throw away the information about this data structure
+
             	 }
 
             	
             }
-            
-            //numColumns = 5
+
             Object[] rowData = new Object[numColumns];
             for(int i=0;i<descAL.size();i++) {
-            	rowData[0] = false;
-            	
-            	rowData[1] = shortNameAL.get(i);
-            	rowData[2] = descAL.get(i);
-            	rowData[3] = versionAL.get(i);
-            	rowData[4] = statusAL.get(i);
+
+            	rowData[0] = shortNameAL.get(i);
+            	rowData[1] = descAL.get(i);
+            	rowData[2] = statusAL.get(i);
             	structsModel.addRow(rowData);
             }
             
             
-            
+          structsTable.setRowSelectionInterval(0, 0);  
+          
+
             
             structsScrollPane = new JScrollPane(structsTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -1583,7 +1588,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             final JPanel OKPanel = new JPanel();
             buildOKButton();
             buildCancelButton();
-            OKButton.setText("OK");
+            OKButton.setText("Add");
             OKButton.setActionCommand("ok4");
             OKButton.addActionListener(this);
             OKPanel.add(OKButton);
@@ -1613,166 +1618,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          */
         public void actionPerformed(final ActionEvent e) {
             final String command = e.getActionCommand();
-            if(command.equals("ok4")) {
-            	int numRows = structsModel.getRowCount();
-            	boolean hasSelected = false;
-            	for(int i=0;i<numRows;i++) {
-            		
-            		if((Boolean)structsModel.getValueAt(i, 0)) {
-            			hasSelected = true;
-            		}
-            	}
-            	if(!hasSelected) {
-            		MipavUtil.displayError("Please select at least 1 Data Structure for this image");
-            		return;
-            	}
-            	
-            	Vector rowData = new Vector();
-                rowData.add(file);
-                rowData.add("No");
-                sourceTableModel.addRow(rowData);
-                sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount() - 1, sourceTableModel
-                        .getRowCount() - 1);
-                multiFileTable.put(file, new Boolean(isMultiFile));
-
-                //FileIO fileIO = new FileIO();
-                //fileIO.setQuiet(true);
-                final File imageFile = file;
-                //ModelImage srcImage = fileIO.readImage(imageFile.getName(), imageFile.getParent()
-                        //+ File.separator, multiFileTable.get(imageFile), null);
-
-                final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
-
-                previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
-                int slice = 0;
-                if ( !srcImage.is2DImage()) {
-                    slice = (srcImage.getExtents()[2] / 2);
-                }
-                previewImg.createImg(slice);
-
-                previewImages.add(previewImg);
-
-                previewPanel.removeAll();
-                previewPanel.repaint();
-
-                previewPanel.add(previewImg);
-
-                previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
-
-                previewPanel.validate();
-                previewPanel.repaint();
-
-                srcImage.disposeLocal();
-                srcImage = null;
-                
-                ArrayList<String> selectedDataStructsAL = new ArrayList<String>();
-                for(int i=0;i<numRows;i++) {
-            		if((Boolean)structsModel.getValueAt(i, 0)) {
-            			//get all selected shortnames
-            			String shortName = (String)structsModel.getValueAt(i, 1);
-            			selectedDataStructsAL.add(shortName);
-            		}
-            	}
-                
-                selectedFileDataStructureNames.put(file, selectedDataStructsAL);
-                
+            if(command.equalsIgnoreCase("ok4")) {
+            	int selectedRow = structsTable.getSelectedRow();
                 this.dispose();
-                
-                
-                
-                
-                new InfoDialog(owner, file, false);
-            	
-            	
+                String dsName = (String) structsModel.getValueAt(selectedRow, 0);
+                new InfoDialog(owner, dsName, false);
             }
             
         }
-    	
-    	
-        
-        private class CheckBoxRenderer extends DefaultTableCellRenderer {
-            JCheckBox checkBox = new JCheckBox();
 
-            public Component getTableCellRendererComponent(final JTable table, final Object value,
-                    final boolean isSelected, final boolean hasFocus, final int row, final int column) {
-                if (value instanceof Boolean) { // Boolean
-                    checkBox.setSelected( ((Boolean) value).booleanValue());
-                    checkBox.setHorizontalAlignment(SwingConstants.CENTER);
-                    return checkBox;
-                }
-
-                return null;
-            }
-        }
-        
-        
-        private class CheckBoxEditor implements TableCellEditor {
-            private final static int BOOLEAN = 1;
-
-            DefaultCellEditor cellEditor;
-
-            int flg;
-
-            public CheckBoxEditor() {
-                final JCheckBox checkBox = new JCheckBox();
-                cellEditor = new DefaultCellEditor(checkBox);
-                checkBox.setHorizontalAlignment(SwingConstants.CENTER);
-            }
-
-            public Component getTableCellEditorComponent(final JTable table, final Object value, final boolean isSelected,
-                    final int row, final int column) {
-                if (value instanceof Boolean) { // Boolean
-                    flg = CheckBoxEditor.BOOLEAN;
-                    return cellEditor.getTableCellEditorComponent(table, value, isSelected, row, column);
-                }
-                return null;
-            }
-
-            public Object getCellEditorValue() {
-                switch (flg) {
-                    case BOOLEAN:
-                        return cellEditor.getCellEditorValue();
-                    default:
-                        return null;
-                }
-            }
-
-            public Component getComponent() {
-                return cellEditor.getComponent();
-            }
-
-            public boolean stopCellEditing() {
-                return cellEditor.stopCellEditing();
-            }
-
-            public void cancelCellEditing() {
-                cellEditor.cancelCellEditing();
-            }
-
-            public boolean isCellEditable(final EventObject anEvent) {
-                return cellEditor.isCellEditable(anEvent);
-            }
-
-            public boolean shouldSelectCell(final EventObject anEvent) {
-                return cellEditor.shouldSelectCell(anEvent);
-            }
-
-            public void addCellEditorListener(final CellEditorListener l) {
-                cellEditor.addCellEditorListener(l);
-            }
-
-            public void removeCellEditorListener(final CellEditorListener l) {
-                cellEditor.removeCellEditorListener(l);
-            }
-
-            public void setClickCountToStart(final int n) {
-                cellEditor.setClickCountToStart(n);
-            }
-
-            public int getClickCountToStart() {
-                return cellEditor.getClickCountToStart();
-            }
-        }
         
         
     }
@@ -1784,11 +1638,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * 
      */
     private class InfoDialog extends JDialog implements ActionListener, WindowListener {
-        private final Dialog owner;
-
-        private final File file;
-
-        private Hashtable<String, TreeMap> labelsAndComponentsTable = new Hashtable<String,TreeMap>();
+        private final PlugInDialogNDAR owner;
 
         private final JTabbedPane tabbedPane = new JTabbedPane();
 
@@ -1800,19 +1650,19 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         private String guid = "";
 
-        private ModelImage origImage;
-
-        private final FileIO fileIO;
-
         private int gridYCounter = 0;
 
-        private boolean launchedFromCompletedState = false;
+        private boolean launchedFromInProcessState = false;
 
         private JLabel requiredLabel;
         
-        private JMenu addMenu;
+        private String dataStructureName;
+
+        private TreeMap<JLabel, JComponent> labelsAndComps;
         
-        private JMenu removeMenu;
+        private ArrayList<File> allOtherFiles = new ArrayList<File>();
+        
+        private boolean addedPreviewImage = false;
 
         /**
          * constructor
@@ -1821,42 +1671,39 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          * @param file
          * @param launchedFromCompletedState
          */
-        public InfoDialog(final Dialog owner, final File file, final boolean launchedFromCompletedState) {
+        public InfoDialog(PlugInDialogNDAR owner, String name, boolean launchedFromInProcessState) {
 
             super(owner, true);
 
             this.owner = owner;
-            this.file = file;
-            this.launchedFromCompletedState = launchedFromCompletedState;
-
-            fileIO = new FileIO();
-            fileIO.setQuiet(true);
-            origImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, multiFileTable.get(file),
-                    null);
+            this.launchedFromInProcessState = launchedFromInProcessState;
             
-            //create tabs for all the data structures
-            Set keySet = selectedFileDataStructureNames.keySet();
-            Iterator iter = keySet.iterator();
-            while (iter.hasNext()) {
-                File f2 = (File) iter.next();
-                if (file.getName().equals(f2.getName())) {
-                    ArrayList<String> dataStructsAL = selectedFileDataStructureNames.get(f2);
-                	for(int i=0;i<dataStructsAL.size();i++) {
-                		String dsName = dataStructsAL.get(i);
-                		JPanel panel = new JPanel(new GridBagLayout());
-                        tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-                        tabScrollPane.setPreferredSize(new Dimension(600, 200));
-                        tabbedPane.addTab(dsName, tabScrollPane);	
-                	}
-                }
+            if(launchedFromInProcessState) {
+            	if(name.toLowerCase().contains("_ndar")) {
+            		this.dataStructureName = name.toLowerCase().substring(0, name.toLowerCase().indexOf("_ndar"));
+            	}else {
+            		this.dataStructureName = name.substring(0, name.lastIndexOf("_"));
+            	}
+            	
+            	
+
+            }else {
+            	previewImages.add(null);
+            	imageFiles.add(null);
+            	multifiles.add(new Boolean(false));
+            	infoList.add(null);
+            	allOtherFilesAL.add(null);
+            	this.dataStructureName = name;
             }
+
+            
+            JPanel panel = new JPanel(new GridBagLayout());
+            tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            tabScrollPane.setPreferredSize(new Dimension(600, 200));
+            tabbedPane.addTab(dataStructureName, tabScrollPane);
             
             init();
-            if (origImage != null) {
-                origImage.disposeLocal();
-                origImage = null;
-            }
 
         }
 
@@ -1864,7 +1711,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          * init
          */
         private void init() {
-            setTitle("Edit Data Elements for " + file.getName());
+            setTitle("Edit Data Elements");
             addWindowListener(this);
             mainPanel = new JPanel(new GridBagLayout());
 
@@ -1876,32 +1723,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
             }
 
-            ArrayList<String> selectedDataStuctsAl = null;
-            Set keySet = selectedFileDataStructureNames.keySet();
-            Iterator iter = keySet.iterator();
-
-            while (iter.hasNext()) {
-                File f = (File) iter.next();
-                if(f.getName().equals(file.getName())) {
-                	selectedDataStuctsAl = selectedFileDataStructureNames.get(f);
-                	break;
-                }    
-            }
-            
-            
-            
-            for(int i=0;i<selectedDataStuctsAl.size();i++) {
-            	//get the OMElement for each selected Data Structure
-            	
-            	
-            	
-            	 keySet = documentElements.keySet();
-                 iter = keySet.iterator();
-
-                 while (iter.hasNext()) {
-                     String shortname  = (String) iter.next();
-                     if(shortname.equals(selectedDataStuctsAl.get(i))) {
-                    	 documentElement = documentElements.get(shortname);
+                    	 documentElement = documentElements.get(dataStructureName);
                     	 Iterator<OMElement> iter2 = documentElement.getChildElements();
                          //should only be 1 top level Data_Structure tag
                          dataStructElement = iter2.next();
@@ -1934,59 +1756,46 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                              final String t = attr.getAttributeValue();
 
                              DataStruct dataStruct = new DataStruct(n, s, d, v, t);
-                             selectedFileDataStructures.add(dataStruct);
+                             boolean found = false;
+                             for(int i=0;i<dataStructures.size();i++) {
+                            	 String sn = dataStructures.get(i).getShortname();
+                            	 if(s.equalsIgnoreCase(sn)) {
+                            		 found = true;
+                            	 }
+                             }
+                             if(!found) {
+                            	 dataStructures.add(dataStruct);
+                             }
                              
-                             TreeMap<JLabel, JComponent> labelsAndComps = new TreeMap<JLabel, JComponent>(new JLabelComparator());
                              
-                             parse(dataStructElement, dataStruct, shortname, labelsAndComps);
                              
-                             //parseForInitLabelsAndComponents(selectedFileDataStructures.get(i), labelsAndComps);
-                             parseForInitLabelsAndComponents(dataStruct, labelsAndComps);
-                             
-                             if (launchedFromCompletedState) {
-                            	 //LinkedHashMap<String, String> infoMap2 = infoTable.get(file);
-                            	 Hashtable<String, LinkedHashMap<String, String>> hTable = infoTable.get(file);
+                             if (launchedFromInProcessState) {
+                            	 int selectedRow = sourceTable.getSelectedRow();
+                            	 LinkedHashMap<String, String> infoMap = infoList.get(selectedRow);
+                            	 labelsAndComps = labelsAndCompsList.get(selectedRow);
                             	 
-                            	 keySet = hTable.keySet();
-                                 iter = keySet.iterator();
-                                 while (iter.hasNext()) {
-
-                                     String sname = (String) iter.next();
-                                     LinkedHashMap<String, String> infoMap = hTable.get(sname);
-
-                                     populateFieldsFromCompletedState(labelsAndComps, infoMap);
-
-                                     
-                                 }
+                            	 parse(dataStructElement, dataStruct, dataStructureName, labelsAndComps);
                             	 
+                            	 parseForInitLabelsAndComponents(dataStruct, labelsAndComps);
+                            	 
+                            	 populateFieldsFromCompletedState(labelsAndComps, infoMap);
+                          
                                  
                              } else {
-                                 populateFields(labelsAndComps);
-                             }
-                             labelsAndComponentsTable.put(shortname, labelsAndComps);
-                             
-                             
 
+                            	 labelsAndComps = new TreeMap<JLabel, JComponent>(new JLabelComparator());
+                                 
+                                 parse(dataStructElement, dataStruct, dataStructureName, labelsAndComps);
+
+                                 parseForInitLabelsAndComponents(dataStruct, labelsAndComps);
+                                 
+                                 labelsAndCompsList.add(labelsAndComps);
+                                 
+                             }
                          } catch (final Exception e) {
                              e.printStackTrace();
                          }
-                         
-                         
-                         
-                         
-                    	 
-                    	 
-                     	break;
-                     }    
-                 }
-            	
-            	
-            	
-            	
-            }
-            
-            
-            
+
             
             
 
@@ -1994,11 +1803,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             gbc.gridy = 0;
             gbc.insets = new Insets(10, 5, 10, 25);
             gbc.gridwidth = 1;
-            
-            /*for(int i=0;i<selectedFileDataStructures.size();i++) {
-            	parseForInitLabelsAndComponents(selectedFileDataStructures.get(i));
-            }*/
-
 
 
             final JPanel OKPanel = new JPanel();
@@ -2032,50 +1836,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
 
             getContentPane().add(mainPanel);
-            
-            addMenu = new JMenu("Add");
-            
-            keySet = documentElements.keySet();
-            iter = keySet.iterator();
-            while (iter.hasNext()) {
-                String shortname  = (String) iter.next();
-                boolean found = false;
-                for(int i=0;i<selectedDataStuctsAl.size();i++) {
-                	String selectedDS = selectedDataStuctsAl.get(i);
-                	if(shortname.equals(selectedDS)) {
-                		found = true;
-                		break;
-                	}
-                }
-                if(!found) {
-                	JMenuItem itemOpen = new JMenuItem(shortname);
-                    itemOpen.addActionListener(this);
-                    itemOpen.setActionCommand("add");
-                    itemOpen.setFont(MipavUtil.font12B);
-                    addMenu.add(itemOpen);
-                }
-                
-            }
-            
-            
-            
-            
-            
-            
-            
-            
-            removeMenu = new JMenu("Remove");
-            for(int i=0;i<selectedDataStuctsAl.size();i++) {
-            	JMenuItem itemOpen = new JMenuItem(selectedDataStuctsAl.get(i));
-                itemOpen.addActionListener(this);
-                itemOpen.setActionCommand("remove");
-                itemOpen.setFont(MipavUtil.font12B);
-                removeMenu.add(itemOpen);
-            }
-            JMenuBar menuBar = new JMenuBar();
-            menuBar.add(addMenu);
-            menuBar.add(removeMenu);
-            setJMenuBar(menuBar);
 
             pack();
             MipavUtil.centerInWindow(owner, this);
@@ -2098,6 +1858,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             while (iter.hasNext()) {
                 final JLabel l = (JLabel) iter.next();
                 final JComponent t = labelsAndComps.get(l);
+                boolean isFile = false;
+                String labelName = l.getName();
+                if(t instanceof JTextField) {
+                	if(((JTextField)t).getToolTipText().contains("File")) {
+                		isFile = true;
+                		
+                	}
+                }
                 for (int k = 0; k < ds2.size(); k++) {
                     final Object o1 = ds2.get(k);
                     if (o1 instanceof DataElement) {
@@ -2108,7 +1876,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 if (title.toLowerCase().startsWith(parentDataStructShortname.toLowerCase())) {
                                     sp = (JScrollPane) (tabbedPane.getComponentAt(i));
                                     panel = (JPanel) (sp.getViewport().getComponent(0));
-                                    if (l.getName().equals( ((DataElement) o1).getName())) {
+                                    if (l.getName().equalsIgnoreCase( ((DataElement) o1).getName())) {
                                         gbc.fill = GridBagConstraints.HORIZONTAL;
                                         gbc.anchor = GridBagConstraints.EAST;
                                         gbc.weightx = 0;
@@ -2116,10 +1884,25 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                         gbc.weightx = 1;
                                         gbc.gridx = 1;
                                         gbc.anchor = GridBagConstraints.WEST;
-                                        panel.add(t, gbc);
+                                        if(isFile) {
+                                        	panel.add(t, gbc);
+                                        	gbc.gridx = 2;
+                                        	JButton browseButton = new JButton("Browse");
+                                        	browseButton.addActionListener(this);
+                                        	browseButton.setActionCommand("browse_" + labelName);
+                                        	panel.add(browseButton, gbc);
+                                        	
+                                        }else {
+                                        	gbc.gridwidth = 2;
+                                        	panel.add(t, gbc);
+                                        }
+                                        
+                                        
+                                        
                                         gridYCounter = gridYCounter + 1;
                                         gbc.gridy = gridYCounter;
                                         gbc.gridx = 0;
+                                        gbc.gridwidth = 1;
                                         break;
                                     }
                                 }
@@ -2143,7 +1926,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             while (iter.hasNext()) {
                 childElement = (OMElement) iter.next();
                 childElementName = childElement.getLocalName();
-                if (childElementName.equals("data_element")) {
+                if (childElementName.equalsIgnoreCase("data_element")) {
                     qname = new QName(namespace, "name");
                     attr = childElement.getAttribute(qname);
                     String n = attr.getAttributeValue();
@@ -2177,22 +1960,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     DataElement de = new DataElement(n, d, sh, t, s, r, v, parentDataStruct,parentDataStructShortName);
                     ds2.add(de);
 
-                    if ( ! (n.equals("image_file")
-                            || n.equals("image_thumbnail_file")
-                            || (origImage.is2DImage() && n.equals("image_extent3"))
-                            || ( (origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_extent4"))
-                            || ( (origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n
-                                    .equals("image_extent5"))
-                            || (origImage.is2DImage() && n.equals("image_resolution3"))
-                            || ( (origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_resolution4"))
-                            || ( (origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n
-                                    .equals("image_resolution5")) || (origImage.is2DImage() && n.equals("image_unit3"))
-                            || ( (origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_unit4")) || ( (origImage
-                            .is2DImage()
-                            || origImage.is3DImage() || origImage.is4DImage()) && n.equals("image_unit5")))) {
-
                         JLabel l;
-                        if (sh == null || sh.equals("")) {
+                        if (sh == null || sh.equalsIgnoreCase("")) {
                             l = new JLabel(n);
                         } else {
                             l = new JLabel(sh);
@@ -2208,7 +1977,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 final String item = element.trim();
                                 cb.addItem(item);
                             }
-                            if (r.equals("Required")) {
+                            if (r.equalsIgnoreCase("Required")) {
                                 l.setForeground(Color.red);
                             }
                             labelsAndComps.put(l, cb);
@@ -2220,30 +1989,34 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             if (t.equalsIgnoreCase("String")) {
                                 tooltip += " (" + s + ")";
                             }
-                            if ( !v.trim().equals("")) {
+                            if ( !v.trim().equalsIgnoreCase("")) {
                                 tooltip += ".  Value range: " + v;
                             }
                             tf.setToolTipText(tooltip);
 
-                            if (n.equals("image_num_dimensions")) {
+                            if (n.equalsIgnoreCase("image_num_dimensions")) {
                                 tf.setEnabled(false);
-                            } else if (n.equals("image_extent1")) {
+                            } else if (n.equalsIgnoreCase("image_extent1")) {
                                 tf.setEnabled(false);
-                            } else if (n.equals("image_extent2")) {
+                            } else if (n.equalsIgnoreCase("image_extent2")) {
                                 tf.setEnabled(false);
-                            } else if (n.equals("image_extent3")) {
+                            } else if (n.equalsIgnoreCase("image_extent3")) {
                                 tf.setEnabled(false);
-                            } else if (n.equals("image_extent4")) {
+                            } else if (n.equalsIgnoreCase("image_extent4")) {
                                 tf.setEnabled(false);
-                            } else if (n.equals("image_extent5")) {
+                            } else if (n.equalsIgnoreCase("image_extent5")) {
                                 tf.setEnabled(false);
+                            } else if(n.equalsIgnoreCase("image_thumbnail_file")) {
+                            	tf.setEnabled(false);
+                            } else if(n.equalsIgnoreCase("image_file")) {
+                            	tf.setEnabled(false);
                             }
-                            if (r.equals("Required")) {
+                            if (r.equalsIgnoreCase("Required")) {
                                 l.setForeground(Color.red);
                             }
                             labelsAndComps.put(l, tf);
                         }
-                    }
+                    //}
                 }
             }
         }
@@ -2267,7 +2040,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     final JLabel l = (JLabel) iter2.next();
                     final Component comp = labelsAndComps.get(l);
                     final String name = comp.getName();
-                    if (name.equals(key)) {
+                    if (name.equalsIgnoreCase(key)) {
                         if (comp instanceof JTextField) {
                             final JTextField t = (JTextField) comp;
                             t.setText(value);
@@ -2277,7 +2050,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                             for (int k = 0; k < c.getItemCount(); k++) {
                                 final String item = (String) c.getItemAt(k);
-                                if (value.equals(item)) {
+                                if (value.equalsIgnoreCase(item)) {
                                     c.setSelectedIndex(k);
                                 }
                             }
@@ -2291,15 +2064,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         /**
          * prepopulates some of the fields with info from image header
          */
-        public void populateFields(TreeMap<JLabel, JComponent> labelsAndComps) {
-            final float[] res = origImage.getResolutions(0);
-            final int[] units = origImage.getUnitsOfMeasure();
-            final int exts[] = origImage.getExtents();
-            final int nDims = origImage.getNDims();
-            final int modality = origImage.getFileInfo(0).getModality();
+        public void populateFields(TreeMap<JLabel, JComponent> labelsAndComps, ModelImage img) {
+            final float[] res = img.getResolutions(0);
+            final int[] units = img.getUnitsOfMeasure();
+            final int exts[] = img.getExtents();
+            final int nDims = img.getNDims();
+            final int modality = img.getFileInfo(0).getModality();
             final String modalityString = FileInfoBase.getModalityStr(modality);
-            final float sliceThickness = origImage.getFileInfo(0).getSliceThickness();
-            final int orient = origImage.getFileInfo(0).getImageOrientation();
+            final float sliceThickness = img.getFileInfo(0).getSliceThickness();
+            final int orient = img.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
             // get index for extents
             final Set keySet = labelsAndComps.keySet();
@@ -2308,81 +2081,93 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 final JLabel label = (JLabel) iter.next();
                 final String l = label.getName();
                 final JComponent comp = labelsAndComps.get(label);
-                if (l.equals("image_num_dimensions")) {
+                if (l.equalsIgnoreCase("image_num_dimensions")) {
                     ((JTextField) comp).setText(String.valueOf(nDims));
-                } else if (l.equals("image_extent1")) {
+                } else if (l.equalsIgnoreCase("image_extent1")) {
                     ((JTextField) comp).setText(String.valueOf(exts[0]));
-                } else if (l.equals("image_extent2")) {
+                } else if (l.equalsIgnoreCase("image_extent2")) {
                     ((JTextField) comp).setText(String.valueOf(exts[1]));
-                } else if (l.equals("image_extent3")) {
-                    ((JTextField) comp).setText(String.valueOf(exts[2]));
-                } else if (l.equals("image_extent4")) {
-                    ((JTextField) comp).setText(String.valueOf(exts[3]));
-                } else if (l.equals("image_extent5")) {
+                } else if (l.equalsIgnoreCase("image_extent3")) {
+                	if(img.getNDims() > 2) {
+                		((JTextField) comp).setText(String.valueOf(exts[2]));
+                	}
+                } else if (l.equalsIgnoreCase("image_extent4")) {
+                	if(img.getNDims() > 3) {
+                		((JTextField) comp).setText(String.valueOf(exts[3]));
+                	}
+                } else if (l.equalsIgnoreCase("image_extent5")) {
                     // for now...nothing
-                } else if (l.equals("image_unit1")) {
+                } else if (l.equalsIgnoreCase("image_unit1")) {
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equals(item)) {
+                        if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
-                } else if (l.equals("image_unit2")) {
+                } else if (l.equalsIgnoreCase("image_unit2")) {
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equals(item)) {
+                        if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
-                } else if (l.equals("image_unit3")) {
-                    final JComboBox jc = (JComboBox) comp;
-                    for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equals(item)) {
-                            jc.setSelectedIndex(k);
-                        }
-                    }
-                } else if (l.equals("image_unit4")) {
-                    final JComboBox jc = (JComboBox) comp;
-                    for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equals(item)) {
-                            jc.setSelectedIndex(k);
-                        }
-                    }
-                } else if (l.equals("image_unit5")) {
+                } else if (l.equalsIgnoreCase("image_unit3")) {
+                	if(img.getNDims() > 2) {
+	                    final JComboBox jc = (JComboBox) comp;
+	                    for (int k = 0; k < jc.getItemCount(); k++) {
+	                        final String item = (String) jc.getItemAt(k);
+	                        if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equalsIgnoreCase(item)) {
+	                            jc.setSelectedIndex(k);
+	                        }
+	                    }
+                	}
+                } else if (l.equalsIgnoreCase("image_unit4")) {
+                	if(img.getNDims() > 3) {
+	                    final JComboBox jc = (JComboBox) comp;
+	                    for (int k = 0; k < jc.getItemCount(); k++) {
+	                        final String item = (String) jc.getItemAt(k);
+	                        if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equalsIgnoreCase(item)) {
+	                            jc.setSelectedIndex(k);
+	                        }
+	                    }
+                	}
+                } else if (l.equalsIgnoreCase("image_unit5")) {
                     // for now...nothing
-                } else if (l.equals("image_resolution1")) {
+                } else if (l.equalsIgnoreCase("image_resolution1")) {
                     ((JTextField) comp).setText(String.valueOf(res[0]));
-                } else if (l.equals("image_resolution2")) {
+                } else if (l.equalsIgnoreCase("image_resolution2")) {
                     ((JTextField) comp).setText(String.valueOf(res[1]));
-                } else if (l.equals("image_resolution3")) {
-                    ((JTextField) comp).setText(String.valueOf(res[2]));
-                } else if (l.equals("image_resolution4")) {
-                    ((JTextField) comp).setText(String.valueOf(res[3]));
-                } else if (l.equals("image_resolution5")) {
+                } else if (l.equalsIgnoreCase("image_resolution3")) {
+                	if(img.getNDims() > 2) {
+                		((JTextField) comp).setText(String.valueOf(res[2]));
+                	}
+                } else if (l.equalsIgnoreCase("image_resolution4")) {
+                	if(img.getNDims() > 3) {
+                		((JTextField) comp).setText(String.valueOf(res[3]));
+                	}
+                } else if (l.equalsIgnoreCase("image_resolution5")) {
                     // for now...nothing
-                } else if (l.equals("image_modality")) {
+                } else if (l.equalsIgnoreCase("image_modality")) {
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
-                        if (modalityString.equals(item)) {
+                        if (modalityString.equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
-                } else if (l.equals("image_slice_thickness")) {
+                } else if (l.equalsIgnoreCase("image_slice_thickness")) {
                     if (sliceThickness == 0) {
                         ((JTextField) comp).setText("");
                     } else {
                         ((JTextField) comp).setText(String.valueOf(sliceThickness));
                     }
-                } else if (l.equals("image_orientation")) {
+                } else if (l.equalsIgnoreCase("image_orientation")) {
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
-                        if (orientation.equals(item)) {
+                        if (orientation.equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
@@ -2398,199 +2183,177 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             ArrayList<String> errs;
             final StringBuffer errors = new StringBuffer();
             ;
-            if (command.equals("ok3")) {
+            if (command.equalsIgnoreCase("ok3")) {
                 errs = validateFields();
-                if (errs.size() == 0) {
-                	
-                	
-                	
-                	
-                	Set keySet = selectedFileDataStructureNames.keySet();
-                    Iterator iter = keySet.iterator();
-                    while (iter.hasNext()) {
-                        File f2 = (File) iter.next();
-                        if (file.getName().equals(f2.getName())) {
-                            ArrayList<String> dataStructsAL = selectedFileDataStructureNames.get(f2);
-                        	for(int i=0;i<dataStructsAL.size();i++) {
-                        		String dsName = dataStructsAL.get(i);
-                        		
-                        		
-                        		for(int k=0;k<selectedFileDataStructures.size();k++) {
-                                	String sName = selectedFileDataStructures.get(k).getShortname();
-                                	
-                                	if(dsName.equals(sName)) {
-                                	
-	                                	TreeMap<JLabel, JComponent> labelsAndComps = labelsAndComponentsTable.get(sName);
-	                                	
-	                                	
-	                                    complete(labelsAndComps, sName);	
-                                	}
-                                	
-                                	
-                                	
-                                }
-                        		
-                        		
-                        	}
+
+                	boolean isComplete = true;
+                	if (errs.size() != 0) {
+                		for (int i = 0; i < errs.size(); i++) {
+                            errors.append(" - " + errs.get(i) + "\n");
                         }
-                    }
+                        MipavUtil.displayWarning(errors.toString());
+                		isComplete = false;
+                	}
+
+                    complete(labelsAndComps, dataStructureName, isComplete);
 
                     enableDisableFinishButton();
                     dispose();
-                } else {
-                    for (int i = 0; i < errs.size(); i++) {
-                        errors.append(" - " + errs.get(i) + "\n");
-                    }
-                    MipavUtil.displayError("Please correct the following errors: \n" + errors.toString());
-                }
-            } else if (command.equals("cancel3")) {
-                // enableDisableCompleteDataElementsButton();
+
+            } else if (command.equalsIgnoreCase("cancel3")) {
                 enableDisableFinishButton();
                 dispose();
-            }else if(command.equals("add")) {
-            	String shortname = ((JMenuItem)e.getSource()).getText();
-            	
-            	ArrayList<String> selectedDataStructsAL = new ArrayList<String>();
-            	selectedDataStructsAL = selectedFileDataStructureNames.get(file);
-            	selectedDataStructsAL.add(shortname);
-            	selectedFileDataStructureNames.put(file, selectedDataStructsAL);
-            	
-            	
-            	//create tab
-            	JPanel panel = new JPanel(new GridBagLayout());
-                tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-                tabScrollPane.setPreferredSize(new Dimension(600, 200));
-                tabbedPane.addTab(shortname, tabScrollPane);
+            }else if(command.startsWith("browse_")) {
+        	 boolean isMultiFile = false;
+        	 if(dataStructureName.startsWith("image")) {
+        		 final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+                 fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
 
-            	documentElement = documentElements.get(shortname);
-           	    Iterator<OMElement> iter2 = documentElement.getChildElements();
-                //should only be 1 top level Data_Structure tag
-                dataStructElement = iter2.next();
-                namespace = dataStructElement.getNamespace().getNamespaceURI();
-                try {
-                    OMAttribute attr;
-                    QName qname;
+                 final JFileChooser chooser = fileChooser.getFileChooser();
+                 chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
 
-                    qname = new QName(namespace, "name");
-                    attr = dataStructElement.getAttribute(qname);
-                    final String n = attr.getAttributeValue();
+                 // default to TECH filter
+                 int filter = ViewImageFileFilter.TECH;
 
-                    qname = new QName(namespace, "short_name");
-                    attr = dataStructElement.getAttribute(qname);
-                    final String s = attr.getAttributeValue();
+                 try {
+                     filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
+                 } catch (final NumberFormatException nfe) {
 
-                    qname = new QName(namespace, "desc");
-                    attr = dataStructElement.getAttribute(qname);
-                    final String d = attr.getAttributeValue();
+                     // an invalid value was set in preferences -- so don't use it!
+                     filter = -1;
+                 }
 
-                    qname = new QName(namespace, "version");
-                    attr = dataStructElement.getAttribute(qname);
-                    final String v = attr.getAttributeValue();
+                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
+                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
 
-                    qname = new QName(namespace, "type");
-                    attr = dataStructElement.getAttribute(qname);
-                    final String t = attr.getAttributeValue();
+                 if (filter != -1) {
+                     // it seems that the set command adds the filter again...
+                     // chooser.addChoosableFileFilter(new ViewImageFileFilter(filter));
 
-                    DataStruct dataStruct = new DataStruct(n, s, d, v, t);
-                    selectedFileDataStructures.add(dataStruct);
+                     // if filter is something we already added, then remove it before
+                     // setting it..... (kludgy, kludgy....)
+                     final javax.swing.filechooser.FileFilter found = ViewOpenFileUI.findFilter(chooser, filter);
 
-                    TreeMap<JLabel, JComponent> labelsAndComps = new TreeMap<JLabel, JComponent>(new JLabelComparator());
-                    
-                    parse(dataStructElement, dataStruct, shortname, labelsAndComps);
+                     if (found != null) {
+                         chooser.removeChoosableFileFilter(found);
+                     }
 
-                    parseForInitLabelsAndComponents(dataStruct, labelsAndComps);
-                    
-                    populateFields(labelsAndComps);
+                     // initially set to the preferences
+                     chooser.setFileFilter(new ViewImageFileFilter(filter));
+                 }
 
-                    labelsAndComponentsTable.put(shortname, labelsAndComps);
-                }catch(Exception ex) {
-                	ex.printStackTrace();
-                }
+                 final int returnVal = chooser.showOpenDialog(this);
 
-                JMenuItem itemOpen = new JMenuItem(shortname);
-                itemOpen.addActionListener(this);
-                itemOpen.setActionCommand("remove");
-                itemOpen.setFont(MipavUtil.font12B);
-                removeMenu.add(itemOpen);
-                
-                int numItems = addMenu.getItemCount();
-                for(int i=0;i<numItems;i++) {
-                	JMenuItem item = addMenu.getItem(i);
-                	String itemText = item.getText();
-                	if(shortname.equals(itemText)) {
-                		addMenu.remove(i);
-                		break;
-                	}
-                	
-                }
+                 if (returnVal == JFileChooser.APPROVE_OPTION) {
+                     isMultiFile = fileChooser.isMulti();
 
-            	this.repaint();
-            	sourceTableModel.setValueAt("No", sourceTable.getSelectedRow(), 1);
+                     File file = chooser.getSelectedFile();
+                     ViewUserInterface.getReference().setDefaultDirectory(file.getParent());
 
-            }else if(command.equals("remove")) {
-            	
-            	int numTabs = tabbedPane.getTabCount();
-            	
-            	if(numTabs < 2) {
-            		MipavUtil.displayError("There must be at least 1 Data Structure associated with each file");
-            		return;
-            	}
+     	            FileIO fileIO = new FileIO();
+     	            fileIO.setQuiet(true);
+     	            ModelImage srcImage = fileIO.readImage(file.getName(), file.getParent()
+     	                                + File.separator, isMultiFile, null);
+     	                        
+     	            if(srcImage != null) {
+     	            	
+     	            	String labelName = command.substring(command.indexOf("_")+1, command.length());
+     	            	
+     	            	Set keySet = labelsAndComps.keySet();
+     	                Iterator iter = keySet.iterator();
+     	                while (iter.hasNext()) {
+     	                   final JLabel l = (JLabel) iter.next();
+     	                  if(l.getName().equalsIgnoreCase("image_thumbnail_file")) {
+     	                	 JTextField tf = (JTextField)labelsAndComps.get(l);
+     	                	 String n = file.getName();
+     	                	 tf.setText(n.substring(0, n.lastIndexOf(".")) + ".jpg"); 
+    	                   }else if(l.getName().equalsIgnoreCase(labelName)) {
+     	                	  JTextField tf = (JTextField)labelsAndComps.get(l);
+     	                	  tf.setText(file.getName());
+     	                	  tf.setEnabled(false);
+     	                   }
+     	                   
+     	                }
+     	                  
 
-            	String shortname = ((JMenuItem)e.getSource()).getText();
+     	            	final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
 
-            	ArrayList<String> selectedDataStructsAL = new ArrayList<String>();
-            	selectedDataStructsAL = selectedFileDataStructureNames.get(file);
-            	selectedDataStructsAL.remove(shortname);
-            	selectedFileDataStructureNames.put(file, selectedDataStructsAL);
+     	                previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
+     	                int slice = 0;
+     	                if ( !srcImage.is2DImage()) {
+     	                    slice = (srcImage.getExtents()[2] / 2);
+     	                }
+     	                previewImg.createImg(slice);
 
-            for(int i=0;i<numTabs;i++) {
-            	String tabName = tabbedPane.getTitleAt(i);
-            	if(tabName.equals(shortname)) {
-            		tabbedPane.removeTabAt(i);
-            		break;
-            	}
-            }
-            
-            JMenuItem itemOpen = new JMenuItem(shortname);
-            itemOpen.addActionListener(this);
-            itemOpen.setActionCommand("add");
-            itemOpen.setFont(MipavUtil.font12B);
-            addMenu.add(itemOpen);
-            
-            int numItems = removeMenu.getItemCount();
-            for(int i=0;i<numItems;i++) {
-            	JMenuItem item = removeMenu.getItem(i);
-            	String itemText = item.getText();
-            	if(shortname.equals(itemText)) {
-            		removeMenu.remove(i);
-            		break;
-            	}
-            	
-            }
+     	                previewPanel.removeAll();
+     	                previewPanel.repaint();
 
-            this.repaint();
+     	               
+     	                
+     	                previewPanel.add(previewImg);
+     	                
+     	                addedPreviewImage = true;
 
-            Hashtable<String, LinkedHashMap<String, String>> hTable;
-            if(infoTable.get(file) != null) {
+     	               if(launchedFromInProcessState) {
+    	                	int selectedRow = sourceTable.getSelectedRow();
+    	                	previewImages.set(selectedRow, previewImg);
+    	                	previewImages.get(selectedRow).setSliceBrightness(brightness, contrast);
+    	                	imageFiles.set(selectedRow, file);
+    	                	multifiles.set(selectedRow, new Boolean(isMultiFile));
+    	                	
+    	                }else {
+    	                	int size = previewImages.size();
+    	                	previewImages.set(size-1, previewImg);
+    	                	previewImages.get(size-1).setSliceBrightness(brightness, contrast);
+    	                	imageFiles.set(size-1, file);
+    	                	multifiles.set(size-1, new Boolean(isMultiFile));
+    	                }
+     	               
+     	               
 
-            	hTable = infoTable.get(file);
-            	
-            	hTable.remove(shortname);
-            	
-            	infoTable.put(file, hTable);
-            	
-            }
+     	                previewPanel.validate();
+     	                previewPanel.repaint();
+     	                
+     	               populateFields(labelsAndComps,srcImage);
+     	                
+     	                
 
-            
-            
-            
-            
-            
-            
-            	
-            	
-            }
+     	                srcImage.disposeLocal();
+     	                srcImage = null;
+
+     	            }
+
+                 }
+        	 }else {
+        		 JFileChooser chooser = new JFileChooser();
+        		 chooser.setDialogTitle("Choose file");
+        	     int returnValue = chooser.showOpenDialog(this);
+    	        if (returnValue == JFileChooser.APPROVE_OPTION) {
+    	        	
+    	        	
+    	        	
+    	        	String labelName = command.substring(command.indexOf("_")+1, command.length());
+    	        	
+    	        	 File file = chooser.getSelectedFile();
+ 	            	
+ 	            	Set keySet = labelsAndComps.keySet();
+ 	                Iterator iter = keySet.iterator();
+ 	                while (iter.hasNext()) {
+ 	                   final JLabel l = (JLabel) iter.next();
+ 	                   if(l.getName().equalsIgnoreCase(labelName)) {
+ 	                	  JTextField tf = (JTextField)labelsAndComps.get(l);
+ 	                	  tf.setText(file.getAbsolutePath());
+ 	                	  tf.setEnabled(false);
+ 	                	   break;
+ 	                   }
+ 	                }
+
+    	        }
+        	 }
+        	 
+         }
 
         }
 
@@ -2601,30 +2364,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          */
         public ArrayList<String> validateFields() {
             ArrayList<String> errs = new ArrayList<String>();
-            
-            
-            
-            
-            Set keySet = selectedFileDataStructureNames.keySet();
-            Iterator iter = keySet.iterator();
-            while (iter.hasNext()) {
-                File f2 = (File) iter.next();
-                if (file.getName().equals(f2.getName())) {
-                    ArrayList<String> dataStructsAL = selectedFileDataStructureNames.get(f2);
-                	for(int i=0;i<dataStructsAL.size();i++) {
-                		String dsName = dataStructsAL.get(i);
-                		
-                		for(int k=0;k<selectedFileDataStructures.size();k++) {
-                        	String sName = selectedFileDataStructures.get(k).getShortname();
-                        	
-                        	if(dsName.equals(sName)) {
-	                        	TreeMap<JLabel, JComponent> labelsAndComps = labelsAndComponentsTable.get(sName);
-	                        	parseDataStructForValidation(selectedFileDataStructures.get(k), file, errs, labelsAndComps);
-                        	}
-                        }
-                	}
-                }
+
+            for(int k=0;k<dataStructures.size();k++) {
+            	String sName = dataStructures.get(k).getShortname();
+            	
+            	if(dataStructureName.equalsIgnoreCase(sName)) {
+            		 parseDataStructForValidation(dataStructures.get(k),errs, labelsAndComps);
+            	}
             }
+           
+            
+        	
 
             return errs;
 
@@ -2637,8 +2387,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          * @param imageFile
          * @param errs
          */
-        public void parseDataStructForValidation(final DataStruct ds2, final File imageFile,
-                final ArrayList<String> errs,TreeMap<JLabel, JComponent> labelsAndComps) {
+        public void parseDataStructForValidation(final DataStruct ds2, final ArrayList<String> errs,TreeMap<JLabel, JComponent> labelsAndComps) {
             String value = "";
             String key = "";
             String labelText = "";
@@ -2667,7 +2416,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         } else if (comp instanceof JComboBox) {
                             value = (String) ( ((JComboBox) comp).getSelectedItem());
                         }
-                        if (key.equals(name)) {
+                        if (key.equalsIgnoreCase(name)) {
                             found = true;
                             break;
                         }
@@ -2679,19 +2428,19 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         type = de.getType();
                         size = de.getSize();
                         valuerange = de.getValuerange();
-                        if (required.equals("Required")) {
-                            if (value.trim().equals("")) {
+                        if (required.equalsIgnoreCase("Required")) {
+                            if (value.trim().equalsIgnoreCase("")) {
                                 errs.add(labelText + " is a required field");
                             } else {
-                                if (key.equals("subjectkey")) {
+                                if (key.equalsIgnoreCase("subjectkey")) {
                                     if ( !value.trim().startsWith("NDAR")) {
                                         errs.add(labelText + " must begin with NDAR");
                                     }
                                 }
                             }
                         }
-                        if (type.equals("Integer")) {
-                            if ( !value.trim().equals("")) {
+                        if (type.equalsIgnoreCase("Integer")) {
+                            if ( !value.trim().equalsIgnoreCase("")) {
                                 try {
                                     final int intValue = Integer.valueOf(value.trim()).intValue();
                                     if (valuerange.contains("+")) {
@@ -2723,8 +2472,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 }
                             }
                         }
-                        if (type.equals("Float")) {
-                            if ( !value.trim().equals("")) {
+                        if (type.equalsIgnoreCase("Float")) {
+                            if ( !value.trim().equalsIgnoreCase("")) {
                                 try {
                                     final float floatValue = Float.valueOf(value.trim()).floatValue();
                                     if (valuerange.contains("+")) {
@@ -2757,9 +2506,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 }
                             }
                         }
-                        if ( !size.equals("")) {
+                        if ( !size.equalsIgnoreCase("")) {
                             final int intValue = Integer.valueOf(size.trim()).intValue();
-                            if ( !value.trim().equals("")) {
+                            if ( !value.trim().equalsIgnoreCase("")) {
                                 if (value.length() > intValue) {
                                     errs.add(labelText + " must not exceed " + intValue + " in length");
                                 }
@@ -2768,19 +2517,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         }
                         found = false;
                     }
-                } /*else {
-                    final DataStruct ds3 = (DataStruct) o1;
-                    final String n = ds3.getName();
-                    final String v = ds3.getVersion();
-                    parseDataStructForValidation(ds3, imageFile, errs);
-                }*/
+                }
             }
         }
 
         /**
          * called after validation is done
          */
-        public void complete(TreeMap<JLabel, JComponent> labelsAndComps, String dataStructShortname) {
+        public void complete(TreeMap<JLabel, JComponent> labelsAndComps, String dataStructShortname, boolean isComplete) {
         	LinkedHashMap<String, String> infoMap = new LinkedHashMap<String, String>();
             String value = "";
             final Set keySet = labelsAndComps.keySet();
@@ -2788,29 +2532,79 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             while (iter.hasNext()) {
                 final JLabel label = (JLabel) iter.next();
                 final JComponent comp = labelsAndComps.get(label);
-                if (label.getName().equals("subjectkey")) {
+                if (label.getName().equalsIgnoreCase("subjectkey")) {
                     guid = ((JTextField) comp).getText().trim();
-                    outputFileNameBaseTable.put(file, guid);
                 }
                 final String key = label.getName();
                 if (comp instanceof JTextField) {
                     value = ((JTextField) comp).getText().trim();
+                    //ok...all files will go into the allOtherFiles AL
+                    
+                    File f = new File(value);
+                    if(f.isFile()) {
+                    	allOtherFiles.add(f);
+                    }
+                    
+                    
                 } else if (comp instanceof JComboBox) {
                     value = (String) ( ((JComboBox) comp).getSelectedItem());
                 }
                 infoMap.put(key, value);
             }
-            Hashtable<String, LinkedHashMap<String, String>> hTable;
-            if(infoTable.get(file) == null) {
-            	hTable = new Hashtable<String, LinkedHashMap<String, String>>();
-            }else {
-            	hTable = infoTable.get(file);
+
+            boolean guidKnown = true;
+            if(guid != null && !guid.trim().equalsIgnoreCase("")) {
+            	guidKnown = false;
             }
-            hTable.put(dataStructShortname, infoMap);
             
             
-            infoTable.put(file, hTable);
-            sourceTableModel.setValueAt("Yes", sourceTable.getSelectedRow(), 1);
+      
+            
+            String name = ""; 
+            
+            if(guid != null && !guid.trim().equalsIgnoreCase("")) {
+        		name = dataStructShortname + "_" + guid;
+        	}else {
+        		name = dataStructShortname + "_UNKNOWNGUID";
+        	}
+            
+            
+            if(launchedFromInProcessState) {
+            	int selectedRow = sourceTable.getSelectedRow();
+            	
+            	
+            	sourceTableModel.setValueAt(name, selectedRow, 0);
+	           	 if(isComplete) {
+	           		 sourceTableModel.setValueAt("Yes", selectedRow, 1);
+	           	 }else {
+	           		 sourceTableModel.setValueAt("No", selectedRow, 1);
+	           	 }
+            	
+	           	infoList.set(selectedRow, infoMap);
+	           	
+	           	allOtherFilesAL.set(selectedRow, allOtherFiles);
+            	
+            }else {
+            	if (!addedPreviewImage) {
+            		previewPanel.removeAll();
+            		previewPanel.repaint();
+            	}
+            	
+            	infoList.set(infoList.size()-1, infoMap);
+            	//infoTable.put(k, infoMap);
+                Vector rowData = new Vector();
+                rowData.add(name);
+                if(isComplete) {
+                	rowData.add("Yes");
+                }else {
+                	rowData.add("No");
+                }
+                sourceTableModel.addRow(rowData);
+                sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount() - 1, sourceTableModel.getRowCount() - 1);
+                
+                allOtherFilesAL.set(allOtherFilesAL.size()-1, allOtherFiles);
+            }
+
         }
 
         public void windowActivated(final WindowEvent e) {
@@ -3076,13 +2870,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 while(iter2.hasNext()) {
                 	OMElement e = iter2.next();
                 	
-                	if (e.getLocalName().equals("data_structure"))
+                	if (e.getLocalName().equalsIgnoreCase("data_structure"))
                 	 {
                 	  String dataType = e.getAttributeValue(qDataType);
                 	  String parent = e.getAttributeValue(qParentDataStructure);
                 	  String shortname = e.getAttributeValue(qName);
-                	if(dataType.equals("Imaging")) {
-                		if(parent.trim().equals("")) {
+                	if(dataType.equalsIgnoreCase("Imaging")) {
+                		if(parent.trim().equalsIgnoreCase("")) {
                 			//set up all the OMElements
                 			OMElement ome = client.getDataDictionary(shortname);
                 			documentElements.put(shortname, ome);
