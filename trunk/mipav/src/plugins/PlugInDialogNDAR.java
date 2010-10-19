@@ -660,7 +660,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         for (int i = 0; i < numDataStructs; i++) {
         	int collisionCounter = 1;
         	String name = (String)sourceTableModel.getValueAt(i, 0);
-        	String guid = name.substring(name.lastIndexOf("_")+1, name.length());
+        	
+
+        	String guid = name.substring(name.indexOf("_NDAR")+1, name.length());
+
         	
         	File imageFile = imageFiles.get(i);
         	String outputFileNameBase;
@@ -679,7 +682,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 
                 int modality = origImage.getFileInfo(0).getModality();
                 String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
-                String dsName = name.substring(0, name.lastIndexOf("_"));
+                
+                String dsName = name.substring(0, name.indexOf("_NDAR"));
+                
                 
                 outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
                 
@@ -726,8 +731,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         		//this means that this is another data structure besides image
         		
         		printlnToLog("Creating submission file for " + name);
-        		
-        		String dsName = name.substring(0, name.lastIndexOf("_"));
+        
+        		String dsName = name.substring(0, name.indexOf("_NDAR"));
         		
         		outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
         		
@@ -823,7 +828,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         try {
         	
         	String name = (String)sourceTableModel.getValueAt(counter, 0);
-        	String dsName = name.substring(0,name.lastIndexOf("_"));
+
+        	String dsName = name.substring(0, name.indexOf("_NDAR"));
         	
         	String xmlFileName = outputFileNameBase + ".xml";
             
@@ -1685,8 +1691,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             this.launchedFromInProcessState = launchedFromInProcessState;
             
             if(launchedFromInProcessState) {
-            	if(name.toLowerCase().contains("_ndar")) {
-            		this.dataStructureName = name.toLowerCase().substring(0, name.toLowerCase().indexOf("_ndar"));
+            	if(name.contains("_NDAR")) {
+            		this.dataStructureName = name.substring(0, name.indexOf("_NDAR"));
             	}else {
             		this.dataStructureName = name.substring(0, name.lastIndexOf("_"));
             	}
