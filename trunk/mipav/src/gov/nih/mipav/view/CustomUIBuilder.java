@@ -48,13 +48,13 @@ public class CustomUIBuilder {
 
 
     public static final UIParams PARAM_VOI_COLOR = new UIParams("VOIColor", "Current/change VOI Color", "transparent");
-    public static final UIParams PARAM_VOI_NEW = new UIParams("NewVOI", "Initiate new VOI", "newvoi");
-    public static final UIParams PARAM_VOI_UNDO = new UIParams("undoVOI", "Undo last VOI change (Ctrl-Z)", "undopaint");
-    public static final UIParams PARAM_VOI_REDO = new UIParams("redoVOI", "Redo last VOI change (Ctrl-Y)", "redopaint");
-    public static final UIParams PARAM_VOI_DELETE = new UIParams("deleteVOI", "Delete contour (Del)", "delete");
-    public static final UIParams PARAM_VOI_CUT = new UIParams("cutVOI", "Cut selected contour (Ctrl-X)", "cutpaint");
-    public static final UIParams PARAM_VOI_COPY = new UIParams("copyVOI", "Copy selected contour (Ctrl-C)", "copypaint");
-    public static final UIParams PARAM_VOI_PASTE = new UIParams("pasteVOI", "Paste contour (Ctrl-V)", "pastepaint");
+    public static final UIParams PARAM_VOI_NEW = new UIParams("New VOI", "NewVOI", UIParams.INVALID_MNEMONIC, "Initiate new VOI", "newvoi");
+    public static final UIParams PARAM_VOI_UNDO = new UIParams("Undo VOI Action", "undoVOI", UIParams.INVALID_MNEMONIC, "Undo last VOI change (Ctrl-Z)", "undopaint");
+    public static final UIParams PARAM_VOI_REDO = new UIParams("Redo VOI Action", "redoVOI", UIParams.INVALID_MNEMONIC, "Redo last VOI change (Ctrl-Y)", "redopaint");
+    public static final UIParams PARAM_VOI_DELETE = new UIParams("Delete VOI", "deleteVOI", UIParams.INVALID_MNEMONIC, "Delete contour (Del)", "delete");
+    public static final UIParams PARAM_VOI_CUT = new UIParams("Cut VOI", "cutVOI", UIParams.INVALID_MNEMONIC, "Cut selected contour (Ctrl-X)", "cutpaint");
+    public static final UIParams PARAM_VOI_COPY = new UIParams("Copy VOI", "copyVOI", UIParams.INVALID_MNEMONIC, "Copy selected contour (Ctrl-C)", "copypaint");
+    public static final UIParams PARAM_VOI_PASTE = new UIParams("Paste VOI", "pasteVOI", UIParams.INVALID_MNEMONIC, "Paste contour (Ctrl-V)", "pastepaint");
     public static final UIParams PARAM_VOI_PROPAGATE_DOWN = new UIParams("PropVOIDown", "To previous slice", "voipropd");
     public static final UIParams PARAM_VOI_PROPAGATE_UP = new UIParams("PropVOIUp", "To next slice", "voipropu");
     public static final UIParams PARAM_VOI_PROPAGATE_ALL = new UIParams("PropVOIAll", "To all slices", "voipropall");
