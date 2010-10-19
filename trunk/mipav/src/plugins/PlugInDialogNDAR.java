@@ -1535,6 +1535,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             	}
             };
             
+            structsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); 
+            
             for (int i = 0; i < columnNames.length; i++) {
             	structsModel.addColumn(columnNames[i]);
             }
