@@ -764,7 +764,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         		                        if(value.equals(f.getAbsolutePath())) {
         		                        	prefix = value.substring(0, value.lastIndexOf("."));
         	        						suffix = value.substring(value.lastIndexOf(".") + 1, value.length());
-        		                        	infoMap.put(key, prefix + "_" + collisionCounter + "." + suffix);
+        		                        	infoMap.put(key, prefix + "_" + collisionCounter + "." + suffix + "_collision");
         		                        	break;
         		                        	
         		                        }
@@ -911,9 +911,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 if ( !value.trim().equalsIgnoreCase("")) {
                 	
                 	 File f = new File(value);
-                     if(f.isFile()) {
-                    	 String filename = f.getName();
-                    	 value = outputFileNameBase + File.separator + filename;
+                     if(f.isFile() || value.endsWith("_collision")) {
+                    	 if(value.endsWith("_collision")) {
+                    		 value = value.substring(0, value.indexOf("_collision"));
+                    		 String filename = value.substring(value.lastIndexOf(File.separator) + 1, value.length());
+                    		 value = outputFileNameBase + File.separator + filename;
+                    	 }else {
+                    		 String filename = f.getName();
+                    		 value = outputFileNameBase + File.separator + filename;
+                    	 }
                     	 
                      }
                 	
@@ -2282,7 +2288,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      	                  if(l.getName().equalsIgnoreCase("image_thumbnail_file")) {
      	                	 JTextField tf = (JTextField)labelsAndComps.get(l);
      	                	 String n = file.getName();
-     	                	 tf.setText(n.substring(0, n.lastIndexOf(".")) + ".jpg"); 
+     	                	 tf.setText("Automatically generated JPEG"); 
     	                   }else if(l.getName().equalsIgnoreCase(labelName)) {
      	                	  JTextField tf = (JTextField)labelsAndComps.get(l);
      	                	  tf.setText(file.getName());
