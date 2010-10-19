@@ -17,7 +17,7 @@ import gov.nih.mipav.view.Preferences;
  * </p>
  * 
  * <p>
- * Hollenbeck algorithm modification: The time vector is split in segements of equal magnitude which are inverted
+ * Hollenbeck algorithm modification: The time vector is split in segments of equal magnitude which are inverted
  * individually. This gives better overall accuracy.
  * </p>
  * 
