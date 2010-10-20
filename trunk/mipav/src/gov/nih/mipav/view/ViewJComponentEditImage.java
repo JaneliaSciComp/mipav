@@ -5050,8 +5050,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         else
                         {
                             voiManager.draw( kVOI3D, 
-                                    imageA.getResolutions(0, orientation), 
-                                    imageA.getUnitsOfMeasure(0, orientation), slice, orientation, 
+                                    imageA.getResolutions(0), 
+                                    imageA.getUnitsOfMeasure(), slice, orientation, 
                                     offscreenGraphics2d );
                         }
                     }
@@ -5076,8 +5076,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         {
                             offscreenGraphics2d.setColor( kVOI.getColor() );
                             voiManager.draw( kVOI3D, 
-                                    imageB.getResolutions(0, orientation), 
-                                    imageB.getUnitsOfMeasure(0, orientation), slice, orientation, 
+                                    imageB.getResolutions(0), 
+                                    imageB.getUnitsOfMeasure(), slice, orientation, 
                                     offscreenGraphics2d );
                         }
                     }

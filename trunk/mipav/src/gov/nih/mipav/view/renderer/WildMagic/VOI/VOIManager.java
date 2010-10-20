@@ -4378,7 +4378,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         Vector3f ptRetrace = null;
         double minDistance, dist;
-        int[] units = new int[3];
 
         if ( kVOIIn.getType() != VOI.CONTOUR )
         {
@@ -4412,9 +4411,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
 
             kVOI.setActive(false);
-            units[0] = 0;
-            units[1] = 0;
-            units[2] = 0;
 
             // Find nearest point in old contour
             minDistance = 9999999;

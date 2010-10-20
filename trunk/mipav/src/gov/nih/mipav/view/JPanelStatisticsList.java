@@ -133,10 +133,10 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
 
             // turn off eccentricity, principal axis, major axis, and
             // minor axis
-            setVisibleList(11, false);
-            setVisibleList(12, false);
-            setVisibleList(13, false);
-            setVisibleList(14, false);
+            //setVisibleList(11, false);
+            //setVisibleList(12, false);
+            //setVisibleList(13, false);
+            //setVisibleList(14, false);
         }
     }
 
