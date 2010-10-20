@@ -697,12 +697,17 @@ public class VOIContour extends VOIBase {
 		getMask();
 		int nPts = m_kMask.cardinality();
 
+		
+		
+		
 		int xUnits = kImage.getUnitsOfMeasure().length > 0 ? kImage.getUnitsOfMeasure()[0] : 1;
 		int yUnits = kImage.getUnitsOfMeasure().length > 1 ? kImage.getUnitsOfMeasure()[1] : 1;
+		int zUnits = kImage.getUnitsOfMeasure().length > 2 ? kImage.getUnitsOfMeasure()[2] : 1;
 		float xRes = kImage.getResolutions(0).length > 0 ? kImage.getResolutions(0)[0] : 1;
 		float yRes = kImage.getResolutions(0).length > 1 ? kImage.getResolutions(0)[1] : 1;
 		float zRes = kImage.getResolutions(0).length > 2 ? kImage.getResolutions(0)[2] : 1;
-
+		
+		
 		double m10 = 0.0;
 		double m01 = 0.0;
 
@@ -718,33 +723,33 @@ public class VOIContour extends VOIBase {
 			{
 				if ( (m_iPlane&ZPLANE) == ZPLANE )
 				{
-					if (xUnits == yUnits) {
+					//if (xUnits == yUnits) {
 						m10 += m_kMaskPositions.elementAt(i).X * xRes;
 						m01 += m_kMaskPositions.elementAt(i).Y * yRes;
-					} else {
-						m10 += m_kMaskPositions.elementAt(i).X;
-						m01 += m_kMaskPositions.elementAt(i).Y;
-					}        	
+					//} else {
+					//	m10 += m_kMaskPositions.elementAt(i).X;
+					//	m01 += m_kMaskPositions.elementAt(i).Y;
+					//}        	
 				}
 				else if ( (m_iPlane&XPLANE) == XPLANE )
 				{
-					if (xUnits == yUnits) {
+					//if (yUnits == zUnits) {
 						m10 += m_kMaskPositions.elementAt(i).Y * yRes;
 						m01 += m_kMaskPositions.elementAt(i).Z * zRes;
-					} else {
-						m10 += m_kMaskPositions.elementAt(i).Y;
-						m01 += m_kMaskPositions.elementAt(i).Z;
-					}        	
+					//} else {
+					//	m10 += m_kMaskPositions.elementAt(i).Y;
+					//	m01 += m_kMaskPositions.elementAt(i).Z;
+					//}        	
 				}
 				else if ( (m_iPlane&YPLANE) == YPLANE )
 				{
-					if (xUnits == yUnits) {
+					//if (xUnits == zUnits) {
 						m10 += m_kMaskPositions.elementAt(i).X * xRes;
 						m01 += m_kMaskPositions.elementAt(i).Z * zRes;
-					} else {
-						m10 += m_kMaskPositions.elementAt(i).X;
-						m01 += m_kMaskPositions.elementAt(i).Z;
-					}        	
+					//} else {
+					//	m10 += m_kMaskPositions.elementAt(i).X;
+					//	m01 += m_kMaskPositions.elementAt(i).Z;
+					//}        	
 				}
 			}        
 
@@ -761,33 +766,33 @@ public class VOIContour extends VOIBase {
 			{
 				if ( (m_iPlane&ZPLANE) == ZPLANE )
 				{
-					if (xUnits == yUnits) {
+					//if (xUnits == yUnits) {
 						xdiff = (m_kMaskPositions.elementAt(i).X * xRes) - m10;
 						ydiff = (m_kMaskPositions.elementAt(i).Y * yRes) - m01;
-					} else {
-						xdiff = m_kMaskPositions.elementAt(i).X - m10;
-						ydiff = m_kMaskPositions.elementAt(i).Y - m01;
-					}        	
+					//} else {
+					//	xdiff = m_kMaskPositions.elementAt(i).X - m10;
+					//	ydiff = m_kMaskPositions.elementAt(i).Y - m01;
+					//}        	
 				}
 				else if ( (m_iPlane&XPLANE) == XPLANE )
 				{
-					if (xUnits == yUnits) {
+					//if (yUnits == zUnits) {
 						xdiff = (m_kMaskPositions.elementAt(i).Y * yRes) - m10;
 						ydiff = (m_kMaskPositions.elementAt(i).Z * zRes) - m01;
-					} else {
-						xdiff = m_kMaskPositions.elementAt(i).Y - m10;
-						ydiff = m_kMaskPositions.elementAt(i).Z - m01;
-					}        	
+					//} else {
+					//	xdiff = m_kMaskPositions.elementAt(i).Y - m10;
+					//	ydiff = m_kMaskPositions.elementAt(i).Z - m01;
+					//}        	
 				}
 				else if ( (m_iPlane&YPLANE) == YPLANE )
 				{
-					if (xUnits == yUnits) {
+					//if (xUnits == zUnits) {
 						xdiff = (m_kMaskPositions.elementAt(i).X * xRes) - m10;
 						ydiff = (m_kMaskPositions.elementAt(i).Z * zRes) - m01;
-					} else {
-						xdiff = m_kMaskPositions.elementAt(i).X - m10;
-						ydiff = m_kMaskPositions.elementAt(i).Z - m01;
-					}        	
+					//} else {
+					//	xdiff = m_kMaskPositions.elementAt(i).X - m10;
+					//	ydiff = m_kMaskPositions.elementAt(i).Z - m01;
+					//}        	
 				}
 				m20 += xdiff * xdiff;
 				m11 += xdiff * ydiff;
@@ -807,12 +812,25 @@ public class VOIContour extends VOIBase {
 			minorAxis[0] = (float) Math.sqrt(2.0 * (m20 + m02 - root));
 
 			double areaEllipse = (Math.PI / 4.0) * majorAxis[0] * minorAxis[0];
-			double normFactor;
+			double normFactor = Math.sqrt(nPts / areaEllipse);
 
-			if (xUnits == yUnits) {
-				normFactor = Math.sqrt(xRes * yRes * nPts / areaEllipse);
-			} else {
-				normFactor = Math.sqrt(nPts / areaEllipse);
+			if ( (m_iPlane&ZPLANE) == ZPLANE )
+			{
+				//if (xUnits == yUnits) {
+					normFactor = Math.sqrt(xRes * yRes * nPts / areaEllipse);
+				//}			
+			}
+			else if ( (m_iPlane&XPLANE) == XPLANE )
+			{
+				//if (yUnits == zUnits) {
+					normFactor = Math.sqrt(yRes * zRes * nPts / areaEllipse);
+				//} 				
+			}
+			else if ( (m_iPlane&YPLANE) == YPLANE )
+			{
+				//if (xUnits == zUnits) {
+					normFactor = Math.sqrt(xRes * zRes * nPts / areaEllipse);
+				//}				
 			}
 
 			majorAxis[0] = (float) (normFactor * majorAxis[0]);

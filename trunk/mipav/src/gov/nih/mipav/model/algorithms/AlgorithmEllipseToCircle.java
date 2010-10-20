@@ -160,7 +160,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         int numErrors = 0;
         double sinr[] = new double[1];
         double sini[] = new double[1];
-        boolean test = false;
+        boolean test = true;
         
         if (test) {
             selfTest();
@@ -273,22 +273,18 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         shigh = 0.999;
         smid = (slow + shigh)/2.0;
         while (true) {
-            eInt = new EllipticIntegral(Math.sqrt(1.0 - smid*smid), first, second); 
-            eInt.run();
-            knum = first[0];
-            eInt = new EllipticIntegral(smid, first, second);
-            eInt.run();
-            kdenom = first[0];
-            
-            
-
+            //eInt = new EllipticIntegral(Math.sqrt(1.0 - smid*smid), first, second); 
+            //eInt.run();
+            //knum = first[0];
             de.jtem.mfc.field.Complex kComplex = new de.jtem.mfc.field.Complex(Math.sqrt(1.0 - smid*smid));
             de.jtem.mfc.field.Complex kPrimeComplex = Jacobi.K_from_k(kComplex);
-            System.err.println( "TESTING JTEM " + knum + " == ? " + kPrimeComplex.getRe() + " " + kPrimeComplex.getIm() );
-            
+            knum = kPrimeComplex.getRe();
+            //eInt = new EllipticIntegral(smid, first, second);
+            //eInt.run();
+            //kdenom = first[0];
             de.jtem.mfc.field.Complex kComplex2 = new de.jtem.mfc.field.Complex(smid);
             de.jtem.mfc.field.Complex kPrimeComplex2 = Jacobi.K_from_k(kComplex2);
-            System.err.println( "TESTING2 JTEM " + kdenom + " == ? "  + kPrimeComplex2.getRe() + " " + kPrimeComplex2.getIm() );
+            kdenom = kPrimeComplex2.getRe();
             
             
             usmid = pihf * knum/kdenom;
@@ -368,16 +364,23 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
                     phir = prodr[0];
                     phii = prodi[0];
                     error[0] = 0;
+                    // TO: William Gandler: need to replace the EllipticIntegral with the
+                    // equivalent incomplete elliptic integral from JTEM (See JTEM Jacobi.K_from_k for
+                    // an example of the complete elliptic integral.
                     eInt = new EllipticIntegral(complete, modr, modi, complementaryModulusUsed, analyticContinuationUsed,
                                phir, phii, firstr, firsti, secondr, secondi, useStandardMethod, error);
                     eInt.run();
                     if (error[0] == 1) {
                         numErrors++;
                     }
-                                        
+                    
+
                     // Multiply by PI/(2*K(s)) = coef;
                     firstr[0] = coef * firstr[0];
                     firsti[0] = coef * firsti[0];
+                    
+                    
+                    
                     zsin(firstr[0], firsti[0], sinr, sini);
                     // Now map from the standard ellipse on the xaxis with foci at +- 1
                     // to the original drawn ellipse
@@ -641,9 +644,11 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         EllipticIntegral ei;
         double first[] = new double[1];
         double second[] = new double[1];
+        // TO: William Gandler: need to compute complete elliptic integral of the second kind
         ei = new EllipticIntegral(e, first, second);
         ei.run();
         maxEllipsePoints = (int)Math.ceil(4.0 * a * second[0]);
+        
         float xArr[] = new float[maxEllipsePoints];
         float yArr[] = new float[maxEllipsePoints];
         float zArr[] = new float[maxEllipsePoints];
