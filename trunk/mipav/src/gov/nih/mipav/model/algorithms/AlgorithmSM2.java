@@ -229,6 +229,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
         final boolean selfTest2 = false;
         final boolean nl2solTest = false;
         final boolean dqedTest = false;
+        final boolean Integration2Test = false;
+        final boolean Integration2EPTest = false;
         int voiCount;
         double delT;
         long normalTerminations = 0;
@@ -765,6 +767,18 @@ public class AlgorithmSM2 extends AlgorithmBase {
         if (dqedTest) {
         	boolean dqedSelfTest = true;
         	new DQED(dqedSelfTest);
+        	setCompleted(false);
+        	return;
+        }
+        
+        if (Integration2Test) {
+        	new Integration2All();
+        	setCompleted(false);
+        	return;
+        }
+        
+        if (Integration2EPTest) {
+        	new Integration2EPAll();
         	setCompleted(false);
         	return;
         }
@@ -3043,6 +3057,28 @@ public class AlgorithmSM2 extends AlgorithmBase {
      * 
      * return; } }
      */
+    
+    class Integration2All extends Integration2 {
+    	public Integration2All() {
+    		super();
+    	}
+    	
+    	public double intFunc(double x) {
+    		double function = 0.0;
+    		return function;
+    	}
+    }
+    
+    class Integration2EPAll extends Integration2EP {
+    	public Integration2EPAll() {
+    		super();
+    	}
+    	
+    	public DoubleDouble intFunc(DoubleDouble x) {
+    		DoubleDouble function = DoubleDouble.valueOf(0.0);
+    		return function;
+    	}
+    }
 
     class FitAllNL2 extends NL2sol {
         public FitAllNL2() {
