@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import de.jtem.numericalMethods.calculus.function.RealFunctionOfOneVariable;
+import de.jtem.numericalMethods.calculus.minimizing.Brent;
 import gov.nih.mipav.model.algorithms.filters.*;
 
 import gov.nih.mipav.view.*;
@@ -26,7 +28,7 @@ import gov.nih.mipav.view.*;
  * </ol>
  */
 
-public abstract class InverseLaplaceWeeks {
+public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
     // This Weeks method of inverting the Laplace Transform is a port of MATLAB
     // code obtained from a web page of Andre Weideman called ILT M-Files at
     // http://dip.sun.ac.za/~weideman/research/weeks.html
@@ -107,6 +109,9 @@ public abstract class InverseLaplaceWeeks {
 
     /** DOCUMENT ME! */
     private double tols = 1.0e-6;
+
+    private boolean bGolden = false;
+    private double dSig = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -328,16 +333,30 @@ public abstract class InverseLaplaceWeeks {
      * DOCUMENT ME!
      */
     public void wpar2() {
+        double[] X = new double[2];
         double gold;
         ax2 = sig0;
         bx2 = (sig0 + sigmax) / 2.0;
         cx2 = sigmax;
         gold = golden2();
+        boolean bGoldenSave = bGolden;
+        bGolden = false;
+        Brent.search( ax, bx, cx, X, this, tolb);
+        System.err.println( gold + "== " + X[1] + " " + sigOpt + " == " + X[0] );
+        sigOpt = X[0];
+        bGolden = bGoldenSave;
 
         ax = 0;
         bx = bmax / 2.0;
         cx = bmax;
         gold = golden(sigOpt);
+        bGoldenSave = bGolden;
+        bGolden = true;
+        dSig = sigOpt;
+        Brent.search( ax, bx, cx, X, this, tolb);
+        System.err.println( gold + " == " + X[1] + " " + bOpt + " == " + X[0] );
+        bOpt = X[0];
+        bGolden = bGoldenSave;
     }
 
     /**
@@ -614,6 +633,16 @@ public abstract class InverseLaplaceWeeks {
         bx = bmax / 2.0;
         cx = bmax;
         gold = golden(sig);
+
+        boolean bGoldenSave = bGolden;
+        bGolden = true;
+        dSig = sig;
+        double[] X = new double[2];
+        Brent.search( ax, bx, cx, X, this, tolb);        
+        System.err.println( gold + " == " + X[1] + " " + bOpt + " == " + X[0] );
+        bOpt = X[0];
+        bGolden = bGoldenSave;
+        
         b = bOpt;
 
         M = 2 * nLaguerre;
@@ -690,5 +719,11 @@ public abstract class InverseLaplaceWeeks {
         }
     }
 
+    @Override
+    public double eval(double x) {
+    	if ( bGolden )
+    		return werr2t(x, dSig);
+    	return werr2e(x);
+    }
 
 }
