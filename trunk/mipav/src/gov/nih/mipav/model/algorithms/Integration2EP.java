@@ -282,8 +282,131 @@ public abstract class Integration2EP {
 
     /** DOCUMENT ME! */
     private DoubleDouble upper;
+    
+    private boolean selfTest = false;
+    
+    private int testCase = 1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+    
+    /**
+     * Constructor for running self tests.
+     */
+    public Integration2EP() {
+    	DoubleDouble neweps;
+    	DoubleDouble tol;
+        selfTest = true;
+        testCase = 1;
+        
+        epmach = DoubleDouble.valueOf(1.0);
+        neweps = DoubleDouble.valueOf(1.0);
+
+        while (true) {
+
+            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
+                break;
+            } else {
+                epmach = neweps;
+                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
+            }
+        }
+
+        tol = ((DoubleDouble.valueOf(50.0)).multiply(epmach)).max(DoubleDouble.valueOf(5.0E-29));
+        
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2.DQAGPE;
+        breakPoints = new DoubleDouble[4];
+        breakPoints[0] = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(7.0));
+        breakPoints[1] = (DoubleDouble.valueOf(2.0)).divide(DoubleDouble.valueOf(3.0));
+        epsabs = DoubleDouble.valueOf(0.0);
+        epsrel = DoubleDouble.valueOf(1.0E-3);
+        limit = 100;
+        
+        npts2 = breakPoints.length;
+        npts = npts2 - 2;
+
+        if (npts2 < 2) {
+            MipavUtil.displayError("breakPoints array length must be >= 2");
+            errorStatus = 6;
+
+            return;
+        }
+
+        for (int i = 0; i < (npts2 - 2); i++) {
+
+            if (breakPoints[i].lt(lower)) {
+                MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly < lower");
+                errorStatus = 6;
+
+                return;
+            }
+
+            if (breakPoints[i].gt(upper)) {
+                MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly > upper");
+                errorStatus = 6;
+
+                return;
+            }
+        } // for (int i = 0; i < npts2 - 2; i++)
+        
+        if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (limit <= npts) {
+            MipavUtil.displayError("Must set limit = " + limit + " > " + npts);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with absolute error = " + abserr[0] + "\n");
+        
+        testCase = 2;
+        bound = DoubleDouble.valueOf(0.0);
+        routine = Integration2.DQAGIE;
+        inf = 1;
+        epsabs = DoubleDouble.valueOf(0.0);
+        epsrel = DoubleDouble.valueOf(1.0E-3);
+        limit = 100;
+        
+        if ((inf != 1) && (inf != -1) && (inf != 2)) {
+            MipavUtil.displayError("inf must equal -1, 1, or 2");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with absolute error = " + abserr[0] + "\n");
+    }
 
     /**
      * Constructor for Integration Used with routine = DQNG.
@@ -623,6 +746,26 @@ public abstract class Integration2EP {
      * @return  DOCUMENT ME!
      */
     public abstract DoubleDouble intFunc(DoubleDouble x);
+    
+    private DoubleDouble intFuncTest(DoubleDouble x) {
+    	DoubleDouble function = DoubleDouble.valueOf(0.0);
+    	switch(testCase) {
+    	case 1:
+    		DoubleDouble oneSeventh = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(7.0));
+    		DoubleDouble twoThirds = (DoubleDouble.valueOf(2.0)).divide(DoubleDouble.valueOf(3.0));
+    		if ((x.ne(oneSeventh)) && (x.ne(twoThirds))) {
+    	          function = (((x.subtract(oneSeventh)).abs()).pow( -0.25)).multiply
+    	                     (((x.subtract(twoThirds)).abs()).pow( -0.55));
+    	        }
+    		break;
+    	case 2:
+    		if (x.isPositive()) {
+    	          function = ((x.sqrt()).multiply(x.log())).divide(((x.add(DoubleDouble.valueOf(1.0))).multiply(x.add(DoubleDouble.valueOf(2.0)))));
+    	        }
+    		break;
+    	}
+    	return function;
+    }
 
     /**
      * This is a port of the orginal FORTRAN code whose header is given below:
@@ -3072,7 +3215,12 @@ loop:
         // Compute the 15-point kronrod approximation to the integral, and
         // estimate the absolute error.
 
-        fc = intFunc(centr);
+        if (selfTest) {
+            fc = intFuncTest(centr);	
+        }
+        else {
+            fc = intFunc(centr);
+        }
         resg = fc.multiply(wg[3]);
         resk = fc.multiply(wgk[7]);
         resabs[0] = resk.abs();
@@ -3080,8 +3228,14 @@ loop:
         for (j = 0; j < 3; j++) {
             jtw = (2 * j) + 1;
             absc = hlgth.multiply(xgk[jtw]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtw] = fval1;
             fv2[jtw] = fval2;
             fsum = fval1.add(fval2);
@@ -3093,8 +3247,14 @@ loop:
         for (j = 0; j < 4; j++) {
             jtwm1 = 2 * j;
             absc = hlgth.multiply(xgk[jtwm1]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtwm1] = fval1;
             fv2[jtwm1] = fval2;
             fsum = fval1.add(fval2);
@@ -3251,10 +3411,20 @@ loop:
         centr = (DoubleDouble.valueOf(0.5)).multiply(a.add(b));
         hlgth = (DoubleDouble.valueOf(0.5)).multiply(b.subtract(a));
         tabsc1 = boun.add((dinf.multiply((DoubleDouble.valueOf(1.0)).subtract(centr))).divide(centr));
-        fval1 = intFunc(tabsc1);
+        if (selfTest) {
+        	fval1 = intFuncTest(tabsc1);	
+        }
+        else {
+            fval1 = intFunc(tabsc1);
+        }
 
         if (inf == 2) {
-            fval1 = fval1.add(intFunc(tabsc1.negate()));
+        	if (selfTest) {
+        		fval1 = fval1.add(intFuncTest(tabsc1.negate()));	
+        	}
+        	else {
+                fval1 = fval1.add(intFunc(tabsc1.negate()));
+        	}
         } // if (inf == 2)
 
         fc = (fval1.divide(centr)).divide(centr);
@@ -3272,12 +3442,24 @@ loop:
             absc2 = centr.add(absc);
             tabsc1 = boun.add((dinf.multiply((DoubleDouble.valueOf(1.0)).subtract(absc1))).divide(absc1));
             tabsc2 = boun.add((dinf.multiply((DoubleDouble.valueOf(1.0)).subtract(absc2))).divide(absc2));
-            fval1 = intFunc(tabsc1);
-            fval2 = intFunc(tabsc2);
+            if (selfTest) {
+            	fval1 = intFuncTest(tabsc1);
+                fval2 = intFuncTest(tabsc2);	
+            }
+            else {
+                fval1 = intFunc(tabsc1);
+                fval2 = intFunc(tabsc2);
+            }
 
             if (inf == 2) {
-                fval1 = fval1.add(intFunc(tabsc1.negate()));
-                fval2 = fval2.add(intFunc(tabsc2.negate()));
+            	if (selfTest) {
+            		fval1 = fval1.add(intFuncTest(tabsc1.negate()));
+                    fval2 = fval2.add(intFuncTest(tabsc2.negate()));	
+            	}
+            	else {
+                    fval1 = fval1.add(intFunc(tabsc1.negate()));
+                    fval2 = fval2.add(intFunc(tabsc2.negate()));
+            	}
             } // if (inf == 2)
 
             fval1 = (fval1.divide(absc1)).divide(absc1);
@@ -3433,15 +3615,26 @@ loop:
         // estimate the absolute error
 
         resg = DoubleDouble.valueOf(0.0);
-        fc = intFunc(centr);
+        if (selfTest) {
+        	fc = intFuncTest(centr);	
+        }
+        else {
+            fc = intFunc(centr);
+        }
         resk = wgk[10].multiply(fc);
         resabs[0] = resk.abs();
 
         for (j = 0; j <= 4; j++) {
             jtw = (2 * j) + 1;
             absc = hlgth.multiply(xgk[jtw]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtw] = fval1;
             fv2[jtw] = fval2;
             fsum = fval1.add(fval2);
@@ -3453,8 +3646,14 @@ loop:
         for (j = 0; j <= 4; j++) {
             jtwm1 = 2 * j;
             absc = hlgth.multiply(xgk[jtwm1]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtwm1] = fval1;
             fv2[jtwm1] = fval2;
             fsum = fval1.add(fval2);
@@ -3617,7 +3816,12 @@ loop:
         // Compute the 31-point kronrod approximation to the integral, and
         // estimate the absolute error.
 
-        fc = intFunc(centr);
+        if (selfTest) {
+        	fc = intFuncTest(centr);
+        }
+        else {
+            fc = intFunc(centr);
+        }
         resg = fc.multiply(wg[7]);
         resk = fc.multiply(wgk[15]);
         resabs[0] = resk.abs();
@@ -3625,8 +3829,14 @@ loop:
         for (j = 0; j < 7; j++) {
             jtw = (2 * j) + 1;
             absc = hlgth.multiply(xgk[jtw]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtw] = fval1;
             fv2[jtw] = fval2;
             fsum = fval1.add(fval2);
@@ -3638,8 +3848,14 @@ loop:
         for (j = 0; j < 8; j++) {
             jtwm1 = 2 * j;
             absc = hlgth.multiply(xgk[jtwm1]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtwm1] = fval1;
             fv2[jtwm1] = fval2;
             fsum = fval1.add(fval2);
@@ -3815,15 +4031,26 @@ loop:
         // estimate the absolute error.
 
         resg = DoubleDouble.valueOf(0.0);
-        fc = intFunc(centr);
+        if (selfTest) {
+        	fc = intFuncTest(centr);	
+        }
+        else {
+            fc = intFunc(centr);
+        }
         resk = fc.multiply(wgk[20]);
         resabs[0] = resk.abs();
 
         for (j = 0; j < 10; j++) {
             jtw = (2 * j) + 1;
             absc = hlgth.multiply(xgk[jtw]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtw] = fval1;
             fv2[jtw] = fval2;
             fsum = fval1.add(fval2);
@@ -3835,8 +4062,14 @@ loop:
         for (j = 0; j < 10; j++) {
             jtwm1 = 2 * j;
             absc = hlgth.multiply(xgk[jtwm1]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtwm1] = fval1;
             fv2[jtwm1] = fval2;
             fsum = fval1.add(fval2);
@@ -4026,7 +4259,12 @@ loop:
         // Compute the 51-point kronrod approximation to the integral, and
         // estimate the absolute error.
 
-        fc = intFunc(centr);
+        if (selfTest) {
+        	fc = intFuncTest(centr);	
+        }
+        else {
+            fc = intFunc(centr);
+        }
         resg = fc.multiply(wg[12]);
         resk = fc.multiply(wgk[25]);
         resabs[0] = resk.abs();
@@ -4034,8 +4272,14 @@ loop:
         for (j = 0; j < 12; j++) {
             jtw = (2 * j) + 1;
             absc = hlgth.multiply(xgk[jtw]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtw] = fval1;
             fv2[jtw] = fval2;
             fsum = fval1.add(fval2);
@@ -4047,8 +4291,14 @@ loop:
         for (j = 0; j < 13; j++) {
             jtwm1 = 2 * j;
             absc = hlgth.multiply(xgk[jtwm1]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtwm1] = fval1;
             fv2[jtwm1] = fval2;
             fsum = fval1.add(fval2);
@@ -4249,15 +4499,26 @@ loop:
         // estimate the absolute error.
 
         resg = DoubleDouble.valueOf(0.0);
-        fc = intFunc(centr);
+        if (selfTest) {
+        	fc = intFuncTest(centr);	
+        }
+        else {
+            fc = intFunc(centr);
+        }
         resk = fc.multiply(wgk[30]);
         resabs[0] = resk.abs();
 
         for (j = 0; j < 15; j++) {
             jtw = (2 * j) + 1;
             absc = hlgth.multiply(xgk[jtw]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtw] = fval1;
             fv2[jtw] = fval2;
             fsum = fval1.add(fval2);
@@ -4269,8 +4530,14 @@ loop:
         for (j = 0; j < 15; j++) {
             jtwm1 = 2 * j;
             absc = hlgth.multiply(xgk[jtwm1]);
-            fval1 = intFunc(centr.subtract(absc));
-            fval2 = intFunc(centr.add(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.subtract(absc));
+                fval2 = intFuncTest(centr.add(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.subtract(absc));
+                fval2 = intFunc(centr.add(absc));
+            }
             fv1[jtwm1] = fval1;
             fv2[jtwm1] = fval2;
             fsum = fval1.add(fval2);
@@ -4558,7 +4825,12 @@ loop:
         hlgth = (DoubleDouble.valueOf(0.5)).multiply(upper.subtract(lower));
         dhlgth = hlgth.abs();
         centr = (DoubleDouble.valueOf(0.5)).multiply(upper.add(lower));
-        fcentr = intFunc(centr);
+        if (selfTest) {
+        	fcentr = intFuncTest(centr);	
+        }
+        else {
+            fcentr = intFunc(centr);
+        }
         neval = 21;
         errorStatus = 1;
 
@@ -4570,8 +4842,14 @@ loop:
 
         for (k = 0; k < 5; k++) {
             absc = hlgth.multiply(x1[k]);
-            fval1 = intFunc(centr.add(absc));
-            fval2 = intFunc(centr.subtract(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.add(absc));
+                fval2 = intFuncTest(centr.subtract(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.add(absc));
+                fval2 = intFunc(centr.subtract(absc));
+            }
             fval = fval1.add(fval2);
             res10 = res10.add(w10[k].multiply(fval));
             res21 = res21.add(w21a[k].multiply(fval));
@@ -4586,8 +4864,14 @@ loop:
         for (k = 0; k < 5; k++) {
             ipx++;
             absc = hlgth.multiply(x2[k]);
-            fval1 = intFunc(centr.add(absc));
-            fval2 = intFunc(centr.subtract(absc));
+            if (selfTest) {
+            	fval1 = intFuncTest(centr.add(absc));
+                fval2 = intFuncTest(centr.subtract(absc));	
+            }
+            else {
+                fval1 = intFunc(centr.add(absc));
+                fval2 = intFunc(centr.subtract(absc));
+            }
             fval = fval1.add(fval2);
             res21 = res21.add(w21b[k].multiply(fval));
             resabs = resabs.add(w21b[k].multiply((fval1.abs()).add(fval2.abs())));
@@ -4640,7 +4924,12 @@ loop:
         for (k = 0; k < 11; k++) {
             ipx++;
             absc = hlgth.multiply(x3[k]);
-            fval = intFunc(absc.add(centr)).add(intFunc(centr.subtract(absc)));
+            if (selfTest) {
+            	fval = intFuncTest(absc.add(centr)).add(intFuncTest(centr.subtract(absc)));	
+            }
+            else {
+                fval = intFunc(absc.add(centr)).add(intFunc(centr.subtract(absc)));
+            }
             res43 = res43.add(fval.multiply(w43b[k]));
             savfun[ipx] = fval;
         } // for (k = 0; k < 11; k++)
@@ -4676,7 +4965,12 @@ loop:
 
         for (k = 0; k < 22; k++) {
             absc = hlgth.multiply(x4[k]);
-            res87 = res87.add(w87b[k].multiply(intFunc(absc.add(centr)).add(intFunc(centr.subtract(absc)))));
+            if (selfTest) {
+            	res87 = res87.add(w87b[k].multiply(intFuncTest(absc.add(centr)).add(intFuncTest(centr.subtract(absc)))));	
+            }
+            else {
+                res87 = res87.add(w87b[k].multiply(intFunc(absc.add(centr)).add(intFunc(centr.subtract(absc)))));
+            }
         } // for (k = 0; k < 22; k++)
 
         result[0] = res87.multiply(hlgth);
