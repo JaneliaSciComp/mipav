@@ -23,6 +23,9 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
 
 
 import gov.nih.mipav.model.scripting.*;
@@ -36,6 +39,8 @@ import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -277,7 +282,9 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
 		} catch (FileNotFoundException e) {
 			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
 		}
-
+        
+        JPanel imagePanel = new JPanel(new GridBagLayout());
+        imagePanel.setBorder(MipavUtil.buildTitledBorder("Select images"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -287,10 +294,6 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
-
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("Image Parameters"));
         
         titles = new String[ViewUserInterface.getReference().getRegisteredImagesNum()];
         Enumeration<String> imageStr = ViewUserInterface.getReference().getRegisteredImageNames();
@@ -302,25 +305,76 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
         
         imageCombo = new JComboBox[3];
         inversionTimeField = new JTextField[3];
+        int numDefault = 0;
         for (int i=0; i<3; i++) {
-            imageCombo[i] = guiBuilder.buildComboBox("MDEFT Scan #"+(i+1), titles, 0);
-            mainPanel.add(imageCombo[i].getParent(), gbc);
+            if(titles.length >= 3) {
+                numDefault = i;
+            }
+            imageCombo[i] = guiBuilder.buildComboBox("MDEFT Scan #"+(i+1), titles, numDefault);
+            imageCombo[i].addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    for(int i=0; i<imageCombo.length; i++) {
+                        if(e.getSource().equals(imageCombo[i])) {
+                            Double invTime = getInvTime(imageCombo[i].getSelectedItem().toString());
+                            if(invTime != null) {
+                                inversionTimeField[i].setText(invTime.toString());
+                            }
+                        }
+                    }
+                }
+                
+            });
+            imagePanel.add(imageCombo[i].getParent(), gbc);
             gbc.gridy++;
-            inversionTimeField[i] = guiBuilder.buildDecimalField("Inversion time", 0.0);
-            mainPanel.add(inversionTimeField[i].getParent(), gbc);
+            
+            Double invTime = getInvTime(titles[numDefault]);
+            if(invTime == null) {
+                invTime = Double.valueOf(0.0);
+            }
+
+            inversionTimeField[i] = guiBuilder.buildDecimalField("Inversion time", invTime.doubleValue());
+            imagePanel.add(inversionTimeField[i].getParent(), gbc);
             gbc.gridy++;
         }
+        
+        JPanel paramPanel = new JPanel(new GridBagLayout());
+        paramPanel.setBorder(MipavUtil.buildTitledBorder("T1 Parameters"));
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         
         t1MinField = guiBuilder.buildDecimalField("Minimum T1", 500);
         t1MaxField = guiBuilder.buildDecimalField("Maximum T1", 2500);
         precisionField = guiBuilder.buildDecimalField("Precision", 0.5);
         
-        mainPanel.add(t1MinField.getParent(), gbc);
+        paramPanel.add(t1MinField.getParent(), gbc);
         gbc.gridy++;
-        mainPanel.add(t1MaxField.getParent(), gbc);
+        paramPanel.add(t1MaxField.getParent(), gbc);
         gbc.gridy++;
-        mainPanel.add(precisionField.getParent(), gbc);
+        paramPanel.add(precisionField.getParent(), gbc);
         gbc.gridy++;
+        
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setForeground(Color.black);
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        
+        mainPanel.add(imagePanel, gbc);
+        gbc.gridy++;
+        mainPanel.add(paramPanel, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -335,6 +389,23 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
         System.gc();
 
     } // end init()
+
+    private Double getInvTime(String string) {
+        Double invTime = null;
+        
+        if(ViewUserInterface.getReference().getRegisteredImageByName(string).getFileInfo()[0] instanceof FileInfoDicom) {
+            FileInfoDicom f = (FileInfoDicom) ViewUserInterface.getReference().getRegisteredImageByName(string).getFileInfo()[0];
+            Object obj = f.getTagTable().getValue(new FileDicomKey("0018,0082"));
+            if(obj != null) {
+                try {
+                    invTime = Double.valueOf(obj.toString());
+                } catch(NumberFormatException e) {
+                    
+                }
+            }
+        }
+        return invTime;
+    }
 
     /**
      * This method could ensure everything in your dialog box has been set correctly
@@ -555,6 +626,8 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
             JComboBox comboBox = buildComboBox(labelText, options); //call default
             if(numDefault > comboBox.getItemCount()-1) {
                 numDefault = 0;
+            } else {
+                comboBox.setSelectedIndex(numDefault);
             }
             //TODO: get renderer to truncate long names
             /*comboBox.setRenderer(new ListCellRenderer() {
