@@ -15,6 +15,7 @@ import gov.nih.mipav.DoubleDouble;
  * The original dqng routine was written by Robert Piessens and Elise de Doncker and modified by David Kahaner.
  * The original dqelg, dqk15, dqk15i, dqk21, dqk31, dqk41, dqk51, dqk61, and dqpsrt routines were written
  * by Robert Piessens and Elise de Doncker.
+ * Self tests 1 to 15 come from quadpack_prb.f90 by John Burkardt.
  * The names of the copyright holders or contributors may not be used to endorse
  * or promote any derived software without prior permission;
  * The Quadpack software is provided "as is", without warranties;
@@ -146,6 +147,25 @@ public abstract class Integration2EP {
 
     /** Non-adaptive integration. */
     protected static final int DQNG = 5;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK15 = 6;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK21 = 7;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK31 = 8;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK41 = 9;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK51 = 10;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK61 = 11;
+
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -173,9 +193,10 @@ public abstract class Integration2EP {
     /**
      * epmach = D1MACH(4) Machine epmach is the smallest positive epmach such that (1.0 + epmach) != 1.0. epmach = 2**(1
      * - doubleDigits) = 2**(1 - 53) = 2**(-52) epmach = 2.224460e-16 epmach is called the largest relative spacing
+     * for doubles
+     * For DoubleDouble useEPS = 1.23259516440783e-32= 2^-106
      */
     private DoubleDouble epmach;
-    // 2**-1022 = D1MACH(1)
 
     /**
      * If epsabs <= 0.0 and epsrel < Math.max(50*relative machine accuracy, 5.0E-29), the routine will exit with an
@@ -267,6 +288,10 @@ public abstract class Integration2EP {
 
     /** Integration limits and the break points of the interval in ascending sequence. */
     private DoubleDouble[] pts;
+    
+    private DoubleDouble[] resabs = new DoubleDouble[1];
+    
+    private DoubleDouble[] resasc = new DoubleDouble[1];
 
     /** Approximation to the integral. */
     private DoubleDouble[] result = new DoubleDouble[1];
@@ -277,8 +302,11 @@ public abstract class Integration2EP {
     /** DOCUMENT ME! */
     private int routine;
 
-    /** DOCUMENT ME! */
-    private DoubleDouble uflow = DoubleDouble.valueOf(2.0).pow(-1022);
+    /** 
+     * For doubles uflow = 2**-1022, but a double has 53 bits of precision while
+     * a DoubleDouble has 106 bits of precision, so uflow = 2**-(1022 - 53) = 2**-969
+     */
+    private DoubleDouble uflow = DoubleDouble.valueOf(2.0).pow(-969.0);
 
     /** DOCUMENT ME! */
     private DoubleDouble upper;
@@ -286,6 +314,8 @@ public abstract class Integration2EP {
     private boolean selfTest = false;
     
     private int testCase = 1;
+    
+    private DoubleDouble actualAnswer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -293,39 +323,172 @@ public abstract class Integration2EP {
      * Constructor for running self tests.
      */
     public Integration2EP() {
-    	DoubleDouble neweps;
+    	int i;
+    	//DoubleDouble neweps;
     	DoubleDouble tol;
         selfTest = true;
-        testCase = 1;
         
-        epmach = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
+        //epmach = DoubleDouble.valueOf(1.0);
+        //neweps = DoubleDouble.valueOf(1.0);
 
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epmach = neweps;
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        //while (true) {
+        	// Obtain x.hi = 2.0 x.lo = 0
+        	// x.hi = 1.5 x.lo = 0 
+        	// down to
+        	// x.hi = 1.0000000000000002 x.lo = 0.0
+        	// x.hi = 1.0 x.lo =  1.1102230246251565E-16
+        	// down to 
+        	// x.hi = 1.0 x.lo = 4.9E-324
+        	//DoubleDouble x = (DoubleDouble.valueOf(1.0)).add(neweps);
+        	//Preferences.debug("x.hi = " + x.hi + "\n");
+        	//Preferences.debug("x.lo = " + x.lo + "\n");
+            //if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
+               // break;
+            //} else {
+                //epmach = neweps;
+                //neweps = neweps.divide(DoubleDouble.valueOf(2.0));
+            //}
+        //}
+        // DoubleDouble.EPS is the smallest representable relative difference between two {link @ DoubleDouble} values
+        // EPS = 1.23259516440783e-32;  /* = 2^-106 */
+        epmach = DoubleDouble.valueOf(DoubleDouble.EPS);
 
         tol = ((DoubleDouble.valueOf(50.0)).multiply(epmach)).max(DoubleDouble.valueOf(5.0E-29));
         
-        lower = DoubleDouble.valueOf(0.0);
-        upper = DoubleDouble.valueOf(1.0);
-        routine = Integration2.DQAGPE;
-        breakPoints = new DoubleDouble[4];
-        breakPoints[0] = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(7.0));
-        breakPoints[1] = (DoubleDouble.valueOf(2.0)).divide(DoubleDouble.valueOf(3.0));
-        epsabs = DoubleDouble.valueOf(0.0);
-        epsrel = DoubleDouble.valueOf(1.0E-3);
-        limit = 100;
+        testCase = 1;
+        // dqage is an adaptive automatic integrator using a Gauss-Kronod rule.
+        // Integrate cos(100*sin(x)) from 0 to PI.
+        // The exact answer is PI * j0(100), or roughly 0.06278740.
+        // key chooses the order of the integration rule from 1 to 6.
+        // Numerical Integral = 0.062787400491492629703018938311878 after 2623 integrand evaluations used
+        // Error status = 2 with estimated absolute error = 5.475357990914704230361215237912E-22
+        // Actual answer = 0.062787400491492672011578833637816
+        // Exact error = -4.2308559895325939633446582822463E-17
+        double realArg = 100.0;
+    	double imaginaryArg = 0.0;
+    	double initialOrder = 0.0;
+    	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+    	double realResult[] = new double[1];
+    	double imagResult[] = new double[1];
+    	int[] nz = new int[1]; // number of components set to zero due to underflow
+        int[] errorFlag = new int[1]; // zero if no error
         
+    	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                sequenceNumber, realResult, imagResult, nz, errorFlag);
+    	bes.run();
+    	if (errorFlag[0] != 0) {
+    	    Preferences.debug("Bessel_J error for realArg = " + realArg + "\n");
+    	}
+    	Preferences.debug("j0(100.0) = " + realResult[0] + "\n");
+    	
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.PI;
+        routine = Integration2EP.DQAGE;
+        key = 6;
+        epsabs = DoubleDouble.valueOf(0.0);
+        epsrel = DoubleDouble.valueOf(1.0E-28);
+        actualAnswer = (DoubleDouble.valueOf(realResult[0])).multiply(DoubleDouble.PI);
+        limit = 1000;
+        
+        if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (limit <= 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 1 testing dqage\n");
+        Preferences.debug("Integrand is cos(100.0*sin(x))\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = PI\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        
+        testCase = 2;
+        // Test2 tests dqagie.
+        // dqagie is an adaptive quadrature routine for infinite intervals.
+        // Integrate log(x)/(1 + 100*x*x) from 0 to infinity
+        // The exact answer is -PI*log(10)/20 = -0.3616892
+        // Give the type of infinity
+        // inf = 1 means bound to infinity
+        // inf = -1 means -infinity to bound
+        // inf = 2 means -infinity to infinity
+        // Numerical Integral = -0.36168922062077324571528626847539 after 6285 integrand evaluations used
+        // Error status = 2 with estimated absolute error = 2.7214832372768430856227469064293E-21
+        // Actual answer = -0.36168922062077324062450232751309
+        // Exact error = -5.0907839409623050673220957332826E-18
+        bound = DoubleDouble.valueOf(0.0);
+        inf = 1;
+        routine = Integration2EP.DQAGIE;
+        epsabs = DoubleDouble.valueOf(0.0);
+        epsrel = DoubleDouble.valueOf(1.0E-28);
+        limit = 1000;
+        actualAnswer = (((DoubleDouble.PI).negate()).multiply((DoubleDouble.valueOf(10.0)).log())).divide(DoubleDouble.valueOf(20.0));
+        
+        if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (limit <= 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 2 testing dqagie\n");
+        Preferences.debug("Integrand is log(x)/(1 + 100*x*x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = infinity\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        
+        testCase = 3;
+        // Test3 tests dqagpe
+        // dqagpe is an adaptive integrator that can handle singularities of the
+        // integrand at user specified points.
+        // Integrate x**3 * log(abs((x*x-1)*(x*x-2))) from 0 to 3.
+        // The exact answer is 61*log(2)+77*log(7)/4 - 27.
+        // Numerical Integral = 52.740748383471444913493269262508 after 11907 integrand evaluations used
+        // Error status = 2 with estimated absolute error = 5.686261292209667242705102933715E-20
+        // Actual answer = 52.74074838347144499772919972023
+        // Exact error = -8.4235930457721460477450425680551E-17
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(3.0);
+        routine = Integration2EP.DQAGPE;
+        breakPoints = new DoubleDouble[4];
+        breakPoints[0] = DoubleDouble.valueOf(1.0);
+        breakPoints[1] = (DoubleDouble.valueOf(2.0)).sqrt();
+        epsabs = DoubleDouble.valueOf(0.0);
+        epsrel = DoubleDouble.valueOf(1.0E-28);
+        limit = 1000;
         npts2 = breakPoints.length;
         npts = npts2 - 2;
-
+        actualAnswer = (((DoubleDouble.valueOf(61.0)).multiply((DoubleDouble.valueOf(2.0)).log())).add
+        ((DoubleDouble.valueOf(77.0)).multiply(((DoubleDouble.valueOf(7.0)).log())).divide(DoubleDouble.valueOf(4.0)))).subtract(DoubleDouble.valueOf(27.0));
+        
         if (npts2 < 2) {
             MipavUtil.displayError("breakPoints array length must be >= 2");
             errorStatus = 6;
@@ -333,7 +496,7 @@ public abstract class Integration2EP {
             return;
         }
 
-        for (int i = 0; i < (npts2 - 2); i++) {
+        for (i = 0; i < (npts2 - 2); i++) {
 
             if (breakPoints[i].lt(lower)) {
                 MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly < lower");
@@ -366,18 +529,331 @@ public abstract class Integration2EP {
         
         driver();
         
+        Preferences.debug("Test 3 testing dqagpe\n");
+        Preferences.debug("Integrand is x**3 * log(abs((x*x-1)*(x*x-2)))\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 3.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        
+        testCase = 4;
+        // Test4 tests dqagse
+        // dqagse is an adaptive integrator for endpoint singularities.
+        // Integrate log(x)/sqrt(x) from 0 to 1.
+        // The exact answer is -4.
+        // Numerical Integral = -4.00000000000000000 after 8127 integrand evaluations used
+        // Error status = 2 with estimated absolute error = 2.3876831159953403966422329946169E-21
+        // Actual answer = -4.0
+        // Exact error = 6.1021832024198197007231242132039E-18
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2EP.DQAGSE;
+        epsabs = DoubleDouble.valueOf(0.0);
+        epsrel = DoubleDouble.valueOf(1.0E-28);
+        limit = 1000;
+        actualAnswer = DoubleDouble.valueOf(-4.0);
+        
+        if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 4 testing dqagse\n");
+        Preferences.debug("Integrand is log(x)/sqrt(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        
+        testCase = 9;
+        // test9 tests dqk15
+        // dqk15 is a Gauss-Kronod quadrature rule.
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2EP.DQK15;
+        actualAnswer = (DoubleDouble.valueOf(-4.0)).divide(DoubleDouble.valueOf(9.0));
+        // Numerical Integral = -0.44453824758327635083418354279228
+        // Estimated absolute error = 0.2017677811047011722019991551744
+        // Actual answer = -0.44444444444444444444444444444444
+        // Exact error = -9.3803138831906389739098347836056E-5
+        // resabs[0] = 0.44453824758327635083418354279228
+        // resasc[0] = 0.2017677811047011722019991551744
+        
+        driver();
+        
+        Preferences.debug("Test 9 testing dqk15\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 10;
+        // test10 tests dqk21
+        // dqk21 is a Gauss-Kronod quadrature rule.
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2EP.DQK21;
+        actualAnswer = (DoubleDouble.valueOf(-4.0)).divide(DoubleDouble.valueOf(9.0));
+        // Numerical Integral = -0.44448120174773075854749425655714
+        // Estimated absolute error = 0.062137345692400246001066751930368
+        // Actual answer = -0.44444444444444444444444444444444
+        // Exact error = -3.6757303286314103049812112702108E-5
+        // resabs[0] = 0.44448120174773075854749425655714
+        // resasc[0] = 0.2010203179967191344102455883178
+        
+        driver();
+        
+        Preferences.debug("Test 10 testing dqk21\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 11;
+        // test11 tests dqk31
+        // dqk31 is a Gauss-Kronod quadrature rule.
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2EP.DQK31;
+        actualAnswer = (DoubleDouble.valueOf(-4.0)).divide(DoubleDouble.valueOf(9.0));
+        // Numerical Integral = -0.44445711423810116344071890372747
+        // Estimated absolute error = 0.013135187473737603241003449749653
+        // Actual answer = -0.44444444444444444444444444444444
+        // Exact error = -1.2669793656718996274459283032989E-5
+        // resabs[0] = 0.44445711423810116344071890372747
+        // resasc[0] = 0.20044662305437476729677475163959
+        
+        driver();
+        
+        Preferences.debug("Test 11 testing dqk31\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 12;
+        // test12 tests dqk41
+        // dqk41 is a Gauss-Kronod quadrature rule.
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2EP.DQK41;
+        actualAnswer = (DoubleDouble.valueOf(-4.0)).divide(DoubleDouble.valueOf(9.0));
+        // Numerical Integral = -0.4444502553565425529317134939924
+        // Estimated absolute error = 0.0042429656788425900820197450546617
+        // Actual answer = -0.44444444444444444444444444444444
+        // Exact error = -5.8109120981084872690495479589851E-6
+        // resabs[0] = 0.4444502553565425529317134939924
+        // resasc[0] = 0.20065010692415911355429312311755
+        
+        driver();
+        
+        Preferences.debug("Test 12 testing dqk41\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 13;
+        // test13 tests dqk51
+        // dqk51 is a Gauss-Kronod quadrature rule.
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2EP.DQK51;
+        actualAnswer = (DoubleDouble.valueOf(-4.0)).divide(DoubleDouble.valueOf(9.0));
+        // Numerical Integral = -0.44444761693182600668948609006176
+        // Estimated absolute error = 0.0017429443550292554005765269872151
+        // Actual answer = -0.44444444444444444444444444444444
+        // Exact error = -3.1724873815622450416456173276073E-6
+        // resabs[0] = 0.44444761693182600668948609006176
+        // resasc[0] = 0.20079987986805535202107362923376
+        
+        driver();
+        
+        Preferences.debug("Test 13 testing dqk51\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 14;
+        // test14 tests dqk61
+        // dqk61 is a Gauss-Kronod quadrature rule.
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2EP.DQK61;
+        actualAnswer = (DoubleDouble.valueOf(-4.0)).divide(DoubleDouble.valueOf(9.0));
+        // Numerical Integral = -0.44444636518933710849952792078239
+        // Estimated absolute error = 8.3764739340422666930861763803848E-4
+        // Actual answer = -0.44444444444444444444444444444444
+        // Exact error = -1.9207448926640550834763379470697E-6
+        // resabs[0] = 0.44444636518933710849952792078239
+        // resasc[0] = 0.20063345752687790135346389270898
+        
+        driver();
+        
+        Preferences.debug("Test 14 testing dqk61\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 15;
+        // Test15 tests dqng
+        // dqng is a nonadaptive automatic integrator using a Gauss-Kronod
+        // Patterson rule.
+        // Integrate sqrt(x) * log(x) from 0 to 1.
+        // The exact answer is -4.0/9.0.
+        // Numerical Integral = -0.44444458538420454910066622043601 after 87 integrand evaluations used
+        // Error status = 1 with estimated absolute error = 2.1889792398786871280557597028752E-5
+        // Actual answer = -0.44444444444444444444444444444444
+        // Exact error = -1.4093976010465622177599158059837E-7
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2EP.DQNG;
+        epsabs = DoubleDouble.valueOf(0.0);
+        epsrel = DoubleDouble.valueOf(1.0E-28);
+        actualAnswer = (DoubleDouble.valueOf(-4.0)).divide(DoubleDouble.valueOf(9.0));
+        
+        if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 15 testing dqng\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        
+        testCase = 101;
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2EP.DQAGPE;
+        breakPoints = new DoubleDouble[4];
+        breakPoints[0] = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(7.0));
+        breakPoints[1] = (DoubleDouble.valueOf(2.0)).divide(DoubleDouble.valueOf(3.0));
+        epsabs = DoubleDouble.valueOf(0.0);
+        //epsrel = DoubleDouble.valueOf(1.0E-3);
+        epsrel = DoubleDouble.valueOf(1.0E-28);
+        //limit = 100;
+        limit = 1000;
+        
+        npts2 = breakPoints.length;
+        npts = npts2 - 2;
+
+        if (npts2 < 2) {
+            MipavUtil.displayError("breakPoints array length must be >= 2");
+            errorStatus = 6;
+
+            return;
+        }
+
+        for (i = 0; i < (npts2 - 2); i++) {
+
+            if (breakPoints[i].lt(lower)) {
+                MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly < lower");
+                errorStatus = 6;
+
+                return;
+            }
+
+            if (breakPoints[i].gt(upper)) {
+                MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly > upper");
+                errorStatus = 6;
+
+                return;
+            }
+        } // for (int i = 0; i < npts2 - 2; i++)
+        
+        if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (limit <= npts) {
+            MipavUtil.displayError("Must set limit = " + limit + " > " + npts);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 101\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with absolute error = " + abserr[0] + "\n");
         
-        testCase = 2;
+        testCase = 102;
         bound = DoubleDouble.valueOf(0.0);
-        routine = Integration2.DQAGIE;
+        routine = Integration2EP.DQAGIE;
         inf = 1;
         epsabs = DoubleDouble.valueOf(0.0);
-        epsrel = DoubleDouble.valueOf(1.0E-3);
-        limit = 100;
+        //epsrel = DoubleDouble.valueOf(1.0E-3);
+        epsrel = DoubleDouble.valueOf(1.0E-28);
+        //limit = 100;
+        limit = 1000;
         
         if ((inf != 1) && (inf != -1) && (inf != 2)) {
             MipavUtil.displayError("inf must equal -1, 1, or 2");
@@ -402,6 +878,7 @@ public abstract class Integration2EP {
         
         driver();
         
+        Preferences.debug("Test 102\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
@@ -418,7 +895,6 @@ public abstract class Integration2EP {
      * @param  epsrel   DOCUMENT ME!
      */
     public Integration2EP(DoubleDouble lower, DoubleDouble upper, int routine, DoubleDouble epsabs, DoubleDouble epsrel) {
-        DoubleDouble neweps;
         DoubleDouble tol;
 
         this.lower = lower;
@@ -434,19 +910,7 @@ public abstract class Integration2EP {
         this.epsabs = epsabs;
         this.epsrel = epsrel;
 
-        epmach = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if (DoubleDouble.valueOf(1.0).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epmach = neweps;
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
-
+        epmach = DoubleDouble.valueOf(DoubleDouble.EPS);
         tol = ((DoubleDouble.valueOf(50.0)).multiply(epmach)).max(DoubleDouble.valueOf(5.0E-29));
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
@@ -468,7 +932,6 @@ public abstract class Integration2EP {
      * @param  limit    int
      */
     public Integration2EP(DoubleDouble bound, int routine, int inf, DoubleDouble epsabs, DoubleDouble epsrel, int limit) {
-        DoubleDouble neweps;
         DoubleDouble tol;
         this.bound = bound;
         this.routine = routine;
@@ -491,19 +954,7 @@ public abstract class Integration2EP {
         this.epsabs = epsabs;
         this.epsrel = epsrel;
 
-        epmach = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epmach = neweps;
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
-
+        epmach = DoubleDouble.valueOf(DoubleDouble.EPS);
         tol = ((DoubleDouble.valueOf(50.0)).multiply(epmach)).max(DoubleDouble.valueOf(5.0E-29));
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
@@ -535,7 +986,6 @@ public abstract class Integration2EP {
      * @param  limit    DOCUMENT ME!
      */
     public Integration2EP(DoubleDouble lower, DoubleDouble upper, int routine, DoubleDouble epsabs, DoubleDouble epsrel, int limit) {
-        DoubleDouble neweps;
         DoubleDouble tol;
 
         this.lower = lower;
@@ -551,19 +1001,7 @@ public abstract class Integration2EP {
         this.epsabs = epsabs;
         this.epsrel = epsrel;
 
-        epmach = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if (DoubleDouble.valueOf(1.0).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epmach = neweps;
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
-
+        epmach = DoubleDouble.valueOf(DoubleDouble.EPS);
         tol = ((DoubleDouble.valueOf(50.0)).multiply(epmach)).max(DoubleDouble.valueOf(5.0E-29));
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
@@ -597,7 +1035,6 @@ public abstract class Integration2EP {
      */
     public Integration2EP(DoubleDouble lower, DoubleDouble upper, int routine, DoubleDouble[] breakPoints, 
     		              DoubleDouble epsabs, DoubleDouble epsrel, int limit) {
-        DoubleDouble neweps;
         DoubleDouble tol;
 
         this.lower = lower;
@@ -641,19 +1078,7 @@ public abstract class Integration2EP {
         this.epsabs = epsabs;
         this.epsrel = epsrel;
 
-        epmach = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epmach = neweps;
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
-
+        epmach = DoubleDouble.valueOf(DoubleDouble.EPS);
         tol = ((DoubleDouble.valueOf(50.0)).multiply(epmach)).max(DoubleDouble.valueOf(5.0E-29));
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
@@ -686,7 +1111,6 @@ public abstract class Integration2EP {
      */
     public Integration2EP(DoubleDouble lower, DoubleDouble upper, int routine, int key,
     		              DoubleDouble epsabs, DoubleDouble epsrel, int limit) {
-        DoubleDouble neweps;
         DoubleDouble tol;
 
         this.lower = lower;
@@ -703,19 +1127,7 @@ public abstract class Integration2EP {
         this.epsabs = epsabs;
         this.epsrel = epsrel;
 
-        epmach = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epmach = neweps;
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
-
+        epmach = DoubleDouble.valueOf(DoubleDouble.EPS);
         tol = ((DoubleDouble.valueOf(50.0)).multiply(epmach)).max(DoubleDouble.valueOf(5.0E-29));
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
@@ -751,6 +1163,33 @@ public abstract class Integration2EP {
     	DoubleDouble function = DoubleDouble.valueOf(0.0);
     	switch(testCase) {
     	case 1:
+    		function = ((DoubleDouble.valueOf(100.0)).multiply(x.sin())).cos();
+    		break;
+    	case 2:
+    		function = (x.log()).divide((DoubleDouble.valueOf(1.0)).add(((DoubleDouble.valueOf(100.0)).multiply(x)).multiply(x)));
+    		break;
+    	case 3:
+    		function = ((x.multiply(x)).multiply(x)).multiply(((((x.multiply(x)).subtract(DoubleDouble.valueOf(1.0))).multiply
+    				                                       ((x.multiply(x)).subtract(DoubleDouble.valueOf(2.0)))).abs()).log());
+    		break;
+    	case 4:
+    		function = (x.log()).divide(x.sqrt());
+    		break;
+    	case 9:
+    	case 10:
+    	case 11:
+    	case 12:
+    	case 13:
+    	case 14:
+    	case 15:
+    		if (x.le(DoubleDouble.valueOf(0.0))) {
+    		    function = DoubleDouble.valueOf(0.0);	
+    		}
+    		else {
+    			function = (x.sqrt()).multiply(x.log());
+    		}
+    		break;
+    	case 101:
     		DoubleDouble oneSeventh = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(7.0));
     		DoubleDouble twoThirds = (DoubleDouble.valueOf(2.0)).divide(DoubleDouble.valueOf(3.0));
     		if ((x.ne(oneSeventh)) && (x.ne(twoThirds))) {
@@ -758,7 +1197,7 @@ public abstract class Integration2EP {
     	                     (((x.subtract(twoThirds)).abs()).pow( -0.55));
     	        }
     		break;
-    	case 2:
+    	case 102:
     		if (x.isPositive()) {
     	          function = ((x.sqrt()).multiply(x.log())).divide(((x.add(DoubleDouble.valueOf(1.0))).multiply(x.add(DoubleDouble.valueOf(2.0)))));
     	        }
@@ -900,7 +1339,7 @@ public abstract class Integration2EP {
             // i1 = integral of f over(-infinity, 0)
             // i2 = integral of f over (0, +infinity)
 
-            boun = bound;
+            boun = (DoubleDouble)bound.clone();
 
             if (inf == 2) {
                 boun = DoubleDouble.valueOf(0.0);
@@ -911,8 +1350,8 @@ public abstract class Integration2EP {
             // Test on accuracy
 
             last = 1;
-            rlist[0] = result[0];
-            elist[0] = abserr[0];
+            rlist[0] = (DoubleDouble)result[0].clone();
+            elist[0] = (DoubleDouble)abserr[0].clone();
             iord[0] = 0;
             dres = (result[0]).abs();
             errBnd = (epsabs).max(epsrel.multiply(dres));
@@ -941,22 +1380,22 @@ public abstract class Integration2EP {
 
             // Initialization
 
-            rlist2[0] = result[0];
-            errMax[0] = abserr[0];
+            rlist2[0] = (DoubleDouble)result[0].clone();
+            errMax[0] = (DoubleDouble)abserr[0].clone();
             maxErr[0] = 0;
-            area = result[0];
-            errSum = abserr[0];
-            abserr[0] = oflow;
+            area = (DoubleDouble)result[0].clone();
+            errSum = (DoubleDouble)abserr[0].clone();
+            abserr[0] = (DoubleDouble)oflow.clone();
             nrmax[0] = 1;
             nres[0] = 0;
             ktmin = 0;
             numr12[0] = 2;
             extrap = false;
             noext = false;
-            erlarg = errSum;
-            correc = erlarg;
+            erlarg = (DoubleDouble)errSum.clone();
+            correc = (DoubleDouble)erlarg.clone();
             small = DoubleDouble.valueOf(0.375);
-            ertest = errBnd;
+            ertest = (DoubleDouble)errBnd.clone();
             ierro = 0;
             iroff1 = 0;
             iroff2 = 0;
@@ -973,11 +1412,11 @@ loop:
 
                 // Bisect the interval with the nrmax-th largest error estimate.
 
-                a1 = alist[maxErr[0]];
+                a1 = (DoubleDouble)alist[maxErr[0]].clone();
                 b1 = (DoubleDouble.valueOf(0.5)).multiply(alist[maxErr[0]].add(blist[maxErr[0]]));
-                a2 = b1;
-                b2 = blist[maxErr[0]];
-                erlast = errMax[0];
+                a2 = (DoubleDouble)b1.clone();
+                b2 = (DoubleDouble)blist[maxErr[0]].clone();
+                erlast = (DoubleDouble)errMax[0].clone();
                 dqk15i(boun, inf, a1, b1, area1, error1, resabs, defab1);
                 dqk15i(boun, inf, a2, b2, area2, error2, resabs, defab2);
 
@@ -1006,8 +1445,8 @@ loop:
                     } // if ((last > 10) && (error12 > errMax[0]))
                 } // if ((defab1[0] != error1[0]) && (defab2[0] != error2[0]))
 
-                rlist[maxErr[0]] = area1[0];
-                rlist[last - 1] = area2[0];
+                rlist[maxErr[0]] = (DoubleDouble)area1[0].clone();
+                rlist[last - 1] = (DoubleDouble)area2[0].clone();
                 errBnd = (epsabs).max(epsrel.multiply(area.abs()));
 
                 // Test for roundoff error and eventually set error flag
@@ -1037,20 +1476,20 @@ loop:
                 // Append the newly-created intervals to the list.
 
                 if (error2[0].le(error1[0])) {
-                    alist[last - 1] = a2;
-                    blist[maxErr[0]] = b1;
-                    blist[last - 1] = b2;
-                    elist[maxErr[0]] = error1[0];
-                    elist[last - 1] = error2[0];
+                    alist[last - 1] = (DoubleDouble)a2.clone();
+                    blist[maxErr[0]] = (DoubleDouble)b1.clone();
+                    blist[last - 1] = (DoubleDouble)b2.clone();
+                    elist[maxErr[0]] = (DoubleDouble)error1[0].clone();
+                    elist[last - 1] = (DoubleDouble)error2[0].clone();
                 } // if (error2[0] <= error1[0])
                 else {
-                    alist[maxErr[0]] = a2;
-                    alist[last - 1] = a1;
-                    blist[last - 1] = b1;
-                    rlist[maxErr[0]] = area2[0];
-                    rlist[last - 1] = area1[0];
-                    elist[maxErr[0]] = error2[0];
-                    elist[last - 1] = error1[0];
+                    alist[maxErr[0]] = (DoubleDouble)a2.clone();
+                    alist[last - 1] = (DoubleDouble)a1.clone();
+                    blist[last - 1] = (DoubleDouble)b1.clone();
+                    rlist[maxErr[0]] = (DoubleDouble)area2[0].clone();
+                    rlist[last - 1] = (DoubleDouble)area1[0].clone();
+                    elist[maxErr[0]] = (DoubleDouble)error2[0].clone();
+                    elist[last - 1] = (DoubleDouble)error1[0].clone();
                 } // else
 
                 // Call the subroutine dqpsrt to maintain the descending ordering
@@ -1066,7 +1505,7 @@ loop:
                         result[0] = result[0].add(rlist[k]);
                     } // for (k = 0; k < last; k++)
 
-                    abserr[0] = errSum;
+                    abserr[0] = (DoubleDouble)errSum.clone();
                     neval = (30 * last) - 15;
 
                     if (inf == 2) {
@@ -1086,9 +1525,9 @@ loop:
 
                 if (last == 2) {
                     small = DoubleDouble.valueOf(0.375);
-                    erlarg = errSum;
-                    ertest = errBnd;
-                    rlist2[1] = area;
+                    erlarg = (DoubleDouble)errSum.clone();
+                    ertest = (DoubleDouble)errBnd.clone();
+                    rlist2[1] = (DoubleDouble)area.clone();
 
                     continue;
                 } // if (last == 2)
@@ -1131,7 +1570,7 @@ loop:
 
                     for (k = id; k <= jupbnd; k++) {
                         maxErr[0] = iord[nrmax[0] - 1];
-                        errMax[0] = elist[maxErr[0]];
+                        errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
 
                         if (((blist[maxErr[0]].subtract(alist[maxErr[0]])).abs()).gt(small)) {
                             continue loop;
@@ -1154,9 +1593,9 @@ loop:
 
                 if (abseps[0].lt(abserr[0])) {
                     ktmin = 0;
-                    abserr[0] = abseps[0];
-                    result[0] = reseps[0];
-                    correc = erlarg;
+                    abserr[0] = (DoubleDouble)abseps[0].clone();
+                    result[0] = (DoubleDouble)reseps[0].clone();
+                    correc = (DoubleDouble)erlarg.clone();
                     ertest = epsabs.max(epsrel.multiply(reseps[0].abs()));
 
                     if (abserr[0].le(ertest)) {
@@ -1174,11 +1613,11 @@ loop:
                 } // if (errorStatus == 5)
 
                 maxErr[0] = iord[0];
-                errMax[0] = elist[maxErr[0]];
+                errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
                 nrmax[0] = 1;
                 extrap = false;
                 small = (DoubleDouble.valueOf(0.5)).multiply(small);
-                erlarg = errSum;
+                erlarg = (DoubleDouble)errSum.clone();
             } // for (last = 2; last <= limit; last++)
 
             // Set final result and error estimate
@@ -1204,7 +1643,7 @@ loop:
                                 result[0] = result[0].add(rlist[k]);
                             } // for (k = 0; k < last; k++)
 
-                            abserr[0] = errSum;
+                            abserr[0] = (DoubleDouble)errSum.clone();
                             neval = (30 * last) - 15;
 
                             if (inf == 2) {
@@ -1271,7 +1710,7 @@ loop:
                             result[0] = result[0].add(rlist[k]);
                         } // for (k = 0; k < last; k++)
 
-                        abserr[0] = errSum;
+                        abserr[0] = (DoubleDouble)errSum.clone();
                         neval = (30 * last) - 15;
 
                         if (inf == 2) {
@@ -1324,7 +1763,7 @@ loop:
                 result[0] = result[0].add(rlist[k]);
             } // for (k = 0; k < last; k++)
 
-            abserr[0] = errSum;
+            abserr[0] = (DoubleDouble)errSum.clone();
             neval = (30 * last) - 15;
 
             if (inf == 2) {
@@ -1478,8 +1917,8 @@ loop:
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
             abserr[0] = DoubleDouble.valueOf(0.0);
-            alist[0] = lower;
-            blist[0] = upper;
+            alist[0] = (DoubleDouble)lower.clone();
+            blist[0] = (DoubleDouble)upper.clone();
             rlist[0] = DoubleDouble.valueOf(0.0);
             elist[0] = DoubleDouble.valueOf(0.0);
             iord[0] = -1;
@@ -1515,9 +1954,9 @@ loop:
                     for (j = ip1; j < nintp1; j++) {
 
                         if (pts[i].gt(pts[j])) {
-                            temp = pts[i];
-                            pts[i] = pts[j];
-                            pts[j] = temp;
+                            temp = (DoubleDouble)pts[i].clone();
+                            pts[i] = (DoubleDouble)pts[j].clone();
+                            pts[j] = (DoubleDouble)temp.clone();
                         } // if (pts[i] > pts[j])
                     } // for (j = ip1; j < nintp1; j++)
                 } // for (i = 0; i < nint; i++)
@@ -1528,7 +1967,7 @@ loop:
             resabs = DoubleDouble.valueOf(0.0);
 
             for (i = 0; i < nint; i++) {
-                b1 = pts[i + 1];
+                b1 = (DoubleDouble)pts[i + 1].clone();
                 dqk21(a1, b1, area1, error1, defabs, resa);
                 abserr[0] = abserr[0].add(error1[0]);
                 result[0] = result[0].add(area1[0]);
@@ -1540,12 +1979,12 @@ loop:
 
                 resabs = resabs.add(defabs[0]);
                 level[i] = 0;
-                elist[i] = error1[0];
-                alist[i] = a1;
-                blist[i] = b1;
-                rlist[i] = area1[0];
+                elist[i] = (DoubleDouble)error1[0].clone();
+                alist[i] = (DoubleDouble)a1.clone();
+                blist[i] = (DoubleDouble)b1.clone();
+                rlist[i] = (DoubleDouble)area1[0].clone();
                 iord[i] = i;
-                a1 = b1;
+                a1 = (DoubleDouble)b1.clone();
             } // for (i = 0; i < nint; i++)
 
             errSum = DoubleDouble.valueOf(0.0);
@@ -1553,7 +1992,7 @@ loop:
             for (i = 0; i < nint; i++) {
 
                 if (ndin[i] == 1) {
-                    elist[i] = abserr[0];
+                    elist[i] = (DoubleDouble)abserr[0].clone();
                 } // if (ndin[i] == 1)
 
                 errSum = errSum.add(elist[i]);
@@ -1609,24 +2048,24 @@ loop:
 
             // Initialization
 
-            rlist2[0] = result[0];
+            rlist2[0] = (DoubleDouble)result[0].clone();
             maxErr[0] = iord[0];
-            errMax[0] = elist[maxErr[0]];
-            area = result[0];
+            errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
+            area = (DoubleDouble)result[0].clone();
             nrmax[0] = 1;
             nres[0] = 0;
             numr12[0] = 1;
             ktmin = 0;
             extrap = false;
             noext = false;
-            erlarg = errSum;
-            ertest = errBnd;
+            erlarg = (DoubleDouble)errSum.clone();
+            ertest = (DoubleDouble)errBnd.clone();
             levmax = 1;
             iroff1 = 0;
             iroff2 = 0;
             iroff3 = 0;
             ierro = 0;
-            abserr[0] = oflow;
+            abserr[0] = (DoubleDouble)oflow.clone();
             ksgn = -1;
 
             if (dres.ge(((DoubleDouble.valueOf(1.0)).subtract((DoubleDouble.valueOf(50.0)).multiply(epmach))).multiply(resabs))) {
@@ -1640,10 +2079,10 @@ loop:
                 // Bisect the subinterval with the nrmax-th largest error
                 // estimate
                 levcur = level[maxErr[0]] + 1;
-                a1 = alist[maxErr[0]];
+                a1 = (DoubleDouble)alist[maxErr[0]].clone();
                 b1 = (DoubleDouble.valueOf(0.5)).multiply(alist[maxErr[0]].add(blist[maxErr[0]]));
-                a2 = b1;
-                b2 = blist[maxErr[0]];
+                a2 = (DoubleDouble)b1.clone();
+                b2 = (DoubleDouble)blist[maxErr[0]].clone();
                 erlast = DoubleDouble.valueOf((double)maxErr[0]);
                 dqk21(a1, b1, area1, error1, resa, defab1);
                 dqk21(a2, b2, area2, error2, resa, defab2);
@@ -1675,8 +2114,8 @@ loop:
 
                 level[maxErr[0]] = levcur;
                 level[last - 1] = levcur;
-                rlist[maxErr[0]] = area1[0];
-                rlist[last - 1] = area2[0];
+                rlist[maxErr[0]] = (DoubleDouble)area1[0].clone();
+                rlist[last - 1] = (DoubleDouble)area2[0].clone();
                 errBnd = epsabs.max( epsrel.multiply(area.abs()));
 
                 // Test for roundoff error and eventually set error flag
@@ -1709,19 +2148,19 @@ loop:
                 // Append the newly created intervals to the list
 
                 if (error2[0].le(error1[0])) {
-                    alist[last - 1] = a2;
-                    blist[maxErr[0]] = b1;
-                    blist[last - 1] = b2;
-                    elist[maxErr[0]] = error1[0];
-                    elist[last - 1] = error2[0];
+                    alist[last - 1] = (DoubleDouble)a2.clone();
+                    blist[maxErr[0]] = (DoubleDouble)b1.clone();
+                    blist[last - 1] = (DoubleDouble)b2.clone();
+                    elist[maxErr[0]] = (DoubleDouble)error1[0].clone();
+                    elist[last - 1] = (DoubleDouble)error2[0].clone();
                 } else {
-                    alist[maxErr[0]] = a2;
-                    alist[last - 1] = a1;
-                    blist[last - 1] = b1;
-                    rlist[maxErr[0]] = area2[0];
-                    rlist[last - 1] = area1[0];
-                    elist[maxErr[0]] = error2[0];
-                    elist[last - 1] = error1[0];
+                    alist[maxErr[0]] = (DoubleDouble)a2.clone();
+                    alist[last - 1] = (DoubleDouble)a1.clone();
+                    blist[last - 1] = (DoubleDouble)b1.clone();
+                    rlist[maxErr[0]] = (DoubleDouble)area2[0].clone();
+                    rlist[last - 1] = (DoubleDouble)area1[0].clone();
+                    elist[maxErr[0]] = (DoubleDouble)error2[0].clone();
+                    elist[last - 1] = (DoubleDouble)error1[0].clone();
                 }
 
                 // Call subroutine dqpsrt to maintain the descending
@@ -1738,7 +2177,7 @@ loop:
                         result[0] = result[0].add(rlist[k]);
                     }
 
-                    abserr[0] = errSum;
+                    abserr[0] = (DoubleDouble)errSum.clone();
 
                     if (errorStatus > 2) {
                         errorStatus = errorStatus - 1;
@@ -1789,7 +2228,7 @@ loop:
 
                     for (k = id; k <= jupbnd; k++) {
                         maxErr[0] = iord[nrmax[0] - 1];
-                        errMax[0] = elist[maxErr[0]];
+                        errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
 
                         if ((level[maxErr[0]] + 1) <= levmax) {
                             continue loop;
@@ -1802,7 +2241,7 @@ loop:
                 // Perform extrapolation
 
                 numr12[0] = numr12[0] + 1;
-                rlist2[numr12[0] - 1] = area;
+                rlist2[numr12[0] - 1] = (DoubleDouble)area.clone();
 
                 if (numr12[0] > 2) {
                     dqelg(numr12, rlist2, reseps, abseps, res31a, nres);
@@ -1814,9 +2253,9 @@ loop:
 
                     if (abseps[0].lt(abserr[0])) {
                         ktmin = 0;
-                        abserr[0] = abseps[0];
-                        result[0] = reseps[0];
-                        correc = erlarg;
+                        abserr[0] = (DoubleDouble)abseps[0].clone();
+                        result[0] = (DoubleDouble)reseps[0].clone();
+                        correc = (DoubleDouble)erlarg.clone();
                         ertest = epsabs.max(epsrel.multiply(reseps[0].abs()));
 
                         if (abserr[0].lt(ertest)) {
@@ -1835,11 +2274,11 @@ loop:
                 } // if (numr12[0] > 2)
 
                 maxErr[0] = iord[0];
-                errMax[0] = elist[maxErr[0]];
+                errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
                 nrmax[0] = 1;
                 extrap = false;
                 levmax = levmax + 1;
-                erlarg = errSum;
+                erlarg = (DoubleDouble)errSum.clone();
             } // for (last = npts2; last <= limit; last++)
 
             // Set the final result.
@@ -1865,7 +2304,7 @@ loop:
                                 result[0] = result[0].add(rlist[k]);
                             }
 
-                            abserr[0] = errSum;
+                            abserr[0] = (DoubleDouble)errSum.clone();
 
                             if (errorStatus > 2) {
                                 errorStatus = errorStatus - 1;
@@ -1920,7 +2359,7 @@ loop:
                             result[0] = result[0].add(rlist[k]);
                         }
 
-                        abserr[0] = errSum;
+                        abserr[0] = (DoubleDouble)errSum.clone();
 
                         if (errorStatus > 2) {
                             errorStatus = errorStatus - 1;
@@ -1963,7 +2402,7 @@ loop:
                 result[0] = result[0].add(rlist[k]);
             }
 
-            abserr[0] = errSum;
+            abserr[0] = (DoubleDouble)errSum.clone();
 
             if (errorStatus > 2) {
                 errorStatus = errorStatus - 1;
@@ -2001,6 +2440,30 @@ loop:
             case DQAGE:
                 dqage();
                 break;
+                
+            case DQK15:
+            	dqk15(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK21:
+            	dqk21(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK31:
+            	dqk31(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK41:
+            	dqk41(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK51:
+            	dqk51(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK61:
+            	dqk61(lower, upper, result, abserr, resabs, resasc);
+            	break;
 
             case DQNG:
                 dqng();
@@ -2119,8 +2582,8 @@ loop:
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
             abserr[0] = DoubleDouble.valueOf(0.0);
-            alist[0] = lower;
-            blist[0] = upper;
+            alist[0] = (DoubleDouble)lower.clone();
+            blist[0] = (DoubleDouble)upper.clone();
             rlist[0] = DoubleDouble.valueOf(0.0);
             elist[0] = DoubleDouble.valueOf(0.0);
             iord[0] = -1;
@@ -2167,8 +2630,8 @@ loop:
             } // switch (keyf)
 
             last = 1;
-            rlist[0] = result[0];
-            elist[0] = abserr[0];
+            rlist[0] = (DoubleDouble)result[0].clone();
+            elist[0] = (DoubleDouble)abserr[0].clone();
             iord[0] = 0;
 
             // Test on accuracy
@@ -2197,10 +2660,10 @@ loop:
 
             // Initialization
 
-            errMax[0] = abserr[0];
+            errMax[0] = (DoubleDouble)abserr[0].clone();
             maxErr[0] = 0;
-            area = result[0];
-            errSum = abserr[0];
+            area = (DoubleDouble)result[0].clone();
+            errSum = (DoubleDouble)abserr[0].clone();
             nrmax[0] = 1;
             iroff1 = 0;
             iroff2 = 0;
@@ -2211,10 +2674,10 @@ loop:
 
                 // Bisect the subinterval with the largest error estimate.
 
-                a1 = alist[maxErr[0]];
+                a1 = (DoubleDouble)alist[maxErr[0]].clone();
                 b1 = (DoubleDouble.valueOf(0.5)).multiply(alist[maxErr[0]].add(blist[maxErr[0]]));
-                a2 = b1;
-                b2 = blist[maxErr[0]];
+                a2 = (DoubleDouble)b1.clone();
+                b2 = (DoubleDouble)blist[maxErr[0]].clone();
 
                 switch (keyf) {
 
@@ -2270,8 +2733,8 @@ loop:
                     } // if ((last > 10) && (error12 > errMax[0]))
                 } // if ((defab1[0] != error1[0]) && (defab2[0] != error2[0]))
 
-                rlist[maxErr[0]] = area1[0];
-                rlist[last - 1] = area2[0];
+                rlist[maxErr[0]] = (DoubleDouble)area1[0].clone();
+                rlist[last - 1] = (DoubleDouble)area2[0].clone();
                 errBnd = epsabs.max(epsrel.multiply(area.abs()));
 
                 if (errSum.gt(errBnd)) {
@@ -2303,20 +2766,20 @@ loop:
                 // Append the newly created intervals to the list
 
                 if (error2[0].le(error1[0])) {
-                    alist[last - 1] = a2;
-                    blist[maxErr[0]] = b1;
-                    blist[last - 1] = b2;
-                    elist[maxErr[0]] = error1[0];
-                    elist[last - 1] = error2[0];
+                    alist[last - 1] = (DoubleDouble)a2.clone();
+                    blist[maxErr[0]] = (DoubleDouble)b1.clone();
+                    blist[last - 1] = (DoubleDouble)b2.clone();
+                    elist[maxErr[0]] = (DoubleDouble)error1[0].clone();
+                    elist[last - 1] = (DoubleDouble)error2[0].clone();
                 } // if (error2[0] <= error1[0])
                 else {
-                    alist[maxErr[0]] = a2;
-                    alist[last - 1] = a1;
-                    blist[last - 1] = b1;
-                    rlist[maxErr[0]] = area2[0];
-                    rlist[last - 1] = area1[0];
-                    elist[maxErr[0]] = error2[0];
-                    elist[last - 1] = error1[0];
+                    alist[maxErr[0]] = (DoubleDouble)a2.clone();
+                    alist[last - 1] = (DoubleDouble)a1.clone();
+                    blist[last - 1] = (DoubleDouble)b1.clone();
+                    rlist[maxErr[0]] = (DoubleDouble)area2[0].clone();
+                    rlist[last - 1] = (DoubleDouble)area1[0].clone();
+                    elist[maxErr[0]] = (DoubleDouble)error2[0].clone();
+                    elist[last - 1] = (DoubleDouble)error1[0].clone();
                 } // else
 
                 // Call subroutine dqpsrt to maintain the descending ordering
@@ -2338,7 +2801,7 @@ loop:
                 result[0] = result[0].add(rlist[k]);
             } // for (k = 0; k < last; k++)
 
-            abserr[0] = errSum;
+            abserr[0] = (DoubleDouble)errSum.clone();
 
             if (keyf != 1) {
                 neval = ((10 * keyf) + 1) * ((2 * neval) + 1);
@@ -2478,8 +2941,8 @@ loop:
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
             abserr[0] = DoubleDouble.valueOf(0.0);
-            alist[0] = lower;
-            blist[0] = upper;
+            alist[0] = (DoubleDouble)lower.clone();
+            blist[0] = (DoubleDouble)upper.clone();
             rlist[0] = DoubleDouble.valueOf(0.0);
             elist[0] = DoubleDouble.valueOf(0.0);
 
@@ -2493,8 +2956,8 @@ loop:
             dres = (result[0].abs());
             errBnd = epsabs.max(epsrel.multiply(dres));
             last = 1;
-            rlist[0] = result[0];
-            elist[0] = abserr[0];
+            rlist[0] = (DoubleDouble)result[0].clone();
+            elist[0] = (DoubleDouble)abserr[0].clone();
             iord[0] = 0;
 
             if ((abserr[0].le(((DoubleDouble.valueOf(100.0)).multiply(epmach)).multiply(defabs[0]))) && (abserr[0].gt(errBnd))) {
@@ -2513,16 +2976,16 @@ loop:
 
             // Initialization
 
-            rlist2[0] = result[0];
-            errMax[0] = abserr[0];
+            rlist2[0] = (DoubleDouble)result[0].clone();
+            errMax[0] = (DoubleDouble)abserr[0].clone();
             maxErr[0] = 0;
-            area = result[0];
-            errSum = abserr[0];
-            erlarg = errSum;
-            correc = erlarg;
+            area = (DoubleDouble)result[0].clone();
+            errSum = (DoubleDouble)abserr[0].clone();
+            erlarg = (DoubleDouble)errSum.clone();
+            correc = (DoubleDouble)erlarg.clone();
             small = (DoubleDouble.valueOf(0.375)).multiply((upper.subtract(lower)).abs());
-            ertest = errBnd;
-            abserr[0] = oflow;
+            ertest = (DoubleDouble)errBnd.clone();
+            abserr[0] = (DoubleDouble)oflow.clone();
             nrmax[0] = 1;
             nres[0] = 0;
             numr12[0] = 2;
@@ -2545,11 +3008,11 @@ loop:
                 // Bisect the subinterval with the nrmax-th largest error
                 // estimate.
 
-                a1 = alist[maxErr[0]];
+                a1 = (DoubleDouble)alist[maxErr[0]].clone();
                 b1 = (DoubleDouble.valueOf(0.5)).multiply(alist[maxErr[0]].add(blist[maxErr[0]]));
-                a2 = b1;
-                b2 = blist[maxErr[0]];
-                erlast = errMax[0];
+                a2 = (DoubleDouble)b1.clone();
+                b2 = (DoubleDouble)blist[maxErr[0]].clone();
+                erlast = (DoubleDouble)errMax[0].clone();
                 dqk21(a1, b1, area1, error1, resabs, defab1);
                 dqk21(a2, b2, area2, error2, resabs, defab2);
 
@@ -2579,8 +3042,8 @@ loop:
                     } // if ((last > 10) && (error12 > errMax[0]))
                 } // if ((defab1[0] != error1[0]) && (defab2[0] != error2[0]))
 
-                rlist[maxErr[0]] = area1[0];
-                rlist[last - 1] = area2[0];
+                rlist[maxErr[0]] = (DoubleDouble)area1[0].clone();
+                rlist[last - 1] = (DoubleDouble)area2[0].clone();
                 errBnd = epsabs.max(epsrel.multiply(area.abs()));
 
                 // Test for roundoff error and eventually set error flag.
@@ -2613,20 +3076,20 @@ loop:
                 // Append the newly-created intervals to the list.
 
                 if (error2[0].le(error1[0])) {
-                    alist[last - 1] = a2;
-                    blist[maxErr[0]] = b1;
-                    blist[last - 1] = b2;
-                    elist[maxErr[0]] = error1[0];
-                    elist[last - 1] = error2[0];
+                    alist[last - 1] = (DoubleDouble)a2.clone();
+                    blist[maxErr[0]] = (DoubleDouble)b1.clone();
+                    blist[last - 1] = (DoubleDouble)b2.clone();
+                    elist[maxErr[0]] = (DoubleDouble)error1[0].clone();
+                    elist[last - 1] = (DoubleDouble)error2[0].clone();
                 } // if (error2[0] <= error1[0])
                 else {
-                    alist[maxErr[0]] = a2;
-                    alist[last - 1] = a1;
-                    blist[last - 1] = b1;
-                    rlist[maxErr[0]] = area2[0];
-                    rlist[last - 1] = area1[0];
-                    elist[maxErr[0]] = error2[0];
-                    elist[last - 1] = error1[0];
+                    alist[maxErr[0]] = (DoubleDouble)a2.clone();
+                    alist[last - 1] = (DoubleDouble)a1.clone();
+                    blist[last - 1] = (DoubleDouble)b1.clone();
+                    rlist[maxErr[0]] = (DoubleDouble)area2[0].clone();
+                    rlist[last - 1] = (DoubleDouble)area1[0].clone();
+                    elist[maxErr[0]] = (DoubleDouble)error2[0].clone();
+                    elist[last - 1] = (DoubleDouble)error1[0].clone();
                 } // else
 
                 // Call subroutine dqpsrt to maintain the descending ordering
@@ -2642,7 +3105,7 @@ loop:
                         result[0] = result[0].add(rlist[k]);
                     } // for (k = 0; k < last; k++)
 
-                    abserr[0] = errSum;
+                    abserr[0] = (DoubleDouble)errSum.clone();
 
                     if (errorStatus > 2) {
                         errorStatus = errorStatus - 1;
@@ -2659,9 +3122,9 @@ loop:
 
                 if (last == 2) {
                     small = (DoubleDouble.valueOf(0.375)).multiply((upper.subtract(lower)).abs());
-                    erlarg = errSum;
-                    ertest = errBnd;
-                    rlist2[1] = area;
+                    erlarg = (DoubleDouble)errSum.clone();
+                    ertest = (DoubleDouble)errBnd.clone();
+                    rlist2[1] = (DoubleDouble)area.clone();
 
                     continue;
                 } // if (last == 2)
@@ -2704,7 +3167,7 @@ loop:
 
                     for (k = id; k <= jupbnd; k++) {
                         maxErr[0] = iord[nrmax[0] - 1];
-                        errMax[0] = elist[maxErr[0]];
+                        errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
 
                         if (((blist[maxErr[0]].subtract(alist[maxErr[0]])).abs()).gt(small)) {
                             continue loop;
@@ -2717,7 +3180,7 @@ loop:
                 // Perform extrapolation
 
                 numr12[0] = numr12[0] + 1;
-                rlist2[numr12[0] - 1] = area;
+                rlist2[numr12[0] - 1] = (DoubleDouble)area.clone();
                 dqelg(numr12, rlist2, reseps, abseps, res31a, nres);
                 ktmin = ktmin + 1;
 
@@ -2727,9 +3190,9 @@ loop:
 
                 if (abseps[0].lt(abserr[0])) {
                     ktmin = 0;
-                    abserr[0] = abseps[0];
-                    result[0] = reseps[0];
-                    correc = erlarg;
+                    abserr[0] = (DoubleDouble)abseps[0].clone();
+                    result[0] = (DoubleDouble)reseps[0].clone();
+                    correc = (DoubleDouble)erlarg.clone();
                     ertest = epsabs.max(epsrel.multiply(reseps[0].abs()));
 
                     if (abserr[0].le(ertest)) {
@@ -2748,11 +3211,11 @@ loop:
                 } // if (errorStatus == 5)
 
                 maxErr[0] = iord[0];
-                errMax[0] = elist[maxErr[0]];
+                errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
                 nrmax[0] = 1;
                 extrap = false;
                 small = (DoubleDouble.valueOf(0.5)).multiply(small);
-                erlarg = errSum;
+                erlarg = (DoubleDouble)errSum.clone();
             } // for (last = 2; last <= limit; last++)
 
             // Set final result and error estimate
@@ -2778,7 +3241,7 @@ loop:
                                 result[0] = result[0].add(rlist[k]);
                             } // for (k = 0; k < last; k++)
 
-                            abserr[0] = errSum;
+                            abserr[0] = (DoubleDouble)errSum.clone();
 
                             if (errorStatus > 2) {
                                 errorStatus = errorStatus - 1;
@@ -2832,7 +3295,7 @@ loop:
                             result[0] = result[0].add(rlist[k]);
                         } // for (k = 0; k < last; k++)
 
-                        abserr[0] = errSum;
+                        abserr[0] = (DoubleDouble)errSum.clone();
 
                         if (errorStatus > 2) {
                             errorStatus = errorStatus - 1;
@@ -2875,7 +3338,7 @@ loop:
                 result[0] = result[0].add(rlist[k]);
             } // for (k = 0; k < last; k++)
 
-            abserr[0] = errSum;
+            abserr[0] = (DoubleDouble)errSum.clone();
 
             if (errorStatus > 2) {
                 errorStatus = errorStatus - 1;
@@ -2971,8 +3434,8 @@ loop:
         boolean doSeg = true;
 
         nres[0] = nres[0] + 1;
-        abserr[0] = oflow;
-        result[0] = epstab[n[0] - 1];
+        abserr[0] = (DoubleDouble)oflow.clone();
+        result[0] = (DoubleDouble)epstab[n[0] - 1].clone();
 
         if (n[0] < 3) {
             abserr[0] = abserr[0].max( ((DoubleDouble.valueOf(5.0)).multiply(epmach)).multiply(result[0].abs()));
@@ -2981,19 +3444,19 @@ loop:
         } // if (n[0] < 3)
 
         limexp = 50;
-        epstab[n[0] + 1] = epstab[n[0] - 1];
+        epstab[n[0] + 1] = (DoubleDouble)epstab[n[0] - 1].clone();
         newelm = (n[0] - 1) / 2;
-        epstab[n[0] - 1] = oflow;
+        epstab[n[0] - 1] = (DoubleDouble)oflow.clone();
         num = n[0];
         k1 = n[0];
 
         for (i = 1; i <= newelm; i++) {
             k2 = k1 - 1;
             k3 = k1 - 2;
-            res = epstab[k1 + 1];
-            e0 = epstab[k3 - 1];
-            e1 = epstab[k2 - 1];
-            e2 = res;
+            res = (DoubleDouble)epstab[k1 + 1].clone();
+            e0 = (DoubleDouble)epstab[k3 - 1].clone();
+            e1 = (DoubleDouble)epstab[k2 - 1].clone();
+            e2 = (DoubleDouble)res.clone();
             e1abs = (e1.abs());
             delta2 = e2.subtract(e1);
             err2 = delta2.abs();
@@ -3006,15 +3469,15 @@ loop:
 
                 // if e0, e1, and e2 are equal to within machine accuracy,
                 // convergence is assumed.
-                result[0] = res;
+                result[0] = (DoubleDouble)res.clone();
                 abserr[0] = err2.add(err3);
                 abserr[0] = abserr[0].max( ((DoubleDouble.valueOf(5.0)).multiply(epmach)).multiply(result[0].abs()));
 
                 return;
             } // if ((err2 <= tol2) && (err3 <= tol3))
 
-            e3 = epstab[k1 - 1];
-            epstab[k1 - 1] = e1;
+            e3 = (DoubleDouble)epstab[k1 - 1].clone();
+            epstab[k1 - 1] = (DoubleDouble)e1.clone();
             delta1 = e1.subtract(e3);
             err1 = delta1.abs();
             tol1 = (e1abs.max(e3.abs())).multiply(epmach);
@@ -3043,7 +3506,7 @@ loop:
             // Compute a new element and eventually adjust the value of result
 
             res = e1.add(ss.reciprocal());
-            epstab[k1 - 1] = res;
+            epstab[k1 - 1] = (DoubleDouble)res.clone();
             k1 = k1 - 2;
             error = (err2.add((res.subtract(e2)).abs())).add(err3);
 
@@ -3051,8 +3514,8 @@ loop:
                 continue;
             } // if (error > abserr[0])
 
-            abserr[0] = error;
-            result[0] = res;
+            abserr[0] = (DoubleDouble)error.clone();
+            result[0] = (DoubleDouble)res.clone();
         } // for (i = 1; i <= newelm; i++)
 
         // Shift the table
@@ -3070,7 +3533,7 @@ loop:
 
         for (i = 1; i <= ie; i++) {
             ib2 = ib + 2;
-            epstab[ib - 1] = epstab[ib2 - 1];
+            epstab[ib - 1] = (DoubleDouble)epstab[ib2 - 1].clone();
             ib = ib2;
         } // for (i = 1; i <= ie; i++)
 
@@ -3078,14 +3541,14 @@ loop:
             indx = num - n[0];
 
             for (i = 0; i < n[0]; i++) {
-                epstab[i] = epstab[indx];
+                epstab[i] = (DoubleDouble)epstab[indx].clone();
                 indx = indx + 1;
             } // for (i = 0; i < n[0]; i++)
         } // if (num != n[0])
 
         if (nres[0] < 4) {
-            res31a[nres[0] - 1] = result[0];
-            abserr[0] = oflow;
+            res31a[nres[0] - 1] = (DoubleDouble)result[0].clone();
+            abserr[0] = (DoubleDouble)oflow.clone();
             abserr[0] = abserr[0].max( ((DoubleDouble.valueOf(5.0)).multiply(epmach)).multiply(result[0].abs()));
 
             return;
@@ -3094,9 +3557,9 @@ loop:
         // Compute error estimate
 
         abserr[0] = (((result[0].subtract(res31a[2])).abs()).add((result[0].subtract(res31a[1])).abs())).add((result[0].subtract(res31a[0])).abs());
-        res31a[0] = res31a[1];
-        res31a[1] = res31a[2];
-        res31a[2] = result[0];
+        res31a[0] = (DoubleDouble)res31a[1].clone();
+        res31a[1] = (DoubleDouble)res31a[2].clone();
+        res31a[2] = (DoubleDouble)result[0].clone();
         abserr[0] = abserr[0].max( ((DoubleDouble.valueOf(5.0)).multiply(epmach)).multiply(result[0].abs()));
 
         return;
@@ -3236,8 +3699,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtw] = fval1;
-            fv2[jtw] = fval2;
+            fv1[jtw] = (DoubleDouble)fval1.clone();
+            fv2[jtw] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resg = resg.add(wg[j].multiply(fsum));
             resk = resk.add(wgk[jtw].multiply(fsum));
@@ -3255,8 +3718,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtwm1] = fval1;
-            fv2[jtwm1] = fval2;
+            fv1[jtwm1] = (DoubleDouble)fval1.clone();
+            fv2[jtwm1] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resk = resk.add(wgk[jtwm1].multiply(fsum));
             resabs[0] = resabs[0].add(wgk[jtwm1].multiply((fval1.abs()).add(fval2.abs())));
@@ -3464,8 +3927,8 @@ loop:
 
             fval1 = (fval1.divide(absc1)).divide(absc1);
             fval2 = (fval2.divide(absc2)).divide(absc2);
-            fv1[j] = fval1;
-            fv2[j] = fval2;
+            fv1[j] = (DoubleDouble)fval1.clone();
+            fv2[j] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resg = resg.add(wg[j].multiply(fsum));
             resk = resk.add(wgk[j].multiply(fsum));
@@ -3635,8 +4098,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtw] = fval1;
-            fv2[jtw] = fval2;
+            fv1[jtw] = (DoubleDouble)fval1.clone();
+            fv2[jtw] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resg = resg.add(wg[j].multiply(fsum));
             resk = resk.add(wgk[jtw].multiply(fsum));
@@ -3654,8 +4117,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtwm1] = fval1;
-            fv2[jtwm1] = fval2;
+            fv1[jtwm1] = (DoubleDouble)fval1.clone();
+            fv2[jtwm1] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resk = resk.add(wgk[jtwm1].multiply(fsum));
             resabs[0] = resabs[0].add(wgk[jtwm1].multiply((fval1.abs()).add(fval2.abs())));
@@ -3837,8 +4300,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtw] = fval1;
-            fv2[jtw] = fval2;
+            fv1[jtw] = (DoubleDouble)fval1.clone();
+            fv2[jtw] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resg = resg.add(wg[j].multiply(fsum));
             resk = resk.add(wgk[jtw].multiply(fsum));
@@ -3856,8 +4319,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtwm1] = fval1;
-            fv2[jtwm1] = fval2;
+            fv1[jtwm1] = (DoubleDouble)fval1.clone();
+            fv2[jtwm1] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resk = resk.add(wgk[jtwm1].multiply(fsum));
             resabs[0] = resabs[0].add(wgk[jtwm1].multiply((fval1.abs()).add(fval2.abs())));
@@ -4051,8 +4514,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtw] = fval1;
-            fv2[jtw] = fval2;
+            fv1[jtw] = (DoubleDouble)fval1.clone();
+            fv2[jtw] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resg = resg.add(wg[j].multiply(fsum));
             resk = resk.add(wgk[jtw].multiply(fsum));
@@ -4070,8 +4533,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtwm1] = fval1;
-            fv2[jtwm1] = fval2;
+            fv1[jtwm1] = (DoubleDouble)fval1.clone();
+            fv2[jtwm1] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resk = resk.add(wgk[jtwm1].multiply(fsum));
             resabs[0] = resabs[0].add(wgk[jtwm1].multiply((fval1.abs()).add(fval2.abs())));
@@ -4280,8 +4743,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtw] = fval1;
-            fv2[jtw] = fval2;
+            fv1[jtw] = (DoubleDouble)fval1.clone();
+            fv2[jtw] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resg = resg.add(wg[j].multiply(fsum));
             resk = resk.add(wgk[jtw].multiply(fsum));
@@ -4299,8 +4762,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtwm1] = fval1;
-            fv2[jtwm1] = fval2;
+            fv1[jtwm1] = (DoubleDouble)fval1.clone();
+            fv2[jtwm1] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resk = resk.add(wgk[jtwm1].multiply(fsum));
             resabs[0] = resabs[0].add(wgk[jtwm1].multiply((fval1.abs()).add(fval2.abs())));
@@ -4519,8 +4982,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtw] = fval1;
-            fv2[jtw] = fval2;
+            fv1[jtw] = (DoubleDouble)fval1.clone();
+            fv2[jtw] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resg = resg.add(wg[j].multiply(fsum));
             resk = resk.add(wgk[jtw].multiply(fsum));
@@ -4538,8 +5001,8 @@ loop:
                 fval1 = intFunc(centr.subtract(absc));
                 fval2 = intFunc(centr.add(absc));
             }
-            fv1[jtwm1] = fval1;
-            fv2[jtwm1] = fval2;
+            fv1[jtwm1] = (DoubleDouble)fval1.clone();
+            fv2[jtwm1] = (DoubleDouble)fval2.clone();
             fsum = fval1.add(fval2);
             resk = resk.add(wgk[jtwm1].multiply(fsum));
             resabs[0] = resabs[0].add(wgk[jtwm1].multiply((fval1.abs()).add(fval2.abs())));
@@ -4854,9 +5317,9 @@ loop:
             res10 = res10.add(w10[k].multiply(fval));
             res21 = res21.add(w21a[k].multiply(fval));
             resabs = resabs.add(w21a[k].multiply((fval1.abs()).add(fval2.abs())));
-            savfun[k] = fval;
-            fv1[k] = fval1;
-            fv2[k] = fval2;
+            savfun[k] = (DoubleDouble)fval.clone();
+            fv1[k] = (DoubleDouble)fval1.clone();
+            fv2[k] = (DoubleDouble)fval2.clone();
         } // for (k = 0; k < 5; k++)
 
         ipx = 4;
@@ -4875,9 +5338,9 @@ loop:
             fval = fval1.add(fval2);
             res21 = res21.add(w21b[k].multiply(fval));
             resabs = resabs.add(w21b[k].multiply((fval1.abs()).add(fval2.abs())));
-            savfun[ipx] = fval;
-            fv3[k] = fval1;
-            fv4[k] = fval2;
+            savfun[ipx] = (DoubleDouble)fval.clone();
+            fv3[k] = (DoubleDouble)fval1.clone();
+            fv4[k] = (DoubleDouble)fval2.clone();
         } // for (k = 0; k < 5; k++)
 
         // Test for convergence
@@ -4931,7 +5394,7 @@ loop:
                 fval = intFunc(absc.add(centr)).add(intFunc(centr.subtract(absc)));
             }
             res43 = res43.add(fval.multiply(w43b[k]));
-            savfun[ipx] = fval;
+            savfun[ipx] = (DoubleDouble)fval.clone();
         } // for (k = 0; k < 11; k++)
 
         // Test for convergence
@@ -4993,7 +5456,7 @@ loop:
             return;
         } // if (errorStatus == 0)
 
-        MipavUtil.displayError("Abnormal return from dqng");
+        Preferences.debug("Abnormal return from dqng\n");
 
         return;
     }
@@ -5051,7 +5514,7 @@ loop:
             iord[0] = 0;
             iord[1] = 1;
             maxErr[0] = iord[nrmax[0] - 1];
-            ermax[0] = elist[maxErr[0]];
+            ermax[0] = (DoubleDouble)elist[maxErr[0]].clone();
 
             return;
         } // if (last <= 2)
@@ -5061,7 +5524,7 @@ loop:
         // normal case the insert procedure should start after the nrmax-th
         // largest error estimate
 
-        errmax = elist[maxErr[0]];
+        errmax = (DoubleDouble)elist[maxErr[0]].clone();
 
         if (nrmax[0] != 1) {
             ido = nrmax[0] - 1;
@@ -5087,7 +5550,7 @@ loop:
             jupbn = limit + 3 - last;
         } // if (last > (limit/2 + 2))
 
-        errmin = elist[last - 1];
+        errmin = (DoubleDouble)elist[last - 1].clone();
 
         // Insert errmax by traversing the list top-down,
         // starting comparison from the element elist(iord[nrmmax[0]])
@@ -5113,7 +5576,7 @@ group:   {
             iord[jbnd - 1] = maxErr[0];
             iord[jupbn - 1] = last - 1;
             maxErr[0] = iord[nrmax[0] - 1];
-            ermax[0] = elist[maxErr[0]];
+            ermax[0] = (DoubleDouble)elist[maxErr[0]].clone();
 
             return;
         } // group
@@ -5138,14 +5601,14 @@ group2:  {
 
             iord[i - 1] = last - 1;
             maxErr[0] = iord[nrmax[0] - 1];
-            ermax[0] = elist[maxErr[0]];
+            ermax[0] = (DoubleDouble)elist[maxErr[0]].clone();
 
             return;
         } // group2
 
         iord[k] = last - 1;
         maxErr[0] = iord[nrmax[0] - 1];
-        ermax[0] = elist[maxErr[0]];
+        ermax[0] = (DoubleDouble)elist[maxErr[0]].clone();
 
         return;
     }
