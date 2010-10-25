@@ -9,10 +9,11 @@ import gov.nih.mipav.view.*;
  * This is a port of FORTRAN numerical integration routines in QUADPACK found at http://www.netlib.org/quadpack
  * Reference: R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner Quadpack: a Subroutine Package for Automatic
  * Integration Springer Verlag, 1983. Series in Computational Mathematics v. 1
- * The original dqage, dqagie, dqagpe, and dqagse routines were written by Robert Piessens and Elise de Doncker.
+ * The original dqage, dqagie, dqagpe, dqagse, and dqawce routines were written by Robert Piessens and Elise de Doncker.
  * The original dqng routine was written by Robert Piessens and Elise de Doncker and modified by David Kahaner.
- * The original dqelg, dqk15, dqk15i, dqk21, dqk31, dqk41, dqk51, dqk61, and dqpsrt routines were written
- * by Robert Piessens and Elise de Doncker.
+ * The original dqc25c, dqcheb, dqelg, dqk15, dqk15i, dqk15w, dqk21, dqk31, dqk41, dqk51, dqk61, dqpsrt, and dqwgtc  
+ * routines were written by Robert Piessens and Elise de Doncker.
+ * Self tests 1 to 15 come from quadpack_prb.f90 by John Burkardt.
  * The names of the copyright holders or contributors may not be used to endorse
  * or promote any derived software without prior permission;
  * The Quadpack software is provided "as is", without warranties;
@@ -144,6 +145,27 @@ public abstract class Integration2 {
 
     /** Non-adaptive integration. */
     protected static final int DQNG = 5;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK15 = 6;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK21 = 7;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK31 = 8;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK41 = 9;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK51 = 10;
+    
+    /** Gauss-Kronod quadrature rule */
+    protected static final int DQK61 = 11;
+    
+    /** Cauchy principal value */
+    protected static final int DQAWCE = 12;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -158,6 +180,11 @@ public abstract class Integration2 {
 
     /** finite bound of integration range used in dqagie (has no meaning if interval is doubly-infinite). */
     private double bound;
+    
+    /** Parameter in the weight function, c != lower, c != upper.
+     * If c == a or c == b, the routine will end with errorStatus = 6
+     */
+    private double c;
 
     /**
      * Used in dqagpe This array must always be >= 2 in length. The first breakPoints.length - 2 points are user
@@ -187,21 +214,31 @@ public abstract class Integration2 {
     /**
      * errorStatus = 0 for normal and reliable termination of the routine. It is assumed that the requested accuracy has
      * been achieved. errorStatus > 0 for abnormal termination of the routine. The estimates for the integral and error
-     * are less reliable. It is assumed that the requested accuracy has not been achieved. errorStatus = 1 maximum
-     * number of subdivisions allowed has been achieved. One can allow more subdivisions by increasing the value of
-     * limit (and taking the according dimension adjustments into account). However, if this yields no improvement, it
-     * is advised to analyze the integrand in order to determine the integration difficulties. If the position of a
-     * local difficulty can be determined( i.e. singularity, discontinuity within the interval), it should be supplied
-     * to the routine as an element of the breakPoints array. If necessary, an appropriate special purpose integrator
-     * must be used, which is designed for handling the type of difficulty involved. errorStatus = 2 The occurrence of
-     * roundoff error is detected, which prevents the requested tolerance from being achieved. The error may be
-     * under-estimated. errorStatus = 3 Extremely bad integrand behavior occurs at some points of the integration
-     * interval. errorStatus = 4 The algorithm does not converge. Roundoff error is detected in the extrapolation table.
+     * are less reliable. It is assumed that the requested accuracy has not been achieved.
+     *  
+     * errorStatus = 1 maximum number of subdivisions allowed has been achieved. 
+     * One can allow more subdivisions by increasing the value of limit (and taking the according dimension adjustments
+     * into account). However, if this yields no improvement, it is advised to analyze the integrand in order to
+     * determine the integration difficulties. If the position of a local difficulty can be determined( i.e. singularity,
+     * discontinuity within the interval), it should be supplied to the routine as an element of the breakPoints array.
+     * If necessary, an appropriate special purpose integrator must be used, which is designed for handling the type
+     * of difficulty involved. 
+     * 
+     * errorStatus = 2 The occurrence of roundoff error is detected, which prevents the requested tolerance from 
+     * being achieved. The error may be under-estimated.
+     *  
+     * errorStatus = 3 Extremely bad integrand behavior occurs at some points of the integration interval.
+     * 
+     * errorStatus = 4 The algorithm does not converge. Roundoff error is detected in the extrapolation table.
      * It is presumed that the requested tolerance cannot be achieved, and that the returned result is the best that can
-     * be obtained. errorStatus = 5 The integral is probably divergent, or slowly convergent. It must be noted that
-     * divergence can occur with any other value of errorStatus > 0. errorStatus = 6 The input is invalid because
-     * (epsabs <= 0 and epsrel < max(50.0 * relative machine accuracy, 5.0E-29) or in the case of dqagpe can also happen
-     * because npts2 < 2, the breakPoints are specified outside the integration range, or , or limit <= npts.
+     * be obtained. 
+     * 
+     * errorStatus = 5 The integral is probably divergent, or slowly convergent. It must be noted that
+     * divergence can occur with any other value of errorStatus > 0. 
+     * 
+     * errorStatus = 6 The input is invalid because (epsabs <= 0 and epsrel < max(50.0 * relative machine accuracy, 5.0E-29) 
+     * or in the case of dqagpe can also happen because npts2 < 2, the breakPoints are specified outside the integration
+     * range, or , or limit <= npts.
      */
     private int errorStatus;
 
@@ -252,7 +289,7 @@ public abstract class Integration2 {
     private int[] ndin;
 
     /** Number of integrand evaluations. */
-    private int neval;
+    private int neval[] = new int[1];
 
     /** npts = npts2 - 2. */
     private int npts;
@@ -265,6 +302,10 @@ public abstract class Integration2 {
 
     /** Integration limits and the break points of the interval in ascending sequence. */
     private double[] pts;
+    
+    private double[] resabs = new double[1];
+    
+    private double[] resasc = new double[1];
 
     /** Approximation to the integral. */
     private double[] result = new double[1];
@@ -284,6 +325,8 @@ public abstract class Integration2 {
     private boolean selfTest = false;
     
     private int testCase = 1;
+    
+    private double actualAnswer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -294,7 +337,6 @@ public abstract class Integration2 {
     	double neweps;
     	double tol;
         selfTest = true;
-        testCase = 1;
         
         epmach = 1.0;
         neweps = 1.0;
@@ -308,9 +350,439 @@ public abstract class Integration2 {
                 neweps = neweps / 2.0;
             }
         }
+        Preferences.debug("epmach = " + epmach + "\n");
 
         tol = Math.max(50.0 * epmach, 5.0E-29);
+        Preferences.debug("tol = " + tol + "\n");
         
+        testCase = 1;
+        // dqage is an adaptive automatic integrator using a Gauss-Kronod rule.
+        // Integrate cos(100*sin(x)) from 0 to PI.
+        // The exact answer is PI * j0(100), or roughly 0.06278740.
+        // key chooses the order of the integration rule from 1 to 6.
+        // Numerical Integral = 0.06278740049149303 after 427 integrand evaluations used
+        // Error status = 0 with estimated absolute error = 9.163654279831235E-9
+        // Actual answer = 0.06278740049149267
+        // Exact error = 3.608224830031759E-16
+        double realArg = 100.0;
+    	double imaginaryArg = 0.0;
+    	double initialOrder = 0.0;
+    	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+    	double realResult[] = new double[1];
+    	double imagResult[] = new double[1];
+    	int[] nz = new int[1]; // number of components set to zero due to underflow
+        int[] errorFlag = new int[1]; // zero if no error
+        
+    	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                sequenceNumber, realResult, imagResult, nz, errorFlag);
+    	bes.run();
+    	if (errorFlag[0] != 0) {
+    	    Preferences.debug("Bessel_J error for realArg = " + realArg + "\n");
+    	}
+    	Preferences.debug("j0(100.0) = " + realResult[0] + "\n");
+    	
+        lower = 0.0;
+        upper = Math.PI;
+        routine = Integration2.DQAGE;
+        key = 6;
+        epsabs = 0.0;
+        epsrel = 1.0E-3;
+        actualAnswer = Math.PI * realResult[0];
+        limit = 100;
+        
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (limit <= 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 1 testing dqage\n");
+        Preferences.debug("Integrand is cos(100.0*sin(x))\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = PI\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        
+        testCase = 2;
+        // Test2 tests dqagie.
+        // dqagie is an adaptive quadrature routine for infinite intervals.
+        // Integrate log(x)/(1 + 100*x*x) from 0 to infinity
+        // The exact answer is -PI*log(10)/20 = -0.3616892
+        // Give the type of infinity
+        // inf = 1 means bound to infinity
+        // inf = -1 means -infinity to bound
+        // inf = 2 means -infinity to infinity
+        // Numerical Integral = -0.3616892186127024 after 285 integrand evaluations used
+        // Error status = 0 with estimated absolute error = 3.016716912995765E-6
+        // Actual answer = -0.36168922062077324
+        // Exact error = 2.008070820735952E-9
+        bound = 0.0;
+        inf = 1;
+        routine = Integration2.DQAGIE;
+        epsabs = 0.0;
+        epsrel = 1.0E-3;
+        limit = 100;
+        actualAnswer = -Math.PI * Math.log(10.0)/20.0;
+        
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (limit <= 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 2 testing dqagie\n");
+        Preferences.debug("Integrand is log(x)/(1 + 100*x*x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = infinity\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        
+        testCase = 3;
+        // Test3 tests dqagpe
+        // dqagpe is an adaptive integrator that can handle singularities of the
+        // integrand at user specified points.
+        // Integrate x**3 * log(abs((x*x-1)*(x*x-2))) from 0 to 3.
+        // The exact answer is 61*log(2)+77*log(7)/4 - 27.
+        // Numerical Integral = 52.75627387910168 after 609 integrand evaluations used
+        // Error status = 0 with estimated absolute error = 0.051715446356638495
+        // Actual answer = 52.74074838347144
+        // Exact error = 0.015525495630235753
+        lower = 0.0;
+        upper = 3.0;
+        routine = Integration2.DQAGPE;
+        breakPoints = new double[4];
+        breakPoints[0] = 1.0;
+        breakPoints[1] = Math.sqrt(2.0);
+        epsabs = 0.0;
+        epsrel = 1.0E-3;
+        limit = 100;
+        npts2 = breakPoints.length;
+        npts = npts2 - 2;
+        actualAnswer = 61.0*Math.log(2.0) + 77.0*Math.log(7.0)/4.0 - 27.0;
+        
+        if (npts2 < 2) {
+            MipavUtil.displayError("breakPoints array length must be >= 2");
+            errorStatus = 6;
+
+            return;
+        }
+
+        for (int i = 0; i < (npts2 - 2); i++) {
+
+            if (breakPoints[i] < lower) {
+                MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly < lower");
+                errorStatus = 6;
+
+                return;
+            }
+
+            if (breakPoints[i] > upper) {
+                MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly > upper");
+                errorStatus = 6;
+
+                return;
+            }
+        } // for (int i = 0; i < npts2 - 2; i++)
+        
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (limit <= npts) {
+            MipavUtil.displayError("Must set limit = " + limit + " > " + npts);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 3 testing dqagpe\n");
+        Preferences.debug("Integrand is x**3 * log(abs((x*x-1)*(x*x-2)))\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 3.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        
+        testCase = 4;
+        // Test4 tests dqagse
+        // dqagse is an adaptive integrator for endpoint singularities.
+        // Integrate log(x)/sqrt(x) from 0 to 1.
+        // The exact answer is -4.
+        // Numerical Integral = -4.000000000000085 after 315 integrand evaluations used
+        // Error status = 0 with estimated absolute error = 1.354472090042691E-13
+        // Actual answer = -4.0
+        // Exact error = -8.526512829121202E-14
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQAGSE;
+        epsabs = 0.0;
+        epsrel = 1.0E-3;
+        limit = 100;
+        actualAnswer = -4.0;
+        
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 4 testing dqagse\n");
+        Preferences.debug("Integrand is log(x)/sqrt(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        
+        testCase = 9;
+        // test9 tests dqk15
+        // dqk15 is a Gauss-Kronod quadrature rule.
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQK15;
+        actualAnswer = -4.0/9.0;
+        // Numerical Integral = -0.44453824758327637
+        // Estimated absolute error = 0.20176778110470117
+        // Actual answer = -0.4444444444444444
+        // Exact error = -9.380313883194935E-5
+        // resabs[0] = 0.44453824758327637
+        // resasc[0] = 0.20176778110470117
+        
+        driver();
+        
+        Preferences.debug("Test 9 testing dqk15\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 10;
+        // test10 tests dqk21
+        // dqk21 is a Gauss-Kronod quadrature rule.
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQK21;
+        actualAnswer = -4.0/9.0;
+        // Numerical Integral = -0.44448120174773076
+        // Estimated absolute error = 0.06213734569239914
+        // Actual answer = -0.4444444444444444
+        // Exact error = -3.675730328633886E-5
+        // resabs[0] = 0.44448120174773076
+        // resasc[0] = 0.20102031799671913
+        
+        driver();
+        
+        Preferences.debug("Test 10 testing dqk21\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 11;
+        // test11 tests dqk31
+        // dqk31 is a Gauss-Kronod quadrature rule.
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQK31;
+        actualAnswer = -4.0/9.0;
+        // Numerical Integral = -0.4444571142381011
+        // Estimated absolute error = 0.013135187473747374
+        // Actual answer = -0.4444444444444444
+        // Exact error = -1.2669793656661099E-5
+        // resabs[0] = 0.4444571142381011
+        // resasc[0] = 0.20044662305437475
+        
+        driver();
+        
+        Preferences.debug("Test 11 testing dqk31\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 12;
+        // test12 tests dqk41
+        // dqk41 is a Gauss-Kronod quadrature rule.
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQK41;
+        actualAnswer = -4.0/9.0;
+        // Numerical Integral = -0.4444502553565426
+        // Estimated absolute error = 0.004242965678842284
+        // Actual answer = -0.4444444444444444
+        // Exact error = -5.8109120981697515E-6
+        // resabs[0] = 0.4444502553565426
+        // resasc[0] = 0.20065010692415908
+        
+        driver();
+        
+        Preferences.debug("Test 12 testing dqk41\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 13;
+        // test13 tests dqk51
+        // dqk51 is a Gauss-Kronod quadrature rule.
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQK51;
+        actualAnswer = -4.0/9.0;
+        // Numerical Integral = -0.4444476169318261
+        // Estimated absolute error = 0.001742944355024998
+        // Actual answer = -0.4444444444444444
+        // Exact error = -3.1724873816862953E-6
+        // resabs[0] = 0.4444476169318261
+        // resasc[0] = 0.20079987986805534
+        
+        driver();
+        
+        Preferences.debug("Test 13 testing dqk51\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 14;
+        // test14 tests dqk61
+        // dqk61 is a Gauss-Kronod quadrature rule.
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQK61;
+        actualAnswer = -4.0/9.0;
+        // Numerical Integral = -0.4444463651893372
+        // Estimated absolute error = 8.376473933975456E-4
+        // Actual answer = -0.4444444444444444
+        // Exact error = -1.920744892802695E-6
+        // resabs[0] = 0.4444463651893372
+        // resasc[0] = 0.2006334575268779
+        
+        driver();
+        
+        Preferences.debug("Test 14 testing dqk61\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0]+ "\n");
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        
+        testCase = 15;
+        // Test15 tests dqng
+        // dqng is a nonadaptive automatic integrator using a Gauss-Kronod
+        // Patterson rule.
+        // Integrate sqrt(x) * log(x) from 0 to 1.
+        // The exact answer is -4.0/9.0.
+        // Numerical Integral = -0.44444458538420456 after 87 integrand evaluations used
+        // Error status = 0 with estimated absolute error = 2.1889792399460097E-5
+        // Actual answer = -0.4444444444444444
+        // Exact error = -1.4093976014040166E-7
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQNG;
+        epsabs = 0.0;
+        epsrel = 1.0E-3;
+        actualAnswer = -4.0/9.0;
+        
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 15 testing dqng\n");
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        
+        testCase = 101;
         lower = 0.0;
         upper = 1.0;
         routine = Integration2.DQAGPE;
@@ -364,12 +836,13 @@ public abstract class Integration2 {
         
         driver();
         
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        Preferences.debug("Test 101\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with absolute error = " + abserr[0] + "\n");
         
-        testCase = 2;
+        testCase = 102;
         bound = 0.0;
         routine = Integration2.DQAGIE;
         inf = 1;
@@ -400,7 +873,8 @@ public abstract class Integration2 {
         
         driver();
         
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        Preferences.debug("Test 102\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with absolute error = " + abserr[0] + "\n");
@@ -543,6 +1017,74 @@ public abstract class Integration2 {
         if (routine != DQAGSE) {
             MipavUtil.displayError("routine must be DQAGSE with this constructor");
 
+            return;
+        }
+
+        this.epsabs = epsabs;
+        this.epsrel = epsrel;
+
+        epmach = 1.0;
+        neweps = 1.0;
+
+        while (true) {
+
+            if (1.0 == (1.0 + neweps)) {
+                break;
+            } else {
+                epmach = neweps;
+                neweps = neweps / 2.0;
+            }
+        }
+
+        tol = Math.max(50.0 * epmach, 5.0E-29);
+
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+
+        this.limit = limit;
+
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+    }
+    
+    /**
+     * Constructor for Integration Used with routine = DQAWCE.
+     *
+     * @param  lower    DOCUMENT ME!
+     * @param  upper    DOCUMENT ME!
+     * @param  c
+     * @param  routine  DOCUMENT ME!
+     * @param  epsabs   DOCUMENT ME!
+     * @param  epsrel   DOCUMENT ME!
+     * @param  limit    DOCUMENT ME!
+     */
+    public Integration2(double lower, double upper, double c, int routine, double epsabs, double epsrel, int limit) {
+        double neweps;
+        double tol;
+
+        this.lower = lower;
+        this.upper = upper;
+        this.c = c;
+        this.routine = routine;
+
+        if (routine != DQAWCE) {
+            MipavUtil.displayError("routine must be DQAWCE with this constructor");
+
+            return;
+        }
+        
+        if ((c == lower) || (c == upper)) {
+            MipavUtil.displayError("Cannot have c == lower or c == upper");
+            errorStatus = 6;
+            
             return;
         }
 
@@ -748,12 +1290,38 @@ public abstract class Integration2 {
         double function = 0.0;
         switch (testCase) {
         case 1:
+        	function = Math.cos(100.0 * Math.sin(x));
+        	break;
+        case 2:
+        	function = Math.log(x)/(1.0 + 100.0*x*x);
+        	break;
+        case 3:
+        	function = x*x*x*Math.log(Math.abs((x*x - 1.0)*(x*x - 2.0)));
+        	break;
+        case 4:
+        	function = Math.log(x)/Math.sqrt(x);
+        	break;
+        case 9:
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+        	if (x <= 0.0) {
+        		function = 0.0;
+        	}
+        	else {
+        		function = Math.sqrt(x) * Math.log(x);
+        	}
+        	break;
+        case 101:
         	if ((x != 1.0/7.0) && (x != 2.0/3.0)) {
                 function = Math.pow(Math.abs(x - 1.0/7.0), -0.25) *
                            Math.pow(Math.abs(x - 2.0/3.0), -0.55);
               }
         	break;
-        case 2:
+        case 102:
         	if (x > 0.0) {
                 function = Math.sqrt(x) * Math.log(x)/((x + 1.0) * (x + 2.0));
               }
@@ -878,7 +1446,7 @@ public abstract class Integration2 {
             rlist2 = new double[52];
 
             errorStatus = 0;
-            neval = 0;
+            neval[0] = 0;
             last = 0;
             result[0] = 0.0;
             abserr[0] = 0.0;
@@ -921,10 +1489,10 @@ public abstract class Integration2 {
             } // if (limit == 1)
 
             if ((errorStatus != 0) || ((abserr[0] <= errBnd) && (abserr[0] != resabs[0])) || (abserr[0] == 0.0)) {
-                neval = (30 * last) - 15;
+                neval[0] = (30 * last) - 15;
 
                 if (inf == 2) {
-                    neval = 2 * neval;
+                    neval[0] = 2 * neval[0];
                 } // if (inf == 2)
 
                 if (errorStatus > 2) {
@@ -1062,10 +1630,10 @@ loop:
                     } // for (k = 0; k < last; k++)
 
                     abserr[0] = errSum;
-                    neval = (30 * last) - 15;
+                    neval[0] = (30 * last) - 15;
 
                     if (inf == 2) {
-                        neval = 2 * neval;
+                        neval[0] = 2 * neval[0];
                     } // if (inf == 2)
 
                     if (errorStatus > 2) {
@@ -1200,10 +1768,10 @@ loop:
                             } // for (k = 0; k < last; k++)
 
                             abserr[0] = errSum;
-                            neval = (30 * last) - 15;
+                            neval[0] = (30 * last) - 15;
 
                             if (inf == 2) {
-                                neval = 2 * neval;
+                                neval[0] = 2 * neval[0];
                             } // if (inf == 2)
 
                             if (errorStatus > 2) {
@@ -1214,10 +1782,10 @@ loop:
                         } // if (abserr[0] > errSum)
 
                         if (area == 0.0) {
-                            neval = (30 * last) - 15;
+                            neval[0] = (30 * last) - 15;
 
                             if (inf == 2) {
-                                neval = 2 * neval;
+                                neval[0] = 2 * neval[0];
                             } // if (inf == 2)
 
                             if (errorStatus > 2) {
@@ -1228,10 +1796,10 @@ loop:
                         } // if (area == 0.0)
 
                         if ((ksgn == -1) && (Math.max(Math.abs(result[0]), Math.abs(area)) <= (1.0E-2 * defabs[0]))) {
-                            neval = (30 * last) - 15;
+                            neval[0] = (30 * last) - 15;
 
                             if (inf == 2) {
-                                neval = 2 * neval;
+                                neval[0] = 2 * neval[0];
                             } // if (inf == 2)
 
                             if (errorStatus > 2) {
@@ -1246,10 +1814,10 @@ loop:
                             errorStatus = 6;
                         } // if ((1.0E-2 > (result[0]/area)) || (result[0]/area > 100.0) ||
 
-                        neval = (30 * last) - 15;
+                        neval[0] = (30 * last) - 15;
 
                         if (inf == 2) {
-                            neval = 2 * neval;
+                            neval[0] = 2 * neval[0];
                         } // if (inf == 2)
 
                         if (errorStatus > 2) {
@@ -1267,10 +1835,10 @@ loop:
                         } // for (k = 0; k < last; k++)
 
                         abserr[0] = errSum;
-                        neval = (30 * last) - 15;
+                        neval[0] = (30 * last) - 15;
 
                         if (inf == 2) {
-                            neval = 2 * neval;
+                            neval[0] = 2 * neval[0];
                         } // if (inf == 2)
 
                         if (errorStatus > 2) {
@@ -1282,10 +1850,10 @@ loop:
                 } // if ((errorStatus + ierro) != 0)
 
                 if ((ksgn == -1) && (Math.max(Math.abs(result[0]), Math.abs(area)) <= (1.0E-2 * defabs[0]))) {
-                    neval = (30 * last) - 15;
+                    neval[0] = (30 * last) - 15;
 
                     if (inf == 2) {
-                        neval = 2 * neval;
+                        neval[0] = 2 * neval[0];
                     } // if (inf == 2)
 
                     if (errorStatus > 2) {
@@ -1299,10 +1867,10 @@ loop:
                     errorStatus = 6;
                 } // if ((1.0E-2 > (result[0]/area)) || (result[0]/area > 100.0) ||
 
-                neval = (30 * last) - 15;
+                neval[0] = (30 * last) - 15;
 
                 if (inf == 2) {
-                    neval = 2 * neval;
+                    neval[0] = 2 * neval[0];
                 } // if (inf == 2)
 
                 if (errorStatus > 2) {
@@ -1319,10 +1887,10 @@ loop:
             } // for (k = 0; k < last; k++)
 
             abserr[0] = errSum;
-            neval = (30 * last) - 15;
+            neval[0] = (30 * last) - 15;
 
             if (inf == 2) {
-                neval = 2 * neval;
+                neval[0] = 2 * neval[0];
             } // if (inf == 2)
 
             if (errorStatus > 2) {
@@ -1468,7 +2036,7 @@ loop:
             rlist2 = new double[52];
 
             errorStatus = 0;
-            neval = 0;
+            neval[0] = 0;
             last = 0;
             result[0] = 0.0;
             abserr[0] = 0.0;
@@ -1556,7 +2124,7 @@ loop:
             // Test on accuracy
 
             last = nint;
-            neval = 21 * nint;
+            neval[0] = 21 * nint;
             dres = Math.abs(result[0]);
             errBnd = Math.max(epsabs, dres * epsrel);
 
@@ -1644,7 +2212,7 @@ loop:
 
                 // Improve previous approximations to integral and error
                 // and test for accuracy.
-                neval = neval + 42;
+                neval[0] = neval[0] + 42;
                 area12 = area1[0] + area2[0];
                 error12 = error1[0] + error2[0];
                 errSum = errSum + error12 - errMax[0];
@@ -1991,6 +2559,34 @@ loop:
             case DQAGE:
                 dqage();
                 break;
+                
+            case DQAWCE:
+            	dqawce();
+            	break;
+                
+            case DQK15:
+            	dqk15(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK21:
+            	dqk21(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK31:
+            	dqk31(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK41:
+            	dqk41(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK51:
+            	dqk51(lower, upper, result, abserr, resabs, resasc);
+            	break;
+            	
+            case DQK61:
+            	dqk61(lower, upper, result, abserr, resabs, resasc);
+            	break;
 
             case DQNG:
                 dqng();
@@ -2032,7 +2628,7 @@ loop:
      * @return  neval
      */
     public int getNeval() {
-        return neval;
+        return neval[0];
     }
 
     /**
@@ -2105,7 +2701,7 @@ loop:
             iord = new int[limit];
 
             errorStatus = 0;
-            neval = 0;
+            neval[0] = 0;
             last = 0;
             result[0] = 0.0;
             abserr[0] = 0.0;
@@ -2127,7 +2723,7 @@ loop:
                 keyf = 6;
             } // if (key >= 7)
 
-            neval = 0;
+            neval[0] = 0;
 
             switch (keyf) {
 
@@ -2176,10 +2772,10 @@ loop:
             if ((errorStatus != 0) || ((abserr[0] <= errBnd) && (abserr[0] != resabs[0])) || (abserr[0] == 0.0)) {
 
                 if (keyf != 1) {
-                    neval = ((10 * keyf) + 1) * ((2 * neval) + 1);
+                    neval[0] = ((10 * keyf) + 1) * ((2 * neval[0]) + 1);
                 } // if (keyf != 1)
                 else {
-                    neval = (30 * neval) + 15;
+                    neval[0] = (30 * neval[0]) + 15;
                 } // else
 
                 return;
@@ -2242,7 +2838,7 @@ loop:
                 // Improve previous approximations to integral and error
                 // and test for accuracy.
 
-                neval = neval + 1;
+                neval[0] = neval[0] + 1;
                 area12 = area1[0] + area2[0];
                 error12 = error1[0] + error2[0];
                 errSum = errSum + error12 - errMax[0];
@@ -2329,10 +2925,10 @@ loop:
             abserr[0] = errSum;
 
             if (keyf != 1) {
-                neval = ((10 * keyf) + 1) * ((2 * neval) + 1);
+                neval[0] = ((10 * keyf) + 1) * ((2 * neval[0]) + 1);
             } // if (keyf != 1)
             else {
-                neval = (30 * neval) + 15;
+                neval[0] = (30 * neval[0]) + 15;
             } // else
 
             return;
@@ -2462,7 +3058,7 @@ loop:
             res31a = new double[3];
 
             errorStatus = 0;
-            neval = 0;
+            neval[0] = 0;
             last = 0;
             result[0] = 0.0;
             abserr[0] = 0.0;
@@ -2494,7 +3090,7 @@ loop:
             } // if (limit == 1)
 
             if ((errorStatus != 0) || ((abserr[0] <= errBnd) && (abserr[0] != resabs[0])) || (abserr[0] == 0.0)) {
-                neval = (42 * last) - 21;
+                neval[0] = (42 * last) - 21;
 
                 return;
             } // if ((errorStatus != 0) || ((abserr[0] <= errBnd) && (abserr[0] !=
@@ -2634,7 +3230,7 @@ loop:
                         errorStatus = errorStatus - 1;
                     } // if (errorStatus > 2)
 
-                    neval = (42 * last) - 21;
+                    neval[0] = (42 * last) - 21;
 
                     return;
                 } // if (errSum <= errBnd)
@@ -2770,7 +3366,7 @@ loop:
                                 errorStatus = errorStatus - 1;
                             } // if (errorStatus > 2)
 
-                            neval = (42 * last) - 21;
+                            neval[0] = (42 * last) - 21;
 
                             return;
                         } // if (abserr[0] > errSum)
@@ -2781,7 +3377,7 @@ loop:
                                 errorStatus = errorStatus - 1;
                             } // if (errorStatus > 2)
 
-                            neval = (42 * last) - 21;
+                            neval[0] = (42 * last) - 21;
 
                             return;
                         } // if (area == 0.0)
@@ -2792,7 +3388,7 @@ loop:
                                 errorStatus = errorStatus - 1;
                             } // if (errorStatus > 2)
 
-                            neval = (42 * last) - 21;
+                            neval[0] = (42 * last) - 21;
 
                             return;
                         } // if ((ksgn == -1) && (Math.max(Math.abs(result[0]),
@@ -2806,7 +3402,7 @@ loop:
                             errorStatus = errorStatus - 1;
                         } // if (errorStatus > 2)
 
-                        neval = (42 * last) - 21;
+                        neval[0] = (42 * last) - 21;
 
                         return;
                     } // if ((result[0] == 0.00 || (area == 0.0))
@@ -2824,7 +3420,7 @@ loop:
                             errorStatus = errorStatus - 1;
                         } // if (errorStatus > 2)
 
-                        neval = (42 * last) - 21;
+                        neval[0] = (42 * last) - 21;
 
                         return;
                     } // if (abserr[0]/Math.abs(result[0]) > errSum/Math.abs(area))
@@ -2836,7 +3432,7 @@ loop:
                         errorStatus = errorStatus - 1;
                     } // if (errorStatus > 2)
 
-                    neval = (42 * last) - 21;
+                    neval[0] = (42 * last) - 21;
 
                     return;
                 } // if ((ksgn == -1) && (Math.max(Math.abs(result[0]),
@@ -2849,7 +3445,7 @@ loop:
                     errorStatus = errorStatus - 1;
                 } // if (errorStatus > 2)
 
-                neval = (42 * last) - 21;
+                neval[0] = (42 * last) - 21;
 
                 return;
             } // if (abserr[0] != oflow)
@@ -2866,7 +3462,7 @@ loop:
                 errorStatus = errorStatus - 1;
             } // if (errorStatus > 2)
 
-            neval = (42 * last) - 21;
+            neval[0] = (42 * last) - 21;
 
             return;
         } // try
@@ -2875,6 +3471,301 @@ loop:
         }
 
     }
+    
+    /**
+     * This is the port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqawce
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a2a1,j4
+	 c***keywords  automatic integrator, special-purpose,
+	 c             cauchy principal value, clenshaw-curtis method
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***  purpose  the routine calculates an approximation result to a
+	 c              cauchy principal value i = integral of f*w over (a,b)
+	 c              (w(x) = 1/(x-c), (c.ne.a, c.ne.b), hopefully satisfying
+	 c              following claim for accuracy
+	 c              abs(i-result).le.max(epsabs,epsrel*abs(i))
+	 c***description
+	 c
+	 c        computation of a cauchy principal value
+	 c        standard fortran subroutine
+	 c        double precision version
+     */
+    private void dqawce() {
+        // Routines called dqc25c, dqpsrt
+    	// Variables end in 1 for the the left subinterval
+    	// and variables end in 2 for the right subinterval
+    	
+    	// Index to the interval with the largest error estimate
+        int[] maxErr = new int[1];
+
+        // errMax[0] = elist[maxErr];
+        double[] errMax = new double[1];
+
+        // Sum of the integrals over the subintervals
+        double area;
+
+        // Sum of the errors over the subintervals
+        double errSum;
+
+        // Requested accuracy max(epsabs, epsrel * abs(result))
+        double errBnd;
+        
+        double aa;
+        double area1[] = new double[1];
+        double area12;
+        double area2[] = new double[1];
+        double a1;
+        double a2;
+        double bb;
+        double b1;
+        double b2;
+        double error1[] = new double[1];
+        double erro12;
+        double error2[] = new double[1];
+        int iroff1;
+        int iroff2;
+        int k;
+        int krule[] = new int[1];
+        int nev[] = new int[1];
+        int nrmax[] = new int[1];
+        
+	    try {
+	    	alist = new double[limit];
+            blist = new double[limit];
+            rlist = new double[limit];
+            elist = new double[limit];
+            iord = new int[limit];
+            
+            errorStatus = 0;
+            neval[0] = 0;
+            last = 0;
+            alist[0] = lower;
+            blist[0] = upper;
+            rlist[0] = 0.0;
+            elist[0] = 0.0;
+            iord[0] = -1;
+            result[0] = 0.0;
+            abserr[0] = 0.0;
+            
+            // First approximation to the integral
+            aa = lower;
+            bb = upper;
+            if (lower > upper) {
+            	aa = upper;
+            	bb = lower;
+            }
+            errorStatus = 0;
+            krule[0] = 1;
+            dqc25c(aa, bb, c, result, abserr, krule, neval);
+            last = 1;
+            rlist[0] = result[0];
+            elist[0] = abserr[0];
+            iord[0] = 0;
+            alist[0] = lower;
+            blist[0] = upper;
+            
+            // Test on accuracy
+            
+            errBnd = Math.max(epsabs, epsrel * Math.abs(result[0]));
+            if (limit == 1) {
+            	errorStatus = 1;
+            }
+            if ((abserr[0] < Math.min(0.01 * Math.abs(result[0]), errBnd)) ||
+            	(errorStatus == 1)) {
+            	if (aa == upper) {
+            		result[0] = -result[0];
+            	}
+            	return;
+            }
+            
+            // Initialization
+            
+            alist[0] = aa;
+            blist[0] = bb;
+            rlist[0] = result[0];
+            errMax[0] = abserr[0];
+            maxErr[0] = 0;
+            area = result[0];
+            errSum = abserr[0];
+            nrmax[0] = 1;
+            iroff1 = 0;
+            iroff2 = 0;
+            
+            // Main for loop
+            
+            for (last = 1; last < limit; last++) {
+            	
+            	// Biset the subinterval with the nrmax-th largest error estimate.
+            	
+            	a1 = alist[maxErr[0]];
+            	b1 = 0.5*(alist[maxErr[0]] + blist[maxErr[0]]);
+            	b2 = blist[maxErr[0]];
+            	if ((c <= b1) && (c > a1)) {
+            		b1 = 0.5*(c + b2);
+            	}
+            	if ((c > b1) && (c < b2)) {
+            		b1 = 0.5*(a1 + c);
+            	}
+            	a2 = b1;
+            	krule[0] = 2;
+            	dqc25c(a1, b1, c, area1, error1, krule, nev);
+            	neval[0] = neval[0] + nev[0];
+            	dqc25c(a2, b2, c, area2, error2, krule, nev);
+            	neval[0] = neval[0] + nev[0];
+            	
+            	// Improve previous approximations to integral
+            	// and error and test for accuracy.
+            	
+            	area12 = area1[0] + area2[0];
+            	erro12 = error1[0] + error2[0];
+            	errSum = errSum + erro12 - errMax[0];
+            	area = area + area12 - rlist[maxErr[0]];
+            	if ((Math.abs(rlist[maxErr[0]] - area12) < 1.0E-5*Math.abs(area12)) &&
+            		(erro12 >= 0.99*errMax[0]) && (krule[0] == 0)) {
+            		iroff1 = iroff1 + 1;
+            	}
+            	if ((last >= 10) && (erro12 > errMax[0]) && (krule[0] == 0)) {
+            		iroff2 = iroff2 + 1;
+            	}
+            	rlist[maxErr[0]] = area1[0];
+            	rlist[last] = area2[0];
+            	errBnd = Math.max(epsabs, epsrel * Math.abs(area));
+            	if (errSum > errBnd) {
+            		
+            		// Test for roundoff error and eventually set error flag.
+            		
+            		if ((iroff1 >= 6) && (iroff2 > 20)) {
+            			errorStatus = 2;
+            		}
+            		
+            		// Set error flag in the case that number of interval
+            		// bisections exceeds limit.
+            		
+            		if (last == (limit-1)) {
+            			errorStatus = 1;
+            		}
+            		
+            		// Set error flag in the case of bad integrand behavior
+            		// at a point of the integration range
+            		if (Math.max(Math.abs(a1), Math.abs(b2)) <= ((1.0 + 100.0*epmach)*(Math.abs(a2) + 1.0E3 * uflow))) {
+            			errorStatus = 3;
+            		}
+            	} // if (errSum > errBnd)
+            	
+            	// Append the newly created intervals to the list
+            	
+            	if (error2[0] <= error1[0]) {
+            		alist[last] = a2;
+            		blist[maxErr[0]] = b1;
+            		blist[last] = b2;
+            		elist[maxErr[0]] = error1[0];
+            		elist[last] = error2[0];
+            	}
+            	else {
+            	    alist[maxErr[0]] = a2;
+            	    alist[last] = a1;
+            	    blist[last] = b1;
+            	    rlist[maxErr[0]] = area2[0];
+            	    rlist[last] = area1[0];
+            	    elist[maxErr[0]] = error2[0];
+            	    elist[last] = error1[0];
+            	}
+            	
+            	// Call subroutine dqpsrt to maintain the descending ordering
+            	// in the list of error estimates and select the subinterval
+            	// with the nrmax-th largest error estimate (to be bisected next).
+            	
+            	dqpsrt(limit, last, maxErr, errMax, elist, iord, nrmax);
+            	if ((errorStatus != 0) || (errSum <= errBnd)) {
+            		break;
+            	}
+            } // for (last = 1; last < limit; last++)
+            
+            // Compute final result
+            
+            result[0] = 0.0;
+            for (k = 0; k < last; k++) {
+            	result[0] = result[0] + rlist[k];
+            }
+            abserr[0] = errSum;
+            if (aa == upper) {
+            	result[0] = -result[0];
+            }
+            return;
+	    } // try
+	    catch (Exception err) {
+	        Preferences.debug("dqawce error: " + err.getMessage());
+	    }
+    } // dqawce
+    
+    /**
+     * This is the port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqc25c
+	 c***date written   810101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a2a2,j4
+	 c***keywords  25-point clenshaw-curtis integration
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f*w over (a,b) with
+	 c            error estimate, where w(x) = 1/(x-c)
+	 c***description
+	 c
+	 c        integration rules for the computation of cauchy
+	 c        principal value integrals
+	 c        standard fortran subroutine
+	 c        double precision version
+	 c
+	 c
+	 c           a      - double precision
+	 c                    left end point of the integration interval
+	 c
+	 c           b      - double precision
+	 c                    right end point of the integration interval, b.gt.a
+	 c
+	 c           c      - double precision
+	 c                    parameter in the weight function
+	 c
+	 c           result - double precision
+	 c                    approximation to the integral
+	 c                    result is computed by using a generalized
+	 c                    clenshaw-curtis method if c lies within ten percent
+	 c                    of the integration interval. in the other case the
+	 c                    15-point kronrod rule obtained by optimal addition
+	 c                    of abscissae to the 7-point gauss rule, is applied.
+	 c
+	 c           abserr - double precision
+	 c                    estimate of the modulus of the absolute error,
+	 c                    which should equal or exceed abs(i-result)
+	 c
+	 c           krul   - integer
+	 c                    key which is decreased by 1 if the 15-point
+	 c                    gauss-kronrod scheme has been used
+	 c
+	 c           neval  - integer
+	 c                    number of integrand evaluations
+	 c
+	 c.......................................................................
+	 c***references  (none)
+	 c***routines called  dqcheb,dqk15w,dqwgtc
+	 c***end prologue  dqc25c
+	 c
+     * 
+     * @param a
+     * @param b
+     * @param c
+     * @param result
+     * @param abserr
+     * @param krul
+     * @param neval
+     */
+    private void dqc25c(double a, double b, double c, double result[], double abserr[],
+    		            int krul[], int neval[]) {
+    	
+    } // dqc25c
 
     /**
      * This is a port of the original FORTRAN whose header is given below:
@@ -4596,7 +5487,7 @@ loop:
         else {
             fcentr = intFunc(centr);
         }
-        neval = 21;
+        neval[0] = 21;
         errorStatus = 1;
 
         // Compute the integral using the 10- and 21-point formula.
@@ -4679,7 +5570,7 @@ loop:
         // Compute the integral using the 43-point formula
 
         res43 = w43b[11] * fcentr;
-        neval = 43;
+        neval[0] = 43;
 
         for (k = 0; k < 10; k++) {
             res43 = res43 + (savfun[k] * w43a[k]);
@@ -4720,7 +5611,7 @@ loop:
 
         // Compute the integral using the 87-point formula
         res87 = w87b[22] * fcentr;
-        neval = 87;
+        neval[0] = 87;
 
         for (k = 0; k < 21; k++) {
             res87 = res87 + (savfun[k] * w87a[k]);
@@ -4755,7 +5646,7 @@ loop:
             return;
         } // if (errorStatus == 0)
 
-        MipavUtil.displayError("Abnormal return from dqng");
+        Preferences.debug("Abnormal return from dqng\n");
 
         return;
     }
