@@ -10,8 +10,7 @@ import gov.nih.mipav.view.*;
 
 /**
  * <p>This Weeks method of inverting the Laplace Transform is a port of MATLAB code. It is obtained from a web page of
- * Andre Weideman called <a href="http://dip.sun.ac.za/~weideman/research/weeks.html">ILT M-Files</a>. The minimization
- * routines are a modification of the routines found in Numerical Recipes in C.</p>
+ * Andre Weideman called <a href="http://dip.sun.ac.za/~weideman/research/weeks.html">ILT M-Files</a>.</p>
  *
  * <p>References:</p>
  *
@@ -23,8 +22,6 @@ import gov.nih.mipav.view.*;
  *   <li>"Numercial Recipes in C The Art of Scientific Computing Second Edition" by William H. Press, Saul A. Teukolsky,
  *     William T. Vetterling, and Brian P. Flannery, Chapter 10.1 Golden Section Search in One Dimension, pp. 397-402.
  *   </li>
- *   <li>"Numerical Recipes [C] Second Edition by William T. Vetterling, Saul A. Teukolsky, William H. Press, and Brian
- *     P. Flannery, Chapter 10: Minimization and Maximization of Functions, pp. 168 - 170.</li>
  * </ol>
  */
 
@@ -32,8 +29,6 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
     // This Weeks method of inverting the Laplace Transform is a port of MATLAB
     // code obtained from a web page of Andre Weideman called ILT M-Files at
     // http://dip.sun.ac.za/~weideman/research/weeks.html
-    // The minimization routines are a modification of the routines found
-    // in Numerical Recipes in C.
     // References:
     // 1.) "Algorithms for Parameter Selection in the Weeks Method for Inverting
     // the Laplace Transform" by J. A. C. Weideman, SIAM Journal on
@@ -45,10 +40,6 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
     // Edition" by William H. Press, Saul A. Teukolsky, William T.
     // Vetterling, and Brian P. Flannery, Chapter 10.1 Golden Section
     // Search in One Dimension, pp. 397-402.
-    // 4.)  "Numerical Recipes [C] Second Edition by William T. Vetterling,
-    // Saul A. Teukolsky, William H. Press, and Brian P. Flannery,
-    // Chapter 10: Minimization and Maximization of Functions,
-    // pp. 168 - 170.
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -72,12 +63,6 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
 
     /** Estimate of the absolute error at time. */
     private double[] estimatedError = null;
-
-    /** DOCUMENT ME! */
-    private double fa, fb, fc;
-
-    /** DOCUMENT ME! */
-    private double fa2, fb2, fc2;
 
     /** Number of terms in the Laguerre expansion. */
     private int nLaguerre;
@@ -110,7 +95,7 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
     /** DOCUMENT ME! */
     private double tols = 1.0e-6;
 
-    private boolean bGolden = false;
+    private boolean do_werr2t = false;
     private double dSig = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -334,160 +319,24 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
      */
     public void wpar2() {
         double[] X = new double[2];
-        double gold;
         ax2 = sig0;
         bx2 = (sig0 + sigmax) / 2.0;
         cx2 = sigmax;
-        gold = golden2();
-        boolean bGoldenSave = bGolden;
-        bGolden = false;
-        Brent.search( ax, bx, cx, X, this, tolb);
-        System.err.println( gold + "== " + X[1] + " " + sigOpt + " == " + X[0] );
+        boolean do_werr2tSave = do_werr2t;
+        do_werr2t = false;
+        Brent.search( ax2, bx2, cx2, X, this, tols);
         sigOpt = X[0];
-        bGolden = bGoldenSave;
+        do_werr2t = do_werr2tSave;
 
         ax = 0;
         bx = bmax / 2.0;
         cx = bmax;
-        gold = golden(sigOpt);
-        bGoldenSave = bGolden;
-        bGolden = true;
+        do_werr2tSave = do_werr2t;
+        do_werr2t = true;
         dSig = sigOpt;
         Brent.search( ax, bx, cx, X, this, tolb);
-        System.err.println( gold + " == " + X[1] + " " + bOpt + " == " + X[0] );
         bOpt = X[0];
-        bGolden = bGoldenSave;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param   sig  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private double golden(double sig) {
-        double R = 0.61803399;
-        double C = 1.0 - R;
-        double f1;
-        double f2;
-        double x0, x1, x2, x3;
-
-        x0 = ax;
-        x3 = cx;
-
-        if (Math.abs(cx - bx) > Math.abs(bx - ax)) {
-            x1 = bx;
-            x2 = bx + (C * (cx - bx));
-        } // if (Math.abs(cx - bx) > Math.abs(bx - ax))
-        else {
-            x2 = bx;
-            x1 = bx - (C * (bx - ax));
-        } // else
-
-        f1 = werr2t(x1, sig);
-        f2 = werr2t(x2, sig);
-
-        while (Math.abs(x3 - x0) > (tolb * (Math.abs(x1) + Math.abs(x2)))) {
-
-            if (f2 < f1) {
-                x0 = x1;
-                x1 = x2;
-                x2 = (R * x1) + (C * x3);
-                f1 = f2;
-                f2 = werr2t(x2, sig);
-            } // if (f2 < f1)
-            else {
-                x3 = x2;
-                x2 = x1;
-
-                // Stop infinite looping with x0 = 0.0, x1 = x2 = x3 = 4.9E-324
-                if ((x0 == 0.0) && ((R * x2) == x2)) {
-                    x1 = 0.0;
-                } else {
-                    x1 = (R * x2) + (C * x0);
-                }
-
-                f2 = f1;
-                f1 = werr2t(x1, sig);
-            } // else
-        } // while (Math.abs(x3 - x0) > tolb * (Math.abs(x1) + Math.abs(x2)))
-
-        if (f1 < f2) {
-            bOpt = x1;
-
-            return f1;
-        } // if (f1 < f2)
-        else {
-            bOpt = x2;
-
-            return f2;
-        } // else
-    }
-
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private double golden2() {
-        double R = 0.61803399;
-        double C = 1.0 - R;
-        double f1;
-        double f2;
-        double x0, x1, x2, x3;
-
-        x0 = ax2;
-        x3 = cx2;
-
-        if (Math.abs(cx2 - bx2) > Math.abs(bx2 - ax2)) {
-            x1 = bx2;
-            x2 = bx2 + (C * (cx2 - bx2));
-        } // if (Math.abs(cx2 - bx2) > Math.abs(bx2 - ax2))
-        else {
-            x2 = bx2;
-            x1 = bx2 - (C * (bx2 - ax2));
-        } // else
-
-        f1 = werr2e(x1);
-        f2 = werr2e(x2);
-
-        while (Math.abs(x3 - x0) > (tols * (Math.abs(x1) + Math.abs(x2)))) {
-
-            if (f2 < f1) {
-                x0 = x1;
-                x1 = x2;
-                x2 = (R * x1) + (C * x3);
-                f1 = f2;
-                f2 = werr2e(x2);
-            } // if (f2 < f1)
-            else {
-                x3 = x2;
-                x2 = x1;
-
-                // Stop infinite looping with x0 = 0.0, x1 = x2 = x3 = 4.9E-324
-                if ((x0 == 0.0) && ((R * x2) == x2)) {
-                    x1 = 0.0;
-                } else {
-                    x1 = (R * x2) + (C * x0);
-                }
-
-                f2 = f1;
-                f1 = werr2e(x1);
-            } // else
-        } // while (Math.abs(x3 - x0) > tols * (Math.abs(x1) + Math.abs(x2)))
-
-        if (f1 < f2) {
-            sigOpt = x1;
-
-            return f1;
-        } // if (f1 < f2)
-        else {
-            sigOpt = x2;
-
-            return f2;
-        } // else
+        do_werr2t = do_werr2tSave;
     }
 
     /**
@@ -519,7 +368,7 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
         for (j = N; j >= 1; j--) {
 
             for (i = 0; i < x.length; i++) {
-                unm1[i] = ((1.0 / j) * ((2.0 * j) - 1 - x[i]) * un[i]) - ((double) j / (j + 1.0) * unp1[i]) + a[j - 1];
+                unm1[i] = ((1.0 / j) * ((2.0 * j) - 1 - x[i]) * un[i]) - (j / (j + 1.0) * unp1[i]) + a[j - 1];
                 unp1[i] = un[i];
                 un[i] = unm1[i];
             }
@@ -619,7 +468,6 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
         // werr2e computes the error bound = truncation plus conditioning
         // error on the optimal curve b = b(sig)
 
-        double gold;
         int M;
         double[][] a;
         double[][] a1 = new double[nLaguerre][2];
@@ -632,16 +480,15 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
         ax = 0;
         bx = bmax / 2.0;
         cx = bmax;
-        gold = golden(sig);
-
-        boolean bGoldenSave = bGolden;
-        bGolden = true;
+        boolean do_werr2tSave = do_werr2t;
+        do_werr2t = true;
+        double dSigSave = dSig;
         dSig = sig;
         double[] X = new double[2];
         Brent.search( ax, bx, cx, X, this, tolb);        
-        System.err.println( gold + " == " + X[1] + " " + bOpt + " == " + X[0] );
         bOpt = X[0];
-        bGolden = bGoldenSave;
+        do_werr2t = do_werr2tSave;
+        dSig = dSigSave;
         
         b = bOpt;
 
@@ -721,7 +568,7 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
 
     @Override
     public double eval(double x) {
-    	if ( bGolden )
+    	if ( do_werr2t )
     		return werr2t(x, dSig);
     	return werr2e(x);
     }
