@@ -2221,6 +2221,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     dispose();
 
             } else if (command.equalsIgnoreCase("cancel3")) {
+            	if(!launchedFromInProcessState) {
+            		previewImages.remove(previewImages.size()-1);
+                	imageFiles.remove(imageFiles.size()-1);
+                	multifiles.remove(multifiles.size()-1);
+                	infoList.remove(infoList.size()-1);
+                	allOtherFilesAL.remove(allOtherFilesAL.size()-1);
+                	if(addedPreviewImage) {
+                		previewPanel.removeAll();
+     	                previewPanel.repaint();
+                	}
+            	}
                 enableDisableFinishButton();
                 dispose();
             }else if(command.startsWith("browse_")) {
