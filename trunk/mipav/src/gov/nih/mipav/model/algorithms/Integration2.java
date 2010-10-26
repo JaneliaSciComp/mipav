@@ -583,6 +583,57 @@ public abstract class Integration2 {
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
         
+        testCase = 5;
+        // Test5 tests dqawce
+        // dqawce is an adaptive integrator for finding the Cauchy
+        // principal value of the integral of f(x)*w(x) over (lower,upper)
+        // where w(x) = 1/(x-c), c between lower and upper.
+        // Integrate 1/(x*(5*x*x*x+6)) from -1 to 5.
+        // The exact answer is log(125/631)/18 = -0.0899401
+        lower = -1.0;
+        upper = 5.0;
+        c = 0.0;
+        routine = Integration2.DQAWCE;
+        epsabs = 0.0;
+        epsrel = 1.0E-3;
+        limit = 100;
+        actualAnswer = Math.log(125.0/631.0)/18.0;
+        
+        if ((c == lower) || (c == upper)) {
+            MipavUtil.displayError("Cannot have c == lower or c == upper");
+            errorStatus = 6;
+            
+            return;
+        }
+        
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 5 testing dqawce\n");
+        Preferences.debug("Integrand is 1/(x*(5*x*x*x+6))\n");
+        Preferences.debug("Integrand lower endpoint = -1.0\n");
+        Preferences.debug("Integrand upper endpoint = 5.0\n");
+        Preferences.debug("Point of singularity c = 0.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        
         testCase = 9;
         // test9 tests dqk15
         // dqk15 is a Gauss-Kronod quadrature rule.
@@ -1300,6 +1351,9 @@ public abstract class Integration2 {
         	break;
         case 4:
         	function = Math.log(x)/Math.sqrt(x);
+        	break;
+        case 5:
+        	function = 1.0/(5.0*x*x*x + 6.0);
         	break;
         case 9:
         case 10:
@@ -3764,8 +3818,278 @@ loop:
      */
     private void dqc25c(double a, double b, double c, double result[], double abserr[],
     		            int krul[], int neval[]) {
-    	
+        double ak22;
+        double amom0;
+        double amom1;
+        double amom2;
+        double cc;
+        /** mid point of the interval */
+        double centr;
+        /** chebyshev series expansion of coefficients, 
+         * for the function f, of degree 12.
+         */
+        double cheb12[] = new double[13];
+        /** chebyshev series expansion of coefficients, 
+         * for the function f, of degree 24.
+         */
+        double cheb24[] = new double[25];
+        /** value of the function f at the points cos(k*pi/24), k = 0, ..., 24 */
+        double fval[] = new double[25];
+        /** half-length of the interval */
+        double hlgth;
+        /** Approximation to the integral corresponding to the use of cheb12 */
+        double res12;
+        /** Approximation to the integral corresponding to the use of cheb24 */
+        double res24;
+        double u;
+        /** To be used for the chebyshev series expansion of f */
+        double x[] = new double[11];
+        int i;
+        int isym;
+        int k;
+        
+        for (k = 1; k <= 11; k++) {
+            x[k-1] = Math.cos(k * Math.PI/24);	
+        }
+        
+        // Check the position of c
+        cc = (2.0*c - b - a)/(b - a);
+        if (Math.abs(cc) >= 1.1) {
+           
+        	// Apply the 15-point gauss-kronrod scheme.
+        	
+        	krul[0] = krul[0] - 1;
+        	dqk15w(c,a,b,result,abserr,resabs,resasc);
+        	neval[0] = 15;
+        	if (resasc[0] == abserr[0]) {
+        	    krul[0] = krul[0] +1;	
+        	}
+        	return;
+        } // if (Math.abs(cc) >= 1.1)
+        
+        // Use the generalized clenshaw-curtis method.
+        
+        hlgth = 0.5*(b-a);
+        centr = 0.5*(b+a);
+        neval[0] = 25;
+        if (selfTest) {
+            fval[0] = 0.5 * intFuncTest(hlgth+centr);
+            fval[12] = intFuncTest(centr);
+            fval[24] = 0.5*intFuncTest(centr-hlgth);
+            for (i = 2; i <= 12; i++) {
+            	u = hlgth * x[i-2];
+            	isym = 26 - i;
+            	fval[i-1] = intFuncTest(u + centr);
+            	fval[isym-1] = intFuncTest(centr - u);
+            }
+        } // if (selfTest)
+        else {
+        	fval[0] = 0.5 * intFunc(hlgth+centr);
+            fval[12] = intFunc(centr);
+            fval[24] = 0.5*intFunc(centr-hlgth);
+            for (i = 2; i <= 12; i++) {
+            	u = hlgth * x[i-2];
+            	isym = 26 - i;
+            	fval[i-1] = intFunc(u + centr);
+            	fval[isym-1] = intFunc(centr - u);
+            }	
+        }
+        
+        // Compute the chebyshev series expansion.
+        
+        dqcheb(x, fval, cheb12, cheb24);
+        
+        // The modified chebyshev moments sare computed by forward
+        // recursion, using amom0 and amom1 as starting values.
+        
+        amom0 = Math.log(Math.abs((1.0 - cc)/(1.0 + cc)));
+        amom1 = 2.0 + cc*amom0;
+        res12 = cheb12[0]*amom0+cheb12[1]*amom1;
+        res24 = cheb24[0]*amom0+cheb24[1]*amom1;
+        for (k = 3; k <= 13; k++) {
+            amom2 = 2.0*cc*amom1 - amom0;
+            ak22 = (k-2)*(k-2);
+            if ((k/2)*2 == k) {
+            	amom2 = amom2 - 4.0/(ak22 - 1.0);
+            }
+            res12 = res12 + cheb12[k-1]*amom2;
+        	res24 = res24 + cheb24[k-1]*amom2;
+        	amom0 = amom1;
+        	amom1 = amom2;
+        } // for (k = 3; k <= 13; k++)
+        for (k = 14; k <= 25; k++) {
+        	amom2 = 2.0*cc*amom1 - amom0;
+        	ak22 = (k-2)*(k-2);
+        	if ((k/2)*2 == k) {
+        		amom2 = amom2 - 4.0/(ak22 - 1.0);
+        	}
+        	res24 = res24 + cheb24[k-1]*amom2;
+        	amom0 = amom1;
+        	amom1 = amom2;
+        } // for (k = 14; k <= 25; k++)
+        result[0] = res24;
+        abserr[0] = Math.abs(res24 - res12);
+        return;
     } // dqc25c
+    
+    /**
+     * This is a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqcheb
+	 c***refer to  dqc25c,dqc25f,dqc25s
+	 c***routines called  (none)
+	 c***revision date  830518   (yymmdd)
+	 c***keywords  chebyshev series expansion, fast fourier transform
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  this routine computes the chebyshev series expansion
+	 c            of degrees 12 and 24 of a function using a
+	 c            fast fourier transform method
+	 c            f(x) = sum(k=1,..,13) (cheb12(k)*t(k-1,x)),
+	 c            f(x) = sum(k=1,..,25) (cheb24(k)*t(k-1,x)),
+	 c            where t(k,x) is the chebyshev polynomial of degree k.
+	 c***description
+	 c
+	 c        chebyshev series expansion
+	 c        standard fortran subroutine
+	 c        double precision version
+	 c
+	 c        parameters
+	 c          on entry
+	 c           x      - double precision
+	 c                    vector of dimension 11 containing the
+	 c                    values cos(k*pi/24), k = 1, ..., 11
+	 c
+	 c           fval   - double precision
+	 c                    vector of dimension 25 containing the
+	 c                    function values at the points
+	 c                    (b+a+(b-a)*cos(k*pi/24))/2, k = 0, ...,24,
+	 c                    where (a,b) is the approximation interval.
+	 c                    fval(1) and fval(25) are divided by two
+	 c                    (these values are destroyed at output).
+	 c
+	 c          on return
+	 c           cheb12 - double precision
+	 c                    vector of dimension 13 containing the
+	 c                    chebyshev coefficients for degree 12
+	 c
+	 c           cheb24 - double precision
+	 c                    vector of dimension 25 containing the
+	 c                    chebyshev coefficients for degree 24
+	 c
+	 c***end prologue  dqcheb
+	 c
+     * @param x
+     * @param fval
+     * @param cheb12
+     * @param cheb24
+     */
+    private void dqcheb(double x[], double fval[], double cheb12[], double cheb24[]) {
+        double alam;
+        double alam1;
+        double alam2;
+        double part1;
+        double part2;
+        double part3;
+        double v[] = new double[12];
+        int i;
+        int j;
+        
+        for (i = 1; i <= 12; i++) {
+            j = 26-i;
+            v[i-1] = fval[i-1]-fval[j-1];
+            fval[i-1] = fval[i-1]+fval[j-1];
+        }
+       alam1 = v[0]-v[8];
+       alam2 = x[5]*(v[2]-v[6]-v[10]);
+       cheb12[3] = alam1+alam2;
+       cheb12[9] = alam1-alam2;
+       alam1 = v[1]-v[7]-v[9];
+       alam2 = v[3]-v[5]-v[11];
+       alam = x[2]*alam1+x[8]*alam2;
+       cheb24[3] = cheb12[3]+alam;
+       cheb24[21] = cheb12[3]-alam;
+       alam = x[8]*alam1-x[2]*alam2;
+       cheb24[9] = cheb12[9]+alam;
+       cheb24[15] = cheb12[9]-alam;
+       part1 = x[3]*v[4];
+       part2 = x[7]*v[8];
+       part3 = x[5]*v[6];
+       alam1 = v[0]+part1+part2;
+       alam2 = x[1]*v[2]+part3+x[9]*v[10];
+       cheb12[1] = alam1+alam2;
+       cheb12[11] = alam1-alam2;
+       alam = x[0]*v[1]+x[2]*v[3]+x[4]*v[5]+x[6]*v[7]
+       +x[8]*v[9]+x[10]*v[11];
+       cheb24[1] = cheb12[1]+alam;
+       cheb24[23] = cheb12[1]-alam;
+       alam = x[10]*v[1]-x[8]*v[3]+x[6]*v[5]-x[4]*v[7]
+       +x[2]*v[9]-x[0]*v[11];
+       cheb24[11] = cheb12[11]+alam;
+       cheb24[13] = cheb12[11]-alam;
+       alam1 = v[0]-part1+part2;
+       alam2 = x[9]*v[2]-part3+x[1]*v[10];
+       cheb12[5] = alam1+alam2;
+       cheb12[7] = alam1-alam2;
+       alam = x[4]*v[1]-x[8]*v[3]-x[0]*v[5]
+       -x[10]*v[7]+x[2]*v[9]+x[6]*v[11];
+       cheb24[5] = cheb12[5]+alam;
+       cheb24[19] = cheb12[5]-alam;
+       alam = x[6]*v[1]-x[2]*v[3]-x[10]*v[5]+x[0]*v[7]
+       -x[8]*v[9]-x[4]*v[11];
+       cheb24[7] = cheb12[7]+alam;
+       cheb24[17] = cheb12[7]-alam;
+       for (i = 1; i <= 6; i++) {
+           j = 14-i;
+           v[i-1] = fval[i-1]-fval[j-1];
+           fval[i-1] = fval[i-1]+fval[j-1];
+       }
+       alam1 = v[0]+x[7]*v[4];
+       alam2 = x[3]*v[2];
+       cheb12[2] = alam1+alam2;
+       cheb12[10] = alam1-alam2;
+       cheb12[6] = v[0]-v[4];
+       alam = x[1]*v[1]+x[5]*v[3]+x[9]*v[5];
+       cheb24[2] = cheb12[2]+alam;
+       cheb24[22] = cheb12[2]-alam;
+       alam = x[5]*(v[1]-v[3]-v[5]);
+       cheb24[6] = cheb12[6]+alam;
+       cheb24[18] = cheb12[6]-alam;
+       alam = x[9]*v[1]-x[5]*v[3]+x[1]*v[5];
+       cheb24[10] = cheb12[10]+alam;
+       cheb24[14] = cheb12[10]-alam;
+       for (i = 1; i <= 3; i++) {
+           j = 8-i;
+           v[i-1] = fval[i-1]-fval[j-1];
+           fval[i-1] = fval[i-1]+fval[j-1];
+       }
+       cheb12[4] = v[0]+x[7]*v[2];
+       cheb12[8] = fval[0]-x[7]*fval[2];
+       alam = x[3]*v[1];
+       cheb24[4] = cheb12[4]+alam;
+       cheb24[20] = cheb12[4]-alam;
+       alam = x[7]*fval[1]-fval[3];
+       cheb24[8] = cheb12[8]+alam;
+       cheb24[16] = cheb12[8]-alam;
+       cheb12[0] = fval[0]+fval[2];
+       alam = fval[1]+fval[3];
+       cheb24[0] = cheb12[0]+alam;
+       cheb24[24] = cheb12[0]-alam;
+       cheb12[12] = v[0]-v[2];
+       cheb24[12] = cheb12[12];
+       alam = 1.0/6.0;
+       for (i = 1; i <= 11; i++) {
+           cheb12[i] = cheb12[i]*alam;
+       }
+       alam = 0.5*alam;
+       cheb12[0] = cheb12[0]*alam;
+       cheb12[12] = cheb12[12]*alam;
+       for (i = 1; i <= 23; i++) {
+           cheb24[i] = cheb24[i]*alam;
+       }
+       cheb24[0] = 0.5*alam*cheb24[0];
+       cheb24[24] = 0.5*alam*cheb24[24];
+      return;
+    } // dqcheb
 
     /**
      * This is a port of the original FORTRAN whose header is given below:
@@ -4340,6 +4664,187 @@ loop:
 
         return;
     }
+    
+    /**
+     * This a a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqk15w
+	 c***date written   810101   (yymmdd)
+	 c***revision date  830518   (mmddyy)
+	 c***category no.  h2a2a2
+	 c***keywords  15-point gauss-kronrod rules
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f*w over (a,b), with error
+	 c                           estimate
+	 c                       j = integral of abs(f*w) over (a,b)
+	 c***description
+	 c
+	 c           integration rules
+	 c           standard fortran subroutine
+	 c           double precision version
+	 c
+	 c           parameters
+	 c             on entry
+	 c
+	 c              p1, p2, p3, p4 - double precision
+	 c                       parameters in the weight function
+	 c
+	 c              kp     - integer
+	 c                       key for indicating the type of weight function
+	 c
+	 c              a      - double precision
+	 c                       lower limit of integration
+	 c
+	 c              b      - double precision
+	 c                       upper limit of integration
+	 c
+	 c            on return
+	 c              result - double precision
+	 c                       approximation to the integral i
+	 c                       result is computed by applying the 15-point
+	 c                       kronrod rule (resk) obtained by optimal addition
+	 c                       of abscissae to the 7-point gauss rule (resg).
+	 c
+	 c              abserr - double precision
+	 c                       estimate of the modulus of the absolute error,
+	 c                       which should equal or exceed abs(i-result)
+	 c
+	 c              resabs - double precision
+	 c                       approximation to the integral of abs(f)
+	 c
+	 c              resasc - double precision
+	 c                       approximation to the integral of abs(f-i/(b-a))
+	 c
+     * @param p1
+     * @param p2
+     * @param a
+     * @param b
+     * @param result
+     * @param abserr
+     * @param resabs
+     * @param resasc
+     */
+    private void dqk15w(double p1, double a, double b,
+    		double[] result, double[] abserr, double[] resabs, double[] resasc) {
+    	/** The abscissa and weights are given for the interval (-1,1).
+    	 * Because of symmetry only the positive abscissae and their
+    	 * corresponding weights are given.
+    	 */
+    	/** abscissa */
+        double absc;
+        double absc1;
+        double absc2;
+        /** mid point of the inverval */
+        double centr;
+        double dhlgth;
+        double fc;
+        double fsum;
+        /** function value */
+        double fval1;
+        double fval2;
+        double fv1[] = new double[7];
+        double fv2[] = new double[7];
+        /** half_length of the interval */
+        double hlgth;
+        /** result of the 7-point gauss formula */
+        double resg;
+        /** result of the 15-point kronrod formula */
+        double resk;
+        /** approximation to the mean value of f*w over (a,b),
+         *  i.e. to i/(b-a)
+         */
+        double reskh;
+        /** Weights of the 7-point gauss rule */
+        double wg[] = new double[]{0.1294849661688697,    0.2797053914892767,
+                                   0.3818300505051889,    0.4179591836734694};
+        /** Weights of the 15-point gauss-kronrod rule */
+        double wgk[] = new double[]{0.02293532201052922,     0.06309209262997855,
+        	                        0.1047900103222502,      0.1406532597155259,
+        	                        0.1690047266392679,      0.1903505780647854,
+        	                        0.2044329400752989,      0.2094821410847278};
+        /** abscissae of the 15-point gauss-kronrod rule
+         *  xgk[1], xgk[3], ... abscissae of the 7-point gauss rule.
+         *  xgk[0], xgk[2], ... abscissae which are optimally added to the 7-point gauss rule.
+         */
+        double xgk[] = new double[]{0.9914553711208126,     0.9491079123427585,
+        	                        0.8648644233597691,     0.7415311855993944,
+        	                        0.5860872354676911,     0.4058451513773972,
+        	                        0.2077849550078985,     0.0000000000000000};
+        int j;
+        int jtw;
+        int jtwm1;
+        
+        centr = 0.5*(a+b);
+        hlgth = 0.5*(b - a);
+        dhlgth = Math.abs(hlgth);
+        
+        // Compute the 15-point kronrod approximation to the
+        // integral, and estimate the error.
+        if (selfTest) {
+        	fc = intFuncTest(centr)/(centr - p1);
+        }
+        else {
+        	fc = intFunc(centr)/(centr - p1);
+        }
+        resg = wg[3] * fc;
+        resk = wgk[7] * fc;
+        resabs[0] = Math.abs(resk);
+        for (j = 1; j <= 3; j++) {
+        	jtw = 2*j;
+        	absc = hlgth*xgk[jtw-1];
+        	absc1 = centr - absc;
+        	absc2 = centr + absc;
+        	if (selfTest) {
+        		fval1 = intFuncTest(absc1)/(absc1 - p1);
+        		fval2 = intFuncTest(absc2)/(absc2 - p1);
+        	}
+        	else {
+        		fval1 = intFunc(absc1)/(absc1 - p1);
+        		fval2 = intFunc(absc2)/(absc2 - p1);
+        	}
+        	fv1[jtw-1] = fval1;
+        	fv2[jtw-1] = fval2;
+        	fsum = fval1 + fval2;
+        	resg = resg + wg[j-1]*fsum;
+        	resk = resk + wgk[jtw-1]*fsum;
+        	resabs[0] = resabs[0] + wgk[jtw-1]*(Math.abs(fval1) + Math.abs(fval2));
+        } // for (j = 1; j <= 3; j++)
+        for (j = 1; j <= 4; j++) {
+        	jtwm1 = 2*j - 1;
+        	absc = hlgth*xgk[jtwm1-1];
+        	absc1 = centr - absc;
+        	absc2 = centr + absc;
+        	if (selfTest) {
+        		fval1 = intFuncTest(absc1)/(absc1 - p1);
+        		fval2 = intFuncTest(absc2)/(absc2 - p1);
+        	}
+        	else {
+        		fval1 = intFunc(absc1)/(absc1 - p1);
+        		fval2 = intFunc(absc2)/(absc2 - p1);
+        	}
+        	fv1[jtwm1 - 1] = fval1;
+        	fv2[jtwm1 - 1] = fval2;
+        	fsum = fval1 + fval2;
+        	resk = resk + wgk[jtwm1-1]*fsum;
+        	resabs[0] = resabs[0] + wgk[jtwm1-1]*(Math.abs(fval1) + Math.abs(fval2));
+        } // for (j = 1; j <= 4; j++)
+        reskh = 0.5*resk;
+        resasc[0] = wgk[7]*Math.abs(fc - reskh);
+        for (j = 0; j < 7; j++) {
+        	resasc[0] = resasc[0] + wgk[j]*(Math.abs(fv1[j] - reskh) + Math.abs(fv2[j] - reskh));
+        }
+        result[0] = resk*hlgth;
+        resabs[0] = resabs[0] * dhlgth;
+        resasc[0] = resasc[0] * dhlgth;
+        abserr[0] = Math.abs((resk-resg)*hlgth);
+        if ((resasc[0] != 0.0) && (abserr[0] != 0.0)) {
+        	abserr[0] = resasc[0]*Math.min(1.0, Math.pow(200.0*abserr[0]/resasc[0], 1.5));
+        }
+        if (resabs[0] > uflow/(50.0*epmach)) {
+        	abserr[0] = Math.max((50.0*epmach)*resabs[0], abserr[0]);
+        }
+        return;
+    } // dqk15w
 
     /**
      * This is a port of the original FORTRAN whose header is given below:
