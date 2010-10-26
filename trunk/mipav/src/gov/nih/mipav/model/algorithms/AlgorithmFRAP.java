@@ -197,7 +197,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
     private boolean useRed = false;
 
     /** DOCUMENT ME! */
-    private boolean useTestData = false;
+    private boolean useTestData = true;
 
     /** DOCUMENT ME! */
     private int wholeOrganIndex;
@@ -383,11 +383,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             // runLapTest2();*/
             // runLapTestqd();
-            //runLapTestWeeks();
+            runLapTestWeeks();
             // runFullModelTest();
 
             // runIntegrationTest();
-            runIntegrationTest2();
+            // runIntegrationTest2();
             // FFTUtility fft = new FFTUtility(FFTUtility.SELF_TEST);
             // fft.run();
             return;
