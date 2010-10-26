@@ -5,8 +5,9 @@ import gov.nih.mipav.model.algorithms.filters.*;
 
 
 /**
- * This is a port of niltqd.m, a fast numerical inverse Laplace transform based on FFT and quotient-difference algorithm
- * by Lubomir Brancik, 2001 In doing fits be sure to exclude the t = 0.0 point values as the error associated with this
+ * This is a port of niltqd.m, a fast numerical inverse Laplace transform based on FFT and quotient-difference algorithm by
+ * Lubomir Brancik, 2001, Brno University of Technology.
+ * In doing fits be sure to exclude the t = 0.0 point values as the error associated with this
  * point is far greater than the error associated with the other points. Increasing p above 3 did not have any
  * appreciable effect on the rms error. For the exp(t) example the effect of tol was: tol = 1.0E-8 rms error = 6.29E-5
  * tol = 1.0E-9 rms error = 7.26E-6 tol = 1.0E-10 rms error = 4.40E-6 tol = 1.0E-11 rms error = 1.13E-5 tol = 1.0E-12
