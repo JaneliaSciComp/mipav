@@ -167,7 +167,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmNewGeneric2) {
+       if (algorithm instanceof PlugInAlgorithmMTry) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             
@@ -414,11 +414,10 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
      */
 	private boolean setVariables() {
 	   
-	    
-	    
-	    
-	    medImage = ViewUserInterface.getReference().getRegisteredImageByName(titles[1]);
-	    maxImage = ViewUserInterface.getReference().getRegisteredImageByName(titles[2]);
+	    titles = new String[imageCombo.length];
+	    for(int i=0; i<titles.length; i++) {
+	        titles[i] = imageCombo[i].getSelectedItem().toString();
+	    }
 	    
 	    double invTime1, invTime2, invTime3;
 	    
