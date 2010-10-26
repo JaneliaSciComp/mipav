@@ -10,6 +10,9 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
+import de.jtem.numericalMethods.algebra.linear.Inversion;
+import de.jtem.numericalMethods.algebra.linear.solve.AXB;
+
 /**
  *      This program generates type 1, type 2, and type 3 objects in different spatial patterns and tests to see if
  *      randomness if rejected for segregation or association.  The objects may be points or circles of
@@ -744,7 +747,7 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         byte green[];
         byte blue[];
         boolean success;
-        GeneralizedInverse ge;
+        //GeneralizedInverse ge;
         double sigmaInv[][];
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -2518,14 +2521,16 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         ND[7][0] = N32 - EN32;
         ND[8][0] = N33 - EN33;
         NDM = new Matrix(ND);
-        success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
-        sigmaInv = null;
+        //success = true;
+        sigmaInv = new double[sigma.length][sigma.length];
+        success = Inversion.compute( sigma, sigmaInv );
+        //ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
+        //sigmaInv = null;
         //sigmaInv = ge.ginv();
-        sigmaInv = ge.pinv();
-        ge = null;
-        sigmaD = new Matrix(sigmaInv);
-        CD = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
+        //sigmaInv = ge.pinv();
+        //ge = null;
+        sigmaD = new Matrix(sigmaInv);        
+        CD = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];        
         //sigmaD = new Matrix(sigma);
         Preferences.debug("CD calculated via matrix quadratic form for generalized inverse = " + CD + "\n");
         /*try {
@@ -3066,12 +3071,14 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         T[7][0] = T32;
         T[8][0] = T33;
         TM = new Matrix(T);
-        success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
-        sigmaInv = null;
+        sigmaInv = new double[sigma.length][sigma.length];
+        success = Inversion.compute( sigma, sigmaInv );
+        //success = true;
+        //ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
+        //sigmaInv = null;
         //sigmaInv = ge.ginv();
-        sigmaInv = ge.pinv();
-        ge = null;
+        //sigmaInv = ge.pinv();
+        //ge = null;
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
         Preferences.debug("CN for generalized inverse = " + CN[0][0] + "\n");
@@ -3525,12 +3532,14 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
             }
         }
         NDM = new Matrix(ND);
-        success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
-        sigmaInv = null;
+        sigmaInv = new double[sigma.length][sigma.length];
+        success = Inversion.compute( sigma, sigmaInv );
+        //success = true;
+        //ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
+        //sigmaInv = null;
         //sigmaInv = ge.ginv();
-        sigmaInv = ge.pinv();
-        ge = null;
+        //sigmaInv = ge.pinv();
+        //ge = null;
         sigmaD = new Matrix(sigmaInv);
         CD = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
         Preferences.debug("CD for generalized inverse = " + CD + "\n");
@@ -3711,12 +3720,14 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         }
         
         TM = new Matrix(T);
-        success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
-        sigmaInv = null;
+        sigmaInv = new double[sigma.length][sigma.length];
+        success = Inversion.compute( sigma, sigmaInv );
+        //success = true;
+        //ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
+        //sigmaInv = null;
         //sigmaInv = ge.ginv();
-        sigmaInv = ge.pinv();
-        ge = null;
+        //sigmaInv = ge.pinv();
+        //ge = null;
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
         Preferences.debug("CN for generalized inverse = " + CN[0][0] + "\n");
