@@ -13,6 +13,7 @@ import gov.nih.mipav.view.*;
  * The original dqng routine was written by Robert Piessens and Elise de Doncker and modified by David Kahaner.
  * The original dqc25c, dqcheb, dqelg, dqk15, dqk15i, dqk15w, dqk21, dqk31, dqk41, dqk51, dqk61, dqpsrt, and dqwgtc  
  * routines were written by Robert Piessens and Elise de Doncker.
+ * The simple contents of dqwgtc are incorporated into dqk15w.
  * Self tests 1 to 15 come from quadpack_prb.f90 by John Burkardt.
  * The names of the copyright holders or contributors may not be used to endorse
  * or promote any derived software without prior permission;
@@ -590,6 +591,10 @@ public abstract class Integration2 {
         // where w(x) = 1/(x-c), c between lower and upper.
         // Integrate 1/(x*(5*x*x*x+6)) from -1 to 5.
         // The exact answer is log(125/631)/18 = -0.0899401
+        // Numerical Integral = -0.08994400695837006 after 215 integrand evaluations used
+        // Error status = 0 with estimated absolute error = 1.1852900958199885E-6
+        // Actual answer = -0.08994400695771734
+        // Exact error = -6.527139939649373E-13
         lower = -1.0;
         upper = 5.0;
         c = 0.0;
@@ -3593,7 +3598,6 @@ loop:
             elist = new double[limit];
             iord = new int[limit];
             
-            errorStatus = 0;
             neval[0] = 0;
             last = 0;
             alist[0] = lower;
@@ -3650,7 +3654,7 @@ loop:
             
             // Main for loop
             
-            for (last = 1; last < limit; last++) {
+            for (last = 2; last <= limit; last++) {
             	
             	// Biset the subinterval with the nrmax-th largest error estimate.
             	
@@ -3681,11 +3685,11 @@ loop:
             		(erro12 >= 0.99*errMax[0]) && (krule[0] == 0)) {
             		iroff1 = iroff1 + 1;
             	}
-            	if ((last >= 10) && (erro12 > errMax[0]) && (krule[0] == 0)) {
+            	if ((last > 10) && (erro12 > errMax[0]) && (krule[0] == 0)) {
             		iroff2 = iroff2 + 1;
             	}
             	rlist[maxErr[0]] = area1[0];
-            	rlist[last] = area2[0];
+            	rlist[last-1] = area2[0];
             	errBnd = Math.max(epsabs, epsrel * Math.abs(area));
             	if (errSum > errBnd) {
             		
@@ -3698,7 +3702,7 @@ loop:
             		// Set error flag in the case that number of interval
             		// bisections exceeds limit.
             		
-            		if (last == (limit-1)) {
+            		if (last == limit) {
             			errorStatus = 1;
             		}
             		
@@ -3712,20 +3716,20 @@ loop:
             	// Append the newly created intervals to the list
             	
             	if (error2[0] <= error1[0]) {
-            		alist[last] = a2;
+            		alist[last-1] = a2;
             		blist[maxErr[0]] = b1;
-            		blist[last] = b2;
+            		blist[last-1] = b2;
             		elist[maxErr[0]] = error1[0];
-            		elist[last] = error2[0];
+            		elist[last-1] = error2[0];
             	}
             	else {
             	    alist[maxErr[0]] = a2;
-            	    alist[last] = a1;
-            	    blist[last] = b1;
+            	    alist[last-1] = a1;
+            	    blist[last-1] = b1;
             	    rlist[maxErr[0]] = area2[0];
-            	    rlist[last] = area1[0];
+            	    rlist[last-1] = area1[0];
             	    elist[maxErr[0]] = error2[0];
-            	    elist[last] = error1[0];
+            	    elist[last-1] = error1[0];
             	}
             	
             	// Call subroutine dqpsrt to maintain the descending ordering
@@ -3736,7 +3740,7 @@ loop:
             	if ((errorStatus != 0) || (errSum <= errBnd)) {
             		break;
             	}
-            } // for (last = 1; last < limit; last++)
+            } // for (last = 2; last <= limit; last++)
             
             // Compute final result
             
