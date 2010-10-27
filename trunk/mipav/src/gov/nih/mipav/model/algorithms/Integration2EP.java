@@ -11,10 +11,11 @@ import gov.nih.mipav.DoubleDouble;
  * This is a port of FORTRAN numerical integration routines in QUADPACK found at http://www.netlib.org/quadpack
  * Reference: R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner Quadpack: a Subroutine Package for Automatic
  * Integration Springer Verlag, 1983. Series in Computational Mathematics v. 1
- * The original dqage, dqagie, dqagpe, and dqagse routines were written by Robert Piessens and Elise de Doncker.
+ * The original dqage, dqagie, dqagpe, dqagse, and dqawce routines were written by Robert Piessens and Elise de Doncker.
  * The original dqng routine was written by Robert Piessens and Elise de Doncker and modified by David Kahaner.
- * The original dqelg, dqk15, dqk15i, dqk21, dqk31, dqk41, dqk51, dqk61, and dqpsrt routines were written
- * by Robert Piessens and Elise de Doncker.
+ * The original dqc25c, dqcheb, dqelg, dqk15, dqk15i, dqk15w, dqk21, dqk31, dqk41, dqk51, dqk61, dqpsrt, and dqwgtc  
+ * routines were written by Robert Piessens and Elise de Doncker.
+ * The simple contents of dqwgtc are incorporated into dqk15w.
  * Self tests 1 to 15 come from quadpack_prb.f90 by John Burkardt.
  * The names of the copyright holders or contributors may not be used to endorse
  * or promote any derived software without prior permission;
@@ -165,6 +166,9 @@ public abstract class Integration2EP {
     
     /** Gauss-Kronod quadrature rule */
     protected static final int DQK61 = 11;
+    
+    /** Cauchy principal value */
+    protected static final int DQAWCE = 12;
 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -180,6 +184,11 @@ public abstract class Integration2EP {
 
     /** finite bound of integration range used in dqagie (has no meaning if interval is doubly-infinite). */
     private DoubleDouble bound;
+    
+    /** Parameter in the weight function, c != lower, c != upper.
+     * If c == a or c == b, the routine will end with errorStatus = 6
+     */
+    private DoubleDouble c;
 
     /**
      * Used in dqagpe This array must always be >= 2 in length. The first breakPoints.length - 2 points are user
@@ -275,7 +284,7 @@ public abstract class Integration2EP {
     private int[] ndin;
 
     /** Number of integrand evaluations. */
-    private int neval;
+    private int neval[] = new int[1];
 
     /** npts = npts2 - 2. */
     private int npts;
@@ -410,7 +419,7 @@ public abstract class Integration2EP {
         Preferences.debug("Integrand is cos(100.0*sin(x))\n");
         Preferences.debug("Integrand lower endpoint = 0.0\n");
         Preferences.debug("Integrand upper endpoint = PI\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with estimated absolute error = " + abserr[0] + "\n");
@@ -458,7 +467,7 @@ public abstract class Integration2EP {
         Preferences.debug("Integrand is log(x)/(1 + 100*x*x)\n");
         Preferences.debug("Integrand lower endpoint = 0.0\n");
         Preferences.debug("Integrand upper endpoint = infinity\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with estimated absolute error = " + abserr[0] + "\n");
@@ -533,7 +542,7 @@ public abstract class Integration2EP {
         Preferences.debug("Integrand is x**3 * log(abs((x*x-1)*(x*x-2)))\n");
         Preferences.debug("Integrand lower endpoint = 0.0\n");
         Preferences.debug("Integrand upper endpoint = 3.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with estimated absolute error = " + abserr[0] + "\n");
@@ -577,7 +586,62 @@ public abstract class Integration2EP {
         Preferences.debug("Integrand is log(x)/sqrt(x)\n");
         Preferences.debug("Integrand lower endpoint = 0.0\n");
         Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        
+        testCase = 5;
+        // Test5 tests dqawce
+        // dqawce is an adaptive integrator for finding the Cauchy
+        // principal value of the integral of f(x)*w(x) over (lower,upper)
+        // where w(x) = 1/(x-c), c between lower and upper.
+        // Integrate 1/(x*(5*x*x*x+6)) from -1 to 5.
+        // The exact answer is log(125/631)/18 = -0.0899401
+        // Numerical Integral = -0.089944006957717334997429859754904 after 1465 integrand evaluations used
+        // Error status = 2 with estimated absolute error = 3.8465541596292214532062525632172E-16
+        // Actual answer = -0.089944006957717335193136668554834
+        // Exact error = 1.957068087999283248150260255781E-19
+        lower = DoubleDouble.valueOf(-1.0);
+        upper = DoubleDouble.valueOf(5.0);
+        c = DoubleDouble.valueOf(0.0);
+        routine = Integration2.DQAWCE;
+        epsabs = DoubleDouble.valueOf(0.0);
+        epsrel = DoubleDouble.valueOf(1.0E-28);
+        limit = 1000;
+        actualAnswer = (((DoubleDouble.valueOf(125.0)).divide(DoubleDouble.valueOf(631.0))).log()).divide(DoubleDouble.valueOf(18.0));
+        
+        if ((c.equals(lower)) || (c.equals(upper))) {
+            MipavUtil.displayError("Cannot have c == lower or c == upper");
+            errorStatus = 6;
+            
+            return;
+        }
+        
+        if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 5 testing dqawce\n");
+        Preferences.debug("Integrand is 1/(x*(5*x*x*x+6))\n");
+        Preferences.debug("Integrand lower endpoint = -1.0\n");
+        Preferences.debug("Integrand upper endpoint = 5.0\n");
+        Preferences.debug("Point of singularity c = 0.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with estimated absolute error = " + abserr[0] + "\n");
@@ -776,7 +840,7 @@ public abstract class Integration2EP {
         Preferences.debug("Integrand is sqrt(x) * log(x)\n");
         Preferences.debug("Integrand lower endpoint = 0.0\n");
         Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with estimated absolute error = " + abserr[0] + "\n");
@@ -840,7 +904,7 @@ public abstract class Integration2EP {
         driver();
         
         Preferences.debug("Test 101\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with absolute error = " + abserr[0] + "\n");
@@ -879,7 +943,7 @@ public abstract class Integration2EP {
         driver();
         
         Preferences.debug("Test 102\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval +
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
         " with absolute error = " + abserr[0] + "\n");
@@ -1175,6 +1239,10 @@ public abstract class Integration2EP {
     	case 4:
     		function = (x.log()).divide(x.sqrt());
     		break;
+    	case 5:
+        	function = (DoubleDouble.valueOf(1.0)).divide
+        	(((((DoubleDouble.valueOf(5.0)).multiply(x)).multiply(x)).multiply(x)).add(DoubleDouble.valueOf(6.0)));
+        	break;
     	case 9:
     	case 10:
     	case 11:
@@ -1322,7 +1390,7 @@ public abstract class Integration2EP {
             rlist2 = new DoubleDouble[52];
 
             errorStatus = 0;
-            neval = 0;
+            neval[0] = 0;
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
             abserr[0] = DoubleDouble.valueOf(0.0);
@@ -1365,10 +1433,10 @@ public abstract class Integration2EP {
             } // if (limit == 1)
 
             if ((errorStatus != 0) || ((abserr[0].le(errBnd)) && (abserr[0].ne(resabs[0]))) || (abserr[0].equals(DoubleDouble.valueOf(0.0)))) {
-                neval = (30 * last) - 15;
+                neval[0] = (30 * last) - 15;
 
                 if (inf == 2) {
-                    neval = 2 * neval;
+                    neval[0] = 2 * neval[0];
                 } // if (inf == 2)
 
                 if (errorStatus > 2) {
@@ -1506,10 +1574,10 @@ loop:
                     } // for (k = 0; k < last; k++)
 
                     abserr[0] = (DoubleDouble)errSum.clone();
-                    neval = (30 * last) - 15;
+                    neval[0] = (30 * last) - 15;
 
                     if (inf == 2) {
-                        neval = 2 * neval;
+                        neval[0] = 2 * neval[0];
                     } // if (inf == 2)
 
                     if (errorStatus > 2) {
@@ -1644,10 +1712,10 @@ loop:
                             } // for (k = 0; k < last; k++)
 
                             abserr[0] = (DoubleDouble)errSum.clone();
-                            neval = (30 * last) - 15;
+                            neval[0] = (30 * last) - 15;
 
                             if (inf == 2) {
-                                neval = 2 * neval;
+                                neval[0] = 2 * neval[0];
                             } // if (inf == 2)
 
                             if (errorStatus > 2) {
@@ -1658,10 +1726,10 @@ loop:
                         } // if (abserr[0] > errSum)
 
                         if (area.isZero()) {
-                            neval = (30 * last) - 15;
+                            neval[0] = (30 * last) - 15;
 
                             if (inf == 2) {
-                                neval = 2 * neval;
+                                neval[0] = 2 * neval[0];
                             } // if (inf == 2)
 
                             if (errorStatus > 2) {
@@ -1672,10 +1740,10 @@ loop:
                         } // if (area == 0.0)
 
                         if ((ksgn == -1) && ((result[0].abs()).max(area.abs()).le((DoubleDouble.valueOf(1.0E-2)).multiply(defabs[0])))) {
-                            neval = (30 * last) - 15;
+                            neval[0] = (30 * last) - 15;
 
                             if (inf == 2) {
-                                neval = 2 * neval;
+                                neval[0] = 2 * neval[0];
                             } // if (inf == 2)
 
                             if (errorStatus > 2) {
@@ -1690,10 +1758,10 @@ loop:
                             errorStatus = 6;
                         } // if ((1.0E-2 > (result[0]/area)) || (result[0]/area > 100.0) ||
 
-                        neval = (30 * last) - 15;
+                        neval[0] = (30 * last) - 15;
 
                         if (inf == 2) {
-                            neval = 2 * neval;
+                            neval[0] = 2 * neval[0];
                         } // if (inf == 2)
 
                         if (errorStatus > 2) {
@@ -1711,10 +1779,10 @@ loop:
                         } // for (k = 0; k < last; k++)
 
                         abserr[0] = (DoubleDouble)errSum.clone();
-                        neval = (30 * last) - 15;
+                        neval[0] = (30 * last) - 15;
 
                         if (inf == 2) {
-                            neval = 2 * neval;
+                            neval[0] = 2 * neval[0];
                         } // if (inf == 2)
 
                         if (errorStatus > 2) {
@@ -1726,10 +1794,10 @@ loop:
                 } // if ((errorStatus + ierro) != 0)
 
                 if ((ksgn == -1) && (((result[0].abs()).max(area.abs())).le((DoubleDouble.valueOf(1.0E-2)).multiply(defabs[0])))) {
-                    neval = (30 * last) - 15;
+                    neval[0] = (30 * last) - 15;
 
                     if (inf == 2) {
-                        neval = 2 * neval;
+                        neval[0] = 2 * neval[0];
                     } // if (inf == 2)
 
                     if (errorStatus > 2) {
@@ -1744,10 +1812,10 @@ loop:
                     errorStatus = 6;
                 } // if ((1.0E-2 > (result[0]/area)) || (result[0]/area > 100.0) ||
 
-                neval = (30 * last) - 15;
+                neval[0] = (30 * last) - 15;
 
                 if (inf == 2) {
-                    neval = 2 * neval;
+                    neval[0] = 2 * neval[0];
                 } // if (inf == 2)
 
                 if (errorStatus > 2) {
@@ -1764,10 +1832,10 @@ loop:
             } // for (k = 0; k < last; k++)
 
             abserr[0] = (DoubleDouble)errSum.clone();
-            neval = (30 * last) - 15;
+            neval[0] = (30 * last) - 15;
 
             if (inf == 2) {
-                neval = 2 * neval;
+                neval[0] = 2 * neval[0];
             } // if (inf == 2)
 
             if (errorStatus > 2) {
@@ -1913,7 +1981,7 @@ loop:
             rlist2 = new DoubleDouble[52];
 
             errorStatus = 0;
-            neval = 0;
+            neval[0] = 0;
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
             abserr[0] = DoubleDouble.valueOf(0.0);
@@ -2001,7 +2069,7 @@ loop:
             // Test on accuracy
 
             last = nint;
-            neval = 21 * nint;
+            neval[0] = 21 * nint;
             dres = (result[0].abs());
             errBnd = epsabs.max(dres.multiply(epsrel));
 
@@ -2089,7 +2157,7 @@ loop:
 
                 // Improve previous approximations to integral and error
                 // and test for accuracy.
-                neval = neval + 42;
+                neval[0] = neval[0] + 42;
                 area12 = area1[0].add(area2[0]);
                 error12 = error1[0].add(error2[0]);
                 errSum = (errSum.add(error12)).subtract(errMax[0]);
@@ -2441,6 +2509,10 @@ loop:
                 dqage();
                 break;
                 
+            case DQAWCE:
+            	dqawce();
+            	break;
+                
             case DQK15:
             	dqk15(lower, upper, result, abserr, resabs, resasc);
             	break;
@@ -2502,10 +2574,10 @@ loop:
     /**
      * DOCUMENT ME!
      *
-     * @return  neval
+     * @return  neval[0
      */
     public int getNeval() {
-        return neval;
+        return neval[0];
     }
 
     /**
@@ -2578,7 +2650,7 @@ loop:
             iord = new int[limit];
 
             errorStatus = 0;
-            neval = 0;
+            neval[0] = 0;
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
             abserr[0] = DoubleDouble.valueOf(0.0);
@@ -2600,7 +2672,7 @@ loop:
                 keyf = 6;
             } // if (key >= 7)
 
-            neval = 0;
+            neval[0] = 0;
 
             switch (keyf) {
 
@@ -2649,10 +2721,10 @@ loop:
             if ((errorStatus != 0) || ((abserr[0].le(errBnd)) && (abserr[0].ne(resabs[0]))) || (abserr[0].isZero())) {
 
                 if (keyf != 1) {
-                    neval = ((10 * keyf) + 1) * ((2 * neval) + 1);
+                    neval[0] = ((10 * keyf) + 1) * ((2 * neval[0]) + 1);
                 } // if (keyf != 1)
                 else {
-                    neval = (30 * neval) + 15;
+                    neval[0] = (30 * neval[0]) + 15;
                 } // else
 
                 return;
@@ -2715,7 +2787,7 @@ loop:
                 // Improve previous approximations to integral and error
                 // and test for accuracy.
 
-                neval = neval + 1;
+                neval[0] = neval[0] + 1;
                 area12 = area1[0].add(area2[0]);
                 error12 = error1[0].add(error2[0]);
                 errSum = (errSum.add(error12)).subtract(errMax[0]);
@@ -2804,10 +2876,10 @@ loop:
             abserr[0] = (DoubleDouble)errSum.clone();
 
             if (keyf != 1) {
-                neval = ((10 * keyf) + 1) * ((2 * neval) + 1);
+                neval[0] = ((10 * keyf) + 1) * ((2 * neval[0]) + 1);
             } // if (keyf != 1)
             else {
-                neval = (30 * neval) + 15;
+                neval[0] = (30 * neval[0]) + 15;
             } // else
 
             return;
@@ -2937,7 +3009,7 @@ loop:
             res31a = new DoubleDouble[3];
 
             errorStatus = 0;
-            neval = 0;
+            neval[0] = 0;
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
             abserr[0] = DoubleDouble.valueOf(0.0);
@@ -2969,7 +3041,7 @@ loop:
             } // if (limit == 1)
 
             if ((errorStatus != 0) || ((abserr[0].le(errBnd)) && (abserr[0].ne(resabs[0]))) || (abserr[0].isZero())) {
-                neval = (42 * last) - 21;
+                neval[0] = (42 * last) - 21;
 
                 return;
             } // if ((errorStatus != 0) || ((abserr[0] <= errBnd) && (abserr[0] !=
@@ -3111,7 +3183,7 @@ loop:
                         errorStatus = errorStatus - 1;
                     } // if (errorStatus > 2)
 
-                    neval = (42 * last) - 21;
+                    neval[0] = (42 * last) - 21;
 
                     return;
                 } // if (errSum <= errBnd)
@@ -3247,7 +3319,7 @@ loop:
                                 errorStatus = errorStatus - 1;
                             } // if (errorStatus > 2)
 
-                            neval = (42 * last) - 21;
+                            neval[0] = (42 * last) - 21;
 
                             return;
                         } // if (abserr[0] > errSum)
@@ -3258,7 +3330,7 @@ loop:
                                 errorStatus = errorStatus - 1;
                             } // if (errorStatus > 2)
 
-                            neval = (42 * last) - 21;
+                            neval[0] = (42 * last) - 21;
 
                             return;
                         } // if (area.isZero())
@@ -3269,7 +3341,7 @@ loop:
                                 errorStatus = errorStatus - 1;
                             } // if (errorStatus > 2)
 
-                            neval = (42 * last) - 21;
+                            neval[0] = (42 * last) - 21;
 
                             return;
                         } // if ((ksgn == -1) && (Math.max(Math.abs(result[0]),
@@ -3283,7 +3355,7 @@ loop:
                             errorStatus = errorStatus - 1;
                         } // if (errorStatus > 2)
 
-                        neval = (42 * last) - 21;
+                        neval[0] = (42 * last) - 21;
 
                         return;
                     } // if ((result[0].isZero()0 || (area.isZero()))
@@ -3301,7 +3373,7 @@ loop:
                             errorStatus = errorStatus - 1;
                         } // if (errorStatus > 2)
 
-                        neval = (42 * last) - 21;
+                        neval[0] = (42 * last) - 21;
 
                         return;
                     } // if (abserr[0]/Math.abs(result[0]) > errSum/Math.abs(area))
@@ -3313,7 +3385,7 @@ loop:
                         errorStatus = errorStatus - 1;
                     } // if (errorStatus > 2)
 
-                    neval = (42 * last) - 21;
+                    neval[0] = (42 * last) - 21;
 
                     return;
                 } // if ((ksgn == -1) && (Math.max(Math.abs(result[0]),
@@ -3327,7 +3399,7 @@ loop:
                     errorStatus = errorStatus - 1;
                 } // if (errorStatus > 2)
 
-                neval = (42 * last) - 21;
+                neval[0] = (42 * last) - 21;
 
                 return;
             } // if (abserr[0] != oflow)
@@ -3344,7 +3416,7 @@ loop:
                 errorStatus = errorStatus - 1;
             } // if (errorStatus > 2)
 
-            neval = (42 * last) - 21;
+            neval[0] = (42 * last) - 21;
 
             return;
         } // try
@@ -3353,6 +3425,574 @@ loop:
         }
 
     }
+    
+    /**
+     * This is the port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqawce
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a2a1,j4
+	 c***keywords  automatic integrator, special-purpose,
+	 c             cauchy principal value, clenshaw-curtis method
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***  purpose  the routine calculates an approximation result to a
+	 c              cauchy principal value i = integral of f*w over (a,b)
+	 c              (w(x) = 1/(x-c), (c.ne.a, c.ne.b), hopefully satisfying
+	 c              following claim for accuracy
+	 c              abs(i-result).le.max(epsabs,epsrel*abs(i))
+	 c***description
+	 c
+	 c        computation of a cauchy principal value
+	 c        standard fortran subroutine
+	 c        double precision version
+     */
+    private void dqawce() {
+        // Routines called dqc25c, dqpsrt
+    	// Variables end in 1 for the the left subinterval
+    	// and variables end in 2 for the right subinterval
+    	
+    	// Index to the interval with the largest error estimate
+        int[] maxErr = new int[1];
+
+        // errMax[0] = elist[maxErr];
+        DoubleDouble[] errMax = new DoubleDouble[1];
+
+        // Sum of the integrals over the subintervals
+        DoubleDouble area;
+
+        // Sum of the errors over the subintervals
+        DoubleDouble errSum;
+
+        // Requested accuracy max(epsabs, epsrel * abs(result))
+        DoubleDouble errBnd;
+        
+        DoubleDouble aa;
+        DoubleDouble area1[] = new DoubleDouble[1];
+        DoubleDouble area12;
+        DoubleDouble area2[] = new DoubleDouble[1];
+        DoubleDouble a1;
+        DoubleDouble a2;
+        DoubleDouble bb;
+        DoubleDouble b1;
+        DoubleDouble b2;
+        DoubleDouble error1[] = new DoubleDouble[1];
+        DoubleDouble erro12;
+        DoubleDouble error2[] = new DoubleDouble[1];
+        int iroff1;
+        int iroff2;
+        int k;
+        int krule[] = new int[1];
+        int nev[] = new int[1];
+        int nrmax[] = new int[1];
+        
+	    try {
+	    	alist = new DoubleDouble[limit];
+            blist = new DoubleDouble[limit];
+            rlist = new DoubleDouble[limit];
+            elist = new DoubleDouble[limit];
+            iord = new int[limit];
+            
+            neval[0] = 0;
+            last = 0;
+            alist[0] = (DoubleDouble)lower.clone();
+            blist[0] = (DoubleDouble)upper.clone();
+            rlist[0] = DoubleDouble.valueOf(0.0);
+            elist[0] = DoubleDouble.valueOf(0.0);
+            iord[0] = -1;
+            result[0] = DoubleDouble.valueOf(0.0);
+            abserr[0] = DoubleDouble.valueOf(0.0);
+            
+            // First approximation to the integral
+            aa = (DoubleDouble)lower.clone();
+            bb = (DoubleDouble)upper.clone();
+            if (lower.gt(upper)) {
+            	aa = (DoubleDouble)upper.clone();
+            	bb = (DoubleDouble)lower.clone();
+            }
+            errorStatus = 0;
+            krule[0] = 1;
+            dqc25c(aa, bb, c, result, abserr, krule, neval);
+            last = 1;
+            rlist[0] = (DoubleDouble)result[0].clone();
+            elist[0] = (DoubleDouble)abserr[0].clone();
+            iord[0] = 0;
+            alist[0] = (DoubleDouble)lower.clone();
+            blist[0] = (DoubleDouble)upper.clone();
+            
+            // Test on accuracy
+            
+            errBnd = epsabs.max( epsrel.multiply(result[0].abs()));
+            if (limit == 1) {
+            	errorStatus = 1;
+            }
+            if ((abserr[0].lt(((DoubleDouble.valueOf(0.01)).multiply(result[0].abs())).min( errBnd))) ||
+            	(errorStatus == 1)) {
+            	if (aa.equals(upper)) {
+            		result[0] = result[0].negate();
+            	}
+            	return;
+            }
+            
+            // Initialization
+            
+            alist[0] = (DoubleDouble)aa.clone();
+            blist[0] = (DoubleDouble)bb.clone();
+            rlist[0] = (DoubleDouble)result[0].clone();
+            errMax[0] = (DoubleDouble)abserr[0].clone();
+            maxErr[0] = 0;
+            area = (DoubleDouble)result[0].clone();
+            errSum = (DoubleDouble)abserr[0].clone();
+            nrmax[0] = 1;
+            iroff1 = 0;
+            iroff2 = 0;
+            
+            // Main for loop
+            
+            for (last = 2; last <= limit; last++) {
+            	
+            	// Biset the subinterval with the nrmax-th largest error estimate.
+            	
+            	a1 = (DoubleDouble)alist[maxErr[0]].clone();
+            	b1 = (DoubleDouble.valueOf(0.5)).multiply(alist[maxErr[0]].add(blist[maxErr[0]]));
+            	b2 = (DoubleDouble)blist[maxErr[0]].clone();
+            	if ((c.le(b1)) && (c.gt(a1))) {
+            		b1 = (DoubleDouble.valueOf(0.5)).multiply(c.add(b2));
+            	}
+            	if ((c.gt(b1)) && (c.lt(b2))) {
+            		b1 = (DoubleDouble.valueOf(0.5)).multiply(a1.add(c));
+            	}
+            	a2 = (DoubleDouble)b1.clone();
+            	krule[0] = 2;
+            	dqc25c(a1, b1, c, area1, error1, krule, nev);
+            	neval[0] = neval[0] + nev[0];
+            	dqc25c(a2, b2, c, area2, error2, krule, nev);
+            	neval[0] = neval[0] + nev[0];
+            	
+            	// Improve previous approximations to integral
+            	// and error and test for accuracy.
+            	
+            	area12 = area1[0].add(area2[0]);
+            	erro12 = error1[0].add(error2[0]);
+            	errSum = (errSum.add(erro12)).subtract(errMax[0]);
+            	area = (area.add(area12)).subtract(rlist[maxErr[0]]);
+            	if ((((rlist[maxErr[0]].subtract(area12)).abs()).lt((DoubleDouble.valueOf(1.0E-5)).multiply(area12.abs()))) &&
+            		(erro12.ge((DoubleDouble.valueOf(0.99)).multiply(errMax[0]))) && (krule[0] == 0)) {
+            		iroff1 = iroff1 + 1;
+            	}
+            	if ((last > 10) && (erro12.gt(errMax[0])) && (krule[0] == 0)) {
+            		iroff2 = iroff2 + 1;
+            	}
+            	rlist[maxErr[0]] = (DoubleDouble)area1[0].clone();
+            	rlist[last-1] = (DoubleDouble)area2[0].clone();
+            	errBnd = epsabs.max(epsrel.multiply(area.abs()));
+            	if (errSum.gt(errBnd)) {
+            		
+            		// Test for roundoff error and eventually set error flag.
+            		
+            		if ((iroff1 >= 6) && (iroff2 > 20)) {
+            			errorStatus = 2;
+            		}
+            		
+            		// Set error flag in the case that number of interval
+            		// bisections exceeds limit.
+            		
+            		if (last == limit) {
+            			errorStatus = 1;
+            		}
+            		
+            		// Set error flag in the case of bad integrand behavior
+            		// at a point of the integration range
+            		if (((a1.abs()).max(b2.abs())).le(((DoubleDouble.valueOf(1.0)).add((DoubleDouble.valueOf(100.0)).multiply(epmach)))
+            				.multiply((a2.abs()).add((DoubleDouble.valueOf(1.0E3)).multiply(uflow))))) {
+            			errorStatus = 3;
+            		}
+            	} // if (errSum > errBnd)
+            	
+            	// Append the newly created intervals to the list
+            	
+            	if (error2[0].le(error1[0])) {
+            		alist[last-1] = (DoubleDouble)a2.clone();
+            		blist[maxErr[0]] = (DoubleDouble)b1.clone();
+            		blist[last-1] = (DoubleDouble)b2.clone();
+            		elist[maxErr[0]] = (DoubleDouble)error1[0].clone();
+            		elist[last-1] = (DoubleDouble)error2[0].clone();
+            	}
+            	else {
+            	    alist[maxErr[0]] = (DoubleDouble)a2.clone();
+            	    alist[last-1] = (DoubleDouble)a1.clone();
+            	    blist[last-1] = (DoubleDouble)b1.clone();
+            	    rlist[maxErr[0]] = (DoubleDouble)area2[0].clone();
+            	    rlist[last-1] = (DoubleDouble)area1[0].clone();
+            	    elist[maxErr[0]] = (DoubleDouble)error2[0].clone();
+            	    elist[last-1] = (DoubleDouble)error1[0].clone();
+            	}
+            	
+            	// Call subroutine dqpsrt to maintain the descending ordering
+            	// in the list of error estimates and select the subinterval
+            	// with the nrmax-th largest error estimate (to be bisected next).
+            	
+            	dqpsrt(limit, last, maxErr, errMax, elist, iord, nrmax);
+            	if ((errorStatus != 0) || (errSum.le(errBnd))) {
+            		break;
+            	}
+            } // for (last = 2; last <= limit; last++)
+            
+            // Compute final result
+            
+            result[0] = DoubleDouble.valueOf(0.0);
+            for (k = 0; k < last; k++) {
+            	result[0] = result[0].add(rlist[k]);
+            }
+            abserr[0] = errSum;
+            if (aa == upper) {
+            	result[0] = result[0].negate();
+            }
+            return;
+	    } // try
+	    catch (Exception err) {
+	        Preferences.debug("dqawce error: " + err.getMessage());
+	    }
+    } // dqawce
+    
+    /**
+     * This is the port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqc25c
+	 c***date written   810101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a2a2,j4
+	 c***keywords  25-point clenshaw-curtis integration
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f*w over (a,b) with
+	 c            error estimate, where w(x) = 1/(x-c)
+	 c***description
+	 c
+	 c        integration rules for the computation of cauchy
+	 c        principal value integrals
+	 c        standard fortran subroutine
+	 c        double precision version
+	 c
+	 c
+	 c           a      - double precision
+	 c                    left end point of the integration interval
+	 c
+	 c           b      - double precision
+	 c                    right end point of the integration interval, b.gt.a
+	 c
+	 c           c      - double precision
+	 c                    parameter in the weight function
+	 c
+	 c           result - double precision
+	 c                    approximation to the integral
+	 c                    result is computed by using a generalized
+	 c                    clenshaw-curtis method if c lies within ten percent
+	 c                    of the integration interval. in the other case the
+	 c                    15-point kronrod rule obtained by optimal addition
+	 c                    of abscissae to the 7-point gauss rule, is applied.
+	 c
+	 c           abserr - double precision
+	 c                    estimate of the modulus of the absolute error,
+	 c                    which should equal or exceed abs(i-result)
+	 c
+	 c           krul   - integer
+	 c                    key which is decreased by 1 if the 15-point
+	 c                    gauss-kronrod scheme has been used
+	 c
+	 c           neval  - integer
+	 c                    number of integrand evaluations
+	 c
+	 c.......................................................................
+	 c***references  (none)
+	 c***routines called  dqcheb,dqk15w,dqwgtc
+	 c***end prologue  dqc25c
+	 c
+     * 
+     * @param a
+     * @param b
+     * @param c
+     * @param result
+     * @param abserr
+     * @param krul
+     * @param neval
+     */
+    private void dqc25c(DoubleDouble a, DoubleDouble b, DoubleDouble c, DoubleDouble result[], DoubleDouble abserr[],
+    		            int krul[], int neval[]) {
+        DoubleDouble ak22;
+        DoubleDouble amom0;
+        DoubleDouble amom1;
+        DoubleDouble amom2;
+        DoubleDouble cc;
+        /** mid point of the interval */
+        DoubleDouble centr;
+        /** chebyshev series expansion of coefficients, 
+         * for the function f, of degree 12.
+         */
+        DoubleDouble cheb12[] = new DoubleDouble[13];
+        /** chebyshev series expansion of coefficients, 
+         * for the function f, of degree 24.
+         */
+        DoubleDouble cheb24[] = new DoubleDouble[25];
+        /** value of the function f at the points cos(k*pi/24), k = 0, ..., 24 */
+        DoubleDouble fval[] = new DoubleDouble[25];
+        /** half-length of the interval */
+        DoubleDouble hlgth;
+        /** Approximation to the integral corresponding to the use of cheb12 */
+        DoubleDouble res12;
+        /** Approximation to the integral corresponding to the use of cheb24 */
+        DoubleDouble res24;
+        DoubleDouble u;
+        //           the vector x contains the values cos(k*pi/24),
+        //           k = 1, ..., 11, to be used for the chebyshev series
+        //           expansion of f
+        /** To be used for the chebyshev series expansion of f */
+        DoubleDouble x[] = new DoubleDouble[11];
+        int i;
+        int isym;
+        int k;
+        
+        for (k = 1; k <= 11; k++) {
+            x[k-1] = (((DoubleDouble.valueOf((double)k)).multiply(DoubleDouble.PI)).divide(DoubleDouble.valueOf(24))).cos();	
+        }
+        
+        // Check the position of c
+        cc = ((((DoubleDouble.valueOf(2.0)).multiply(c)).subtract(b)).subtract(a)).divide(b.subtract(a));
+        if (((cc).abs()).ge(DoubleDouble.valueOf(1.1))) {
+           
+        	// Apply the 15-point gauss-kronrod scheme.
+        	
+        	krul[0] = krul[0] - 1;
+        	dqk15w(c,a,b,result,abserr,resabs,resasc);
+        	neval[0] = 15;
+        	if (resasc[0] == abserr[0]) {
+        	    krul[0] = krul[0] +1;	
+        	}
+        	return;
+        } // if (Math.abs(cc) >= 1.1)
+        
+        // Use the generalized clenshaw-curtis method.
+        
+        hlgth = (DoubleDouble.valueOf(0.5)).multiply(b.subtract(a));
+        centr = (DoubleDouble.valueOf(0.5)).multiply(b.add(a));
+        neval[0] = 25;
+        if (selfTest) {
+            fval[0] = (DoubleDouble.valueOf(0.5)).multiply(intFuncTest(hlgth.add(centr)));
+            fval[12] = intFuncTest(centr);
+            fval[24] = (DoubleDouble.valueOf(0.5)).multiply(intFuncTest(centr.subtract(hlgth)));
+            for (i = 2; i <= 12; i++) {
+            	u = hlgth.multiply(x[i-2]);
+            	isym = 26 - i;
+            	fval[i-1] = intFuncTest(u.add(centr));
+            	fval[isym-1] = intFuncTest(centr.subtract(u));
+            }
+        } // if (selfTest)
+        else {
+        	fval[0] = (DoubleDouble.valueOf(0.5)).multiply(intFunc(hlgth.add(centr)));
+            fval[12] = intFunc(centr);
+            fval[24] = (DoubleDouble.valueOf(0.5)).multiply(intFunc(centr.subtract(hlgth)));
+            for (i = 2; i <= 12; i++) {
+            	u = hlgth.multiply(x[i-2]);
+            	isym = 26 - i;
+            	fval[i-1] = intFunc(u.add(centr));
+            	fval[isym-1] = intFunc(centr.subtract(u));
+            }	
+        }
+        
+        // Compute the chebyshev series expansion.
+        
+        dqcheb(x, fval, cheb12, cheb24);
+        
+        // The modified chebyshev moments sare computed by forward
+        // recursion, using amom0 and amom1 as starting values.
+        
+        amom0 = (((DoubleDouble.valueOf(1.0)).subtract(cc)).divide((DoubleDouble.valueOf(1.0)).add(cc)).abs()).log();
+        amom1 = (DoubleDouble.valueOf(2.0)).add(cc.multiply(amom0));
+        res12 = (cheb12[0].multiply(amom0)).add(cheb12[1].multiply(amom1));
+        res24 = (cheb24[0].multiply(amom0)).add(cheb24[1].multiply(amom1));
+        for (k = 3; k <= 13; k++) {
+            amom2 = (((DoubleDouble.valueOf(2.0)).multiply(cc)).multiply(amom1)).subtract(amom0);
+            ak22 = DoubleDouble.valueOf((double)((k-2)*(k-2)));
+            if ((k/2)*2 == k) {
+            	amom2 = amom2.subtract((DoubleDouble.valueOf(4.0)).divide(ak22.subtract(DoubleDouble.valueOf(1.0))));
+            }
+            res12 = res12.add(cheb12[k-1].multiply(amom2));
+        	res24 = res24.add(cheb24[k-1].multiply(amom2));
+        	amom0 = (DoubleDouble)amom1.clone();
+        	amom1 = (DoubleDouble)amom2.clone();
+        } // for (k = 3; k <= 13; k++)
+        for (k = 14; k <= 25; k++) {
+        	amom2 = (((DoubleDouble.valueOf(2.0)).multiply(cc)).multiply(amom1)).subtract(amom0);
+        	ak22 = DoubleDouble.valueOf((double)((k-2)*(k-2)));
+        	if ((k/2)*2 == k) {
+        		amom2 = amom2.subtract((DoubleDouble.valueOf(4.0)).divide(ak22.subtract(DoubleDouble.valueOf(1.0))));
+        	}
+        	res24 = res24.add(cheb24[k-1].multiply(amom2));
+        	amom0 = (DoubleDouble)amom1.clone();
+        	amom1 = (DoubleDouble)amom2.clone();
+        } // for (k = 14; k <= 25; k++)
+        result[0] = (DoubleDouble)res24.clone();
+        abserr[0] = (res24.subtract(res12)).abs();
+        return;
+    } // dqc25c
+    
+    /**
+     * This is a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqcheb
+	 c***refer to  dqc25c,dqc25f,dqc25s
+	 c***routines called  (none)
+	 c***revision date  830518   (yymmdd)
+	 c***keywords  chebyshev series expansion, fast fourier transform
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  this routine computes the chebyshev series expansion
+	 c            of degrees 12 and 24 of a function using a
+	 c            fast fourier transform method
+	 c            f(x) = sum(k=1,..,13) (cheb12(k)*t(k-1,x)),
+	 c            f(x) = sum(k=1,..,25) (cheb24(k)*t(k-1,x)),
+	 c            where t(k,x) is the chebyshev polynomial of degree k.
+	 c***description
+	 c
+	 c        chebyshev series expansion
+	 c        standard fortran subroutine
+	 c        double precision version
+	 c
+	 c        parameters
+	 c          on entry
+	 c           x      - double precision
+	 c                    vector of dimension 11 containing the
+	 c                    values cos(k*pi/24), k = 1, ..., 11
+	 c
+	 c           fval   - double precision
+	 c                    vector of dimension 25 containing the
+	 c                    function values at the points
+	 c                    (b+a+(b-a)*cos(k*pi/24))/2, k = 0, ...,24,
+	 c                    where (a,b) is the approximation interval.
+	 c                    fval(1) and fval(25) are divided by two
+	 c                    (these values are destroyed at output).
+	 c
+	 c          on return
+	 c           cheb12 - double precision
+	 c                    vector of dimension 13 containing the
+	 c                    chebyshev coefficients for degree 12
+	 c
+	 c           cheb24 - double precision
+	 c                    vector of dimension 25 containing the
+	 c                    chebyshev coefficients for degree 24
+	 c
+	 c***end prologue  dqcheb
+	 c
+     * @param x
+     * @param fval
+     * @param cheb12
+     * @param cheb24
+     */
+    private void dqcheb(DoubleDouble x[], DoubleDouble fval[], DoubleDouble cheb12[], DoubleDouble cheb24[]) {
+        DoubleDouble alam;
+        DoubleDouble alam1;
+        DoubleDouble alam2;
+        DoubleDouble part1;
+        DoubleDouble part2;
+        DoubleDouble part3;
+        DoubleDouble v[] = new DoubleDouble[12];
+        int i;
+        int j;
+        
+        for (i = 1; i <= 12; i++) {
+            j = 26-i;
+            v[i-1] = fval[i-1].subtract(fval[j-1]);
+            fval[i-1] = fval[i-1].add(fval[j-1]);
+        }
+       alam1 = v[0].subtract(v[8]);
+       alam2 = x[5].multiply((v[2].subtract(v[6])).subtract(v[10]));
+       cheb12[3] = alam1.add(alam2);
+       cheb12[9] = alam1.subtract(alam2);
+       alam1 = (v[1].subtract(v[7])).subtract(v[9]);
+       alam2 = (v[3].subtract(v[5])).subtract(v[11]);
+       alam = (x[2].multiply(alam1)).add(x[8].multiply(alam2));
+       cheb24[3] = cheb12[3].add(alam);
+       cheb24[21] = cheb12[3].subtract(alam);
+       alam = (x[8].multiply(alam1)).subtract(x[2].multiply(alam2));
+       cheb24[9] = cheb12[9].add(alam);
+       cheb24[15] = cheb12[9].subtract(alam);
+       part1 = x[3].multiply(v[4]);
+       part2 = x[7].multiply(v[8]);
+       part3 = x[5].multiply(v[6]);
+       alam1 = (v[0].add(part1)).add(part2);
+       alam2 = ((x[1].multiply(v[2])).add(part3)).add(x[9].multiply(v[10]));
+       cheb12[1] = alam1.add(alam2);
+       cheb12[11] = alam1.subtract(alam2);
+       alam = (((((x[0].multiply(v[1])).add(x[2].multiply(v[3]))).add(x[4].multiply(v[5]))).add(x[6].multiply(v[7])))
+       .add(x[8].multiply(v[9]))).add(x[10].multiply(v[11]));
+       cheb24[1] = cheb12[1].add(alam);
+       cheb24[23] = cheb12[1].subtract(alam);
+       alam = (((((x[10].multiply(v[1])).subtract(x[8].multiply(v[3]))).add(x[6].multiply(v[5]))).subtract(x[4].multiply(v[7])))
+       .add(x[2].multiply(v[9]))).subtract(x[0].multiply(v[11]));
+       cheb24[11] = cheb12[11].add(alam);
+       cheb24[13] = cheb12[11].subtract(alam);
+       alam1 = (v[0].subtract(part1)).add(part2);
+       alam2 = ((x[9].multiply(v[2])).subtract(part3)).add(x[1].multiply(v[10]));
+       cheb12[5] = alam1.add(alam2);
+       cheb12[7] = alam1.subtract(alam2);
+       alam = (((((x[4].multiply(v[1])).subtract(x[8].multiply(v[3]))).subtract(x[0].multiply(v[5])))
+       .subtract(x[10].multiply(v[7]))).add(x[2].multiply(v[9]))).add(x[6].multiply(v[11]));
+       cheb24[5] = cheb12[5].add(alam);
+       cheb24[19] = cheb12[5].subtract(alam);
+       alam = (((((x[6].multiply(v[1])).subtract(x[2].multiply(v[3]))).subtract(x[10].multiply(v[5]))).add(x[0].multiply(v[7])))
+       .subtract(x[8].multiply(v[9]))).subtract(x[4].multiply(v[11]));
+       cheb24[7] = cheb12[7].add(alam);
+       cheb24[17] = cheb12[7].subtract(alam);
+       for (i = 1; i <= 6; i++) {
+           j = 14-i;
+           v[i-1] = fval[i-1].subtract(fval[j-1]);
+           fval[i-1] = fval[i-1].add(fval[j-1]);
+       }
+       alam1 = v[0].add(x[7].multiply(v[4]));
+       alam2 = x[3].multiply(v[2]);
+       cheb12[2] = alam1.add(alam2);
+       cheb12[10] = alam1.subtract(alam2);
+       cheb12[6] = v[0].subtract(v[4]);
+       alam = ((x[1].multiply(v[1])).add(x[5].multiply(v[3]))).add(x[9].multiply(v[5]));
+       cheb24[2] = cheb12[2].add(alam);
+       cheb24[22] = cheb12[2].subtract(alam);
+       alam = x[5].multiply((v[1].subtract(v[3])).subtract(v[5]));
+       cheb24[6] = cheb12[6].add(alam);
+       cheb24[18] = cheb12[6].subtract(alam);
+       alam = ((x[9].multiply(v[1])).subtract(x[5].multiply(v[3]))).add(x[1].multiply(v[5]));
+       cheb24[10] = cheb12[10].add(alam);
+       cheb24[14] = cheb12[10].subtract(alam);
+       for (i = 1; i <= 3; i++) {
+           j = 8-i;
+           v[i-1] = fval[i-1].subtract(fval[j-1]);
+           fval[i-1] = fval[i-1].add(fval[j-1]);
+       }
+       cheb12[4] = v[0].add(x[7].multiply(v[2]));
+       cheb12[8] = fval[0].subtract(x[7].multiply(fval[2]));
+       alam = x[3].multiply(v[1]);
+       cheb24[4] = cheb12[4].add(alam);
+       cheb24[20] = cheb12[4].subtract(alam);
+       alam = (x[7].multiply(fval[1])).subtract(fval[3]);
+       cheb24[8] = cheb12[8].add(alam);
+       cheb24[16] = cheb12[8].subtract(alam);
+       cheb12[0] = fval[0].add(fval[2]);
+       alam = fval[1].add(fval[3]);
+       cheb24[0] = cheb12[0].add(alam);
+       cheb24[24] = cheb12[0].subtract(alam);
+       cheb12[12] = v[0].subtract(v[2]);
+       cheb24[12] = (DoubleDouble)cheb12[12].clone();
+       alam = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(6.0));
+       for (i = 1; i <= 11; i++) {
+           cheb12[i] = cheb12[i].multiply(alam);
+       }
+       alam = (DoubleDouble.valueOf(0.5)).multiply(alam);
+       cheb12[0] = cheb12[0].multiply(alam);
+       cheb12[12] = cheb12[12].multiply(alam);
+       for (i = 1; i <= 23; i++) {
+           cheb24[i] = cheb24[i].multiply(alam);
+       }
+       cheb24[0] = ((DoubleDouble.valueOf(0.5)).multiply(alam)).multiply(cheb24[0]);
+       cheb24[24] = ((DoubleDouble.valueOf(0.5)).multiply(alam)).multiply(cheb24[24]);
+      return;
+    } // dqcheb
 
     /**
      * This is a port of the original FORTRAN whose header is given below:
@@ -3958,6 +4598,198 @@ loop:
 
         return;
     }
+    
+    /**
+     * This a a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqk15w
+	 c***date written   810101   (yymmdd)
+	 c***revision date  830518   (mmddyy)
+	 c***category no.  h2a2a2
+	 c***keywords  15-point gauss-kronrod rules
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f*w over (a,b), with error
+	 c                           estimate
+	 c                       j = integral of abs(f*w) over (a,b)
+	 c***description
+	 c
+	 c           integration rules
+	 c           standard fortran subroutine
+	 c           double precision version
+	 c
+	 c           parameters
+	 c             on entry
+	 c
+	 c              p1, p2, p3, p4 - double precision
+	 c                       parameters in the weight function
+	 c
+	 c              kp     - integer
+	 c                       key for indicating the type of weight function
+	 c
+	 c              a      - double precision
+	 c                       lower limit of integration
+	 c
+	 c              b      - double precision
+	 c                       upper limit of integration
+	 c
+	 c            on return
+	 c              result - double precision
+	 c                       approximation to the integral i
+	 c                       result is computed by applying the 15-point
+	 c                       kronrod rule (resk) obtained by optimal addition
+	 c                       of abscissae to the 7-point gauss rule (resg).
+	 c
+	 c              abserr - double precision
+	 c                       estimate of the modulus of the absolute error,
+	 c                       which should equal or exceed abs(i-result)
+	 c
+	 c              resabs - double precision
+	 c                       approximation to the integral of abs(f)
+	 c
+	 c              resasc - double precision
+	 c                       approximation to the integral of abs(f-i/(b-a))
+	 c
+     * @param p1
+     * @param p2
+     * @param a
+     * @param b
+     * @param result
+     * @param abserr
+     * @param resabs
+     * @param resasc
+     */
+    private void dqk15w(DoubleDouble p1, DoubleDouble a, DoubleDouble b,
+    		DoubleDouble[] result, DoubleDouble[] abserr, DoubleDouble[] resabs, DoubleDouble[] resasc) {
+    	/** The abscissa and weights are given for the interval (-1,1).
+    	 * Because of symmetry only the positive abscissae and their
+    	 * corresponding weights are given.
+    	 */
+    	/** abscissa */
+        DoubleDouble absc;
+        DoubleDouble absc1;
+        DoubleDouble absc2;
+        /** mid point of the inverval */
+        DoubleDouble centr;
+        DoubleDouble dhlgth;
+        DoubleDouble fc;
+        DoubleDouble fsum;
+        /** function value */
+        DoubleDouble fval1;
+        DoubleDouble fval2;
+        DoubleDouble fv1[] = new DoubleDouble[7];
+        DoubleDouble fv2[] = new DoubleDouble[7];
+        /** half_length of the interval */
+        DoubleDouble hlgth;
+        /** result of the 7-point gauss formula */
+        DoubleDouble resg;
+        /** result of the 15-point kronrod formula */
+        DoubleDouble resk;
+        /** approximation to the mean value of f*w over (a,b),
+         *  i.e. to i/(b-a)
+         */
+        DoubleDouble reskh;
+        /** Weights of the 7-point gauss rule */
+        DoubleDouble wg[] = new DoubleDouble[]{DoubleDouble.valueOf(0.1294849661688697),    
+        		                               DoubleDouble.valueOf(0.2797053914892767),
+                                               DoubleDouble.valueOf(0.3818300505051889), 
+                                               DoubleDouble.valueOf(0.4179591836734694)};
+        /** Weights of the 15-point gauss-kronrod rule */
+        DoubleDouble wgk[] = new DoubleDouble[]{DoubleDouble.valueOf(0.02293532201052922),     
+        		                                DoubleDouble.valueOf(0.06309209262997855),
+        	                                    DoubleDouble.valueOf(0.1047900103222502),      
+        	                                    DoubleDouble.valueOf(0.1406532597155259),
+        	                                    DoubleDouble.valueOf(0.1690047266392679),      
+        	                                    DoubleDouble.valueOf(0.1903505780647854),
+        	                                    DoubleDouble.valueOf(0.2044329400752989),      
+        	                                    DoubleDouble.valueOf(0.2094821410847278)};
+        /** abscissae of the 15-point gauss-kronrod rule
+         *  xgk[1], xgk[3], ... abscissae of the 7-point gauss rule.
+         *  xgk[0], xgk[2], ... abscissae which are optimally added to the 7-point gauss rule.
+         */
+        DoubleDouble xgk[] = new DoubleDouble[]{DoubleDouble.valueOf(0.9914553711208126),     
+        		                                DoubleDouble.valueOf(0.9491079123427585),
+        	                                    DoubleDouble.valueOf(0.8648644233597691),     
+        	                                    DoubleDouble.valueOf(0.7415311855993944),
+        	                                    DoubleDouble.valueOf(0.5860872354676911),    
+        	                                    DoubleDouble.valueOf(0.4058451513773972),
+        	                                    DoubleDouble.valueOf(0.2077849550078985), 
+        	                                    DoubleDouble.valueOf(0.0000000000000000)};
+        int j;
+        int jtw;
+        int jtwm1;
+        
+        centr = (DoubleDouble.valueOf(0.5)).multiply(a.add(b));
+        hlgth = (DoubleDouble.valueOf(0.5)).multiply(b.subtract(a));
+        dhlgth = hlgth.abs();
+        
+        // Compute the 15-point kronrod approximation to the
+        // integral, and estimate the error.
+        if (selfTest) {
+        	fc = intFuncTest(centr).divide(centr.subtract(p1));
+        }
+        else {
+        	fc = intFunc(centr).divide(centr.subtract(p1));
+        }
+        resg = wg[3].multiply(fc);
+        resk = wgk[7].multiply(fc);
+        resabs[0] = resk.abs();
+        for (j = 1; j <= 3; j++) {
+        	jtw = 2*j;
+        	absc = hlgth.multiply(xgk[jtw-1]);
+        	absc1 = centr.subtract(absc);
+        	absc2 = centr.add(absc);
+        	if (selfTest) {
+        		fval1 = intFuncTest(absc1).divide(absc1.subtract(p1));
+        		fval2 = intFuncTest(absc2).divide(absc2.subtract(p1));
+        	}
+        	else {
+        		fval1 = intFunc(absc1).divide(absc1.subtract(p1));
+        		fval2 = intFunc(absc2).divide(absc2.subtract(p1));
+        	}
+        	fv1[jtw-1] = (DoubleDouble)fval1.clone();
+        	fv2[jtw-1] = (DoubleDouble)fval2.clone();
+        	fsum = fval1.add(fval2);
+        	resg = resg.add(wg[j-1].multiply(fsum));
+        	resk = resk.add(wgk[jtw-1].multiply(fsum));
+        	resabs[0] = resabs[0].add(wgk[jtw-1].multiply((fval1.abs()).add(fval2.abs())));
+        } // for (j = 1; j <= 3; j++)
+        for (j = 1; j <= 4; j++) {
+        	jtwm1 = 2*j - 1;
+        	absc = hlgth.multiply(xgk[jtwm1-1]);
+        	absc1 = centr.subtract(absc);
+        	absc2 = centr.add(absc);
+        	if (selfTest) {
+        		fval1 = intFuncTest(absc1).divide(absc1.subtract(p1));
+        		fval2 = intFuncTest(absc2).divide(absc2.subtract(p1));
+        	}
+        	else {
+        		fval1 = intFunc(absc1).divide(absc1.subtract(p1));
+        		fval2 = intFunc(absc2).divide(absc2.subtract(p1));
+        	}
+        	fv1[jtwm1 - 1] = (DoubleDouble)fval1.clone();
+        	fv2[jtwm1 - 1] = (DoubleDouble)fval2.clone();
+        	fsum = fval1.add(fval2);
+        	resk = resk.add(wgk[jtwm1-1].multiply(fsum));
+        	resabs[0] = resabs[0].add(wgk[jtwm1-1].multiply((fval1.abs()).add(fval2.abs())));
+        } // for (j = 1; j <= 4; j++)
+        reskh = (DoubleDouble.valueOf(0.5)).multiply(resk);
+        resasc[0] = wgk[7].multiply((fc.subtract(reskh)).abs());
+        for (j = 0; j < 7; j++) {
+        	resasc[0] = resasc[0].add(wgk[j].multiply(((fv1[j].subtract(reskh)).abs()).add((fv2[j].subtract(reskh)).abs())));
+        }
+        result[0] = resk.multiply(hlgth);
+        resabs[0] = resabs[0].multiply(dhlgth);
+        resasc[0] = resasc[0].multiply(dhlgth);
+        abserr[0] = ((resk.subtract(resg)).multiply(hlgth)).abs();
+        if ((resasc[0].ne(DoubleDouble.valueOf(0.0))) && (abserr[0].ne(DoubleDouble.valueOf(0.0)))) {
+        	DoubleDouble base = ((DoubleDouble.valueOf(200.0)).multiply(abserr[0])).divide(resasc[0]);
+        	abserr[0] = resasc[0].multiply((DoubleDouble.valueOf(1.0)).min(base.pow(1.5)));
+        }
+        if (resabs[0].gt(uflow.divide((DoubleDouble.valueOf(50.0)).multiply(epmach)))) {
+        	abserr[0] = (((DoubleDouble.valueOf(50.0)).multiply(epmach)).multiply(resabs[0])).max( abserr[0]);
+        }
+        return;
+    } // dqk15w
 
     /**
      * This is a port of the original FORTRAN whose header is given below:
@@ -5294,7 +6126,7 @@ loop:
         else {
             fcentr = intFunc(centr);
         }
-        neval = 21;
+        neval[0] = 21;
         errorStatus = 1;
 
         // Compute the integral using the 10- and 21-point formula.
@@ -5378,7 +6210,7 @@ loop:
         // Compute the integral using the 43-point formula
 
         res43 = w43b[11].multiply(fcentr);
-        neval = 43;
+        neval[0] = 43;
 
         for (k = 0; k < 10; k++) {
             res43 = res43.add(savfun[k].multiply(w43a[k]));
@@ -5420,7 +6252,7 @@ loop:
 
         // Compute the integral using the 87-point formula
         res87 = w87b[22].multiply(fcentr);
-        neval = 87;
+        neval[0] = 87;
 
         for (k = 0; k < 21; k++) {
             res87 = res87.add(savfun[k].multiply(w87a[k]));
