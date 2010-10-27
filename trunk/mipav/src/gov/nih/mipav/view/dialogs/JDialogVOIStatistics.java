@@ -1111,6 +1111,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 }
                 
                 logModel.addRow(updateRowStatistics(voi, properties, rowData, totalData, end, count));
+                rowData = new String[rowData.length];
                 count = 0;
                 end = new String();
             } // end for contours
