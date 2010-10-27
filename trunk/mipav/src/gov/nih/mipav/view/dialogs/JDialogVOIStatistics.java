@@ -1181,12 +1181,13 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      * Writes the column titles of selected statistics calculations to the logModel.
      */
     protected void writeLogHeader() {
-        logModel.addColumn("Name");
+        Vector<String> logModelCol = new Vector<String>();
+        logModelCol.add("Name");
         if(processType == AlgorithmVOIProps.PROCESS_PER_SLICE || processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
-            logModel.addColumn("Slice");
+            logModelCol.add("Slice");
         } 
         if(processType == AlgorithmVOIProps.PROCESS_PER_CONTOUR || processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
-            logModel.addColumn("Contour");
+            logModelCol.add("Contour");
         }
         
         int totalCount = 0;
@@ -1199,27 +1200,27 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 if ( (VOIStatisticList.statisticDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits)
                         && (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                     str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr().trim();
-                    logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                    logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Area") != -1)
                         && (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                     str = image.getFileInfo(0).getAreaUnitsOfMeasureStr().trim();
-                    logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                    logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Perimeter") != -1)
                         && (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                     str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits).trim();
-                    logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                    logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if (VOIStatisticList.statisticDescription[i].indexOf("Principal Axis") != -1) {
-                    logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (degrees)");
+                    logModelCol.add(VOIStatisticList.statisticDescription[i] + " (degrees)");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Major axis length") != -1)
                         && (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                     str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits).trim();
-                    logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                    logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Minor axis length") != -1)
                         && (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                     str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits).trim();
-                    logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                    logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else {
-                    logModel.addColumn(VOIStatisticList.statisticDescription[i]);
+                    logModelCol.add(VOIStatisticList.statisticDescription[i]);
                 }
     
                 // total count used for total # of data elemets, need to add 3 if color
@@ -1231,6 +1232,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 }
             }
         }
+        logModel.setColumnIdentifiers(logModelCol);
     }
 
     /**
