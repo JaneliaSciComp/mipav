@@ -45,6 +45,7 @@ public class CustomUIBuilder {
     /** VOI Actions/Properties */
     public static final UIParams PARAM_VOI_PROPERTIES = new UIParams("View VOI Properties", "VOIProperties", 'P', "View VOI Properties", null );
     public static final UIParams PARAM_VOI_STATISTICS = new UIParams("Statistics generator", "VOIStistics", 'G', null, null );
+    public static final UIParams PARAM_VOI_LOGICAL_OPERATIONS = new UIParams("VOI Logical Operations", "VOILogicalOperations", UIParams.INVALID_MNEMONIC, null, null );
 
 
     public static final UIParams PARAM_VOI_COLOR = new UIParams("VOIColor", "Current/change VOI Color", "transparent");

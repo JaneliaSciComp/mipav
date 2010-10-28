@@ -43,6 +43,7 @@ public class ModelSerialCloneable implements Cloneable, Serializable {
             return clonedObj;
 
         } catch (Exception e) {
+        	e.printStackTrace();
             MipavUtil.displayError("Error cloning " + this.getClass().getName() + " :\n" + e);
             Preferences.debug("Clone() exception:\n", Preferences.DEBUG_MINOR);
 
