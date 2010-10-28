@@ -116,14 +116,30 @@ VOIVectorListener {
 
         image = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
         
-        clonedImage = (ModelImage)(image.clone());
         
-        clonedImage.unregisterAllVOIs();
         
         buildDialog(voiList);
 
+
        
     }
+	
+	/**
+     * Clean up some things done by the dialog which may affect other parts of MIPAV.
+     */
+    protected void cleanUpAndDispose() {
+
+        // make sure all voi listeners are removed from the image's list, if that isn't done problems happen when
+        // the image is serialized (e.g. if it's cloned)
+        for (int i = 0; i < image.getVOIs().size(); i++) {
+            image.getVOIs().VOIAt(i).removeVOIListener(highlighter);
+        }
+
+        image.getVOIs().removeVectorListener(this);
+
+        dispose();
+    }
+
 	
 	
 	/**
@@ -282,7 +298,7 @@ VOIVectorListener {
         srctreep.add(jsp, BorderLayout.CENTER);
 
         // now let's listen to this vector:
-        VOIlist.addVectorListener(this);
+        //VOIlist.addVectorListener(this);
 
         return srctreep;
     }
@@ -358,11 +374,6 @@ VOIVectorListener {
         
         GridBagConstraints gbc = new GridBagConstraints();
 
-        /*fileSelectorPanel = new JPanelFileSelection(new File(image.getFileInfo(0).getFileDirectory() + File.separator
-                + image.getImageName() + ".table"), "VOI Statistic File Destination");
-
-        destinationsPanel.add(fileSelectorPanel, BorderLayout.CENTER);*/
-
         logicalOptionsPanel = new JPanelLogicalOptions();
         imageOptionsPanel = new JPanelImageOptions();
         gbc.gridx = 0;
@@ -373,10 +384,6 @@ VOIVectorListener {
         gbc.gridx = 1;
         optionsPanel.add(imageOptionsPanel, gbc);
 
-       /* final JPanel lowerPanel = new JPanel(new BorderLayout());
-        lowerPanel.add(destinationsPanel, BorderLayout.CENTER);
-*/
-        // lowerPanel.add(buildRandSelectionPanel(), BorderLayout.EAST);
         imagePanel.add(optionsPanel, BorderLayout.SOUTH);
 
         return imagePanel;
@@ -411,10 +418,12 @@ VOIVectorListener {
         
         
         
-
+        clonedImage = (ModelImage)(image.clone());
+        
+        clonedImage.unregisterAllVOIs();
         
         
-        alg = new AlgorithmVOILogicalOperations(image, clonedImage, processList,logicalOperation, doVOIImage);
+        alg = new AlgorithmVOILogicalOperations(clonedImage, processList,logicalOperation, doVOIImage);
         
         alg.addListener(this);
 
@@ -456,7 +465,7 @@ VOIVectorListener {
 			ModelImage finalMaskImage = ((AlgorithmVOILogicalOperations)algorithm).getFinalMaskImage();
 			new ViewJFrameImage(finalMaskImage);
 		}
-		this.dispose();
+		cleanUpAndDispose();
 
 	}
 
@@ -472,7 +481,7 @@ VOIVectorListener {
 				 clonedImage.disposeLocal();
 				 clonedImage = null;
 			 }
-			this.dispose();
+			cleanUpAndDispose();
 		}
 
 	}
@@ -484,7 +493,7 @@ VOIVectorListener {
 			 clonedImage.disposeLocal();
 			 clonedImage = null;
 		 }
-		 
+		 cleanUpAndDispose();
 		 
 	 }
 	
