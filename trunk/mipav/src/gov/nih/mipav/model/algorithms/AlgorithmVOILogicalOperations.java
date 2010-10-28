@@ -33,7 +33,7 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
     protected ViewVOIVector selectedVOIset;
     
     /** Model Images **/
-    protected ModelImage img, clonedImage, finalMaskImage, tempMaskImage;
+    protected ModelImage clonedImage, finalMaskImage, tempMaskImage;
     
     /** operation type **/
     protected int operation;
@@ -60,8 +60,8 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
      * @param operation
      * @param doVoiImage
      */
-	public AlgorithmVOILogicalOperations(ModelImage img, ModelImage clonedImage , ViewVOIVector selectedVOIset, int operation, boolean doVoiImage) {
-		this.img = img;
+	public AlgorithmVOILogicalOperations(ModelImage clonedImage , ViewVOIVector selectedVOIset, int operation, boolean doVoiImage) {
+		//this.img = img;
 		this.clonedImage = clonedImage;
 		this.selectedVOIset = selectedVOIset;
 		this.operation = operation;
@@ -88,11 +88,11 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 				
 				VOIContour contour = (VOIContour) (voi.getCurves().elementAt(0));
 				contour.setActive(true);
-				finalMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, img.getExtents(), "Final Mask Image");
-				JDialogBase.updateFileInfoOtherModality(img, finalMaskImage);
+				finalMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, clonedImage.getExtents(), "Final Mask Image");
+				JDialogBase.updateFileInfoOtherModality(clonedImage, finalMaskImage);
 				voi.createBinaryImage(finalMaskImage, false, true);
-				finalMaskImage.getMatrixHolder().replaceMatrices(img.getMatrixHolder().getMatrices());
-				finalMaskImage.getFileInfo(0).setOrigin(img.getFileInfo(0).getOrigin());
+				finalMaskImage.getMatrixHolder().replaceMatrices(clonedImage.getMatrixHolder().getMatrices());
+				finalMaskImage.getFileInfo(0).setOrigin(clonedImage.getFileInfo(0).getOrigin());
 				
 				int extents[] = finalMaskImage.getExtents();
 				int length = extents[0];
@@ -103,10 +103,10 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 				finalMaskImage.exportData(0, length, finalBitSet);
 				contour.setActive(false);
 				
-				tempMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, img.getExtents(), "Temp Image");
-				JDialogBase.updateFileInfoOtherModality(img, tempMaskImage);
-				tempMaskImage.getMatrixHolder().replaceMatrices(img.getMatrixHolder().getMatrices());
-				tempMaskImage.getFileInfo(0).setOrigin(img.getFileInfo(0).getOrigin());
+				tempMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, clonedImage.getExtents(), "Temp Image");
+				JDialogBase.updateFileInfoOtherModality(clonedImage, tempMaskImage);
+				tempMaskImage.getMatrixHolder().replaceMatrices(clonedImage.getMatrixHolder().getMatrices());
+				tempMaskImage.getFileInfo(0).setOrigin(clonedImage.getFileInfo(0).getOrigin());
 				
 				for (int i=1; i<voi.getCurves().size(); i++) {
 					tempMaskImage.reallocate(ModelStorageBase.BOOLEAN);
@@ -193,11 +193,11 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 				
 				VOI voi = selectedVOIset.elementAt(0);
 				voi.setAllActive(true);
-				finalMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, img.getExtents(), "Final Mask Image");
-				JDialogBase.updateFileInfoOtherModality(img, finalMaskImage);
+				finalMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, clonedImage.getExtents(), "Final Mask Image");
+				JDialogBase.updateFileInfoOtherModality(clonedImage, finalMaskImage);
 				voi.createBinaryImage(finalMaskImage, false, true);
-				finalMaskImage.getMatrixHolder().replaceMatrices(img.getMatrixHolder().getMatrices());
-				finalMaskImage.getFileInfo(0).setOrigin(img.getFileInfo(0).getOrigin());
+				finalMaskImage.getMatrixHolder().replaceMatrices(clonedImage.getMatrixHolder().getMatrices());
+				finalMaskImage.getFileInfo(0).setOrigin(clonedImage.getFileInfo(0).getOrigin());
 				
 				int extents[] = finalMaskImage.getExtents();
 				int length = extents[0];
@@ -208,10 +208,10 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 				finalMaskImage.exportData(0, length, finalBitSet);
 				voi.setAllActive(false);
 				
-				tempMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, img.getExtents(), "Temp Image");
-				JDialogBase.updateFileInfoOtherModality(img, tempMaskImage);
-				tempMaskImage.getMatrixHolder().replaceMatrices(img.getMatrixHolder().getMatrices());
-				tempMaskImage.getFileInfo(0).setOrigin(img.getFileInfo(0).getOrigin());
+				tempMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, clonedImage.getExtents(), "Temp Image");
+				JDialogBase.updateFileInfoOtherModality(clonedImage, tempMaskImage);
+				tempMaskImage.getMatrixHolder().replaceMatrices(clonedImage.getMatrixHolder().getMatrices());
+				tempMaskImage.getFileInfo(0).setOrigin(clonedImage.getFileInfo(0).getOrigin());
 				
 				for (int i=1; i<selectedVOIset.size(); i++) {
 					tempMaskImage.reallocate(ModelStorageBase.BOOLEAN);
