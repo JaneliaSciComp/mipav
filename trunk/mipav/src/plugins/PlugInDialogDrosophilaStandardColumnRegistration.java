@@ -117,8 +117,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     /** radio buttons * */
     //private JRadioButton leftEyeRadio, rightEyeRadio;
     
-    
-    
+
     
     //SWC params
 
@@ -158,7 +157,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v3.0");
+        setTitle("Drosophila Standard Column Registration v3.1");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
