@@ -2836,6 +2836,8 @@ public class VOI extends ModelSerialCloneable {
 							} // else (endZ < startZ)
 					} // else ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
 					largestDistanceSq = distanceSq;
+					Preferences.debug("New points for largest distance: "+kPos1+"\t"+kPos2+"\n", 
+					        Preferences.DEBUG_ALGORITHM);
 				}
 			}
 		return Math.sqrt(largestDistanceSq);
