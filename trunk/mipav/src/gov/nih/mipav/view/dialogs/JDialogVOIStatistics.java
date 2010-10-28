@@ -1159,11 +1159,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                         totalData[count] = temp.replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":");
                     }
                 } else {
-                    if (k != 18) {
-                        // Exclude largest distance
-                        rowData[count] = properties.getProperty(
-                                VOIStatisticList.statisticDescription[k] + end).replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":");
-                    }
+                	rowData[count] = properties.getProperty(
+                			VOIStatisticList.statisticDescription[k] + end).replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":");
 
                     if (showTotals) {
                         totalData[count] = properties.getProperty(

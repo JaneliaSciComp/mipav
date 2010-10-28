@@ -353,7 +353,6 @@ public class JDialogTriImageTransformation extends JDialogBase {
             }
 
             TransMatrix xfrm = new TransMatrix(4);
-            //xfrm.MakeIdentity();
 
             xfrm.setTranslate(centerX * image.getFileInfo()[0].getResolutions()[0],
                               centerY * image.getFileInfo()[0].getResolutions()[1],
