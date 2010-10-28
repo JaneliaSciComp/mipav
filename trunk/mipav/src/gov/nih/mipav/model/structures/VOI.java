@@ -409,7 +409,7 @@ public class VOI extends ModelSerialCloneable {
 	 * @param zRes
 	 * @return largestDistance
 	 */
-	public double calcLargestDistance(float xRes, float yRes, float zRes) {
+	public double calcLargestDistance(BitSet mask, int[] extents, float[] res) {
 		int i;
 		int j;
 		float xPts[];
@@ -443,7 +443,15 @@ public class VOI extends ModelSerialCloneable {
 				zPts[index++] = (((VOIContour) (curves.elementAt(i))).elementAt(j)).Z;
 			}
 		}
-
+		Vector3f kPos1 = new Vector3f();
+		Vector3f kPos2 = new Vector3f();
+		return calcLargestDistance( mask, extents, res[0], res[1], res[2], xPts, yPts, zPts, kPos1, kPos2 );
+	}
+	
+	
+	public static double calcLargestDistance(BitSet mask, int[] extents, float xRes, float yRes, float zRes,
+			float[] xPts, float[] yPts, float zPts[], Vector3f kPos1, Vector3f kPos2 )
+	{
 		long time = System.currentTimeMillis();
 		double avg = 0, max = 0;
 		double[] maxAvg = determineMaxAvg(xRes, yRes, zRes, xPts, yPts, zPts);
@@ -463,7 +471,7 @@ public class VOI extends ModelSerialCloneable {
 			gatherBoundedPoints(orig, term, lowerBound-1, upperBound, xRes, yRes, zRes, xPts, yPts, zPts);
 			time = System.currentTimeMillis();        
 			Preferences.debug("Completed points in "+(System.currentTimeMillis() - time)+"\tsize: "+orig.size()+"\n");
-			a = getLargest(orig, term, xRes, yRes, zRes, xPts, yPts, zPts);
+			a = getLargest(mask, extents, orig, term, xRes, yRes, zRes, xPts, yPts, zPts, kPos1, kPos2 );
 			if(lowerBound == 0.0) {
 				terminal = true;
 			}
@@ -2454,11 +2462,11 @@ public class VOI extends ModelSerialCloneable {
 	/**
 	 * Gathers max and average statistics to build guessing intervals
 	 */
-	private double[] determineMaxAvg(float xRes, float yRes, float zRes,
+	private static double[] determineMaxAvg(float xRes, float yRes, float zRes,
 			float[] xPts, float[] yPts, float zPts[]) {
 		double max = 0, avg = 0;
 		int n = xPts.length;
-		Random r = new Random();
+		Random r = new Random(1);
 		//note that a stop that yields a non-representative average is fine, since worst case is more computations
 		int stop = n < 100 ? (int)(n*0.50) : (int)(n*0.10);
 		int[] search = new int[stop];
@@ -2553,7 +2561,7 @@ public class VOI extends ModelSerialCloneable {
 	/**
 	 * Gathers the points that fall within the required bounds
 	 */
-	private void gatherBoundedPoints(ArrayList<Integer> orig, ArrayList<Integer> term, 
+	private static void gatherBoundedPoints(ArrayList<Integer> orig, ArrayList<Integer> term, 
 			double lowerBound, double upperBound, 
 			float xRes, float yRes, float zRes, 
 			float[] xPts, float[] yPts, float zPts[]) {
@@ -2676,9 +2684,9 @@ public class VOI extends ModelSerialCloneable {
 	/**
 	 * Finds the largest line that lies within entirely within the VOI.
 	 */  
-	private double getLargest(ArrayList<Integer> orig, ArrayList<Integer> term, 
+	private static double getLargest(BitSet mask, int[] extents, ArrayList<Integer> orig, ArrayList<Integer> term, 
 			float xRes, float yRes, float zRes, 
-			float[] xPoints, float[] yPoints, float zPoints[]) {
+			float[] xPoints, float[] yPoints, float zPoints[], Vector3f kPos1, Vector3f kPos2) {
 		int origPoint, termPoint;
 		double largestDistanceSq = 0, distanceSq;
 		double startX, startY, startZ;
@@ -2689,6 +2697,9 @@ public class VOI extends ModelSerialCloneable {
 		double slope, slope2;
 		int xRound, yRound, zRound;
 		int j, k;
+		int maskIndex = 0;
+		int xDim = extents.length > 0 ? extents[0] : 1;
+		int yDim = extents.length > 1 ? extents[1] : 1;
 		boolean okay;
 		forj:
 			for(j=0; j<orig.size(); j++) {
@@ -2707,6 +2718,14 @@ public class VOI extends ModelSerialCloneable {
 				distY = yRes * delY;
 				distZ = zRes * delZ;
 				distanceSq = distX*distX + distY*distY + distZ*distZ;
+
+				kPos1.X = (float)startX;
+				kPos1.Y = (float)startY;
+				kPos1.Z = (float)startZ;
+				kPos2.X = (float)endX;
+				kPos2.Y = (float)endY;
+				kPos2.Z = (float)endZ;
+				
 				if(distanceSq > largestDistanceSq) {
 					if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ))) {
 						slope = delY/delX;
@@ -2717,14 +2736,13 @@ public class VOI extends ModelSerialCloneable {
 								xRound = (int)Math.round(x);
 								yRound = (int)Math.round(y);
 								zRound = (int)Math.round(z);
-								okay = false;
-								for (k = 0; (k < curves.size()) && (!okay); k++) {
-									if (((VOIContour) (curves.elementAt(k))).contains(xRound, yRound, zRound)) { 
-										okay = true;  
+								if ( xRound < endX && yRound < endY && zRound < endZ )
+								{
+									maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+									okay = mask.get( maskIndex );
+									if (!okay) {
+										continue forj;
 									}
-								}
-								if (!okay) {
-									continue forj;
 								}
 							} // for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
 						} // if (endX >= startX)
@@ -2734,14 +2752,13 @@ public class VOI extends ModelSerialCloneable {
 									xRound = (int)Math.round(x);
 									yRound = (int)Math.round(y);
 									zRound = (int)Math.round(z);
-									okay = false;
-									for (k = 0; (k < curves.size()) && (!okay); k++) {
-										if (((VOIContour) (curves.elementAt(k))).contains(xRound, yRound, zRound)) { 
-											okay = true;  
+									if ( xRound < endX && yRound < endY && zRound < endZ )
+									{
+										maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+										okay = mask.get( maskIndex );
+										if (!okay) {
+											continue forj;
 										}
-									}
-									if (!okay) {
-										continue forj;
 									}
 								} // for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
 							} // else endX < startX
@@ -2755,14 +2772,13 @@ public class VOI extends ModelSerialCloneable {
 								xRound = (int)Math.round(x);
 								yRound = (int)Math.round(y);
 								zRound = (int)Math.round(z);
-								okay = false;
-								for (k = 0; (k < curves.size()) && (!okay); k++) {
-									if (((VOIContour) (curves.elementAt(k))).contains(xRound, yRound, zRound)) { 
-										okay = true;  
+								if ( xRound < endX && yRound < endY && zRound < endZ )
+								{
+									maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+									okay = mask.get( maskIndex );
+									if (!okay) {
+										continue forj;
 									}
-								}
-								if (!okay) {
-									continue forj;
 								}
 							} // for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
 						} // if (endX >= startX)
@@ -2772,14 +2788,13 @@ public class VOI extends ModelSerialCloneable {
 									xRound = (int)Math.round(x);
 									yRound = (int)Math.round(y);
 									zRound = (int)Math.round(z);
-									okay = false;
-									for (k = 0; (k < curves.size()) && (!okay); k++) {
-										if (((VOIContour) (curves.elementAt(k))).contains(xRound, yRound, zRound)) { 
-											okay = true;  
+									if ( xRound < endX && yRound < endY && zRound < endZ )
+									{
+										maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+										okay = mask.get( maskIndex );
+										if (!okay) {
+											continue forj;
 										}
-									}
-									if (!okay) {
-										continue forj;
 									}
 								} // for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
 							} // else endX < startX    
@@ -2793,14 +2808,13 @@ public class VOI extends ModelSerialCloneable {
 								xRound = (int)Math.round(x);
 								yRound = (int)Math.round(y);
 								zRound = (int)Math.round(z);
-								okay = false;
-								for (k = 0; (k < curves.size()) && (!okay); k++) {
-									if (((VOIContour) (curves.elementAt(k))).contains(xRound, yRound, zRound)) { 
-										okay = true;  
+								if ( xRound < endX && yRound < endY && zRound < endZ )
+								{
+									maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+									okay = mask.get( maskIndex );
+									if (!okay) {
+										continue forj;
 									}
-								}
-								if (!okay) {
-									continue forj;
 								}
 							} // for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,   
 						} // if (endZ >= startZ)
@@ -2810,14 +2824,13 @@ public class VOI extends ModelSerialCloneable {
 									xRound = (int)Math.round(x);
 									yRound = (int)Math.round(y);
 									zRound = (int)Math.round(z);
-									okay = false;
-									for (k = 0; (k < curves.size()) && (!okay); k++) {
-										if (((VOIContour) (curves.elementAt(k))).contains(xRound, yRound, zRound)) { 
-											okay = true;  
+									if ( xRound < endX && yRound < endY && zRound < endZ )
+									{
+										maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+										okay = mask.get( maskIndex );
+										if (!okay) {
+											continue forj;
 										}
-									}
-									if (!okay) {
-										continue forj;
 									}
 								} // for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
 							} // else (endZ < startZ)

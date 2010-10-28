@@ -611,15 +611,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             float ignoreMin = calcSelectedVOI.getMinimumIgnore();
             float ignoreMax = calcSelectedVOI.getMaximumIgnore();
 
-            if(distanceFlag) {
-                //long time2 = System.currentTimeMillis();
-                largestDistance = calcSelectedVOI.calcLargestDistance(
-                        srcImage.getFileInfo(0).getResolutions()[0],
-                        srcImage.getFileInfo(0).getResolutions()[1],
-                        srcImage.getFileInfo(0).getResolutions()[2]);
-                //System.out.println("Total time: "+(System.currentTimeMillis() - time2));
-            }
-
             int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
             if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
                 xStr = "X " + FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);    
@@ -740,8 +731,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             else
             {
                 Vector<VOIBase> contours = calcSelectedVOI.getCurves();
-                //calcStatsTotal( contours, statProperty, fileInfo, unit2DStr, unit3DStr, ignoreMin, ignoreMax, largestDistance );
-                calcStatsTotal( calcSelectedVOI, statProperty, fileInfo, unit2DStr, unit3DStr, ignoreMin, ignoreMax, largestDistance );
+                calcStatsTotal( calcSelectedVOI, statProperty, fileInfo, unit2DStr, unit3DStr, ignoreMin, ignoreMax );
             }
 
             //System.out.println("Time required to calculate "+calcSelectedVOI.getName()+": "+(System.currentTimeMillis() - time));
@@ -990,8 +980,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             {               
                 Vector3f kPos1 = new Vector3f();
                 Vector3f kPos2 = new Vector3f();
-                stats.largestContourDistance = ((VOIContour) (contour)).calcLargestSliceDistance(
-                        fileInfo.getResolutions()[0], fileInfo.getResolutions()[1], kPos1, kPos2);
+                stats.largestContourDistance = ((VOIContour) (contour)).calcLargestSliceDistance( srcImage.getExtents(),
+                        fileInfo.getResolutions(), kPos1, kPos2);
                 // Uncomment the following to at the VOILine to the image:
                 //VOILine kLine = new VOILine();
                 //kLine.add(kPos1);
@@ -1311,7 +1301,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         
         private void calcStatsTotal( VOI kVOI, VOIStatisticalProperties statProperty,
                 FileInfoBase fileInfo, 
-                String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax, double largestDistance )
+                String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax )
         {
             ContourStats stats = new ContourStats();
 
@@ -1321,6 +1311,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             
             BitSet mask = new BitSet( xDim * yDim * zDim );
             kVOI.createBinaryMask3D(mask, xDim, yDim, Preferences.is(Preferences.PREF_USE_VOI_XOR), false);
+            
+            double largestDistance = 0;
+            if(distanceFlag) {
+                largestDistance = calcSelectedVOI.calcLargestDistance( mask, srcImage.getExtents(),
+                        srcImage.getFileInfo(0).getResolutions());
+            }
 
             stats.nVox = mask.cardinality();
 
@@ -1543,8 +1539,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     Vector3f kPos2 = new Vector3f();
                     if ( i == 0 )
                     {
-                        stats.largestContourDistance = ((VOIContour) (kVOI.getCurves().elementAt(i))).calcLargestSliceDistance(
-                                fileInfo.getResolutions()[0], fileInfo.getResolutions()[1], kPos1, kPos2);
+                        stats.largestContourDistance = ((VOIContour) (kVOI.getCurves().elementAt(i))).calcLargestSliceDistance(srcImage.getExtents(),
+                                fileInfo.getResolutions(), kPos1, kPos2);
 
 
                         // Uncomment the following to at the VOILine to the image:
@@ -1558,8 +1554,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     else
                     {
                         stats.largestContourDistance = Math.max( stats.largestContourDistance, 
-                                ((VOIContour) (kVOI.getCurves().elementAt(i))).calcLargestSliceDistance(
-                                        fileInfo.getResolutions()[0], fileInfo.getResolutions()[1], kPos1, kPos2));
+                                ((VOIContour) (kVOI.getCurves().elementAt(i))).calcLargestSliceDistance( srcImage.getExtents(),
+                                        fileInfo.getResolutions(), kPos1, kPos2));
 
                         // Uncomment the following to at the VOILine to the image:
                         //VOILine kLine = new VOILine();

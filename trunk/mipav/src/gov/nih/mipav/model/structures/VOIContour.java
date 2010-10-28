@@ -1370,10 +1370,26 @@ public class VOIContour extends VOIBase {
 	 * @param yRes
 	 * @return largestDistance
 	 */
-	public double calcLargestSliceDistance(float xRes, float yRes, Vector3f kPos1, Vector3f kPos2) {
+	public double calcLargestSliceDistance(int[] extents, float[] res, Vector3f kPos1, Vector3f kPos2) {
 
 		float[] xPts = new float[size()];
 		float[] yPts = new float[size()];
+		float[] zPts = new float[size()];
+		int size = size();
+		for (int i = 0; i < size; i++) {
+			xPts[i] = elementAt(i).X;
+			yPts[i] = elementAt(i).Y;
+			zPts[i] = elementAt(i).Z;
+		}
+
+		int xDim = extents.length > 0 ? extents[0] : 1;
+		int yDim = extents.length > 1 ? extents[1] : 1;
+		int zDim = extents.length > 2 ? extents[2] : 1;
+		BitSet mask = new BitSet(xDim*yDim*zDim); 
+		setMask( mask, xDim, yDim, false, VOI.ADDITIVE );     
+		return VOI.calcLargestDistance( mask, extents, res[0], res[1], res[2], xPts, yPts, zPts, kPos1, kPos2 );
+		
+		/*
 		reloadPoints(xPts, yPts);
 
 		long time = System.currentTimeMillis();
@@ -1409,6 +1425,7 @@ public class VOIContour extends VOIBase {
 			iter++;
 		}
 		return a;
+		*/
 	}
 
 	/**
