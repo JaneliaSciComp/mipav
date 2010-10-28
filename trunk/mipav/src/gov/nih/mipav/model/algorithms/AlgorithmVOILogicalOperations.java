@@ -1,0 +1,317 @@
+package gov.nih.mipav.model.algorithms;
+
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Vector;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionMaskToVOI;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.ViewVOIVector;
+import gov.nih.mipav.view.dialogs.JDialogBase;
+
+
+/**
+ * Algorithm class for performing logical operations on VOIs
+ * @author pandyan
+ *
+ */
+public class AlgorithmVOILogicalOperations extends AlgorithmBase {
+	
+	/** Vector of all VOIs that will have calculations performed. */
+    protected ViewVOIVector selectedVOIset;
+    
+    /** Model Images **/
+    protected ModelImage img, clonedImage, finalMaskImage, tempMaskImage;
+    
+    /** operation type **/
+    protected int operation;
+    
+    /** operation constants **/
+    public static final int ADD = 0;
+
+    /** operation constants **/
+    public static final int OR = 1;
+    
+    /** operation constants **/
+    public static final int XOR = 2;
+    
+    /** flag indicating whether output should be VOI image or mask image **/
+    protected boolean doVoiImage;
+    
+
+     
+    /**
+     * constructor
+     * @param img
+     * @param clonedImage
+     * @param selectedVOIset
+     * @param operation
+     * @param doVoiImage
+     */
+	public AlgorithmVOILogicalOperations(ModelImage img, ModelImage clonedImage , ViewVOIVector selectedVOIset, int operation, boolean doVoiImage) {
+		this.img = img;
+		this.clonedImage = clonedImage;
+		this.selectedVOIset = selectedVOIset;
+		this.operation = operation;
+		this.doVoiImage = doVoiImage;
+	}
+	
+	
+	/**
+	 * run algorithm
+	 */
+	public void runAlgorithm() {
+
+		
+		if (selectedVOIset.size() == 1) {
+			//This means only 1 VOI is selected...so perform logical operations on its contours
+			
+			try {
+				VOI voi = selectedVOIset.elementAt(0);
+				
+				for (int i=0; i<voi.getCurves().size(); i++) {
+					VOIContour contour = (VOIContour) (voi.getCurves().elementAt(i));
+					contour.setActive(false);
+				}
+				
+				VOIContour contour = (VOIContour) (voi.getCurves().elementAt(0));
+				contour.setActive(true);
+				finalMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, img.getExtents(), "Final Mask Image");
+				JDialogBase.updateFileInfoOtherModality(img, finalMaskImage);
+				voi.createBinaryImage(finalMaskImage, false, true);
+				finalMaskImage.getMatrixHolder().replaceMatrices(img.getMatrixHolder().getMatrices());
+				finalMaskImage.getFileInfo(0).setOrigin(img.getFileInfo(0).getOrigin());
+				
+				int extents[] = finalMaskImage.getExtents();
+				int length = extents[0];
+				for (int i=1;i<extents.length;i++) {
+					length = length * extents[i];
+				}
+				BitSet finalBitSet = new BitSet(length);
+				finalMaskImage.exportData(0, length, finalBitSet);
+				contour.setActive(false);
+				
+				tempMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, img.getExtents(), "Temp Image");
+				JDialogBase.updateFileInfoOtherModality(img, tempMaskImage);
+				tempMaskImage.getMatrixHolder().replaceMatrices(img.getMatrixHolder().getMatrices());
+				tempMaskImage.getFileInfo(0).setOrigin(img.getFileInfo(0).getOrigin());
+				
+				for (int i=1; i<voi.getCurves().size(); i++) {
+					tempMaskImage.reallocate(ModelStorageBase.BOOLEAN);
+					contour = (VOIContour) (voi.getCurves().elementAt(i));
+					
+					contour.setActive(true);
+					
+					voi.createBinaryImage(tempMaskImage, false, true);
+					
+					BitSet tempBitSet = new BitSet(length);
+					tempMaskImage.exportData(0, length, tempBitSet);
+					
+					
+					
+					int size = tempBitSet.size();
+	
+					
+					for(int k=0;k<size;k++) {
+						boolean bool1 = finalBitSet.get(k);
+						boolean bool2 = tempBitSet.get(k);
+						if(operation == ADD) {
+							if(bool1 == true && bool2 == true) {
+								finalBitSet.set(k);
+							}else {
+								finalBitSet.clear(k);
+							}
+						}else if(operation == OR) {
+							if(bool1 == true || bool2 == true) {
+								finalBitSet.set(k);
+							}else {
+								finalBitSet.clear(k);
+							}
+						}else {
+							if(bool1 == true && bool2 == true) {
+								finalBitSet.clear(k);
+							}else if (bool1 == false && bool2 == false){
+								finalBitSet.clear(k);
+							}else {
+								finalBitSet.set(k);
+							}
+						}
+					}
+					contour.setActive(false);
+				}
+				tempMaskImage.disposeLocal();
+				finalMaskImage.clearMask();
+				finalMaskImage.importData(0, finalBitSet, true);
+				
+				if(doVoiImage) {
+
+					AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(finalMaskImage);
+
+		            VOIExtractionAlgo.run();
+		            
+		            VOIVector kVOIs = finalMaskImage.getVOIs();
+		            
+		            for ( int i = 0; i < kVOIs.size(); i++ ) {
+		                VOI kCurrentGroup = kVOIs.get(i);
+		                VOI clonedGroup = (VOI)kCurrentGroup.clone();
+		                clonedImage.registerVOI(clonedGroup);
+		            }
+		            
+		            finalMaskImage.disposeLocal();
+				}else {
+					
+					clonedImage.disposeLocal();
+				}
+
+				setCompleted(true);
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+
+	
+		}else {
+			//This means multiple VOIs are selected
+			try {
+				
+				for (int i=0; i<selectedVOIset.size(); i++) {
+					VOI voi = selectedVOIset.elementAt(i);
+					voi.setAllActive(false);
+				}
+				
+				
+				VOI voi = selectedVOIset.elementAt(0);
+				voi.setAllActive(true);
+				finalMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, img.getExtents(), "Final Mask Image");
+				JDialogBase.updateFileInfoOtherModality(img, finalMaskImage);
+				voi.createBinaryImage(finalMaskImage, false, true);
+				finalMaskImage.getMatrixHolder().replaceMatrices(img.getMatrixHolder().getMatrices());
+				finalMaskImage.getFileInfo(0).setOrigin(img.getFileInfo(0).getOrigin());
+				
+				int extents[] = finalMaskImage.getExtents();
+				int length = extents[0];
+				for (int i=1;i<extents.length;i++) {
+					length = length * extents[i];
+				}
+				BitSet finalBitSet = new BitSet(length);
+				finalMaskImage.exportData(0, length, finalBitSet);
+				voi.setAllActive(false);
+				
+				tempMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, img.getExtents(), "Temp Image");
+				JDialogBase.updateFileInfoOtherModality(img, tempMaskImage);
+				tempMaskImage.getMatrixHolder().replaceMatrices(img.getMatrixHolder().getMatrices());
+				tempMaskImage.getFileInfo(0).setOrigin(img.getFileInfo(0).getOrigin());
+				
+				for (int i=1; i<selectedVOIset.size(); i++) {
+					tempMaskImage.reallocate(ModelStorageBase.BOOLEAN);
+					
+					voi = selectedVOIset.elementAt(i);
+					voi.setAllActive(true);
+					voi.createBinaryImage(tempMaskImage, false, true);
+	
+					BitSet tempBitSet = new BitSet(length);
+					tempMaskImage.exportData(0, length, tempBitSet);
+					
+					
+					
+					int size = tempBitSet.size();
+					
+					for(int k=0;k<size;k++) {
+						boolean bool1 = finalBitSet.get(k);
+						boolean bool2 = tempBitSet.get(k);
+						if(operation == ADD) {
+							if(bool1 == true && bool2 == true) {
+								finalBitSet.set(k);
+							}else {
+								finalBitSet.clear(k);
+							}
+						}else if(operation == OR) {
+							if(bool1 == true || bool2 == true) {
+								finalBitSet.set(k);
+							}else {
+								finalBitSet.clear(k);
+							}
+						}else {
+							if(bool1 == true && bool2 == true) {
+								finalBitSet.clear(k);
+							}else if (bool1 == false && bool2 == false){
+								finalBitSet.clear(k);
+							}else {
+								finalBitSet.set(k);
+							}
+						}
+					}
+					voi.setAllActive(false);
+				}
+				tempMaskImage.disposeLocal();
+				finalMaskImage.clearMask();
+				finalMaskImage.importData(0, finalBitSet, true);
+				
+				
+				if(doVoiImage) {
+
+					AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(finalMaskImage);
+
+		            VOIExtractionAlgo.run();
+		            
+		            VOIVector kVOIs = finalMaskImage.getVOIs();
+		            
+		            for ( int i = 0; i < kVOIs.size(); i++ ) {
+		                VOI kCurrentGroup = kVOIs.get(i);
+		                VOI clonedGroup = (VOI)kCurrentGroup.clone();
+		                clonedImage.registerVOI(clonedGroup);
+		            }
+		            
+		            finalMaskImage.disposeLocal();
+				}else {
+					
+					clonedImage.disposeLocal();
+				}
+				
+				
+	
+				setCompleted(true);
+			}catch (Exception e) {
+				e.printStackTrace();
+			}
+				
+			
+		}
+
+
+	}
+
+
+	/**
+	 * returns the mask image
+	 * @return
+	 */
+	public ModelImage getFinalMaskImage() {
+		return finalMaskImage;
+	}
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+}
