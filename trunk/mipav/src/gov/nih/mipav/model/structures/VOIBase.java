@@ -615,21 +615,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         
         return containsZ((int)iX,(int)iY);
-        
-        /*
-        getMask();
-        int xDim = (int)kBounds[1].X;
-        int yDim = (int)kBounds[1].Y;
-        for ( int i = (int)kBounds[0].Z; i <= kBounds[1].Z; i++ )
-        {
-            int index = (int)(i * xDim * yDim + iY * xDim + iX);
-            if( m_kMask.get( index ) )
-            {
-                return true;
-            }
-        }
-        return false;
-        */
     }
 
 
@@ -659,7 +644,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         if ( m_iPlane == ZPLANE )
         {
-            return ( (iZ == (int)elementAt(0).Z) && containsZ((int)iX,(int)iY) );
+            return ( (iZ == (int)elementAt(0).Z) && contains((int)iX,(int)iY) );
         }
         else if ( m_iPlane == XPLANE )
         {

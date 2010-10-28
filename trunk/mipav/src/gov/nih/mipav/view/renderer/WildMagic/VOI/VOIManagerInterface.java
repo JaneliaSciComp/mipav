@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.VOI;
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -29,6 +30,7 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIPolyLineSlice;
+import gov.nih.mipav.model.structures.VOIStatisticList;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.structures.event.VOIEvent;
 import gov.nih.mipav.model.structures.event.VOIListener;
@@ -1938,6 +1940,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void quickLUT( VOIBase kLUT )
     {
+    	if ( kLUT == null )
+    	{
+    		return;
+    	}
         kLUT.update();
         Vector3f[] kBounds = kLUT.getImageBoundingBox();
         m_akBounds[0].Copy(kBounds[0]);
@@ -4448,13 +4454,32 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * Opens a JDialogStatistics to allow computation ofROI statistics.
      */
     protected void showStatisticsCalculator() {
-        
+    	/* Tested just calculating the volume statistic:
+    	boolean[] statsList = new boolean[VOIStatisticList.numberOfStatistics];
+    	for ( int i = 0; i < VOIStatisticList.numberOfStatistics; i++ )
+    	{
+    		statsList[i] = false;
+    		if ( VOIStatisticList.statisticDescription[i].equals( VOIStatisticList.volumeDescription) )
+    		{
+    			statsList[i] = true;
+    		}
+    	}
+    	ViewVOIVector vector = new ViewVOIVector();
+    	vector.add( getActiveImage().getVOIs().elementAt(0) );
+    	AlgorithmVOIProps algProps = new AlgorithmVOIProps( getActiveImage(), AlgorithmVOIProps.PROCESS_PER_VOI, vector);
+    	algProps.setSelectedStatistics(statsList);
+    	algProps.setDistanceFlag(false);
+    	algProps.setSliceDistanceFlag(false);
+    	algProps.runAlgorithm();
+    	float volume = algProps.getVolume();
+    	System.err.println( volume );
+    	*/
+    	
         if (imageStatList == null) {
             
             if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() != 0)) {
                 imageStatList = new JDialogVOIStatistics(getActiveImage().getVOIs());
                 imageStatList.setVisible(true);
-                // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
             } else {
                 MipavUtil.displayError("A VOI must be present to use the statistics calculator");
             }

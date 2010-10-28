@@ -38,8 +38,6 @@ public class VOIProtractor extends VOIBase {
     /** Set to true, displays this protractor object for any z-value. */
     private boolean allSlices = false;
     
-    private int plane = VOIBase.ZPLANE;
-
     /**
      * Default constructor.
      */
@@ -67,7 +65,6 @@ public class VOIProtractor extends VOIBase {
     {
         super(kVOI);
         m_iVOIType = VOI.PROTRACTOR;
-        plane = kVOI.plane;
     }
 
     /* (non-Javadoc)
@@ -104,11 +101,6 @@ public class VOIProtractor extends VOIBase {
 
         degreeString += " deg";
         return degreeString;
-    }
-    
-    public int getPlane()
-    {
-        return plane;
     }
 
     /**

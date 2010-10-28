@@ -525,10 +525,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      */
     public void add( VOIBase kVOI, float fHue )
     {
-        m_kParent.newVOI( false, false );
+        m_kParent.newVOI(fHue);
         m_kParent.addVOI( kVOI, false, true, true );
-        m_kParent.setPresetHue(fHue);
-        kVOI.setActive(true);
         m_kParent.setDefaultCursor();
     }
 
