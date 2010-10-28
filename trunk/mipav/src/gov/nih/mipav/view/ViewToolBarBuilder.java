@@ -24,7 +24,7 @@ import javax.swing.event.*;
 /**
  * Builds the GUI toolbars for the user interface.
  */
-public class ViewToolBarBuilder implements ItemListener, ActionListener {
+public class ViewToolBarBuilder implements ItemListener, ActionListener, Serializable {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

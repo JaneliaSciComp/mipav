@@ -804,6 +804,7 @@ public class ViewMenuBar {
                                                 false),}),
                                 menuBuilder.buildCheckBoxMenuItem("Allow VOI holes (XOR)", "XOR", Preferences
                                         .is(Preferences.PREF_USE_VOI_XOR)),
+                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS, false),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Propagate", true, new JMenuItem[] {
                                         menuBuilder

@@ -66,6 +66,7 @@ import gov.nih.mipav.view.dialogs.JDialogSaveMergedVOIs;
 import gov.nih.mipav.view.dialogs.JDialogSnake;
 import gov.nih.mipav.view.dialogs.JDialogSurfaceReconstruction;
 import gov.nih.mipav.view.dialogs.JDialogTrim;
+import gov.nih.mipav.view.dialogs.JDialogVOILogicalOperations;
 import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
@@ -243,6 +244,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     
     /** Statistics dialog VOI->Statistics generator... */
     protected JDialogVOIStatistics imageStatList;
+    
     
     private float presetHue = -1.0f;
     
@@ -850,7 +852,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	prostateSegAuto();
         } else if (command.equals("SaveDicomMatrix")) {
             saveDicomMatrixInfo();
-        } 
+        }  else if (command.equals(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS.getActionCommand())) {
+        	if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() != 0)) {
+        		JDialogVOILogicalOperations logOper = new JDialogVOILogicalOperations(getActiveImage().getVOIs());
+        		logOper.setVisible(true);
+                // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
+            } else {
+                MipavUtil.displayError("A VOI must be present to use the statistics calculator");
+            }
+        }
         else {
             doVOI(command);
         }
@@ -3411,9 +3421,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         // If the copy list is from another image:
         if ( copyList.elementAt(0).getGroup() != null && !copyList.elementAt(0).getGroup().hasListener(this) )
         {
+        	System.out.println("here");
             pasteFromViewUserInterface();
             return;
         }
+        System.out.println("yo");
         // The copy list is from this image/manager: 
         for ( int i = 0; i < copyList.size(); i++ )
         {
