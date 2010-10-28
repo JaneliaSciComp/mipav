@@ -7,10 +7,8 @@ public class PlugInDrosophilaStandardColumnRegistration implements PlugInGeneric
 		
 	}
 
-	
-	
-	
 
+	
 	
 	
 	public void run() {
