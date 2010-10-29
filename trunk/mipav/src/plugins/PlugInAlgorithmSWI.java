@@ -35,6 +35,7 @@ import java.util.TreeMap;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -81,6 +82,8 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     private double originRo;
 
     private double originPe;
+
+    private AlgorithmAddMargins imageMarginsAlgo;
     
     /**
      * Constructor.
@@ -162,12 +165,13 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	        }
     	    }
     	}
+    	brainMask.calcMinMax();
     	
     	ViewJFrameImage brainFrame = new ViewJFrameImage(brainMask);
     	brainFrame.setVisible(true);
     	
     	ModelImage complexImage = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "complexData");
-    	ModelImage transformImage = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "transformData");
+    	ModelImage transformImage = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "transformData");
     	double[] realData = new double[sizeRo*sizePe*sizeSs];
     	double[] complexData = new double[sizeRo*sizePe*sizeSs];
     	
@@ -175,6 +179,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	
     	try {
             complexImage.importDComplexData(0, realData, complexData, true, false);
+            complexImage.setOriginalExtents(complexImage.getExtents());
         } catch (IOException e2) {
             // TODO Auto-generated catch block
             e2.printStackTrace();
@@ -182,15 +187,19 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
         ViewJFrameImage complexFrame = new ViewJFrameImage(complexImage);
         complexFrame.setVisible(true);
+        
+        int a = 0;
     	
-    	AlgorithmFFT fft = new AlgorithmFFT(transformImage, complexImage, AlgorithmFFT.INVERSE, false, false, true);
+    	AlgorithmFFT fft = new AlgorithmFFT(transformImage, complexImage, AlgorithmFFT.FORWARD, false, false, true);
     	fft.run();
     	
     	ViewJFrameImage transformFrame = new ViewJFrameImage(transformImage);
     	transformFrame.setVisible(true);
     	
     	ModelImage transformImageCenter = (ModelImage) transformImage.clone();
-    	ModelImage complexImageCenter = (ModelImage) complexImage.clone();
+    	transformImageCenter.setImageName("TransformImageCenter");
+    	ModelImage inverseFFTImageCenter = (ModelImage) complexImage.clone();
+    	inverseFFTImageCenter.setImageName("inverseFFTImageCenter");
     	for(int i=0; i<sizeRo; i++) {
             if(i < originRo+1 || i > originRo+roFilterSize) {
         	    for(int j=0; j<sizePe; j++) {
@@ -205,11 +214,22 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	
     	ViewJFrameImage transformFrameCenter = new ViewJFrameImage(transformImageCenter);
     	transformFrameCenter.setVisible(true);
-    	
-    	AlgorithmFFT fft2 = new AlgorithmFFT(complexImageCenter, transformImageCenter, AlgorithmFFT.FORWARD, false, false, true);
+    
+        imageMarginsAlgo = new AlgorithmAddMargins(inverseFFTImageCenter, 
+                new int[]{16,16}, new int[]{16,16}, new int[]{0, 0});
+        imageMarginsAlgo.setPadValue(new float[]{0});
+        
+        imageMarginsAlgo.runAlgorithm();
+        inverseFFTImageCenter = imageMarginsAlgo.getSrcImage();
+        
+    	if(a == 0) {
+    	    return;
+    	}
+        
+    	AlgorithmFFT fft2 = new AlgorithmFFT(inverseFFTImageCenter, transformImageCenter, AlgorithmFFT.INVERSE, false, false, true);
         fft2.run();
         
-        ViewJFrameImage complexFrameCenter = new ViewJFrameImage(complexImageCenter);
+        ViewJFrameImage complexFrameCenter = new ViewJFrameImage(inverseFFTImageCenter);
         complexFrameCenter.setVisible(true);
         
         double[] ixReal = new double[sizeRo*sizePe*sizeSs];
@@ -220,7 +240,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         try {
             brainMask.exportData(0, sizeRo*sizePe*sizeSs, brainMaskSet);
             complexImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixReal, ixImag);
-            complexImageCenter.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixRealCenter, ixImagCenter);
+            inverseFFTImageCenter.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixRealCenter, ixImagCenter);
             
         } catch (IOException e1) {
             // TODO Auto-generated catch block
