@@ -375,6 +375,8 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
 
     /** DOCUMENT ME! */
     private double uflow = Math.pow(2, -1022);
+    
+    private double gamma;
 
     /** DOCUMENT ME! */
     private double upper;
@@ -688,6 +690,80 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Integrand lower endpoint = -1.0\n");
         Preferences.debug("Integrand upper endpoint = 5.0\n");
         Preferences.debug("Point of singularity c = 0.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        
+        testCase = 7;
+        // Test7 tests dqawoe
+        // dqawoe integrates functions of the form f(x)*sin(omega*x) 
+        // or f(x)*cos(omega*x)
+        // Integrate log(x)*sin(10*pi*x) from 0 to 1
+        // The exact answer is -(gamma+log(10*pi)-ci(10*pi))/(10*pi) = -0.1281316.
+        // gamma is euler's constant
+        // ci is the cosine integral ci(x) = integral(x to infinity) -cos(v)/v dv.
+        // cin(10.0*pi) = 4.0255378
+        // ci(x*pi) = gamma + ln(pi) + ln(x) - cin(x*pi)
+        // Specify integr = 1 for cosine integral, 2 for sine integral.
+        // ci(10.0*pi) = -0.0010071562550209023
+        // Numerical Integral = -0.12813689323080435 after 215 integrand evaluations used
+        // Error status = 0 with estimated absolute error = 7.321363049983965E-5
+        // Actual answer = -0.1281368478946547
+        // Exact error = -4.533614963997401E-8
+
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQAWOE;
+        epsabs = 0.0;
+        epsrel = 1.0E-3;
+        limit = 100;
+        omega = 10.0 * Math.PI;
+        integr = 2;
+        icall = 1;
+        maxp1 = 100;
+        gamma = 0.57721566490153286061;
+        double cin = 4.0255378;
+        double ci = gamma + Math.log(Math.PI) + Math.log(10.0) - cin;
+        actualAnswer = -(gamma + Math.log(10.0*Math.PI) - ci)/(10.0* Math.PI);
+        
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (icall < 1) {
+        	MipavUtil.displayError("icall must be at least 1");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        if (maxp1 < 1) {
+        	MipavUtil.displayError("maxp1 must be at least 1");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 7 testing dqawoe\n");
+        Preferences.debug("Integrand is log(x)*sin(10*pi*x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("ci(10.0*pi) = " + ci + "\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
@@ -1287,8 +1363,8 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
 
         this.limit = limit;
 
-        if (limit <= npts) {
-            MipavUtil.displayError("Must set limit = " + limit + " > " + npts);
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be at least 1");
             errorStatus = 6;
 
             return;
@@ -4273,7 +4349,7 @@ loop:
 
         // Sum of the errors over the intervals larger than the smallest
         // interval considered up to now
-        double erlarg;
+        double erlarg = 0.0;
 
         // boolean variable denoting that the routine is attempting to
         // perform extrapolation.  That is, before dividing the
@@ -4283,7 +4359,7 @@ loop:
         // If noext is true, the extrapolation is no longer allowed.
         boolean noext;
         
-        double abseps;
+        double abseps[] = new double[1];
         double area1[] = new double[1];
         double area12;
         double area2[] = new double[1];
@@ -4291,7 +4367,7 @@ loop:
         double a2;
         double b1;
         double b2;
-        double correc;
+        double correc = 0.0;
         double defab1[] = new double[1];
         double defab2[] = new double[1];
         double defabs[] = new double[1];
@@ -4300,8 +4376,8 @@ loop:
         double error1[] = new double[1];
         double erro12;
         double error2[] = new double[1];
-        double ertest;
-        double reseps;
+        double ertest = 0.0;
+        double reseps[] = new double[1];
         double res31a[] = new double[3];
         double width;
         int id;
@@ -4317,10 +4393,15 @@ loop:
         int nrmax[] = new int[1];
         int nrmom;
         boolean extall;
+        boolean do50 = false;
+        boolean do70 = false;
+        boolean do75 = false;
+        boolean do90 = false;
         boolean do150 = false;
         boolean do160 = false;
         boolean do165 = false;
         boolean do170 = false;
+        boolean do190 = false;
         
         try {
 	    	alist = new double[limit];
@@ -4407,7 +4488,8 @@ loop:
             
             // Main for loop
             
-            for (last = 2; last <= limit; last++) {
+            do150 = true;
+            loop: for (last = 2; last <= limit; last++) {
             	
             	// Bisect the subinteval with the nrmax-th largest error estimate.
             	
@@ -4496,10 +4578,207 @@ loop:
             	
             	dqpsrt(limit, last, maxErr, errMax, elist, iord, nrmax);
             	if (errSum <= errBnd) {
+            		do150 = false;
             		do170 = true;
             		break;
             	}
+            	if (errorStatus != 0) {
+            		break;
+            	}
+            	if ((last == 2) && extall) {
+            		small = 0.5 * small;
+            		numr12[0] = numr12[0] + 1;
+            		rlist2[numr12[0]-1] = area;
+            		ertest = errBnd;
+            		erlarg = errSum;
+            		continue;
+            	} // if ((last == 2) && extall)
+            	if (noext) {
+            		continue;
+            	}
+            	if (extall) {
+            		erlarg = erlarg - erlast;
+            		if (Math.abs(b1 - a1) > small) {
+            		    erlarg = erlarg + erro12;	
+            		}
+            		if (extrap) {
+            			do70 = true;
+            		}
+            		else {
+            			do50 = true;
+            		}
+            	} // if (extall)
+            	else {
+            		do50 = true;
+            	}
+            	
+            	// Test whether the interval to be bisected next is the
+            	// smallest interval.
+            	
+            	if (do50) {
+            		do50 = false;
+            		width = Math.abs(blist[maxErr[0]] - alist[maxErr[0]]);
+            		if (width > small) {
+            			continue;
+            		} // if (width > small)
+            		if (!extall) {
+            		
+            			// Test whether we can start with the extrapolation procedure
+            			// (we do this if we integrate over the next interval with
+            			// use of a gauss-kronrod rule - see subroutine dqc25f).
+            			
+            			small = 0.5 * small;
+            			if (0.25*width*domega > 2.0) {
+            				continue;
+            			}
+            			extall = true;
+            			ertest = errBnd;
+            			erlarg = errSum;
+            			continue;
+            		} // if (!extall)
+            		extrap = true;
+            		nrmax[0] = 2;
+            		do70 = true;
+            	} // if (do50)
+            	if (do70) {
+            		do70 = false;
+            		if ((ierro == 3) || (erlarg <= ertest)) {
+            			do90 = true;
+            		}
+            		else {
+            			do75 = true;
+            		}
+            	} // if (do70)
+            	
+            	if (do75) {
+            		do75 = false;
+            		// The smallest interval has the largest error.
+            		// Before bisecting decrease the sum of the errors over
+            		// the larger intervals (erlarg) and perform extrapolation.
+            		
+            		jupbnd = last;
+            		if (last > (limit/2+2)) {
+            			jupbnd = limit + 3 - last;
+            		}
+            		id = nrmax[0];
+            		for (k = id; k <= jupbnd; k++) {
+            			maxErr[0] = iord[nrmax[0]-1];
+            			errMax[0] = elist[maxErr[0]];
+            			if (Math.abs(blist[maxErr[0]] - alist[maxErr[0]]) > small) {
+            				continue loop;
+            			}
+            			nrmax[0] = nrmax[0] + 1;
+            		} // for (k = id; k <= jupbnd; k++)
+            		do90 = true;
+            	} // if (do75)
+            	if (do90) {
+            		do90 = false;
+            		// Perform extrapolation
+            		numr12[0] = numr12[0] + 1;
+            		rlist2[numr12[0]-1] = area;
+            		if (numr12[0] >= 3) {
+            			dqelg(numr12, rlist2, reseps, abseps, res31a, nres);
+            			ktmin = ktmin + 1;
+            			if ((ktmin > 5) && (abserr[0] < 1.0E-3 * errSum)) {
+            				errorStatus = 5;
+            			}
+            			if (abseps[0] < abserr[0]) {
+            				ktmin = 0;
+            				abserr[0] = abseps[0];
+            				result[0] = reseps[0];
+            				correc = erlarg;
+            				ertest = Math.max(epsabs, epsrel * Math.abs(reseps[0]));
+            				if (abserr[0] <= ertest) {
+            					break;
+            				}
+            			} // if (abseps[0] < abserr[0])
+            			// Prepare bisection of the smallest interval
+            			if (numr12[0] == 1) {
+            				noext = true;
+            			}
+            			if (errorStatus == 5) {
+            				break;
+            			}
+            		} // if (numr12[0] >= 3)
+            		maxErr[0] = iord[0];
+            		errMax[0] = elist[maxErr[0]];
+            		nrmax[0] = 1;
+            		extrap = false;
+            		small = 0.5 * small;
+            		erlarg = errSum;
+            	} // if (do90)
             } // for (last = 2; last <= limit; last++)
+            
+            // Set the final result.
+            
+            if (do150) {
+            	if ((abserr[0] == oflow) || (nres[0] == 0)) {
+            		do170 = true;
+            	}
+            	else if (errorStatus + ierro == 0) {
+            		do165 = true;
+            	}
+            	else {
+            		if (ierro == 3) {
+            			abserr[0] = abserr[0] + correc;
+            		}
+            		if (errorStatus == 0) {
+            			errorStatus = 3;
+            		}
+            		if ((result[0] != 0.0) && (area != 0.0)) {
+            			do160 = true;
+            		}
+            		else if (abserr[0] > errSum) {
+            			do170 = true;
+            		}
+            		else if (area == 0.0) {
+            			do190 = true;
+            		}
+            		else {
+            			do165 = true;
+            		}
+            	}
+            } // if (do150)
+            
+            if (do160) {
+            	if (abserr[0]/Math.abs(result[0]) > errSum/Math.abs(area)) {
+            		do170 = true;
+            	}
+            	else {
+            		do165 = true;
+            	}
+            } // if (do160)
+            
+            if (do165) {
+                // Test on divergence
+            	if ((ksgn == -1) && (Math.max(Math.abs(result[0]), Math.abs(area)) <= 
+            		1.0E-2 * defabs[0])) {
+            	}
+            	else if ((1.0E-2 > (result[0]/area)) || ((result[0]/area) > 100.0) ||
+            			 (errSum >= Math.abs(area))) {
+            		errorStatus = 6;
+            	}
+            	do190 = true; 	
+            } // if (do165)
+            
+            if (do170) {
+            	result[0] = 0.0;
+            	for (k = 0; k < last; k++) {
+            		result[0] = result[0] + rlist[k];
+            	}
+            	abserr[0] = errSum;
+            	do190 = true;
+            } // if (do170)
+            
+            if (do190) {
+            	if (errorStatus > 2) {
+            		errorStatus = errorStatus - 1;
+            	}
+            	if ((integr == 2) && (omega < 0.0)) {
+            		result[0] = -result[0];
+            	}
+            } // if (do190)
+            return;
         } // try
 	    catch (Exception err) {
 	        Preferences.debug("dqawoe error: " + err.getMessage());
