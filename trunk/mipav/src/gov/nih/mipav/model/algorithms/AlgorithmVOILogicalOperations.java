@@ -87,10 +87,8 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 				}
 				
 				VOIContour contour = (VOIContour) (voi.getCurves().elementAt(0));
-				contour.setActive(true);
+
 				finalMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, clonedImage.getExtents(), "Final Mask Image");
-				JDialogBase.updateFileInfoOtherModality(clonedImage, finalMaskImage);
-				voi.createBinaryImage(finalMaskImage, false, true);
 				finalMaskImage.getMatrixHolder().replaceMatrices(clonedImage.getMatrixHolder().getMatrices());
 				finalMaskImage.getFileInfo(0).setOrigin(clonedImage.getFileInfo(0).getOrigin());
 				
@@ -100,27 +98,23 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 					length = length * extents[i];
 				}
 				BitSet finalBitSet = new BitSet(length);
+				finalBitSet.clear();
 				finalMaskImage.exportData(0, length, finalBitSet);
-				contour.setActive(false);
+
+				JDialogBase.updateFileInfoOtherModality(clonedImage, finalMaskImage);
+
+				contour.setMask( finalBitSet, extents[0], extents[1], false, 1 );     
 				
-				tempMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, clonedImage.getExtents(), "Temp Image");
-				JDialogBase.updateFileInfoOtherModality(clonedImage, tempMaskImage);
-				tempMaskImage.getMatrixHolder().replaceMatrices(clonedImage.getMatrixHolder().getMatrices());
-				tempMaskImage.getFileInfo(0).setOrigin(clonedImage.getFileInfo(0).getOrigin());
 				
+				finalMaskImage.importData(0, finalBitSet, true);
+
 				for (int i=1; i<voi.getCurves().size(); i++) {
-					tempMaskImage.reallocate(ModelStorageBase.BOOLEAN);
 					contour = (VOIContour) (voi.getCurves().elementAt(i));
-					
-					contour.setActive(true);
-					
-					voi.createBinaryImage(tempMaskImage, false, true);
-					
+
 					BitSet tempBitSet = new BitSet(length);
-					tempMaskImage.exportData(0, length, tempBitSet);
 					
-					
-					
+					contour.setMask( tempBitSet, extents[0], extents[1], false, 1 );    
+
 					int size = tempBitSet.size();
 	
 					
@@ -149,9 +143,7 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 							}
 						}
 					}
-					contour.setActive(false);
 				}
-				tempMaskImage.disposeLocal();
 				finalMaskImage.clearMask();
 				finalMaskImage.importData(0, finalBitSet, true);
 				

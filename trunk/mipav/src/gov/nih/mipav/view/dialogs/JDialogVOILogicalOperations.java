@@ -475,6 +475,10 @@ VOIVectorListener {
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if(command.equals("OK")) {
+			if(selectedList.getModel().getSize() == 0) {
+				MipavUtil.displayError("You must select at least 1 VOI");
+				return;
+			}
 			callAlgorithm();
 		}else if(command.equals("Cancel")) {
 			if(clonedImage != null) {

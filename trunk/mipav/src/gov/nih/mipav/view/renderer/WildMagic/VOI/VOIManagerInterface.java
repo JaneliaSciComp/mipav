@@ -855,12 +855,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } else if (command.equals("SaveDicomMatrix")) {
             saveDicomMatrixInfo();
         }  else if (command.equals(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS.getActionCommand())) {
-        	if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() >= 2 )) {
+        	if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() >= 1 )) {
         		JDialogVOILogicalOperations logOper = new JDialogVOILogicalOperations(getActiveImage().getVOIs());
         		logOper.setVisible(true);
                 // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
             } else {
-                MipavUtil.displayError("At least 2 VOIs must be present to perform Logical Operations");
+                MipavUtil.displayError("At least 1 VOI must be present to perform Logical Operations");
             }
         }
         else {
