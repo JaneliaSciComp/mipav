@@ -33,6 +33,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 
@@ -321,8 +322,8 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         gbc.gridy = 0;
         
         maskThresholdField = guiBuilder.buildDecimalField("Brain Mask Threshold", .5e4);
-        roFilterSizeField = guiBuilder.buildDecimalField("Ro filter size", 64);
-        peFilterSizeField = guiBuilder.buildDecimalField("Pe filter size", 64);
+        roFilterSizeField = guiBuilder.buildIntegerField("Ro filter size", 64);
+        peFilterSizeField = guiBuilder.buildIntegerField("Pe filter size", 64);
         multFactorField = guiBuilder.buildIntegerField("Multiplication factor", 4);
         
         paramPanel.add(maskThresholdField.getParent(), gbc);
@@ -371,17 +372,10 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
      */
 	private boolean setVariables() {
 	    
-	    try {
-	        
-    	    maskThreshold = Double.valueOf(maskThresholdField.getText()).doubleValue();
-    	    roFilterSize = (int) Double.valueOf(roFilterSizeField.getText()).doubleValue();
-    	    peFilterSize = (int) Double.valueOf(peFilterSizeField.getText()).doubleValue();
-    	    multFactor = (int) Double.valueOf(multFactorField.getText()).doubleValue();
-    	    
-	    } catch(NumberFormatException nfe) {
-	        MipavUtil.displayError("All values must be numerical.");
-	        return false;
-	    }
+	    maskThreshold = Double.valueOf(maskThresholdField.getText()).doubleValue();
+	    roFilterSize = Integer.valueOf(roFilterSizeField.getText()).intValue();
+	    peFilterSize = Integer.valueOf(peFilterSizeField.getText()).intValue();
+	    multFactor = Integer.valueOf(multFactorField.getText()).intValue();
 	    
 	    try {
 	        magImage = ViewUserInterface.getReference().getRegisteredImageByName(magnitudeCombo.getSelectedItem().toString());
@@ -414,9 +408,9 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         
         private JButton yes, no;
         
-        private JDialog parent;
+        private JDialogBase parent;
         
-        public GuiBuilder(JDialog parent) {
+        public GuiBuilder(JDialogBase parent) {
             this.parent = parent;
             this.listenerList = new ArrayList<ActionListener>();
             this.exit = ExitStatus.INCOMPLETE;
@@ -474,8 +468,19 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
                         try {
                             Integer.valueOf(genericField.getText());
                         } catch(NumberFormatException e1) {
-                            MipavUtil.displayInfo(labelText+" must be an integer.");
-                            passedListeners = false;
+                            try {
+                                double d = Double.valueOf(genericField.getText());
+                                if(((int)d) == d) {
+                                    genericField.setText(Integer.valueOf((int)d).toString());
+                                    return;
+                                } else {
+                                    MipavUtil.displayInfo(labelText+" must be an integer.");
+                                    passedListeners = false;
+                                }
+                            } catch(NumberFormatException e2) {
+                                MipavUtil.displayInfo(labelText+" must be an integer.");
+                                passedListeners = false;
+                            }
                         }
                     }
                 }
@@ -552,11 +557,19 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         
         public JPanel buildOKCancelPanel() {
             JPanel panel = new JPanel();
-            OKButton = buildOKButton();
-            cancelButton = buildCancelButton();
-            cancelButton.addActionListener(this);
-            panel.add(OKButton);
+            OKButton = new JButton("OK");
             OKButton.addActionListener(this);
+            OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+            OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            OKButton.setFont(serif12B);
+            
+            cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(this);
+            cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
+            cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            cancelButton.setFont(serif12B);
+            
+            panel.add(OKButton);
             panel.add(cancelButton);
             return panel;
         }
@@ -574,7 +587,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
                 }
                 if(passedListeners) {
                     exit = ExitStatus.OK_SUCCESS;
-                    parent.dispose();
+                    parent.actionPerformed(e);
                 } else {    
                     exit = ExitStatus.OK_FAIL;
                     return;
