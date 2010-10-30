@@ -5169,9 +5169,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } else if (interp == AlgorithmTransform.BILINEAR) {
                     transformBilinear4D(imgBuf, xfrm);
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline2D(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline2D(imgBuf, xfrm, 3);
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline2D(imgBuf, xfrm, 4);
+                	transformAlgorithmBspline2D(imgBuf, xfrm, 4);
                 } else if (interp == AlgorithmTransform.CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian4Dim2D(imgBuf, xfrm, clip);
                 } else if (interp == AlgorithmTransform.QUINTIC_LAGRANGIAN) {
@@ -5194,12 +5194,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline2D(imgBuf, xfrm, 3);
+                	transformAlgorithmBspline2D(imgBuf, xfrm, 3);
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline2D(imgBuf, xfrm, 4);
+                	transformAlgorithmBspline2D(imgBuf, xfrm, 4);
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
@@ -5229,9 +5229,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                 if (interp == AlgorithmTransform.TRILINEAR) {
                     transformTrilinear4D(imgBuf, xfrm);
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline4D(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline4D(imgBuf, xfrm, 3);
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline4D(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline4D(imgBuf, xfrm, 4);
                 } else if (interp == AlgorithmTransform.NEAREST_NEIGHBOR) {
                     transformNearestNeighbor4D(imgBuf, xfrm);
                 } else if (interp == AlgorithmTransform.CUBIC_LAGRANGIAN) {
@@ -5256,13 +5256,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline3D(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline3D(imgBuf, xfrm, 3);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline3D(imgBuf, xfrm, 4);
+                	transformAlgorithmBspline3D(imgBuf, xfrm, 4);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
@@ -5317,13 +5317,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline2D(imgBuf, xfrm, 3);
+                	transformAlgorithmBspline2D(imgBuf, xfrm, 3);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline2D(imgBuf, xfrm, 4);
+                	transformAlgorithmBspline2D(imgBuf, xfrm, 4);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
@@ -5368,9 +5368,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } else if (interp == AlgorithmTransform.BILINEAR) {
                     transformBilinear4DC(imgBuf, imgBuf2, xfrm);
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline2DC(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline2DC(imgBuf, xfrm, 3);
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline2DC(imgBuf, xfrm, 4);
+                	transformAlgorithmBspline2DC(imgBuf, xfrm, 4);
                 } else if (interp == AlgorithmTransform.CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian4Dim2DC(imgBuf, imgBuf2, xfrm, clip);
                 } else if (interp == AlgorithmTransform.QUINTIC_LAGRANGIAN) {
@@ -5395,12 +5395,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline2DC(imgBuf, xfrm, 3);
+                	transformAlgorithmBspline2DC(imgBuf, xfrm, 3);
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline2DC(imgBuf, xfrm, 4);
+                	transformAlgorithmBspline2DC(imgBuf, xfrm, 4);
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
@@ -5434,9 +5434,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transformTrilinear4DC(imgBuf, imgBuf2, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline4DC(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline4DC(imgBuf, xfrm, 3);
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline4DC(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline4DC(imgBuf, xfrm, 4);
                 } else if (interp == AlgorithmTransform.NEAREST_NEIGHBOR) {
                     transformNearestNeighbor4DC(imgBuf, imgBuf2, xfrm);
                 } else if (interp == AlgorithmTransform.CUBIC_LAGRANGIAN) {
@@ -5470,13 +5470,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline3DC(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline3DC(imgBuf, xfrm, 3);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline3DC(imgBuf, xfrm, 4);
+                	transformAlgorithmBspline3DC(imgBuf, xfrm, 4);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
@@ -5531,13 +5531,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                    transformBspline2DC(imgBuf, xfrm, 3);
+                	transformAlgorithmBspline2DC(imgBuf, xfrm, 3);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                    transformBspline2DC(imgBuf, xfrm, 4);
+                	transformAlgorithmBspline2DC(imgBuf, xfrm, 4);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
@@ -6846,6 +6846,821 @@ public class AlgorithmTransform extends AlgorithmBase {
             MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
         }
     }
+    
+	/**
+	 * Transforms and resamples volume using Bspline interpolation.
+	 * 
+	 * @param imgBuf image array
+	 * @param kTM transformation matrix to be applied
+	 * @param degree degree of polynomial
+	 */
+	private void transformAlgorithmBspline2D(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+		int i, j;
+		int iAdj, jAdj;
+		float X, Y;
+		float value;
+		float imm, jmm;
+		final int mod = Math.max(1, oYdim / 50);
+		;
+
+		float j1, j2;
+		float T00, T01, T02, T10, T11, T12;
+		int nz;
+		int x, y, z;
+		float sliceMin;
+		float sliceMax;
+
+		T00 = kTM.M00;
+		T01 = kTM.M01;
+		T02 = kTM.M02;
+		T10 = kTM.M10;
+		T11 = kTM.M11;
+		T12 = kTM.M12;
+
+		if (srcImage.getNDims() == 2) {
+			nz = 1;
+		} else if (srcImage.getNDims() == 3) {
+			nz = srcImage.getExtents()[2];
+		} else {
+			nz = srcImage.getExtents()[2] * srcImage.getExtents()[3];
+		}
+
+		AlgorithmBSpline Bspline = new AlgorithmBSpline();
+
+		final float invXRes = 1 / iXres;
+		final float invYRes = 1 / iYres;
+
+		int index = 0;
+
+		for (z = 0; z < nz; z++) {
+
+			if (z >= 1) {
+
+				try {
+					srcImage.exportData(z * imgLength, imgLength, imgBuf);
+				} catch (final IOException error) {
+					displayError("Algorithm Transform: Image(s) locked");
+					setCompleted(false);
+
+					return;
+				}
+			}
+
+			sliceMin = Float.MAX_VALUE;
+			sliceMax = -Float.MAX_VALUE;
+
+			for (y = 0; y < iYdim; y++) {
+				for (x = 0; x < iXdim; x++) {
+					if (imgBuf[x + (iXdim * y)] > sliceMax) {
+						sliceMax = imgBuf[x + (iXdim * y)];
+					}
+					if (imgBuf[x + (iXdim * y)] < sliceMin) {
+						sliceMin = imgBuf[x + (iXdim * y)];
+					}
+				}
+			}
+
+			Bspline.setup2DBSpline(imgBuf, new int[]{iXdim,iYdim}, degree);
+
+			for (j = 0; (j < oYdim) && !threadStopped; j++) {
+
+				if ( ( (j % mod) == 0)) {
+					fireProgressStateChanged((int) ( ( ((float) z / nz * 100) + ((float) j / (oYdim * nz) * 100)) + 0.5f));
+				}
+
+				if (pad) {
+					jAdj = j - AlgorithmTransform.margins[1];
+				} else {
+					jAdj = j;
+				}
+
+				jmm = jAdj * oYres;
+				j1 = (jmm * T01) + T02;
+				j2 = (jmm * T11) + T12;
+
+				for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+					// transform i,j,z
+					value = fillValue; // if voxel is transformed out of bounds
+					if (pad) {
+						iAdj = i - AlgorithmTransform.margins[0];
+					} else {
+						iAdj = i;
+					}
+					imm = iAdj * oXres;
+					X = (j1 + (imm * T00)) * invXRes;
+
+					if ( (X > -0.5f) && (X < iXdim)) {
+						Y = (j2 + (imm * T10)) * invYRes;
+
+						if ( (Y > -0.5f) && (Y < iYdim)) {
+							value = Bspline.bSpline2D(0, 0, X, Y);
+
+							if (value > sliceMax) {
+								value = sliceMax;
+							} else if (value < sliceMin) {
+								value = sliceMin;
+							}
+						}
+					}
+
+					destImage.set(index++, value);
+				}
+			}
+		}
+
+		Preferences.debug("finished Bspline");
+
+	}
+
+
+	/**
+	 * Transforms and resamples volume using Bspline interpolation.
+	 * 
+	 * @param imgBuf image array
+	 * @param kTM transformation matrix to be applied
+	 * @param degree degree of polynomial
+	 */
+	private void transformAlgorithmBspline2DC(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+		int i, j;
+		int iAdj, jAdj;
+		float X, Y;
+		float[] value = new float[4];
+		float imm, jmm;
+		final int mod = Math.max(1, oYdim / 50);
+
+		float j1, j2;
+		float T00, T01, T02, T10, T11, T12;
+		int nz;
+		int x, y, z;
+
+		T00 = kTM.M00;
+		T01 = kTM.M01;
+		T02 = kTM.M02;
+		T10 = kTM.M10;
+		T11 = kTM.M11;
+		T12 = kTM.M12;
+
+		if (srcImage.getNDims() == 2) {
+			nz = 1;
+		} else if (srcImage.getNDims() == 3) {
+			nz = srcImage.getExtents()[2];
+		} else {
+			nz = srcImage.getExtents()[2] * srcImage.getExtents()[3];
+		}
+
+		final AlgorithmBSpline Bspline = new AlgorithmBSpline();
+
+		final float invXRes = 1 / iXres;
+		final float invYRes = 1 / iYres;
+
+		final int[] index = new int[4];
+		index[0] = 0;
+		index[1] = 1;
+		index[2] = 2;
+		index[3] = 3;
+
+		final float[] imageMin = new float[4];
+		final float[] imageMax = new float[4];
+
+		for (z = 0; z < nz; z++) {
+
+			if (z >= 1) {
+
+				try {
+					srcImage.exportData(z * imgLength, imgLength, imgBuf);
+				} catch (final IOException error) {
+					displayError("Algorithm Transform: Image(s) locked");
+					setCompleted(false);
+
+					return;
+				}
+			}
+			for ( int c = 0; c < 4; c++ )
+			{
+				imageMin[c] = Float.MAX_VALUE;
+				imageMax[c] = Float.MIN_VALUE;
+			}
+
+			for (y = 0; y < iYdim; y++) {
+				for (x = 0; x < iXdim; x++) {
+					for ( int c = 0; c < 4; c++ )
+					{
+						if ( imgBuf[ 4 * (y * iXdim + x) + c] > imageMax[c] )
+						{
+							imageMax[c] = imgBuf[ 4 * (y * iXdim + x) + c];
+						}
+						if ( imgBuf[ 4 * (y * iXdim + x) + c] < imageMin[c] )
+						{
+							imageMin[c] = imgBuf[ 4 * (y * iXdim + x) + c];
+						}                   		
+					}
+				}
+			}
+
+			Bspline.setup2DBSplineC(imgBuf, new int[]{iXdim,iYdim}, degree);
+
+			for (j = 0; (j < oYdim) && !threadStopped; j++) {
+
+				if ( ( (j % mod) == 0)) {
+					fireProgressStateChanged((int) ( ( ((float) z / nz * 100) + ((float) j / (oYdim * nz) * 100)) + 0.5f));
+				}
+
+				if (pad) {
+					jAdj = j - AlgorithmTransform.margins[1];
+				} else {
+					jAdj = j;
+				}
+
+				jmm = jAdj * oYres;
+				j1 = (jmm * T01) + T02;
+				j2 = (jmm * T11) + T12;
+
+				for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+					// transform i,j,z
+					value[0] = fillValue; // if voxel is transformed out of bounds
+					value[1] = fillValue; // if voxel is transformed out of bounds
+					value[2] = fillValue; // if voxel is transformed out of bounds
+					value[3] = fillValue; // if voxel is transformed out of bounds
+					if (pad) {
+						iAdj = i - AlgorithmTransform.margins[0];
+					} else {
+						iAdj = i;
+					}
+					imm = iAdj * oXres;
+					X = (j1 + (imm * T00)) * invXRes;
+
+					if ( (X > -0.5f) && (X < iXdim)) {
+						Y = (j2 + (imm * T10)) * invYRes;
+
+						if ( (Y > -0.5f) && (Y < iYdim)) {
+							value = Bspline.bSpline2DC(0, 0, X, Y);
+
+							for ( int c = 0; c < 4; c++ )
+							{
+								if (value[c] > imageMax[c]) {
+									value[c] = imageMax[c];
+								} else if (value[c] < imageMin[c]) {
+									value[c] = imageMin[c];
+								}
+							}
+						}
+					}
+
+					for ( int c = 0; c < 4; c++ )
+					{
+						destImage.set(index[c], value[c]);
+						index[c] += 4;
+					}
+				}
+			}
+		}
+
+		Preferences.debug("finished Bspline");
+
+	}
+
+
+	/**
+	 * Transforms and resamples volume using Bspline interpolation.
+	 * 
+	 * @param imgBuf image array
+	 * @param kTM transformation matrix to be applied
+	 * @param degree degree of polynomial
+	 */
+	private void transformAlgorithmBspline3D(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+		int i, j, k;
+		int iAdj, jAdj, kAdj;
+		float X, Y, Z;
+		float value;
+		float imm, jmm, kmm;
+		final int mod = Math.max(1, oZdim / 50);
+		final AlgorithmBSpline Bspline = new AlgorithmBSpline();
+		float imageMin;
+		float imageMax;
+
+		srcImage.calcMinMax();
+		imageMin = (float) srcImage.getMin();
+		imageMax = (float) srcImage.getMax();
+
+		float k1, k2, k3, j1, j2, j3;
+
+		float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+		T00 = kTM.M00;
+		T01 = kTM.M01;
+		T02 = kTM.M02;
+		T03 = kTM.M03;
+		T10 = kTM.M10;
+		T11 = kTM.M11;
+		T12 = kTM.M12;
+		T13 = kTM.M13;
+		T20 = kTM.M20;
+		T21 = kTM.M21;
+		T22 = kTM.M22;
+		T23 = kTM.M23;
+
+		Bspline.setup3DBSpline(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
+
+		final float invXRes = 1 / iXres;
+		final float invYRes = 1 / iYres;
+		final float invZRes = 1 / iZres;
+
+		int index = 0;
+
+		for (k = 0; (k < oZdim) && !threadStopped; k++) {
+
+			if ( ( (k % mod) == 0)) {
+				fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5f));
+			}
+
+			if (pad) {
+				kAdj = k - AlgorithmTransform.margins[2];
+			} else {
+				kAdj = k;
+			}
+
+			kmm = kAdj * oZres;
+			k1 = (kmm * T02) + T03;
+			k2 = (kmm * T12) + T13;
+			k3 = (kmm * T22) + T23;
+
+			for (j = 0; (j < oYdim) && !threadStopped; j++) {
+				if (pad) {
+					jAdj = j - AlgorithmTransform.margins[1];
+				} else {
+					jAdj = j;
+				}
+				jmm = jAdj * oYres;
+				j1 = (jmm * T01) + k1;
+				j2 = (jmm * T11) + k2;
+				j3 = (jmm * T21) + k3;
+
+				for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+					// transform i,j,k
+					value = fillValue; // if voxel is transformed out of bounds
+					if (pad) {
+						iAdj = i - AlgorithmTransform.margins[0];
+					} else {
+						iAdj = i;
+					}
+					imm = iAdj * oXres;
+					X = (j1 + (imm * T00)) * invXRes;
+
+					if ( (X > -0.5f) && (X < iXdim)) {
+						Y = (j2 + (imm * T10)) * invYRes;
+
+						if ( (Y > -0.5f) && (Y < iYdim)) {
+							Z = (j3 + (imm * T20)) * invZRes;
+
+							if ( (Z > -0.5f) && (Z < iZdim)) {
+								//value = splineAlg.interpolatedValue(image, X, Y, Z, iXdim, iYdim, iZdim, degree);
+								value = Bspline.bSpline3D(0, 0, 0, X, Y, Z);
+
+								if (value > imageMax) {
+									value = imageMax;
+								} else if (value < imageMin) {
+									value = imageMin;
+								}
+							}
+						}
+					}
+
+					destImage.set(index++, value);
+				}
+			}
+		}
+
+		Preferences.debug("finished Bspline");
+
+	}
+
+
+	/**
+	 * Transforms and resamples volume using Bspline interpolation.
+	 * 
+	 * @param imgBuf image array
+	 * @param kTM transformation matrix to be applied
+	 * @param degree degree of polynomial
+	 * */
+	private void transformAlgorithmBspline3DC(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+		int i, j, k;
+		int iAdj, jAdj, kAdj;
+		float X, Y, Z;
+		float[] value = new float[4];
+		float imm, jmm, kmm;
+		final int mod = Math.max(1, oZdim / 50);
+		final float[] imageMin = new float[4];
+		final float[] imageMax = new float[4];
+
+		float k1, k2, k3, j1, j2, j3;
+
+		float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+		T00 = kTM.M00;
+		T01 = kTM.M01;
+		T02 = kTM.M02;
+		T03 = kTM.M03;
+		T10 = kTM.M10;
+		T11 = kTM.M11;
+		T12 = kTM.M12;
+		T13 = kTM.M13;
+		T20 = kTM.M20;
+		T21 = kTM.M21;
+		T22 = kTM.M22;
+		T23 = kTM.M23;
+
+		final float invXRes = 1 / iXres;
+		final float invYRes = 1 / iYres;
+		final float invZRes = 1 / iZres;
+
+		final int[] index = new int[4];
+		index[0] = 0;
+		index[1] = 1;
+		index[2] = 2;
+		index[3] = 3;
+
+		imageMin[0] = (float)srcImage.getMinA();
+		imageMin[1] = (float)srcImage.getMinR();
+		imageMin[2] = (float)srcImage.getMinG();
+		imageMin[3] = (float)srcImage.getMinB();
+		imageMax[0] = (float)srcImage.getMaxA();
+		imageMax[1] = (float)srcImage.getMaxR();
+		imageMax[2] = (float)srcImage.getMaxG();
+		imageMax[3] = (float)srcImage.getMaxB();
+
+		AlgorithmBSpline Bspline = new AlgorithmBSpline();
+		Bspline.setup3DBSplineC(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
+
+		for (k = 0; (k < oZdim) && !threadStopped; k++) {
+
+			if ( ( (k % mod) == 0)) {
+				fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5f));
+			}
+
+			if (pad) {
+				kAdj = k - AlgorithmTransform.margins[2];
+			} else {
+				kAdj = k;
+			}
+
+			kmm = kAdj * oZres;
+			k1 = (kmm * T02) + T03;
+			k2 = (kmm * T12) + T13;
+			k3 = (kmm * T22) + T23;
+
+			for (j = 0; (j < oYdim) && !threadStopped; j++) {
+				if (pad) {
+					jAdj = j - AlgorithmTransform.margins[1];
+				} else {
+					jAdj = j;
+				}
+				jmm = jAdj * oYres;
+				j1 = (jmm * T01) + k1;
+				j2 = (jmm * T11) + k2;
+				j3 = (jmm * T21) + k3;
+
+				for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+					// transform i,j,k
+					value[0] = fillValue; // if voxel is transformed out of bounds
+					value[1] = fillValue; // if voxel is transformed out of bounds
+					value[2] = fillValue; // if voxel is transformed out of bounds
+					value[3] = fillValue; // if voxel is transformed out of bounds
+					if (pad) {
+						iAdj = i - AlgorithmTransform.margins[0];
+					} else {
+						iAdj = i;
+					}
+					imm = iAdj * oXres;
+					X = (j1 + (imm * T00)) * invXRes;
+
+					if ( (X > -0.5f) && (X < iXdim)) {
+						Y = (j2 + (imm * T10)) * invYRes;
+
+						if ( (Y > -0.5f) && (Y < iYdim)) {
+							Z = (j3 + (imm * T20)) * invZRes;
+
+							if ( (Z > -0.5f) && (Z < iZdim)) {
+								value = Bspline.bSpline3DC(0, 0, 0, X, Y, Z);
+								for ( int c = 0; c < 4; c++ )
+								{
+									if (value[c] > imageMax[c]) {
+										value[c] = imageMax[c];
+									} else if (value[c] < imageMin[c]) {
+										value[c] = imageMin[c];
+									}
+								}
+							}
+						}
+					}
+					for ( int c = 0; c < 4; c++ )
+					{
+						destImage.set(index[c], value[c]);
+						index[c] += 4;
+					}
+				}
+			}
+		}
+
+		Preferences.debug("finished Bspline");
+	}
+
+	/**
+	 * Transforms and resamples volume using Bspline interpolation.
+	 * 
+	 * @param imgBuf image array
+	 * @param kTM transformation matrix to be applied
+	 * @param degree degree of polynomial
+	 */
+	private void transformAlgorithmBspline4D(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+		int i, j, k;
+		int iAdj, jAdj, kAdj;
+		float X, Y, Z;
+		float value;
+		float imm, jmm, kmm;
+		int x, y, z;
+		float volMin;
+		float volMax;
+		int t;
+
+		float k1, k2, k3, j1, j2, j3;
+
+		float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+		T00 = kTM.M00;
+		T01 = kTM.M01;
+		T02 = kTM.M02;
+		T03 = kTM.M03;
+		T10 = kTM.M10;
+		T11 = kTM.M11;
+		T12 = kTM.M12;
+		T13 = kTM.M13;
+		T20 = kTM.M20;
+		T21 = kTM.M21;
+		T22 = kTM.M22;
+		T23 = kTM.M23;
+
+		AlgorithmBSpline Bspline = new AlgorithmBSpline();
+
+		final float invXRes = 1 / iXres;
+		final float invYRes = 1 / iYres;
+		final float invZRes = 1 / iZres;
+
+		int index = 0;
+
+		int iProgress = iTdim * oZdim;
+		for (t = 0; t < iTdim; t++) {
+
+			if ( (t >= 1)) {
+
+				try {
+					srcImage.exportData(t * imgLength, imgLength, imgBuf);
+				} catch (final IOException error) {
+					displayError("Algorithm Transform: Image(s) locked");
+					setCompleted(false);
+
+					return;
+				}
+			}
+
+			volMin = Float.MAX_VALUE;
+			volMax = -Float.MAX_VALUE;
+
+			for (z = 0; z < iZdim; z++) {
+				for (y = 0; y < iYdim; y++) {
+					for (x = 0; x < iXdim; x++) {
+						if (imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)] > volMax) {
+							volMax = imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)];
+						}
+						if (imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)] < volMin) {
+							volMin = imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)];
+						}
+					}
+				}
+			}
+
+			Bspline.setup3DBSpline(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
+
+			for (k = 0; (k < oZdim) && !threadStopped; k++) {
+				fireProgressStateChanged((int) ( ((float) (t*oZdim + k) / iProgress * 100) + 0.5));
+				if (pad) {
+					kAdj = k - AlgorithmTransform.margins[2];
+				} else {
+					kAdj = k;
+				}
+				kmm = kAdj * oZres;
+				k1 = (kmm * T02) + T03;
+				k2 = (kmm * T12) + T13;
+				k3 = (kmm * T22) + T23;
+
+				for (j = 0; (j < oYdim) && !threadStopped; j++) {
+					if (pad) {
+						jAdj = j - AlgorithmTransform.margins[1];
+					} else {
+						jAdj = j;
+					}
+					jmm = jAdj * oYres;
+					j1 = (jmm * T01) + k1;
+					j2 = (jmm * T11) + k2;
+					j3 = (jmm * T21) + k3;
+
+					for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+						// transform i,j,k
+						value = fillValue; // if voxel is transformed out of bounds
+						if (pad) {
+							iAdj = i - AlgorithmTransform.margins[0];
+						} else {
+							iAdj = i;
+						}
+						imm = iAdj * oXres;
+						X = (j1 + (imm * T00)) * invXRes;
+
+						if ( (X > -0.5f) && (X < iXdim)) {
+							Y = (j2 + (imm * T10)) * invYRes;
+
+							if ( (Y > -0.5f) && (Y < iYdim)) {
+								Z = (j3 + (imm * T20)) * invZRes;
+
+								if ( (Z > -0.5f) && (Z < iZdim)) {
+									value = Bspline.bSpline3D(0, 0, 0, X, Y, Z);
+									if (value > volMax) {
+										value = volMax;
+									} else if (value < volMin) {
+										value = volMin;
+									}
+								}
+							}
+						}
+
+						destImage.set(index++, value);
+					}
+				}
+			}
+		}
+
+		Preferences.debug("finished Bspline");
+
+	}
+
+	/**
+	 * Transforms and resamples color volume using Bspline interpolation.
+	 * 
+	 * @param imgBuf image array
+	 * @param kTM transformation matrix to be applied
+	 * @param degree degree of polynomial
+	 */
+	private void transformAlgorithmBspline4DC(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+		int i, j, k;
+		int iAdj, jAdj, kAdj;
+		float X, Y, Z;
+		float[] value = new float[4];
+		float imm, jmm, kmm;
+		int x, y, z, c;
+		final float volMin[] = new float[4];
+		final float volMax[] = new float[4];
+		int t;
+
+		float k1, k2, k3, j1, j2, j3;
+
+		float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+		T00 = kTM.M00;
+		T01 = kTM.M01;
+		T02 = kTM.M02;
+		T03 = kTM.M03;
+		T10 = kTM.M10;
+		T11 = kTM.M11;
+		T12 = kTM.M12;
+		T13 = kTM.M13;
+		T20 = kTM.M20;
+		T21 = kTM.M21;
+		T22 = kTM.M22;
+		T23 = kTM.M23;
+
+		AlgorithmBSpline Bspline = new AlgorithmBSpline();
+
+		final float invXRes = 1 / iXres;
+		final float invYRes = 1 / iYres;
+		final float invZRes = 1 / iZres;
+
+		final int index[] = new int[4];
+		index[0] = 0;
+		index[1] = 1;
+		index[2] = 2;
+		index[3] = 3;
+
+		int iProgress = iTdim * oZdim;
+		for (t = 0; t < iTdim; t++) {
+
+			if ( (t >= 1)) {
+
+				try {
+					srcImage.exportData(t * imgLength, imgLength, imgBuf);
+				} catch (final IOException error) {
+					displayError("Algorithm Transform: Image(s) locked");
+					setCompleted(false);
+
+					return;
+				}
+			}
+
+			for (c = 0; c < 4; c++) {
+				volMin[c] = Float.MAX_VALUE;
+				volMax[c] = -Float.MAX_VALUE;
+			}
+			for (z = 0; z < iZdim; z++) {
+				for (y = 0; y < iYdim; y++) {
+					for (x = 0; x < iXdim; x++) {
+						for (c = 0; c < 4; c++) {
+							if (imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c] > volMax[c]) {
+								volMax[c] = imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c];
+							}
+
+							if (imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c] < volMin[c]) {
+								volMin[c] = imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c];
+							}
+						}
+					}
+				}
+			}
+
+			Bspline.setup3DBSplineC(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
+
+			for (k = 0; (k < oZdim) && !threadStopped; k++) {
+				fireProgressStateChanged((int) ( ((float) (t*oZdim + k) / iProgress * 100) + 0.5));
+				
+				if (pad) {
+					kAdj = k - AlgorithmTransform.margins[2];
+				} else {
+					kAdj = k;
+				}
+				kmm = kAdj * oZres;
+				k1 = (kmm * T02) + T03;
+				k2 = (kmm * T12) + T13;
+				k3 = (kmm * T22) + T23;
+
+				for (j = 0; (j < oYdim) && !threadStopped; j++) {
+					if (pad) {
+						jAdj = j - AlgorithmTransform.margins[1];
+					} else {
+						jAdj = j;
+					}
+					jmm = jAdj * oYres;
+					j1 = (jmm * T01) + k1;
+					j2 = (jmm * T11) + k2;
+					j3 = (jmm * T21) + k3;
+
+					for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+						// transform i,j,k
+						value[0] = fillValue; // if voxel is transformed out of bounds
+						value[1] = fillValue; // if voxel is transformed out of bounds
+						value[2] = fillValue; // if voxel is transformed out of bounds
+						value[3] = fillValue; // if voxel is transformed out of bounds
+						if (pad) {
+							iAdj = i - AlgorithmTransform.margins[0];
+						} else {
+							iAdj = i;
+						}
+						imm = iAdj * oXres;
+						X = (j1 + (imm * T00)) * invXRes;
+
+						if ( (X > -0.5f) && (X < iXdim)) {
+							Y = (j2 + (imm * T10)) * invYRes;
+
+							if ( (Y > -0.5f) && (Y < iYdim)) {
+								Z = (j3 + (imm * T20)) * invZRes;
+
+								if ( (Z > -0.5f) && (Z < iZdim)) {
+									value = Bspline.bSpline3DC(0, 0, 0, X, Y, Z);
+									for ( c = 0; c < 4; c++ )
+									{
+										if (value[c] > volMax[c]) {
+											value[c] = volMax[c];
+										} else if (value[c] < volMin[c]) {
+											value[c] = volMin[c];
+										}
+									}
+								}
+							}
+						}
+						for ( c = 0; c < 4; c++ )
+						{								
+							destImage.set(index[c], value[c]);
+							index[c] += 4;
+						}
+					}
+				}
+			}
+		}
+		Preferences.debug("finished Bspline");
+	}
+
+
 
     /**
      * Transforms and resamples volume using Bspline interpolation.

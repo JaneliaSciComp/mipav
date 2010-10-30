@@ -251,7 +251,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private double min, max;
 
     /** Minimum and maximum for a color image. */
-    private double minR, maxR, minG, maxG, minB, maxB;
+    private double minA, maxA, minR, maxR, minG, maxG, minB, maxB;
 
     /** Number of dimensions of the data. */
     private int nDims;
@@ -451,6 +451,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
             }
             // }
         } else { // color
+            minA = Double.POSITIVE_INFINITY;
+            maxA = Double.NEGATIVE_INFINITY;
             minR = Double.POSITIVE_INFINITY;
             maxR = Double.NEGATIVE_INFINITY;
             minG = Double.POSITIVE_INFINITY;
@@ -459,6 +461,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
             maxB = Double.NEGATIVE_INFINITY;
 
             for (i = 0; i < dataSize; i += 4) {
+                value = data.getDouble(i);
+
+                if (value > maxA) {
+                    maxA = value;
+                }
+
+                if (value < minA) {
+                    minA = value;
+                }
+                
                 value = data.getDouble(i + 1);
 
                 if (value > maxR) {
@@ -3547,6 +3559,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * Accessor that returns the maximum alpha value in the dataArray.
+     * 
+     * @return double indicating maximum alpha value in the dataArray
+     */
+    public double getMaxA() {
+        return maxA;
+    }
+
+    /**
      * Accessor that returns the maximum blue value in the dataArray.
      * 
      * @return double indicating maximum blue value in the dataArray
@@ -3580,6 +3601,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public double getMin() {
         return min;
+    }
+
+    /**
+     * Accessor that returns the minimum alpha value in the dataArray.
+     * 
+     * @return double indicating minimum alpha value in the dataArray
+     */
+    public double getMinA() {
+        return minA;
     }
 
     /**
