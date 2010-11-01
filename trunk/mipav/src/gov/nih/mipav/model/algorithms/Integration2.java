@@ -184,6 +184,12 @@ public abstract class Integration2 {
     /** finite bound of integration range used in dqagie (has no meaning if interval is doubly-infinite). */
     private double bound;
     
+    /**
+     * Used in dqagpe This array must always be >= 2 in length. The first breakPoints.length - 2 points are user
+     * provided break points. If these points are not in an ascending sequence, they will automatically be sorted.
+     */
+    private double[] breakPoints;
+    
     /** Parameter in the weight function, c != lower, c != upper.
      * If c == a or c == b, the routine will end with errorStatus = 6
      */
@@ -194,12 +200,6 @@ public abstract class Integration2 {
      * chebyshev moments
      */
     private double[][] chebmo = null;
-
-    /**
-     * Used in dqagpe This array must always be >= 2 in length. The first breakPoints.length - 2 points are user
-     * provided break points. If these points are not in an ascending sequence, they will automatically be sorted.
-     */
-    private double[] breakPoints;
 
     /** Estimates of the absolute errors on the subintervals. */
     private double[] elist;
@@ -250,6 +250,8 @@ public abstract class Integration2 {
      * range, or , or limit <= npts.
      */
     private int errorStatus;
+    
+    private double gamma;
     
     /**
      * if dqawoe is to be used only once, icall must
@@ -375,8 +377,6 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
 
     /** DOCUMENT ME! */
     private double uflow = Math.pow(2, -1022);
-    
-    private double gamma;
 
     /** DOCUMENT ME! */
     private double upper;
@@ -4473,7 +4473,7 @@ loop:
             nres[0] = 0;
             numr12[0] = 0;
             extall = false;
-            if (0.5*Math.abs(upper-lower)*domega <- 2.0) {
+            if (0.5*Math.abs(upper-lower)*domega <= 2.0) {
             	numr12[0] = 1;
             	extall = true;
             	rlist2[0] = result[0];
@@ -6150,7 +6150,7 @@ loop:
 	 c                       approximation to the integral of abs(f-i/(b-a))
 	 c
      * @param p1
-     * @param p2
+     * @param kp
      * @param a
      * @param b
      * @param result
