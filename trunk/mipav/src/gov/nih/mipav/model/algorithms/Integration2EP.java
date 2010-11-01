@@ -3,6 +3,9 @@ package gov.nih.mipav.model.algorithms;
 
 import javax.help.plaf.basic.BasicFavoritesNavigatorUI.AddAction;
 
+import com.sun.org.apache.xpath.internal.operations.Gt;
+import com.sun.org.apache.xpath.internal.operations.Lt;
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.DoubleDouble;
 
@@ -11,11 +14,12 @@ import gov.nih.mipav.DoubleDouble;
  * This is a port of FORTRAN numerical integration routines in QUADPACK found at http://www.netlib.org/quadpack
  * Reference: R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner Quadpack: a Subroutine Package for Automatic
  * Integration Springer Verlag, 1983. Series in Computational Mathematics v. 1
- * The original dqage, dqagie, dqagpe, dqagse, and dqawce routines were written by Robert Piessens and Elise de Doncker.
+ * The original dqage, dqagie, dqagpe, dqagse, dqawce, and dqawoe routines were written by Robert Piessens and Elise de Doncker.
  * The original dqng routine was written by Robert Piessens and Elise de Doncker and modified by David Kahaner.
- * The original dqc25c, dqcheb, dqelg, dqk15, dqk15i, dqk15w, dqk21, dqk31, dqk41, dqk51, dqk61, dqpsrt, and dqwgtc  
+ * The original dqc25c, dqc25f, dqcheb, dqelg, dqk15, dqk15i, dqk15w, dqk21, dqk31, dqk41, dqk51, dqk61, dqpsrt, dqwgtc, and dqwgtf  
  * routines were written by Robert Piessens and Elise de Doncker.
- * The simple contents of dqwgtc are incorporated into dqk15w.
+ * The simple contents of dqwgtc and dqwgtf are incorporated into dqk15w.
+ * The linpack routine dgtsl was written by Jack Dongarra of the Argonne National Laboratory.
  * Self tests 1 to 15 come from quadpack_prb.f90 by John Burkardt.
  * The names of the copyright holders or contributors may not be used to endorse
  * or promote any derived software without prior permission;
@@ -169,6 +173,9 @@ public abstract class Integration2EP {
     
     /** Cauchy principal value */
     protected static final int DQAWCE = 12;
+    
+    /** Automatic integrator, integrand with oscillatory cosine or sine factor */
+    protected static final int DQAWOE = 13;
 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -185,16 +192,22 @@ public abstract class Integration2EP {
     /** finite bound of integration range used in dqagie (has no meaning if interval is doubly-infinite). */
     private DoubleDouble bound;
     
-    /** Parameter in the weight function, c != lower, c != upper.
-     * If c == a or c == b, the routine will end with errorStatus = 6
-     */
-    private DoubleDouble c;
-
     /**
      * Used in dqagpe This array must always be >= 2 in length. The first breakPoints.length - 2 points are user
      * provided break points. If these points are not in an ascending sequence, they will automatically be sorted.
      */
     private DoubleDouble[] breakPoints;
+    
+    /** Parameter in the weight function, c != lower, c != upper.
+     * If c == a or c == b, the routine will end with errorStatus = 6
+     */
+    private DoubleDouble c;
+    
+    /**
+     * array of dimension (maxp1,25) containing the
+     * chebyshev moments
+     */
+    private DoubleDouble[][] chebmo = null;
 
     /** Estimates of the absolute errors on the subintervals. */
     private DoubleDouble[] elist;
@@ -219,29 +232,63 @@ public abstract class Integration2EP {
     /**
      * errorStatus = 0 for normal and reliable termination of the routine. It is assumed that the requested accuracy has
      * been achieved. errorStatus > 0 for abnormal termination of the routine. The estimates for the integral and error
-     * are less reliable. It is assumed that the requested accuracy has not been achieved. errorStatus = 1 maximum
-     * number of subdivisions allowed has been achieved. One can allow more subdivisions by increasing the value of
-     * limit (and taking the according dimension adjustments into account). However, if this yields no improvement, it
-     * is advised to analyze the integrand in order to determine the integration difficulties. If the position of a
-     * local difficulty can be determined( i.e. singularity, discontinuity within the interval), it should be supplied
-     * to the routine as an element of the breakPoints array. If necessary, an appropriate special purpose integrator
-     * must be used, which is designed for handling the type of difficulty involved. errorStatus = 2 The occurrence of
-     * roundoff error is detected, which prevents the requested tolerance from being achieved. The error may be
-     * under-estimated. errorStatus = 3 Extremely bad integrand behavior occurs at some points of the integration
-     * interval. errorStatus = 4 The algorithm does not converge. Roundoff error is detected in the extrapolation table.
+     * are less reliable. It is assumed that the requested accuracy has not been achieved.
+     *  
+     * errorStatus = 1 maximum number of subdivisions allowed has been achieved. 
+     * One can allow more subdivisions by increasing the value of limit (and taking the according dimension adjustments
+     * into account). However, if this yields no improvement, it is advised to analyze the integrand in order to
+     * determine the integration difficulties. If the position of a local difficulty can be determined( i.e. singularity,
+     * discontinuity within the interval), it should be supplied to the routine as an element of the breakPoints array.
+     * If necessary, an appropriate special purpose integrator must be used, which is designed for handling the type
+     * of difficulty involved. 
+     * 
+     * errorStatus = 2 The occurrence of roundoff error is detected, which prevents the requested tolerance from 
+     * being achieved. The error may be under-estimated.
+     *  
+     * errorStatus = 3 Extremely bad integrand behavior occurs at some points of the integration interval.
+     * 
+     * errorStatus = 4 The algorithm does not converge. Roundoff error is detected in the extrapolation table.
      * It is presumed that the requested tolerance cannot be achieved, and that the returned result is the best that can
-     * be obtained. errorStatus = 5 The integral is probably divergent, or slowly convergent. It must be noted that
-     * divergence can occur with any other value of errorStatus > 0. errorStatus = 6 The input is invalid because
-     * (epsabs <= 0 and epsrel < max(50.0 * relative machine accuracy, 5.0E-29) or in the case of dqagpe can also happen
-     * because npts2 < 2, the breakPoints are specified outside the integration range, or , or limit <= npts.
+     * be obtained. 
+     * 
+     * errorStatus = 5 The integral is probably divergent, or slowly convergent. It must be noted that
+     * divergence can occur with any other value of errorStatus > 0. 
+     * 
+     * errorStatus = 6 The input is invalid because (epsabs <= 0 and epsrel < max(50.0 * relative machine accuracy, 5.0E-29) 
+     * or in the case of dqagpe can also happen because npts2 < 2, the breakPoints are specified outside the integration
+     * range, or , or limit <= npts.
      */
     private int errorStatus;
+    
+    private DoubleDouble gamma;
+    
+    /**
+     * if dqawoe is to be used only once, icall must
+     *                be set to 1.  assume that during this call, the
+c                     chebyshev moments (for clenshaw-curtis integration
+c                     of degree 24) have been computed for intervals of
+c                     lenghts (abs(b-a))*2**(-l), l=0,1,2,...momcom-1.
+c                     if icall.gt.1 this means that dqawoe has been
+c                     called twice or more on intervals of the same
+c                     length abs(b-a). the chebyshev moments already
+c                     computed are then re-used in subsequent calls.
+c                     if icall.lt.1, the routine will end with ier = 6.
+     */
+    private int icall;
 
     /**
      * In dqagie indicates the kind of integration range involved inf = 1 corresponds to (bound, +infinity) inf = -1
      * corresponds to (-infinity, bound) inf = 2 corresponds to (-infinity, +infinity).
      */
     private int inf;
+    
+    /** indicates which of the weight functions is to be
+    c                     used
+    c                     integr = 1      w(x) = cos(omega*x)
+    c                     integr = 2      w(x) = sin(omega*x)
+    c                     if integr.ne.1 and integr.ne.2, the routine
+    c                     will end with ier = 6. */
+    private int integr;
 
     /**
      * The first k elements of iord are pointers to the error estimates over the subintervals, such that elist[iord[0]],
@@ -275,6 +322,21 @@ public abstract class Integration2EP {
 
     /** DOCUMENT ME! */
     private DoubleDouble lower;
+    
+    /**
+     * gives an upper bound on the number of chebyshev
+c                     moments which can be stored, i.e. for the
+c                     intervals of lenghts abs(b-a)*2**(-l),
+c                     l=0,1, ..., maxp1-2, maxp1.ge.1.
+c                     if maxp1.lt.1, the routine will end with ier = 6.
+     */
+    private int maxp1;
+    
+    /** indicating that the chebyshev moments
+    c                     have been computed for intervals of lengths
+    c                     (abs(b-a))*2**(-l), l=0,1,2, ..., momcom-1,
+    c                     momcom.lt.maxp1 */
+    private int momcom;
 
     /**
      * After the first integration over the intervals (pts[i], pts[i+1]), i = 0, 1, ..., npts2 - 2, the error estimates
@@ -285,6 +347,15 @@ public abstract class Integration2EP {
 
     /** Number of integrand evaluations. */
     private int neval[] = new int[1];
+    
+    /**
+     *  vector of dimension at least limit, containing the
+c       subdivision levels of the subintervals, i.e.
+c       iwork(i) = l means that the subinterval
+c       numbered i is of length abs(b-a)*2**(1-l)
+     */
+    private int nnlog[];
+
 
     /** npts = npts2 - 2. */
     private int npts;
@@ -294,6 +365,9 @@ public abstract class Integration2EP {
 
     /** D1MACH(2) = 2**(emax)*(1 - 2**(-doubleDigits)) = 2**1024*(1 - 2**-53) D1MACH(2) = Double.MAX_VALUE. */
     private DoubleDouble oflow = DoubleDouble.valueOf(Double.MAX_VALUE);
+    
+    /** parameter in the integrand weight function */
+    private DoubleDouble omega; 
 
     /** Integration limits and the break points of the interval in ascending sequence. */
     private DoubleDouble[] pts;
@@ -641,6 +715,81 @@ public abstract class Integration2EP {
         Preferences.debug("Integrand lower endpoint = -1.0\n");
         Preferences.debug("Integrand upper endpoint = 5.0\n");
         Preferences.debug("Point of singularity c = 0.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        
+        testCase = 7;
+        // Test7 tests dqawoe
+        // dqawoe integrates functions of the form f(x)*sin(omega*x) 
+        // or f(x)*cos(omega*x)
+        // Integrate log(x)*sin(10*pi*x) from 0 to 1
+        // The exact answer is -(gamma+log(10*pi)-ci(10*pi))/(10*pi) = -0.1281316.
+        // gamma is euler's constant
+        // ci is the cosine integral ci(x) = integral(x to infinity) -cos(v)/v dv.
+        // cin(10.0*pi) = 4.0255378
+        // ci(x*pi) = gamma + ln(pi) + ln(x) - cin(x*pi)
+        // Specify integr = 1 for cosine integral, 2 for sine integral.
+        // ci(10.0*pi) = -0.0010071562550216642568563602363948
+        // Numerical Integral = -0.12813684839916732808773185269829 after 1585 integrand evaluations used
+        // Error status = 2 with estimated absolute error = 1.7134290667214252583410074821439E-16
+        // Actual answer = -0.12813684789465472190566225032523
+        // Exact error = -5.0451260618206960237305589988034E-10
+
+        lower = DoubleDouble.valueOf(0.0);
+        upper = DoubleDouble.valueOf(1.0);
+        routine = Integration2.DQAWOE;
+        epsabs = DoubleDouble.valueOf(0.0);
+        epsrel = DoubleDouble.valueOf(1.0E-28);
+        limit = 100;
+        omega = (DoubleDouble.valueOf(10.0)).multiply(DoubleDouble.PI);
+        integr = 2;
+        icall = 1;
+        maxp1 = 100;
+        gamma = DoubleDouble.valueOf(0.57721566490153286061);
+        DoubleDouble cin = DoubleDouble.valueOf(4.0255378);
+        DoubleDouble ci = ((gamma.add(DoubleDouble.PI.log())).add((DoubleDouble.valueOf(10.0)).log())).subtract(cin);
+        actualAnswer = (((gamma.add(((DoubleDouble.valueOf(10.0)).multiply(DoubleDouble.PI)).log())).subtract(ci)).negate()).
+                       divide((DoubleDouble.valueOf(10.0)).multiply(DoubleDouble.PI));
+        
+        if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be >= 1");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if (icall < 1) {
+        	MipavUtil.displayError("icall must be at least 1");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        if (maxp1 < 1) {
+        	MipavUtil.displayError("maxp1 must be at least 1");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 7 testing dqawoe\n");
+        Preferences.debug("Integrand is log(x)*sin(10*pi*x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("ci(10.0*pi) = " + ci + "\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus +
@@ -1243,6 +1392,14 @@ public abstract class Integration2EP {
         	function = (DoubleDouble.valueOf(1.0)).divide
         	(((((DoubleDouble.valueOf(5.0)).multiply(x)).multiply(x)).multiply(x)).add(DoubleDouble.valueOf(6.0)));
         	break;
+    	case 7:
+        	if (x.le(DoubleDouble.valueOf(0.0))) {
+        		function = DoubleDouble.valueOf(0.0);
+        	}
+        	else {
+        		function = x.log();
+        	}
+        	break;
     	case 9:
     	case 10:
     	case 11:
@@ -1273,6 +1430,128 @@ public abstract class Integration2EP {
     	}
     	return function;
     }
+    
+    /**
+     * This is a port of the FORTRAN routine whose header is given below:
+     * c
+	   c     dgtsl given a general tridiagonal matrix and a right hand
+	   c     side will find the solution.
+	   c
+	   c     on entry
+	   c
+	   c        n       integer
+	   c                is the order of the tridiagonal matrix.
+	   c
+	   c        c       double precision(n)
+	   c                is the subdiagonal of the tridiagonal matrix.
+	   c                c(2) through c(n) should contain the subdiagonal.
+	   c                on output c is destroyed.
+	   c
+	   c        d       double precision(n)
+	   c                is the diagonal of the tridiagonal matrix.
+	   c                on output d is destroyed.
+	   c
+	   c        e       double precision(n)
+	   c                is the superdiagonal of the tridiagonal matrix.
+	   c                e(1) through e(n-1) should contain the superdiagonal.
+	   c                on output e is destroyed.
+	   c
+	   c        b       double precision(n)
+	   c                is the right hand side vector.
+	   c
+	   c     on return
+	   c
+	   c        b       is the solution vector.
+	   c
+	   c        info    integer
+	   c                = 0 normal value.
+	   c                = k if the k-th element of the diagonal becomes
+	   c                    exactly zero.  the subroutine returns when
+	   c                    this is detected.
+	   c
+	   c     linpack. this version dated 08/14/78 .
+	   c     jack dongarra, argonne national laboratory.
+
+     * @param n
+     * @param c
+     * @param d
+     * @param e
+     * @param b
+     */
+    private void dgtsl(int n, DoubleDouble c[], DoubleDouble d[], DoubleDouble e[], DoubleDouble b[], int info[]) {
+        int k;
+        int kb;
+        int kp1;
+        int nm1;
+        int nm2;
+        DoubleDouble t;
+        
+        info[0] = 0;
+        c[0] = d[0];
+        nm1 = n - 1;
+        if (nm1 >= 1) {
+        	d[0] = (DoubleDouble)e[0].clone();
+        	e[0] = DoubleDouble.valueOf(0.0);
+        	e[n-1] = DoubleDouble.valueOf(0.0);
+        	for (k = 0; k < nm1; k++) {
+        		kp1 = k + 1;
+        		
+        		// Find the largest of the two rows
+        		
+        		if ((c[kp1].abs()).ge(c[k].abs())) {
+        		
+        			// Interchange row
+        			
+        			t = (DoubleDouble)c[kp1].clone();
+        			c[kp1] = (DoubleDouble)c[k].clone();
+        			c[k] = (DoubleDouble)t.clone();
+        			t = (DoubleDouble)d[kp1].clone();
+        			d[kp1] = (DoubleDouble)d[k].clone();
+        			d[k] = (DoubleDouble)t.clone();
+        			t = (DoubleDouble)e[kp1].clone();
+        			e[kp1] = (DoubleDouble)e[k].clone();
+        			e[k] = (DoubleDouble)t.clone();
+        			t = (DoubleDouble)b[kp1].clone();
+        			b[kp1] = (DoubleDouble)b[k].clone();
+        			b[k] = (DoubleDouble)t.clone();
+        		} // if (Math.abs(c[kp1]) >= Math.abs(c[k]))
+        		
+        		// Zero elements
+        		
+        		if (c[k].isZero()) {
+        			info[0] = k+1;
+        			return;
+        		} // if (c[k] == 0.0)
+        		
+        		t = (c[kp1].divide(c[k])).negate();
+        		c[kp1] = d[kp1].add(t.multiply(d[k]));
+        		d[kp1] = e[kp1].add(t.multiply(e[k]));
+        		e[kp1] = DoubleDouble.valueOf(0.0);
+        		b[kp1] = b[kp1].add(t.multiply(b[k]));
+        	} // for (k = 0; k < nm1; k++)
+        } // if (nm1 >= 1)
+        if (c[n-1].isZero()) {
+        	info[0] = n;
+        	return;
+        } // if (c[n-1] == 0.0)
+        
+        // Back solve
+        
+        nm2 = n - 2;
+        b[n-1] = b[n-1].divide(c[n-1]);
+        if (n == 1) {
+        	return;
+        }
+        b[nm1-1] = (b[nm1-1].subtract(d[nm1-1].multiply(b[n-1]))).divide(c[nm1-1]);
+        if (nm2 < 1) {
+        	return;
+        }
+        for (kb = 1; kb <= nm2; kb++) {
+        	k = nm2 - kb + 1;
+        	b[k-1] = ((b[k-1].subtract(d[k-1].multiply(b[k]))).subtract(e[k-1].multiply(b[k+1]))).divide(c[k-1]);
+        } // for (kb = 1; kb <= nm2; kb++)
+        return;
+    } // dgtsl
 
     /**
      * This is a port of the orginal FORTRAN code whose header is given below:
@@ -2512,6 +2791,10 @@ loop:
             case DQAWCE:
             	dqawce();
             	break;
+            	
+            case DQAWOE:
+            	dqawoe();
+            	break;
                 
             case DQK15:
             	dqk15(lower, upper, result, abserr, resabs, resasc);
@@ -3657,6 +3940,690 @@ loop:
     
     /**
      * This is the port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqawoe
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a2a1
+	 c***keywords  automatic integrator, special-purpose,
+	 c             integrand with oscillatory cos or sin factor,
+	 c             clenshaw-curtis method, (end point) singularities,
+	 c             extrapolation, globally adaptive
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  the routine calculates an approximation result to a given
+	 c            definite integral
+	 c            i = integral of f(x)*w(x) over (a,b)
+	 c            where w(x) = cos(omega*x) or w(x)=sin(omega*x),
+	 c            hopefully satisfying following claim for accuracy
+	 c            abs(i-result).le.max(epsabs,epsrel*abs(i)).
+	 c***description
+	 c
+	 c        computation of oscillatory integrals
+	 c        standard fortran subroutine
+	 c        double precision version
+	 c
+	 c        parameters
+	 c         on entry
+	 c            f      - double precision
+	 c                     function subprogram defining the integrand
+	 c                     function f(x). the actual name for f needs to be
+	 c                     declared e x t e r n a l in the driver program.
+	 c
+	 c            a      - double precision
+	 c                     lower limit of integration
+	 c
+	 c            b      - double precision
+	 c                     upper limit of integration
+	 c
+	 c            omega  - double precision
+	 c                     parameter in the integrand weight function
+	 c
+	 c            integr - integer
+	 c                     indicates which of the weight functions is to be
+	 c                     used
+	 c                     integr = 1      w(x) = cos(omega*x)
+	 c                     integr = 2      w(x) = sin(omega*x)
+	 c                     if integr.ne.1 and integr.ne.2, the routine
+	 c                     will end with ier = 6.
+	 c
+	 c            epsabs - double precision
+	 c                     absolute accuracy requested
+	 c            epsrel - double precision
+	 c                     relative accuracy requested
+	 c                     if  epsabs.le.0
+	 c                     and epsrel.lt.max(50*rel.mach.acc.,0.5d-28),
+	 c                     the routine will end with ier = 6.
+	 c
+	 c            limit  - integer
+	 c                     gives an upper bound on the number of subdivisions
+	 c                     in the partition of (a,b), limit.ge.1.
+	 c
+	 c            icall  - integer
+	 c                     if dqawoe is to be used only once, icall must
+	 c                     be set to 1.  assume that during this call, the
+	 c                     chebyshev moments (for clenshaw-curtis integration
+	 c                     of degree 24) have been computed for intervals of
+	 c                     lenghts (abs(b-a))*2**(-l), l=0,1,2,...momcom-1.
+	 c                     if icall.gt.1 this means that dqawoe has been
+	 c                     called twice or more on intervals of the same
+	 c                     length abs(b-a). the chebyshev moments already
+	 c                     computed are then re-used in subsequent calls.
+	 c                     if icall.lt.1, the routine will end with ier = 6.
+	 c
+	 c            maxp1  - integer
+	 c                     gives an upper bound on the number of chebyshev
+	 c                     moments which can be stored, i.e. for the
+	 c                     intervals of lenghts abs(b-a)*2**(-l),
+	 c                     l=0,1, ..., maxp1-2, maxp1.ge.1.
+	 c                     if maxp1.lt.1, the routine will end with ier = 6.
+	 c
+	 c         on return
+	 c            result - double precision
+	 c                     approximation to the integral
+	 c
+	 c            abserr - double precision
+	 c                     estimate of the modulus of the absolute error,
+	 c                     which should equal or exceed abs(i-result)
+	 c
+	 c            neval  - integer
+	 c                     number of integrand evaluations
+	 c
+	 c            ier    - integer
+	 c                     ier = 0 normal and reliable termination of the
+	 c                             routine. it is assumed that the
+	 c                             requested accuracy has been achieved.
+	 c                   - ier.gt.0 abnormal termination of the routine.
+	 c                             the estimates for integral and error are
+	 c                             less reliable. it is assumed that the
+	 c                             requested accuracy has not been achieved.
+	 c            error messages
+	 c                     ier = 1 maximum number of subdivisions allowed
+	 c                             has been achieved. one can allow more
+	 c                             subdivisions by increasing the value of
+	 c                             limit (and taking according dimension
+	 c                             adjustments into account). however, if
+	 c                             this yields no improvement it is advised
+	 c                             to analyze the integrand, in order to
+	 c                             determine the integration difficulties.
+	 c                             if the position of a local difficulty can
+	 c                             be determined (e.g. singularity,
+	 c                             discontinuity within the interval) one
+	 c                             will probably gain from splitting up the
+	 c                             interval at this point and calling the
+	 c                             integrator on the subranges. if possible,
+	 c                             an appropriate special-purpose integrator
+	 c                             should be used which is designed for
+	 c                             handling the type of difficulty involved.
+	 c                         = 2 the occurrence of roundoff error is
+	 c                             detected, which prevents the requested
+	 c                             tolerance from being achieved.
+	 c                             the error may be under-estimated.
+	 c                         = 3 extremely bad integrand behaviour occurs
+	 c                             at some points of the integration
+	 c                             interval.
+	 c                         = 4 the algorithm does not converge.
+	 c                             roundoff error is detected in the
+	 c                             extrapolation table.
+	 c                             it is presumed that the requested
+	 c                             tolerance cannot be achieved due to
+	 c                             roundoff in the extrapolation table,
+	 c                             and that the returned result is the
+	 c                             best which can be obtained.
+	 c                         = 5 the integral is probably divergent, or
+	 c                             slowly convergent. it must be noted that
+	 c                             divergence can occur with any other value
+	 c                             of ier.gt.0.
+	 c                         = 6 the input is invalid, because
+	 c                             (epsabs.le.0 and
+	 c                              epsrel.lt.max(50*rel.mach.acc.,0.5d-28))
+	 c                             or (integr.ne.1 and integr.ne.2) or
+	 c                             icall.lt.1 or maxp1.lt.1.
+	 c                             result, abserr, neval, last, rlist(1),
+	 c                             elist(1), iord(1) and nnlog(1) are set
+	 c                             to zero. alist(1) and blist(1) are set
+	 c                             to a and b respectively.
+	 c
+	 c            last  -  integer
+	 c                     on return, last equals the number of
+	 c                     subintervals produces in the subdivision
+	 c                     process, which determines the number of
+	 c                     significant elements actually in the
+	 c                     work arrays.
+	 c            alist  - double precision
+	 c                     vector of dimension at least limit, the first
+	 c                      last  elements of which are the left
+	 c                     end points of the subintervals in the partition
+	 c                     of the given integration range (a,b)
+	 c
+	 c            blist  - double precision
+	 c                     vector of dimension at least limit, the first
+	 c                      last  elements of which are the right
+	 c                     end points of the subintervals in the partition
+	 c                     of the given integration range (a,b)
+	 c
+	 c            rlist  - double precision
+	 c                     vector of dimension at least limit, the first
+	 c                      last  elements of which are the integral
+	 c                     approximations on the subintervals
+	 c
+	 c            elist  - double precision
+	 c                     vector of dimension at least limit, the first
+	 c                      last  elements of which are the moduli of the
+	 c                     absolute error estimates on the subintervals
+	 c
+	 c            iord   - integer
+	 c                     vector of dimension at least limit, the first k
+	 c                     elements of which are pointers to the error
+	 c                     estimates over the subintervals,
+	 c                     such that elist(iord(1)), ...,
+	 c                     elist(iord(k)) form a decreasing sequence, with
+	 c                     k = last if last.le.(limit/2+2), and
+	 c                     k = limit+1-last otherwise.
+	 c
+	 c            nnlog  - integer
+	 c                     vector of dimension at least limit, containing the
+	 c                     subdivision levels of the subintervals, i.e.
+	 c                     iwork(i) = l means that the subinterval
+	 c                     numbered i is of length abs(b-a)*2**(1-l)
+	 c
+	 c         on entry and return
+	 c            momcom - integer
+	 c                     indicating that the chebyshev moments
+	 c                     have been computed for intervals of lengths
+	 c                     (abs(b-a))*2**(-l), l=0,1,2, ..., momcom-1,
+	 c                     momcom.lt.maxp1
+	 c
+	 c            chebmo - double precision
+	 c                     array of dimension (maxp1,25) containing the
+	 c                     chebyshev moments
+	 c
+	 c***references  (none)
+	 c***routines called  d1mach,dqc25f,dqelg,dqpsrt
+	 c***end prologue  dqawoe
+	 c
+     */
+    private void dqawoe() {
+    	// Variables ending in 1 denote left subinterval and variables
+        // ending in 2 denote right subinterval
+        // rlist2 should be length at least (limexp + 2)
+        // The value of limexp is determined in subroutine dqelg
+        // rlist2 contains the part of the epsilon table still needed for
+        // further computations
+        DoubleDouble[] rlist2;
+
+        // Index to the interval with the largest error estimate
+        int[] maxErr = new int[1];
+
+        // errMax[0] = elist[maxErr];
+        DoubleDouble[] errMax = new DoubleDouble[1];
+
+        // error on the interval currently subdivided (before that subdivision
+        // has taken place)
+        DoubleDouble erlast;
+
+        // Sum of the integrals over the subintervals
+        DoubleDouble area;
+
+        // Sum of the errors over the subintervals
+        DoubleDouble errSum;
+
+        // Requested accuracy max(epsabs, epsrel * abs(result))
+        DoubleDouble errBnd;
+
+        // Number of calls to the extrapolation routine
+        int[] nres = new int[1];
+
+        // Number of elements in rlist2.  If an appropriate approximation
+        // to the compounded integral has been obtained, it is put in
+        // rlist2[numr12-1] after numr12 has been increased by one.
+        int[] numr12 = new int[1];
+        
+        // Length of the smallest interval considered up to now,
+        // multiplied by 1.5
+        DoubleDouble small;
+
+        // Sum of the errors over the intervals larger than the smallest
+        // interval considered up to now
+        DoubleDouble erlarg = DoubleDouble.valueOf(0.0);
+
+        // boolean variable denoting that the routine is attempting to
+        // perform extrapolation.  That is, before dividing the
+        // interval we try to decrease the value of erlarg
+        boolean extrap;
+
+        // If noext is true, the extrapolation is no longer allowed.
+        boolean noext;
+        
+        DoubleDouble abseps[] = new DoubleDouble[1];
+        DoubleDouble area1[] = new DoubleDouble[1];
+        DoubleDouble area12;
+        DoubleDouble area2[] = new DoubleDouble[1];
+        DoubleDouble a1;
+        DoubleDouble a2;
+        DoubleDouble b1;
+        DoubleDouble b2;
+        DoubleDouble correc = DoubleDouble.valueOf(0.0);
+        DoubleDouble defab1[] = new DoubleDouble[1];
+        DoubleDouble defab2[] = new DoubleDouble[1];
+        DoubleDouble defabs[] = new DoubleDouble[1];
+        DoubleDouble domega;
+        DoubleDouble dres;
+        DoubleDouble error1[] = new DoubleDouble[1];
+        DoubleDouble erro12;
+        DoubleDouble error2[] = new DoubleDouble[1];
+        DoubleDouble ertest = DoubleDouble.valueOf(0.0);
+        DoubleDouble reseps[] = new DoubleDouble[1];
+        DoubleDouble res31a[] = new DoubleDouble[3];
+        DoubleDouble width;
+        int id;
+        int ierro;
+        int iroff1;
+        int iroff2;
+        int iroff3;
+        int jupbnd;
+        int k;
+        int ksgn;
+        int ktmin;
+        int nev[] = new int[1];
+        int nrmax[] = new int[1];
+        int nrmom;
+        boolean extall;
+        boolean do50 = false;
+        boolean do70 = false;
+        boolean do75 = false;
+        boolean do90 = false;
+        boolean do150 = false;
+        boolean do160 = false;
+        boolean do165 = false;
+        boolean do170 = false;
+        boolean do190 = false;
+        
+        try {
+	    	alist = new DoubleDouble[limit];
+            blist = new DoubleDouble[limit];
+            rlist = new DoubleDouble[limit];
+            elist = new DoubleDouble[limit];
+            defab1[0] = DoubleDouble.valueOf(0.0);
+            defab2[0] = DoubleDouble.valueOf(0.0);
+            iord = new int[limit];
+            rlist2 = new DoubleDouble[52];
+            if ((chebmo == null) || (chebmo.length != maxp1)) {
+            	chebmo = new DoubleDouble[maxp1][25];
+            }
+            nnlog = new int[limit];
+            
+            errorStatus = 0;
+            neval[0] = 0;
+            last = 0;
+            result[0] = DoubleDouble.valueOf(0.0);
+            abserr[0] = DoubleDouble.valueOf(0.0);
+            alist[0] = (DoubleDouble)lower.clone();
+            blist[0] = (DoubleDouble)upper.clone();
+            rlist[0] = DoubleDouble.valueOf(0.0);
+            elist[0] = DoubleDouble.valueOf(0.0);
+            iord[0] = -1;
+            nnlog[0] = 0;
+            
+            // First approximation to the integral
+            domega = omega.abs();
+            nrmom = 0;
+            if (icall == 1) {
+            	momcom = 0;
+            }
+            dqc25f(lower, upper, domega, nrmom, 0, result, abserr, neval, defabs, resabs);
+            
+            // Test on accuracy
+            
+            dres = result[0].abs();
+            errBnd = epsabs.max( epsrel.multiply(dres));
+            rlist[0] = (DoubleDouble)result[0].clone();
+            elist[0] = (DoubleDouble)abserr[0].clone();
+            iord[0] = 0;
+            if ((abserr[0].le(((DoubleDouble.valueOf(100.0)).multiply(epmach)).multiply(defabs[0]))) && (abserr[0].gt(errBnd))) {
+            	errorStatus = 2;
+            }
+            if (limit == 1) {
+            	errorStatus = 1;
+            }
+            if ((errorStatus != 0) || (abserr[0].le(errBnd))) {
+            	if ((integr == 2) && (omega.lt(DoubleDouble.valueOf(0.0)))) {
+            		result[0] = result[0].negate();
+            	}
+            	return;
+            }
+            
+            // Initializations
+            errMax[0] = (DoubleDouble)abserr[0].clone();
+            maxErr[0] = 0;
+            area = (DoubleDouble)result[0].clone();
+            errSum = (DoubleDouble)abserr[0].clone();
+            abserr[0] = (DoubleDouble)oflow.clone();
+            nrmax[0] = 1;
+            extrap = false;
+            noext = false;
+            ierro = 0;
+            iroff1 = 0;
+            iroff2 = 0;
+            iroff3 = 0;
+            ktmin = 0;
+            small = ((upper.subtract(lower)).abs()).multiply(DoubleDouble.valueOf(0.75));
+            nres[0] = 0;
+            numr12[0] = 0;
+            extall = false;
+            if ((((DoubleDouble.valueOf(0.5)).multiply((upper.subtract(lower)).abs())).multiply(domega)).le(DoubleDouble.valueOf(2.0))) {
+            	numr12[0] = 1;
+            	extall = true;
+            	rlist2[0] = (DoubleDouble)result[0].clone();
+            }
+            if (((DoubleDouble.valueOf(0.25)).multiply((upper.subtract(lower)).abs()).multiply(domega)).le(DoubleDouble.valueOf(2.0))) {
+            	extall = true;
+            }
+            ksgn = -1;
+            if (dres.ge(((DoubleDouble.valueOf(1.0)).subtract((DoubleDouble.valueOf(50.0)).multiply(epmach))).multiply(defabs[0]))) {
+            	ksgn = 1;
+            }
+            
+            // Main for loop
+            
+            do150 = true;
+            loop: for (last = 2; last <= limit; last++) {
+            	
+            	// Bisect the subinteval with the nrmax-th largest error estimate.
+            	
+            	nrmom = nnlog[maxErr[0]] + 1;
+            	a1 = (DoubleDouble)alist[maxErr[0]].clone();
+            	b1 = (DoubleDouble.valueOf(0.5)).multiply(alist[maxErr[0]].add(blist[maxErr[0]]));
+            	a2 = (DoubleDouble)b1.clone();
+            	b2 = (DoubleDouble)blist[maxErr[0]].clone();
+            	erlast = (DoubleDouble)errMax[0].clone();
+            	dqc25f(a1, b1, domega, nrmom, 0, area1, error1, nev, resabs, defab1);
+            	neval[0] = neval[0] + nev[0];
+            	dqc25f(a2, b2, domega, nrmom, 1, area2, error2, nev, resabs, defab2);
+            	neval[0] = neval[0] + nev[0];
+            	
+            	// Improve precious approximations to integral
+            	// and error and test for accuracy.
+            	
+            	area12 = area1[0].add(area2[0]);
+            	erro12 = error1[0].add(error2[0]);
+            	errSum = (errSum.add(erro12)).subtract(errMax[0]);
+            	area = (area.add(area12)).subtract(rlist[maxErr[0]]);
+            	if ((defab1[0].ne(error1[0])) && (defab2[0].ne(error2[0]))) {
+            	    if ((((rlist[maxErr[0]].subtract(area12)).abs()).le((DoubleDouble.valueOf(1.0E-5)).multiply(area12.abs()))) &&
+            	        (erro12.ge((DoubleDouble.valueOf(0.99)).multiply(errMax[0])))) {
+            	    	if (extrap) {
+            	    		iroff2 = iroff2 + 1;
+            	    	}
+            	    	else {
+            	    		iroff1 = iroff1 + 1;
+            	    	}
+            	    }
+            	    if ((last > 10) && (erro12.gt(errMax[0]))) {
+            	    	iroff3 = iroff3 + 1;
+            	    }
+            	} // if ((defab1[0] != error1[0]) && (defab2[0] != error2[0]))
+            	rlist[maxErr[0]] = (DoubleDouble)area1[0].clone();
+            	rlist[last-1] = (DoubleDouble)area2[0].clone();
+            	nnlog[maxErr[0]] = nrmom;
+            	nnlog[last-1] = nrmom;
+            	errBnd = epsabs.max(epsrel.multiply(area.abs()));
+            	
+            	// Test for roundoff error and eventually set error flag.
+            	
+            	if ((iroff1 + iroff2 >= 10) || (iroff3 >= 20)) {
+            		errorStatus = 2;
+            	}
+            	if (iroff2 >= 5) {
+            		ierro = 3;
+            	}
+            	
+            	// Set error flag in the case that the number of
+            	// subintervals equals the limit.
+            	
+            	if (last == limit) {
+            		errorStatus = 1;
+            	}
+            	
+            	// Set error flag in the case of bad integrand behavior
+            	// at a point of the integration range.
+            	
+            	if (((a1.abs()).max( (b2.abs()))).le(((DoubleDouble.valueOf(1.0))
+            			.add((DoubleDouble.valueOf(100.0)).multiply(epmach))).multiply((a2.abs()).add((DoubleDouble.valueOf(1.0E3)).multiply(uflow))))) {
+            		errorStatus = 4;
+            	}
+            	
+            	// Append the newly-created intervals to the list
+            	if (error2[0].le(error1[0])) {
+            		alist[last-1] = (DoubleDouble)a2.clone();
+            		blist[maxErr[0]] = (DoubleDouble)b1.clone();
+            		blist[last-1] = (DoubleDouble)b2.clone();
+            		elist[maxErr[0]] = (DoubleDouble)error1[0].clone();
+            		elist[last-1] = (DoubleDouble)error2[0].clone();
+            	}
+            	else {
+            	    alist[maxErr[0]] = (DoubleDouble)a2.clone();
+            	    alist[last-1] = (DoubleDouble)a1.clone();
+            	    blist[last-1] = (DoubleDouble)b1.clone();
+            	    rlist[maxErr[0]] = (DoubleDouble)area2[0].clone();
+            	    rlist[last-1] = (DoubleDouble)area1[0].clone();
+            	    elist[maxErr[0]] = (DoubleDouble)error2[0].clone();
+            	    elist[last-1] = (DoubleDouble)error1[0].clone();
+            	}
+            	
+            	// Call the subroutine dqpsrt to maintain the descending ordering
+            	// in the list of error estimates and select the subinterval
+            	// with the nrmax-th largest error estimate (to bisected next).
+            	dqpsrt(limit, last, maxErr, errMax, elist, iord, nrmax);
+            	if (errSum.le(errBnd)) {
+            		do150 = false;
+            		do170 = true;
+            		break;
+            	}
+            	if (errorStatus != 0) {
+            		break;
+            	}
+            	if ((last == 2) && extall) {
+            		small = (DoubleDouble.valueOf(0.5)).multiply(small);
+            		numr12[0] = numr12[0] + 1;
+            		rlist2[numr12[0]-1] = (DoubleDouble)area.clone();
+            		ertest = (DoubleDouble)errBnd.clone();
+            		erlarg = (DoubleDouble)errSum.clone();
+            		continue;
+            	} // if ((last == 2) && extall)
+            	if (noext) {
+            		continue;
+            	}
+            	if (extall) {
+            		erlarg = erlarg.subtract(erlast);
+            		if (((b1.subtract(a1)).abs()).gt(small)) {
+            		    erlarg = erlarg.add(erro12);	
+            		}
+            		if (extrap) {
+            			do70 = true;
+            		}
+            		else {
+            			do50 = true;
+            		}
+            	} // if (extall)
+            	else {
+            		do50 = true;
+            	}
+            	
+            	// Test whether the interval to be bisected next is the
+            	// smallest interval.
+            	
+            	if (do50) {
+            		do50 = false;
+            		width = (blist[maxErr[0]].subtract(alist[maxErr[0]])).abs();
+            		if (width.gt(small)) {
+            			continue;
+            		} // if (width > small)
+            		if (!extall) {
+            		
+            			// Test whether we can start with the extrapolation procedure
+            			// (we do this if we integrate over the next interval with
+            			// use of a gauss-kronrod rule - see subroutine dqc25f).
+            			
+            			small = (DoubleDouble.valueOf(0.5)).multiply(small);
+            			if ((((DoubleDouble.valueOf(0.25)).multiply(width)).multiply(domega)).gt(DoubleDouble.valueOf(2.0))) {
+            				continue;
+            			}
+            			extall = true;
+            			ertest = (DoubleDouble)errBnd.clone();
+            			erlarg = (DoubleDouble)errSum.clone();
+            			continue;
+            		} // if (!extall)
+            		extrap = true;
+            		nrmax[0] = 2;
+            		do70 = true;
+            	} // if (do50)
+            	if (do70) {
+            		do70 = false;
+            		if ((ierro == 3) || (erlarg.le(ertest))) {
+            			do90 = true;
+            		}
+            		else {
+            			do75 = true;
+            		}
+            	} // if (do70)
+            	
+            	if (do75) {
+            		do75 = false;
+            		// The smallest interval has the largest error.
+            		// Before bisecting decrease the sum of the errors over
+            		// the larger intervals (erlarg) and perform extrapolation.
+            		
+            		jupbnd = last;
+            		if (last > (limit/2+2)) {
+            			jupbnd = limit + 3 - last;
+            		}
+            		id = nrmax[0];
+            		for (k = id; k <= jupbnd; k++) {
+            			maxErr[0] = iord[nrmax[0]-1];
+            			errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
+            			if (((blist[maxErr[0]].subtract(alist[maxErr[0]])).abs()).gt(small)) {
+            				continue loop;
+            			}
+            			nrmax[0] = nrmax[0] + 1;
+            		} // for (k = id; k <= jupbnd; k++)
+            		do90 = true;
+            	} // if (do75)
+            	if (do90) {
+            		do90 = false;
+            		// Perform extrapolation
+            		numr12[0] = numr12[0] + 1;
+            		rlist2[numr12[0]-1] = (DoubleDouble)area.clone();
+            		if (numr12[0] >= 3) {
+            			dqelg(numr12, rlist2, reseps, abseps, res31a, nres);
+            			ktmin = ktmin + 1;
+            			if ((ktmin > 5) && (abserr[0].lt((DoubleDouble.valueOf(1.0E-3)).multiply(errSum)))) {
+            				errorStatus = 5;
+            			}
+            			if (abseps[0].lt(abserr[0])) {
+            				ktmin = 0;
+            				abserr[0] = (DoubleDouble)abseps[0].clone();
+            				result[0] = (DoubleDouble)reseps[0].clone();
+            				correc = (DoubleDouble)erlarg.clone();
+            				ertest = epsabs.max(epsrel.multiply(reseps[0].abs()));
+            				if (abserr[0].le(ertest)) {
+            					break;
+            				}
+            			} // if (abseps[0] < abserr[0])
+            			// Prepare bisection of the smallest interval
+            			if (numr12[0] == 1) {
+            				noext = true;
+            			}
+            			if (errorStatus == 5) {
+            				break;
+            			}
+            		} // if (numr12[0] >= 3)
+            		maxErr[0] = iord[0];
+            		errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
+            		nrmax[0] = 1;
+            		extrap = false;
+            		small = (DoubleDouble.valueOf(0.5)).multiply(small);
+            		erlarg = (DoubleDouble)errSum.clone();
+            	} // if (do90)
+            } // for (last = 2; last <= limit; last++)
+            
+            // Set the final result.
+            
+            if (do150) {
+            	if ((abserr[0].equals(oflow)) || (nres[0] == 0)) {
+            		do170 = true;
+            	}
+            	else if (errorStatus + ierro == 0) {
+            		do165 = true;
+            	}
+            	else {
+            		if (ierro == 3) {
+            			abserr[0] = abserr[0].add(correc);
+            		}
+            		if (errorStatus == 0) {
+            			errorStatus = 3;
+            		}
+            		if ((result[0].ne(DoubleDouble.valueOf(0.0))) && (area.ne(DoubleDouble.valueOf(0.0)))) {
+            			do160 = true;
+            		}
+            		else if (abserr[0].gt(errSum)) {
+            			do170 = true;
+            		}
+            		else if (area.isZero()) {
+            			do190 = true;
+            		}
+            		else {
+            			do165 = true;
+            		}
+            	}
+            } // if (do150)
+            
+            if (do160) {
+            	if ((abserr[0].divide(result[0].abs())).gt(errSum.divide(area.abs()))) {
+            		do170 = true;
+            	}
+            	else {
+            		do165 = true;
+            	}
+            } // if (do160)
+            
+            if (do165) {
+                // Test on divergence
+            	if ((ksgn == -1) && ((result[0].abs()).max( (area.abs())).le
+            		((DoubleDouble.valueOf(1.0E-2)).multiply(defabs[0])))) {
+            	}
+            	else if (((DoubleDouble.valueOf(1.0E-2)).gt(result[0].divide(area))) || ((result[0].divide(area)).gt(DoubleDouble.valueOf(100.0))) ||
+            			 (errSum.ge(area.abs()))) {
+            		errorStatus = 6;
+            	}
+            	do190 = true; 	
+            } // if (do165)
+            
+            if (do170) {
+            	result[0] = DoubleDouble.valueOf(0.0);
+            	for (k = 0; k < last; k++) {
+            		result[0] = result[0].add(rlist[k]);
+            	}
+            	abserr[0] = errSum;
+            	do190 = true;
+            } // if (do170)
+            
+            if (do190) {
+            	if (errorStatus > 2) {
+            		errorStatus = errorStatus - 1;
+            	}
+            	if ((integr == 2) && (omega.lt(DoubleDouble.valueOf(0.0)))) {
+            		result[0] = result[0].negate();
+            	}
+            } // if (do190)
+            return;
+        } // try
+	    catch (Exception err) {
+	        Preferences.debug("dqawoe error: " + err.getMessage());
+	    }
+    } // dqawoe
+    
+    /**
+     * This is the port of the original FORTRAN routine whose header is given below:
      * c***begin prologue  dqc25c
 	 c***date written   810101   (yymmdd)
 	 c***revision date  830518   (yymmdd)
@@ -3750,6 +4717,7 @@ loop:
         int i;
         int isym;
         int k;
+        int kp = 1;
         
         for (k = 1; k <= 11; k++) {
             x[k-1] = (((DoubleDouble.valueOf((double)k)).multiply(DoubleDouble.PI)).divide(DoubleDouble.valueOf(24))).cos();	
@@ -3762,7 +4730,7 @@ loop:
         	// Apply the 15-point gauss-kronrod scheme.
         	
         	krul[0] = krul[0] - 1;
-        	dqk15w(c,a,b,result,abserr,resabs,resasc);
+        	dqk15w(c,kp,a,b,result,abserr,resabs,resasc);
         	neval[0] = 15;
         	if (resasc[0] == abserr[0]) {
         	    krul[0] = krul[0] +1;	
@@ -3834,6 +4802,426 @@ loop:
         abserr[0] = (res24.subtract(res12)).abs();
         return;
     } // dqc25c
+    
+    /**
+     * This is a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqc25f
+	 c***date written   810101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a2a2
+	 c***keywords  integration rules for functions with cos or sin
+	 c             factor, clenshaw-curtis, gauss-kronrod
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute the integral i=integral of f(x) over (a,b)
+	 c            where w(x) = cos(omega*x) or w(x)=sin(omega*x) and to
+	 c            compute j = integral of abs(f) over (a,b). for small value
+	 c            of omega or small intervals (a,b) the 15-point gauss-kronro
+	 c            rule is used. otherwise a generalized clenshaw-curtis
+	 c            method is used.
+	 c***description
+	 c
+	 c        integration rules for functions with cos or sin factor
+	 c        standard fortran subroutine
+	 c        double precision version
+	 c
+	 c        parameters
+	 c         on entry
+	 c           f      - double precision
+	 c                    function subprogram defining the integrand
+	 c                    function f(x). the actual name for f needs to
+	 c                    be declared e x t e r n a l in the calling program.
+	 c
+	 c           a      - double precision
+	 c                    lower limit of integration
+	 c
+	 c           b      - double precision
+	 c                    upper limit of integration
+	 c
+	 c           omega  - double precision
+	 c                    parameter in the weight function
+	 c
+	 c           integr - integer
+	 c                    indicates which weight function is to be used
+	 c                       integr = 1   w(x) = cos(omega*x)
+	 c                       integr = 2   w(x) = sin(omega*x)
+	 c
+	 c           nrmom  - integer
+	 c                    the length of interval (a,b) is equal to the length
+	 c                    of the original integration interval divided by
+	 c                    2**nrmom (we suppose that the routine is used in an
+	 c                    adaptive integration process, otherwise set
+	 c                    nrmom = 0). nrmom must be zero at the first call.
+	 c
+	 c           maxp1  - integer
+	 c                    gives an upper bound on the number of chebyshev
+	 c                    moments which can be stored, i.e. for the
+	 c                    intervals of lengths abs(bb-aa)*2**(-l),
+	 c                    l = 0,1,2, ..., maxp1-2.
+	 c
+	 c           ksave  - integer
+	 c                    key which is one when the moments for the
+	 c                    current interval have been computed
+	 c
+	 c         on return
+	 c           result - double precision
+	 c                    approximation to the integral i
+	 c
+	 c           abserr - double precision
+	 c                    estimate of the modulus of the absolute
+	 c                    error, which should equal or exceed abs(i-result)
+	 c
+	 c           neval  - integer
+	 c                    number of integrand evaluations
+	 c
+	 c           resabs - double precision
+	 c                    approximation to the integral j
+	 c
+	 c           resasc - double precision
+	 c                    approximation to the integral of abs(f-i/(b-a))
+	 c
+	 c         on entry and return
+	 c           momcom - integer
+	 c                    for each interval length we need to compute the
+	 c                    chebyshev moments. momcom counts the number of
+	 c                    intervals for which these moments have already been
+	 c                    computed. if nrmom.lt.momcom or ksave = 1, the
+	 c                    chebyshev moments for the interval (a,b) have
+	 c                    already been computed and stored, otherwise we
+	 c                    compute them and we increase momcom.
+	 c
+	 c           chebmo - double precision
+	 c                    array of dimension at least (maxp1,25) containing
+	 c                    the modified chebyshev moments for the first momcom
+	 c                    momcom interval lengths
+	 c
+	 c ......................................................................
+	 c***references  (none)
+	 c***routines called  d1mach,dgtsl,dqcheb,dqk15w,dqwgtf
+	 c***end prologue  dqc25f
+	 c
+     * @param a
+     * @param b
+     * @param omega
+     * @param nrmom
+     * @param ksave
+     * @param result
+     * @param abserr
+     * @param neval
+     * @param resabs
+     * @param resasc
+     */
+    private void dqc25f(DoubleDouble a, DoubleDouble b, DoubleDouble omega, int nrmom, int ksave, DoubleDouble result[],
+    		            DoubleDouble abserr[], int neval[], DoubleDouble resabs[], DoubleDouble resasc[]) {
+        // mid point of the integration variable
+    	DoubleDouble centr;
+    	
+    	// half-length of the integration interval
+    	DoubleDouble hlgth;
+    	
+    	// value of the function f at the points
+    	// (b-a)*0.5*cos(k*PI/12) + (b+a)*0.5, k = 0, ..., 24.
+    	DoubleDouble fval[] = new DoubleDouble[25];
+    	
+    	// coefficients of the chebyshev series expansion of degree 12,
+    	// for the function f, in the interval (a,b)
+    	DoubleDouble cheb12[] = new DoubleDouble[13];
+    	
+    	// coefficients of the chebyshev series expansion of degree 24,
+    	// for the function f, in the interval (a,b)
+    	DoubleDouble cheb24[] = new DoubleDouble[25];
+    	
+    	// approximation to the integral of 
+    	// cos(0.5*(b-a)*omega*x)*f(0.5*(b-a)*x+0.5*(b+a))
+    	// over (-1,+1) using the chebyshev sereis expansion of degree 12
+    	DoubleDouble resc12;
+    	
+    	// approximation to the same integral, using the 
+    	// chebyshev seies expansion of degree 24
+    	DoubleDouble resc24;
+    	
+    	// the analogue of resc12 for the sine
+    	DoubleDouble ress12;
+    	
+    	// the analogue of resc24 for the sine
+    	DoubleDouble ress24;
+    	
+    	/** Values cos(k*PI/24) k = 1, ..., 11 to be used for the chebyshev series expansion of f */
+        DoubleDouble x[] = new DoubleDouble[11];
+    	
+    	DoubleDouble d[] = new DoubleDouble[25];
+    	DoubleDouble d1[] = new DoubleDouble[25];
+    	DoubleDouble d2[] = new DoubleDouble[25];
+    	DoubleDouble v[] = new DoubleDouble[28];
+    	DoubleDouble vp[];
+    	
+    	DoubleDouble ac;
+    	DoubleDouble an;
+    	DoubleDouble an2;
+    	DoubleDouble as;
+    	DoubleDouble asap;
+    	DoubleDouble ass;
+    	DoubleDouble conc;
+    	DoubleDouble cons;
+    	DoubleDouble cospar;
+    	DoubleDouble estc;
+    	DoubleDouble ests;
+    	DoubleDouble parint;
+    	DoubleDouble par2;
+    	DoubleDouble par22;
+    	DoubleDouble sinpar;
+    	
+    	int i;
+    	int iers[] = new int[1];
+    	int isym;
+    	int j;
+    	int k;
+    	int m = 0;
+    	int noequ = 0;
+    	int noeq1 = 0;
+    	
+    	for (k = 1; k <= 11; k++) {
+            x[k-1] = (((DoubleDouble.valueOf((double)k)).multiply(DoubleDouble.PI)).divide(DoubleDouble.valueOf(24.0))).cos();	
+        }
+    	
+    	centr = (DoubleDouble.valueOf(0.5)).multiply(b.add(a));
+    	hlgth = (DoubleDouble.valueOf(0.5)).multiply(b.subtract(a));
+    	parint = omega.multiply(hlgth);
+    	
+    	// Compute the integral using the 15-point gauss-kronrod
+    	// formula if the value of the parameter in the integrand
+    	// is small
+    	
+    	if ((parint.abs()).le(DoubleDouble.valueOf(2.0))) {
+    		dqk15w(omega, integr, a, b, result, abserr, resabs, resasc);
+    		neval[0] = 15;
+    		return;
+    	} // if (Math.abw(parint) <= 2.0)
+    	
+    	// Compute the integral using the generalized clenshaw-curtis method.
+    	
+    	conc = hlgth.multiply((centr.multiply(omega)).cos());
+    	cons = hlgth.multiply((centr.multiply(omega)).sin());
+    	neval[0] = 25;
+    	
+    	// Check whether the chebyshev moments for this interval
+    	// have already been computed.
+    	
+    	if ((nrmom >= momcom) && (ksave != 1)) {
+    		
+    		// Compute a new set of chebyshev moments
+    		
+    		m = momcom + 1;
+    		par2 = parint.multiply(parint);
+    		par22 = par2.add(DoubleDouble.valueOf(2.0));
+    		sinpar = parint.sin();
+    		cospar = parint.cos();
+    		
+    		// Compute the chebyshev moments with respect to cosine.
+    		
+    	    v[0] = ((DoubleDouble.valueOf(2.0)).multiply(sinpar)).divide(parint);
+    	    v[1] = (((DoubleDouble.valueOf(8.0)).multiply(cospar))
+    	    		.add(((par2.add(par2)).subtract(DoubleDouble.valueOf(8.0))).multiply(sinpar)).divide(parint)).divide(par2);
+    	    v[2] = ((((DoubleDouble.valueOf(32.0)).multiply(par2.subtract(DoubleDouble.valueOf(12.0)))).
+    	    		multiply(cospar)).add((DoubleDouble.valueOf(2.0)).multiply(((par2.subtract(DoubleDouble.valueOf(80.0))).
+    	    				multiply(par2)).add(DoubleDouble.valueOf(192.0))).multiply(sinpar)).divide(parint)).divide(par2.multiply(par2));
+    	    ac = (DoubleDouble.valueOf(8.0)).multiply(cospar);
+    	    as = ((DoubleDouble.valueOf(24.0)).multiply(parint)).multiply(sinpar);
+    	    if ((parint.abs()).le(DoubleDouble.valueOf(24.0))) {
+    	    	
+    	        // compute the chebyshev moments as the solutions of a
+    	        // boundary value problem with 1 initial value (v(3)) and 1
+    	    	// end value (computed using an asymptotic formula).
+ 
+    	    	noequ = 25;
+    	    	noeq1 = noequ-1;
+    	    	an = DoubleDouble.valueOf(6.0);
+    	    	for (k = 0; k < noeq1; k++) {
+    	    	    an2 = an.multiply(an);
+    	    	    d[k] = (((DoubleDouble.valueOf(2.0)).multiply(an2.subtract(DoubleDouble.valueOf(4.0)))).
+    	    	    		multiply((par22.subtract(an2)).subtract(an2))).negate();
+    	    	    d2[k] = ((an.subtract(DoubleDouble.valueOf(1.0))).multiply(an.subtract(DoubleDouble.valueOf(2.0)))).multiply(par2);
+    	    	    d1[k+1] = ((an.add(DoubleDouble.valueOf(3.0))).multiply(an.add(DoubleDouble.valueOf(4.0)))).multiply(par2);
+    	    	    v[k+3] = as.subtract((an2.subtract(DoubleDouble.valueOf(4.0))).multiply(ac));
+    	    	    an = an.add(DoubleDouble.valueOf(2.0));
+    	    	} // for (k = 0; k < noeq1; k++)
+    	    	an2 = an.multiply(an);
+    	    	d[noequ-1] = (((DoubleDouble.valueOf(2.0)).multiply(an2.subtract(DoubleDouble.valueOf(4.0)))).
+    	    			multiply((par22.subtract(an2)).subtract(an2))).negate();
+    	    	v[noequ+2] = as.subtract((an2.subtract(DoubleDouble.valueOf(4.0))).multiply(ac));
+    	    	v[3] = v[3].subtract(((DoubleDouble.valueOf(56.0)).multiply(par2)).multiply(v[2]));
+    	    	ass = parint.multiply(sinpar);
+    	    	asap = ((((((((((((DoubleDouble.valueOf(210.0)).multiply(par2)).subtract(DoubleDouble.valueOf(1.0)))
+    	    			.multiply(cospar)).subtract((DoubleDouble.valueOf(105.0)).multiply(par2))
+     	    	       .subtract(DoubleDouble.valueOf(63.0))).multiply(ass)).divide(an2))
+     	    	       .subtract(((DoubleDouble.valueOf(1.0)).subtract((DoubleDouble.valueOf(15.0)).multiply(par2))).multiply(cospar))
+     	    	       .add((DoubleDouble.valueOf(15.0)).multiply(ass))).divide(an2)).subtract(cospar)
+     	    	       .add((DoubleDouble.valueOf(3.0)).multiply(ass))).divide(an2)).subtract(cospar)).divide(an2);
+    	    	v[noequ+2] = v[noequ+2].subtract((((((DoubleDouble.valueOf(2.0)).multiply(asap)).multiply(par2))
+    	    			.multiply(an.subtract(DoubleDouble.valueOf(1.0))))).multiply(an.subtract(DoubleDouble.valueOf(2.0))));
+    	    	
+    	    	// solve the tridiagonal system by means of gaussian
+    	    	// elimination with partial pivoting.
+    	    	vp = new DoubleDouble[25];
+    	    	for (i = 0; i < 25; i++) {
+    	    		vp[i] = (DoubleDouble)v[i+3].clone();
+    	    	}
+    	    	dgtsl(noequ,d1,d,d2,vp,iers);
+    	    	for (i = 0; i < 25; i++) {
+    	    		v[i+3] = (DoubleDouble)vp[i].clone();
+    	    	}
+    	    } // if (Math.abs(parint) <= 24.0)
+    	    else { // Math.abs(parint) > 24.0
+    	    	
+    	        // compute the chebyshev moments by means of forward recursion.
+    	    	
+    	        an = DoubleDouble.valueOf(4.0);
+    	    	for (i = 3; i < 13; i++) {
+    	    	    an2 = an.multiply(an);
+    	    	    v[i] = (((an2.subtract(DoubleDouble.valueOf(4.0))).multiply((((DoubleDouble.valueOf(2.0))
+    	    	    		.multiply((par22.subtract(an2)).subtract(an2))).multiply(v[i-1])).subtract(ac))
+    	    	           .add(as)).subtract(((par2.multiply(an.add(DoubleDouble.valueOf(1.0))))
+    	    	        		   .multiply(an.add(DoubleDouble.valueOf(2.0)))).multiply(v[i-2]))).divide
+    	    	          ((par2.multiply(an.subtract(DoubleDouble.valueOf(1.0)))).multiply(an.subtract(DoubleDouble.valueOf(2.0))));
+    	    	    an = an.add(DoubleDouble.valueOf(2.0));
+    	    	} // for (i = 3; i < 13; i++)	
+    	    } // else Math.abs(parint) > 24.0)
+    	    for (j = 1; j <= 13; j++) {
+    	    	chebmo[m-1][2*j-2] = v[j-1];
+    	    }
+    	    
+    	    // Compute the chebyshev moments with respect to sine
+    	    
+    	    v[0] = ((DoubleDouble.valueOf(2.0)).multiply(sinpar.subtract(parint.multiply(cospar)))).divide(par2);
+    	    v[1] = ((((DoubleDouble.valueOf(18.0)).subtract((DoubleDouble.valueOf(48.0)).divide(par2))).multiply(sinpar)).divide(par2))
+    	           .add((((DoubleDouble.valueOf(-2.0)).add((DoubleDouble.valueOf(48.0)).divide(par2))).multiply(cospar)).divide(parint));
+    	    ac = ((DoubleDouble.valueOf(-24.0)).multiply(parint)).multiply(cospar);
+    	    as = (DoubleDouble.valueOf(-8.0)).multiply(sinpar);
+    	    if ((parint.abs()).le(DoubleDouble.valueOf(24.0))) {
+    	    	
+    	        // compute the chebyshev moments as the solutions of a boundary
+    	    	// value problem with 1 initial value (v[1]) and 1 end value
+    	    	// (computed using an asymptotic formula).
+    	    	
+    	    	an = DoubleDouble.valueOf(5.0);
+    	    	for (k = 0; k < noeq1; k++) {
+    	    	    an2 = an.multiply(an);
+    	    	    d[k] = ((DoubleDouble.valueOf(-2.0)).multiply(an2.subtract(DoubleDouble.valueOf(4.0)))).multiply((par22.subtract(an2)).subtract(an2));
+    	    	    d2[k] = ((an.subtract(DoubleDouble.valueOf(1.0))).multiply(an.subtract(DoubleDouble.valueOf(2.0)))).multiply(par2);
+    	    	    d1[k+1] = ((an.add(DoubleDouble.valueOf(3.0))).multiply(an.add(DoubleDouble.valueOf(4.0)))).multiply(par2);
+    	    	    v[k+2] = ac.add((an2.subtract(DoubleDouble.valueOf(4.0))).multiply(as));
+    	    	    an = an.add(DoubleDouble.valueOf(2.0));
+    	    	} // for (k = 0; k < noeq1; k++)
+    	    	an2 = an.multiply(an);
+    	    	d[noequ-1] = ((DoubleDouble.valueOf(-2.0)).multiply(an2.subtract(DoubleDouble.valueOf(4.0)))).multiply((par22.subtract(an2)).subtract(an2));
+    	    	v[noequ+1] = ac.add((an2.subtract(DoubleDouble.valueOf(4.0))).multiply(as));
+    	    	v[2] = v[2].subtract(((DoubleDouble.valueOf(42.0)).multiply(par2)).multiply(v[1]));
+    	    	ass = parint.multiply(cospar);
+    	    	asap = (((((((((((DoubleDouble.valueOf(105.0)).multiply(par2)).subtract(DoubleDouble.valueOf(63.0)))
+    	    			.multiply(ass)).add(((DoubleDouble.valueOf(210.0)).multiply(par2))
+    	    	       .subtract(DoubleDouble.valueOf(1.0))).multiply(sinpar)).divide(an2))
+    	    	       .add(((DoubleDouble.valueOf(15.0)).multiply(par2)).subtract(DoubleDouble.valueOf(1.0))).multiply(sinpar).subtract
+    	    	       ((DoubleDouble.valueOf(15.0)).multiply(ass))).divide(an2)).subtract((DoubleDouble.valueOf(3.0))
+    	    	        .multiply(ass)).subtract(sinpar)).divide(an2)).subtract(sinpar)).divide(an2);
+    	    	v[noequ+1] = v[noequ+1].subtract(((((DoubleDouble.valueOf(2.0)).multiply(asap)).multiply(par2))
+    	    			.multiply(an.subtract(DoubleDouble.valueOf(1.0)))).multiply(an.subtract(DoubleDouble.valueOf(2.0))));
+    	    	
+    	    	// solve the tridiagonal system by means of gaussian
+    	    	// elimination with partial pivoting.
+    	    	
+    	    	vp = new DoubleDouble[26];
+    	    	for (i = 0; i < 26; i++) {
+    	    		vp[i] = (DoubleDouble)v[i+2].clone();
+    	    	}
+    	    	dgtsl(noequ,d1,d,d2,vp,iers);
+    	    	for (i = 0; i < 26; i++) {
+    	    		v[i+2] = (DoubleDouble)vp[i].clone();
+    	    	}
+    	    } // if (Math.abs(parint) <= 24.0)
+    	    else { // Math.abs(parint) > 24.0
+    	    	
+    	        // compute the chebyshev moments by means of forward recursion.
+    	    	
+    	    	an = DoubleDouble.valueOf(3.0);
+    	        for (i = 2; i < 12; i++) {
+    	    	    an2 = an.multiply(an);
+    	    	    v[i] = (((an2.subtract(DoubleDouble.valueOf(4.0))).multiply((((DoubleDouble.valueOf(2.0))
+    	    	    		.multiply((par22.subtract(an2)).subtract(an2))).multiply(v[i-1])).add(as))
+    	    	           .add(ac)).subtract(((par2.multiply(an.add(DoubleDouble.valueOf(1.0))))
+    	    	        		   .multiply(an.add(DoubleDouble.valueOf(2.0)))).multiply(v[i-2])))
+    	    	           .divide((par2.multiply(an.subtract(DoubleDouble.valueOf(1.0)))).multiply(an.subtract(DoubleDouble.valueOf(2.0))));
+    	    	    an = an.add(DoubleDouble.valueOf(2.0));
+    	        } // for (i = 2; i < 12; i++)	
+    	    } // else Math.abs(parint) > 24.0
+    	    for (j = 1; j <= 12; j++) {
+    	    	chebmo[m-1][2*j-1] = (DoubleDouble)v[j-1].clone();
+    	    }
+    	} // if ((nrmom >= momcom) && (ksave != 1)
+    	if (nrmom < momcom) {
+    		m = nrmom + 1;
+    	}
+    	if ((momcom < (maxp1-1)) && (nrmom >= momcom)) {
+    		momcom = momcom + 1;
+    	}
+    	
+    	// compute the coefficients of the chebyshev expansions
+    	// of degrees 12 and 24 of the function f.
+    	
+        if (selfTest) {
+    	    fval[0] = (DoubleDouble.valueOf(0.5)).multiply(intFuncTest(centr.add(hlgth)));
+    	    fval[12] = intFuncTest(centr);
+    	    fval[24] = (DoubleDouble.valueOf(0.5)).multiply(intFuncTest(centr.subtract(hlgth)));
+    	    for (i = 2; i <= 12; i++) {
+    	        isym = 26-i;
+    	        fval[i-1] = intFuncTest((hlgth.multiply(x[i-2])).add(centr));
+    	        fval[isym-1] = intFuncTest(centr.subtract(hlgth.multiply(x[i-2])));
+    	    } // for (i = 2; i <= 12; i++)
+        } // if (selfTest)
+        else {
+        	fval[0] = (DoubleDouble.valueOf(0.5)).multiply(intFunc(centr.add(hlgth)));
+    	    fval[12] = intFunc(centr);
+    	    fval[24] = (DoubleDouble.valueOf(0.5)).multiply(intFunc(centr.subtract(hlgth)));
+    	    for (i = 2; i <= 12; i++) {
+    	        isym = 26-i;
+    	        fval[i-1] = intFunc((hlgth.multiply(x[i-2])).add(centr));
+    	        fval[isym-1] = intFunc(centr.subtract(hlgth.multiply(x[i-2])));
+    	    } // for (i = 2; i <= 12; i++)	
+        }
+        dqcheb(x,fval,cheb12,cheb24);
+    	
+    	// compute the integral and error estimates.
+    	
+        resc12 = cheb12[12].multiply(chebmo[m-1][12]);
+    	ress12 = DoubleDouble.valueOf(0.0);
+    	k = 11;
+    	for (j = 1; j <= 6; j++) {
+    	    resc12 = resc12.add(cheb12[k-1].multiply(chebmo[m-1][k-1]));
+    	    ress12 = ress12.add(cheb12[k].multiply(chebmo[m-1][k]));
+    	    k = k-2;
+    	} // for (j = 1; j <= 6; j++)
+    	resc24 = cheb24[24].multiply(chebmo[m-1][24]);
+    	ress24 = DoubleDouble.valueOf(0.0);
+    	resabs[0] = cheb24[24].abs();
+    	k = 23;
+    	for (j = 1; j <= 12; j++) {
+    	    resc24 = resc24.add(cheb24[k-1].multiply(chebmo[m-1][k-1]));
+    	    ress24 = ress24.add(cheb24[k].multiply(chebmo[m-1][k]));
+    	    resabs[0] = (cheb24[k-1].abs()).add(cheb24[k].abs());
+    	    k = k-2;
+    	} // for (j = 1; j <= 12; j++)
+    	estc = (resc24.subtract(resc12)).abs();
+    	ests = (ress24.subtract(ress12)).abs();
+    	resabs[0] = resabs[0].multiply(hlgth.abs());
+    	if(integr == 1) {
+    	    result[0] = (conc.multiply(resc24)).subtract(cons.multiply(ress24));
+    	    abserr[0] = ((conc.multiply(estc)).abs()).add((cons.multiply(ests)).abs());
+    	}
+    	else {
+    	    result[0] = (conc.multiply(ress24)).add(cons.multiply(resc24));
+    	    abserr[0] = ((conc.multiply(ests)).abs()).add((cons.multiply(estc)).abs());
+    	}
+    	return;
+    } // dqc25f
     
     /**
      * This is a port of the original FORTRAN whose header is given below:
@@ -4650,7 +6038,7 @@ loop:
 	 c                       approximation to the integral of abs(f-i/(b-a))
 	 c
      * @param p1
-     * @param p2
+     * @param kp
      * @param a
      * @param b
      * @param result
@@ -4658,7 +6046,7 @@ loop:
      * @param resabs
      * @param resasc
      */
-    private void dqk15w(DoubleDouble p1, DoubleDouble a, DoubleDouble b,
+    private void dqk15w(DoubleDouble p1, int kp, DoubleDouble a, DoubleDouble b,
     		DoubleDouble[] result, DoubleDouble[] abserr, DoubleDouble[] resabs, DoubleDouble[] resasc) {
     	/** The abscissa and weights are given for the interval (-1,1).
     	 * Because of symmetry only the positive abscissae and their
@@ -4724,12 +6112,32 @@ loop:
         
         // Compute the 15-point kronrod approximation to the
         // integral, and estimate the error.
-        if (selfTest) {
-        	fc = intFuncTest(centr).divide(centr.subtract(p1));
-        }
-        else {
-        	fc = intFunc(centr).divide(centr.subtract(p1));
-        }
+        if (routine == DQAWCE) {
+	        if (selfTest) {
+	        	fc = intFuncTest(centr).divide(centr.subtract(p1));
+	        }
+	        else {
+	        	fc = intFunc(centr).divide(centr.subtract(p1));
+	        }
+        } // if (routine == DQAWCE)
+        else { // routine == DQAWOE
+	        if (kp == 1) {
+	            if (selfTest) {
+	   	            fc = intFuncTest(centr).multiply((centr.multiply(p1)).cos());
+	   	        }
+	   	        else {
+	   	        	fc = intFunc(centr).multiply((centr.multiply(p1)).cos());
+	   	        }   
+            } // if (kp == 1)
+           else { // kp == 2
+        	   if (selfTest) {
+	   	            fc = intFuncTest(centr).multiply((centr.multiply(p1)).sin());
+	   	        }
+	   	        else {
+	   	        	fc = intFunc(centr).multiply((centr.multiply(p1)).sin());
+	   	        }          
+           } // else kp == 2
+        } // else routine == DQAWOE
         resg = wg[3].multiply(fc);
         resk = wgk[7].multiply(fc);
         resabs[0] = resk.abs();
@@ -4738,14 +6146,38 @@ loop:
         	absc = hlgth.multiply(xgk[jtw-1]);
         	absc1 = centr.subtract(absc);
         	absc2 = centr.add(absc);
-        	if (selfTest) {
-        		fval1 = intFuncTest(absc1).divide(absc1.subtract(p1));
-        		fval2 = intFuncTest(absc2).divide(absc2.subtract(p1));
-        	}
-        	else {
-        		fval1 = intFunc(absc1).divide(absc1.subtract(p1));
-        		fval2 = intFunc(absc2).divide(absc2.subtract(p1));
-        	}
+        	if (routine == DQAWCE) {
+        		if (selfTest) {
+            		fval1 = intFuncTest(absc1).divide(absc1.subtract(p1));
+            		fval2 = intFuncTest(absc2).divide(absc2.subtract(p1));
+            	}
+            	else {
+            		fval1 = intFunc(absc1).divide(absc1.subtract(p1));
+            		fval2 = intFunc(absc2).divide(absc2.subtract(p1));
+            	}
+        	} // if (routine == DQAWCE)
+        	else { // routine == DQAWOE
+        	    if (kp == 1) {
+        	    	if (selfTest) {
+    	        		fval1 = intFuncTest(absc1).multiply((absc1.multiply(p1)).cos());
+    	        		fval2 = intFuncTest(absc2).multiply((absc2.multiply(p1)).cos());
+    	        	}
+    	        	else {
+    	        		fval1 = intFunc(absc1).multiply((absc1.multiply(p1)).cos());
+    	        		fval2 = intFunc(absc2).multiply((absc2.multiply(p1)).cos());
+    	        	}	
+        	    } // if (kp == 1)
+        	    else { // kp == 2
+        	    	if (selfTest) {
+    	        		fval1 = intFuncTest(absc1).multiply((absc1.multiply(p1)).sin());
+    	        		fval2 = intFuncTest(absc2).multiply((absc2.multiply(p1)).sin());
+    	        	}
+    	        	else {
+    	        		fval1 = intFunc(absc1).multiply((absc1.multiply(p1)).sin());
+    	        		fval2 = intFunc(absc2).multiply((absc2.multiply(p1)).sin());
+    	        	}		
+        	    }
+        	} // else routine == DQAWOE
         	fv1[jtw-1] = (DoubleDouble)fval1.clone();
         	fv2[jtw-1] = (DoubleDouble)fval2.clone();
         	fsum = fval1.add(fval2);
@@ -4758,14 +6190,38 @@ loop:
         	absc = hlgth.multiply(xgk[jtwm1-1]);
         	absc1 = centr.subtract(absc);
         	absc2 = centr.add(absc);
-        	if (selfTest) {
-        		fval1 = intFuncTest(absc1).divide(absc1.subtract(p1));
-        		fval2 = intFuncTest(absc2).divide(absc2.subtract(p1));
-        	}
-        	else {
-        		fval1 = intFunc(absc1).divide(absc1.subtract(p1));
-        		fval2 = intFunc(absc2).divide(absc2.subtract(p1));
-        	}
+        	if (routine == DQAWCE) {
+        		if (selfTest) {
+            		fval1 = intFuncTest(absc1).divide(absc1.subtract(p1));
+            		fval2 = intFuncTest(absc2).divide(absc2.subtract(p1));
+            	}
+            	else {
+            		fval1 = intFunc(absc1).divide(absc1.subtract(p1));
+            		fval2 = intFunc(absc2).divide(absc2.subtract(p1));
+            	}
+        	} // if (routine == DQAWCE)
+        	else { // routine == DQAWOE
+        	    if (kp == 1) {
+        	    	if (selfTest) {
+    	        		fval1 = intFuncTest(absc1).multiply((absc1.multiply(p1)).cos());
+    	        		fval2 = intFuncTest(absc2).multiply((absc2.multiply(p1)).cos());
+    	        	}
+    	        	else {
+    	        		fval1 = intFunc(absc1).multiply((absc1.multiply(p1)).cos());
+    	        		fval2 = intFunc(absc2).multiply((absc2.multiply(p1)).cos());
+    	        	}	
+        	    } // if (kp == 1)
+        	    else { // kp == 2
+        	    	if (selfTest) {
+    	        		fval1 = intFuncTest(absc1).multiply((absc1.multiply(p1)).sin());
+    	        		fval2 = intFuncTest(absc2).multiply((absc2.multiply(p1)).sin());
+    	        	}
+    	        	else {
+    	        		fval1 = intFunc(absc1).multiply((absc1.multiply(p1)).sin());
+    	        		fval2 = intFunc(absc2).multiply((absc2.multiply(p1)).sin());
+    	        	}		
+        	    }
+        	} // else routine == DQAWOE
         	fv1[jtwm1 - 1] = (DoubleDouble)fval1.clone();
         	fv2[jtwm1 - 1] = (DoubleDouble)fval2.clone();
         	fsum = fval1.add(fval2);
