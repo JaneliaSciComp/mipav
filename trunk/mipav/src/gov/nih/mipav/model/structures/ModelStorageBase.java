@@ -6,6 +6,8 @@ import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.FileInfoBase;
 
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.Preferences.ComplexDisplay;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -959,6 +961,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
                             : ( (dimExtents.length > 0) ? dimExtents[0] : 1));
 
             final boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
+            if(exportComplex && (Preferences.getComplexDisplay() != ComplexDisplay.APLUSBI || 
+                                    Preferences.getComplexDisplay() != ComplexDisplay.REITHETA)) {
+                Preferences.debug("MIPAV will only display the magnitude of this complex data because the buffer has not been set.", Preferences.DEBUG_FILEIO);
+            }
             double real, imaginary, mag;
 
             /* loop over the 2D image (values) we're writing into */

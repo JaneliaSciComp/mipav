@@ -4631,11 +4631,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     protected int[] createBuffers() throws OutOfMemoryError {
         final int[] extents = ViewJFrameBase.initExtents(imageA);
 
-        imageBufferA = ViewJFrameBase.initImageBuffer(extents, imageA.isColorImage());
+        imageBufferA = ViewJFrameBase.initImageBuffer(extents, imageA.isColorImage(), imageA.getType());
         pixBuffer = ViewJFrameBase.initPixelBuffer(extents);
 
         if (imageB != null) {
-            imageBufferB = ViewJFrameBase.initImageBuffer(imageB.getExtents(), imageB.isColorImage());
+            imageBufferB = ViewJFrameBase.initImageBuffer(imageB.getExtents(), imageB.isColorImage(), imageB.getType());
             pixBufferB = ViewJFrameBase.initPixelBuffer(imageB.getExtents());
         }
 
