@@ -7,11 +7,11 @@ import gov.nih.mipav.view.*;
  * This is a port of FORTRAN numerical integration routines in QUADPACK found at http://www.netlib.org/quadpack
  * Reference: R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner Quadpack: a Subroutine Package for Automatic
  * Integration Springer Verlag, 1983. Series in Computational Mathematics v. 1
- * The original dqage, dqagie, dqagpe, dqagse, dqawce, and dqawoe routines were written by Robert Piessens and Elise de Doncker.
+ * The original dqage, dqagie, dqagpe, dqagse, dqawce, dqawoe, adn dqawse routines were written by Robert Piessens and Elise de Doncker.
  * The original dqng routine was written by Robert Piessens and Elise de Doncker and modified by David Kahaner.
- * The original dqc25c, dqc25f, dqcheb, dqelg, dqk15, dqk15i, dqk15w, dqk21, dqk31, dqk41, dqk51, dqk61, dqpsrt, dqwgtc, and dqwgtf  
- * routines were written by Robert Piessens and Elise de Doncker.
- * The simple contents of dqwgtc and dqwgtf are incorporated into dqk15w.
+ * The original dqc25c, dqc25f, dqc25s, dqcheb, dqelg, dqk15, dqk15i, dqk15w, dqk21, dqk31, dqk41, dqk51, dqk61, dqmomo,
+ * dqpsrt, dqwgtc, dqwgtf, and dqwgts routines were written by Robert Piessens and Elise de Doncker.
+ * The simple contents of dqwgtc, dqwgtf, and dqwgts are incorporated into dqk15w.
  * The linpack routine dgtsl was written by Jack Dongarra of the Argonne National Laboratory.
  * Self tests 1 to 15 come from quadpack_prb.f90 by John Burkardt.
  * The names of the copyright holders or contributors may not be used to endorse
@@ -169,14 +169,30 @@ public abstract class Integration2 {
     
     /** Automatic integrator, integrand with oscillatory cosine or sine factor */
     protected static final int DQAWOE = 13;
+    
+    /** Adaptive integrator for integrands with algebraic or logarithmic singularities at endpoints. */
+    protected static final int DQAWSE = 14;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Estimate of the absolute value of the error, which should equal or exceed abs(actual integral - result). */
     private double[] abserr = new double[1];
+    
+    /**
+     * parameter in the weight function, alfa.gt.(-1)
+     * if alfa.le.(-1), the routine will end with errorStatus = 6.
+     */
+    private double alfa;
 
     /** The left end points of the subintervals in the partition of the given integration range (lower, upper). */
     private double[] alist;
+    
+    /**
+     * parameter in the weight function, beta.gt.(-1)
+     * if beta.le.(-1), the routine will end with errorStatus = 6.
+     */
+    private double beta;
+
 
     /** The right end points of the subintervals in the partition of the given integration range (lower, upper). */
     private double[] blist;
@@ -273,12 +289,22 @@ c                     if icall.lt.1, the routine will end with ier = 6.
      */
     private int inf;
     
-    /** indicates which of the weight functions is to be
-c                     used
-c                     integr = 1      w(x) = cos(omega*x)
-c                     integr = 2      w(x) = sin(omega*x)
-c                     if integr.ne.1 and integr.ne.2, the routine
-c                     will end with ier = 6. */
+    /** 
+     * With dqawoe:
+     * indicates which of the weight functions is to be used
+       integr = 1      w(x) = cos(omega*x)
+       integr = 2      w(x) = sin(omega*x)
+       if integr.ne.1 and integr.ne.2, the routine
+       will end with ier = 6. 
+       With dqawse:
+       indicates which weight function is to be used
+       = 1  (x-lower)**alfa*(upper-x)**beta
+       = 2  (x-lower)**alfa*(upper-x)**beta*log(x-lower)
+       = 3  (x-lower)**alfa*(upper-x)**beta*log(upper-x)
+       = 4  (x-lower)**alfa*(upper-x)**beta*log(x-lower)*log(upper-x)
+       if integr.lt.1 or integr.gt.4, the routine
+       will end with ier = 6.
+       */
     private int integr;
 
     /**
@@ -307,7 +333,8 @@ c                     will end with ier = 6. */
 
     /**
      * Gives an upper bound on the number of subintervals in the partition of lower, upper. In dqagpe limit must be >=
-     * npts2. If limit < npts2 in dqagpe, the routine exits with an error message.
+     * npts2. If limit < npts2 in dqagpe, the routine exits with an error message.  In dqawse limit must be >= 2. If
+     * limit < 2 in dqawse, the routine exits with errorStatus = 6.
      */
     private int limit;
 
@@ -449,6 +476,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         actualAnswer = Math.PI * realResult[0];
         limit = 100;
         
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
         if ((epsabs <= 0.0) && (epsrel < tol)) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
             errorStatus = 6;
@@ -547,6 +581,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         npts = npts2 - 2;
         actualAnswer = 61.0*Math.log(2.0) + 77.0*Math.log(7.0)/4.0 - 27.0;
         
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
         if (npts2 < 2) {
             MipavUtil.displayError("breakPoints array length must be >= 2");
             errorStatus = 6;
@@ -615,6 +656,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         limit = 100;
         actualAnswer = -4.0;
         
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
         if ((epsabs <= 0.0) && (epsrel < tol)) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
             errorStatus = 6;
@@ -661,6 +709,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         epsrel = 1.0E-3;
         limit = 100;
         actualAnswer = Math.log(125.0/631.0)/18.0;
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
         
         if ((c == lower) || (c == upper)) {
             MipavUtil.displayError("Cannot have c == lower or c == upper");
@@ -729,6 +784,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         double ci = gamma + Math.log(Math.PI) + Math.log(10.0) - cin;
         actualAnswer = -(gamma + Math.log(10.0*Math.PI) - ci)/(10.0* Math.PI);
         
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
         if ((epsabs <= 0.0) && (epsrel < tol)) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
             errorStatus = 6;
@@ -741,6 +803,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
             errorStatus = 6;
 
             return;
+        }
+        
+        if ((integr != 1) && (integr != 2)) {
+        	MipavUtil.displayError("integr must equal 1 or 2");
+        	errorStatus = 6;
+        	
+        	return;
         }
         
         if (icall < 1) {
@@ -771,6 +840,84 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
         
+        testCase = 8;
+        // test8 tests dwqawse
+        // dqawse is an adaptive integrator for integrands wiht
+        // algebraic or logarithmic singularities at the endpoints.
+        // ci is the cosine integral ci(x) = integral (x to infinity) -cos(v)/v dv
+        // Si is the sine integral Si(x) = integral (0 to x) sin(v)/v dv
+        // Actual answer = 0.5*(ci(1.0)*sin(1.0) - si(1.0)*cos(1.0)) - 0.5
+        // Actual answer = 0.5*(ci(1.0)*sin(1.0) - (Si(1.0) - pi/2.0)*cos(1.0)) - 0.5
+        lower = 0.0;
+        upper = 1.0;
+        routine = Integration2.DQAWSE;
+        epsabs = 0.0;
+        epsrel = 1.0E-3;
+        limit = 100;
+        alfa = 0.0;
+        beta = 0.0;
+        // Describes the integrand weight function
+        // integr = 2 means weight function is (x-lower)**alfa * (upper-x)**beta * log(x-lower)
+        integr = 2;
+        ci = 0.3374039229;
+        double Si = 0.9460830704;
+        actualAnswer = 0.5*(ci*Math.sin(1.0) - (Si - Math.PI/2.0)*Math.cos(1.0)) - 0.5;
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+
+        if (limit < 2) {
+            MipavUtil.displayError("limit must be >= 2");
+            errorStatus = 6;
+
+            return;
+        }
+        
+        if ((integr != 1) && (integr != 2)  && (integr != 3) && (integr != 4)) {
+        	MipavUtil.displayError("integr must equal 1, 2, 3, or 4");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        if (alfa <= -1.0) {
+        	MipavUtil.displayError("alfa must be > -1.0");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        if (beta <= -1.0) {
+        	MipavUtil.displayError("beta must be > -1.0");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 8 testing dqawse\n");
+        Preferences.debug("Integrand is log(x)/(1 + (log(x))**2)**2");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = 1.0\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + errorStatus +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        
         testCase = 9;
         // test9 tests dqk15
         // dqk15 is a Gauss-Kronod quadrature rule.
@@ -784,6 +931,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         // Exact error = -9.380313883194935E-5
         // resabs[0] = 0.44453824758327637
         // resasc[0] = 0.20176778110470117
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
         
         driver();
         
@@ -812,6 +966,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         // resabs[0] = 0.44448120174773076
         // resasc[0] = 0.20102031799671913
         
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
         driver();
         
         Preferences.debug("Test 10 testing dqk21\n");
@@ -838,6 +999,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         // Exact error = -1.2669793656661099E-5
         // resabs[0] = 0.4444571142381011
         // resasc[0] = 0.20044662305437475
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
         
         driver();
         
@@ -866,6 +1034,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         // resabs[0] = 0.4444502553565426
         // resasc[0] = 0.20065010692415908
         
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
         driver();
         
         Preferences.debug("Test 12 testing dqk41\n");
@@ -893,6 +1068,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         // resabs[0] = 0.4444476169318261
         // resasc[0] = 0.20079987986805534
         
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
         driver();
         
         Preferences.debug("Test 13 testing dqk51\n");
@@ -919,6 +1101,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         // Exact error = -1.920744892802695E-6
         // resabs[0] = 0.4444463651893372
         // resasc[0] = 0.2006334575268779
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
         
         driver();
         
@@ -950,6 +1139,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         epsrel = 1.0E-3;
         actualAnswer = -4.0/9.0;
         
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
         if ((epsabs <= 0.0) && (epsrel < tol)) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
             errorStatus = 6;
@@ -980,6 +1176,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         epsabs = 0.0;
         epsrel = 1.0E-3;
         limit = 100;
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
         
         npts2 = breakPoints.length;
         npts = npts2 - 2;
@@ -1089,6 +1292,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
             MipavUtil.displayError("routine must be DQAGSE with this constructor");
 
             return;
+        }
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
         }
 
         this.epsabs = epsabs;
@@ -1207,6 +1417,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
 
             return;
         }
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
 
         this.epsabs = epsabs;
         this.epsrel = epsrel;
@@ -1269,6 +1486,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
             return;
         }
         
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
         if ((c == lower) || (c == upper)) {
             MipavUtil.displayError("Cannot have c == lower or c == upper");
             errorStatus = 6;
@@ -1311,6 +1535,19 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         }
     }
     
+    /**
+     * Constructor must be used with routine dqawoe
+     * @param lower
+     * @param upper
+     * @param routine
+     * @param omega
+     * @param integr
+     * @param epsabs
+     * @param epsrel
+     * @param limit
+     * @param icall
+     * @param maxp1
+     */
     public Integration2(double lower, double upper, int routine, double omega, int integr, double epsabs, 
     		            double epsrel, int limit, int icall, int maxp1) {
     	double neweps;
@@ -1324,6 +1561,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
             MipavUtil.displayError("routine must be DQAWOE with this constructor");
 
             return;
+        }
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
         }
         
         this.omega = omega;
@@ -1388,6 +1632,100 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         	return;
         }
     }
+    
+    /**
+     * This constructor must be used with routine DQAWSE.
+     * @param lower
+     * @param upper
+     * @param routine
+     * @param alfa
+     * @param beta
+     * @param integr
+     * @param epsabs
+     * @param epsrel
+     * @param limit
+     */
+    public Integration2(double lower, double upper, int routine, double alfa, double beta, int integr, double epsabs, 
+            double epsrel, int limit) {
+    	double neweps;
+        double tol;
+
+        this.lower = lower;
+        this.upper = upper;
+        this.routine = routine;
+
+        if (routine != DQAWSE) {
+            MipavUtil.displayError("routine must be DQAWSE with this constructor");
+
+            return;
+        }
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        this.alfa = alfa;
+        if (alfa <= -1.0) {
+        	MipavUtil.displayError("alfa must be > -1.0");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        this.beta = beta;
+        if (beta <= -1.0) {
+        	MipavUtil.displayError("beta must be > -1.0");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        this.integr = integr;
+        if ((integr != 1) && (integr != 2)  && (integr != 3) && (integr != 4)) {
+        	MipavUtil.displayError("integr must equal 1, 2, 3, or 4");
+        	errorStatus = 6;
+        	
+        	return;
+        }
+        
+        this.epsabs = epsabs;
+        this.epsrel = epsrel;
+
+        epmach = 1.0;
+        neweps = 1.0;
+
+        while (true) {
+
+            if (1.0 == (1.0 + neweps)) {
+                break;
+            } else {
+                epmach = neweps;
+                neweps = neweps / 2.0;
+            }
+        }
+
+        tol = Math.max(50.0 * epmach, 5.0E-29);
+
+        if ((epsabs <= 0.0) && (epsrel < tol)) {
+            MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
+            errorStatus = 6;
+
+            return;
+        }
+
+        this.limit = limit;
+
+        if (limit <  2) {
+            MipavUtil.displayError("Must set limit >= 2");
+            errorStatus = 6;
+
+            return;
+        }
+    
+    }
 
 
     /**
@@ -1414,6 +1752,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
             MipavUtil.displayError("routine must be DQAGPE with this constructor");
 
             return;
+        }
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
         }
 
         this.breakPoints = breakPoints;
@@ -1503,6 +1848,13 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
 
             return;
         }
+        
+        if (upper <= lower) {
+        	MipavUtil.displayError("upper must be > than lower");
+        	errorStatus = 6;
+        	
+        	return;
+        }
 
         this.key = key;
         this.epsabs = epsabs;
@@ -1554,6 +1906,8 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
     
     private double intFuncTest(double x) {
         double function = 0.0;
+        double lg;
+        double var;
         switch (testCase) {
         case 1:
         	function = Math.cos(100.0 * Math.sin(x));
@@ -1576,6 +1930,16 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         	}
         	else {
         		function = Math.log(x);
+        	}
+        	break;
+        case 8:
+        	if (x <= 0.0) {
+        		function = 0.0;
+        	}
+        	else {
+                lg = Math.log(x);
+                var = 1.0 + lg * lg;
+                function = 1.0/(var * var);    
         	}
         	break;
         case 9:
@@ -2965,6 +3329,10 @@ loop:
             	
             case DQAWOE:
             	dqawoe();
+            	break;
+            	
+            case DQAWSE:
+            	dqawse();
             	break;
                 
             case DQK15:
@@ -4787,6 +5155,291 @@ loop:
     
     /**
      * This is the port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqawse
+	 c***date written   800101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a2a1
+	 c***keywords  automatic integrator, special-purpose,
+	 c             algebraico-logarithmic end point singularities,
+	 c             clenshaw-curtis method
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  the routine calculates an approximation result to a given
+	 c            definite integral i = integral of f*w over (a,b),
+	 c            (where w shows a singular behaviour at the end points,
+	 c            see parameter integr).
+	 c            hopefully satisfying following claim for accuracy
+	 c            abs(i-result).le.max(epsabs,epsrel*abs(i)).
+	 c***description
+	 c
+	 c        integration of functions having algebraico-logarithmic
+	 c        end point singularities
+	 c        standard fortran subroutine
+	 c        double precision version
+	 c
+	 c        parameters
+	 c         on entry
+	 c            f      - double precision
+	 c                     function subprogram defining the integrand
+	 c                     function f(x). the actual name for f needs to be
+	 c                     declared e x t e r n a l in the driver program.
+	 c
+	 c            a      - double precision
+	 c                     lower limit of integration
+	 c
+	 c            b      - double precision
+	 c                     upper limit of integration, b.gt.a
+	 c                     if b.le.a, the routine will end with ier = 6.
+	 c
+	 c            alfa   - double precision
+	 c                     parameter in the weight function, alfa.gt.(-1)
+	 c                     if alfa.le.(-1), the routine will end with
+	 c                     ier = 6.
+	 c
+	 c            beta   - double precision
+	 c                     parameter in the weight function, beta.gt.(-1)
+	 c                     if beta.le.(-1), the routine will end with
+	 c                     ier = 6.
+	 c
+	 c            integr - integer
+	 c                     indicates which weight function is to be used
+	 c                     = 1  (x-a)**alfa*(b-x)**beta
+	 c                     = 2  (x-a)**alfa*(b-x)**beta*log(x-a)
+	 c                     = 3  (x-a)**alfa*(b-x)**beta*log(b-x)
+	 c                     = 4  (x-a)**alfa*(b-x)**beta*log(x-a)*log(b-x)
+	 c                     if integr.lt.1 or integr.gt.4, the routine
+	 c                     will end with ier = 6.
+	 c
+	 c            epsabs - double precision
+	 c                     absolute accuracy requested
+	 c            epsrel - double precision
+	 c                     relative accuracy requested
+	 c                     if  epsabs.le.0
+	 c                     and epsrel.lt.max(50*rel.mach.acc.,0.5d-28),
+	 c                     the routine will end with ier = 6.
+	 c
+	 c            limit  - integer
+	 c                     gives an upper bound on the number of subintervals
+	 c                     in the partition of (a,b), limit.ge.2
+	 c                     if limit.lt.2, the routine will end with ier = 6.
+	 c
+	 c         on return
+	 c            result - double precision
+	 c                     approximation to the integral
+	 c
+	 c            abserr - double precision
+	 c                     estimate of the modulus of the absolute error,
+	 c                     which should equal or exceed abs(i-result)
+	 c
+	 c            neval  - integer
+	 c                     number of integrand evaluations
+	 c
+	 c            ier    - integer
+	 c                     ier = 0 normal and reliable termination of the
+	 c                             routine. it is assumed that the requested
+	 c                             accuracy has been achieved.
+	 c                     ier.gt.0 abnormal termination of the routine
+	 c                             the estimates for the integral and error
+	 c                             are less reliable. it is assumed that the
+	 c                             requested accuracy has not been achieved.
+	 c            error messages
+	 c                         = 1 maximum number of subdivisions allowed
+	 c                             has been achieved. one can allow more
+	 c                             subdivisions by increasing the value of
+	 c                             limit. however, if this yields no
+	 c                             improvement, it is advised to analyze the
+	 c                             integrand in order to determine the
+	 c                             integration difficulties which prevent the
+	 c                             requested tolerance from being achieved.
+	 c                             in case of a jump discontinuity or a local
+	 c                             singularity of algebraico-logarithmic type
+	 c                             at one or more interior points of the
+	 c                             integration range, one should proceed by
+	 c                             splitting up the interval at these
+	 c                             points and calling the integrator on the
+	 c                             subranges.
+	 c                         = 2 the occurrence of roundoff error is
+	 c                             detected, which prevents the requested
+	 c                             tolerance from being achieved.
+	 c                         = 3 extremely bad integrand behaviour occurs
+	 c                             at some points of the integration
+	 c                             interval.
+	 c                         = 6 the input is invalid, because
+	 c                             b.le.a or alfa.le.(-1) or beta.le.(-1), or
+	 c                             integr.lt.1 or integr.gt.4, or
+	 c                             (epsabs.le.0 and
+	 c                              epsrel.lt.max(50*rel.mach.acc.,0.5d-28),
+	 c                             or limit.lt.2.
+	 c                             result, abserr, neval, rlist(1), elist(1),
+	 c                             iord(1) and last are set to zero. alist(1)
+	 c                             and blist(1) are set to a and b
+	 c                             respectively.
+	 c
+	 c            alist  - double precision
+	 c                     vector of dimension at least limit, the first
+	 c                      last  elements of which are the left
+	 c                     end points of the subintervals in the partition
+	 c                     of the given integration range (a,b)
+	 c
+	 c            blist  - double precision
+	 c                     vector of dimension at least limit, the first
+	 c                      last  elements of which are the right
+	 c                     end points of the subintervals in the partition
+	 c                     of the given integration range (a,b)
+	 c
+	 c            rlist  - double precision
+	 c                     vector of dimension at least limit,the first
+	 c                      last  elements of which are the integral
+	 c                     approximations on the subintervals
+	 c
+	 c            elist  - double precision
+	 c                     vector of dimension at least limit, the first
+	 c                      last  elements of which are the moduli of the
+	 c                     absolute error estimates on the subintervals
+	 c
+	 c            iord   - integer
+	 c                     vector of dimension at least limit, the first k
+	 c                     of which are pointers to the error
+	 c                     estimates over the subintervals, so that
+	 c                     elist(iord(1)), ..., elist(iord(k)) with k = last
+	 c                     if last.le.(limit/2+2), and k = limit+1-last
+	 c                     otherwise form a decreasing sequence
+	 c
+	 c            last   - integer
+	 c                     number of subintervals actually produced in
+	 c                     the subdivision process
+	 c
+	 c***references  (none)
+	 c***routines called  d1mach,dqc25s,dqmomo,dqpsrt
+	 c***end prologue  dqawse
+	 c
+     */
+    private void dqawse() {
+    	 // Index to the interval with the largest error estimate
+        int[] maxErr = new int[1];
+
+        // errMax[0] = elist[maxErr];
+        double[] errMax = new double[1];
+        
+        // Sum of the integrals over the subintervals
+        double area;
+
+        // Sum of the errors over the subintervals
+        double errSum;
+
+        // Requested accuracy max(epsabs, epsrel * abs(result))
+        double errBnd;
+        
+        double area1[] = new double[1];
+        double area12;
+        double area2[] = new double[1];
+        double a1;
+        double a2;
+        double b1;
+        double b2;
+        double centre;
+        double error1[] = new double[1];
+        double erro12;
+        double error2[] = new double[1];
+        double resas1[] = new double[1];
+        double resas2[] = new double[1];
+        double rg[];
+        double rh[];
+        double ri[];
+        double rj[];
+        
+        int iroff1;
+        int iroff2;
+        int k;
+        int nev[] = new int[1];
+        int nrmax[] = new int[1];
+        
+        try {
+	    	alist = new double[limit];
+            blist = new double[limit];
+            rlist = new double[limit];
+            elist = new double[limit];
+            iord = new int[limit];
+            rg = new double[25];
+            rh = new double[25];
+            ri = new double[25];
+            rj = new double[25];
+            
+            neval[0] = 0;
+            last = 0;
+            rlist[0] = 0.0;
+            elist[0] = 0.0;
+            iord[0] = -1;
+            result[0] = 0.0;
+            abserr[0] = 0.0;
+            errorStatus = 0;
+            
+            // Compute the modified chebyshev moments
+            
+            dqmomo(ri, rj, rg, rh);
+            
+            // Integrate over the intervals (lower, (lower+upper)/2) and ((lower+upper)/2, upper).
+            
+            centre = 0.5*(lower + upper);
+            dqc25s(lower, centre, ri, rj, rg, rh, area1, error1, resas1, nev);
+            neval[0] = nev[0];
+            dqc25s(centre, upper, ri, rj, rg, rh, area2, error2, resas2, nev);
+            last = 2;
+            neval[0] = neval[0] + nev[0];
+            result[0] = area1[0] + area2[0];
+            abserr[0] = error1[0] + error2[0];
+            
+            // Test on accuracy
+            errBnd = Math.max(epsabs, epsrel * Math.abs(result[0]));
+            
+            // Initialization
+            if (error2[0] <= error1[0]) {
+            	alist[0] = lower;
+            	alist[1] = centre;
+            	blist[0] = centre;
+            	blist[1] = upper;
+            	rlist[0] = area1[0];
+            	rlist[1] = area2[0];
+            	elist[0] = error1[0];
+            	elist[1] = error2[0];
+            }
+            else {
+                alist[0] = centre;
+                alist[1] = lower;
+                blist[0] = upper;
+                blist[1] = centre;
+                rlist[0] = area2[0];
+                rlist[1] = area1[0];
+                elist[0] = error2[0];
+                elist[1] = error1[0];
+            }
+            iord[0] = 0;
+            iord[1] = 1;
+            if (limit == 2) {
+            	errorStatus = 1;
+            }
+            if (abserr[0] <= errBnd || errorStatus == 1) {
+            	return;
+            }
+            errMax[0] = elist[0];
+            maxErr[0] = 0;
+            nrmax[0] = 1;
+            area = result[0];
+            errSum = abserr[0];
+            iroff1 = 0;
+            iroff2 = 0;
+            
+            // Main for loop
+            
+            return;
+        } // try
+	    catch (Exception err) {
+	        Preferences.debug("dqawse error: " + err.getMessage());
+	    }
+    } // dqawse()
+    
+    /**
+     * This is the port of the original FORTRAN routine whose header is given below:
      * c***begin prologue  dqc25c
 	 c***date written   810101   (yymmdd)
 	 c***revision date  830518   (yymmdd)
@@ -4877,7 +5530,6 @@ loop:
         int i;
         int isym;
         int k;
-        int kp = 1;
         
         for (k = 1; k <= 11; k++) {
             x[k-1] = Math.cos(k * Math.PI/24);	
@@ -4890,7 +5542,7 @@ loop:
         	// Apply the 15-point gauss-kronrod scheme.
         	
         	krul[0] = krul[0] - 1;
-        	dqk15w(c,kp,a,b,result,abserr,resabs,resasc);
+        	dqk15w(c,a,b,result,abserr,resabs,resasc);
         	neval[0] = 15;
         	if (resasc[0] == abserr[0]) {
         	    krul[0] = krul[0] +1;	
@@ -5153,7 +5805,7 @@ loop:
     	// is small
     	
     	if (Math.abs(parint) <= 2.0) {
-    		dqk15w(omega, integr, a, b, result, abserr, resabs, resasc);
+    		dqk15w(omega, a, b, result, abserr, resabs, resasc);
     		neval[0] = 15;
     		return;
     	} // if (Math.abw(parint) <= 2.0)
@@ -5365,6 +6017,459 @@ loop:
     	}
     	return;
     } // dqc25f
+    
+    /**
+     * This is a port of the original FORTRAN whose header is given below:
+     * c***begin prologue  dqc25s
+	 c***date written   810101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a2a2
+	 c***keywords  25-point clenshaw-curtis integration
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  to compute i = integral of f*w over (bl,br), with error
+	 c            estimate, where the weight function w has a singular
+	 c            behaviour of algebraico-logarithmic type at the points
+	 c            a and/or b. (bl,br) is a part of (a,b).
+	 c***description
+	 c
+	 c        integration rules for integrands having algebraico-logarithmic
+	 c        end point singularities
+	 c        standard fortran subroutine
+	 c        double precision version
+	 c
+	 c        parameters
+	 c           f      - double precision
+	 c                    function subprogram defining the integrand
+	 c                    f(x). the actual name for f needs to be declared
+	 c                    e x t e r n a l  in the driver program.
+	 c
+	 c           a      - double precision
+	 c                    left end point of the original interval
+	 c
+	 c           b      - double precision
+	 c                    right end point of the original interval, b.gt.a
+	 c
+	 c           bl     - double precision
+	 c                    lower limit of integration, bl.ge.a
+	 c
+	 c           br     - double precision
+	 c                    upper limit of integration, br.le.b
+	 c
+	 c           alfa   - double precision
+	 c                    parameter in the weight function
+	 c
+	 c           beta   - double precision
+	 c                    parameter in the weight function
+	 c
+	 c           ri,rj,rg,rh - double precision
+	 c                    modified chebyshev moments for the application
+	 c                    of the generalized clenshaw-curtis
+	 c                    method (computed in subroutine dqmomo)
+	 c
+	 c           result - double precision
+	 c                    approximation to the integral
+	 c                    result is computed by using a generalized
+	 c                    clenshaw-curtis method if b1 = a or br = b.
+	 c                    in all other cases the 15-point kronrod
+	 c                    rule is applied, obtained by optimal addition of
+	 c                    abscissae to the 7-point gauss rule.
+	 c
+	 c           abserr - double precision
+	 c                    estimate of the modulus of the absolute error,
+	 c                    which should equal or exceed abs(i-result)
+	 c
+	 c           resasc - double precision
+	 c                    approximation to the integral of abs(f*w-i/(b-a))
+	 c
+	 c           integr - integer
+	 c                    which determines the weight function
+	 c                    = 1   w(x) = (x-a)**alfa*(b-x)**beta
+	 c                    = 2   w(x) = (x-a)**alfa*(b-x)**beta*log(x-a)
+	 c                    = 3   w(x) = (x-a)**alfa*(b-x)**beta*log(b-x)
+	 c                    = 4   w(x) = (x-a)**alfa*(b-x)**beta*log(x-a)*
+	 c                                 log(b-x)
+	 c
+	 c           nev    - integer
+	 c                    number of integrand evaluations
+	 c***references  (none)
+	 c***routines called  dqcheb,dqk15w
+	 c***end prologue  dqc25s
+	 c
+     * @param bl
+     * @param br
+     * @param ri
+     * @param rj
+     * @param rg
+     * @param rh
+     * @param result
+     * @param abserr
+     * @param resasc
+     * @param nev
+     */
+    private void dqc25s(double bl, double br, double ri[], double rj[], double rg[], double rh[],
+    		            double result[], double abserr[], double resasc[], int nev[]) {
+    	// mid point of the interval (bl, br)
+    	double centr;
+    	
+    	// half-length of the interval (bl, br)
+    	double hlgth = 0.0;
+    	
+    	// value of the function f at the points
+    	// (br-bl)*0.5*cos(k*PI/24) + (br+bl)*0.5, k = 0, ..., 24.
+    	double fval[] = new double[25];
+    	
+    	// coefficients of the chebyshev series expansion of degree 12,
+    	// for the function f, in the interval (bl,br)
+    	double cheb12[] = new double[13];
+    	
+    	// coefficients of the chebyshev series expansion of degree 24,
+    	// for the function f, in the interval (bl,br)
+    	double cheb24[] = new double[25];	
+    	
+    	// approximation to the integral obtained from cheb12
+    	double res12 = 0.0;
+    	
+    	// approximation to the integral obtained from cheb24
+    	double res24 = 0.0;
+    	
+    	double dc;
+    	double factor = 0.0;
+    	double fix = 0.0;
+    	double u;
+    	double resabs[] = new double[1];
+    	
+    	/** Values cos(k*PI/24) k = 1, ..., 11 to be used for the chebyshev series expansion of f */
+        double x[] = new double[11];
+        
+        int i;
+        int isym;
+        int k;
+        
+        boolean do5 = false;
+        boolean do7 = false;
+        boolean do10 = false;
+        boolean do25 = false;
+        boolean do45 = false;
+        boolean do70 = false;
+        boolean do105 = false;
+        boolean do130 = false;
+        boolean do140 = false;
+        boolean do155 = false;
+        boolean do175 = false;
+        boolean do200 = false;
+        boolean do235 = false;
+        boolean do260 = false;
+        
+        for (k = 1; k <= 11; k++) {
+            x[k-1] = Math.cos(k * Math.PI/24);	
+        }
+        
+        nev[0] = 25;
+        if (bl == lower && (alfa != 0.0 || integr == 2 || integr == 4)) {
+        	do10 = true;
+        }
+        else {
+        	do5 = true;
+        }
+        if (do5) {
+        	if (br == upper && (beta != 0.0 || integr == 3 || integr == 4)) {
+        		do140 = true;
+        	}
+        	else {
+        		do7 = true;
+        	}
+        } // if (do5)
+        if (do7) {
+        	// If lower > bl and upper < br, apply the 15-point gauss-kronrod scheme.
+        	
+        	dqk15w(lower, bl, br, result, abserr, resabs, resasc);
+        	nev[0] = 15;
+        	return;
+        } // if (do7)
+        if (do10) {
+        	
+            // this part of the program is executed only if a = bl.
+            // ----------------------------------------------------
+        	
+        	// compute the chebyshev series expansion of the following function
+        	// f1 = (0.5*(b+b-br-a)-0.5*(br-a)*x)**beta*f(0.5*(br-a)*x+0.5*(br+a))
+        	
+        	hlgth = 0.5*(br-bl);
+        	centr = 0.5*(br+bl);
+        	fix = upper-centr;
+        	if (selfTest) {
+        	    fval[0] = 0.5*intFuncTest(hlgth+centr)*Math.pow((fix-hlgth),beta);
+        	    fval[12] = intFuncTest(centr)*Math.pow(fix, beta);
+        	    fval[24] = 0.5*intFuncTest(centr-hlgth)*Math.pow((fix+hlgth), beta);
+        	    for (i = 2; i <= 12; i++) {
+        	        u = hlgth*x[i-2];
+        	        isym = 26-i;
+        	        fval[i-1] = intFuncTest(u+centr)*Math.pow((fix-u),beta);
+        	        fval[isym-1] = intFuncTest(centr-u)*Math.pow((fix+u),beta);
+        	    } // for (i = 2; i <= 12; i++)
+        	} // if (selfTest)
+        	else {
+        		fval[0] = 0.5*intFunc(hlgth+centr)*Math.pow((fix-hlgth),beta);
+        	    fval[12] = intFunc(centr)*Math.pow(fix, beta);
+        	    fval[24] = 0.5*intFunc(centr-hlgth)*Math.pow((fix+hlgth), beta);
+        	    for (i = 2; i <= 12; i++) {
+        	        u = hlgth*x[i-2];
+        	        isym = 26-i;
+        	        fval[i-1] = intFunc(u+centr)*Math.pow((fix-u),beta);
+        	        fval[isym-1] = intFunc(centr-u)*Math.pow((fix+u),beta);
+        	    } // for (i = 2; i <= 12; i++)	
+        	} // else
+        	factor = Math.pow(hlgth,(alfa + 1.0));
+        	result[0] = 0.0;
+        	abserr[0] = 0.0;
+        	res12 = 0.0;
+        	res24 = 0.0;
+        	if(integr > 2) {
+        		do70 = true;
+        	}
+        	else {
+        		do25 = true;
+        	}
+        } // if (do10)
+        if (do25) {
+            dqcheb(x,fval,cheb12,cheb24);
+        	
+            // integr = 1  (or 2)
+       
+        	for (i = 0; i <= 12; i++) {
+        	    res12 = res12+cheb12[i]*ri[i];
+        	    res24 = res24+cheb24[i]*ri[i];
+        	} // for (i = 0; i <= 12; i++)
+        	 for (i = 13; i <= 24; i++) {
+        	     res24 = res24+cheb24[i]*ri[i];
+        	 }
+        	 if(integr == 1) {
+        		 do130 = true;
+        	 }
+        	 else {
+        		 do45 = true;
+        	 }
+        } // if (do25)
+        if (do45) {
+        	
+            // integr = 2
+        	
+        	dc = Math.log(br-bl);
+        	result[0] = res24*dc;
+        	abserr[0] = Math.abs((res24-res12)*dc);
+        	res12 = 0.0;
+        	res24 = 0.0;
+        	for (i = 0; i <= 12; i++) {
+        	    res12 = res12+cheb12[i]*rg[i];
+        	    res24 = res12+cheb24[i]*rg[i];
+        	} // for (i = 0; i <= 12; i++)
+        	for (i = 13; i <= 24; i++) {
+        	    res24 = res24+cheb24[i]*rg[i];
+        	}
+        	do130 = true;	
+        } // if (do45)
+        
+        if (do70) {
+        	
+            // compute the chebyshev series expansion of the following function
+            // f4 = f1*log(0.5*(b+b-br-a)-0.5*(br-a)*x)
+        	
+        	fval[0] = fval[0]*Math.log(fix-hlgth);
+        	fval[12] = fval[12]*Math.log(fix);
+        	fval[24] = fval[24]*Math.log(fix+hlgth);
+        	for (i = 2; i <= 12; i++) {
+        	    u = hlgth*x[i-2];
+        	    isym = 26-i;
+        	    fval[i-1] = fval[i-1]*Math.log(fix-u);
+        	    fval[isym-1] = fval[isym-1]*Math.log(fix+u);
+        	} // for (i = 2; i <= 12; i++)
+        	dqcheb(x,fval,cheb12,cheb24);
+        	
+        	// integr = 3  (or 4)
+        	
+            for (i = 0; i <= 12; i++) {
+        	    res12 = res12+cheb12[i]*ri[i];
+        	    res24 = res24+cheb24[i]*ri[i];
+            } // for (i = 0; i <= 12; i++)
+        	for (i = 13; i <= 24; i++) {
+        	    res24 = res24+cheb24[i]*ri[i];
+        	}
+        	if(integr == 3) {
+        		do130 = true;
+        	}
+        	else {
+        		do105 = true;
+        	}
+        } // if (do70)
+        
+        if (do105) {
+        	
+            // integr = 4
+        	
+            dc = Math.log(br-bl);
+        	result[0] = res24*dc;
+        	abserr[0] = Math.abs((res24-res12)*dc);
+        	res12 = 0.0;
+        	res24 = 0.0;
+        	for (i = 0; i <= 12; i++) {
+        	    res12 = res12+cheb12[i]*rg[i];
+        	    res24 = res24+cheb24[i]*rg[i];
+        	} // for (i = 0; i <= 12; i++)
+        	for (i = 13; i <= 24; i++) {
+        	    res24 = res24+cheb24[i]*rg[i];
+        	}
+        	do130 = true;
+        } // if (do105
+        if (do130) {
+            result[0] = (result[0]+res24)*factor;
+        	abserr[0] = (abserr[0]+Math.abs(res24-res12))*factor;
+        	return;
+        } // if (do130)
+        
+        if (do140) {
+        	
+            // this part of the program is executed only if b = br.
+            // ----------------------------------------------------
+        	
+        	// compute the chebyshev series expansion of the following function
+        	// f2 = (0.5*(b+bl-a-a)+0.5*(b-bl)*x)**alfa*f(0.5*(b-bl)*x+0.5*(b+bl))
+        	
+        	hlgth = 0.5*(br-bl);
+        	centr = 0.5*(br+bl);
+        	fix = centr-lower;
+        	if (selfTest) {
+        	    fval[0] = 0.5*intFuncTest(hlgth+centr)*Math.pow((fix+hlgth),alfa);
+        	    fval[12] = intFuncTest(centr)*Math.pow(fix,alfa);
+        	    fval[24] = 0.5*intFuncTest(centr-hlgth)*Math.pow((fix-hlgth),alfa);
+        	    for (i = 2; i <= 12; i++) {
+        	        u = hlgth*x[i-2];
+        	        isym = 26-i;
+        	        fval[i-1] = intFuncTest(u+centr)*Math.pow((fix+u),alfa);
+        	        fval[isym-1] = intFuncTest(centr-u)*Math.pow((fix-u),alfa);
+        	    } // for (i = 2; i <= 12; i++)
+        	} // if (selfTest)
+        	else {
+        		fval[0] = 0.5*intFunc(hlgth+centr)*Math.pow((fix+hlgth),alfa);
+        	    fval[12] = intFunc(centr)*Math.pow(fix,alfa);
+        	    fval[24] = 0.5*intFunc(centr-hlgth)*Math.pow((fix-hlgth),alfa);
+        	    for (i = 2; i <= 12; i++) {
+        	        u = hlgth*x[i-2];
+        	        isym = 26-i;
+        	        fval[i-1] = intFunc(u+centr)*Math.pow((fix+u),alfa);
+        	        fval[isym-1] = intFunc(centr-u)*Math.pow((fix-u),alfa);
+        	    } // for (i = 2; i <= 12; i++)	
+        	} // else
+        	factor = Math.pow(hlgth,(beta+1.0));
+        	result[0] = 0.0;
+        	abserr[0] = 0.0;
+        	res12 = 0.0;
+        	res24 = 0.0;
+        	if(integr == 2 || integr == 4) {
+        		do200 = true;
+        	}
+        	else {
+        		do155 = true;
+        	}
+        } // if (do140)
+        
+        if (do155) {
+        	
+            // integr = 1  (or 3)
+        	
+        	dqcheb(x,fval,cheb12,cheb24);
+        	for (i = 0; i <= 12; i++) {
+        	    res12 = res12+cheb12[i]*rj[i];
+        	    res24 = res24+cheb24[i]*rj[i];
+        	} // for (i = 0; i <= 12; i++)
+        	for (i = 13; i <= 24; i++) {
+        	    res24 = res24+cheb24[i]*rj[i];
+        	}
+        	if(integr == 1) {
+        		do260 = true;
+        	}
+        	else {
+        		do175 = true;
+        	}
+        } // if (do155)
+        
+        if (do175) {
+        	
+            // integr = 3
+        	
+            dc = Math.log(br-bl);
+        	result[0] = res24*dc;
+        	abserr[0] = Math.abs((res24-res12)*dc);
+        	res12 = 0.0;
+        	res24 = 0.0;
+        	for (i = 0; i <= 12; i++) {
+        	        res12 = res12+cheb12[i]*rh[i];
+        	        res24 = res24+cheb24[i]*rh[i];
+        	} // for (i = 0; i <= 12; i++)
+        	for (i = 13; i <= 24; i++) {
+        	    res24 = res24+cheb24[i]*rh[i];
+        	}
+        	do260 = true;
+        } // if (do175)
+        
+        if (do200) {
+        	
+            // compute the chebyshev series expansion of the following function
+        	// f3 = f2*log(0.5*(b-bl)*x+0.5*(b+bl-a-a))
+        	
+            fval[0] = fval[0]*Math.log(hlgth+fix);
+        	fval[12] = fval[12]*Math.log(fix);
+        	fval[24] = fval[24]*Math.log(fix-hlgth);
+        	for (i = 2; i <= 12; i++) {
+        	    u = hlgth*x[i-2];
+        	    isym = 26-i;
+        	    fval[i-1] = fval[i-1]*Math.log(u+fix);
+        	    fval[isym-1] = fval[isym-1]*Math.log(fix-u);
+        	} // for (i = 2; i <= 12; i++)
+        	dqcheb(x,fval,cheb12,cheb24);
+        	
+        	// integr = 2  (or 4)
+        	
+        	for (i = 0; i <= 12; i++) {
+        	    res12 = res12+cheb12[i]*rj[i];
+        	    res24 = res24+cheb24[i]*rj[i];
+        	} // for (i = 0; i <= 12; i++)
+        	for (i = 13; i <= 24; i++) {
+        	    res24 = res24+cheb24[i]*rj[i];
+        	}
+        	if(integr == 2) {
+        		do260 = true;
+        	}
+        	else {
+        		do235 = true;
+        	}
+        } // if (do200)
+        
+        if (do235) {
+            dc = Math.log(br-bl);
+            result[0] = res24*dc;
+            abserr[0] = Math.abs((res24-res12)*dc);
+            res12 = 0.0;
+            res24 = 0.0;
+      
+            // integr = 4
+     
+            for (i = 0; i <= 12; i++) {
+                res12 = res12+cheb12[i]*rh[i];
+                res24 = res24+cheb24[i]*rh[i];
+            } // for (i = 0; i <= 12; i++)
+            for (i = 13; i <= 24; i++) {
+                res24 = res24+cheb24[i]*rh[i];
+            }
+            do260 = true;
+        } // if (do235)
+        
+        if (do260) {
+        	result[0] = (result[0]+res24)*factor;
+            abserr[0] = (abserr[0]+Math.abs(res24-res12))*factor;	
+        } // if (do260)
+        return;
+    } // dqc25s
     
     /**
      * This is a port of the original FORTRAN whose header is given below:
@@ -6158,7 +7263,7 @@ loop:
      * @param resabs
      * @param resasc
      */
-    private void dqk15w(double p1, int kp, double a, double b,
+    private void dqk15w(double p1, double a, double b,
     		double[] result, double[] abserr, double[] resabs, double[] resasc) {
     	/** The abscissa and weights are given for the interval (-1,1).
     	 * Because of symmetry only the positive abscissae and their
@@ -6204,6 +7309,9 @@ loop:
         	                        0.8648644233597691,     0.7415311855993944,
         	                        0.5860872354676911,     0.4058451513773972,
         	                        0.2077849550078985,     0.0000000000000000};
+        double xma;
+        double bmx;
+        
         int j;
         int jtw;
         int jtwm1;
@@ -6222,24 +7330,74 @@ loop:
 	        	fc = intFunc(centr)/(centr - p1);
 	        }
         } // if (routine == DQAWCE)
-        else { // routine == DQAWOE
-	        if (kp == 1) {
+        else if (routine == DQAWOE){
+	        if (integr == 1) {
 	            if (selfTest) {
 	   	            fc = intFuncTest(centr)*Math.cos(centr * p1);
 	   	        }
 	   	        else {
 	   	        	fc = intFunc(centr)*Math.cos(centr * p1);
 	   	        }   
-            } // if (kp == 1)
-           else { // kp == 2
+            } // if (integr == 1)
+           else { // integr == 2
         	   if (selfTest) {
 	   	            fc = intFuncTest(centr)*Math.sin(centr * p1);
 	   	        }
 	   	        else {
 	   	        	fc = intFunc(centr)*Math.sin(centr * p1);
 	   	        }          
-           } // else kp == 2
-        } // else routine == DQAWOE
+           } // else integr == 2
+        } // else if (routine == DQAWOE)
+        else { // routine == DQAWSE
+          if (integr == 1) {
+        	  if (selfTest) {
+        	      xma = centr - lower;
+        	      bmx = upper - centr;
+        	      fc = intFuncTest(centr)*Math.pow(xma, alfa)*Math.pow(bmx, beta);
+        	  }
+        	  else {
+        		  xma = centr - lower;
+        	      bmx = upper - centr;
+        	      fc = intFunc(centr)*Math.pow(xma, alfa)*Math.pow(bmx, beta);  
+        	  }
+          } // if (integr == 1)
+          else if (integr == 2) {
+        	  if (selfTest) {
+        	      xma = centr - lower;
+        	      bmx = upper - centr;
+        	      fc = intFuncTest(centr)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma);
+        	  }
+        	  else {
+        		  xma = centr - lower;
+        	      bmx = upper - centr;
+        	      fc = intFunc(centr)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma);  
+        	  }  
+          } // else if (integr == 2)
+          else if (integr == 3) {
+        	  if (selfTest) {
+        	      xma = centr - lower;
+        	      bmx = upper - centr;
+        	      fc = intFuncTest(centr)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx);
+        	  }
+        	  else {
+        		  xma = centr - lower;
+        	      bmx = upper - centr;
+        	      fc = intFunc(centr)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx);  
+        	  }	  
+          } // else if (integr == 3)
+          else { // integr == 4
+        	  if (selfTest) {
+        	      xma = centr - lower;
+        	      bmx = upper - centr;
+        	      fc = intFuncTest(centr)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);
+        	  }
+        	  else {
+        		  xma = centr - lower;
+        	      bmx = upper - centr;
+        	      fc = intFunc(centr)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);  
+        	  }
+          } // integr == 4
+        } // else routine == DQAWSE
         resg = wg[3] * fc;
         resk = wgk[7] * fc;
         resabs[0] = Math.abs(resk);
@@ -6258,8 +7416,8 @@ loop:
 	        		fval2 = intFunc(absc2)/(absc2 - p1);
 	        	}
         	} // if (routine == DQAWCE)
-        	else { // routine == DQAWOE
-        	    if (kp == 1) {
+        	else if (routine == DQAWOE){
+        	    if (integr == 1) {
         	    	if (selfTest) {
     	        		fval1 = intFuncTest(absc1)*Math.cos(absc1 * p1);
     	        		fval2 = intFuncTest(absc2)*Math.cos(absc2 * p1);
@@ -6268,7 +7426,7 @@ loop:
     	        		fval1 = intFunc(absc1)*Math.cos(absc1 * p1);
     	        		fval2 = intFunc(absc2)*Math.cos(absc2 * p1);
     	        	}	
-        	    } // if (kp == 1)
+        	    } // if (integr == 1)
         	    else { // kp == 2
         	    	if (selfTest) {
     	        		fval1 = intFuncTest(absc1)*Math.sin(absc1 * p1);
@@ -6279,7 +7437,81 @@ loop:
     	        		fval2 = intFunc(absc2)*Math.sin(absc2 * p1);
     	        	}		
         	    }
-        	} // else routine == DQAWOE
+        	} // else if (routine == DQAWOE)
+        	else { // routine == DQAWSE
+                if (integr == 1) {
+              	  if (selfTest) {
+              	      xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFuncTest(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta);
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFuncTest(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta);
+              	  }
+              	  else {
+              		  xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFunc(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta); 
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFunc(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta);  
+              	  }
+                } // if (integr == 1)
+                else if (integr == 2) {
+              	  if (selfTest) {
+              	      xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFuncTest(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma);
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFuncTest(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma);
+              	  }
+              	  else {
+              		  xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFunc(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma); 
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFunc(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma);  
+              	  }  
+                } // else if (integr == 2)
+                else if (integr == 3) {
+              	  if (selfTest) {
+              	      xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFuncTest(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx);
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFuncTest(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx);
+              	  }
+              	  else {
+              		  xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFunc(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx); 
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFunc(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx);
+              	  }	  
+                } // else if (integr == 3)
+                else { // integr == 4
+              	  if (selfTest) {
+              	      xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFuncTest(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFuncTest(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);
+              	  }
+              	  else {
+              		  xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFunc(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);  
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFunc(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);  
+              	  }
+                } // integr == 4
+              } // else routine == DQAWSE
         	fv1[jtw-1] = fval1;
         	fv2[jtw-1] = fval2;
         	fsum = fval1 + fval2;
@@ -6302,8 +7534,8 @@ loop:
 	        		fval2 = intFunc(absc2)/(absc2 - p1);
 	        	}
         	} // if (routine == DQAWCE)
-        	else { // routine == DQAWOE
-        	    if (kp == 1) {
+        	else if (routine == DQAWOE){
+        	    if (integr == 1) {
         	    	if (selfTest) {
     	        		fval1 = intFuncTest(absc1)*Math.cos(absc1 * p1);
     	        		fval2 = intFuncTest(absc2)*Math.cos(absc2 * p1);
@@ -6312,8 +7544,8 @@ loop:
     	        		fval1 = intFunc(absc1)*Math.cos(absc1 * p1);
     	        		fval2 = intFunc(absc2)*Math.cos(absc2 * p1);
     	        	}	
-        	    } // if (kp == 1)
-        	    else { // kp == 2
+        	    } // if (integr == 1)
+        	    else { // integr == 2
         	    	if (selfTest) {
     	        		fval1 = intFuncTest(absc1)*Math.sin(absc1 * p1);
     	        		fval2 = intFuncTest(absc2)*Math.sin(absc2 * p1);
@@ -6323,7 +7555,81 @@ loop:
     	        		fval2 = intFunc(absc2)*Math.sin(absc2 * p1);
     	        	}		
         	    }
-        	} // else routine == DQAWOE
+        	} // else if (routine == DQAWOE)
+        	else { // routine == DQAWSE
+                if (integr == 1) {
+              	  if (selfTest) {
+              	      xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFuncTest(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta);
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFuncTest(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta);
+              	  }
+              	  else {
+              		  xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFunc(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta); 
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFunc(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta);  
+              	  }
+                } // if (integr == 1)
+                else if (integr == 2) {
+              	  if (selfTest) {
+              	      xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFuncTest(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma);
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFuncTest(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma);
+              	  }
+              	  else {
+              		  xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFunc(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma); 
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFunc(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma);  
+              	  }  
+                } // else if (integr == 2)
+                else if (integr == 3) {
+              	  if (selfTest) {
+              	      xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFuncTest(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx);
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFuncTest(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx);
+              	  }
+              	  else {
+              		  xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFunc(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx); 
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFunc(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(bmx);
+              	  }	  
+                } // else if (integr == 3)
+                else { // integr == 4
+              	  if (selfTest) {
+              	      xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFuncTest(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFuncTest(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);
+              	  }
+              	  else {
+              		  xma = absc1 - lower;
+              	      bmx = upper - absc1;
+              	      fval1 = intFunc(absc1)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);  
+              	      xma = absc2 - lower;
+            	      bmx = upper - absc2;
+            	      fval2 = intFunc(absc2)*Math.pow(xma, alfa)*Math.pow(bmx, beta) * Math.log(xma) * Math.log(bmx);  
+              	  }
+                } // integr == 4
+              } // else routine == DQAWSE
         	fv1[jtwm1 - 1] = fval1;
         	fv2[jtwm1 - 1] = fval2;
         	fsum = fval1 + fval2;
@@ -7290,6 +8596,146 @@ loop:
 
         return;
     }
+    
+    /**
+     * This is a port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqmomo
+	 c***date written   820101   (yymmdd)
+	 c***revision date  830518   (yymmdd)
+	 c***category no.  h2a2a1,c3a2
+	 c***keywords  modified chebyshev moments
+	 c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	 c           de doncker,elise,appl. math. & progr. div. - k.u.leuven
+	 c***purpose  this routine computes modified chebsyshev moments. the k-th
+	 c            modified chebyshev moment is defined as the integral over
+	 c            (-1,1) of w(x)*t(k,x), where t(k,x) is the chebyshev
+	 c            polynomial of degree k.
+	 c***description
+	 c
+	 c        modified chebyshev moments
+	 c        standard fortran subroutine
+	 c        double precision version
+	 c
+	 c        parameters
+	 c           alfa   - double precision
+	 c                    parameter in the weight function w(x), alfa.gt.(-1)
+	 c
+	 c           beta   - double precision
+	 c                    parameter in the weight function w(x), beta.gt.(-1)
+	 c
+	 c           ri     - double precision
+	 c                    vector of dimension 25
+	 c                    ri(k) is the integral over (-1,1) of
+	 c                    (1+x)**alfa*t(k-1,x), k = 1, ..., 25.
+	 c
+	 c           rj     - double precision
+	 c                    vector of dimension 25
+	 c                    rj(k) is the integral over (-1,1) of
+	 c                    (1-x)**beta*t(k-1,x), k = 1, ..., 25.
+	 c
+	 c           rg     - double precision
+	 c                    vector of dimension 25
+	 c                    rg(k) is the integral over (-1,1) of
+	 c                    (1+x)**alfa*log((1+x)/2)*t(k-1,x), k = 1, ..., 25.
+	 c
+	 c           rh     - double precision
+	 c                    vector of dimension 25
+	 c                    rh(k) is the integral over (-1,1) of
+	 c                    (1-x)**beta*log((1-x)/2)*t(k-1,x), k = 1, ..., 25.
+	 c
+	 c           integr - integer
+	 c                    input parameter indicating the modified
+	 c                    moments to be computed
+	 c                    integr = 1 compute ri, rj
+	 c                           = 2 compute ri, rj, rg
+	 c                           = 3 compute ri, rj, rh
+	 c                           = 4 compute ri, rj, rg, rh
+	 c
+	 c***references  (none)
+	 c***routines called  (none)
+	 c***end prologue  dqmomo
+	 c
+     * @param ri
+     * @param rj
+     * @param rg
+     * @param rh
+     */
+    private void dqmomo(double ri[], double rj[], double rg[], double rh[]) {
+        double alfp1;
+        double alfp2;
+        double an;
+        double anm1;
+        double betp1;
+        double betp2;
+        double ralf;
+        double rbet;
+        
+        int i;
+        int im1;
+        
+        alfp1 = alfa + 1.0;
+        betp1 = beta + 1.0;
+        alfp2 = alfa + 2.0;
+        betp2 = beta + 2.0;
+        ralf = Math.pow(2.0, alfp1);
+        rbet = Math.pow(2.0, betp1);
+        
+        // Compute ri, rj using a forward recurrence relation
+        
+        ri[0] = ralf/alfp1;
+        rj[0] = rbet/betp1;
+        ri[1] = ri[0]*alfa/alfp2;
+        rj[1] = rj[0]*beta/betp2;
+        an = 2.0;
+        anm1 = 1.0;
+        for (i = 2; i <= 24; i++) {
+          ri[i] = -(ralf+an*(an-alfp2)*ri[i-1])/(anm1*(an+alfp1));
+          rj[i] = -(rbet+an*(an-betp2)*rj[i-1])/(anm1*(an+betp1));
+          anm1 = an;
+          an = an + 1.0;
+        } // for (i = 2; i <= 24; i++)
+        
+        if ((integr == 2) || (integr == 4)) {
+  
+            //compute rg using a forward recurrence relation.
+  
+            rg[0] = -ri[0]/alfp1;
+            rg[1] = -(ralf+ralf)/(alfp2*alfp2)-rg[0];
+            an = 2.0;
+            anm1 = 1.0;
+            im1 = 2;
+            for (i = 3 ; i <= 25; i++) {
+                rg[i-1] = -(an*(an-alfp2)*rg[im1-1]-an*ri[im1-1]+anm1*ri[i-1])/(anm1*(an+alfp1));
+                anm1 = an;
+                an = an + 1.0;
+                im1 = i;
+            } // for (i = 3 ; i <= 25; i++)
+        } // if ((integr == 2) || (integr == 4)
+        
+        if ((integr == 3) || (integr == 4)) {
+ 
+            // compute rh using a forward recurrence relation.
+
+            rh[0] = -rj[0]/betp1;
+            rh[1] = -(rbet+rbet)/(betp2*betp2)-rh[0];
+            an = 2.0;
+            anm1 = 1.0;
+            im1 = 2;
+            for (i = 3; i <= 25; i++) {
+                rh[i-1] = -(an*(an-betp2)*rh[im1-1]-an*rj[im1-1]+ anm1*rj[i-1])/(anm1*(an+betp1));
+                anm1 = an;
+                an = an + 1.0;
+                im1 = i;
+            } // for (i = 3; i <= 25; i++)
+            for (i = 2; i <= 25; i += 2) {
+                rh[i-1] = -rh[i-1];
+            } // for (i = 2; i <= 25; i += 2)
+        } // if ((integr == 3) || (integr == 4))
+        for (i = 2; i <= 25; i += 2) {
+            rj[i-1] = -rj[i-1];
+        }
+        return;
+    } // dqmomo
 
 
     /**
