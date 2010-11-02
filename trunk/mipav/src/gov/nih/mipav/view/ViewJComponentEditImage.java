@@ -14,6 +14,7 @@ import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
 import gov.nih.mipav.model.scripting.actions.ActionPaintToVOI;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.Preferences.ComplexDisplay;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.icons.PlaceHolder;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
@@ -516,12 +517,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         cursorMode = ViewJComponentBase.DEFAULT;
 
         if (imgBufferA == null) {
-            final int bufferFactor = (imageA.isColorImage() ? 4 : 1);
+            final int bufferFactor = (imageA.isColorImage() ? 4 : imageA.getType() == ModelStorageBase.COMPLEX ? Preferences.getComplexDisplay().getNumParts() : 1);
             imgBufferA = new float[bufferFactor * imageDim.width * imageDim.height];
         }
 
         if ( (imgBufferB == null) && (imageB != null)) {
-            final int bufferFactor = (imageB.isColorImage() ? 4 : 1);
+            final int bufferFactor = (imageB.isColorImage() ? 4 : imageA.getType() == ModelStorageBase.COMPLEX ? Preferences.getComplexDisplay().getNumParts() : 1);
             imgBufferB = new float[bufferFactor * imageDim.width * imageDim.height];
         }
 
@@ -4473,7 +4474,22 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         "  G:  ").append(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2]).append(
                         "  B:  ").append(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]);
             } else if(imageActive.getType() == ModelStorageBase.COMPLEX) { 
-                //System.out.println("Here");
+                switch(Preferences.getComplexDisplay()) {
+                case APLUSBI:
+                    str.append("  Intensity:  ").append(imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS)]).append(" + ").append(
+                            imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS+1)]).append("*i");
+                    break;
+                case REITHETA:
+                    double a = imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS)];
+                    double b = imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS+1)];
+                    double r = Math.sqrt(a*a + b*b);
+                    double theta = -Math.atan(b/a);
+                    str.append("  Intensity:  ").append(r).append(" * e^(i*").append(theta).append(")");
+                    break;
+                case MAGNITUDE:
+                default:
+                    str.append("  Intensity:  ").append(String.valueOf(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS]));
+                }
             } else {
                 str.append("  Intensity:  ").append(String.valueOf(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS]));
             }

@@ -911,6 +911,10 @@ public class PatientSlice {
 
         try {
             int buffFactor = imageA.isColorImage() ? 4 : 1;
+            
+            if(!imageA.isColorImage()) {
+                buffFactor = imageA.getType() == ModelStorageBase.COMPLEX ? Preferences.getComplexDisplay().getNumParts() : 1;
+            }
 
             if (imageBufferA == null) {
                 imageBufferA = new float[localImageExtents[0] * localImageExtents[1] * buffFactor];
@@ -918,11 +922,17 @@ public class PatientSlice {
 
             if ((imageB != null) && (imageBufferB == null)) {
                 buffFactor = imageB.isColorImage() ? 4 : 1;
+                if(!imageB.isColorImage()) {
+                    buffFactor = imageB.getType() == ModelStorageBase.COMPLEX ? Preferences.getComplexDisplay().getNumParts() : 1;
+                }
                 imageBufferB = new float[localImageExtents[0] * localImageExtents[1] * buffFactor];
             }
 
             if ((imageColocalize != null) && (imageBufferColocalize == null)) {
                 buffFactor = imageColocalize.isColorImage() ? 4 : 1;
+                if(!imageColocalize.isColorImage()) {
+                    buffFactor = imageColocalize.getType() == ModelStorageBase.COMPLEX ? Preferences.getComplexDisplay().getNumParts() : 1;
+                }
                 imageBufferColocalize = new float[localImageExtents[0] * localImageExtents[1] * buffFactor];
             }
 

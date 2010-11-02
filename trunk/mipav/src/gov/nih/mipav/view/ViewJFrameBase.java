@@ -3703,11 +3703,13 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * 
      * @return a buffer which is big enough to contain the image intensity data
      */
-    protected static float[] initImageBuffer(final int[] extents, final boolean isColor) {
+    protected static float[] initImageBuffer(final int[] extents, final boolean isColor, final int imageType) {
         int bufferFactor = 1;
 
         if (isColor) {
             bufferFactor = 4;
+        } else if(imageType == ModelStorageBase.COMPLEX){
+            bufferFactor = Preferences.getComplexDisplay().getNumParts();
         }
 
         return new float[bufferFactor * extents[0] * extents[1]];
