@@ -7,6 +7,7 @@ import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.Preferences.ComplexDisplay;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -224,6 +225,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** Check boxes for whether right and left mouse clicks produce default actions. */
 	private JCheckBox doIntensityOnLeftBox, doWinLevOnRightBox;
 
+    private JPanel displayImagePanel;
+
+    private String[] complexTypes;
+
+    private JComboBox complexDisplayChoices;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -250,6 +257,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         displayPanel = new JPanel();
         displayUserInterfacePanel = new JPanel();
+        displayImagePanel = new JPanel();
         displayColorPanel = new JPanel();
         filePanel = new JPanel();
         fileSavePanel = new JPanel();
@@ -268,6 +276,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeSplashOptions(gbc, gbl);
         makeMouseClickOptions(gbc, gbl);
         makeFontOptions(gbc, gbl);
+        
+        displayImagePanel.setLayout(gbl);
+        displayImagePanel.setBorder(buildTitledBorder("Image"));
+        makeComplexImageOptions(gbc, gbl);
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -307,6 +319,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         displayPanel.setLayout(new BoxLayout(displayPanel, BoxLayout.Y_AXIS));
         displayPanel.add(displayUserInterfacePanel);
+        displayPanel.add(displayImagePanel);
         displayPanel.add(displayColorPanel);
 
         // make the other options
@@ -458,7 +471,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     .makeColorString(preferredActiveColor));
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices
                     .getSelectedIndex()]);
-
+            Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay)complexDisplayChoices.getSelectedItem()).name());
+            
             // check to see if provenance should be turned on (if it was off)
             if (Preferences.is(Preferences.PREF_DATA_PROVENANCE) != provenanceCheckBox.isSelected()) {
                 if (provenanceCheckBox.isSelected()) {
@@ -916,7 +930,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param gbl the layout used in the globablChangesPanel
      */
     protected void makeCheckOnCloseFrameOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        checkOnFrameClose = new JCheckBox("Check on closing frame?");
+        checkOnFrameClose = new JCheckBox("Check on closing frame");
         checkOnFrameClose.setFont(MipavUtil.font12);
         checkOnFrameClose.setForeground(Color.black);
         checkOnFrameClose.addActionListener(this);
@@ -930,6 +944,43 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         checkOnFrameClose.setSelected(Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK));
     }
 
+    /**
+     * Makes the options for displaying complex image information
+     * 
+     * @param gbc2 GridBagConstraints
+     * @param gbl GridBagLayout
+     */
+    protected void makeComplexImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
+        final JLabel l1 = new JLabel("Show complex image information using:");
+        l1.setFont(MipavUtil.font12);
+        l1.setForeground(Color.black);
+        gbc2.insets = new Insets(0, 0, 0, 5);
+        gbc2.gridwidth = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(l1, gbc2);
+
+        complexDisplayChoices = new JComboBox(ComplexDisplay.values());
+        complexDisplayChoices.setFont(MipavUtil.font12);
+
+        gbc2.insets = new Insets(0, 0, 0, 0);
+        gbc2.gridwidth = GridBagConstraints.REMAINDER;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(complexDisplayChoices, gbc2);
+
+        
+        ComplexDisplay defaultChoice = ComplexDisplay.MAGNITUDE;
+        // preset the choices.
+        if (Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY) == null) {
+            Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
+        } else {
+            defaultChoice = ComplexDisplay.valueOf(Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY));
+        }
+
+        if(defaultChoice != null) {
+            complexDisplayChoices.setSelectedItem(defaultChoice);
+        }
+    }
+    
     /**
      * Makes the options for crosshair display.
      * 

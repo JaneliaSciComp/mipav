@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.view.CustomUIBuilder.UIParams;
+import gov.nih.mipav.view.Preferences.OperatingSystem;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -319,7 +320,7 @@ public class ViewMenuBuilder {
                 try {
                     float ver = Float.parseFloat(System.getProperty("java.version").substring(0, 3));
 
-                    if (ver < 1.6 && Preferences.getOS() != Preferences.OS_MAC) {
+                    if (ver < 1.6 && !OperatingSystem.getOS().equals(OperatingSystem.OS_MAC)) {
                         menu.setIconTextGap(50);
                     }
                 } catch (Exception e) {}
