@@ -19,65 +19,125 @@ import javax.swing.KeyStroke;
  * user. It is a text file and can be manually edited - not recommended.
  */
 public class Preferences {
-
+    
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
 
-    /**
-     * Indicates an unknown system architecture.
-     */
-    public static final int ARCH_UNKNOWN = 0;
+    public enum ComplexDisplay {
+        /** Displays complex images in a + bi format */
+        APLUSBI("a + bi", 2),
+        /** Displays complex images in r*e^(i*theta) format */
+        REITHETA("r * e^(i"+'\u03B8'+")", 2),
+        /** Displays the magnitude of complex images */
+        MAGNITUDE("Magnitude", 1);
+        
+        /** The format of complex display */
+        private String str;
+        
+        /** How many parts the complex display has */
+        private int numParts;
 
-    /**
-     * Indicates an x86 system architecture.
-     */
-    public static final int ARCH_X86 = 1;
+        ComplexDisplay(String str, int numParts) {
+            this.str = str;
+            this.numParts = numParts;
+        }
+        
+        public String toString() {
+            return str;
+        }
+        
+        
+        public int getNumParts() {
+            return numParts;
+        }
+    }
+    
+    public enum SystemArchitecture {
+        /** Indicates an unknown system architecture. */
+        ARCH_UNKNOWN,
+        /** Indicates an x86 system architecture. */
+        ARCH_X86,
+        /** Indicates an amd64 system architecture. */
+        ARCH_AMD64,
+        /** Indicates a 32-bit power pc system architecture. */
+        ARCH_PPC,
+        /** Indicates a 64-bit power pc system architecture. */
+        ARCH_PPC64,
+        /** Indicates a mips system architecture. */
+        ARCH_MIPS,
+        /** Indicates an alpha system architecture. */
+        ARCH_ALPHA,
+        /** Indicates an ia64 (itanium) system architecture. */
+        ARCH_IA64,
+        /** Indicates an arm system architecture. */
+        ARCH_ARM,
+        /** Indicates a sparc system architecture. */
+        ARCH_SPARC,
+        /** Indicates a PA RISC system architecture. */
+        ARCH_PA_RISC;
+        
+        /**
+         * Gets the system architecture.
+         * 
+         * @return the architecture
+         */
+        public static final SystemArchitecture getArch() {
+            final String arch = System.getProperty("os.arch");
 
-    /**
-     * Indicates an amd64 system architecture.
-     */
-    public static final int ARCH_AMD64 = 2;
+            if (arch.equalsIgnoreCase("i386") || arch.equalsIgnoreCase("i486") || arch.equalsIgnoreCase("i586")
+                    || arch.equalsIgnoreCase("i686") || arch.equalsIgnoreCase("x86")) {
+                return SystemArchitecture.ARCH_X86;
+            } else if (arch.equalsIgnoreCase("amd64") || arch.equalsIgnoreCase("x86_64")) {
+                return SystemArchitecture.ARCH_AMD64;
+            } else if (arch.equalsIgnoreCase("ppc") || arch.equalsIgnoreCase("PowerPC")) {
+                return SystemArchitecture.ARCH_PPC;
+            } else if (arch.equalsIgnoreCase("pcc64")) {
+                return SystemArchitecture.ARCH_PPC64;
+            } else if (arch.equalsIgnoreCase("mips") || arch.equalsIgnoreCase("MIPS4000")) {
+                return SystemArchitecture.ARCH_MIPS;
+            } else if (arch.equalsIgnoreCase("alpha")) {
+                return SystemArchitecture.ARCH_ALPHA;
+            } else if (arch.equalsIgnoreCase("ia64") || arch.equalsIgnoreCase("IA64N")) {
+                return SystemArchitecture.ARCH_IA64;
+            } else if (arch.equalsIgnoreCase("arm") || arch.equalsIgnoreCase("armv41")) {
+                return SystemArchitecture.ARCH_ARM;
+            } else if (arch.equalsIgnoreCase("sparc")) {
+                return SystemArchitecture.ARCH_SPARC;
+            } else if (arch.equalsIgnoreCase("PA-RISC") || arch.equalsIgnoreCase("PA_RISC")
+                    || arch.equalsIgnoreCase("PA_RISC2.0")) {
+                return SystemArchitecture.ARCH_PA_RISC;
+            } else {
+                return SystemArchitecture.ARCH_UNKNOWN;
+            }
+        }
+    }
+    
+    public enum OperatingSystem {
+        /** Operating system enum for Windows. */
+        OS_WINDOWS,
+        /** Operating system enum for Unix - DEFAULT for unrecognized OS. */
+        OS_UNIX,
+        /** Operating system enum for the MAC. */
+        OS_MAC;
+        
+        /**
+         * Gets the operating system.
+         * 
+         * @return operating system
+         */
+        public static final OperatingSystem getOS() {
 
-    /**
-     * Indicates a 32-bit power pc system architecture.
-     */
-    public static final int ARCH_PPC = 3;
+            final String os = System.getProperty("os.name");
 
-    /**
-     * Indicates a 64-bit power pc system architecture.
-     */
-    public static final int ARCH_PPC64 = 4;
-
-    /**
-     * Indicates a mips system architecture.
-     */
-    public static final int ARCH_MIPS = 5;
-
-    /**
-     * Indicates an alpha system architecture.
-     */
-    public static final int ARCH_ALPHA = 6;
-
-    /**
-     * Indicates an ia64 (itanium) system architecture.
-     */
-    public static final int ARCH_IA64 = 7;
-
-    /**
-     * Indicates an arm system architecture.
-     */
-    public static final int ARCH_ARM = 8;
-
-    /**
-     * Indicates a sparc system architecture.
-     */
-    public static final int ARCH_SPARC = 9;
-
-    /**
-     * Indicates a PA RISC system architecture.
-     */
-    public static final int ARCH_PA_RISC = 10;
-
+            if (os.startsWith("Windows")) {
+                return OperatingSystem.OS_WINDOWS;
+            } else if (os.startsWith("Mac")) {
+                return OperatingSystem.OS_MAC;
+            } else {
+                return OperatingSystem.OS_UNIX;
+            }
+        }
+    }
 
     /** Constant that indicates use of saving images, vois, and transfer functions. */
     public static final String PREF_SAVE_ALL_ON_SAVE = "SaveAllOnSave";
@@ -302,6 +362,9 @@ public class Preferences {
     /** Constant that indicates the crosshair cursor to be used. */
     public static final String PREF_CROSSHAIR_CURSOR = "CrosshairCursor";
 
+    /** Constant that indicates method used to display complex values. */
+    public static final String PREF_COMPLEX_DISPLAY = "ComplexDisplay";
+    
     /** Constant that indicates the VOI Trim level variable. */
     public static final String PREF_TRIM = "TRIM";
 
@@ -471,23 +534,12 @@ public class Preferences {
     public static final String PREF_NDAR_PLUGIN_DATASTRUCT_NAME = "image01";
     
     public static final String PREF_PAINT_OPACITY = "paintOpacity";
-    
-    
 
     /**
      * The character that separates an item from its value in a definition or mapping (such as in the user file type
      * definitions).
      */
     public static final String DEFINITION_SEPARATOR = ":";
-
-    /** Operating system constant for Windows. */
-    public static final int OS_WINDOWS = 2;
-
-    /** Operating system constant for Unix - DEFAULT for unrecognized OS. */
-    public static final int OS_UNIX = 1;
-
-    /** Operating system constant for the MAC. */
-    public static final int OS_MAC = 0;
 
     /** Constant used to identify debugging level for general output. */
     public static final int DEBUG_MINOR = 0;
@@ -599,6 +651,8 @@ public class Preferences {
         // location
 
         // look and feel properties
+        Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
+        
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT_SIZE, "12");
 
@@ -1522,59 +1576,6 @@ public class Preferences {
         }
 
         return key;
-    }
-
-    /**
-     * Gets an int representing the operating system.
-     * 
-     * @return int operating system
-     */
-    public static final int getOS() {
-
-        final String os = System.getProperty("os.name");
-
-        if (os.startsWith("Windows")) {
-            return Preferences.OS_WINDOWS;
-        } else if (os.startsWith("Mac")) {
-            return Preferences.OS_MAC;
-        } else {
-            return Preferences.OS_UNIX;
-        }
-    }
-
-    /**
-     * Gets an int representing the system architecture.
-     * 
-     * @return the architecture
-     */
-    public static final int getArch() {
-        final String arch = System.getProperty("os.arch");
-
-        if (arch.equalsIgnoreCase("i386") || arch.equalsIgnoreCase("i486") || arch.equalsIgnoreCase("i586")
-                || arch.equalsIgnoreCase("i686") || arch.equalsIgnoreCase("x86")) {
-            return Preferences.ARCH_X86;
-        } else if (arch.equalsIgnoreCase("amd64") || arch.equalsIgnoreCase("x86_64")) {
-            return Preferences.ARCH_AMD64;
-        } else if (arch.equalsIgnoreCase("ppc") || arch.equalsIgnoreCase("PowerPC")) {
-            return Preferences.ARCH_PPC;
-        } else if (arch.equalsIgnoreCase("pcc64")) {
-            return Preferences.ARCH_PPC64;
-        } else if (arch.equalsIgnoreCase("mips") || arch.equalsIgnoreCase("MIPS4000")) {
-            return Preferences.ARCH_MIPS;
-        } else if (arch.equalsIgnoreCase("alpha")) {
-            return Preferences.ARCH_ALPHA;
-        } else if (arch.equalsIgnoreCase("ia64") || arch.equalsIgnoreCase("IA64N")) {
-            return Preferences.ARCH_IA64;
-        } else if (arch.equalsIgnoreCase("arm") || arch.equalsIgnoreCase("armv41")) {
-            return Preferences.ARCH_ARM;
-        } else if (arch.equalsIgnoreCase("sparc")) {
-            return Preferences.ARCH_SPARC;
-        } else if (arch.equalsIgnoreCase("PA-RISC") || arch.equalsIgnoreCase("PA_RISC")
-                || arch.equalsIgnoreCase("PA_RISC2.0")) {
-            return Preferences.ARCH_PA_RISC;
-        } else {
-            return Preferences.ARCH_UNKNOWN;
-        }
     }
 
     /**
@@ -2764,6 +2765,17 @@ public class Preferences {
         return Preferences.defaultShortcutTable;
     }
 
+    public static ComplexDisplay getComplexDisplay() {
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+        String complexDisplay = Preferences.mipavProps.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
+        if (complexDisplay == null) {
+            complexDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
+        }
+        return ComplexDisplay.valueOf(complexDisplay); 
+    }
+    
     public static boolean isMultiThreadingEnabled() {
         if (Preferences.mipavProps == null) {
             Preferences.read();

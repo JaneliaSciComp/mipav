@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.Preferences.OperatingSystem;
+import gov.nih.mipav.view.Preferences.SystemArchitecture;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -418,11 +420,11 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 Preferences.setProperty("StartingHeapSize", initHeapText.getText());
                 Preferences.setProperty("MaximumHeapSize", maxHeapText.getText());
 
-                final int os = Preferences.getOS();
-                final int arch = Preferences.getArch();
+                final OperatingSystem os = OperatingSystem.getOS();
+                final SystemArchitecture arch = SystemArchitecture.getArch();
 
                 // cannot automatically restart on Macs or 64-bit windows (due to mipav.bat startup work-around)
-                if (os != Preferences.OS_MAC && arch != Preferences.ARCH_AMD64) {
+                if (!os.equals(OperatingSystem.OS_MAC) && !arch.equals(SystemArchitecture.ARCH_AMD64)) {
                     final int response = JOptionPane.showConfirmDialog(this, "Restart " + progName.toUpperCase()
                             + " to apply memory changes?", "Restart needed", JOptionPane.YES_NO_OPTION,
                             JOptionPane.INFORMATION_MESSAGE);
