@@ -912,7 +912,7 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         driver();
         
         Preferences.debug("Test 8 testing dqawse\n");
-        Preferences.debug("Integrand is log(x)/(1 + (log(x))**2)**2");
+        Preferences.debug("Integrand is log(x)/(1 + (log(x))**2)**2\n");
         Preferences.debug("Integrand lower endpoint = 0.0\n");
         Preferences.debug("Integrand upper endpoint = 1.0\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
@@ -7531,7 +7531,7 @@ loop:
     	        		fval2 = intFunc(absc2)*Math.cos(absc2 * p1);
     	        	}	
         	    } // if (integr == 1)
-        	    else { // kp == 2
+        	    else { // integr == 2
         	    	if (selfTest) {
     	        		fval1 = intFuncTest(absc1)*Math.sin(absc1 * p1);
     	        		fval2 = intFuncTest(absc2)*Math.sin(absc2 * p1);
