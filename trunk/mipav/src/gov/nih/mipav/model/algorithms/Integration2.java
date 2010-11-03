@@ -841,13 +841,17 @@ c                     numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
         
         testCase = 8;
-        // test8 tests dwqawse
+        // test8 tests dqawse
         // dqawse is an adaptive integrator for integrands wiht
         // algebraic or logarithmic singularities at the endpoints.
         // ci is the cosine integral ci(x) = integral (x to infinity) -cos(v)/v dv
         // Si is the sine integral Si(x) = integral (0 to x) sin(v)/v dv
         // Actual answer = 0.5*(ci(1.0)*sin(1.0) - si(1.0)*cos(1.0)) - 0.5
         // Actual answer = 0.5*(ci(1.0)*sin(1.0) - (Si(1.0) - pi/2.0)*cos(1.0)) - 0.5
+        // Numerical Integral = -0.18927363338348974 after 40 integrand evaluations used
+        // Error status = 0 with estimated absolute error = 1.1122097989861538E-6
+        // Actual answer = -0.18927518789136621
+        // Exact error = 1.5545078764778175E-6
         lower = 0.0;
         upper = 1.0;
         routine = Integration2.DQAWSE;
@@ -5430,7 +5434,107 @@ loop:
             iroff2 = 0;
             
             // Main for loop
+            for (last = 3; last <= limit; last++) {
             
+                // bisect the subinterval with largest error estimate.
+   
+                a1 = alist[maxErr[0]];
+                b1 = 0.5*(alist[maxErr[0]]+blist[maxErr[0]]);
+                a2 = b1;
+                b2 = blist[maxErr[0]];
+            
+                dqc25s(a1,b1,ri,rj,rg,rh,area1,error1,resas1,nev);
+                neval[0] = neval[0]+nev[0];
+                dqc25s(a2,b2,ri,rj,rg,rh,area2,error2,resas2,nev);
+                neval[0] = neval[0]+nev[0];
+            
+                // improve previous approximations integral and error
+                // and test for accuracy.
+            
+                area12 = area1[0]+area2[0];
+                erro12 = error1[0]+error2[0];
+                errSum = errSum+erro12-errMax[0];
+                area = area+area12-rlist[maxErr[0]];
+                if ((lower != a1) && (upper != b2) &&
+                    (resas1[0] != error1[0]) && (resas2[0] != error2[0])) {
+            
+                    // test for roundoff error.
+            
+                    if(Math.abs(rlist[maxErr[0]]-area12) < 1.0E-5*Math.abs(area12)
+                      && erro12 >= 0.99*errMax[0]){
+                    	iroff1 = iroff1+1;
+                    }
+                    if(last > 10 && erro12 > errMax[0]) {
+                    	iroff2 = iroff2+1;
+                    }
+                } // if ((lower != a1) && (upper != b2) &&
+                rlist[maxErr[0]] = area1[0];
+                rlist[last-1] = area2[0];
+            
+                // test on accuracy.
+          
+                errBnd = Math.max(epsabs,epsrel*Math.abs(area));
+                if(errSum > errBnd) {
+            
+                    // set error flag in the case that the number of interval
+                    // bisections exceeds limit.
+            
+	                if(last == limit) {
+	                	errorStatus = 1;
+	                }
+	            
+	                // set error flag in the case of roundoff error.
+	            
+	                if(iroff1 >= 6 || iroff2 >= 20) {
+	                	errorStatus = 2;
+	                }
+	           
+	                // set error flag in the case of bad integrand behaviour
+	                // at interior points of integration range.
+	            
+	                if(Math.max(Math.abs(a1),Math.abs(b2)) <= (1.0 + 100.0*epmach)* (Math.abs(a2)+1.0E3*uflow)) {
+	                	errorStatus = 3;
+	                }
+	            
+                } // if (errSum > errBnd)
+
+                // append the newly-created intervals to the list.
+              
+                if(error2[0] <= error1[0]) {
+                    alist[last-1] = a2;
+                    blist[maxErr[0]] = b1;
+                    blist[last-1] = b2;
+                    elist[maxErr[0]] = error1[0];
+                    elist[last-1] = error2[0];
+                }
+                else {
+                    alist[maxErr[0]] = a2;
+                    alist[last-1] = a1;
+                    blist[last-1] = b1;
+                    rlist[maxErr[0]] = area2[0];
+                    rlist[last-1] = area1[0];
+                    elist[maxErr[0]] = error2[0];
+                    elist[last-1] = error1[0];
+                }
+            
+                // call subroutine dqpsrt to maintain the descending ordering
+                // in the list of error estimates and select the subinterval
+                // with largest error estimate (to be bisected next).
+           
+                dqpsrt(limit,last,maxErr,errMax,elist,iord,nrmax);
+                if (errorStatus != 0 || errSum <= errBnd) {
+                	break;
+                }
+            } // for (last = 3; last <= limit; last++)
+            
+            // compute final result.
+            // ---------------------
+            
+            result[0] = 0.0;
+            for (k = 0; k < last; k++) {
+                result[0] = result[0]+rlist[k];
+            }
+            abserr[0] = errSum;
             return;
         } // try
 	    catch (Exception err) {
