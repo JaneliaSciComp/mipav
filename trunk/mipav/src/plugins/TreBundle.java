@@ -78,7 +78,7 @@ public class TreBundle extends PlugInBundle {
                 ((PlugInGeneric) thePlugIn).run();
             } else {
                 MipavUtil.displayError("Plug-in " + plugInName
-                        + " claims to be an generic PlugIn, but does not implement PlugInGeneric.");
+                        + " is not a generic plugin.");
             }
         } catch (final UnsupportedClassVersionError ucve) {
             Preferences
