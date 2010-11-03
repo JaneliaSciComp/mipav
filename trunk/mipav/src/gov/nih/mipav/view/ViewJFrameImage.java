@@ -2334,7 +2334,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("dtiVisualization")) {
             userInterface.invokeDTIframe();
         } else if (command.equals("treT1")) {
-            new JDialogTreT1(this, getActiveImage());
+            new JDialogTreT1Temp(this, getActiveImage());
         } else if (command.equals("treT2")) {
             new JDialogTreT2(this, getActiveImage());
         } else if (command.equals("LogSlope")) {
