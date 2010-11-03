@@ -24,6 +24,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.*;
 
+
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
@@ -36,8 +37,10 @@ import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 
 import javax.swing.*;
 
@@ -68,14 +71,38 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
     /** This source image is typically set by the constructor */
     private ModelImage image; // 
     
-    /** This is your algorithm */
+    /** The tre4D algorithm */
     private PlugInAlgorithmTre4D treAlgo = null;
 
-    /** The check box for whether a blur should be performed. */
-	private JCheckBox check;
+    private String[] titles;
 
-	/** The variable representing whether the blur should be performed. */
-	private boolean doErnst;
+    private ModelImage dceHigh;
+
+    private ModelImage r1;
+
+    private ModelImage newM0;
+
+    private ModelImage b1;
+
+    private JComboBox dceCombo;
+
+    private JComboBox newM0Combo;
+
+    private JComboBox r1Combo;
+
+    private JComboBox b1Combo;
+
+    private JTextField flipAngleField;
+
+    private JTextField repTimeField;
+
+    private JTextField dceCenterField;
+
+    private int fa;
+
+    private double trTime;
+
+    private String dceCenterFile;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -180,8 +207,7 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
             
-            treAlgo = new PlugInAlgorithmTre4D(resultImage, image);
-            treAlgo.doErnst(doErnst);
+            treAlgo = new PlugInAlgorithmTre4D(resultImage, image, dceHigh, r1, newM0, b1, fa, trTime, dceCenterFile);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -219,8 +245,6 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
      */
     protected void setGUIFromParams() {
     	image = scriptParameters.retrieveInputImage();
-
-    	doErnst = scriptParameters.getParams().getBoolean("do_gaussian");
     } //end setGUIFromParams()
 
     /**
@@ -228,19 +252,22 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
      */
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.storeInputImage(image);
-   
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doErnst));
     } //end storeParamsFromGUI()
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Generic Plugin");
+        setTitle("TRE4D Plugin");
+        
         try {
-			setIconImage(MipavUtil.getIconImage("divinci.gif"));
-		} catch (FileNotFoundException e) {
-			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
-		}
-
+            setIconImage(MipavUtil.getIconImage("divinci.gif"));
+        } catch (FileNotFoundException e) {
+            Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
+        }
+		
+		GuiBuilder guiBuilder = new GuiBuilder(this);
+        
+        JPanel imagePanel = new JPanel(new GridBagLayout());
+        imagePanel.setBorder(MipavUtil.buildTitledBorder("Select images"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -250,35 +277,86 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        
+        titles = new String[ViewUserInterface.getReference().getRegisteredImagesNum()];
+        Enumeration<String> imageStr = ViewUserInterface.getReference().getRegisteredImageNames();
+        int index = 0;
+        int dceGuess = 0, r1Guess = 0, newM0Guess = 0, b1Guess = 0;
+        while(imageStr.hasMoreElements()) {
+            titles[index] = imageStr.nextElement();
+            if(titles[index].indexOf("DCE") != -1) {
+                dceGuess = index;
+            } else if(titles[index].indexOf("r1") != -1) {
+                r1Guess = index;
+            } else if(titles[index].indexOf("m0") != -1) {
+                newM0Guess = index;
+            } else if(titles[index].indexOf("b1") != -1) {
+                b1Guess = index;
+            }
+            index++;
+            
+        }
+        
+        dceCombo = guiBuilder.buildComboBox("DCE Full:", titles, dceGuess);
+        imagePanel.add(dceCombo.getParent(), gbc);
+        gbc.gridy++;
+        
+        r1Combo = guiBuilder.buildComboBox("R1 results:", titles, r1Guess);
+        imagePanel.add(r1Combo.getParent(), gbc);
+        gbc.gridy++;
+        
+        newM0Combo = guiBuilder.buildComboBox("M0 results:", titles, newM0Guess);
+        imagePanel.add(newM0Combo.getParent(), gbc);
+        gbc.gridy++;
+        
+        b1Combo = guiBuilder.buildComboBox("B1 results:", titles, b1Guess);
+        imagePanel.add(b1Combo.getParent(), gbc);
+        gbc.gridy++;
+        
+        JPanel paramPanel = new JPanel(new GridBagLayout());
+        paramPanel.setBorder(MipavUtil.buildTitledBorder("TRE 4D Parameters"));
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        
+        flipAngleField = guiBuilder.buildIntegerField("Flip angle:", 15);
+        repTimeField = guiBuilder.buildDecimalField("Repetition Time:", 5.6);
+        dceCenterField = guiBuilder.buildFileField("DCE Center Times:", " ", false, JFileChooser.FILES_ONLY);
+        
+        paramPanel.add(flipAngleField.getParent(), gbc);
+        gbc.gridy++;
+        paramPanel.add(repTimeField.getParent(), gbc);
+        gbc.gridy++;
+        paramPanel.add(dceCenterField.getParent(), gbc);
+        gbc.gridy++;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("TRE 4D"));
-
-        JLabel labelVOI = new JLabel("This plugin refines the DESPOT produced maps.");
-        labelVOI.setForeground(Color.black);
-        labelVOI.setFont(serif12);
-        mainPanel.add(labelVOI, gbc);
-
-        gbc.gridy++;
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         
-        check = new JCheckBox("Refine 4D TRE processing using inverse Ernst equation.");
-        check.setFont(serif12);
-        check.setSelected(false);
-        mainPanel.add(check, gbc);
+        mainPanel.add(imagePanel, gbc);
+        gbc.gridy++;
+        mainPanel.add(paramPanel, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
         // Build the Panel that holds the OK and CANCEL Buttons
-        JPanel OKCancelPanel = new JPanel();
+        JPanel OKCancelPanel = guiBuilder.buildOKCancelPanel();
 
-        // size and place the OK button
-        buildOKButton();
-        OKCancelPanel.add(OKButton, BorderLayout.WEST);
-
-        // size and place the CANCEL button
-        buildCancelButton();
-        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
 
         pack();
@@ -294,7 +372,26 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
      * @return
      */
 	private boolean setVariables() {
-		doErnst = check.isSelected();
+		
+		dceHigh = ViewUserInterface.getReference().getRegisteredImageByName(dceCombo.getSelectedItem().toString());
+        r1 = ViewUserInterface.getReference().getRegisteredImageByName(r1Combo.getSelectedItem().toString());
+        newM0 = ViewUserInterface.getReference().getRegisteredImageByName(newM0Combo.getSelectedItem().toString());
+        b1 = ViewUserInterface.getReference().getRegisteredImageByName(b1Combo.getSelectedItem().toString());
+        
+        try {
+            fa = Integer.valueOf(flipAngleField.getText()).intValue();
+            trTime = Double.valueOf(repTimeField.getText()).doubleValue();
+        } catch(NumberFormatException nfe) {
+            return false;
+        }
+        
+        dceCenterFile = dceCenterField.getText();
+        
+        File f = new File(dceCenterFile);
+        if(!f.exists() || !f.canWrite()) {
+            return false;
+        }
+        
 		return true;
 	} //end setVariables()
 	
@@ -367,6 +464,62 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
             panel.add(label);
             panel.add(text);
             return text;
+        }
+        
+        public JTextField buildFileField(String labelText, String initText, final boolean multiSelect, final int fileSelectionMode) {
+            FlowLayout f = new FlowLayout();
+            f.setAlignment(FlowLayout.LEFT);
+            JPanel panel = new JPanel(f);
+            JLabel label = new JLabel(labelText);
+            final JTextField text = new JTextField(initText);
+            text.setColumns(8);
+            JButton button = new JButton("Browse");
+            ActionListener listener = new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    JFileChooser fileChooser = new JFileChooser(Preferences.getImageDirectory());
+                    fileChooser.setFont(MipavUtil.defaultMenuFont);
+                    fileChooser.setMultiSelectionEnabled(multiSelect);
+                    fileChooser.setFileSelectionMode(fileSelectionMode);
+                    
+                    Dimension d = new Dimension(700, 400);
+                    fileChooser.setMinimumSize(d);
+                    fileChooser.setPreferredSize(d);
+                    
+                    int returnVal = fileChooser.showOpenDialog(null);
+                                
+                    if (returnVal == JFileChooser.APPROVE_OPTION) {
+                        File selectedFile = fileChooser.getSelectedFile();
+                        Preferences.setImageDirectory(fileChooser.getCurrentDirectory());
+                        if(!selectedFile.exists() || !selectedFile.canRead()) {
+                            MipavUtil.displayError(selectedFile.getName() + " could not be found.");
+                            return;
+                        }
+                        
+                        text.setText(selectedFile.toString());
+                        text.updateUI();
+                    }
+                }
+            };
+            button.addActionListener(listener);
+            
+            ActionListener textListener = new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    if(e.getSource().equals(OKButton)) {
+                        File f = new File(text.getText());
+                        if(!f.exists() || !f.canRead()) {
+                            passedListeners = false;
+                        }
+                    }
+                }
+            };
+            
+            listenerList.add(textListener);
+            panel.add(label);
+            panel.add(text);
+            panel.add(button);
+            
+            return text;
+            
         }
         
         public JTextField buildIntegerField(final String labelText, int initNum) {
