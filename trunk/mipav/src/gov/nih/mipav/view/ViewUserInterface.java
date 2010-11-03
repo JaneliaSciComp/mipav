@@ -771,7 +771,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             invokeDTIframe();
         } else if (command.equals("treT1")) {
             if (getActiveImageFrame() != null) {
-                new JDialogTreT1Temp(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
+                new JDialogTreT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
             } else {
                 MipavUtil.displayError("Images required for T1 estimation were not found.");
             }
