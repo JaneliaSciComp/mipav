@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.structures;
 
-import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;

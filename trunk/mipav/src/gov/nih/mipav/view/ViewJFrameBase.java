@@ -1,7 +1,7 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;

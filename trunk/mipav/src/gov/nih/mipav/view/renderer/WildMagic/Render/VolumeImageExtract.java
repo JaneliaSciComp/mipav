@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;

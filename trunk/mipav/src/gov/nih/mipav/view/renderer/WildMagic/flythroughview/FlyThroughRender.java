@@ -1,7 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
 
-import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMatchImages;
 import gov.nih.mipav.model.structures.ModelImage;

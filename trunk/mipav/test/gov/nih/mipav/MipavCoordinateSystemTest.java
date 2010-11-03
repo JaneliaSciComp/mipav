@@ -1,5 +1,6 @@
 package gov.nih.mipav;
 
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.util.TestingFileUtil;

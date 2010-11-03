@@ -4,7 +4,7 @@ import java.io.*;
 import javax.swing.JFileChooser;
 import WildMagic.LibFoundation.Mathematics.*;
 
-import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.ViewImageFileFilter;

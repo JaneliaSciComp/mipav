@@ -1,8 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
 
-import gov.nih.mipav.*;
-
+import gov.nih.mipav.util.*;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;

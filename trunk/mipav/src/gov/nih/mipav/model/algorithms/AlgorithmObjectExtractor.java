@@ -6,7 +6,7 @@ import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;

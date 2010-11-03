@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.structures;
 
-import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.util.MipavMath;
 
 import java.awt.Polygon;
 import java.util.BitSet;

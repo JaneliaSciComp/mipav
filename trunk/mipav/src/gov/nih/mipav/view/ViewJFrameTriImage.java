@@ -3,7 +3,7 @@ package gov.nih.mipav.view;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.*;

@@ -5,7 +5,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.util.MipavMath;
 
 import java.awt.*;
 import java.awt.event.*;

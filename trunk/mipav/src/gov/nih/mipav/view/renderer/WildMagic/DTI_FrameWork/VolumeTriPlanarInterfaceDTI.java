@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
-import gov.nih.mipav.MipavInitGPU;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
