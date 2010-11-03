@@ -29,11 +29,15 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
+import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 
 import javax.swing.*;
 
@@ -65,7 +69,7 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmTre4D genericAlgo = null;
+    private PlugInAlgorithmTre4D treAlgo = null;
 
     /** The check box for whether a blur should be performed. */
 	private JCheckBox check;
@@ -129,7 +133,7 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             
-            if ((genericAlgo.isCompleted() == true) && (resultImage != null)) {
+            if ((treAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
                 updateFileInfo(image, resultImage);
@@ -176,14 +180,14 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
             
-            genericAlgo = new PlugInAlgorithmTre4D(resultImage, image);
-            genericAlgo.doErnst(doErnst);
+            treAlgo = new PlugInAlgorithmTre4D(resultImage, image);
+            treAlgo.doErnst(doErnst);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            genericAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", genericAlgo);
+            treAlgo.addListener(this);
+            createProgressBar(image.getImageName(), " ...", treAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -191,11 +195,11 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
-                if (genericAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (treAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                genericAlgo.run();
+                treAlgo.run();
             }
         } catch (OutOfMemoryError x) {
             if (resultImage != null) {
@@ -249,9 +253,9 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("A titled border"));
+        mainPanel.setBorder(buildTitledBorder("TRE 4D"));
 
-        JLabel labelVOI = new JLabel("Blank text");
+        JLabel labelVOI = new JLabel("This plugin refines the DESPOT produced maps.");
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         mainPanel.add(labelVOI, gbc);
@@ -293,4 +297,215 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
 		doErnst = check.isSelected();
 		return true;
 	} //end setVariables()
+	
+	/**
+     * Provides methods for quickly building panel components. I can think of many other (better)
+     * ways to do this, but for the ImageJ port this works well for now.
+     * 
+     * @author senseneyj
+     *
+     */
+    private class GuiBuilder implements ActionListener {
+        
+        public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
+
+        private ArrayList<ActionListener> listenerList;
+        
+        private boolean passedListeners;
+
+        private ExitStatus exit;
+        
+        private JButton yes, no;
+        
+        private JDialogBase parent;
+        
+        public GuiBuilder(JDialogBase parent) {
+            this.parent = parent;
+            this.listenerList = new ArrayList<ActionListener>();
+            this.exit = ExitStatus.INCOMPLETE;
+        }
+        
+        public ExitStatus getExitStatus() {
+            return exit;
+        }
+        
+        public ActionListener[] getListenerList() {
+            ActionListener[] list = new ActionListener[listenerList.size()];
+            for(int i=0; i<listenerList.size(); i++) {
+                list[i] = listenerList.get(i);
+            }
+            return list;
+        }
+        
+        public JRadioButton buildRadioButton(String label, boolean selected) {
+            FlowLayout f = new FlowLayout();
+            f.setAlignment(FlowLayout.LEFT);
+            JPanel radioPanel = new JPanel(f);
+            JRadioButton radioButton = new JRadioButton(label);
+            radioButton.setSelected(selected);
+            radioPanel.add(radioButton);
+            return radioButton;
+        }
+        
+        public JCheckBox buildCheckBox(String label, boolean selected) {
+            FlowLayout f = new FlowLayout();
+            f.setAlignment(FlowLayout.LEFT);
+            JPanel checkPanel = new JPanel(f);
+            JCheckBox checkBox = new JCheckBox(label);
+            checkBox.setSelected(selected);
+            checkPanel.add(checkBox);
+            return checkBox;
+        }
+        
+        public JTextField buildField(String labelText, String initText) {
+            FlowLayout f = new FlowLayout();
+            f.setAlignment(FlowLayout.LEFT);
+            JPanel panel = new JPanel(f);
+            JLabel label = new JLabel(labelText);
+            JTextField text = new JTextField(initText);
+            text.setColumns(8);
+            panel.add(label);
+            panel.add(text);
+            return text;
+        }
+        
+        public JTextField buildIntegerField(final String labelText, int initNum) {
+            final JTextField genericField = buildField(labelText, String.valueOf(initNum));
+            ActionListener listener = new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    if(e.getSource().equals(OKButton)) {
+                        try {
+                            Integer.valueOf(genericField.getText());
+                        } catch(NumberFormatException e1) {
+                            try {
+                                double d = Double.valueOf(genericField.getText());
+                                if(((int)d) == d) {
+                                    genericField.setText(Integer.valueOf((int)d).toString());
+                                    return;
+                                } else {
+                                    MipavUtil.displayInfo(labelText+" must be an integer.");
+                                    passedListeners = false;
+                                }
+                            } catch(NumberFormatException e2) {
+                                MipavUtil.displayInfo(labelText+" must be an integer.");
+                                passedListeners = false;
+                            }
+                        }
+                    }
+                }
+            };
+            genericField.addActionListener(listener);
+            listenerList.add(listener);
+            return genericField;
+        }
+        
+        public JTextField buildDecimalField(final String labelText, double initNum) {
+            final JTextField genericField = buildField(labelText, String.valueOf(initNum));
+            ActionListener listener = new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    if(e.getSource().equals(OKButton)) {
+                        try {
+                            Double.valueOf(genericField.getText());
+                        } catch(NumberFormatException e1) {
+                            MipavUtil.displayInfo(labelText+" must be a number.");
+                            passedListeners = false;
+                        }
+                    }
+                }
+            };
+            genericField.addActionListener(listener);
+            listenerList.add(listener);
+            return genericField;
+        }
+        
+        public JComboBox buildComboBox(String labelText, Object[] options) {
+            FlowLayout f = new FlowLayout();
+            f.setAlignment(FlowLayout.LEFT);
+            JPanel panel = new JPanel(f);
+            JLabel label = new JLabel(labelText);
+            JComboBox comboBox = null;
+            if(options != null) {
+                
+                comboBox = new JComboBox(options);
+            } else {
+                comboBox = new JComboBox(new String[]{"a", "B"});
+            }
+         
+            panel.add(label);
+            panel.add(comboBox);
+            return comboBox;
+        }
+        
+        public JComboBox buildComboBox(String labelText, Object[] options, int numDefault) {
+            JComboBox comboBox = buildComboBox(labelText, options); //call default
+            if(numDefault > comboBox.getItemCount()-1) {
+                numDefault = 0;
+            } else {
+                comboBox.setSelectedIndex(numDefault);
+            }
+            //TODO: get renderer to truncate long names
+            /*comboBox.setRenderer(new ListCellRenderer() {
+                DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
+                
+                public Component getListCellRendererComponent(JList list,
+                        Object value, int index, boolean isSelected,
+                        boolean cellHasFocus) {
+                    JLabel renderer = (JLabel) defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if(index == -1 && value.toString().length() > 23) {
+                        renderer.setText(value.toString().substring(0, 23)+"...");
+                    } else {
+                        //renderer.setBounds(0, 0, 300, 20);
+                    }
+                    System.out.println(value+" "+index);
+                    return renderer;
+                
+                }   
+            });*/
+            return comboBox;
+        }
+        
+        public JPanel buildOKCancelPanel() {
+            JPanel panel = new JPanel();
+            OKButton = new JButton("OK");
+            OKButton.addActionListener(this);
+            OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+            OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            OKButton.setFont(serif12B);
+            
+            cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(this);
+            cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
+            cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            cancelButton.setFont(serif12B);
+            
+            panel.add(OKButton);
+            panel.add(cancelButton);
+            return panel;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            passedListeners = true;
+            if(e.getSource().equals(OKButton)) {
+                for(int i=0; i<listenerList.size(); i++) {
+                    if(passedListeners) {
+                        listenerList.get(i).actionPerformed(e);
+                    } else {
+                        exit = ExitStatus.OK_FAIL;
+                        return;
+                    }
+                }
+                if(passedListeners) {
+                    exit = ExitStatus.OK_SUCCESS;
+                    parent.actionPerformed(e);
+                } else {    
+                    exit = ExitStatus.OK_FAIL;
+                    return;
+                }
+            } else if(e.getSource().equals(cancelButton)) {
+                exit = ExitStatus.CANCEL;
+                parent.dispose();
+            }
+        }
+        
+    }
 }
