@@ -1,8 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
-import gov.nih.mipav.*;
-
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;

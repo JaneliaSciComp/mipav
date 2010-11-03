@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.MipavInitGPU;
+import gov.nih.mipav.util.MipavInitGPU;
 
 import java.awt.event.KeyListener;
 

@@ -1,4 +1,4 @@
-package gov.nih.mipav;
+package gov.nih.mipav.util;
 
 import java.io.*;
 

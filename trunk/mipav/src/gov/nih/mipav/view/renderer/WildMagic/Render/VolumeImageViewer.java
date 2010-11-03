@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.MipavInitGPU;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.awt.Frame;

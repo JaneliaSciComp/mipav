@@ -1,7 +1,7 @@
 package gov.nih.mipav.view.renderer.J3D.model.file;
 
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 
 import gov.nih.mipav.model.structures.*;
 

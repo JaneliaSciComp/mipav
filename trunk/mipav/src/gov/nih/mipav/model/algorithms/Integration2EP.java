@@ -7,7 +7,7 @@ import com.sun.org.apache.xpath.internal.operations.Gt;
 import com.sun.org.apache.xpath.internal.operations.Lt;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.DoubleDouble;
+import gov.nih.mipav.util.DoubleDouble;
 
 
 /**
