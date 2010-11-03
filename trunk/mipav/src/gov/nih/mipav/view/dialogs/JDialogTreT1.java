@@ -87,7 +87,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     private double maxAngle = 20;
     
     private boolean smoothB1Field = true;
-    /**The following GUI choices change algorithm operation in bi/trinary ways*/
+    /**The following GUI choices change algorithm operation using enums*/
     private FieldStrength mriStrength;
 	private ScannerType scannerType;
 	private Threshold thresholdMethod;
@@ -327,8 +327,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    gbc.gridy++;
 	    panel.add(useB1Map.getParent(), gbc);
-	 
-	    //TODO: Remove dummy label for display
+	    
 	    gbc.gridy++;
 	    gbc.weighty = 1;
 	    gbc.insets = new Insets(0, 0, 0, 0);
@@ -492,6 +491,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    //TODO: Remove dummy label for display
 	    gbc.gridy++;
 	    gbc.weighty = 1;
+	    
+	    
+	    
 	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(new JLabel(""), gbc);
 	    
@@ -789,7 +791,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	        gbc.insets = new Insets(10, 0, 0, 0);
 	        panel.add(leastSquaresCheck.getParent(), gbc);
 	    }
-	    //TODO: Remove dummy label for display
+
 	    gbc.gridy++;
 	    gbc.weighty = 1;
 	    gbc.insets = new Insets(0, 0, 0, 0);
@@ -827,8 +829,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    	thresholdMethod = Threshold.SMART;
 	    }
 	    
-	    System.out.println("The selected state: "+thresholdMethod);
-	    
 	    ActionListener c = new ThresholdChoiceListener();
 	    smartCheckBox.addActionListener(c);
 	    hardCheckBox.addActionListener(c);
@@ -864,7 +864,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.insets = new Insets(20, 0, 0, 0);
 	    panel.add(generalThresholdPanel, gbc);
 	    
-	    //TODO: Remove dummy label for display
 	    gbc.gridy++;
 	    gbc.weighty = 1;
 	    gbc.insets = new Insets(0, 0, 0, 0);
@@ -878,7 +877,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    LayoutManager panelLayout = new BorderLayout();
 	    panel.addComponentListener(new FlipAngleChangeListener());
 	    panel.setLayout(panelLayout);
-	    GridBagConstraints gbc =  new GridBagConstraints();
 	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Image Information"));
 	    
 	    panel.add(buildTreT1HIFISpecificsPanelInner());
@@ -927,10 +925,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    	gbc.insets = new Insets(10, 0, 0, 0);
 	    	panel.add(leastSquaresCheck.getParent(), gbc);
 	    }
-	    //TODO: Don't use dummy label for pushing all elements north
-	    gbc.weighty = 1;
-	    gbc.insets = new Insets(0, 0, 0, 0);
-	    panel.add(new JLabel(""), gbc);
+	    //gbc.weighty = 1;
+	    //gbc.insets = new Insets(0, 0, 0, 0);
+	    //panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
 	}
@@ -2329,7 +2326,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             //get the list of possible images
             ArrayList<Parameter> parImageArr = new ArrayList<Parameter>();
             Parameter[] parTotal = scriptParameters.getParams().getParameters();
-            for(int i=0; i<parTotal.length; i++) {
+            for(int i=0; i<parTotal.length; i++) {w
                 if(parTotal[i].getType() == Parameter.PARAM_EXTERNAL_IMAGE) {
                     parImageArr.add(parTotal[i]);
                 }
