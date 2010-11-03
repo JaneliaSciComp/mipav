@@ -33,6 +33,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 
@@ -513,9 +514,9 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
         
         private JButton yes, no;
         
-        private JDialog parent;
+        private JDialogBase parent;
         
-        public GuiBuilder(JDialog parent) {
+        public GuiBuilder(JDialogBase parent) {
             this.parent = parent;
             this.listenerList = new ArrayList<ActionListener>();
             this.exit = ExitStatus.INCOMPLETE;
@@ -573,8 +574,19 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
                         try {
                             Integer.valueOf(genericField.getText());
                         } catch(NumberFormatException e1) {
-                            MipavUtil.displayInfo(labelText+" must be an integer.");
-                            passedListeners = false;
+                            try {
+                                double d = Double.valueOf(genericField.getText());
+                                if(((int)d) == d) {
+                                    genericField.setText(Integer.valueOf((int)d).toString());
+                                    return;
+                                } else {
+                                    MipavUtil.displayInfo(labelText+" must be an integer.");
+                                    passedListeners = false;
+                                }
+                            } catch(NumberFormatException e2) {
+                                MipavUtil.displayInfo(labelText+" must be an integer.");
+                                passedListeners = false;
+                            }
                         }
                     }
                 }
@@ -651,11 +663,19 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
         
         public JPanel buildOKCancelPanel() {
             JPanel panel = new JPanel();
-            OKButton = buildOKButton();
-            cancelButton = buildCancelButton();
-            cancelButton.addActionListener(this);
-            panel.add(OKButton);
+            OKButton = new JButton("OK");
             OKButton.addActionListener(this);
+            OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+            OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            OKButton.setFont(serif12B);
+            
+            cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(this);
+            cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
+            cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            cancelButton.setFont(serif12B);
+            
+            panel.add(OKButton);
             panel.add(cancelButton);
             return panel;
         }
@@ -673,7 +693,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
                 }
                 if(passedListeners) {
                     exit = ExitStatus.OK_SUCCESS;
-                    parent.dispose();
+                    parent.actionPerformed(e);
                 } else {    
                     exit = ExitStatus.OK_FAIL;
                     return;
