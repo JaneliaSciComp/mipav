@@ -51,7 +51,99 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /** Used to indicate Taylor series interpolation. */
     public static final int TAYLOR = 2;
+    
+    public enum DataType {
+        /** Data buffer is of type Boolean (1 bit per voxel). */
+        BOOLEAN(0, "Boolean", 0, 1),
+        /** Data buffer is of type signed byte (8 bits per voxel). */
+        BYTE(1, "Byte", Byte.MIN_VALUE, Byte.MAX_VALUE),
+        /** Data buffer is of type unsigned byte (8 bits per voxel). */
+        UBYTE(2, "Unsigned Byte", 0, 255),
+        /** Data buffer is of type signed short (16 bits per voxel). */
+        SHORT(3, "Short", Short.MIN_VALUE, Short.MAX_VALUE),
+        /** Data buffer is of type unsigned short (16 bits per voxal). */
+        USHORT(4, "Unsigned Short", 0, 65535),
+        /** Data buffer is of type signed integer (32 bits per voxel). */
+        INTEGER(5, "Integer", Integer.MIN_VALUE, Integer.MAX_VALUE),
+        /** Data buffer is of type unsigned integer (32 bits per voxel). */
+        UINTEGER(14, "Unsigned Integer", 0, 4294967295L),
+        /** Data buffer is of type signed long integer (64 bits per voxel). */
+        LONG(6, "Long", Long.MIN_VALUE, Long.MAX_VALUE),
+        /** Data buffer is of type float (32 bits per voxel). */
+        FLOAT(7, "Float", -Float.MAX_VALUE, Float.MAX_VALUE),
+        /** Data buffer is of type double (64 bits per voxel). */
+        DOUBLE(8, "Double", -Double.MAX_VALUE, Double.MAX_VALUE),
+        /** 
+         * Data buffer is of type ARGB where each channel (A = alpha, R = red, G = green, B =
+         * blue) is represented by a unsigned byte value. (4 * UBYTE(8 bits) = 4 bytes) 
+         */
+        ARGB(9, "ARGB", UBYTE.typeMin, UBYTE.typeMax),
+        /** 
+         * Data buffer is of type ARGB where each channel (A = alpha, R = red, G = green, B =
+         * blue) is represented by a unsigned short value. (4 * USHORT(16 bits) = 8 bytes)
+         */
+        ARGB_USHORT(10, "ARGB Ushort", USHORT.typeMin, USHORT.typeMax),
+        /** 
+         * Data buffer is of type ARGB where each channel (A = alpha, R = red, G = green, B =
+         * blue) is represented by a float value. (4 * FLOAT(32 bits) = 16 bytes)
+         */
+        ARGB_FLOAT(11, "ARGB Float", -Float.MAX_VALUE, Float.MAX_VALUE),
+        /** Data buffer is of type complex type floats (2 x 64 bits per voxel). */
+        COMPLEX(12, "Complex", -Float.MAX_VALUE, Float.MAX_VALUE),
+        /** Data buffer is of type complex type of doubles (2 x 128 bits per voxel). */
+        DCOMPLEX(13, "Complex Double", -Double.MAX_VALUE, Double.MAX_VALUE);
+        
+        /** These variables preserve the legacy ordering of these enums. */
+        private int legacyNum;
+        private String legacyName;
+        /** Min value allowed of the type */
+        private Number typeMin;
+        /** Max value allowed of the type */
+        private Number typeMax;
 
+        DataType(int legacyNum, String legacyName, Number typeMin, Number typeMax) {
+            this.legacyNum = legacyNum;
+            this.legacyName = legacyName;
+            this.typeMin = typeMin;
+            this.typeMax = typeMax;
+        }
+
+        public int getLegacyNum() {
+            return legacyNum;
+        }
+
+        /**
+         * This method returns the min value allowed of the type.
+         * 
+         * @return A java.lang.Number
+         */
+        public Number getTypeMin() {
+            return typeMin;
+        }
+
+        /**
+         * This method return the max value allowed of the type.
+         * 
+         * @return A java.lang.Number
+         */
+        public Number getTypeMax() {
+            return typeMax;
+        }
+        
+        public String toString() {
+            return legacyName;
+        }
+        
+        public static DataType getDataType(int legacyNum) {
+            for(DataType d : DataType.values()) {
+                if(d.legacyNum == legacyNum) {
+                    return d;
+                }
+            }
+            return null;
+        }
+    }
+    
     /** Used to indicate that the data buffer is of type Boolean (1 bit per voxel). */
     public static final int BOOLEAN = 0;
 
@@ -151,13 +243,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** Used to indicate, as a String, that the data buffer is of type unsigned integer. */
     public static final String UINTEGER_STRING = "Unsigned Integer";
 
+    
     /** String representations of the data types supported by ModelStorageBase. */
-    public static final String[] bufferTypeStr = {ModelStorageBase.BOOLEAN_STRING, ModelStorageBase.BYTE_STRING,
-            ModelStorageBase.UBYTE_STRING, ModelStorageBase.SHORT_STRING, ModelStorageBase.USHORT_STRING,
-            ModelStorageBase.INTEGER_STRING, ModelStorageBase.LONG_STRING, ModelStorageBase.FLOAT_STRING,
-            ModelStorageBase.DOUBLE_STRING, ModelStorageBase.ARGB_STRING, ModelStorageBase.ARGB_USHORT_STRING,
-            ModelStorageBase.ARGB_FLOAT_STRING, ModelStorageBase.COMPLEX_STRING, ModelStorageBase.DCOMPLEX_STRING,
-            ModelStorageBase.UINTEGER_STRING};
+    public static final String[] bufferTypeStr;
+    
+    static {
+        bufferTypeStr = new String[DataType.values().length];
+        for(int i=0; i<DataType.values().length; i++) {
+            bufferTypeStr[DataType.values()[i].legacyNum] = DataType.values()[i].toString();
+        }
+    }
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -172,7 +267,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     protected double lastMin, lastMax;
 
     /** Type of image buffer (i.e. BOOLEAN, BYTE, UBYTE, SHORT ...) */
-    private int bufferType;
+    private DataType bufferType;
 
     /** Storage location of image data. */
     private BufferBase data;
@@ -340,6 +435,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *            be allocated
      */
     public ModelStorageBase(final int type, final int[] dimExtents) {
+        this(DataType.getDataType(type), dimExtents);
+    }
+    
+    /**
+     * Allocates buffer memory of the specified type.
+     * 
+     * @param type type of buffer to allocate
+     * @param dimExtents extents of the buffer in each dimension (multipleid together produces the size of the buffer to
+     *            be allocated
+     */
+    public ModelStorageBase(final DataType type, final int[] dimExtents) {
         construct(type, dimExtents);
     }
 
@@ -426,10 +532,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
         int i;
         double value;
 
-        if ( (bufferType == ModelStorageBase.COMPLEX) || (bufferType == ModelStorageBase.DCOMPLEX)) {
+        if ( (bufferType == DataType.COMPLEX) || (bufferType == DataType.DCOMPLEX)) {
             calcMinMaxMag(logMagDisplay);
-        } else if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
-                && (bufferType != ModelStorageBase.ARGB_FLOAT)) {
+        } else if ( (bufferType != DataType.ARGB) && (bufferType != DataType.ARGB_USHORT)
+                && (bufferType != DataType.ARGB_FLOAT)) {
 
             /*
              * if (bufferType == SHORT) { // I thought this would be faster but it is not -- Matt 9/5/2008 short
@@ -604,13 +710,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
         int i;
         double value;
 
-        if (bufferType == ModelStorageBase.BOOLEAN) {
+        if (bufferType == DataType.BOOLEAN) {
             nonZeroMin = 1;
             nonZeroMax = 1;
             smallestMagnitudeNegative = Double.NaN;
             smallestMagnitudePositive = 1;
-        } else if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
-                && (bufferType != ModelStorageBase.ARGB_FLOAT)) {
+        } else if ( (bufferType != DataType.ARGB) && (bufferType != DataType.ARGB_USHORT)
+                && (bufferType != DataType.ARGB_FLOAT)) {
             foundNonZeroMin = false;
             foundNonZeroMax = false;
             foundSmallestMagnitudeNegative = false;
@@ -849,7 +955,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
                 data = null;
                 System.gc();
-                construct(ModelStorageBase.FLOAT, dimExtents);
+                construct(DataType.FLOAT, dimExtents);
                 importData(0, imgBuf, true);
             } else {
                 return;
@@ -1023,15 +1129,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     }
 
                     /* if color: */
-                    if ( (bufferType == ModelStorageBase.ARGB) || (bufferType == ModelStorageBase.ARGB_USHORT)
-                            || (bufferType == ModelStorageBase.ARGB_FLOAT)) {
+                    if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                            || (bufferType == DataType.ARGB_FLOAT)) {
                         values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
                         values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
                         values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
                         values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
                     }
                     /* if complex: */
-                    else if ( (bufferType == ModelStorageBase.COMPLEX) || (bufferType == ModelStorageBase.DCOMPLEX)) {
+                    else if ( (bufferType == DataType.COMPLEX) || (bufferType == DataType.DCOMPLEX)) {
 
                         if (exportComplex) {
                             values[ ( ( (j * iBound) + i) * 2) + 0] = getFloat(index * 2);
@@ -1788,8 +1894,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         int buffFactor = 1;
 
-        if ( (bufferType == ModelStorageBase.ARGB) || (bufferType == ModelStorageBase.ARGB_USHORT)
-                || (bufferType == ModelStorageBase.ARGB_FLOAT)) {
+        if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                || (bufferType == DataType.ARGB_FLOAT)) {
             buffFactor = 4;
         }
 
@@ -1841,8 +1947,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if ( ( (x < 0) || (x >= dimExtents[0])) || ( (y < 0) || (y >= dimExtents[1]))
                         || ( (z < 0) || (z >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
 
-                    if ( (bufferType == ModelStorageBase.ARGB) || (bufferType == ModelStorageBase.ARGB_USHORT)
-                            || (bufferType == ModelStorageBase.ARGB_FLOAT)) {
+                    if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                            || (bufferType == DataType.ARGB_FLOAT)) {
                         values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
                         values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
                         values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
@@ -1855,15 +1961,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 } else {
 
                     /* if color: */
-                    if ( (bufferType == ModelStorageBase.ARGB) || (bufferType == ModelStorageBase.ARGB_USHORT)
-                            || (bufferType == ModelStorageBase.ARGB_FLOAT)) {
+                    if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                            || (bufferType == DataType.ARGB_FLOAT)) {
                         values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
                         values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
                         values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
                         values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
                     }
                     /* if complex: */
-                    else if (bufferType == ModelStorageBase.COMPLEX) {
+                    else if (bufferType == DataType.COMPLEX) {
 
                         if (exportComplex) {
                             values[ ( ( (j * iBound) + i) * 2) + 0] = getFloat(index * 2);
@@ -4299,7 +4405,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @return Indicates the data buffer type
      */
     public final int getType() {
-        return bufferType;
+        return bufferType.getLegacyNum();
     }
 
     /**
@@ -4309,35 +4415,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final String getTypeString() {
 
-        if (bufferType == ModelStorageBase.BOOLEAN) {
-            return ModelStorageBase.BOOLEAN_STRING;
-        } else if (bufferType == ModelStorageBase.BYTE) {
-            return ModelStorageBase.BYTE_STRING;
-        } else if (bufferType == ModelStorageBase.UBYTE) {
-            return ModelStorageBase.UBYTE_STRING;
-        } else if (bufferType == ModelStorageBase.SHORT) {
-            return ModelStorageBase.SHORT_STRING;
-        } else if (bufferType == ModelStorageBase.USHORT) {
-            return ModelStorageBase.USHORT_STRING;
-        } else if (bufferType == ModelStorageBase.INTEGER) {
-            return ModelStorageBase.INTEGER_STRING;
-        } else if (bufferType == ModelStorageBase.UINTEGER) {
-            return ModelStorageBase.UINTEGER_STRING;
-        } else if (bufferType == ModelStorageBase.LONG) {
-            return ModelStorageBase.LONG_STRING;
-        } else if (bufferType == ModelStorageBase.FLOAT) {
-            return ModelStorageBase.FLOAT_STRING;
-        } else if (bufferType == ModelStorageBase.DOUBLE) {
-            return ModelStorageBase.DOUBLE_STRING;
-        } else if (bufferType == ModelStorageBase.ARGB) {
-            return ModelStorageBase.ARGB_STRING;
-        } else if (bufferType == ModelStorageBase.ARGB_USHORT) {
-            return ModelStorageBase.ARGB_USHORT_STRING;
-        } else if (bufferType == ModelStorageBase.ARGB_FLOAT) {
-            return ModelStorageBase.ARGB_FLOAT_STRING;
-        } else {
-            return "Unknown";
-        }
+        return bufferType.toString();
     }
 
     /**
@@ -5330,8 +5408,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
         final int length = values.length;
         int ptr;
 
-        if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
-                && (bufferType != ModelStorageBase.ARGB_FLOAT)) { // not
+        if ( (bufferType != DataType.ARGB) && (bufferType != DataType.ARGB_USHORT)
+                && (bufferType != DataType.ARGB_FLOAT)) { // not
             // a
             // color
             // image
@@ -5378,8 +5456,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
         final int length = values.length;
         int ptr;
 
-        if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
-                && (bufferType != ModelStorageBase.ARGB_FLOAT)) { // not
+        if ( (bufferType != DataType.ARGB) && (bufferType != DataType.ARGB_USHORT)
+                && (bufferType != DataType.ARGB_FLOAT)) { // not
             // a
             // color
             // image
@@ -5544,7 +5622,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             // disposeLocal(); // delete old memory and reallocate
             data = null;
             System.gc();
-            construct(type, dimExtents);
+            construct(DataType.getDataType(type), dimExtents);
         } else {
             throw new IOException("ModelStorageBase: Reallocate: Image locked !");
         }
@@ -5587,7 +5665,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             // disposeLocal(); // delete old memory and reallocate
             data = null;
             System.gc();
-            construct(type, dimExtents);
+            construct(DataType.getDataType(type), dimExtents);
         } else {
             throw new IOException("ModelStorageBase: Reallocate: Image locked !");
         }
@@ -6789,6 +6867,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param type the type of data
      */
     public final void setType(final int type) {
+        bufferType = DataType.getDataType(type);
+    }
+    
+    /**
+     * Sets the type of data.
+     * 
+     * @param type the type of data
+     */
+    public final void setType(final DataType type) {
         bufferType = type;
     }
 
@@ -7314,8 +7401,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public void calcAvgIntenStdDev() {
         if (getNDims() == 2) {
             final int numPixelsPerSlice = getSliceSize();
-            if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
-                    && (bufferType != ModelStorageBase.ARGB_FLOAT)) { // greyscale
+            if ( (bufferType != DataType.ARGB) && (bufferType != DataType.ARGB_USHORT)
+                    && (bufferType != DataType.ARGB_FLOAT)) { // greyscale
                 // image
                 final float[] imageBuffer = new float[numPixelsPerSlice];
 
@@ -7387,8 +7474,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
         } else if (getNDims() == 3) {
             final int numSlices = getExtents()[2];
             final int numPixelsPerSlice = getSliceSize();
-            if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
-                    && (bufferType != ModelStorageBase.ARGB_FLOAT)) { // greyscale
+            if ( (bufferType != DataType.ARGB) && (bufferType != DataType.ARGB_USHORT)
+                    && (bufferType != DataType.ARGB_FLOAT)) { // greyscale
                 // image
                 final float[] imageBuffer = new float[numSlices * numPixelsPerSlice];
 
@@ -7605,7 +7692,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param dimExtents extents of the buffer in each dimension (multiplied together produces the size of the buffer to
      *            be allocated
      */
-    protected void construct(final int type, final int[] dimExtents) {
+    protected void construct(final DataType type, final int[] dimExtents) {
 
         this.bufferType = type;
         this.dimExtents = dimExtents.clone();
