@@ -110,6 +110,10 @@ public class ModelImage extends ModelStorageBase {
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
     
+    public ModelImage(final DataType type, final int[] dimExtents, final String name) {
+        this(type.getLegacyNum(), dimExtents, name);
+    }
+    
     /**
      * Creates a new ModelImage object.
      * 
