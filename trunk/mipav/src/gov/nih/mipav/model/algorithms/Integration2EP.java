@@ -14,7 +14,7 @@ import gov.nih.mipav.util.DoubleDouble;
  * This is a port of FORTRAN numerical integration routines in QUADPACK found at http://www.netlib.org/quadpack
  * Reference: R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner Quadpack: a Subroutine Package for Automatic
  * Integration Springer Verlag, 1983. Series in Computational Mathematics v. 1
- * The original dqage, dqagie, dqagpe, dqagse, dqawce, dqawoe, adn dqawse routines were written by Robert Piessens and Elise de Doncker.
+ * The original dqage, dqagie, dqagpe, dqagse, dqawce, dqawfe, dqawoe, adn dqawse routines were written by Robert Piessens and Elise de Doncker.
  * The original dqng routine was written by Robert Piessens and Elise de Doncker and modified by David Kahaner.
  * The original dqc25c, dqc25f, dqc25s, dqcheb, dqelg, dqk15, dqk15i, dqk15w, dqk21, dqk31, dqk41, dqk51, dqk61, dqmomo,
  * dqpsrt, dqwgtc, dqwgtf, and dqwgts routines were written by Robert Piessens and Elise de Doncker.
@@ -180,6 +180,9 @@ public abstract class Integration2EP {
     /** Adaptive integrator for integrands with algebraic or logarithmic singularities at endpoints. */
     protected static final int DQAWSE = 14;
     
+    /** Automatic integrator, special-purpose, fourier integrals */
+    protected static final int DQAWFE = 15;
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Estimate of the absolute value of the error, which should equal or exceed abs(actual integral - result). */
@@ -196,7 +199,7 @@ public abstract class Integration2EP {
     
     /**
      * parameter in the weight function, beta.gt.(-1)
-     * if beta.le.(-1), the routine will end with errorStatus = 6.
+     * if beta.le.(-1), the routine will end with ier[0] = 6.
      */
     private DoubleDouble beta;
 
@@ -213,7 +216,7 @@ public abstract class Integration2EP {
     private DoubleDouble[] breakPoints;
     
     /** Parameter in the weight function, c != lower, c != upper.
-     * If c == a or c == b, the routine will end with errorStatus = 6
+     * If c == a or c == b, the routine will end with ier[0] = 6
      */
     private DoubleDouble c;
     
@@ -242,37 +245,12 @@ public abstract class Integration2EP {
 
     /** DOCUMENT ME! */
     private DoubleDouble epsrel;
-
-    /**
-     * errorStatus = 0 for normal and reliable termination of the routine. It is assumed that the requested accuracy has
-     * been achieved. errorStatus > 0 for abnormal termination of the routine. The estimates for the integral and error
-     * are less reliable. It is assumed that the requested accuracy has not been achieved.
-     *  
-     * errorStatus = 1 maximum number of subdivisions allowed has been achieved. 
-     * One can allow more subdivisions by increasing the value of limit (and taking the according dimension adjustments
-     * into account). However, if this yields no improvement, it is advised to analyze the integrand in order to
-     * determine the integration difficulties. If the position of a local difficulty can be determined( i.e. singularity,
-     * discontinuity within the interval), it should be supplied to the routine as an element of the breakPoints array.
-     * If necessary, an appropriate special purpose integrator must be used, which is designed for handling the type
-     * of difficulty involved. 
-     * 
-     * errorStatus = 2 The occurrence of roundoff error is detected, which prevents the requested tolerance from 
-     * being achieved. The error may be under-estimated.
-     *  
-     * errorStatus = 3 Extremely bad integrand behavior occurs at some points of the integration interval.
-     * 
-     * errorStatus = 4 The algorithm does not converge. Roundoff error is detected in the extrapolation table.
-     * It is presumed that the requested tolerance cannot be achieved, and that the returned result is the best that can
-     * be obtained. 
-     * 
-     * errorStatus = 5 The integral is probably divergent, or slowly convergent. It must be noted that
-     * divergence can occur with any other value of errorStatus > 0. 
-     * 
-     * errorStatus = 6 The input is invalid because (epsabs <= 0 and epsrel < max(50.0 * relative machine accuracy, 5.0E-29) 
-     * or in the case of dqagpe can also happen because npts2 < 2, the breakPoints are specified outside the integration
-     * range, or , or limit <= npts.
+    
+    /** 
+     * In dqawfe vector of dimension at least limlst
+     * erlst[k] contains the error estimate corresponding wiht rstlst[k].
      */
-    private int errorStatus;
+    private DoubleDouble erlst[];
     
     private DoubleDouble gamma;
     
@@ -286,9 +264,46 @@ c                     if icall.gt.1 this means that dqawoe has been
 c                     called twice or more on intervals of the same
 c                     length abs(b-a). the chebyshev moments already
 c                     computed are then re-used in subsequent calls.
-c                     if icall.lt.1, the routine will end with ier = 6.
+c                     if icall.lt.1, the routine will end with ier[0] = 6.
      */
     private int icall;
+    
+    /**
+     * ier[0] = 0 for normal and reliable termination of the routine. It is assumed that the requested accuracy has
+     * been achieved. errorStatus > 0 for abnormal termination of the routine. The estimates for the integral and error
+     * are less reliable. It is assumed that the requested accuracy has not been achieved.
+     *  
+     * ier[0] = 1 maximum number of subdivisions allowed has been achieved. 
+     * One can allow more subdivisions by increasing the value of limit (and taking the according dimension adjustments
+     * into account). However, if this yields no improvement, it is advised to analyze the integrand in order to
+     * determine the integration difficulties. If the position of a local difficulty can be determined( i.e. singularity,
+     * discontinuity within the interval), it should be supplied to the routine as an element of the breakPoints array.
+     * If necessary, an appropriate special purpose integrator must be used, which is designed for handling the type
+     * of difficulty involved. 
+     * 
+     * ier[0] = 2 The occurrence of roundoff error is detected, which prevents the requested tolerance from 
+     * being achieved. The error may be under-estimated.
+     *  
+     * ier[0] = 3 Extremely bad integrand behavior occurs at some points of the integration interval.
+     * 
+     * ier[0 = 4 The algorithm does not converge. Roundoff error is detected in the extrapolation table.
+     * It is presumed that the requested tolerance cannot be achieved, and that the returned result is the best that can
+     * be obtained. 
+     * 
+     * ier[0] = 5 The integral is probably divergent, or slowly convergent. It must be noted that
+     * divergence can occur with any other value of errorStatus > 0. 
+     * 
+     * ier[0] = 6 The input is invalid because (epsabs <= 0 and epsrel < max(50.0 * relative machine accuracy, 5.0E-29) 
+     * or in the case of dqagpe can also happen because npts2 < 2, the breakPoints are specified outside the integration
+     * range, or , or limit <= npts.
+     */
+    private int ier[] = new int[1];
+    
+    /** In dqawfe vector of dimension at least limlst
+     * ierlst[k] contains the error flag corresponding with rstlst[k].  For the meaning of the local error
+     * flags see description of the output parameter ier.
+     */
+    private int ierlst[];
 
     /**
      * In dqagie indicates the kind of integration range involved inf = 1 corresponds to (bound, +infinity) inf = -1
@@ -302,7 +317,7 @@ c                     if icall.lt.1, the routine will end with ier = 6.
        integr = 1      w(x) = cos(omega*x)
        integr = 2      w(x) = sin(omega*x)
        if integr.ne.1 and integr.ne.2, the routine
-       will end with ier = 6. 
+       will end with ier[0] = 6. 
        With dqawse:
        indicates which weight function is to be used
        = 1  (x-lower)**alfa*(upper-x)**beta
@@ -310,7 +325,7 @@ c                     if icall.lt.1, the routine will end with ier = 6.
        = 3  (x-lower)**alfa*(upper-x)**beta*log(upper-x)
        = 4  (x-lower)**alfa*(upper-x)**beta*log(x-lower)*log(upper-x)
        if integr.lt.1 or integr.gt.4, the routine
-       will end with ier = 6.
+       will end with ier[0] = 6.
        */
     private int integr;
 
@@ -341,19 +356,29 @@ c                     if icall.lt.1, the routine will end with ier = 6.
     /**
      * Gives an upper bound on the number of subintervals in the partition of lower, upper. In dqagpe limit must be >=
      * npts2. If limit < npts2 in dqagpe, the routine exits with an error message.   In dqawse limit must be >= 2. If
-     * limit < 2 in dqawse, the routine exits with errorStatus = 6.
+     * limit < 2 in dqawse, the routine exits with ier[0] = 6.
      */
     private int limit;
+    
+    /** In dqawfe limlst gives an upper bound on the number of cycles, limlst >= 1.
+     *  If limlst < 3, the routine will end with ier[0] = 6.
+     */
+    private int limlst;
 
     /** DOCUMENT ME! */
     private DoubleDouble lower;
+    
+    /** In dqawfe number of subintervals needed for the integration.
+     * If omega = 0 then lst is set to 1.
+     */
+    private int lst;
     
     /**
      * gives an upper bound on the number of chebyshev
 c                     moments which can be stored, i.e. for the
 c                     intervals of lenghts abs(b-a)*2**(-l),
 c                     l=0,1, ..., maxp1-2, maxp1.ge.1.
-c                     if maxp1.lt.1, the routine will end with ier = 6.
+c                     if maxp1.lt.1, the routine will end with ier[0] = 6.
      */
     private int maxp1;
     
@@ -409,6 +434,17 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
     /** DOCUMENT ME! */
     private int routine;
+    
+    /**
+     * In dqawfe vector of dimension at least limlst.
+     * rslst[k-1] contains the integral contribution
+     * over the interval (a+(k-1)c, a+kc), where
+     * c = (2*int(abs(omega))+1)*pi/abs(omega),
+     * k = 1, 2, ..., lst.
+     * Note that if omega = 0, rslst[0] contains
+     * the value of the integral over (a, infinity).
+     */
+    private DoubleDouble rslst[];
 
     /** 
      * For doubles uflow = 2**-1022, but a double has 53 bits of precision while
@@ -500,21 +536,21 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
         
         if (limit <= 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -527,7 +563,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Integrand upper endpoint = PI\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
         " with estimated absolute error = " + abserr[0] + "\n");
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
@@ -555,14 +591,14 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
         
         if (limit <= 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -575,7 +611,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Integrand upper endpoint = infinity\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
         " with estimated absolute error = " + abserr[0] + "\n");
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
@@ -606,14 +642,14 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if (npts2 < 2) {
             MipavUtil.displayError("breakPoints array length must be >= 2");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -622,14 +658,14 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
             if (breakPoints[i].lt(lower)) {
                 MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly < lower");
-                errorStatus = 6;
+                ier[0] = 6;
 
                 return;
             }
 
             if (breakPoints[i].gt(upper)) {
                 MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly > upper");
-                errorStatus = 6;
+                ier[0] = 6;
 
                 return;
             }
@@ -637,14 +673,14 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
         
         if (limit <= npts) {
             MipavUtil.displayError("Must set limit = " + limit + " > " + npts);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -657,7 +693,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Integrand upper endpoint = 3.0\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
         " with estimated absolute error = " + abserr[0] + "\n");
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
@@ -681,21 +717,21 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
 
         if (limit < 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -708,7 +744,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Integrand upper endpoint = 1.0\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
         " with estimated absolute error = " + abserr[0] + "\n");
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
@@ -735,28 +771,28 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if ((c.equals(lower)) || (c.equals(upper))) {
             MipavUtil.displayError("Cannot have c == lower or c == upper");
-            errorStatus = 6;
+            ier[0] = 6;
             
             return;
         }
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
 
         if (limit < 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -770,7 +806,78 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Point of singularity c = 0.0\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
+        " with estimated absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Actual answer = " + actualAnswer + "\n");
+        Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
+        
+        testCase = 6;
+        // Test 6 tests dqawfe
+        // dqawfe handles fourier integration of f(x)*w(x) from 
+        // lower to infinity, with w(x) = cos(omega*x) or sine(omega*x)
+        // Integrate cos(pi*x/2)/sqrt(x) from 0 to infinity.
+        // The exact answer is 1.0
+        
+        lower = DoubleDouble.valueOf(0.0);
+        routine = Integration2.DQAWFE;
+        epsabs = DoubleDouble.valueOf(1.0E-28);
+        // integr = 1 for cosine, = 2 for sine
+        integr = 1;
+        limlst = 1000;
+        limit = 1000;
+        maxp1 = 1000;
+        omega = DoubleDouble.PI_2;
+        actualAnswer = DoubleDouble.valueOf(1.0);
+        // Numerical Integral = 1.0008077423247694706975922000344 after 29410 integrand evaluations used
+        // Error status = 1 with estimated absolute error = 4.3642349749966654680431157178436E-5
+        // Actual answer = 1.0
+        // Exact error = 8.0774232476947069759220003443673E-4
+        
+        if ((integr != 1) && (integr != 2)) {
+        	MipavUtil.displayError("integr must equal 1 or 2");
+        	ier[0] = 6;
+        	
+        	return;
+        }
+
+        
+        if (epsabs.le(DoubleDouble.valueOf(0.0))) {
+            MipavUtil.displayError("Must set epsabs > 0.0");
+            ier[0] = 6;
+
+            return;
+        }
+
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be at least 1");
+            ier[0] = 6;
+
+            return;
+        }
+        
+        if (limlst < 3) {
+        	MipavUtil.displayError("limlst must be at least 3");
+        	ier[0] = 6;
+        	
+        	return;
+        }
+        
+        if (maxp1 < 1) {
+        	MipavUtil.displayError("maxp1 must be at least 1");
+        	ier[0] = 6;
+        	
+        	return;
+        }
+        
+        driver();
+        
+        Preferences.debug("Test 6 testing dqawfe\n");
+        Preferences.debug("Integrand is cos(pi*x/2)/sqrt(x)\n");
+        Preferences.debug("Integrand lower endpoint = 0.0\n");
+        Preferences.debug("Integrand upper endpoint = infinity\n");
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
+        " integrand evaluations used\n");
+        Preferences.debug("Error status = " + ier[0] +
         " with estimated absolute error = " + abserr[0] + "\n");
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
@@ -810,35 +917,35 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
 
         if (limit < 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
         
         if (icall < 1) {
         	MipavUtil.displayError("icall must be at least 1");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if (maxp1 < 1) {
         	MipavUtil.displayError("maxp1 must be at least 1");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -852,7 +959,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("ci(10.0*pi) = " + ci + "\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
         " with estimated absolute error = " + abserr[0] + "\n");
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
@@ -888,42 +995,42 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
 
         if (limit < 2) {
             MipavUtil.displayError("limit must be >= 2");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
         
         if ((integr != 1) && (integr != 2)  && (integr != 3) && (integr != 4)) {
         	MipavUtil.displayError("integr must equal 1, 2, 3, or 4");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if (alfa.le(DoubleDouble.valueOf(-1.0))) {
         	MipavUtil.displayError("alfa must be > -1.0");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if (beta.le(DoubleDouble.valueOf(-1.0))) {
         	MipavUtil.displayError("beta must be > -1.0");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -936,7 +1043,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Integrand upper endpoint = 1.0\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
         " with estimated absolute error = " + abserr[0] + "\n");
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
@@ -1122,7 +1229,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1135,7 +1242,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Integrand upper endpoint = 1.0\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
         " with estimated absolute error = " + abserr[0] + "\n");
         Preferences.debug("Actual answer = " + actualAnswer + "\n");
         Preferences.debug("Exact error = " + (result[0].subtract(actualAnswer)) + "\n");
@@ -1158,7 +1265,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if (npts2 < 2) {
             MipavUtil.displayError("breakPoints array length must be >= 2");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1167,14 +1274,14 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
             if (breakPoints[i].lt(lower)) {
                 MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly < lower");
-                errorStatus = 6;
+                ier[0] = 6;
 
                 return;
             }
 
             if (breakPoints[i].gt(upper)) {
                 MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly > upper");
-                errorStatus = 6;
+                ier[0] = 6;
 
                 return;
             }
@@ -1182,14 +1289,14 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
         
         if (limit <= npts) {
             MipavUtil.displayError("Must set limit = " + limit + " > " + npts);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1199,7 +1306,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Test 101\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
         " with absolute error = " + abserr[0] + "\n");
         
         testCase = 102;
@@ -1214,21 +1321,21 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if ((inf != 1) && (inf != -1) && (inf != 2)) {
             MipavUtil.displayError("inf must equal -1, 1, or 2");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
         
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
         
         if (limit < 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1238,7 +1345,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         Preferences.debug("Test 102\n");
         Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] +
         " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus +
+        Preferences.debug("Error status = " + ier[0] +
         " with absolute error = " + abserr[0] + "\n");
     }
 
@@ -1266,7 +1373,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1279,7 +1386,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1310,7 +1417,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if ((inf != 1) && (inf != -1) && (inf != 2)) {
             MipavUtil.displayError("inf must equal -1, 1, or 2");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1323,7 +1430,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1332,7 +1439,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if (limit < 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1364,7 +1471,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1377,7 +1484,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1386,7 +1493,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if (limit < 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1419,14 +1526,14 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
         
         if ((c == lower) || (c == upper)) {
             MipavUtil.displayError("Cannot have c == lower or c == upper");
-            errorStatus = 6;
+            ier[0] = 6;
             
             return;
         }
@@ -1439,7 +1546,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1448,9 +1555,79 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if (limit < 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
+        }
+    }
+    
+    /**
+     * Constructor must be used with routine dqawfe
+     * @param lower
+     * @param routine
+     * @param omega
+     * @param integr
+     * @param epsabs
+     * @param limlst
+     * @param limit
+     * @param maxp1
+     */
+    public Integration2EP(DoubleDouble lower, int routine, DoubleDouble omega, int integr, DoubleDouble epsabs, 
+    		            int limlst, int limit, int maxp1) {
+
+        this.lower = lower;
+        this.routine = routine;
+
+        if (routine != DQAWFE) {
+            MipavUtil.displayError("routine must be DQAWFE with this constructor");
+
+            return;
+        }
+        
+        this.omega = omega;
+        
+        this.integr = integr;
+        if ((integr != 1) && (integr != 2)) {
+        	MipavUtil.displayError("integr must equal 1 or 2");
+        	ier[0] = 6;
+        	
+        	return;
+        }
+        
+        this.epsabs = epsabs;
+
+        
+        if (epsabs.le(DoubleDouble.valueOf(0.0))) {
+            MipavUtil.displayError("Must set epsabs > 0.0");
+            ier[0] = 6;
+
+            return;
+        }
+
+        this.limit = limit;
+
+        if (limit < 1) {
+            MipavUtil.displayError("limit must be at least 1");
+            ier[0] = 6;
+
+            return;
+        }
+        
+        this.limlst = limlst;
+        if (limlst < 3) {
+        	MipavUtil.displayError("limlst must be at least 3");
+        	ier[0] = 6;
+        	
+        	return;
+        }
+        
+        this.maxp1 = maxp1;
+        
+        if (maxp1 < 1) {
+        	MipavUtil.displayError("maxp1 must be at least 1");
+        	ier[0] = 6;
+        	
+        	return;
         }
     }
     
@@ -1483,7 +1660,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1493,7 +1670,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         this.integr = integr;
         if ((integr != 1) && (integr != 2)) {
         	MipavUtil.displayError("integr must equal 1 or 2");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1506,7 +1683,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1515,7 +1692,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if (limit < 1) {
             MipavUtil.displayError("limit must be at least 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1524,7 +1701,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (icall < 1) {
         	MipavUtil.displayError("icall must be at least 1");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1533,7 +1710,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (maxp1 < 1) {
         	MipavUtil.displayError("maxp1 must be at least 1");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1567,7 +1744,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1575,7 +1752,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         this.alfa = alfa;
         if (alfa.le(DoubleDouble.valueOf(-1.0))) {
         	MipavUtil.displayError("alfa must be > -1.0");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1583,7 +1760,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         this.beta = beta;
         if (beta.le(DoubleDouble.valueOf(-1.0))) {
         	MipavUtil.displayError("beta must be > -1.0");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1591,7 +1768,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         this.integr = integr;
         if ((integr != 1) && (integr != 2)  && (integr != 3) && (integr != 4)) {
         	MipavUtil.displayError("integr must equal 1, 2, 3, or 4");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1604,7 +1781,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1613,7 +1790,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if (limit <  2) {
             MipavUtil.displayError("Must set limit >= 2");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1648,7 +1825,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1659,7 +1836,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if (npts2 < 2) {
             MipavUtil.displayError("breakPoints array length must be >= 2");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1668,14 +1845,14 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
             if (breakPoints[i].lt(lower)) {
                 MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly < lower");
-                errorStatus = 6;
+                ier[0] = 6;
 
                 return;
             }
 
             if (breakPoints[i].gt(upper)) {
                 MipavUtil.displayError("Break point " + breakPoints[i] + " is impossibly > upper");
-                errorStatus = 6;
+                ier[0] = 6;
 
                 return;
             }
@@ -1689,7 +1866,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1698,7 +1875,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if (limit <= npts) {
             MipavUtil.displayError("Must set limit = " + limit + " > " + npts);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1731,7 +1908,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
         
         if (upper.le(lower)) {
         	MipavUtil.displayError("upper must be > than lower");
-        	errorStatus = 6;
+        	ier[0] = 6;
         	
         	return;
         }
@@ -1745,7 +1922,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if ((epsabs.le(DoubleDouble.valueOf(0.0))) && (epsrel.lt(tol))) {
             MipavUtil.displayError("Must set epsabs > 0.0 or must set epsrel >= " + tol);
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1754,7 +1931,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
 
         if (limit <= 1) {
             MipavUtil.displayError("limit must be >= 1");
-            errorStatus = 6;
+            ier[0] = 6;
 
             return;
         }
@@ -1793,6 +1970,14 @@ c       numbered i is of length abs(b-a)*2**(1-l)
     	case 5:
         	function = (DoubleDouble.valueOf(1.0)).divide
         	(((((DoubleDouble.valueOf(5.0)).multiply(x)).multiply(x)).multiply(x)).add(DoubleDouble.valueOf(6.0)));
+        	break;
+    	case 6:
+    		if (x.le(DoubleDouble.valueOf(0.0))) {
+        		function = DoubleDouble.valueOf(0.0);
+        	}
+        	else {
+        		function = (DoubleDouble.valueOf(1.0)).divide(x.sqrt());
+        	}
         	break;
     	case 7:
         	if (x.le(DoubleDouble.valueOf(0.0))) {
@@ -1988,7 +2173,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
      c standard fortran subroutine
 
      */
-    public void dqagie() {
+    public void dqagie(DoubleDouble bound, int inf, DoubleDouble epsrel) {
 
         // Variables ending in 1 denote left subinterval and variables
         // ending in 2 denote right subinterval
@@ -2080,7 +2265,7 @@ c       numbered i is of length abs(b-a)*2**(1-l)
             res31a = new DoubleDouble[3];
             rlist2 = new DoubleDouble[52];
 
-            errorStatus = 0;
+            ier[0] = 0;
             neval[0] = 0;
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
@@ -2116,26 +2301,26 @@ c       numbered i is of length abs(b-a)*2**(1-l)
             errBnd = (epsabs).max(epsrel.multiply(dres));
 
             if ((abserr[0].le(((DoubleDouble.valueOf(100.0)).multiply(epmach)).multiply(defabs[0]))) && (abserr[0].gt(errBnd))) {
-                errorStatus = 2;
+                ier[0] = 2;
             } // if ((abserr[0].le(((DoubleDouble.valueOf(100.0)).multiply(epmach)).multiply(defabs[0]))) && (abserr[0].gt(errBnd)))
 
             if (limit == 1) {
-                errorStatus = 1;
+                ier[0] = 1;
             } // if (limit == 1)
 
-            if ((errorStatus != 0) || ((abserr[0].le(errBnd)) && (abserr[0].ne(resabs[0]))) || (abserr[0].equals(DoubleDouble.valueOf(0.0)))) {
+            if ((ier[0] != 0) || ((abserr[0].le(errBnd)) && (abserr[0].ne(resabs[0]))) || (abserr[0].equals(DoubleDouble.valueOf(0.0)))) {
                 neval[0] = (30 * last) - 15;
 
                 if (inf == 2) {
                     neval[0] = 2 * neval[0];
                 } // if (inf == 2)
 
-                if (errorStatus > 2) {
-                    errorStatus = errorStatus - 1;
-                } // if (errorStatus > 2)
+                if (ier[0] > 2) {
+                    ier[0] = ier[0] - 1;
+                } // if (ier[0] > 2)
 
                 return;
-            } // if ((errorStatus != 0) ||
+            } // if ((ier[0] != 0) ||
 
             // Initialization
 
@@ -2211,7 +2396,7 @@ loop:
                 // Test for roundoff error and eventually set error flag
 
                 if (((iroff1 + iroff2) >= 10) || (iroff3 >= 20)) {
-                    errorStatus = 2;
+                    ier[0] = 2;
                 } // if ((iroff1 + iroff2 >= 10) || (iroff3 >= 20))
 
                 if (iroff2 >= 5) {
@@ -2222,14 +2407,14 @@ loop:
                 // equals limit
 
                 if (last == limit) {
-                    errorStatus = 1;
+                    ier[0] = 1;
                 } // if (last == limit)
 
                 // Set error flag in the case of bad integrand behavior
                 // at some points of the integration range
                 if (((a1.abs()).max(b2.abs())).le
                         (((DoubleDouble.valueOf(1.0)).add((DoubleDouble.valueOf(100.0)).multiply(epmach))).multiply((a2.abs()).add((DoubleDouble.valueOf(1.0E3)).multiply(uflow))))) {
-                    errorStatus = 4;
+                    ier[0] = 4;
                 } // if (Math.max(Math.abs(a1), Math.abs(b2)) <=
 
                 // Append the newly-created intervals to the list.
@@ -2271,16 +2456,16 @@ loop:
                         neval[0] = 2 * neval[0];
                     } // if (inf == 2)
 
-                    if (errorStatus > 2) {
-                        errorStatus = errorStatus - 1;
-                    } // if (errorStatus > 2)
+                    if (ier[0] > 2) {
+                        ier[0] = ier[0] - 1;
+                    } // if (ier[0] > 2)
 
                     return;
                 } // if (errSum <= errBnd)
 
-                if (errorStatus != 0) {
+                if (ier[0] != 0) {
                     break;
-                } // if (errorStatus != 0)
+                } // if (ier[0] != 0)
 
                 if (last == 2) {
                     small = DoubleDouble.valueOf(0.375);
@@ -2347,7 +2532,7 @@ loop:
                 ktmin = ktmin + 1;
 
                 if ((ktmin > 5) && (abserr[0].lt((DoubleDouble.valueOf(1.0E-3)).multiply(errSum)))) {
-                    errorStatus = 5;
+                    ier[0] = 5;
                 } // if ((ktmin > 5) && (abserr[0] < 1.0E-3 * errSum))
 
                 if (abseps[0].lt(abserr[0])) {
@@ -2367,9 +2552,9 @@ loop:
                     noext = true;
                 } // if (numr12[0] == 1)
 
-                if (errorStatus == 5) {
+                if (ier[0] == 5) {
                     break;
-                } // if (errorStatus == 5)
+                } // if (ier[0] == 5)
 
                 maxErr[0] = iord[0];
                 errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
@@ -2383,15 +2568,15 @@ loop:
 
             if (abserr[0].ne(oflow)) {
 
-                if ((errorStatus + ierro) != 0) {
+                if ((ier[0] + ierro) != 0) {
 
                     if (ierro == 3) {
                         abserr[0] = abserr[0].add(correc);
                     } // if (ierro == 3)
 
-                    if (errorStatus == 0) {
-                        errorStatus = 3;
-                    } // if (errorStatus == 0)
+                    if (ier[0] == 0) {
+                        ier[0] = 3;
+                    } // if (ier[0] == 0)
 
                     if ((result[0].isZero()) || (area.isZero())) {
 
@@ -2409,9 +2594,9 @@ loop:
                                 neval[0] = 2 * neval[0];
                             } // if (inf == 2)
 
-                            if (errorStatus > 2) {
-                                errorStatus = errorStatus - 1;
-                            } // if (errorStatus > 2)
+                            if (ier[0] > 2) {
+                                ier[0] = ier[0] - 1;
+                            } // if (ier[0] > 2)
 
                             return;
                         } // if (abserr[0] > errSum)
@@ -2423,9 +2608,9 @@ loop:
                                 neval[0] = 2 * neval[0];
                             } // if (inf == 2)
 
-                            if (errorStatus > 2) {
-                                errorStatus = errorStatus - 1;
-                            } // if (errorStatus > 2)
+                            if (ier[0] > 2) {
+                                ier[0] = ier[0] - 1;
+                            } // if (ier[0] > 2)
 
                             return;
                         } // if (area == 0.0)
@@ -2437,16 +2622,16 @@ loop:
                                 neval[0] = 2 * neval[0];
                             } // if (inf == 2)
 
-                            if (errorStatus > 2) {
-                                errorStatus = errorStatus - 1;
-                            } // if (errorStatus > 2)
+                            if (ier[0] > 2) {
+                                ier[0] = ier[0] - 1;
+                            } // if (ier[0] > 2)
 
                             return;
                         } // if ((ksgn == -1) && (Math.max(Math.abs(result[0]),
 
                         if (((DoubleDouble.valueOf(1.0E-2)).gt(result[0].divide(area))) || ((result[0].divide(area)).gt(DoubleDouble.valueOf(100.0))) ||
                                 (errSum.gt(area.abs()))) {
-                            errorStatus = 6;
+                            ier[0] = 6;
                         } // if ((1.0E-2 > (result[0]/area)) || (result[0]/area > 100.0) ||
 
                         neval[0] = (30 * last) - 15;
@@ -2455,9 +2640,9 @@ loop:
                             neval[0] = 2 * neval[0];
                         } // if (inf == 2)
 
-                        if (errorStatus > 2) {
-                            errorStatus = errorStatus - 1;
-                        } // if (errorStatus > 2)
+                        if (ier[0] > 2) {
+                            ier[0] = ier[0] - 1;
+                        } // if (ier[0] > 2)
 
                         return;
                     } // if (result[0] == 0.0) || (area == 0.0))
@@ -2476,13 +2661,13 @@ loop:
                             neval[0] = 2 * neval[0];
                         } // if (inf == 2)
 
-                        if (errorStatus > 2) {
-                            errorStatus = errorStatus - 1;
-                        } // if (errorStatus > 2)
+                        if (ier[0] > 2) {
+                            ier[0] = ier[0] - 1;
+                        } // if (ier[0] > 2)
 
                         return;
                     } // if (abserr[0]/Math.abs(result[0]) > errSum/Math.abs(area))
-                } // if ((errorStatus + ierro) != 0)
+                } // if ((ier[0] + ierro) != 0)
 
                 if ((ksgn == -1) && (((result[0].abs()).max(area.abs())).le((DoubleDouble.valueOf(1.0E-2)).multiply(defabs[0])))) {
                     neval[0] = (30 * last) - 15;
@@ -2491,16 +2676,16 @@ loop:
                         neval[0] = 2 * neval[0];
                     } // if (inf == 2)
 
-                    if (errorStatus > 2) {
-                        errorStatus = errorStatus - 1;
-                    } // if (errorStatus > 2)
+                    if (ier[0] > 2) {
+                        ier[0] = ier[0] - 1;
+                    } // if (ier[0] > 2)
 
                     return;
                 } // if ((ksgn == -1) && (Math.max(Math.abs(result[0]),
 
                 if (((DoubleDouble.valueOf(1.0E-2)).gt(result[0].divide(area))) || ((result[0].divide(area)).gt(DoubleDouble.valueOf(100.0))) ||
                 		                  (errSum.gt(area.abs()))) {
-                    errorStatus = 6;
+                    ier[0] = 6;
                 } // if ((1.0E-2 > (result[0]/area)) || (result[0]/area > 100.0) ||
 
                 neval[0] = (30 * last) - 15;
@@ -2509,9 +2694,9 @@ loop:
                     neval[0] = 2 * neval[0];
                 } // if (inf == 2)
 
-                if (errorStatus > 2) {
-                    errorStatus = errorStatus - 1;
-                } // if (errorStatus > 2)
+                if (ier[0] > 2) {
+                    ier[0] = ier[0] - 1;
+                } // if (ier[0] > 2)
 
                 return;
             } // if (abserr[0] != oflow)
@@ -2529,9 +2714,9 @@ loop:
                 neval[0] = 2 * neval[0];
             } // if (inf == 2)
 
-            if (errorStatus > 2) {
-                errorStatus = errorStatus - 1;
-            } // if (errorStatus > 2)
+            if (ier[0] > 2) {
+                ier[0] = ier[0] - 1;
+            } // if (ier[0] > 2)
 
             return;
 
@@ -2671,7 +2856,7 @@ loop:
             res31a = new DoubleDouble[3];
             rlist2 = new DoubleDouble[52];
 
-            errorStatus = 0;
+            ier[0] = 0;
             neval[0] = 0;
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
@@ -2765,7 +2950,7 @@ loop:
             errBnd = epsabs.max(dres.multiply(epsrel));
 
             if ((abserr[0].le(((DoubleDouble.valueOf(100.0)).multiply(epmach)).multiply(resabs))) && (abserr[0].gt(errBnd))) {
-                errorStatus = 2;
+                ier[0] = 2;
             }
 
             if (nint != 1) {
@@ -2790,20 +2975,20 @@ loop:
                 } // for (i = 0; i < npts; i++)
 
                 if (limit < npts2) {
-                    errorStatus = 1;
+                    ier[0] = 1;
                 } // if (limit < npts2)
             } // if (nint != 1)
 
-            if ((errorStatus != 0) || (abserr[0].le(errBnd))) {
+            if ((ier[0] != 0) || (abserr[0].le(errBnd))) {
 
-                if (errorStatus > 2) {
-                    errorStatus = errorStatus - 1;
-                } // if (errorStatus > 2)
+                if (ier[0] > 2) {
+                    ier[0] = ier[0] - 1;
+                } // if (ier[0] > 2)
 
                 result[0] = result[0].multiply(sign);
 
                 return;
-            } // if ((errorStatus != 0) || (abserr[0] <= errBnd))
+            } // if ((ier[0] != 0) || (abserr[0] <= errBnd))
 
             // Initialization
 
@@ -2880,7 +3065,7 @@ loop:
                 // Test for roundoff error and eventually set error flag
 
                 if (((iroff1 + iroff2) >= 10) || (iroff3 >= 20)) {
-                    errorStatus = 2;
+                    ier[0] = 2;
                 }
 
                 if (iroff2 >= 5) {
@@ -2891,7 +3076,7 @@ loop:
                 // subintervals equals limit.
 
                 if (last == limit) {
-                    errorStatus = 1;
+                    ier[0] = 1;
                 }
 
                 // Set error flag in the case of bad integrand behavior
@@ -2901,7 +3086,7 @@ loop:
                 DoubleDouble leftVar = (DoubleDouble.valueOf(1.0)).add((DoubleDouble.valueOf(100.0)).multiply(epmach));
                 DoubleDouble rightVar = (a2.abs()).add((DoubleDouble.valueOf(1.0E3)).multiply(uflow));
                 if (maxVar.le(leftVar.multiply(rightVar))) {
-                    errorStatus = 4;
+                    ier[0] = 4;
                 }
 
                 // Append the newly created intervals to the list
@@ -2938,8 +3123,8 @@ loop:
 
                     abserr[0] = (DoubleDouble)errSum.clone();
 
-                    if (errorStatus > 2) {
-                        errorStatus = errorStatus - 1;
+                    if (ier[0] > 2) {
+                        ier[0] = ier[0] - 1;
                     }
 
                     result[0] = result[0].multiply(sign);
@@ -2947,9 +3132,9 @@ loop:
                     return;
                 } // if (errSum <= errBnd)
 
-                if (errorStatus != 0) {
+                if (ier[0] != 0) {
                     break;
-                } // if (errorStatus != 0)
+                } // if (ier[0] != 0)
 
                 if (noext) {
                     continue;
@@ -3007,7 +3192,7 @@ loop:
                     ktmin = ktmin + 1;
 
                     if ((ktmin > 5) && (abserr[0].lt((DoubleDouble.valueOf(1.0E-3)).multiply(errSum)))) {
-                        errorStatus = 5;
+                        ier[0] = 5;
                     } // if ((ktmin > 5) && (abserr < 1.0E-3 * errSum))
 
                     if (abseps[0].lt(abserr[0])) {
@@ -3027,9 +3212,9 @@ loop:
                         noext = true;
                     } // if (numr12[0] == 1)
 
-                    if (errorStatus >= 5) {
+                    if (ier[0] >= 5) {
                         break;
-                    } // if (errorStatus >= 5)
+                    } // if (ier[0] >= 5)
                 } // if (numr12[0] > 2)
 
                 maxErr[0] = iord[0];
@@ -3044,15 +3229,15 @@ loop:
 
             if (abserr[0].ne(oflow)) {
 
-                if ((errorStatus + ierro) != 0) {
+                if ((ier[0] + ierro) != 0) {
 
                     if (ierro == 3) {
                         abserr[0] = abserr[0].add(correc);
                     }
 
-                    if (errorStatus == 0) {
-                        errorStatus = 3;
-                    } // if (errorStatus == 0)
+                    if (ier[0] == 0) {
+                        ier[0] = 3;
+                    } // if (ier[0] == 0)
 
                     if ((result[0].isZero()) || (area.isZero())) {
 
@@ -3065,8 +3250,8 @@ loop:
 
                             abserr[0] = (DoubleDouble)errSum.clone();
 
-                            if (errorStatus > 2) {
-                                errorStatus = errorStatus - 1;
+                            if (ier[0] > 2) {
+                                ier[0] = ier[0] - 1;
                             }
 
                             result[0] = result[0].multiply(sign);
@@ -3076,8 +3261,8 @@ loop:
 
                         if (area.isZero()) {
 
-                            if (errorStatus > 2) {
-                                errorStatus = errorStatus - 1;
+                            if (ier[0] > 2) {
+                                ier[0] = ier[0] - 1;
                             }
 
                             result[0] = result[0].multiply(sign);
@@ -3088,8 +3273,8 @@ loop:
                         if ((ksgn == -1) && (((result[0].abs()).max(area.abs())).le((DoubleDouble.valueOf(1.0E-2)).multiply(resabs)))) {
                         
 
-                            if (errorStatus > 2) {
-                                errorStatus = errorStatus - 1;
+                            if (ier[0] > 2) {
+                                ier[0] = ier[0] - 1;
                             }
 
                             result[0] = result[0].multiply(sign);
@@ -3099,11 +3284,11 @@ loop:
 
                         if (((DoubleDouble.valueOf(1.0E-2)).gt(result[0].divide(area))) || ((result[0].divide(area)) .gt(DoubleDouble.valueOf(100.0))) ||
                                 (errSum.gt(area.abs()))) {
-                            errorStatus = 6;
+                            ier[0] = 6;
                         } // if ((1.0E-2 > (result[0]/area) || ((result[0]/area) >
 
-                        if (errorStatus > 2) {
-                            errorStatus = errorStatus - 1;
+                        if (ier[0] > 2) {
+                            ier[0] = ier[0] - 1;
                         }
 
                         result[0] = result[0].multiply(sign);
@@ -3120,20 +3305,20 @@ loop:
 
                         abserr[0] = (DoubleDouble)errSum.clone();
 
-                        if (errorStatus > 2) {
-                            errorStatus = errorStatus - 1;
+                        if (ier[0] > 2) {
+                            ier[0] = ier[0] - 1;
                         }
 
                         result[0] = result[0].multiply(sign);
 
                         return;
                     } // if ((abserr[0]/Math.abs(result[0])) > (errSum/Math.abs(area)))
-                } // if ((errorStatus + ierro) != 0)
+                } // if ((ier[0] + ierro) != 0)
 
                 if ((ksgn == -1) && ((result[0].abs()).max((area.abs())).le((DoubleDouble.valueOf(1.0E-2)).multiply(resabs)))) {
 
-                    if (errorStatus > 2) {
-                        errorStatus = errorStatus - 1;
+                    if (ier[0] > 2) {
+                        ier[0] = ier[0] - 1;
                     }
 
                     result[0] = result[0].multiply(sign);
@@ -3143,11 +3328,11 @@ loop:
 
                 if (((DoubleDouble.valueOf(1.0E-2)).gt(result[0].divide(area))) || ((result[0].divide(area)).gt(DoubleDouble.valueOf(100.0))) ||
                    (errSum.gt(area.abs()))) {
-                    errorStatus = 6;
+                    ier[0] = 6;
                 } // if ((1.0E-2 > (result[0]/area) || ((result[0]/area) >
 
-                if (errorStatus > 2) {
-                    errorStatus = errorStatus - 1;
+                if (ier[0] > 2) {
+                    ier[0] = ier[0] - 1;
                 }
 
                 result[0] = result[0].multiply(sign);
@@ -3163,8 +3348,8 @@ loop:
 
             abserr[0] = (DoubleDouble)errSum.clone();
 
-            if (errorStatus > 2) {
-                errorStatus = errorStatus - 1;
+            if (ier[0] > 2) {
+                ier[0] = ier[0] - 1;
             }
 
             result[0] = result[0].multiply(sign);
@@ -3189,7 +3374,7 @@ loop:
                 break;
 
             case DQAGIE:
-                dqagie();
+                dqagie(bound, inf, epsrel);
                 break;
 
             case DQAGSE:
@@ -3204,8 +3389,12 @@ loop:
             	dqawce();
             	break;
             	
+            case DQAWFE:
+            	dqawfe();
+            	break;
+            	
             case DQAWOE:
-            	dqawoe();
+            	dqawoe(lower, upper, epsabs, epsrel, icall, result, abserr, neval, ier);
             	break;
             	
             case DQAWSE:
@@ -3254,10 +3443,10 @@ loop:
     /**
      * DOCUMENT ME!
      *
-     * @return  errorStatus
+     * @return  ier[0]
      */
     public int getErrorStatus() {
-        return errorStatus;
+        return ier[0];
     }
 
 
@@ -3348,7 +3537,7 @@ loop:
             elist = new DoubleDouble[limit];
             iord = new int[limit];
 
-            errorStatus = 0;
+            ier[0] = 0;
             neval[0] = 0;
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
@@ -3410,14 +3599,14 @@ loop:
             errBnd = epsabs.max(epsrel.multiply(result[0].abs()));
 
             if ((abserr[0].le(((DoubleDouble.valueOf(50.0)).multiply(epmach)).multiply(defabs[0]))) && (abserr[0].gt(errBnd))) {
-                errorStatus = 2;
+                ier[0] = 2;
             } // if ((abserr[0] <= 50.0 * epmach * defabs[0]) &&
 
             if (limit == 1) {
-                errorStatus = 1;
+                ier[0] = 1;
             } // if (limit == 1)
 
-            if ((errorStatus != 0) || ((abserr[0].le(errBnd)) && (abserr[0].ne(resabs[0]))) || (abserr[0].isZero())) {
+            if ((ier[0] != 0) || ((abserr[0].le(errBnd)) && (abserr[0].ne(resabs[0]))) || (abserr[0].isZero())) {
 
                 if (keyf != 1) {
                     neval[0] = ((10 * keyf) + 1) * ((2 * neval[0]) + 1);
@@ -3427,7 +3616,7 @@ loop:
                 } // else
 
                 return;
-            } // if ((errorStatus != 0) ||
+            } // if ((ier[0] != 0) ||
 
             // Initialization
 
@@ -3513,14 +3702,14 @@ loop:
                     // Test for roundoff error and eventually set error flag
 
                     if ((iroff1 >= 6) || (iroff2 >= 20)) {
-                        errorStatus = 2;
+                        ier[0] = 2;
                     } // if ((iroff1 >= 6) || (iroff2 >= 20))
 
                     // Set error flag in the case that the number of subintervals
                     // equals limit.
 
                     if (last == limit) {
-                        errorStatus = 1;
+                        ier[0] = 1;
                     } // if (last == limit)
 
                     // Set error flag in the case of bad integrand behavior
@@ -3530,7 +3719,7 @@ loop:
                     DoubleDouble leftVal = (DoubleDouble.valueOf(1.0)).add((DoubleDouble.valueOf(100.0)).multiply(epmach));
                     DoubleDouble rightVal = (a2.abs()).add((DoubleDouble.valueOf(1.0E3)).multiply(uflow));
                     if (maxVal.le(leftVal.multiply(rightVal))) {
-                        errorStatus = 3;
+                        ier[0] = 3;
                     } // if (Math.max(Math.abs(a1), Math.abs(b2)) <=
                 } // if (errSum > errBnd)
 
@@ -3559,9 +3748,9 @@ loop:
 
                 dqpsrt(limit, last, maxErr, errMax, elist, iord, nrmax);
 
-                if ((errorStatus != 0) || (errSum.le(errBnd))) {
+                if ((ier[0] != 0) || (errSum.le(errBnd))) {
                     break;
-                } // if (errorStatus != 0) || (errSum <= errBnd))
+                } // if (ier[0] != 0) || (errSum <= errBnd))
             } // for (last = 2; last <= limit; last++)
 
             // Compute final result.
@@ -3707,7 +3896,7 @@ loop:
             rlist2 = new DoubleDouble[52];
             res31a = new DoubleDouble[3];
 
-            errorStatus = 0;
+            ier[0] = 0;
             neval[0] = 0;
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
@@ -3732,18 +3921,18 @@ loop:
             iord[0] = 0;
 
             if ((abserr[0].le(((DoubleDouble.valueOf(100.0)).multiply(epmach)).multiply(defabs[0]))) && (abserr[0].gt(errBnd))) {
-                errorStatus = 2;
+                ier[0] = 2;
             } // if ((abserr[0] <= 100.0 * epmach * defabs[0]) &&
 
             if (limit == 1) {
-                errorStatus = 1;
+                ier[0] = 1;
             } // if (limit == 1)
 
-            if ((errorStatus != 0) || ((abserr[0].le(errBnd)) && (abserr[0].ne(resabs[0]))) || (abserr[0].isZero())) {
+            if ((ier[0] != 0) || ((abserr[0].le(errBnd)) && (abserr[0].ne(resabs[0]))) || (abserr[0].isZero())) {
                 neval[0] = (42 * last) - 21;
 
                 return;
-            } // if ((errorStatus != 0) || ((abserr[0] <= errBnd) && (abserr[0] !=
+            } // if ((ier[0] != 0) || ((abserr[0] <= errBnd) && (abserr[0] !=
 
             // Initialization
 
@@ -3820,7 +4009,7 @@ loop:
                 // Test for roundoff error and eventually set error flag.
 
                 if (((iroff1 + iroff2) >= 10) || (iroff3 >= 20)) {
-                    errorStatus = 2;
+                    ier[0] = 2;
                 } // if (((iroff1 + iroff2) >= 10) || (iroff3 >= 20))
 
                 if (iroff2 >= 5) {
@@ -3831,7 +4020,7 @@ loop:
                 // equals limit.
 
                 if (last == limit) {
-                    errorStatus = 1;
+                    ier[0] = 1;
                 } // if (last == limit)
 
                 // Set error flag in the case of bad integrand behavior
@@ -3841,7 +4030,7 @@ loop:
                 DoubleDouble leftVal = (DoubleDouble.valueOf(1.0)).add((DoubleDouble.valueOf(100.0)).multiply(epmach));
                 DoubleDouble rightVal = (a2.abs()).add((DoubleDouble.valueOf(1.0E3)).multiply(uflow));
                 if (maxVal.le(leftVal.multiply(rightVal))) {
-                    errorStatus = 4;
+                    ier[0] = 4;
                 } // if (Math.max(Math.abs(a1), Math.abs(b2)) <=
 
                 // Append the newly-created intervals to the list.
@@ -3878,18 +4067,18 @@ loop:
 
                     abserr[0] = (DoubleDouble)errSum.clone();
 
-                    if (errorStatus > 2) {
-                        errorStatus = errorStatus - 1;
-                    } // if (errorStatus > 2)
+                    if (ier[0] > 2) {
+                        ier[0] = ier[0] - 1;
+                    } // if (ier[0] > 2)
 
                     neval[0] = (42 * last) - 21;
 
                     return;
                 } // if (errSum <= errBnd)
 
-                if (errorStatus != 0) {
+                if (ier[0] != 0) {
                     break;
-                } // if (errorStatus != 0)
+                } // if (ier[0] != 0)
 
                 if (last == 2) {
                     small = (DoubleDouble.valueOf(0.375)).multiply((upper.subtract(lower)).abs());
@@ -3956,7 +4145,7 @@ loop:
                 ktmin = ktmin + 1;
 
                 if ((ktmin > 5) && (abserr[0].lt((DoubleDouble.valueOf(1.0E-3)).multiply(errSum)))) {
-                    errorStatus = 5;
+                    ier[0] = 5;
                 } // if ((ktmin > 5) && (abserr[0] < 1.0E-3 * errSum))
 
                 if (abseps[0].lt(abserr[0])) {
@@ -3977,9 +4166,9 @@ loop:
                     noext = true;
                 } // if (numr12[0] == 1)
 
-                if (errorStatus == 5) {
+                if (ier[0] == 5) {
                     break;
-                } // if (errorStatus == 5)
+                } // if (ier[0] == 5)
 
                 maxErr[0] = iord[0];
                 errMax[0] = (DoubleDouble)elist[maxErr[0]].clone();
@@ -3993,15 +4182,15 @@ loop:
 
             if (abserr[0].ne(oflow)) {
 
-                if ((errorStatus + ierro) != 0) {
+                if ((ier[0] + ierro) != 0) {
 
                     if (ierro == 3) {
                         abserr[0] = abserr[0].add(correc);
                     } // if (ierro == 3)
 
-                    if (errorStatus == 0) {
-                        errorStatus = 3;
-                    } // if (errorStatus == 0)
+                    if (ier[0] == 0) {
+                        ier[0] = 3;
+                    } // if (ier[0] == 0)
 
                     if ((result[0].isZero()) || (area.isZero())) {
 
@@ -4014,9 +4203,9 @@ loop:
 
                             abserr[0] = (DoubleDouble)errSum.clone();
 
-                            if (errorStatus > 2) {
-                                errorStatus = errorStatus - 1;
-                            } // if (errorStatus > 2)
+                            if (ier[0] > 2) {
+                                ier[0] = ier[0] - 1;
+                            } // if (ier[0] > 2)
 
                             neval[0] = (42 * last) - 21;
 
@@ -4025,9 +4214,9 @@ loop:
 
                         if (area.isZero()) {
 
-                            if (errorStatus > 2) {
-                                errorStatus = errorStatus - 1;
-                            } // if (errorStatus > 2)
+                            if (ier[0] > 2) {
+                                ier[0] = ier[0] - 1;
+                            } // if (ier[0] > 2)
 
                             neval[0] = (42 * last) - 21;
 
@@ -4036,9 +4225,9 @@ loop:
 
                         if ((ksgn == -1) && ((result[0].abs()).max( (area.abs())).le((DoubleDouble.valueOf(1.0E-2)).multiply(defabs[0])))) {
 
-                            if (errorStatus > 2) {
-                                errorStatus = errorStatus - 1;
-                            } // if (errorStatus > 2)
+                            if (ier[0] > 2) {
+                                ier[0] = ier[0] - 1;
+                            } // if (ier[0] > 2)
 
                             neval[0] = (42 * last) - 21;
 
@@ -4047,12 +4236,12 @@ loop:
 
                         if (((DoubleDouble.valueOf(1.0E-2)).gt(result[0].divide(area))) || ((result[0].divide(area)).gt(DoubleDouble.valueOf(100.0))) ||
                                 (errSum.gt(area.abs()))) {
-                            errorStatus = 6;
+                            ier[0] = 6;
                         } // if ((1.0E-2 > (result[0]/area)) || (result[0]/area > 100.0) ||
 
-                        if (errorStatus > 2) {
-                            errorStatus = errorStatus - 1;
-                        } // if (errorStatus > 2)
+                        if (ier[0] > 2) {
+                            ier[0] = ier[0] - 1;
+                        } // if (ier[0] > 2)
 
                         neval[0] = (42 * last) - 21;
 
@@ -4068,21 +4257,21 @@ loop:
 
                         abserr[0] = (DoubleDouble)errSum.clone();
 
-                        if (errorStatus > 2) {
-                            errorStatus = errorStatus - 1;
-                        } // if (errorStatus > 2)
+                        if (ier[0] > 2) {
+                            ier[0] = ier[0] - 1;
+                        } // if (ier[0] > 2)
 
                         neval[0] = (42 * last) - 21;
 
                         return;
                     } // if (abserr[0]/Math.abs(result[0]) > errSum/Math.abs(area))
-                } // if ((errorStatus + ierro) != 0)
+                } // if ((ier[0] + ierro) != 0)
 
                 if ((ksgn == -1) && ((result[0].abs()).max( (area.abs())).le((DoubleDouble.valueOf(1.0E-2)).multiply(defabs[0])))) {
 
-                    if (errorStatus > 2) {
-                        errorStatus = errorStatus - 1;
-                    } // if (errorStatus > 2)
+                    if (ier[0] > 2) {
+                        ier[0] = ier[0] - 1;
+                    } // if (ier[0] > 2)
 
                     neval[0] = (42 * last) - 21;
 
@@ -4091,12 +4280,12 @@ loop:
 
                 if (((DoubleDouble.valueOf(1.0E-2)).gt(result[0].divide(area))) || ((result[0].divide(area)).gt(DoubleDouble.valueOf(100.0))) ||
                 		(errSum.gt(area.abs()))) {
-                    errorStatus = 6;
+                    ier[0] = 6;
                 } // if ((1.0E-2 > (result[0]/area)) || (result[0]/area > 100.0) ||
 
-                if (errorStatus > 2) {
-                    errorStatus = errorStatus - 1;
-                } // if (errorStatus > 2)
+                if (ier[0] > 2) {
+                    ier[0] = ier[0] - 1;
+                } // if (ier[0] > 2)
 
                 neval[0] = (42 * last) - 21;
 
@@ -4111,9 +4300,9 @@ loop:
 
             abserr[0] = (DoubleDouble)errSum.clone();
 
-            if (errorStatus > 2) {
-                errorStatus = errorStatus - 1;
-            } // if (errorStatus > 2)
+            if (ier[0] > 2) {
+                ier[0] = ier[0] - 1;
+            } // if (ier[0] > 2)
 
             neval[0] = (42 * last) - 21;
 
@@ -4209,7 +4398,7 @@ loop:
             	aa = (DoubleDouble)upper.clone();
             	bb = (DoubleDouble)lower.clone();
             }
-            errorStatus = 0;
+            ier[0] = 0;
             krule[0] = 1;
             dqc25c(aa, bb, c, result, abserr, krule, neval);
             last = 1;
@@ -4223,10 +4412,10 @@ loop:
             
             errBnd = epsabs.max( epsrel.multiply(result[0].abs()));
             if (limit == 1) {
-            	errorStatus = 1;
+            	ier[0] = 1;
             }
             if ((abserr[0].lt(((DoubleDouble.valueOf(0.01)).multiply(result[0].abs())).min( errBnd))) ||
-            	(errorStatus == 1)) {
+            	(ier[0] == 1)) {
             	if (aa.equals(upper)) {
             		result[0] = result[0].negate();
             	}
@@ -4290,21 +4479,21 @@ loop:
             		// Test for roundoff error and eventually set error flag.
             		
             		if ((iroff1 >= 6) && (iroff2 > 20)) {
-            			errorStatus = 2;
+            			ier[0] = 2;
             		}
             		
             		// Set error flag in the case that number of interval
             		// bisections exceeds limit.
             		
             		if (last == limit) {
-            			errorStatus = 1;
+            			ier[0] = 1;
             		}
             		
             		// Set error flag in the case of bad integrand behavior
             		// at a point of the integration range
             		if (((a1.abs()).max(b2.abs())).le(((DoubleDouble.valueOf(1.0)).add((DoubleDouble.valueOf(100.0)).multiply(epmach)))
             				.multiply((a2.abs()).add((DoubleDouble.valueOf(1.0E3)).multiply(uflow))))) {
-            			errorStatus = 3;
+            			ier[0] = 3;
             		}
             	} // if (errSum > errBnd)
             	
@@ -4332,7 +4521,7 @@ loop:
             	// with the nrmax-th largest error estimate (to be bisected next).
             	
             	dqpsrt(limit, last, maxErr, errMax, elist, iord, nrmax);
-            	if ((errorStatus != 0) || (errSum.le(errBnd))) {
+            	if ((ier[0] != 0) || (errSum.le(errBnd))) {
             		break;
             	}
             } // for (last = 2; last <= limit; last++)
@@ -4353,6 +4542,432 @@ loop:
 	        Preferences.debug("dqawce error: " + err.getMessage());
 	    }
     } // dqawce
+    
+    /** This is the port of the original FORTRAN routine whose header is given below:
+     * c***begin prologue  dqawfe
+	c***date written   800101   (yymmdd)
+	c***revision date  830518   (yymmdd)
+	c***category no.  h2a3a1
+	c***keywords  automatic integrator, special-purpose,
+	c             fourier integrals,
+	c             integration between zeros with dqawoe,
+	c             convergence acceleration with dqelg
+	c***author  piessens,robert,appl. math. & progr. div. - k.u.leuven
+	c           dedoncker,elise,appl. math. & progr. div. - k.u.leuven
+	c***purpose  the routine calculates an approximation result to a
+	c            given fourier integal
+	c            i = integral of f(x)*w(x) over (a,infinity)
+	c            where w(x)=cos(omega*x) or w(x)=sin(omega*x),
+	c            hopefully satisfying following claim for accuracy
+	c            abs(i-result).le.epsabs.
+	c***description
+	c
+	c        computation of fourier integrals
+	c        standard fortran subroutine
+	c        DoubleDouble precision version
+	c
+	c        parameters
+	c         on entry
+	c            f      - DoubleDouble precision
+	c                     function subprogram defining the integrand
+	c                     function f(x). the actual name for f needs to
+	c                     be declared e x t e r n a l in the driver program.
+	c
+	c            a      - DoubleDouble precision
+	c                     lower limit of integration
+	c
+	c            omega  - DoubleDouble precision
+	c                     parameter in the weight function
+	c
+	c            integr - integer
+	c                     indicates which weight function is used
+	c                     integr = 1      w(x) = cos(omega*x)
+	c                     integr = 2      w(x) = sin(omega*x)
+	c                     if integr.ne.1.and.integr.ne.2, the routine will
+	c                     end with ier = 6.
+	c
+	c            epsabs - DoubleDouble precision
+	c                     absolute accuracy requested, epsabs.gt.0
+	c                     if epsabs.le.0, the routine will end with ier = 6.
+	c
+	c            limlst - integer
+	c                     limlst gives an upper bound on the number of
+	c                     cycles, limlst.ge.1.
+	c                     if limlst.lt.3, the routine will end with ier = 6.
+	c
+	c            limit  - integer
+	c                     gives an upper bound on the number of subintervals
+	c                     allowed in the partition of each cycle, limit.ge.1
+	c                     each cycle, limit.ge.1.
+	c
+	c            maxp1  - integer
+	c                     gives an upper bound on the number of
+	c                     chebyshev moments which can be stored, i.e.
+	c                     for the intervals of lengths abs(b-a)*2**(-l),
+	c                     l=0,1, ..., maxp1-2, maxp1.ge.1
+	c
+	c         on return
+	c            result - DoubleDouble precision
+	c                     approximation to the integral x
+	c
+	c            abserr - DoubleDouble precision
+	c                     estimate of the modulus of the absolute error,
+	c                     which should equal or exceed abs(i-result)
+	c
+	c            neval  - integer
+	c                     number of integrand evaluations
+	c
+	c            ier    - ier = 0 normal and reliable termination of
+	c                             the routine. it is assumed that the
+	c                             requested accuracy has been achieved.
+	c                     ier.gt.0 abnormal termination of the routine. the
+	c                             estimates for integral and error are less
+	c                             reliable. it is assumed that the requested
+	c                             accuracy has not been achieved.
+	c            error messages
+	c                    if omega.ne.0
+	c                     ier = 1 maximum number of  cycles  allowed
+	c                             has been achieved., i.e. of subintervals
+	c                             (a+(k-1)c,a+kc) where
+	c                             c = (2*int(abs(omega))+1)*pi/abs(omega),
+	c                             for k = 1, 2, ..., lst.
+	c                             one can allow more cycles by increasing
+	c                             the value of limlst (and taking the
+	c                             according dimension adjustments into
+	c                             account).
+	c                             examine the array iwork which contains
+	c                             the error flags on the cycles, in order to
+	c                             look for eventual local integration
+	c                             difficulties. if the position of a local
+	c                             difficulty can be determined (e.g.
+	c                             singularity, discontinuity within the
+	c                             interval) one will probably gain from
+	c                             splitting up the interval at this point
+	c                             and calling appropriate integrators on
+	c                             the subranges.
+	c                         = 4 the extrapolation table constructed for
+	c                             convergence acceleration of the series
+	c                             formed by the integral contributions over
+	c                             the cycles, does not converge to within
+	c                             the requested accuracy. as in the case of
+	c                             ier = 1, it is advised to examine the
+	c                             array iwork which contains the error
+	c                             flags on the cycles.
+	c                         = 6 the input is invalid because
+	c                             (integr.ne.1 and integr.ne.2) or
+	c                              epsabs.le.0 or limlst.lt.3.
+	c                              result, abserr, neval, lst are set
+	c                              to zero.
+	c                         = 7 bad integrand behaviour occurs within one
+	c                             or more of the cycles. location and type
+	c                             of the difficulty involved can be
+	c                             determined from the vector ierlst. here
+	c                             lst is the number of cycles actually
+	c                             needed (see below).
+	c                             ierlst(k) = 1 the maximum number of
+	c                                           subdivisions (= limit) has
+	c                                           been achieved on the k th
+	c                                           cycle.
+	c                                       = 2 occurrence of roundoff error
+	c                                           is detected and prevents the
+	c                                           tolerance imposed on the
+	c                                           k th cycle, from being
+	c                                           achieved.
+	c                                       = 3 extremely bad integrand
+	c                                           behaviour occurs at some
+	c                                           points of the k th cycle.
+	c                                       = 4 the integration procedure
+	c                                           over the k th cycle does
+	c                                           not converge (to within the
+	c                                           required accuracy) due to
+	c                                           roundoff in the
+	c                                           extrapolation procedure
+	c                                           invoked on this cycle. it
+	c                                           is assumed that the result
+	c                                           on this interval is the
+	c                                           best which can be obtained.
+	c                                       = 5 the integral over the k th
+	c                                           cycle is probably divergent
+	c                                           or slowly convergent. it
+	c                                           must be noted that
+	c                                           divergence can occur with
+	c                                           any other value of
+	c                                           ierlst(k).
+	c                    if omega = 0 and integr = 1,
+	c                    the integral is calculated by means of dqagie
+	c                    and ier = ierlst(1) (with meaning as described
+	c                    for ierlst(k), k = 1).
+	c
+	c            rslst  - DoubleDouble precision
+	c                     vector of dimension at least limlst
+	c                     rslst(k) contains the integral contribution
+	c                     over the interval (a+(k-1)c,a+kc) where
+	c                     c = (2*int(abs(omega))+1)*pi/abs(omega),
+	c                     k = 1, 2, ..., lst.
+	c                     note that, if omega = 0, rslst(1) contains
+	c                     the value of the integral over (a,infinity).
+	c
+	c            erlst  - DoubleDouble precision
+	c                     vector of dimension at least limlst
+	c                     erlst(k) contains the error estimate corresponding
+	c                     with rslst(k).
+	c
+	c            ierlst - integer
+	c                     vector of dimension at least limlst
+	c                     ierlst(k) contains the error flag corresponding
+	c                     with rslst(k). for the meaning of the local error
+	c                     flags see description of output parameter ier.
+	c
+	c            lst    - integer
+	c                     number of subintervals needed for the integration
+	c                     if omega = 0 then lst is set to 1.
+	c
+	c            alist, blist, rlist, elist - DoubleDouble precision
+	c                     vector of dimension at least limit,
+	c
+	c            iord, nnlog - integer
+	c                     vector of dimension at least limit, providing
+	c                     space for the quantities needed in the subdivision
+	c                     process of each cycle
+	c
+	c            chebmo - DoubleDouble precision
+	c                     array of dimension at least (maxp1,25), providing
+	c                     space for the chebyshev moments needed within the
+	c                     cycles
+	c
+	c***references  (none)
+	c***routines called  d1mach,dqagie,dqawoe,dqelg
+	c***end prologue  dqawfe
+	c
+ */
+    private void dqawfe() {
+    	DoubleDouble abseps[] = new DoubleDouble[1];
+        DoubleDouble correc;
+        // (2*int(abs(omega))+1)*pi/abs(omega)
+        DoubleDouble cycle;
+        // c1, c2 end points of subinterval (of length cycle)
+        DoubleDouble c1;
+        DoubleDouble c2;
+        DoubleDouble dl;
+        DoubleDouble drl = DoubleDouble.valueOf(0.0);
+        DoubleDouble ep;
+        DoubleDouble eps;
+        // absolute tolerance requested over current subinterval
+        DoubleDouble epsa;
+        // sum of error estimates over subintervals, calculated cumulatively
+        DoubleDouble errsum;
+        DoubleDouble fact;
+        DoubleDouble p = DoubleDouble.valueOf(0.9);
+        DoubleDouble p1;
+        // The dimension of psum is determined by the value of limexp
+        // in subroutine dqelg (psum must be of dimension (limexp+2) at least).
+        // psum contains the part of the epsilon table which is still
+        // needed for further computations.  Each element of psum is a
+        // partial sum of the series which should sum to the value of 
+        // the integral.
+        DoubleDouble psum[];
+        DoubleDouble reseps[] = new DoubleDouble[1];
+        DoubleDouble res3la[];
+        DoubleDouble rslstVar[] = new DoubleDouble[1];
+        DoubleDouble erlstVar[] = new DoubleDouble[1];
+        int ierlstVar[] = new int[1];
+        
+        int ktmin;
+        int l;
+        int ll = 0;
+        int nev[] = new int[1];
+        int nres[] = new int[1];
+        int numrl2[] = new int[1];
+        
+        try {
+	    	alist = new DoubleDouble[limit];
+            blist = new DoubleDouble[limit];
+            chebmo = new DoubleDouble[maxp1][25];
+            elist = new DoubleDouble[limit];
+            erlst = new DoubleDouble[limlst];
+            ierlst = new int[limlst];
+            iord = new int[limit];
+            nnlog = new int[limit];
+            psum = new DoubleDouble[52];
+            res3la = new DoubleDouble[3];
+            rlist = new DoubleDouble[limit];
+            rslst = new DoubleDouble[limlst];
+            
+            result[0] = DoubleDouble.valueOf(0.0);
+            abserr[0] = DoubleDouble.valueOf(0.0);
+            neval[0] = 0;
+            lst = 0;
+            ier[0] = 0;
+            for (l = 0; l < limlst; l++) {
+            	erlst[l] = DoubleDouble.valueOf(0.0);
+            	rslst[l] = DoubleDouble.valueOf(0.0);
+            }
+            for (l = 0; l < 52; l++) {
+            	psum[l] = DoubleDouble.valueOf(0.0);
+            }
+            for (l = 0; l < 3; l++) {
+            	res3la[l] = DoubleDouble.valueOf(0.0);
+            }
+            reseps[0] = DoubleDouble.valueOf(0.0);
+            abseps[0] = DoubleDouble.valueOf(0.0);
+            if (omega.isZero()) {
+            	
+            	// Integration by dqagie if omega is zero
+            	
+            	if (integr == 1) {
+            		dqagie(DoubleDouble.valueOf(0.0), 1, DoubleDouble.valueOf(0.0));
+            	}
+            	rslst[0] = (DoubleDouble)result[0].clone();
+            	erlst[0] = (DoubleDouble)abserr[0].clone();
+            	ierlst[0] = ier[0];
+            	lst = 1;
+            	return;
+            } // if (omega == 0.0)
+            
+            // Initializations
+            
+            l = ((omega.abs()).trunc()).intValue();
+            dl = ((DoubleDouble.valueOf(2.0)).multiply(DoubleDouble.valueOf((double)l))).add(DoubleDouble.valueOf(1.0));
+            cycle = (dl.multiply(DoubleDouble.PI)).divide(omega.abs());
+            ier[0] = 0;
+            ktmin = 0;
+            neval[0] = 0;
+            numrl2[0] = 0;
+            nres[0] = 0;
+            c1 = (DoubleDouble)lower.clone();
+            c2 = cycle.add(lower);
+            p1 = (DoubleDouble.valueOf(1.0)).subtract(p);
+            eps = (DoubleDouble)epsabs.clone();
+            if(epsabs.gt(uflow.divide(p1))) {
+            	eps = epsabs.multiply(p1);
+            }
+            ep = (DoubleDouble)eps.clone();
+            fact = DoubleDouble.valueOf(1.0);
+            correc = DoubleDouble.valueOf(0.0);
+            abserr[0] = DoubleDouble.valueOf(0.0);
+            errsum = DoubleDouble.valueOf(0.0);
+            // main for loop
+            for (lst = 1; lst <= limlst; lst++) {
+      
+              // integrate over current subinterval.
+      
+              epsa = eps.multiply(fact);
+              rslstVar[0] = (DoubleDouble)rslst[lst-1].clone();
+              erlstVar[0] = (DoubleDouble)erlst[lst-1].clone();
+              dqawoe(c1,c2,epsa,DoubleDouble.valueOf(0.0),lst,rslstVar, erlstVar, nev, ierlstVar);
+              rslst[lst-1] = (DoubleDouble)rslstVar[0].clone();
+              erlst[lst-1] = (DoubleDouble)erlstVar[0].clone();
+              ierlst[lst-1] = ierlstVar[0];
+              neval[0] = neval[0]+nev[0];
+              fact = fact.multiply(p);
+              errsum = errsum.add(erlst[lst-1]);
+              drl = (DoubleDouble.valueOf(50.0)).multiply(rslst[lst-1].abs());
+      
+              // test on accuracy with partial sum
+    
+              if((errsum.add(drl)).le(epsabs) && lst >= 6) {
+            	  result[0] = (DoubleDouble)psum[numrl2[0]-1].clone();
+            	  abserr[0] = errsum.add(drl);
+            	  return;
+              }
+              correc = correc.max(erlst[lst-1]);
+              if(ierlst[lst-1] != 0) {
+            	  eps = ep.max(correc.multiply(p1));
+              }
+              if(ierlst[lst-1] != 0) {
+            	  ier[0] = 7;
+              }
+              if(ier[0] == 7 && (errsum.add(drl)).le(correc.multiply(DoubleDouble.valueOf(10.0))) && lst > 5) {
+            	  result[0] = (DoubleDouble)psum[numrl2[0]-1].clone();
+            	  abserr[0] = errsum.add(drl);
+            	  return;	  
+              }
+              numrl2[0] = numrl2[0]+1;
+              if(lst <= 1) {
+                  psum[0] = (DoubleDouble)rslst[0].clone();
+                  ll = numrl2[0];
+                  c1 = (DoubleDouble)c2.clone();
+                  c2 = c2.add(cycle);
+                  continue;
+              } // if (lst <= 1)
+              psum[numrl2[0]-1] = psum[ll-1].add(rslst[lst-1]);
+              if(lst == 2) {
+            	  ll = numrl2[0];
+                  c1 = (DoubleDouble)c2.clone();
+                  c2 = c2.add(cycle);
+                  continue;  
+              } // if (lst == 2)
+      
+              // test on maximum number of subintervals
+      
+              if(lst == limlst) {
+            	  ier[0] = 1;
+              }
+     
+              // perform new extrapolation
+              
+              dqelg(numrl2,psum,reseps,abseps,res3la,nres);
+      
+              // test whether extrapolated result is influenced by roundoff
+    
+              ktmin = ktmin+1;
+              if(ktmin >= 15 && abserr[0].le((DoubleDouble.valueOf(1.0E-3)).multiply(errsum.add(drl)))) {
+            	  ier[0] = 4;
+              }
+              if(abseps[0].le(abserr[0]) || lst == 3) {
+                  abserr[0] = (DoubleDouble)abseps[0].clone();
+                  result[0] = (DoubleDouble)reseps[0].clone();
+                  ktmin = 0;
+      
+                  // if ier[0] is not 0, check whether direct result (partial sum)
+                  // or extrapolated result yields the best integral
+                  // approximation
+      
+                  if((abserr[0].add((DoubleDouble.valueOf(10.0)).multiply(correc))).le(epsabs) || 
+                     (abserr[0].le(epsabs) && ((DoubleDouble.valueOf(10.0)).multiply(correc)).ge(epsabs))) {
+            	      break;
+                  }
+              
+              } // if(abseps[0] <= abserr[0] || lst == 3)
+              if(ier[0] != 0 && ier[0] != 7) {
+        	      break;
+              }
+              ll = numrl2[0];
+              c1 = (DoubleDouble)c2.clone();
+              c2 = c2.add(cycle);
+            } // for (lst = 1; lst <= limlst; lst++)
+      
+            // set final result and error estimate
+            // -----------------------------------
+   
+            abserr[0] = abserr[0].add((DoubleDouble.valueOf(10.0)).multiply(correc));
+            if(ier[0] == 0) {
+            	return;
+            }
+            if(result[0].isZero() || psum[numrl2[0]-1].isZero()) {
+                if(abserr[0].gt(errsum)) {
+                	result[0] = (DoubleDouble)psum[numrl2[0]-1].clone();
+              	    abserr[0] = errsum.add(drl);
+              	    return;	  
+                }
+                if(psum[numrl2[0]-1].isZero()) {
+            	    return;
+                }
+            } // if(result[0] == 0.0 || psum[numrl2[0]-1] == 0.0)
+            if((abserr[0].divide(result[0].abs())).gt((errsum.add(drl)).divide(psum[numrl2[0]-1].abs()))) {
+            	result[0] = (DoubleDouble)psum[numrl2[0]-1].clone();
+          	    abserr[0] = errsum.add(drl);
+          	    return;	      
+            }
+            if(ier[0] >= 1 && ier[0] != 7) {
+            	abserr[0] = abserr[0].add(drl);
+            }
+            return;
+        }
+        catch (Exception err) {
+	        Preferences.debug("dqawfe error: " + err.getMessage());
+	    }	
+    } // dqawfe
     
     /**
      * This is the port of the original FORTRAN routine whose header is given below:
@@ -4380,18 +4995,18 @@ loop:
 	 c
 	 c        parameters
 	 c         on entry
-	 c            f      - double precision
+	 c            f      - DoubleDouble precision
 	 c                     function subprogram defining the integrand
 	 c                     function f(x). the actual name for f needs to be
 	 c                     declared e x t e r n a l in the driver program.
 	 c
-	 c            a      - double precision
+	 c            a      - DoubleDouble precision
 	 c                     lower limit of integration
 	 c
-	 c            b      - double precision
+	 c            b      - DoubleDouble precision
 	 c                     upper limit of integration
 	 c
-	 c            omega  - double precision
+	 c            omega  - DoubleDouble precision
 	 c                     parameter in the integrand weight function
 	 c
 	 c            integr - integer
@@ -4402,9 +5017,9 @@ loop:
 	 c                     if integr.ne.1 and integr.ne.2, the routine
 	 c                     will end with ier = 6.
 	 c
-	 c            epsabs - double precision
+	 c            epsabs - DoubleDouble precision
 	 c                     absolute accuracy requested
-	 c            epsrel - double precision
+	 c            epsrel - DoubleDouble precision
 	 c                     relative accuracy requested
 	 c                     if  epsabs.le.0
 	 c                     and epsrel.lt.max(50*rel.mach.acc.,0.5d-28),
@@ -4434,10 +5049,10 @@ loop:
 	 c                     if maxp1.lt.1, the routine will end with ier = 6.
 	 c
 	 c         on return
-	 c            result - double precision
+	 c            result - DoubleDouble precision
 	 c                     approximation to the integral
 	 c
-	 c            abserr - double precision
+	 c            abserr - DoubleDouble precision
 	 c                     estimate of the modulus of the absolute error,
 	 c                     which should equal or exceed abs(i-result)
 	 c
@@ -4505,24 +5120,24 @@ loop:
 	 c                     process, which determines the number of
 	 c                     significant elements actually in the
 	 c                     work arrays.
-	 c            alist  - double precision
+	 c            alist  - DoubleDouble precision
 	 c                     vector of dimension at least limit, the first
 	 c                      last  elements of which are the left
 	 c                     end points of the subintervals in the partition
 	 c                     of the given integration range (a,b)
 	 c
-	 c            blist  - double precision
+	 c            blist  - DoubleDouble precision
 	 c                     vector of dimension at least limit, the first
 	 c                      last  elements of which are the right
 	 c                     end points of the subintervals in the partition
 	 c                     of the given integration range (a,b)
 	 c
-	 c            rlist  - double precision
+	 c            rlist  - DoubleDouble precision
 	 c                     vector of dimension at least limit, the first
 	 c                      last  elements of which are the integral
 	 c                     approximations on the subintervals
 	 c
-	 c            elist  - double precision
+	 c            elist  - DoubleDouble precision
 	 c                     vector of dimension at least limit, the first
 	 c                      last  elements of which are the moduli of the
 	 c                     absolute error estimates on the subintervals
@@ -4549,7 +5164,7 @@ loop:
 	 c                     (abs(b-a))*2**(-l), l=0,1,2, ..., momcom-1,
 	 c                     momcom.lt.maxp1
 	 c
-	 c            chebmo - double precision
+	 c            chebmo - DoubleDouble precision
 	 c                     array of dimension (maxp1,25) containing the
 	 c                     chebyshev moments
 	 c
@@ -4558,7 +5173,8 @@ loop:
 	 c***end prologue  dqawoe
 	 c
      */
-    private void dqawoe() {
+    private void dqawoe(DoubleDouble a, DoubleDouble b, DoubleDouble epsabs, DoubleDouble epsrel, int icall, DoubleDouble result[],
+    		            DoubleDouble abserr[], int neval[], int ier[]) {
     	// Variables ending in 1 denote left subinterval and variables
         // ending in 2 denote right subinterval
         // rlist2 should be length at least (limexp + 2)
@@ -4668,13 +5284,13 @@ loop:
             }
             nnlog = new int[limit];
             
-            errorStatus = 0;
+            ier[0] = 0;
             neval[0] = 0;
             last = 0;
             result[0] = DoubleDouble.valueOf(0.0);
             abserr[0] = DoubleDouble.valueOf(0.0);
-            alist[0] = (DoubleDouble)lower.clone();
-            blist[0] = (DoubleDouble)upper.clone();
+            alist[0] = (DoubleDouble)a.clone();
+            blist[0] = (DoubleDouble)b.clone();
             rlist[0] = DoubleDouble.valueOf(0.0);
             elist[0] = DoubleDouble.valueOf(0.0);
             iord[0] = -1;
@@ -4686,7 +5302,7 @@ loop:
             if (icall == 1) {
             	momcom = 0;
             }
-            dqc25f(lower, upper, domega, nrmom, 0, result, abserr, neval, defabs, resabs);
+            dqc25f(a, b, domega, nrmom, 0, result, abserr, neval, defabs, resabs);
             
             // Test on accuracy
             
@@ -4696,12 +5312,12 @@ loop:
             elist[0] = (DoubleDouble)abserr[0].clone();
             iord[0] = 0;
             if ((abserr[0].le(((DoubleDouble.valueOf(100.0)).multiply(epmach)).multiply(defabs[0]))) && (abserr[0].gt(errBnd))) {
-            	errorStatus = 2;
+            	ier[0] = 2;
             }
             if (limit == 1) {
-            	errorStatus = 1;
+            	ier[0] = 1;
             }
-            if ((errorStatus != 0) || (abserr[0].le(errBnd))) {
+            if ((ier[0] != 0) || (abserr[0].le(errBnd))) {
             	if ((integr == 2) && (omega.lt(DoubleDouble.valueOf(0.0)))) {
             		result[0] = result[0].negate();
             	}
@@ -4722,16 +5338,16 @@ loop:
             iroff2 = 0;
             iroff3 = 0;
             ktmin = 0;
-            small = ((upper.subtract(lower)).abs()).multiply(DoubleDouble.valueOf(0.75));
+            small = ((b.subtract(a)).abs()).multiply(DoubleDouble.valueOf(0.75));
             nres[0] = 0;
             numr12[0] = 0;
             extall = false;
-            if ((((DoubleDouble.valueOf(0.5)).multiply((upper.subtract(lower)).abs())).multiply(domega)).le(DoubleDouble.valueOf(2.0))) {
+            if ((((DoubleDouble.valueOf(0.5)).multiply((b.subtract(a)).abs())).multiply(domega)).le(DoubleDouble.valueOf(2.0))) {
             	numr12[0] = 1;
             	extall = true;
             	rlist2[0] = (DoubleDouble)result[0].clone();
             }
-            if (((DoubleDouble.valueOf(0.25)).multiply((upper.subtract(lower)).abs()).multiply(domega)).le(DoubleDouble.valueOf(2.0))) {
+            if (((DoubleDouble.valueOf(0.25)).multiply((b.subtract(a)).abs()).multiply(domega)).le(DoubleDouble.valueOf(2.0))) {
             	extall = true;
             }
             ksgn = -1;
@@ -4787,7 +5403,7 @@ loop:
             	// Test for roundoff error and eventually set error flag.
             	
             	if ((iroff1 + iroff2 >= 10) || (iroff3 >= 20)) {
-            		errorStatus = 2;
+            		ier[0] = 2;
             	}
             	if (iroff2 >= 5) {
             		ierro = 3;
@@ -4797,7 +5413,7 @@ loop:
             	// subintervals equals the limit.
             	
             	if (last == limit) {
-            		errorStatus = 1;
+            		ier[0] = 1;
             	}
             	
             	// Set error flag in the case of bad integrand behavior
@@ -4805,7 +5421,7 @@ loop:
             	
             	if (((a1.abs()).max( (b2.abs()))).le(((DoubleDouble.valueOf(1.0))
             			.add((DoubleDouble.valueOf(100.0)).multiply(epmach))).multiply((a2.abs()).add((DoubleDouble.valueOf(1.0E3)).multiply(uflow))))) {
-            		errorStatus = 4;
+            		ier[0] = 4;
             	}
             	
             	// Append the newly-created intervals to the list
@@ -4835,7 +5451,7 @@ loop:
             		do170 = true;
             		break;
             	}
-            	if (errorStatus != 0) {
+            	if (ier[0] != 0) {
             		break;
             	}
             	if ((last == 2) && extall) {
@@ -4933,7 +5549,7 @@ loop:
             			dqelg(numr12, rlist2, reseps, abseps, res31a, nres);
             			ktmin = ktmin + 1;
             			if ((ktmin > 5) && (abserr[0].lt((DoubleDouble.valueOf(1.0E-3)).multiply(errSum)))) {
-            				errorStatus = 5;
+            				ier[0] = 5;
             			}
             			if (abseps[0].lt(abserr[0])) {
             				ktmin = 0;
@@ -4949,7 +5565,7 @@ loop:
             			if (numr12[0] == 1) {
             				noext = true;
             			}
-            			if (errorStatus == 5) {
+            			if (ier[0] == 5) {
             				break;
             			}
             		} // if (numr12[0] >= 3)
@@ -4968,15 +5584,15 @@ loop:
             	if ((abserr[0].equals(oflow)) || (nres[0] == 0)) {
             		do170 = true;
             	}
-            	else if (errorStatus + ierro == 0) {
+            	else if (ier[0] + ierro == 0) {
             		do165 = true;
             	}
             	else {
             		if (ierro == 3) {
             			abserr[0] = abserr[0].add(correc);
             		}
-            		if (errorStatus == 0) {
-            			errorStatus = 3;
+            		if (ier[0] == 0) {
+            			ier[0] = 3;
             		}
             		if ((result[0].ne(DoubleDouble.valueOf(0.0))) && (area.ne(DoubleDouble.valueOf(0.0)))) {
             			do160 = true;
@@ -5009,7 +5625,7 @@ loop:
             	}
             	else if (((DoubleDouble.valueOf(1.0E-2)).gt(result[0].divide(area))) || ((result[0].divide(area)).gt(DoubleDouble.valueOf(100.0))) ||
             			 (errSum.ge(area.abs()))) {
-            		errorStatus = 6;
+            		ier[0] = 6;
             	}
             	do190 = true; 	
             } // if (do165)
@@ -5024,8 +5640,8 @@ loop:
             } // if (do170)
             
             if (do190) {
-            	if (errorStatus > 2) {
-            		errorStatus = errorStatus - 1;
+            	if (ier[0] > 2) {
+            		ier[0] = ier[0] - 1;
             	}
             	if ((integr == 2) && (omega.lt(DoubleDouble.valueOf(0.0)))) {
             		result[0] = result[0].negate();
@@ -5257,7 +5873,7 @@ loop:
             iord[0] = -1;
             result[0] = DoubleDouble.valueOf(0.0);
             abserr[0] = DoubleDouble.valueOf(0.0);
-            errorStatus = 0;
+            ier[0] = 0;
             
             // Compute the modified chebyshev moments
             
@@ -5301,9 +5917,9 @@ loop:
             iord[0] = 0;
             iord[1] = 1;
             if (limit == 2) {
-            	errorStatus = 1;
+            	ier[0] = 1;
             }
-            if (abserr[0].le(errBnd) || errorStatus == 1) {
+            if (abserr[0].le(errBnd) || ier[0] == 1) {
             	return;
             }
             errMax[0] = (DoubleDouble)elist[0].clone();
@@ -5361,13 +5977,13 @@ loop:
                     // bisections exceeds limit.
             
 	                if(last == limit) {
-	                	errorStatus = 1;
+	                	ier[0] = 1;
 	                }
 	            
 	                // set error flag in the case of roundoff error.
 	            
 	                if(iroff1 >= 6 || iroff2 >= 20) {
-	                	errorStatus = 2;
+	                	ier[0] = 2;
 	                }
 	           
 	                // set error flag in the case of bad integrand behaviour
@@ -5375,7 +5991,7 @@ loop:
 	            
 	                if(((a1.abs()).max(b2.abs())).le(((DoubleDouble.valueOf(1.0)).add((DoubleDouble.valueOf(100.0)).multiply(epmach)))
 	                		.multiply((a2.abs()).add((DoubleDouble.valueOf(1.0E3)).multiply(uflow))))) {
-	                	errorStatus = 3;
+	                	ier[0] = 3;
 	                }
 	            
                 } // if (errSum > errBnd)
@@ -5404,7 +6020,7 @@ loop:
                 // with largest error estimate (to be bisected next).
            
                 dqpsrt(limit,last,maxErr,errMax,elist,iord,nrmax);
-                if (errorStatus != 0 || errSum.le(errBnd)) {
+                if (ier[0] != 0 || errSum.le(errBnd)) {
                 	break;
                 }
             } // for (last = 3; last <= limit; last++)
@@ -7377,7 +7993,7 @@ loop:
 	        	fc = intFunc(centr).divide(centr.subtract(p1));
 	        }
         } // if (routine == DQAWCE)
-        else if (routine == DQAWOE) {
+        else if ((routine == DQAWFE) || (routine == DQAWOE)) {
 	        if (integr == 1) {
 	            if (selfTest) {
 	   	            fc = intFuncTest(centr).multiply((centr.multiply(p1)).cos());
@@ -7394,7 +8010,7 @@ loop:
 	   	        	fc = intFunc(centr).multiply((centr.multiply(p1)).sin());
 	   	        }          
            } // else integr == 2
-        } // else if (routine == DQAWOE)
+        } // else if ((routine == DQAWFE) || (routine == DQAWOE))
         else { // routine == DQAWSE
             if (integr == 1) {
           	  if (selfTest) {
@@ -7463,7 +8079,7 @@ loop:
             		fval2 = intFunc(absc2).divide(absc2.subtract(p1));
             	}
         	} // if (routine == DQAWCE)
-        	else if (routine == DQAWOE){
+        	else if ((routine == DQAWFE) || (routine == DQAWOE)) {
         	    if (integr == 1) {
         	    	if (selfTest) {
     	        		fval1 = intFuncTest(absc1).multiply((absc1.multiply(p1)).cos());
@@ -7484,7 +8100,7 @@ loop:
     	        		fval2 = intFunc(absc2).multiply((absc2.multiply(p1)).sin());
     	        	}		
         	    }
-        	} // else if (routine == DQAWOE)
+        	} // else if ((routine == DQAWFE) || (routine == DQAWOE))
         	else { // routine == DQAWSE
                 if (integr == 1) {
               	  if (selfTest) {
@@ -7581,7 +8197,7 @@ loop:
             		fval2 = intFunc(absc2).divide(absc2.subtract(p1));
             	}
         	} // if (routine == DQAWCE)
-        	else if (routine == DQAWOE) {
+        	else if ((routine == DQAWFE) || (routine == DQAWOE)) {
         	    if (integr == 1) {
         	    	if (selfTest) {
     	        		fval1 = intFuncTest(absc1).multiply((absc1.multiply(p1)).cos());
@@ -7602,7 +8218,7 @@ loop:
     	        		fval2 = intFunc(absc2).multiply((absc2.multiply(p1)).sin());
     	        	}		
         	    }
-        	} // else if (routine == DQAWOE)
+        	} // else if ((routine == DQAWFE) || (routine == DQAWOE))
         	else { // routine == DQAWSE
                 if (integr == 1) {
               	  if (selfTest) {
@@ -9180,7 +9796,7 @@ loop:
             fcentr = intFunc(centr);
         }
         neval[0] = 21;
-        errorStatus = 1;
+        ier[0] = 1;
 
         // Compute the integral using the 10- and 21-point formula.
 
@@ -9253,12 +9869,12 @@ loop:
         } // if (resabs > uflow/(50.0 * epmach))
 
         if (abserr[0].le(epsabs.max( epsrel.multiply(result[0].abs())))) {
-            errorStatus = 0;
+            ier[0] = 0;
         } // if (abserr[0] <= Math.max(epsabs, epsrel * Math.abs(result[0])))
 
-        if (errorStatus == 0) {
+        if (ier[0] == 0) {
             return;
-        } // if (errorStatus == 0)
+        } // if (ier[0] == 0)
 
         // Compute the integral using the 43-point formula
 
@@ -9296,12 +9912,12 @@ loop:
         } // if (resabs > uflow/(50.0 * epmach))
 
         if (abserr[0].le(epsabs.max( epsrel.multiply(result[0].abs())))) {
-            errorStatus = 0;
+            ier[0] = 0;
         } // if (abserr[0] <= Math.max(epsabs, epsrel * Math.abs(result[0])))
 
-        if (errorStatus == 0) {
+        if (ier[0] == 0) {
             return;
-        } // if (errorStatus == 0)
+        } // if (ier[0] == 0)
 
         // Compute the integral using the 87-point formula
         res87 = w87b[22].multiply(fcentr);
@@ -9334,12 +9950,12 @@ loop:
         } // if (resabs > uflow/(50.0 * epmach))
 
         if (abserr[0].le(epsabs.max( epsrel.multiply(result[0].abs())))) {
-            errorStatus = 0;
+            ier[0] = 0;
         } // if (abserr[0] <= Math.max(epsabs, epsrel * Math.abs(result[0])))
 
-        if (errorStatus == 0) {
+        if (ier[0] == 0) {
             return;
-        } // if (errorStatus == 0)
+        } // if (ier[0] == 0)
 
         Preferences.debug("Abnormal return from dqng\n");
 
