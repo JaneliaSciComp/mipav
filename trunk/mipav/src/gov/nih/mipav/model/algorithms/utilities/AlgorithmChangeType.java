@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.model.file.*;
 
 import java.io.*;
@@ -24,8 +25,10 @@ public class AlgorithmChangeType extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** 1 for black and white, 4 for color. */
-
     private int colorFactor = 1;
+    
+    /** 1 for real images, 2 for complex. */
+    private int complexFactor = 1;
 
     /** The ending range value of the input image. Typically the image maximum. */
     private double endRange1 = Double.NaN;
@@ -38,7 +41,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
      *
      * @see  ModelStorageBase
      */
-    private int newType = -1;
+    private DataType newType = null;
 
     /** The starting range value of the input image. Typically the image minimum. */
     private double stRange1 = Double.NaN;
@@ -85,7 +88,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
                                double endRge2, boolean img25D) {
 
         super(null, srcImg);
-        this.newType = newType;
+        this.newType = DataType.getDataType(newType);
         stRange1 = stRge1;
         endRange1 = endRge1;
         stRange2 = stRge2;
@@ -118,6 +121,10 @@ public class AlgorithmChangeType extends AlgorithmBase {
         if (srcImage.isColorImage()) {
             colorFactor = 4;
         }
+        
+        if (srcImage.isComplexImage()) {
+            complexFactor = 2;
+        }
 
         if (destImage != null) {
           
@@ -147,7 +154,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         double imDiff, newDiff;
 
         try {
-            length = srcImage.getSliceSize() * colorFactor;
+            length = srcImage.getSliceSize() * colorFactor * complexFactor;
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Changing image to new type");
@@ -201,8 +208,8 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
         try {
 
-            if (srcImage.getType() != newType) {
-                srcImage.reallocate(newType);
+            if (srcImage.getType() != newType.getLegacyNum()) {
+                srcImage.reallocate(newType.getLegacyNum());
             }
 
             srcImage.importData(0, buffer, true);
@@ -246,7 +253,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         newDiff = endRange2 - stRange2;
 
         try {
-            length = srcImage.getSliceSize() * srcImage.getExtents()[2] * colorFactor;
+            length = srcImage.getSliceSize() * srcImage.getExtents()[2] * colorFactor * complexFactor;
 
             if (srcImage.getNDims() == 4) {
                 length = length * srcImage.getExtents()[3];
@@ -295,7 +302,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         else {
             System.err.println("doing 25D");
 
-            int sliceLength = srcImage.getSliceSize() * colorFactor;
+            int sliceLength = srcImage.getSliceSize() * colorFactor * complexFactor;
             int numSlices = srcImage.getExtents()[2];
             int endIndex, startIndex;
 
@@ -352,11 +359,9 @@ public class AlgorithmChangeType extends AlgorithmBase {
         }
 
         try {
-
-            if (srcImage.getType() != newType) {
-                srcImage.reallocate(newType);
+            if (srcImage.getType() != newType.getLegacyNum()) {
+                srcImage.reallocate(newType.getLegacyNum());
             }
-
             srcImage.importData(0, buffer, true);
         } catch (IOException error) {
             buffer = null;
@@ -401,7 +406,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         }
 
         try {
-            length = srcImage.getSliceSize() * colorFactor;
+            length = srcImage.getSliceSize() * colorFactor * complexFactor;
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Creating new type image");
@@ -492,7 +497,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         imDiff = imMax - imMin;
         newDiff = endRange2 - stRange2;
 
-        length = srcImage.getSliceSize() * colorFactor;
+        length = srcImage.getSliceSize() * colorFactor * complexFactor;
 
         buffer = new double[length];
 
