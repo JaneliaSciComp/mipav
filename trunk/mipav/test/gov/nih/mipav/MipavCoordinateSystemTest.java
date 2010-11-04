@@ -3,6 +3,7 @@ package gov.nih.mipav;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.util.TestingFileUtil;
 
 import java.io.File;
@@ -35,7 +36,7 @@ public class MipavCoordinateSystemTest {
 	    // genormcor2.raw: 256 x 256 x 34,  Axial. 
 	    testImageFileName = f.getPath() + File.separatorChar + "genormcor2.raw";
 		
-		srcImage = new ModelImage(ModelStorageBase.SHORT, new int[]{256, 256, 34}, "");
+		srcImage = new ModelImage(DataType.SHORT, new int[]{256, 256, 34}, "");
         imageBuffer = TestingFileUtil.readRawFileShort(testImageFileName, false);
         try {
           srcImage.importData(0, imageBuffer, true);
