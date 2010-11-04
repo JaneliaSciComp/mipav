@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 
 import gov.nih.mipav.view.*;
 
@@ -67,7 +68,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
     private ButtonGroup colorGroup;
     
     /** ARGB, ARGB_USHORT, or ARGB_FLOAT for color image */
-    private int dataType;
+    private DataType dataType;
     
     private ButtonGroup remapGroup;
     
@@ -277,7 +278,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
      * @param dataType
      */
     public void setDataType(int dataType) {
-        this.dataType = dataType;
+        this.dataType = DataType.getDataType(dataType);
     }
 
     /**
@@ -363,7 +364,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 // Make algorithm
-                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, dataType, remapMode, commonMapping,
+                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, dataType.getLegacyNum(), remapMode, commonMapping,
                                                   remapHighestValue, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
@@ -722,20 +723,16 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
      */
     private boolean setVariables() {
         String tmpStr;
-        float upperLimit;
         blank = new ModelImage(ModelImage.SHORT, imageR.getExtents(), makeImageName(imageR.getImageName(), ""));
         
         if (radioARGB.isSelected()) {
-            dataType = ModelStorageBase.ARGB;
-            upperLimit = 255.0f;
+            dataType = DataType.ARGB;
         }
         else if (radioARGB_USHORT.isSelected()) {
-            dataType = ModelStorageBase.ARGB_USHORT;
-            upperLimit = 65535.0f;
+            dataType = DataType.ARGB_USHORT;
         }
         else {
-            dataType = ModelStorageBase.ARGB_FLOAT;
-            upperLimit = Float.MAX_VALUE;
+            dataType = DataType.ARGB_FLOAT;
         }
         
         commonMapping = radioCommon.isSelected();
@@ -761,8 +758,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 textRemap.selectAll();
                 return false;
             }
-            else if (remapHighestValue > upperLimit) {
-                MipavUtil.displayError("Remap value cannot be greater than " + upperLimit);
+            else if (remapHighestValue > dataType.getTypeMax().floatValue()) {
+                MipavUtil.displayError("Remap value cannot be greater than " + dataType.getTypeMax().floatValue());
                 textRemap.requestFocus();
                 textRemap.selectAll();
                 return false;
