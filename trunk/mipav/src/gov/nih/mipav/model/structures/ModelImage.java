@@ -2235,7 +2235,7 @@ public class ModelImage extends ModelStorageBase {
      */
     public boolean isComplexImage() {
 
-        if ( (getType() == ModelStorageBase.COMPLEX) || (getType() == ModelStorageBase.DCOMPLEX)) {
+        if ( (getDataType() == DataType.COMPLEX) || (getDataType() == DataType.DCOMPLEX)) {
             return true;
         } else {
             return false;
