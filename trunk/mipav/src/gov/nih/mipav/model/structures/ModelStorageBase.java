@@ -4407,14 +4407,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public final int getType() {
         return bufferType.getLegacyNum();
     }
-
+    
+    /**
+     * Accessor that returns the image buffer type as an enum.
+     * 
+     * @return The data buffer type
+     */
+    public final DataType getDataType() {
+        return bufferType;
+    }
+    
     /**
      * Accessor that returns the image type.
      * 
      * @return The data buffer type as a String.
      */
     public final String getTypeString() {
-
         return bufferType.toString();
     }
 
