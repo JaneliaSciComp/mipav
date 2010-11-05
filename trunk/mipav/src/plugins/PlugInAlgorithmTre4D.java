@@ -148,7 +148,6 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
     	}
     	System.out.println("Avg computed");
     	
-    	fa = 15;
     	int timeSeries = dceHigh.getExtents()[3];
     	double[][][] r1Copy = new double[extents[0]][extents[1]][extents[2]];
     	double[][][] m0Copy = new double[extents[0]][extents[1]][extents[2]];
@@ -177,9 +176,6 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
     	fireProgressStateChanged(25);
     	
     	System.err.println("Fully copied in "+(System.currentTimeMillis() - time));
-    	trTime = 5.6;
-    	//get TR values
-    	centerTimesFile = new File("E:\\my\\projects\\DESPOT\\tre4d\\DCECenterTimes.txt");
     	
     	ArrayList<Double> centerTimesArr = new ArrayList<Double>();
     	String tString = new String();
