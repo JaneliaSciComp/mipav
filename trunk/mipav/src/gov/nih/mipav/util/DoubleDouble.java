@@ -1107,6 +1107,167 @@ public strictfp class DoubleDouble
 		return BN[n];
 	}
 	
+	public DoubleDouble Ci() {
+		DoubleDouble x = new DoubleDouble(this);
+		DoubleDouble Ci = DoubleDouble.valueOf(0.0);
+		DoubleDouble Si = DoubleDouble.valueOf(0.0);
+		cisia(x, Ci, Si);
+		return Ci;
+	}
+	
+	public DoubleDouble Si() {
+		DoubleDouble x = new DoubleDouble(this);
+		DoubleDouble Ci = DoubleDouble.valueOf(0.0);
+		DoubleDouble Si = DoubleDouble.valueOf(0.0);
+		cisia(x, Ci, Si);
+		return Si;
+	}
+	
+	/**
+	 * This is a port of subroutine CISIA which computes cosine and sine integrals from 
+	 * Computation of Special Functions by Shanjie Zhang and Jianming Jin.
+	 * Waiting for Professor Jin's reply.
+	 * Dear Professor Jianming Jin:
+
+  There is an error in subroutine CISIA in Computation of Special Functions.  Under ELSE IF (x .LE. 32.0D0) THEN in the DO 25 K =M,1,-1 loop the values of BJ(1) thru BJ(M) are set.  You then have the loop
+DO 30 K=2,M,2
+30 XS=XS+2.0D0*BJ(K+1)
+so for M even the value of BJ(M+1) will be used, but the value of BJ(M+1) has not been set.
+
+                                                                                     Sincerely,
+
+                                                                            William Gandler
+
+	 * 
+	 */
+	public void cisia(DoubleDouble x, DoubleDouble Ci, DoubleDouble Si) {
+		// Purpose: Compute cosine and sine integrals Si(x) and
+		// Ci(x) (x >= 0)
+		// Input x: Argument of Ci(x) and Si(x)
+		// Output: Ci(x), Si(x)
+		DoubleDouble bj[] = new DoubleDouble[101];
+		// Euler's constant
+		DoubleDouble el = DoubleDouble.valueOf(.57721566490153286060651209008240243104215933593992);
+		DoubleDouble x2;
+		DoubleDouble xr;
+		int k;
+		int m;
+		DoubleDouble xa1;
+		DoubleDouble xa0;
+		DoubleDouble xa;
+		DoubleDouble xs;
+		DoubleDouble xg1;
+		DoubleDouble xg2;
+		DoubleDouble xcs;
+		DoubleDouble xss;
+		DoubleDouble xf;
+		DoubleDouble xg;
+		int i1;
+		int i2;
+		DoubleDouble var1;
+		DoubleDouble var2;
+		
+		x2 = x.multiply(x);
+		if (x.isZero()) {
+			Ci = DoubleDouble.valueOf(-1.0E300);
+			Si = DoubleDouble.valueOf(0.0);
+		}
+		else if (x.le(DoubleDouble.valueOf(16.0))) {
+		    xr = (DoubleDouble.valueOf(-0.25)).multiply(x2);
+		    Ci = (el.add(x.log())).add(xr);
+		    for (k = 2; k <= 40; k++) {
+		    	xr = ((((DoubleDouble.valueOf(-0.5)).multiply(xr)).multiply(DoubleDouble.valueOf((double)(k - 1)))).
+		    	     divide(DoubleDouble.valueOf((double)(k*k*(2*k-1))))).multiply(x2);
+		    	Ci = Ci.add(xr);
+		    	if ((xr.abs()).lt((Ci.abs()).multiply(DoubleDouble.valueOf(DoubleDouble.EPS)))) {
+		    	    break;	
+		    	}
+		    } // for (k = 2; k <= 40; k++)
+		    xr = (DoubleDouble)x.clone();
+		    Si = (DoubleDouble)x.clone();
+		    for (k = 1; k <= 40; k++) {
+		    	xr = (((((DoubleDouble.valueOf(-0.5)).multiply(xr)).multiply(DoubleDouble.valueOf((double)(2*k - 1)))).
+			    	     divide(DoubleDouble.valueOf((double)k))).divide(DoubleDouble.valueOf((double)(4*k*k+4*k+1)))).multiply(x2);
+		    	Si = Si.add(xr);
+		    	if ((xr.abs()).lt((Si.abs()).multiply(DoubleDouble.valueOf(DoubleDouble.EPS)))) {
+		    	    return;	
+		    	}
+		    } // for (k = 1; k <= 40; k++)
+		    
+		} // else if x <= 16
+		else if (x.le(DoubleDouble.valueOf(32.0))) {
+		    m = (((DoubleDouble.valueOf(47.2)).add((DoubleDouble.valueOf(0.82)).multiply(x))).trunc()).intValue();
+		    xa1 = DoubleDouble.valueOf(0.0);
+		    xa0 = DoubleDouble.valueOf(1.0E-100);
+		    for (k = m; k >= 1; k--) {
+		    	xa = ((((DoubleDouble.valueOf(4.0)).multiply(DoubleDouble.valueOf((double)k))).multiply(xa0)).divide(x)).subtract(xa1);
+		    	bj[k-1] = (DoubleDouble)xa.clone();
+		    	xa1 = (DoubleDouble)xa0.clone();
+		    	xa0 = (DoubleDouble)xa.clone();
+		    } // for (k = m; k >= 1; k--)
+		    xs = (DoubleDouble)bj[0].clone();
+		    for (k = 2; k <= m; k += 2) {
+		    	xs = xs.add((DoubleDouble.valueOf(2.0)).multiply(bj[k]));
+		    }
+		    bj[0] = bj[0].divide(xs);
+		    for (k = 1; k <= m; k++) {
+		    	bj[k] = bj[k].divide(xs);
+		    }
+		    xr = DoubleDouble.valueOf(1.0);
+		    xg1 = (DoubleDouble)bj[0].clone();
+		    for (k = 1; k <= m; k++) {
+		        i1 = (2*k-1)*(2*k-1);
+		        var1 = DoubleDouble.valueOf((double)i1);
+		        i2 = k*(2*k+1)*(2*k+1);
+		        var2 = DoubleDouble.valueOf((double)i2);
+		        xr = ((((DoubleDouble.valueOf(0.25)).multiply(xr)).multiply(var1)).divide(var2)).multiply(x);
+		        xg1 = xg1.add(bj[k].multiply(xr));
+		    }
+		    xr = DoubleDouble.valueOf(1.0);
+		    xg2 = (DoubleDouble)bj[0].clone();
+		    for (k = 1; k <= m; k++) {
+		    	i1 = (2*k-3)*(2*k-3);
+		    	var1 = DoubleDouble.valueOf((double)i1);
+		    	i2 = k*(2*k-1)*(2*k-1);
+		    	var2 = DoubleDouble.valueOf((double)i2);
+		    	xr = ((((DoubleDouble.valueOf(0.25)).multiply(xr)).multiply(var1)).divide(var2)).multiply(x);
+		        xg2 = xg2.add(bj[k].multiply(xr));
+		    }
+		    xcs = ((DoubleDouble.valueOf(0.5)).multiply(x)).cos();
+		    xss = ((DoubleDouble.valueOf(0.5)).multiply(x)).sin();
+		    Ci = (((el.add(x.log())).subtract((x.multiply(xss)).multiply(xg1))).add(((DoubleDouble.valueOf(2.0)).multiply(xcs)).multiply(xg2))).
+		          subtract(((DoubleDouble.valueOf(2.0)).multiply(xcs)).multiply(xcs));
+		    Si = (((x.multiply(xcs)).multiply(xg1)).add(((DoubleDouble.valueOf(2.0)).multiply(xss)).multiply(xg2))).subtract(x.sin());
+		} // else if x <= 32
+		else {
+			xr = DoubleDouble.valueOf(1.0);
+			xf = DoubleDouble.valueOf(1.0);
+			for (k = 1; k <= 9; k++) {
+				i1 = k*(2*k-1);
+				var1 = DoubleDouble.valueOf((double)i1);
+				xr = (((DoubleDouble.valueOf(-2.0)).multiply(xr)).multiply(var1)).divide(x2);
+				xf = xf.add(xr);
+			}
+			xr = x.reciprocal();
+			xg = (DoubleDouble)xr.clone();
+			for (k = 1; k <= 8; k++) {
+				i1 = (2*k+1)*k;
+				var1 = DoubleDouble.valueOf((double)i1);
+				xr = (((DoubleDouble.valueOf(-2.0)).multiply(xr)).multiply(var1)).divide(x2);
+				xg = xg.add(xr);
+			}
+			Ci = ((xf.multiply(x.sin())).divide(x)).subtract((xg.multiply(x.cos())).divide(x));
+			Si = (DoubleDouble.PI_2.subtract((xf.multiply(x.cos())).divide(x))).subtract((xg.multiply(x.sin())).divide(x));
+		}
+		return;
+	}
+	
+	/**
+	 * 
+	 * @param fac
+	 * @return
+	 */
+	
 	public DoubleDouble factorial(int fac) {
 		DoubleDouble prod;
 		if (fac < 0) {
