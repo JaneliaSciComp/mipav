@@ -333,6 +333,23 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             return;
         }
 
+        
+		AlgorithmBSpline bSplineX = new AlgorithmBSpline();
+		float[] imageXFloatBuffer = new float[length1];
+        for (int c = 0; c < 4; c++) {
+            for (int z = 0; z < imageX.getExtents()[2]; z++) {
+                for (int y = 0; y < imageX.getExtents()[1]; y++) {
+                    for (int x = 0; x < imageX.getExtents()[0]; x++) {
+                    	int tempIndex = 4 * (z * imageX.getExtents()[1] * imageX.getExtents()[0] +
+                    			y * imageX.getExtents()[0] + x) + c;
+                    	imageXFloatBuffer[tempIndex] = (imageXBuffer[tempIndex] & 0xff);
+                    }
+                }
+            }
+        }
+		bSplineX.setup3DBSplineC(imageXFloatBuffer, imageX.getExtents(), 3);
+		/*
+
         // b-spline stuff in case b-spline interp was selected
         imageX_R_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
         imageX_G_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
@@ -376,6 +393,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         splineAlgX_B = new BSplineProcessing();
         splineAlgX_B.samplesToCoefficients(imageX_B_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX
                 .getExtents()[2], 3);
+                */
 
         byte[] imageYBuffer;
         final int length2 = imageY.getExtents()[0] * imageY.getExtents()[1] * imageY.getExtents()[2] * 4;
@@ -386,7 +404,23 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             System.out.println("IO exception");
             return;
         }
+        
+		AlgorithmBSpline bSplineY = new AlgorithmBSpline();
+		float[] imageYFloatBuffer = new float[length2];
+        for (int c = 0; c < 4; c++) {
+            for (int z = 0; z < imageY.getExtents()[2]; z++) {
+                for (int y = 0; y < imageY.getExtents()[1]; y++) {
+                    for (int x = 0; x < imageY.getExtents()[0]; x++) {
+                    	int tempIndex = 4 * (z * imageY.getExtents()[1] * imageY.getExtents()[0] +
+                    			y * imageY.getExtents()[0] + x) + c;
+                    	imageYFloatBuffer[tempIndex] = (imageYBuffer[tempIndex] & 0xff);
+                    }
+                }
+            }
+        }
+		bSplineY.setup3DBSplineC(imageYFloatBuffer, imageY.getExtents(), 3);
 
+		/*
         imageY_R_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
         imageY_G_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
         imageY_B_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
@@ -430,6 +464,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         splineAlgY_B = new BSplineProcessing();
         splineAlgY_B.samplesToCoefficients(imageY_B_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY
                 .getExtents()[2], 3);
+                */
 
         // following is if nlt file is inputted also
         ModelSimpleImage[] akSimpleImageSourceMap = null;
@@ -577,6 +612,20 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                     rgb1_short[1] = (short) (rgb1[1] & 0xff);
                                     rgb1_short[2] = (short) (rgb1[2] & 0xff);
                                 } else {
+                                	float[] tempValues = bSplineX.bSpline3DC(0, 0, 0, 
+                                			(float)tX1_floor, (float)tY1_floor, (float)tZ1_floor);
+    								for ( int c = 0; c < 4; c++ )
+    								{
+    									if (tempValues[c] > 255) {
+    										tempValues[c] = 255;
+    									} else if (tempValues[c] < 0) {
+    										tempValues[c] = 0;
+    									}
+    								}
+                                    rgb1_short[0] = (short) (tempValues[1]);
+                                    rgb1_short[1] = (short) (tempValues[2]);
+                                    rgb1_short[2] = (short) (tempValues[3]);
+                                	/*
                                     r1_float = splineAlgX_R.interpolatedValue(imageX_R_coeff, tX1_floor, tY1_floor,
                                             tZ1_floor, extents1[0], extents1[1], extents1[2], 3);
                                     if (r1_float > 255) {
@@ -604,6 +653,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                     rgb1_short[0] = (short) (r1_float);
                                     rgb1_short[1] = (short) (g1_float);
                                     rgb1_short[2] = (short) (b1_float);
+                                    */
                                 }
                             } else {
                                 rgb1_short[0] = 0;
@@ -635,6 +685,20 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                     rgb2_short[1] = (short) (rgb2[1] & 0xff);
                                     rgb2_short[2] = (short) (rgb2[2] & 0xff);
                                 } else {
+                                	float[] tempValues = bSplineY.bSpline3DC(0, 0, 0, 
+                                			(float)tX2_floor, (float)tY2_floor, (float)tZ2_floor);
+    								for ( int c = 0; c < 4; c++ )
+    								{
+    									if (tempValues[c] > 255) {
+    										tempValues[c] = 255;
+    									} else if (tempValues[c] < 0) {
+    										tempValues[c] = 0;
+    									}
+    								}
+                                    rgb2_short[0] = (short) (tempValues[1]);
+                                    rgb2_short[1] = (short) (tempValues[2]);
+                                    rgb2_short[2] = (short) (tempValues[3]);
+                                	/*
                                     r2_float = splineAlgY_R.interpolatedValue(imageY_R_coeff, tX2_floor, tY2_floor,
                                             tZ2_floor, extents2[0], extents2[1], extents2[2], 3);
                                     if (r2_float > 255) {
@@ -662,6 +726,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                     rgb2_short[0] = (short) (r2_float);
                                     rgb2_short[1] = (short) (g2_float);
                                     rgb2_short[2] = (short) (b2_float);
+                                    */
                                 }
                             } else {
                                 rgb2_short[0] = 0;
@@ -775,6 +840,20 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 rgb1_short[1] = (short) (rgb1[1] & 0xff);
                                 rgb1_short[2] = (short) (rgb1[2] & 0xff);
                             } else {
+                            	float[] tempValues = bSplineY.bSpline3DC(0, 0, 0, 
+                            			(float)tX1_floor, (float)tY1_floor, (float)tZ1_floor);
+								for ( int c = 0; c < 4; c++ )
+								{
+									if (tempValues[c] > 255) {
+										tempValues[c] = 255;
+									} else if (tempValues[c] < 0) {
+										tempValues[c] = 0;
+									}
+								}
+                                rgb1_short[0] = (short) (tempValues[1]);
+                                rgb1_short[1] = (short) (tempValues[2]);
+                                rgb1_short[2] = (short) (tempValues[3]);
+                            	/*
                                 r1_float = splineAlgX_R.interpolatedValue(imageX_R_coeff, tX1_floor, tY1_floor,
                                         tZ1_floor, extents1[0], extents1[1], extents1[2], 3);
                                 if (r1_float > 255) {
@@ -802,6 +881,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 rgb1_short[0] = (short) (r1_float);
                                 rgb1_short[1] = (short) (g1_float);
                                 rgb1_short[2] = (short) (b1_float);
+                                */
                             }
                         }
 
@@ -827,6 +907,20 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 rgb2_short[1] = (short) (rgb2[1] & 0xff);
                                 rgb2_short[2] = (short) (rgb2[2] & 0xff);
                             } else {
+                            	float[] tempValues = bSplineY.bSpline3DC(0, 0, 0, 
+                            			(float)tX2_floor, (float)tY2_floor, (float)tZ2_floor);
+								for ( int c = 0; c < 4; c++ )
+								{
+									if (tempValues[c] > 255) {
+										tempValues[c] = 255;
+									} else if (tempValues[c] < 0) {
+										tempValues[c] = 0;
+									}
+								}
+                                rgb2_short[0] = (short) (tempValues[1]);
+                                rgb2_short[1] = (short) (tempValues[2]);
+                                rgb2_short[2] = (short) (tempValues[3]);
+                                /*
                                 r2_float = splineAlgY_R.interpolatedValue(imageY_R_coeff, tX2_floor, tY2_floor,
                                         tZ2_floor, extents2[0], extents2[1], extents2[2], 3);
                                 if (r2_float > 255) {
@@ -854,6 +948,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 rgb2_short[0] = (short) (r2_float);
                                 rgb2_short[1] = (short) (g2_float);
                                 rgb2_short[2] = (short) (b2_float);
+                                */
                             }
                         }
 

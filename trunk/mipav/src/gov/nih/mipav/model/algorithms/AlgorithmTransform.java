@@ -7668,7 +7668,6 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      * @param degree degree of polynomial
-     */
     private void transformBspline2D(final float[] imgBuf, final TransMatrix kTM, final int degree) {
         int i, j;
         int iAdj, jAdj;
@@ -7794,6 +7793,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         Preferences.debug("finished Bspline");
 
     }
+     */
 
     /**
      * Transforms and resamples volume using Bspline interpolation.
@@ -7801,7 +7801,6 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      * @param degree degree of polynomial
-     */
     private void transformBspline2DC(final float[] imgBuf, final TransMatrix kTM, final int degree) {
         int i, j;
         int iAdj, jAdj;
@@ -7935,6 +7934,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         Preferences.debug("finished Bspline");
 
     }
+     */
 
     /**
      * Transforms and resamples volume using Bspline interpolation.
@@ -7942,7 +7942,6 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      * @param degree degree of polynomial
-     */
     private void transformBspline3D(final float[] imgBuf, final TransMatrix kTM, final int degree) {
         int i, j, k;
         int iAdj, jAdj, kAdj;
@@ -8064,6 +8063,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         Preferences.debug("finished Bspline");
 
     }
+     */
 
     /**
      * Transforms and resamples volume using Bspline interpolation.
@@ -8071,7 +8071,6 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      * @param degree degree of polynomial
-     */
     private void transformBspline3DC(final float[] imgBuf, final TransMatrix kTM, final int degree) {
         int i, j, k;
         int iAdj, jAdj, kAdj;
@@ -8209,6 +8208,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         Preferences.debug("finished Bspline");
 
     }
+     */
 
     /**
      * Transforms and resamples volume using Bspline interpolation.
@@ -8216,7 +8216,6 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      * @param degree degree of polynomial
-     */
     private void transformBspline4D(final float[] imgBuf, final TransMatrix kTM, final int degree) {
         int i, j, k;
         int iAdj, jAdj, kAdj;
@@ -8355,6 +8354,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         Preferences.debug("finished Bspline");
 
     }
+     */
 
     /**
      * Transforms and resamples color volume using Bspline interpolation.
@@ -8362,7 +8362,6 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      * @param degree degree of polynomial
-     */
     private void transformBspline4DC(final float[] imgBuf, final TransMatrix kTM, final int degree) {
         int i, j, k;
         int iAdj, jAdj, kAdj;
@@ -8508,6 +8507,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         Preferences.debug("finished Bspline");
 
     }
+     */
 
     /**
      * Transforms and resamples volume using Bspline interpolation.
