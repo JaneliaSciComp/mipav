@@ -73,8 +73,6 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 	 * run algorithm
 	 */
 	public void runAlgorithm() {
-
-		
 		if (selectedVOIset.size() == 1) {
 			//This means only 1 VOI is selected...so perform logical operations on its contours
 			
@@ -200,13 +198,13 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 				finalMaskImage.exportData(0, length, finalBitSet);
 				voi.setAllActive(false);
 				
-				tempMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, clonedImage.getExtents(), "Temp Image");
-				JDialogBase.updateFileInfoOtherModality(clonedImage, tempMaskImage);
-				tempMaskImage.getMatrixHolder().replaceMatrices(clonedImage.getMatrixHolder().getMatrices());
-				tempMaskImage.getFileInfo(0).setOrigin(clonedImage.getFileInfo(0).getOrigin());
+				
 				
 				for (int i=1; i<selectedVOIset.size(); i++) {
-					tempMaskImage.reallocate(ModelStorageBase.BOOLEAN);
+					tempMaskImage = new ModelImage(ModelStorageBase.BOOLEAN, clonedImage.getExtents(), "Temp Image");
+					JDialogBase.updateFileInfoOtherModality(clonedImage, tempMaskImage);
+					tempMaskImage.getMatrixHolder().replaceMatrices(clonedImage.getMatrixHolder().getMatrices());
+					tempMaskImage.getFileInfo(0).setOrigin(clonedImage.getFileInfo(0).getOrigin());
 					
 					voi = selectedVOIset.elementAt(i);
 					voi.setAllActive(true);
@@ -214,9 +212,7 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 	
 					BitSet tempBitSet = new BitSet(length);
 					tempMaskImage.exportData(0, length, tempBitSet);
-					
-					
-					
+
 					int size = tempBitSet.size();
 					
 					for(int k=0;k<size;k++) {
@@ -245,8 +241,9 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 						}
 					}
 					voi.setAllActive(false);
+					tempMaskImage.disposeLocal();
 				}
-				tempMaskImage.disposeLocal();
+				
 				finalMaskImage.clearMask();
 				finalMaskImage.importData(0, finalBitSet, true);
 				
