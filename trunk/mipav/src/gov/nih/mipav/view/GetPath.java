@@ -12,11 +12,12 @@ public class GetPath {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    public static final int FOR_READING = 0;
-
-    /** DOCUMENT ME! */
-    public static final int FOR_WRITING = 1;
+    public enum Purpose {
+        /** File will be used only for reading. */
+        FOR_READING,
+        /** File will be used for writing, and could be used for reading. */
+        FOR_WRITING;
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -33,7 +34,7 @@ public class GetPath {
      *
      * @return  the path to the file for reading or writing. Returns _null_ if the file cannot be found.
      */
-    public static String getPath(String fileName, int purpose) {
+    public static String getPath(String fileName, Purpose purpose) {
         String userDir = "";
         String userHome = "";
         String newClassPath = "";
@@ -43,7 +44,7 @@ public class GetPath {
         boolean found = false;
 
         // if this file needs to be read check for its existence in various places
-        if (purpose == GetPath.FOR_READING) {
+        if (purpose == Purpose.FOR_READING) {
 
             // first try finding the file in the user's home
             try {
@@ -67,23 +68,35 @@ public class GetPath {
             }
 
             if (!found) {
-                int i = -1;
+                
 
                 // next try finding file in the class path
                 String classPath = System.getProperty("java.class.path");
 
-                i = classPath.indexOf(File.pathSeparatorChar);
-
-                try {
-                    newClassPath = classPath.substring(0, i);
-                    testFile = new FileInputStream(newClassPath + File.separatorChar + fileName);
-                    pathName = newClassPath;
-                    found = true;
-                    testFile.close();
-                } // when the classpath is not specified:
-                catch (StringIndexOutOfBoundsException e) { }
-                catch (FileNotFoundException e) { }
-                catch (IOException e) { }
+                String newFile = new String();
+                int i = classPath.indexOf(File.pathSeparatorChar);
+                int lastClassPath = -1;
+                while(!found && lastClassPath+1 < classPath.length() && i != -1) {
+                    i = classPath.indexOf(File.pathSeparatorChar, lastClassPath+1);
+                    if(i != -1) {
+                        newClassPath = classPath.substring(lastClassPath+1, i);
+                        lastClassPath = i;
+                        if(newClassPath.indexOf(fileName) != -1) {
+                            newFile = newClassPath;
+                        } else {
+                            newFile = newClassPath + File.separatorChar + fileName;
+                        }
+                        try {
+                            testFile = new FileInputStream(newFile);
+                            pathName = newClassPath;
+                            found = true;
+                            testFile.close();
+                        } // when the classpath is not specified:
+                    catch (StringIndexOutOfBoundsException e) { }
+                    catch (FileNotFoundException e) { }
+                    catch (IOException e) { }
+                    }
+                }
             }
 
             if (!found) {

@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.GetPath.Purpose;
 
 import java.io.*;
 import java.net.URL;
@@ -533,7 +534,7 @@ public class DicomDictionary {
 
                 return new BufferedReader(new InputStreamReader(fileURL.openStream()));
             } else {
-                filepath = GetPath.getPath(filename, GetPath.FOR_READING);
+                filepath = GetPath.getPath(filename, Purpose.FOR_READING);
             }
 
             if (filepath == null) {
