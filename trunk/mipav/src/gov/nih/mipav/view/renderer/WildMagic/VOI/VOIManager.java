@@ -1332,15 +1332,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             if ( m_kCurrentVOI != null && m_kCurrentVOI.size() > 2 )
             {
                 showSelectedVOI( kEvent.getX(), kEvent.getY() );
+            	
                 // If the user clicks on the last point in the current contour, or on the first point
                 // finish the polyline or livewire contour:
                 if ( (m_iNearStatus == NearPoint) &&
                         ((m_kCurrentVOI.getNearPoint() == 0) || 
-                                (!m_bMouseDrag && m_kCurrentVOI.getNearPoint() == m_kCurrentVOI.size()-2)) )
-                {
+                                (!m_bMouseDrag && m_kCurrentVOI.getNearPoint() == m_kCurrentVOI.getAnchor())) )
+                {                	
                     // If the user clicks on the first point close the contour:
                     m_kCurrentVOI.setClosed((m_kCurrentVOI.getNearPoint() == 0));
-                    m_kCurrentVOI.removeElementAt( m_kCurrentVOI.size() -1 );
+                    //m_kCurrentVOI.removeElementAt( m_kCurrentVOI.size() -1 );
                     m_kCurrentVOI.trimPoints(Preferences.getTrim(),
                             Preferences.getTrimAdjacient());
                     if ( m_kCurrentVOI.getGroup() != null )
