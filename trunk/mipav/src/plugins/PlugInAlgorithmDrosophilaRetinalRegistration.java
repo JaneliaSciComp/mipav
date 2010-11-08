@@ -183,7 +183,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v2.8" + "\n");
+        outputTextArea.append("Running Algorithm v2.9" + "\n");
         final long begTime = System.currentTimeMillis();
 
         // rescale imageX intensity to imageY based on VOI
