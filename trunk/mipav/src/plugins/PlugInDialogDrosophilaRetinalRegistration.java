@@ -138,7 +138,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
      */
     public void init() {
         setForeground(Color.black);
-        setTitle("Drosophila Retinal Registration v2.8");
+        setTitle("Drosophila Retinal Registration v2.9");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
 
