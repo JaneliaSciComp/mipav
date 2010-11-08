@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.GetPath.Purpose;
 import gov.nih.mipav.view.Preferences.OperatingSystem;
 import gov.nih.mipav.view.Preferences.SystemArchitecture;
 
@@ -274,13 +275,13 @@ public class JDialogMemoryAllocation extends JDialogBase {
         }
 
         String fName = new String(app + ".lax");
-        String startPath = GetPath.getPath(fName, GetPath.FOR_READING);
+        String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
 
         if (startPath == null) {
             fName = new String(app + ".app" + File.separator + "Contents" + File.separator + "Info.plist"); // Macintosh!
             Preferences.debug("JDialogMemoryAllocation: Looking for " + "Info.plist as the startfile: " + startPath
                     + "\n");
-            startPath = GetPath.getPath(fName, GetPath.FOR_READING);
+            startPath = GetPath.getPath(fName, Purpose.FOR_READING);
 
             if (startPath == null) {
                 throw new FileNotFoundException("Starting options file cannot " + "be found.  Check path and filename.");
