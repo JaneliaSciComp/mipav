@@ -3,7 +3,6 @@ package gov.nih.mipav.view.renderer.WildMagic.VOI;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
-import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -24,13 +23,11 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.model.structures.UpdateVOIEvent;
 import gov.nih.mipav.model.structures.UpdateVOISelectionListener;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIPolyLineSlice;
-import gov.nih.mipav.model.structures.VOIStatisticList;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.structures.event.VOIEvent;
 import gov.nih.mipav.model.structures.event.VOIListener;
@@ -2009,6 +2006,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             kCurrentGroup.setAllActive(bActive);
             m_kCurrentVOIGroup = kCurrentGroup;
         }
+        m_kParent.getActiveImage().getParentFrame().toFront();
         updateDisplay();
     }
 
