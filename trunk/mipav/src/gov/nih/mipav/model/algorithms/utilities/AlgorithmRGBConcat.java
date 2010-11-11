@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 
 import java.io.*;
 
@@ -48,7 +49,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
     private boolean performBoundsChecking;
     
     /** ARGB, ARGB_USHORT, or ARGB_FLOAT */
-    private int dataType;
+    private DataType dataType;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -72,7 +73,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         srcImageG = srcImgG; // Put results in green destination image.
         srcImageB = srcImgB; // Put results in blue  destination image.
         destImage = null;
-        this.dataType = dataType;
+        this.dataType = DataType.getDataType(dataType);
         reMap = remap;
         this.commonMapping = commonMapping;
         this.remapHighestValue = remapHighestValue;
@@ -99,7 +100,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         srcImageG = srcImgG; // Put results in green destination image.
         srcImageB = srcImgB; // Put results in blue  destination image.
         destImage = destImg;
-        this.dataType = destImage.getType();
+        this.dataType = destImage.getDataType();
         reMap = remap;
         this.commonMapping = commonMapping;
         this.remapHighestValue = remapHighestValue;
@@ -161,7 +162,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
     }
 
     /**
-     * Concatinate the image and store the results in the destination image.
+     * Concatenate the image and store the results in the destination image.
      */
     private void calcStoreInDest() {
 
@@ -183,17 +184,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         float max = Math.min(maxR, Math.max(maxG, maxB));
 
         int nImages = 1;
-        float upperLimit;
-        
-        if (dataType == ModelStorageBase.ARGB) {
-            upperLimit = 255.0f;
-        }
-        else if (dataType == ModelStorageBase.ARGB_USHORT) {
-            upperLimit = 65535.0f;
-        }
-        else {
-            upperLimit = Float.MAX_VALUE;
-        }
+        float upperLimit = dataType.getTypeMax().floatValue();
 
         try {
             length = 4 * destImage.getSliceSize();
@@ -404,7 +395,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
     }
 
     /**
-     * Concatinate the image Must run getImageR after running this routine.
+     * Concatenate the image Must run getImageR after running this routine.
      */
     private void calcStoreInPlace() {
 
@@ -428,17 +419,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         int[] extents;
         String imageName;
         FileInfoBase[] fInfoBase = null;
-        float upperLimit;
-        
-        if (dataType == ModelStorageBase.ARGB) {
-            upperLimit = 255.0f;
-        }
-        else if (dataType == ModelStorageBase.ARGB_USHORT) {
-            upperLimit = 65535.0f;
-        }
-        else {
-            upperLimit = Float.MAX_VALUE;
-        }
+        float upperLimit = dataType.getTypeMax().floatValue();
 
         int nImages = 1;
 
