@@ -2,6 +2,7 @@ package gov.nih.mipav.model.structures.jama;
 
 
 import gov.nih.mipav.view.*;
+import de.jtem.numericalMethods.algebra.linear.Inversion;
 
 public class GeneralizedInverse {
     private double A[][];
@@ -46,7 +47,7 @@ public class GeneralizedInverse {
     private double badc2_dlatb4;
     
     public GeneralizedInverse() {
-        
+            
     }
     
     public GeneralizedInverse(double A1[][], int NR, int NC) {
@@ -253,6 +254,7 @@ public class GeneralizedInverse {
         boolean doginv = false;
         // Test pinv routine that calls dgelss.
         boolean dopinv = true;
+        boolean dojteminv = false;
         double tol = Math.pow(16.0, -5.0);
         
         // The following sequence of tests is used to test error traps in ginvse, ptst, and zielke
@@ -600,6 +602,30 @@ public class GeneralizedInverse {
                     }
                 } 
             } // if (dopinv)
+            
+            if (dojteminv) {
+            	// Inversion.compute() requires square matrices
+                if (n[0] != m[0]) {
+            		continue;
+            	}
+            	
+            	NR = m[0];
+                NC = n[0];
+                A = new double[NR][NC];
+                for (i = 0; i < NR; i++) {
+                    for (j = 0; j < NC; j++) {
+                        A[i][j] = Ag[i][j];
+                    }
+                } 
+            	double AIN[][] = new double[NC][NR];
+                boolean success = Inversion.compute(A, AIN );
+                
+                for (i = 0; i < NC; i++) {
+                    for (j = 0; j < NR; j++) {
+                        X[i][j] = AIN[i][j];
+                    }
+                } 
+            } // if (dojteminv)
             
             // Test penrose conditions
             ptst(m, n, Ag, ma, X, ma, C, ma, ta, tm, fail);
