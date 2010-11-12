@@ -191,6 +191,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private boolean m_bGPURenderer = false;
     /** VOI Properties dialog -- from the popup menu or drop-down menu. */
     private JDialogVOIStats m_kVOIDialog;
+    
+    private JDialogVOILogicalOperations m_kVOILogicalOperationsDialog;
+    
+    
     /** Saved VOI states for undo. */
     private Vector<VOISaveState> m_kUndoList = new Vector<VOISaveState>();
     /** Saved VOI states for re-do. */
@@ -853,8 +857,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             saveDicomMatrixInfo();
         }  else if (command.equals(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS.getActionCommand())) {
         	if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() >= 1 )) {
-        		JDialogVOILogicalOperations logOper = new JDialogVOILogicalOperations(getActiveImage().getVOIs());
-        		logOper.setVisible(true);
+        		m_kVOILogicalOperationsDialog = new JDialogVOILogicalOperations(this,getActiveImage().getVOIs());
+
+                 //addVOIUpdateListener(m_kVOILogicalOperationsDialog);
+                 
+                 
+                 m_kVOILogicalOperationsDialog.setVisible(true);
                 // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
             } else {
                 MipavUtil.displayError("At least 1 VOI must be present to perform Logical Operations");
@@ -4787,11 +4795,17 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     @Override
     public void selectedVOI(VOIEvent selection) {
+    	System.out.println("selected voi");
         //System.err.println( "VOIManagerInterface.selectedVOI" );
         if ( m_kVOIDialog != null )
         {
             m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
+        }
+        if ( m_kVOILogicalOperationsDialog != null )
+        {
+        	m_kVOILogicalOperationsDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            
         }
     }
 
