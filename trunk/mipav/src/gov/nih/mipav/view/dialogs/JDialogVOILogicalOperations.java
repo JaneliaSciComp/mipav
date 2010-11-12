@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -9,21 +11,38 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
+import java.awt.image.PixelGrabber;
 import java.io.File;
+import java.util.Enumeration;
 import java.util.Vector;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
@@ -32,6 +51,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIStatisticList;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.structures.event.VOIEvent;
@@ -40,13 +60,21 @@ import gov.nih.mipav.model.structures.event.VOIVectorEvent;
 import gov.nih.mipav.model.structures.event.VOIVectorListener;
 import gov.nih.mipav.view.JPanelFileSelection;
 import gov.nih.mipav.view.JPanelListController;
+import gov.nih.mipav.view.JPanelTreeController;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.VOIFrameNode;
+import gov.nih.mipav.view.VOIGroupNode;
+import gov.nih.mipav.view.VOIHandlerInterface;
+import gov.nih.mipav.view.VOINode;
+import gov.nih.mipav.view.VOIOrientationNode;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.JPanelAddRemoveVOI;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.JPanelStatisticFileFormatOptions;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.VOIHighlighter;
+
 
 
 
@@ -57,7 +85,7 @@ import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.VOIHighlighter;
  *
  */
 public class JDialogVOILogicalOperations extends JDialogScriptableBase implements AlgorithmInterface, VOIStatisticList,
-VOIVectorListener {
+VOIVectorListener, TreeSelectionListener {
 	
 	
 	 /** image and cloned image */
@@ -70,12 +98,6 @@ VOIVectorListener {
     
     /** Operator to provide listener access... could be done by /this/ */
     private VOIHighlighter highlighter;
-    
-    /** List of available VOIs. */
-    private final JList volumesList = new JList();
-    
-    /** List of selected VOIs. */
-    protected JList selectedList = new JList();
     
     /** Panel to push/pull VOIs from full list to selectable list. */
     private JPanelAddRemoveVOI addremove;
@@ -103,7 +125,56 @@ VOIVectorListener {
 
     /** flag indicating whether output should be VOI image or mask image **/
     private boolean doVOIImage = false;
+    
+    /** DOCUMENT ME! */
+    private DefaultMutableTreeNode sourceRoot, selectedRoot;
+    
+    /** The tree of VOIs, composed of an image with children VOIs */
+    private DefaultTreeModel sourceVoiModel, selectedVOIModel;
+    
+    /** The graphical representation of voiModel */
+    private JTree sourceVoiTree;
+    
+    private JTree selectedVoiTree;
+    
+    /** DOCUMENT ME! */
+    private static Icon ICON_POLYGON = MipavUtil.getIcon("polygon.gif");
+
+    /** DOCUMENT ME! */
+    private static Icon ICON_POLYLINE = MipavUtil.getIcon("polyline.gif");
+
+    /** DOCUMENT ME! */
+    private static Icon ICON_POINT = MipavUtil.getIcon("pointROI.gif");
+
+    /** DOCUMENT ME! */
+    private static Icon ICON_LINE = MipavUtil.getIcon("linear.gif");
+
+    /** DOCUMENT ME! */
+    private static Icon ICON_MEDICAL_FRAME = MipavUtil.getIcon("med_frame.gif");
+    /** DOCUMENT ME! */
+    private static Icon ICON_X_AXIS = MipavUtil.getIcon("xalign.gif");
+    /** DOCUMENT ME! */
+    private static Icon ICON_Y_AXIS = MipavUtil.getIcon("yalign.gif");
+    /** DOCUMENT ME! */
+    private static Icon ICON_Z_AXIS = MipavUtil.getIcon("zalign.gif");
+    
+    /** DOCUMENT ME! */
+    private static Icon ICON_PROTRACTOR = MipavUtil.getIcon("protractor.gif");
 	
+    
+    private Border frameBorder= BorderFactory.createCompoundBorder(BorderFactory.createRaisedBevelBorder(),
+            BorderFactory.createLoweredBevelBorder());
+    
+    private JScrollPane jsp;
+    
+    private boolean treeSelectionChange = false;
+    private boolean updateTree = false;
+    
+    protected VOIHandlerInterface voiHandler;
+    
+    private VOI selectedVOI;
+    
+    int index = 0;
 	
 	
 	
@@ -111,12 +182,12 @@ VOIVectorListener {
 	 * constructor
 	 * @param voiList
 	 */
-	public JDialogVOILogicalOperations(final VOIVector voiList) {
+	public JDialogVOILogicalOperations(VOIHandlerInterface voiHandler,VOIVector voiList) {
         super(ViewUserInterface.getReference().getMainFrame(), false);
 
         image = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
-        
-        
+        this.voiHandler = voiHandler;
+
         
         buildDialog(voiList);
 
@@ -222,7 +293,7 @@ VOIVectorListener {
             }
         }
 
-        volumesList.setListData(volumesVector);
+        //volumesList.setListData(volumesVector);
         voiEvent.getVOI().addVOIListener(highlighter);
     }
     
@@ -244,7 +315,7 @@ VOIVectorListener {
             }
         }
 
-        volumesList.setListData(volumesVector);
+        //volumesList.setListData(volumesVector);
 
         /*
          * we cannot delete VOIs out of the selected VOI list if there are no more VOIs in the image. --
@@ -261,7 +332,7 @@ VOIVectorListener {
 
             // ensuring that the selected VOI is not in
             // the selected list.
-            selectedList.setSelectedValue(voiEvent.getVOI(), true);
+            //selectedList.setSelectedValue(voiEvent.getVOI(), true);
             addremove.performDelete();
         }
     }
@@ -277,7 +348,7 @@ VOIVectorListener {
      */
     private JPanel buildSourceListingPanel(final VOIVector VOIlist) {
         final JPanel srctreep = new JPanel(new BorderLayout());
-        final Vector volumesVector = new Vector();
+        /*final Vector volumesVector = new Vector();
         highlighter = new VOIHighlighter();
 
         for (int i = 0; i < VOIlist.size(); i++) {
@@ -292,9 +363,9 @@ VOIVectorListener {
 
         volumesList.setListData(volumesVector);
         volumesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        volumesList.addListSelectionListener(highlighter);
+        volumesList.addListSelectionListener(highlighter);*/
 
-        final JScrollPane jsp = new JScrollPane(volumesList);
+        jsp = new JScrollPane(buildVOITree());
         srctreep.add(jsp, BorderLayout.CENTER);
 
         // now let's listen to this vector:
@@ -302,6 +373,180 @@ VOIVectorListener {
 
         return srctreep;
     }
+    
+    
+    
+    
+    
+    public void updateTree() {
+        if (treeSelectionChange) {
+            treeSelectionChange = false;
+            return;
+        }
+        updateTree = true;
+        if (this.isVisible()) {
+        	sourceRoot.removeAllChildren();
+
+            ViewVOIVector VOIs = image.getVOIs();
+            Enumeration e = VOIs.elements();
+
+            VOI tempVOI = null;
+
+            VOIGroupNode currentNode = null;
+            Vector curves = null;
+
+            int index = 0;
+
+            Enumeration voiEnum = null;
+            VOIBase voiBase = null;
+
+            Enumeration voiNodeEnum = null;
+            VOINode currentVOINode = null;
+            VOIFrameNode currentVOIFrameNode = null;
+            Enumeration voiFrameEnum = null;
+
+            Vector<TreePath> treePaths = new Vector<TreePath>();
+
+            TreeNode tempNode = null;
+
+            // iterate through all VOIs
+            while (e.hasMoreElements()) {
+                tempVOI = (VOI) e.nextElement();
+
+                // create VOI group node (for VOI)
+                currentNode = new VOIGroupNode(tempVOI,image.getExtents());
+
+                // check to see if the current VOI is the VOI shown in this dialog
+                // or if the VOI isActive (can have multiple selections on tree)
+                if (tempVOI.isActive())
+                {
+
+                    // add a new tree path so the VOI node is selected
+                    treePaths.addElement(new TreePath(new Object[] { sourceRoot, currentNode }));
+
+                    curves = tempVOI.getCurves();
+
+                    // look through curves to find which of the VOI's VOIBases (contours etc)
+                    // are active
+                    voiEnum = curves.elements();
+                    while (voiEnum.hasMoreElements()) {
+                        voiBase = (VOIBase) voiEnum.nextElement();
+
+                        // check to see if the VOIBase is active
+                        if (voiBase.isActive())
+                        {
+
+                            voiFrameEnum = currentNode.children();
+
+                            while (voiFrameEnum.hasMoreElements()) {
+
+                                tempNode = (TreeNode) voiFrameEnum.nextElement();
+
+                                if (tempNode instanceof VOIOrientationNode) {
+
+                                    voiNodeEnum = tempNode.children();
+
+                                    // find the child that matches this selected contour
+                                    while (voiNodeEnum.hasMoreElements()) {
+                                        
+                                        VOIFrameNode currentFrameNode = (VOIFrameNode) voiNodeEnum.nextElement();
+                                        Enumeration voiFrameEnum2 = currentFrameNode.children();
+                                        
+                                        // find the child that matches this selected contour
+                                        while (voiFrameEnum2.hasMoreElements()) {
+                                            currentVOINode = (VOINode) voiFrameEnum2.nextElement();
+
+                                            if (currentVOINode.getVOI().equals(voiBase)) {
+                                                treePaths.addElement(new TreePath(new Object[] {
+                                                		sourceRoot, currentNode, tempNode, currentFrameNode,
+                                                        currentVOINode
+                                                }));
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+                sourceRoot.add(currentNode);
+            }
+            sourceVoiModel.reload();
+
+            if (treePaths.size() > 0) {
+                TreePath[] tPaths = new TreePath[treePaths.size()];
+
+                for (int i = 0; i < tPaths.length; i++) {
+                    tPaths[i] = (TreePath) treePaths.elementAt(i);
+                }
+                sourceVoiTree.setSelectionPaths(tPaths);
+
+                for (int i = 0; i < tPaths.length; i++) {
+                    sourceVoiTree.expandPath( tPaths[i] );
+                }
+            } else {
+                TreePath path = new TreePath(sourceRoot);
+                sourceVoiTree.setSelectionPath(path);
+                sourceVoiTree.expandPath(path);
+            }
+            jsp.validate();
+        }
+
+        updateTree = false;
+    }
+    
+    
+    
+    
+    
+    /**
+     * DOCUMENT ME!
+     */
+    protected JTree buildVOITree() {
+
+        ViewVOIVector VOIs = image.getVOIs();
+
+        sourceRoot = new DefaultMutableTreeNode(image.getImageName());
+        sourceVoiModel = new DefaultTreeModel(sourceRoot);
+
+        Enumeration e = VOIs.elements();
+
+        VOI currentVOI = null;
+
+        int index = 0;
+
+        while (e.hasMoreElements()) {
+            currentVOI = (VOI) e.nextElement();
+            sourceVoiModel.insertNodeInto(new VOIGroupNode(currentVOI,image.getExtents()), sourceRoot, index);
+            //voiModel.insertNodeInto(new VOIGroupNode(currentVOI), root, index);
+            index++;
+        }
+
+        sourceVoiTree = new JTree(sourceVoiModel);
+        sourceVoiTree.setCellRenderer(new VOITreeRenderer());
+
+        sourceVoiTree.setFont(MipavUtil.font12);
+        sourceVoiTree.addTreeSelectionListener(this);
+        
+        
+
+
+       /* voiTreePane = new JScrollPane(voiTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                                      JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        voiTreePane.setPreferredSize(new Dimension(100,300));*/
+        
+        return sourceVoiTree;
+    }
+    
+    
+    
+    
+    
+    
+    
 	
 	/**
      * creates the source panel which consists of the directory line, the browse button, and a check box approving the
@@ -334,20 +579,36 @@ VOIVectorListener {
         final JPanel selp = new JPanel(new BorderLayout());
         selp.add(Box.createHorizontalStrut(240), BorderLayout.NORTH); // width of text area. seems to start out very
         // skinny.
+        
+        selectedRoot = new DefaultMutableTreeNode(image.getImageName());
+        
+        selectedVOIModel = new DefaultTreeModel(selectedRoot);
+
+        selectedVoiTree = new JTree(selectedVOIModel);
+        selectedVoiTree.setCellRenderer(new VOITreeRenderer());
+
+        selectedVoiTree.setFont(MipavUtil.font12);
+        selectedVoiTree.addTreeSelectionListener(this);
+        
+        
+        selp.add(new JScrollPane(selectedVoiTree), BorderLayout.CENTER);
+        
+        
+        
 
         // this list to hold things so that they may be selectable/removable
         // panel to hold list access.
-        selectedList.setListData(new Vector()); // = new JList();
-        selp.add(new JScrollPane(selectedList), BorderLayout.CENTER);
+       /* selectedList.setListData(new Vector()); // = new JList();
+        selp.add(new JScrollPane(selectedList), BorderLayout.CENTER);*/
 
         // build default arrowpanel
         if (addremove == null) {
             addremove = new JPanelAddRemoveVOI();
-            addremove.setLeftList(volumesList);
-            addremove.setRightList(selectedList);
+            addremove.setLeftTree(sourceVoiTree);
+            addremove.setRightTree(selectedVoiTree);
 
-            volumesList.addListSelectionListener(addremove);
-            selectedList.addListSelectionListener(addremove);
+            /*volumesList.addListSelectionListener(addremove);
+            selectedList.addListSelectionListener(addremove);*/
 
             selp.add(addremove, BorderLayout.WEST);
         }
@@ -395,11 +656,55 @@ VOIVectorListener {
 	 * 
 	 */
 	protected void callAlgorithm() {
-		ViewVOIVector processList = new ViewVOIVector(selectedList.getModel().getSize());
-        for(int i=0; i<selectedList.getModel().getSize(); i++) {
-            processList.add((VOI)selectedList.getModel().getElementAt(i));
-        }
+		Object root = selectedVOIModel.getRoot();
         
+        int voiCount = selectedVOIModel.getChildCount(root);
+        
+        ViewVOIVector processList = new ViewVOIVector(voiCount);
+        
+        for(int i=0;i<voiCount;i++) {
+        	VOI voi = new VOI((short)i,"voi" + i);
+        	
+        	VOIGroupNode groupNode = (VOIGroupNode)selectedVOIModel.getChild(root, i);
+        	
+        	int orientationCount = groupNode.getChildCount();
+        	
+        	for(int k=0;k<orientationCount;k++) {
+        		VOIOrientationNode orientationNode = (VOIOrientationNode)selectedVOIModel.getChild(groupNode, k);
+        		
+        		int frameCount = orientationNode.getChildCount();
+        		
+        		for(int m=0;m<frameCount;m++) {
+        			
+        			VOIFrameNode frameNode = (VOIFrameNode)selectedVOIModel.getChild(orientationNode, m);
+        			
+        			int contourCount = frameNode.getChildCount();
+        			
+        			for(int c=0;c<contourCount;c++) {
+        				
+        				VOINode contourNode = (VOINode)selectedVOIModel.getChild(frameNode, c);
+        				VOIBase contour = contourNode.getVOI();
+        				
+        				voi.importCurve(contour);
+        				
+        			}
+        			
+        			
+        		}
+        		
+        		
+        	}
+        	
+        	
+        	
+        	
+        	
+        	 processList.add(voi);
+        	
+        	
+        }
+		
+
         int logicalOperation = 0;
         
         doVOIImage = false;
@@ -475,10 +780,10 @@ VOIVectorListener {
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if(command.equals("OK")) {
-			if(selectedList.getModel().getSize() == 0) {
+			/*if(selectedList.getModel().getSize() == 0) {
 				MipavUtil.displayError("You must select at least 1 VOI");
 				return;
-			}
+			}*/
 			callAlgorithm();
 		}else if(command.equals("Cancel")) {
 			if(clonedImage != null) {
@@ -492,7 +797,6 @@ VOIVectorListener {
 	
 	
 	 public void windowClosing(WindowEvent event) {
-		 System.out.println("window closing");
 		 if(clonedImage != null) {
 			 clonedImage.disposeLocal();
 			 clonedImage = null;
@@ -500,15 +804,291 @@ VOIVectorListener {
 		 cleanUpAndDispose();
 		 
 	 }
+	 
+	  private void printTree( TreeModel model, Object parent )
+	    {
+	        if ( model.isLeaf(parent) && parent instanceof VOINode )
+	        {
+	            VOIBase contour = ((VOINode)parent).getVOI();
+	            if ( contour != null )
+	            {
+	                contour.setActive(false);
+	            }
+	            return;
+	        }
+	        int childCount = model.getChildCount(parent);
+	        for ( int i = 0; i < childCount; i++ )
+	        {
+	            printTree( model, model.getChild(parent,i) );
+	        }
+	    }
+	  
+	  
+	  
+	 
+	  /**
+	     * Updates the ViewJFrameImage when a VOI/contour is selected.
+	     *
+	     * @param  e  TreeSelectionEvent
+	     */
+	    public void valueChanged(TreeSelectionEvent e) {
+	        if ( updateTree )
+	        {
+	            return;
+	        }
+	        TreeModel model = sourceVoiTree.getModel();
+	        if ( !updateTree )
+	        {
+	            printTree( model, model.getRoot() );
+	        }
+	        
+	        TreePath leadPath = e.getNewLeadSelectionPath();
+
+	        if (leadPath != null) {
+	            Object[] leadObjects = leadPath.getPath();
+	            int curveIndex = 0;
+
+	            if (leadObjects[leadObjects.length - 1] instanceof VOINode) {
+	                VOIBase leadBase = ((VOINode) leadObjects[leadObjects.length - 1]).getVOI();
+	                //VOI leadVOI = ((VOIGroupNode)((VOIFrameNode) ((VOINode) leadObjects[leadObjects.length - 1]).getParent()).getParent()).getVOIgroup();
+
+	                if ((image.getNDims() > 2)) {
+	                    voiHandler.setCenter(leadBase.getGeometricCenter(), true );
+	                    //System.err.println( "frameFollowsSelection " + leadBase );
+	                    leadBase.setActive(true);
+	                }
+
+	                //updateContourPane(leadBase);
+	                //updateVOI(leadBase.getGroup(), image);
+
+	            } else if (leadObjects[leadObjects.length - 1] instanceof VOIFrameNode) {
+	                curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
+
+	                if ((image.getNDims() > 2)) {
+	                    //voiHandler.setSlice(curveIndex);
+	                }
+	            }
+
+	        }
+	        treeSelectionChange = true;
+	    }
 	
 	
 	
 	
-	
+	    /**
+	     * Updates the dialog based on the VOI passed in.
+	     *
+	     * @param  _voi  VOI whose properties we want to calculate.
+	     * @param  img   Image where voi is to be updated
+	     */
+	    public void updateVOI(VOI _voi, ModelImage img) {
+	    	selectedVOI = _voi;
+	    	ViewUserInterface.getReference().setUseVOIName(false);
+	    	
+	    	
+	    }
 	
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////    INNER CLASSES    ///////////////////////////////
+	 
+	  private class VOITreeRenderer extends DefaultTreeCellRenderer {
+
+	        /** Use serialVersionUID for interoperability. */
+	        private static final long serialVersionUID = -4107179145193872844L;
+
+	        /**
+	         * DOCUMENT ME!
+	         *
+	         * @param   tree      DOCUMENT ME!
+	         * @param   value     DOCUMENT ME!
+	         * @param   sel       DOCUMENT ME!
+	         * @param   expanded  DOCUMENT ME!
+	         * @param   leaf      DOCUMENT ME!
+	         * @param   row       DOCUMENT ME!
+	         * @param   hasFocus  DOCUMENT ME!
+	         *
+	         * @return  DOCUMENT ME!
+	         */
+	        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
+	                                                      boolean leaf, int row, boolean hasFocus) {
+
+	            super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+
+	            if (value instanceof VOIGroupNode) {
+
+	                setIcon(null);
+
+	                int type = ((VOIGroupNode) value).getVOIgroup().getCurveType();
+
+	                Icon typeIcon = null;
+
+	                switch (type) {
+
+	                    case VOI.POLYLINE:
+	                        typeIcon = ICON_POLYLINE;
+	                        break;
+
+	                    case VOI.CONTOUR:
+	                        typeIcon = ICON_POLYGON;
+	                        break;
+
+	                    case VOI.LINE:
+	                        typeIcon = ICON_LINE;
+	                        break;
+
+	                    case VOI.POINT:
+	                        typeIcon = ICON_POINT;
+	                        break;
+
+	                    case VOI.PROTRACTOR:
+	                        typeIcon = ICON_PROTRACTOR;
+	                        break;
+
+	                    default:
+	                        setIcon(null);
+	                }
+
+	                int rgb = ((VOIGroupNode) value).getVOIgroup().getColor().getRGB();
+	                int black = Color.black.getRGB();
+
+	                if (typeIcon != null) {
+	                    ImageIcon ico = (ImageIcon) typeIcon;
+	                    int imageWidth = ico.getIconWidth();
+	                    int imageHeight = ico.getIconHeight();
+
+	                    int[] pixels = new int[imageWidth * imageHeight];
+	                    PixelGrabber pg = new PixelGrabber(ico.getImage(), 0, 0, imageWidth, imageHeight, pixels, 0,
+	                                                       imageWidth);
+
+	                    try {
+	                        pg.grabPixels();
+	                    } catch (InterruptedException e) {
+	                        Preferences.debug("JIMI: Interrupted waiting for pixels!" + "\n");
+
+	                        return null;
+	                    }
+
+	                    BufferedImage image2 = new BufferedImage(ico.getIconWidth() + 15, ico.getIconHeight(),
+	                                                             BufferedImage.TYPE_INT_ARGB);
+
+	                    for (int y = 0; y < imageHeight; y++) {
+
+	                        for (int x = 0; x < imageWidth; x++) {
+	                            image2.setRGB(x, y, pixels[(y * imageWidth) + x]);
+	                        }
+	                    }
+
+
+	                    // draw black border around color box
+	                    for (int i = ico.getIconWidth() + 3; i < (image2.getWidth() - 3); i++) {
+
+	                        for (int j = 0; j < 2; j++) {
+	                            image2.setRGB(i, j, black);
+	                        }
+
+	                        for (int j = image2.getHeight() - 2; j < image2.getHeight(); j++) {
+	                            image2.setRGB(i, j, black);
+	                        }
+	                    }
+
+	                    for (int j = 0; j < image2.getHeight(); j++) {
+
+	                        for (int i = ico.getIconWidth() + 3; i < (ico.getIconWidth() + 5); i++) {
+	                            image2.setRGB(i, j, black);
+	                        }
+
+	                        for (int i = image2.getWidth() - 5; i < (image2.getWidth() - 3); i++) {
+	                            image2.setRGB(i, j, black);
+	                        }
+
+	                    }
+
+	                    // draw color
+	                    for (int i = ico.getIconWidth() + 5; i < (image2.getWidth() - 5); i++) {
+
+	                        for (int j = 2; j < (image2.getHeight() - 2); j++) {
+	                            image2.setRGB(i, j, rgb);
+	                        }
+	                    }
+
+	                    setIcon(new ImageIcon(image2));
+
+	                } else {
+	                    BufferedImage image = new BufferedImage(9, 26, BufferedImage.TYPE_INT_ARGB);
+
+	                    for (int i = 2; i < 7; i++) {
+
+	                        for (int j = 4; j < 24; j++) {
+	                            image.setRGB(i, j, rgb);
+	                        }
+	                    }
+
+	                    // draw black border
+	                    for (int i = 0; i < 9; i++) {
+
+	                        for (int j = 2; j < 4; j++) {
+	                            image.setRGB(i, j, black);
+	                        }
+
+	                        for (int j = 24; j < 26; j++) {
+	                            image.setRGB(i, j, black);
+	                        }
+	                    }
+
+	                    for (int j = 2; j < 26; j++) {
+
+	                        for (int i = 0; i < 2; i++) {
+	                            image.setRGB(i, j, black);
+	                        }
+
+	                        for (int i = 7; i < 9; i++) {
+	                            image.setRGB(i, j, black);
+	                        }
+	                    }
+
+	                    setIcon(new ImageIcon(image));
+	                }
+
+	                // ImageIcon ico = new ImageIcon(image);
+	                // setIcon(ico);
+
+
+	                setBorder(null);
+	                setFont(MipavUtil.font12);
+	            } else if (value instanceof VOIFrameNode) {
+	                setBorder(frameBorder);
+	                setFont(MipavUtil.font10);
+	                setIcon(null);
+
+	            } else if (value instanceof VOINode) {
+	                setIcon(null);
+	                setBorder(null);
+	                setFont(MipavUtil.font12);
+	            } else if (value instanceof VOIOrientationNode) {
+	            	if(((VOIOrientationNode)value).getName().equals("X Plane")) {
+	            		setIcon(ICON_X_AXIS);
+	            	}else if(((VOIOrientationNode)value).getName().equals("Y Plane")) {
+	            		setIcon(ICON_Y_AXIS);
+	            	}else if(((VOIOrientationNode)value).getName().equals("Z Plane")) {
+	            		setIcon(ICON_Z_AXIS);
+	            	}
+	            	
+	                setFont(MipavUtil.font12);
+	                setBorder(null);
+	            } else {
+
+	                // setForeground(Color.white);
+	                setIcon(ICON_MEDICAL_FRAME);
+	                setFont(MipavUtil.font12);
+	                setBorder(null);
+	                // setIcon(null);
+	            }
+
+	            return this;
+	        }
+	    }
 	
 	
 	
@@ -517,7 +1097,7 @@ VOIVectorListener {
 	/**
      * controllas the lists between left and right side.
      */
-    public class JPanelAddRemoveVOI extends JPanelListController {
+    public class JPanelAddRemoveVOI extends JPanelTreeController {
 
         /** Use serialVersionUID for interoperability. */
         private static final long serialVersionUID = -2076771728355899710L;
@@ -531,6 +1111,477 @@ VOIVectorListener {
             setBackArrowVisble(false);
             setDeleteEnabled(true);
         }
+        
+        protected void copySelected(JTree a, JTree b) {
+
+   
+            int pathCount;
+            
+            
+
+
+            // ignore if there are no selections made.
+            if (a.isSelectionEmpty()) {
+                return;
+            }
+
+            // Next, copy in the selected values at the bottom.
+            TreePath[] selectedValues = a.getSelectionModel().getSelectionPaths();
+            pathCount = ((TreePath)selectedValues[0]).getPathCount();
+            if(pathCount == 1) {
+            	return;
+            }
+            
+            VOIGroupNode aGroupNode;
+            aGroupNode = (VOIGroupNode)(((TreePath)selectedValues[0]).getPathComponent(1));
+            
+            
+        	
+
+            if(pathCount == 2 || pathCount == 3 || pathCount == 4) {
+            	selectedVOI = aGroupNode.getVOIgroup();
+ 
+            }
+            
+            // Lastly, copy the total tree into the tree to view and clean up.
+            //b.addSelectionPaths(selectedValues);
+
+            
+            Object root = selectedVOIModel.getRoot();
+            
+            int childCountFromRoot = selectedVOIModel.getChildCount(root);
+            boolean found = false;
+            VOIGroupNode foundGroupNode = null;
+            for(int k=0;k<childCountFromRoot;k++) {
+            	foundGroupNode = (VOIGroupNode)selectedVOIModel.getChild(root, k);
+            	
+            	if(foundGroupNode.getName().equals(selectedVOI.getName())) {
+            		found = true;
+            		break;
+            	}
+            	
+            	
+            }
+            
+            if(!found) {
+            	VOIGroupNode groupNode = new VOIGroupNode(selectedVOI,image.getExtents());
+	            selectedVOIModel.insertNodeInto(groupNode, selectedRoot, index);
+	            index++;
+
+	            if(pathCount !=  2) {
+	            	//start with a blank slate (remove all the slice nodes) since only 1 contour was selected
+	            	  
+		            
+		            int childCountFromGroupNode = selectedVOIModel.getChildCount(groupNode);
+		            for(int k=0;k<childCountFromGroupNode;k++) {
+		            	VOIOrientationNode orientationNode = (VOIOrientationNode)selectedVOIModel.getChild(groupNode, k);
+		            	int childCountFromOrientationNode = selectedVOIModel.getChildCount(orientationNode);
+		            	if(childCountFromOrientationNode > 0) {
+			            	for(int m=childCountFromOrientationNode-1;m>=0;m--) {
+			            		
+			            		VOIFrameNode frameNode = (VOIFrameNode)selectedVOIModel.getChild(orientationNode, m);
+			            		selectedVOIModel.removeNodeFromParent(frameNode);
+			            	}
+		            	}
+		            	
+		            }
+		            selectedVOIModel.reload();
+		          
+		            
+		            
+		            
+		            
+		            
+		            
+		            childCountFromRoot = selectedVOIModel.getChildCount(root);
+		            
+		            for(int k=0;k<childCountFromRoot;k++) {
+		            	foundGroupNode = (VOIGroupNode)selectedVOIModel.getChild(root, k);
+		            	
+		            	if(foundGroupNode.getName().equals(selectedVOI.getName())) {
+		            		found = true;
+		            		break;
+		            	}
+		            	
+		            	
+		            }
+		            
+		            VOIOrientationNode aOrientationNode,bOrientationNode;
+		        	VOIFrameNode aFrameNode,bFrameNode,bFrameNode2;
+		        	VOINode aNode,bNode,bNode2;
+		        	aFrameNode = null;
+		        	bFrameNode = null;
+		        	aNode = null;
+		        	bNode = null;
+		        	
+		        	
+		        	aOrientationNode = (VOIOrientationNode)(((TreePath)selectedValues[0]).getPathComponent(2));
+		        	
+		        	if(pathCount == 3) {
+
+		        	}else if(pathCount == 4) {
+		        		aFrameNode = (VOIFrameNode)(((TreePath)selectedValues[0]).getPathComponent(3));
+		        		bFrameNode = (VOIFrameNode)aFrameNode.clone();
+
+		        	}else if(pathCount == 5) {
+		        		aFrameNode = (VOIFrameNode)(((TreePath)selectedValues[0]).getPathComponent(3));
+			        	aNode = (VOINode)(((TreePath)selectedValues[0]).getPathComponent(4));
+			        	bFrameNode = (VOIFrameNode)aFrameNode.clone();
+			        	bNode = (VOINode)aNode.clone();
+		        	}
+		        	
+		        	
+		        	
+		
+		        	bFrameNode2 = null;
+		            
+		            
+	            	
+	            	
+	            	int childCount1 = foundGroupNode.getChildCount();
+	            	for(int k=0;k<childCount1;k++) {
+	            		bOrientationNode = (VOIOrientationNode)selectedVOIModel.getChild(foundGroupNode, k);
+	            		if(aOrientationNode.getName().equals(bOrientationNode.getName())) {
+	            			/*int childCount2 = bOrientationNode.getChildCount();
+	            			if(childCount2 > 0) {
+	            				boolean found2 = false;
+	            				for(int m=0;m<childCount2;m++) {
+	            					bFrameNode2 = (VOIFrameNode)selectedVOIModel.getChild(bOrientationNode, m);
+	            					if(bFrameNode2.getName().equals(aFrameNode.getName())) {
+	            						found2 = true;
+	            						break;
+	            					}
+	            				}
+	            				if(found2) {
+	            					int childCount3 = bFrameNode2.getChildCount();
+	            					boolean found3 = false;
+	            					for(int m=0;m<childCount3;m++) {
+	            						bNode2 = (VOINode)selectedVOIModel.getChild(bFrameNode2, m);
+	            						if(bNode2.getName().equals(aNode.getName())) {
+	                						found3 = true;
+	                						break;
+	                					}
+	            					}
+	            					if(!found3) {
+	            						selectedVOIModel.insertNodeInto(bNode, bFrameNode2, childCount3);
+	            					}
+	            					
+	            				}else {
+	            					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, 0);
+	                				selectedVOIModel.insertNodeInto(bNode, bFrameNode, 0);
+	            				}
+	            				
+	            				
+	            			}else {*/
+	            				if(pathCount == 3) {
+	            					int frameCount = aOrientationNode.getChildCount();
+	            					int c1=0;
+	            					for(int m=0;m<frameCount;m++) {
+	            						aFrameNode = (VOIFrameNode)selectedVOIModel.getChild(aOrientationNode, m);
+	            						bFrameNode = (VOIFrameNode)aFrameNode.clone();
+	            						
+	            						selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, c1);
+	            						
+	            						int contourCount = aFrameNode.getChildCount();
+	            						
+	            						int c=0;
+		            					for(int i=0;i<contourCount;i++) {
+		            						
+		            						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+		            						c++;
+		            					}
+	            						c1++;
+	            						
+	            					}
+	            					
+	            				}else if(pathCount == 4) {
+	            					int contourCount = aFrameNode.getChildCount();
+	            					int bFrameCount = bOrientationNode.getChildCount();
+	            					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, bFrameCount);
+	            					int c=0;
+	            					for(int i=0;i<contourCount;i++) {
+	            						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+	            						c++;
+	            					}
+	            					
+	            					
+	            				}else if(pathCount == 5) {
+	            					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, 0);
+	            					selectedVOIModel.insertNodeInto(bNode, bFrameNode, 0);
+	            				}
+	            			//}
+	            			
+	            			break;
+	            		}
+	            		
+	            	}
+		            
+		            
+	            
+	            
+	            }
+
+	            
+	            selectedVOIModel.reload();
+	            
+            }else {
+    
+            	pathCount = ((TreePath)selectedValues[0]).getPathCount();
+
+            	VOIOrientationNode aOrientationNode,bOrientationNode;
+            	VOIFrameNode aFrameNode,bFrameNode,bFrameNode2;
+            	VOINode aNode,bNode,bNode2;
+
+            	aFrameNode = null;
+	        	bFrameNode = null;
+	        	aNode = null;
+	        	bNode = null;
+	        	
+	        	
+	        	aOrientationNode = (VOIOrientationNode)(((TreePath)selectedValues[0]).getPathComponent(2));
+	        	
+	        	if(pathCount == 3) {
+
+	        	}else if(pathCount == 4) {
+	        		aFrameNode = (VOIFrameNode)(((TreePath)selectedValues[0]).getPathComponent(3));
+	        		bFrameNode = (VOIFrameNode)aFrameNode.clone();
+
+	        	}else if(pathCount == 5) {
+	        		aFrameNode = (VOIFrameNode)(((TreePath)selectedValues[0]).getPathComponent(3));
+		        	aNode = (VOINode)(((TreePath)selectedValues[0]).getPathComponent(4));
+		        	bFrameNode = (VOIFrameNode)aFrameNode.clone();
+		        	bNode = (VOINode)aNode.clone();
+	        	}
+	        	
+	        	
+	        	
+	
+	        	bFrameNode2 = null;
+	        	
+	        	
+	        	
+	        	
+            	
+            	int childCount1 = foundGroupNode.getChildCount();
+            	for(int k=0;k<childCount1;k++) {
+            		bOrientationNode = (VOIOrientationNode)selectedVOIModel.getChild(foundGroupNode, k);
+            		if(aOrientationNode.getName().equals(bOrientationNode.getName())) {
+            			int childCount2 = bOrientationNode.getChildCount();
+            			if(childCount2 > 0) {
+            				boolean found2 = false;
+            				for(int m=0;m<childCount2;m++) {
+            					bFrameNode2 = (VOIFrameNode)selectedVOIModel.getChild(bOrientationNode, m);
+            					if(bFrameNode2.getName().equals(aFrameNode.getName())) {
+            						found2 = true;
+            						break;
+            					}
+            				}
+            				if(found2) {
+            					int childCount3 = bFrameNode2.getChildCount();
+            					boolean found3 = false;
+            					for(int m=0;m<childCount3;m++) {
+            						bNode2 = (VOINode)selectedVOIModel.getChild(bFrameNode2, m);
+            						if(bNode2.getName().equals(aNode.getName())) {
+                						found3 = true;
+                						break;
+                					}
+            					}
+            					if(!found3) {
+            						selectedVOIModel.insertNodeInto(bNode, bFrameNode2, childCount3);
+            					}
+            					
+            				}else {
+            					if(pathCount == 4) {
+                					int contourCount = aFrameNode.getChildCount();
+                					int bFrameCount = bOrientationNode.getChildCount();
+                					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, bFrameCount);
+                					int c=0;
+                					for(int i=0;i<contourCount;i++) {
+                						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+                						c++;
+                					}
+                					
+                					
+                				}else if(pathCount == 5) {
+                					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, 0);
+                					selectedVOIModel.insertNodeInto(bNode, bFrameNode, 0);
+                				}
+            				}
+            				
+            				
+            			}else {
+            				if(pathCount == 3) {
+            					int frameCount = aOrientationNode.getChildCount();
+            					int c1=0;
+            					for(int m=0;m<frameCount;m++) {
+            						aFrameNode = (VOIFrameNode)selectedVOIModel.getChild(aOrientationNode, m);
+            						bFrameNode = (VOIFrameNode)aFrameNode.clone();
+            						
+            						selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, c1);
+            						
+            						int contourCount = aFrameNode.getChildCount();
+            						
+            						int c=0;
+	            					for(int i=0;i<contourCount;i++) {
+	            						
+	            						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+	            						c++;
+	            					}
+            						c1++;
+            						
+            					}
+            					
+            				}else if(pathCount == 4) {
+            					int contourCount = aFrameNode.getChildCount();
+            					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, contourCount);
+            					int c=0;
+            					for(int i=0;i<contourCount;i++) {
+            						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+            						c++;
+            					}
+            					
+            					
+            				}else if(pathCount == 5) {
+            					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, 0);
+            					selectedVOIModel.insertNodeInto(bNode, bFrameNode, 0);
+            				}
+            			}
+            			
+            			break;
+            		}
+            		
+            	}
+            	
+            	
+            	 selectedVOIModel.reload();
+            	
+            	
+            }
+            
+           
+            a.clearSelection();
+        }
+        
+        
+        protected void deleteFrom(JTree tree) {
+
+            // ignore if there are no selections made.
+            if (tree == null) {
+                return;
+            }
+
+           
+           
+           TreePath[] selectedValues = tree.getSelectionModel().getSelectionPaths();
+
+           int pathCount = ((TreePath)selectedValues[0]).getPathCount();
+           Object root = selectedVOIModel.getRoot();
+           
+           if(pathCount == 2) {
+        	   VOIGroupNode bGroupNode = (VOIGroupNode)(((TreePath)selectedValues[0]).getPathComponent(1));
+        	   selectedVOIModel.removeNodeFromParent(bGroupNode);
+        	   index--;
+        	   selectedVOIModel.reload();
+        	   
+        	   
+           }else if(pathCount == 4) {
+        	   VOIGroupNode bGroupNode = (VOIGroupNode)(((TreePath)selectedValues[0]).getPathComponent(1));
+        	   VOIFrameNode bFrameNode = (VOIFrameNode)(((TreePath)selectedValues[0]).getPathComponent(3));
+        	   selectedVOIModel.removeNodeFromParent(bFrameNode);
+        	   selectedVOIModel.reload();
+        	   
+        	   //remove entire VOI if there are no more contours
+        	   boolean deleteEntireVOI = true;
+        	   int childCountFromGroupNode = selectedVOIModel.getChildCount(bGroupNode);
+	            for(int k=0;k<childCountFromGroupNode;k++) {
+	            	VOIOrientationNode orientationNode = (VOIOrientationNode)selectedVOIModel.getChild(bGroupNode, k);
+	            	int childCountFromOrientationNode = selectedVOIModel.getChildCount(orientationNode);
+	            	if(childCountFromOrientationNode > 0) {
+	            		deleteEntireVOI = false;
+	            		break;
+	            	}
+	            }
+	            if(deleteEntireVOI) {
+	            	 selectedVOIModel.removeNodeFromParent(bGroupNode);
+	          	   index--;
+	          	   selectedVOIModel.reload();
+	            }
+        	   
+        	   
+        	   
+           }else if(pathCount == 5) {
+        	   VOIGroupNode bGroupNode = (VOIGroupNode)(((TreePath)selectedValues[0]).getPathComponent(1));
+        	   VOINode bNode = (VOINode)(((TreePath)selectedValues[0]).getPathComponent(4));
+        	   selectedVOIModel.removeNodeFromParent(bNode);
+        	   selectedVOIModel.reload();
+        	   
+        	   
+        	   VOIFrameNode bFrameNode = (VOIFrameNode)(((TreePath)selectedValues[0]).getPathComponent(3));
+        	   if(bFrameNode.getChildCount() == 0) {
+        		   selectedVOIModel.removeNodeFromParent(bFrameNode);
+            	   selectedVOIModel.reload();
+        	   }
+        	   
+        	   
+        	   
+        	 //remove entire VOI if there are no more contours
+        	   boolean deleteEntireVOI = true;
+        	   int childCountFromGroupNode = selectedVOIModel.getChildCount(bGroupNode);
+	            for(int k=0;k<childCountFromGroupNode;k++) {
+	            	VOIOrientationNode orientationNode = (VOIOrientationNode)selectedVOIModel.getChild(bGroupNode, k);
+	            	int childCountFromOrientationNode = selectedVOIModel.getChildCount(orientationNode);
+	            	if(childCountFromOrientationNode > 0) {
+	            		deleteEntireVOI = false;
+	            		break;
+	            	}
+	            }
+	            if(deleteEntireVOI) {
+	            	 selectedVOIModel.removeNodeFromParent(bGroupNode);
+	          	   index--;
+	          	   selectedVOIModel.reload();
+	            }
+        	   
+           }
+           
+        }
+
+        
+        
+        
+        private void copyAllToRight() {
+        	//first delete all from right
+        	
+        	DefaultMutableTreeNode root = (DefaultMutableTreeNode)selectedVOIModel.getRoot();
+             
+             int childCountFromRoot = selectedVOIModel.getChildCount(root);
+
+             if(childCountFromRoot > 0) {
+	             for(int k=childCountFromRoot-1;k>=0;k--) {
+	             	VOIGroupNode groupNode = (VOIGroupNode)selectedVOIModel.getChild(root, k);
+	             	selectedVOIModel.removeNodeFromParent(groupNode);
+	             	
+	             }
+             }
+        	
+
+        	
+            Object sourceRoot =  sourceVoiModel.getRoot();
+        	
+        	int childCountFromRoot2 = sourceVoiModel.getChildCount(sourceRoot);
+
+        	for(int m=0;m<childCountFromRoot2;m++) {
+        		VOIGroupNode groupNode = (VOIGroupNode)sourceVoiModel.getChild(sourceRoot, m);
+        		VOIGroupNode groupNode2 = new VOIGroupNode(groupNode.getVOIgroup(),image.getExtents());
+        		
+        		
+        		selectedVOIModel.insertNodeInto(groupNode2, root, m);
+        		
+        	}
+        	
+        	selectedVOIModel.reload();
+        
+        }
+        
 
         /**
          * Checks if all super's action commands are used, and ensures that the delete button removes items from listB,
@@ -541,23 +1592,29 @@ VOIVectorListener {
         public void actionPerformed(final ActionEvent ae) {
 
             // the buttons won't work getting lists if either are null.
-            if ( (getRightList() == null) || (getLeftList() == null)) {
+            if ( (getRightTree() == null) || (getLeftTree() == null)) {
                 return;
             }
 
-            // check on other actions.
-            super.actionPerformed(ae);
-
             final String command = ae.getActionCommand();
+            // check on other actions.
+            if(!command.equals(ALLTREEB)) {
+            	super.actionPerformed(ae);
+            }
+
+            
 
             if (command.equalsIgnoreCase("delete")) {
-                deleteFrom(listB);
+                deleteFrom(selectedVoiTree);
+            }else if (command.equals(ALLTREEB)) {
+
+            	copyAllToRight();
             }
 
             // prevent duplicate selections in listB:
-            if (command.equalsIgnoreCase("listB")) {
+           /* if (command.equalsIgnoreCase(TREEB)) {
                 removeRepeatedElements(listB);
-            }
+            }*/
         }
     }
     
@@ -663,7 +1720,7 @@ VOIVectorListener {
          */
         public void selectedVOI(final VOIEvent selection) {
             //System.err.println( "VOIHighlighter.selectedVOI " + selection.getSource() + " " + selection.getState());
-            volumesList.setSelectedValue(selection.getSource(), selection.getState());
+            //volumesList.setSelectedValue(selection.getSource(), selection.getState());
         }
 
         /**
@@ -694,5 +1751,10 @@ VOIVectorListener {
             }
         }
     }
+
+
+
+	
+	
 
 }
