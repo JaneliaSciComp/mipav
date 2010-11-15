@@ -784,6 +784,12 @@ VOIVectorListener, TreeSelectionListener {
 				MipavUtil.displayError("You must select at least 1 VOI");
 				return;
 			}*/
+			 TreePath[] selectedValues = selectedVoiTree.getSelectionModel().getSelectionPaths();
+	           
+	           if(selectedVoiTree.getRowCount() == 1) {
+	        	   MipavUtil.displayError("You must select at least 1 VOI");
+	        	   return;
+	           }
 			callAlgorithm();
 		}else if(command.equals("Cancel")) {
 			if(clonedImage != null) {
@@ -1473,6 +1479,12 @@ VOIVectorListener, TreeSelectionListener {
            
            
            TreePath[] selectedValues = tree.getSelectionModel().getSelectionPaths();
+           
+           if(selectedValues == null || selectedValues[0] == null) {
+        	   return;
+           }
+           
+           
 
            int pathCount = ((TreePath)selectedValues[0]).getPathCount();
            Object root = selectedVOIModel.getRoot();

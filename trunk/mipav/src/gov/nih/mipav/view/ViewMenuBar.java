@@ -804,7 +804,8 @@ public class ViewMenuBar {
                                                 false),}),
                                 menuBuilder.buildCheckBoxMenuItem("Allow VOI holes (XOR)", "XOR", Preferences
                                         .is(Preferences.PREF_USE_VOI_XOR)),
-                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS, false),
+                                //menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS, false),
+                                menuBuilder.buildMenuItem("VOI Logical Operations", "VOILogicalOperations", 0, null, true),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Propagate", true, new JMenuItem[] {
                                         menuBuilder
@@ -855,8 +856,12 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY_THRESHOLD , false),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD, false)}),
                                 ViewMenuBar.separator,
-                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, false),
-                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_STATISTICS, false),});
+                                //menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, false),
+                                //menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_STATISTICS, false),
+                                menuBuilder.buildMenuItem("View VOI Properties", "VOIProperties", 'P', null, true),
+                                menuBuilder.buildMenuItem("Statistics generator", "VOIStistics", 'G', null, true),
+                                
+                        		});
     }
 
 
