@@ -4795,7 +4795,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     @Override
     public void selectedVOI(VOIEvent selection) {
-    	System.out.println("selected voi");
+    	//System.out.println("selected voi");
         //System.err.println( "VOIManagerInterface.selectedVOI" );
         if ( m_kVOIDialog != null )
         {
