@@ -11,6 +11,10 @@ import gov.nih.mipav.view.*;
 /**
  * <p>This Weeks method of inverting the Laplace Transform is a port of MATLAB code. It is obtained from a web page of
  * Andre Weideman called <a href="http://dip.sun.ac.za/~weideman/research/weeks.html">ILT M-Files</a>.</p>
+ * Note that in Software for an Implementation of Weeks's Method for the Inverse Laplace Transform
+ * Problem by B. S. Garbow, G. Giunta, J. N. Lyness, and A. Murli states that for f(t) an entire function,
+ * the results are good.  Weeks method does not work where f(t) has a discontinuity, a sqrt(t) singularity at
+ * the origin, a log(t) singularity at the origin, or an isolated essential singularity at the origin.
  *
  * <p>References:</p>
  *
