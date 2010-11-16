@@ -85,7 +85,7 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
 
     /**
      * Independent variable for which the inverse Laplace transform has to be computed. In running the inverse Laplace
-     * transform the array can have 1 or multiple points. In caclulating the optimal bOpt and sigOpt the time array can
+     * transform the array can have 1 or multiple points. In calculating the optimal bOpt and sigOpt the time array can
      * only have 1 point.
      */
     private double[] time;
