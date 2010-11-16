@@ -1668,8 +1668,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
             float hue = (float) ((((voiIndex + Preferences.getVOIColorIncrement()) * 35) % 360) / 360.0);
             Color color = Color.getHSBColor(hue, (float) 1.0, (float) 1.0);
 
-            // System.err.println("Color is: R=" + color.getRed() + ", G=" + color.getGreen() + ", B=" +
-            // color.getBlue());
+            System.err.println("Color is: R=" + color.getRed() + ", G=" + color.getGreen() + ", B=" +
+             color.getBlue());
             setBackground(color);
             setForeground(color);
         }

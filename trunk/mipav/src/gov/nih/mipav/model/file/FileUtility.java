@@ -728,6 +728,14 @@ public class FileUtility {
         int fileType;
         int i;
 
+        int indexExt = fileName.lastIndexOf(".");
+        if (indexExt >= 0 && indexExt < fileName.length()-1) {
+            String ext = fileName.substring(indexExt + 1);
+            if (ext.equalsIgnoreCase("zip") || ext.equalsIgnoreCase("gz") || ext.equalsIgnoreCase("bz2")) {
+                fileName = fileName.substring(0, indexExt);
+            } 
+        }
+        
         final String beginString = FileUtility.stripExtension(fileName);
 
         if ( (beginString.equalsIgnoreCase("d3proc")) || (beginString.equalsIgnoreCase("reco"))
