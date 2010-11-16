@@ -2696,9 +2696,7 @@ public class FileIO {
             }
         }
 
-        System.out.println("Here");
         if (options.isSaveAs()) { // if we're doing a save-as op, then try to get the filetype from the name
-            
         	fileType = FileUtility.getFileType(options.getFileName(), options.getFileDirectory(), true, quiet);
 
             // System.err.println("FileType: " + fileType);
