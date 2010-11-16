@@ -10,8 +10,6 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
-import de.jtem.numericalMethods.algebra.linear.Inversion;
-
 /**
  *      This program generates type 1 and type 2 objects in different spatial patterns and tests to see if
  *      randomness if rejected for segregation or association.  The objects may be points or circles of
@@ -561,7 +559,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         byte red[];
         byte green[];
         boolean success;
-        //GeneralizedInverse ge;
+        GeneralizedInverse ge;
         double sigmaInv[][];
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -1888,14 +1886,13 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         ND[2][0] = N21 - EN21;
         ND[3][0] = N22 - EN22;
         NDM = new Matrix(ND);
-        sigmaInv = new double[sigma.length][sigma.length];
-        success = Inversion.compute( sigma, sigmaInv );
-        //success = true;        
-        //ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
-        //sigmaInv = null;
+        success = true;
+        
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
+        sigmaInv = null;
         //sigmaInv = ge.ginv();
-        //sigmaInv = ge.pinv();
-        //ge = null;
+        sigmaInv = ge.pinv();
+        ge = null;
         sigmaD = new Matrix(sigmaInv);
         CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
         //sigmaD = new Matrix(sigma);
@@ -2134,14 +2131,12 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         T[2][0] = T21;
         T[3][0] = T22;
         TM = new Matrix(T);
-        sigmaInv = new double[sigma.length][sigma.length];
-        success = Inversion.compute( sigma, sigmaInv );
-        //success = true;
-        //ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
-        //sigmaInv = null;
+        success = true;
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
+        sigmaInv = null;
         //sigmaInv = ge.ginv();
-        //sigmaInv = ge.pinv();
-        //ge = null;
+        sigmaInv = ge.pinv();
+        ge = null;
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
         Preferences.debug("CN for generalized inverse = " + CN[0][0] + "\n");
@@ -2536,14 +2531,12 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             }
         }
         NDM = new Matrix(ND);
-        sigmaInv = new double[sigma.length][sigma.length];
-        success = Inversion.compute( sigma, sigmaInv );
-        //success = true;
-        //ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
-        //sigmaInv = null;
+        success = true;
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
+        sigmaInv = null;
         //sigmaInv = ge.ginv();
-        //sigmaInv = ge.pinv();
-        //ge = null;
+        sigmaInv = ge.pinv();
+        ge = null;
         sigmaD = new Matrix(sigmaInv);
         CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
         Preferences.debug("CD for generalized inverse = " + CD2 + "\n");
@@ -2724,14 +2717,12 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         }
         
         TM = new Matrix(T);
-        sigmaInv = new double[sigma.length][sigma.length];
-        success = Inversion.compute( sigma, sigmaInv );
-        //success = true;
-        //ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
-        //sigmaInv = null;
+        success = true;
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
+        sigmaInv = null;
         //sigmaInv = ge.ginv();
-        //sigmaInv = ge.pinv();
-        //ge = null;
+        sigmaInv = ge.pinv();
+        ge = null;
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
         Preferences.debug("CN for generalized inverse = " + CN[0][0] + "\n");
