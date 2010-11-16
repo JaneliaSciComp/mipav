@@ -471,7 +471,6 @@ public class ViewMenuBar {
                 ViewMenuBar.separator, loadMenu, extractImageBItem, closeImageBItem, ViewMenuBar.separator,
                 saveImageItem, saveImageAsItem, captureMenu, ViewMenuBar.separator, dicomMenu, ViewMenuBar.separator,
                 menuBuilder.buildQuickList(), ViewMenuBar.separator,
-                menuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, null, true),
                 ViewMenuBar.separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)});
     }
 

@@ -731,8 +731,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         } else if (command.equals("Shortcuts")) {
             showShortcutEditor(false);
-        } else if (command.equals("dccieconvert")) {
-            new JDialogDCCIEConversion();
         } else if (command.equals("loadLeica")) {
             // open a file chooser to select .txt header
 

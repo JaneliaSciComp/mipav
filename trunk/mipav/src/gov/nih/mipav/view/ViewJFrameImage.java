@@ -701,8 +701,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             showEditImageInfo();
         } else if (command.equals("Exit")) {
             userInterface.windowClosing(null);
-        } else if (command.equals("dccieconvert")) {
-            new JDialogDCCIEConversion();
         } else if (command.equals("loadLeica")) {
             // open a file chooser to select .txt header
 
