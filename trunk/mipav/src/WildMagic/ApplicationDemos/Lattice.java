@@ -24,6 +24,7 @@ import java.awt.Frame;
 import java.awt.event.*;
 
 import javax.media.opengl.*;
+import javax.media.opengl.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.*;
 import WildMagic.LibFoundation.Mathematics.*;
@@ -357,4 +358,7 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
         }
         return System.getProperties().getProperty("user.dir");
     }
+
+	public void dispose(GLAutoDrawable arg0) {}
+
 }

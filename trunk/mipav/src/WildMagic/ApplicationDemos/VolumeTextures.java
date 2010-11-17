@@ -19,7 +19,9 @@
 package WildMagic.ApplicationDemos;
 
 import javax.media.opengl.*;
+
 import com.sun.opengl.util.*;
+import javax.media.opengl.GLCanvas;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -195,10 +197,10 @@ public class VolumeTextures extends JavaApplication3D
         CreateGridMesh();
     }
 
+    final int iBound = 63;
     void CreateVolumeTexture ()
     {
-        final int iBound = 64;
-        byte[] aucData = new byte[3*iBound*iBound*iBound];
+        byte[] aucData = new byte[4*iBound*iBound*iBound];
 
         // Create three Gaussian distributions to be used for the RGB color
         // channels.  The alpha channel is constant and is stored as a pixel
@@ -249,13 +251,14 @@ public class VolumeTextures extends JavaApplication3D
                     aucData[i++] = (byte)(255.0f*fRGauss);
                     aucData[i++] = (byte)(255.0f*fGGauss);
                     aucData[i++] = (byte)(255.0f*fBGauss);
+                    aucData[i++] = (byte)(255.0f);
                 }
             }
         }
         kDiff = null;
         
         m_spkVolume = new GraphicsImage(
-                GraphicsImage.FormatMode.IT_RGB888,64,64,64,aucData,
+                GraphicsImage.FormatMode.IT_CUBE_RGBA8888,iBound,iBound,iBound,aucData,
                                 "VolumeImage");
 
         VertexShader pkVShader = new VertexShader("VolumeTexturesV");
@@ -278,7 +281,7 @@ public class VolumeTextures extends JavaApplication3D
 
     void CreateGridMesh ()
     {
-        final int iSlices = 64;
+        final int iSlices = iBound;
         final int iDelta = 32;
         for (int i = 0; i < iSlices; i++)
         {
@@ -390,4 +393,9 @@ public class VolumeTextures extends JavaApplication3D
         }
         return System.getProperties().getProperty("user.dir");
     }
+
+
+	public void dispose(GLAutoDrawable arg0) {}
+
+
 }

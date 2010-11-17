@@ -3597,7 +3597,7 @@ public class ModelImage extends ModelStorageBase {
      * @param gmImage ModelImage gradient magnitude image to save
      */
     public static void saveImage(final ModelImage kImage) {
-        final String fName = kImage.getImageName();
+        final String fName = kImage.getImageFileName();
         final String dName = ViewUserInterface.getReference().getDefaultDirectory();
         final FileIO fileIO = new FileIO();
 
@@ -3607,8 +3607,10 @@ public class ModelImage extends ModelStorageBase {
 
         options.setFileDirectory(dName);
         options.setFileName(fName);
+        options.setSaveAs(true);
         options.setBeginSlice(0);
-        options.setEndSlice(kImage.getExtents()[2] - 1);
+        int end = kImage.getExtents().length > 2 ? kImage.getExtents()[2] - 1 : 0;
+        options.setEndSlice(end);
         fileIO.writeImage(kImage, options);
     }
 
@@ -5368,6 +5370,9 @@ public class ModelImage extends ModelStorageBase {
             throws IOException {
         int i, j;
 
+        double imMax = getMax();
+        double imMin = getMin();
+        double imDiff = imMax - imMin;
         if ( (start >= 0) && ( (start + length) <= getSize()) && (length <= values.length)) {
 
             try {
@@ -5375,13 +5380,13 @@ public class ModelImage extends ModelStorageBase {
 
                 for (i = start, j = 0; j < length; i++, j++) {
                     if ( (mask != null) && useMask) {
-                        if (mask.get(j)) {
-                            values[j] = getByte(i);
+                        if (mask.get(j)) {                        	                        	
+                            values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * 255);
                         } else {
-                            values[j] = 0;
+                            values[j] = (byte)imMin;
                         }
                     } else {
-                        values[j] = getByte(i);
+                        values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * 255);
                     }
 
                 }

@@ -248,4 +248,8 @@ implements GLEventListener, KeyListener
         m_pkRenderer.LoadResources(m_spkSphere);
         updateLighting( m_akLights );
     }
+
+
+	public void dispose(GLAutoDrawable arg0) {}
+
 }

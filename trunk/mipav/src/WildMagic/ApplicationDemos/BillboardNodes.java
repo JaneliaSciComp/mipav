@@ -19,6 +19,8 @@
 package WildMagic.ApplicationDemos;
 
 import javax.media.opengl.*;
+import javax.media.opengl.GLCanvas;
+
 import com.sun.opengl.util.*;
 
 import java.awt.*;
@@ -40,7 +42,7 @@ public class BillboardNodes extends JavaApplication3D
 {
     public BillboardNodes()
     {
-        super("BillboardNodes",0,0,640,480, ColorRGBA.WHITE);
+        super("BillboardNodes",0,0,256,256, ColorRGBA.WHITE);
         m_eDepth = FrameBuffer.DepthType.DT_DEPTH_NONE;
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                           m_eBuffering, m_eMultisampling,
@@ -290,6 +292,7 @@ public class BillboardNodes extends JavaApplication3D
         kMaterial.Diffuse.Set( 0.2f, 0.2f, 0.2f );
         m_kGround.AttachGlobalState(kMaterial);
         m_kGround.AttachEffect(pkEffect);
+        pkEffect.LoadResources(m_pkRenderer, m_kGround);
         m_spkScene.AttachChild(m_kGround);
 
         // Create a billboard node that causes a rectangle to always be facing
@@ -307,6 +310,7 @@ public class BillboardNodes extends JavaApplication3D
         pkEffect = new OrderIndpTransparencyEffect("Leaf", 0.2f);
         pkMesh.AttachGlobalState(kMaterial);
         pkMesh.AttachEffect(pkEffect);
+        pkEffect.LoadResources(m_pkRenderer, pkMesh);
         m_spkBillboard0.AttachChild(pkMesh);
 
         // The billboard rotation is about its model-space up-vector (0,1,0).  In
@@ -331,6 +335,7 @@ public class BillboardNodes extends JavaApplication3D
         pkEffect = new OrderIndpTransparencyEffect("RedSky", 0.9f);
         pkMesh.AttachGlobalState(kMaterial);
         pkMesh.AttachEffect(pkEffect);
+        pkEffect.LoadResources(m_pkRenderer, pkMesh);
         m_spkBillboard1.AttachChild(pkMesh);
 
         // The billboard rotation is about its model-space up-vector (0,1,0).  In
@@ -350,7 +355,7 @@ public class BillboardNodes extends JavaApplication3D
     private Culler m_kCuller = new Culler(0,0,null);
 
     private BillboardNode m_spkBillboard0, m_spkBillboard1;
-    private FrameBuffer m_kFBO;
+    private OpenGLFrameBuffer m_kFBO;
     //private FrameBuffer m_kSolidFBO;
     
     protected ShaderEffect m_spkPlaneEffect;
@@ -415,6 +420,9 @@ public class BillboardNodes extends JavaApplication3D
 
     private void CreateRenderTarget( GLAutoDrawable arg0, int iWidth, int iHeight )
     {        
+        m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
+                m_eBuffering,m_eMultisampling,m_pkRenderer, arg0);
+        
         Texture[] akSceneTarget = new Texture[3];
         GraphicsImage pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(byte[])null,
                 "ColorTex0");
@@ -426,6 +434,7 @@ public class BillboardNodes extends JavaApplication3D
         akSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP);
         //akSceneTarget[0].SetSamplerInformation( new SamplerInformation( "ColorTex0", 0, 0 ) );
         m_pkRenderer.LoadTexture( akSceneTarget[0] );
+        m_pkRenderer.DisableTexture( akSceneTarget[0] );
         
         
         pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(float[])null,
@@ -438,6 +447,7 @@ public class BillboardNodes extends JavaApplication3D
         akSceneTarget[1].SetWrapType(1,Texture.WrapType.CLAMP);
         //akSceneTarget[1].SetSamplerInformation( new SamplerInformation( "ColorTex1", 0, 0 ) );
         m_pkRenderer.LoadTexture( akSceneTarget[1] );
+        m_pkRenderer.DisableTexture( akSceneTarget[1] );
         
         pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(float[])null,
                 "ColorTex2");
@@ -449,6 +459,7 @@ public class BillboardNodes extends JavaApplication3D
         akSceneTarget[2].SetWrapType(1,Texture.WrapType.CLAMP);
         //akSceneTarget[2].SetSamplerInformation( new SamplerInformation( "ColorTex2", 0, 0 ) );
         m_pkRenderer.LoadTexture( akSceneTarget[2] );
+        m_pkRenderer.DisableTexture( akSceneTarget[2] );
       
         Attributes kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
@@ -461,8 +472,13 @@ public class BillboardNodes extends JavaApplication3D
         m_pkPlane.UpdateGS();
         m_pkPlane.UpdateRS();
         
-        m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget, arg0);
+        //m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
+        //		m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget, arg0);
+        m_kFBO.InitializeBuffer(akSceneTarget);
     }
+
+
+	public void dispose(GLAutoDrawable arg0) {}
+
     
 }

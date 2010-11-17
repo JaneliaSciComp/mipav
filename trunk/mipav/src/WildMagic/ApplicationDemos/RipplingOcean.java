@@ -19,7 +19,9 @@
 package WildMagic.ApplicationDemos;
 
 import javax.media.opengl.*;
+
 import com.sun.opengl.util.*;
+import javax.media.opengl.GLCanvas;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -493,4 +495,8 @@ public class RipplingOcean extends JavaApplication3D
         }
         return System.getProperties().getProperty("user.dir");
     }
+
+
+	public void dispose(GLAutoDrawable arg0) {}
+
 }
