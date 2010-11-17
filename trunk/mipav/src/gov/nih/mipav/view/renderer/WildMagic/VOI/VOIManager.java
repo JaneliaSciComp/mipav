@@ -1051,7 +1051,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         // On double-click, finish the current livewire or polyline contour:
         if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE || m_iDrawType == POLYLINE) && (kEvent.getClickCount() > 1) )
         {
-            showSelectedVOI( kEvent.getX(), kEvent.getY() );
+            showSelectedVOI( kEvent );
             if ( m_iNearStatus == NearPoint )
             {
                 if ( m_kCurrentVOI.getNearPoint() == 0 )
@@ -1102,7 +1102,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public void mouseDragged(MouseEvent kEvent) {
         if ( !m_bMouseDrag && m_kParent.getPointerButton().isSelected() && !m_bDrawVOI && (m_iNearStatus == NearPoint) )
         { 
-            showSelectedVOI( kEvent.getX(), kEvent.getY() );
+            showSelectedVOI( kEvent );
         }       
         
         m_bMouseDrag = true;
@@ -1178,7 +1178,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         // Show any selected contours:
         if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
         {
-            showSelectedVOI( kEvent.getX(), kEvent.getY() );
+            showSelectedVOI( kEvent );
         }
         // The levelset voi is created during a mouse moved event:
         else if ( m_bDrawVOI && (m_iDrawType == LEVELSET) )
@@ -1331,7 +1331,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             // If the contour has more than 2 points already, then we can possibly close the polyline:
             if ( m_kCurrentVOI != null && m_kCurrentVOI.size() > 2 )
             {
-                showSelectedVOI( kEvent.getX(), kEvent.getY() );
+                showSelectedVOI( kEvent );
             	
                 // If the user clicks on the last point in the current contour, or on the first point
                 // finish the polyline or livewire contour:
@@ -1393,8 +1393,18 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bDrawVOI = false;
             resetStart();
         }
+        if ( m_kCurrentVOI != null && !m_bDrawVOI && m_iNearStatus == NearPoint )
+        {
+        	m_kCurrentVOI.setSelectedPoint( m_kCurrentVOI.getNearPoint() );
+        	if ( kEvent.isShiftDown() )
+        	{
+        		m_kParent.doVOI("deleteVOIActivePt");
+        	}
+            m_kParent.setDefaultCursor( );
+            return;
+        }
 
-        // Determine if the draw mode should be reset, or if the user hase selected continuous draw:
+        // Determine if the draw mode should be reset, or if the user has selected continuous draw:
         if ( !(kEvent.isShiftDown() || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR) ) && m_bDrawVOI )
         {
             m_kParent.setDefaultCursor( );
@@ -5213,8 +5223,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public void setSlice(float fSlice) {}
 
 
-    private void showSelectedVOI( int iX, int iY )
+    private void showSelectedVOI( MouseEvent kEvent )
     {
+    	int iX = kEvent.getX();
+    	int iY = kEvent.getY(); 
         VOIVector kVOIs = m_kImageActive.getVOIs();
         if ( kVOIs == null || kVOIs.size() <= 0 )
         {
@@ -5233,6 +5245,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     m_kParent.setCursor(MipavUtil.moveCursor);
                     m_iNearStatus = NearNone;
+                }
+                else if ( kEvent.isShiftDown() )
+                {
+                    m_kParent.setCursor(MipavUtil.pointCursor);
+                    m_iNearStatus = NearPoint;
+                    m_kParent.updateDisplay();
                 }
                 else
                 {
