@@ -34,8 +34,8 @@ import org.apache.axis2.AxisFault;
 
 public class PlugInDataEntryTool extends JFrame implements PlugInGeneric,ActionListener  {
 
-	private static final String CA_TYPE = "Clinical Assessments Data";
-	private static final String G_TYPE = "Genomics Data";
+	private static final String CA_TYPE = "Clinical Assessments";
+	private static final String GEN_TYPE = "Genomics";
 	private JTable table;
 	private MyTableModel tableModel;
 	private List<PlugInGenomicsEntry> allList = new ArrayList<PlugInGenomicsEntry>();
@@ -73,11 +73,11 @@ public class PlugInDataEntryTool extends JFrame implements PlugInGeneric,ActionL
 		JPanel titlePanel = new JPanel();
 
         JLabel sort = new JLabel("Sort By:");
-        JRadioButton caButton = new JRadioButton(CA_TYPE);
+        JRadioButton caButton = new JRadioButton("Clinical Assessments Data");
         caButton.setActionCommand(CA_TYPE);
         
-        JRadioButton genButton = new JRadioButton(G_TYPE);
-        genButton.setActionCommand(G_TYPE);
+        JRadioButton genButton = new JRadioButton("Genomics Data");
+        genButton.setActionCommand(GEN_TYPE);
         
         JRadioButton allButton = new JRadioButton("All");
         allButton.setActionCommand("All");
@@ -162,7 +162,7 @@ public class PlugInDataEntryTool extends JFrame implements PlugInGeneric,ActionL
 				String pub = e2.getAttributeValue(qPublished);
 				String dsType = e2.getAttributeValue(qType);
 				Object[] o = {shortName, desc, pub};
-//				System.out.println("Row: "+o[0]+" "+o[1]+" "+o[2]);
+//				System.out.println("Row: "+o[0]+" "+o[1]+" "+o[2]+" "+dsType);
 				if(dsType.equals(type) && !type.equals("All")){
 					PlugInGenomicsEntry entry = new PlugInGenomicsEntry(o);
 					tableModel.addRow(entry.rowData);
@@ -181,10 +181,10 @@ public class PlugInDataEntryTool extends JFrame implements PlugInGeneric,ActionL
 			System.out.println("Creating Clinical Assessments list");
 			clearTable();
 			getDataStructures(CA_TYPE);
-		} else if (e.getActionCommand().equals(G_TYPE)){
+		} else if (e.getActionCommand().equals(GEN_TYPE)){
 			System.out.println("Creating Genomics list");
 			clearTable();
-			getDataStructures(G_TYPE);
+			getDataStructures(GEN_TYPE);
 			
 		}else{
 			System.out.println("Getting All");
@@ -203,7 +203,7 @@ public class PlugInDataEntryTool extends JFrame implements PlugInGeneric,ActionL
 		}
 		System.out.println(selectedList);
 		if(selectedList.isEmpty()){
-			JOptionPane.showMessageDialog(this, "Please select a Data Structure to edit", "Error",
+			JOptionPane.showMessageDialog(this, "Please select a Data Structure", "Error",
 					JOptionPane.ERROR_MESSAGE);
 		}
 		else{
