@@ -2206,7 +2206,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public void update()
     {
-        //System.err.println( "update mask set to true " + getGroup().getName() + getLabel() );
         m_bUpdateMask = true;
         m_bUpdateBounds = true;
         m_bUpdatePlane = true;
@@ -2239,7 +2238,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public void update(Vector3f kTranslate)
     {
-        //System.err.println( "update mask set to true " + getGroup().getName() + getLabel() );
         m_bUpdateMask = true;
         m_bReloadPoints = true;
         gcPt.Add(kTranslate);
