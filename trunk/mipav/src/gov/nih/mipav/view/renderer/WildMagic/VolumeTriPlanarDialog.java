@@ -354,7 +354,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
         // Checking to see if the image has all dimensions that are a power of 2.
         for (int i = 0; i < 3; i++) {
-            volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
+            volExtents[i] = extents[i];
         }
 
         extXOutput = new JTextField(Integer.toString(volExtents[0]), 3);

@@ -342,6 +342,54 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         MipavInitGPU.InitGPU();
     }
 
+    public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB) {
+        userInterface = ViewUserInterface.getReference();
+        getContentPane().setLayout(new BorderLayout());
+        addWindowListener(this);
+
+        try {
+            setIconImage(MipavUtil.getIconImage("wm.gif"));
+        } catch (final FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+        }
+
+        MipavInitGPU.InitGPU();
+        /** Progress bar show up during the volume view frame loading */
+        final ViewJProgressBar progressBar = new ViewJProgressBar("Creating Volume & Surface Renderer...",
+                "Creating Volume & Surface Renderer...", 0, 100, false, null, null);
+        MipavUtil.centerOnScreen(progressBar);
+        progressBar.setVisible(true);
+        progressBar.updateValueImmed(0);
+
+        final int iProgress = (_imageB == null) ? 10 : 5;
+        m_kVolumeImageA = new VolumeImage(_imageA, "A", progressBar, iProgress);
+        progressBar.updateValueImmed(progressBar.getValue() + iProgress);
+        if (_imageB != null) {
+            m_kVolumeImageB = new VolumeImage(_imageB, "B", progressBar,
+                    iProgress);
+            progressBar.updateValueImmed(progressBar.getValue() + iProgress);
+        } else {
+            m_kVolumeImageB = new VolumeImage();
+        }
+        m_kVolumeImageA.GetImage().setImageOrder(ModelImage.IMAGE_A);
+
+        if (m_kVolumeImageB.GetImage() != null) {
+            m_kVolumeImageB.GetImage().setImageOrder(ModelImage.IMAGE_B);
+        }
+        progressBar.setMessage("Configuring frame...");
+        this.configureFrame();
+        constructRenderers(progressBar);
+
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        gpuPanel.setVisible(true);
+
+        progressBar.updateValueImmed(100);
+        progressBar.dispose();
+    }
+
     public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB, final int iFilterType,
             final boolean bCompute, final String kDir, final int[] aiExtents) {
         userInterface = ViewUserInterface.getReference();
@@ -1535,13 +1583,16 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param bShow on/off.
      */
     public void setGradientMagnitude(final boolean bShow) {
-        raycastRenderWM.setGradientMagnitude(bShow);
+    	System.err.println( "setGradientMagnitude " + bShow );
         TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
+        m_kVolumeImageA.SetGradientMagnitude(m_kVolOpacityPanel.getGradMagA(), false, "A");
         m_kVolumeImageA.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagA());
         if (m_kVolumeImageB.GetImage() != null) {
             kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
+            m_kVolumeImageB.SetGradientMagnitude(m_kVolOpacityPanel.getGradMagB(), false, "B");
             m_kVolumeImageB.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagB());
         }
+        raycastRenderWM.setGradientMagnitude(bShow);
     }
 
     /*
@@ -2121,6 +2172,13 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param flag MultiHistogram Check box checked or not.
      */
     public void updateMultihistoTab(final boolean flag) {
+    	if ( !m_kVolumeImageA.isHistoInit() )
+    	{
+    		m_kVolumeImageA.SetGradientMagnitude(null, true, "A");    
+    		if (m_kVolumeImageB.GetImage() != null && !m_kVolumeImageB.isHistoInit() ) {
+                m_kVolumeImageB.SetGradientMagnitude(m_kVolOpacityPanel.getGradMagB(), false, "B");
+            }
+    	}
         if (flag) {
             insertTab("MultiHistogram", multiHistogramGUI.getMainPanel());
             multiHistogramGUI.getMainPanel().setVisible(flag);
@@ -2535,11 +2593,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
 
         m_kAnimator.stop();
-        final java.util.Iterator kDrawables = m_kAnimator.drawableIterator();
-        while (kDrawables.hasNext()) {
-            final GLAutoDrawable kGL = (GLAutoDrawable) kDrawables.next();
-            m_kAnimator.remove(kGL);
-        }
+        //final java.util.Iterator kDrawables = m_kAnimator.drawableIterator();
+        //while (kDrawables.hasNext()) {
+        //    final GLAutoDrawable kGL = (GLAutoDrawable) kDrawables.next();
+        //    m_kAnimator.remove(kGL);
+        //}
         m_kAnimator = null;
     }
 

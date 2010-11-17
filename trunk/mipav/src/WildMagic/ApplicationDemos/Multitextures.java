@@ -19,7 +19,9 @@
 package WildMagic.ApplicationDemos;
 
 import javax.media.opengl.*;
+
 import com.sun.opengl.util.*;
+import javax.media.opengl.GLCanvas;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -31,7 +33,10 @@ import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibGraphics.Shaders.*;
 import WildMagic.LibRenderers.OpenGLRenderer.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 
 public class Multitextures extends JavaApplication3D
     implements GLEventListener, KeyListener
@@ -192,7 +197,7 @@ public class Multitextures extends JavaApplication3D
         // multiplicative (the default)
         m_spkEffect = new MultitextureEffect(2);
         m_spkEffect.SetImageName(0,"Horizontal");
-        m_spkEffect.SetImageName(1,"Magician");
+        m_spkEffect.SetImageName(1,"MagicianCropNPOT.jpg");
         m_spkEffect.Configure();
 
         pkPlane.AttachEffect(m_spkEffect);
@@ -273,6 +278,15 @@ public class Multitextures extends JavaApplication3D
                 m_iActive = 0;
             }
             return;
+        case 'o':
+        	ViewUserInterface.create();
+        	// output textures as tif...
+            //m_pkRenderer.FrameBufferToTexSubImage3D( m_spkEffect.GetTexture(0,1), 0, true );
+        	ModelImage tex = VolumeImage.CreateImageFromTexture(m_spkEffect.GetTexture(0,1).GetImage());
+        	tex.setImageName( tex.getImageName() + ".tif" );
+        	System.err.println( tex.getImageFileName() );
+        	ModelImage.saveImage(tex);
+        	break;
         case 's':
         case 'S':
             TestStreaming(m_spkScene,"Multitexture.wmof");
@@ -296,4 +310,8 @@ public class Multitextures extends JavaApplication3D
         }
         return System.getProperties().getProperty("user.dir");
     }
+
+
+	public void dispose(GLAutoDrawable arg0) {}
+
 }

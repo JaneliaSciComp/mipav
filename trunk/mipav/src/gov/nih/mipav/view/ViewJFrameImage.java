@@ -17,6 +17,7 @@ import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarDialog;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
@@ -29,7 +30,21 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 
+import de.jtem.numericalMethods.algebra.linear.Inversion;
+import de.jtem.numericalMethods.algebra.linear.decompose.Householder;
+import de.jtem.numericalMethods.algebra.linear.decompose.LR;
+import de.jtem.numericalMethods.algebra.linear.decompose.PLR;
+import de.jtem.numericalMethods.algebra.linear.decompose.QR;
+import de.jtem.numericalMethods.algebra.linear.decompose.Tridiagonal;
+import de.jtem.numericalMethods.algebra.linear.solve.AXB;
+
+import Jama.EigenvalueDecomposition;
+import Jama.LUDecomposition;
+import Jama.Matrix;
+import Jama.QRDecomposition;
+import Jama.SingularValueDecomposition;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.NumericalAnalysis.Eigenf;
 
 
 /**
@@ -1801,10 +1816,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                             imageInfoDialog.toFront();
                         }
                     } else {
-                        new VolumeTriPlanarDialog(imageA, imageB);
+                    	 new VolumeTriPlanarInterface(imageA, imageB);
+                        //new VolumeTriPlanarDialog(imageA, imageB);
                     }
                 } else {
-                    new VolumeTriPlanarDialog(imageA, imageB);
+                	new VolumeTriPlanarInterface(imageA, imageB);
+                    //new VolumeTriPlanarDialog(imageA, imageB);
                 }
             } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: unable to open Volume Triplanar frame.");
@@ -2337,8 +2354,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogTreT2(this, getActiveImage());
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
-        }
-
+        } 
     }
 
     /**

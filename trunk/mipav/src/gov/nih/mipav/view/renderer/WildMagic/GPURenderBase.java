@@ -722,4 +722,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_spkScene.Local.SetRotate(kRotation);
         UpdateSceneRotation();
     }
+    
+    public void dispose(GLAutoDrawable a) {}
 }

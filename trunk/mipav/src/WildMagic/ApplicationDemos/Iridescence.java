@@ -577,4 +577,7 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
         m_akLights[LIGHT_INDEX_STATIC].DVector.Normalize();
         m_aiLightScale[LIGHT_INDEX_STATIC] = 3;
     }
+
+	public void dispose(GLAutoDrawable arg0) {}
+
 }

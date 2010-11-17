@@ -2947,7 +2947,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kFBO.SetTarget(i, akSceneTarget[i]);
         }
-        m_kFBO.InitializeBuffer();
+        m_kFBO.InitializeBuffer(akSceneTarget);
         m_kFBO.Enable();
         m_kFBO.Disable();     
     }
@@ -3007,4 +3007,5 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         m_kDisplayList.add( m_kDisplayList.size() - 1, kVOI );
     }
+
 }

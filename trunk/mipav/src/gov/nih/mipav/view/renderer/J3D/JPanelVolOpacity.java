@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.WildMagic.*;
 
@@ -573,6 +574,7 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                     rendererProgressBar.setValue(50);
                     rendererProgressBar.update(rendererProgressBar.getGraphics());
                 }
+                JDialogBase.updateFileInfo(imageA, gradMagRescale_A);
             } else {
                 dimExtentsGM_A[0] = 1024;
                 rendererProgressBar.setValue(20);
@@ -671,6 +673,7 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                     rendererProgressBar.setValue(90);
                     rendererProgressBar.update(rendererProgressBar.getGraphics());
                 }
+                JDialogBase.updateFileInfo(imageA, gradMagRescale_A);
             } else {
                 dimExtentsGM_B[0] = 1024;
                 rendererProgressBar.setValue(60);
