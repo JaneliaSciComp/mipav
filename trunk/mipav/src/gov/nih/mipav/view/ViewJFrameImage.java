@@ -2693,89 +2693,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setTitle();
             // need to get all other images in sync if there are other matching images and if shift was down
             if (linkedScrolling || isShiftDown) {
-                /*Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
-                if(getImageA().is4DImage()) {
-                	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
-                	 for (int i = 0; i < registeredFramedImages2.size(); i++) {
-                		 registeredFramedImages.add((ModelImage) registeredFramedImages2.get(i));
-                	 }
-                }
-
-                for (int i = 0; i < registeredFramedImages.size(); i++) {
-                    final ModelImage img = (ModelImage) registeredFramedImages.get(i);
-                    final ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-                    framedImg.setSlice(componentImage.getSlice(), false);
-                }
-
-                registeredFramedImages = null;*/
-                
-                
-                
-              //9/22/2010
-                //ok...we will link scroll not just images of same dimensionality
-                int activeImageNumDims = getImageA().getNDims();
-                int activeImageNumSlices = 1, activeImageNumVolumes = 1, activeImageNumChannels = 1;
-
-                switch (getImageA().getNDims()) { // all extents above 2D need to be checked
-                    case 5:
-                        activeImageNumChannels = getImageA().getExtents()[4];
-                    case 4:
-                        activeImageNumVolumes = getImageA().getExtents()[3];
-                    case 3:
-                        activeImageNumSlices = getImageA().getExtents()[2];
-
-                }
-             // get all registered images
-                final Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
-                // add only the framed ones to a new list...also..dont include the active image
-
-                while (regImages.hasMoreElements()) {
-                    final ModelImage image = (ModelImage) regImages.nextElement();
-
-                    // check if it is a framed image...and if its not the active image...also make sure its just imageA
-                    if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(getImageA().getImageName()))
-                            && ( ( (image.getParentFrame())).getImageA() == image)) {
-
-                        // now check the dimensionality to see if it matches with the active image
-                        final int regFramedNumDims = image.getNDims();
-
-                        if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
-
-                            switch (image.getNDims()) {
-                                case 5:
-                                    if (image.getExtents()[4] != activeImageNumChannels) {
-                                        break;
-                                    }
-                                case 4:
-                                    if (image.getExtents()[3] != activeImageNumVolumes) {
-                                    	int currentSlice = image.getParentFrame().getComponentImage().getSlice();
-                                    	if(currentSlice > 0) {
-                                    		image.setSlice(currentSlice-1);
-                                    	}
-                                        break;
-                                    }
-                                case 3:
-                                    //if (image.getExtents()[2] != activeImageNumSlices) {
-                                    	int currentSlice = image.getParentFrame().getComponentImage().getSlice();
-                                    	if(currentSlice > 0) {
-                                    		image.setSlice(currentSlice-1);
-                                    	}
-                                        break;
-                                    //}
-
-                            }
-                        }
-                    }
-                }
-                
-                
-                
-                
-                
-                
-                
-                
-                
+                doLinkedScrolling(-1);
             }
 
             if (linkFrame != null) {
@@ -2799,6 +2717,60 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if ( voiManager != null )
         {
             voiManager.setCenter( new Vector3f( 0, 0, componentImage.getSlice() ) );
+        }
+    }
+
+    public void doLinkedScrolling(int offset) {
+        int activeImageNumDims = getImageA().getNDims();
+        int activeImageNumVolumes = 1, activeImageNumChannels = 1;
+
+        switch (getImageA().getNDims()) { // all extents above 3D need to be checked, since these must match for linking
+            case 5:
+                activeImageNumChannels = getImageA().getExtents()[4];
+            case 4:
+                activeImageNumVolumes = getImageA().getExtents()[3];
+
+        }
+     // get all registered images
+        final Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
+        // add only the framed ones to a new list...also..dont include the active image
+
+        while (regImages.hasMoreElements()) {
+            final ModelImage image = (ModelImage) regImages.nextElement();
+            // check if it is a framed image...and if its not the active image...also make sure its just imageA
+            if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(getImageA().getImageName()))
+                    && ( ( (image.getParentFrame())).getImageA() == image)) {
+
+                // now check the dimensionality to see if it matches with the active image
+                final int regFramedNumDims = image.getNDims();
+
+                if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
+
+                    switch (image.getNDims()) {
+                        case 5:
+                            if (image.getExtents()[4] != activeImageNumChannels) {
+                                break;
+                            }
+                        case 4:
+                            if (image.getExtents()[3] != activeImageNumVolumes) {
+                                int currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                                if(currentSlice > 0 && currentSlice < image.getExtents()[2]-1) {
+                                    image.setSlice(currentSlice+offset);
+                                }
+                                break;
+                            }
+                        case 3:
+                            //if (image.getExtents()[2] != activeImageNumSlices) {
+                                int currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                                if(currentSlice > 0 && currentSlice < image.getExtents()[2]-1) {
+                                    image.setSlice(currentSlice+offset);
+                                }
+                                break;
+                            //}
+
+                    }
+                }
+            }
         }
     }
 
@@ -3367,93 +3339,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // need to get all other images in sync if there are other matching images and if shift was down
             if (linkedScrolling || isShiftDown) {
-                /*Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
-                if(getImageA().is4DImage()) {
-                	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
-                	 for (int i = 0; i < registeredFramedImages2.size(); i++) {
-                		 registeredFramedImages.add((ModelImage) registeredFramedImages2.get(i));
-                	 }
-                }
-
-                for (int i = 0; i < registeredFramedImages.size(); i++) {
-                    final ModelImage img = (ModelImage) registeredFramedImages.get(i);
-                    final ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-                    framedImg.setSlice(componentImage.getSlice(), false);
-                    framedImg.updateImages();
-                }
-
-                registeredFramedImages = null;*/
-                //setShiftDown(false);
-                
-                
-                //9/22/2010
-                //ok...we will link scroll not just images of same dimensionality
-                int activeImageNumDims = getImageA().getNDims();
-                int activeImageNumSlices = 1, activeImageNumVolumes = 1, activeImageNumChannels = 1;
-
-                switch (getImageA().getNDims()) { // all extents above 2D need to be checked
-                    case 5:
-                        activeImageNumChannels = getImageA().getExtents()[4];
-                    case 4:
-                        activeImageNumVolumes = getImageA().getExtents()[3];
-                    case 3:
-                        activeImageNumSlices = getImageA().getExtents()[2];
-
-                }
-             // get all registered images
-                final Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
-                // add only the framed ones to a new list...also..dont include the active image
-
-                while (regImages.hasMoreElements()) {
-                    final ModelImage image = (ModelImage) regImages.nextElement();
-                    // check if it is a framed image...and if its not the active image...also make sure its just imageA
-                    if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(getImageA().getImageName()))
-                            && ( ( (image.getParentFrame())).getImageA() == image)) {
-
-                        // now check the dimensionality to see if it matches with the active image
-                        final int regFramedNumDims = image.getNDims();
-
-                        if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
-
-                            switch (image.getNDims()) {
-                                case 5:
-                                    if (image.getExtents()[4] != activeImageNumChannels) {
-                                        break;
-                                    }
-                                case 4:
-                                    if (image.getExtents()[3] != activeImageNumVolumes) {
-                                    	int currentSlice = image.getParentFrame().getComponentImage().getSlice();
-                                    	if(currentSlice < image.getExtents()[2]-1) {
-                                    		image.setSlice(currentSlice+1);
-                                    	}
-                                        break;
-                                    }
-                                case 3:
-                                    //if (image.getExtents()[2] != activeImageNumSlices) {
-                                    	int currentSlice = image.getParentFrame().getComponentImage().getSlice();
-                                    	if(currentSlice < image.getExtents()[2]-1) {
-                                    		image.setSlice(currentSlice+1);
-                                    	}
-                                        break;
-                                    //}
-
-                            }
-                        }
-                    }
-                }
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
+                doLinkedScrolling(1);
             }
             //////
 
