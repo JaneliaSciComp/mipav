@@ -5248,7 +5248,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 }
                 else if ( kEvent.isShiftDown() )
                 {
-                    m_kParent.setCursor(MipavUtil.pointCursor);
+                    m_kParent.setCursor(MipavUtil.resizeCursor);
                     m_iNearStatus = NearPoint;
                     m_kParent.updateDisplay();
                 }
