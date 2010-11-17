@@ -706,15 +706,15 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
                 frame.getImageA().getLightBoxFrame().setSlice(zImageSlider.getValue());
             }
 
+            frame.getImageA().setSlice(zImageSlider.getValue());
             int currentSlice = ((ViewJFrameImage)frame).getComponentImage().getSlice();
-            if(zImageSlider.getValue() > currentSlice) {
-            	((ViewJFrameImage)frame).incSlice();
-            }else if(zImageSlider.getValue() < currentSlice) {
-            	((ViewJFrameImage)frame).decSlice();
+            if(frame instanceof ViewJFrameImage) {
+                if(zImageSlider.getValue() > currentSlice) {
+                    ((ViewJFrameImage)frame).doLinkedScrolling(1);
+                }else if(zImageSlider.getValue() < currentSlice) {
+                    ((ViewJFrameImage)frame).doLinkedScrolling(-1);
+                }
             }
-            //frame.getImageA().setSlice(zImageSlider.getValue());
-            
-            
         } else if (source == tImageSlider) {
 
             frame.getImageA().setTimeSlice(tImageSlider.getValue());
