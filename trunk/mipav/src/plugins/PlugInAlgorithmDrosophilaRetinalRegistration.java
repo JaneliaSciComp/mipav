@@ -60,24 +60,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
     /** transform matrices * */
     private final TransMatrix matrixGreen, matrixAffine;
 
-    /** coefficients need for b-spline * */
-    private float[][][] imageX_R_coeff;
-
-    /** coefficients need for b-spline * */
-    private float[][][] imageX_G_coeff;
-
-    /** coefficients need for b-spline * */
-    private float[][][] imageX_B_coeff;
-
-    /** coefficients need for b-spline * */
-    private float[][][] imageY_R_coeff;
-
-    /** coefficients need for b-spline * */
-    private float[][][] imageY_G_coeff;
-
-    /** coefficients need for b-spline * */
-    private float[][][] imageY_B_coeff;
-
     /** 2D and 3D B-Spline basis definitions. */
     private BSplineBasisDiscretef m_kBSplineBasisX;
 
@@ -253,12 +235,8 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                 System.out.println("IO exception");
                 return;
             }
-            final float red;
             float green;
-            final float blue;
-            final float newRed;
             float newGreen;
-            final float newBlue;
 
             for (int i = 0; i < buffer.length; i = i + 4) {
                 /*
@@ -348,52 +326,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             }
         }
 		bSplineX.setup3DBSplineC(imageXFloatBuffer, imageX.getExtents(), 3);
-		/*
-
-        // b-spline stuff in case b-spline interp was selected
-        imageX_R_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
-        imageX_G_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
-        imageX_B_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
-        for (int c = 0; c < 4; c++) {
-            for (int z = 0; z < imageX.getExtents()[2]; z++) {
-                for (int y = 0; y < imageX.getExtents()[1]; y++) {
-                    for (int x = 0; x < imageX.getExtents()[0]; x++) {
-                        if (c == 1) {
-                            imageX_R_coeff[x][y][z] = (imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX
-                                    .getExtents()[0]
-                                    * imageX.getExtents()[1] * z)))
-                                    + c] & 0xff);
-                        } else if (c == 2) {
-                            imageX_G_coeff[x][y][z] = (imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX
-                                    .getExtents()[0]
-                                    * imageX.getExtents()[1] * z)))
-                                    + c] & 0xff);
-                        } else if (c == 3) {
-                            imageX_B_coeff[x][y][z] = (imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX
-                                    .getExtents()[0]
-                                    * imageX.getExtents()[1] * z)))
-                                    + c] & 0xff);
-                        }
-
-                    }
-                }
-            }
-        }
-        BSplineProcessing splineAlgX_R;
-        splineAlgX_R = new BSplineProcessing();
-        splineAlgX_R.samplesToCoefficients(imageX_R_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX
-                .getExtents()[2], 3);
-
-        BSplineProcessing splineAlgX_G;
-        splineAlgX_G = new BSplineProcessing();
-        splineAlgX_G.samplesToCoefficients(imageX_G_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX
-                .getExtents()[2], 3);
-
-        BSplineProcessing splineAlgX_B;
-        splineAlgX_B = new BSplineProcessing();
-        splineAlgX_B.samplesToCoefficients(imageX_B_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX
-                .getExtents()[2], 3);
-                */
 
         byte[] imageYBuffer;
         final int length2 = imageY.getExtents()[0] * imageY.getExtents()[1] * imageY.getExtents()[2] * 4;
@@ -419,52 +351,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             }
         }
 		bSplineY.setup3DBSplineC(imageYFloatBuffer, imageY.getExtents(), 3);
-
-		/*
-        imageY_R_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
-        imageY_G_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
-        imageY_B_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
-        for (int c = 0; c < 4; c++) {
-            for (int z = 0; z < imageY.getExtents()[2]; z++) {
-                for (int y = 0; y < imageY.getExtents()[1]; y++) {
-                    for (int x = 0; x < imageY.getExtents()[0]; x++) {
-                        if (c == 1) {
-                            imageY_R_coeff[x][y][z] = (imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY
-                                    .getExtents()[0]
-                                    * imageY.getExtents()[1] * z)))
-                                    + c] & 0xff);
-
-                        } else if (c == 2) {
-                            imageY_G_coeff[x][y][z] = (imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY
-                                    .getExtents()[0]
-                                    * imageY.getExtents()[1] * z)))
-                                    + c] & 0xff);
-                        } else if (c == 3) {
-                            imageY_B_coeff[x][y][z] = (imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY
-                                    .getExtents()[0]
-                                    * imageY.getExtents()[1] * z)))
-                                    + c] & 0xff);
-                        }
-
-                    }
-                }
-            }
-        }
-        BSplineProcessing splineAlgY_R;
-        splineAlgY_R = new BSplineProcessing();
-        splineAlgY_R.samplesToCoefficients(imageY_R_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY
-                .getExtents()[2], 3);
-
-        BSplineProcessing splineAlgY_G;
-        splineAlgY_G = new BSplineProcessing();
-        splineAlgY_G.samplesToCoefficients(imageY_G_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY
-                .getExtents()[2], 3);
-
-        BSplineProcessing splineAlgY_B;
-        splineAlgY_B = new BSplineProcessing();
-        splineAlgY_B.samplesToCoefficients(imageY_B_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY
-                .getExtents()[2], 3);
-                */
 
         // following is if nlt file is inputted also
         ModelSimpleImage[] akSimpleImageSourceMap = null;
@@ -498,7 +384,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         float xmm, ymm, zmm;
         byte[] rgb1 = new byte[3];
         byte[] rgb2 = new byte[3];
-        float r1_float, g1_float, b1_float, r2_float, g2_float, b2_float;
         final short[] rgb1_short = new short[3];
         final short[] rgb2_short = new short[3];
         // loop through each point in result image
