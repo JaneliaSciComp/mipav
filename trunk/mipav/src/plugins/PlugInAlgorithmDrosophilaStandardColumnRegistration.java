@@ -288,17 +288,17 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v3.2" + "\n");
+        outputTextArea.append("Running Algorithm v3.3" + "\n");
         
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
-        String text = "";
+        /*String text = "";
         if(rvld) {
         	text = "RV/LD";
         }else {
         	text = "LD/RV";
         }
         
-        outputTextArea.append("Standard Column : " + text + "\n");
+        outputTextArea.append("Standard Column : " + text + "\n");*/
 
         final long begTime = System.currentTimeMillis();
 
@@ -411,15 +411,15 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         final int zEnd = zStart + neurLen;
         
         //****** FOR LV, WE ARE FLIPPING THE NEURON....SO THE ZMIDDLE USES A LENGTH OF 6.93 INSTEAD OF THE NORMAL 14.44
-        final int r8Len = Math.round((float) (6.93 / resols[2]));
-        //final int r8Len = Math.round((float) (14.44 / resols[2]));
+        //final int r8Len = Math.round((float) (6.93 / resols[2]));
+        final int r8Len = Math.round((float) (14.44 / resols[2]));
         
         final int zMiddle = zStart + r8Len;
         
         
         
         
-        
+        ModelImage test = new ModelImage(ModelImage.BOOLEAN, standardColumnImage.getExtents(), "b;ah" );
         
         
         //8.74*2 = 17.48
