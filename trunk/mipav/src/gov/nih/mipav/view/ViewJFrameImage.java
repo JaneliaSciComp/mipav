@@ -2721,6 +2721,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     public void doLinkedScrolling(int offset) {
+        if(!linkedScrolling && !isShiftDown) {
+            return;
+        }
+        
         int activeImageNumDims = getImageA().getNDims();
         int activeImageNumVolumes = 1, activeImageNumChannels = 1;
 
@@ -2747,19 +2751,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
 
                     switch (image.getNDims()) {
-                        case 5:
-                            if (image.getExtents()[4] != activeImageNumChannels) {
-                                break;
-                            }
-                        case 4:
-                            if (image.getExtents()[3] != activeImageNumVolumes) {
-                                break;
-                            }
-                        case 3:
-                            int currentSlice = image.getParentFrame().getComponentImage().getSlice();
-                            if(currentSlice > 0 && currentSlice < image.getExtents()[2]-1) {
-                                image.setSlice(currentSlice+offset);
-                            }
+                    case 5:
+                        if (image.getExtents()[4] != activeImageNumChannels) {
+                            break;
+                        }
+                    case 4:
+                        if (image.getExtents()[3] != activeImageNumVolumes) {
+                            break;
+                        }
+                    case 3:
+                        int currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                        if(currentSlice+offset > -1 && currentSlice+offset < image.getExtents()[2]) {
+                            image.setSlice(currentSlice+offset);
+                        }
                     }
                 }
             }
