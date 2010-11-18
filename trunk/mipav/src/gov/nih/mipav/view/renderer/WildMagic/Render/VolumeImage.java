@@ -43,6 +43,7 @@ public class VolumeImage implements Serializable {
 
     /** Data storage for normals: */
     private GraphicsImage[] m_kNormal;
+	private boolean m_bNormalsInit = false;
 
     /** Texture object for normal map: */
     private Texture m_kNormalMapTarget;
@@ -116,9 +117,6 @@ public class VolumeImage implements Serializable {
     /** 3D sub-images (4D data) */
     private ModelImage[] m_akImages;
 
-    /** When true the supporting images are re-computed */
-    private boolean m_bCompute = true;
-
     private float[] m_fGMMin;
 
     private float[] m_fGMMax;
@@ -147,31 +145,6 @@ public class VolumeImage implements Serializable {
             } catch (final SecurityException e) {}
         }
         m_kImage = (ModelImage)kImage.clone();
-        init(kProgress, iProgress);
-    }
-
-
-    public VolumeImage(final ModelImage kImage, final String kPostfix, boolean bCompute, final String kDir,
-            final int iFilterType, final int[] aiExtents, final ViewJProgressBar kProgress, final int iProgress) {
-        if (kProgress != null) {
-            kProgress.setMessage("Creating VolumeImage...");
-        }
-
-        m_kPostfix = new String(kPostfix);
-        m_kDir = new String(kDir);
-        final String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), "_" + kPostfix);
-        final File kFile = new File(kDir + kImageName + ".xml");
-        if ( !bCompute && kFile.exists()) {
-            m_kImage = ReadFromDisk(kImageName, m_kDir);
-        } else {
-            bCompute = true;
-            ReconfigureImage(kImage, kImageName, m_kDir, iFilterType, aiExtents);
-        }
-        m_bCompute = bCompute;
-        m_kImage.calcMinMax();
-        if (kProgress != null) {
-            kProgress.updateValueImmed(kProgress.getValue() + iProgress);
-        }
         init(kProgress, iProgress);
     }
 
@@ -531,13 +504,36 @@ public class VolumeImage implements Serializable {
     }
 
     public void GenerateNormalFiles() {
-        if ( !m_bCompute) {
-            return;
-        }
-        for (int i = 0; i < m_iTimeSteps; i++) {
-            VolumeImageNormalGM.main(this, m_akImages[i], m_kNormalMapTarget, i, ModelImage.makeImageName(m_kImage
-                    .getFileInfo(0).getFileName(), "_Normal_" + i));
-        }
+    	if ( m_bNormalsInit )
+    	{
+    		return;
+    	}
+    	for (int i = 0; i < m_iTimeSteps; i++) {
+    		final String kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), "_Normal_"
+    				+ i);
+    		// System.err.println( kImageName );
+    		ModelImage kNormal = ReadFromDisk(kImageName + ".xml", m_kDir);
+    		if ( kNormal != null && !checkImage( kNormal, m_akImages[i] ) )
+    		{
+    			kNormal.disposeLocal();
+    			kNormal = null;
+    		}
+    		if ( kNormal != null )
+    		{
+    			m_kNormal[i] = VolumeImage.UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal
+    					.getImageName(), true);
+    			kNormal.disposeLocal();
+    			m_bNormalsInit = true;
+    		}
+    	}
+    	if ( !m_bNormalsInit )
+    	{
+    		for (int i = 0; i < m_iTimeSteps; i++) {
+    			VolumeImageNormalGM.main(this, m_akImages[i], m_kNormalMapTarget, i, ModelImage.makeImageName(m_kImage
+    					.getFileInfo(0).getFileName(), "_Normal_" + i));
+    		}
+    		m_bNormalsInit = false;
+    	}
     }
 
     /**
@@ -1218,38 +1214,18 @@ public class VolumeImage implements Serializable {
 
     private void init(final ViewJProgressBar kProgress, final int iProgress) {
         initLUT();
-        initImages(m_bCompute, m_kPostfix, m_kDir, kProgress, iProgress);
+        initImages();
 
-        for (int i = 0; i < m_iTimeSteps; i++) {
-        	final String kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), "_Normal_"
-        			+ i);
-        	// System.err.println( kImageName );
-        	ModelImage kNormal = ReadFromDisk(kImageName + ".xml", m_kDir);
-        	if ( kNormal != null && !checkImage( kNormal, m_akImages[i] ) )
-        	{
-        		kNormal.disposeLocal();
-        		kNormal = null;
-        		m_bCompute = true;
-        	}
-        	if ( kNormal != null )
-        	{
-        		m_kNormal[i] = VolumeImage.UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal
-        				.getImageName(), true);
-        		kNormal.disposeLocal();
-        		m_bCompute = false;
-        	}
-        }
         if (kProgress != null) {
             kProgress.updateValueImmed(kProgress.getValue() + iProgress);
         }
     }
 
-    private void initImages(final boolean bCreate, final String kPostfix, final String kDir,
-            final ViewJProgressBar kProgress, final int iProgress) {
+    private void initImages() {
         m_fDRRNormalize = computeIntegralNormalizationFactor();
-        m_kColorMap = VolumeImage.InitColorMap(m_kLUT, m_kRGBT, kPostfix);
-        m_kOpacityMap = InitOpacityMap(m_kImage, kPostfix);
-        m_kOpacityMap_GM = InitOpacityMap(m_kImage, new String(kPostfix + "_GM"));
+        m_kColorMap = VolumeImage.InitColorMap(m_kLUT, m_kRGBT, m_kPostfix);
+        m_kOpacityMap = InitOpacityMap(m_kImage, m_kPostfix);
+        m_kOpacityMap_GM = InitOpacityMap(m_kImage, new String(m_kPostfix + "_GM"));
 
         final int iXBound = m_kImage.getExtents()[0];
         final int iYBound = m_kImage.getExtents()[1];
@@ -1517,7 +1493,6 @@ public class VolumeImage implements Serializable {
             final String kImageName = (String) in.readObject();
             m_kPostfix = (String) in.readObject();
             m_kImage = ReadFromDisk(kImageName, m_kDir);
-            m_bCompute = false;
             init(null, 0);
         }
     }

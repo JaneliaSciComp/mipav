@@ -414,11 +414,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         progressBar.updateValueImmed(0);
 
         final int iProgress = (_imageB == null) ? 10 : 5;
-        m_kVolumeImageA = new VolumeImage(_imageA, "A", bCompute, kDir, iFilterType, aiExtents, progressBar, iProgress);
+        m_kVolumeImageA = new VolumeImage(_imageA, "A", progressBar, iProgress);
         progressBar.updateValueImmed(progressBar.getValue() + iProgress);
         if (_imageB != null) {
-            m_kVolumeImageB = new VolumeImage(_imageB, "B", bCompute, kDir, iFilterType, aiExtents, progressBar,
-                    iProgress);
+            m_kVolumeImageB = new VolumeImage(_imageB, "B", progressBar, iProgress);
             progressBar.updateValueImmed(progressBar.getValue() + iProgress);
         } else {
             m_kVolumeImageB = new VolumeImage();
@@ -2012,6 +2011,28 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         raycastRenderWM.smoothTwo(kSurfaceName, iteration, fStiffness, volumeLimit, volumePercent);
     }
 
+    public void SURMode( boolean bSURFast )
+    {
+
+        setCursor(new Cursor(Cursor.WAIT_CURSOR));
+        m_kVolumeImageA.GenerateNormalFiles( );
+        if ( m_kVolumeImageB.GetImage() != null )
+        {
+            m_kVolumeImageB.GenerateNormalFiles( );
+        }
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        
+    	if ( bSURFast )
+    	{
+    		raycastRenderWM.SURFASTMode();
+    	}
+    	else
+    	{
+    		raycastRenderWM.SURMode();
+    	}
+		refreshLighting();
+    }
+    
     /**
      * Switches between different ways of displaying the geodesic path (Euclidean, Geodesic, or Mesh).
      * 
@@ -2172,7 +2193,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param flag MultiHistogram Check box checked or not.
      */
     public void updateMultihistoTab(final boolean flag) {
-    	if ( !m_kVolumeImageA.isHistoInit() )
+    	if ( !m_kVolumeImageA.isHistoInit() && flag )
     	{
     		m_kVolumeImageA.SetGradientMagnitude(null, true, "A");    
     		if (m_kVolumeImageB.GetImage() != null && !m_kVolumeImageB.isHistoInit() ) {

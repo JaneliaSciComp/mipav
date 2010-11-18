@@ -6,6 +6,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -21,6 +22,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -52,9 +54,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Turn display 3D TriMesh Surface on/off */
     protected JCheckBox m_kDisplaySurfaceCheck;
 
-    /** Turn display 3D Stereo on/off */
-    protected JRadioButton m_kStereoOff, m_kStereo_Red_Green, m_kStereo_Shutter;
-    
+    /** The combo box for the polygon mode to display. */
+    private JComboBox m_kStereoModeCB;
+        
     /** Radio button of the COMPOSITE mode option. */
     protected JRadioButton radioCOMPOSITE;
 
@@ -129,7 +131,19 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     public void actionPerformed(ActionEvent event) {
         String levelStr = m_kIntensityTF.getText();
         rayBasedRenderWM.setIntenstityLevel(Integer.valueOf(levelStr).intValue());
-    	m_kVolumeViewer.actionPerformed(event);    	
+        if ( event.getActionCommand().equals("ChangeStereoMode") )
+        {
+        	switch ( m_kStereoModeCB.getSelectedIndex() )
+        	{
+        	case 0: m_kVolumeViewer.actionPerformed( new ActionEvent(this, 0, "StereoOFF") );   break;
+        	case 1: m_kVolumeViewer.actionPerformed( new ActionEvent(this, 0, "StereoRED") );   break;
+        	case 2: m_kVolumeViewer.actionPerformed( new ActionEvent(this, 0, "StereoSHUTTER") );   break;
+        	}        	
+        }
+        else
+        {
+        	m_kVolumeViewer.actionPerformed(event);
+        }
     }
     
     public int getRenderMode()
@@ -170,14 +184,12 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         else if ( which == 3 ) 
         {
             radioSURFACEFAST.setSelected(true); 
-            rayBasedRenderWM.SURFASTMode();
-            m_kVolumeViewer.refreshLighting();
+        	m_kVolumeViewer.SURMode( true );
         }
         else if ( which == 4 ) 
         { 
             radioSURFACE.setSelected(true); 
-            rayBasedRenderWM.SURMode();
-            m_kVolumeViewer.refreshLighting();
+        	m_kVolumeViewer.SURMode( false );
         }
         else if ( which == 5 ) 
         { 
@@ -193,37 +205,15 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     
     public int getStereo()
     {
-        if ( m_kStereoOff.isSelected() )
-        {
-            return 0;
-        }
-        if ( m_kStereo_Red_Green.isSelected() )
-        {
-            return 1;
-        }
-        return 2;
+    	return m_kStereoModeCB.getSelectedIndex();
     }
     
     public void setStereo(int which )
     {
-        if ( which == 0 )
-        {
-            m_kStereoOff.setSelected(true);
-            m_kStereo_Red_Green.setSelected(false);
-            m_kStereo_Shutter.setSelected(false);
-        }
-        else if ( which == 1 )
-        {
-            m_kStereoOff.setSelected(false);
-            m_kStereo_Red_Green.setSelected(true);
-            m_kStereo_Shutter.setSelected(false);
-        }
-        else
-        {
-            m_kStereoOff.setSelected(false);
-            m_kStereo_Red_Green.setSelected(false);
-            m_kStereo_Shutter.setSelected(true);            
-        }
+    	if ( which >= 0 && which < 3 )
+    	{
+    		m_kStereoModeCB.setSelectedIndex(which);
+    	}
     }
     
     public int getIntensityLevel()
@@ -326,11 +316,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         } else if (radioCustum.isSelected() && (source == radioCustum)) {
             m_kVolumeViewer.CustumBlendMode();
         } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
-        	rayBasedRenderWM.SURMode();
-            m_kVolumeViewer.refreshLighting();
+        	m_kVolumeViewer.SURMode( false );
         } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
-        	rayBasedRenderWM.SURFASTMode();
-            m_kVolumeViewer.refreshLighting();
+        	m_kVolumeViewer.SURMode( true );
         } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
         	rayBasedRenderWM.selfShadow( kSelfShadow.isSelected() );
         if ( (m_kVolumeViewer.getImageB() == null) )
@@ -446,28 +434,18 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          componentsPanel.add(m_kDisplaySurfaceCheck, gbc);
 
          gbc.gridx = 0;
-         ButtonGroup group0 = new ButtonGroup();
-         m_kStereoOff = new JRadioButton( "Stereo OFF", true );
-         m_kStereoOff.setActionCommand( "StereoOFF");
-         m_kStereoOff.addActionListener(this);
          gbc.gridy = 3;
-         componentsPanel.add(m_kStereoOff, gbc);
-         group0.add(m_kStereoOff);
-         
-         m_kStereo_Red_Green = new JRadioButton( "Red/Green Stereo", false );
-         m_kStereo_Red_Green.setActionCommand( "StereoRED");
-         m_kStereo_Red_Green.addActionListener(this);
-         gbc.gridx++;
-         componentsPanel.add(m_kStereo_Red_Green, gbc);
-         group0.add(m_kStereo_Red_Green);
-         
-         m_kStereo_Shutter = new JRadioButton( "Shutter Glasses Stereo", false );
-         m_kStereo_Shutter.setActionCommand( "StereoSHUTTER");
-         m_kStereo_Shutter.addActionListener(this);
-         gbc.gridx++;
-         componentsPanel.add(m_kStereo_Shutter, gbc);
-         group0.add(m_kStereo_Shutter);
-         
+         componentsPanel.add(new JLabel( "Stereo Mode" ), gbc);
+         gbc.gridx = 1;
+         m_kStereoModeCB = new JComboBox(new String[] { "Off", "Red/Green", "Shutter Glasses" });
+         m_kStereoModeCB.addActionListener(this);
+         m_kStereoModeCB.setActionCommand("ChangeStereoMode");
+         m_kStereoModeCB.setAlignmentX(Component.LEFT_ALIGNMENT);
+         m_kStereoModeCB.setFont(MipavUtil.font12);
+         m_kStereoModeCB.setBackground(Color.white);
+         gbc.gridy = 3;
+         componentsPanel.add(m_kStereoModeCB, gbc);
+                  
          gbc.gridx = 0;
          kSelfShadow = new JCheckBox("Self Shadow", false);
          kSelfShadow.setFont(MipavUtil.font12);
@@ -542,7 +520,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 0;
          gbc.gridy = 1;
          blendPanel.add(kSamplesLabelMR, gbc);
-         m_kVolumeSamplesSliderMouseReleased = new JSlider( 0, 1000, (int)(m_kVolumeViewer.getImageA().getExtents()[2]*2.0f) );
+         m_kVolumeSamplesSliderMouseReleased = new JSlider( 0, 1000, 
+        		 (int)Math.max( 700, (m_kVolumeViewer.getImageA().getExtents()[2]*5.0f)) );
          m_kVolumeSamplesSliderMouseReleased.addChangeListener(this);
          rayBasedRenderWM.setVolumeSamplesMouseReleased( m_kVolumeSamplesSliderMouseReleased.getValue()/1000.0f );
          gbc.gridx = 1;
@@ -552,7 +531,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 0;
          gbc.gridy = 2;
          blendPanel.add(kSamplesLabelMD, gbc);
-         m_kVolumeSamplesSliderMouseDragged = new JSlider( 0, 1000, (int)(m_kVolumeViewer.getImageA().getExtents()[2]*2.0f) );
+         m_kVolumeSamplesSliderMouseDragged = new JSlider( 0, 1000, 
+        		 (int)Math.min( 250, m_kVolumeViewer.getImageA().getExtents()[2]*2.0f) );
          m_kVolumeSamplesSliderMouseDragged.addChangeListener(this);
          rayBasedRenderWM.setVolumeSamplesMouseDragged( m_kVolumeSamplesSliderMouseDragged.getValue()/1000.0f );
          gbc.gridx = 1;
