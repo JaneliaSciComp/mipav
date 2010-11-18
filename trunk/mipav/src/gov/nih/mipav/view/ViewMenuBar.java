@@ -470,8 +470,7 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Close all images", "closeAllImages", 0, null, true),       
                 ViewMenuBar.separator, loadMenu, extractImageBItem, closeImageBItem, ViewMenuBar.separator,
                 saveImageItem, saveImageAsItem, captureMenu, ViewMenuBar.separator, dicomMenu, ViewMenuBar.separator,
-                menuBuilder.buildQuickList(), ViewMenuBar.separator,
-                ViewMenuBar.separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)});
+                menuBuilder.buildQuickList(), ViewMenuBar.separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)});
     }
 
     /**
