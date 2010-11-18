@@ -11,10 +11,52 @@ import gov.nih.mipav.view.*;
 /**
  * <p>This Weeks method of inverting the Laplace Transform is a port of MATLAB code. It is obtained from a web page of
  * Andre Weideman called <a href="http://dip.sun.ac.za/~weideman/research/weeks.html">ILT M-Files</a>.</p>
+ * 
  * Note that in Software for an Implementation of Weeks's Method for the Inverse Laplace Transform
  * Problem by B. S. Garbow, G. Giunta, J. N. Lyness, and A. Murli states that for f(t) an entire function,
  * the results are good.  Weeks method does not work where f(t) has a discontinuity, a sqrt(t) singularity at
  * the origin, a log(t) singularity at the origin, or an isolated essential singularity at the origin.
+ * 
+ *Apparently Java rounding does not always occur the same way and InverseLaplaceWeeks magnifies the small
+  rounding differences into 2 totally different paths.  For 2 runs on test case 6 with nLaguerreWeeks = 128.
+  The print outs of 2 different runs were identical for the first 19 pages.  Then on page 20 for run 1:
+  Entering werr2t b = 5.729490377339999 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 7.49999552373415 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 6.514404300769063 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 6.302208848022489 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 6.890866637840145 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 6.658200113810756 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 6.433352852465265 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 6.569329412293346 sig = 1.3525492793447342
+  Exiting werr2t
+
+  On page 20 for run 2:
+  Entering werr2t b = 5.729490377339999 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 7.4999955225879775 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 6.5037420898569716 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 3.541019855868949 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 0.9066039647410506 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 0.41104422954889436 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 0.6003311993613015 sig = 1.3525492793447342
+  Exiting werr2t
+  Entering werr2t b = 0.2540393093650214 sig = 1.3525492793447342
+  Exiting werr2t
+  A difference in b starts in the tenth significant digit with run 1 having
+  b = 7.49999552373415 and run 2 having b = 7.4999955225879775.  The difference
+  quickly takes the 2 runs down 2 entirely different paths. 
  *
  * <p>References:</p>
  *
