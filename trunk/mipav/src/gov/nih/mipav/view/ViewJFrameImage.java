@@ -2753,21 +2753,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                             }
                         case 4:
                             if (image.getExtents()[3] != activeImageNumVolumes) {
-                                int currentSlice = image.getParentFrame().getComponentImage().getSlice();
-                                if(currentSlice > 0 && currentSlice < image.getExtents()[2]-1) {
-                                    image.setSlice(currentSlice+offset);
-                                }
                                 break;
                             }
                         case 3:
-                            //if (image.getExtents()[2] != activeImageNumSlices) {
-                                int currentSlice = image.getParentFrame().getComponentImage().getSlice();
-                                if(currentSlice > 0 && currentSlice < image.getExtents()[2]-1) {
-                                    image.setSlice(currentSlice+offset);
-                                }
-                                break;
-                            //}
-
+                            int currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                            if(currentSlice > 0 && currentSlice < image.getExtents()[2]-1) {
+                                image.setSlice(currentSlice+offset);
+                            }
                     }
                 }
             }
