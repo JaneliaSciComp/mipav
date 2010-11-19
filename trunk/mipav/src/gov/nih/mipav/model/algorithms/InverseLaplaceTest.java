@@ -13,8 +13,7 @@ public class InverseLaplaceTest extends AlgorithmBase {
         Weeks method does not work where f(t) has a discontinuity (#10, #12), a sqrt(t) singularity at
 	    the origin (#2, #9, #14), a log(t) singularity at the origin (#11), or an isolated essential
 	    singularity at the origin(#15).
-	    Apparently Java rounding does not always occur the same way and InverseLaplaceWeeks magnifies the small
-	    rounding differences into 2 totally different paths.  For 2 runs on test case 6 with nLaguerreWeeks = 128.
+	    InverseLaplaceWeeks grows small differences into 2 totally different paths.  For 2 runs on test case 6 with nLaguerreWeeks = 128.
 	    The print outs of 2 different runs were identical for the first 19 pages.  Then on page 20 for run 1:
 		Entering werr2t b = 5.729490377339999 sig = 1.3525492793447342
 		Exiting werr2t
@@ -52,7 +51,8 @@ public class InverseLaplaceTest extends AlgorithmBase {
 		Exiting werr2t
 		A difference in b starts in the tenth significant digit with run 1 having
 	    b = 7.49999552373415 and run 2 having b = 7.4999955225879775.  The difference
-	    quickly takes the 2 runs down 2 entirely different paths. */
+	    quickly takes the 2 runs down 2 entirely different paths. The first difference
+	    occurs sometimes after werr2t is entered and before werr2t is exited. */
 
 	// Number of times to invert for
 	int n = 30;
@@ -274,7 +274,7 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	    	ledenom = ledenom + Math.exp(-t[i]);
 	    }
 	    
-	    for (test = 16; test <= 16; test++) {
+	    for (test = 1; test <= 16; test++) {
 	    
 		    switch (test) {
 		    case 1:
