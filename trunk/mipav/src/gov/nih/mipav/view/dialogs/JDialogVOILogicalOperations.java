@@ -49,6 +49,9 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmVOILogicalOperations;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
@@ -85,7 +88,7 @@ import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.VOIHighlighter;
  *
  */
 public class JDialogVOILogicalOperations extends JDialogScriptableBase implements AlgorithmInterface, VOIStatisticList,
-VOIVectorListener, TreeSelectionListener {
+VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	
 	
 	 /** image and cloned image */
@@ -175,6 +178,10 @@ VOIVectorListener, TreeSelectionListener {
     private VOI selectedVOI;
     
     int index = 0;
+    
+    int logicalOperation;
+    
+    ViewVOIVector processList;
 	
 	
 	
@@ -660,7 +667,7 @@ VOIVectorListener, TreeSelectionListener {
         
         int voiCount = selectedVOIModel.getChildCount(root);
         
-        ViewVOIVector processList = new ViewVOIVector(voiCount);
+        processList = new ViewVOIVector(voiCount);
         
         for(int i=0;i<voiCount;i++) {
         	VOI voi = new VOI((short)i,"voi" + i);
@@ -705,7 +712,7 @@ VOIVectorListener, TreeSelectionListener {
         }
 		
 
-        int logicalOperation = 0;
+        
         
         doVOIImage = false;
         
@@ -748,7 +755,12 @@ VOIVectorListener, TreeSelectionListener {
 	 * 
 	 */
 	protected void setGUIFromParams() {
-		// TODO Auto-generated method stub
+		setLogicalOperation(Integer.valueOf(scriptParameters.getParams().getString("operation")).intValue());
+		setDoVOIImage(Boolean.valueOf(scriptParameters.getParams().getString("doVOIImg")).booleanValue());
+		image = scriptParameters.retrieveInputImage();
+		processList = image.getVOIs();
+		clonedImage = (ModelImage)(image.clone());
+        clonedImage.unregisterAllVOIs();
 
 	}
 
@@ -756,7 +768,25 @@ VOIVectorListener, TreeSelectionListener {
 	 * 
 	 */
 	protected void storeParamsFromGUI() throws ParserException {
-		// TODO Auto-generated method stub
+
+		if(and.isSelected()) {
+        	logicalOperation = AlgorithmVOILogicalOperations.ADD;
+        	
+        }else if(or.isSelected()) {
+        	logicalOperation = AlgorithmVOILogicalOperations.OR;
+        }else {
+        	logicalOperation = AlgorithmVOILogicalOperations.XOR;
+        }
+		scriptParameters.getParams().put(ParameterFactory.newParameter("operation", logicalOperation));
+        
+		boolean doVOIImg = false;
+        if(createVoiImage.isSelected()) {
+        	doVOIImg = true;
+        }
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doVOIImg", doVOIImg));
+        
+        
+		
 
 	}
 
@@ -1763,6 +1793,92 @@ VOIVectorListener, TreeSelectionListener {
             }
         }
     }
+
+
+
+	/**
+	 * 
+	 */
+	public ParameterTable createInputParameters() {
+		final ParameterTable table = new ParameterTable();
+		
+		try {
+		 table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+		}catch(Exception e) {
+			
+		}
+		
+		return table;
+	}
+
+	/**
+	 * 
+	 */
+	public ParameterTable createOutputParameters() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * 
+	 */
+	public ActionMetadata getActionMetadata() {
+		return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("VOI.VOI Logical Operations");
+            }
+
+            public String getDescription() {
+                return new String("VOI Logical Operations");
+            }
+
+            public String getDescriptionLong() {
+                return new String("VOI Logical Operations");
+            }
+
+            public String getShortLabel() {
+                return new String("VOI Logical Operations");
+            }
+
+            public String getLabel() {
+                return new String("VOI Logical Operations");
+            }
+
+            public String getName() {
+                return new String("VOI Logical Operations");
+            }
+        };
+
+	}
+
+	/**
+	 * 
+	 */
+	public String getOutputImageName(String imageParamName) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * 
+	 */
+	public boolean isActionComplete() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+	public void setDoVOIImage(boolean doVOIImage) {
+		this.doVOIImage = doVOIImage;
+	}
+
+	public void setLogicalOperation(int logicalOperation) {
+		this.logicalOperation = logicalOperation;
+	}
+	
+	
+	
+	
 
 
 
