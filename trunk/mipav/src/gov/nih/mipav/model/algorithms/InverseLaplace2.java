@@ -107,7 +107,7 @@ public abstract class InverseLaplace2 {
     private int it;
 
     /** maxBound is a bound on the number of terms used in the Durbin formula. */
-    private final int maxBound = 5000;
+    private final int maxBound = 20000;
 
     /** DOCUMENT ME! */
     private int nex;
