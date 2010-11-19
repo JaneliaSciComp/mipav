@@ -1371,9 +1371,8 @@ public class ModelImage extends ModelStorageBase {
         if (fileInfo != null) {
             // System.out.println(fileInfo[0].getFileDirectory());
             return fileInfo[0].getFileDirectory();
-        } else {
-            return null;
         }
+		return null;
     }
 
     /**
@@ -1386,9 +1385,8 @@ public class ModelImage extends ModelStorageBase {
         if (fileInfo != null) {
             // System.out.println(fileInfo[0].getFileName());
             return fileInfo[0].getFileName();
-        } else {
-            return null;
         }
+		return null;
     }
 
     /**
@@ -3596,23 +3594,43 @@ public class ModelImage extends ModelStorageBase {
      * 
      * @param gmImage ModelImage gradient magnitude image to save
      */
-    public static void saveImage(final ModelImage kImage) {
-        final String fName = kImage.getImageFileName();
-        final String dName = ViewUserInterface.getReference().getDefaultDirectory();
+    public static void saveImage(final ModelImage kImage, String fName, String dName ) {
         final FileIO fileIO = new FileIO();
-
-        fileIO.setQuiet(true);
-
+        fileIO.setQuiet(true);        
         final FileWriteOptions options = new FileWriteOptions(false);
-
         options.setFileDirectory(dName);
         options.setFileName(fName);
         options.setSaveAs(true);
         options.setBeginSlice(0);
+        options.setOptionsSet(true);
         int end = kImage.getExtents().length > 2 ? kImage.getExtents()[2] - 1 : 0;
         options.setEndSlice(end);
         fileIO.writeImage(kImage, options);
     }
+    
+    
+/*
+    * Save the gradient magnitude image into the MIPAV default dir.
+    * 
+    * @param gmImage ModelImage gradient magnitude image to save
+    */
+   public static void saveImage(final ModelImage kImage) {
+       final String fName = kImage.getImageName();
+       final String dName = ViewUserInterface.getReference().getDefaultDirectory();
+       final FileIO fileIO = new FileIO();
+
+       fileIO.setQuiet(true);
+
+       final FileWriteOptions options = new FileWriteOptions(false);
+
+       options.setFileDirectory(dName);
+       options.setFileName(fName);
+       options.setBeginSlice(0);
+       int end = kImage.getExtents().length > 2 ? kImage.getExtents()[2] - 1 : 0;
+       options.setEndSlice(end);
+       fileIO.writeImage(kImage, options);
+   }
+    
 
     /**
      * Save the images transformation matrix in the working directory with the supplied fileName.

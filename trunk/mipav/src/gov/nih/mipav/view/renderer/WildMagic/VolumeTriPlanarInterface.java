@@ -1582,7 +1582,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param bShow on/off.
      */
     public void setGradientMagnitude(final boolean bShow) {
-    	System.err.println( "setGradientMagnitude " + bShow );
         TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
         m_kVolumeImageA.SetGradientMagnitude(m_kVolOpacityPanel.getGradMagA(), false, "A");
         m_kVolumeImageA.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagA());
