@@ -98,6 +98,9 @@ public class InverseLaplaceTest extends AlgorithmBase {
         FitdeHoog11 moddeHoog11;
         FitdeHoog12 moddeHoog12;
         FitdeHoog13 moddeHoog13;
+        FitdeHoog14 moddeHoog14;
+        FitdeHoog15 moddeHoog15;
+        FitdeHoog16 moddeHoog16;
         
         double abscissaPiessens = 0.0;
         double relEpsPiessens = 1.0E-12;
@@ -119,6 +122,9 @@ public class InverseLaplaceTest extends AlgorithmBase {
         FitPiessens11 modPiessens11;
         FitPiessens12 modPiessens12;
         FitPiessens13 modPiessens13;
+        FitPiessens14 modPiessens14;
+        FitPiessens15 modPiessens15;
+        FitPiessens16 modPiessens16;
         
         // An estimate for the maximum of the real parts of the singularities
         // of F. If unknown, set largestPole = 0.0
@@ -141,6 +147,9 @@ public class InverseLaplaceTest extends AlgorithmBase {
         Fitqd11 modqd11;
         Fitqd12 modqd12;
         Fitqd13 modqd13;
+        Fitqd14 modqd14;
+        Fitqd15 modqd15;
+        Fitqd16 modqd16;
         
         double pretWeeks[] = new double[1];
         double sig0Weeks = 0.0;
@@ -177,6 +186,12 @@ public class InverseLaplaceTest extends AlgorithmBase {
         FitWeeks12 modWeeks12;
         FitWeeks13 modPreWeeks13;
         FitWeeks13 modWeeks13;
+        FitWeeks14 modPreWeeks14;
+        FitWeeks14 modWeeks14;
+        FitWeeks15 modPreWeeks15;
+        FitWeeks15 modWeeks15;
+        FitWeeks16 modPreWeeks16;
+        FitWeeks16 modWeeks16;
         
         double[] timeFunction = null;
         double diff;
@@ -259,7 +274,7 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	    	ledenom = ledenom + Math.exp(-t[i]);
 	    }
 	    
-	    for (test = 1; test <= 13; test++) {
+	    for (test = 16; test <= 16; test++) {
 	    
 		    switch (test) {
 		    case 1:
@@ -344,6 +359,9 @@ public class InverseLaplaceTest extends AlgorithmBase {
 		    // test 11: L = 2.419E-9 Le = 2.506E-10
 		    // test 12: L = 0.3619 Le = 0.2655
 		    // test 13: L = 2.735E-9 Le = 1.702E-10
+		    // test 14: L = 1.726E-9 Le = 9.355E-11
+		    // test 15: L = 2.318E-10 Le = 2.000E-11
+		    // test 16: L = 5.066E-9 Le = 1.401E-10
 		    
 		    switch (test) {
 		    case 1:
@@ -411,6 +429,21 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	            moddeHoog13.driver();
 	            timeFunction = moddeHoog13.getTimeFunction();
 	            break;
+		    case 14:
+		    	moddeHoog14 = new FitdeHoog14(t, largestPoledeHoog, toldeHoog);
+	            moddeHoog14.driver();
+	            timeFunction = moddeHoog14.getTimeFunction();
+	            break;
+		    case 15:
+		    	moddeHoog15 = new FitdeHoog15(t, largestPoledeHoog, toldeHoog);
+	            moddeHoog15.driver();
+	            timeFunction = moddeHoog15.getTimeFunction();
+	            break;
+		    case 16:
+		    	moddeHoog16 = new FitdeHoog16(t, largestPoledeHoog, toldeHoog);
+	            moddeHoog16.driver();
+	            timeFunction = moddeHoog16.getTimeFunction();
+	            break;
 		    }
 	
 	        sum = 0.0;
@@ -441,9 +474,12 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        // test 10: For times 0.5 to 5.0 computations terminated
 	        //          Maximum bound on Laplace evaluations was reached
 	        // test 11: L = 1.463E-13 Le = 5.781E-14
-	        // test 12: For times 0.5 to 10.0 computations terminated
+	        // test 12: For times 1.0 to 9.5 except for 2.5 computations terminated
 	        //          Maximum bound on Laplace evaluations was reached
 	        // test 13: L = 2.285E-13 Le = 4.760E-14
+	        // test 14: L = 1.223E-14 Le = 1.909E-14
+	        // test 15: L = 5.748E-14 Le = 5.310E-14
+	        // test 16: L = 2.979E-14 Le = 3.062E-14
 	        
 	        switch (test) {
 	        case 1:
@@ -511,6 +547,21 @@ public class InverseLaplaceTest extends AlgorithmBase {
                         resultPiessens, estErrPiessens, evaluationsPiessens, errStatusPiessens);
                 modPiessens13.driver();
                 break;
+	        case 14:
+	        	modPiessens14 = new FitPiessens14(t, abscissaPiessens, relEpsPiessens, absEpsPiessens,
+                        resultPiessens, estErrPiessens, evaluationsPiessens, errStatusPiessens);
+                modPiessens14.driver();
+                break;
+	        case 15:
+	        	modPiessens15 = new FitPiessens15(t, abscissaPiessens, relEpsPiessens, absEpsPiessens,
+                        resultPiessens, estErrPiessens, evaluationsPiessens, errStatusPiessens);
+                modPiessens15.driver();
+                break;
+	        case 16:
+	        	modPiessens16 = new FitPiessens16(t, abscissaPiessens, relEpsPiessens, absEpsPiessens,
+                        resultPiessens, estErrPiessens, evaluationsPiessens, errStatusPiessens);
+                modPiessens16.driver();
+                break;
 	        }
 	
 	        sum = 0.0;
@@ -559,6 +610,9 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        // test 11: L = 4.345E-9 Le = 5.477E-9
 	        // test 12: L = 0.3535 Le = 0.3072
 	        // test 13: L = 2.743E-8 Le = 2.485E-8
+	        // test 14: L = 7.641E-11 Le = 2.604E-10
+	        // test 15: L = 4.510E-12 Le = 5.666E-12
+	        // test 16: L = 1.685E-10 Le = 5.7578E-10
 	        
 	        switch(test) {
 	        case 1:
@@ -625,6 +679,21 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        	modqd13 = new Fitqd13(10*n+1, tqd[10*n], largestPoleqd, tolqd, matrixSizeParameterqd);
 		        modqd13.driver();
 		        timeFunction = modqd13.getTimeFunction();
+		        break;
+	        case 14:
+	        	modqd14 = new Fitqd14(10*n+1, tqd[10*n], largestPoleqd, tolqd, matrixSizeParameterqd);
+		        modqd14.driver();
+		        timeFunction = modqd14.getTimeFunction();
+		        break;
+	        case 15:
+	        	modqd15 = new Fitqd15(10*n+1, tqd[10*n], largestPoleqd, tolqd, matrixSizeParameterqd);
+		        modqd15.driver();
+		        timeFunction = modqd15.getTimeFunction();
+		        break;
+	        case 16:
+	        	modqd16 = new Fitqd16(10*n+1, tqd[10*n], largestPoleqd, tolqd, matrixSizeParameterqd);
+		        modqd16.driver();
+		        timeFunction = modqd16.getTimeFunction();
 		        break;
 	        }
 	        
@@ -693,6 +762,13 @@ public class InverseLaplaceTest extends AlgorithmBase {
 		    //          nLaguerreWeeks 128: L = 2.244E-7 Le = 5.742E-10
 		    //          nLaguerreWeeks 256: L = 4.205E-7 Le = 1.445E-9
 		    //          nLagueereWeeks 512: L = 2.735E-6 Le = 6.773E-9
+		    // test 14: Does not work with sqrt(t) singularity at the origin
+		    //          nLaguerreWeeks 32: L = 0.01971 Le = 0.05908
+		    // test 15: Does not work with isolated essential singularity at the origin
+		    //          nLaguerreWeeks 32: L = 0.02920 Le = 0.01331
+		    // test 16: nLaguerreWeeks 32: L = 3.994E10 Le = 9.752E7
+		    //          nLaguerreWeeks 64: L = 8.460E-15 Le = 2.025E-16
+		    //          nLaguerreWeeks 128: L = 1.038E10 Le = 2.547E7
 	        
 	        pretWeeks[0] = 0.5;
 	        switch(test) {
@@ -708,7 +784,7 @@ public class InverseLaplaceTest extends AlgorithmBase {
 		        timeFunction = modWeeks1.getTimeFunction();
 		        break;
 	        case 2:
-	        	Preferences.debug("InverseLaplaceWeeks does not work due with sqrt(t) singularity at the origin\n");
+	        	Preferences.debug("InverseLaplaceWeeks does not work with sqrt(t) singularity at the origin\n");
 	        	modPreWeeks2 = new FitWeeks2(pretWeeks, nLaguerreWeeks, sig0Weeks, sigmaxWeeks, bmaxWeeks, tolsWeeks, tolbWeeks);
 		        modPreWeeks2.wpar2();
 		        bWeeks = modPreWeeks2.getBOpt();
@@ -843,6 +919,41 @@ public class InverseLaplaceTest extends AlgorithmBase {
 		        modWeeks13 = new FitWeeks13(t, nLaguerreWeeks, sigWeeks, bWeeks);
 		        modWeeks13.driver();
 		        timeFunction = modWeeks13.getTimeFunction();
+		        break;
+	        case 14:
+	        	Preferences.debug("InverseLaplaceWeeks does not work with sqrt(t) singularity at the origin\n");
+	        	modPreWeeks14 = new FitWeeks14(pretWeeks, nLaguerreWeeks, sig0Weeks, sigmaxWeeks, bmaxWeeks, tolsWeeks, tolbWeeks);
+		        modPreWeeks14.wpar2();
+		        bWeeks = modPreWeeks14.getBOpt();
+		        sigWeeks = modPreWeeks14.getSigOpt();
+		        Preferences.debug("bWeeks = " + bWeeks + " sigWeeks = " + sigWeeks + "\n");
+		        
+		        modWeeks14 = new FitWeeks14(t, nLaguerreWeeks, sigWeeks, bWeeks);
+		        modWeeks14.driver();
+		        timeFunction = modWeeks14.getTimeFunction();
+		        break;
+	        case 15:
+	        	Preferences.debug("InverseLaplaceWeeks does not work with an isolated essential singularity at the origin\n");
+	        	modPreWeeks15 = new FitWeeks15(pretWeeks, nLaguerreWeeks, sig0Weeks, sigmaxWeeks, bmaxWeeks, tolsWeeks, tolbWeeks);
+		        modPreWeeks15.wpar2();
+		        bWeeks = modPreWeeks15.getBOpt();
+		        sigWeeks = modPreWeeks15.getSigOpt();
+		        Preferences.debug("bWeeks = " + bWeeks + " sigWeeks = " + sigWeeks + "\n");
+		        
+		        modWeeks15 = new FitWeeks15(t, nLaguerreWeeks, sigWeeks, bWeeks);
+		        modWeeks15.driver();
+		        timeFunction = modWeeks15.getTimeFunction();
+		        break;
+	        case 16:
+	        	modPreWeeks16 = new FitWeeks16(pretWeeks, nLaguerreWeeks, sig0Weeks, sigmaxWeeks, bmaxWeeks, tolsWeeks, tolbWeeks);
+		        modPreWeeks16.wpar2();
+		        bWeeks = modPreWeeks16.getBOpt();
+		        sigWeeks = modPreWeeks16.getSigOpt();
+		        Preferences.debug("bWeeks = " + bWeeks + " sigWeeks = " + sigWeeks + "\n");
+		        
+		        modWeeks16 = new FitWeeks16(t, nLaguerreWeeks, sigWeeks, bWeeks);
+		        modWeeks16.driver();
+		        timeFunction = modWeeks16.getTimeFunction();
 		        break;
 	        }
 	        
@@ -1702,6 +1813,149 @@ public class InverseLaplaceTest extends AlgorithmBase {
         }
 
     }
+    
+    class FitdeHoog14 extends InverseLaplace {
+
+        /**
+         * Creates a new FitExpModel object.
+         *
+         * @param  time         DOCUMENT ME!
+         * @param  largestPole  DOCUMENT ME!
+         * @param  tol          DOCUMENT ME!
+         */
+        public FitdeHoog14(double[] time, double largestPole, double tol) {
+            super(time, largestPole, tol);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   realS  DOCUMENT ME!
+         * @param   imagS  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double[][] fitToLaplace(double realS, double[] imagS) {
+
+            // The Laplace transform of (exp(-0.25*t) - exp(-0.5*t))/sqrt(4*PI*t*t*t) = sqrt(s + 0.5) - sqrt(s + 0.25)
+            double[][] ans = new double[imagS.length][2];
+            int i;
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+
+            for (i = 0; i < imagS.length; i++) {
+            	zsqrt(realS + 0.5, imagS[i], realPart, imagPart);
+            	zsqrt(realS + 0.25, imagS[i], realPart2, imagPart2);
+
+                // real part
+                ans[i][0] = realPart[0] - realPart2[0];
+                ans[i][1] = imagPart[0] - imagPart2[0];
+            }
+
+            return ans;
+        }
+
+    }
+    
+    class FitdeHoog15 extends InverseLaplace {
+
+        /**
+         * Creates a new FitExpModel object.
+         *
+         * @param  time         DOCUMENT ME!
+         * @param  largestPole  DOCUMENT ME!
+         * @param  tol          DOCUMENT ME!
+         */
+        public FitdeHoog15(double[] time, double largestPole, double tol) {
+            super(time, largestPole, tol);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   realS  DOCUMENT ME!
+         * @param   imagS  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double[][] fitToLaplace(double realS, double[] imagS) {
+
+            // The Laplace transform of 2*exp(-4/t)/sqrt(pi*t*t*t) = exp(-4*sqrt(s))
+            double[][] ans = new double[imagS.length][2];
+            int i;
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+
+            for (i = 0; i < imagS.length; i++) {
+            	zsqrt(realS, imagS[i], realPart, imagPart);
+            	zexp(-4.0*realPart[0], -4.0*imagPart[0], realPart2, imagPart2);
+            	
+                // real part
+                ans[i][0] = realPart2[0];
+                ans[i][1] = imagPart2[0];
+            }
+
+            return ans;
+        }
+
+    }
+    
+    class FitdeHoog16 extends InverseLaplace {
+
+        /**
+         * Creates a new FitdeHoog16 object.
+         *
+         * @param  time         DOCUMENT ME!
+         * @param  largestPole  DOCUMENT ME!
+         * @param  tol          DOCUMENT ME!
+         */
+        public FitdeHoog16(double[] time, double largestPole, double tol) {
+            super(time, largestPole, tol);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   realS  DOCUMENT ME!
+         * @param   imagS  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double[][] fitToLaplace(double realS, double[] imagS) {
+
+            // The Laplace transform of sin(t)/t = arctan(1/s)
+        	// arctan(x) = (i/2)*ln((i + x)/(i - x))
+            double[][] ans = new double[imagS.length][2];
+            int i;
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+            double realPart3[] = new double[1];
+            double imagPart3[] = new double[1];
+            double realPart4[] = new double[1];
+            double imagPart4[] = new double[1];
+            int ierr[] = new int[1];
+
+            for (i = 0; i < imagS.length; i++) {
+            	zdiv(1.0, 0.0, realS, imagS[i], realPart, imagPart);
+            	zdiv(realPart[0], imagPart[0] + 1.0, -realPart[0], -imagPart[0] + 1.0, realPart2, imagPart2);
+            	zlog(realPart2[0], imagPart2[0], realPart3, imagPart3, ierr);
+            	zmlt(0.0, 0.5, realPart3[0], imagPart3[0], realPart4, imagPart4);
+
+                // real part
+                ans[i][0] = realPart4[0];
+                ans[i][1] = imagPart4[0];
+            }
+
+            return ans;
+        }
+
+    }
 	
 	class FitPiessens1 extends InverseLaplace2 {
 
@@ -2235,6 +2489,141 @@ public class InverseLaplaceTest extends AlgorithmBase {
         	zmlt(realIn,imagIn,realIn,imagIn,realPart,imagPart);
         	zmlt(realPart[0] + 1.0, imagPart[0], realPart[0] + 1.0, imagPart[0], realPart2, imagPart2);
         	zdiv(realPart[0] - 1.0, imagPart[0], realPart2[0], imagPart2[0], realOut, imagOut);
+
+            return;
+        }
+    }
+	
+	class FitPiessens14 extends InverseLaplace2 {
+
+        /**
+         * Creates a new FitSineModel object.
+         *
+         * @param  time         DOCUMENT ME!
+         * @param  abscissa     DOCUMENT ME!
+         * @param  relEps       DOCUMENT ME!
+         * @param  absEps       DOCUMENT ME!
+         * @param  result       DOCUMENT ME!
+         * @param  estErr       DOCUMENT ME!
+         * @param  evaluations  DOCUMENT ME!
+         * @param  errStatus    DOCUMENT ME!
+         */
+        public FitPiessens14(double[] time, double abscissa, double relEps, double absEps, double[] result,
+                            double[] estErr, int[] evaluations, int[] errStatus) {
+            super(time, abscissa, relEps, absEps, result, estErr, evaluations, errStatus);
+
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  realIn   DOCUMENT ME!
+         * @param  imagIn   DOCUMENT ME!
+         * @param  realOut  DOCUMENT ME!
+         * @param  imagOut  DOCUMENT ME!
+         */
+        public void fitToLaplace(double realIn, double imagIn, double[] realOut, double[] imagOut) {
+        	
+        	// The Laplace transform of (exp(-0.25*t) - exp(-0.5*t))/sqrt(4*PI*t*t*t) = sqrt(s + 0.5) - sqrt(s + 0.25)
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+
+        	zsqrt(realIn + 0.5, imagIn, realPart, imagPart);
+        	zsqrt(realIn + 0.25, imagIn, realPart2, imagPart2);
+            realOut[0] = realPart[0] - realPart2[0];
+            imagOut[0] = imagPart[0] - imagPart2[0];
+
+            return;
+        }
+    }
+	
+	class FitPiessens15 extends InverseLaplace2 {
+
+        /**
+         * Creates a new FitSineModel object.
+         *
+         * @param  time         DOCUMENT ME!
+         * @param  abscissa     DOCUMENT ME!
+         * @param  relEps       DOCUMENT ME!
+         * @param  absEps       DOCUMENT ME!
+         * @param  result       DOCUMENT ME!
+         * @param  estErr       DOCUMENT ME!
+         * @param  evaluations  DOCUMENT ME!
+         * @param  errStatus    DOCUMENT ME!
+         */
+        public FitPiessens15(double[] time, double abscissa, double relEps, double absEps, double[] result,
+                            double[] estErr, int[] evaluations, int[] errStatus) {
+            super(time, abscissa, relEps, absEps, result, estErr, evaluations, errStatus);
+
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  realIn   DOCUMENT ME!
+         * @param  imagIn   DOCUMENT ME!
+         * @param  realOut  DOCUMENT ME!
+         * @param  imagOut  DOCUMENT ME!
+         */
+        public void fitToLaplace(double realIn, double imagIn, double[] realOut, double[] imagOut) {
+        	
+            // The Laplace transform of 2*exp(-4/t)/sqrt(pi*t*t*t) = exp(-4*sqrt(s))
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+
+        	zsqrt(realIn,imagIn,realPart,imagPart);
+        	zexp(-4.0*realPart[0], -4.0*imagPart[0], realOut, imagOut);
+        	
+            return;
+        }
+    }
+	
+	class FitPiessens16 extends InverseLaplace2 {
+
+        /**
+         * Creates a new FitPiessens16 object.
+         *
+         * @param  time         DOCUMENT ME!
+         * @param  abscissa     DOCUMENT ME!
+         * @param  relEps       DOCUMENT ME!
+         * @param  absEps       DOCUMENT ME!
+         * @param  result       DOCUMENT ME!
+         * @param  estErr       DOCUMENT ME!
+         * @param  evaluations  DOCUMENT ME!
+         * @param  errStatus    DOCUMENT ME!
+         */
+        public FitPiessens16(double[] time, double abscissa, double relEps, double absEps, double[] result,
+                            double[] estErr, int[] evaluations, int[] errStatus) {
+            super(time, abscissa, relEps, absEps, result, estErr, evaluations, errStatus);
+
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  realIn   DOCUMENT ME!
+         * @param  imagIn   DOCUMENT ME!
+         * @param  realOut  DOCUMENT ME!
+         * @param  imagOut  DOCUMENT ME!
+         */
+        public void fitToLaplace(double realIn, double imagIn, double[] realOut, double[] imagOut) {
+        	
+        	// The Laplace transform of sin(t)/t = arctan(1/s)
+        	// arctan(x) = (i/2)*ln((i + x)/(i - x))
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+            double realPart3[] = new double[1];
+            double imagPart3[] = new double[1];
+            int ierr[] = new int[1];
+
+        	zdiv(1.0, 0.0, realIn, imagIn, realPart, imagPart);
+        	zdiv(realPart[0], imagPart[0] + 1.0, -realPart[0], -imagPart[0] + 1.0, realPart2, imagPart2);
+        	zlog(realPart2[0], imagPart2[0], realPart3, imagPart3, ierr);
+            zmlt(realPart3[0], imagPart3[0], 0.0, 0.5, realOut,imagOut);
 
             return;
         }
@@ -2852,6 +3241,152 @@ public class InverseLaplaceTest extends AlgorithmBase {
                 // real part
                 ans[i][0] = realPart3[0];
                 ans[i][1] = imagPart3[0];
+            }
+
+            return ans;
+        	
+        }
+	}
+	
+	class Fitqd14 extends InverseLaplaceqd {
+
+        /**
+         * Creates a new FitExpModelqd object.
+         *
+         * @param  timePoints           DOCUMENT ME!
+         * @param  endTime              DOCUMENT ME!
+         * @param  largestPole          DOCUMENT ME!
+         * @param  tol                  DOCUMENT ME!
+         * @param  matrixSizeParameter  DOCUMENT ME!
+         */
+        public Fitqd14(int timePoints, double endTime, double largestPole, double tol, int matrixSizeParameter) {
+            super(timePoints, endTime, largestPole, tol, matrixSizeParameter);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   realS  DOCUMENT ME!
+         * @param   imagS  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double[][] fitToLaplace(double realS, double[] imagS) {
+        	// The Laplace transform of (exp(-0.25*t) - exp(-0.5*t))/sqrt(4*PI*t*t*t) = sqrt(s + 0.5) - sqrt(s + 0.25)
+            double[][] ans = new double[imagS.length][2];
+            int i;
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+
+            for (i = 0; i < imagS.length; i++) {
+            	zsqrt(realS + 0.5, imagS[i], realPart, imagPart);
+            	zsqrt(realS + 0.25, imagS[i], realPart2, imagPart2);
+
+                // real part
+                ans[i][0] = realPart[0] - realPart2[0];
+                ans[i][1] = imagPart[0] - imagPart2[0];
+            }
+
+            return ans;
+        	
+        }
+	}
+	
+	class Fitqd15 extends InverseLaplaceqd {
+
+        /**
+         * Creates a new FitExpModelqd object.
+         *
+         * @param  timePoints           DOCUMENT ME!
+         * @param  endTime              DOCUMENT ME!
+         * @param  largestPole          DOCUMENT ME!
+         * @param  tol                  DOCUMENT ME!
+         * @param  matrixSizeParameter  DOCUMENT ME!
+         */
+        public Fitqd15(int timePoints, double endTime, double largestPole, double tol, int matrixSizeParameter) {
+            super(timePoints, endTime, largestPole, tol, matrixSizeParameter);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   realS  DOCUMENT ME!
+         * @param   imagS  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double[][] fitToLaplace(double realS, double[] imagS) {
+        	// The Laplace transform of 2*exp(-4/t)/sqrt(pi*t*t*t) = exp(-4*sqrt(s))
+            double[][] ans = new double[imagS.length][2];
+            int i;
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+
+            for (i = 0; i < imagS.length; i++) {
+            	zsqrt(realS, imagS[i], realPart, imagPart);
+            	zexp(-4.0*realPart[0], -4.0*imagPart[0], realPart2, imagPart2);
+            	
+                // real part
+                ans[i][0] = realPart2[0];
+                ans[i][1] = imagPart2[0];
+            }
+
+            return ans;
+        	
+        }
+	}
+	
+	class Fitqd16 extends InverseLaplaceqd {
+
+        /**
+         * Creates a new FitExpModelqd object.
+         *
+         * @param  timePoints           DOCUMENT ME!
+         * @param  endTime              DOCUMENT ME!
+         * @param  largestPole          DOCUMENT ME!
+         * @param  tol                  DOCUMENT ME!
+         * @param  matrixSizeParameter  DOCUMENT ME!
+         */
+        public Fitqd16(int timePoints, double endTime, double largestPole, double tol, int matrixSizeParameter) {
+            super(timePoints, endTime, largestPole, tol, matrixSizeParameter);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   realS  DOCUMENT ME!
+         * @param   imagS  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double[][] fitToLaplace(double realS, double[] imagS) {
+        	// The Laplace transform of sin(t)/t = arctan(1/s)
+        	// arctan(x) = (i/2)*ln((i + x)/(i - x))
+            double[][] ans = new double[imagS.length][2];
+            int i;
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+            double realPart3[] = new double[1];
+            double imagPart3[] = new double[1];
+            double realPart4[] = new double[1];
+            double imagPart4[] = new double[1];
+            int ierr[] = new int[1];
+
+            for (i = 0; i < imagS.length; i++) {
+            	zdiv(1.0, 0.0, realS, imagS[i], realPart, imagPart);
+            	zdiv(realPart[0], imagPart[0] + 1.0, -realPart[0], -imagPart[0] + 1.0, realPart2, imagPart2);
+            	zlog(realPart2[0], imagPart2[0], realPart3, imagPart3, ierr);
+            	zmlt(0.0, 0.5, realPart3[0], imagPart3[0], realPart4, imagPart4);
+
+                // real part
+                ans[i][0] = realPart4[0];
+                ans[i][1] = imagPart4[0];
             }
 
             return ans;
@@ -3678,6 +4213,202 @@ public class InverseLaplaceTest extends AlgorithmBase {
                 // real part
                 ans[i][0] = realPart3[0];
                 ans[i][1] = imagPart3[0];
+            }
+
+            return ans;
+        	
+        }
+        
+        
+
+    }
+	
+	class FitWeeks14 extends InverseLaplaceWeeks {
+
+        /**
+         * Creates a new FitExpModelWeeks object.
+         *
+         * @param  time       DOCUMENT ME!
+         * @param  nLaguerre  DOCUMENT ME!
+         * @param  sig        DOCUMENT ME!
+         * @param  b          DOCUMENT ME!
+         */
+        public FitWeeks14(double[] time, int nLaguerre, double sig, double b) {
+            super(time, nLaguerre, sig, b);
+        }
+
+        /**
+         * Creates a new FitExpModelWeeks object.
+         *
+         * @param  time       DOCUMENT ME!
+         * @param  nLaguerre  DOCUMENT ME!
+         * @param  sig0       DOCUMENT ME!
+         * @param  sigmax     DOCUMENT ME!
+         * @param  bmax       DOCUMENT ME!
+         * @param  tols       DOCUMENT ME!
+         * @param  tolb       DOCUMENT ME!
+         */
+        public FitWeeks14(double[] time, int nLaguerre, double sig0, double sigmax, double bmax, double tols,
+                                double tolb) {
+            super(time, nLaguerre, sig0, sigmax, bmax, tols, tolb);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   realS  DOCUMENT ME!
+         * @param   imagS  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double[][] fitToLaplace(double realS, double[] imagS) {
+        	// The Laplace transform of (exp(-0.25*t) - exp(-0.5*t))/sqrt(4*PI*t*t*t) = sqrt(s + 0.5) - sqrt(s + 0.25)
+            double[][] ans = new double[imagS.length][2];
+            int i;
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+
+            for (i = 0; i < imagS.length; i++) {
+            	zsqrt(realS + 0.5, imagS[i], realPart, imagPart);
+            	zsqrt(realS + 0.25, imagS[i], realPart2, imagPart2);
+
+                // real part
+                ans[i][0] = realPart[0] - realPart2[0];
+                ans[i][1] = imagPart[0] - imagPart2[0];
+            }
+
+            return ans;
+        	
+        }
+
+    }
+	
+	class FitWeeks15 extends InverseLaplaceWeeks {
+
+        /**
+         * Creates a new FitExpModelWeeks object.
+         *
+         * @param  time       DOCUMENT ME!
+         * @param  nLaguerre  DOCUMENT ME!
+         * @param  sig        DOCUMENT ME!
+         * @param  b          DOCUMENT ME!
+         */
+        public FitWeeks15(double[] time, int nLaguerre, double sig, double b) {
+            super(time, nLaguerre, sig, b);
+        }
+
+        /**
+         * Creates a new FitExpModelWeeks object.
+         *
+         * @param  time       DOCUMENT ME!
+         * @param  nLaguerre  DOCUMENT ME!
+         * @param  sig0       DOCUMENT ME!
+         * @param  sigmax     DOCUMENT ME!
+         * @param  bmax       DOCUMENT ME!
+         * @param  tols       DOCUMENT ME!
+         * @param  tolb       DOCUMENT ME!
+         */
+        public FitWeeks15(double[] time, int nLaguerre, double sig0, double sigmax, double bmax, double tols,
+                                double tolb) {
+            super(time, nLaguerre, sig0, sigmax, bmax, tols, tolb);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   realS  DOCUMENT ME!
+         * @param   imagS  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double[][] fitToLaplace(double realS, double[] imagS) {
+        	// The Laplace transform of 2*exp(-4/t)/sqrt(pi*t*t*t) = exp(-4*sqrt(s))
+            double[][] ans = new double[imagS.length][2];
+            int i;
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+
+            for (i = 0; i < imagS.length; i++) {
+            	zsqrt(realS, imagS[i], realPart, imagPart);
+            	zexp(-4.0*realPart[0], -4.0*imagPart[0], realPart2, imagPart2);
+            	
+                // real part
+                ans[i][0] = realPart2[0];
+                ans[i][1] = imagPart2[0];
+            }
+
+            return ans;
+        	
+        }
+
+    }
+	
+	class FitWeeks16 extends InverseLaplaceWeeks {
+
+        /**
+         * Creates a new FitWeeks16 object.
+         *
+         * @param  time       DOCUMENT ME!
+         * @param  nLaguerre  DOCUMENT ME!
+         * @param  sig        DOCUMENT ME!
+         * @param  b          DOCUMENT ME!
+         */
+        public FitWeeks16(double[] time, int nLaguerre, double sig, double b) {
+            super(time, nLaguerre, sig, b);
+        }
+
+        /**
+         * Creates a new FitExpModelWeeks object.
+         *
+         * @param  time       DOCUMENT ME!
+         * @param  nLaguerre  DOCUMENT ME!
+         * @param  sig0       DOCUMENT ME!
+         * @param  sigmax     DOCUMENT ME!
+         * @param  bmax       DOCUMENT ME!
+         * @param  tols       DOCUMENT ME!
+         * @param  tolb       DOCUMENT ME!
+         */
+        public FitWeeks16(double[] time, int nLaguerre, double sig0, double sigmax, double bmax, double tols,
+                                double tolb) {
+            super(time, nLaguerre, sig0, sigmax, bmax, tols, tolb);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   realS  DOCUMENT ME!
+         * @param   imagS  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double[][] fitToLaplace(double realS, double[] imagS) {
+        	// The Laplace transform of sin(t)/t = arctan(1/s)
+        	// arctan(x) = (i/2)*ln((i + x)/(i - x))
+            double[][] ans = new double[imagS.length][2];
+            int i;
+            double realPart[] = new double[1];
+            double imagPart[] = new double[1];
+            double realPart2[] = new double[1];
+            double imagPart2[] = new double[1];
+            double realPart3[] = new double[1];
+            double imagPart3[] = new double[1];
+            double realPart4[] = new double[1];
+            double imagPart4[] = new double[1];
+            int ierr[] = new int[1];
+
+            for (i = 0; i < imagS.length; i++) {
+            	zdiv(1.0, 0.0, realS, imagS[i], realPart, imagPart);
+            	zdiv(realPart[0], imagPart[0] + 1.0, -realPart[0], -imagPart[0] + 1.0, realPart2, imagPart2);
+            	zlog(realPart2[0], imagPart2[0], realPart3, imagPart3, ierr);
+            	zmlt(0.0, 0.5, realPart3[0], imagPart3[0], realPart4, imagPart4);
+
+                // real part
+                ans[i][0] = realPart4[0];
+                ans[i][1] = imagPart4[0];
             }
 
             return ans;
