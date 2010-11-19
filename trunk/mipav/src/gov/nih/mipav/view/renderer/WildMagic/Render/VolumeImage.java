@@ -338,7 +338,8 @@ public class VolumeImage implements Serializable {
     public void CopyNormalFiles(final int i, final ModelImage kImage) {
         kImage.calcMinMax();
         JDialogBase.updateFileInfo( m_kImage, kImage );
-        kImage.saveImage(m_kDir, kImage.getImageName(), FileUtility.XML, false, false);
+		ModelImage.saveImage( kImage, kImage.getImageName() + ".xml", m_kDir );
+        //kImage.saveImage(m_kDir, kImage.getImageName(), FileUtility.XML, false, false);
         m_kNormal[i] = VolumeImage.UpdateData(kImage, 0, null, m_kNormal[i], m_kNormalMapTarget, kImage.getImageName(),
                 true);
     }
@@ -532,7 +533,7 @@ public class VolumeImage implements Serializable {
     			VolumeImageNormalGM.main(this, m_akImages[i], m_kNormalMapTarget, i, ModelImage.makeImageName(m_kImage
     					.getFileInfo(0).getFileName(), "_Normal_" + i));
     		}
-    		m_bNormalsInit = false;
+    		m_bNormalsInit = true;
     	}
     }
 
@@ -1114,7 +1115,7 @@ public class VolumeImage implements Serializable {
     			{
     				m_kVolumeGM[i] = VolumeImage.UpdateData(kGradientMagnitude, i, null, m_kVolumeGM[i], 
     						m_kVolumeGMTarget, m_kVolumeGM[i].GetName(), true);
-    				kGradientMagnitude.saveImage(m_kDir, kImageName, FileUtility.XML, false, false);
+    				ModelImage.saveImage( kGradientMagnitude, kImageName + ".xml", m_kDir );
     			}
     			else
     			{
@@ -1138,7 +1139,10 @@ public class VolumeImage implements Serializable {
     					kCalcMagnitude.actionPerformed(new ActionEvent(this, 0, "OK"));
     					kCalcMagnitude = null;
     					if (kImageGM != null) {
-    						kImageGM.saveImage(m_kDir, kImageName, FileUtility.XML, false, false);
+    						kImageGM.setImageDirectory( m_kDir );
+    						kImageGM.setImageName( kImageName + ".xml" );
+    						ModelImage.saveImage(kImageGM, kImageName + ".xml", m_kDir );
+    						//kImageGM.saveImage(m_kDir, kImageName + ".xml", FileUtility.XML, false, false);
     					}
     				}
     				if (kImageGM == null) {
@@ -1189,8 +1193,10 @@ public class VolumeImage implements Serializable {
         			kCalcLaplacian.setSeparateThread(false);
         			kCalcLaplacian.actionPerformed(new ActionEvent(this, 0, "OK"));
         			if (kImageGMGM != null) {
-        				kImageGMGM.calcMinMax();
-        				kImageGMGM.saveImage(m_kDir, kImageName, FileUtility.XML, false, false);
+        				kImageGMGM.calcMinMax(); 
+        				kImageGMGM.setImageDirectory( m_kDir );
+        				kImageGMGM.setImageName( kImageName + ".xml" );
+        				ModelImage.saveImage(kImageGMGM, kImageName + ".xml", m_kDir );
         			}
         		}
         		if (kImageGMGM != null) {
@@ -1258,17 +1264,17 @@ public class VolumeImage implements Serializable {
             kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), new String("_Normal_"
                     + 0));              
             m_kNormal[0] = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound,
-                    new byte[iXBound * iYBound * iZBound * 4], kImageName);
+                    (byte[])null, kImageName);
             
             kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), new String("_GM_"
                     + 0));              
             m_kVolumeGM[0] = new GraphicsImage(type, iXBound, iYBound, iZBound,
-                    new byte[size], kImageName);
+            		(byte[])null, kImageName);
 
             kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), new String(
                     "_Laplacian_" + 0));
             m_kVolumeGMGM[0] = new GraphicsImage(type, iXBound, iYBound, iZBound,
-                    new byte[size], kImageName);
+            		(byte[])null, kImageName);
         } else {
             m_iTimeSteps = aiExtents[3];
             final int[] aiSubset = new int[] {aiExtents[0], aiExtents[1], aiExtents[2]};
@@ -1295,17 +1301,17 @@ public class VolumeImage implements Serializable {
                 kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), new String("_Normal_"
                         + i));              
                 m_kNormal[i] = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound,
-                        new byte[iXBound * iYBound * iZBound * 4], kImageName);
+                		(byte[])null, kImageName);
 
                 kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), new String("_GM_"
                         + i));              
                 m_kVolumeGM[i] = new GraphicsImage(type, iXBound, iYBound, iZBound,
-                        new byte[size], kImageName);
+                		(byte[])null, kImageName);
 
                 kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), new String(
                         "_Laplacian_" + i));
                 m_kVolumeGMGM[i] = new GraphicsImage(type, iXBound, iYBound, iZBound,
-                        new byte[size], kImageName);
+                		(byte[])null, kImageName);
             }
         }
         

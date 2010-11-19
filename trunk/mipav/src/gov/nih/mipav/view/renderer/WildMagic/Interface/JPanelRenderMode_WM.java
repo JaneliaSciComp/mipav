@@ -521,7 +521,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridy = 1;
          blendPanel.add(kSamplesLabelMR, gbc);
          m_kVolumeSamplesSliderMouseReleased = new JSlider( 0, 1000, 
-        		 (int)Math.max( 700, (m_kVolumeViewer.getImageA().getExtents()[2]*5.0f)) );
+        		 (int)Math.min( 700, (m_kVolumeViewer.getImageA().getExtents()[2]*5.0f)) );
          m_kVolumeSamplesSliderMouseReleased.addChangeListener(this);
          rayBasedRenderWM.setVolumeSamplesMouseReleased( m_kVolumeSamplesSliderMouseReleased.getValue()/1000.0f );
          gbc.gridx = 1;
