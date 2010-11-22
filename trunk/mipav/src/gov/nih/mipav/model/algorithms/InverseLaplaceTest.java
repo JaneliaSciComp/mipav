@@ -51,8 +51,10 @@ public class InverseLaplaceTest extends AlgorithmBase {
 		Exiting werr2t
 		A difference in b starts in the tenth significant digit with run 1 having
 	    b = 7.49999552373415 and run 2 having b = 7.4999955225879775.  The difference
-	    quickly takes the 2 runs down 2 entirely different paths. The first difference
-	    occurs sometimes after werr2t is entered and before werr2t is exited. */
+	    quickly takes the 2 runs down 2 entirely different paths. The differences
+	    occur in a wcoef call to FFTUtility, probably due to rounding differences.
+	    The next step would be to see if a DoubleDouble version of FFTUtility improves
+	    performance. */
 
 	// Number of times to invert for
 	int n = 30;
