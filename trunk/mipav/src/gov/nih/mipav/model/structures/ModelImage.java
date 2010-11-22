@@ -1156,7 +1156,7 @@ public class ModelImage extends ModelStorageBase {
      * @return binary mask of all VOIs returned as a BitSet object
      */
     public BitSet generateVOIMask() {
-        return this.generateVOIMask(Preferences.is(Preferences.PREF_USE_VOI_XOR));
+        return this.generateVOIMask(false);
     }
 
     /**

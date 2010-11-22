@@ -172,7 +172,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     private int quickPaintBrushIndex = -1;
 
     /** tells whether or not to XOR when creating binary masks (allowing holes). */
-    private boolean useXOR = Preferences.is(Preferences.PREF_USE_VOI_XOR);
+    //private boolean useXOR = Preferences.is(Preferences.PREF_USE_VOI_XOR);
 
     /** Reference to the magnification tool. */
     private JDialogZoom zoomDialog = null;
@@ -772,7 +772,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
             System.err.println("PaintMask");
-            getActiveImage().setMask(getActiveImage().generateVOIMask(useXOR, true));
+            getActiveImage().setMask(getActiveImage().generateVOIMask(false, true));
             componentImage.setPaintMask(getActiveImage().getMask());
             updateImages(true);
             getActiveImage().notifyImageDisplayListeners();
@@ -4199,10 +4199,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @param useXOR boolean is XOR being used for VOIs
      */
-    public void setUseVOIXOR(final boolean useXOR) {
+    /*public void setUseVOIXOR(final boolean useXOR) {
         this.useXOR = useXOR;
         menuBuilder.setMenuItemSelected("XOR", useXOR);
-    }
+    }*/
 
     /**
      * Sets the magnification of Image B. Allocates the image buffers so that it can be displayed properly.
@@ -4498,9 +4498,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @return boolean use XOR?
      */
-    public boolean useXOR() {
+   /* public boolean useXOR() {
         return this.useXOR;
-    }
+    }*/
 
     /**
      * Closes window and disposes of frame and component.

@@ -285,7 +285,7 @@ public class Preferences {
     public static final String PREF_LAST_STACK_FLAG = "LastStackFlag";
 
     /** Constant that indicates whether to use VOI XOR'ing. */
-    public static final String PREF_USE_VOI_XOR = "UseVOIXOR";
+    //public static final String PREF_USE_VOI_XOR = "UseVOIXOR";
 
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";

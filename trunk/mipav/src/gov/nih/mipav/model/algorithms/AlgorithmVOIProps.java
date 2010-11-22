@@ -1310,7 +1310,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             int zDim = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
             
             BitSet mask = new BitSet( xDim * yDim * zDim );
-            kVOI.createBinaryMask3D(mask, xDim, yDim, Preferences.is(Preferences.PREF_USE_VOI_XOR), false);
+            kVOI.createBinaryMask3D(mask, xDim, yDim, false, false);
             
             double largestDistance = 0;
             if(distanceFlag) {
