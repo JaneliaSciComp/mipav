@@ -3102,7 +3102,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             zDim = 1;
         }
         mask = new BitSet(imageSize);
-        VOIs.VOIAt(i).createBinaryMask3D(mask, xDim, yDim, selectedImage.getParentFrame().useXOR(), false);
+        VOIs.VOIAt(i).createBinaryMask3D(mask, xDim, yDim, false, false);
         if (selectedImage.isColorImage()) {
             buffer = new double[4 * imageSize];
         } else if (selectedImage.isComplexImage()) {

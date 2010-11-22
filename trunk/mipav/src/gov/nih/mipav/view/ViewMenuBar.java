@@ -804,8 +804,8 @@ public class ViewMenuBar {
                                                 null, false),
                                         menuBuilder.buildMenuItem("Paint -> Short mask", "PaintToShortMask", 0, null,
                                                 false),}),
-                                menuBuilder.buildCheckBoxMenuItem("Allow VOI holes (XOR)", "XOR", Preferences
-                                        .is(Preferences.PREF_USE_VOI_XOR)),
+                                //menuBuilder.buildCheckBoxMenuItem("Allow VOI holes (XOR)", "XOR", Preferences
+                                        //.is(Preferences.PREF_USE_VOI_XOR)),
                                 //menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS, false),
                                 menuBuilder.buildMenuItem("VOI Logical Operations", "VOILogicalOperations", 0, null, true),
                                 ViewMenuBar.separator,

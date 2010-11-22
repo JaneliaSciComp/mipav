@@ -205,7 +205,7 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
         }
         BitSet mask = new BitSet( size );
         int[] extents = image.getExtents();
-        srcContour.setMaskSlice( mask, extents[0], Preferences.is(Preferences.PREF_USE_VOI_XOR), VOI.ADDITIVE ); 
+        srcContour.setMaskSlice( mask, extents[0], false, VOI.ADDITIVE ); 
         
         int[] extentsSlice = new int[]{extents[0],extents[1]};
         ModelImage maskImage = new ModelImage(ModelStorageBase.BOOLEAN, extentsSlice, "Binary Image");

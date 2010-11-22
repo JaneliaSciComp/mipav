@@ -2899,8 +2899,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @param doXOR boolean use XOR for VOIs
      */
-    public void setUseVOIXOR(final boolean doXOR) {
-        Preferences.setProperty(Preferences.PREF_USE_VOI_XOR, Boolean.toString(doXOR));
+   /* public void setUseVOIXOR(final boolean doXOR) {
+        Preferences.setProperty(false, Boolean.toString(doXOR));
 
         final Enumeration<ModelImage> e = this.getRegisteredImages();
 
@@ -2912,7 +2912,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         }
 
-    }
+    }*/
 
     /**
      * Change whether the GUI should be visible. The order is strage because we want the main frame to be first on the

@@ -499,18 +499,18 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         else if (command.equals(CustomUIBuilder.PARAM_SAVE_ALL_LABEL.getActionCommand())) {
             saveLabels(true);
         } 
-        else if (command.equals("XOR")) {
+        /*else if (command.equals("XOR")) {
             if( event.getSource() instanceof JCheckBoxMenuItem )
             {
                 ViewUserInterface.getReference().setUseVOIXOR(((JCheckBoxMenuItem)event.getSource()).isSelected());
             }
-        } 
+        } */
         else if (command.equals("PaintMask")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
-            getActiveImage().setMask(getActiveImage().generateVOIMask(Preferences.is(Preferences.PREF_USE_VOI_XOR), true));
+            getActiveImage().setMask(getActiveImage().generateVOIMask(false, true));
             m_kParent.setPaintMask(getActiveImage().getMask());
             updateDisplay();
             getActiveImage().notifyImageDisplayListeners();
@@ -528,7 +528,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if (getActiveVOICount() == 0) {
                     selectAllVOIs(true);
                 }
-                maskImage = getActiveImage().generateBinaryImage(Preferences.is(Preferences.PREF_USE_VOI_XOR), false);
+                maskImage = getActiveImage().generateBinaryImage(false, false);
                
                 if (maskImage != null) {
                     maskImage.setImageName(getActiveImage().getImageName() + "_bmask");
@@ -564,7 +564,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if (getActiveVOICount() == 0) {
                     selectAllVOIs(true);
                 }
-                shortImage = getActiveImage().generateShortImage(1, Preferences.is(Preferences.PREF_USE_VOI_XOR), false);
+                shortImage = getActiveImage().generateShortImage(1, false, false);
 
                 if (shortImage != null) {
                     shortImage.setImageName(getActiveImage().getImageName() + "_smask");
@@ -600,7 +600,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if (getActiveVOICount() == 0) {
                     selectAllVOIs(true);
                 }
-                uByteImage = getActiveImage().generateUnsignedByteImage(1, Preferences.is(Preferences.PREF_USE_VOI_XOR), false);
+                uByteImage = getActiveImage().generateUnsignedByteImage(1, false, false);
 
                 if (uByteImage != null) {
                     uByteImage.setImageName(getActiveImage().getImageName() + "_ubmask");
@@ -635,7 +635,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
             try {
 
-                maskImage = getActiveImage().generateBinaryImage(Preferences.is(Preferences.PREF_USE_VOI_XOR), true);
+                maskImage = getActiveImage().generateBinaryImage(false, true);
 
                 if (maskImage != null) {
                     maskImage.setImageName(getActiveImage().getImageName() + "_bmask");
@@ -670,7 +670,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
             try {
 
-                shortImage = getActiveImage().generateShortImage(1, Preferences.is(Preferences.PREF_USE_VOI_XOR), true);
+                shortImage = getActiveImage().generateShortImage(1, false, true);
 
                 if (shortImage != null) {
                     shortImage.setImageName(getActiveImage().getImageName() + "_smask");
@@ -704,7 +704,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
             try {
 
-                uByteImage = getActiveImage().generateUnsignedByteImage(1, Preferences.is(Preferences.PREF_USE_VOI_XOR), true);
+                uByteImage = getActiveImage().generateUnsignedByteImage(1, false, true);
 
                 if (uByteImage != null) {
                     uByteImage.setImageName(getActiveImage().getImageName() + "_ubmask");
@@ -4185,7 +4185,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             zDim = 1;
         }
         mask = new BitSet(imageSize);
-        VOIs.VOIAt(i).createBinaryMask3D(mask, xDim, yDim, selectedImage.getParentFrame().useXOR(), false);
+        VOIs.VOIAt(i).createBinaryMask3D(mask, xDim, yDim, false, false);
         if (selectedImage.isColorImage()) {
             buffer = new double[4 * imageSize];
         } else if (selectedImage.isComplexImage()) {

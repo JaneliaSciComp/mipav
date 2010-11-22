@@ -508,7 +508,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             deselectMask();
 
             /** I changed this to onlyActive is false... you can switch */
-            image.getParentFrame().setImageB(image.generateUnsignedByteImage(1, image.getParentFrame().useXOR(), false));
+            image.getParentFrame().setImageB(image.generateUnsignedByteImage(1, false, false));
             image.getParentFrame().getLUTb().makeStripedLUT();
 
             // import the VOI labels as well
