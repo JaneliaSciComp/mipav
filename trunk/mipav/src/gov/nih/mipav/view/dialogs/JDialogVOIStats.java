@@ -5,8 +5,6 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.event.VOIEvent;
-import gov.nih.mipav.model.structures.event.VOIListener;
 
 import gov.nih.mipav.view.*;
 
@@ -87,7 +85,7 @@ public class JDialogVOIStats extends JDialogBase
     protected JButton helpButton;
 
     /** DOCUMENT ME! */
-    protected JCheckBox checkboxAdditiveOrSubtractive;
+    //protected JCheckBox checkboxAdditiveOrSubtractive;
 
     /** DOCUMENT ME! */
     protected JCheckBox checkboxBoundary;
@@ -317,11 +315,13 @@ public class JDialogVOIStats extends JDialogBase
                 voi.setBoundingBoxFlag(false);
             }
 
-            if (checkboxAdditiveOrSubtractive.isSelected() == true) {
+            /*if (checkboxAdditiveOrSubtractive.isSelected() == true) {
                 voi.setPolarity(VOI.ADDITIVE);
             } else {
                 voi.setPolarity(VOI.SUBTRACTIVE);
-            }
+            }*/
+            
+            voi.setPolarity(VOI.ADDITIVE);
 
             if (checkboxIncludeForProcessing.isSelected() == true) {
                 voi.setProcess(true);
@@ -1232,11 +1232,11 @@ public class JDialogVOIStats extends JDialogBase
 
             ViewUserInterface.getReference().setUseVOIName(checkboxVOIName.isSelected());
 
-            if (voi.getPolarity() == voi.ADDITIVE) {
+            /*if (voi.getPolarity() == voi.ADDITIVE) {
                 checkboxAdditiveOrSubtractive.setSelected(true);
             } else {
                 checkboxAdditiveOrSubtractive.setSelected(false);
-            }
+            }*/
 
             checkboxIncludeForProcessing.setSelected(voi.getProcess());
 
@@ -1492,8 +1492,8 @@ public class JDialogVOIStats extends JDialogBase
         checkboxBoundingBox = new JCheckBox("Show contour bounding box");
         checkboxBoundingBox.setFont(serif12);
 
-        checkboxAdditiveOrSubtractive = new JCheckBox("Use additive polarity for VOI");
-        checkboxAdditiveOrSubtractive.setFont(serif12);
+        //checkboxAdditiveOrSubtractive = new JCheckBox("Use additive polarity for VOI");
+        //checkboxAdditiveOrSubtractive.setFont(serif12);
 
         checkboxIncludeForProcessing = new JCheckBox("Include for processing");
         checkboxIncludeForProcessing.setFont(serif12);
@@ -1509,7 +1509,7 @@ public class JDialogVOIStats extends JDialogBase
         JPanel checkboxPanel = new JPanel();
         checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
         checkboxPanel.add(checkboxBoundingBox);
-        checkboxPanel.add(checkboxAdditiveOrSubtractive);
+        //checkboxPanel.add(checkboxAdditiveOrSubtractive);
         checkboxPanel.add(checkboxIncludeForProcessing);
         checkboxPanel.add(checkboxVOIName);
         checkboxPanel.add(checkboxBoundary);

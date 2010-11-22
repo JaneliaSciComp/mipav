@@ -131,7 +131,7 @@ public class VOI extends ModelSerialCloneable {
 	private float opacity;
 
 	/** Indicates if the VOI should mask ones or mask as zeros. */
-	private int polarity;
+	private int polarity = ADDITIVE;
 
 	/** If true this flag indicates that the VOI should be included (applied) when processing the image. */
 	private boolean process;
