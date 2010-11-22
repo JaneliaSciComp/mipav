@@ -8,7 +8,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.FileNotFoundException;
 
-import javax.swing.JDialog;
+import javax.swing.WindowConstants;
 
 
 /**
@@ -17,7 +17,7 @@ import javax.swing.JDialog;
  * windowClosing(), it should call super.windowClosing() in the first line of the method. The subclass's frame should
  * also call windowClosing(null) directly when a cancel or close button is pressed.
  */
-public abstract class JDialogStandalonePlugin extends JDialogBase implements WindowListener {
+public class JDialogStandalonePlugin extends JDialogBase implements WindowListener {
     /**
      * Passthrough to JDialogBase constructor.
      * 
@@ -36,7 +36,7 @@ public abstract class JDialogStandalonePlugin extends JDialogBase implements Win
      * 
      * @see JDialogBase
      */
-    public JDialogStandalonePlugin(boolean modal) {
+    public JDialogStandalonePlugin(final boolean modal) {
         super(modal);
 
         setWindowSettings();
@@ -50,7 +50,7 @@ public abstract class JDialogStandalonePlugin extends JDialogBase implements Win
      * 
      * @see JDialogBase
      */
-    public JDialogStandalonePlugin(Frame parent, boolean modal) {
+    public JDialogStandalonePlugin(final Frame parent, final boolean modal) {
         super(parent, modal);
 
         setWindowSettings();
@@ -64,7 +64,7 @@ public abstract class JDialogStandalonePlugin extends JDialogBase implements Win
      * 
      * @see JDialogBase
      */
-    public JDialogStandalonePlugin(Dialog parent, boolean modal) {
+    public JDialogStandalonePlugin(final Dialog parent, final boolean modal) {
         super(parent, modal);
 
         setWindowSettings();
@@ -76,10 +76,10 @@ public abstract class JDialogStandalonePlugin extends JDialogBase implements Win
      * 
      * @param event Event that triggered this function.
      */
-    public void windowClosing(WindowEvent event) {
+    public void windowClosing(final WindowEvent event) {
         cancelFlag = true;
 
-        if (isExitRequired()) {
+        if (JDialogStandalonePlugin.isExitRequired()) {
             ViewUserInterface.getReference().windowClosing(event);
         }
     }
@@ -100,10 +100,10 @@ public abstract class JDialogStandalonePlugin extends JDialogBase implements Win
      * @param window The window to set up.
      */
     public void setWindowSettings() {
-        if (isExitRequired()) {
-            setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        if (JDialogStandalonePlugin.isExitRequired()) {
+            setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         } else {
-            setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         }
 
         try {
@@ -112,7 +112,7 @@ public abstract class JDialogStandalonePlugin extends JDialogBase implements Win
 
             // no setIconImage() for JDialog in Java 1.5 API
             // setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-        } catch (FileNotFoundException error) {
+        } catch (final FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
                     + ">.  Check that this file is available.\n");
         }
@@ -123,40 +123,47 @@ public abstract class JDialogStandalonePlugin extends JDialogBase implements Win
      * 
      * @param event the window event.
      */
-    public void windowActivated(WindowEvent event) {}
+    public void windowActivated(final WindowEvent event) {}
 
     /**
      * Do nothing.
      * 
      * @param event the window event.
      */
-    public void windowDeactivated(WindowEvent event) {}
+    public void windowDeactivated(final WindowEvent event) {}
 
     /**
      * Do nothing.
      * 
      * @param event the window event.
      */
-    public void windowOpened(WindowEvent event) {}
+    public void windowOpened(final WindowEvent event) {}
 
     /**
      * Do nothing.
      * 
      * @param event the window event.
      */
-    public void windowClosed(WindowEvent event) {}
+    public void windowClosed(final WindowEvent event) {}
 
     /**
      * Do nothing.
      * 
      * @param event the window event.
      */
-    public void windowIconified(WindowEvent event) {}
+    public void windowIconified(final WindowEvent event) {}
 
     /**
      * Do nothing.
      * 
      * @param event the window event.
      */
-    public void windowDeiconified(WindowEvent event) {}
+    public void windowDeiconified(final WindowEvent event) {}
+
+    /**
+     * Do nothing. Gives subclasses the option to not include an actionPerformed method implementation.
+     * 
+     * @param event The action event.
+     */
+    public void actionPerformed(final ActionEvent event) {}
 }
