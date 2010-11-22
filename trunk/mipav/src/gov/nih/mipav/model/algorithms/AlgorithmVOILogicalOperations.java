@@ -50,6 +50,16 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
     /** flag indicating whether output should be VOI image or mask image **/
     protected boolean doVoiImage;
     
+    private AlgorithmMorphology2D alg2D;
+    
+    private AlgorithmMorphology3D alg3D;
+    
+    private int min = 0;
+    
+    private int max = 1000000000;
+    
+    private int kernel = 0;
+    
 
      
     /**
@@ -146,10 +156,36 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 				finalMaskImage.importData(0, finalBitSet, true);
 				
 				if(doVoiImage) {
+					
+					if(operation == XOR) {
+						
+						if(finalMaskImage.getNDims() == 2) {
+							 alg2D = new AlgorithmMorphology2D(finalMaskImage, kernel, 0, AlgorithmMorphology2D.ID_OBJECTS, 0,
+                                     0, 0, 0, true);
+							 alg2D.setMinMax(min, max);
+							
+							 alg2D.run();
+							
+						}else if (finalMaskImage.getNDims() == 3) {
+							 alg3D = new AlgorithmMorphology3D(finalMaskImage, kernel, 0, AlgorithmMorphology3D.ID_OBJECTS, 0,
+                                     0, 0, 0, true);
+							 alg3D.setMinMax(min, max);
+							 
+							 alg3D.run();
+							
+						}
+						
+						finalMaskImage.notifyImageDisplayListeners(null, true);
+						
+					}
 
 					AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(finalMaskImage);
 
 		            VOIExtractionAlgo.run();
+		            
+		            finalMaskImage.groupVOIs();
+		            
+		            finalMaskImage.notifyImageDisplayListeners(null, true);
 		            
 		            VOIVector kVOIs = finalMaskImage.getVOIs();
 		            
@@ -249,10 +285,32 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 				
 				
 				if(doVoiImage) {
+					
+					if(operation == XOR) {
+						if(finalMaskImage.getNDims() == 2) {
+							 alg2D = new AlgorithmMorphology2D(finalMaskImage, kernel, 0, AlgorithmMorphology2D.ID_OBJECTS, 0,
+                                     0, 0, 0, true);
+							 alg2D.setMinMax(min, max);
+							
+							 alg2D.run();
+							
+						}else if (finalMaskImage.getNDims() == 3) {
+							 alg3D = new AlgorithmMorphology3D(finalMaskImage, kernel, 0, AlgorithmMorphology3D.ID_OBJECTS, 0,
+                                     0, 0, 0, true);
+							 alg3D.setMinMax(min, max);
+							 
+							 alg3D.run();
+							
+						}
+						
+						finalMaskImage.notifyImageDisplayListeners(null, true);
+						
+					}
 
 					AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(finalMaskImage);
 
 		            VOIExtractionAlgo.run();
+		           
 		            
 		            VOIVector kVOIs = finalMaskImage.getVOIs();
 		            
@@ -263,6 +321,7 @@ public class AlgorithmVOILogicalOperations extends AlgorithmBase {
 		            }
 		            
 		            finalMaskImage.disposeLocal();
+
 				}else {
 					
 					clonedImage.disposeLocal();

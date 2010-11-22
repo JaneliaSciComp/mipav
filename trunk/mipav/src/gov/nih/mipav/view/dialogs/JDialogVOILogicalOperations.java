@@ -795,7 +795,18 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if(doVOIImage) {
+
+	        VOIVector kVOIs = clonedImage.getVOIs();
+	        for ( int i = 0; i < kVOIs.size(); i++ )
+	        {
+	            kVOIs.elementAt(i).setAllActive(true);
+	        }
+	        clonedImage.groupVOIs();
+			
+			
 			new ViewJFrameImage(clonedImage);
+
+			
 		}else {
 			ModelImage finalMaskImage = ((AlgorithmVOILogicalOperations)algorithm).getFinalMaskImage();
 			new ViewJFrameImage(finalMaskImage);
