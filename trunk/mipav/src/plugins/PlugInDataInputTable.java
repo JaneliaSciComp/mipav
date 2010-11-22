@@ -228,7 +228,7 @@ public class PlugInDataInputTable extends JPanel implements Observer{
 		OMElement e = null;
         try {
         	System.out.println("Processing: "+targetDataStruct);
-			e = PlugInDataEntryTool.getClient().getDataDictionary(targetDataStruct);
+			e = PlugInDialogDataEntryTool.getClient().getDataDictionary(targetDataStruct);
 		} catch (AxisFault e1) {
 			e1.printStackTrace();
 		}
