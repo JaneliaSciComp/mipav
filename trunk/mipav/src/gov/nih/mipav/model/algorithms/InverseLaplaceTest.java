@@ -13,48 +13,10 @@ public class InverseLaplaceTest extends AlgorithmBase {
         Weeks method does not work where f(t) has a discontinuity (#10, #12), a sqrt(t) singularity at
 	    the origin (#2, #9, #14), a log(t) singularity at the origin (#11), or an isolated essential
 	    singularity at the origin(#15).
-	    InverseLaplaceWeeks grows small differences into 2 totally different paths.  For 2 runs on test case 6 with nLaguerreWeeks = 128.
-	    The print outs of 2 different runs were identical for the first 19 pages.  Then on page 20 for run 1:
-		Entering werr2t b = 5.729490377339999 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 7.49999552373415 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 6.514404300769063 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 6.302208848022489 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 6.890866637840145 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 6.658200113810756 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 6.433352852465265 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 6.569329412293346 sig = 1.3525492793447342
-		Exiting werr2t
-
-		On page 20 for run 2:
-		Entering werr2t b = 5.729490377339999 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 7.4999955225879775 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 6.5037420898569716 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 3.541019855868949 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 0.9066039647410506 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 0.41104422954889436 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 0.6003311993613015 sig = 1.3525492793447342
-		Exiting werr2t
-		Entering werr2t b = 0.2540393093650214 sig = 1.3525492793447342
-		Exiting werr2t
-		A difference in b starts in the tenth significant digit with run 1 having
-	    b = 7.49999552373415 and run 2 having b = 7.4999955225879775.  The difference
-	    quickly takes the 2 runs down 2 entirely different paths. The differences
-	    occur in a wcoef call to FFTUtility, probably due to rounding differences.
-	    The next step would be to see if a DoubleDouble version of FFTUtility improves
-	    performance. */
+	    InverseLaplaceWeeks grows small differences into 2 totally different paths.  The difference was
+	    traced to a call by wcoef to double precision FFTUtility and the variability was greatly reduced
+	    by instead calling a DoubleDouble precision FFTUtilityEP. I achieved the 9 good cases cited above
+	    when I used FFTUtilityEP with nLaguerreWeeks = 512 and 1024. */
 
 	// Number of times to invert for
 	int n = 30;
@@ -157,7 +119,7 @@ public class InverseLaplaceTest extends AlgorithmBase {
         double sig0Weeks = 0.0;
         double sigmaxWeeks = 30.0;
         double bmaxWeeks = 30.0;
-        int nLaguerreWeeks = 32;
+        int nLaguerreWeeks = 512;
         double tolsWeeks = 1.0e-9;
         double tolbWeeks = 1.0e-9;
         double bWeeks;
@@ -715,7 +677,8 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        Preferences.debug("Exponential weighted root mean square error = " + Le + "\n");
 	        
 		    Preferences.debug("Weeks algorithm\n");
-	        // Answers can vary greatly on different runs
+	        // Answers can vary greatly on different runs with InverselaplaceWeeks
+		    // calling double precision FFTUtility.
 	        // test 1: nLaguerreWeeks 16: L = 248262 Le = 671.4
 	        //         nLaguerreWeeks 32: L = 8.899E-8 Le = 3.166E-10
 	        //         nLaguerreWeeks 64: L = 5.781E-5 Le = 1.467E-7
@@ -771,6 +734,117 @@ public class InverseLaplaceTest extends AlgorithmBase {
 		    // test 16: nLaguerreWeeks 32: L = 3.994E10 Le = 9.752E7
 		    //          nLaguerreWeeks 64: L = 8.460E-15 Le = 2.025E-16
 		    //          nLaguerreWeeks 128: L = 1.038E10 Le = 2.547E7
+		    // For InverseLaplaceWeeks calling DoubleDouble FFTUtilityEP for
+		    // nLaguerreWeeks = 32 and 64 for 3 runs only test case 3 varied.  
+		    // Answers in the other test cases remained the same; even
+		    // test case 3 stayed the same for 3 runs with nLaguerreWeeks = 128, 256, 512, and 1024.
+		    // test 1: nLaguerreWeeks 32 L = 5.695E-5 Le = 1.635E-7
+		    //                        64 L = 5.321E-10 Le = 1.537E-12
+		    //                       128 L = 9.220E-7 Le = 2.990E-9
+		    //                       256 L = 6.664E-13 Le = 2.598E-15
+		    //                       512 L = 2.692E-12 Le = 1.061E-14
+		    //                      1024 L = 3.132E-13 Le = 5.547E-15
+		    // test 2: Does not work with sqrt(t) singularity at the origin
+		    //         nLaguerreWeeks 32 L = 0.1824 Le = 0.2484
+		    //                        64 L = 0.1824 Le = 0.2484
+		    //                       128 L = 0.1824 Le = 0.2484
+		    //                       256 L = 0.1824 Le = 0.2484
+		    //                       512 L = 0.1824 Le = 0.2484
+		    //                      1024 L = 0.1824 Le = 0.2484
+		    // test 3: nLaguerreWeeks 32 L = 154228.0 Le = 376.9
+		    //                        32 L = 4.151E8 Le = 1017602.3
+		    //                        32 L = 4.154E-14 Le = 2.643E-16
+		    //                        64 L = 4.254E-4 Le = 1.105E-6
+		    //                        64 L = 3.577E-4 Le = 8.802E-7
+		    //                        64 L = 1.525E-5 Le = 3.972E-8
+		    //                       128 L = 8.349E-10 Le = 3.122E-12
+		    //                       256 L = 7.115E-13 Le = 3.901E-15
+		    //                       512 L = 7.244E-15 Le = 1.437E-15
+		    //                      1024 L = 3.161E-15 Le = 2.860E-15
+		    // test 4: nLaguerreWeeks 32 L = 2506245.99 Le = 6127.1065
+		    //                        64 L = 1.774E-5 Le = 4.358E-8
+		    //                       128 L = 5.384E-5 Le = 1.418E-7
+		    //                       256 L = 2.388E-7 Le = 6.422E-10
+		    //                       512 L = 2.515E-5 Le = 6.397E-8
+		    //                      1024 L = 1.38E-8 Le = 4.253E-11
+		    // test 5: nLaguerreWeeks 32 L = 1.888E-11 Le = 6.202E-14
+		    //                        64 L = 11.99 Le = 0.02928
+		    //                       128 L = 1.438E-6 Le = 4.667E-9
+		    //                       256 L = 5.330E-14 Le = 1.136E-15
+		    //                       512 L = 7.524E-15 Le = 4.158E-15
+		    //                      1024 L = 9.731E-15 Le = 1.213E-14
+		    // test 6: nLaguerreWeeks 32 L = 9.136E-8 Le = 2.918E-10
+		    //                        64 L = 3695.84 Le = 9.749
+		    //                       128 L = 14.04 Le = 0.03522
+		    //                       256 L = 3.132E-4 Le = 1.195E-6
+		    //                       512 L = 5.633E-5 Le = 1.432E-7
+		    //                      1024 L = 7.379E-4 Le = 1.806E-6
+		    // test 7: nLaguerreWeeks 32 L = 3.235E-5 Le = 8.639E-8
+		    //                        64 L = 0.5391 Le = 0.001325
+		    //                       128 L = 9.816E-11 Le = 2.710E-13
+		    //                       256 L = 1.296E-13 Le = 7.655E-16
+		    //                       512 L = 6.182E-14 Le = 1.048E-15
+		    //                      1024 L = 1.414E-8 Le = 4.074E-11
+		    // test 8: nLaguerreWeeks 32 L = 1.421E7 Le = 44644.4
+		    //                        64 L = 14873.6 Le = 37.469
+		    //                       128 L = 41834.2 Le = 102.1
+		    //                       256 L = 4.098E-5 Le = 1.033E-7
+		    //                       512 L = 1.709E-5 Le = 5.283E-8
+		    //                      1024 L = 1.061E-5 Le = 2.844E-8
+		    // test 9: Does not work with sqrt(t) singularity at the origin
+		    //         nLaguerreWeeks 32: L = 0.2911 Le = 0.6206
+		    //                        64: L = 0.2911 Le = 0.6206
+		    //                       128: L = 0.2911 Le = 0.6206
+		    //                       256: L = 0.2911 Le = 0.6206
+		    //                       512: L = 0.2911 Le = 0.6206
+		    //                      1024: L = 0.2911 Le = 0.6206
+		    // test 10: Does not work with discontinuity
+		    //         nLaguerreWeeks 32: L = 1.008E123 Le = 2.460E120
+		    //                        64: L = 1.578E126 Le = 3.850E123
+		    //                       128: L = 1.487E126 Le = 3.630E123
+		    //                       256: L = 9.301E125 Le = 2.269E123
+		    //                       512: L = 2.902E124 Le = 7.083E121
+		    //                      1024: L = 4.127E122 Le = 1.007E120
+		    // test 11: Does not work with log(t) singularity at the origin
+		    //         nLaguerreWeeks 32: L = 0.009816 Le = 0.02211
+		    //                        64: L = 0.005507 Le = 0.01426
+		    //                       128: L = 0.003883 Le = 0.01139
+		    //                       256: L = 0.002498 Le = 0.006338
+		    //                       512: L = 0.001986 Le = 0.005605
+		    //                      1024: L = 0.001056 Le = 0.002829
+		    // test 12: Does not work with discontinuity
+		    //         nLaguerreWeeks 32: L = 1.937E137 Le = 4.728E134
+		    //                        64: L = Infinity, Le = Infinity
+		    //                       128: L = Infinity, Le = Infinity
+		    //                       256: L = Infinity, Le = Infinity
+		    //                       512: L = Infinity, Le = Infinity
+		    //                      1024: L = Infinity, Le = Infinity
+		    // test 13: nLaguerreWeeks 32 L = 1.026E-6 Le = 2.955E-9
+		    //                         64 L = 0.1997 Le = 4.905E-4
+		    //                        128 L = 0.4025 Le = 9.872E-4
+		    //                        256 L = 0.001107 Le = 2.880E-6
+		    //                        512 L = 9.119E-9 Le = 2.360E-11
+		    //                       1024 L = 7.625E-4 Le = 1.956E-6
+		    // test 14: Does not work with sqrt(t) singularity at the origin
+		    //          nLaguerreWeeks 32: L = 0.01971 Le = 0.05908
+		    //                         64: L = 0.01971 Le = 0.05908
+		    //                        128: L = 0.01971 Le = 0.05908
+		    //                        256: L = 0.01971 Le = 0.05908
+		    //                        512: L = 0.01971 Le = 0.05908
+		    //                       1024: L = 0.01971 Le = 0.05908
+		    // test 15: Does not work with isolated essential singularity at the origin
+		    //          nLaguerreWeeks 32: L = 0.02920 Le = 0.01331
+		    //                         64: L = 0.02803 Le = 0.007897
+		    //                        128: L = 8.928E13 Le = 3.569E12
+		    //                        256: L = 2.340E57 Le = 5.710E54
+		    //                        512: L = 5.178E55 Le = 1.263E53
+		    //                       1024: L = 6.299E57 Le = 1.537E55
+		    // test 16: nLaguerreWeeks 32: L = 1.251E9 Le = 3062218.29
+		    //                         64: L = 3.061E-4 Le = 7.660E-7
+		    //                        128: L = 5.671E-5 Le = 1.930E-7
+		    //                        256: L = 2.047E20 Le = 4.999E17
+		    //                        512: L = 8.307E-10 Le = 2.703E-12
+		    //                       1024: L = 1.751E-12 Le = 6.059E-15
 	        
 	        pretWeeks[0] = 0.5;
 	        switch(test) {
