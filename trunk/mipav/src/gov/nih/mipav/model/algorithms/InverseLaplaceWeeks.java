@@ -448,7 +448,7 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
         double tempR;
         double tempI;
         int iComp;
-        FFTUtility fft;
+        FFTUtilityEP fft;
         double[][] a = new double[M][2];
         double arg;
 
@@ -475,7 +475,7 @@ public abstract class InverseLaplaceWeeks implements RealFunctionOfOneVariable {
             fftI[iComp] = tempI;
         }
 
-        fft = new FFTUtility(fftR, fftI, 1, M, 1, -1, FFTUtility.FFT);
+        fft = new FFTUtilityEP(fftR, fftI, 1, M, 1, -1, FFTUtility.FFT);
         fft.run();
         fft.finalize();
         fft = null;
