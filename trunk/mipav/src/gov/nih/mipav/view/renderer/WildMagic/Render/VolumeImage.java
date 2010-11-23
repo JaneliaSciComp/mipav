@@ -1,10 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
-import gov.nih.mipav.util.MipavMath;
-
-import gov.nih.mipav.model.algorithms.AlgorithmTransform;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -19,7 +15,22 @@ import java.nio.Buffer;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibGraphics.Rendering.*;
 
-
+/** *
+ *  The VolumeImage class provides an interface between the MIPAV ModelImage and the 2D and 3D Textures used to render
+ *  the ModelImage on the GPU. The VolumeImage creates the supporting Texture and GraphicImage objects that pass
+ *  the ModelImage data to the GPU. It also creates Texture and GraphicsImage objects for the ModelImage Look-up Table (LUT)
+ *  and the ModelImage opacity transfer function.  Other textures that are used for advanced volume rendering, such as
+ *  a normal map for surface rendering, and the gradient-magnitude and laplace images for the multi-histogram rendering are
+ *  calculated and passed on-demand to the GPU when the user selects these options in the Volume-Renderer user-interface.
+ *  
+ *  The VolumeImage data structure handles all GPU content for rendering one ModelImage. All Textures and GraphicsImages
+ *  are initialized and stored in the VolumeImage. When needed by the renderer they are loaded onto the GPU. Any images
+ *  that are derived from the ModelImage: Normal map, Gradient Magnitude, Laplace, are either read from file or calculated 
+ *  and then written to file.  The supporting files are stored in a directory on disk located next to the original ModelImage.
+ *  The directory is named with the ModelImage name followed by "_RenderFiles".
+ *  
+ *  
+ */
 public class VolumeImage implements Serializable {
     /**  */
     private static final long serialVersionUID = -7254697711265907746L;
@@ -43,6 +54,7 @@ public class VolumeImage implements Serializable {
 
     /** Data storage for normals: */
     private GraphicsImage[] m_kNormal;
+	/**	Set to true if the Normal Map has been initialized. */
 	private boolean m_bNormalsInit = false;
 
     /** Texture object for normal map: */
@@ -121,19 +133,21 @@ public class VolumeImage implements Serializable {
 
     private float[] m_fGMMax;
 
+
+    /* Default Constructor */
+    public VolumeImage() {}
+    
     /**
-     * Create a Volume image with the input ModelImage.
+     * Create a Volume image with the input ModelImage. The supporting images for advanced volume rendering, such as
+     * the normal map, gradient magnitude and laplace images are generated on-demand and stored in a directory for 
+     * later use. The directory is created if it does not already exist, with the ModelImage name + "_RenderFiles" as
+     * the directory name.
      * 
      * @param kImage input ModelImage
      * @param kPostfix Postfix for images 'A' or 'B'
-     * @param bCompute when true re-compute the image gradient mag, etc. when false read from disk.
-     * @param kDir directory for storing calculated images
-     * @param iFilterType filter type for resampling image
-     * @param aiExtents target extents.
+     * @param kProgress progress bar
+     * @param iProgress progress bar increment
      */
-
-    public VolumeImage() {}
-
     public VolumeImage(final ModelImage kImage, final String kPostfix, final ViewJProgressBar kProgress, final int iProgress) {
         m_kPostfix = new String(kPostfix);
         String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), "");
@@ -150,11 +164,13 @@ public class VolumeImage implements Serializable {
 
     /**
      * Copy the data from the input GraphicsImage and return a new ModelImage of that data.
+     * Any changes to the GraphicsImage that occur only on the GPU can first be written from
+     * the GPU back into the GraphicsImage CPU data storage. This enables calculations that
+     * are performed on the GPU to be written back into a ModelImage data structure.
      * 
-     * @return new ModelImage from Volume Texture on GPU.
      * @param kImage Graphics Image to copy
      * @param bSwap when true convert from RGBA (graphics format) to ARGB (ModelImage format)
-     * @return new ModelImage
+     * @return new ModelImage from Volume Texture on GPU.
      */
     public static ModelImage CreateImageFromTexture(final GraphicsImage kImage, final boolean bSwap) {
         final int iXBound = kImage.GetBound(0);
@@ -233,12 +249,17 @@ public class VolumeImage implements Serializable {
     }
 
     /**
-     * Update the image volume data on the GPU.
+     * When a ModelImage changes on the CPU, this function is used to update the ModelImage
+     * data on the CPU.
      * 
-     * @param kImage the new ModelImage
-     * @param kVolumeImage the volume data image.
-     * @param kVolumeTexture the volume data texture.
-     * @param kPostFix the postfix string for the image name.
+     * @param kImage Modified ModelImage to copy into the GPU Texture and GraphicsImage
+     * @param iTimeSlice time value for 4D image, 0 otherwise
+     * @param kNewImage a new ModelImage (always 3D) that the data or data subset for 4D image can be copied into (when non-null).
+     * @param kVolumeImage GraphicsImage that will hold the ModelImage data
+     * @param kVolumeTexture Texture object containing the GraphicsImage
+     * @param kImageName new image name for the new ModelImage.
+     * @param bSwap when true swap the ARGB (ModelImage) color data representation to a RGBA (GPU) color representation.
+     * @return
      */
     public static GraphicsImage UpdateData(final ModelImage kImage, final int iTimeSlice, final ModelImage kNewImage,
             final GraphicsImage kVolumeImage, final Texture kVolumeTexture, final String kImageName, final boolean bSwap) {
@@ -298,7 +319,13 @@ public class VolumeImage implements Serializable {
         return kReturn;
     }
 
+
     /**
+     * Creates a new GraphicsImage for the input ModelSimpleImage. The ModelSimpleImage data is 
+     * referenced by the new GraphicsImage and will be passed to the GPU as a texture.
+     * @param kImage input ModelSimpleImage.
+     * @param kImageName name for the GraphicsImage.
+     * @return a new GraphcisImage.
      */
     public static GraphicsImage UpdateData(final ModelSimpleImage kImage, final String kImageName) {
         final GraphicsImage.FormatMode eType = GraphicsImage.FormatMode.IT_L32F;
@@ -311,29 +338,29 @@ public class VolumeImage implements Serializable {
     }
 
     /**
-     * Update the LUT texture sent to the GPU.
+     * When the LUT changes, this function updates the LUT data on the GPU.
      * 
      * @param kColorTexture the color-map Texture object.
      * @param kColorMap the color-map GraphicsImage object (stores data).
-     * @param kLUT the new LUT.
+     * @param kLUT the updated or new LUT.
      */
     public static void UpdateImages(final Texture kColorTexture, final GraphicsImage kColorMap, final ModelLUT kLUT) {
         if (kLUT == null) {
             return;
         }
         ModelLUT.exportIndexedLUTMin(kLUT, kColorMap.GetData());
-        // for ( int i = 0; i < kColorMap.GetData().length; i++ )
-        // {
-        // System.err.println( kColorMap.GetData()[i]);
-        // }
         kColorTexture.Reload(true);
     }
 
     /**
-     * Save the normal image data to disk
+     * When the ModelImage data is rendered as a solid surface, the Normal map is used in the rendering.
+     * The Normal map is calculated on the GPU by one of the GLSL shader programs. This function is called
+     * after the GPU calculation has finished and the GPU data has been copied into a new ModelImage on the CPU 
+     * the new ModelImage then contains the Normal map information, which is written into a file and
+     * copied into the Normal map GraphicsImage used to render the original ModelImage.
      * 
-     * @param i current sub-image (3D or 4D data)
-     * @param kImage base image.
+     * @param i current 3D sub-image for 4D data. If the data is 3D this value should be 0.
+     * @param kImage a new ModelImage containing the calculated Normals.
      */
     public void CopyNormalFiles(final int i, final ModelImage kImage) {
         kImage.calcMinMax();
@@ -455,60 +482,22 @@ public class VolumeImage implements Serializable {
         m_akHistoTCoord = null;
     }
 
-    public GraphicsImage GenerateGMImages(final ModelImage kImageGM, final String kPostFix) {
-        final int iXBound = kImageGM.getExtents()[0];
-        final int iYBound = kImageGM.getExtents()[1];
-        final int iZBound = kImageGM.getExtents()[2];
-        kImageGM.calcMinMax();
-        final float fImageMaxGM = (float) kImageGM.getMax();
-        final float fImageMinGM = (float) kImageGM.getMin();
 
-        byte[] abData = null;
-        abData = new byte[iXBound * iYBound * iZBound];
-        int i = 0;
-        for (int iZ = 0; iZ < iZBound; iZ++) {
-            for (int iY = 0; iY < iYBound; iY++) {
-                for (int iX = 0; iX < iXBound; iX++) {
-                    final float fValue = kImageGM.getFloat(iX, iY, iZ);
-                    abData[i++] = (byte) (255 * (fValue - fImageMinGM) / (fImageMaxGM - fImageMinGM));
-                }
-            }
-        }
-        return new GraphicsImage(GraphicsImage.FormatMode.IT_L8, iXBound, iYBound, iZBound, abData, new String(
-                "VolumeImage" + kPostFix));
-    }
-
-    public GraphicsImage GenerateImagesColor(final ModelImage kImage, final String kPostFix) {
-        final int iXBound = kImage.getExtents()[0];
-        final int iYBound = kImage.getExtents()[1];
-        final int iZBound = kImage.getExtents()[2];
-
-        final byte[] aucData = new byte[4 * iXBound * iYBound * iZBound];
-        final byte[] aucGMData = new byte[4 * iXBound * iYBound * iZBound];
-        float temp;
-        int iGM = 0;
-        try {
-            kImage.exportDataUseMask(0, kImage.getSize(), aucData);
-            for (int i = 0; i < kImage.getSize(); i += 4) {
-                temp = (aucData[i + 1] + aucData[i + 2] + aucData[i + 3]) / 3.0f;
-                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
-                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
-                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
-                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
-            }
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-        return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, aucGMData,
-                new String("VolumeImage" + kPostFix));
-
-    }
-
+    /**
+     * This function is called when the user selects the Surface or Composite Surface volume rendering option.
+     * If the normals have already been initialized the function returns. Otherwise the function checks if the
+     * normals are available in a file on disk, and if so if they match the parameters (size, units, resolutions) of
+     * the original ModelImage. If the files match they are used and the Normal map is read from file. Otherwise this
+     * function launches the GPU-based Normal calculation.  That calculation when finished calls the CopyNormalFiles
+     * which writes the calculated normals to disk and updates the Normal map on the GPU for rendering.
+     */
     public void GenerateNormalFiles() {
+    	// Return if already initialized.
     	if ( m_bNormalsInit )
     	{
     		return;
     	}
+    	// Check if the Normal map exists on disk and if it matches the parameters of the ModelImage. 
     	for (int i = 0; i < m_iTimeSteps; i++) {
     		final String kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), "_Normal_"
     				+ i);
@@ -527,6 +516,8 @@ public class VolumeImage implements Serializable {
     			m_bNormalsInit = true;
     		}
     	}
+    	// If the Normal map is still not initialized -- no matching file on disk, then launch the GPU-based
+    	// Normal map generator.
     	if ( !m_bNormalsInit )
     	{
     		for (int i = 0; i < m_iTimeSteps; i++) {
@@ -538,51 +529,56 @@ public class VolumeImage implements Serializable {
     }
 
     /**
-     * Return the Volume color map Texture.
-     * 
+     * Return the Color Map Texture.
      * @return Volume color map Texture.
      */
     public Texture GetColorMapTarget() {
         return m_kColorMapTarget;
     }
 
+    /**
+     * Return the normalization factor for DDR rendering mode.
+     * @return normalization factor for DDR rendering mode.
+     */
     public float getDRRNorm() {
         return m_fDRRNormalize;
     }
 
-    public float GetGMMax() {
-        return m_fGMMax[m_iTimeSlice];
-    }
-
-    public float GetGMMin() {
-        return m_fGMMin[m_iTimeSlice];
-    }
-
     /**
      * Return the Gradient Magnitude Texture.
-     * 
      * @return Gradient Magnitude Texture.
      */
     public Texture GetGradientMapTarget() {
         return m_kVolumeGMTarget;
     }
 
+    /**
+     * Returns true if the multi-histogram histogram texture has been initialized, false otherwise.
+     * @return  true if the multi-histogram histogram texture has been initialized, false otherwise.
+     */
     public boolean isHistoInit()
     {
     	return m_bHistoInit;
     }
     
+    /**
+     * Returns the name of the multi-histogram histogram GraphicsImage.
+     * @return the name of the multi-histogram histogram GraphicsImage.
+     */
     public String GetHistoName() {
         return m_kHisto[m_iTimeSlice].GetName();
     }
 
+    /**
+     * Return the texture coordinates for the multi-histogram histogram texture.
+     * @return the texture coordinates for the multi-histogram histogram texture.
+     */
     public Vector2f[] GetHistoTCoords() {
         return m_akHistoTCoord;
     }
 
     /**
      * Return the ModelImage volume data.
-     * 
      * @return ModelImage volume data.
      */
     public ModelImage GetImage() {
@@ -590,8 +586,7 @@ public class VolumeImage implements Serializable {
     }
 
     /**
-     * Return the Volume LUT.
-     * 
+     * Return the ModelImage LUT.
      * @return Volume LUT.
      */
     public ModelLUT GetLUT() {
@@ -599,9 +594,8 @@ public class VolumeImage implements Serializable {
     }
 
     /**
-     * Return the Volume normal Texture.
-     * 
-     * @return Volume normal Texture.
+     * Return the Normal map Texture.
+     * @return Normal map Texture.
      */
     public Texture GetNormalMapTarget() {
         return m_kNormalMapTarget;
@@ -609,7 +603,6 @@ public class VolumeImage implements Serializable {
 
     /**
      * Return the gradient magnitude opacity transfer function Texture.
-     * 
      * @return gradient magnitude opacity transfer function Texture.
      */
     public Texture GetOpacityMapGMTarget() {
@@ -618,7 +611,6 @@ public class VolumeImage implements Serializable {
 
     /**
      * Return the Volume opacity transfer function Texture.
-     * 
      * @return Volume opacity transfer function Texture.
      */
     public Texture GetOpacityMapTarget() {
@@ -627,7 +619,6 @@ public class VolumeImage implements Serializable {
 
     /**
      * Return the postfix for this VolumeImage.
-     * 
      * @return postfix for this VolumeImage.
      */
     public String GetPostfix() {
@@ -636,7 +627,6 @@ public class VolumeImage implements Serializable {
 
     /**
      * Return the Volume RGBT.
-     * 
      * @return Volume RGBT.
      */
     public ModelRGB GetRGB() {
@@ -645,7 +635,6 @@ public class VolumeImage implements Serializable {
 
     /**
      * The ModelImage Volume x-scale factor.
-     * 
      * @return Volume x-scale factor.
      */
     public float GetScaleX() {
@@ -654,7 +643,6 @@ public class VolumeImage implements Serializable {
 
     /**
      * The ModelImage Volume y-scale factor.
-     * 
      * @return Volume y-scale factor.
      */
     public float GetScaleY() {
@@ -663,7 +651,6 @@ public class VolumeImage implements Serializable {
 
     /**
      * The ModelImage Volume z-scale factor.
-     * 
      * @return Volume z-scale factor.
      */
     public float GetScaleZ() {
@@ -672,7 +659,6 @@ public class VolumeImage implements Serializable {
 
     /**
      * Return the 2nd derivative texture.
-     * 
      * @return 2nd derivative texture.
      */
     public Texture GetSecondDerivativeMapTarget() {
@@ -681,20 +667,22 @@ public class VolumeImage implements Serializable {
 
     /**
      * Return the surface mask Texture.
-     * 
      * @return surface mask Texture.
      */
     public Texture GetSurfaceTarget() {
         return m_kSurfaceTarget;
     }
 
+    /**
+     * Returns the current rendered time-slice for 4D images. Otherwise returns 0.
+     * @return the current rendered time-slice for 4D images. Otherwise returns 0.
+     */
     public int GetTimeSlice() {
         return m_iTimeSlice;
     }
 
     /**
      * Return the Texture containing the volume data.
-     * 
      * @return Texture containing the volume data.
      */
     public Texture GetVolumeTarget() {
@@ -702,20 +690,19 @@ public class VolumeImage implements Serializable {
     }
 
     /**
-     * Return the Texture containing the volume data.
-     * 
-     * @return Texture containing the volume data.
+     * Return the Buffer containing the volume data, which is stored in the Texture GrapicsImage.
+     * @return Buffer containing the volume data.
      */
     public Buffer GetVolumeTargetBuffer() {
         return m_kVolumeTarget.GetImage().GetDataBuffer();
     }
 
     /**
-     * Initialize the textures for the opacity lookup table.
+     * Initialize the GraphicsImage for the opacity lookup table.
      * 
      * @param kImage the ModelImage the opacity transfer function applies to.
      * @param kPostfix the string postfix to concatenate to the "OpacityMap" image name.
-     * @return GraphicsImage, the new GraphicsImage storing the colormap lookup table.
+     * @return GraphicsImage, the new GraphicsImage storing opacity lookup table.
      */
     public GraphicsImage InitOpacityMap(final ModelImage kImage, final String kPostFix) {
         final int iLutHeight = 256;
@@ -751,6 +738,13 @@ public class VolumeImage implements Serializable {
 
     
 
+    /**
+     * Called when the user selects the Gradient Magnitude option or the Multi-Histogram option
+     * in the Volume Renderer. 
+     * @param kGradientMagnitude pre-computed GradientMagnitude image or null
+     * @param bComputeLaplace when true the Laplace image and multi-histogram histogram Textures are computed.
+     * @param kPostfix GraphicsImage postfix string.
+     */
     public void SetGradientMagnitude(ModelImage kGradientMagnitude, boolean bComputeLaplace, String kPostfix )
     {
     	GradientMagnitudeImage(m_kImage, kGradientMagnitude, bComputeLaplace );
@@ -771,6 +765,10 @@ public class VolumeImage implements Serializable {
         m_kRGBT = kRGBT;
     }
 
+    /**
+     * Sets the time slices for 4D data.
+     * @param iSlice new time slice value.
+     */
     public void SetTimeSlice(final int iSlice) {
         if (m_iTimeSlice != iSlice) {
             m_iTimeSlice = iSlice;
@@ -778,6 +776,11 @@ public class VolumeImage implements Serializable {
         }
     }
 
+    /**
+     * Updates the current time slice.
+     * @param bForward when true the time advances on step forward or wraps to the beginning. 
+     * When false the time moves backward.
+     */
     public void update4D(final boolean bForward) {
         if (m_iTimeSteps == 1) {
             return;
@@ -801,6 +804,7 @@ public class VolumeImage implements Serializable {
      * Update the image data.
      * 
      * @param kImage the modified ModelImage
+     * @param bCopytoCPU when true the data is copied from the GPU GraphicsImage into the ModelImage
      */
     public void UpdateData(final ModelImage kImage, final boolean bCopytoCPU) {
         m_kImage = kImage;
@@ -830,6 +834,7 @@ public class VolumeImage implements Serializable {
      * 
      * @param kTransfer the new opacity transfer function
      * @param iImage the image to modify (0 = volume image, 2 = gradient mag)
+     * @param kImage GradientMagitude image.
      * @return boolean true when updated, false otherwise.
      */
     public boolean UpdateImages(final TransferFunction kTransfer, final int iImage, final ModelImage kImage) {
@@ -942,6 +947,13 @@ public class VolumeImage implements Serializable {
         return (fMaxIntegral > 0.0f) ? (1.0f / fMaxIntegral) : 0.00f;
     }
     
+    /**
+     * Checks that the two input images match extents, units of measure and resolutions. The images
+     * may had different sizes (3D or 4D) the first 3-dimensions must match.
+     * @param kImage1
+     * @param kImage2
+     * @return true if the images match extends, units and resolutions.
+     */
     private boolean checkImage(ModelImage kImage1, ModelImage kImage2 )
     {
     	for ( int i = 0; i < Math.min( kImage1.getExtents().length, kImage2.getExtents().length ); i++ )
@@ -965,8 +977,8 @@ public class VolumeImage implements Serializable {
     /**
      * Generate 2D histogram from the input image and the gradient-magnitude
      * 
-     * @param kImage
-     * @param kImageGM
+     * @param kImage input GraphicsImage containing the ModelImage data
+     * @param kImageGM input GraphcisImage containing the Gradient Magnitude data.
      * @param kPostFix post-fix for the image name.
      */
     private void GenerateHistogram(final GraphicsImage[] kImage, final GraphicsImage[] kImageGM, final String kPostFix) {
@@ -1094,11 +1106,11 @@ public class VolumeImage implements Serializable {
 
     /**
      * Calculates and stores the gradient magnitude images (3D or 4D) for the input image. Or reads from disk.
+     * The data is stored in the GraphicsImage data structures and will be passed to the GPU to use in rendering.
      * 
      * @param kImage input image
-     * @param kPostfix input post-fix
-     * @param kDir directory for reading/writing GM images
-     * @param bCreate when true generate and write the GM image to disk.
+     * @param kGradientMagnitude input Gradient Magnitude image, or null.
+     * @param bComputeLaplace when true the Laplace image is also calculated or read from dis.
      */
     private void GradientMagnitudeImage(final ModelImage kImage, ModelImage kGradientMagnitude, 
     		boolean bComputeLaplace) {
@@ -1218,6 +1230,11 @@ public class VolumeImage implements Serializable {
         }
     }
 
+    /**
+     * Initialize the VolumeImage with the ModelImage data.
+     * @param kProgress progress bar
+     * @param iProgress progress bar increment
+     */
     private void init(final ViewJProgressBar kProgress, final int iProgress) {
         initLUT();
         initImages();
@@ -1227,6 +1244,10 @@ public class VolumeImage implements Serializable {
         }
     }
 
+    /**
+     *  Intializes the Textures and GraphicsImages used to render the ModelImage this 
+     *  VolumeImage represents.
+     */
     private void initImages() {
         m_fDRRNormalize = computeIntegralNormalizationFactor();
         m_kColorMap = VolumeImage.InitColorMap(m_kLUT, m_kRGBT, m_kPostfix);
@@ -1245,8 +1266,6 @@ public class VolumeImage implements Serializable {
         String kImageName;
         GraphicsImage.FormatMode type = m_kImage.isColorImage() ? GraphicsImage.FormatMode.IT_RGBA8888 :
         	GraphicsImage.FormatMode.IT_L8;
-        int size = m_kImage.isColorImage() ? iXBound * iYBound * iZBound * 4 :
-        	iXBound * iYBound * iZBound;
         if (iNDims == 3) {
             m_iTimeSteps = 1;
             m_fGMMin = new float[1];
@@ -1372,25 +1391,6 @@ public class VolumeImage implements Serializable {
         m_kSurfaceTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
 
         InitScale();
-
-        /*
-         * float[] afGaussX = new float[3*3*3]; int[] aiExtents = new int[]{3,3,3}; float[] afSigmas = new float[]{.5f,
-         * .5f, .5f}; int[] aiOrder = new int[]{1,0,0}; GenerateGaussian Gx = new GenerateGaussian(afGaussX, aiExtents,
-         * afSigmas, aiOrder); Gx.calc(false);
-         * 
-         * float[] afGaussY = new float[3*3*3]; aiOrder[0] = 0; aiOrder[1] = 1; GenerateGaussian Gy = new
-         * GenerateGaussian(afGaussY, aiExtents, afSigmas, aiOrder); Gy.calc(true);
-         * 
-         * float[] afGaussZ = new float[3*3*3]; aiOrder[0] = 0; aiOrder[1] = 0; aiOrder[2] = 1; GenerateGaussian Gz =
-         * new GenerateGaussian(afGaussZ, aiExtents, afSigmas, aiOrder); Gz.calc(true);
-         * 
-         * for ( int i = 0; i < aiExtents[0]; i++ ) { for ( int j = 0; j < aiExtents[1]; j++ ) { for ( int k = 0; k <
-         * aiExtents[2]; k++ ) { System.err.println( "gaussian[" + i + "][" + j + "][" + k + "].rgb = (" +
-         * afGaussX[i*aiExtents[1]*aiExtents[2] + j*aiExtents[2] + k] + ", " + afGaussY[i*aiExtents[1]*aiExtents[2] +
-         * j*aiExtents[2] + k] + ", " + afGaussZ[i*aiExtents[1]*aiExtents[2] + j*aiExtents[2] + k] + ");" );
-         * 
-         *  } System.err.println( ); } System.err.println( ); System.err.println( ); }
-         */
     }
 
     /**
@@ -1503,96 +1503,10 @@ public class VolumeImage implements Serializable {
         }
     }
 
-    /**
-     * Reconfigures the ModelImage for GPU rendering. First resizes the image to power-of-two dimensions, then converts
-     * the image to unsigned byte.
-     * 
-     * @param kImage input image.
-     * @param kImageName image name.
-     * @param kDir directory for writing result image
-     * @param iFilterType filter type for re-sampling image
-     * @param aiExtents target power-of-two extents.
-     */
-    private void ReconfigureImage(final ModelImage kImage, final String kImageName, final String kDir,
-            final int iFilterType, final int[] aiExtents) {
-
-        final int[] extents = kImage.getExtents();
-        final float[] res = kImage.getFileInfo(0).getResolutions();
-
-        final float[] newRes = res.clone();
-        final int[] volExtents = extents.clone();
-
-        // Checking to see if the image has all dimensions that are a power of 2.
-        for (int i = 0; i < 3; i++) {
-            if (aiExtents != null) {
-                volExtents[i] = aiExtents[i];
-            } else {
-                volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
-            }
-            newRes[i] = (res[i] * extents[i]) / volExtents[i];
-        }
-
-        ModelImage kNewRes = kImage;
-        System.err.println( "Resizing image " + extents[0] + " " + extents[1] + " " + extents[2] );
-        /*
-        if ( (extents[0] != volExtents[0]) || (extents[1] != volExtents[1]) || (extents[2] != volExtents[2])) {
-            AlgorithmTransform transformFunct = new AlgorithmTransform(kImage, new TransMatrix(4), iFilterType,
-                    newRes[0], newRes[1], newRes[2], volExtents[0], volExtents[1], volExtents[2], false, true, false);
-
-            transformFunct.setRunningInSeparateThread(false);
-            transformFunct.run();
-
-            if (transformFunct.isCompleted() == false) {
-
-                // What to do
-                transformFunct.finalize();
-                transformFunct = null;
-            }
-
-            kNewRes = transformFunct.getTransformedImage();
-            kNewRes.calcMinMax();
-
-            transformFunct.disposeLocal();
-            transformFunct = null;
-        }
-*/
-        ModelImage kNewType = null;
-        if ( (kNewRes.getType() != ModelStorageBase.UBYTE)
-                || (kNewRes.isColorImage() && (kNewRes.getType() != ModelStorageBase.ARGB))) {
-            AlgorithmChangeType changeTypeAlgo = null;
-            if (kNewRes.isColorImage()) {
-                kNewType = new ModelImage(ModelStorageBase.ARGB, kNewRes.getExtents(), kImageName);
-                changeTypeAlgo = new AlgorithmChangeType(kNewType, kNewRes, kNewRes.getMin(), kNewRes.getMax(), 0, 255,
-                        false);
-            } else {
-                kNewType = new ModelImage(ModelStorageBase.UBYTE, kNewRes.getExtents(), kImageName);
-                changeTypeAlgo = new AlgorithmChangeType(kNewType, kNewRes, kNewRes.getMin(), kNewRes.getMax(), 0, 255,
-                        false);
-            }
-            changeTypeAlgo.setRunningInSeparateThread(false);
-            changeTypeAlgo.run();
-            changeTypeAlgo.finalize();
-            changeTypeAlgo = null;
-        }
-
-        if ( (kNewType == null) && (kNewRes == kImage)) {
-            m_kImage = (ModelImage) kImage.clone();
-        } else {
-            m_kImage = (kNewType == null) ? kNewRes : kNewType;
-        }
-
-        m_kImage.copyFileTypeInfo(kImage);
-        //final FileInfoBase[] fileInfoBases = m_kImage.getFileInfo();
-        //for (final FileInfoBase element : fileInfoBases) {
-        //    element.setResolutions(newRes);
-        //}
-        m_kImage.calcMinMax();
-        m_kImage.setImageName(kImageName);
-        m_kImage.saveImage(kDir, kImageName, FileUtility.XML, false, false);
-    }
 
     /**
-     * Go to the next 3D volume sub-image for the 4D animation. Updates the image data, and supporting images.
+     * Go to the next 3D volume sub-image for the 4D animation. 
+     * Updates the Textures and causes them to be reloaded onto the GPU.
      */
     private void update4D() {
         m_kVolumeTarget.SetImage(m_kVolume[m_iTimeSlice]);
@@ -1614,7 +1528,8 @@ public class VolumeImage implements Serializable {
     }
 
     /**
-     * Update the opacity transfer function.
+     * Called when the opacity transfer function changes. This function updates the Texture
+     * and causes the data to be reloaded onto the GPU.
      * 
      * @param kImage the ModelImage the transfer function applies to.
      * @param kOpacityTexture the opacity Texture passed to the GPU

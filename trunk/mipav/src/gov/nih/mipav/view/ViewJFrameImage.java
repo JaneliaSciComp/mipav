@@ -16,7 +16,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
-import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarDialog;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
@@ -29,22 +28,7 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-
-import de.jtem.numericalMethods.algebra.linear.Inversion;
-import de.jtem.numericalMethods.algebra.linear.decompose.Householder;
-import de.jtem.numericalMethods.algebra.linear.decompose.LR;
-import de.jtem.numericalMethods.algebra.linear.decompose.PLR;
-import de.jtem.numericalMethods.algebra.linear.decompose.QR;
-import de.jtem.numericalMethods.algebra.linear.decompose.Tridiagonal;
-import de.jtem.numericalMethods.algebra.linear.solve.AXB;
-
-import Jama.EigenvalueDecomposition;
-import Jama.LUDecomposition;
-import Jama.Matrix;
-import Jama.QRDecomposition;
-import Jama.SingularValueDecomposition;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.NumericalAnalysis.Eigenf;
 
 
 /**
@@ -802,9 +786,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 final JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
                 if (dialogMask3D4D.isCancelled()) {
                     return;
-                } else {
-                    saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
                 }
+				saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
             }
             System.out.println("aaa saveMasksAs4D is " + saveMasksAs4D);
             if (outputNew == true) {
@@ -3448,8 +3431,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         command = Preferences.getShortcutCommand(ks);
 
-        if (command != null) {
-            actionPerformed(new ActionEvent(ks, 0, command));
+        // Don't pass the VOI key-commands to the actionPerformed function, this
+        // will be done by the VOIManager which will also get the KeyEvents.
+        if ((command != null) && !( (voiMenu != null) && ViewMenuBar.isMenuCommand( voiMenu, command ) ) ) {
+			actionPerformed(new ActionEvent(ks, 0, command));
         }
 
     }

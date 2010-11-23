@@ -1769,6 +1769,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return true;
         }
+        if ( (kVOI.getType() == VOI.CONTOUR) || (kVOI.getType() == VOI.POLYLINE) )
+        {
+        	return false;
+        }
         if ( kVOI.nearLine( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z ) )
         {
             return true;

@@ -109,31 +109,35 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }
-        //m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene()) {
-            MoveRight();
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-            m_pkRenderer.DrawRight();
-            m_pkRenderer.ClearBuffers();          
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());            
-            //m_pkRenderer.DisplayBackBuffer();
-
-
-            MoveLeft();
-            MoveLeft();
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-            m_pkRenderer.DrawLeft();
-            m_pkRenderer.ClearBuffers();
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());            
-            //m_pkRenderer.DisplayBackBuffer();
-            MoveRight();
-            //DrawFrameRate(8, GetHeight() - 8, ColorRGBA.WHITE);
-            //m_pkRenderer.EndScene();
+        	if ( m_bStereo )
+        	{
+        		// Move view point right for right-eye view:
+        		MoveRight();
+        		m_kCuller.ComputeVisibleSet(m_spkScene);
+        		m_pkRenderer.DrawRight();
+        		m_pkRenderer.ClearBuffers();          
+        		m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());    
+        		// Move view point left (back to center):
+        		MoveLeft();
+        		// Move view point left for left-eye view:
+        		MoveLeft();
+        		m_kCuller.ComputeVisibleSet(m_spkScene);
+        		m_pkRenderer.DrawLeft();
+        		m_pkRenderer.ClearBuffers();
+        		m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+        		// Move view point right (back to center)
+        		MoveRight();
+        	}
+        	else
+        	{
+        		m_kCuller.ComputeVisibleSet(m_spkScene);
+        		m_pkRenderer.ClearBuffers();          
+        		m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());  
+        	}
         }
         m_pkRenderer.DrawDefault();
         m_pkRenderer.DisplayBackBuffer();
-        //UpdateFrameCount();
-        // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         if (m_kShaderParamsWindow == null) {
             m_kShaderParamsWindow = new ApplicationGUI();
@@ -286,26 +290,7 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
         super.keyPressed(e);
-        float fInterpolateFactor = 0;
         switch (ucKey) {
-            case '+':
-            case '=':
-                // fInterpolateFactor = m_spkEffect.GetInterpolateFactor();
-                fInterpolateFactor += 0.1f;
-                if (fInterpolateFactor > 1.0f) {
-                    fInterpolateFactor = 1.0f;
-                }
-                // m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
-                return;
-            case '-':
-            case '_':
-                // fInterpolateFactor = m_spkEffect.GetInterpolateFactor();
-                fInterpolateFactor -= 0.1f;
-                if (fInterpolateFactor < 0.0f) {
-                    fInterpolateFactor = 0.0f;
-                }
-                // m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
-                return;
             case 'l':
             case 'L':
                 ApplicationGUI kShaderParamsWindow = new ApplicationGUI();
@@ -315,7 +300,8 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
                 return;
             case 's':
             case 'S':
-                TestStreaming(m_spkScene, "Lattice.wmof");
+            	m_bStereo = !m_bStereo;
+                //TestStreaming(m_spkScene, "Lattice.wmof");
                 return;
             case 'i':
                 m_fTrnSpeed += .05;      
@@ -343,6 +329,9 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 
     /** Window with the shader parameter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;
+    
+    // toggle stereo on/off with the 's' or 'S' key:
+    private boolean m_bStereo = false;
 
     private String getExternalDirs() {
         String jar_filename = "";

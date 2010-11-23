@@ -416,11 +416,11 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
         m_spkWireframe = new WireframeState();
 
         // start arrow node --------
-        MakeArrow();
-        m_spkScene.AttachChild(m_kArrow);
+        //MakeArrow();
+        //m_spkScene.AttachChild(m_kArrow);
         // end arrow node --------
 
-        /*
+       
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
         kAttr.SetNChannels(3);
@@ -432,9 +432,7 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
         pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), new Vector3f(
                 -0.707f, 0.707f, 0f), false));
         m_spkScene.AttachChild(pkMesh);
-
-                */
-               
+             
 
         m_spkEffect = new IridescenceEffect("Leaf", "Gradient");
         m_spkEffect.SetInterpolateFactor(0.5f);
@@ -443,6 +441,7 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
             m_spkEffect.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
                                      m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
         }
+        pkMesh.AttachEffect(m_spkEffect);
     }
 
     private void MakeArrow()

@@ -437,7 +437,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridy = 3;
          componentsPanel.add(new JLabel( "Stereo Mode" ), gbc);
          gbc.gridx = 1;
-         m_kStereoModeCB = new JComboBox(new String[] { "Off", "Red/Green", "Shutter Glasses" });
+         m_kStereoModeCB = new JComboBox(new String[] { "Off", "Anaglyph", "Quad Buffer" });
          m_kStereoModeCB.addActionListener(this);
          m_kStereoModeCB.setActionCommand("ChangeStereoMode");
          m_kStereoModeCB.setAlignmentX(Component.LEFT_ALIGNMENT);
