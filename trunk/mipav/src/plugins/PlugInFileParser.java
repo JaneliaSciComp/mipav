@@ -1,21 +1,11 @@
 
 import java.beans.XMLEncoder;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
+import javax.swing.JOptionPane;
 import javax.swing.table.TableModel;
+import javax.xml.*;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -67,8 +57,9 @@ public class PlugInFileParser {
 			for(PlugInGenomicsEntry row : rows){
 				StringBuffer line = new StringBuffer();
 				boolean empty=true;
+				System.out.println(cols.size()+" "+row.getRowSize());
 				for(int i=0;i<cols.size();i++){
-					String value = String.valueOf(row.getValue(i+1)).trim();
+					String value = String.valueOf(row.rowData[i+1]).trim();
 					if(value!=null&&!value.trim().equals("")){
 						if(value.equals("null"))
 							line.append(""+delim);

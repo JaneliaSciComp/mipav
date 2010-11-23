@@ -7,7 +7,9 @@ import gov.nih.ndar.ws.client.Startup;
 import info.clearthought.layout.*;
 
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.event.*;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import javax.swing.*;
@@ -21,36 +23,50 @@ import org.apache.axis2.AxisFault;
 public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implements ActionListener {
 
     private static final String CA_TYPE = "Clinical Assessments";
+    
+	private static final String GEN_TYPE = "Genomics";
+	
+	public static final String ICON_NAME= "ndar_puzzle_icon.gif";
+	
+	private static final String ENV = Startup.PROD_NAME;//TODO change for each env
+//	private static final String ENV = Startup.DEMO_NAME;
 
-    private static final String GEN_TYPE = "Genomics";
-
-    private JTable table;
-
-    private MyTableModel tableModel;
-
-    private final List<PlugInGenomicsEntry> allList = new ArrayList<PlugInGenomicsEntry>();
-
-    protected static VToolSimpleAccessionClient client;
-
-    public PlugInDialogDataEntryTool() {
-        final int response = JOptionPane.showConfirmDialog(this, PlugInDialogNDAR.NDAR_PRIVACY_NOTICE,
-                "NDAR Genomics and Clinical Assessments Data Entry Tool", JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
-        if (response == JOptionPane.YES_OPTION) {
-            init();
+	private JTable table;
+	
+	private MyTableModel tableModel;
+	
+	private final List<PlugInGenomicsEntry> allList = new ArrayList<PlugInGenomicsEntry>();
+	
+	private boolean fromAddTabAction;
+	protected static VToolSimpleAccessionClient client;
+	
+	public PlugInDialogDataEntryTool(){
+		final int response = JOptionPane.showConfirmDialog(this, PlugInDialogNDAR.NDAR_PRIVACY_NOTICE,
+                "NDAR Genomics and Clinical Assessments Data Entry Tool", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+		this.fromAddTabAction = false;
+		if (response == JOptionPane.YES_OPTION){
+			init();
+		 } else {
+        if (JDialogStandalonePlugin.isExitRequired()) {
+            System.exit(0);
+            // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         } else {
-            if (JDialogStandalonePlugin.isExitRequired()) {
-                System.exit(0);
-                // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-            } else {
-                return;
-            }
+            return;
         }
     }
-
-    public void init() {
-        PlugInDialogDataEntryTool.setClient(Startup.getClient(Startup.PROD_NAME));
-
+	}
+	
+	public PlugInDialogDataEntryTool(final boolean fromAddTabAction){
+		this.fromAddTabAction = fromAddTabAction;
+		init();
+	}
+	
+	public void init(){
+		if(!fromAddTabAction || client == null){
+			PlugInDialogDataEntryTool.testConnection();
+			PlugInDialogDataEntryTool.setClient(Startup.getClient(PlugInDialogDataEntryTool.ENV));
+		}
+		
         setTitle("Please select which Data Structures you would like to add data");
         tableModel = new MyTableModel();
         tableModel.addColumn("");
@@ -60,9 +76,9 @@ public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implement
         table = new JTable(tableModel);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(22);
-        table.getColumnModel().getColumn(0).setPreferredWidth(20);
+        table.getColumnModel().getColumn(0).setPreferredWidth(25);
         table.getColumn("Short Name").setMinWidth(150);
-        table.getColumn("Description").setMinWidth(300);
+        table.getColumn("Description").setMinWidth(350);
         table.getTableHeader().setReorderingAllowed(false);
         final TableRowSorter<MyTableModel> sorter = new TableRowSorter<MyTableModel>(tableModel);
         sorter.toggleSortOrder(1);
@@ -72,7 +88,7 @@ public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implement
 
         final JPanel titlePanel = new JPanel();
 
-        final JLabel sort = new JLabel("Sort By:");
+		final JLabel sort = new JLabel("Filter By:");
         final JRadioButton caButton = new JRadioButton("Clinical Assessments Data");
         caButton.setActionCommand(PlugInDialogDataEntryTool.CA_TYPE);
 
@@ -99,7 +115,7 @@ public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implement
 
         final JPanel buttonPanel = new JPanel();
         final double border = 3;
-        final double[][] buttonPanelSize = { {border, 100, border, 100}, {border, TableLayoutConstants.FILL, border}};
+        final double[][] buttonPanelSize = { {border, 100, border, 100}, {border, TableLayout.FILL, border}};
         buttonPanel.setLayout(new TableLayout(buttonPanelSize));
 
         final JButton openButton = new JButton("Open");
@@ -118,8 +134,8 @@ public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implement
         buttonPanel.add(cancelButton, "3,1");
 
         final double border1 = 3;
-        final double[][] panelSize = { {TableLayoutConstants.FILL},
-                {border1, 30, border1, TableLayoutConstants.FILL, border1, 50}};
+        final double[][] panelSize = { {TableLayout.FILL},
+                {border1, 30, border1, TableLayout.FILL, border1, 50}};
         setLayout(new TableLayout(panelSize));
         final JScrollPane scrollPane = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -128,23 +144,23 @@ public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implement
         add(scrollPane, "0,3");
         add(buttonPanel, "0,5,c,c");
 
-        Icon icon = null;
         try {
-            icon = new ImageIcon(MipavUtil.getIconImage(Preferences.getIconName()));
-            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+            setIconImage(MipavUtil.getIconImage(ICON_NAME));
         } catch (final Exception e) {
 
         }
 
         setSize(new Dimension(900, 500));
+        setWindowSettings();
         setVisible(true);
     }
 
     public void getDataStructures(final String type) {
         OMElement e = null;
         try {
-            e = PlugInDialogDataEntryTool.getClient().getPublishedStructures();
-        } catch (final AxisFault e1) {
+        	PlugInDialogDataEntryTool.testConnection();
+			e = PlugInDialogDataEntryTool.getClient().getPublishedStructures();
+		} catch (final AxisFault e1) {
             e1.printStackTrace();
         }
         final Iterator<OMElement> iter = e.getChildElements();
@@ -203,15 +219,20 @@ public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implement
         System.out.println(selectedList);
         if (selectedList.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please select a Data Structure", "Error", JOptionPane.ERROR_MESSAGE);
-        } else {
-            new PlugInGenericDataEntryContainer(selectedList);
-            this.dispose();
+        } else{
+			if(fromAddTabAction)
+				PlugInGenericDataEntryContainer.addPane(selectedList);
+			else
+				new PlugInGenericDataEntryContainer(selectedList);
+			this.dispose();
         }
 
     }
 
     public void actionCancel() {
-        if (JDialogStandalonePlugin.isExitRequired()) {
+    	if(fromAddTabAction)
+    		this.dispose();
+    	else if (JDialogStandalonePlugin.isExitRequired()) {
             windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         }
     }
@@ -243,9 +264,21 @@ public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implement
             super.setValueAt(value, row, col);
             allList.get(row).setValueAt(value, col);
         }
-    }
-
-    public static VToolSimpleAccessionClient getClient() {
+	}
+	
+	public static void testConnection(){
+		try {
+			PlugInDialogDataEntryTool.getClient().testConnection();
+		}catch(NullPointerException e){
+			System.err.println("Connection NULL, Creating new client");
+			PlugInDialogDataEntryTool.setClient(Startup.getClient(PlugInDialogDataEntryTool.ENV));
+		} catch (AxisFault e) {
+			System.err.println("Connection Timeout, Creating new client");
+			PlugInDialogDataEntryTool.setClient(Startup.getClient(PlugInDialogDataEntryTool.ENV));
+		}
+	}
+	
+	public static VToolSimpleAccessionClient getClient() {
         return PlugInDialogDataEntryTool.client;
     }
 

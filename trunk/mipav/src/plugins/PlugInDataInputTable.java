@@ -121,11 +121,12 @@ public class PlugInDataInputTable extends JPanel implements Observer{
 		if(dataStructure.endsWith(dataStructureVersion))
 			dataStructure = dataStructure.substring(0, dataStructure.lastIndexOf(dataStructureVersion));
 		tableModel = new SubjectsTableModel(dataElementList);
-		dataStructureTitle = new JLabel("Data Structure: "+ dataStructure.toUpperCase()
-				+"     Version: "+dataStructureVersion+"     Type: "+dataStructureType);
-		dataStructureDescTitle = new JLabel("Description: "+dataStructureDesc);
-		dataStructureTitle.setFont(new Font("Arial",Font.BOLD,14));
-//		dataStructureVersionTitle.setFont(new Font("Arial",Font.BOLD,14));
+		dataStructureTitle = new JLabel("<html><font style=\"font-weight:bold;\">Data Structure: </font>"+ dataStructure.toUpperCase()
+				+"     <font style=\"font-weight:bold;\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version:</font> "+dataStructureVersion
+				+"     <font style=\"font-weight:bold;\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Type: </font>"+dataStructureType+"</html>");
+		dataStructureTitle.setFont(new Font("Arial",Font.PLAIN,14));
+		dataStructureDescTitle = new JLabel("<html><NOBR><font style=\"font-weight:bold;\">Description: </font>"+dataStructureDesc+"</NOBR></html>");
+		dataStructureDescTitle.setFont(new Font("Arial",Font.PLAIN,14));
 		JLabel requiredNote = new JLabel("<html>Columns in <font color=\"red\">red</font> are required fields</html>");
 		table = new JTable(tableModel);
 		
@@ -156,8 +157,8 @@ public class PlugInDataInputTable extends JPanel implements Observer{
         
         JPanel buttonPanel = new JPanel();
         double border = .07;
-        double[][] buttonPanelSize = {{border, 100, border, 130, border, 170, border,170},
-        		{border, TableLayout.FILL, border}};
+        double[][] buttonPanelSize = {{border, 100, border, 130, border, 170, 
+        	border,170,border,200,border,200},{border, TableLayout.FILL, border}};
         buttonPanel.setLayout(new TableLayout(buttonPanelSize));
         
         JButton addButton = new JButton("Add Row");
@@ -195,17 +196,33 @@ public class PlugInDataInputTable extends JPanel implements Observer{
             }
         });
         
+        JButton newTabButton = new JButton("Add New Data Structure Tab");
+        newTabButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            	actionAddTab();
+            }
+        });
+        
+        JButton removeTabButton = new JButton("Remove Data Structure Tab");
+        removeTabButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            	actionRemoveTab();
+            }
+        });
+        
         buttonPanel.add(addButton, "1,1");
         buttonPanel.add(removeButton, "3,1");
         buttonPanel.add(uploadButton, "5,1");
 //        buttonPanel.add(exportButton, "7,1");
         buttonPanel.add(exportTxtButton, "7,1");
+        buttonPanel.add(newTabButton, "9,1");
+        buttonPanel.add(removeTabButton, "11,1");
 
         JScrollPane scrollPane = new JScrollPane(table);
        
         double border1 = 3;
         double[][] panelSize = {{TableLayout.FILL},
-        		{border1,15,border1,15,border1,15,border1,TableLayout.FILL,border1,30}};
+        		{border1,20,border1,20,border1,15,border1,TableLayout.FILL,border1,30}};
         setLayout(new TableLayout(panelSize));
 
 //        add(title, "0,1");
@@ -228,6 +245,7 @@ public class PlugInDataInputTable extends JPanel implements Observer{
 		OMElement e = null;
         try {
         	System.out.println("Processing: "+targetDataStruct);
+        	PlugInDialogDataEntryTool.testConnection();
 			e = PlugInDialogDataEntryTool.getClient().getDataDictionary(targetDataStruct);
 		} catch (AxisFault e1) {
 			e1.printStackTrace();
@@ -246,7 +264,7 @@ public class PlugInDataInputTable extends JPanel implements Observer{
 
         while(iter.hasNext()){
         	OMElement e2 = iter.next();   
-			System.out.println(e2.toString());
+//			System.out.println(e2.toString());
 			dataStructureType = e2.getAttributeValue(qDataStructType);
 			dataStructureVersion = e2.getAttributeValue(qDataStructVersion);
 			dataStructureDesc = e2.getAttributeValue(qDataStructDesc);
@@ -356,10 +374,14 @@ public class PlugInDataInputTable extends JPanel implements Observer{
 		    			List<String> colCheck = getDataElements((dataStructure+dataStructureVersion).toLowerCase().trim());
 		    			dataStructure = dataStructInfo.get(0).toUpperCase();
 		    			dataStructureVersion = dataStructInfo.get(1).toUpperCase();
-		    			dataStructureTitle.setText("Data Structure: "+dataStructure
-		    					+"\tVersion: "+dataStructureVersion+"\tType: "+dataStructureType);
+		    			dataStructureTitle = new JLabel("<html><font style=\"font-weight:bold;\">Data Structure: </font>"+ dataStructure.toUpperCase()
+		    					+"     <font style=\"font-weight:bold;\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version:</font> "+dataStructureVersion
+		    					+"     <font style=\"font-weight:bold;\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Type: </font>"+dataStructureType+"</html>");
+		    			dataStructureTitle.setFont(new Font("Arial",Font.PLAIN,14));
+		    			dataStructureDescTitle = new JLabel("<html><NOBR><font style=\"font-weight:bold;\">Description: </font>"+dataStructureDesc+"</NOBR></html>");
+		    			dataStructureDescTitle.setFont(new Font("Arial",Font.PLAIN,14));
 			    		tableModel.addColumn("");
-			    		System.out.println(colCheck.toString());
+//			    		System.out.println(colCheck.toString());
 			    		boolean complete=true;
 			    		List<String> missingColumns = new ArrayList<String>();
 			    		for(String col : colList){
@@ -387,7 +409,7 @@ public class PlugInDataInputTable extends JPanel implements Observer{
 	    				int response = JOptionPane.showConfirmDialog(this, "The Data Structure in this file does not match " +
 	    						"the currently opened tab. Load this data in a new tab?",
 	    		                "Open File", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-	    				if(response ==0){
+	    				if(response==JOptionPane.YES_OPTION){
 	    					PlugInGenericDataEntryContainer.addPane(dataStructInfo, colList, entries);
 	    				}
 	    			}
@@ -423,21 +445,46 @@ public class PlugInDataInputTable extends JPanel implements Observer{
     	chooser.removeChoosableFileFilter(chooser.getAcceptAllFileFilter());
     	chooser.setSelectedFile(new File(dataStructure+dataStructureVersion+".txt"));
     	if(chooser.showOpenDialog(getParent()) == JFileChooser.APPROVE_OPTION){
-			PlugInFileParser xml = new PlugInFileParser();
-	    	File file = chooser.getSelectedFile();
-	    	if(file.exists()){
-	    		int response= JOptionPane.showConfirmDialog(this, "A file with the name you specified already exists. Overwrite file?",
-	                    "NDAR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-	    		if(response==JOptionPane.YES_OPTION)
-	    			xml.exportTxt(dataStructure,dataStructureType,dataStructureVersion,
-	    					file, dataElementList, allList);
-	    		else
-	    			actionExportTxt();
-	    	}
-	    	else
-	    		xml.exportTxt(dataStructure,dataStructureType,dataStructureVersion,
-						file, dataElementList, allList);
+			try{
+	    		PlugInFileParser xml = new PlugInFileParser();
+		    	File file = chooser.getSelectedFile();
+		    	if(file.exists()){
+		    		int response= JOptionPane.showConfirmDialog(this, "A file with the name you specified already exists. Overwrite file?",
+		                    "NDAR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+		    		if(response==JOptionPane.YES_OPTION)
+		    			xml.exportTxt(dataStructure,dataStructureType,dataStructureVersion,
+		    					file, dataElementList, allList);
+		    		else
+		    			actionExportTxt();
+		    	}
+		    	else
+		    		xml.exportTxt(dataStructure,dataStructureType,dataStructureVersion,
+							file, dataElementList, allList);
+		    	System.out.println("File wrote to successfully");
+			}catch(Exception e){
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(this, "NDAR was unable to export your file, check data and try again", "Error",
+						JOptionPane.ERROR_MESSAGE);
+			}
     	}
+	}
+	
+	public void actionAddTab(){
+		new PlugInDialogDataEntryTool(true);
+	}
+	
+	public void actionRemoveTab(){
+		Object[] options = new Object[]{"Yes","No","Save To TXT/CSV"};
+		int response= JOptionPane.showOptionDialog(this, "Are you sure you want to remove this tab? All data entered into table will be lost.",
+                "NDAR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE, null,options , null);
+		if(response==JOptionPane.YES_OPTION)
+			PlugInGenericDataEntryContainer.removePane(this);
+		else if(response==2){
+			actionExportTxt();
+			PlugInGenericDataEntryContainer.removePane(this);
+		}
+			
 	}
 	
 	public void clearTable(){
@@ -453,11 +500,6 @@ public class PlugInDataInputTable extends JPanel implements Observer{
 	public void update(Observable arg0, Object arg1) {
 
 	}
-	
-//	@Override 
-//	public String getToolTipText(MouseEvent e){
-//		
-//	}
 
 	class SubjectsTableModel extends DefaultTableModel {
 		

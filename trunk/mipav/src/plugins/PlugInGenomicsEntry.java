@@ -3,17 +3,15 @@ public class PlugInGenomicsEntry {
 	public Object[] rowData;
 	
 	public boolean selected;
-	public boolean required;
-	public String type;
 	
 	public PlugInGenomicsEntry(Object[] pSubject){
 		selected = false;
 		rowData = new Object[pSubject.length + 1];
 		rowData[0] = selected;
 		for(int i=0; i<pSubject.length; i++) {
-			// put in check for enum and add JComboBox below instead of direct assignment
 			rowData[i+1] = pSubject[i];
 		}
+//		System.out.println("passed in: "+pSubject.length+"\n result: "+rowData.length);
 	}
 	
 	public Object getValueAt(int col){
@@ -25,10 +23,6 @@ public class PlugInGenomicsEntry {
 			selected = (Boolean)value;
 		}
 		rowData[col] = value;
-	}
-	
-	public boolean isRequired(){
-		return required;
 	}
 	
 	public int getRowSize(){
