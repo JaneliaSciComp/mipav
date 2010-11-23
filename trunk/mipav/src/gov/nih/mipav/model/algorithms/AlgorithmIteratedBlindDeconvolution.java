@@ -3,13 +3,14 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
-import gov.nih.mipav.model.structures.Complex;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.io.IOException;
+
+import de.jtem.mfc.field.Complex;
 
 
 /**
@@ -305,15 +306,15 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
 
             // estimate the psf (H = blurredImageSpectrum / estimatedImageSpectrum)
             for (int i = 0; i < arrayLength; i++) {
-                blurredVal.setReal(blurredSpectrumReals[i]);
-                blurredVal.setImag(blurredSpectrumImags[i]);
-                estimatedVal.setReal(estimatedSpectrumReals[i]);
-                estimatedVal.setImag(estimatedSpectrumImags[i]);
+                blurredVal.setRe(blurredSpectrumReals[i]);
+                blurredVal.setIm(blurredSpectrumImags[i]);
+                estimatedVal.setRe(estimatedSpectrumReals[i]);
+                estimatedVal.setIm(estimatedSpectrumImags[i]);
 
                 tmpComplexVal = blurredVal.divide(estimatedVal);
 
-                psfSpectrumReals[i] = tmpComplexVal.getReal();
-                psfSpectrumImags[i] = tmpComplexVal.getImag();
+                psfSpectrumReals[i] = (float)tmpComplexVal.getRe();
+                psfSpectrumImags[i] = (float)tmpComplexVal.getIm();
             } // end for(int i = 0; ...)
 
 
@@ -420,35 +421,35 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
 
             // form a new estimated image spectrum from the blurred image spectrum and H
             for (int i = 0; i < arrayLength; i++) {
-                blurredVal.setReal(blurredSpectrumReals[i]);
-                blurredVal.setImag(blurredSpectrumImags[i]);
-                blurredMagVal = blurredVal.magnitude();
+                blurredVal.setRe(blurredSpectrumReals[i]);
+                blurredVal.setIm(blurredSpectrumImags[i]);
+                blurredMagVal = (float)blurredVal.abs();
 
-                psfVal.setReal(psfSpectrumReals[i]);
-                psfVal.setImag(psfSpectrumImags[i]);
-                psfMagVal = psfVal.magnitude();
+                psfVal.setRe(psfSpectrumReals[i]);
+                psfVal.setIm(psfSpectrumImags[i]);
+                psfMagVal = (float)psfVal.abs();
 
-                estimatedVal.setReal(estimatedSpectrumReals[i]);
-                estimatedVal.setImag(estimatedSpectrumImags[i]);
+                estimatedVal.setRe(estimatedSpectrumReals[i]);
+                estimatedVal.setIm(estimatedSpectrumImags[i]);
 
                 if (psfMagVal >= blurredMagVal) {
-                    tmpComplexVal = OneMinusBETA.multiply(estimatedVal);
+                    tmpComplexVal = OneMinusBETA.times(estimatedVal);
                     tmpComplexVal2 = blurredVal.divide(psfVal);
-                    tmpComplexVal3 = BETA.multiply(tmpComplexVal2);
-                    tmpComplexVal4 = tmpComplexVal.add(tmpComplexVal3);
+                    tmpComplexVal3 = BETA.times(tmpComplexVal2);
+                    tmpComplexVal4 = tmpComplexVal.plus(tmpComplexVal3);
 
-                    estimatedSpectrumReals[i] = tmpComplexVal4.getReal();
-                    estimatedSpectrumImags[i] = tmpComplexVal4.getImag();
+                    estimatedSpectrumReals[i] = (float)tmpComplexVal4.getRe();
+                    estimatedSpectrumImags[i] = (float)tmpComplexVal4.getIm();
 
                 } else {
                     tmpComplexVal = OneMinusBETA.divide(estimatedVal);
                     tmpComplexVal2 = psfVal.divide(blurredVal);
-                    tmpComplexVal3 = BETA.multiply(tmpComplexVal2);
-                    tmpComplexVal4 = tmpComplexVal.add(tmpComplexVal3);
+                    tmpComplexVal3 = BETA.times(tmpComplexVal2);
+                    tmpComplexVal4 = tmpComplexVal.plus(tmpComplexVal3);
                     tmpComplexVal5 = ONE.divide(tmpComplexVal4);
 
-                    estimatedSpectrumReals[i] = tmpComplexVal5.getReal();
-                    estimatedSpectrumImags[i] = tmpComplexVal5.getImag();
+                    estimatedSpectrumReals[i] = (float)tmpComplexVal5.getRe();
+                    estimatedSpectrumImags[i] = (float)tmpComplexVal5.getIm();
 
                 }
             } // end for (int i = 0; ...)
