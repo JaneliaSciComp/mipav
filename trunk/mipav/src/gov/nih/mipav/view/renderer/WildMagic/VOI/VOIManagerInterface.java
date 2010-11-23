@@ -3433,11 +3433,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         // If the copy list is from another image:
         if ( copyList.elementAt(0).getGroup() != null && !copyList.elementAt(0).getGroup().hasListener(this) )
         {
-        	System.out.println("here");
             pasteFromViewUserInterface();
             return;
         }
-        System.out.println("yo");
         // The copy list is from this image/manager: 
         for ( int i = 0; i < copyList.size(); i++ )
         {
@@ -3536,8 +3534,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         int iAdded = 0;
         while ( iAdded < copyList.size() )
         {
+        	// get last non-added contour:
             VOIBase kCurrentVOI = copyList.elementAt(iAdded++ );
             
+            // create a new VOI
             short sID = (short)(kActive.getVOIs().getUniqueID());
             String kName = kCurrentVOI.getClass().getName();
             int index = kName.lastIndexOf('.') + 1;
@@ -3546,29 +3546,29 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             kNewVOI.setCurveType( kCurrentVOI.getType() );
             kNewVOI.setColor( kCurrentVOI.getGroup().getColor() );
                         
-            
+            // Put the current contours in the new group:
             VOI kOldGroup = kCurrentVOI.getGroup();
-            kNewVOI.getCurves().add( kCurrentVOI );
-            for ( int i = iAdded; i < copyList.size(); i++ )
+            kNewVOI.getCurves().add( kCurrentVOI.clone() );
+            // Add all the other contours with the same group to this group
+            for ( ; iAdded < copyList.size(); iAdded++ )
             {
-                if ( copyList.elementAt(i).getGroup() == kOldGroup )
+                if ( copyList.elementAt(iAdded).getGroup() == kOldGroup )
                 {
-                    kNewVOI.getCurves().add( copyList.elementAt(i) );
+                    kNewVOI.getCurves().add( copyList.elementAt(iAdded).clone() );
                 }
                 else
                 {
-                    iAdded = i;
                     break;
                 }
             }
+            // add the new group.
             if ( kNewVOI.getCurves().size() > 0 )
             {
                 newVOIs.add( kNewVOI );
             }
         }
-        // Paste new VOI groups:
-        
-        
+        // At this point the contours are grouped together and ready to be copied...
+        // Paste new VOI groups:               
         for ( int i = 0; i < newVOIs.size(); i++ )
         {
             VOI currentVOI = newVOIs.get(i);
