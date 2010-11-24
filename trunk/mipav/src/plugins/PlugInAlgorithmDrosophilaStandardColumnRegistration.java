@@ -152,7 +152,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     private final JTextArea outputTextArea;
 
     /** whether to flip or not * */
-    private final boolean flipX, flipY, flipZ;
+    private  boolean flipX, flipY, flipZ;
     
     private String standardizedFilamentFileName;
     
@@ -288,7 +288,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v3.3" + "\n");
+        outputTextArea.append("Running Algorithm v3.4" + "\n");
         
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
         /*String text = "";
@@ -3513,6 +3513,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         outputTextArea.append("\n");
 
         writeSurfaceFile();
+        //if we do a flipx or flipy or flipz ...lets also write surface file without being flipped
+        if(flipX || flipY || flipZ) {
+        	flipX = false;
+        	flipY = false;
+        	flipZ = false;
+        	writeSurfaceFile();
+        }
         writeNewPointsFile();
         
         
