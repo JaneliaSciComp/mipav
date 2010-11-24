@@ -1,8 +1,11 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
+import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -730,6 +733,31 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                     new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
         } 
         else if (command.equals("MaskToVOI")) {
+        	boolean wholeImage = true;
+        	int originalType = getActiveImage().getType();
+        	double originalMin = getActiveImage().getMin();
+        	double originalMax = getActiveImage().getMax();
+        	if (getActiveImage().getNDims() == 2) { 
+                AlgorithmMorphology2D idObjectsAlgo2D;
+                int method = AlgorithmMorphology2D.ID_OBJECTS;
+                
+                idObjectsAlgo2D = new AlgorithmMorphology2D(getActiveImage(), 0, 0, method, 0, 0, 0, 0, wholeImage);
+                idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
+                idObjectsAlgo2D.run();
+                idObjectsAlgo2D.finalize();
+                idObjectsAlgo2D = null;
+        	}
+        	else { 
+                AlgorithmMorphology3D idObjectsAlgo3D;
+                int method = AlgorithmMorphology3D.ID_OBJECTS;
+                
+                idObjectsAlgo3D = new AlgorithmMorphology3D(getActiveImage(), 0, 0, method, 0, 0, 0, 0, wholeImage);
+                idObjectsAlgo3D.setMinMax(1, Integer.MAX_VALUE);
+                idObjectsAlgo3D.run();
+                idObjectsAlgo3D.finalize();
+                idObjectsAlgo3D = null;
+        	}
+        	getActiveImage().calcMinMax();
             final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
 
             ViewJProgressBar progressBar = new ViewJProgressBar(getActiveImage().getImageName(), "Extracting VOI ...", 0, 100, true);
@@ -739,6 +767,16 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
             // VOIExtractionAlgo.setActiveImage(false);
             VOIExtractionAlgo.run();
+            
+            if (originalType != getActiveImage().getType()) {
+                AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(getActiveImage(), originalType,
+                		              getActiveImage().getMin(), getActiveImage().getMax(), originalMin, originalMax, false);
+                changeTypeAlgo.run();
+                changeTypeAlgo.finalize();
+                changeTypeAlgo = null;
+            }
+            selectAllVOIs(true);
+            getActiveImage().groupVOIs();
 
             ScriptRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
             ProvenanceRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
