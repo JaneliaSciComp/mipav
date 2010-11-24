@@ -756,6 +756,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         
         alg.addListener(this);
 
+        setVisible(false);
         
         if (isRunInSeparateThread()) {
             // Start the thread as a low priority because we wish to still have user interface work fast.
