@@ -677,13 +677,32 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         	int orientationCount = groupNode.getChildCount();
         	
         	for(int k=0;k<orientationCount;k++) {
-        		VOIOrientationNode orientationNode = (VOIOrientationNode)selectedVOIModel.getChild(groupNode, k);
+        		try {
+	        		VOIOrientationNode orientationNode = (VOIOrientationNode)selectedVOIModel.getChild(groupNode, k);
         		
-        		int frameCount = orientationNode.getChildCount();
-        		
-        		for(int m=0;m<frameCount;m++) {
-        			
-        			VOIFrameNode frameNode = (VOIFrameNode)selectedVOIModel.getChild(orientationNode, m);
+	        		
+	        		int frameCount = orientationNode.getChildCount();
+	        		
+	        		for(int m=0;m<frameCount;m++) {
+	        			
+	        			VOIFrameNode frameNode = (VOIFrameNode)selectedVOIModel.getChild(orientationNode, m);
+	        			
+	        			int contourCount = frameNode.getChildCount();
+	        			
+	        			for(int c=0;c<contourCount;c++) {
+	        				
+	        				VOINode contourNode = (VOINode)selectedVOIModel.getChild(frameNode, c);
+	        				VOIBase contour = contourNode.getVOI();
+	        				
+	        				voi.importCurve(contour);
+	        				
+	        			}
+	        			
+	        			
+	        		}
+        		}
+        		catch(ClassCastException e) {
+        			VOIFrameNode frameNode = (VOIFrameNode)selectedVOIModel.getChild(groupNode, 0);
         			
         			int contourCount = frameNode.getChildCount();
         			
@@ -694,9 +713,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         				
         				voi.importCurve(contour);
         				
-        			}
-        			
-        			
+        			}	
         		}
         		
         		
