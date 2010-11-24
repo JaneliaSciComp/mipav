@@ -75,6 +75,10 @@ public class PlugInAlgorithmMTry extends AlgorithmBase {
     private double invTimeMed;
 
     private double invTimeMax;
+
+    private double funcMin;
+
+    private double funcMax;
     
     /**
      * Constructor.
@@ -151,7 +155,8 @@ public class PlugInAlgorithmMTry extends AlgorithmBase {
     	}
     	System.out.println("New x is "+newX+" while t1Max is "+t1Max);
     	
-    	double funcMin = t1Val[0], funcMax = t1Val[0];
+    	funcMin = t1Val[0];
+    	funcMax = t1Val[0];
     	for(int i=0; i<t1Val.length; i++) {
     	    if(t1Val[i] < funcMin) {
     	        funcMin = t1Val[i];
@@ -223,12 +228,17 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     	rescaleToComplex(maxImage, maxImageComplexReal, maxImageComplexImag);
     	rescaleToComplex(maxImage, negPhaseReal, negPhaseImag);
     	
+    	//searchForValues(minImageComplexReal, minImageComplexImag, medImageComplexReal, medImageComplexImag, maxImageComplexReal, maxImageComplexImag);
+    	
+    	
+    	
     	/*double[] maxImageComplexReal = new double[maxImageComplex.getSize()];
     	double[] maxImageComplexImag = new double[maxImageComplex.getSize()];
     	double[] negPhaseReal = new double[maxImageComplex.getSize()];
     	double[] negPhaseImag = new double[maxImageComplex.getSize()];
     	try {
-            maxImageComplex.exportDComplexData(0, maxImageComplex.getSize(), maxImageComplexReal, maxImageComplexImag);
+            maxImageComplex.exportDComplexData(0, maxImageComplex.getSize(), maxImageComplexRReceived	Subject	From	Size	Categories	
+1:05 PM	DCO Presentation Monday (11/22) Service Desk Knowledge Management and Change Management	CIT Communications Office (NIH/CIT)	11 KB		eal, maxImageComplexImag);
         } catch (IOException e) {
             e.printStackTrace();
         }*/
@@ -249,19 +259,25 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         float[][] tempDenReal = new float[64*64*44][5];
         float[][] tempDenImag = new float[64*64*44][5];
         
+        float realFactor, imagFactor;
+        
         for(int i=0; i<t1Real.length; i++) {
             for(int j=0; j<tempNumReal[i].length; j++) {
                 tempNumReal[i][j] = (maxImageComplexReal[i][j] - medImageComplexReal[i][j]);
                 tempNumImag[i][j] = (maxImageComplexImag[i][j] - medImageComplexImag[i][j]);
-                
-                tempNumReal[i][j] = tempNumReal[i][j]*negPhaseReal[i][j] - tempNumImag[i][j]*negPhaseImag[i][j];
+                             
+                realFactor = tempNumReal[i][j]*negPhaseReal[i][j] - tempNumImag[i][j]*negPhaseImag[i][j];
                 tempNumImag[i][j] = tempNumImag[i][j]*negPhaseReal[i][j] + tempNumReal[i][j]*negPhaseImag[i][j];
+                
+                tempNumReal[i][j] = realFactor;
                 
                 tempDenReal[i][j] = (medImageComplexReal[i][j] - minImageComplexReal[i][j]);
                 tempDenImag[i][j] = (medImageComplexImag[i][j] - minImageComplexImag[i][j]);
                 
-                tempDenReal[i][j] = tempDenReal[i][j]*negPhaseReal[i][j] - tempDenImag[i][j]*negPhaseImag[i][j];
+                realFactor = tempDenReal[i][j]*negPhaseReal[i][j] - tempDenImag[i][j]*negPhaseImag[i][j];
                 tempDenImag[i][j] = tempDenImag[i][j]*negPhaseReal[i][j] + tempDenReal[i][j]*negPhaseImag[i][j];
+                
+                tempDenReal[i][j] = realFactor;
             }
         }
         int k = 1;
@@ -280,25 +296,11 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
             tempImag[i] = (float) ((avgNumImag[i]*avgDenReal[i] - avgNumReal[i]*avgDenImag[i])/pow);
             t1Real[i] = (float) Math.sqrt(Math.pow(tempReal[i], 2) + Math.pow(tempImag[i], 2));
         }   	
-        
-        for(int i=0; i<t1Real.length; i++) {
-            
-        }
             
     	
     	destImage = new ModelImage(ModelImage.FLOAT, new int[]{64,64,44}, "T1 Result");
-    	int replace = 0;
-    	for(int i=0; i<t1Real.length; i++) {
-    	    if(t1Real[i] - funcMin > funcMax - funcMin) {
-    	        //System.out.println("MaxReplacing "+t1Real[i]+" with "+(funcMax - funcMin));
-    	        t1Real[i] = (float) (funcMax - funcMin);
-    	        replace++;
-    	    } else if(t1Real[i] < funcMin) {
-    	        //System.out.println("MinReplacing "+t1Real[i]+" with "+funcMin);
-    	        replace++;
-    	        t1Real[i] = (float) funcMin;
-    	    }
-        }
+    	int replace = doMaxMinReplace(t1Real);
+    	
     	
     	System.out.println("Num replaces: "+replace);
     	replace = 0;
@@ -328,6 +330,42 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
 	    	
     }
     
+    private int doMaxMinReplace(float[] t1Real) {
+        int replace = 0;
+        for(int i=0; i<t1Real.length; i++) {
+            if(t1Real[i] - funcMin > funcMax - funcMin) {
+                //System.out.println("MaxReplacing "+t1Real[i]+" with "+(funcMax - funcMin));
+                t1Real[i] = (float) (funcMax - funcMin);
+                replace++;
+            } else {
+                //System.out.println("MinReplacing "+t1Real[i]+" with "+funcMin);
+                replace++;
+                t1Real[i] = (float) (t1Real[i] - funcMin);
+            }
+            if(t1Real[i] < 0) {
+                t1Real[i] = 0;
+            }
+        }
+        return replace;
+    }
+
+    private void searchForValues(float[][] minImageComplexReal,
+            float[][] minImageComplexImag, float[][] medImageComplexReal,
+            float[][] medImageComplexImag, float[][] maxImageComplexReal,
+            float[][] maxImageComplexImag) {
+        
+        int search = -19262;
+        for(int i=0; i<minImageComplexReal.length; i++) {
+            for(int j=0; j<minImageComplexReal[i].length; j++) {
+                if(minImageComplexReal[i][j] > search-1 &&  minImageComplexReal[i][j] < search+1) {
+                    System.out.println("i, j: "+i+", "+j+": "+minImageComplexReal[i][j]);
+                }
+            }
+        }
+        System.out.println("Here");
+        
+    }
+
     private void rescaleToComplex(ModelImage origImage, float[][] realData, float[][] complexData) {
         float[] realDataTemp = new float[64*64*44*5];
         float[] complexDataTemp = new float[64*64*44*5];
