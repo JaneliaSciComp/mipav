@@ -157,7 +157,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v3.3");
+        setTitle("Drosophila Standard Column Registration v3.4");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -678,48 +678,27 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			pointsMap = new TreeMap<Integer, float[]>();
             raFile = new RandomAccessFile(pointsFile, "r");
             String[] arr;
-            String[] arr2;
+            //String[] arr2;
             String line;
             float x,y,z;
             int counter = 1;
             while((line = raFile.readLine()) != null) {
-            	if(line.trim().equals("top") || line.trim().equals("r8") || line.trim().equals("r7")) {
-            	}else {
-            		arr = line.trim().split(":");
-            		if(arr.length == 2 && arr[0].trim().equals(String.valueOf(counter))) {
-                    	if(arr[1].trim().equals("")) {
-                    		pointsMap.put(new Integer(counter), null);
-                    	}else {
-                    		arr2 = arr[1].trim().split(",");
-                        	if(arr2.length != 3) {
-                        		return false;
-                        	}
-                        	x = new Float(arr2[0]).floatValue();
-                        	y = new Float(arr2[1]).floatValue();
-                        	z = new Float(arr2[2]).floatValue();
-                        	float[] f = {x,y,z};
-                        	pointsMap.put(new Integer(counter), f);
-                    	}
+            		arr = line.trim().split(",");
+            		if(arr.length == 4) {
+                    	x = new Float(arr[1]).floatValue();
+                    	y = new Float(arr[2]).floatValue();
+                    	z = new Float(arr[3]).floatValue();
+                    	float[] f = {x,y,z};
+                    	pointsMap.put(new Integer(counter), f);
                     }else {
                     	if(arr.length == 1) {
-                    		int length = line.trim().length();
-                    		String numString;
-                    		if(line.trim().charAt(length-1) == ':') {
-                    			numString = line.trim().substring(0, length-1);
-                    			if(numString.equals(String.valueOf(counter))) {
-                    				pointsMap.put(new Integer(counter), null);
-                    			}else {
-                    				return false;
-                    			}
-                    		}else {
-                    			return false;
-                    		}	
+                    		pointsMap.put(new Integer(counter), null);
                     	}else {
                     		return false;
                     	}
                     }
             		counter++;
-            	}
+            	
             }
             raFile.close();
             if(pointsMap.size() != 27) {
