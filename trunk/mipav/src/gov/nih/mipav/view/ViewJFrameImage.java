@@ -1042,6 +1042,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogMatchImages(this, getActiveImage());
         } else if (command.equals("maximumIntensityProjection")) {
             new JDialogMaximumIntensityProjection(this, getActiveImage());
+        } else if (command.equals("minimumIntensityProjection")) { 
+            new JDialogMaximumIntensityProjection(this, getActiveImage());
         } else if (command.equals("performRAHE")) {
 
             // JDialogAHE ahe =

@@ -42,10 +42,10 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
     /** Dialog border size */
     private int borderSize = 0;
     
-    /** Jtextfield for minimum value of threshold. */
+    /** JTextfield for minimum value of threshold. */
     private JTextField minInput;
     
-    /** Jtextfield for maximum value of threshold. */
+    /** JTextfield for maximum value of threshold. */
     private JTextField maxInput;
     
     /** Minimum intensity. */
