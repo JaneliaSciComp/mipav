@@ -25,7 +25,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	private ModelImage ZProjectionImage;
 	
 	/** Array of Result Images */
-	private ArrayList resultImages;
+	private ArrayList<ModelImage> resultImages;
 	
 	/** Source Image Resolutions */
 	float [] imResolutions;
