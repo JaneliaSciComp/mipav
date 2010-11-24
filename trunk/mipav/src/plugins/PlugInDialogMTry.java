@@ -177,14 +177,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
                 // The algorithm has completed and produced a new image to be displayed.
                 updateFileInfo(image, resultImage);
 
-                resultImage.clearMask();
-
-                try {
-                    new ViewJFrameImage(resultImage);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
+                
             } else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage
