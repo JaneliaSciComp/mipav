@@ -279,6 +279,10 @@ public class FileTypeTable {
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.ZVI, new FileTypeInfo("ZVI", ".zvi"));
         FileTypeTable.FILE_EXT_TABLE.put(".zvi", FileUtility.ZVI);
         FileTypeTable.FILE_EXT_TABLE.put(".ZVI", FileUtility.ZVI);
+        
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.MATLAB, new FileTypeInfo("MATLAB", ".mat"));
+        FileTypeTable.FILE_EXT_TABLE.put(".mat", FileUtility.MATLAB);
+        FileTypeTable.FILE_EXT_TABLE.put(".MAT", FileUtility.MATLAB);
     }
 
     /**
