@@ -15,6 +15,10 @@ public class FileInfoMATLAB extends FileInfoBase {
 
     /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
+	String headerTextField = null;
+	boolean level5Format = true;
+	long subsystemSpecificDataOffset = 0L;
+	int version = -1;
     
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -47,5 +51,43 @@ public class FileInfoMATLAB extends FileInfoBase {
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
+        
+        if (level5Format) {
+        	dialog.append("The MATLAB file is in level 5 format\n");
+        }
+        else {
+        	dialog.append("The MATLAB file is in level 4 format\n");
+        }
+        
+        if (headerTextField != null) {
+        	dialog.append("Header text field = " + headerTextField.trim() + "\n");
+        }
+        
+        if (subsystemSpecificDataOffset == 0L) {
+            dialog.append("No subsystem specific data is stored in the file\n");	
+        }
+        else {
+        	dialog.append("Subsystem specific data is stored at location " + subsystemSpecificDataOffset + "\n");
+        }
+        
+        if (version >= 0) {
+        	dialog.append("Version = " + version + "\n");
+        }
+    }
+    
+    public void setHeaderTextField(String headerTextField) {
+    	this.headerTextField = headerTextField;
+    }
+    
+    public void setLevel5Format(boolean level5Format) {
+    	this.level5Format = level5Format;
+    }
+    
+    public void setSubsystemSpecificDataOffset(long subsystemSpecificDataOffset) {
+    	this.subsystemSpecificDataOffset = subsystemSpecificDataOffset;
+    }
+    
+    public void setVersion(int version) {
+    	this.version = version;
     }
 }
