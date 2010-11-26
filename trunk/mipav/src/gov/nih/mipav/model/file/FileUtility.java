@@ -243,6 +243,9 @@ public class FileUtility {
     public static final int ZVI = 67;
 
     public static final int JP2 = 68;
+    
+    /** extension .mat */
+    public static final int MATLAB = 69;
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
             "biorad", "bmp", "bruker", "cheshire", "cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits",
@@ -251,7 +254,7 @@ public class FileUtility {
             "medivision", "mgh", "micro cat", "minc", "mipav", "mrc", "nifti", "nifti multifile", "nrrd", "osm", "pcx",
             "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga", "tiff",
             "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "surfaceref xml",
-            "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2"};
+            "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat"};
 
     /**
      * Returns the file type associated with a string.
