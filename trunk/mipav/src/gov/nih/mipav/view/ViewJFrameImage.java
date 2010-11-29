@@ -2699,10 +2699,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // registeredFramedImages = null;
         }
-        if ( voiManager != null )
-        {
-            voiManager.setCenter( new Vector3f( 0, 0, componentImage.getSlice() ) );
-        }
     }
 
     public void doLinkedScrolling(int offset) {
@@ -3341,10 +3337,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // registeredFramedImages = null;
 
-        }
-        if ( voiManager != null )
-        {
-            voiManager.setCenter( new Vector3f( 0, 0, componentImage.getSlice() ) );
         }
     }
 
@@ -4068,12 +4060,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (infoDialogB != null) {
                 infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
             }
-        }
-        
-        if ( voiManager != null )
-        {
-            voiManager.setCenter( new Vector3f( 0, 0, componentImage.getSlice() ) );
-        }
+        }        
     }
 
     /**

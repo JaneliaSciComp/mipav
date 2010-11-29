@@ -524,8 +524,8 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSecondDerivativeMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSecondDerivativeMapTarget());
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetLaplaceMapTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetLaplaceMapTarget());
         if ( m_kVolumeImageB != null )
         {
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName());

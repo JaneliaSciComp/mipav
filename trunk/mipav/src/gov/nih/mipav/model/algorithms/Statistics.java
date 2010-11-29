@@ -115,9 +115,10 @@ public class Statistics {
         hyper = new Hypergeometric(0.5, (v + 1.0)/2.0, 1.5, -x*x/v, result);
         hyper.run();
         ansR[0] = 0.5 + x*(g1[0]/(Math.sqrt(v*Math.PI)*g2[0]))*result[0];
-        // JTEM Solution (Produces same resultt testR.getReal = result[0].
-        //Complex testR = HyperGeometric2F1.evaluateSeries( new Complex(0.5), new Complex((v + 1.0)/2.0),
-        //		new Complex(1.5), new Complex(-x*x/v) );
+        // JTEM Solution (Produces same result testR.getRe() = result[0].
+        Complex testR = HyperGeometric2F1.evaluateSeries( new Complex(0.5), new Complex((v + 1.0)/2.0),
+        		new Complex(1.5), new Complex(-x*x/v) );
+        System.err.println( result[0] + "   " + testR.getRe() );
         return;
     }
     

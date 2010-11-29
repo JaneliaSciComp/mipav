@@ -776,8 +776,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSecondDerivativeMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSecondDerivativeMapTarget());
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetLaplaceMapTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetLaplaceMapTarget());
         
 
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName());
@@ -798,8 +798,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName() );
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetSecondDerivativeMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetSecondDerivativeMapTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetLaplaceMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetLaplaceMapTarget());
         }
     }
     
@@ -824,8 +824,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSecondDerivativeMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSecondDerivativeMapTarget());
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetLaplaceMapTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetLaplaceMapTarget());
         
 
         //kPShader.SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName());
@@ -846,8 +846,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName() );
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetSecondDerivativeMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetSecondDerivativeMapTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetLaplaceMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetLaplaceMapTarget());
         }
     }
     
