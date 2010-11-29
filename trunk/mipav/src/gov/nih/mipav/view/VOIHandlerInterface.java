@@ -131,6 +131,7 @@ public interface VOIHandlerInterface extends ActionListener, MouseInputListener
      * orthogonal planes displayed in the ViewJFrameTriImage. When this function is called from ViewJFrameImage
      * the X,Y, parameters are ignored and current slice is the Z-value.
      * @param center ModelImage file coordinates representation of the slice values of the three orthogonal image planes.
+     * @deprecated
      */
     public void setCenter( Vector3f center );
     /**

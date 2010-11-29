@@ -7,6 +7,7 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import de.jtem.ellipticFunctions.Jacobi;
+import de.jtem.mfc.field.Complex;
 
 
 /**
@@ -210,8 +211,17 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
                 // Center around x axis
                 xp = (i - xoff)*(K/xoff);
                 // Conformal map from origin centered rectangle to unit circle
-                je = new JacobianElliptic(xp, yp, modulus, JacobianElliptic.CN, xw, yw);
-                je.run();
+                //je = new JacobianElliptic(xp, yp, modulus, JacobianElliptic.CN, xw, yw);
+                //je.run();
+                
+                
+                Complex c1 = new Complex(xp, yp );
+                Complex c2 = new Complex( modulus );
+                Complex cR = Jacobi.cn( c1, c2 );
+                //System.err.println( xw[0] + " " + yw[0] + "      " + cR.getRe() + " " + cR.getIm() );
+                xw[0] = cR.getRe();
+                yw[0] = cR.getIm();
+                
                 zdiv(1.0 - xw[0], -yw[0], 1.0 + xw[0], yw[0], xr, yr);
                 sqrtc(xr[0], yr[0], xr, yr);
                 if (xp >=0.0) {

@@ -18,7 +18,7 @@ import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.RubberbandLivewire;
-import gov.nih.mipav.view.ViewJFrameImage;
+
 import gov.nih.mipav.view.ViewJPopupPt;
 import gov.nih.mipav.view.ViewJPopupVOI;
 import gov.nih.mipav.view.ViewJProgressBar;
@@ -354,20 +354,22 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             return "position: " + position + " cost: " + cost;
         }
     }
+    
+    /** Set to true when the user is actively drawing or modifying a VOI contour. */
     private boolean m_bDrawVOI = false;
-
-    private boolean m_bPointer = false;
+    /** Set to true when the user has selected a VOI contour. */
     private boolean m_bSelected = false;
 
 
     /** used in the popup menu when the user right-clicks over a voi intensity line. */
     public static final String DELETE_INTENSITY_LINE = "delete_inensity_line";
+    /** used in the popup menu when the user right-clicks over a voi intensity line. */
     public static final String SHOW_INTENSITY_GRAPH = "show_intensity_graph";
 
     private static final int NONE = -1;
     private static final int TEXT = 0;
     private static final int POINT = 1;
-    public static final int POLYPOINT = 2;
+    private static final int POLYPOINT = 2;
     private static final int LINE = 3;
     private static final int PROTRACTOR = 4;
     private static final int RECTANGLE = 5;
@@ -381,87 +383,82 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private static final int RETRACE = 13;
     private int m_iDrawType;
 
+    /** Current active voi contour. */
     private VOIBase m_kCurrentVOI = null;
+    /** The contour to copy. */
     private VOIBase m_kCopyVOI = null;
+    /** ScreenCoordinateListener translates between the current image dimensions, canvas size, and mouse
+     * coordinates for correct mouse interaction. */
     protected ScreenCoordinateListener m_kDrawingContext = null;
+    /** Used to calculate the levelset contour. */
     private PointStack levelSetStack = new PointStack(500);
+    /** Used to calculate the levelset contour. */
     private BitSet map = null;
+    /** Used to calculate the levelset contour. */
     private Stack<int[]> stack = new Stack<int[]>();
-    //private int m_iSlice;
+    /** Set to true when the left mouse is pressed. */
     private boolean m_bLeftMousePressed;
 
     /** Change the mouse cursor with the first mouseDrag event */
     private boolean m_bFirstDrag = true;
-
+    /** Last/current mouse position. */
     private float m_fMouseX, m_fMouseY;
+    /** Local orientation of the displayed image, used in the volume renderer and tri-planar views. */
     private int m_iPlaneOrientation;
+    /** ImageA and ImageB */
     private ModelImage[] m_akImages = new ModelImage[2];
+    /** Current active image. */
     private ModelImage m_kImageActive;
+    /** A re-oriented version of the active image, re-oriented so it matches the currently
+     * displayed image orientations in either the tri-planar or volume render views. This
+     * is used for level-set and livewire in the tri-planar view. */
     private ModelImage m_kLocalImage;
-
+    /** The image extents in the local orientation. */
     private int[] m_aiLocalImageExtents;
-
+    /** A reference to the VOIManagerInterface */
     private VOIManagerInterface m_kParent;
-
+    /** Calculations for the oval voi are calculated one time: */
     private boolean m_bFirstVOI = true;
     private int m_iCirclePts = 32;
-
     private double[] m_adCos = new double[m_iCirclePts];
     private double[] m_adSin = new double[m_iCirclePts];
+    
+    /** VOI contour near status: */
     private static final int NearNone = -1;
     private static final int NearPoint = 0;
-
     private static final int NearLine = 1;
     private static final int NearBoundPoint = 2;
-
+    /** The near status of the mouse, used to set the mouse cursor. */
     private int m_iNearStatus = NearNone;
-
+    /** The canvas */
     private Component m_kComponent = null;
-
+    /** Type of livewire cost function, gradient magnitude, laplace, intensity. */
     private int m_iLiveWireSelection = 0;
-
-    Vector3f m_kCenter = new Vector3f();
-
+    /** Livewire calculations: */
     private ActiveTree activeTree;
-
     private byte[] costGraph = null;
-
-
-
     private float grad_weight = 0.20f; // used to remember gradient weight
-
-
     private float[] localCosts = null;
-
     private BitSet processedIndicies;
     private float[] seededCosts;
-
     private int seedPoint;
-
     private boolean m_bLiveWireInit = false;  
     private boolean[] m_abInitLiveWire;
     private boolean m_bLevelSetInit = false;  
     private boolean[] m_abInitLevelSet;
-  
-
     private float[] xDirections;
-
-
     private float[] yDirections;
-
     private float[] imageBufferActive;
 
+    /** True if the user has selected the quick lut feature: */
     private boolean m_bQuickLUT = false;
-
-
-
 
     /** Popup Menu for VOIs (non-point). */
     protected ViewJPopupVOI m_kPopupVOI = null;
 
     /** Popup Menu for VOIPoints. */
     protected ViewJPopupPt m_kPopupPt = null;
-
+    /** Set to XPLANE, YPLANE, or ZPLANE, depending on the image orientation. */
     private int m_iPlane = -1;
 
     /**
@@ -470,24 +467,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * to the present location and uses this distance to move an object. 
      */
     private Vector3f m_kMouseOffset = new Vector3f();
+    /** Set to true if the left mouse is pressed during drag. */
     private boolean m_bMouseDrag = false;
 
+    /** Contour Retrace: */
     private int indexRetrace = -99;
-
     private VOIContour oldContour = null;
-
-
     private int lastX = -1;
-
     private int lastY = -1;
-
     private int lastZ = -1;
-
     private boolean knowDirection = false;
-
     private boolean isFirst = true;
-
-
     private boolean resetStart = true;
 
     /** Whether the livewire properties (e.g. gradient magnitude) should be recalculated */
@@ -497,12 +487,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private VOIBase m_kBackupVOI = null;
     private boolean m_bFirstKey = true;
     
+    /**
+     * Constructor. Passes in the VOIManagerInterface parent which communicates all user-interface commands to the VOIManager.
+     * @param kParent containing VOIManagerInterface.
+     */
     public VOIManager (VOIManagerInterface kParent )
     {
         m_kParent = kParent;
     }
 
+    /* (non-Javadoc)
+     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
     public void actionPerformed(ActionEvent event) {
+    	// Handles action commands from the VOI Line popup menu.
         String command = event.getActionCommand();
 
         if (command.equals(DELETE_INTENSITY_LINE)) // handling the popup menu for the VOI intensity line
@@ -539,6 +537,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kParent.deleteVOI( kVOI );
     }
 
+    /**
+     * Cleans up local memory.
+     */
     public void dispose() 
     {
         m_kCurrentVOI = null;
@@ -580,8 +581,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         m_kComponent = null;
 
-        m_kCenter = null;
-
         activeTree = null;
         costGraph = null;
         localCosts = null;
@@ -616,19 +615,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             { 
                 m_kParent.setDefaultCursor();
                 m_bDrawVOI = false;
-                m_bPointer = false;
             }
         } 
         else //since resetLiveWire is not a drawing command, it should not affect these, unless current operation is livewire
         {
             m_bDrawVOI = false;
-            m_bPointer = false;
         }
 
 
-        if (kCommand.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) ) {
-            m_bPointer = true;
-        }
+        if (kCommand.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) ) { }
         else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand()) || 
                 kCommand.equals("ResetVOI") )
         {
@@ -896,7 +891,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         setCanvas(kComponent);
         setDrawingContext(kContext);
         setOrientation(iOrientation);
-        setSlice(iSlice);
         int iPlane = MipavCoordinateSystems.getAxisOrder( m_kImageActive, iOrientation)[2];
         switch ( iPlane )
         {
@@ -1029,7 +1023,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kCurrentVOI = null;
         }
         m_bDrawVOI = true;
-        m_bPointer = false;
         m_bSelected = false;
         m_iDrawType = LIVEWIRE;
         initLiveWire( m_kDrawingContext.getSlice(), m_bLiveWire );
@@ -1534,17 +1527,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             m_kImageActive = m_akImages[iActive];
         }
-    }
-
-    /**
-     * Sets the current slice value. The center is the current value of all slices, x,y,z in default image file-coordinates.
-     * It is translated into local coordinates and the local z-value sets the slice.
-     * @param center
-     */
-    public void setCenter( Vector3f center )
-    {
-        MipavCoordinateSystems.fileToPatient( center, m_kCenter, m_kImageActive, m_iPlaneOrientation );
-        setSlice( m_kCenter.Z );
     }
 
     /**
@@ -3954,9 +3936,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
             m_abInitLiveWire[iSlice] = true;
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
+            progressBar.dispose();
         }
     }
 
@@ -4146,63 +4126,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
         }
         return false;
-    }
-
-    private void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings,
-            int iXMin, int iXMax, Vector3f[] akPoints )
-    {        
-        int iNumPts = akPoints.length;
-        double dNudge = 0.1;       
-        double[][][] aaadEdgeList = new double[iNumPts][2][2];
-
-        for (int i = 0; i < (iNumPts - 1); i++) {
-            aaadEdgeList[i][0][0] = akPoints[i].X - dNudge;
-            aaadEdgeList[i][0][1] = akPoints[i].Y - dNudge;
-            aaadEdgeList[i][1][0] = akPoints[i+1].X - dNudge;
-            aaadEdgeList[i][1][1] = akPoints[i+1].Y - dNudge;
-        }
-
-        /*
-         * Compute the crossing points for this column and produce spans.
-         */
-        for (int iColumn = iXMin; iColumn < iXMax; iColumn++) {
-            int iIndex = iColumn - iXMin;
-
-            /* for each edge, figure out if it crosses this column and add its
-             * crossing point to the list if so. */
-            aiNumCrossings[iIndex] = 0;
-
-            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
-                double dX0 = aaadEdgeList[iPoint][0][0];
-                double dX1 = aaadEdgeList[iPoint][1][0];
-                double dY0 = aaadEdgeList[iPoint][0][1];
-                double dY1 = aaadEdgeList[iPoint][1][1];
-                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
-                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
-
-                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
-
-                    /* The edge crosses this column, so compute the
-                     * intersection.
-                     */
-                    double dDX = dX1 - dX0;
-                    double dDY = dY1 - dY0;
-                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
-                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
-
-                    double dYCross = (dM * iColumn) + dB;
-                    //double dRound = 0.5;
-                    //aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound) :
-                    //    (int) (dYCross + dRound);
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (int)Math.round(dYCross);
-                    aiNumCrossings[iIndex]++;
-                }
-            }
-
-            /* sort the set of crossings for this column: */
-            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
-        }
-        aaadEdgeList = null;
     }
 
     private void pasteVOI( int iSlice )
@@ -5220,11 +5143,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
     }
-    /**
-     * Sets the local slice value.
-     * @param fSlice
-     */
-    public void setSlice(float fSlice) {}
 
 
     private void showSelectedVOI( MouseEvent kEvent )
@@ -5557,33 +5475,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         } 
         return null;
     }
-
-
-
-    /**
-     * Sorts the edge crossing points in place.
-     *
-     * @param  aiList        list of positions
-     * @param  iNumElements  number of positions.
-     */
-    private void sortCrossingPoints(int[] aiList, int iNumElements) {
-        boolean bDidSwap = true;
-
-        while (bDidSwap) {
-            bDidSwap = false;
-
-            for (int iPoint = 0; iPoint < (iNumElements - 1); iPoint++) {
-
-                if (aiList[iPoint] > aiList[iPoint + 1]) {
-                    int iTmp = aiList[iPoint];
-                    aiList[iPoint] = aiList[iPoint + 1];
-                    aiList[iPoint + 1] = iTmp;
-                    bDidSwap = true;
-                }
-            }
-        }
-    }
-
 
 
     private VOIBase split( VOIBase kVOI, Vector3f kStartPt, Vector3f kEndPt )

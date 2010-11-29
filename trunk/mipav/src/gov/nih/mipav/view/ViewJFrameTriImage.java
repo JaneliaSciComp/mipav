@@ -2257,11 +2257,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             parentFrame.setSlice(k);
         }
         
-        if ( voiManager != null )
-        {
-            voiManager.setCenter( new Vector3f( i, j, k ) );
-        }
-
         fireCoordinateChange(i, j, k);
         setPositionLabels(i, j, k);
         updateImages(true);

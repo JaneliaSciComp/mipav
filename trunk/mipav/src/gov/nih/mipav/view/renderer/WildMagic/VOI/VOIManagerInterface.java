@@ -2052,7 +2052,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             kCurrentGroup.setAllActive(bActive);
             m_kCurrentVOIGroup = kCurrentGroup;
         }
-        m_kParent.getActiveImage().getParentFrame().toFront();
+        if ( m_kParent != null && m_kParent.getActiveImage() != null &&
+        		m_kParent.getActiveImage().getParentFrame() != null )
+        {
+        	m_kParent.getActiveImage().getParentFrame().toFront();
+        }
         updateDisplay();
     }
 
@@ -2106,13 +2110,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#setCenter(WildMagic.LibFoundation.Mathematics.Vector3f)
      */
-    public void setCenter( Vector3f center )
-    {
-        for (int i = 0; i < m_kVOIManagers.size(); i++)
-        {
-            m_kVOIManagers.elementAt(i).setCenter(center);
-        }
-    }
+    public void setCenter( Vector3f center )   { }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#setCenter(WildMagic.LibFoundation.Mathematics.Vector3f, boolean)
@@ -2124,7 +2122,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kParent.setCenter(center);
             return;
         }
-        setCenter(center);
     }
 
     /**

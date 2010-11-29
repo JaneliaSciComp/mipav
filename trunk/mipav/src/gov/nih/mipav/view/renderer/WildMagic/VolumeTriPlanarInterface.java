@@ -1753,10 +1753,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
         Vector3f center = sliceGUI.getCenter();
 
-        if ( m_kVOIInterface != null )
-        {
-            m_kVOIInterface.setCenter(center);
-        }
         raycastRenderWM.setCenter( new Vector3f( center.X, center.Y, center.Z ) );    
         for (int i = 0; i < 3; i++) {
             if (m_akPlaneRender[i] != null) {
@@ -1852,10 +1848,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                 m_akPlaneRender[i].setCenter(center);
             }
         }
-        if ( m_kVOIInterface != null )
-        {
-            m_kVOIInterface.setCenter(center);
-        }
 
         raycastRenderWM.setCenter(center);
         sliceGUI.setCenter((int) center.X, (int) center.Y, (int) center.Z);
@@ -1876,11 +1868,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                     m_akPlaneRender[i].setCenter(center);
                 }
             }
-        }
-
-        if ( m_kVOIInterface != null )
-        {
-            m_kVOIInterface.setCenter(center);
         }
         raycastRenderWM.setCenter( new Vector3f( center.X, center.Y, center.Z ) );
     }
