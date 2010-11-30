@@ -1093,11 +1093,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
     public void mouseDragged(MouseEvent kEvent) {
-        if ( !m_bMouseDrag && m_kParent.getPointerButton().isSelected() && !m_bDrawVOI && (m_iNearStatus == NearPoint) )
+    	// Only show which contour is selected if the mouse isn't currently in drag mode already
+    	// and if the pointer icon is selected
+    	// and if the current mode isn't draw
+    	// and if the near status is near point this ensures the correct near point is modified
+        if ( !m_bMouseDrag && m_kParent.getPointerButton().isSelected() && 
+        		!m_bDrawVOI && (m_iNearStatus == NearPoint) )
         { 
+        	System.err.println( "mouseDragged near point" );
             showSelectedVOI( kEvent );
         }       
-        
         m_bMouseDrag = true;
         m_kParent.setActive(this, m_kImageActive);
         if ( !isActive() )
@@ -1111,10 +1116,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             //Profile.start();
             if ( kEvent.isAltDown() && m_kCurrentVOI != null )
             {
+            	// If the Alt-key is down, do a contour retrace.
                 retraceContour( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
             }
             else
             {
+            	// Otherwise process the left-mouse drag.
                 processLeftMouseDrag(kEvent);
             }
             //Profile.stop();
@@ -1386,11 +1393,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bDrawVOI = false;
             resetStart();
         }
+        // This will enable the user to delete points on the contour with the mouse:
+        // if there is an active voi and the mode is not draw and the mouse is near a point
         if ( m_kCurrentVOI != null && !m_bDrawVOI && m_iNearStatus == NearPoint )
         {
+        	// Find the nearest point:
         	m_kCurrentVOI.setSelectedPoint( m_kCurrentVOI.getNearPoint() );
         	if ( kEvent.isShiftDown() )
         	{
+        		// if shift is down, delete the near point
         		m_kParent.doVOI("deleteVOIActivePt");
         	}
             m_kParent.setDefaultCursor( );
@@ -1410,10 +1421,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         if ( !(kEvent.isShiftDown() || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR) ) 
                 || (m_iDrawType == SPLITLINE) )
         {
+            // Turn off draw mode:
             m_bDrawVOI = false;
         }
         else
         {
+        	// Keep drawing with a new voi:
             m_kCurrentVOI = null;
         }
         m_bMouseDrag = false;
@@ -1597,27 +1610,40 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return true;
     }
 
+    /**
+     * Add a point to the voi contour
+     * @param kVOI the voi to add to
+     * @param iPos the position the new point will be added after
+     * @param kNewPoint new point
+     * @param bIsFile when true the point is already in file coordinates, when false translate the point to file coordinates.
+     * @return
+     */
     private boolean add( VOIBase kVOI, int iPos, Vector3f kNewPoint, boolean bIsFile  )
     {
         if ( kVOI.isFixed() )
         {
+        	// do not add a point if the contour is fixed
             return false;
         }        
         Vector3f kFilePt = kNewPoint;
         if ( !bIsFile )
         {            
             kFilePt = new Vector3f();
+            // Translate the point to file coordinates
             if ( m_kDrawingContext.screenToFileVOI( (int)kNewPoint.X, (int)kNewPoint.Y, (int)kNewPoint.Z, kFilePt) )
             {
+            	// The point was clipped, so will not be added
                 return false;
             }
         }
         if ( (iPos + 1) < kVOI.size() )
         {
+            // Add the new point, after iPos
             kVOI.insertElementAt( kFilePt, iPos + 1);
         }
         else
         {
+        	// Add the point to the end of the list
             if ( (kVOI.size() == 0) || !kVOI.lastElement().equals( kFilePt ) )
             {
                 kVOI.add( kFilePt );
@@ -1627,6 +1653,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 return false;
             }
         }
+        // Set the added point as the current selected point.
         kVOI.setSelectedPoint( iPos + 1 );     
         kVOI.update();
 
@@ -1634,11 +1661,22 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
 
+    /**
+     * Add a new point to the end of the current contour.
+     * @param kVOI current contour
+     * @param kNewPoint new point to add
+     * @param bIsFile if true the point is in file coordinates.
+     * @return true if the point was added.
+     */
     private boolean add( VOIBase kVOI, Vector3f kNewPoint, boolean bIsFile  )
     {
         return add( kVOI, kVOI.size() - 1, kNewPoint, bIsFile );
     }
 
+    /**
+     * Link the popup menu to the input voi so the popup menu will operate on the input voi.
+     * @param kVOI input voi for the popup menu.
+     */
     private void addPopup( VOIBase kVOI )
     {
         if ( kVOI.getType() == VOI.POINT )
@@ -1653,6 +1691,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+    /**
+     * Adds a point to the current voi.
+     * @param iX x in screen coordinates.
+     * @param iY y in screen coordinates.
+     */
     private void addVOIPoint( int iX, int iY )
     {
         if ( m_kCurrentVOI == null )
@@ -1667,6 +1710,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kParent.updateDisplay();
         }
     }
+    
+    /**
+     * Add an anchor point to the livewire contour.
+     * @param iX x value of the anchor point in file coordinates.
+     * @param iY y value of the anchor point in file coordinates.
+     * @param bSeed when true calculate a new seed from the anchor to the current mouse point, when false the anchor is the last point to add.
+     */
     private void anchor(int iX, int iY, boolean bSeed) {
         Vector3f kNewPoint = new Vector3f( iX, iY, m_kDrawingContext.getSlice() ) ;
         if ( m_kCurrentVOI == null )
@@ -1690,6 +1740,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+    /** Add an anchor point to the poly line contour.
+     * @param iX x value of the anchor point in file coordinates.
+     * @param iY y value of the anchor point in file coordinates.
+     * @param bFinished when true the current voi is set to active.
+     */
     private void anchorPolyline(int iX, int iY, boolean bFinished) {
         Vector3f kNewPoint = new Vector3f( iX, iY, m_kDrawingContext.getSlice() ) ;
         if ( m_kCurrentVOI == null )
@@ -1711,10 +1766,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         if ( !bFinished )
         {
             m_kCurrentVOI.setActive(true);
-        }
-        else
-        {
-            //m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()-1 );
         }
     }
 
@@ -1742,6 +1793,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return (imageBufferActive[index]);
     }
 
+    /**
+     * Used to determine which contour is selected. Called by selectVOI and showSelectedVOI.
+     * For a closed or open contour, the point must be entirely within the contour. If
+     * the input voi is a line or point, returns true if the input point is near the line or point.
+     * @param kVOI input contour to test.
+     * @param iX x value in screen coordinates.
+     * @param iY y value in screen coordinates.
+     * @param iZ z value in screen coordinates.
+     * @return true if inside the contour, or true if near the VOILine or near the VOIPoint.
+     */
     private boolean contains( VOIBase kVOI, int iX, int iY, int iZ ) {
 
         Vector3f kLocalPt = new Vector3f(iX, iY, iZ);
@@ -1806,6 +1867,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
 
+    /**
+     * Creates a new VOIText at the local point. Causes the JDialogAnnotation to open so
+     * the user can specify the parameters and content of the text.
+     * @param iX x position in screen coordinates.
+     * @param iY y position in screen coordinates.
+     */
     private void createTextVOI( int iX, int iY )
     {
         Vector3f kVolumePt = new Vector3f();
@@ -1871,9 +1938,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     }
 
+    /**
+     * Creates a new VOI Contour based on the input type.
+     * @param iType the type of contour to create.
+     * @param bClosed when true the contour is closed.
+     * @param bFixed when true the contour is fixed (cannot be changed).
+     * @param kPositions the positions of the contour in screen coordinates.
+     * @return the new VOI Contour.
+     */
     private VOIBase createVOI( int iType, boolean bClosed, boolean bFixed, Vector<Vector3f> kPositions )
     {
-
         VOIBase kVOI = null;
 
         switch( iType )
@@ -1912,6 +1986,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return kVOI;
     }
 
+    /**
+     * Creates a new VOI Contour or adds a new point to the existing VOI Contour.
+     * @param iX new x position in screen coordinates.
+     * @param iY new y position in screen coordinates.
+     */
     private void createVOI( int iX, int iY )
     {
         float fYStart = m_fMouseY;
@@ -2103,6 +2182,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+    /** Draw the VOIText arror on screen.
+     * @param kVOI
+     * @param g2d
+     * @param xCenter
+     * @param yCenter
+     * @param x
+     * @param y
+     * @param stroke
+     */
     private void drawArrow( VOIText kVOI, Graphics2D g2d, int xCenter, int yCenter, int x, int y, float stroke) {
         double aDir=Math.atan2(xCenter-x,yCenter-y);
 
@@ -2175,6 +2263,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         g2d.fillPolygon(tmpPoly);                       // remove this line to leave arrow head unpainted
     }
 
+    /**
+     * Draws the geometric center on screen.
+     * @param kVOI
+     * @param g
+     */
     private void drawGeometricCenter(VOIBase kVOI, Graphics g) {
         int xS, yS;
 
@@ -2200,18 +2293,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
     /**
-     * Draws the length of open contour (Polyline).
-     * 
+     * Draws length of the open contour.
      * @param g
-     *            graphics to draw in
-     * @param zoomX
-     *            magnification for the x coordinate
-     * @param zoomY
-     *            magnification for the y coordinate
+     * @param kVOI
+     * @param resols
      * @param unitsOfMeasure
-     *            units of measure to be displayed on line.
-     * @param res
-     *            DOCUMENT ME!
      */
     private void drawLength(Graphics g, VOIBase kVOI, float[] resols, int[] unitsOfMeasure ) {
         String tmpString = kVOI.getTotalLengthString( resols, unitsOfMeasure );
@@ -2228,6 +2314,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         g.drawString(tmpString, (int) (pt.X), (int) (pt.Y));
     }
 
+    /**
+     * Draws the livewire from the last anchor point to the current mouse position.
+     * @param iX current mouse x-position in screen coordinates.
+     * @param iY current mouse y-position in screen coordinates.
+     */
     private void drawNext(int iX, int iY) {
         if ( m_kCurrentVOI == null )
         {
@@ -2290,6 +2381,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+    /**
+     * Draws the open contour from the last anchor point to the current mouse point.
+     * @param iX current mouse x-position in screen coordinates.
+     * @param iY current mouse y-position in screen coordinates.
+     */
     private void drawNextPolyline(int iX, int iY) {
         if ( m_kCurrentVOI == null )
         {
@@ -2306,6 +2402,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+    /**
+     * Draws the tick marks on the VOILine.
+     * @param kVOI
+     * @param g
+     * @param color
+     * @param unitsOfMeasure
+     * @param xD
+     * @param yD
+     * @param res
+     */
     private void drawTickMarks(VOIBase kVOI, Graphics g, Color color, int[] unitsOfMeasure, int xD, int yD, float[] res) {
         g.setFont(MipavUtil.font12);
 
@@ -2438,6 +2544,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+    /**
+     * Draw the tick marks for the VOIProtractor
+     * @param kVOI
+     * @param g
+     * @param unitsOfMeasure
+     * @param xD
+     * @param yD
+     * @param res
+     */
     private void drawTickMarks( VOIBase kVOI, Graphics g, int[] unitsOfMeasure, int xD, int yD, float[] res)
     {
         int i;
@@ -2622,125 +2737,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
     /**
-     * Draws the vertices of the contour.
+     * Draw the VOI Contour (open or closed).
+     * @param kVOI
+     * @param resols
+     * @param unitsOfMeasure
+     * @param g
      */
-    private void drawVertices( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness, boolean boundingBox) {
-        Polygon gon = null;
-        int j;
-
-        if (g == null) {
-            MipavUtil.displayError("VOIContour.drawSelf: grapics = null");
-
-            return;
-        }
-
-        gon = scalePolygon(kVOI);
-
-        // if active draw little boxes at points
-        if ( kVOI.isActive() ) {
-
-            // drawCenterOfMass(scaleX, scaleY, g);
-            for (j = 0; j < kVOI.size(); j++) {
-
-                if (kVOI.getNearPoint() != j) { // Highlight Active point
-                    g.setColor(Color.white);
-                    g.fillRect((int) (gon.xpoints[j] - 1.5 + 0.5f),
-                            (int) (gon.ypoints[j] - 1.5 + 0.5f), 3, 3);
-                    g.setColor(Color.black);
-                    g.drawRect((int) (gon.xpoints[j] - 1.5 + 0.5f),
-                            (int) (gon.ypoints[j] - 1.5 + 0.5f), 3, 3);
-                }
-            }
-
-            g.setColor(Color.yellow);
-            g.drawRect((int) (gon.xpoints[0] - 1.5 + 0.5f),
-                    (int) (gon.ypoints[0] - 1.5 + 0.5f), 3, 3);
-        }
-        /*
-        if (boundingBox == true) {
-            int x0, x1, y0, y1;
-            x0 = (int) ((xBounds[0] * zoomX * resolutionX) + 0.5f);
-            x1 = (int) ((xBounds[1] * zoomX * resolutionX) + 0.5f);
-            y0 = (int) ((yBounds[0] * zoomY * resolutionY) + 0.5f);
-            y1 = (int) ((yBounds[1] * zoomY * resolutionY) + 0.5f);
-            g.setColor(Color.yellow.darker());
-            g.drawRect(x0, y0, x1 - x0, y1 - y0);
-
-            // draw corners of bounding box to make handles for resizing VOI
-            g.fillRect(x0 - 2, y0 - 2, 5, 5);
-            g.fillRect(x1 - 2, y0 - 2, 5, 5);
-            g.fillRect(x0 - 2, y1 - 2, 5, 5);
-            g.fillRect(x1 - 2, y1 - 2, 5, 5);
-
-            // draw mid points of bounding box to make handles for resizing VOI
-            g.fillRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y0 - 2, 5, 5);
-            g.fillRect(x1 - 2, Math.round(y0 + ((y1 - y0) / 2) - 2), 5, 5);
-            g.fillRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y1 - 2, 5, 5);
-            g.fillRect(x0 - 2, Math.round(y0 + ((y1 - y0) / 2) - 2), 5, 5);
-            g.setColor(Color.yellow.brighter());
-
-            switch (nearBoundPoint) {
-
-            case 1:
-                g.fillRect(x0 - 2, y0 - 2, 5, 5);
-                g.setColor(Color.black);
-                g.drawRect(x0 - 2, y0 - 2, 4, 4);
-                break;
-
-            case 2:
-                g.fillRect(x1 - 2, y0 - 2, 5, 5);
-                g.setColor(Color.black);
-                g.drawRect(x1 - 2, y0 - 2, 4, 4);
-                break;
-
-            case 3:
-                g.fillRect(x1 - 2, y1 - 2, 5, 5);
-                g.setColor(Color.black);
-                g.drawRect(x1 - 2, y1 - 2, 4, 4);
-                break;
-
-            case 4:
-                g.fillRect(x0 - 2, y1 - 2, 5, 5);
-                g.setColor(Color.black);
-                g.drawRect(x0 - 2, y1 - 2, 4, 4);
-                break;
-
-            case 5:
-                g.fillRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y0 - 2,
-                        5, 5);
-                g.setColor(Color.black);
-                g.drawRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y0 - 2,
-                        4, 4);
-                break;
-
-            case 6:
-                g.fillRect(x1 - 2, MipavMath.round(y0 + ((y1 - y0) / 2) - 2),
-                        5, 5);
-                g.setColor(Color.black);
-                g.drawRect(x1 - 2, MipavMath.round(y0 + ((y1 - y0) / 2) - 2),
-                        4, 4);
-                break;
-
-            case 7:
-                g.fillRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y1 - 2,
-                        5, 5);
-                g.setColor(Color.black);
-                g.drawRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y1 - 2,
-                        4, 4);
-                break;
-
-            case 8:
-                g.fillRect(x0 - 2, MipavMath.round(y0 + ((y1 - y0) / 2) - 2),
-                        5, 5);
-                g.setColor(Color.black);
-                g.drawRect(x0 - 2, MipavMath.round(y0 + ((y1 - y0) / 2) - 2),
-                        4, 4);
-                break;
-            }
-        }
-         */
-    }
-
     private void drawVOI( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g ) {
         Polygon gon = null;
         int j;
@@ -3569,6 +3571,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         g.setFont(previousFont);
     }
 
+    /**
+     * Converts the input position from file coordinates to the local patient coordinates.
+     * @param volumePt
+     * @return
+     */
     private Vector3f fileCoordinatesToPatient( Vector3f volumePt )
     {       
         Vector3f kPatient = new Vector3f();
@@ -3581,9 +3588,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return kPatient;
     }
 
-
-
-
     private Vector3f getBoundingBoxLeftMiddle( VOIBase kVOI )
     {
         Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
@@ -3593,7 +3597,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         kLeftMid.Scale( 0.5f );
         return kLeftMid;
     }
-
 
     private Vector3f getBoundingBoxLowerLeft( VOIBase kVOI )
     {
@@ -3616,11 +3619,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return kLowerMid;
     }
 
-
-
-
-
-
     private Vector3f getBoundingBoxLowerRight( VOIBase kVOI )
     {
         Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
@@ -3642,8 +3640,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return kRightMid;
     }
 
-
-
     private Vector3f getBoundingBoxUpperLeft( VOIBase kVOI )
     {
         Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
@@ -3654,10 +3650,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         return new Vector3f( kScreenMin );
     }
-
-
-
-
+    
     private Vector3f getBoundingBoxUpperMiddle( VOIBase kVOI )
     {
         Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
@@ -3678,12 +3671,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         return new Vector3f( kScreenMax.X, kScreenMin.Y, kScreenMin.Z );
     }
-
-
-
-
-
-
 
     private void getCoordsLine(float[] linePtsX, float[] linePtsY, double fraction, float[] coords) {
         float x1, y1;
@@ -3743,9 +3730,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         coords[3] = (int) (y1 - vector2 + 0.5);
     }
 
-
-
-
     private void getEndLinesLine(float[] linePtsX, float[] linePtsY, int line, float[] coords) {
         double vector1, vector2, tmp;
         double length;
@@ -3781,8 +3765,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-
-
     private void getEndLinesProtractor(float[] x, float[] y, int line, float[] coords) {
         double vector1, vector2, tmp;
         double length;
@@ -3807,10 +3789,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             coords[3] = (int) (y[1] + vector1 + 0.5);
         }
     }
-
-
-
-
 
     private int getSlice( VOIBase kVOI )
     {
@@ -3856,11 +3834,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         		- m_kImageActive.getParentFrame().getScrollPane().getLocation().y;
         
         popupMenu.show(m_kImageActive.getParentFrame(), x, y);
-
-
     }
-
-
 
     private void initLiveWire( int iSlice, boolean bLiveWire )
     {
@@ -3940,7 +3914,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-
     private void initLevelSet( int iSlice )
     {
         if ( !m_bLevelSetInit )
@@ -3997,9 +3970,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-
-
-
     private void moveVOIPoint( int iX, int iY )
     {
         if ( m_kCurrentVOI == null )
@@ -4019,6 +3989,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+    /**
+     * Calculates the bounding box of the voi contour and returns true if the input
+     * point is near the bounding box.
+     * @param kVOI
+     * @param iX
+     * @param iY
+     * @param iZ
+     * @return
+     */
     private boolean nearBoundPoint( VOIBase kVOI, int iX, int iY, int iZ )
     {
         if ( kVOI.getGroup() == null )
@@ -4148,7 +4127,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kParent.pasteVOI(m_kCurrentVOI);
     }
 
-
     /**
      * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
      * directions for the possible paths.
@@ -4191,8 +4169,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-
-
+    /**
+     * Converts the local patient point into file coordinates.
+     * @param patientPt
+     * @return
+     */
     private Vector3f patientCoordinatesToFile( Vector3f patientPt )
     {       
         Vector3f volumePt = new Vector3f();
@@ -4205,13 +4186,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return volumePt;
     }
 
-
     /**
      * @param  kEvent  the mouse event generated by a mouse drag
      */
     private void processLeftMouseDrag(MouseEvent kEvent) {
-
-
         if ( m_bDrawVOI && !(((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT) ||
                 (m_iDrawType == LIVEWIRE) || (m_iDrawType == LEVELSET) || (m_iDrawType == TEXT) ||
                 (m_iDrawType == RETRACE))) )
@@ -4259,7 +4237,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-
     /* Resets the index and flag used in the retraceContour mode. It should be
      * called after retracing a Contour.
      */
@@ -4270,8 +4247,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         knowDirection = false;
         isFirst = true;
     }
-
-
 
     /**
      * Resets all retrace variables and allows it to start anewA
