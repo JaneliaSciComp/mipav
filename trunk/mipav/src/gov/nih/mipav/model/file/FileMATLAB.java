@@ -86,6 +86,8 @@ public class FileMATLAB extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoMATLAB fileInfo;
+    
+    private FileInfoMATLAB fileInfo2;
 
     /** DOCUMENT ME! */
     private String fileName;
@@ -106,6 +108,10 @@ public class FileMATLAB extends FileBase {
     private ModelLUT LUT = null;
     
     private Inflater zlibDecompresser = null;
+    
+    private ModelImage image2 = null;
+    
+    private ViewJFrameImage vFrame2 = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -190,7 +196,8 @@ public class FileMATLAB extends FileBase {
         int i, j, k;
         int xDim = 0;
         int yDim = 0;
-        int imageSlices = 0;
+        int imageSlices = 1;
+        int imageSlices2 = 1;
         int byteCount;
         int totalByteCount = 0;
         byte firstEndianByte;
@@ -214,7 +221,7 @@ public class FileMATLAB extends FileBase {
         int totalBytesRead = 0;
         long currentLocation;
         int s;
-        File ufile;
+        File ufile = null;
         long bytesSkipped;
         byte[] decomp = null;
         int resultLength = 0;
@@ -238,13 +245,20 @@ public class FileMATLAB extends FileBase {
         short shortBuffer[] = null;
         int intBuffer[] = null;
         long longBuffer[] = null;
+        float floatBuffer[] = null;
+        float realBuffer[] = null;
+        float imaginaryBuffer[] = null;
         double doubleBuffer[] = null;
+        double realDBuffer[] = null;
+        double imaginaryDBuffer[] = null;
         int imageLength;
         int x;
         int y;
         int z;
         int t;
         long decompSize;
+        String uncompressedName = null;
+        int imagesFound = 0;
 
         try {
             
@@ -254,6 +268,7 @@ public class FileMATLAB extends FileBase {
             s = fileName.lastIndexOf(".");
             
             fileLength = raFile.length();
+            Preferences.debug("fileLength = " + fileLength + "\n");
             raFile.seek(126L);
             firstEndianByte = raFile.readByte();
             secondEndianByte = raFile.readByte();
@@ -343,8 +358,15 @@ public class FileMATLAB extends FileBase {
                     if ((elementBytes % 8) != 0) {
                     	padBytes = 8 - (elementBytes % 8);
                     }
-                    nextElementAddress = nextElementAddress + elementBytes + padBytes + 8;
+                    Preferences.debug("padBytes = " + padBytes + "\n");
+                    if (dataType == miCOMPRESSED) {
+                        nextElementAddress = nextElementAddress + elementBytes + 8;
+                    }
+                    else {
+                        nextElementAddress = nextElementAddress + elementBytes + padBytes + 8;
+                    }
                 }
+                Preferences.debug("nextElementAddress = " + nextElementAddress + "\n");
                 if (dataType == miCOMPRESSED) {
                 	isCompressed = true;
                 	Preferences.debug("Data type = miCOMPRESSED\n");
@@ -368,7 +390,7 @@ public class FileMATLAB extends FileBase {
                         MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
                     }
                     zlibDecompresser.reset();
-                    String uncompressedName = fileDir + fileName.substring(0, s) + "uncompressed.mat";
+                    uncompressedName = fileDir + fileName.substring(0, s) + "uncompressed.mat";
                     ufile = new File(uncompressedName);
                     raFile = new RandomAccessFile(ufile, "rw");
                     raFile.setLength(0);
@@ -430,6 +452,7 @@ public class FileMATLAB extends FileBase {
                 case miMATRIX:
                 	Preferences.debug("Data type = miMATRIX\n");
                 	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	imagesFound++;
                 	arrayFlagsDataType = getInt(endianess);
                 	if (arrayFlagsDataType == miUINT32) {
                 		Preferences.debug("Array flags data type is the expected miUINT32\n");
@@ -455,6 +478,9 @@ public class FileMATLAB extends FileBase {
                     	break;
                     case mxOBJECT_CLASS:
                     	Preferences.debug("Array type is object\n");
+                    	break;
+                    case mxCHAR_CLASS:
+                    	Preferences.debug("Array type is character\n");
                     	break;
                     case mxSPARSE_CLASS:
                     	Preferences.debug("Array type is sparse\n");
@@ -485,6 +511,9 @@ public class FileMATLAB extends FileBase {
                     	break;
                     default:
                     	Preferences.debug("Array type is an illegal = " + arrayClass + "\n");
+                    }
+                    if (arrayClass == mxCHAR_CLASS) {
+                    	continue;
                     }
                     if ((arrayFlags & 0x00000800) != 0) {
                     	complexFlag = true;
@@ -534,12 +563,25 @@ public class FileMATLAB extends FileBase {
                 	}
                 	imageExtents = new int[nDim];
                 	imageLength = 1;
+                	if (imagesFound == 1) {
+                		imageSlices = 1;
+                	}
+                	else {
+                		imageSlices2 = 1;
+                	}
                 	for (i = 0; i < nDim; i++) {
                 		imageExtents[i] = getInt(endianess);
                 		imageLength = imageLength * imageExtents[i];
                 		Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n");
+                		if (i > 1) {
+                			if (imagesFound == 1) {
+                				imageSlices = imageSlices * imageExtents[i];
+                			}
+                			else {
+                				imageSlices2 = imageSlices2 * imageExtents[i];
+                			}
+                		}
                 	}
-                	fileInfo.setExtents(imageExtents);
                 	if ((dimensionsArrayBytes % 8) != 0) {
                 		// Skip over padding bytes
                 		padBytes = 8 - (dimensionsArrayBytes % 8);
@@ -572,46 +614,153 @@ public class FileMATLAB extends FileBase {
                 		}
                     }
                     Preferences.debug("Array name = " + arrayName + "\n");
+                    if (imagesFound == 1) {
+                	    fileInfo.setExtents(imageExtents);
+                	    fileInfo.setArrayName(arrayName);
+                	}
+                	else {
+                		fileInfo2 = new FileInfoMATLAB(fileName + "_2", fileDir, FileUtility.MATLAB); // dummy fileInfo
+                        fileInfo2.setEndianess(endianess);
+                        fileInfo2.setLevel5Format(level5Format);
+                        fileInfo2.setHeaderTextField(headerTextField);
+                        fileInfo2.setVersion(version);
+                        fileInfo2.setExtents(imageExtents);
+                        fileInfo2.setArrayName(arrayName);
+                	}
                     realDataType = getInt(endianess);
                     realDataBytes = getInt(endianess);
+                    if (imagesFound == 1) {
                     switch(realDataType) {
                     case miINT8:
                     	Preferences.debug("Real data type = miINT8\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                    	image = new ModelImage(ModelStorageBase.BYTE, imageExtents, fileName); 
-                    	buffer = new byte[imageLength];
-                    	raFile.read(buffer);
-                    	try {
-                			image.importData(0, buffer, true);
-                		}
-                		catch(IOException e) {
-                		   MipavUtil.displayError("IOException on image.importData(0, buffer, true)");
-                		   throw e;
-                		}
+                    	if (!complexFlag) {
+	                    	image = new ModelImage(ModelStorageBase.BYTE, imageExtents, fileName); 
+	                    	fileInfo.setDataType(ModelStorageBase.BYTE);
+	                    	buffer = new byte[imageLength];
+	                    	raFile.read(buffer);
+	                    	try {
+	                			image.importData(0, buffer, true);
+	                		}
+	                		catch(IOException e) {
+	                		   MipavUtil.displayError("IOException on image.importData(0, buffer, true)");
+	                		   throw e;
+	                		}
+                    	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.COMPLEX);
+                    		buffer = new byte[imageLength];
+                    		raFile.read(buffer);
+                    		realBuffer = new float[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realBuffer[i] = (float)(buffer[i]);
+                    		}
+                    		if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miINT8) {
+                    	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            raFile.read(buffer);
+                            imaginaryBuffer = new float[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryBuffer[i] = (float)(buffer[i]);
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}		
+                    	}
                     	break;
                     case miUINT8:
                     	Preferences.debug("Real data type = miUINT8\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                    	image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
-                    	buffer = new byte[imageLength];
-                    	raFile.read(buffer);
-                    	shortBuffer = new short[imageLength];
-                    	for (i = 0; i < imageLength; i++) {
-                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
-                		}
-                    	try {
-                			image.importUData(0, shortBuffer, true);
-                		}
-                		catch(IOException e) {
-                		   MipavUtil.displayError("IOException on image.importData(0, shortBuffer, true)");
-                		   throw e;
-                		}
+                    	if (!complexFlag) {
+	                    	image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
+	                    	fileInfo.setDataType(ModelStorageBase.UBYTE);
+	                    	buffer = new byte[imageLength];
+	                    	raFile.read(buffer);
+	                    	shortBuffer = new short[imageLength];
+	                    	for (i = 0; i < imageLength; i++) {
+	                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
+	                		}
+	                    	try {
+	                			image.importUData(0, shortBuffer, true);
+	                		}
+	                		catch(IOException e) {
+	                		   MipavUtil.displayError("IOException on image.importData(0, shortBuffer, true)");
+	                		   throw e;
+	                		}
+                    	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName);
+                    		fileInfo.setDataType(ModelStorageBase.COMPLEX);
+                    		buffer = new byte[imageLength];
+                    		raFile.read(buffer);
+                    		realBuffer = new float[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realBuffer[i] = (float)(buffer[i] & 0xff);
+                    		}
+                    		if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miUINT8) {
+                    	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            raFile.read(buffer);
+                            imaginaryBuffer = new float[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryBuffer[i] = (float)(buffer[i] & 0xff);
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}	
+                    	}
                     	break;
                     case miINT16:
                     	Preferences.debug("Real data type = miINT16\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
                     		image = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.SHORT);
                     		shortBuffer = new short[imageLength];
                     		for (i = 0; i < imageLength; i++) {
                     		    shortBuffer[i] = readShort(endianess);
@@ -624,12 +773,53 @@ public class FileMATLAB extends FileBase {
                     		   throw e;
                     		}
                     	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.COMPLEX);
+                    		realBuffer = new float[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realBuffer[i] = (float)(readShort(endianess));
+                    		}
+                    		if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miINT16) {
+                    	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            imaginaryBuffer = new float[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryBuffer[i] = (float)(readShort(endianess));
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}		
+                    	}
                     	break;
                     case miUINT16:
                     	Preferences.debug("Real data type = miUINT16\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		image = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName); 
+                    		image = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName);
+                    		fileInfo.setDataType(ModelStorageBase.USHORT);
                     		intBuffer = new int[imageLength];
                     		for (i = 0; i < imageLength; i++) {
                     		    intBuffer[i] = getUnsignedShort(endianess);
@@ -642,12 +832,53 @@ public class FileMATLAB extends FileBase {
                     		   throw e;
                     		}
                     	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.COMPLEX);
+                    		realBuffer = new float[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realBuffer[i] = (float)(getUnsignedShort(endianess));
+                    		}
+                    		if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miUINT16) {
+                    	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            imaginaryBuffer = new float[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryBuffer[i] = (float)(getUnsignedShort(endianess));
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}		
+                    	}
                     	break;
                     case miINT32:
                     	Preferences.debug("Real data type = miINT32\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName); 
+                    		image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
+                    		fileInfo.setDataType(ModelStorageBase.INTEGER);
                     		intBuffer = new int[imageLength];
                     		for (i = 0; i < imageLength; i++) {
                     		    intBuffer[i] = getInt(endianess);
@@ -660,12 +891,53 @@ public class FileMATLAB extends FileBase {
                     		   throw e;
                     		}
                     	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
+                    		realDBuffer = new double[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realDBuffer[i] = (double)getInt(endianess);
+                    		}
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miINT32) {
+                    	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                    	    if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            imaginaryDBuffer = new double[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryDBuffer[i] = (double)getInt(endianess);
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}
+                    	}
                     	break;
                     case miUINT32:
                     	Preferences.debug("Real data type = miUINT32\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
                     		image = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.UINTEGER);
                     		longBuffer = new long[imageLength];
                     		for (i = 0; i < imageLength; i++) {
                     		    longBuffer[i] = getUInt(endianess);
@@ -678,16 +950,112 @@ public class FileMATLAB extends FileBase {
                     		   throw e;
                     		}
                     	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
+                    		realDBuffer = new double[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realDBuffer[i] = (double)getUInt(endianess);
+                    		}
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miUINT32) {
+                    	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                    	    if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            imaginaryDBuffer = new double[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryDBuffer[i] = (double)getUInt(endianess);
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}
+                    	}
                     	break;
                     case miSINGLE:
                     	Preferences.debug("Real data type = miSINGLE\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	if (!complexFlag) {
+                    		image = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.FLOAT);
+                    		floatBuffer = new float[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    floatBuffer[i] = getFloat(endianess);
+                    		}
+                    		try {
+                    			image.importData(0, floatBuffer, true);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importData(0, floatBuffer, true)");
+                    		   throw e;
+                    		}
+                    	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.COMPLEX);
+                    		realBuffer = new float[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realBuffer[i] = getFloat(endianess);
+                    		}
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miSINGLE) {
+                    	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                    	    if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            imaginaryBuffer = new float[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryBuffer[i] = getFloat(endianess);
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}
+                    	}
                     	break;
                     case miDOUBLE:
                     	Preferences.debug("Real data type = miDOUBLE\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
                     		image = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.DOUBLE);
                     		doubleBuffer = new double[imageLength];
                     		for (i = 0; i < imageLength; i++) {
                     		    doubleBuffer[i] = getDouble(endianess);
@@ -700,12 +1068,53 @@ public class FileMATLAB extends FileBase {
                     		   throw e;
                     		}
                     	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
+                    		realDBuffer = new double[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realDBuffer[i] = getDouble(endianess);
+                    		}
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miDOUBLE) {
+                    	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                    	    if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            imaginaryDBuffer = new double[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryDBuffer[i] = getDouble(endianess);
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}
+                    	}
                     	break;
                     case miINT64:
                     	Preferences.debug("Real data type = miINT64\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName); 
+                    		image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
+                    		fileInfo.setDataType(ModelStorageBase.LONG);
                     		longBuffer = new long[imageLength];
                     		for (i = 0; i < imageLength; i++) {
                     		    longBuffer[i] = getLong(endianess);
@@ -718,15 +1127,718 @@ public class FileMATLAB extends FileBase {
                     		   throw e;
                     		}
                     	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
+                    		fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
+                    		realDBuffer = new double[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realDBuffer[i] = (double)getLong(endianess);
+                    		}
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miINT64) {
+                    	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                    	    if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            imaginaryDBuffer = new double[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryDBuffer[i] = (double)getLong(endianess);
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}
+                    	}
                     	break;
                     case miUINT64:
                     	Preferences.debug("Real data type = miUINT64\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	if (!complexFlag) {
+                    		image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
+                    		fileInfo.setDataType(ModelStorageBase.LONG);
+                    		longBuffer = new long[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    longBuffer[i] = getLong(endianess);
+                    		}
+                    		try {
+                    			image.importData(0, longBuffer, true);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importData(0, longBuffer, true)");
+                    		   throw e;
+                    		}
+                    	}
+                    	else {
+                    		image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
+                    		fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
+                    		realDBuffer = new double[imageLength];
+                    		for (i = 0; i < imageLength; i++) {
+                    		    realDBuffer[i] = (double)getLong(endianess);
+                    		}
+                    	    imaginaryDataType = getInt(endianess);
+                    	    if (imaginaryDataType == miUINT64) {
+                    	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n");
+                    	    }
+                    	    else {
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    }
+                    	    if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
+                            imaginaryDataBytes = getInt(endianess);
+                            if (imaginaryDataBytes == realDataBytes) {
+                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            }
+                            else {
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            }
+                            imaginaryDBuffer = new double[imageLength];
+                            for (i = 0; i < imageLength; i++) {
+                            	imaginaryDBuffer[i] = (double)getLong(endianess);
+                            }
+                            boolean logMagDisplay = true;
+                            try {
+                    			image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                    		   throw e;
+                    		}
+                    	}
                     	break;
                     default:
                     	Preferences.debug("Illegal data type = " + realDataType + "\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     }
+                    fileInfo.setMin(image.getMin());
+                	fileInfo.setMax(image.getMax());
+                    } // if (imagesFound == 1)
+                    else { // imagesFound > 1
+                    	switch(realDataType) {
+                        case miINT8:
+                        	Preferences.debug("Real data type = miINT8\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+    	                    	image2 = new ModelImage(ModelStorageBase.BYTE, imageExtents, fileName);
+    	                    	fileInfo2.setDataType(ModelStorageBase.BYTE);
+    	                    	buffer = new byte[imageLength];
+    	                    	raFile.read(buffer);
+    	                    	try {
+    	                			image2.importData(0, buffer, true);
+    	                		}
+    	                		catch(IOException e) {
+    	                		   MipavUtil.displayError("IOException on image2.importData(0, buffer, true)");
+    	                		   throw e;
+    	                		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.COMPLEX);
+                        		buffer = new byte[imageLength];
+                        		raFile.read(buffer);
+                        		realBuffer = new float[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realBuffer[i] = (float)(buffer[i]);
+                        		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miINT8) {
+                        	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                raFile.read(buffer);
+                                imaginaryBuffer = new float[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryBuffer[i] = (float)(buffer[i]);
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}		
+                        	}
+                        	break;
+                        case miUINT8:
+                        	Preferences.debug("Real data type = miUINT8\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+    	                    	image2 = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
+    	                    	fileInfo2.setDataType(ModelStorageBase.UBYTE);
+    	                    	buffer = new byte[imageLength];
+    	                    	raFile.read(buffer);
+    	                    	shortBuffer = new short[imageLength];
+    	                    	for (i = 0; i < imageLength; i++) {
+    	                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
+    	                		}
+    	                    	try {
+    	                			image2.importUData(0, shortBuffer, true);
+    	                		}
+    	                		catch(IOException e) {
+    	                		   MipavUtil.displayError("IOException on image2.importData(0, shortBuffer, true)");
+    	                		   throw e;
+    	                		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.COMPLEX);
+                        		buffer = new byte[imageLength];
+                        		raFile.read(buffer);
+                        		realBuffer = new float[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realBuffer[i] = (float)(buffer[i] & 0xff);
+                        		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miUINT8) {
+                        	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                raFile.read(buffer);
+                                imaginaryBuffer = new float[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryBuffer[i] = (float)(buffer[i] & 0xff);
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}	
+                        	}
+                        	break;
+                        case miINT16:
+                        	Preferences.debug("Real data type = miINT16\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+                        		image2 = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.SHORT);
+                        		shortBuffer = new short[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    shortBuffer[i] = readShort(endianess);
+                        		}
+                        		try {
+                        			image2.importData(0, shortBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importData(0, shortBuffer, true)");
+                        		   throw e;
+                        		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.COMPLEX);
+                        		realBuffer = new float[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realBuffer[i] = (float)(readShort(endianess));
+                        		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miINT16) {
+                        	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                imaginaryBuffer = new float[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryBuffer[i] = (float)(readShort(endianess));
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}		
+                        	}
+                        	break;
+                        case miUINT16:
+                        	Preferences.debug("Real data type = miUINT16\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+                        		image2 = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.USHORT);
+                        		intBuffer = new int[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    intBuffer[i] = getUnsignedShort(endianess);
+                        		}
+                        		try {
+                        			image2.importUData(0, intBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importUData(0, intBuffer, true)");
+                        		   throw e;
+                        		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.COMPLEX);
+                        		realBuffer = new float[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realBuffer[i] = (float)(getUnsignedShort(endianess));
+                        		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miUINT16) {
+                        	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                imaginaryBuffer = new float[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryBuffer[i] = (float)(getUnsignedShort(endianess));
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}		
+                        	}
+                        	break;
+                        case miINT32:
+                        	Preferences.debug("Real data type = miINT32\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+                        		image2 = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
+                        		fileInfo2.setDataType(ModelStorageBase.INTEGER);
+                        		intBuffer = new int[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    intBuffer[i] = getInt(endianess);
+                        		}
+                        		try {
+                        			image2.importData(0, intBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importData(0, intBuffer, true)");
+                        		   throw e;
+                        		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
+                        		realDBuffer = new double[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realDBuffer[i] = (double)getInt(endianess);
+                        		}
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miINT32) {
+                        	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                        	    if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                imaginaryDBuffer = new double[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryDBuffer[i] = (double)getInt(endianess);
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}
+                        	}
+                        	break;
+                        case miUINT32:
+                        	Preferences.debug("Real data type = miUINT32\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+                        		image2 = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName);
+                        		fileInfo2.setDataType(ModelStorageBase.UINTEGER);
+                        		longBuffer = new long[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    longBuffer[i] = getUInt(endianess);
+                        		}
+                        		try {
+                        			image2.importUData(0, longBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importUData(0, longBuffer, true)");
+                        		   throw e;
+                        		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
+                        		fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
+                        		realDBuffer = new double[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realDBuffer[i] = (double)getUInt(endianess);
+                        		}
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miUINT32) {
+                        	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                        	    if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                imaginaryDBuffer = new double[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryDBuffer[i] = (double)getUInt(endianess);
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}
+                        	}
+                        	break;
+                        case miSINGLE:
+                        	Preferences.debug("Real data type = miSINGLE\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+                        		image2 = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.FLOAT);
+                        		floatBuffer = new float[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    floatBuffer[i] = getFloat(endianess);
+                        		}
+                        		try {
+                        			image2.importData(0, floatBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importData(0, floatBuffer, true)");
+                        		   throw e;
+                        		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName);
+                        		fileInfo2.setDataType(ModelStorageBase.COMPLEX);
+                        		realBuffer = new float[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realBuffer[i] = getFloat(endianess);
+                        		}
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miSINGLE) {
+                        	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                        	    if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                imaginaryBuffer = new float[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryBuffer[i] = getFloat(endianess);
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}
+                        	}
+                        	break;
+                        case miDOUBLE:
+                        	Preferences.debug("Real data type = miDOUBLE\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+                        		image2 = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.DOUBLE);
+                        		doubleBuffer = new double[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    doubleBuffer[i] = getDouble(endianess);
+                        		}
+                        		try {
+                        			image2.importData(0, doubleBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importData(0, doubleBuffer, true)");
+                        		   throw e;
+                        		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
+                        		realDBuffer = new double[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realDBuffer[i] = getDouble(endianess);
+                        		}
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miDOUBLE) {
+                        	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                        	    if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                imaginaryDBuffer = new double[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryDBuffer[i] = getDouble(endianess);
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}
+                        	}
+                        	break;
+                        case miINT64:
+                        	Preferences.debug("Real data type = miINT64\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+                        		image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
+                        		fileInfo2.setDataType(ModelStorageBase.LONG);
+                        		longBuffer = new long[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    longBuffer[i] = getLong(endianess);
+                        		}
+                        		try {
+                        			image2.importData(0, longBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importData(0, longBuffer, true)");
+                        		   throw e;
+                        		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
+                        		realDBuffer = new double[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realDBuffer[i] = (double)getLong(endianess);
+                        		}
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miINT64) {
+                        	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                        	    if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                imaginaryDBuffer = new double[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryDBuffer[i] = (double)getLong(endianess);
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}
+                        	}
+                        	break;
+                        case miUINT64:
+                        	Preferences.debug("Real data type = miUINT64\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	if (!complexFlag) {
+                        		image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.LONG);
+                        		longBuffer = new long[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    longBuffer[i] = getLong(endianess);
+                        		}
+                        		try {
+                        			image2.importData(0, longBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importData(0, longBuffer, true)");
+                        		   throw e;
+                        		}
+                        	}
+                        	else {
+                        		image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
+                        		fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
+                        		realDBuffer = new double[imageLength];
+                        		for (i = 0; i < imageLength; i++) {
+                        		    realDBuffer[i] = (double)getLong(endianess);
+                        		}
+                        	    imaginaryDataType = getInt(endianess);
+                        	    if (imaginaryDataType == miUINT64) {
+                        	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n");
+                        	    }
+                        	    else {
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    }
+                        	    if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
+                                imaginaryDataBytes = getInt(endianess);
+                                if (imaginaryDataBytes == realDataBytes) {
+                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                }
+                                else {
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                }
+                                imaginaryDBuffer = new double[imageLength];
+                                for (i = 0; i < imageLength; i++) {
+                                	imaginaryDBuffer[i] = (double)getLong(endianess);
+                                }
+                                boolean logMagDisplay = true;
+                                try {
+                        			image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}
+                        	}
+                        	break;
+                        default:
+                        	Preferences.debug("Illegal data type = " + realDataType + "\n");
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        }	
+                    	fileInfo2.setMin(image2.getMin());
+                    	fileInfo2.setMax(image2.getMax());
+                    } // else imagesFound > 1
                 	break;
                 case miUTF8:
                 	Preferences.debug("Data type = miUTF8\n");
@@ -768,6 +1880,11 @@ public class FileMATLAB extends FileBase {
                 }
                 if (isCompressed) {
                 	raFile.close();
+	                try {
+	                    ufile.delete();
+	                } catch (final SecurityException sc) {
+	                    MipavUtil.displayError("Security error occurs while trying to delete " + uncompressedName);
+	                }
                 	raFile = new RandomAccessFile(file, "r");
                 }
             } // while (nextElementAddress)
@@ -782,6 +1899,14 @@ public class FileMATLAB extends FileBase {
                 
                 image.setFileInfo((FileInfoMATLAB)fileInfo.clone(), i);
             }
+            if (image2 != null) {
+            	 for (i = 0; i < imageSlices2; i++) {
+                     
+                     image2.setFileInfo((FileInfoMATLAB)fileInfo2.clone(), i);
+                 }
+            	 vFrame2 = new ViewJFrameImage(image2);
+            	 vFrame2.setTitle(fileName.substring(0,s) + "_2");
+            }
             
             fireProgressStateChanged(100);
             
@@ -790,6 +1915,11 @@ public class FileMATLAB extends FileBase {
             if (image != null) {
                 image.disposeLocal();
                 image = null;
+            }
+            
+            if (image2 != null) {
+                image2.disposeLocal();
+                image2 = null;
             }
 
             System.gc();
