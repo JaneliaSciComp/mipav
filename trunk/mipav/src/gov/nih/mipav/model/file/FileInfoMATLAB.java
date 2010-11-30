@@ -19,6 +19,7 @@ public class FileInfoMATLAB extends FileInfoBase {
 	boolean level5Format = true;
 	long subsystemSpecificDataOffset = 0L;
 	int version = -1;
+	String arrayName = null;
     
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -73,6 +74,10 @@ public class FileInfoMATLAB extends FileInfoBase {
         if (version >= 0) {
         	dialog.append("Version = " + version + "\n");
         }
+        
+        if (arrayName != null) {
+        	dialog.append("Array name = " + arrayName + "\n");
+        }
     }
     
     public void setHeaderTextField(String headerTextField) {
@@ -89,5 +94,9 @@ public class FileInfoMATLAB extends FileInfoBase {
     
     public void setVersion(int version) {
     	this.version = version;
+    }
+    
+    public void setArrayName(String arrayName) {
+    	this.arrayName = arrayName;
     }
 }
