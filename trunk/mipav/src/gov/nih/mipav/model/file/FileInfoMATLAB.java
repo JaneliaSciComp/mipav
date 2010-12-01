@@ -20,6 +20,7 @@ public class FileInfoMATLAB extends FileInfoBase {
 	long subsystemSpecificDataOffset = 0L;
 	int version = -1;
 	String arrayName = null;
+	String fieldNames[] = null;
     
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -78,6 +79,14 @@ public class FileInfoMATLAB extends FileInfoBase {
         if (arrayName != null) {
         	dialog.append("Array name = " + arrayName + "\n");
         }
+        
+        if (fieldNames != null) {
+        	for (i = 0; i < fieldNames.length; i++) {
+        		if (fieldNames[i] != null) {
+        			dialog.append("Field name " + (i+1) + " = " + fieldNames[i] + "\n");
+        		}
+        	}
+        }
     }
     
     public void setHeaderTextField(String headerTextField) {
@@ -98,5 +107,9 @@ public class FileInfoMATLAB extends FileInfoBase {
     
     public void setArrayName(String arrayName) {
     	this.arrayName = arrayName;
+    }
+    
+    public void setFieldNames(String fieldNames[]) {
+    	this.fieldNames = fieldNames;
     }
 }
