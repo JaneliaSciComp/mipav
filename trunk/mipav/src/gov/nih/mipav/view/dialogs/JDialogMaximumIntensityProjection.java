@@ -17,6 +17,7 @@ import java.util.*;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -43,16 +44,22 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
     private int borderSize = 0;
     
     /** JTextfield for minimum value of threshold. */
-    private JTextField minInput;
+    private JTextField[] minInput;
     
     /** JTextfield for maximum value of threshold. */
-    private JTextField maxInput;
+    private JTextField[] maxInput;
+    
+    /** JTextfield for minimum value of threshold. */
+    private JTextField[] startInput;
+    
+    /** JTextfield for maximum value of threshold. */
+    private JTextField[] stopInput;
     
     /** Minimum intensity. */
-    private float minIntensity;
+    private float[] minIntensity;
     
     /** Maximum intensity. */
-    private float maxIntensity;
+    private float[] maxIntensity;
     
     private JTextField minInputR;
     private JTextField maxInputR;
@@ -67,6 +74,17 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
     private float maxIntensityG;
     private float minIntensityB;
     private float maxIntensityB;
+
+    private JCheckBox[] maximumCheck;
+    private JCheckBox[] minimumCheck;
+    private boolean[] maximum;
+    private boolean[] minimum;    
+    private int[] startSlice;
+    private int[] stopSlice;
+    private int projection = 0;
+    
+    private int nDims;
+    int[] extents;
     
     /** Algorithm instance. */
     private AlgorithmMaximumIntensityProjection mipAlgo;
@@ -90,7 +108,19 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
     public JDialogMaximumIntensityProjection(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        init();
+        nDims = image.getExtents().length > 2 ? 3 : 1;
+	    extents = new int[nDims];
+	    extents[0] = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+	    extents[1] = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+	    extents[2] = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+        if ( image.isColorImage() )
+        {
+        	init();
+        }
+        else
+        {
+        	init2();
+        }
     }
 
     // Methods -----------------------------------------------------------------------------------------------
@@ -131,34 +161,20 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
 
         if (algorithm instanceof AlgorithmMaximumIntensityProjection) {
 
-            ArrayList resultImages = mipAlgo.getResultImage();
-            ModelImage XresultImage = (ModelImage) resultImages.get(0);
-            ModelImage YresultImage = (ModelImage) resultImages.get(1);
-            ModelImage ZresultImage = (ModelImage) resultImages.get(2);
-
-            /* Display the result */
-
-            try {
-                new ViewJFrameImage(XresultImage, null, new Dimension(610, 200));
-            } catch (OutOfMemoryError error) {
-                System.gc();
-                MipavUtil.displayError("Out of memory: unable to open new frame");
+        	Vector<ModelImage> resultImages = mipAlgo.getResultImage();
+            for ( int i = 0; i < resultImages.size(); i++ )
+            {
+            	ModelImage resultImage = resultImages.get(i);
+            	if ( resultImage != null )
+            	{
+            	try {
+            		new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+            	} catch (OutOfMemoryError error) {
+            		System.gc();
+            		MipavUtil.displayError("Out of memory: unable to open new frame");
+            	}
+            	}
             }
-
-            try {
-                new ViewJFrameImage(YresultImage, null, new Dimension(610, 200));
-            } catch (OutOfMemoryError error) {
-                System.gc();
-                MipavUtil.displayError("Out of memory: unable to open new frame");
-            }
-
-            try {
-                new ViewJFrameImage(ZresultImage, null, new Dimension(610, 200));
-            } catch (OutOfMemoryError error) {
-                System.gc();
-                MipavUtil.displayError("Out of memory: unable to open new frame");
-            }
-
             insertScriptLine();
 
         }
@@ -172,7 +188,11 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
      * Calls the algorithm.
      */
     public void callAlgorithm() {
-
+    	if ( projection == 0 )
+    	{
+    		// No images to project.
+    		return;
+    	}
         try {
             System.gc();
 
@@ -182,7 +202,10 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
                              minIntensityG, maxIntensityG, minIntensityB, maxIntensityB);    
             }
             else {
-                mipAlgo = new AlgorithmMaximumIntensityProjection(image, minIntensity, maxIntensity);
+                mipAlgo = new AlgorithmMaximumIntensityProjection(image, 
+                		startSlice, stopSlice,
+                		minIntensity, maxIntensity,
+                		maximum, minimum, projection );
             }
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -207,7 +230,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
             }
         } catch (OutOfMemoryError x) {
             System.gc();
-            MipavUtil.displayError("Dialog VOI Extraction: unable to allocate enough memory");
+            MipavUtil.displayError("Dialog MIP: unable to allocate enough memory");
 
             return;
         }
@@ -219,27 +242,27 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
      *
      * @return  The text field that returned null.
      */
-    protected JTextField determineNull() {
+    protected JTextField determineNull( JTextField min, JTextField max ) {
         String t;
 
         try {
-            t = minInput.getText();
+            t = min.getText();
 
             if (t.equals("")) {
-                return minInput;
+                return min;
             }
 
-            t = maxInput.getText();
+            t = max.getText();
 
             if (t.equals("")) {
-                return maxInput;
+                return max;
             }
-            return minInput;
+            return min;
             
         } catch (NullPointerException npe) {
             MipavUtil.displayError("JDialogMaximumIntensityProjection reports: Unknown Error");
 
-            return minInput; // gotta have some thing returned
+            return min; // gotta have some thing returned
         }
     }
     
@@ -248,8 +271,8 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
      *
      * @param  x  Value to set minimum value to.
      */
-    public void setMin(float x) {
-        minIntensity = x;
+    public void setMin(int i, float x) {
+        minIntensity[i] = x;
     }
     
     /**
@@ -257,8 +280,8 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
      *
      * @param  x  Value to set maximum value to.
      */
-    public void setMax(float x) {
-        maxIntensity = x;
+    public void setMax(int i, float x) {
+        maxIntensity[i] = x;
     }
     
     public void setMinR(float minR) {
@@ -290,6 +313,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
+        nDims = image.getExtents().length > 2 ? 3 : 1;
         parentFrame = image.getParentFrame();
         borderSize = scriptParameters.getParams().getInt("border_size");
         
@@ -362,31 +386,34 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
             }
         }
         else {
-            setMin(scriptParameters.getParams().getFloat("min_value"));
-            setMax(scriptParameters.getParams().getFloat("max_value"));
-            if (minIntensity < 0) {
-                throw new ParameterException("min_value", "Cannot have minimum intensity < 0");
-            }
-            
-            if (minIntensity < image.getMin()) {
-                throw new ParameterException("min_value", "Cannot have minimum intensity < image minimum");
-            }
-            
-            if (minIntensity > image.getMax()) {
-                throw new ParameterException("min_value", "Cannot have minimum intensity > image maximum");
-            }
-            
-            if (maxIntensity < 0) {
-                throw new ParameterException("max_value", "Cannot have maximum intensity < 0");
-            }
-            
-            if (maxIntensity < image.getMin()) {
-                throw new ParameterException("max_value", "Cannot have maximum intensity < image minimum");
-            }
-            
-            if (maxIntensity > image.getMax()) {
-                throw new ParameterException("max_value", "Cannot have minimum intensity > image maximum");
-            }
+        	for ( int i = 0; i < nDims; i++ )
+        	{
+        		setMin(i, scriptParameters.getParams().getFloat("min_value"));
+        		setMax(i, scriptParameters.getParams().getFloat("max_value"));
+        		if (minIntensity[i] < 0) {
+        			throw new ParameterException("min_value", "Cannot have minimum intensity < 0");
+        		}
+
+        		if (minIntensity[i] < image.getMin()) {
+        			throw new ParameterException("min_value", "Cannot have minimum intensity < image minimum");
+        		}
+
+        		if (minIntensity[i] > image.getMax()) {
+        			throw new ParameterException("min_value", "Cannot have minimum intensity > image maximum");
+        		}
+
+        		if (maxIntensity[i] < 0) {
+        			throw new ParameterException("max_value", "Cannot have maximum intensity < 0");
+        		}
+
+        		if (maxIntensity[i] < image.getMin()) {
+        			throw new ParameterException("max_value", "Cannot have maximum intensity < image minimum");
+        		}
+
+        		if (maxIntensity[i] > image.getMax()) {
+        			throw new ParameterException("max_value", "Cannot have minimum intensity > image maximum");
+        		}
+        	}
         }
         
        
@@ -417,6 +444,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
      * Initializes the GUI components and places them in dialog.
      */
     private void init() {
+    	/*
         boolean haveFloat;
         if ((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE) ||
             (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
@@ -664,6 +692,169 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
 
         pack();
         setVisible(true);
+        */
+    }
+    /**
+     * Initializes the GUI components and places them in dialog.
+     */
+    private void init2() {
+        boolean haveFloat;
+        if ((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE) ||
+            (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
+            haveFloat = true;
+        }
+        else {
+            haveFloat = false;
+        }
+        
+        boolean numericsPeriod = true;    
+    	
+    	setTitle("Maximum Intensity Projection");
+        setSize(350, 230);
+        setForeground(Color.black);
+        
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
+        
+        maximumCheck = new JCheckBox[nDims];
+        minimumCheck = new JCheckBox[nDims];
+        minInput = new JTextField[nDims];
+        maxInput = new JTextField[nDims];
+		maximum = new boolean[nDims];
+		minimum = new boolean[nDims];
+		maxIntensity = new float[nDims];
+		minIntensity = new float[nDims];
+		startInput = new JTextField[nDims];
+		stopInput = new JTextField[nDims];
+	    startSlice = new int[nDims];
+	    stopSlice = new int[nDims];
+	    
+        
+        String[] projectionLables = new String[]{ "Z Projection", "Y Projection", "X Projection" };
+        for ( int i = 0; i < nDims; i++ )
+        {
+            JPanel thresholdPanel = new JPanel();        
+        	//make border
+            thresholdPanel.setBorder(buildTitledBorder("Threshold Image " + projectionLables[i]));
+            contentBox.add(thresholdPanel);        
+            //set layout
+            GridBagLayout gbl = new GridBagLayout();
+            GridBagConstraints gbc = new GridBagConstraints();
+            thresholdPanel.setLayout(gbl);
+            gbc.anchor = GridBagConstraints.NORTHWEST;
+            
+            maximumCheck[i] = new JCheckBox( "Compute Maximum", true );
+            maximumCheck[i].addActionListener(this);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(maximumCheck[i], gbc);
+            thresholdPanel.add(maximumCheck[i]);
+            minimumCheck[i] = new JCheckBox( "Compute Minimum", false );
+            minimumCheck[i].addActionListener(this);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(minimumCheck[i], gbc);
+            thresholdPanel.add(minimumCheck[i]);
+
+            //For min
+            thresholdPanel.add(Box.createHorizontalStrut(10));
+    
+            JLabel minLabel = new JLabel("Threshold minimum:");
+            minLabel.setFont(serif12);
+            minLabel.setForeground(Color.black);
+            minLabel.setRequestFocusEnabled(false);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(minLabel, gbc);
+            thresholdPanel.add(minLabel);
+            thresholdPanel.add(Box.createHorizontalStrut(10));
+    
+            minInput[i] = new JTextField("0", 12);
+            minInput[i].addActionListener(this);
+            if (haveFloat) {
+                minInput[i].setText(Double.toString(image.getMin()));
+            }
+            else {
+                minInput[i].setText(Long.toString((long)image.getMin()));
+            }
+            MipavUtil.makeNumericsOnly(minInput[i], numericsPeriod);
+    
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(minInput[i], gbc);
+            thresholdPanel.add(minInput[i]);
+            
+            //For max
+            thresholdPanel.add(Box.createHorizontalStrut(10));
+    
+            JLabel maxLabel = new JLabel("Threshold maximum:");
+            maxLabel.setFont(serif12);
+            maxLabel.setForeground(Color.black);
+            maxLabel.setRequestFocusEnabled(false);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(maxLabel, gbc);
+            thresholdPanel.add(maxLabel);
+            thresholdPanel.add(Box.createHorizontalStrut(10));
+    
+            maxInput[i] = new JTextField("0", 12);
+            maxInput[i].addActionListener(this);
+            if (haveFloat) {
+                maxInput[i].setText(Double.toString(image.getMax()));
+            }
+            else {
+                maxInput[i].setText(Long.toString((long)image.getMax()));
+            }
+            MipavUtil.makeNumericsOnly(maxInput[i], numericsPeriod);
+    
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(maxInput[i], gbc);
+            thresholdPanel.add(maxInput[i]);
+            
+            
+            
+
+
+            // Start Slice:
+            thresholdPanel.add(Box.createHorizontalStrut(10));    
+            JLabel startLabel = new JLabel("Start Slice:");
+            startLabel.setFont(serif12);
+            startLabel.setForeground(Color.black);
+            startLabel.setRequestFocusEnabled(false);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(startLabel, gbc);
+            thresholdPanel.add(startLabel);
+            thresholdPanel.add(Box.createHorizontalStrut(10));
+    
+            startInput[i] = new JTextField("0", 12);
+            startInput[i].addActionListener(this);
+            startInput[i].setText(Integer.toString(0));
+            MipavUtil.makeNumericsOnly(startInput[i], numericsPeriod);    
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(startInput[i], gbc);
+            thresholdPanel.add(startInput[i]);
+            
+            // Stop SLice
+            thresholdPanel.add(Box.createHorizontalStrut(10));    
+            JLabel stopLabel = new JLabel("End slice:");
+            stopLabel.setFont(serif12);
+            stopLabel.setForeground(Color.black);
+            stopLabel.setRequestFocusEnabled(false);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(stopLabel, gbc);
+            thresholdPanel.add(stopLabel);
+            thresholdPanel.add(Box.createHorizontalStrut(10));
+    
+            stopInput[i] = new JTextField("0", 12);
+            stopInput[i].addActionListener(this);
+            stopInput[i].setText(Integer.toString(extents[i]));
+            MipavUtil.makeNumericsOnly(stopInput[i], numericsPeriod);    
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(stopInput[i], gbc);
+            thresholdPanel.add(stopInput[i]);
+            
+        }
+                
+        contentBox.add(buildButtons());
+        mainDialogPanel.add(contentBox);
+        getContentPane().add(mainDialogPanel);
+
+        pack();
+        setVisible(true);
     }
     
     /**
@@ -679,7 +870,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
                 maxIntensityR = Float.parseFloat(maxInputR.getText()); // Maximum red intensity value.
             } catch (NumberFormatException nfe) {
                 // an empty text-field.  decide which one is empty, then alert the user to correct
-                JTextField t = determineNull();
+                JTextField t = determineNull(minInputR, maxInputR );
                 MipavUtil.displayError("Improper number!");
                 t.requestFocus();
                 t.selectAll();
@@ -724,7 +915,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
                 maxIntensityG = Float.parseFloat(maxInputG.getText()); // Green maximum intensity value.
             } catch (NumberFormatException nfe) {
                 // an empty text-field.  decide which one is empty, then alert the user to correct
-                JTextField t = determineNull();
+                JTextField t = determineNull(minInputG, maxInputG);
                 MipavUtil.displayError("Improper number!");
                 t.requestFocus();
                 t.selectAll();
@@ -769,7 +960,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
                 maxIntensityB = Float.parseFloat(maxInputB.getText()); // Blue maximum intensity value.
             } catch (NumberFormatException nfe) {
                 // an empty text-field.  decide which one is empty, then alert the user to correct
-                JTextField t = determineNull();
+                JTextField t = determineNull(minInputB, maxInputB);
                 MipavUtil.displayError("Improper number!");
                 t.requestFocus();
                 t.selectAll();
@@ -810,12 +1001,62 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
             }    
         } // if (image.isColorImage())
         else { // black and white image    
+        	for ( int i = 0; i < nDims; i++ )
+        	{
+
+                try {
+            		startSlice[i] = Integer.parseInt(startInput[i].getText());
+            		stopSlice[i] = Integer.parseInt(stopInput[i].getText());
+            	} catch (NumberFormatException nfe) {
+            		// an empty text-field.  decide which one is empty, then alert the user to correct
+                    JTextField t = determineNull(startInput[i], stopInput[i]);
+                    MipavUtil.displayError("Improper number!");
+                    t.requestFocus();
+                    t.selectAll();        
+                    return false;
+            	}
+            	if ( startSlice[i] < 0 )
+            	{
+            		MipavUtil.displayError("Cannot have start slice < 0");
+            		startInput[i].requestFocus();
+            		startInput[i].selectAll();
+            		return false;
+            	}
+            	if ( startSlice[i] > extents[i] )
+            	{
+            		MipavUtil.displayError("Cannot have start slice greater than " + extents[i]);
+            		startInput[i].requestFocus();
+            		startInput[i].selectAll();
+            		return false;
+            	}
+            	if ( startSlice[i] > stopSlice[i] )
+            	{
+            		MipavUtil.displayError("Cannot have start slice greater than end slice" );
+            		startInput[i].requestFocus();
+            		startInput[i].selectAll();
+            		return false;
+            	}
+            	if ( stopSlice[i] < 0 )
+            	{
+            		MipavUtil.displayError("Cannot have stop slice < 0");
+            		stopInput[i].requestFocus();
+            		stopInput[i].selectAll();
+            		return false;
+            	}
+            	if ( stopSlice[i] > extents[i] )
+            	{
+            		MipavUtil.displayError("Cannot have stop slice greater than " + extents[i]);
+            		startInput[i].requestFocus();
+            		startInput[i].selectAll();
+            		return false;
+            	}
+        		
             try {
-        		minIntensity = Float.parseFloat(minInput.getText()); // Minimum intensity value.
-        		maxIntensity = Float.parseFloat(maxInput.getText()); // Maximum intensity value.
+        		minIntensity[i] = Float.parseFloat(minInput[i].getText()); // Minimum intensity value.
+        		maxIntensity[i] = Float.parseFloat(maxInput[i].getText()); // Maximum intensity value.
         	} catch (NumberFormatException nfe) {
         		// an empty text-field.  decide which one is empty, then alert the user to correct
-                JTextField t = determineNull();
+                JTextField t = determineNull(minInput[i], maxInput[i]);
                 MipavUtil.displayError("Improper number!");
                 t.requestFocus();
                 t.selectAll();
@@ -823,55 +1064,74 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
                 return false;
         	}
         	
-        	if (minIntensity < 0) {
+        	if (minIntensity[i] < 0) {
                 MipavUtil.displayError("Cannot have minimum intensity value < 0");
-                minInput.requestFocus();
-                minInput.selectAll();
+                minInput[i].requestFocus();
+                minInput[i].selectAll();
     
                 return false;
             }
         	
-        	if (minIntensity < image.getMin()) {
+        	if (minIntensity[i] < image.getMin()) {
                 MipavUtil.displayError("Cannot have minimum intensity value < image minimum");
-                minInput.requestFocus();
-                minInput.selectAll();
+                minInput[i].requestFocus();
+                minInput[i].selectAll();
     
                 return false;
             }
         	
-        	if (minIntensity > image.getMax()) {
+        	if (minIntensity[i] > image.getMax()) {
                 MipavUtil.displayError("Cannot have minimum intensity value > image maximum");
-                minInput.requestFocus();
-                minInput.selectAll();
+                minInput[i].requestFocus();
+                minInput[i].selectAll();
     
                 return false;
             }
         	
-        	if (maxIntensity < 0) {
+        	if (maxIntensity[i] < 0) {
                 MipavUtil.displayError("Cannot have maximum intensity value < 0");
-                maxInput.requestFocus();
-                maxInput.selectAll();
+                maxInput[i].requestFocus();
+                maxInput[i].selectAll();
     
                 return false;
             }
         	
-        	if (maxIntensity < image.getMin()) {
+        	if (maxIntensity[i] < image.getMin()) {
                 MipavUtil.displayError("Cannot have maximum intensity value < image minimum");
-                maxInput.requestFocus();
-                maxInput.selectAll();
+                maxInput[i].requestFocus();
+                maxInput[i].selectAll();
     
                 return false;
             }
         	
-        	if (maxIntensity > image.getMax()) {
+        	if (maxIntensity [i]> image.getMax()) {
                 MipavUtil.displayError("Cannot have maximum intensity value > image maximum");
-                maxInput.requestFocus();
-                maxInput.selectAll();
+                maxInput[i].requestFocus();
+                maxInput[i].selectAll();
     
                 return false;
             }
+        	}
         } // else black and white image
-    	
+
+    	if ( maximumCheck[0].isSelected() || minimumCheck[0].isSelected() )
+    	{
+    		projection |= AlgorithmMaximumIntensityProjection.Z_PROJECTION;
+    	}
+    	if ( (image.getNDims() > 2) && (maximumCheck[1].isSelected() || minimumCheck[1].isSelected()) )
+    	{
+    		projection |= AlgorithmMaximumIntensityProjection.Y_PROJECTION;
+    	}
+    	if ( (image.getNDims() > 2) && (maximumCheck[2].isSelected() || minimumCheck[2].isSelected()) )
+    	{
+    		projection |= AlgorithmMaximumIntensityProjection.X_PROJECTION;
+    	}
+    	for ( int i = 0; i < nDims; i++ )
+    	{
+    		maximum[i] = maximumCheck[i].isSelected();
+    		minimum[i] = minimumCheck[i].isSelected();
+    	}
+
     	return true;
     }
      

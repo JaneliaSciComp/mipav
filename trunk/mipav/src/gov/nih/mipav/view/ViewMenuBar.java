@@ -678,12 +678,8 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Mosaic to 3D volume", "MosaicTo3D", 0, null, false),
                 menuBuilder.buildMenuItem("Noise", null, 0, null, false),
                 menuBuilder.buildMenuItem("Pad", null, 0, null, false),
-                menuBuilder.makeMenu("Project", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Maximum intensity (MIP)", "maximumIntensityProjection", 0, null,
+                menuBuilder.buildMenuItem("Intensity Projection", "maximumIntensityProjection", 0, null,
                                 false),
-                        menuBuilder.buildMenuItem("Minimum intensity (MinIP)", "minimumIntensityProjection", 0, null,
-                                false),
-                }),
                 menuBuilder.makeMenu("Quantify", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Quantify using mask", "Quantify", 0, null, false),
                         menuBuilder.buildMenuItem("Quantify mask(s)", "QuantifyMasks", 0, null, false),
