@@ -300,6 +300,8 @@ public class FileMATLAB extends FileBase {
         int totalNumber = 1;
         boolean logMagDisplay = true;
         int maskExtents[] = null;
+        boolean haveSmallRealData;
+        boolean haveSmallImaginaryData;
 
         try {
             
@@ -750,7 +752,7 @@ public class FileMATLAB extends FileBase {
                     } // if (arrayClass == mxSTRUCT_CLASS)
                     for (field = 0; field < fieldNumber; field++) {
                     if (arrayClass == mxSTRUCT_CLASS) {
-                    	Preferences.debug("Reading numeric array number " + (field+1) + "\n");
+                    	Preferences.debug("Reading numeric array number " + field + "\n");
                         numericArrayDataType = getInt(endianess);
                         if (numericArrayDataType == miMATRIX) {
                         	Preferences.debug("Numeric array data type == miMATRIX as expected\n");
@@ -984,10 +986,12 @@ public class FileMATLAB extends FileBase {
                     if ((realDataType & 0xffff0000) != 0) {
                         // Small data element format    
                     	realDataBytes = (realDataType & 0xffff0000) >>> 16;
-                    	realDataType = arrayNameDataType & 0xffff;
+                    	realDataType = realDataType & 0xffff;
+                    	haveSmallRealData = true;
                     }
                     else {
                         realDataBytes = getInt(endianess);
+                        haveSmallRealData = false;
                     }
                     if (imagesFound == 1) {
                     switch(realDataType) {
@@ -998,8 +1002,22 @@ public class FileMATLAB extends FileBase {
                     	    if (logicalFields == 1) {
 	                    	    maskImage = new ModelImage(ModelStorageBase.BYTE, maskExtents, fileName + "_mask");
 	                    	    maskFileInfo.setDataType(ModelStorageBase.BYTE);
-	                    	    buffer = new byte[maskExtents[0]*maskExtents[1]];
+	                    	    buffer = new byte[realDataBytes];
 		                    	raFile.read(buffer);
+		                    	if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
 		                    	try {
 		                			maskImage.importData(0, buffer, true);
 		                		}
@@ -1014,8 +1032,22 @@ public class FileMATLAB extends FileBase {
 	                    	    image = new ModelImage(ModelStorageBase.BYTE, imageExtents, fileName); 
 	                    	    fileInfo.setDataType(ModelStorageBase.BYTE);
                     		}
-                    		buffer = new byte[imageLength];
+                    		buffer = new byte[realDataBytes];
 	                    	raFile.read(buffer);
+	                    	if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
 	                    	try {
 	                			image.importData(nonLogicalField * buffer.length, buffer, true);
 	                		}
@@ -1029,37 +1061,69 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
-                    		buffer = new byte[imageLength];
+                    		buffer = new byte[realDataBytes];
                     		raFile.read(buffer);
-                    		realBuffer = new float[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realBuffer = new float[realDataBytes];
+                    		for (i = 0; i < realDataBytes; i++) {
                     		    realBuffer[i] = (float)(buffer[i]);
                     		}
-                    		if ((realDataBytes % 8) != 0) {
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
                     	    	padBytes = 8 - (realDataBytes % 8);
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
+                    	    }   
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miINT8) {
                     	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n");
                     	    }
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                            imaginaryDataBytes = getInt(endianess);
+          
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
                             raFile.read(buffer);
-                            imaginaryBuffer = new float[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryBuffer = new float[imaginaryDataBytes];
+                            for (i = 0; i < imaginaryDataBytes; i++) {
                             	imaginaryBuffer[i] = (float)(buffer[i]);
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importComplexData(2 * nonLogicalField* realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -1078,12 +1142,26 @@ public class FileMATLAB extends FileBase {
                     		if (logicalFields == 1) {
 	                    	    maskImage = new ModelImage(ModelStorageBase.UBYTE, maskExtents, fileName + "_mask");
 	                    	    maskFileInfo.setDataType(ModelStorageBase.UBYTE);
-	                    	    buffer = new byte[maskExtents[0]*maskExtents[1]];
-	                    	    shortBuffer = new short[maskExtents[0]*maskExtents[1]];
+	                    	    buffer = new byte[realDataBytes];
+	                    	    shortBuffer = new short[realDataBytes];
 	                    	    raFile.read(buffer);
-	                    	    for (i = 0; i < maskExtents[0]*maskExtents[1]; i++) {
+	                    	    for (i = 0; i < realDataBytes; i++) {
 		                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
 		                		}
+	                    	    if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
 		                    	try {
 		                			maskImage.importUData(0, shortBuffer, true);
 		                		}
@@ -1098,12 +1176,26 @@ public class FileMATLAB extends FileBase {
 	                    	    image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
 	                    	    fileInfo.setDataType(ModelStorageBase.UBYTE);
                     		}
-	                    	buffer = new byte[imageLength];
+	                    	buffer = new byte[realDataBytes];
 	                    	raFile.read(buffer);
-	                    	shortBuffer = new short[imageLength];
-	                    	for (i = 0; i < imageLength; i++) {
+	                    	shortBuffer = new short[realDataBytes];
+	                    	for (i = 0; i < realDataBytes; i++) {
 	                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
 	                		}
+	                    	if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
 	                    	try {
 	                			image.importUData(nonLogicalField * shortBuffer.length, shortBuffer, true);
 	                		}
@@ -1117,37 +1209,69 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
-                    		buffer = new byte[imageLength];
+                    		buffer = new byte[realDataBytes];
                     		raFile.read(buffer);
-                    		realBuffer = new float[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realBuffer = new float[realDataBytes];
+                    		for (i = 0; i < realDataBytes; i++) {
                     		    realBuffer[i] = (float)(buffer[i] & 0xff);
                     		}
-                    		if ((realDataBytes % 8) != 0) {
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
                     	    	padBytes = 8 - (realDataBytes % 8);
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
                     	    }  
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miUINT8) {
                     	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n");
                     	    }
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                            imaginaryDataBytes = getInt(endianess);
+                         
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
                             raFile.read(buffer);
-                            imaginaryBuffer = new float[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryBuffer = new float[imaginaryDataBytes];
+                            for (i = 0; i < imaginaryDataBytes; i++) {
                             	imaginaryBuffer[i] = (float)(buffer[i] & 0xff);
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -1167,10 +1291,24 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.SHORT);
                     		}
-                    		shortBuffer = new short[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		shortBuffer = new short[realDataBytes/2];
+                    		for (i = 0; i < realDataBytes/2; i++) {
                     		    shortBuffer[i] = readShort(endianess);
                     		}
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     		try {
                     			image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true);
                     		}
@@ -1184,34 +1322,66 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
-                    		realBuffer = new float[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realBuffer = new float[realDataBytes/2];
+                    		for (i = 0; i < realDataBytes/2; i++) {
                     		    realBuffer[i] = (float)(readShort(endianess));
                     		}
-                    		if ((realDataBytes % 8) != 0) {
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
                     	    	padBytes = 8 - (realDataBytes % 8);
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
+                    	    }    
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miINT16) {
                     	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n");
                     	    }
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                            imaginaryDataBytes = getInt(endianess);
+                            
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryBuffer = new float[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryBuffer = new float[imaginaryDataBytes/2];
+                            for (i = 0; i < imaginaryDataBytes/2; i++) {
                             	imaginaryBuffer[i] = (float)(readShort(endianess));
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -1231,10 +1401,24 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.USHORT);
                     		}
-                    		intBuffer = new int[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		intBuffer = new int[realDataBytes/2];
+                    		for (i = 0; i < realDataBytes/2; i++) {
                     		    intBuffer[i] = getUnsignedShort(endianess);
                     		}
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     		try {
                     			image.importUData(nonLogicalField * intBuffer.length, intBuffer, true);
                     		}
@@ -1248,34 +1432,66 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
-                    		realBuffer = new float[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realBuffer = new float[realDataBytes/2];
+                    		for (i = 0; i < realDataBytes/2; i++) {
                     		    realBuffer[i] = (float)(getUnsignedShort(endianess));
                     		}
-                    		if ((realDataBytes % 8) != 0) {
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
                     	    	padBytes = 8 - (realDataBytes % 8);
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
                     	    }  
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miUINT16) {
                     	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n");
                     	    }
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                            imaginaryDataBytes = getInt(endianess);
+                            
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryBuffer = new float[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryBuffer = new float[imaginaryDataBytes/2];
+                            for (i = 0; i < imaginaryDataBytes/2; i++) {
                             	imaginaryBuffer[i] = (float)(getUnsignedShort(endianess));
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -1295,10 +1511,24 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.INTEGER);
                     		}
-                    		intBuffer = new int[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		intBuffer = new int[realDataBytes/4];
+                    		for (i = 0; i < realDataBytes/4; i++) {
                     		    intBuffer[i] = getInt(endianess);
                     		}
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     		try {
                     			image.importData(nonLogicalField * intBuffer.length, intBuffer, true);
                     		}
@@ -1312,17 +1542,35 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realDBuffer = new double[realDataBytes/4];
+                    		for (i = 0; i < realDataBytes/4; i++) {
                     		    realDBuffer[i] = (double)getInt(endianess);
                     		}
-                    		if ((realDataBytes % 8) != 0) {
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
                     	    	padBytes = 8 - (realDataBytes % 8);
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
                     	    }  
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miINT32) {
                     	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n");
                     	    }
@@ -1330,17 +1578,30 @@ public class FileMATLAB extends FileBase {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
                     	    
-                            imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryDBuffer = new double[imaginaryDataBytes/4];
+                            for (i = 0; i < imaginaryDataBytes/4; i++) {
                             	imaginaryDBuffer[i] = (double)getInt(endianess);
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
@@ -1360,10 +1621,24 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.UINTEGER);
                     		}
-                    		longBuffer = new long[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		longBuffer = new long[realDataBytes/4];
+                    		for (i = 0; i < realDataBytes/4; i++) {
                     		    longBuffer[i] = getUInt(endianess);
                     		}
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     		try {
                     			image.importUData(nonLogicalField * longBuffer.length, longBuffer, true);
                     		}
@@ -1377,17 +1652,35 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realDBuffer = new double[realDataBytes/4];
+                    		for (i = 0; i < realDataBytes/4; i++) {
                     		    realDBuffer[i] = (double)getUInt(endianess);
                     		}
-                    		if ((realDataBytes % 8) != 0) {
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
                     	    	padBytes = 8 - (realDataBytes % 8);
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
+                    	    }   
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miUINT32) {
                     	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n");
                     	    }
@@ -1395,17 +1688,30 @@ public class FileMATLAB extends FileBase {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
                     	    
-                            imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryDBuffer = new double[imaginaryDataBytes/4];
+                            for (i = 0; i < imaginaryDataBytes/4; i++) {
                             	imaginaryDBuffer[i] = (double)getUInt(endianess);
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
@@ -1425,10 +1731,24 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.FLOAT);
                     		}
-                    		floatBuffer = new float[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		floatBuffer = new float[realDataBytes/4];
+                    		for (i = 0; i < realDataBytes/4; i++) {
                     		    floatBuffer[i] = getFloat(endianess);
                     		}
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     		try {
                     			image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true);
                     		}
@@ -1442,17 +1762,35 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
-                    		realBuffer = new float[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realBuffer = new float[realDataBytes/4];
+                    		for (i = 0; i < realDataBytes/4; i++) {
                     		    realBuffer[i] = getFloat(endianess);
                     		}
-                    		 if ((realDataBytes % 8) != 0) {
-                     	    	padBytes = 8 - (realDataBytes % 8);
-                     	    	for (i = 0; i < padBytes; i++) {
-                         	    	raFile.readByte();
-                         	    }
-                     	    }  
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }    
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miSINGLE) {
                     	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n");
                     	    }
@@ -1460,17 +1798,30 @@ public class FileMATLAB extends FileBase {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
                     	   
-                            imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryBuffer = new float[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryBuffer = new float[imaginaryDataBytes/4];
+                            for (i = 0; i < imaginaryDataBytes/4; i++) {
                             	imaginaryBuffer[i] = getFloat(endianess);
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -1490,10 +1841,24 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DOUBLE);
                     		}
-                    		doubleBuffer = new double[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		doubleBuffer = new double[realDataBytes/8];
+                    		for (i = 0; i < realDataBytes/8; i++) {
                     		    doubleBuffer[i] = getDouble(endianess);
                     		}
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     		try {
                     			image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
                     		}
@@ -1507,17 +1872,35 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realDBuffer = new double[realDataBytes/8];
+                    		for (i = 0; i < realDataBytes/8; i++) {
                     		    realDBuffer[i] = getDouble(endianess);
                     		}
-                    		if ((realDataBytes % 8) != 0) {
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
                     	    	padBytes = 8 - (realDataBytes % 8);
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
+                    	    }   
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miDOUBLE) {
                     	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n");
                     	    }
@@ -1525,17 +1908,30 @@ public class FileMATLAB extends FileBase {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
                     	    
-                            imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryDBuffer = new double[imaginaryDataBytes/8];
+                            for (i = 0; i < imaginaryDataBytes/8; i++) {
                             	imaginaryDBuffer[i] = getDouble(endianess);
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
@@ -1555,10 +1951,24 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.LONG);
                     		}
-                    		longBuffer = new long[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		longBuffer = new long[realDataBytes/8];
+                    		for (i = 0; i < realDataBytes/8; i++) {
                     		    longBuffer[i] = getLong(endianess);
                     		}
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     		try {
                     			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
                     		}
@@ -1572,17 +1982,35 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realDBuffer = new double[realDataBytes/8];
+                    		for (i = 0; i < realDataBytes/8; i++) {
                     		    realDBuffer[i] = (double)getLong(endianess);
                     		}
-                    		if ((realDataBytes % 8) != 0) {
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
                     	    	padBytes = 8 - (realDataBytes % 8);
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
+                    	    }    
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miINT64) {
                     	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n");
                     	    }
@@ -1590,17 +2018,30 @@ public class FileMATLAB extends FileBase {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
                     	    
-                            imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryDBuffer = new double[imaginaryDataBytes/8];
+                            for (i = 0; i < imaginaryDataBytes/8; i++) {
                             	imaginaryDBuffer[i] = (double)getLong(endianess);
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
@@ -1620,10 +2061,24 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.LONG);
                     		}
-                    		longBuffer = new long[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		longBuffer = new long[realDataBytes/8];
+                    		for (i = 0; i < realDataBytes/8; i++) {
                     		    longBuffer[i] = getLong(endianess);
                     		}
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     		try {
                     			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
                     		}
@@ -1637,17 +2092,35 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[imageLength];
-                    		for (i = 0; i < imageLength; i++) {
+                    		realDBuffer = new double[realDataBytes/8];
+                    		for (i = 0; i < realDataBytes/8; i++) {
                     		    realDBuffer[i] = (double)getLong(endianess);
                     		}
-                    		if ((realDataBytes % 8) != 0) {
+                    		if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
                     	    	padBytes = 8 - (realDataBytes % 8);
                     	    	for (i = 0; i < padBytes; i++) {
                         	    	raFile.readByte();
                         	    }
-                    	    }  
+                    	    }   
                     	    imaginaryDataType = getInt(endianess);
+                    	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                // Small data element format    
+                            	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                            	imaginaryDataType = imaginaryDataType & 0xffff;
+                            	haveSmallImaginaryData = true;
+                            }
+                            else {
+                                imaginaryDataBytes = getInt(endianess);
+                                haveSmallImaginaryData = false;
+                            }
                     	    if (imaginaryDataType == miUINT64) {
                     	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n");
                     	    }
@@ -1655,17 +2128,30 @@ public class FileMATLAB extends FileBase {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
                     	    
-                            imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                             }
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imageLength];
-                            for (i = 0; i < imageLength; i++) {
+                            imaginaryDBuffer = new double[imaginaryDataBytes/8];
+                            for (i = 0; i < imaginaryDataBytes/8; i++) {
                             	imaginaryDBuffer[i] = (double)getLong(endianess);
                             }
+                            if (haveSmallImaginaryData) {
+                    		    if (imaginaryDataBytes < 4) {
+                    		    	padBytes = 4 - imaginaryDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((imaginaryDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }   
                             logMagDisplay = true;
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
@@ -1692,8 +2178,22 @@ public class FileMATLAB extends FileBase {
                         		if (logicalFields == 1) {
     	                    	    maskImage2 = new ModelImage(ModelStorageBase.BYTE, maskExtents, fileName + "_mask");
     	                    	    maskFileInfo2.setDataType(ModelStorageBase.BYTE);
-    	                    	    buffer = new byte[maskExtents[0]*maskExtents[1]];
+    	                    	    buffer = new byte[realDataBytes];
     		                    	raFile.read(buffer);
+    		                    	if (haveSmallRealData) {
+    	                    		    if (realDataBytes < 4) {
+    	                    		    	padBytes = 4 - realDataBytes;
+    	                    		    	for (i = 0; i < padBytes; i++) {
+    	                    		    		raFile.readByte();
+    	                    		    	}
+    	                    		    }
+    	                    		}
+    	                    		else if ((realDataBytes % 8) != 0) {
+    	                    	    	padBytes = 8 - (realDataBytes % 8);
+    	                    	    	for (i = 0; i < padBytes; i++) {
+    	                        	    	raFile.readByte();
+    	                        	    }
+    	                    	    }  
     		                    	try {
     		                			maskImage2.importData(0, buffer, true);
     		                		}
@@ -1708,8 +2208,22 @@ public class FileMATLAB extends FileBase {
     	                    	    image2 = new ModelImage(ModelStorageBase.BYTE, imageExtents, fileName);
     	                    	    fileInfo2.setDataType(ModelStorageBase.BYTE);
                         		}
-    	                    	buffer = new byte[imageLength];
+    	                    	buffer = new byte[realDataBytes];
     	                    	raFile.read(buffer);
+    	                    	if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
     	                    	try {
     	                			image2.importData(nonLogicalField * buffer.length, buffer, true);
     	                		}
@@ -1723,37 +2237,69 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
-                        		buffer = new byte[imageLength];
+                        		buffer = new byte[realDataBytes];
                         		raFile.read(buffer);
-                        		realBuffer = new float[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realBuffer = new float[realDataBytes];
+                        		for (i = 0; i < realDataBytes; i++) {
                         		    realBuffer[i] = (float)(buffer[i]);
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }    
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miINT8) {
                         	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n");
                         	    }
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                                imaginaryDataBytes = getInt(endianess);
+                               
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
                                 raFile.read(buffer);
-                                imaginaryBuffer = new float[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryBuffer = new float[imaginaryDataBytes];
+                                for (i = 0; i < imaginaryDataBytes; i++) {
                                 	imaginaryBuffer[i] = (float)(buffer[i]);
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -1772,12 +2318,26 @@ public class FileMATLAB extends FileBase {
                         		if (logicalFields == 1) {
     	                    	    maskImage2 = new ModelImage(ModelStorageBase.UBYTE, maskExtents, fileName + "_mask");
     	                    	    maskFileInfo2.setDataType(ModelStorageBase.UBYTE);
-    	                    	    buffer = new byte[maskExtents[0]*maskExtents[1]];
-    	                    	    shortBuffer = new short[maskExtents[0]*maskExtents[1]];
+    	                    	    buffer = new byte[realDataBytes];
+    	                    	    shortBuffer = new short[realDataBytes];
     	                    	    raFile.read(buffer);
-    	                    	    for (i = 0; i < maskExtents[0]*maskExtents[1]; i++) {
+    	                    	    for (i = 0; i < realDataBytes; i++) {
     		                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
     		                		}
+    	                    	    if (haveSmallRealData) {
+    	                    		    if (realDataBytes < 4) {
+    	                    		    	padBytes = 4 - realDataBytes;
+    	                    		    	for (i = 0; i < padBytes; i++) {
+    	                    		    		raFile.readByte();
+    	                    		    	}
+    	                    		    }
+    	                    		}
+    	                    		else if ((realDataBytes % 8) != 0) {
+    	                    	    	padBytes = 8 - (realDataBytes % 8);
+    	                    	    	for (i = 0; i < padBytes; i++) {
+    	                        	    	raFile.readByte();
+    	                        	    }
+    	                    	    }  
     		                    	try {
     		                			maskImage2.importUData(0, shortBuffer, true);
     		                		}
@@ -1792,12 +2352,26 @@ public class FileMATLAB extends FileBase {
     	                    	    image2 = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
     	                    	    fileInfo2.setDataType(ModelStorageBase.UBYTE);
                         		}
-    	                    	buffer = new byte[imageLength];
+    	                    	buffer = new byte[realDataBytes];
     	                    	raFile.read(buffer);
-    	                    	shortBuffer = new short[imageLength];
-    	                    	for (i = 0; i < imageLength; i++) {
+    	                    	shortBuffer = new short[realDataBytes];
+    	                    	for (i = 0; i < realDataBytes; i++) {
     	                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
     	                		}
+    	                    	if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
     	                    	try {
     	                			image2.importUData(nonLogicalField * shortBuffer.length, shortBuffer, true);
     	                		}
@@ -1811,37 +2385,69 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
-                        		buffer = new byte[imageLength];
+                        		buffer = new byte[realDataBytes];
                         		raFile.read(buffer);
-                        		realBuffer = new float[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realBuffer = new float[realDataBytes];
+                        		for (i = 0; i < realDataBytes; i++) {
                         		    realBuffer[i] = (float)(buffer[i] & 0xff);
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }   
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miUINT8) {
                         	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n");
                         	    }
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                                imaginaryDataBytes = getInt(endianess);
+                                
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
                                 raFile.read(buffer);
-                                imaginaryBuffer = new float[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryBuffer = new float[imaginaryDataBytes];
+                                for (i = 0; i < imaginaryDataBytes; i++) {
                                 	imaginaryBuffer[i] = (float)(buffer[i] & 0xff);
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -1861,10 +2467,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.SHORT);
                         		}
-                        		shortBuffer = new short[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		shortBuffer = new short[realDataBytes/2];
+                        		for (i = 0; i < realDataBytes/2; i++) {
                         		    shortBuffer[i] = readShort(endianess);
                         		}
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         		try {
                         			image2.importData(nonLogicalField * shortBuffer.length, shortBuffer, true);
                         		}
@@ -1878,34 +2498,66 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
-                        		realBuffer = new float[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realBuffer = new float[realDataBytes/2];
+                        		for (i = 0; i < realDataBytes/2; i++) {
                         		    realBuffer[i] = (float)(readShort(endianess));
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miINT16) {
                         	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n");
                         	    }
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                                imaginaryDataBytes = getInt(endianess);
+                                
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryBuffer = new float[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryBuffer = new float[imaginaryDataBytes/2];
+                                for (i = 0; i < imaginaryDataBytes/2; i++) {
                                 	imaginaryBuffer[i] = (float)(readShort(endianess));
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -1925,10 +2577,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.USHORT);
                         		}
-                        		intBuffer = new int[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		intBuffer = new int[realDataBytes/2];
+                        		for (i = 0; i < realDataBytes/2; i++) {
                         		    intBuffer[i] = getUnsignedShort(endianess);
                         		}
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         		try {
                         			image2.importUData(nonLogicalField * intBuffer.length, intBuffer, true);
                         		}
@@ -1942,34 +2608,66 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
-                        		realBuffer = new float[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realBuffer = new float[realDataBytes/2];
+                        		for (i = 0; i < realDataBytes/2; i++) {
                         		    realBuffer[i] = (float)(getUnsignedShort(endianess));
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }   
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miUINT16) {
                         	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n");
                         	    }
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                                imaginaryDataBytes = getInt(endianess);
+                               
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryBuffer = new float[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryBuffer = new float[imaginaryDataBytes/2];
+                                for (i = 0; i < imaginaryDataBytes/2; i++) {
                                 	imaginaryBuffer[i] = (float)(getUnsignedShort(endianess));
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -1989,10 +2687,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.INTEGER);
                         		}
-                        		intBuffer = new int[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		intBuffer = new int[realDataBytes/4];
+                        		for (i = 0; i < realDataBytes/4; i++) {
                         		    intBuffer[i] = getInt(endianess);
                         		}
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         		try {
                         			image2.importData(nonLogicalField * intBuffer.length, intBuffer, true);
                         		}
@@ -2006,17 +2718,35 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realDBuffer = new double[realDataBytes/4];
+                        		for (i = 0; i < realDataBytes/4; i++) {
                         		    realDBuffer[i] = (double)getInt(endianess);
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }    
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miINT32) {
                         	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n");
                         	    }
@@ -2024,17 +2754,30 @@ public class FileMATLAB extends FileBase {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
                         	    
-                                imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryDBuffer = new double[imaginaryDataBytes/4];
+                                for (i = 0; i < imaginaryDataBytes/4; i++) {
                                 	imaginaryDBuffer[i] = (double)getInt(endianess);
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
@@ -2054,10 +2797,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.UINTEGER);
                         		}
-                        		longBuffer = new long[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		longBuffer = new long[realDataBytes/4];
+                        		for (i = 0; i < realDataBytes/4; i++) {
                         		    longBuffer[i] = getUInt(endianess);
                         		}
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         		try {
                         			image2.importUData(nonLogicalField * longBuffer.length, longBuffer, true);
                         		}
@@ -2071,17 +2828,35 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realDBuffer = new double[realDataBytes/4];
+                        		for (i = 0; i < realDataBytes/4; i++) {
                         		    realDBuffer[i] = (double)getUInt(endianess);
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }   
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miUINT32) {
                         	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n");
                         	    }
@@ -2089,17 +2864,30 @@ public class FileMATLAB extends FileBase {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
                         	    
-                                imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryDBuffer = new double[imaginaryDataBytes/4];
+                                for (i = 0; i < imaginaryDataBytes/4; i++) {
                                 	imaginaryDBuffer[i] = (double)getUInt(endianess);
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
@@ -2119,10 +2907,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.FLOAT);
                         		}
-                        		floatBuffer = new float[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		floatBuffer = new float[realDataBytes/4];
+                        		for (i = 0; i < realDataBytes/4; i++) {
                         		    floatBuffer[i] = getFloat(endianess);
                         		}
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         		try {
                         			image2.importData(nonLogicalField * floatBuffer.length, floatBuffer, true);
                         		}
@@ -2136,17 +2938,35 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
-                        		realBuffer = new float[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realBuffer = new float[realDataBytes/4];
+                        		for (i = 0; i < realDataBytes/4; i++) {
                         		    realBuffer[i] = getFloat(endianess);
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miSINGLE) {
                         	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n");
                         	    }
@@ -2154,17 +2974,30 @@ public class FileMATLAB extends FileBase {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
                         	    
-                                imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryBuffer = new float[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryBuffer = new float[imaginaryDataBytes/4];
+                                for (i = 0; i < imaginaryDataBytes/4; i++) {
                                 	imaginaryBuffer[i] = getFloat(endianess);
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
@@ -2184,10 +3017,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DOUBLE);
                         		}
-                        		doubleBuffer = new double[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		doubleBuffer = new double[realDataBytes/8];
+                        		for (i = 0; i < realDataBytes/8; i++) {
                         		    doubleBuffer[i] = getDouble(endianess);
                         		}
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         		try {
                         			image2.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
                         		}
@@ -2201,17 +3048,35 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realDBuffer = new double[realDataBytes/8];
+                        		for (i = 0; i < realDataBytes/8; i++) {
                         		    realDBuffer[i] = getDouble(endianess);
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }    
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miDOUBLE) {
                         	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n");
                         	    }
@@ -2219,17 +3084,30 @@ public class FileMATLAB extends FileBase {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
                         	    
-                                imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryDBuffer = new double[imaginaryDataBytes/8];
+                                for (i = 0; i < imaginaryDataBytes/8; i++) {
                                 	imaginaryDBuffer[i] = getDouble(endianess);
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
@@ -2249,10 +3127,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.LONG);
                         		}
-                        		longBuffer = new long[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		longBuffer = new long[realDataBytes/8];
+                        		for (i = 0; i < realDataBytes/8; i++) {
                         		    longBuffer[i] = getLong(endianess);
                         		}
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         		try {
                         			image2.importData(nonLogicalField * longBuffer.length, longBuffer, true);
                         		}
@@ -2266,17 +3158,35 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realDBuffer = new double[realDataBytes/8];
+                        		for (i = 0; i < realDataBytes/8; i++) {
                         		    realDBuffer[i] = (double)getLong(endianess);
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }   
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miINT64) {
                         	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n");
                         	    }
@@ -2284,17 +3194,30 @@ public class FileMATLAB extends FileBase {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
                         	    
-                                imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryDBuffer = new double[imaginaryDataBytes/8];
+                                for (i = 0; i < imaginaryDataBytes/8; i++) {
                                 	imaginaryDBuffer[i] = (double)getLong(endianess);
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
@@ -2314,10 +3237,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.LONG);
                         		}
-                        		longBuffer = new long[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		longBuffer = new long[realDataBytes/8];
+                        		for (i = 0; i < realDataBytes/8; i++) {
                         		    longBuffer[i] = getLong(endianess);
                         		}
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         		try {
                         			image2.importData(nonLogicalField * longBuffer.length, longBuffer, true);
                         		}
@@ -2331,17 +3268,35 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[imageLength];
-                        		for (i = 0; i < imageLength; i++) {
+                        		realDBuffer = new double[realDataBytes/8];
+                        		for (i = 0; i < realDataBytes/8; i++) {
                         		    realDBuffer[i] = (double)getLong(endianess);
                         		}
-                        		if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    } 
+                        		if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    }  
                         	    imaginaryDataType = getInt(endianess);
+                        	    if ((imaginaryDataType & 0xffff0000) != 0) {
+                                    // Small data element format    
+                                	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
+                                	imaginaryDataType = imaginaryDataType & 0xffff;
+                                	haveSmallImaginaryData = true;
+                                }
+                                else {
+                                    imaginaryDataBytes = getInt(endianess);
+                                    haveSmallImaginaryData = false;
+                                }
                         	    if (imaginaryDataType == miUINT64) {
                         	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n");
                         	    }
@@ -2349,17 +3304,30 @@ public class FileMATLAB extends FileBase {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
                         	     
-                                imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
                                 }
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imageLength];
-                                for (i = 0; i < imageLength; i++) {
+                                imaginaryDBuffer = new double[imaginaryDataBytes/8];
+                                for (i = 0; i < imaginaryDataBytes/8; i++) {
                                 	imaginaryDBuffer[i] = (double)getLong(endianess);
                                 }
+                                if (haveSmallImaginaryData) {
+                        		    if (imaginaryDataBytes < 4) {
+                        		    	padBytes = 4 - imaginaryDataBytes;
+                        		    	for (i = 0; i < padBytes; i++) {
+                        		    		raFile.readByte();
+                        		    	}
+                        		    }
+                        		}
+                        		else if ((imaginaryDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (imaginaryDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }   
                                 logMagDisplay = true;
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
