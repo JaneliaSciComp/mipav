@@ -981,7 +981,14 @@ public class FileMATLAB extends FileBase {
 	                    Preferences.debug("Numeric array name = " + numericArrayName + "\n");
                     } // if (arrayClass == mxSTRUCT_CLASS)
                     realDataType = getInt(endianess);
-                    realDataBytes = getInt(endianess);
+                    if ((realDataType & 0xffff0000) != 0) {
+                        // Small data element format    
+                    	realDataBytes = (realDataType & 0xffff0000) >>> 16;
+                    	realDataType = arrayNameDataType & 0xffff;
+                    }
+                    else {
+                        realDataBytes = getInt(endianess);
+                    }
                     if (imagesFound == 1) {
                     switch(realDataType) {
                     case miINT8:
@@ -1309,6 +1316,12 @@ public class FileMATLAB extends FileBase {
                     		for (i = 0; i < imageLength; i++) {
                     		    realDBuffer[i] = (double)getInt(endianess);
                     		}
+                    		if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     	    imaginaryDataType = getInt(endianess);
                     	    if (imaginaryDataType == miINT32) {
                     	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n");
@@ -1316,12 +1329,7 @@ public class FileMATLAB extends FileBase {
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                    	    if ((realDataBytes % 8) != 0) {
-                    	    	padBytes = 8 - (realDataBytes % 8);
-                    	    	for (i = 0; i < padBytes; i++) {
-                        	    	raFile.readByte();
-                        	    }
-                    	    }  
+                    	    
                             imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
                             	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -1373,6 +1381,12 @@ public class FileMATLAB extends FileBase {
                     		for (i = 0; i < imageLength; i++) {
                     		    realDBuffer[i] = (double)getUInt(endianess);
                     		}
+                    		if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     	    imaginaryDataType = getInt(endianess);
                     	    if (imaginaryDataType == miUINT32) {
                     	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n");
@@ -1380,12 +1394,7 @@ public class FileMATLAB extends FileBase {
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                    	    if ((realDataBytes % 8) != 0) {
-                    	    	padBytes = 8 - (realDataBytes % 8);
-                    	    	for (i = 0; i < padBytes; i++) {
-                        	    	raFile.readByte();
-                        	    }
-                    	    }  
+                    	    
                             imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
                             	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -1437,6 +1446,12 @@ public class FileMATLAB extends FileBase {
                     		for (i = 0; i < imageLength; i++) {
                     		    realBuffer[i] = getFloat(endianess);
                     		}
+                    		 if ((realDataBytes % 8) != 0) {
+                     	    	padBytes = 8 - (realDataBytes % 8);
+                     	    	for (i = 0; i < padBytes; i++) {
+                         	    	raFile.readByte();
+                         	    }
+                     	    }  
                     	    imaginaryDataType = getInt(endianess);
                     	    if (imaginaryDataType == miSINGLE) {
                     	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n");
@@ -1444,12 +1459,7 @@ public class FileMATLAB extends FileBase {
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                    	    if ((realDataBytes % 8) != 0) {
-                    	    	padBytes = 8 - (realDataBytes % 8);
-                    	    	for (i = 0; i < padBytes; i++) {
-                        	    	raFile.readByte();
-                        	    }
-                    	    }  
+                    	   
                             imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
                             	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -1501,6 +1511,12 @@ public class FileMATLAB extends FileBase {
                     		for (i = 0; i < imageLength; i++) {
                     		    realDBuffer[i] = getDouble(endianess);
                     		}
+                    		if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     	    imaginaryDataType = getInt(endianess);
                     	    if (imaginaryDataType == miDOUBLE) {
                     	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n");
@@ -1508,12 +1524,7 @@ public class FileMATLAB extends FileBase {
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                    	    if ((realDataBytes % 8) != 0) {
-                    	    	padBytes = 8 - (realDataBytes % 8);
-                    	    	for (i = 0; i < padBytes; i++) {
-                        	    	raFile.readByte();
-                        	    }
-                    	    }  
+                    	    
                             imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
                             	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -1565,6 +1576,12 @@ public class FileMATLAB extends FileBase {
                     		for (i = 0; i < imageLength; i++) {
                     		    realDBuffer[i] = (double)getLong(endianess);
                     		}
+                    		if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     	    imaginaryDataType = getInt(endianess);
                     	    if (imaginaryDataType == miINT64) {
                     	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n");
@@ -1572,12 +1589,7 @@ public class FileMATLAB extends FileBase {
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                    	    if ((realDataBytes % 8) != 0) {
-                    	    	padBytes = 8 - (realDataBytes % 8);
-                    	    	for (i = 0; i < padBytes; i++) {
-                        	    	raFile.readByte();
-                        	    }
-                    	    }  
+                    	    
                             imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
                             	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -1629,6 +1641,12 @@ public class FileMATLAB extends FileBase {
                     		for (i = 0; i < imageLength; i++) {
                     		    realDBuffer[i] = (double)getLong(endianess);
                     		}
+                    		if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    }  
                     	    imaginaryDataType = getInt(endianess);
                     	    if (imaginaryDataType == miUINT64) {
                     	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n");
@@ -1636,12 +1654,7 @@ public class FileMATLAB extends FileBase {
                     	    else {
                     	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                     	    }
-                    	    if ((realDataBytes % 8) != 0) {
-                    	    	padBytes = 8 - (realDataBytes % 8);
-                    	    	for (i = 0; i < padBytes; i++) {
-                        	    	raFile.readByte();
-                        	    }
-                    	    }  
+                    	    
                             imaginaryDataBytes = getInt(endianess);
                             if (imaginaryDataBytes == realDataBytes) {
                             	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -1997,6 +2010,12 @@ public class FileMATLAB extends FileBase {
                         		for (i = 0; i < imageLength; i++) {
                         		    realDBuffer[i] = (double)getInt(endianess);
                         		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
                         	    imaginaryDataType = getInt(endianess);
                         	    if (imaginaryDataType == miINT32) {
                         	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n");
@@ -2004,12 +2023,7 @@ public class FileMATLAB extends FileBase {
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                        	    if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        	    
                                 imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
                                 	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -2061,6 +2075,12 @@ public class FileMATLAB extends FileBase {
                         		for (i = 0; i < imageLength; i++) {
                         		    realDBuffer[i] = (double)getUInt(endianess);
                         		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
                         	    imaginaryDataType = getInt(endianess);
                         	    if (imaginaryDataType == miUINT32) {
                         	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n");
@@ -2068,12 +2088,7 @@ public class FileMATLAB extends FileBase {
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                        	    if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        	    
                                 imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
                                 	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -2125,6 +2140,12 @@ public class FileMATLAB extends FileBase {
                         		for (i = 0; i < imageLength; i++) {
                         		    realBuffer[i] = getFloat(endianess);
                         		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
                         	    imaginaryDataType = getInt(endianess);
                         	    if (imaginaryDataType == miSINGLE) {
                         	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n");
@@ -2132,12 +2153,7 @@ public class FileMATLAB extends FileBase {
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                        	    if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        	    
                                 imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
                                 	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -2189,6 +2205,12 @@ public class FileMATLAB extends FileBase {
                         		for (i = 0; i < imageLength; i++) {
                         		    realDBuffer[i] = getDouble(endianess);
                         		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
                         	    imaginaryDataType = getInt(endianess);
                         	    if (imaginaryDataType == miDOUBLE) {
                         	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n");
@@ -2196,12 +2218,7 @@ public class FileMATLAB extends FileBase {
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                        	    if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        	    
                                 imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
                                 	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -2253,6 +2270,12 @@ public class FileMATLAB extends FileBase {
                         		for (i = 0; i < imageLength; i++) {
                         		    realDBuffer[i] = (double)getLong(endianess);
                         		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    }  
                         	    imaginaryDataType = getInt(endianess);
                         	    if (imaginaryDataType == miINT64) {
                         	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n");
@@ -2260,12 +2283,7 @@ public class FileMATLAB extends FileBase {
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                        	    if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        	    
                                 imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
                                 	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
@@ -2317,6 +2335,12 @@ public class FileMATLAB extends FileBase {
                         		for (i = 0; i < imageLength; i++) {
                         		    realDBuffer[i] = (double)getLong(endianess);
                         		}
+                        		if ((realDataBytes % 8) != 0) {
+                        	    	padBytes = 8 - (realDataBytes % 8);
+                        	    	for (i = 0; i < padBytes; i++) {
+                            	    	raFile.readByte();
+                            	    }
+                        	    } 
                         	    imaginaryDataType = getInt(endianess);
                         	    if (imaginaryDataType == miUINT64) {
                         	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n");
@@ -2324,12 +2348,7 @@ public class FileMATLAB extends FileBase {
                         	    else {
                         	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
                         	    }
-                        	    if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
+                        	     
                                 imaginaryDataBytes = getInt(endianess);
                                 if (imaginaryDataBytes == realDataBytes) {
                                 	Preferences.debug("imaginaryDataByts == realDataBytes as expected\n");
