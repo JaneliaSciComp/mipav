@@ -22,12 +22,6 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	/** Source Image Resolutions */
 	float [] imResolutions;
 
-	/** Extents for X Projection Image */
-	private int [] XExtents;
-
-	/** Extents for Y Projection Image */
-	private int [] YExtents;
-
 	/** Extents for Z Projection Image */
 	private int [] ZExtents;
 
@@ -36,24 +30,19 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	private int window;
 
 	/** Minimum intensity value. */
-	private float min;
+	private double[] minIntensity;
 
 	/** Maximum intensity value. */
-	private float max;
+	private double[] maxIntensity;
 
-	private float minR;
-	private float maxR;
-	private float minG;
-	private float maxG;
-	private float minB;
-	private float maxB;
-
-	private boolean maximum;
-	private boolean minimum;
+	private boolean computeMaximum;
+	private boolean computeMinimum;
 	public static final int X_PROJECTION = 0;
 	public static final int Y_PROJECTION = 1;
 	public static final int Z_PROJECTION = 2;
-	private int projection = Z_PROJECTION;
+	private int projectionDirection = Z_PROJECTION;
+	
+	private int colorFactor = 1;
 
 	//	~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -65,19 +54,23 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	 */
 	public AlgorithmMaximumIntensityProjection(ModelImage srcImg, 
 			int _startSlice, int _stopSlice, int _window,
-			float _min, float _max, boolean _maximum, boolean _minimum, int _projection ) {
+			float _minIntensity, float _maxIntensity, 
+			boolean _computeMaximum, boolean _computeMinimum, int _projectionDirection ) {
 		super(null, srcImg);
 		startSlice = _startSlice;
 		stopSlice = _stopSlice;
 		window = _window;
-		min = _min;
-		max = _max;
-		maximum = _maximum;
-		minimum = _minimum;
-		projection = _projection;
+		computeMaximum = _computeMaximum;
+		computeMinimum = _computeMinimum;
+		projectionDirection = _projectionDirection;
 		imResolutions = srcImg.getResolutions(0);
 		resultImages = new Vector<ModelImage>();
-
+		
+		colorFactor = 1;
+		minIntensity = new double[colorFactor];
+		minIntensity[0] = _minIntensity;
+		maxIntensity = new double[colorFactor];
+		maxIntensity[0] = _maxIntensity;
 	}
 
 	/**
@@ -90,18 +83,33 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	 * @param  _minB
 	 * @param  _maxB
 	 */
-	public AlgorithmMaximumIntensityProjection(ModelImage srcImg, float _minR, float _maxR,
-			float _minG, float _maxG, float _minB, float _maxB) {
+	public AlgorithmMaximumIntensityProjection(ModelImage srcImg, 
+			int _startSlice, int _stopSlice, int _window,
+			float _minR, float _maxR,
+			float _minG, float _maxG, 
+			float _minB, float _maxB, 
+			boolean _computeMaximum, boolean _computeMinimum, int _projectionDirection) {
 		super(null, srcImg);
-		minR = _minR;
-		maxR = _maxR;
-		minG = _minG;
-		maxG = _maxG;
-		minB = _minB;
-		maxB = _maxB;
+		startSlice = _startSlice;
+		stopSlice = _stopSlice;
+		window = _window;
+		computeMaximum = _computeMaximum;
+		computeMinimum = _computeMinimum;
+		projectionDirection = _projectionDirection;
 		imResolutions = srcImg.getResolutions(0);
 		resultImages = new Vector<ModelImage>();
-
+		
+		colorFactor = 4;
+		minIntensity = new double[colorFactor];
+		minIntensity[0] = 0;
+		minIntensity[1] = _minR;
+		minIntensity[2] = _minG;
+		minIntensity[3] = _minB;
+		maxIntensity = new double[colorFactor];
+		maxIntensity[0] = 255;
+		maxIntensity[1] = _maxR;
+		maxIntensity[2] = _maxG;
+		maxIntensity[3] = _maxB;
 	}
 
 	//  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -114,7 +122,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	}
 
 	/**
-	 * Runs the Maximum Intensity Projection algorithm.
+	 * Runs the Intensity Projection algorithm.
 	 */
 	public void runAlgorithm() {
 
@@ -122,284 +130,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 			displayError("Source Image is null");
 			finalize();
 			return;
-		} else if (srcImage.isColorImage()) {
-			calcColor();
-		} else {
-			calc();
-		}
-	}
-
-	/**
-	 * This method computes the maximum intenisty projection of a 3D color image.
-	 */
-	private void calcColor() {
-		int length;
-		int i, j, k;
-		int index;
-		float [] buffer;
-		float [] resultBufferX;
-		float [] resultBufferY;
-		float [] resultBufferZ;
-		float maxIntensityValueR = 0f;
-		float maxIntensityValueG = 0f;
-		float maxIntensityValueB = 0f;
-		int [] dim = srcImage.getExtents();
-
-		try {
-			length = 4 * srcImage.getSliceSize() * srcImage.getExtents() [2];
-			buffer = new float[length];
-			srcImage.exportData(0, length, buffer);
-		} catch (IOException error) {
-			buffer = null;
-			errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
-			return;
-		} catch (OutOfMemoryError e) {
-			buffer = null;
-			errorCleanUp("Algorithm Maximum Intensity Projection: Out of Memory", true);
-			return;
-		}
-
-		int totalLength = (dim[0]*dim[1]) + (dim[2]*dim[0]) + (dim[1]*dim[2]);
-		int mod = 0;
-		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
-
-		// For maximum intensity along Z-axis
-
-		int lengthZ = dim[0] * dim[1]; // No. of pixels Z projection image
-		resultBufferZ = new float[4*lengthZ];
-		ZExtents = new int[2];
-		System.arraycopy(dim, 0, ZExtents, 0, 2);
-
-		for (i = 0; i < lengthZ; i++) {
-
-			// Compute the max intensity value along Z-axis
-			for (j = 0; j < dim[2]; j++) {
-				index = 4*(i + (j * lengthZ));
-				if ((buffer[index + 1] < minR) || (buffer[index + 1] > maxR)) {
-					buffer[index + 1] = 0;
-				}
-
-				if (buffer[index + 1] > maxIntensityValueR) {
-					maxIntensityValueR = buffer[index + 1];
-				}
-
-				if ((buffer[index + 2] < minG) || (buffer[index + 2] > maxG)) {
-					buffer[index + 2] = 0;
-				}
-
-				if (buffer[index + 2] > maxIntensityValueG) {
-					maxIntensityValueG = buffer[index + 2];
-				}
-
-				if ((buffer[index + 3] < minB) || (buffer[index + 3] > maxB)) {
-					buffer[index + 3] = 0;
-				}
-
-				if (buffer[index + 3] > maxIntensityValueB) {
-					maxIntensityValueB = buffer[index + 3];
-				}
-			}
-
-			resultBufferZ[4*i+1] = maxIntensityValueR;
-			maxIntensityValueR = 0f;
-			resultBufferZ[4*i+2] = maxIntensityValueG;
-			maxIntensityValueG = 0f;
-			resultBufferZ[4*i+3] = maxIntensityValueB;
-			maxIntensityValueB = 0f;
-			mod = mod + 1; // For progressbar purposes
-		}
-
-		// Reconstruct Z Projection image from result buffer
-
-		ModelImage ZProjectionImage = new ModelImage(srcImage.getType(), ZExtents, "ZProjectionImage");
-		resultImages.add(ZProjectionImage);
-
-		try {
-
-			ZProjectionImage.importData(0, resultBufferZ, true);
-		} catch (IOException error) {
-
-			resultBufferZ = null;
-			errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
-			return;
-		} catch (OutOfMemoryError e) {
-
-			resultBufferZ = null;
-			errorCleanUp("Algorithm Maximum Intensity Projection: Out of Memory", true);
-			return;
-		}
-
-		// Set resolutions in line with the original source image resolutions
-		float [] ZRes = new float[2];
-		System.arraycopy(imResolutions, 0, ZRes, 0, 2);
-		ZProjectionImage.setResolutions(0, ZRes);
-
-		//Update progress bar
-		fireProgressStateChanged(Math.round((mod / totalLength) * 100));
-
-		// For maximum intensity along Y-axis
-
-		int lengthY = dim[2] * dim[0]; // No. of pixels Y projection image
-		resultBufferY = new float[4*lengthY];
-		YExtents = new int[2];
-		YExtents[0] = dim[0];
-		YExtents[1] = dim[2];
-		maxIntensityValueR = 0;
-		maxIntensityValueG = 0;
-		maxIntensityValueB = 0;
-
-		for (i = 0; i < dim[2]; i++) {
-
-			for (j = 0; j < dim[0]; j++) {
-
-				for (k = 0; k < dim[1]; k++) {
-					index = 4* ((dim[0]*dim[1]*i) + j + (dim[0]*k));
-					if ((buffer[index + 1] < minR) || (buffer[index + 1] > maxR)) {
-						buffer[index + 1] = 0;
-					}
-
-					if (buffer[index+1] > maxIntensityValueR) {
-						maxIntensityValueR = buffer[index+1];
-					}
-
-					if ((buffer[index + 2] < minG) || (buffer[index + 2] > maxG)) {
-						buffer[index + 2] = 0;
-					}
-
-					if (buffer[index+2] > maxIntensityValueG) {
-						maxIntensityValueG = buffer[index+2];
-					}
-
-					if ((buffer[index + 3] < minB) || (buffer[index + 3] > maxB)) {
-						buffer[index + 3] = 0;
-					}
-
-					if (buffer[index+3] > maxIntensityValueB) {
-						maxIntensityValueB = buffer[index+3];
-					}
-				}
-				resultBufferY[4*(j + i*dim[0]) + 1] = maxIntensityValueR;
-				maxIntensityValueR = 0f;
-				resultBufferY[4*(j + i*dim[0]) + 2] = maxIntensityValueG;
-				maxIntensityValueG = 0f;
-				resultBufferY[4*(j + i*dim[0]) + 3] = maxIntensityValueB;
-				maxIntensityValueB = 0f;
-				mod = mod + 1; // For progress bar purposes
-			}           
-		}
-
-		// Reconstruct Y Projection image from result buffer
-
-		ModelImage YProjectionImage = new ModelImage(srcImage.getType(), YExtents, "YProjectionImage");
-		resultImages.add(YProjectionImage);
-
-		try {
-
-			YProjectionImage.importData(0, resultBufferY, true);
-		} catch (IOException error) {
-
-			resultBufferY = null;
-			errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
-			return;
-		} catch (OutOfMemoryError e) {
-
-			resultBufferY = null;
-			errorCleanUp("Algorithm Maximum Intensity Projection: Out of Memory", true);
-			return;
-		}
-
-		// Set resolutions in line with the original source image resolutions
-		float [] YRes = new float[2];
-		YRes[0] = imResolutions[0];
-		YRes[1] = imResolutions[2];
-		YProjectionImage.setResolutions(0, YRes);
-
-		// Update progress bar
-		fireProgressStateChanged(Math.round((mod / totalLength) * 100));
-
-		// For maximum intensity along X-axis
-
-		int lengthX = dim[1] * dim[2]; // No. of pixels X projection image
-		resultBufferX = new float[4*lengthX];
-		XExtents = new int[2];
-		XExtents[0] = dim[2];
-		XExtents[1] = dim[1];
-		maxIntensityValueR = 0;
-		maxIntensityValueG = 0;
-		maxIntensityValueB = 0;
-
-		for (i = 0; i < dim[2]; i++) {
-
-			for (j = 0; j < dim[1]; j++) {
-
-				for (k = 0; k < dim[0]; k++) {
-					index = 4*((i*dim[1]*dim[0]) + (dim[0]*j) + k);
-					if ((buffer[index+1] < minR) || (buffer[index+1] > maxR)) {
-						buffer[index+1] = 0;
-					}
-
-					if (buffer[index+1] > maxIntensityValueR) {
-						maxIntensityValueR = buffer[index+1];
-					}
-
-					if ((buffer[index+2] < minG) || (buffer[index+2] > maxG)) {
-						buffer[index+2] = 0;
-					}
-
-					if (buffer[index+2] > maxIntensityValueG) {
-						maxIntensityValueG = buffer[index+2];
-					}
-
-					if ((buffer[index+3] < minB) || (buffer[index+3] > maxB)) {
-						buffer[index+3] = 0;
-					}
-
-					if (buffer[index+3] > maxIntensityValueB) {
-						maxIntensityValueB = buffer[index+3];
-					}
-				}
-				resultBufferX[4*(i + (j*dim[2])) + 1] = maxIntensityValueR;
-				maxIntensityValueR = 0f;
-				resultBufferX[4*(i + (j*dim[2])) + 2] = maxIntensityValueG;
-				maxIntensityValueG = 0f;
-				resultBufferX[4*(i + (j*dim[2])) + 3] = maxIntensityValueB;
-				maxIntensityValueB = 0f;
-				mod = mod + 1; // For progress bar purposes
-			}
-		}
-
-		// Construct X Projection image from result buffer
-
-		ModelImage XProjectionImage = new ModelImage(srcImage.getType(), XExtents, "XProjectionImage");
-		resultImages.add(XProjectionImage);
-		try {
-
-			XProjectionImage.importData(0, resultBufferX, true);
-		} catch (IOException error) {
-
-			resultBufferX = null;
-			errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
-			return;
-		} catch (OutOfMemoryError e) {
-
-			resultBufferX = null;
-			errorCleanUp("Algorithm Maximum Intensity Projection: Out of Memory", true);
-			return;
-		}
-
-		// Set resolutions in line with the original source image resolutions
-		float [] XRes = new float[2];
-		XRes[0] = imResolutions[2];
-		XRes[1] = imResolutions[1];
-		XProjectionImage.setResolutions(0, XRes);
-
-		// Update progress bar
-		fireProgressStateChanged(Math.round((mod / totalLength) * 100));
-	}
-
-
-	private void calc() {
-		switch ( projection ) 
+		} 
+		
+		switch ( projectionDirection ) 
 		{
 		case X_PROJECTION: calcXProjection(); break;
 		case Y_PROJECTION: calcYProjection(); break;
@@ -407,20 +140,15 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		}
 	}
 
-
 	private void calcZProjection() {
 
-		int length;
-		int i, j, k;
-		double [] buffer;
-		double maxIntensityValue = Double.MIN_VALUE;
-		double minIntensityValue = Double.MAX_VALUE;
 		int dimX = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
 		int dimY = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
 		int dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
 
+		double [] buffer;
 		try {
-			length = srcImage.getSize();
+			int length = srcImage.getSize();
 			buffer = new double[length];
 			srcImage.exportData(0, length, buffer);
 		} catch (IOException error) {
@@ -446,12 +174,20 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		int newSlices = (stopZ - startZ) - windowSize + 1;
 		ZExtents = ( newSlices == 1 ) ? new int[]{dimX,dimY} : new int[]{dimX,dimY,newSlices};		
 		
-		double[][] resultBufferMaxZ = new double[newSlices][lengthZ]; 
-		double[][] resultBufferMinZ = new double[newSlices][lengthZ];
-
+		double[][] resultBufferMaxZ = new double[newSlices][lengthZ * colorFactor]; 
+		double[][] resultBufferMinZ = new double[newSlices][lengthZ * colorFactor];
+		
+		double[] maxIntensityValue = new double[colorFactor];
+		double[] minIntensityValue = new double[colorFactor];
+		for ( int c = 0; c < colorFactor; c++ )
+		{
+			maxIntensityValue[c] = Double.MIN_VALUE;
+			minIntensityValue[c] = Double.MAX_VALUE;
+		}
+		
 		ModelImage ZProjectionImageMax = null;
 		ModelImage ZProjectionImageMin = null;
-		if ( maximum )
+		if ( computeMaximum )
 		{
 			ZProjectionImageMax = new ModelImage(srcImage.getType(), ZExtents, "ZProjectionImageMax");
 			resultImages.add(ZProjectionImageMax);
@@ -462,46 +198,50 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 			System.arraycopy(imResolutions, 0, ZRes, 0, 2);
 			ZProjectionImageMax.setResolutions(0, ZRes);	
 		}
-		if ( minimum )
+		if ( computeMinimum )
 		{
 			ZProjectionImageMin = new ModelImage(srcImage.getType(), ZExtents, "ZProjectionImageMin");
 			resultImages.add(ZProjectionImageMin);
 	        JDialogBase.updateFileInfo( srcImage, ZProjectionImageMin );
 		}
-		float minZ = min;
-		float maxZ = max;
 
 		for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
 		{
-			for (i = 0; i < lengthZ; i++)
+			for (int i = 0; i < lengthZ; i++ )
 			{
 				// Compute the max intensity value along Z-axis
-				for (j = startZ + iSlice; j < startZ + iSlice + windowSize; j++)
+				for (int j = startZ + iSlice; j < startZ + iSlice + windowSize; j++)
 				{
-					if ((buffer[i + (j * lengthZ)] >= minZ) && (buffer[i + (j * lengthZ)] <= maxZ))
+					for ( int c = 0; c < colorFactor; c++ )
 					{
-						if (buffer[i + (j * lengthZ)] > maxIntensityValue)
+						if ((buffer[colorFactor * (i + (j * lengthZ)) + c] >= minIntensity[c]) &&
+								(buffer[colorFactor * (i + (j * lengthZ)) + c] <= maxIntensity[c]))
 						{
-							maxIntensityValue = buffer[i + (j * lengthZ)];
-						}
-						if ( buffer[i + (j * lengthZ)] < minIntensityValue )
-						{
-							minIntensityValue = buffer[i + (j * lengthZ)];
+							if (buffer[colorFactor * (i + (j * lengthZ)) + c] > maxIntensityValue[c])
+							{
+								maxIntensityValue[c] = buffer[colorFactor * (i + (j * lengthZ)) + c];
+							}
+							if ( buffer[colorFactor * (i + (j * lengthZ)) + c] < minIntensityValue[c] )
+							{
+								minIntensityValue[c] = buffer[colorFactor * (i + (j * lengthZ)) + c];
+							}
 						}
 					}
 				}
-				resultBufferMaxZ[iSlice][i] = maxIntensityValue;
-				maxIntensityValue = Double.MIN_VALUE;
-
-				resultBufferMinZ[iSlice][i] = minIntensityValue;
-				minIntensityValue = Double.MAX_VALUE;
+				for ( int c = 0; c < colorFactor; c++ )
+				{
+					resultBufferMaxZ[iSlice][i*colorFactor + c] = maxIntensityValue[c];
+					maxIntensityValue[c] = Double.MIN_VALUE;
+					resultBufferMinZ[iSlice][i*colorFactor + c] = minIntensityValue[c];
+					minIntensityValue[c] = Double.MAX_VALUE;
+				}
 			}
 
 			// Reconstruct Z Projection image from result buffer
-			if ( maximum )
+			if ( computeMaximum )
 			{
 				try {
-					ZProjectionImageMax.importData(iSlice*lengthZ, resultBufferMaxZ[iSlice], false);
+					ZProjectionImageMax.importData(iSlice*lengthZ*colorFactor, resultBufferMaxZ[iSlice], false);
 				} catch (IOException error) {
 					resultBufferMaxZ = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
@@ -512,10 +252,10 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 					return;
 				}
 			}
-			if ( minimum )
+			if ( computeMinimum )
 			{
 				try {
-					ZProjectionImageMin.importData(iSlice*lengthZ, resultBufferMinZ[iSlice], false);
+					ZProjectionImageMin.importData(iSlice*lengthZ*colorFactor, resultBufferMinZ[iSlice], false);
 				} catch (IOException error) {
 					resultBufferMinZ = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
@@ -543,17 +283,13 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 
 	private void calcYProjection() {
 
-		int length;
-		int i, j, k;
-		double [] buffer;
-		double maxIntensityValue = Double.MIN_VALUE;
-		double minIntensityValue = Double.MAX_VALUE;
 		int dimX = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
 		int dimY = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
 		int dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
 
+		double [] buffer;
 		try {
-			length = srcImage.getSize();
+			int length = srcImage.getSize();
 			buffer = new double[length];
 			srcImage.exportData(0, length, buffer);
 		} catch (IOException error) {
@@ -581,79 +317,93 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 			new float[] {imResolutions[0], imResolutions[2], imResolutions[1] };
 
 		int lengthY = dimZ * dimX; // No. of pixels Y projection image
-		double[][] resultBufferMaxY = new double[newSlices][lengthY];
-		double[][] resultBufferMinY = new double[newSlices][lengthY];
-		maxIntensityValue = 0;
-		float minY = min;
-		float maxY = max;			
-
+		double[][] resultBufferMax = new double[newSlices][lengthY * colorFactor]; 
+		double[][] resultBufferMin = new double[newSlices][lengthY * colorFactor];
+		
+		double[] maxIntensityValue = new double[colorFactor];
+		double[] minIntensityValue = new double[colorFactor];
+		for ( int c = 0; c < colorFactor; c++ )
+		{
+			maxIntensityValue[c] = Double.MIN_VALUE;
+			minIntensityValue[c] = Double.MAX_VALUE;
+		}
+		
 		ModelImage YProjectionImageMax = null;
 		ModelImage YProjectionImageMin = null;
-		if ( maximum )
+		if ( computeMaximum )
 		{
 			YProjectionImageMax = new ModelImage(srcImage.getType(), ZExtents, "YProjectionImageMax");
 			resultImages.add(YProjectionImageMax);
 			YProjectionImageMax.setResolutions(YRes);
 		}
-		if ( minimum )
+		if ( computeMinimum )
 		{
 			YProjectionImageMin = new ModelImage(srcImage.getType(), ZExtents, "YProjectionImageMin");
 			resultImages.add(YProjectionImageMin);
 			YProjectionImageMin.setResolutions(YRes);
 		}			
 
+		int index;
 		for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
 		{
-			for (i = 0; i < dimZ; i++)
+			for (int i = 0; i < dimZ; i++)
 			{
-				for (j = 0; j < dimX; j++)
+				for (int j = 0; j < dimX; j++)
 				{
-					for (k = startY + iSlice; k < startY + iSlice + windowSize; k++)
+					for (int k = startY + iSlice; k < startY + iSlice + windowSize; k++)
 					{
-						if ((buffer[(dimX*dimY*i) + j + (dimX*k)] >= minY) &&
-								(buffer[(dimX*dimY*i) + j + (dimX*k)] <= maxY))
+						index = (dimX*dimY*i) + j + (dimX*k);
+						index *= colorFactor;
+						for ( int c = 0; c < colorFactor; c++ )
 						{
-							if (buffer[(dimX*dimY*i) + j + (dimX*k)] > maxIntensityValue)
+							if ((buffer[index + c] >= minIntensity[c]) &&
+									(buffer[index + c] <= maxIntensity[c]))
 							{
-								maxIntensityValue = buffer[(dimX*dimY*i) + j + (dimX*k)];
-							}
-							if (buffer[(dimX*dimY*i) + j + (dimX*k)] < minIntensityValue) 
-							{
-								minIntensityValue = buffer[(dimX*dimY*i) + j + (dimX*k)];
+								if (buffer[index + c] > maxIntensityValue[c])
+								{
+									maxIntensityValue[c] = buffer[index + c];
+								}
+								if (buffer[index + c] < minIntensityValue[c]) 
+								{
+									minIntensityValue[c] = buffer[index + c];
+								}
 							}
 						}
 					}
-					resultBufferMaxY[iSlice][j + i*dimX] = maxIntensityValue;
-					maxIntensityValue = Double.MIN_VALUE;
-					resultBufferMinY[iSlice][j + i*dimX] = minIntensityValue;
-					minIntensityValue = Double.MAX_VALUE;
+					for ( int c = 0; c < colorFactor; c++ )
+					{						
+						resultBufferMax[iSlice][colorFactor * (j + i*dimX) + c] = maxIntensityValue[c];
+						maxIntensityValue[c] = Double.MIN_VALUE;
+						resultBufferMin[iSlice][colorFactor * (j + i*dimX) + c] = minIntensityValue[c];
+						minIntensityValue[c] = Double.MAX_VALUE;
+					}
 				} 			
 			}
 			// Reconstruct Z Projection image from result buffer
-			if ( maximum )
+			if ( computeMaximum )
 			{
 				try {
-					YProjectionImageMax.importData(iSlice*lengthY, resultBufferMaxY[iSlice], false);
+					YProjectionImageMax.importData(iSlice*lengthY*colorFactor, resultBufferMax[iSlice], false);
 				} catch (IOException error) {
-					resultBufferMaxY = null;
+					resultBufferMax = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
 					return;
 				} catch (OutOfMemoryError e) {
-					resultBufferMaxY = null;
+					resultBufferMax = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Out of Memory", true);
 					return;
 				}
 			}
-			if ( minimum )
+			if ( computeMinimum )
 			{
 				try {
-					YProjectionImageMin.importData(iSlice*lengthY, resultBufferMinY[iSlice], false);
+					YProjectionImageMin.importData(iSlice*lengthY*colorFactor, resultBufferMin[iSlice], false);
 				} catch (IOException error) {
-					resultBufferMinY = null;
+					resultBufferMin = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
 					return;
 				} catch (OutOfMemoryError e) {
-					resultBufferMinY = null;
+					resultBufferMin = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Out of Memory", true);
 					return;
 				}			
@@ -675,17 +425,13 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 
 	private void calcXProjection() {
 
-		int length;
-		int i, j, k;
-		double [] buffer;
-		double maxIntensityValue = Double.MIN_VALUE;
-		double minIntensityValue = Double.MAX_VALUE;
 		int dimX = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
 		int dimY = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
 		int dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
 
+		double [] buffer;
 		try {
-			length = srcImage.getSize();
+			int length = srcImage.getSize();
 			buffer = new double[length];
 			srcImage.exportData(0, length, buffer);
 		} catch (IOException error) {
@@ -713,80 +459,93 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 			new float[] {imResolutions[2], imResolutions[1], imResolutions[0] };
 
 		int lengthX = dimY * dimZ; // No. of pixels X projection image
-		double[][] resultBufferMaxX = new double[newSlices][lengthX];
-		double[][] resultBufferMinX = new double[newSlices][lengthX];
-		maxIntensityValue = 0;
-		float minX = min;
-		float maxX = max;			
+		double[][] resultBufferMax = new double[newSlices][lengthX * colorFactor]; 
+		double[][] resultBufferMin = new double[newSlices][lengthX * colorFactor];
+		
+		double[] maxIntensityValue = new double[colorFactor];
+		double[] minIntensityValue = new double[colorFactor];
+		for ( int c = 0; c < colorFactor; c++ )
+		{
+			maxIntensityValue[c] = Double.MIN_VALUE;
+			minIntensityValue[c] = Double.MAX_VALUE;
+		}
 
 		ModelImage XProjectionImageMax = null;
 		ModelImage XProjectionImageMin = null;
-		if ( maximum )
+		if ( computeMaximum )
 		{
 			XProjectionImageMax = new ModelImage(srcImage.getType(), ZExtents, "XProjectionImageMax");
 			resultImages.add(XProjectionImageMax);
 			XProjectionImageMax.setResolutions(XRes);
 		}
-		if ( minimum )
+		if ( computeMinimum )
 		{
 			XProjectionImageMin = new ModelImage(srcImage.getType(), ZExtents, "XProjectionImageMin");
 			resultImages.add(XProjectionImageMin);
 			XProjectionImageMin.setResolutions(XRes);
 		}			
-
+		int index;
 		for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
 		{
-			for (i = 0; i < dimZ; i++)
+			for (int i = 0; i < dimZ; i++)
 			{
-				for (j = 0; j < dimY; j++)
+				for (int j = 0; j < dimY; j++)
 				{
-					for (k = startX + iSlice; k < startX + iSlice + windowSize; k++)
+					for (int k = startX + iSlice; k < startX + iSlice + windowSize; k++)
 					{
-						if ((buffer[(i*dimY*dimX) + (dimX*j) + k] >= minX) &&
-								(buffer[(i*dimY*dimX) + (dimX*j) + k] <= maxX))
+						index = (i*dimY*dimX) + (dimX*j) + k;
+						index *= colorFactor;
+						for ( int c = 0; c < colorFactor; c++ )
 						{
-							if (buffer[(i*dimY*dimX) + (dimX*j) + k] > maxIntensityValue)
+							if ((buffer[index+c] >= minIntensity[c]) &&
+									(buffer[index+c] <= maxIntensity[c]))
 							{
-								maxIntensityValue = buffer[(i*dimY*dimX) + (dimX*j) + k];
-							}
+								if (buffer[index+c] > maxIntensityValue[c])
+								{
+									maxIntensityValue[c] = buffer[index+c];
+								}
 
-							if (buffer[(i*dimY*dimX) + (dimX*j) + k] < minIntensityValue)
-							{
-								minIntensityValue = buffer[(i*dimY*dimX) + (dimX*j) + k];
+								if (buffer[index+c] < minIntensityValue[c])
+								{
+									minIntensityValue[c] = buffer[index+c];
+								}
 							}
 						}
 					}
-					resultBufferMaxX[iSlice][i + (j*dimZ)] = maxIntensityValue;
-					maxIntensityValue = Double.MIN_VALUE;
-					resultBufferMinX[iSlice][i + (j*dimZ)] = minIntensityValue;
-					minIntensityValue = Double.MAX_VALUE;
+					for ( int c = 0; c < colorFactor; c++ )
+					{
+						resultBufferMax[iSlice][colorFactor * (i + (j*dimZ)) + c] = maxIntensityValue[c];
+						maxIntensityValue[c] = Double.MIN_VALUE;
+						resultBufferMin[iSlice][colorFactor * (i + (j*dimZ)) + c] = minIntensityValue[c];
+						minIntensityValue[c] = Double.MAX_VALUE;
+					}
 				}
 			}
 			// Reconstruct Z Projection image from result buffer
-			if ( maximum )
+			if ( computeMaximum )
 			{
 				try {
-					XProjectionImageMax.importData(iSlice*lengthX, resultBufferMaxX[iSlice], false);
+					XProjectionImageMax.importData(iSlice*lengthX, resultBufferMax[iSlice], false);
 				} catch (IOException error) {
-					resultBufferMaxX = null;
+					resultBufferMax = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
 					return;
 				} catch (OutOfMemoryError e) {
-					resultBufferMaxX = null;
+					resultBufferMax = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Out of Memory", true);
 					return;
 				}
 			}
-			if ( minimum )
+			if ( computeMinimum )
 			{
 				try {
-					XProjectionImageMin.importData(iSlice*lengthX, resultBufferMinX[iSlice], false);
+					XProjectionImageMin.importData(iSlice*lengthX, resultBufferMin[iSlice], false);
 				} catch (IOException error) {
-					resultBufferMinX = null;
+					resultBufferMin = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Image(s) Locked", true);
 					return;
 				} catch (OutOfMemoryError e) {
-					resultBufferMinX = null;
+					resultBufferMin = null;
 					errorCleanUp("Algorithm Maximum Intensity Projection: Out of Memory", true);
 					return;
 				}			
