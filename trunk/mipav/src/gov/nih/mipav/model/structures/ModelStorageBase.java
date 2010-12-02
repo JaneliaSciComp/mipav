@@ -6822,6 +6822,25 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * Sets the resolutions to the specific value for a specific slice indicated by the index parameter.
+     * 
+     * @param resolutions the image's voxel resolutions
+     */
+    public void setResolutions(final float[] resolutions) {
+
+        if (fileInfo == null) {
+            return;
+        }
+        for ( int i = 0; i < fileInfo.length; i++ )
+        {
+        	if ( fileInfo[i] != null )
+        	{
+        		fileInfo[i].setResolutions(resolutions);
+        	}
+        }
+    }
+
+    /**
      * Sets the image voxel at the specified position to the specified value.
      * 
      * @param position position in one dimensional array.
