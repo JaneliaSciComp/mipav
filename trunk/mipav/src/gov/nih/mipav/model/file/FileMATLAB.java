@@ -88,6 +88,10 @@ public class FileMATLAB extends FileBase {
     private FileInfoMATLAB fileInfo;
     
     private FileInfoMATLAB fileInfo2;
+    
+    private FileInfoMATLAB maskFileInfo;
+    
+    private FileInfoMATLAB maskFileInfo2;
 
     /** DOCUMENT ME! */
     private String fileName;
@@ -112,6 +116,14 @@ public class FileMATLAB extends FileBase {
     private ModelImage image2 = null;
     
     private ViewJFrameImage vFrame2 = null;
+    
+    private ModelImage maskImage = null;
+    
+    private ViewJFrameImage vmFrame = null;
+    
+    private ModelImage maskImage2 = null;
+    
+    private ViewJFrameImage vmFrame2 = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -278,6 +290,16 @@ public class FileMATLAB extends FileBase {
         int numericArrayNameDataType;
         int numericArrayNameBytes;
         String numericArrayName;
+        int logicalFields = 0;
+        int firstNonLogicalExtents[] = null;
+        boolean firstNonLogicalFound = false;
+        boolean isVOI = false;
+        int nonLogicalField = 0;
+        int adjustedFieldDim;
+        int newExtents[] = null;
+        int totalNumber = 1;
+        boolean logMagDisplay = true;
+        int maskExtents[] = null;
 
         try {
             
@@ -468,7 +490,9 @@ public class FileMATLAB extends FileBase {
                 case miMATRIX:
                 	Preferences.debug("Data type = miMATRIX\n");
                 	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	imageExtents = null;
                 	imagesFound++;
+                	logicalFields = 0;
                 	arrayFlagsDataType = getInt(endianess);
                 	if (arrayFlagsDataType == miUINT32) {
                 		Preferences.debug("Array flags data type is the expected miUINT32\n");
@@ -646,10 +670,12 @@ public class FileMATLAB extends FileBase {
                     	arrayNameBytes = getInt(endianess);
                     	arrayName = getString(arrayNameBytes);
                     	// Skip over padding bytes
-                		padBytes = 8 - (arrayNameBytes % 8);
-                		for (i = 0; i < padBytes; i++) {
-                		    raFile.readByte();
-                		}
+                    	if ((arrayNameBytes % 8) != 0) {
+	                		padBytes = 8 - (arrayNameBytes % 8);
+	                		for (i = 0; i < padBytes; i++) {
+	                		    raFile.readByte();
+	                		}
+                    	}
                     }
                     Preferences.debug("Array name = " + arrayName + "\n");
                     if (imagesFound == 1) {
@@ -724,7 +750,7 @@ public class FileMATLAB extends FileBase {
                     } // if (arrayClass == mxSTRUCT_CLASS)
                     for (field = 0; field < fieldNumber; field++) {
                     if (arrayClass == mxSTRUCT_CLASS) {
-                    	Preferences.debug("Reading numeric array number " + i + "\n");
+                    	Preferences.debug("Reading numeric array number " + (field+1) + "\n");
                         numericArrayDataType = getInt(endianess);
                         if (numericArrayDataType == miMATRIX) {
                         	Preferences.debug("Numeric array data type == miMATRIX as expected\n");
@@ -813,11 +839,15 @@ public class FileMATLAB extends FileBase {
                         if ((numericArrayFlags & 0x00000200) != 0) {
                         	logicalFlag = true;
                         	Preferences.debug("Logical flag is set\n");
+                        	logicalFields++;
+                        	isVOI = true;
                         }
                         else {
                         	logicalFlag = false;
                         	Preferences.debug("Logical flag is not set\n");
+                        	isVOI = false;
                         }
+                        nonLogicalField = field - logicalFields;
                         
                         // 4 undefined bytes
                     	getInt(endianess);
@@ -842,44 +872,79 @@ public class FileMATLAB extends FileBase {
                     		Preferences.debug("Error! All numeric arrays should have at least 2 dimensions\n");
                     	}
                     	
-                    	imageExtents = new int[nDim+1];
-	                	imageLength = 1;
-	                	if (imagesFound == 1) {
-	                		imageSlices = 1;
-	                	}
-	                	else {
-	                		imageSlices2 = 1;
-	                	}
-	                	for (i = 0; i < nDim; i++) {
-	                		imageExtents[i] = getInt(endianess);
-	                		imageLength = imageLength * imageExtents[i];
-	                		Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n");
-	                		if (i > 1) {
-	                			if (imagesFound == 1) {
-	                				imageSlices = imageSlices * imageExtents[i];
-	                			}
-	                			else {
-	                				imageSlices2 = imageSlices2 * imageExtents[i];
-	                			}
-	                		}
-	                	}
-	                	// Note that imageLength only includes slices in one field of a structure
-	                	imageExtents[nDim] = fieldNumber;
-	                	Preferences.debug("imageExtents[" + nDim + "] = " + imageExtents[nDim] + "\n");
-	                	if (nDim > 1) {
-	                		if (imagesFound == 1) {
-	                			imageSlices = imageSlices * fieldNumber;
-	                		}
-	                		else {
-	                			imageSlices2 = imageSlices2 * fieldNumber;
-	                		}
-	                	}
-	                	if (imagesFound == 1) {
-	                		fileInfo.setExtents(imageExtents);
-	                	}
-	                	else {
-	                		fileInfo2.setExtents(imageExtents);
-	                	}
+                    	if (logicalFlag) {
+                    		// MATLAB function used to create VOIs (roipoly) always returns a 2D mask
+                    		maskExtents = new int[nDim];
+                    		for (i = 0; i < nDim; i++) {
+                    			maskExtents[i] = getInt(endianess);
+                    		}
+                    		if (imageExtents != null) {
+	                    		for (i = 0; i < 2; i++) {
+	                    		    if (imageExtents[i] != maskExtents[i]) {
+	                    		    	isVOI = false;
+	                    		    }
+	                    		}
+                    		}
+                    		if (imagesFound == 1) {
+                    			maskFileInfo = new FileInfoMATLAB(fileName + "_mask", fileDir, FileUtility.MATLAB); // dummy fileInfo
+                                maskFileInfo.setEndianess(endianess);
+                                maskFileInfo.setLevel5Format(level5Format);
+                                maskFileInfo.setHeaderTextField(headerTextField);
+                                maskFileInfo.setVersion(version);
+                                maskFileInfo.setExtents(maskExtents);
+                                maskFileInfo.setArrayName(arrayName);
+                    		}
+                    		else {
+                    			maskFileInfo2 = new FileInfoMATLAB(fileName + "_2_mask", fileDir, FileUtility.MATLAB); // dummy fileInfo
+                                maskFileInfo2.setEndianess(endianess);
+                                maskFileInfo2.setLevel5Format(level5Format);
+                                maskFileInfo2.setHeaderTextField(headerTextField);
+                                maskFileInfo2.setVersion(version);
+                                maskFileInfo2.setExtents(maskExtents);
+                                maskFileInfo2.setArrayName(arrayName);	
+                    		}
+                    	} // if (logicalFlag)
+                    	else { // !logicalFlag
+	                    	imageExtents = new int[nDim+1];
+		                	imageLength = 1;
+		                	if (imagesFound == 1) {
+		                		imageSlices = 1;
+		                	}
+		                	else {
+		                		imageSlices2 = 1;
+		                	}
+		                	for (i = 0; i < nDim; i++) {
+		                		imageExtents[i] = getInt(endianess);
+		                		imageLength = imageLength * imageExtents[i];
+		                		Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n");
+		                		if (i > 1) {
+		                			if (imagesFound == 1) {
+		                				imageSlices = imageSlices * imageExtents[i];
+		                			}
+		                			else {
+		                				imageSlices2 = imageSlices2 * imageExtents[i];
+		                			}
+		                		}
+		                	}
+		                	
+		                	// Note that imageLength only includes slices in one field of a structure
+		                	imageExtents[nDim] = fieldNumber;
+		                	Preferences.debug("imageExtents[" + nDim + "] = " + imageExtents[nDim] + "\n");
+		                	if (nDim > 1) {
+		                		if (imagesFound == 1) {
+		                			imageSlices = imageSlices * fieldNumber;
+		                		}
+		                		else {
+		                			imageSlices2 = imageSlices2 * fieldNumber;
+		                		}
+		                	}
+		                	if (imagesFound == 1) {
+		                		fileInfo.setExtents(imageExtents);
+		                	}
+		                	else {
+		                		fileInfo2.setExtents(imageExtents);
+		                	}
+                    	} // else !logicalFlag
 	                	
 	                	if ((dimensionsArrayBytes % 8) != 0) {
 	                		// Skip over padding bytes
@@ -922,23 +987,38 @@ public class FileMATLAB extends FileBase {
                     case miINT8:
                     	Preferences.debug("Real data type = miINT8\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                    	if (!complexFlag) {
-                    		if (field == 0) {
+                    	if (logicalFlag) {
+                    	    if (logicalFields == 1) {
+	                    	    maskImage = new ModelImage(ModelStorageBase.BYTE, maskExtents, fileName + "_mask");
+	                    	    maskFileInfo.setDataType(ModelStorageBase.BYTE);
+	                    	    buffer = new byte[maskExtents[0]*maskExtents[1]];
+		                    	raFile.read(buffer);
+		                    	try {
+		                			maskImage.importData(0, buffer, true);
+		                		}
+		                		catch(IOException e) {
+		                		   MipavUtil.displayError("IOException on maskImage.importData(0, buffer, true)");
+		                		   throw e;
+		                		}
+                    	    } // if (logicalFields == 1)
+                    	}
+                    	else if (!complexFlag) {
+                    		if (nonLogicalField == 0) {
 	                    	    image = new ModelImage(ModelStorageBase.BYTE, imageExtents, fileName); 
 	                    	    fileInfo.setDataType(ModelStorageBase.BYTE);
                     		}
                     		buffer = new byte[imageLength];
 	                    	raFile.read(buffer);
 	                    	try {
-	                			image.importData(field * buffer.length, buffer, true);
+	                			image.importData(nonLogicalField * buffer.length, buffer, true);
 	                		}
 	                		catch(IOException e) {
-	                		   MipavUtil.displayError("IOException on image.importData(field * buffer.length, buffer, true)");
+	                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField* buffer.length, buffer, true)");
 	                		   throw e;
 	                		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
@@ -973,12 +1053,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryBuffer[i] = (float)(buffer[i]);
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			image.importComplexData(2 * nonLogicalField* realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * field * realBuffer.length," +
+                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
                     		   		"  realBuffer, imaginaryBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}		
@@ -987,8 +1067,27 @@ public class FileMATLAB extends FileBase {
                     case miUINT8:
                     	Preferences.debug("Real data type = miUINT8\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                    	if (!complexFlag) {
-                    		if (field == 0) {
+                    	if (logicalFlag) {
+                    		if (logicalFields == 1) {
+	                    	    maskImage = new ModelImage(ModelStorageBase.UBYTE, maskExtents, fileName + "_mask");
+	                    	    maskFileInfo.setDataType(ModelStorageBase.UBYTE);
+	                    	    buffer = new byte[maskExtents[0]*maskExtents[1]];
+	                    	    shortBuffer = new short[maskExtents[0]*maskExtents[1]];
+	                    	    raFile.read(buffer);
+	                    	    for (i = 0; i < maskExtents[0]*maskExtents[1]; i++) {
+		                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
+		                		}
+		                    	try {
+		                			maskImage.importUData(0, shortBuffer, true);
+		                		}
+		                		catch(IOException e) {
+		                		   MipavUtil.displayError("IOException on maskImage.importUData(0, shortBuffer, true)");
+		                		   throw e;
+		                		}
+                    	    } // if (logicalFields == 1)	
+                    	}
+                    	else if (!complexFlag) {
+                    		if (nonLogicalField == 0) {
 	                    	    image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
 	                    	    fileInfo.setDataType(ModelStorageBase.UBYTE);
                     		}
@@ -999,15 +1098,15 @@ public class FileMATLAB extends FileBase {
 	                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
 	                		}
 	                    	try {
-	                			image.importUData(field * shortBuffer.length, shortBuffer, true);
+	                			image.importUData(nonLogicalField * shortBuffer.length, shortBuffer, true);
 	                		}
 	                		catch(IOException e) {
-	                		   MipavUtil.displayError("IOException on image.importData(field * shortBuffer.length, shortBuffer, true)");
+	                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
 	                		   throw e;
 	                		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
@@ -1042,12 +1141,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryBuffer[i] = (float)(buffer[i] & 0xff);
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * field * realBuffer.length," +
+                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
                     		   		"  realBuffer, imaginaryBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}		
@@ -1057,7 +1156,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data type = miINT16\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.SHORT);
                     		}
@@ -1066,15 +1165,15 @@ public class FileMATLAB extends FileBase {
                     		    shortBuffer[i] = readShort(endianess);
                     		}
                     		try {
-                    			image.importData(field * shortBuffer.length, shortBuffer, true);
+                    			image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(field * shortBuffer.length, shortBuffer, true)");
+                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
                     		   throw e;
                     		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
@@ -1106,12 +1205,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryBuffer[i] = (float)(readShort(endianess));
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * field * realBuffer.length," +
+                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
                     		   		"  realBuffer, imaginaryBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}		
@@ -1121,7 +1220,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data type = miUINT16\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.USHORT);
                     		}
@@ -1130,15 +1229,15 @@ public class FileMATLAB extends FileBase {
                     		    intBuffer[i] = getUnsignedShort(endianess);
                     		}
                     		try {
-                    			image.importUData(field * intBuffer.length, intBuffer, true);
+                    			image.importUData(nonLogicalField * intBuffer.length, intBuffer, true);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importUData(field * intBuffer.length, intBuffer, true)");
+                    		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * intBuffer.length, intBuffer, true)");
                     		   throw e;
                     		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
@@ -1170,12 +1269,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryBuffer[i] = (float)(getUnsignedShort(endianess));
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * field * realBuffer.length," +
+                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
                     		   		"  realBuffer, imaginaryBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}		
@@ -1185,7 +1284,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data type = miINT32\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.INTEGER);
                     		}
@@ -1194,15 +1293,15 @@ public class FileMATLAB extends FileBase {
                     		    intBuffer[i] = getInt(endianess);
                     		}
                     		try {
-                    			image.importData(field * intBuffer.length, intBuffer, true);
+                    			image.importData(nonLogicalField * intBuffer.length, intBuffer, true);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(field * intBuffer.length, intBuffer, true)");
+                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * intBuffer.length, intBuffer, true)");
                     		   throw e;
                     		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
@@ -1234,12 +1333,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryDBuffer[i] = (double)getInt(endianess);
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * field * realDBuffer.length," +
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
                     		   		"  realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}		
@@ -1249,7 +1348,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data type = miUINT32\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.UINTEGER);
                     		}
@@ -1258,15 +1357,15 @@ public class FileMATLAB extends FileBase {
                     		    longBuffer[i] = getUInt(endianess);
                     		}
                     		try {
-                    			image.importUData(field * longBuffer.length, longBuffer, true);
+                    			image.importUData(nonLogicalField * longBuffer.length, longBuffer, true);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importUData(field * longBuffer.length, longBuffer, true)");
+                    		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * longBuffer.length, longBuffer, true)");
                     		   throw e;
                     		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
@@ -1298,12 +1397,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryDBuffer[i] = (double)getUInt(endianess);
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * field * realDBuffer.length," +
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
                     		   		"  realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}		
@@ -1313,7 +1412,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data type = miSINGLE\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.FLOAT);
                     		}
@@ -1322,15 +1421,15 @@ public class FileMATLAB extends FileBase {
                     		    floatBuffer[i] = getFloat(endianess);
                     		}
                     		try {
-                    			image.importData(field * floatBuffer.length, floatBuffer, true);
+                    			image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(field * floatBuffer.length, floatBuffer, true)");
+                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true)");
                     		   throw e;
                     		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
@@ -1362,12 +1461,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryBuffer[i] = getFloat(endianess);
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                    			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * field * realBuffer.length," +
+                    		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
                     		   		" realBuffer, imaginaryBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}
@@ -1377,7 +1476,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data type = miDOUBLE\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DOUBLE);
                     		}
@@ -1386,15 +1485,15 @@ public class FileMATLAB extends FileBase {
                     		    doubleBuffer[i] = getDouble(endianess);
                     		}
                     		try {
-                    			image.importData(field * doubleBuffer.length, doubleBuffer, true);
+                    			image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(field * doubleBuffer.length, doubleBuffer, true)");
+                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
                     		   throw e;
                     		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
@@ -1426,12 +1525,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryDBuffer[i] = getDouble(endianess);
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * field * realDBuffer.length," +
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
                     		   		" realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}
@@ -1441,7 +1540,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data type = miINT64\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.LONG);
                     		}
@@ -1450,15 +1549,15 @@ public class FileMATLAB extends FileBase {
                     		    longBuffer[i] = getLong(endianess);
                     		}
                     		try {
-                    			image.importData(field * longBuffer.length, longBuffer, true);
+                    			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(field * longBuffer.length, longBuffer, true)");
+                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
                     		   throw e;
                     		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
@@ -1490,12 +1589,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryDBuffer[i] = (double)getLong(endianess);
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * field * realDBuffer.length," +
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
                     		   		" realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}
@@ -1505,7 +1604,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Real data type = miUINT64\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                     	if (!complexFlag) {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.LONG);
                     		}
@@ -1514,15 +1613,15 @@ public class FileMATLAB extends FileBase {
                     		    longBuffer[i] = getLong(endianess);
                     		}
                     		try {
-                    			image.importData(field * longBuffer.length, longBuffer, true);
+                    			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importData(field * longBuffer.length, longBuffer, true)");
+                    		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
                     		   throw e;
                     		}
                     	}
                     	else {
-                    		if (field == 0) {
+                    		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
@@ -1554,12 +1653,12 @@ public class FileMATLAB extends FileBase {
                             for (i = 0; i < imageLength; i++) {
                             	imaginaryDBuffer[i] = (double)getLong(endianess);
                             }
-                            boolean logMagDisplay = true;
+                            logMagDisplay = true;
                             try {
-                    			image.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                    			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * field * realDBuffer.length, " +
+                    		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
                     		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                     		   throw e;
                     		}
@@ -1576,23 +1675,38 @@ public class FileMATLAB extends FileBase {
                         case miINT8:
                         	Preferences.debug("Real data type = miINT8\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                        	if (!complexFlag) {
-                        		if (field == 0) {
+                        	if (logicalFlag) {
+                        		if (logicalFields == 1) {
+    	                    	    maskImage2 = new ModelImage(ModelStorageBase.BYTE, maskExtents, fileName + "_mask");
+    	                    	    maskFileInfo2.setDataType(ModelStorageBase.BYTE);
+    	                    	    buffer = new byte[maskExtents[0]*maskExtents[1]];
+    		                    	raFile.read(buffer);
+    		                    	try {
+    		                			maskImage2.importData(0, buffer, true);
+    		                		}
+    		                		catch(IOException e) {
+    		                		   MipavUtil.displayError("IOException on maskImage2.importData(0, buffer, true)");
+    		                		   throw e;
+    		                		}
+                        	    } // if (logicalFields == 1)	
+                        	}
+                        	else if (!complexFlag) {
+                        		if (nonLogicalField == 0) {
     	                    	    image2 = new ModelImage(ModelStorageBase.BYTE, imageExtents, fileName);
     	                    	    fileInfo2.setDataType(ModelStorageBase.BYTE);
                         		}
     	                    	buffer = new byte[imageLength];
     	                    	raFile.read(buffer);
     	                    	try {
-    	                			image2.importData(field * buffer.length, buffer, true);
+    	                			image2.importData(nonLogicalField * buffer.length, buffer, true);
     	                		}
     	                		catch(IOException e) {
-    	                		   MipavUtil.displayError("IOException on image2.importData(field * buffer.length, buffer, true)");
+    	                		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * buffer.length, buffer, true)");
     	                		   throw e;
     	                		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
@@ -1627,12 +1741,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryBuffer[i] = (float)(buffer[i]);
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * field * realBuffer.length, " +
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length, " +
                         		   		"realBuffer, imaginaryBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}		
@@ -1641,8 +1755,27 @@ public class FileMATLAB extends FileBase {
                         case miUINT8:
                         	Preferences.debug("Real data type = miUINT8\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                        	if (!complexFlag) {
-                        		if (field == 0) {
+                        	if (logicalFlag) {
+                        		if (logicalFields == 1) {
+    	                    	    maskImage2 = new ModelImage(ModelStorageBase.UBYTE, maskExtents, fileName + "_mask");
+    	                    	    maskFileInfo2.setDataType(ModelStorageBase.UBYTE);
+    	                    	    buffer = new byte[maskExtents[0]*maskExtents[1]];
+    	                    	    shortBuffer = new short[maskExtents[0]*maskExtents[1]];
+    	                    	    raFile.read(buffer);
+    	                    	    for (i = 0; i < maskExtents[0]*maskExtents[1]; i++) {
+    		                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
+    		                		}
+    		                    	try {
+    		                			maskImage2.importUData(0, shortBuffer, true);
+    		                		}
+    		                		catch(IOException e) {
+    		                		   MipavUtil.displayError("IOException on maskImage2.importUData(0, shortBuffer, true)");
+    		                		   throw e;
+    		                		}
+                        	    } // if (logicalFields == 1)		
+                        	}
+                        	else if (!complexFlag) {
+                        		if (nonLogicalField == 0) {
     	                    	    image2 = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
     	                    	    fileInfo2.setDataType(ModelStorageBase.UBYTE);
                         		}
@@ -1653,15 +1786,15 @@ public class FileMATLAB extends FileBase {
     	                		    shortBuffer[i] = (short)(buffer[i] & 0xff);
     	                		}
     	                    	try {
-    	                			image2.importUData(field * shortBuffer.length, shortBuffer, true);
+    	                			image2.importUData(nonLogicalField * shortBuffer.length, shortBuffer, true);
     	                		}
     	                		catch(IOException e) {
-    	                		   MipavUtil.displayError("IOException on image2.importData(field * shortBuffer.length, shortBuffer, true)");
+    	                		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
     	                		   throw e;
     	                		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
@@ -1696,12 +1829,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryBuffer[i] = (float)(buffer[i] & 0xff);
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * field * realBuffer.length," +
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length," +
                         		   		" realBuffer, imaginaryBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}	
@@ -1711,7 +1844,7 @@ public class FileMATLAB extends FileBase {
                         	Preferences.debug("Real data type = miINT16\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                         	if (!complexFlag) {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.SHORT);
                         		}
@@ -1720,15 +1853,15 @@ public class FileMATLAB extends FileBase {
                         		    shortBuffer[i] = readShort(endianess);
                         		}
                         		try {
-                        			image2.importData(field * shortBuffer.length, shortBuffer, true);
+                        			image2.importData(nonLogicalField * shortBuffer.length, shortBuffer, true);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importData(field * shortBuffer.length, shortBuffer, true)");
+                        		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
                         		   throw e;
                         		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
@@ -1760,12 +1893,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryBuffer[i] = (float)(readShort(endianess));
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * field * realBuffer.length, " +
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length, " +
                         		   		"realBuffer, imaginaryBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}		
@@ -1775,7 +1908,7 @@ public class FileMATLAB extends FileBase {
                         	Preferences.debug("Real data type = miUINT16\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                         	if (!complexFlag) {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.USHORT);
                         		}
@@ -1784,15 +1917,15 @@ public class FileMATLAB extends FileBase {
                         		    intBuffer[i] = getUnsignedShort(endianess);
                         		}
                         		try {
-                        			image2.importUData(field * intBuffer.length, intBuffer, true);
+                        			image2.importUData(nonLogicalField * intBuffer.length, intBuffer, true);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importUData(field * intBuffer.length, intBuffer, true)");
+                        		   MipavUtil.displayError("IOException on image2.importUData(nonLogicalField * intBuffer.length, intBuffer, true)");
                         		   throw e;
                         		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
@@ -1824,12 +1957,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryBuffer[i] = (float)(getUnsignedShort(endianess));
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * field * realBuffer.length," +
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length," +
                         		   		" realBuffer, imaginaryBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}		
@@ -1839,7 +1972,7 @@ public class FileMATLAB extends FileBase {
                         	Preferences.debug("Real data type = miINT32\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                         	if (!complexFlag) {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.INTEGER);
                         		}
@@ -1848,15 +1981,15 @@ public class FileMATLAB extends FileBase {
                         		    intBuffer[i] = getInt(endianess);
                         		}
                         		try {
-                        			image2.importData(field * intBuffer.length, intBuffer, true);
+                        			image2.importData(nonLogicalField * intBuffer.length, intBuffer, true);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importData(field * intBuffer.length, intBuffer, true)");
+                        		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * intBuffer.length, intBuffer, true)");
                         		   throw e;
                         		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
@@ -1888,12 +2021,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryDBuffer[i] = (double)getInt(endianess);
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * field * realDBuffer.length, " +
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
                         		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}
@@ -1903,7 +2036,7 @@ public class FileMATLAB extends FileBase {
                         	Preferences.debug("Real data type = miUINT32\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                         	if (!complexFlag) {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.UINTEGER);
                         		}
@@ -1912,15 +2045,15 @@ public class FileMATLAB extends FileBase {
                         		    longBuffer[i] = getUInt(endianess);
                         		}
                         		try {
-                        			image2.importUData(field * longBuffer.length, longBuffer, true);
+                        			image2.importUData(nonLogicalField * longBuffer.length, longBuffer, true);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importUData(field * longBuffer.length, longBuffer, true)");
+                        		   MipavUtil.displayError("IOException on image2.importUData(nonLogicalField * longBuffer.length, longBuffer, true)");
                         		   throw e;
                         		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
@@ -1952,12 +2085,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryDBuffer[i] = (double)getUInt(endianess);
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * field * realDBuffer.length," +
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
                         		   		" realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}
@@ -1967,7 +2100,7 @@ public class FileMATLAB extends FileBase {
                         	Preferences.debug("Real data type = miSINGLE\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                         	if (!complexFlag) {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.FLOAT);
                         		}
@@ -1976,15 +2109,15 @@ public class FileMATLAB extends FileBase {
                         		    floatBuffer[i] = getFloat(endianess);
                         		}
                         		try {
-                        			image2.importData(field * floatBuffer.length, floatBuffer, true);
+                        			image2.importData(nonLogicalField * floatBuffer.length, floatBuffer, true);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importData(field * floatBuffer.length, floatBuffer, true)");
+                        		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * floatBuffer.length, floatBuffer, true)");
                         		   throw e;
                         		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
@@ -2016,12 +2149,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryBuffer[i] = getFloat(endianess);
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importComplexData(2 * field * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * field * realBuffer.length, " +
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length, " +
                         		   		"realBuffer, imaginaryBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}
@@ -2031,7 +2164,7 @@ public class FileMATLAB extends FileBase {
                         	Preferences.debug("Real data type = miDOUBLE\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                         	if (!complexFlag) {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DOUBLE);
                         		}
@@ -2040,15 +2173,15 @@ public class FileMATLAB extends FileBase {
                         		    doubleBuffer[i] = getDouble(endianess);
                         		}
                         		try {
-                        			image2.importData(field * doubleBuffer.length, doubleBuffer, true);
+                        			image2.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importData(field * doubleBuffer.length, doubleBuffer, true)");
+                        		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
                         		   throw e;
                         		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
@@ -2080,12 +2213,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryDBuffer[i] = getDouble(endianess);
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * field * realDBuffer.length, " +
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
                         		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}
@@ -2095,7 +2228,7 @@ public class FileMATLAB extends FileBase {
                         	Preferences.debug("Real data type = miINT64\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                         	if (!complexFlag) {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.LONG);
                         		}
@@ -2104,15 +2237,15 @@ public class FileMATLAB extends FileBase {
                         		    longBuffer[i] = getLong(endianess);
                         		}
                         		try {
-                        			image2.importData(field * longBuffer.length, longBuffer, true);
+                        			image2.importData(nonLogicalField * longBuffer.length, longBuffer, true);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importData(field * longBuffer.length, longBuffer, true)");
+                        		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
                         		   throw e;
                         		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
@@ -2144,12 +2277,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryDBuffer[i] = (double)getLong(endianess);
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * field * realDBuffer.length, " +
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
                         		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}
@@ -2159,7 +2292,7 @@ public class FileMATLAB extends FileBase {
                         	Preferences.debug("Real data type = miUINT64\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
                         	if (!complexFlag) {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.LONG);
                         		}
@@ -2168,15 +2301,15 @@ public class FileMATLAB extends FileBase {
                         		    longBuffer[i] = getLong(endianess);
                         		}
                         		try {
-                        			image2.importData(field * longBuffer.length, longBuffer, true);
+                        			image2.importData(nonLogicalField * longBuffer.length, longBuffer, true);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importData(field * longBuffer.length, longBuffer, true)");
+                        		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
                         		   throw e;
                         		}
                         	}
                         	else {
-                        		if (field == 0) {
+                        		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
@@ -2208,12 +2341,12 @@ public class FileMATLAB extends FileBase {
                                 for (i = 0; i < imageLength; i++) {
                                 	imaginaryDBuffer[i] = (double)getLong(endianess);
                                 }
-                                boolean logMagDisplay = true;
+                                logMagDisplay = true;
                                 try {
-                        			image2.importDComplexData(2 * field * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
                         		catch(IOException e) {
-                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * field * realDBuffer.length, " +
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
                         		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
                         		   throw e;
                         		}
@@ -2226,12 +2359,472 @@ public class FileMATLAB extends FileBase {
                     	
                     } // else imagesFound > 1
                     } // for (field = 0; field < fieldNumber; field++)
+                    if (logicalFields >= 1) {
+                	    adjustedFieldDim = imageExtents[imageExtents.length-1] - logicalFields;
+                	    if (adjustedFieldDim >= 2) {
+                	    	newExtents = new int[imageExtents.length];
+                	    	for (i = 0; i < imageExtents.length - 1; i++) {
+                	    		newExtents[i] = imageExtents[i];
+                	    	}
+                	    	newExtents[imageExtents.length-1] = adjustedFieldDim;
+                	    } // if (adjustedFieldDim >= 2)
+                	    else {
+                	    	newExtents = new int[imageExtents.length-1];
+                	    	for (i = 0; i < imageExtents.length - 1; i++) {
+                	    		newExtents[i] = imageExtents[i];
+                	    	}
+                	    }
+                	    totalNumber = 1;
+                	    imageSlices = 1;
+                	    for (i = 0; i < newExtents.length; i++) {
+                	    	totalNumber *= newExtents[i];
+                	    	if (i > 1) {
+                	    		imageSlices *= newExtents[i];
+                	    	}
+                	    }
+                	} // if (logicalFields >= 1)
                     if (imagesFound == 1) {
+                        if (logicalFields >= 1) {
+                        	switch(image.getType()) {
+                        	case ModelStorageBase.BYTE:
+                        		buffer = new byte[totalNumber];
+                        		try {
+                        			image.exportData(0, totalNumber, buffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, buffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		try {
+                        			image.importData(0, buffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image.importData(0, buffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.UBYTE:
+                        		shortBuffer = new short[totalNumber];
+                        		try {
+                        			image.exportData(0, totalNumber, shortBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, shortBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		try {
+                        			image.importUData(0, shortBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image.importUData(0, shortBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.SHORT:
+                        		shortBuffer = new short[totalNumber];
+                        		try {
+                        			image.exportData(0, totalNumber, shortBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, shortBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		try {
+                        			image.importData(0, shortBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image.importData(0, shortBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.USHORT:
+                        		intBuffer = new int[totalNumber];
+                        		try {
+                        			image.exportData(0, totalNumber, intBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, intBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		try {
+                        			image.importUData(0, intBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image.importUData(0, intBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.INTEGER:
+                        		intBuffer = new int[totalNumber];
+                        		try {
+                        			image.exportData(0, totalNumber, intBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, intBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		try {
+                        			image.importData(0, intBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image.importData(0, intBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.UINTEGER:
+                        		longBuffer = new long[totalNumber];
+                        		try {
+                        			image.exportData(0, totalNumber, longBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, longBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		try {
+                        			image.importUData(0, longBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image.importUData(0, longBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;	
+                        	case ModelStorageBase.LONG:
+                        		longBuffer = new long[totalNumber];
+                        		try {
+                        			image.exportData(0, totalNumber, longBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, longBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		try {
+                        			image.importData(0, longBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image.importData(0, longBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.FLOAT:
+                        		floatBuffer = new float[totalNumber];
+                        		try {
+                        			image.exportData(0, totalNumber, floatBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, floatBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		try {
+                        			image.importData(0, floatBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image.importData(0, floatBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.DOUBLE:
+                        		doubleBuffer = new double[totalNumber];
+                        		try {
+                        			image.exportData(0, totalNumber, doubleBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, doubleBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		try {
+                        			image.importData(0, doubleBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image.importData(0, doubleBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.COMPLEX:
+                        		realBuffer = new float[totalNumber];
+                        		imaginaryBuffer = new float[totalNumber];
+                        		try {
+                        			image.exportComplexData(0, totalNumber, realBuffer, imaginaryBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportComplexData(0, totalNumber, realBuffer, imaginaryBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        	    logMagDisplay = true;
+                                try {
+                        			image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}		
+                        		break;
+                        	case ModelStorageBase.DCOMPLEX:
+                        		realDBuffer = new double[totalNumber];
+                        		imaginaryDBuffer = new double[totalNumber];
+                        		try {
+                        			image.exportDComplexData(0, totalNumber, realDBuffer, imaginaryDBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.exportDComplexData(0, totalNumber, realDBuffer, imaginaryDBuffer)");
+                        		   throw e;
+                        		}
+                        		image.changeExtents(newExtents);
+                        		image.recomputeDataSize();
+                        		logMagDisplay = true;
+                                try {
+                        			image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}		
+                        		break;
+                        	} // switch(image.getType())
+                        	fileInfo.setExtents(newExtents);
+                        } // if (logicalFields >= 1)
                     	image.calcMinMax();
                     	fileInfo.setMin(image.getMin());
                     	fileInfo.setMax(image.getMax());	
                     }
                     else {
+                    	if (logicalFields >= 1) {
+                    		switch(image2.getType()) {
+                        	case ModelStorageBase.BYTE:
+                        		buffer = new byte[totalNumber];
+                        		try {
+                        			image2.exportData(0, totalNumber, buffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, buffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		try {
+                        			image2.importData(0, buffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image2.importData(0, buffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.UBYTE:
+                        		shortBuffer = new short[totalNumber];
+                        		try {
+                        			image2.exportData(0, totalNumber, shortBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, shortBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		try {
+                        			image2.importUData(0, shortBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image2.importUData(0, shortBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.SHORT:
+                        		shortBuffer = new short[totalNumber];
+                        		try {
+                        			image2.exportData(0, totalNumber, shortBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, shortBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		try {
+                        			image2.importData(0, shortBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image2.importData(0, shortBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.USHORT:
+                        		intBuffer = new int[totalNumber];
+                        		try {
+                        			image2.exportData(0, totalNumber, intBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, intBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		try {
+                        			image2.importUData(0, intBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image2.importUData(0, intBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.INTEGER:
+                        		intBuffer = new int[totalNumber];
+                        		try {
+                        			image2.exportData(0, totalNumber, intBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, intBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		try {
+                        			image2.importData(0, intBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image2.importData(0, intBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.UINTEGER:
+                        		longBuffer = new long[totalNumber];
+                        		try {
+                        			image2.exportData(0, totalNumber, longBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, longBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		try {
+                        			image2.importUData(0, longBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image2.importUData(0, longBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;	
+                        	case ModelStorageBase.LONG:
+                        		longBuffer = new long[totalNumber];
+                        		try {
+                        			image2.exportData(0, totalNumber, longBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, longBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		try {
+                        			image2.importData(0, longBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image2.importData(0, longBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.FLOAT:
+                        		floatBuffer = new float[totalNumber];
+                        		try {
+                        			image2.exportData(0, totalNumber, floatBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, floatBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		try {
+                        			image2.importData(0, floatBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image2.importData(0, floatBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.DOUBLE:
+                        		doubleBuffer = new double[totalNumber];
+                        		try {
+                        			image2.exportData(0, totalNumber, doubleBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, doubleBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		try {
+                        			image2.importData(0, doubleBuffer, true);
+                        		}
+                        		catch(IOException e) {
+                        			MipavUtil.displayError("IOException on image2.importData(0, doubleBuffer, true)");
+                        			throw e;
+                        		}
+                        		break;
+                        	case ModelStorageBase.COMPLEX:
+                        		realBuffer = new float[totalNumber];
+                        		imaginaryBuffer = new float[totalNumber];
+                        		try {
+                        			image2.exportComplexData(0, totalNumber, realBuffer, imaginaryBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportComplexData(0, totalNumber, realBuffer, imaginaryBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        	    logMagDisplay = true;
+                                try {
+                        			image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}		
+                        		break;
+                        	case ModelStorageBase.DCOMPLEX:
+                        		realDBuffer = new double[totalNumber];
+                        		imaginaryDBuffer = new double[totalNumber];
+                        		try {
+                        			image2.exportDComplexData(0, totalNumber, realDBuffer, imaginaryDBuffer);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.exportDComplexData(0, totalNumber, realDBuffer, imaginaryDBuffer)");
+                        		   throw e;
+                        		}
+                        		image2.changeExtents(newExtents);
+                        		image2.recomputeDataSize();
+                        		logMagDisplay = true;
+                                try {
+                        			image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
+                        		}
+                        		catch(IOException e) {
+                        		   MipavUtil.displayError("IOException on image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
+                        		   throw e;
+                        		}		
+                        		break;
+                        	} // switch(image.getType())
+                    	    fileInfo2.setExtents(newExtents);	
+                    	}
                     	image2.calcMinMax();
                         fileInfo2.setMin(image2.getMin());
                 	    fileInfo2.setMax(image2.getMax());
@@ -2303,6 +2896,18 @@ public class FileMATLAB extends FileBase {
                  }
             	 vFrame2 = new ViewJFrameImage(image2);
             	 vFrame2.setTitle(fileName.substring(0,s) + "_2");
+            }
+            
+            if (maskImage != null) {
+            	maskImage.setFileInfo(maskFileInfo, 0);
+            	vmFrame = new ViewJFrameImage(maskImage);
+            	vmFrame.setTitle(fileName.substring(0,s) + "_mask");
+            }
+            
+            if (maskImage2 != null) {
+            	maskImage2.setFileInfo(maskFileInfo2, 0);
+            	vmFrame2 = new ViewJFrameImage(maskImage2);
+            	vmFrame2.setTitle(fileName.substring(0,s) + "_2_mask");
             }
             
             fireProgressStateChanged(100);
