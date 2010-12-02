@@ -199,8 +199,12 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 				try {
 					// Make algorithm
 					if (image.isColorImage()) {
-						//mipAlgo = new AlgorithmMaximumIntensityProjection(image, minIntensityR, maxIntensityR,
-						//		minIntensityG, maxIntensityG, minIntensityB, maxIntensityB);    
+						mipAlgo = new AlgorithmMaximumIntensityProjection(image, 
+								startSlice[i], stopSlice[i], window[i],
+								minIntensityR[i], maxIntensityR[i],
+								minIntensityG[i], maxIntensityG[i], 
+								minIntensityB[i], maxIntensityB[i],
+								maximum[i], minimum[i], i);    
 					}
 					else {
 						mipAlgo = new AlgorithmMaximumIntensityProjection(image, 
