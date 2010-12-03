@@ -2827,6 +2827,9 @@ public class FileIO {
                 } else {
                     break;
                 }
+            case FileUtility.MATLAB:
+            	success = writeMATLAB(image, options);
+            	break;
             case FileUtility.SPM:
                 success = writeSPM(image, options);
                 break;
@@ -11752,6 +11755,46 @@ public class FileIO {
             return false;
         }
 
+        return true;
+    }
+    
+    /**
+     * Writes a MATLAB file to store the image.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
+     */
+    private boolean writeMATLAB(final ModelImage image, final FileWriteOptions options) {
+        FileMATLAB MATLABFile;
+
+        try { // Construct a new file object
+            MATLABFile = new FileMATLAB(options.getFileName(), options.getFileDirectory());
+            createProgressBar(MATLABFile, options.getFileName(), FileIO.FILE_WRITE);
+            MATLABFile.writeImage(image, options);
+        } catch (final IOException error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        }
+
+        MATLABFile.finalize();
+        MATLABFile = null;
         return true;
     }
 
