@@ -114,6 +114,10 @@ public class FileInfoMATLAB extends FileInfoBase {
     	this.arrayName = arrayName;
     }
     
+    public String getArrayName() {
+    	return arrayName;
+    }
+    
     public void setFieldNames(String fieldNames[]) {
     	this.fieldNames = fieldNames;
     }
