@@ -306,8 +306,8 @@ public class FileMATLAB extends FileBase {
         int maskExtents[] = null;
         boolean haveSmallRealData;
         boolean haveSmallImaginaryData;
-        String imageFieldName = null;
-        String image2FieldName = null;
+        String voiFieldName = null;
+        String voi2FieldName = null;
 
         try {
             
@@ -863,21 +863,19 @@ public class FileMATLAB extends FileBase {
                         }
                         nonLogicalField = field - logicalFields;
                         if ((imagesFound == 1) && (fieldNumber == 2) && (fieldNames != null) && logicalFlag) {
-                        	fileInfo.setFieldNames(null);
                         	if (field == 0) {
-                        		imageFieldName = fieldNames[1];
+                        		voiFieldName = fieldNames[0];
                         	}
                         	else {
-                        		imageFieldName = fieldNames[0];
+                        		voiFieldName = fieldNames[1];
                         	}
                         }
                         if ((imagesFound == 2) && (fieldNumber == 2) && (fieldNames != null) && logicalFlag) {
-                        	fileInfo2.setFieldNames(null);
                         	if (field == 0) {
-                        		image2FieldName = fieldNames[1];
+                        		voi2FieldName = fieldNames[0];
                         	}
                         	else {
-                        		image2FieldName = fieldNames[0];
+                        		voi2FieldName = fieldNames[1];
                         	}
                         }
                         
@@ -3902,9 +3900,9 @@ public class FileMATLAB extends FileBase {
             }
             
            
-            if (imageFieldName != null) {
-            	image.setImageName(imageFieldName);
-            	fileInfo.setFileName(imageFieldName);
+            if (fileInfo.getArrayName() != null) {
+            	image.setImageName(fileInfo.getArrayName());
+            	fileInfo.setFileName(fileInfo.getArrayName());
             }
             fileInfo.setSourceFile(fileDir + fileName);
             for (i = 0; i < imageSlices; i++) {
@@ -3913,17 +3911,17 @@ public class FileMATLAB extends FileBase {
             }
             if (image2 != null) {
             	fileInfo2.setSourceFile(fileDir + fileName);
-            	if (image2FieldName != null) {
-            		image2.setImageName(image2FieldName);
-            		fileInfo2.setFileName(image2FieldName);
+            	if (fileInfo2.getArrayName() != null) {
+            		image2.setImageName(fileInfo2.getArrayName());
+            		fileInfo2.setFileName(fileInfo2.getArrayName());
             	}
             	 for (i = 0; i < imageSlices2; i++) {
                      
                      image2.setFileInfo((FileInfoMATLAB)fileInfo2.clone(), i);
                  }
             	 vFrame2 = new ViewJFrameImage(image2);
-            	 if (image2FieldName != null) {
-            		 vFrame2.setTitle(image2FieldName);
+            	 if (fileInfo2.getArrayName() != null) {
+            		 vFrame2.setTitle(fileInfo2.getArrayName());
             	 }
             	 else {
             	     vFrame2.setTitle(fileName.substring(0,s) + "_2");
@@ -3933,13 +3931,23 @@ public class FileMATLAB extends FileBase {
             if (maskImage != null) {
             	maskImage.setFileInfo(maskFileInfo, 0);
             	vmFrame = new ViewJFrameImage(maskImage);
-            	vmFrame.setTitle(fileName.substring(0,s) + "_mask");
+            	if (voiFieldName != null) {
+            		vmFrame.setTitle(voiFieldName);
+            	}
+            	else {
+            	    vmFrame.setTitle(fileName.substring(0,s) + "_mask");
+            	}
             }
             
             if (maskImage2 != null) {
             	maskImage2.setFileInfo(maskFileInfo2, 0);
             	vmFrame2 = new ViewJFrameImage(maskImage2);
-            	vmFrame2.setTitle(fileName.substring(0,s) + "_2_mask");
+            	if (voi2FieldName != null) {
+            		vmFrame2.setTitle(voi2FieldName);
+            	}
+            	else {
+            	    vmFrame2.setTitle(fileName.substring(0,s) + "_2_mask");
+            	}
             }
             
             fireProgressStateChanged(100);
