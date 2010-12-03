@@ -3943,6 +3943,18 @@ public class FileMATLAB extends FileBase {
     public void setFileName(String fName) {
         fileName = fName;
     }
+    
+    /**
+     * Writes a MATLAB format type image.
+     * 
+     * @param image Image model of data to write.
+     * @param options options such as starting and ending slices and times
+     * 
+     * @exception IOException if there is an error writing the file
+     */
+    public void writeImage(final ModelImage image, final FileWriteOptions options) throws IOException {
+    	
+    }
 
     
 }
