@@ -306,6 +306,8 @@ public class FileMATLAB extends FileBase {
         int maskExtents[] = null;
         boolean haveSmallRealData;
         boolean haveSmallImaginaryData;
+        String imageFieldName = null;
+        String image2FieldName = null;
 
         try {
             
@@ -860,6 +862,24 @@ public class FileMATLAB extends FileBase {
                         	isVOI = false;
                         }
                         nonLogicalField = field - logicalFields;
+                        if ((imagesFound == 1) && (fieldNumber == 2) && (fieldNames != null) && logicalFlag) {
+                        	fileInfo.setFieldNames(null);
+                        	if (field == 0) {
+                        		imageFieldName = fieldNames[1];
+                        	}
+                        	else {
+                        		imageFieldName = fieldNames[0];
+                        	}
+                        }
+                        if ((imagesFound == 2) && (fieldNumber == 2) && (fieldNames != null) && logicalFlag) {
+                        	fileInfo2.setFieldNames(null);
+                        	if (field == 0) {
+                        		image2FieldName = fieldNames[1];
+                        	}
+                        	else {
+                        		image2FieldName = fieldNames[0];
+                        	}
+                        }
                         
                         // 4 undefined bytes
                     	getInt(endianess);
@@ -3882,17 +3902,32 @@ public class FileMATLAB extends FileBase {
             }
             
            
+            if (imageFieldName != null) {
+            	image.setImageName(imageFieldName);
+            	fileInfo.setFileName(imageFieldName);
+            }
+            fileInfo.setSourceFile(fileDir + fileName);
             for (i = 0; i < imageSlices; i++) {
                 
                 image.setFileInfo((FileInfoMATLAB)fileInfo.clone(), i);
             }
             if (image2 != null) {
+            	fileInfo2.setSourceFile(fileDir + fileName);
+            	if (image2FieldName != null) {
+            		image2.setImageName(image2FieldName);
+            		fileInfo2.setFileName(image2FieldName);
+            	}
             	 for (i = 0; i < imageSlices2; i++) {
                      
                      image2.setFileInfo((FileInfoMATLAB)fileInfo2.clone(), i);
                  }
             	 vFrame2 = new ViewJFrameImage(image2);
-            	 vFrame2.setTitle(fileName.substring(0,s) + "_2");
+            	 if (image2FieldName != null) {
+            		 vFrame2.setTitle(image2FieldName);
+            	 }
+            	 else {
+            	     vFrame2.setTitle(fileName.substring(0,s) + "_2");
+            	 }
             }
             
             if (maskImage != null) {
