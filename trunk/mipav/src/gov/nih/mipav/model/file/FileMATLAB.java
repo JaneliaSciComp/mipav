@@ -72,6 +72,10 @@ public class FileMATLAB extends FileBase {
 	private static final byte mxINT32_CLASS = 12;
 	/** 32-bit, unsigned integer */
 	private static final byte mxUINT32_CLASS = 13;
+	/** 64-bit, signed integer */
+	private static final byte mxINT64_CLASS = 14;
+	/** 64-bit, unsigned integer */
+	private static final byte mxUINT64_CLASS = 15;
 	
     
 
@@ -550,6 +554,12 @@ public class FileMATLAB extends FileBase {
                         break;
                     case mxUINT32_CLASS:
                     	Preferences.debug("Array type is unsigned integer\n");
+                    	break;
+                    case mxINT64_CLASS:
+                    	Preferences.debug("Array type is signed long\n");
+                    	break;
+                    case mxUINT64_CLASS:
+                    	Preferences.debug("Array type is unsigned long\n");
                     	break;
                     default:
                     	Preferences.debug("Array type is an illegal = " + arrayClass + "\n");
@@ -3953,7 +3963,510 @@ public class FileMATLAB extends FileBase {
      * @exception IOException if there is an error writing the file
      */
     public void writeImage(final ModelImage image, final FileWriteOptions options) throws IOException {
+    	boolean endianess;
+    	byte descriptiveText[] = new byte[116];
+    	byte endianIndicator[] = new byte[2];
+    	int nDims;
+    	int imageExtents[] = null;
+    	int dataType;
+    	int imageLength;
+    	int realImageBytes;
+    	int i;
+    	int j;
+    	int sBegin; // first z slice to write
+        int sEnd; // last z slice to write
+        int tBegin; // first t time to write
+        int tEnd; // last t time to write
+        int z, t;
+        int zDim;
+        int tDim;
+        byte arrayClass;
+        int matDataType;
+        boolean complexFlag;
+        int arrayFlags;
+        int dimensionsArrayBytes;
+        byte arrayName[] = new byte[8];
+        int sliceSize;
+        int numberSlices;
+        int count;
+        byte[] byteBuffer = null;
+        short[] shortBuffer;
+        int[] intBuffer;
+        float[] floatBuffer = null;
+        float[] floatIBuffer = null;
+        int tmpInt;
+        double[] doubleBuffer = null;
+        double[] doubleIBuffer = null;
+        long tmpLong;
+        int padBytes;
+        int matrixByteLength;
+         
+         if (image.getNDims() >= 3) {
+             sBegin = options.getBeginSlice();
+             sEnd = options.getEndSlice();
+         } else {
+             sBegin = 0;
+             sEnd = 0;
+         }
+
+         if (image.getNDims() == 4) {
+             tBegin = options.getBeginTime();
+             tEnd = options.getEndTime();
+         } else {
+             tBegin = 0;
+             tEnd = 0;
+         }
     	
+    	file = new File(fileDir + fileName);
+        raFile = new RandomAccessFile(file, "rw");
+        // Necessary so that if this is an overwritten file there isn't any
+        // junk at the end
+        raFile.setLength(0);
+        
+        endianess = FileBase.BIG_ENDIAN; // true
+        // Bytes 0 to 115 contain the descriptive text
+        descriptiveText[0] = 77; // M
+        descriptiveText[1] = 73; // I
+        descriptiveText[2] = 80; // P
+        descriptiveText[3] = 65; // A
+        descriptiveText[4] = 86; // V
+        descriptiveText[5] = 32; // sp
+        descriptiveText[6] = 105; // i
+        descriptiveText[7] = 115; // s
+        descriptiveText[8] = 32; // sp
+        descriptiveText[9] = 119; // w
+        descriptiveText[10] = 114; // r
+        descriptiveText[11]= 105; // i
+        descriptiveText[12] = 116; // t
+        descriptiveText[13] = 105; // i
+        descriptiveText[14] = 110; // n
+        descriptiveText[15] = 103; // g
+        descriptiveText[16] = 32; // sp
+        descriptiveText[17] = 97; // a
+        descriptiveText[18] = 32; // sp
+        descriptiveText[19] = 46; // .
+        descriptiveText[20] = 109; // m
+        descriptiveText[21] = 97; // a
+        descriptiveText[22] = 116; // t
+        descriptiveText[23] = 32; // sp
+        descriptiveText[24] = 102; // f
+        descriptiveText[25] = 105; // i
+        descriptiveText[26] = 108; // l
+        descriptiveText[27] = 101; // e
+        descriptiveText[28] = 46; // .
+        raFile.write(descriptiveText);
+        // Bytes 116 thru 123 contain an offset to subsystem-specific data in the .mat file.
+        // All zeros or all spaces in this field indicate that there is no subsystem-specific
+        // data stored in the file.
+        writeLong(0L, endianess);
+        // Write the version 256 at bytes 124-125
+        writeShort((short)256, endianess);
+        // Write the endian indicator at bytes 126-127
+    	endianIndicator[0] = 77; // M
+    	endianIndicator[1] = 73; // I
+    	raFile.write(endianIndicator);
+    	
+    	nDims = image.getNDims();
+    	imageExtents = image.getExtents();
+    	dataType = image.getType();
+    	imageLength = 1;
+    	for (i = 0; i < nDims; i++) {
+    		imageLength *= imageExtents[i];
+    	}
+    	
+    	// Bytes 128-131 write miMATRIX
+    	writeInt(miMATRIX, endianess);
+    	// Bytes 132-135 write total number of following bytes
+    	// Put in 0 for now as a place holder
+    	writeInt(0, endianess);
+    	// Write the data type of the array flags
+    	writeInt(miUINT32, endianess);
+    	// Write the number of bytes in the array flags
+    	writeInt(8, endianess);
+    	switch(dataType) {
+    	case ModelStorageBase.BYTE:
+    		arrayClass = mxINT8_CLASS;
+    		matDataType = miINT8;
+    		complexFlag = false;
+    		realImageBytes = imageLength;
+    		break;
+    	case ModelStorageBase.UBYTE:
+    		arrayClass = mxUINT8_CLASS;
+    		matDataType = miUINT8;
+    		complexFlag = false;
+    		realImageBytes = imageLength;
+    		break;
+    	case ModelStorageBase.SHORT:
+    		arrayClass = mxINT16_CLASS;
+    		matDataType = miINT16;
+    		complexFlag = false;
+    		realImageBytes = 2 * imageLength;
+    		break;
+    	case ModelStorageBase.USHORT:
+    		arrayClass = mxUINT16_CLASS;
+    		matDataType = miUINT16;
+    		complexFlag = false;
+    		realImageBytes = 2 * imageLength;
+    		break;
+    	case ModelStorageBase.INTEGER:
+    		arrayClass = mxINT32_CLASS;
+    		matDataType = miINT32;
+    		complexFlag = false;
+    		realImageBytes = 4 * imageLength;
+    	    break;
+    	case ModelStorageBase.UINTEGER:
+    		arrayClass = mxUINT32_CLASS;
+    		matDataType = miUINT32;
+    		complexFlag = false;
+    		realImageBytes = 4 * imageLength;
+    		break;
+    	case ModelStorageBase.LONG:
+    		arrayClass = mxINT64_CLASS;
+    		matDataType = miINT64;
+    		complexFlag = false;
+    		realImageBytes = 8 * imageLength;
+    		break;
+    	case ModelStorageBase.FLOAT:
+    		arrayClass = mxSINGLE_CLASS;
+    		matDataType = miSINGLE;
+    		complexFlag = false;
+    		realImageBytes = 4 * imageLength;
+    		break;
+    	case ModelStorageBase.DOUBLE:
+    		arrayClass = mxDOUBLE_CLASS;
+    		matDataType = miDOUBLE;
+    		complexFlag = false;
+    		realImageBytes = 8 * imageLength;
+    		break;
+    	case ModelStorageBase.COMPLEX:
+    		arrayClass = mxSINGLE_CLASS;
+    		matDataType = miSINGLE;
+    		complexFlag = true;
+    		realImageBytes = 4 * imageLength;
+    		break;
+    	case ModelStorageBase.DCOMPLEX:
+    		arrayClass = mxDOUBLE_CLASS;
+    		matDataType = miDOUBLE;
+    		complexFlag = true;
+    		realImageBytes = 8 * imageLength;
+    		break;
+    	default:
+    		arrayClass = mxINT8_CLASS;
+    		matDataType = miINT8;
+    		complexFlag = false;
+    		realImageBytes = imageLength;
+    	}
+    	
+    	arrayFlags = 0x000000ff & arrayClass;
+    	if (complexFlag) {
+    	  arrayFlags = arrayFlags | 0x00000800;	
+    	}
+    	// write the arrayFlags
+    	writeInt(arrayFlags, endianess);
+    	// write the 4 undefined bytes following the array flags
+    	writeInt(0, endianess);
+    	// Write the data type of the dimensions array
+    	writeInt(miINT32, endianess);
+    	dimensionsArrayBytes = 4 * nDims;
+    	// Write the number of bytes in the dimensions array
+    	writeInt(dimensionsArrayBytes, endianess);
+    	// Write the dimensions array
+    	for (i = 0; i < nDims; i++) {
+    		writeInt(imageExtents[i], endianess);
+    	}
+    	// Write 4 pad bytes if dimensions array bytes is not a multiple of 8
+    	if ((nDims == 3) || (nDims == 5)) {
+    		writeInt(0, endianess);
+    	}
+    	// Write the data type of the array name
+    	writeInt(miINT8, endianess);
+    	// Write the number of bytes in the array name
+    	writeInt(8, endianess);
+    	arrayName[0] = 109; // m
+    	arrayName[1] = 97; // a
+    	arrayName[2] = 116; // t
+    	arrayName[3] = 65; // A
+    	arrayName[4] = 114; // r
+    	arrayName[5] = 114; // r
+    	arrayName[6] = 97; // a
+    	arrayName[7] = 121; // y
+    	// Write the array name
+    	raFile.write(arrayName);
+    	// write the real data type
+    	writeInt(matDataType, endianess);
+    	// write the number of real data bytes
+    	writeInt(realImageBytes, endianess);
+    	
+    	if (image.getNDims() == 2) {
+            numberSlices = 1;
+            zDim = 1;
+            tDim = 1;
+        } else if (image.getNDims() == 3) {
+            numberSlices = sEnd - sBegin + 1;
+            zDim = imageExtents[2];
+            tDim = 1;
+        } else {
+            numberSlices = (sEnd - sBegin + 1) * (tEnd - tBegin + 1);
+            zDim = imageExtents[2];
+            tDim = imageExtents[3];
+        }
+
+        sliceSize = image.getSliceSize();
+
+        count = 0;	
+        
+        switch(dataType) {
+        case ModelStorageBase.BYTE:
+        case ModelStorageBase.UBYTE:
+
+            byteBuffer = new byte[sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = sBegin; z <= sEnd; z++, count++) {
+                    i = (t * zDim) + z;
+                    fireProgressStateChanged(count * 100 / numberSlices);
+                    image.exportSliceXY(i, byteBuffer);
+                    raFile.write(byteBuffer);
+                } // for (z = sBegin; z <= sEnd; z++,count++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+
+        case ModelStorageBase.SHORT:
+        case ModelStorageBase.USHORT:
+
+            shortBuffer = new short[sliceSize];
+            byteBuffer = new byte[2 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = sBegin; z <= sEnd; z++, count++) {
+                    i = (t * zDim) + z;
+                    fireProgressStateChanged(count * 100 / numberSlices);
+                    image.exportSliceXY(i, shortBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        byteBuffer[2 * j] = (byte) (shortBuffer[j] >>> 8);
+                        byteBuffer[ (2 * j) + 1] = (byte) (shortBuffer[j]);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = sBegin; z <= sEnd; z++,count++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+
+        case ModelStorageBase.INTEGER:
+        case ModelStorageBase.UINTEGER:
+
+            // store as 32 bit signed integer
+            intBuffer = new int[sliceSize];
+            byteBuffer = new byte[4 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = sBegin; z <= sEnd; z++, count++) {
+                    i = (t * zDim) + z;
+                    fireProgressStateChanged(count * 100 / numberSlices);
+                    image.exportSliceXY(i, intBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        byteBuffer[4 * j] = (byte) (intBuffer[j] >>> 24);
+                        byteBuffer[ (4 * j) + 1] = (byte) (intBuffer[j] >>> 16);
+                        byteBuffer[ (4 * j) + 2] = (byte) (intBuffer[j] >>> 8);
+                        byteBuffer[ (4 * j) + 3] = (byte) (intBuffer[j]);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = sBegin; z <= sEnd; z++,count++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+
+        case ModelStorageBase.FLOAT:
+
+            // store as 32 bit float
+            floatBuffer = new float[sliceSize];
+            byteBuffer = new byte[4 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = sBegin; z <= sEnd; z++, count++) {
+                    i = (t * zDim) + z;
+                    fireProgressStateChanged(count * 100 / numberSlices);
+                    image.exportSliceXY(i, floatBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        tmpInt = Float.floatToIntBits(floatBuffer[j]);
+                        byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
+                        byteBuffer[ (4 * j) + 1] = (byte) (tmpInt >>> 16);
+                        byteBuffer[ (4 * j) + 2] = (byte) (tmpInt >>> 8);
+                        byteBuffer[ (4 * j) + 3] = (byte) (tmpInt);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = sBegin; z <= sEnd; z++,count++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+
+        case ModelStorageBase.DOUBLE:
+
+            // store as 64 bit double precision float
+            doubleBuffer = new double[sliceSize];
+            byteBuffer = new byte[8 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = sBegin; z <= sEnd; z++, count++) {
+                    i = (t * zDim) + z;
+                    fireProgressStateChanged(count * 50 / numberSlices);
+                    image.exportSliceXY(i, doubleBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        tmpLong = Double.doubleToLongBits(doubleBuffer[j]);
+                        byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
+                        byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
+                        byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
+                        byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
+                        byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
+                        byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
+                        byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
+                        byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = sBegin; z <= sEnd; z++,count++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+            
+        case ModelStorageBase.COMPLEX:
+
+            // store as 32 bit float
+            floatBuffer = new float[sliceSize];
+            floatIBuffer = new float[sliceSize];
+            byteBuffer = new byte[4 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = sBegin; z <= sEnd; z++, count++) {
+                    i = (t * zDim) + z;
+                    fireProgressStateChanged(count * 100 / numberSlices);
+                    image.exportComplexData(2*i*sliceSize, sliceSize, floatBuffer, floatIBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        tmpInt = Float.floatToIntBits(floatBuffer[j]);
+                        byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
+                        byteBuffer[ (4 * j) + 1] = (byte) (tmpInt >>> 16);
+                        byteBuffer[ (4 * j) + 2] = (byte) (tmpInt >>> 8);
+                        byteBuffer[ (4 * j) + 3] = (byte) (tmpInt);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = sBegin; z <= sEnd; z++,count++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+            
+        case ModelStorageBase.DCOMPLEX:
+
+            // store as 64 bit double precision float
+            doubleBuffer = new double[sliceSize];
+            doubleIBuffer = new double[sliceSize];
+            byteBuffer = new byte[8 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = sBegin; z <= sEnd; z++, count++) {
+                    i = (t * zDim) + z;
+                    fireProgressStateChanged(count * 50 / numberSlices);
+                    image.exportDComplexData(2*i*sliceSize, sliceSize, doubleBuffer, doubleIBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        tmpLong = Double.doubleToLongBits(doubleBuffer[j]);
+                        byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
+                        byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
+                        byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
+                        byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
+                        byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
+                        byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
+                        byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
+                        byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = sBegin; z <= sEnd; z++,count++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+        }
+        
+        if ((byteBuffer.length % 8) != 0) {
+            padBytes = 8 - byteBuffer.length;
+            for (i = 0; i < padBytes; i++) {
+            	raFile.writeByte(0);
+            }
+        }
+        
+       if (complexFlag) {
+    	// write the imaginary data type
+       	writeInt(matDataType, endianess);
+       	// write the number of imaginary data bytes = number of real data bytes
+       	writeInt(realImageBytes, endianess);
+    	   if (dataType == ModelStorageBase.COMPLEX) {
+    		// store as 32 bit float
+               for (t = tBegin; t <= tEnd; t++) {
+
+                   for (z = sBegin; z <= sEnd; z++, count++) {
+                       i = (t * zDim) + z;
+                       fireProgressStateChanged(50 + (count * 50 / numberSlices));
+                       image.exportComplexData(2*i*sliceSize, sliceSize, floatBuffer, floatIBuffer);
+
+                       for (j = 0; j < sliceSize; j++) {
+                           tmpInt = Float.floatToIntBits(floatIBuffer[j]);
+                           byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
+                           byteBuffer[ (4 * j) + 1] = (byte) (tmpInt >>> 16);
+                           byteBuffer[ (4 * j) + 2] = (byte) (tmpInt >>> 8);
+                           byteBuffer[ (4 * j) + 3] = (byte) (tmpInt);
+                       }
+
+                       raFile.write(byteBuffer);
+                   } // for (z = sBegin; z <= sEnd; z++,count++)
+               } // for (t = tBegin; t <= tEnd; t++)
+               
+               if ((byteBuffer.length % 8) != 0) {
+                   padBytes = 8 - byteBuffer.length;
+                   for (i = 0; i < padBytes; i++) {
+                   	raFile.writeByte(0);
+                   }
+               }
+   
+    	   } // if (dataType == ModelStorageBase.COMPLEX)
+    	   else { // dataType == ModelStorageBase.DCOMPLEX
+    		   for (t = tBegin; t <= tEnd; t++) {
+
+                   for (z = sBegin; z <= sEnd; z++, count++) {
+                       i = (t * zDim) + z;
+                       fireProgressStateChanged(50 + (count * 50 / numberSlices));
+                       image.exportDComplexData(2*i*sliceSize, sliceSize, doubleBuffer, doubleIBuffer);
+
+                       for (j = 0; j < sliceSize; j++) {
+                           tmpLong = Double.doubleToLongBits(doubleIBuffer[j]);
+                           byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
+                           byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
+                           byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
+                           byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
+                           byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
+                           byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
+                           byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
+                           byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+                       }
+
+                       raFile.write(byteBuffer);
+                   } // for (z = sBegin; z <= sEnd; z++,count++)
+               } // for (t = tBegin; t <= tEnd; t++)   
+    	   } // else dataType == ModelStorageBase.DCOMPLEX
+       } // if (complexFlag)
+        
+       matrixByteLength = (int)(raFile.length() -  136);
+       raFile.seek(132L);
+       writeInt(matrixByteLength, endianess);
+       raFile.close();
     }
 
     
