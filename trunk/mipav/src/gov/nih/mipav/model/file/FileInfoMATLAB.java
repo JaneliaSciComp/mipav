@@ -21,6 +21,7 @@ public class FileInfoMATLAB extends FileInfoBase {
 	int version = -1;
 	String arrayName = null;
 	String fieldNames[] = null;
+	String sourceFile = null;
     
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -87,6 +88,10 @@ public class FileInfoMATLAB extends FileInfoBase {
         		}
         	}
         }
+        
+        if (sourceFile != null) {
+        	dialog.append("Source file = " + sourceFile + "\n");
+        }
     }
     
     public void setHeaderTextField(String headerTextField) {
@@ -111,5 +116,9 @@ public class FileInfoMATLAB extends FileInfoBase {
     
     public void setFieldNames(String fieldNames[]) {
     	this.fieldNames = fieldNames;
+    }
+    
+    public void setSourceFile(String sourceFile) {
+    	this.sourceFile = sourceFile;
     }
 }
