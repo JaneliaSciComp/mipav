@@ -10,6 +10,14 @@ import java.util.*;
 
 /**
  * Computes the maximum or the minimum intensity along each projection of a 3D image. 
+ * The user can specify theshold values in image intensity for the calculation, as well as
+ * which projection to compute along (X,Y, or Z), the start and end slice used in the calculation,
+ * the size of a sliding 'window' in number of slices to use in the calculation, and whether to calculate the minimum,
+ * maximum or both projections.
+ * 
+ * When the sliding window size is not equal to the number of slices used in the calculation the output is a 3D image,
+ * where each slice of the output image is computed using the number of slices in the sliding window. When the
+ * sliding window size is equal to the number of slices used in the calculation the output image is a 2D image.
  * @author joshim2
  *
  */
@@ -137,6 +145,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	/**
 	 * Prepares this class for destruction.
 	 */
+	@Override
 	public void finalize() {
 		minIntensity = null;
 		maxIntensity = null;
@@ -146,6 +155,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	/**
 	 * Runs the Intensity Projection algorithm.
 	 */
+	@Override
 	public void runAlgorithm() {
 
 		if (srcImage == null) {
