@@ -369,13 +369,13 @@ public class ViewJSlider extends JSlider {
         if(setMajor) {
             setMajorTickSpacing(majTickSpacing);
         } else {
-            setMajorTickSpacing(0);
+            setMajorTickSpacing(0); //major ticks will not be seen
         }
         
         if(setMinor) {
             setMinorTickSpacing(minTickSpacing);
         } else {
-            setMinorTickSpacing(getMaximum() - getMinimum());
+            setMinorTickSpacing(getMaximum() - getMinimum()); //minor ticks will only be seen at endpoints
         }
         
         setLabelTable(buildSliderLabels(majTickSpacing)); 
@@ -385,10 +385,10 @@ public class ViewJSlider extends JSlider {
     
     
     /**
-     * Gets the best tick spacing by finding the value that divides into num with the greatest number that is 
-     * still less than the maxNumber of ticks
-     * @param num
-     * @param maxNumTicks
+     * Gets the best tick spacing by finding the value that divides into rangeNeeded with the greatest number that is 
+     * still less than the maximum number of ticks that are allowed in the range
+     * @param rangeNeeded the range covered by tick marks
+     * @param maxNumTicks the number of tick marks that can exist in the range
      * @return Best tick spacing value
      */
     private int getBestTickSpacing(int rangeNeeded, double maxNumTicks) {
