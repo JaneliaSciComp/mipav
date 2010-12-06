@@ -31,6 +31,15 @@ import javax.swing.JTextField;
 
 /**
  * Dialog to call Maximum Intensity Projection. It should be noted that algorithms are executed in own thread.
+ * The Maximum Intensity Projection algorithm computes the maximum or the minimum intensity along each projection of a 3D image. 
+ * The user can specify theshold values in image intensity for the calculation, as well as
+ * which projection to compute along (X, Y, or Z), the start and end slice used in the calculation,
+ * the size of a sliding 'window' in number of slices to use in the calculation, and whether to calculate the minimum,
+ * maximum or both projections.
+ * 
+ * When the sliding window size is not equal to the number of slices used in the calculation the output is a 3D image,
+ * where each slice of the output image is computed using the number of slices in the sliding window. When the
+ * sliding window size is equal to the number of slices used in the calculation the output image is a 2D image.
  *
  * @author  joshim2
  */
@@ -53,52 +62,71 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	/** JTextfield for maximum value of threshold. */
 	private JTextField[] maxInput;
 
-	/** JTextfield for minimum value of threshold. */
+	/** JTextfield for start slice of the computation. */
 	private JTextField[] startInput;
 
-	/** JTextfield for maximum value of threshold. */
+	/** JTextfield for end slice of the computation. */
 	private JTextField[] stopInput;
 
-	/** Minimum intensity. */
+	/** Minimum intensity threshold. */
 	private float[] minIntensity;
 
-	/** Maximum intensity. */
+	/** Maximum intensity threshold. */
 	private float[] maxIntensity;
 
+	/** JTextfield for minimum Red value of threshold. */
 	private JTextField[] minInputR;
+	/** JTextfield for maximum Red value of threshold. */
 	private JTextField[] maxInputR;
+	/** JTextfield for minimum Green value of threshold. */
 	private JTextField[] minInputG;
+	/** JTextfield for maximum Green value of threshold. */
 	private JTextField[] maxInputG;
+	/** JTextfield for minimum Blue value of threshold. */
 	private JTextField[] minInputB;
+	/** JTextfield for maximum Blue value of threshold. */
 	private JTextField[] maxInputB;
 
+	/** Minimum Red intensity threshold. */
 	private float[] minIntensityR;
+	/** Maximum Red intensity threshold. */
 	private float[] maxIntensityR;
+	/** Minimum Green intensity threshold. */
 	private float[] minIntensityG;
+	/** Maximum Green intensity threshold. */
 	private float[] maxIntensityG;
+	/** Minimum Blue intensity threshold. */
 	private float[] minIntensityB;
+	/** Maximum Blue intensity threshold. */
 	private float[] maxIntensityB;
 
+	/** CheckBox turns on/off calculating the maximum projection. */
 	private JCheckBox[] maximumCheck;
+	/** CheckBox turns on/off calculating the minimum projection. */
 	private JCheckBox[] minimumCheck;
 
+	/** Label displays the number of slices in the sliding window. */
 	private JLabel[] windowLabel;
+	/** Slider enables user to change the size of the sliding window. */
 	private ViewJSlider[] windowSlider;
 
-
+	/** When true, calculate the maximum (X,Y,Z) slices. */
 	private boolean[] maximum;
+	/** When true, calculate the minimum (X,Y,Z) slices. */
 	private boolean[] minimum;    
+	/** Value of the start slice for the calculation (X,Y,Z). */
 	private int[] startSlice;
+	/** Value of the end slice for the calculation (X,Y,Z). */
 	private int[] endSlice;
+	/** Value of the window size for the calculation (X,Y,Z). */
 	private int[] window;
+	/** When true output the X,Y,Z projections. */
 	private boolean[] projection;
-
+	/** Image dimension, must be 3. */
 	private int nDims;
+	/** Image extents. */
 	private int[] extents;
 
-	//~ Constructors ---------------------------------------------------------------------------------------------------
-
-	// Constructors ----------------------------------------------------------------------------------------
 
 	/**
 	 * Empty constructor needed for dynamic instantiation (used during scripting).
@@ -242,7 +270,9 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	 * When one of the text inputs has been left blank, trying to convert them to ints results in throwing a null
 	 * pointer exception. This method determines which one of the JTextFields threw the null pointer Exception.
 	 *
-	 * @return  The text field that returned null.
+	 * @param min one of the JTextFields the threw the null exception.
+	 * @param max one of the JTextFields the threw the null exception.
+	 * @return either min or max.
 	 */
 	protected JTextField determineNull( JTextField min, JTextField max ) {
 		String t;
@@ -269,67 +299,116 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	}
 
 	/**
-	 * Accessor that sets the minimum value.
-	 *
-	 * @param  x  Value to set minimum value to.
+	 * Sets the minimum value.
+	 * @param i index
+	 * @param x Value to set minimum value to.
 	 */
 	public void setMin(int i, float x) {
 		minIntensity[i] = x;
 	}
-
 	/**
-	 * Accessor that sets the maximum value.
-	 *
-	 * @param  x  Value to set maximum value to.
+	 * Sets the maximum value.
+	 * @param i index
+	 * @param x Value to set maximum value to.
 	 */
 	public void setMax(int i, float x) {
 		maxIntensity[i] = x;
 	}
-
+	
+	/**
+	 * Sets the minimum Red value.
+	 * @param i index
+	 * @param minR Value to set minimum Red value to.
+	 */
 	public void setMinR(int i, float minR) {
 		minIntensityR[i] = minR;
 	}
-
+	/**
+	 * Sets the maximum Red value.
+	 * @param i index
+	 * @param maxR Value to set maximum Red value to.
+	 */
 	public void setMaxR(int i, float maxR) {
 		maxIntensityR[i] = maxR;
 	}
-
+	
+	/**
+	 * Sets the minimum Green value.
+	 * @param i index
+	 * @param minG Value to set minimum Green value to.
+	 */
 	public void setMinG(int i, float minG) {
 		minIntensityG[i] = minG;
 	}
-
+	/**
+	 * Sets the maximum Green value.
+	 * @param i index
+	 * @param maxG Value to set maximum Green value to.
+	 */
 	public void setMaxG(int i, float maxG) {
 		maxIntensityG[i] = maxG;
 	}
-
+	
+	/**
+	 * Sets the minimum Blue value.
+	 * @param i index
+	 * @param minB Value to set minimum Blue value to.
+	 */
 	public void setMinB(int i, float minB) {
 		minIntensityB[i] = minB;
 	}
-
+	/**
+	 * Sets the maximumBlue  value.
+	 * @param i index
+	 * @param maxB Value to set maximum Blue value to.
+	 */
 	public void setMaxB(int i, float maxB) {
 		maxIntensityB[i] = maxB;
 	}
 
-
+	/**
+	 * Sets the start slice.
+	 * @param i index
+	 * @param start value.
+	 */
 	public void setStartSlice( int i, int start )
 	{
 		startSlice[i] = start;
 	}
+	/**
+	 * Sets the end slice.
+	 * @param i index
+	 * @param end value.
+	 */
 	public void setEndSlice( int i, int end )
 	{
 		endSlice[i] = end;
 	}
 
+	/**
+	 * Sets the window size.
+	 * @param i index
+	 * @param size, new window size.
+	 */
 	public void setWindow( int i, int size )
 	{
 		window[i] = size;
 	}
 
+	/**
+	 * Turns computing the maximum projection on for index i.
+	 * @param i index representing (X,Y,Z) projection.
+	 * @param compute when true the computation is turned on.
+	 */
 	public void setComputeMax( int i, boolean compute )
 	{
 		maximum[i] = compute;
 	}
-
+	/**
+	 * Turns computing the minimum projection on for index i.
+	 * @param i index representing (X,Y,Z) projection.
+	 * @param compute when true the computation is turned on.
+	 */
 	public void setComputeMin( int i, boolean compute )
 	{
 		minimum[i] = compute;
@@ -463,6 +542,9 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 		}
 	}
 
+	/**
+	 * Allocates local memory.
+	 */
 	private void initData()
 	{
 		maximumCheck = new JCheckBox[nDims];
