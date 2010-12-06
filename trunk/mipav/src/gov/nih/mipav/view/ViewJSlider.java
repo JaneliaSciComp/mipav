@@ -11,6 +11,7 @@ import java.util.Hashtable;
 import javax.swing.BoundedRangeModel;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 
 /**
  * This class extends Java's JSlider to give basic solutions to common slider needs in 
@@ -80,6 +81,10 @@ public class ViewJSlider extends JSlider {
     
     /** Holds the old dimension to minimize redrawing of slider table */
     private Dimension dim;
+    
+    /**The closest number of pixels that major/minor ticks may be next to each other. Used to set GUI and create labels. */
+    private double minAllowableMinorTickSpacing = 5;
+    private double minAllowableMajorTickSpacing = 50;
     
     /** Default constructor **/
     private ViewJSlider() {}
@@ -233,9 +238,33 @@ public class ViewJSlider extends JSlider {
         this.setPaintTicks(type.getImpl().getPaintTicks());
         this.setPaintLabels(type.getImpl().getPaintLabels());
         this.setSnapToTicks(type.getImpl().getSnapToTicks());
+        this.setOrientation(type.getImpl().getOrientation());
         this.addComponentListener(new ViewJSliderResizeTool());
     }
     
+    /**
+     * Sets values for minimum allowable tick spacing depending on size of GUI.
+     */
+    private void buildMinimumTickSpacing() {
+        int length = 0;
+        if(getOrientation() == SwingConstants.VERTICAL) {
+            length = getSize().height;
+        } else {
+            length = getSize().width;
+        }
+        
+        if(length >= 150) {
+            minAllowableMajorTickSpacing = 50.0;
+            minAllowableMinorTickSpacing = 5.0;
+        } else if(length >= 50) { //allow for small spacing for small GUIs
+            minAllowableMajorTickSpacing = 25.0;
+            minAllowableMinorTickSpacing = 3.0;
+        } else { //don't allow for arbitrary small spacing in tiny GUIs
+            minAllowableMajorTickSpacing = 50.0;
+            minAllowableMinorTickSpacing = 5.0;
+        }
+    }
+
     /**
      * This class watches for GUI events that require slider marks to be reset.
      * 
@@ -287,102 +316,113 @@ public class ViewJSlider extends JSlider {
     public void resizeSlider() {
         double maxMinorTicks = 0.0;
         double maxMajorTicks = 0.0;
-        int majTickSpacing,minTickSpacing;
+        int majTickSpacing = 0,minTickSpacing = 0;
+        buildMinimumTickSpacing();
         if(getOrientation() == ViewJSlider.HORIZONTAL) {
-            maxMinorTicks = getSize().getWidth()/5;
-            maxMajorTicks = getSize().getWidth()/50;
+            maxMinorTicks = getSize().getWidth()/minAllowableMinorTickSpacing;
+            maxMajorTicks = getSize().getWidth()/minAllowableMajorTickSpacing;
         } else {
-            maxMinorTicks = getSize().getHeight()/5;
-            maxMajorTicks = getSize().getHeight()/50;
+            maxMinorTicks = getSize().getHeight()/minAllowableMinorTickSpacing;
+            maxMajorTicks = getSize().getHeight()/minAllowableMajorTickSpacing;
         }
-        int maxPlusMin = getMaximum() + getMinimum();
-        if(maxPlusMin < maxMajorTicks) {
-            majTickSpacing = 1;
+        int maxMinusMin = getMaximum() - getMinimum();
+        boolean setMajor = false, setMinor = false;
+        
+        if(maxMinusMin <= maxMinorTicks) {
             minTickSpacing = 1;
-            setMajorTickSpacing(majTickSpacing);
-            setMinorTickSpacing(minTickSpacing);
-            setLabelTable(buildSliderLabels(majTickSpacing));
-            setSnapToTicks(true);
-            return;
+            
+            setMinor = true;
         }
         
-        if(MipavMath.isPrimeUnder1000(maxPlusMin)) {
-            majTickSpacing = 0;
-            minTickSpacing = getBestTickSpacing(maxPlusMin + 1,maxMinorTicks);
-            setMajorTickSpacing(majTickSpacing);
-            setMinorTickSpacing(minTickSpacing);
-            setLabelTable(buildSliderLabels(majTickSpacing));
-            if(minTickSpacing == 1) {
-                setSnapToTicks(true);
+        if(maxMinusMin <= maxMajorTicks) {
+            majTickSpacing = 1;
+            setMajor = true;
+        }
+        
+        if(!setMajor) {
+            majTickSpacing = getBestTickSpacing(maxMinusMin, maxMajorTicks);
+            if(majTickSpacing == -1) {
+                majTickSpacing = 0; //no valid majTickSpacing could be found, so label table will just create values at getMinimum(), half-way point, and getMaximum()
             } else {
-                setSnapToTicks(false);
+                setMajor = true;
             }
-            return;
-            
-        }else {
-            majTickSpacing = getBestTickSpacing(maxPlusMin, maxMajorTicks);
-            if(maxPlusMin < maxMinorTicks) {
-                minTickSpacing = 1;
-                setLabelTable(buildSliderLabels(majTickSpacing));
-                setMajorTickSpacing(majTickSpacing);
-                setMinorTickSpacing(minTickSpacing);
-                setSnapToTicks(true);
-                return;
-            }else {
-                if(MipavMath.isPrimeUnder1000(majTickSpacing)) {
-                    minTickSpacing = majTickSpacing;
-                    setMajorTickSpacing(majTickSpacing);
-                    setMinorTickSpacing(minTickSpacing);
-                    setLabelTable(buildSliderLabels(majTickSpacing));
-                    if(minTickSpacing == 1) {
-                        setSnapToTicks(true);
-                    } else {
-                        setSnapToTicks(false);
-                    }
-                    return;
-                }else {
-                    minTickSpacing = getBestTickSpacing(maxPlusMin,maxMinorTicks);
-                    if(majTickSpacing%minTickSpacing != 0) {
-                        while(majTickSpacing%minTickSpacing != 0 && minTickSpacing <= majTickSpacing) {
-                            minTickSpacing++;
-                        }
-                    }
-                    setMajorTickSpacing(majTickSpacing);
-                    setMinorTickSpacing(minTickSpacing);
-                    setLabelTable(buildSliderLabels(majTickSpacing));
-                    if(minTickSpacing == 1) {
-                        setSnapToTicks(true);
-                    } else {
-                        setSnapToTicks(false);
-                    }
-                    return;
-                }
-            }
-        }  
+        }
+        
+        if(setMajor) {
+            minTickSpacing = getBestTickSpacing(majTickSpacing, majTickSpacing);
+        } else {
+            minTickSpacing = getBestTickSpacing(maxMinusMin, maxMinorTicks);
+        }
+        
+        if(minTickSpacing == -1) {
+            minTickSpacing = 0;
+        }
+        
+        if(minTickSpacing == 1) {
+            setSnapToTicks(true); //when all minor ticks can be displayed, this is the only time a slider should snap to ticks
+        }
+        
+        if(minTickSpacing > 0) {
+            setMinor = true;
+        }
+        
+        if(setMajor) {
+            setMajorTickSpacing(majTickSpacing);
+        } else {
+            setMajorTickSpacing(0);
+        }
+        
+        if(setMinor) {
+            setMinorTickSpacing(minTickSpacing);
+        } else {
+            setMinorTickSpacing(getMaximum() - getMinimum());
+        }
+        
+        setLabelTable(buildSliderLabels(majTickSpacing)); 
     }
     
     
     
     
     /**
-     * Gets the best tick spacing by finding the value that divides into the numb with the greatest numher that is 
+     * Gets the best tick spacing by finding the value that divides into num with the greatest number that is 
      * still less than the maxNumber of ticks
      * @param num
      * @param maxNumTicks
      * @return Best tick spacing value
      */
-    private int getBestTickSpacing(int num, double maxNumTicks) {
+    private int getBestTickSpacing(int rangeNeeded, double maxNumTicks) {
         int bestTickSpacing = 1;
+        boolean converged = false;
     
-        for(int i=getMaximum();i>=1;i--) {
-            if(num%i==0) {
-                if(num/i < maxNumTicks) {
+        for(int i=rangeNeeded-1; i > 0; i--) {
+            if(rangeNeeded%i==0 && rangeNeeded/i <= maxNumTicks) {
+                    converged = true;
                     bestTickSpacing = i;
-                }
             }
         }
-        return bestTickSpacing;
+        if(converged) {
+            return bestTickSpacing;
+        } else {
+            return -1;
+        }
         
+    }
+
+    public double getMinAllowableMinorTickSpacing() {
+        return minAllowableMinorTickSpacing;
+    }
+
+    public void setMinAllowableMinorTickSpacing(double minAllowableMinorTickSpacing) {
+        this.minAllowableMinorTickSpacing = minAllowableMinorTickSpacing;
+    }
+
+    public double getMinAllowableMajorTickSpacing() {
+        return minAllowableMajorTickSpacing;
+    }
+
+    public void setMinAllowableMajorTickSpacing(double minAllowableMajorTickSpacing) {
+        this.minAllowableMajorTickSpacing = minAllowableMajorTickSpacing;
     }
     
     
