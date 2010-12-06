@@ -4109,12 +4109,12 @@ public class FileMATLAB extends FileBase {
                     			maskImage2.exportData(0, sliceSize, shortBuffer);
                     		}
                     		catch(IOException e) {
-                    		   MipavUtil.displayError("IOException on maskImage.exportData(0, sliceSize, shortBuffer)");
+                    		   MipavUtil.displayError("IOException on maskImage2.exportData(0, sliceSize, shortBuffer)");
                     		   throw e;
                     		}
                     		maskImage2.changeExtents(newExtents);
                     		maskImage2.recomputeDataSize();
-                    		for (i = 0; i < image.getExtents()[2]; i++) {
+                    		for (i = 0; i < image2.getExtents()[2]; i++) {
 	                    		try {
 	                    			maskImage2.importUData(i * sliceSize, shortBuffer, false);
 	                    		}
@@ -4162,8 +4162,8 @@ public class FileMATLAB extends FileBase {
 	                }
 	                maskImage2.groupVOIs();
 	                kVOIs = maskImage2.getVOIs();
-	                if (voiFieldName != null) {
-	                    ((VOI)kVOIs.get(0)).setName(voiFieldName);
+	                if (voi2FieldName != null) {
+	                    ((VOI)kVOIs.get(0)).setName(voi2FieldName);
 	                }
 	                image2.setVOIs(kVOIs);
 	                maskImage2.disposeLocal();
