@@ -6,6 +6,9 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -32,7 +35,7 @@ import javax.swing.JTextField;
  * @author  joshim2
  */
 public class JDialogMaximumIntensityProjection extends JDialogScriptableBase 
-implements AlgorithmInterface, ChangeListener, KeyListener {
+implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 
 	//~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -43,9 +46,6 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 
 	/** Source Image. */
 	private ModelImage image = null;
-
-	/** Dialog border size */
-	private int borderSize = 0;
 
 	/** JTextfield for minimum value of threshold. */
 	private JTextField[] minInput;
@@ -342,7 +342,6 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 		image = scriptParameters.retrieveInputImage();
 		nDims = image.getExtents().length > 2 ? 3 : 1;
 		parentFrame = image.getParentFrame();
-		borderSize = scriptParameters.getParams().getInt("border_size");
 		initData();
 
 		for ( int i = 0; i < nDims; i++ )
@@ -441,7 +440,6 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 	 */
 	protected void storeParamsFromGUI() throws ParserException {
 		scriptParameters.storeInputImage(image);
-		scriptParameters.getParams().put(ParameterFactory.newParameter("border_size", borderSize));
 		for ( int i = 0; i < nDims; i++ )
 		{
 			scriptParameters.getParams().put(ParameterFactory.newParameter("startSlice"+i, startSlice[i] ) );
@@ -1142,6 +1140,103 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 				}
 			}
 		}
+	}
+
+	@Override
+	public ActionMetadata getActionMetadata() { 
+		return new MipavActionMetadata() {
+			public String getCategory() {
+				return new String("Utilities");
+			}
+
+			public String getDescription() {
+				return new String("Computes the maximum and/or minimum intensity projection of an image.");
+			}
+
+			public String getDescriptionLong() {
+				return new String("Computes the maximum and/or minimum intensity projection of an image.");
+			}
+
+			public String getShortLabel() {
+				return new String("IntensityProjection");
+			}
+
+			public String getLabel() {
+				return new String("Intensity Projection");
+			}
+
+			public String getName() {
+				return new String("Intensity Projection");
+			}
+		};
+	}
+
+	@Override
+	public ParameterTable createInputParameters() {
+		final ParameterTable table = new ParameterTable();
+
+		try {
+			table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+			for ( int i = 0; i < nDims; i++ )
+			{
+				table.put(ParameterFactory.newParameter("startSlice"+i, startSlice[i] ) );
+				table.put(ParameterFactory.newParameter("endSlice"+i, endSlice[i] ) );
+				table.put(ParameterFactory.newParameter("window"+i, window[i] ) );
+				table.put(ParameterFactory.newParameter("compute_max"+i, maximum[i] ) );
+				table.put(ParameterFactory.newParameter("compute_min"+i, minimum[i] ) );
+				
+				if (image.isColorImage()) {
+					table.put(ParameterFactory.newParameter("min_valuer"+i, minIntensityR[i]));
+					table.put(ParameterFactory.newParameter("max_valuer"+i, maxIntensityR[i]));
+					table.put(ParameterFactory.newParameter("min_valueg"+i, minIntensityG[i]));
+					table.put(ParameterFactory.newParameter("max_valueg"+i, maxIntensityG[i]));
+					table.put(ParameterFactory.newParameter("min_valueb"+i, minIntensityB[i]));
+					table.put(ParameterFactory.newParameter("max_valueb"+i, maxIntensityB[i]));
+				}
+				else {
+					table.put(ParameterFactory.newParameter("min_value"+i, minIntensity[i]));
+					table.put(ParameterFactory.newParameter("max_value"+i, maxIntensity[i]));
+				}
+			}
+		} catch (final ParserException e) {
+			// this shouldn't really happen since there isn't any real parsing going on...
+			e.printStackTrace();
+		}
+
+		return table;
+	}
+
+	@Override
+	public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+        	table.put(new ParameterImage("XMin"));
+        	table.put(new ParameterImage("XMax"));
+        	table.put(new ParameterImage("YMin"));
+        	table.put(new ParameterImage("YMax"));
+        	table.put(new ParameterImage("ZMin"));
+        	table.put(new ParameterImage("ZMax"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+
+	}
+
+	@Override
+	public String getOutputImageName(String imageParamName) {
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+
+	}
+
+	@Override
+	public boolean isActionComplete() {
+		return isComplete();
 	}
 
 }
