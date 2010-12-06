@@ -167,7 +167,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 
 		int lengthZ = dimX * dimY; // No. of pixels Z projection image
 		int startZ = Math.max( 0, startSlice );
-		int stopZ = Math.min( lengthZ, stopSlice );
+		int stopZ = Math.min( dimZ, stopSlice + 1 );
 
 		// For maximum intensity along Z-axis
 		int windowSize = window;
@@ -189,7 +189,8 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		ModelImage ZProjectionImageMin = null;
 		if ( computeMaximum )
 		{
-			ZProjectionImageMax = new ModelImage(srcImage.getType(), ZExtents, "ZProjectionImageMax");
+			ZProjectionImageMax = new ModelImage( srcImage.getType(), ZExtents, 
+					srcImage.getImageName() + "_ZProjectionMax" );
 			resultImages.add(ZProjectionImageMax);
 	        JDialogBase.updateFileInfo( srcImage, ZProjectionImageMax );
 			// Set resolutions in line with the original source image resolutions
@@ -200,7 +201,8 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		}
 		if ( computeMinimum )
 		{
-			ZProjectionImageMin = new ModelImage(srcImage.getType(), ZExtents, "ZProjectionImageMin");
+			ZProjectionImageMin = new ModelImage(srcImage.getType(), ZExtents,
+					srcImage.getImageName() + "_ZProjectionMin" );
 			resultImages.add(ZProjectionImageMin);
 	        JDialogBase.updateFileInfo( srcImage, ZProjectionImageMin );
 		}
@@ -307,7 +309,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
 
 		int startY = Math.max( 0, startSlice );
-		int stopY = Math.min( dimY, stopSlice );
+		int stopY = Math.min( dimY, stopSlice + 1 );
 
 		int windowSize = window;
 		int newSlices = (stopY - startY) - windowSize + 1;
@@ -332,13 +334,15 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		ModelImage YProjectionImageMin = null;
 		if ( computeMaximum )
 		{
-			YProjectionImageMax = new ModelImage(srcImage.getType(), ZExtents, "YProjectionImageMax");
+			YProjectionImageMax = new ModelImage(srcImage.getType(), ZExtents,
+					srcImage.getImageName() + "_YProjectionMax" );
 			resultImages.add(YProjectionImageMax);
 			YProjectionImageMax.setResolutions(YRes);
 		}
 		if ( computeMinimum )
 		{
-			YProjectionImageMin = new ModelImage(srcImage.getType(), ZExtents, "YProjectionImageMin");
+			YProjectionImageMin = new ModelImage(srcImage.getType(), ZExtents,
+					srcImage.getImageName() + "_YProjectionMin" );
 			resultImages.add(YProjectionImageMin);
 			YProjectionImageMin.setResolutions(YRes);
 		}			
@@ -449,7 +453,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
 
 		int startX = Math.max( 0, startSlice );
-		int stopX = Math.min( dimX, stopSlice );
+		int stopX = Math.min( dimX, stopSlice + 1 );
 
 		int windowSize = window;
 		int newSlices = (stopX - startX) - windowSize + 1;
@@ -474,13 +478,15 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		ModelImage XProjectionImageMin = null;
 		if ( computeMaximum )
 		{
-			XProjectionImageMax = new ModelImage(srcImage.getType(), ZExtents, "XProjectionImageMax");
+			XProjectionImageMax = new ModelImage(srcImage.getType(), ZExtents,
+					srcImage.getImageName() + "_XProjectionMax" );
 			resultImages.add(XProjectionImageMax);
 			XProjectionImageMax.setResolutions(XRes);
 		}
 		if ( computeMinimum )
 		{
-			XProjectionImageMin = new ModelImage(srcImage.getType(), ZExtents, "XProjectionImageMin");
+			XProjectionImageMin = new ModelImage(srcImage.getType(), ZExtents,
+					srcImage.getImageName() + "_XProjectionMin" );
 			resultImages.add(XProjectionImageMin);
 			XProjectionImageMin.setResolutions(XRes);
 		}			

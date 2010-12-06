@@ -84,7 +84,7 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 	private JCheckBox[] minimumCheck;
 
 	private JLabel[] windowLabel;
-	private JSlider[] windowSlider;
+	private ViewJSlider[] windowSlider;
 	
 	
 	private boolean[] maximum;
@@ -172,7 +172,9 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 				if ( resultImage != null )
 				{
 					try {
-						new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+						ViewJFrameImage kFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+						kFrame.updateFrame( image.getParentFrame().getComponentImage().getZoomX(), 
+								image.getParentFrame().getComponentImage().getZoomX() );
 					} catch (OutOfMemoryError error) {
 						System.gc();
 						MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -729,7 +731,7 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 		 startSlice = new int[nDims];
 		 stopSlice = new int[nDims];
 		 windowLabel = new JLabel[nDims];
-		 windowSlider = new JSlider[nDims];
+		 windowSlider = new ViewJSlider[nDims];
 		 window = new int[nDims];
 		 projection = new boolean[nDims];
 
@@ -1042,9 +1044,9 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 			 gbl.setConstraints(stopInput[i], gbc);
 			 thresholdPanel.add(stopInput[i]);
 			 
-			 // Windowning slider:
+			 // Windowing slider:
 			 thresholdPanel.add(Box.createHorizontalStrut(10));    
-			 windowLabel[i] = new JLabel("# slices in bracket: " + (extents[i]-1) );
+			 windowLabel[i] = new JLabel("# slices in bracket: " + extents[i] );
 			 windowLabel[i].setFont(serif12);
 			 windowLabel[i].setForeground(Color.black);
 			 windowLabel[i].setRequestFocusEnabled(false);
@@ -1053,7 +1055,7 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 			 thresholdPanel.add(windowLabel[i]);
 			 thresholdPanel.add(Box.createHorizontalStrut(10));
 			 
-			 windowSlider[i] = new JSlider(0, extents[i]-1, extents[i]-1 );
+			 windowSlider[i] = new ViewJSlider( ViewJSlider.SLICE, 1, extents[i], extents[i] );
 			 windowSlider[i].addChangeListener(this); 
 			 gbc.gridwidth = GridBagConstraints.REMAINDER;
 			 gbl.setConstraints(windowSlider[i], gbc);
@@ -1101,9 +1103,9 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 				 startInput[i].selectAll();
 				 return false;
 			 }
-			 if ( startSlice[i] > extents[i] )
+			 if ( startSlice[i] > (extents[i]-1) )
 			 {
-				 MipavUtil.displayError("Cannot have start slice greater than " + extents[i]);
+				 MipavUtil.displayError("Cannot have start slice greater than " + (extents[i]-1));
 				 startInput[i].requestFocus();
 				 startInput[i].selectAll();
 				 return false;
@@ -1117,14 +1119,14 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
 			 }
 			 if ( stopSlice[i] < 0 )
 			 {
-				 MipavUtil.displayError("Cannot have stop slice < 0");
+				 MipavUtil.displayError("Cannot have end slice < 0");
 				 stopInput[i].requestFocus();
 				 stopInput[i].selectAll();
 				 return false;
 			 }
-			 if ( stopSlice[i] > extents[i] )
+			 if ( stopSlice[i] > (extents[i]-1) )
 			 {
-				 MipavUtil.displayError("Cannot have stop slice greater than " + extents[i]);
+				 MipavUtil.displayError("Cannot have end slice greater than " + (extents[i]-1));
 				 startInput[i].requestFocus();
 				 startInput[i].selectAll();
 				 return false;
@@ -1354,17 +1356,7 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
         		{
         			int newStop = Integer.parseInt( stopInput[i].getText() );
         			int newStart = Integer.parseInt( startInput[i].getText() );
-            		if ( source == startInput[i] && newStart > newStop )
-            		{
-            			newStart = newStop;
-            			startInput[i].setText(Integer.toString(newStop));
-            		}
-            		if ( source == stopInput[i] && newStart > newStop )
-            		{
-            			newStop = newStart;
-            			stopInput[i].setText(Integer.toString(newStart));
-            		}
-        			int range = newStop-newStart;
+        			int range = Math.max( 0, Math.min( extents[i], 1 + newStop-newStart ) );
         			windowSlider[i].setMaximum(range);
         			if ( windowSlider[i].getValue() > range )
         			{
@@ -1391,17 +1383,7 @@ implements AlgorithmInterface, ChangeListener, KeyListener {
         	{
         		int newStop = Integer.parseInt( stopInput[i].getText() );
         		int newStart = Integer.parseInt( startInput[i].getText() );
-        		if ( source == startInput[i] && newStart > newStop )
-        		{
-        			newStart = newStop;
-        			startInput[i].setText(Integer.toString(newStop));
-        		}
-        		if ( source == stopInput[i] && newStart > newStop )
-        		{
-        			newStop = newStart;
-        			stopInput[i].setText(Integer.toString(newStart));
-        		}
-        		int range = newStop-newStart;
+    			int range = Math.max( 0, Math.min( extents[i], 1 + newStop-newStart ) );
         		windowSlider[i].setMaximum(range);
         		if ( windowSlider[i].getValue() > range )
         		{
