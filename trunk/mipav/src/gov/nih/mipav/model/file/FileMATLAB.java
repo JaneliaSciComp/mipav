@@ -1,6 +1,10 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
+import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
@@ -295,9 +299,8 @@ public class FileMATLAB extends FileBase {
         int numericArrayNameBytes;
         String numericArrayName;
         int logicalFields = 0;
-        int firstNonLogicalExtents[] = null;
-        boolean firstNonLogicalFound = false;
         boolean isVOI = false;
+        boolean isVOI2 = false;
         int nonLogicalField = 0;
         int adjustedFieldDim;
         int newExtents[] = null;
@@ -308,6 +311,7 @@ public class FileMATLAB extends FileBase {
         boolean haveSmallImaginaryData;
         String voiFieldName = null;
         String voi2FieldName = null;
+        int sliceSize;
 
         try {
             
@@ -854,12 +858,22 @@ public class FileMATLAB extends FileBase {
                         	logicalFlag = true;
                         	Preferences.debug("Logical flag is set\n");
                         	logicalFields++;
-                        	isVOI = true;
+                        	if (imagesFound == 1) {
+                        	    isVOI = true;
+                        	}
+                        	else {
+                        		isVOI2 = true;
+                        	}
                         }
                         else {
                         	logicalFlag = false;
                         	Preferences.debug("Logical flag is not set\n");
-                        	isVOI = false;
+                        	if (imagesFound == 1) {
+                        	    isVOI = false;
+                        	}
+                        	else {
+                        		isVOI2 = false;
+                        	}
                         }
                         nonLogicalField = field - logicalFields;
                         if ((imagesFound == 1) && (fieldNumber == 2) && (fieldNames != null) && logicalFlag) {
@@ -911,7 +925,12 @@ public class FileMATLAB extends FileBase {
                     		if (imageExtents != null) {
 	                    		for (i = 0; i < 2; i++) {
 	                    		    if (imageExtents[i] != maskExtents[i]) {
-	                    		    	isVOI = false;
+	                    		    	if (imagesFound == 1) {
+	                    		    	    isVOI = false;
+	                    		    	}
+	                    		    	else {
+	                    		    		isVOI2 = false;
+	                    		    	}
 	                    		    }
 	                    		}
                     		}
@@ -3929,25 +3948,227 @@ public class FileMATLAB extends FileBase {
             }
             
             if (maskImage != null) {
-            	maskImage.setFileInfo(maskFileInfo, 0);
-            	vmFrame = new ViewJFrameImage(maskImage);
-            	if (voiFieldName != null) {
-            		vmFrame.setTitle(voiFieldName);
-            	}
-            	else {
-            	    vmFrame.setTitle(fileName.substring(0,s) + "_mask");
-            	}
+            	if (!isVOI) {
+            		// If xDim or yDim of maskImage does not equal xDim or yDim of image,
+            		// then do not convert to a VOI
+	            	maskImage.setFileInfo(maskFileInfo, 0);
+	            	vmFrame = new ViewJFrameImage(maskImage);
+	            	if (voiFieldName != null) {
+	            		vmFrame.setTitle(voiFieldName);
+	            	}
+	            	else {
+	            	    vmFrame.setTitle(fileName.substring(0,s) + "_mask");
+	            	}
+            	} // if (!isVOI)
+            	else { // convert maskImage to VOI
+	            	if ((image.getNDims() >= 3) && (maskImage.getNDims() == 2)) {
+	            		// Convert maskImage from 2D to 3D
+	            		sliceSize = image.getExtents()[0]*image.getExtents()[1];
+	            		newExtents = new int[3];
+	            	    for (i = 0; i < 3; i++) {
+	            	    	newExtents[i] = image.getExtents()[i];
+	            	    }
+	            		switch(maskImage.getType()) {
+                    	case ModelStorageBase.BYTE:
+                    		buffer = new byte[sliceSize];
+                    		try {
+                    			maskImage.exportData(0, sliceSize, buffer);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on maskImage.exportData(0, sliceSize, buffer)");
+                    		   throw e;
+                    		}
+                    		maskImage.changeExtents(newExtents);
+                    		maskImage.recomputeDataSize();
+                    		for (i = 0; i < image.getExtents()[2]; i++) {
+	                    		try {
+	                    			maskImage.importData(i * sliceSize, buffer, false);
+	                    		}
+	                    		catch(IOException e) {
+	                    			MipavUtil.displayError("IOException on maskImage.importData(i * sliceSize, buffer, false)");
+	                    			throw e;
+	                    		}
+                    		}
+                    		maskImage.calcMinMax();
+                    		break;
+                    	case ModelStorageBase.UBYTE:
+                    		shortBuffer = new short[sliceSize];
+                    		try {
+                    			maskImage.exportData(0, sliceSize, shortBuffer);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on maskImage.exportData(0, sliceSize, shortBuffer)");
+                    		   throw e;
+                    		}
+                    		maskImage.changeExtents(newExtents);
+                    		maskImage.recomputeDataSize();
+                    		for (i = 0; i < image.getExtents()[2]; i++) {
+	                    		try {
+	                    			maskImage.importUData(i * sliceSize, shortBuffer, false);
+	                    		}
+	                    		catch(IOException e) {
+	                    			MipavUtil.displayError("IOException on maskImage.importUData(i * sliceSize, shortBuffer, false)");
+	                    			throw e;
+	                    		}
+                    		}
+                    		maskImage.calcMinMax();
+                    		break;
+	            		}
+	            	} // if ((image.getNDims() >= 3) && (maskImage.getNDims() == 2))
+	            	boolean wholeImage = true;
+	            	if (maskImage.getNDims() == 2) { 
+	                    AlgorithmMorphology2D idObjectsAlgo2D;
+	                    int method = AlgorithmMorphology2D.ID_OBJECTS;
+	                    
+	                    idObjectsAlgo2D = new AlgorithmMorphology2D(maskImage, 0, 0, method, 0, 0, 0, 0, wholeImage);
+	                    idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
+	                    idObjectsAlgo2D.run();
+	                    idObjectsAlgo2D.finalize();
+	                    idObjectsAlgo2D = null;
+	            	}
+	            	else { 
+	                    AlgorithmMorphology3D idObjectsAlgo3D;
+	                    int method = AlgorithmMorphology3D.ID_OBJECTS;
+	                    
+	                    idObjectsAlgo3D = new AlgorithmMorphology3D(maskImage, 0, 0, method, 0, 0, 0, 0, wholeImage);
+	                    idObjectsAlgo3D.setMinMax(1, Integer.MAX_VALUE);
+	                    idObjectsAlgo3D.run();
+	                    idObjectsAlgo3D.finalize();
+	                    idObjectsAlgo3D = null;
+	            	}
+	            	maskImage.calcMinMax();
+	                final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(maskImage);
+
+	                // VOIExtractionAlgo.setActiveImage(false);
+	                VOIExtractionAlgo.run();
+	                
+	                VOIVector kVOIs = maskImage.getVOIs();
+	                for (i = 0; i < kVOIs.size(); i++ )
+	                {
+	                    VOI kCurrentGroup = kVOIs.get(i);
+	                    kCurrentGroup.setAllActive(true);
+	                }
+	                maskImage.groupVOIs();
+	                kVOIs = maskImage.getVOIs();
+	                if (voiFieldName != null) {
+	                    ((VOI)kVOIs.get(0)).setName(voiFieldName);
+	                }
+	                image.setVOIs(kVOIs);
+	                maskImage.disposeLocal();
+	                maskImage = null;
+            	} // convert maskImage to VOI
             }
             
             if (maskImage2 != null) {
-            	maskImage2.setFileInfo(maskFileInfo2, 0);
-            	vmFrame2 = new ViewJFrameImage(maskImage2);
-            	if (voi2FieldName != null) {
-            		vmFrame2.setTitle(voi2FieldName);
-            	}
-            	else {
-            	    vmFrame2.setTitle(fileName.substring(0,s) + "_2_mask");
-            	}
+            	if (!isVOI2) {
+            		// If xDim or yDim of maskImage2 does not equal xDim or yDim of image2,
+            		// then do not convert to a VOI
+	            	maskImage2.setFileInfo(maskFileInfo2, 0);
+	            	vmFrame2 = new ViewJFrameImage(maskImage2);
+	            	if (voi2FieldName != null) {
+	            		vmFrame2.setTitle(voi2FieldName);
+	            	}
+	            	else {
+	            	    vmFrame2.setTitle(fileName.substring(0,s) + "_2_mask");
+	            	}
+            	} // if (!isVOI2)
+            	else { // convert maskImage2 to VOI
+	            	if ((image2.getNDims() >= 3) && (maskImage2.getNDims() == 2)) {
+	            		// Convert maskImage2 from 2D to 3D
+	            		sliceSize = image2.getExtents()[0]*image2.getExtents()[1];
+	            		newExtents = new int[3];
+	            	    for (i = 0; i < 3; i++) {
+	            	    	newExtents[i] = image2.getExtents()[i];
+	            	    }
+	            		switch(maskImage2.getType()) {
+                    	case ModelStorageBase.BYTE:
+                    		buffer = new byte[sliceSize];
+                    		try {
+                    			maskImage2.exportData(0, sliceSize, buffer);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on maskImage2.exportData(0, sliceSize, buffer)");
+                    		   throw e;
+                    		}
+                    		maskImage2.changeExtents(newExtents);
+                    		maskImage2.recomputeDataSize();
+                    		for (i = 0; i < image2.getExtents()[2]; i++) {
+	                    		try {
+	                    			maskImage2.importData(i * sliceSize, buffer, false);
+	                    		}
+	                    		catch(IOException e) {
+	                    			MipavUtil.displayError("IOException on maskImage2.importData(i * sliceSize, buffer, false)");
+	                    			throw e;
+	                    		}
+                    		}
+                    		maskImage2.calcMinMax();
+                    		break;
+                    	case ModelStorageBase.UBYTE:
+                    		shortBuffer = new short[sliceSize];
+                    		try {
+                    			maskImage2.exportData(0, sliceSize, shortBuffer);
+                    		}
+                    		catch(IOException e) {
+                    		   MipavUtil.displayError("IOException on maskImage.exportData(0, sliceSize, shortBuffer)");
+                    		   throw e;
+                    		}
+                    		maskImage2.changeExtents(newExtents);
+                    		maskImage2.recomputeDataSize();
+                    		for (i = 0; i < image.getExtents()[2]; i++) {
+	                    		try {
+	                    			maskImage2.importUData(i * sliceSize, shortBuffer, false);
+	                    		}
+	                    		catch(IOException e) {
+	                    			MipavUtil.displayError("IOException on maskImage2.importUData(i * sliceSize, shortBuffer, false)");
+	                    			throw e;
+	                    		}
+                    		}
+                    		maskImage2.calcMinMax();
+                    		break;
+	            		}
+	            	} // if ((image.getNDims() >= 3) && (maskImage.getNDims() == 2))
+	            	boolean wholeImage = true;
+	            	if (maskImage2.getNDims() == 2) { 
+	                    AlgorithmMorphology2D idObjectsAlgo2D;
+	                    int method = AlgorithmMorphology2D.ID_OBJECTS;
+	                    
+	                    idObjectsAlgo2D = new AlgorithmMorphology2D(maskImage2, 0, 0, method, 0, 0, 0, 0, wholeImage);
+	                    idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
+	                    idObjectsAlgo2D.run();
+	                    idObjectsAlgo2D.finalize();
+	                    idObjectsAlgo2D = null;
+	            	}
+	            	else { 
+	                    AlgorithmMorphology3D idObjectsAlgo3D;
+	                    int method = AlgorithmMorphology3D.ID_OBJECTS;
+	                    
+	                    idObjectsAlgo3D = new AlgorithmMorphology3D(maskImage2, 0, 0, method, 0, 0, 0, 0, wholeImage);
+	                    idObjectsAlgo3D.setMinMax(1, Integer.MAX_VALUE);
+	                    idObjectsAlgo3D.run();
+	                    idObjectsAlgo3D.finalize();
+	                    idObjectsAlgo3D = null;
+	            	}
+	            	maskImage2.calcMinMax();
+	                final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(maskImage2);
+
+	                // VOIExtractionAlgo.setActiveImage(false);
+	                VOIExtractionAlgo.run();
+	                
+	                VOIVector kVOIs = maskImage2.getVOIs();
+	                for (i = 0; i < kVOIs.size(); i++ )
+	                {
+	                    VOI kCurrentGroup = kVOIs.get(i);
+	                    kCurrentGroup.setAllActive(true);
+	                }
+	                maskImage2.groupVOIs();
+	                kVOIs = maskImage2.getVOIs();
+	                if (voiFieldName != null) {
+	                    ((VOI)kVOIs.get(0)).setName(voiFieldName);
+	                }
+	                image2.setVOIs(kVOIs);
+	                maskImage2.disposeLocal();
+	                maskImage2 = null;
+            	} // convert maskImage2 to VOI
             }
             
             fireProgressStateChanged(100);
