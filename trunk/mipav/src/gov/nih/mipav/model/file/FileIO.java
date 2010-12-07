@@ -7753,7 +7753,9 @@ public class FileIO {
 
         try {
             imageFile = new FileNIFTI(fileName, fileDir);
-            createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            if(!quiet) {
+            	createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            }
             if(niftiCompressed) {
             	image = imageFile.readImage(one,true);
             }else {
