@@ -366,7 +366,7 @@ public class ViewJSlider extends JSlider {
         if(minTickSpacing == 1) {
             setSnapToTicks(true); //when all minor ticks can be displayed, this is the only time a slider should snap to ticks
         }
-        System.out.println(getValue());
+
         if(minTickSpacing > 0) {
             setMinor = true;
         }
