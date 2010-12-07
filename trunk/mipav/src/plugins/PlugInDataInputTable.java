@@ -2,6 +2,7 @@
 
 import info.clearthought.layout.TableLayout;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -16,9 +17,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 
+import javax.swing.AbstractCellEditor;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -31,6 +31,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.xml.namespace.QName;
 
@@ -42,7 +43,7 @@ import org.apache.axis2.AxisFault;
  * @author jhunter
  * 
  */
-public class PlugInDataInputTable extends JPanel implements Observer{
+public class PlugInDataInputTable extends JPanel{
 
 	private static final long serialVersionUID = -8613880570320438353L;
 	private JTable table;
@@ -314,7 +315,6 @@ public class PlugInDataInputTable extends JPanel implements Observer{
 	
 	public String parseMissedCols(List<String> missing){
 		StringBuffer ret = new StringBuffer();
-//		ret.append("<html>");
 		for(String col : missing){
 			ret.append("<html>&#149; "+col+"</html>\n");
 		}
@@ -495,11 +495,6 @@ public class PlugInDataInputTable extends JPanel implements Observer{
     	colRequiredMap.clear();
     	colTypeMap.clear();
     }
-	
-	@Override
-	public void update(Observable arg0, Object arg1) {
-
-	}
 
 	class SubjectsTableModel extends DefaultTableModel {
 		
@@ -538,10 +533,49 @@ public class PlugInDataInputTable extends JPanel implements Observer{
 	        	}
 	    		if(type.contains("Integer"))
 	    			return Integer.class;
+	    		else if(type.contains("File") || type.contains("Thumbnail")){
+	    			col.setCellEditor(new MyFileChooserCellRenderer());
+	    			return JFileChooser.class;
+	    		}
 	    		else 
 	    			return String.class;
         	}
         	return String.class;
     	}
+	}
+	
+	class MyFileChooserCellRenderer extends AbstractCellEditor implements TableCellEditor,ActionListener {
+
+		String filePath;
+		JFileChooser chooser;
+		JButton button;
+		protected static final String EDIT = "edit";
+		
+		public MyFileChooserCellRenderer(){
+			button = new JButton("Browse...");
+            button.setActionCommand(EDIT);
+            button.addActionListener(this);
+            button.setBorderPainted(false);
+			chooser = new JFileChooser((lastDir!=null)?lastDir:System.getProperty("user.home"));
+		}
+		
+		 public void actionPerformed(ActionEvent e) {
+			 int returnVal = chooser.showOpenDialog(PlugInDataInputTable.this);
+             if(returnVal == JFileChooser.APPROVE_OPTION)
+                 filePath = chooser.getSelectedFile().getName();
+             fireEditingStopped();
+		 }
+		
+		@Override
+		public Component getTableCellEditorComponent(JTable table,
+				Object value, boolean isSelected, int row, int column) {
+			filePath = (String)value;
+			return button;
+		}
+
+		@Override
+		public Object getCellEditorValue() {
+			return filePath.trim();
+		}
 	}
 }
