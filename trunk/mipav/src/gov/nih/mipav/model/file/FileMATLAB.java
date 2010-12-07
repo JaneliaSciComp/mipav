@@ -332,6 +332,8 @@ public class FileMATLAB extends FileBase {
         long b8L;
         int tmpInt;
         long tmpLong;
+        boolean isColor = false;
+        int bytesInSlice;
 
         try {
             
@@ -1060,6 +1062,30 @@ public class FileMATLAB extends FileBase {
                         realDataBytes = getInt(endianess);
                         haveSmallRealData = false;
                     }
+                    if ((nDim >= 3) && (imageExtents[nDim - 1] == 3) && (!logicalFlag) && (!complexFlag) &&
+                    		((realDataType == miUINT8) || (realDataType == miUINT16) || (realDataType == miDOUBLE)) &&
+                    		(nonLogicalField == 0)) {
+                    	newExtents = new int[nDim-1];
+                    	for (i = 0; i < nDim-1; i++) {
+                    		newExtents[i] = imageExtents[i];
+                    	}
+                    	imageExtents = new int[nDim-1];
+                    	for (i = 0; i < nDim-1; i++) {
+                    		imageExtents[i] = newExtents[i];
+                    	}
+                    	if (imagesFound == 1) {
+                			imageSlices = imageSlices/3;
+                			fileInfo.setExtents(imageExtents);
+                		}
+                		else {
+                			imageSlices2 = imageSlices2/3;
+                			fileInfo2.setExtents(imageExtents);
+                		}
+                    	isColor = true;
+                    }
+                    else {
+                    	isColor = false;
+                    }
                     if (imagesFound == 1) {
                     switch(realDataType) {
                     case miINT8:
@@ -1238,6 +1264,44 @@ public class FileMATLAB extends FileBase {
 		                		}
                     	    } // if (logicalFields == 1)	
                     	}
+                    	else if (isColor) {
+                    		if (nonLogicalField == 0) {
+                    			image = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
+                    			fileInfo.setDataType(ModelStorageBase.ARGB);
+                    		}
+                    		if ((realDataBytes % 3) == 0) {
+	                    		buffer = new byte[realDataBytes/3];
+	                    		for (i = 0; i < 3; i++) {
+			                    	raFile.read(buffer);
+			                    	
+			                    	try {
+			                			image.importRGBData(i, nonLogicalField * buffer.length, buffer, true);
+			                		}
+			                		catch(IOException e) {
+			                		   MipavUtil.displayError("IOException on image.importRGBData(i," +
+			                		   		" nonLogicalField * buffer.length, buffer, true)");
+			                		   throw e;
+			                		}
+	                    		} // if (i = 0; i < 3; i++)
+	
+		                    	
+		                    	if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    } 
+	                    	
+	                        } // if (realDataBytes % 3) == 0)
+                    	} // else if (isColor)
                     	else if (!complexFlag) {
                     		if (nonLogicalField == 0) {
 	                    	    image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
@@ -1497,7 +1561,60 @@ public class FileMATLAB extends FileBase {
                     case miUINT16:
                     	Preferences.debug("Real data type = miUINT16\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                    	if (!complexFlag) {
+                    	if (isColor) {
+                    		if (nonLogicalField == 0) {
+                    			image = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
+                    			fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
+                    		}
+                    		if ((realDataBytes % 3) == 0) {
+	                    		buffer = new byte[realDataBytes/3];
+	                    		shortNumber = realDataBytes/6;
+	                    		shortBuffer = new short[shortNumber];
+	                    		for (i = 0; i < 3; i++) {
+			                    	raFile.read(buffer);
+			                    	if (endianess == BIG_ENDIAN) {
+		                                 for (j = 0, index = 0; j < shortNumber; j++) {
+		                                     b1 = buffer[index++] & 0xff;
+		                                     b2 = buffer[index++] & 0xff;
+		                                     shortBuffer[j] = (short) ((b1 << 8) | b2);
+		                                 }
+		                             } else {
+		                                 for (j = 0, index = 0; j < shortNumber; j++) {
+		                                     b1 = buffer[index++] & 0xff;
+		                                     b2 = buffer[index++] & 0xff;
+		                                     shortBuffer[j] = (short) ((b2 << 8) | b1);
+		                                 }
+		                             }
+			                    	
+			                    	try {
+			                			image.importRGBData(i, nonLogicalField * shortBuffer.length, shortBuffer, true);
+			                		}
+			                		catch(IOException e) {
+			                		   MipavUtil.displayError("IOException on image.importRGBData(i," +
+			                		   		" nonLogicalField * shortBuffer.length, shortBuffer, true)");
+			                		   throw e;
+			                		}
+	                    		} // if (i = 0; i < 3; i++)
+	
+		                    	
+		                    	if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    } 
+	                    	
+	                        } // if (realDataBytes % 3) == 0)
+                    	} // if (isColor)
+                    	else if (!complexFlag) {
                     		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.USHORT);
@@ -2152,7 +2269,80 @@ public class FileMATLAB extends FileBase {
                     case miDOUBLE:
                     	Preferences.debug("Real data type = miDOUBLE\n");
                     	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                    	if (!complexFlag) {
+                    	if (isColor) {
+                    		if (nonLogicalField == 0) {
+                    			image = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageExtents, fileName);
+                    			fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
+                    		}
+                    		if ((realDataBytes % 3) == 0) {
+	                    		buffer = new byte[realDataBytes/3];
+	                    		doubleNumber = realDataBytes/24;
+	                    		floatBuffer = new float[doubleNumber];
+	                    		for (i = 0; i < 3; i++) {
+			                    	raFile.read(buffer);
+			                    	if (endianess == BIG_ENDIAN) {
+
+		                                for (j = 0, index = 0; j < doubleNumber; j++) {
+		                                    b1L = buffer[index++] & 0xffL;
+		                                    b2L = buffer[index++] & 0xffL;
+		                                    b3L = buffer[index++] & 0xffL;
+		                                    b4L = buffer[index++] & 0xffL;
+		                                    b5L = buffer[index++] & 0xffL;
+		                                    b6L = buffer[index++] & 0xffL;
+		                                    b7L = buffer[index++] & 0xffL;
+		                                    b8L = buffer[index++] & 0xffL;
+		                                    tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+		                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);
+
+		                                    floatBuffer[j] = (float)(255.0 * Double.longBitsToDouble(tmpLong));
+		                                }
+		                            } else {
+
+		                                for (j = 0, index = 0; j < doubleNumber; j++) {
+		                                    b1L = buffer[index++] & 0xffL;
+		                                    b2L = buffer[index++] & 0xffL;
+		                                    b3L = buffer[index++] & 0xffL;
+		                                    b4L = buffer[index++] & 0xffL;
+		                                    b5L = buffer[index++] & 0xffL;
+		                                    b6L = buffer[index++] & 0xffL;
+		                                    b7L = buffer[index++] & 0xffL;
+		                                    b8L = buffer[index++] & 0xffL;
+		                                    tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+		                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+		                                    floatBuffer[j] = (float)(255.0 * Double.longBitsToDouble(tmpLong));
+		                                }
+		                            }
+			                    	
+			                    	
+			                    	try {
+			                			image.importRGBData(i, nonLogicalField * floatBuffer.length, floatBuffer, true);
+			                		}
+			                		catch(IOException e) {
+			                		   MipavUtil.displayError("IOException on image.importRGBData(i," +
+			                		   		" nonLogicalField * floatBuffer.length, floatBuffer, true)");
+			                		   throw e;
+			                		}
+	                    		} // if (i = 0; i < 3; i++)
+	
+		                    	
+		                    	if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    } 
+	                    	
+	                        } // if (realDataBytes % 3) == 0)
+                    	} // else if (isColor)
+                    	else if (!complexFlag) {
                     		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DOUBLE);
@@ -2936,6 +3126,44 @@ public class FileMATLAB extends FileBase {
     		                		}
                         	    } // if (logicalFields == 1)		
                         	}
+                        	else if (isColor) {
+                        		if (nonLogicalField == 0) {
+                        			image2 = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
+                        			fileInfo2.setDataType(ModelStorageBase.ARGB);
+                        		}
+                        		if ((realDataBytes % 3) == 0) {
+    	                    		buffer = new byte[realDataBytes/3];
+    	                    		for (i = 0; i < 3; i++) {
+    			                    	raFile.read(buffer);
+    			                    	
+    			                    	try {
+    			                			image2.importRGBData(i, nonLogicalField * buffer.length, buffer, true);
+    			                		}
+    			                		catch(IOException e) {
+    			                		   MipavUtil.displayError("IOException on image2.importRGBData(i," +
+    			                		   		" nonLogicalField * buffer.length, buffer, true)");
+    			                		   throw e;
+    			                		}
+    	                    		} // if (i = 0; i < 3; i++)
+    	
+    		                    	
+    		                    	if (haveSmallRealData) {
+    	                    		    if (realDataBytes < 4) {
+    	                    		    	padBytes = 4 - realDataBytes;
+    	                    		    	for (i = 0; i < padBytes; i++) {
+    	                    		    		raFile.readByte();
+    	                    		    	}
+    	                    		    }
+    	                    		}
+    	                    		else if ((realDataBytes % 8) != 0) {
+    	                    	    	padBytes = 8 - (realDataBytes % 8);
+    	                    	    	for (i = 0; i < padBytes; i++) {
+    	                        	    	raFile.readByte();
+    	                        	    }
+    	                    	    } 
+    	                    	
+    	                        } // if (realDataBytes % 3) == 0)
+                        	} // else if (isColor)
                         	else if (!complexFlag) {
                         		if (nonLogicalField == 0) {
     	                    	    image2 = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
@@ -3198,7 +3426,60 @@ public class FileMATLAB extends FileBase {
                         case miUINT16:
                         	Preferences.debug("Real data type = miUINT16\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                        	if (!complexFlag) {
+                        	if (isColor) {
+                        		if (nonLogicalField == 0) {
+                        			image2 = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
+                        			fileInfo2.setDataType(ModelStorageBase.ARGB_USHORT);
+                        		}
+                        		if ((realDataBytes % 3) == 0) {
+    	                    		buffer = new byte[realDataBytes/3];
+    	                    		shortNumber = realDataBytes/6;
+    	                    		shortBuffer = new short[shortNumber];
+    	                    		for (i = 0; i < 3; i++) {
+    			                    	raFile.read(buffer);
+    			                    	if (endianess == BIG_ENDIAN) {
+    		                                 for (j = 0, index = 0; j < shortNumber; j++) {
+    		                                     b1 = buffer[index++] & 0xff;
+    		                                     b2 = buffer[index++] & 0xff;
+    		                                     shortBuffer[j] = (short) ((b1 << 8) | b2);
+    		                                 }
+    		                             } else {
+    		                                 for (j = 0, index = 0; j < shortNumber; j++) {
+    		                                     b1 = buffer[index++] & 0xff;
+    		                                     b2 = buffer[index++] & 0xff;
+    		                                     shortBuffer[j] = (short) ((b2 << 8) | b1);
+    		                                 }
+    		                             }
+    			                    	
+    			                    	try {
+    			                			image2.importRGBData(i, nonLogicalField * shortBuffer.length, shortBuffer, true);
+    			                		}
+    			                		catch(IOException e) {
+    			                		   MipavUtil.displayError("IOException on image2.importRGBData(i," +
+    			                		   		" nonLogicalField * shortBuffer.length, shortBuffer, true)");
+    			                		   throw e;
+    			                		}
+    	                    		} // if (i = 0; i < 3; i++)
+    	
+    		                    	
+    		                    	if (haveSmallRealData) {
+    	                    		    if (realDataBytes < 4) {
+    	                    		    	padBytes = 4 - realDataBytes;
+    	                    		    	for (i = 0; i < padBytes; i++) {
+    	                    		    		raFile.readByte();
+    	                    		    	}
+    	                    		    }
+    	                    		}
+    	                    		else if ((realDataBytes % 8) != 0) {
+    	                    	    	padBytes = 8 - (realDataBytes % 8);
+    	                    	    	for (i = 0; i < padBytes; i++) {
+    	                        	    	raFile.readByte();
+    	                        	    }
+    	                    	    } 
+    	                    	
+    	                        } // if (realDataBytes % 3) == 0)
+                        	} // if (isColor)
+                        	else if (!complexFlag) {
                         		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.USHORT);
@@ -3861,7 +4142,80 @@ public class FileMATLAB extends FileBase {
                         case miDOUBLE:
                         	Preferences.debug("Real data type = miDOUBLE\n");
                         	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
-                        	if (!complexFlag) {
+                        	if (isColor) {
+                        		if (nonLogicalField == 0) {
+                        			image2 = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageExtents, fileName);
+                        			fileInfo2.setDataType(ModelStorageBase.ARGB_FLOAT);
+                        		}
+                        		if ((realDataBytes % 3) == 0) {
+    	                    		buffer = new byte[realDataBytes/3];
+    	                    		doubleNumber = realDataBytes/24;
+    	                    		floatBuffer = new float[doubleNumber];
+    	                    		for (i = 0; i < 3; i++) {
+    			                    	raFile.read(buffer);
+    			                    	if (endianess == BIG_ENDIAN) {
+
+    		                                for (j = 0, index = 0; j < doubleNumber; j++) {
+    		                                    b1L = buffer[index++] & 0xffL;
+    		                                    b2L = buffer[index++] & 0xffL;
+    		                                    b3L = buffer[index++] & 0xffL;
+    		                                    b4L = buffer[index++] & 0xffL;
+    		                                    b5L = buffer[index++] & 0xffL;
+    		                                    b6L = buffer[index++] & 0xffL;
+    		                                    b7L = buffer[index++] & 0xffL;
+    		                                    b8L = buffer[index++] & 0xffL;
+    		                                    tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+    		                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);
+
+    		                                    floatBuffer[j] = (float)(255.0 * Double.longBitsToDouble(tmpLong));
+    		                                }
+    		                            } else {
+
+    		                                for (j = 0, index = 0; j < doubleNumber; j++) {
+    		                                    b1L = buffer[index++] & 0xffL;
+    		                                    b2L = buffer[index++] & 0xffL;
+    		                                    b3L = buffer[index++] & 0xffL;
+    		                                    b4L = buffer[index++] & 0xffL;
+    		                                    b5L = buffer[index++] & 0xffL;
+    		                                    b6L = buffer[index++] & 0xffL;
+    		                                    b7L = buffer[index++] & 0xffL;
+    		                                    b8L = buffer[index++] & 0xffL;
+    		                                    tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+    		                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+    		                                    floatBuffer[j] = (float)(255.0 * Double.longBitsToDouble(tmpLong));
+    		                                }
+    		                            }
+    			                    	
+    			                    	
+    			                    	try {
+    			                			image2.importRGBData(i, nonLogicalField * floatBuffer.length, floatBuffer, true);
+    			                		}
+    			                		catch(IOException e) {
+    			                		   MipavUtil.displayError("IOException on image2.importRGBData(i," +
+    			                		   		" nonLogicalField * floatBuffer.length, floatBuffer, true)");
+    			                		   throw e;
+    			                		}
+    	                    		} // if (i = 0; i < 3; i++)
+    	
+    		                    	
+    		                    	if (haveSmallRealData) {
+    	                    		    if (realDataBytes < 4) {
+    	                    		    	padBytes = 4 - realDataBytes;
+    	                    		    	for (i = 0; i < padBytes; i++) {
+    	                    		    		raFile.readByte();
+    	                    		    	}
+    	                    		    }
+    	                    		}
+    	                    		else if ((realDataBytes % 8) != 0) {
+    	                    	    	padBytes = 8 - (realDataBytes % 8);
+    	                    	    	for (i = 0; i < padBytes; i++) {
+    	                        	    	raFile.readByte();
+    	                        	    }
+    	                    	    } 
+    	                    	
+    	                        } // if (realDataBytes % 3) == 0)
+                        	} // else if (isColor)
+                        	else if (!complexFlag) {
                         		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DOUBLE);
