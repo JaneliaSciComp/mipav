@@ -745,7 +745,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         } else if (command.equals("adjMarkMinus")) {
             componentImage.deletePoint(false);
         } else if (command.equals("defaultMode")) {
-        	System.out.println("aaa");
             adjMarkButton.setSelected(false);
             refMarkButton.setSelected(false);
             translateButton.setSelected(false);
