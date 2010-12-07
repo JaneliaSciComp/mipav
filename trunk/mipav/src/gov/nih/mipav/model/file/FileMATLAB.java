@@ -312,6 +312,26 @@ public class FileMATLAB extends FileBase {
         String voiFieldName = null;
         String voi2FieldName = null;
         int sliceSize;
+        int index;
+        int shortNumber;
+        int intNumber;
+        int longNumber;
+        int floatNumber;
+        int doubleNumber;
+        int b1;
+        int b2;
+        int b3;
+        int b4;
+        long b1L;
+        long b2L;
+        long b3L;
+        long b4L;
+        long b5L;
+        long b6L;
+        long b7L;
+        long b8L;
+        int tmpInt;
+        long tmpLong;
 
         try {
             
@@ -1338,10 +1358,24 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.SHORT);
                     		}
-                    		shortBuffer = new short[realDataBytes/2];
-                    		for (i = 0; i < realDataBytes/2; i++) {
-                    		    shortBuffer[i] = readShort(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		shortNumber = realDataBytes/2;
+                    		shortBuffer = new short[shortNumber];
+                    		 if (endianess == BIG_ENDIAN) {
+
+                                 for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+
+                                     shortBuffer[i] = (short) (((buffer[index] & 0x00ff) << 8) |
+                                                                   (buffer[index + 1] & 0x00ff));
+                                 }
+                             } else {
+
+                                 for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                     shortBuffer[i] = (short) (((buffer[index + 1] & 0x00ff) << 8) |
+                                                                   (buffer[index] & 0x00ff));
+                                 }
+                             }
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1369,10 +1403,21 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
-                    		realBuffer = new float[realDataBytes/2];
-                    		for (i = 0; i < realDataBytes/2; i++) {
-                    		    realBuffer[i] = (float)(readShort(endianess));
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		shortNumber = realDataBytes/2;
+                    		realBuffer = new float[shortNumber];
+                    		if (endianess == BIG_ENDIAN) {
+                                for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                    realBuffer[i] = (float) (((buffer[index] & 0x00ff) << 8) |
+                                                                  (buffer[index + 1] & 0x00ff));
+                                }
+                            } else {
+                                for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                    realBuffer[i] = (float) (((buffer[index + 1] & 0x00ff) << 8) |
+                                                                  (buffer[index] & 0x00ff));
+                                }
+                            }
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1411,9 +1456,18 @@ public class FileMATLAB extends FileBase {
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryBuffer = new float[imaginaryDataBytes/2];
-                            for (i = 0; i < imaginaryDataBytes/2; i++) {
-                            	imaginaryBuffer[i] = (float)(readShort(endianess));
+                            raFile.read(buffer);
+                            imaginaryBuffer = new float[shortNumber];
+                            if (endianess == BIG_ENDIAN) {
+                                for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                    imaginaryBuffer[i] = (float) (((buffer[index] & 0x00ff) << 8) |
+                                                                  (buffer[index + 1] & 0x00ff));
+                                }
+                            } else {
+                                for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                    imaginaryBuffer[i] = (float) (((buffer[index + 1] & 0x00ff) << 8) |
+                                                                  (buffer[index] & 0x00ff));
+                                }
                             }
                             if (haveSmallImaginaryData) {
                     		    if (imaginaryDataBytes < 4) {
@@ -1448,10 +1502,23 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.USHORT);
                     		}
-                    		intBuffer = new int[realDataBytes/2];
-                    		for (i = 0; i < realDataBytes/2; i++) {
-                    		    intBuffer[i] = getUnsignedShort(endianess);
-                    		}
+                    		buffer =  new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		shortNumber = realDataBytes/2;
+                    		intBuffer = new int[shortNumber];
+                    		 if (endianess == BIG_ENDIAN) {
+                                 for (i = 0, index = 0; i < shortNumber; i++) {
+                                     b1 = buffer[index++] & 0xff;
+                                     b2 = buffer[index++] & 0xff;
+                                     intBuffer[i] = (int) ((b1 << 8) | b2);
+                                 }
+                             } else {
+                                 for (i = 0, index = 0; i < shortNumber; i++) {
+                                     b1 = buffer[index++] & 0xff;
+                                     b2 = buffer[index++] & 0xff;
+                                     intBuffer[i] = (int) ((b2 << 8) | b1);
+                                 }
+                             }
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1479,10 +1546,23 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
-                    		realBuffer = new float[realDataBytes/2];
-                    		for (i = 0; i < realDataBytes/2; i++) {
-                    		    realBuffer[i] = (float)(getUnsignedShort(endianess));
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		shortNumber = realDataBytes/2;
+                    		realBuffer = new float[shortNumber];
+                    		if (endianess == BIG_ENDIAN) {
+                                 for (i = 0, index = 0; i < shortNumber; i++) {
+                                     b1 = buffer[index++] & 0xff;
+                                     b2 = buffer[index++] & 0xff;
+                                     realBuffer[i] = (float) ((b1 << 8) | b2);
+                                 }
+                            } else {
+                                 for (i = 0, index = 0; i < shortNumber; i++) {
+                                     b1 = buffer[index++] & 0xff;
+                                     b2 = buffer[index++] & 0xff;
+                                     realBuffer[i] = (float) ((b2 << 8) | b1);
+                                 }
+                            }
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1521,9 +1601,20 @@ public class FileMATLAB extends FileBase {
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryBuffer = new float[imaginaryDataBytes/2];
-                            for (i = 0; i < imaginaryDataBytes/2; i++) {
-                            	imaginaryBuffer[i] = (float)(getUnsignedShort(endianess));
+                            raFile.read(buffer);
+                            imaginaryBuffer = new float[shortNumber];
+                            if (endianess == BIG_ENDIAN) {
+                                for (i = 0, index = 0; i < shortNumber; i++) {
+                                    b1 = buffer[index++] & 0xff;
+                                    b2 = buffer[index++] & 0xff;
+                                    imaginaryBuffer[i] = (float) ((b1 << 8) | b2);
+                                }
+                            } else {
+                                for (i = 0, index = 0; i < shortNumber; i++) {
+                                    b1 = buffer[index++] & 0xff;
+                                    b2 = buffer[index++] & 0xff;
+                                    imaginaryBuffer[i] = (float) ((b2 << 8) | b1);
+                                }
                             }
                             if (haveSmallImaginaryData) {
                     		    if (imaginaryDataBytes < 4) {
@@ -1558,10 +1649,28 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.INTEGER);
                     		}
-                    		intBuffer = new int[realDataBytes/4];
-                    		for (i = 0; i < realDataBytes/4; i++) {
-                    		    intBuffer[i] = getInt(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		intNumber = realDataBytes/4;
+                    		intBuffer = new int[intNumber];
+                    		if (endianess == BIG_ENDIAN) {
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1 = buffer[index++] & 0x000000ff;
+                                    b2 = buffer[index++] & 0x000000ff;
+                                    b3 = buffer[index++] & 0x000000ff;
+                                    b4 = buffer[index++] & 0x000000ff;
+                                    intBuffer[i] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1 = buffer[index++] & 0x000000ff;
+                                    b2 = buffer[index++] & 0x000000ff;
+                                    b3 = buffer[index++] & 0x000000ff;
+                                    b4 = buffer[index++] & 0x000000ff;
+                                    intBuffer[i] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                }
+                            }
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1589,10 +1698,28 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[realDataBytes/4];
-                    		for (i = 0; i < realDataBytes/4; i++) {
-                    		    realDBuffer[i] = (double)getInt(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		intNumber = realDataBytes/4;
+                    		realDBuffer = new double[intNumber];
+                    		if (endianess == BIG_ENDIAN) {
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1 = buffer[index++] & 0x000000ff;
+                                    b2 = buffer[index++] & 0x000000ff;
+                                    b3 = buffer[index++] & 0x000000ff;
+                                    b4 = buffer[index++] & 0x000000ff;
+                                    realDBuffer[i] = (double)((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1 = buffer[index++] & 0x000000ff;
+                                    b2 = buffer[index++] & 0x000000ff;
+                                    b3 = buffer[index++] & 0x000000ff;
+                                    b4 = buffer[index++] & 0x000000ff;
+                                    realDBuffer[i] = (double)((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                }
+                            }
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1631,9 +1758,25 @@ public class FileMATLAB extends FileBase {
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imaginaryDataBytes/4];
-                            for (i = 0; i < imaginaryDataBytes/4; i++) {
-                            	imaginaryDBuffer[i] = (double)getInt(endianess);
+                            raFile.read(buffer);
+                            imaginaryDBuffer = new double[intNumber];
+                            if (endianess == BIG_ENDIAN) {
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1 = buffer[index++] & 0x000000ff;
+                                    b2 = buffer[index++] & 0x000000ff;
+                                    b3 = buffer[index++] & 0x000000ff;
+                                    b4 = buffer[index++] & 0x000000ff;
+                                    imaginaryDBuffer[i] = (double)((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1 = buffer[index++] & 0x000000ff;
+                                    b2 = buffer[index++] & 0x000000ff;
+                                    b3 = buffer[index++] & 0x000000ff;
+                                    b4 = buffer[index++] & 0x000000ff;
+                                    imaginaryDBuffer[i] = (double)((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                }
                             }
                             if (haveSmallImaginaryData) {
                     		    if (imaginaryDataBytes < 4) {
@@ -1668,10 +1811,29 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.UINTEGER);
                     		}
-                    		longBuffer = new long[realDataBytes/4];
-                    		for (i = 0; i < realDataBytes/4; i++) {
-                    		    longBuffer[i] = getUInt(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		intNumber = realDataBytes/4;
+                    		longBuffer = new long[intNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    longBuffer[i] = ((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    longBuffer[i] = ((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                }
+                            }
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1699,10 +1861,30 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[realDataBytes/4];
-                    		for (i = 0; i < realDataBytes/4; i++) {
-                    		    realDBuffer[i] = (double)getUInt(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		intNumber = realDataBytes/4;
+                    		realDBuffer = new double[intNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    realDBuffer[i] = (double)((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    realDBuffer[i] = (double)((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                }
+                            }
+                    		
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1741,9 +1923,26 @@ public class FileMATLAB extends FileBase {
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imaginaryDataBytes/4];
-                            for (i = 0; i < imaginaryDataBytes/4; i++) {
-                            	imaginaryDBuffer[i] = (double)getUInt(endianess);
+                            raFile.read(buffer);
+                            imaginaryDBuffer = new double[intNumber];
+                            if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    imaginaryDBuffer[i] = (double)((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < intNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    imaginaryDBuffer[i] = (double)((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                }
                             }
                             if (haveSmallImaginaryData) {
                     		    if (imaginaryDataBytes < 4) {
@@ -1778,10 +1977,34 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.FLOAT);
                     		}
-                    		floatBuffer = new float[realDataBytes/4];
-                    		for (i = 0; i < realDataBytes/4; i++) {
-                    		    floatBuffer[i] = getFloat(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		floatNumber = realDataBytes/4;
+                    		floatBuffer = new float[floatNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < floatNumber; i++) {
+                                    b1 = buffer[index++] & 0xff;
+                                    b2 = buffer[index++] & 0xff;
+                                    b3 = buffer[index++] & 0xff;
+                                    b4 = buffer[index++] & 0xff;
+                                    tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+
+                                    floatBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < floatNumber; i++) {
+                                    b1 = buffer[index++] & 0xff;
+                                    b2 = buffer[index++] & 0xff;
+                                    b3 = buffer[index++] & 0xff;
+                                    b4 = buffer[index++] & 0xff;
+                                    tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+
+                                    floatBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                }
+                            }
+                    		
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1809,10 +2032,34 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
                     		}
-                    		realBuffer = new float[realDataBytes/4];
-                    		for (i = 0; i < realDataBytes/4; i++) {
-                    		    realBuffer[i] = getFloat(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		floatNumber = realDataBytes/4;
+                    		realBuffer = new float[floatNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < floatNumber; i++) {
+                                    b1 = buffer[index++] & 0xff;
+                                    b2 = buffer[index++] & 0xff;
+                                    b3 = buffer[index++] & 0xff;
+                                    b4 = buffer[index++] & 0xff;
+                                    tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+
+                                    realBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < floatNumber; i++) {
+                                    b1 = buffer[index++] & 0xff;
+                                    b2 = buffer[index++] & 0xff;
+                                    b3 = buffer[index++] & 0xff;
+                                    b4 = buffer[index++] & 0xff;
+                                    tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+
+                                    realBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                }
+                            }
+                    		
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1851,10 +2098,32 @@ public class FileMATLAB extends FileBase {
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryBuffer = new float[imaginaryDataBytes/4];
-                            for (i = 0; i < imaginaryDataBytes/4; i++) {
-                            	imaginaryBuffer[i] = getFloat(endianess);
+                            raFile.read(buffer);
+                            imaginaryBuffer = new float[floatNumber];
+                            if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < floatNumber; i++) {
+                                    b1 = buffer[index++] & 0xff;
+                                    b2 = buffer[index++] & 0xff;
+                                    b3 = buffer[index++] & 0xff;
+                                    b4 = buffer[index++] & 0xff;
+                                    tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+
+                                    imaginaryBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < floatNumber; i++) {
+                                    b1 = buffer[index++] & 0xff;
+                                    b2 = buffer[index++] & 0xff;
+                                    b3 = buffer[index++] & 0xff;
+                                    b4 = buffer[index++] & 0xff;
+                                    tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+
+                                    imaginaryBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                }
                             }
+                          
                             if (haveSmallImaginaryData) {
                     		    if (imaginaryDataBytes < 4) {
                     		    	padBytes = 4 - imaginaryDataBytes;
@@ -1888,10 +2157,43 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DOUBLE);
                     		}
-                    		doubleBuffer = new double[realDataBytes/8];
-                    		for (i = 0; i < realDataBytes/8; i++) {
-                    		    doubleBuffer[i] = getDouble(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		doubleNumber = realDataBytes/8;
+                    		doubleBuffer = new double[doubleNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < doubleNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);
+
+                                    doubleBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < doubleNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                    doubleBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                }
+                            }
+                    		
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1919,10 +2221,43 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[realDataBytes/8];
-                    		for (i = 0; i < realDataBytes/8; i++) {
-                    		    realDBuffer[i] = getDouble(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		doubleNumber = realDataBytes/8;
+                    		realDBuffer = new double[doubleNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < doubleNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);
+
+                                    realDBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < doubleNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                    realDBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                }
+                            }
+                    		
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -1961,10 +2296,41 @@ public class FileMATLAB extends FileBase {
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imaginaryDataBytes/8];
-                            for (i = 0; i < imaginaryDataBytes/8; i++) {
-                            	imaginaryDBuffer[i] = getDouble(endianess);
+                            raFile.read(buffer);
+                            imaginaryDBuffer = new double[doubleNumber];
+                            if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < doubleNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);
+
+                                    imaginaryDBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < doubleNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                    imaginaryDBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                }
                             }
+                            
                             if (haveSmallImaginaryData) {
                     		    if (imaginaryDataBytes < 4) {
                     		    	padBytes = 4 - imaginaryDataBytes;
@@ -1998,10 +2364,40 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.LONG);
                     		}
-                    		longBuffer = new long[realDataBytes/8];
-                    		for (i = 0; i < realDataBytes/8; i++) {
-                    		    longBuffer[i] = getLong(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		longNumber = realDataBytes/8;
+                    		longBuffer = new long[longNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    longBuffer[i] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                         (b6L << 16) | (b7L << 8) | b8L);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    longBuffer[i] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                         (b3L << 16) | (b2L << 8) | b1L);
+                                }
+                            }
+                    		
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -2029,10 +2425,40 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[realDataBytes/8];
-                    		for (i = 0; i < realDataBytes/8; i++) {
-                    		    realDBuffer[i] = (double)getLong(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		longNumber = realDataBytes/8;
+                    		realDBuffer = new double[longNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    realDBuffer[i] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                         (b6L << 16) | (b7L << 8) | b8L);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    realDBuffer[i] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                         (b3L << 16) | (b2L << 8) | b1L);
+                                }
+                            }
+                    		
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -2071,10 +2497,38 @@ public class FileMATLAB extends FileBase {
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imaginaryDataBytes/8];
-                            for (i = 0; i < imaginaryDataBytes/8; i++) {
-                            	imaginaryDBuffer[i] = (double)getLong(endianess);
+                            raFile.read(buffer);
+                            imaginaryDBuffer = new double[longNumber];
+                            if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    imaginaryDBuffer[i] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                         (b6L << 16) | (b7L << 8) | b8L);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    imaginaryDBuffer[i] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                         (b3L << 16) | (b2L << 8) | b1L);
+                                }
                             }
+                            
                             if (haveSmallImaginaryData) {
                     		    if (imaginaryDataBytes < 4) {
                     		    	padBytes = 4 - imaginaryDataBytes;
@@ -2108,10 +2562,40 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.LONG);
                     		}
-                    		longBuffer = new long[realDataBytes/8];
-                    		for (i = 0; i < realDataBytes/8; i++) {
-                    		    longBuffer[i] = getLong(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		longNumber = realDataBytes/8;
+                    		longBuffer = new long[longNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    longBuffer[i] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                         (b6L << 16) | (b7L << 8) | b8L);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    longBuffer[i] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                         (b3L << 16) | (b2L << 8) | b1L);
+                                }
+                            }
+                    		
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -2139,10 +2623,40 @@ public class FileMATLAB extends FileBase {
                     		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
                     		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
                     		}
-                    		realDBuffer = new double[realDataBytes/8];
-                    		for (i = 0; i < realDataBytes/8; i++) {
-                    		    realDBuffer[i] = (double)getLong(endianess);
-                    		}
+                    		buffer = new byte[realDataBytes];
+                    		raFile.read(buffer);
+                    		longNumber = realDataBytes/8;
+                    		realDBuffer = new double[longNumber];
+                    		if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    realDBuffer[i] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                         (b6L << 16) | (b7L << 8) | b8L);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    realDBuffer[i] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                         (b3L << 16) | (b2L << 8) | b1L);
+                                }
+                            }
+                    		
                     		if (haveSmallRealData) {
                     		    if (realDataBytes < 4) {
                     		    	padBytes = 4 - realDataBytes;
@@ -2181,10 +2695,38 @@ public class FileMATLAB extends FileBase {
                             else {
                             	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                             }
-                            imaginaryDBuffer = new double[imaginaryDataBytes/8];
-                            for (i = 0; i < imaginaryDataBytes/8; i++) {
-                            	imaginaryDBuffer[i] = (double)getLong(endianess);
+                            raFile.read(buffer);
+                            imaginaryDBuffer = new double[longNumber];
+                            if (endianess == BIG_ENDIAN) {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    imaginaryDBuffer[i] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                         (b6L << 16) | (b7L << 8) | b8L);
+                                }
+                            } else {
+
+                                for (i = 0, index = 0; i < longNumber; i++) {
+                                    b1L = buffer[index++] & 0xffL;
+                                    b2L = buffer[index++] & 0xffL;
+                                    b3L = buffer[index++] & 0xffL;
+                                    b4L = buffer[index++] & 0xffL;
+                                    b5L = buffer[index++] & 0xffL;
+                                    b6L = buffer[index++] & 0xffL;
+                                    b7L = buffer[index++] & 0xffL;
+                                    b8L = buffer[index++] & 0xffL;
+                                    imaginaryDBuffer[i] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                         (b3L << 16) | (b2L << 8) | b1L);
+                                }
                             }
+                            
                             if (haveSmallImaginaryData) {
                     		    if (imaginaryDataBytes < 4) {
                     		    	padBytes = 4 - imaginaryDataBytes;
@@ -2514,10 +3056,25 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.SHORT);
                         		}
-                        		shortBuffer = new short[realDataBytes/2];
-                        		for (i = 0; i < realDataBytes/2; i++) {
-                        		    shortBuffer[i] = readShort(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		shortNumber = realDataBytes/2;
+                        		shortBuffer = new short[shortNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                     for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+
+                                         shortBuffer[i] = (short) (((buffer[index] & 0x00ff) << 8) |
+                                                                       (buffer[index + 1] & 0x00ff));
+                                     }
+                                } else {
+
+                                     for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                         shortBuffer[i] = (short) (((buffer[index + 1] & 0x00ff) << 8) |
+                                                                       (buffer[index] & 0x00ff));
+                                     }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -2545,10 +3102,22 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
-                        		realBuffer = new float[realDataBytes/2];
-                        		for (i = 0; i < realDataBytes/2; i++) {
-                        		    realBuffer[i] = (float)(readShort(endianess));
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		shortNumber = realDataBytes/2;
+                        		realBuffer = new float[shortNumber];
+                        		if (endianess == BIG_ENDIAN) {
+                                    for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                        realBuffer[i] = (float) (((buffer[index] & 0x00ff) << 8) |
+                                                                      (buffer[index + 1] & 0x00ff));
+                                    }
+                                } else {
+                                    for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                        realBuffer[i] = (float) (((buffer[index + 1] & 0x00ff) << 8) |
+                                                                      (buffer[index] & 0x00ff));
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -2587,10 +3156,20 @@ public class FileMATLAB extends FileBase {
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryBuffer = new float[imaginaryDataBytes/2];
-                                for (i = 0; i < imaginaryDataBytes/2; i++) {
-                                	imaginaryBuffer[i] = (float)(readShort(endianess));
+                                raFile.read(buffer);
+                                imaginaryBuffer = new float[shortNumber];
+                                if (endianess == BIG_ENDIAN) {
+                                    for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                        imaginaryBuffer[i] = (float) (((buffer[index] & 0x00ff) << 8) |
+                                                                      (buffer[index + 1] & 0x00ff));
+                                    }
+                                } else {
+                                    for (i = 0, index = 0; i < shortNumber; i++, index += 2) {
+                                        imaginaryBuffer[i] = (float) (((buffer[index + 1] & 0x00ff) << 8) |
+                                                                      (buffer[index] & 0x00ff));
+                                    }
                                 }
+                                
                                 if (haveSmallImaginaryData) {
                         		    if (imaginaryDataBytes < 4) {
                         		    	padBytes = 4 - imaginaryDataBytes;
@@ -2624,10 +3203,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.USHORT);
                         		}
-                        		intBuffer = new int[realDataBytes/2];
-                        		for (i = 0; i < realDataBytes/2; i++) {
-                        		    intBuffer[i] = getUnsignedShort(endianess);
-                        		}
+                        		buffer =  new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		shortNumber = realDataBytes/2;
+                        		intBuffer = new int[shortNumber];
+                        		 if (endianess == BIG_ENDIAN) {
+                                     for (i = 0, index = 0; i < shortNumber; i++) {
+                                         b1 = buffer[index++] & 0xff;
+                                         b2 = buffer[index++] & 0xff;
+                                         intBuffer[i] = (int) ((b1 << 8) | b2);
+                                     }
+                                 } else {
+                                     for (i = 0, index = 0; i < shortNumber; i++) {
+                                         b1 = buffer[index++] & 0xff;
+                                         b2 = buffer[index++] & 0xff;
+                                         intBuffer[i] = (int) ((b2 << 8) | b1);
+                                     }
+                                 }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -2655,10 +3248,24 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
-                        		realBuffer = new float[realDataBytes/2];
-                        		for (i = 0; i < realDataBytes/2; i++) {
-                        		    realBuffer[i] = (float)(getUnsignedShort(endianess));
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		shortNumber = realDataBytes/2;
+                        		realBuffer = new float[shortNumber];
+                        		if (endianess == BIG_ENDIAN) {
+                                     for (i = 0, index = 0; i < shortNumber; i++) {
+                                         b1 = buffer[index++] & 0xff;
+                                         b2 = buffer[index++] & 0xff;
+                                         realBuffer[i] = (float) ((b1 << 8) | b2);
+                                     }
+                                } else {
+                                     for (i = 0, index = 0; i < shortNumber; i++) {
+                                         b1 = buffer[index++] & 0xff;
+                                         b2 = buffer[index++] & 0xff;
+                                         realBuffer[i] = (float) ((b2 << 8) | b1);
+                                     }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -2697,10 +3304,22 @@ public class FileMATLAB extends FileBase {
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryBuffer = new float[imaginaryDataBytes/2];
-                                for (i = 0; i < imaginaryDataBytes/2; i++) {
-                                	imaginaryBuffer[i] = (float)(getUnsignedShort(endianess));
+                                raFile.read(buffer);
+                                imaginaryBuffer = new float[shortNumber];
+                                if (endianess == BIG_ENDIAN) {
+                                    for (i = 0, index = 0; i < shortNumber; i++) {
+                                        b1 = buffer[index++] & 0xff;
+                                        b2 = buffer[index++] & 0xff;
+                                        imaginaryBuffer[i] = (float) ((b1 << 8) | b2);
+                                    }
+                                } else {
+                                    for (i = 0, index = 0; i < shortNumber; i++) {
+                                        b1 = buffer[index++] & 0xff;
+                                        b2 = buffer[index++] & 0xff;
+                                        imaginaryBuffer[i] = (float) ((b2 << 8) | b1);
+                                    }
                                 }
+                                
                                 if (haveSmallImaginaryData) {
                         		    if (imaginaryDataBytes < 4) {
                         		    	padBytes = 4 - imaginaryDataBytes;
@@ -2734,10 +3353,29 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.INTEGER);
                         		}
-                        		intBuffer = new int[realDataBytes/4];
-                        		for (i = 0; i < realDataBytes/4; i++) {
-                        		    intBuffer[i] = getInt(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		intNumber = realDataBytes/4;
+                        		intBuffer = new int[intNumber];
+                        		if (endianess == BIG_ENDIAN) {
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1 = buffer[index++] & 0x000000ff;
+                                        b2 = buffer[index++] & 0x000000ff;
+                                        b3 = buffer[index++] & 0x000000ff;
+                                        b4 = buffer[index++] & 0x000000ff;
+                                        intBuffer[i] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1 = buffer[index++] & 0x000000ff;
+                                        b2 = buffer[index++] & 0x000000ff;
+                                        b3 = buffer[index++] & 0x000000ff;
+                                        b4 = buffer[index++] & 0x000000ff;
+                                        intBuffer[i] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -2765,10 +3403,29 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[realDataBytes/4];
-                        		for (i = 0; i < realDataBytes/4; i++) {
-                        		    realDBuffer[i] = (double)getInt(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		intNumber = realDataBytes/4;
+                        		realDBuffer = new double[intNumber];
+                        		if (endianess == BIG_ENDIAN) {
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1 = buffer[index++] & 0x000000ff;
+                                        b2 = buffer[index++] & 0x000000ff;
+                                        b3 = buffer[index++] & 0x000000ff;
+                                        b4 = buffer[index++] & 0x000000ff;
+                                        realDBuffer[i] = (double)((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1 = buffer[index++] & 0x000000ff;
+                                        b2 = buffer[index++] & 0x000000ff;
+                                        b3 = buffer[index++] & 0x000000ff;
+                                        b4 = buffer[index++] & 0x000000ff;
+                                        realDBuffer[i] = (double)((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -2807,10 +3464,27 @@ public class FileMATLAB extends FileBase {
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imaginaryDataBytes/4];
-                                for (i = 0; i < imaginaryDataBytes/4; i++) {
-                                	imaginaryDBuffer[i] = (double)getInt(endianess);
+                                raFile.read(buffer);
+                                imaginaryDBuffer = new double[intNumber];
+                                if (endianess == BIG_ENDIAN) {
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1 = buffer[index++] & 0x000000ff;
+                                        b2 = buffer[index++] & 0x000000ff;
+                                        b3 = buffer[index++] & 0x000000ff;
+                                        b4 = buffer[index++] & 0x000000ff;
+                                        imaginaryDBuffer[i] = (double)((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1 = buffer[index++] & 0x000000ff;
+                                        b2 = buffer[index++] & 0x000000ff;
+                                        b3 = buffer[index++] & 0x000000ff;
+                                        b4 = buffer[index++] & 0x000000ff;
+                                        imaginaryDBuffer[i] = (double)((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                    }
                                 }
+                                
                                 if (haveSmallImaginaryData) {
                         		    if (imaginaryDataBytes < 4) {
                         		    	padBytes = 4 - imaginaryDataBytes;
@@ -2844,10 +3518,30 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.UINTEGER);
                         		}
-                        		longBuffer = new long[realDataBytes/4];
-                        		for (i = 0; i < realDataBytes/4; i++) {
-                        		    longBuffer[i] = getUInt(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		intNumber = realDataBytes/4;
+                        		longBuffer = new long[intNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        longBuffer[i] = ((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        longBuffer[i] = ((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -2875,10 +3569,30 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[realDataBytes/4];
-                        		for (i = 0; i < realDataBytes/4; i++) {
-                        		    realDBuffer[i] = (double)getUInt(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		intNumber = realDataBytes/4;
+                        		realDBuffer = new double[intNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        realDBuffer[i] = (double)((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        realDBuffer[i] = (double)((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -2917,10 +3631,28 @@ public class FileMATLAB extends FileBase {
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imaginaryDataBytes/4];
-                                for (i = 0; i < imaginaryDataBytes/4; i++) {
-                                	imaginaryDBuffer[i] = (double)getUInt(endianess);
+                                raFile.read(buffer);
+                                imaginaryDBuffer = new double[intNumber];
+                                if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        imaginaryDBuffer[i] = (double)((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < intNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        imaginaryDBuffer[i] = (double)((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                    }
                                 }
+                                
                                 if (haveSmallImaginaryData) {
                         		    if (imaginaryDataBytes < 4) {
                         		    	padBytes = 4 - imaginaryDataBytes;
@@ -2954,10 +3686,34 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.FLOAT);
                         		}
-                        		floatBuffer = new float[realDataBytes/4];
-                        		for (i = 0; i < realDataBytes/4; i++) {
-                        		    floatBuffer[i] = getFloat(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		floatNumber = realDataBytes/4;
+                        		floatBuffer = new float[floatNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < floatNumber; i++) {
+                                        b1 = buffer[index++] & 0xff;
+                                        b2 = buffer[index++] & 0xff;
+                                        b3 = buffer[index++] & 0xff;
+                                        b4 = buffer[index++] & 0xff;
+                                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+
+                                        floatBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < floatNumber; i++) {
+                                        b1 = buffer[index++] & 0xff;
+                                        b2 = buffer[index++] & 0xff;
+                                        b3 = buffer[index++] & 0xff;
+                                        b4 = buffer[index++] & 0xff;
+                                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+
+                                        floatBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -2985,10 +3741,34 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
                         		}
-                        		realBuffer = new float[realDataBytes/4];
-                        		for (i = 0; i < realDataBytes/4; i++) {
-                        		    realBuffer[i] = getFloat(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		floatNumber = realDataBytes/4;
+                        		realBuffer = new float[floatNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < floatNumber; i++) {
+                                        b1 = buffer[index++] & 0xff;
+                                        b2 = buffer[index++] & 0xff;
+                                        b3 = buffer[index++] & 0xff;
+                                        b4 = buffer[index++] & 0xff;
+                                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+
+                                        realBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < floatNumber; i++) {
+                                        b1 = buffer[index++] & 0xff;
+                                        b2 = buffer[index++] & 0xff;
+                                        b3 = buffer[index++] & 0xff;
+                                        b4 = buffer[index++] & 0xff;
+                                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+
+                                        realBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -3027,10 +3807,32 @@ public class FileMATLAB extends FileBase {
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryBuffer = new float[imaginaryDataBytes/4];
-                                for (i = 0; i < imaginaryDataBytes/4; i++) {
-                                	imaginaryBuffer[i] = getFloat(endianess);
+                                raFile.read(buffer);
+                                imaginaryBuffer = new float[floatNumber];
+                                if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < floatNumber; i++) {
+                                        b1 = buffer[index++] & 0xff;
+                                        b2 = buffer[index++] & 0xff;
+                                        b3 = buffer[index++] & 0xff;
+                                        b4 = buffer[index++] & 0xff;
+                                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+
+                                        imaginaryBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < floatNumber; i++) {
+                                        b1 = buffer[index++] & 0xff;
+                                        b2 = buffer[index++] & 0xff;
+                                        b3 = buffer[index++] & 0xff;
+                                        b4 = buffer[index++] & 0xff;
+                                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+
+                                        imaginaryBuffer[i] = Float.intBitsToFloat(tmpInt);
+                                    }
                                 }
+                                
                                 if (haveSmallImaginaryData) {
                         		    if (imaginaryDataBytes < 4) {
                         		    	padBytes = 4 - imaginaryDataBytes;
@@ -3064,10 +3866,43 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DOUBLE);
                         		}
-                        		doubleBuffer = new double[realDataBytes/8];
-                        		for (i = 0; i < realDataBytes/8; i++) {
-                        		    doubleBuffer[i] = getDouble(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		doubleNumber = realDataBytes/8;
+                        		doubleBuffer = new double[doubleNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < doubleNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                       (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);
+
+                                        doubleBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < doubleNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                       (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                        doubleBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -3095,10 +3930,43 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[realDataBytes/8];
-                        		for (i = 0; i < realDataBytes/8; i++) {
-                        		    realDBuffer[i] = getDouble(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		doubleNumber = realDataBytes/8;
+                        		realDBuffer = new double[doubleNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < doubleNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                       (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);
+
+                                        realDBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < doubleNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                       (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                        realDBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -3137,10 +4005,41 @@ public class FileMATLAB extends FileBase {
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imaginaryDataBytes/8];
-                                for (i = 0; i < imaginaryDataBytes/8; i++) {
-                                	imaginaryDBuffer[i] = getDouble(endianess);
+                                raFile.read(buffer);
+                                imaginaryDBuffer = new double[doubleNumber];
+                                if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < doubleNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                       (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);
+
+                                        imaginaryDBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < doubleNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                       (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                        imaginaryDBuffer[i] = Double.longBitsToDouble(tmpLong);
+                                    }
                                 }
+                                
                                 if (haveSmallImaginaryData) {
                         		    if (imaginaryDataBytes < 4) {
                         		    	padBytes = 4 - imaginaryDataBytes;
@@ -3174,10 +4073,40 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
                         		    fileInfo2.setDataType(ModelStorageBase.LONG);
                         		}
-                        		longBuffer = new long[realDataBytes/8];
-                        		for (i = 0; i < realDataBytes/8; i++) {
-                        		    longBuffer[i] = getLong(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		longNumber = realDataBytes/8;
+                        		longBuffer = new long[longNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        longBuffer[i] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                             (b6L << 16) | (b7L << 8) | b8L);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        longBuffer[i] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                             (b3L << 16) | (b2L << 8) | b1L);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -3205,10 +4134,40 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[realDataBytes/8];
-                        		for (i = 0; i < realDataBytes/8; i++) {
-                        		    realDBuffer[i] = (double)getLong(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		longNumber = realDataBytes/8;
+                        		realDBuffer = new double[longNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        realDBuffer[i] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                             (b6L << 16) | (b7L << 8) | b8L);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        realDBuffer[i] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                             (b3L << 16) | (b2L << 8) | b1L);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -3247,10 +4206,38 @@ public class FileMATLAB extends FileBase {
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imaginaryDataBytes/8];
-                                for (i = 0; i < imaginaryDataBytes/8; i++) {
-                                	imaginaryDBuffer[i] = (double)getLong(endianess);
+                                raFile.read(buffer);
+                                imaginaryDBuffer = new double[longNumber];
+                                if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        imaginaryDBuffer[i] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                             (b6L << 16) | (b7L << 8) | b8L);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        imaginaryDBuffer[i] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                             (b3L << 16) | (b2L << 8) | b1L);
+                                    }
                                 }
+                                
                                 if (haveSmallImaginaryData) {
                         		    if (imaginaryDataBytes < 4) {
                         		    	padBytes = 4 - imaginaryDataBytes;
@@ -3284,10 +4271,40 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.LONG);
                         		}
-                        		longBuffer = new long[realDataBytes/8];
-                        		for (i = 0; i < realDataBytes/8; i++) {
-                        		    longBuffer[i] = getLong(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		longNumber = realDataBytes/8;
+                        		longBuffer = new long[longNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        longBuffer[i] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                             (b6L << 16) | (b7L << 8) | b8L);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        longBuffer[i] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                             (b3L << 16) | (b2L << 8) | b1L);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -3315,10 +4332,40 @@ public class FileMATLAB extends FileBase {
                         		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
                         		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
                         		}
-                        		realDBuffer = new double[realDataBytes/8];
-                        		for (i = 0; i < realDataBytes/8; i++) {
-                        		    realDBuffer[i] = (double)getLong(endianess);
-                        		}
+                        		buffer = new byte[realDataBytes];
+                        		raFile.read(buffer);
+                        		longNumber = realDataBytes/8;
+                        		realDBuffer = new double[longNumber];
+                        		if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        realDBuffer[i] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                             (b6L << 16) | (b7L << 8) | b8L);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        realDBuffer[i] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                             (b3L << 16) | (b2L << 8) | b1L);
+                                    }
+                                }
+                        		
                         		if (haveSmallRealData) {
 	                    		    if (realDataBytes < 4) {
 	                    		    	padBytes = 4 - realDataBytes;
@@ -3357,10 +4404,38 @@ public class FileMATLAB extends FileBase {
                                 else {
                                 	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
                                 }
-                                imaginaryDBuffer = new double[imaginaryDataBytes/8];
-                                for (i = 0; i < imaginaryDataBytes/8; i++) {
-                                	imaginaryDBuffer[i] = (double)getLong(endianess);
+                                raFile.read(buffer);
+                                imaginaryDBuffer = new double[longNumber];
+                                if (endianess == BIG_ENDIAN) {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        imaginaryDBuffer[i] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) |
+                                                             (b6L << 16) | (b7L << 8) | b8L);
+                                    }
+                                } else {
+
+                                    for (i = 0, index = 0; i < longNumber; i++) {
+                                        b1L = buffer[index++] & 0xffL;
+                                        b2L = buffer[index++] & 0xffL;
+                                        b3L = buffer[index++] & 0xffL;
+                                        b4L = buffer[index++] & 0xffL;
+                                        b5L = buffer[index++] & 0xffL;
+                                        b6L = buffer[index++] & 0xffL;
+                                        b7L = buffer[index++] & 0xffL;
+                                        b8L = buffer[index++] & 0xffL;
+                                        imaginaryDBuffer[i] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) |
+                                                             (b3L << 16) | (b2L << 8) | b1L);
+                                    }
                                 }
+                                
                                 if (haveSmallImaginaryData) {
                         		    if (imaginaryDataBytes < 4) {
                         		    	padBytes = 4 - imaginaryDataBytes;
