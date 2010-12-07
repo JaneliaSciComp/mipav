@@ -1629,7 +1629,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     transMat.Mult(fileTransMatrix);
                     xfrm = transMat;
                 } else if (transformSource.equals("user")) {
-                    System.out.println("aaa");
                     final double[][] xMat = new double[4][4];
 
                     for (int i = 0; i < 4; i++) {
@@ -1638,7 +1637,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     transMat.copyMatrix(xMat);
                     xfrm = transMat;
                 } else if (transformSource.equals("self")) {
-                    System.out.println("bbb");
                     transMat.MakeIdentity();
                     xfrm = transMat;
                     if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
