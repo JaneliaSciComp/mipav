@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.beans.PropertyChangeListener;
 import java.util.Hashtable;
 
 import javax.swing.BoundedRangeModel;
@@ -314,6 +315,10 @@ public class ViewJSlider extends JSlider {
      * Determine the minor tick spacing using the getBestTickSpacing method
      */
     public void resizeSlider() {
+        PropertyChangeListener[] tempListener = getPropertyChangeListeners();
+        for(int i=0; i<tempListener.length; i++) {
+            removePropertyChangeListener(tempListener[i]);
+        }
         double maxMinorTicks = 0.0;
         double maxMajorTicks = 0.0;
         int majTickSpacing = 0,minTickSpacing = 0;
@@ -361,7 +366,7 @@ public class ViewJSlider extends JSlider {
         if(minTickSpacing == 1) {
             setSnapToTicks(true); //when all minor ticks can be displayed, this is the only time a slider should snap to ticks
         }
-        
+        System.out.println(getValue());
         if(minTickSpacing > 0) {
             setMinor = true;
         }
@@ -377,8 +382,11 @@ public class ViewJSlider extends JSlider {
         } else {
             setMinorTickSpacing(getMaximum() - getMinimum()); //minor ticks will only be seen at endpoints
         }
-        
         setLabelTable(buildSliderLabels(majTickSpacing)); 
+
+        for(int i=0; i<tempListener.length; i++) {
+            addPropertyChangeListener(tempListener[i]);
+        }
     }
     
     
