@@ -173,7 +173,7 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("Help")) {
-			// MipavUtil.showHelp("");
+
 		}
 	}
 
@@ -608,47 +608,63 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 		setSize(350, 230);
 		setForeground(Color.black);
 
-		Box contentBox = new Box(BoxLayout.Y_AXIS);
+		mainDialogPanel.setLayout(new GridBagLayout());
+		GridBagConstraints gbcPanel = new GridBagConstraints();
+		gbcPanel.weightx = 1;
+		gbcPanel.weighty = .9;
+		gbcPanel.gridy = 0;
+		gbcPanel.fill = GridBagConstraints.BOTH;
 
 		String[] projectionLables = new String[]{ "X Projection", "Y Projection", "Z Projection" };
 
 		JTabbedPane tabbedPane = new JTabbedPane();
-		contentBox.add(tabbedPane);
+		mainDialogPanel.add(tabbedPane, gbcPanel);
 		for ( int i = 0; i < nDims; i++ )
 		{
 			JPanel thresholdPanel = new JPanel();        
 			tabbedPane.addTab(projectionLables[i], null, thresholdPanel);        
 			//set layout
 			GridBagLayout gbl = new GridBagLayout();
-			GridBagConstraints gbc = new GridBagConstraints();
-			thresholdPanel.setLayout(gbl);
-			gbc.anchor = GridBagConstraints.NORTHWEST;
+			
+			GridBagConstraints gbcCheck = new GridBagConstraints();
+			gbcCheck.anchor = GridBagConstraints.NORTHWEST;
+			gbcCheck.weightx = .5;
+			thresholdPanel.setLayout(gbl);	
 
 			maximumCheck[i] = new JCheckBox( "Compute Maximum", false );
 			maximumCheck[i].addActionListener(this);
-			gbc.gridwidth = 2;
-			gbl.setConstraints(maximumCheck[i], gbc);
+			gbl.setConstraints(maximumCheck[i], gbcCheck);
 			thresholdPanel.add(maximumCheck[i]);
+			
 			minimumCheck[i] = new JCheckBox( "Compute Minimum", false );
 			minimumCheck[i].addActionListener(this);
-			gbc.gridwidth = GridBagConstraints.REMAINDER;
-			gbl.setConstraints(minimumCheck[i], gbc);
+			gbcCheck.gridwidth = GridBagConstraints.REMAINDER;
+			gbl.setConstraints(minimumCheck[i], gbcCheck);
 			thresholdPanel.add(minimumCheck[i]);
 
+			GridBagConstraints gbcLabel = new GridBagConstraints();
+            gbcLabel.anchor = GridBagConstraints.NORTHWEST;
+            gbcLabel.gridx = 0;
+            gbcLabel.weightx = .1;
+            gbcLabel.insets = new Insets(2, 2, 2, 0);
+            
+            GridBagConstraints gbcField = new GridBagConstraints();
+            gbcField.anchor = GridBagConstraints.NORTHWEST;
+            gbcField.gridwidth = GridBagConstraints.REMAINDER;
+            gbcField.weightx = .9;
+            gbcField.fill = GridBagConstraints.HORIZONTAL;
+            gbcField.insets = new Insets(2, 0, 2, 2);
+			
 			if ( image.isColorImage() )
 			{
 
 				// For minR
-				thresholdPanel.add(Box.createHorizontalStrut(10));
-
 				JLabel minLabelR = new JLabel("Red threshold minimum:");
 				minLabelR.setFont(serif12);
 				minLabelR.setForeground(Color.black);
 				minLabelR.setRequestFocusEnabled(false);
-				gbc.gridwidth = 2;
-				gbl.setConstraints(minLabelR, gbc);
+				gbl.setConstraints(minLabelR, gbcLabel);
 				thresholdPanel.add(minLabelR);
-				thresholdPanel.add(Box.createHorizontalStrut(10));
 
 				minInputR[i] = new JTextField("0", 12);
 				minInputR[i].addActionListener(this);
@@ -659,22 +675,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 					minInputR[i].setText(Integer.toString((int)image.getMinR()));
 				}
 				MipavUtil.makeNumericsOnly(minInputR[i], numericsPeriod);
-
-				gbc.gridwidth = GridBagConstraints.REMAINDER;
-				gbl.setConstraints(minInputR[i], gbc);
+				gbl.setConstraints(minInputR[i], gbcField);
 				thresholdPanel.add(minInputR[i]);
 
 				//For maxR
-				thresholdPanel.add(Box.createHorizontalStrut(10));
-
 				JLabel maxLabelR = new JLabel("Red threshold maximum:");
 				maxLabelR.setFont(serif12);
 				maxLabelR.setForeground(Color.black);
 				maxLabelR.setRequestFocusEnabled(false);
-				gbc.gridwidth = 2;
-				gbl.setConstraints(maxLabelR, gbc);
+				gbl.setConstraints(maxLabelR, gbcLabel);
 				thresholdPanel.add(maxLabelR);
-				thresholdPanel.add(Box.createHorizontalStrut(10));
 
 				maxInputR[i] = new JTextField("0", 12);
 				maxInputR[i].addActionListener(this);
@@ -685,22 +695,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 					maxInputR[i].setText(Integer.toString((int)image.getMaxR()));
 				}
 				MipavUtil.makeNumericsOnly(maxInputR[i], numericsPeriod);
-
-				gbc.gridwidth = GridBagConstraints.REMAINDER;
-				gbl.setConstraints(maxInputR[i], gbc);
+				gbl.setConstraints(maxInputR[i], gbcField);
 				thresholdPanel.add(maxInputR[i]);
 
 				// For minG
-				thresholdPanel.add(Box.createHorizontalStrut(10));
-
 				JLabel minLabelG = new JLabel("Green threshold minimum:");
 				minLabelG.setFont(serif12);
 				minLabelG.setForeground(Color.black);
 				minLabelG.setRequestFocusEnabled(false);
-				gbc.gridwidth = 2;
-				gbl.setConstraints(minLabelG, gbc);
+				gbl.setConstraints(minLabelG, gbcLabel);
 				thresholdPanel.add(minLabelG);
-				thresholdPanel.add(Box.createHorizontalStrut(10));
 
 				minInputG[i] = new JTextField("0", 12);
 				minInputG[i].addActionListener(this);
@@ -711,22 +715,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 					minInputG[i].setText(Integer.toString((int)image.getMinG()));
 				}
 				MipavUtil.makeNumericsOnly(minInputG[i], numericsPeriod);
-
-				gbc.gridwidth = GridBagConstraints.REMAINDER;
-				gbl.setConstraints(minInputG[i], gbc);
+				gbl.setConstraints(minInputG[i], gbcField);
 				thresholdPanel.add(minInputG[i]);
 
 				//For maxG
-				thresholdPanel.add(Box.createHorizontalStrut(10));
-
 				JLabel maxLabelG = new JLabel("Green threshold maximum:");
 				maxLabelG.setFont(serif12);
 				maxLabelG.setForeground(Color.black);
 				maxLabelG.setRequestFocusEnabled(false);
-				gbc.gridwidth = 2;
-				gbl.setConstraints(maxLabelG, gbc);
+				gbl.setConstraints(maxLabelG, gbcLabel);
 				thresholdPanel.add(maxLabelG);
-				thresholdPanel.add(Box.createHorizontalStrut(10));
 
 				maxInputG[i] = new JTextField("0", 12);
 				maxInputG[i].addActionListener(this);
@@ -737,22 +735,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 					maxInputG[i].setText(Integer.toString((int)image.getMaxG()));
 				}
 				MipavUtil.makeNumericsOnly(maxInputG[i], numericsPeriod);
-
-				gbc.gridwidth = GridBagConstraints.REMAINDER;
-				gbl.setConstraints(maxInputG[i], gbc);
+				gbl.setConstraints(maxInputG[i], gbcField);
 				thresholdPanel.add(maxInputG[i]);
 
 				// For minB
-				thresholdPanel.add(Box.createHorizontalStrut(10));
-
 				JLabel minLabelB = new JLabel("Blue threshold minimum:");
 				minLabelB.setFont(serif12);
 				minLabelB.setForeground(Color.black);
 				minLabelB.setRequestFocusEnabled(false);
-				gbc.gridwidth = 2;
-				gbl.setConstraints(minLabelB, gbc);
+				gbl.setConstraints(minLabelB, gbcLabel);
 				thresholdPanel.add(minLabelB);
-				thresholdPanel.add(Box.createHorizontalStrut(10));
 
 				minInputB[i] = new JTextField("0", 12);
 				minInputB[i].addActionListener(this);
@@ -763,22 +755,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 					minInputB[i].setText(Integer.toString((int)image.getMinB()));
 				}
 				MipavUtil.makeNumericsOnly(minInputB[i], numericsPeriod);
-
-				gbc.gridwidth = GridBagConstraints.REMAINDER;
-				gbl.setConstraints(minInputB[i], gbc);
+				gbl.setConstraints(minInputB[i], gbcField);
 				thresholdPanel.add(minInputB[i]);
 
 				//For maxB
-				thresholdPanel.add(Box.createHorizontalStrut(10));
-
 				JLabel maxLabelB = new JLabel("Blue threshold maximum:");
 				maxLabelB.setFont(serif12);
 				maxLabelB.setForeground(Color.black);
 				maxLabelB.setRequestFocusEnabled(false);
-				gbc.gridwidth = 2;
-				gbl.setConstraints(maxLabelB, gbc);
+				gbl.setConstraints(maxLabelB, gbcLabel);
 				thresholdPanel.add(maxLabelB);
-				thresholdPanel.add(Box.createHorizontalStrut(10));
 
 				maxInputB[i] = new JTextField("0", 12);
 				maxInputB[i].addActionListener(this);
@@ -789,24 +775,18 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 					maxInputB[i].setText(Integer.toString((int)image.getMaxB()));
 				}
 				MipavUtil.makeNumericsOnly(maxInputB[i], numericsPeriod);
-
-				gbc.gridwidth = GridBagConstraints.REMAINDER;
-				gbl.setConstraints(maxInputB[i], gbc);
+				gbl.setConstraints(maxInputB[i], gbcField);
 				thresholdPanel.add(maxInputB[i]);
 			}
 			else
 			{
 				//For min
-				thresholdPanel.add(Box.createHorizontalStrut(10));
-
 				JLabel minLabel = new JLabel("Threshold minimum:");
 				minLabel.setFont(serif12);
 				minLabel.setForeground(Color.black);
 				minLabel.setRequestFocusEnabled(false);
-				gbc.gridwidth = 2;
-				gbl.setConstraints(minLabel, gbc);
+				gbl.setConstraints(minLabel, gbcLabel);
 				thresholdPanel.add(minLabel);
-				thresholdPanel.add(Box.createHorizontalStrut(10));
 
 				minInput[i] = new JTextField("0", 12);
 				minInput[i].addActionListener(this);
@@ -817,22 +797,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 					minInput[i].setText(Long.toString((long)image.getMin()));
 				}
 				MipavUtil.makeNumericsOnly(minInput[i], numericsPeriod);
-
-				gbc.gridwidth = GridBagConstraints.REMAINDER;
-				gbl.setConstraints(minInput[i], gbc);
+				gbl.setConstraints(minInput[i], gbcField);
 				thresholdPanel.add(minInput[i]);
 
 				//For max
-				thresholdPanel.add(Box.createHorizontalStrut(10));
-
 				JLabel maxLabel = new JLabel("Threshold maximum:");
 				maxLabel.setFont(serif12);
 				maxLabel.setForeground(Color.black);
 				maxLabel.setRequestFocusEnabled(false);
-				gbc.gridwidth = 2;
-				gbl.setConstraints(maxLabel, gbc);
+				gbl.setConstraints(maxLabel, gbcLabel);
 				thresholdPanel.add(maxLabel);
-				thresholdPanel.add(Box.createHorizontalStrut(10));
 
 				maxInput[i] = new JTextField("0", 12);
 				maxInput[i].addActionListener(this);
@@ -843,25 +817,20 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 					maxInput[i].setText(Long.toString((long)image.getMax()));
 				}
 				MipavUtil.makeNumericsOnly(maxInput[i], numericsPeriod);
-
-				gbc.gridwidth = GridBagConstraints.REMAINDER;
-				gbl.setConstraints(maxInput[i], gbc);
+				gbl.setConstraints(maxInput[i], gbcField);
 				thresholdPanel.add(maxInput[i]);
 			}
 
 
 
 
-			// Start Slice:
-			thresholdPanel.add(Box.createHorizontalStrut(10));    
+			// Start Slice:   
 			JLabel startLabel = new JLabel("Start Slice:");
 			startLabel.setFont(serif12);
 			startLabel.setForeground(Color.black);
 			startLabel.setRequestFocusEnabled(false);
-			gbc.gridwidth = 2;
-			gbl.setConstraints(startLabel, gbc);
+			gbl.setConstraints(startLabel, gbcLabel);
 			thresholdPanel.add(startLabel);
-			thresholdPanel.add(Box.createHorizontalStrut(10));
 
 			startInput[i] = new JTextField("0", 12);
 			startInput[i].addActionListener(this);
@@ -869,20 +838,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 			startInput[i].addKeyListener(this);
 			startInput[i].addFocusListener(this);
 			MipavUtil.makeNumericsOnly(startInput[i], numericsPeriod);    
-			gbc.gridwidth = GridBagConstraints.REMAINDER;
-			gbl.setConstraints(startInput[i], gbc);
+			gbl.setConstraints(startInput[i], gbcField);
 			thresholdPanel.add(startInput[i]);
 
-			// Stop Slice
-			thresholdPanel.add(Box.createHorizontalStrut(10));    
+			// Stop Slice  
 			JLabel stopLabel = new JLabel("End slice:");
 			stopLabel.setFont(serif12);
 			stopLabel.setForeground(Color.black);
 			stopLabel.setRequestFocusEnabled(false);
-			gbc.gridwidth = 2;
-			gbl.setConstraints(stopLabel, gbc);
+			gbl.setConstraints(stopLabel, gbcLabel);
 			thresholdPanel.add(stopLabel);
-			thresholdPanel.add(Box.createHorizontalStrut(10));
 
 			stopInput[i] = new JTextField("0", 12);
 			stopInput[i].addActionListener(this);
@@ -890,25 +855,22 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 			stopInput[i].addKeyListener(this);
 			stopInput[i].addFocusListener(this);
 			MipavUtil.makeNumericsOnly(stopInput[i], numericsPeriod);    
-			gbc.gridwidth = GridBagConstraints.REMAINDER;
-			gbl.setConstraints(stopInput[i], gbc);
+			gbl.setConstraints(stopInput[i], gbcField);
 			thresholdPanel.add(stopInput[i]);
 
 			// Windowing slider:
-			thresholdPanel.add(Box.createHorizontalStrut(10));    
 			windowLabel[i] = new JLabel("# slices in bracket: " + extents[i] );
 			windowLabel[i].setFont(serif12);
 			windowLabel[i].setForeground(Color.black);
 			windowLabel[i].setRequestFocusEnabled(false);
-			gbc.gridwidth = 2;
-			gbl.setConstraints(windowLabel[i], gbc);
+			gbcLabel.insets = new Insets(4, 2, 8, 0);
+			gbl.setConstraints(windowLabel[i], gbcLabel);
 			thresholdPanel.add(windowLabel[i]);
-			thresholdPanel.add(Box.createHorizontalStrut(10));
 
 			windowSlider[i] = new ViewJSlider( ViewJSlider.SLICE, 1, extents[i], extents[i] );
 			windowSlider[i].addChangeListener(this); 
-			gbc.gridwidth = GridBagConstraints.REMAINDER;
-			gbl.setConstraints(windowSlider[i], gbc);
+			gbcField.insets = new Insets(4, 0, 8, 2);
+			gbl.setConstraints(windowSlider[i], gbcField);
 			thresholdPanel.add(windowSlider[i]);
 
 		}
@@ -918,8 +880,11 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 		tabbedPane.setSelectedIndex(2);
 		tabbedPane.addChangeListener(this);;
 
-		contentBox.add(buildButtons());
-		mainDialogPanel.add(contentBox);
+		gbcPanel.weightx = 1;
+        gbcPanel.weighty = .1;
+        gbcPanel.gridy = 1;
+        gbcPanel.fill = GridBagConstraints.HORIZONTAL;
+		mainDialogPanel.add(buildButtons(), gbcPanel);
 		getContentPane().add(mainDialogPanel);
 
 		pack();
@@ -932,7 +897,7 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	 * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
 	 */
 	private boolean setVariables() {
-
+	    
 		for ( int i = 0; i < nDims; i++ )
 		{
 			try {
