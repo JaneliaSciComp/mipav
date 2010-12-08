@@ -5801,14 +5801,22 @@ public class FileMATLAB extends FileBase {
         byte[] byteBuffer = null;
         short[] shortBuffer;
         int[] intBuffer;
+        long[] longBuffer = null;
         float[] floatBuffer = null;
         float[] floatIBuffer = null;
         int tmpInt;
         double[] doubleBuffer = null;
         double[] doubleIBuffer = null;
+        byte[] tBuffer = null;
         long tmpLong;
         int padBytes;
         int matrixByteLength;
+        int x;
+        int y;
+        int index;
+        int dimsWritten;
+        int offset;
+        double maxValue;
          
          if (image.getNDims() >= 3) {
              sBegin = options.getBeginSlice();
@@ -5959,6 +5967,24 @@ public class FileMATLAB extends FileBase {
     		complexFlag = true;
     		realImageBytes = 8 * imageLength;
     		break;
+    	case ModelStorageBase.ARGB:
+    		arrayClass = mxUINT8_CLASS;
+    		matDataType = miUINT8;
+    		complexFlag = false;
+    		realImageBytes = 3 * imageLength;
+    		break;
+    	case ModelStorageBase.ARGB_USHORT:
+    		arrayClass = mxUINT16_CLASS;
+    		matDataType = miUINT16;
+    		complexFlag = false;
+    		realImageBytes = 6 * imageLength;
+    		break;
+    	case ModelStorageBase.ARGB_FLOAT:
+    		arrayClass = mxDOUBLE_CLASS;
+    		matDataType = miDOUBLE;
+    		complexFlag = false;
+    		realImageBytes = 24 * imageLength;
+    		break;
     	default:
     		arrayClass = mxINT8_CLASS;
     		matDataType = miINT8;
@@ -5976,15 +6002,27 @@ public class FileMATLAB extends FileBase {
     	writeInt(0, endianess);
     	// Write the data type of the dimensions array
     	writeInt(miINT32, endianess);
-    	dimensionsArrayBytes = 4 * nDims;
+    	if (image.isColorImage()) {
+    		dimensionsArrayBytes = 4 * (nDims + 1);
+    	}
+    	else {
+    	    dimensionsArrayBytes = 4 * nDims;
+    	}
     	// Write the number of bytes in the dimensions array
     	writeInt(dimensionsArrayBytes, endianess);
     	// Write the dimensions array
-    	for (i = 0; i < nDims; i++) {
+    	writeInt(imageExtents[1], endianess);
+    	writeInt(imageExtents[0], endianess);
+    	for (i = 2; i < nDims; i++) {
     		writeInt(imageExtents[i], endianess);
     	}
+    	dimsWritten = nDims;
+    	if (image.isColorImage()) {
+    		writeInt(3, endianess);
+    		dimsWritten++;
+    	}
     	// Write 4 pad bytes if dimensions array bytes is not a multiple of 8
-    	if ((nDims == 3) || (nDims == 5)) {
+    	if ((dimsWritten == 3) || (dimsWritten == 5)) {
     		writeInt(0, endianess);
     	}
     	// Write the data type of the array name
@@ -6029,17 +6067,46 @@ public class FileMATLAB extends FileBase {
         case ModelStorageBase.UBYTE:
 
             byteBuffer = new byte[sliceSize];
+            tBuffer = new byte[byteBuffer.length];
             for (t = tBegin; t <= tEnd; t++) {
 
                 for (z = sBegin; z <= sEnd; z++, count++) {
                     i = (t * zDim) + z;
                     fireProgressStateChanged(count * 100 / numberSlices);
                     image.exportSliceXY(i, byteBuffer);
-                    raFile.write(byteBuffer);
+                    j = 0;
+                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    	for (y = 0; y < imageExtents[1]; y++) {
+                    	    tBuffer[j++] = byteBuffer[x + imageExtents[0] * y];	
+                    	}
+                    }
+                    raFile.write(tBuffer);
                 } // for (z = sBegin; z <= sEnd; z++,count++)
             } // for (t = tBegin; t <= tEnd; t++)
 
             break;
+            
+        case ModelStorageBase.ARGB:
+        	byteBuffer = new byte[sliceSize];
+            tBuffer = new byte[byteBuffer.length];
+            for (offset = 1; offset <= 3; offset++) {
+	            for (t = tBegin; t <= tEnd; t++) {
+	
+	                for (z = sBegin; z <= sEnd; z++, count++) {
+	                    i = (t * zDim) + z;
+	                    fireProgressStateChanged(count * 100 / (3 * numberSlices));
+	                    image.exportRGBData(offset, 4*i*sliceSize, sliceSize, byteBuffer);
+	                    j = 0;
+	                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+	                    	for (y = 0; y < imageExtents[1]; y++) {
+	                    	    tBuffer[j++] = byteBuffer[x + imageExtents[0] * y];	
+	                    	}
+	                    }
+	                    raFile.write(tBuffer);
+	                } // for (z = sBegin; z <= sEnd; z++,count++)
+	            } // for (t = tBegin; t <= tEnd; t++)
+            } // for (offset = 1; offset <= 3; offset++)
+        	break;
 
         case ModelStorageBase.SHORT:
         case ModelStorageBase.USHORT:
@@ -6052,10 +6119,14 @@ public class FileMATLAB extends FileBase {
                     i = (t * zDim) + z;
                     fireProgressStateChanged(count * 100 / numberSlices);
                     image.exportSliceXY(i, shortBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        byteBuffer[2 * j] = (byte) (shortBuffer[j] >>> 8);
-                        byteBuffer[ (2 * j) + 1] = (byte) (shortBuffer[j]);
+                    
+                    j = 0;
+                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    	for (y = 0; y < imageExtents[1]; y++, j++) {
+                    		index = x + imageExtents[0] * y;
+                    	    byteBuffer[2*j] = (byte)(shortBuffer[index] >>> 8);	
+                    	    byteBuffer[(2*j) + 1] = (byte) (shortBuffer[index]);
+                    	}
                     }
 
                     raFile.write(byteBuffer);
@@ -6063,6 +6134,32 @@ public class FileMATLAB extends FileBase {
             } // for (t = tBegin; t <= tEnd; t++)
 
             break;
+            
+        case ModelStorageBase.ARGB_USHORT:
+        	shortBuffer = new short[sliceSize];
+            byteBuffer = new byte[2 * sliceSize];
+            for (offset = 1; offset <= 3; offset++) {
+	            for (t = tBegin; t <= tEnd; t++) {
+	
+	                for (z = sBegin; z <= sEnd; z++, count++) {
+	                    i = (t * zDim) + z;
+	                    fireProgressStateChanged(count * 100 / (3 * numberSlices));
+	                    image.exportRGBData(offset, 4*i*sliceSize, sliceSize, shortBuffer);
+	                    
+	                    j = 0;
+	                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+	                    	for (y = 0; y < imageExtents[1]; y++, j++) {
+	                    		index = x + imageExtents[0] * y;
+	                    	    byteBuffer[2*j] = (byte)(shortBuffer[index] >>> 8);	
+	                    	    byteBuffer[(2*j) + 1] = (byte) (shortBuffer[index]);
+	                    	}
+	                    }
+	
+	                    raFile.write(byteBuffer);
+	                } // for (z = sBegin; z <= sEnd; z++,count++)
+	            } // for (t = tBegin; t <= tEnd; t++)
+            } // for (offset = 1; offset <= 3; offset++)
+        	break;
 
         case ModelStorageBase.INTEGER:
         case ModelStorageBase.UINTEGER:
@@ -6076,12 +6173,16 @@ public class FileMATLAB extends FileBase {
                     i = (t * zDim) + z;
                     fireProgressStateChanged(count * 100 / numberSlices);
                     image.exportSliceXY(i, intBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        byteBuffer[4 * j] = (byte) (intBuffer[j] >>> 24);
-                        byteBuffer[ (4 * j) + 1] = (byte) (intBuffer[j] >>> 16);
-                        byteBuffer[ (4 * j) + 2] = (byte) (intBuffer[j] >>> 8);
-                        byteBuffer[ (4 * j) + 3] = (byte) (intBuffer[j]);
+                    
+                    j = 0;
+                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    	for (y = 0; y < imageExtents[1]; y++, j++) {
+                    		index = x + imageExtents[0] * y;
+                    	    byteBuffer[4*j] = (byte)(intBuffer[index] >>> 24);	
+                    	    byteBuffer[(4*j) + 1] = (byte) (intBuffer[index] >>> 16);
+                    	    byteBuffer[(4*j) + 2] = (byte) (intBuffer[index] >>> 8);
+                    	    byteBuffer[(4*j) + 3] = (byte) (intBuffer[index]);
+                    	}
                     }
 
                     raFile.write(byteBuffer);
@@ -6089,6 +6190,38 @@ public class FileMATLAB extends FileBase {
             } // for (t = tBegin; t <= tEnd; t++)
 
             break;
+            
+        case ModelStorageBase.LONG:
+        	
+        	// store as 64 bit signed integer
+            longBuffer = new long[sliceSize];
+            byteBuffer = new byte[8 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = sBegin; z <= sEnd; z++, count++) {
+                    i = (t * zDim) + z;
+                    fireProgressStateChanged(count * 100 / numberSlices);
+                    image.exportSliceXY(i, longBuffer);
+		        	j = 0;
+		            for (x = imageExtents[0] - 1; x >= 0; x--) {
+		            	for (y = 0; y < imageExtents[1]; y++, j++) {
+		            		index = x + imageExtents[0] * y;
+		            		tmpLong = Double.doubleToLongBits(longBuffer[index]);
+		            		byteBuffer[8 * j] = (byte) (longBuffer[index] >>> 56);
+		                    byteBuffer[ (8 * j) + 1] = (byte) (longBuffer[index] >>> 48);
+		                    byteBuffer[ (8 * j) + 2] = (byte) (longBuffer[index] >>> 40);
+		                    byteBuffer[ (8 * j) + 3] = (byte) (longBuffer[index] >>> 32);
+		                    byteBuffer[ (8 * j) + 4] = (byte) (longBuffer[index] >>> 24);
+		                    byteBuffer[ (8 * j) + 5] = (byte) (longBuffer[index] >>> 16);
+		                    byteBuffer[ (8 * j) + 6] = (byte) (longBuffer[index] >>> 8);
+		                    byteBuffer[ (8 * j) + 7] = (byte) (longBuffer[index]);
+		            	}
+		            }
+            
+		            raFile.write(byteBuffer);
+                } // for (z = sBegin; z <= sEnd; z++,count++)
+            } // for (t = tBegin; t <= tEnd; t++)
+        	break;
 
         case ModelStorageBase.FLOAT:
 
@@ -6101,13 +6234,17 @@ public class FileMATLAB extends FileBase {
                     i = (t * zDim) + z;
                     fireProgressStateChanged(count * 100 / numberSlices);
                     image.exportSliceXY(i, floatBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        tmpInt = Float.floatToIntBits(floatBuffer[j]);
-                        byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
-                        byteBuffer[ (4 * j) + 1] = (byte) (tmpInt >>> 16);
-                        byteBuffer[ (4 * j) + 2] = (byte) (tmpInt >>> 8);
-                        byteBuffer[ (4 * j) + 3] = (byte) (tmpInt);
+                    
+                    j = 0;
+                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    	for (y = 0; y < imageExtents[1]; y++, j++) {
+                    		index = x + imageExtents[0] * y;
+                    		tmpInt = Float.floatToIntBits(floatBuffer[index]);
+                    	    byteBuffer[4*j] = (byte)(tmpInt >>> 24);	
+                    	    byteBuffer[(4*j) + 1] = (byte) (tmpInt >>> 16);
+                    	    byteBuffer[(4*j) + 2] = (byte) (tmpInt >>> 8);
+                    	    byteBuffer[(4*j) + 3] = (byte) (tmpInt);
+                    	}
                     }
 
                     raFile.write(byteBuffer);
@@ -6127,17 +6264,21 @@ public class FileMATLAB extends FileBase {
                     i = (t * zDim) + z;
                     fireProgressStateChanged(count * 50 / numberSlices);
                     image.exportSliceXY(i, doubleBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        tmpLong = Double.doubleToLongBits(doubleBuffer[j]);
-                        byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
-                        byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
-                        byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
-                        byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
-                        byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
-                        byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
-                        byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
-                        byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+                    
+                    j = 0;
+                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    	for (y = 0; y < imageExtents[1]; y++, j++) {
+                    		index = x + imageExtents[0] * y;
+                    		tmpLong = Double.doubleToLongBits(doubleBuffer[index]);
+                    		byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
+                            byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
+                            byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
+                            byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
+                            byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
+                            byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
+                            byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
+                            byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+                    	}
                     }
 
                     raFile.write(byteBuffer);
@@ -6145,6 +6286,41 @@ public class FileMATLAB extends FileBase {
             } // for (t = tBegin; t <= tEnd; t++)
 
             break;
+            
+        case ModelStorageBase.ARGB_FLOAT:
+        	floatBuffer = new float[sliceSize];
+            byteBuffer = new byte[8 * sliceSize];
+            maxValue = image.getMax();
+            for (offset = 1; offset <= 3; offset++) {
+	            for (t = tBegin; t <= tEnd; t++) {
+	
+	                for (z = sBegin; z <= sEnd; z++, count++) {
+	                    i = (t * zDim) + z;
+	                    fireProgressStateChanged(count * 50 / numberSlices);
+	                    image.exportRGBData(offset, 4*i*sliceSize, sliceSize, floatBuffer);
+	                    
+	                    j = 0;
+	                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+	                    	for (y = 0; y < imageExtents[1]; y++, j++) {
+	                    		index = x + imageExtents[0] * y;
+	                    		tmpLong = Double.doubleToLongBits(floatBuffer[index]/maxValue);
+	                    		byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
+	                            byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
+	                            byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
+	                            byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
+	                            byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
+	                            byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
+	                            byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
+	                            byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+	                    	}
+	                    }
+	
+	                    raFile.write(byteBuffer);
+	                } // for (z = sBegin; z <= sEnd; z++,count++)
+	            } // for (t = tBegin; t <= tEnd; t++)
+            } // for (offset = 1; offset <= 3; offset++)
+
+        	break;
             
         case ModelStorageBase.COMPLEX:
 
@@ -6158,13 +6334,17 @@ public class FileMATLAB extends FileBase {
                     i = (t * zDim) + z;
                     fireProgressStateChanged(count * 100 / numberSlices);
                     image.exportComplexData(2*i*sliceSize, sliceSize, floatBuffer, floatIBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        tmpInt = Float.floatToIntBits(floatBuffer[j]);
-                        byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
-                        byteBuffer[ (4 * j) + 1] = (byte) (tmpInt >>> 16);
-                        byteBuffer[ (4 * j) + 2] = (byte) (tmpInt >>> 8);
-                        byteBuffer[ (4 * j) + 3] = (byte) (tmpInt);
+                    
+                    j = 0;
+                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    	for (y = 0; y < imageExtents[1]; y++, j++) {
+                    		index = x + imageExtents[0] * y;
+                    		tmpInt = Float.floatToIntBits(floatBuffer[index]);
+                    	    byteBuffer[4*j] = (byte)(tmpInt >>> 24);	
+                    	    byteBuffer[(4*j) + 1] = (byte) (tmpInt >>> 16);
+                    	    byteBuffer[(4*j) + 2] = (byte) (tmpInt >>> 8);
+                    	    byteBuffer[(4*j) + 3] = (byte) (tmpInt);
+                    	}
                     }
 
                     raFile.write(byteBuffer);
@@ -6185,17 +6365,21 @@ public class FileMATLAB extends FileBase {
                     i = (t * zDim) + z;
                     fireProgressStateChanged(count * 50 / numberSlices);
                     image.exportDComplexData(2*i*sliceSize, sliceSize, doubleBuffer, doubleIBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        tmpLong = Double.doubleToLongBits(doubleBuffer[j]);
-                        byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
-                        byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
-                        byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
-                        byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
-                        byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
-                        byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
-                        byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
-                        byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+                    
+                    j = 0;
+                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    	for (y = 0; y < imageExtents[1]; y++, j++) {
+                    		index = x + imageExtents[0] * y;
+                    		tmpLong = Double.doubleToLongBits(doubleBuffer[index]);
+                    		byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
+                            byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
+                            byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
+                            byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
+                            byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
+                            byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
+                            byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
+                            byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+                    	}
                     }
 
                     raFile.write(byteBuffer);
@@ -6205,8 +6389,8 @@ public class FileMATLAB extends FileBase {
             break;
         }
         
-        if ((byteBuffer.length % 8) != 0) {
-            padBytes = 8 - byteBuffer.length;
+        if ((raFile.getFilePointer() % 8) != 0) {
+            padBytes = (int)(8 - (raFile.getFilePointer() % 8));
             for (i = 0; i < padBytes; i++) {
             	raFile.writeByte(0);
             }
@@ -6225,21 +6409,25 @@ public class FileMATLAB extends FileBase {
                        i = (t * zDim) + z;
                        fireProgressStateChanged(50 + (count * 50 / numberSlices));
                        image.exportComplexData(2*i*sliceSize, sliceSize, floatBuffer, floatIBuffer);
-
-                       for (j = 0; j < sliceSize; j++) {
-                           tmpInt = Float.floatToIntBits(floatIBuffer[j]);
-                           byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
-                           byteBuffer[ (4 * j) + 1] = (byte) (tmpInt >>> 16);
-                           byteBuffer[ (4 * j) + 2] = (byte) (tmpInt >>> 8);
-                           byteBuffer[ (4 * j) + 3] = (byte) (tmpInt);
+                       
+                       j = 0;
+                       for (x = imageExtents[0] - 1; x >= 0; x--) {
+                       	for (y = 0; y < imageExtents[1]; y++, j++) {
+                       		index = x + imageExtents[0] * y;
+                       		tmpInt = Float.floatToIntBits(floatIBuffer[index]);
+                       	    byteBuffer[4*j] = (byte)(tmpInt >>> 24);	
+                       	    byteBuffer[(4*j) + 1] = (byte) (tmpInt >>> 16);
+                       	    byteBuffer[(4*j) + 2] = (byte) (tmpInt >>> 8);
+                       	    byteBuffer[(4*j) + 3] = (byte) (tmpInt);
+                       	}
                        }
 
                        raFile.write(byteBuffer);
                    } // for (z = sBegin; z <= sEnd; z++,count++)
                } // for (t = tBegin; t <= tEnd; t++)
                
-               if ((byteBuffer.length % 8) != 0) {
-                   padBytes = 8 - byteBuffer.length;
+               if ((raFile.getFilePointer() % 8) != 0) {
+                   padBytes = (int)(8 - (raFile.getFilePointer() % 8));
                    for (i = 0; i < padBytes; i++) {
                    	raFile.writeByte(0);
                    }
@@ -6253,17 +6441,21 @@ public class FileMATLAB extends FileBase {
                        i = (t * zDim) + z;
                        fireProgressStateChanged(50 + (count * 50 / numberSlices));
                        image.exportDComplexData(2*i*sliceSize, sliceSize, doubleBuffer, doubleIBuffer);
-
-                       for (j = 0; j < sliceSize; j++) {
-                           tmpLong = Double.doubleToLongBits(doubleIBuffer[j]);
-                           byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
-                           byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
-                           byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
-                           byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
-                           byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
-                           byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
-                           byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
-                           byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+                       
+                       j = 0;
+                       for (x = imageExtents[0] - 1; x >= 0; x--) {
+                       	for (y = 0; y < imageExtents[1]; y++, j++) {
+                       		index = x + imageExtents[0] * y;
+                       		tmpLong = Double.doubleToLongBits(doubleIBuffer[index]);
+                       		byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
+                               byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
+                               byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
+                               byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
+                               byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
+                               byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
+                               byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
+                               byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
+                       	}
                        }
 
                        raFile.write(byteBuffer);
