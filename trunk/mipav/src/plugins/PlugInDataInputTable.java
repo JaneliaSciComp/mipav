@@ -475,7 +475,7 @@ public class PlugInDataInputTable extends JPanel{
 	
 	public void actionRemoveTab(){
 		Object[] options = new Object[]{"Yes","No","Save To TXT/CSV"};
-		int response= JOptionPane.showOptionDialog(this, "Are you sure you want to remove this tab? All data entered into table will be lost.",
+		int response= JOptionPane.showOptionDialog(this, "Are you sure you want to remove this tab? All data entered into this table will be lost.",
                 "NDAR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE, null,options , null);
 		if(response==JOptionPane.YES_OPTION)

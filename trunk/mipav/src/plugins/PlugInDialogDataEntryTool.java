@@ -28,8 +28,8 @@ public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implement
 	
 	public static final String ICON_NAME= "ndar_puzzle_icon.gif";
 	
-	private static final String ENV = Startup.PROD_NAME;//TODO change for each env
-//	private static final String ENV = Startup.DEMO_NAME;
+//	private static final String ENV = Startup.PROD_NAME;//TODO change for each env
+	private static final String ENV = Startup.DEMO_NAME;
 
 	private JTable table;
 	
