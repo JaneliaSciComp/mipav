@@ -9,6 +9,9 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterFloat;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -1259,26 +1262,17 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 
 		try {
 			table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+			String[] labels = new String[]{ "X", "Y", "Z" };
 			for ( int i = 0; i < nDims; i++ )
 			{
-				table.put(ParameterFactory.newParameter("startSlice"+i, startSlice[i] ) );
-				table.put(ParameterFactory.newParameter("endSlice"+i, endSlice[i] ) );
-				table.put(ParameterFactory.newParameter("window"+i, window[i] ) );
-				table.put(ParameterFactory.newParameter("compute_max"+i, maximum[i] ) );
-				table.put(ParameterFactory.newParameter("compute_min"+i, minimum[i] ) );
+				table.put( new ParameterInt( "startSlice_"+labels[i]+"_projection" ) );
+				table.put( new ParameterInt( "endSlice_"+labels[i]+"_projection" ) );
+				table.put( new ParameterInt( "window_"+labels[i]+"_projection" ) );
+				table.put( new ParameterBoolean( "output_maximum_image_"+labels[i]+"_projection" ) );
+				table.put( new ParameterBoolean( "output_minimum_image_"+labels[i]+"_projection" ) );
 				
-				if (image.isColorImage()) {
-					table.put(ParameterFactory.newParameter("min_valuer"+i, minIntensityR[i]));
-					table.put(ParameterFactory.newParameter("max_valuer"+i, maxIntensityR[i]));
-					table.put(ParameterFactory.newParameter("min_valueg"+i, minIntensityG[i]));
-					table.put(ParameterFactory.newParameter("max_valueg"+i, maxIntensityG[i]));
-					table.put(ParameterFactory.newParameter("min_valueb"+i, minIntensityB[i]));
-					table.put(ParameterFactory.newParameter("max_valueb"+i, maxIntensityB[i]));
-				}
-				else {
-					table.put(ParameterFactory.newParameter("min_value"+i, minIntensity[i]));
-					table.put(ParameterFactory.newParameter("max_value"+i, maxIntensity[i]));
-				}
+				table.put( new ParameterFloat("minimum_threshold_value_"+labels[i]+"_projection" ));
+				table.put( new ParameterFloat("max_threshold_value_"+labels[i]+"_projection" ));
 			}
 		} catch (final ParserException e) {
 			// this shouldn't really happen since there isn't any real parsing going on...
@@ -1293,12 +1287,12 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
         final ParameterTable table = new ParameterTable();
 
         try {
-        	table.put(new ParameterImage("XMin"));
-        	table.put(new ParameterImage("XMax"));
-        	table.put(new ParameterImage("YMin"));
-        	table.put(new ParameterImage("YMax"));
-        	table.put(new ParameterImage("ZMin"));
-        	table.put(new ParameterImage("ZMax"));
+        	table.put(new ParameterImage("X_Minimum_Projection"));
+        	table.put(new ParameterImage("X_Maximum_Projection"));
+        	table.put(new ParameterImage("Y_Minimum_Projection"));
+        	table.put(new ParameterImage("Y_Maximum_Projection"));
+        	table.put(new ParameterImage("Z_Minimum_Projection"));
+        	table.put(new ParameterImage("Z_Maximum_Projection"));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
