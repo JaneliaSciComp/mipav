@@ -447,6 +447,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         ageSlider.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         ageSlider.setLabelTable(ageLabelTable);
         ageSlider.setPaintLabels(true);
+        ageSlider.setSnapToTicks(true);
         ageLabel = new JLabel("Age (months)");
         imagePanel = new JPanel(new GridBagLayout());
         
