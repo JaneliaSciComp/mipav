@@ -336,9 +336,10 @@ public class FileMATLAB extends FileBase {
         boolean isColor = false;
         int numberSlices;
         int st;
+        int elementNumber = 0;
 
         try {
-            
+           
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
@@ -417,6 +418,7 @@ public class FileMATLAB extends FileBase {
             // Go to first data element location
             nextElementAddress = 128L;
             while (nextElementAddress < fileLength) {
+            	elementNumber++;
             	isCompressed = false;
                 raFile.seek(nextElementAddress);
                 dataType = getInt(endianess);
@@ -443,6 +445,16 @@ public class FileMATLAB extends FileBase {
                 }
                 Preferences.debug("nextElementAddress = " + nextElementAddress + "\n");
                 if (dataType == miCOMPRESSED) {
+                	fireProgressStateChanged("Decompressing element number " + String.valueOf(elementNumber));
+                	if (elementNumber == 1) {
+                		fireProgressStateChanged(25);
+                	}
+                	else if (elementNumber == 2) {
+                		fireProgressStateChanged(60);
+                	}
+                	else {
+                		fireProgressStateChanged(85);
+                	}
                 	isCompressed = true;
                 	Preferences.debug("Data type = miCOMPRESSED\n");
                 	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
@@ -482,6 +494,16 @@ public class FileMATLAB extends FileBase {
                         elementBytes = getInt(endianess);
                     }
                 } // if (dataTypeCOMPRESSED)
+                fireProgressStateChanged("Reading element number " + String.valueOf(elementNumber));
+                if (elementNumber == 1) {
+                    fireProgressStateChanged(50);
+                }
+                else if (elementNumber == 2) {
+                	fireProgressStateChanged(75);
+                }
+                else {
+                	fireProgressStateChanged(85);
+                }
                 switch(dataType) {
                 case miINT8:
                 	Preferences.debug("Data type = miINT8\n");
