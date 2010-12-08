@@ -123,7 +123,7 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	/** When true output the X,Y,Z projections. */
 	private boolean[] projection;
 	/** Image dimension, must be 3. */
-	private int nDims;
+	private int nDims = 3;
 	/** Image extents. */
 	private int[] extents;
 
