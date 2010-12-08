@@ -234,50 +234,57 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 			resultImages.add(ZProjectionImageMin);
 	        JDialogBase.updateFileInfo( srcImage, ZProjectionImageMin );
 		}
-
-
-		float totalLength = (newSlices*lengthZ*windowSize);
+		
+		float totalLength = (newSlices*lengthZ);
+		int updates = (int)(totalLength/10f);
 		int mod = 0;
 		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
-		
+		int index;
 		for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
 		{
 			for (int i = 0; i < lengthZ; i++ )
 			{
+				int start = startZ + iSlice;
+				int end = startZ + iSlice + windowSize;
 				// Compute the max intensity value along Z-axis
-				for (int j = startZ + iSlice; j < startZ + iSlice + windowSize; j++)
+				for (int j = start; j < end; j++)
 				{
 					for ( int c = 0; c < colorFactor; c++ )
 					{
-						if ((buffer[colorFactor * (i + (j * lengthZ)) + c] >= minIntensity[c]) &&
-								(buffer[colorFactor * (i + (j * lengthZ)) + c] <= maxIntensity[c]))
+						index = colorFactor * (i + (j * lengthZ)) + c;
+						if ((buffer[index] >= minIntensity[c]) &&
+								(buffer[index] <= maxIntensity[c]))
 						{
-							if (buffer[colorFactor * (i + (j * lengthZ)) + c] > maxIntensityValue[c])
+							if (buffer[index] > maxIntensityValue[c])
 							{
-								maxIntensityValue[c] = buffer[colorFactor * (i + (j * lengthZ)) + c];
+								maxIntensityValue[c] = buffer[index];
 							}
-							if ( buffer[colorFactor * (i + (j * lengthZ)) + c] < minIntensityValue[c] )
+							if ( buffer[index] < minIntensityValue[c] )
 							{
-								minIntensityValue[c] = buffer[colorFactor * (i + (j * lengthZ)) + c];
+								minIntensityValue[c] = buffer[index];
 							}
 						}
 					}
-					mod++;
 				}
 				for ( int c = 0; c < colorFactor; c++ )
 				{
+					index = colorFactor * iSlice * lengthZ + i*colorFactor + c;
 					if ( computeMaximum && ZProjectionImageMax != null )
 					{
-						ZProjectionImageMax.set( colorFactor * iSlice * lengthZ + i*colorFactor + c, maxIntensityValue[c] );
+						ZProjectionImageMax.set( index, maxIntensityValue[c] );
 					}
 					maxIntensityValue[c] = Double.MIN_VALUE;
 					if ( computeMinimum && ZProjectionImageMin != null )
 					{
-						ZProjectionImageMin.set( colorFactor * iSlice * lengthZ + i*colorFactor + c, minIntensityValue[c] );
+						ZProjectionImageMin.set( index, minIntensityValue[c] );
 					}
 					minIntensityValue[c] = Double.MAX_VALUE;
 				}
-				fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+				mod++;
+				if ( (mod%updates) == 0 )
+				{
+					fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+				}
 			}
 		}
 
@@ -353,7 +360,8 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 			YProjectionImageMin.setResolutions(YRes);
 		}			
 
-		float totalLength = (newSlices*dimZ*dimX*windowSize);
+		float totalLength = (newSlices*dimZ*dimX);
+		int update = (int)(totalLength/10);
 		int mod = 0;
 		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
 		int index;
@@ -381,7 +389,6 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 									minIntensityValue[c] = buffer[index + c];
 								}
 							}
-							mod++;
 						}
 					}
 					for ( int c = 0; c < colorFactor; c++ )
@@ -399,7 +406,11 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 						}
 						minIntensityValue[c] = Double.MAX_VALUE;
 					}
-					fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+					mod++;
+					if ( (mod%update) == 0 )
+					{
+						fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+					}
 				} 			
 			}
 		}
@@ -476,7 +487,8 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 			XProjectionImageMin.setResolutions(XRes);
 		}			
 
-		float totalLength = (newSlices*dimZ*dimY*windowSize);
+		float totalLength = (newSlices*dimZ*dimY);
+		int update = (int)(totalLength/10);
 		int mod = 0;
 		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
 		int index;
@@ -505,7 +517,6 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 									minIntensityValue[c] = buffer[index+c];
 								}
 							}
-							mod++;
 						}
 					}
 					for ( int c = 0; c < colorFactor; c++ )
@@ -521,7 +532,11 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 						}
 						minIntensityValue[c] = Double.MAX_VALUE;
 					}
-					fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+					mod++;
+					if ( (mod%update) == 0 )
+					{
+						fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+					}
 				}
 			}
 		}
