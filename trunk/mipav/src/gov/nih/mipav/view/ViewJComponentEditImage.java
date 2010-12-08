@@ -5339,8 +5339,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                     final float fX = xS / (float) xDim;
                     final float fY = yS / (float) yDim;
-System.out.println("here");
-                    m_kWinLevel.updateWinLevel(fX, fY, !winLevelSet, m_kPatientSlice.getActiveLookupTable(),
+
+                     m_kWinLevel.updateWinLevel(fX, fY, !winLevelSet, m_kPatientSlice.getActiveLookupTable(),
                             imageActive);
                     setCursor(MipavUtil.winLevelCursor);
                     if ( !winLevelSet) {

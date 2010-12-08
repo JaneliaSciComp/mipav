@@ -214,6 +214,112 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         System.gc();
     }
+    
+    
+    
+    
+    
+    
+    /**
+     * Constructor.
+     * 
+     * @param theParentFrame parent frame
+     * @param image source image
+     * @param LUT DOCUMENT ME!
+     */
+    public JDialogWinLevel(final Frame theParentFrame, final ModelImage image, final ModelLUT LUT, float[] dataS) {
+        super(theParentFrame, false);
+
+        float min, max;
+        int i;
+
+        this.image = image;
+        this.LUT = LUT;
+
+        setTitle("Level and Window");
+        setForeground(Color.black);
+        try {
+            setIconImage(MipavUtil.getIconImage("winlevel.gif"));
+        } catch (final Exception e) {
+            // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
+        }
+        getContentPane().setLayout(new BorderLayout());
+        calcMinMax();
+
+        dataSlice = dataS;
+        min = Float.MAX_VALUE;
+        max = -Float.MAX_VALUE;
+
+        for (i = 0; i < dataSlice.length; i++) {
+
+            if (dataSlice[i] > max) {
+                max = dataSlice[i];
+            }
+
+            if (dataSlice[i] < min) {
+                min = dataSlice[i];
+            }
+        }
+
+        // Set LUT min max values of the image slice !!
+        x[0] = minImage;
+        y[0] = 255;
+        z[0] = 0;
+        x[1] = min;
+        y[1] = 255;
+        z[1] = 0;
+        x[2] = max;
+        y[2] = 0;
+        z[2] = 0;
+        x[3] = maxImage;
+        y[3] = 0;
+        z[3] = 0;
+        LUT.getTransferFunction().importArrays(x, y, 4);
+        image.notifyImageDisplayListeners(LUT, false);
+
+        final GridBagConstraints gbc = new GridBagConstraints();
+
+        // build a monochrome window/level slider panel and populate it
+        windowLevelPanel = buildWindowLevelPanel();
+        minMaxPanel = buildMinMaxPanel();
+
+        buildLevelSlider(windowLevelPanel, gbc);
+        buildWindowSlider(windowLevelPanel, gbc);
+        buildMinSlider(minMaxPanel, gbc);
+        buildMaxSlider(minMaxPanel, gbc);
+        tabbedPane.add("Level & Window", windowLevelPanel);
+        tabbedPane.add("Min & Max", minMaxPanel);
+        tabbedPane.addChangeListener(this);
+        if (image.getHistoLUTFrame() != null) {
+            updateHistoLUTFrame();
+        }
+        getContentPane().add(tabbedPane, BorderLayout.CENTER);
+        buildButtons(gbc);
+
+        setResizable(true);
+        setMinimumSize(new Dimension(250, 400));
+        pack();
+        locateDialog();
+
+        setVisibleStandard(true);
+        image.notifyImageDisplayListeners(LUT, false);
+
+        if (image.getHistoLUTFrame() != null) {
+            updateHistoLUTFrame();
+        }
+
+        System.gc();
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
@@ -566,7 +672,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                     keyTyped = true;
                     minSlider.setValue((int) val);
                 } else {
-                    System.out.println("here");
                     min = minSlider.getValue();
 
                     min = (minMaxSlope * min) + minMaxBInt;

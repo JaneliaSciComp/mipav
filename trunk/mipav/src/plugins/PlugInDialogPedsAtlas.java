@@ -461,6 +461,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         
         //initialize and put the 0th axial t1 time slice in the imagePanel and call show
         currentComponentImage = t1ComponentImages[0];
+        this.setImageA(t1AtlasImages[0]);
         currentComponentImage.setSlice(currentZSlice);
         currentComponentImage.setZoom(currentZoom, currentZoom);
         currentComponentImage.show(0,currentZSlice,null,null,true);
@@ -683,6 +684,14 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 						     currentComponentImage.setZoom(currentZoom, currentZoom);
 						     currentComponentImage.show(0,currentZSlice,null,null,true);
 						     //imageGBC.anchor = GridBagConstraints.CENTER;
+						     
+						     if(currentModality.equals(T1)) {
+						    	 this.setImageA(t1AtlasImages[currentAge]);
+							 }else if(currentModality.equals(T2)) {
+								 this.setImageA(t2AtlasImages[currentAge]);
+							 }else {
+								 this.setImageA(pdAtlasImages[currentAge]);
+							 }
 						     imagePanel.add(currentComponentImage,imageGBC);
 						     imagePanel.validate();
 						
@@ -726,10 +735,14 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+					        
 					        imagePanel.validate();
 							this.repaint();
 							
 							currentModality = T1;
+
+						    this.setImageA(t1AtlasImages[currentAge]);
+							 
 							test = true;
 						}else {
 							setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -758,10 +771,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+					      
 					        imagePanel.validate();
 							this.repaint();
 							
 							currentModality = T2;
+							this.setImageA(t2AtlasImages[currentAge]);
 							test = true;
 						}else {
 							setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -788,10 +803,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
 					        imagePanel.validate();
 							this.repaint();
 							
 							currentModality = PD;
+							this.setImageA(pdAtlasImages[currentAge]);
 							test = true;
 						}else {
 							setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -812,7 +829,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}else if(command.equals("ZoomOne")) {
 			zoomOne();
 		}else if(command.equals("WinLevel")) {
-			/*ModelImage img = null;
+			ModelImage img = null;
 			if(currentModality.equals(T1)) {
 				img = t1AtlasImages[currentAge];
 			}else if(currentModality.equals(T2)) {
@@ -820,7 +837,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			}else if(currentModality.equals(PD)) {
 				img = pdAtlasImages[currentAge];
 			}
-			JDialogWinLevel winLevel = new JDialogWinLevel(this, img, currentComponentImage.getLUTa());
+			JDialogWinLevel winLevel = new JDialogWinLevel(this, img, currentComponentImage.getActiveLUT(), currentComponentImage.getActiveImageBuffer());
 			if (winLevel.tabbedPane.getSelectedIndex() == 0) {
                 final int lev = winLevel.levelSlider.getValue();
                 final int win = winLevel.windowSlider.getValue();
@@ -838,7 +855,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
                 winLevel.minSlider.setValue(min);
                 winLevel.maxSlider.setValue(max);
-            }*/
+            }
 		}else if(command.equals("axial")) {
 			if(!currentOrientation.equals(AXIAL)) {
 				nullifyStructures();
@@ -924,6 +941,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
+					        this.setImageA(t1AtlasImages[currentAge]);
 					        imagePanel.validate();
 							this.repaint();
 							
@@ -937,6 +956,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
+					        this.setImageA(t2AtlasImages[currentAge]);
 					        imagePanel.validate();
 							this.repaint();
 							
@@ -950,6 +971,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
+					        this.setImageA(pdAtlasImages[currentAge]);
 					        imagePanel.validate();
 							this.repaint();
 							
@@ -965,6 +988,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
+					        this.setImageA(t1AtlasImages[currentAge]);
 					        imagePanel.validate();
 							this.repaint();
 							
@@ -978,6 +1003,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
+					        this.setImageA(t2AtlasImages[currentAge]);
 					        imagePanel.validate();
 							this.repaint();
 							
@@ -991,6 +1018,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
+					        this.setImageA(pdAtlasImages[currentAge]);
 					        imagePanel.validate();
 							this.repaint();
 							
@@ -1006,6 +1035,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
+					        this.setImageA(t1AtlasImages[currentAge]);
 					        imagePanel.validate();
 							this.repaint();
 							
@@ -1019,6 +1050,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
+					        this.setImageA(t2AtlasImages[currentAge]);
 					        imagePanel.validate();
 							this.repaint();
 							
@@ -1032,6 +1065,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
+
+					        this.setImageA(pdAtlasImages[currentAge]);
 					        imagePanel.validate();
 							this.repaint();
 							
@@ -1216,14 +1251,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     
     
     
-    /**
-     * mouse dragged...for win/level
-     * @param mouseEvent
-     */
-    public void mouseDragged(final MouseEvent mouseEvent) {
-    	
-    	
-    }
+    
     
     
     /**
@@ -1277,7 +1305,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	@Override
 	public ModelImage getImageA() {
 		// TODO Auto-generated method stub
-		return null;
+		return imageA;
 	}
 
 	@Override
@@ -1370,12 +1398,48 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		return false;
 	}
 
-	@Override
-	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag,
-			int interpMode) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	/**
+     * This methods calls the componentImage's update method to redraw the screen.
+     * 
+     * @param LUTa LUT used to update imageA
+     * @param LUTb LUT used to update imageB
+     * @param forceShow forces show to re import image and calc. java image
+     * @param interpMode image interpolation method (Nearest or Smooth)
+     * 
+     * @return boolean confirming successful update
+     */
+    public synchronized boolean updateImages(final ModelLUT LUTa, final ModelLUT LUTb, final boolean forceShow,
+            final int interpMode) {
+
+        if (currentComponentImage == null) {
+            return false;
+        }
+
+        // redraw the paintBrushCursor (quick)
+        currentComponentImage.updatePaintBrushCursor();
+
+        if(currentComponentImage.show(0,currentZSlice,LUTa,LUTb,true) == false) {
+        	return false;
+        }
+
+
+        // update the luts in this frame
+        if (LUTa != null) {
+            setLUTa(LUTa);
+        }
+
+        if (LUTb != null) {
+            setLUTb(LUTb);
+        }
+
+        final ViewControlsImage myControls = getControls();
+
+        if (myControls != null) {
+            myControls.repaint();
+        }
+
+        return true;
+    }
 	
 	
 	
@@ -1573,6 +1637,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + axialT1PathStrings[i]);
 				t1AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
@@ -1591,6 +1656,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + axialT1PathStrings[i]);
 				t1AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
@@ -1617,6 +1683,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + axialT2PathStrings[i]);
 				t2AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
@@ -1636,6 +1703,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + axialT2PathStrings[i]);
 				t2AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
@@ -1657,6 +1725,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + axialPDPathStrings[i]);
 				pdAtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
@@ -1675,6 +1744,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + axialPDPathStrings[i]);
 				pdAtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
@@ -1718,6 +1788,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + coronalT1PathStrings[i]);
 				t1AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
@@ -1737,6 +1808,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + coronalT1PathStrings[i]);
 				t1AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
@@ -1759,6 +1831,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + coronalT2PathStrings[i]);
 				t2AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
@@ -1777,6 +1850,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + coronalT2PathStrings[i]);
 				t2AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
@@ -1798,6 +1872,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + coronalPDPathStrings[i]);
 				pdAtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
@@ -1816,6 +1891,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + coronalPDPathStrings[i]);
 				pdAtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
@@ -1864,6 +1940,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + sagittalT1PathStrings[i]);
 				t1AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
@@ -1883,6 +1960,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + sagittalT1PathStrings[i]);
 				t1AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
@@ -1907,6 +1985,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + sagittalT2PathStrings[i]);
 				t2AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
@@ -1925,6 +2004,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + sagittalT2PathStrings[i]);
 				t2AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
@@ -1948,6 +2028,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				infoLabel.setText("loading axial PD images : " + c + "/" + numAgeTicks);
 				atlasFile = new File(pedsHome + sagittalPDPathStrings[i]);
 				pdAtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
@@ -1966,6 +2047,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				atlasFile = new File(pedsHome + sagittalPDPathStrings[i]);
 				pdAtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
+				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);

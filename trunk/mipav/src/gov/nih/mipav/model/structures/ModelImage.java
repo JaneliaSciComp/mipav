@@ -2314,7 +2314,6 @@ public class ModelImage extends ModelStorageBase {
     public void notifyImageDisplayListeners(final ModelLUT LUT, final boolean forceShow) {
 
         if (frameList != null) {
-
             for (int i = 0; i < frameList.size(); i++) {
 
                 if ( (frameList.elementAt(i) instanceof ViewJFrameBase)) {

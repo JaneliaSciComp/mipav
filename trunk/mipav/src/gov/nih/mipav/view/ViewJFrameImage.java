@@ -789,7 +789,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 				saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
             }
-            System.out.println("aaa saveMasksAs4D is " + saveMasksAs4D);
+
             if (outputNew == true) {
                 final ModelImage cloneImage = (ModelImage) getActiveImage().clone();
                 final ViewJFrameImage newFrame = new ViewJFrameImage(cloneImage);
@@ -3319,7 +3319,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             //////
 
             if (linkFrame != null) {
-            	System.out.println("here");
                 linkFrame.incSlice();
             }
 
