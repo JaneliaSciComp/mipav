@@ -16,7 +16,7 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
 
         super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay,
                 _orientation);
-        this.imageA = _imageA;
+        //this.imageA = _imageA;
 
 
     }
@@ -95,16 +95,16 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
 
     }
 
-    /*public void mouseDragged(final MouseEvent mouseEvent) {
+    public void mouseDragged(final MouseEvent mouseEvent) {
 
-        final int mouseMods = mouseEvent.getModifiers();
+        //final int mouseMods = mouseEvent.getModifiers();
 
         int xS, yS;
-        Color dropperColor;
-        int diffX = Math.round((lastMouseX - mouseEvent.getX()) * getZoomX());
-        int diffY = Math.round((lastMouseY - mouseEvent.getY()) * getZoomY());
-        lastMouseX = mouseEvent.getX();
-        lastMouseY = mouseEvent.getY();
+        //Color dropperColor;
+        //int diffX = Math.round((lastMouseX - mouseEvent.getX()) * getZoomX());
+        //int diffY = Math.round((lastMouseY - mouseEvent.getY()) * getZoomY());
+        //lastMouseX = mouseEvent.getX();
+        //lastMouseY = mouseEvent.getY();
 
         if ( (pixBuffer == null) || (imageBufferActive == null) || (modifyFlag == false)) {
             return;
@@ -121,10 +121,8 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
         }
 
         processDefaultMouseDrag(mouseEvent, xS, yS);
-        
-        
-        
-    }*/
+
+    }
     
     
     
