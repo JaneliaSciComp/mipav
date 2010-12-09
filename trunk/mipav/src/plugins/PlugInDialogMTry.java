@@ -24,7 +24,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileDicomKey;
-import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBRUKER;
 import gov.nih.mipav.model.file.FileInfoDicom;
 
 
@@ -397,6 +397,9 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
                     
                 }
             }
+        } else if(ViewUserInterface.getReference().getRegisteredImageByName(string).getFileInfo()[0] instanceof FileInfoBRUKER) {
+            FileInfoBRUKER f = (FileInfoBRUKER) ViewUserInterface.getReference().getRegisteredImageByName(string).getFileInfo()[0];
+            invTime = Double.valueOf(f.getRecoSize());
         }
         return invTime;
     }
