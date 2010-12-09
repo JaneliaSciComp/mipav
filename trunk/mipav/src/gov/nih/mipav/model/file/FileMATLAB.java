@@ -1148,7 +1148,7 @@ public class FileMATLAB extends FileBase {
 		                    	j = 0;
 		                    	for (s = 0; s < numberSlices; s++) {
 			                    	for (x = 0; x < imageExtents[1]; x++) {
-			                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+			                    		for (y = 0; y < imageExtents[0]; y++) {
                                             tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
 			                    		}
 			                    	}
@@ -1188,7 +1188,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
                                         tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
 		                    		}
 		                    	}
@@ -1227,7 +1227,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
                                         realBuffer[j++] = (float)buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
 		                    		}
 		                    	}
@@ -1276,7 +1276,7 @@ public class FileMATLAB extends FileBase {
                             j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
                                         imaginaryBuffer[j++] = (float)buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
 		                    		}
 		                    	}
@@ -1321,7 +1321,7 @@ public class FileMATLAB extends FileBase {
 	                    	    j = 0;
 		                    	for (s = 0; s < numberSlices; s++) {
 			                    	for (x = 0; x < imageExtents[1]; x++) {
-			                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+			                    		for (y = 0; y < imageExtents[0]; y++) {
                                             shortBuffer[j++] = (short) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
 			                    		}
 			                    	}
@@ -1364,7 +1364,7 @@ public class FileMATLAB extends FileBase {
 			                    	j = 0;
 			                    	for (s = 0; s < numberSlices; s++) {
 				                    	for (x = 0; x < imageExtents[1]; x++) {
-				                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+				                    		for (y = 0; y < imageExtents[0]; y++) {
 	                                            tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
 				                    		}
 				                    	}
@@ -1410,7 +1410,7 @@ public class FileMATLAB extends FileBase {
                     	    j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
                                         shortBuffer[j++] = (short) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
 		                    		}
 		                    	}
@@ -1450,7 +1450,7 @@ public class FileMATLAB extends FileBase {
                     	    j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
                                         realBuffer[j++] = (float) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
 		                    		}
 		                    	}
@@ -1499,7 +1499,7 @@ public class FileMATLAB extends FileBase {
                     	    j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
                                         imaginaryBuffer[j++] = (float) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
 		                    		}
 		                    	}
@@ -1546,7 +1546,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -1595,7 +1595,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -1652,7 +1652,7 @@ public class FileMATLAB extends FileBase {
                             j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -1709,7 +1709,7 @@ public class FileMATLAB extends FileBase {
 			                    	j = 0;
 			                    	for (s = 0; s < numberSlices; s++) {
 				                    	for (x = 0; x < imageExtents[1]; x++) {
-				                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+				                    		for (y = 0; y < imageExtents[0]; y++) {
 				                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
 	                                            b1 = buffer[index] & 0xff;
 	                                            b2 = buffer[index+1] & 0xff;
@@ -1764,7 +1764,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -1813,7 +1813,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -1870,7 +1870,7 @@ public class FileMATLAB extends FileBase {
                             j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -1925,7 +1925,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -1976,7 +1976,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -2035,7 +2035,7 @@ public class FileMATLAB extends FileBase {
                             j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -2092,7 +2092,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2143,7 +2143,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2202,7 +2202,7 @@ public class FileMATLAB extends FileBase {
                             j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2259,7 +2259,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -2311,7 +2311,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -2371,7 +2371,7 @@ public class FileMATLAB extends FileBase {
                             j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                         b1 = buffer[index] & 0xff;
                                         b2 = buffer[index+1] & 0xff;
@@ -2431,7 +2431,7 @@ public class FileMATLAB extends FileBase {
 			                    	j = 0;
 			                    	for (s = 0; s < numberSlices; s++) {
 				                    	for (x = 0; x < imageExtents[1]; x++) {
-				                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+				                    		for (y = 0; y < imageExtents[0]; y++) {
 				                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
 	                                            b1L = buffer[index] & 0xffL;
 	                                            b2L = buffer[index+1] & 0xffL;
@@ -2495,7 +2495,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2553,7 +2553,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2619,7 +2619,7 @@ public class FileMATLAB extends FileBase {
                             j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2683,7 +2683,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2740,7 +2740,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2805,7 +2805,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2868,7 +2868,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2925,7 +2925,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -2991,7 +2991,7 @@ public class FileMATLAB extends FileBase {
                     		j = 0;
 	                    	for (s = 0; s < numberSlices; s++) {
 		                    	for (x = 0; x < imageExtents[1]; x++) {
-		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
 		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
@@ -3060,7 +3060,7 @@ public class FileMATLAB extends FileBase {
     		                    	j = 0;
     		                    	for (s = 0; s < numberSlices; s++) {
     			                    	for (x = 0; x < imageExtents[1]; x++) {
-    			                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    			                    		for (y = 0; y < imageExtents[0]; y++) {
                                                 tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
     			                    		}
     			                    	}
@@ -3100,7 +3100,7 @@ public class FileMATLAB extends FileBase {
 		                    	j = 0;
 		                    	for (s = 0; s < numberSlices; s++) {
 			                    	for (x = 0; x < imageExtents[1]; x++) {
-			                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+			                    		for (y = 0; y < imageExtents[0]; y++) {
                                             tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
 			                    		}
 			                    	}
@@ -3139,7 +3139,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
                                             realBuffer[j++] = (float)buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
     		                    		}
     		                    	}
@@ -3188,7 +3188,7 @@ public class FileMATLAB extends FileBase {
                                 j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
                                             imaginaryBuffer[j++] = (float)buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
     		                    		}
     		                    	}
@@ -3233,7 +3233,7 @@ public class FileMATLAB extends FileBase {
     	                    	    j = 0;
     		                    	for (s = 0; s < numberSlices; s++) {
     			                    	for (x = 0; x < imageExtents[1]; x++) {
-    			                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    			                    		for (y = 0; y < imageExtents[0]; y++) {
                                                 shortBuffer[j++] = (short) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
     			                    		}
     			                    	}
@@ -3276,7 +3276,7 @@ public class FileMATLAB extends FileBase {
     			                    	j = 0;
     			                    	for (s = 0; s < numberSlices; s++) {
     				                    	for (x = 0; x < imageExtents[1]; x++) {
-    				                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    				                    		for (y = 0; y < imageExtents[0]; y++) {
     	                                            tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
     				                    		}
     				                    	}
@@ -3322,7 +3322,7 @@ public class FileMATLAB extends FileBase {
     	                    	j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
                                             shortBuffer[j++] = (short) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
     		                    		}
     		                    	}
@@ -3362,7 +3362,7 @@ public class FileMATLAB extends FileBase {
                         	    j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
                                             realBuffer[j++] = (float) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
     		                    		}
     		                    	}
@@ -3411,7 +3411,7 @@ public class FileMATLAB extends FileBase {
                                 j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
                                             imaginaryBuffer[j++] = (float) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
     		                    		}
     		                    	}
@@ -3458,7 +3458,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -3507,7 +3507,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -3564,7 +3564,7 @@ public class FileMATLAB extends FileBase {
                                 j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -3621,7 +3621,7 @@ public class FileMATLAB extends FileBase {
 				                    	j = 0;
 				                    	for (s = 0; s < numberSlices; s++) {
 					                    	for (x = 0; x < imageExtents[1]; x++) {
-					                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+					                    		for (y = 0; y < imageExtents[0]; y++) {
 					                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
 		                                            b1 = buffer[index] & 0xff;
 		                                            b2 = buffer[index+1] & 0xff;
@@ -3676,7 +3676,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -3725,7 +3725,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -3782,7 +3782,7 @@ public class FileMATLAB extends FileBase {
                                 j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -3837,7 +3837,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -3888,7 +3888,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -3947,7 +3947,7 @@ public class FileMATLAB extends FileBase {
                                 j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -4004,7 +4004,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4055,7 +4055,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4114,7 +4114,7 @@ public class FileMATLAB extends FileBase {
                                 j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4171,7 +4171,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -4223,7 +4223,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
                                             b1 = buffer[index] & 0xff;
                                             b2 = buffer[index+1] & 0xff;
@@ -4280,29 +4280,25 @@ public class FileMATLAB extends FileBase {
                                 }
                                 raFile.read(buffer);
                                 imaginaryBuffer = new float[floatNumber];
-                                if (endianess == BIG_ENDIAN) {
-
-                                    for (i = 0, index = 0; i < floatNumber; i++) {
-                                        b1 = buffer[index++] & 0xff;
-                                        b2 = buffer[index++] & 0xff;
-                                        b3 = buffer[index++] & 0xff;
-                                        b4 = buffer[index++] & 0xff;
-                                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-                                        imaginaryBuffer[i] = Float.intBitsToFloat(tmpInt);
-                                    }
-                                } else {
-
-                                    for (i = 0, index = 0; i < floatNumber; i++) {
-                                        b1 = buffer[index++] & 0xff;
-                                        b2 = buffer[index++] & 0xff;
-                                        b3 = buffer[index++] & 0xff;
-                                        b4 = buffer[index++] & 0xff;
-                                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-
-                                        imaginaryBuffer[i] = Float.intBitsToFloat(tmpInt);
-                                    }
-                                }
+                                j = 0;
+    	                    	for (s = 0; s < numberSlices; s++) {
+    		                    	for (x = 0; x < imageExtents[1]; x++) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
+    		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
+                                            b1 = buffer[index] & 0xff;
+                                            b2 = buffer[index+1] & 0xff;
+                                            b3 = buffer[index+2] & 0xff;
+                                            b4 = buffer[index+3] & 0xff;
+                                            if (endianess == BIG_ENDIAN) {
+                                            	tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                            }
+                                            else {
+                                            	tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                            }
+                                            imaginaryBuffer[j++] = Float.intBitsToFloat(tmpInt);
+    		                    		}
+    		                    	}
+    	                    	}
                                 
                                 if (haveSmallImaginaryData) {
                         		    if (imaginaryDataBytes < 4) {
@@ -4347,7 +4343,7 @@ public class FileMATLAB extends FileBase {
     			                    	j = 0;
     			                    	for (s = 0; s < numberSlices; s++) {
     				                    	for (x = 0; x < imageExtents[1]; x++) {
-    				                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    				                    		for (y = 0; y < imageExtents[0]; y++) {	
     				                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
     	                                            b1L = buffer[index] & 0xffL;
     	                                            b2L = buffer[index+1] & 0xffL;
@@ -4411,7 +4407,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4469,7 +4465,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4535,7 +4531,7 @@ public class FileMATLAB extends FileBase {
                                 j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4599,7 +4595,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4656,7 +4652,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4721,7 +4717,7 @@ public class FileMATLAB extends FileBase {
                                 j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4784,7 +4780,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4841,7 +4837,7 @@ public class FileMATLAB extends FileBase {
                         		j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -4906,7 +4902,7 @@ public class FileMATLAB extends FileBase {
                                 j = 0;
     	                    	for (s = 0; s < numberSlices; s++) {
     		                    	for (x = 0; x < imageExtents[1]; x++) {
-    		                    		for (y = imageExtents[0] - 1; y >= 0; y--) {
+    		                    		for (y = 0; y < imageExtents[0]; y++) {
     		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
                                             b1L = buffer[index] & 0xffL;
                                             b2L = buffer[index+1] & 0xffL;
@@ -6097,7 +6093,7 @@ public class FileMATLAB extends FileBase {
                     fireProgressStateChanged(count * 100 / numberSlices);
                     image.exportSliceXY(i, byteBuffer);
                     j = 0;
-                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    for (x = 0; x < imageExtents[0]; x++) {
                     	for (y = 0; y < imageExtents[1]; y++) {
                     	    tBuffer[j++] = byteBuffer[x + imageExtents[0] * y];	
                     	}
@@ -6119,7 +6115,7 @@ public class FileMATLAB extends FileBase {
 	                    fireProgressStateChanged(count * 100 / (3 * numberSlices));
 	                    image.exportRGBData(offset, 4*i*sliceSize, sliceSize, byteBuffer);
 	                    j = 0;
-	                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+	                    for (x = 0; x < imageExtents[0]; x++) {
 	                    	for (y = 0; y < imageExtents[1]; y++) {
 	                    	    tBuffer[j++] = byteBuffer[x + imageExtents[0] * y];	
 	                    	}
@@ -6143,7 +6139,7 @@ public class FileMATLAB extends FileBase {
                     image.exportSliceXY(i, shortBuffer);
                     
                     j = 0;
-                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    for (x = 0; x < imageExtents[0]; x++) {
                     	for (y = 0; y < imageExtents[1]; y++, j++) {
                     		index = x + imageExtents[0] * y;
                     	    byteBuffer[2*j] = (byte)(shortBuffer[index] >>> 8);	
@@ -6169,7 +6165,7 @@ public class FileMATLAB extends FileBase {
 	                    image.exportRGBData(offset, 4*i*sliceSize, sliceSize, shortBuffer);
 	                    
 	                    j = 0;
-	                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+	                    for (x = 0; x < imageExtents[0]; x++) {
 	                    	for (y = 0; y < imageExtents[1]; y++, j++) {
 	                    		index = x + imageExtents[0] * y;
 	                    	    byteBuffer[2*j] = (byte)(shortBuffer[index] >>> 8);	
@@ -6197,7 +6193,7 @@ public class FileMATLAB extends FileBase {
                     image.exportSliceXY(i, intBuffer);
                     
                     j = 0;
-                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    for (x = 0; x < imageExtents[0]; x++) {
                     	for (y = 0; y < imageExtents[1]; y++, j++) {
                     		index = x + imageExtents[0] * y;
                     	    byteBuffer[4*j] = (byte)(intBuffer[index] >>> 24);	
@@ -6225,7 +6221,7 @@ public class FileMATLAB extends FileBase {
                     fireProgressStateChanged(count * 100 / numberSlices);
                     image.exportSliceXY(i, longBuffer);
 		        	j = 0;
-		            for (x = imageExtents[0] - 1; x >= 0; x--) {
+		        	for (x = 0; x < imageExtents[0]; x++) {
 		            	for (y = 0; y < imageExtents[1]; y++, j++) {
 		            		index = x + imageExtents[0] * y;
 		            		tmpLong = Double.doubleToLongBits(longBuffer[index]);
@@ -6258,7 +6254,7 @@ public class FileMATLAB extends FileBase {
                     image.exportSliceXY(i, floatBuffer);
                     
                     j = 0;
-                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    for (x = 0; x < imageExtents[0]; x++) {
                     	for (y = 0; y < imageExtents[1]; y++, j++) {
                     		index = x + imageExtents[0] * y;
                     		tmpInt = Float.floatToIntBits(floatBuffer[index]);
@@ -6288,7 +6284,7 @@ public class FileMATLAB extends FileBase {
                     image.exportSliceXY(i, doubleBuffer);
                     
                     j = 0;
-                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    for (x = 0; x < imageExtents[0]; x++) {
                     	for (y = 0; y < imageExtents[1]; y++, j++) {
                     		index = x + imageExtents[0] * y;
                     		tmpLong = Double.doubleToLongBits(doubleBuffer[index]);
@@ -6322,7 +6318,7 @@ public class FileMATLAB extends FileBase {
 	                    image.exportRGBData(offset, 4*i*sliceSize, sliceSize, floatBuffer);
 	                    
 	                    j = 0;
-	                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+	                    for (x = 0; x < imageExtents[0]; x++) {
 	                    	for (y = 0; y < imageExtents[1]; y++, j++) {
 	                    		index = x + imageExtents[0] * y;
 	                    		tmpLong = Double.doubleToLongBits(floatBuffer[index]/maxValue);
@@ -6358,7 +6354,7 @@ public class FileMATLAB extends FileBase {
                     image.exportComplexData(2*i*sliceSize, sliceSize, floatBuffer, floatIBuffer);
                     
                     j = 0;
-                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    for (x = 0; x < imageExtents[0]; x++) {
                     	for (y = 0; y < imageExtents[1]; y++, j++) {
                     		index = x + imageExtents[0] * y;
                     		tmpInt = Float.floatToIntBits(floatBuffer[index]);
@@ -6389,7 +6385,7 @@ public class FileMATLAB extends FileBase {
                     image.exportDComplexData(2*i*sliceSize, sliceSize, doubleBuffer, doubleIBuffer);
                     
                     j = 0;
-                    for (x = imageExtents[0] - 1; x >= 0; x--) {
+                    for (x = 0; x < imageExtents[0]; x++) {
                     	for (y = 0; y < imageExtents[1]; y++, j++) {
                     		index = x + imageExtents[0] * y;
                     		tmpLong = Double.doubleToLongBits(doubleBuffer[index]);
@@ -6433,15 +6429,15 @@ public class FileMATLAB extends FileBase {
                        image.exportComplexData(2*i*sliceSize, sliceSize, floatBuffer, floatIBuffer);
                        
                        j = 0;
-                       for (x = imageExtents[0] - 1; x >= 0; x--) {
-                       	for (y = 0; y < imageExtents[1]; y++, j++) {
-                       		index = x + imageExtents[0] * y;
-                       		tmpInt = Float.floatToIntBits(floatIBuffer[index]);
-                       	    byteBuffer[4*j] = (byte)(tmpInt >>> 24);	
-                       	    byteBuffer[(4*j) + 1] = (byte) (tmpInt >>> 16);
-                       	    byteBuffer[(4*j) + 2] = (byte) (tmpInt >>> 8);
-                       	    byteBuffer[(4*j) + 3] = (byte) (tmpInt);
-                       	}
+                       for (x = 0; x < imageExtents[0]; x++) {
+                       	   for (y = 0; y < imageExtents[1]; y++, j++) {
+                       		   index = x + imageExtents[0] * y;
+                       		   tmpInt = Float.floatToIntBits(floatIBuffer[index]);
+                       	       byteBuffer[4*j] = (byte)(tmpInt >>> 24);	
+                       	       byteBuffer[(4*j) + 1] = (byte) (tmpInt >>> 16);
+                       	       byteBuffer[(4*j) + 2] = (byte) (tmpInt >>> 8);
+                       	       byteBuffer[(4*j) + 3] = (byte) (tmpInt);
+                       	   }
                        }
 
                        raFile.write(byteBuffer);
@@ -6465,11 +6461,11 @@ public class FileMATLAB extends FileBase {
                        image.exportDComplexData(2*i*sliceSize, sliceSize, doubleBuffer, doubleIBuffer);
                        
                        j = 0;
-                       for (x = imageExtents[0] - 1; x >= 0; x--) {
-                       	for (y = 0; y < imageExtents[1]; y++, j++) {
-                       		index = x + imageExtents[0] * y;
-                       		tmpLong = Double.doubleToLongBits(doubleIBuffer[index]);
-                       		byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
+                       for (x = 0; x < imageExtents[0]; x++) {
+                       	   for (y = 0; y < imageExtents[1]; y++, j++) {
+                       		   index = x + imageExtents[0] * y;
+                       		   tmpLong = Double.doubleToLongBits(doubleIBuffer[index]);
+                       		   byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
                                byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
                                byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
                                byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
@@ -6477,7 +6473,7 @@ public class FileMATLAB extends FileBase {
                                byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
                                byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
                                byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
-                       	}
+                       	   }
                        }
 
                        raFile.write(byteBuffer);
