@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
@@ -72,7 +73,8 @@ public class ViewJComponentPedsAtlasIconImage extends ViewJComponentEditImage {
 
             slice = zSlice;
             //setSliceString(String.valueOf(slice));
-            paintComponent(getGraphics());
+            Graphics g = getGraphics();
+            paintComponent(g);
 
             return true;
         } else {

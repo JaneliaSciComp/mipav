@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -170,6 +171,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     /** labels for slice slider **/
     private Hashtable<Integer,JLabel> sliceLabelTable;
     
+    private Graphics axialG, coronalG, sagittalG;
+    
+    private int iconHeight, iconWidth;
+    
     /** constants **/
     public static final String AXIAL = "axial";
     public static final String CORONAL = "coronal";
@@ -220,10 +225,11 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					sliceLabelTable.put(numZSlices-1, new JLabel(numZSlicesString));
 					currentZSlice = (t1AtlasImages[0].getExtents()[2] - 1) / 2;
 					init();
+					
 					test = true;
 				}
 			}catch(Exception e) {
-				
+				e.printStackTrace();
 			}
 		}
 	}
@@ -492,9 +498,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         edtiButton.addActionListener(this);
         edtiButton.setActionCommand("edti");
         group.add(edtiButton);
+        JButton testButton = new JButton("Test");
+        testButton.addActionListener(this);
+        testButton.setActionCommand("test");
         modalitiesPanel.add(t1Button);
         modalitiesPanel.add(t2Button);
         modalitiesPanel.add(pdButton);
+        modalitiesPanel.add(testButton);
         //modalitiesPanel.add(dtiButton);
         //modalitiesPanel.add(edtiButton);
         
@@ -531,6 +541,17 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         coronalIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, coronalIconImage, null, imageBufferC, pixBufferC, 1, coronalIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT);
         axialIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, axialIconImage, null, imageBufferA, pixBufferA, 1, axialIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT);
         sagittalIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, sagittalIconImage, null, imageBufferS, pixBufferS, 1, sagittalIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT);
+        //axialG = axialIconComponentImage.getGraphics();
+        iconHeight = axialIconComponentImage.getHeight();
+        iconWidth = axialIconComponentImage.getWidth();
+        //sagittalG = sagittalIconComponentImage.getGraphics();
+        //iconHeight = axialIconComponentImage.getSize().height;
+        //iconWidth = axialIconComponentImage.getSize().width;
+        //axialG.setColor(Color.yellow);
+       
+        //sagittalG.setColor(Color.yellow);
+        
+        
         coronalIconComponentImage.addMouseWheelListener(this);
         coronalIconComponentImage.setBuffers(imageBufferC, null, pixBufferC, null);
         axialIconComponentImage.addMouseWheelListener(this);
@@ -541,6 +562,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         axialIconComponentImage.show(0,0,null,null,true);
         sagittalIconComponentImage.show(0,0,null,null,true);
         
+        
+        //coronalG.drawLine(0, (int)((currentZSlice/numZSlices)*iconHeight), iconWidth, (int)((currentZSlice/numZSlices)*iconHeight));
+        //coronalIconComponentImage.update(coronalG);
         
         GridBagConstraints gbc3 = new GridBagConstraints();
         gbc3.anchor = GridBagConstraints.CENTER;
@@ -642,8 +666,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         setResizable(false);
         setVisible(true);
         
+  
+      
         
-        
+   
 	}
 	
 	
@@ -920,6 +946,23 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 	
 			}
+		}else if(command.equals("test")) {
+			  coronalG = coronalIconComponentImage.getGraphics().create();
+		        coronalG.setColor(Color.yellow);
+		        System.out.println(currentZSlice);
+		        System.out.println(numZSlices);
+		        float num = (((float)currentZSlice/numZSlices)*iconHeight);
+		        System.out.println(num);
+		        System.out.println(iconHeight);
+		        System.out.println(iconWidth);
+		        System.out.println((int)(((float)currentZSlice/numZSlices)*iconHeight));
+		        //coronalG.drawLine(0, (int)(((float)currentZSlice/numZSlices)*iconHeight), iconWidth, (int)(((float)currentZSlice/numZSlices)*iconHeight));
+		        //coronalG.drawLine(0,3,10,3);
+		        coronalG.fillRect(1, 1, 10, 30);
+		        coronalIconComponentImage.paint(coronalG);
+		        coronalIconComponentImage.repaint();
+		        repaint();
+		       
 		}
 
 	}
