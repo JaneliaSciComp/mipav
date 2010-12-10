@@ -337,6 +337,7 @@ public class FileMATLAB extends FileBase {
         int numberSlices;
         int st;
         int elementNumber = 0;
+        int totalNumber2;
 
         try {
            
@@ -5491,6 +5492,55 @@ public class FileMATLAB extends FileBase {
                 
                 image.setFileInfo((FileInfoMATLAB)fileInfo.clone(), i);
             }
+            
+            if ((image.getType() == ModelStorageBase.UBYTE) && (image2 != null) && (image2.getType() == ModelStorageBase.DOUBLE) &&
+            	(image2.getExtents()[0]  == 3)  && (image2.getExtents()[1] <= 256)) {
+            	// image2 is really a lookup table for image
+            	totalNumber = 1;
+            	for (i = 0; i < image.getNDims(); i++) {
+            		totalNumber = totalNumber * image.getExtents()[i];
+            	}
+            	shortBuffer = new short[totalNumber];
+        		try {
+        			image.exportData(0, totalNumber, shortBuffer);
+        		}
+        		catch(IOException e) {
+        		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, shortBuffer)");
+        		   throw e;
+        		}
+        		image = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), image.getImageFileName());
+    			fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
+    			floatBuffer = new float[4 * totalNumber];
+    			totalNumber2 = 1;
+    			for (i = 0; i < image2.getNDims(); i++) {
+    				totalNumber2 = totalNumber2 * image2.getExtents()[i];
+    			}
+    			doubleBuffer = new double[totalNumber2];
+    			try {
+    				image2.exportData(0, totalNumber2, doubleBuffer);
+    			}
+    			catch(IOException e) {
+         		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber2, doubleBuffer)");
+         		   throw e;
+         		}
+    			image2.disposeLocal();
+    			image2 = null;
+    			for (i = 0; i < totalNumber; i++) {
+    				floatBuffer[4*i] = 0.0f;
+    				floatBuffer[4*i+1] = (float)doubleBuffer[3*(shortBuffer[i]-1)];
+    				floatBuffer[4*i+2] = (float)doubleBuffer[3*(shortBuffer[i]-1)+1];
+    				floatBuffer[4*i+3] = (float)doubleBuffer[3*(shortBuffer[i]-1)+2];
+    			}
+    			try {
+    				image.importData(0, floatBuffer, true);
+    			}
+    			catch(IOException e) {
+    				MipavUtil.displayError("IOException on image.importData(0, floatBuffer, true)");
+    				throw e;
+    			}
+            }
+            
+            
             if (image2 != null) {
             	fileInfo2.setSourceFile(fileDir + fileName);
             	if (fileInfo2.getArrayName() != null) {
