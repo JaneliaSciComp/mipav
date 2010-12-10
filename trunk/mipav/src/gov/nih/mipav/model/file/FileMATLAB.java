@@ -5563,6 +5563,7 @@ public class FileMATLAB extends FileBase {
         				shortMax = shortBuffer[i];
         			}
         		}
+        		
         		shortRange = shortMax - shortMin;
         		image = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), image.getImageFileName());
     			fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
@@ -5573,7 +5574,7 @@ public class FileMATLAB extends FileBase {
     			}
     			doubleBuffer = new double[totalNumber2];
     			maxColorIndex = (totalNumber2/3) - 1;
-    			scale = maxColorIndex/shortRange;
+    			scale = (double)maxColorIndex/(double)shortRange;
     			try {
     				image2.exportData(0, totalNumber2, doubleBuffer);
     			}
@@ -5581,6 +5582,7 @@ public class FileMATLAB extends FileBase {
          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber2, doubleBuffer)");
          		   throw e;
          		}
+    			
     			image2.disposeLocal();
     			image2 = null;
     			for (i = 0; i < totalNumber; i++) {
@@ -5635,7 +5637,7 @@ public class FileMATLAB extends FileBase {
         			}
         			doubleBuffer = new double[totalNumber2];
         			maxColorIndex = (totalNumber2/3) - 1;
-        			scale = maxColorIndex/shortRange;
+        			scale = (double)maxColorIndex/(double)shortRange;
         			try {
         				image.exportData(0, totalNumber2, doubleBuffer);
         			}
