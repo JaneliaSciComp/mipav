@@ -538,9 +538,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         pixBufferA = initPixelBuffer(axialIconImage.getExtents());
         imageBufferS = initImageBuffer(sagittalIconImage.getExtents(), true);
         pixBufferS = initPixelBuffer(sagittalIconImage.getExtents());
-        coronalIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, coronalIconImage, null, imageBufferC, pixBufferC, 1, coronalIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT);
-        axialIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, axialIconImage, null, imageBufferA, pixBufferA, 1, axialIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT);
-        sagittalIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, sagittalIconImage, null, imageBufferS, pixBufferS, 1, sagittalIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT);
+        coronalIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, coronalIconImage, null, imageBufferC, pixBufferC, 1, coronalIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT, CORONAL);
+        axialIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, axialIconImage, null, imageBufferA, pixBufferA, 1, axialIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT, AXIAL);
+        sagittalIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, sagittalIconImage, null, imageBufferS, pixBufferS, 1, sagittalIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT, SAGITTAL);
         //axialG = axialIconComponentImage.getGraphics();
         iconHeight = axialIconComponentImage.getHeight();
         iconWidth = axialIconComponentImage.getWidth();
@@ -558,9 +558,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         axialIconComponentImage.setBuffers(imageBufferA, null, pixBufferA, null);
         sagittalIconComponentImage.addMouseWheelListener(this);
         sagittalIconComponentImage.setBuffers(imageBufferS, null, pixBufferS, null);
-        coronalIconComponentImage.show(0,0,null,null,true);
-        axialIconComponentImage.show(0,0,null,null,true);
-        sagittalIconComponentImage.show(0,0,null,null,true);
+        int linePosition = (int)(((float)currentZSlice/numZSlices)*iconHeight);
+        coronalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+        sagittalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
         
         
         //coronalG.drawLine(0, (int)((currentZSlice/numZSlices)*iconHeight), iconWidth, (int)((currentZSlice/numZSlices)*iconHeight));
@@ -682,6 +683,25 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			 currentZSlice = sliceSlider.getValue();
 			 currentComponentImage.setSlice(currentZSlice);
 			 currentComponentImage.show(0,currentZSlice,null,null,true);
+			  int linePosition;
+			  int invZSlice = 0;;
+			  
+			 	//if(currentOrientation.equals(AXIAL)) {
+			 		invZSlice = Math.abs(currentZSlice - numZSlices);
+			 	//}
+			 	
+			 	if(currentOrientation.equals(AXIAL)) {
+			 		linePosition = (int)(((float)invZSlice/numZSlices)*iconHeight);
+			 	}else if(currentOrientation.equals(CORONAL)) {
+			 		linePosition = (int)(((float)currentZSlice/numZSlices)*iconHeight);
+			 	}else {
+			 		linePosition = (int)(((float)currentZSlice/numZSlices)*iconHeight);
+			 	}
+			 	
+		        coronalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+		        sagittalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+		        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+		        
 		 }else if(source == ageSlider) {
 			 
 			 
@@ -903,6 +923,24 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				switchOrientations();
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 				
+				 int linePosition;
+				  int invZSlice = 0;;
+				  
+				 	if(currentOrientation.equals(AXIAL)) {
+				 		invZSlice = Math.abs(currentZSlice - numZSlices);
+				 	}
+				 	
+				 	if(currentOrientation.equals(AXIAL)) {
+				 		linePosition = (int)(((float)invZSlice/numZSlices)*iconHeight);
+				 	}else if(currentOrientation.equals(CORONAL)) {
+				 		linePosition = (int)(((float)currentZSlice/numZSlices)*iconHeight);
+				 	}else {
+				 		linePosition = (int)(((float)currentZSlice/numZSlices)*iconHeight);
+				 	}
+			        coronalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+			        sagittalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+			        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+				
 			}
 		}else if(command.equals("coronal")) {
 			if(!currentOrientation.equals(CORONAL)) {
@@ -923,6 +961,24 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				
 				switchOrientations();
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				
+				 int linePosition;
+				  int invZSlice = 0;;
+				  
+				 	//if(currentOrientation.equals(AXIAL)) {
+				 		invZSlice = Math.abs(currentZSlice - numZSlices);
+				 	//}
+				 	
+				 		if(currentOrientation.equals(AXIAL)) {
+					 		linePosition = (int)(((float)invZSlice/numZSlices)*iconHeight);
+					 	}else if(currentOrientation.equals(CORONAL)) {
+					 		linePosition = (int)(((float)currentZSlice/numZSlices)*iconHeight);
+					 	}else {
+					 		linePosition = (int)(((float)currentZSlice/numZSlices)*iconHeight);
+					 	}
+			        coronalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+			        sagittalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+			        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 			}
 			
 		}else if(command.equals("sagittal")) {
@@ -944,6 +1000,24 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				
 				switchOrientations();
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				
+				 int linePosition;
+				  int invZSlice = 0;;
+				  
+				 	//if(currentOrientation.equals(AXIAL)) {
+				 		invZSlice = Math.abs(currentZSlice - numZSlices);
+				 	//}
+				 	
+				 		if(currentOrientation.equals(AXIAL)) {
+					 		linePosition = (int)(((float)invZSlice/numZSlices)*iconHeight);
+					 	}else if(currentOrientation.equals(CORONAL)) {
+					 		linePosition = (int)(((float)currentZSlice/numZSlices)*iconHeight);
+					 	}else {
+					 		linePosition = (int)(((float)currentZSlice/numZSlices)*iconHeight);
+					 	}
+			        coronalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+			        sagittalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+			        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 	
 			}
 		}else if(command.equals("test")) {
@@ -956,6 +1030,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		        System.out.println(iconHeight);
 		        System.out.println(iconWidth);
 		        System.out.println((int)(((float)currentZSlice/numZSlices)*iconHeight));
+		        
 		        //coronalG.drawLine(0, (int)(((float)currentZSlice/numZSlices)*iconHeight), iconWidth, (int)(((float)currentZSlice/numZSlices)*iconHeight));
 		        //coronalG.drawLine(0,3,10,3);
 		        coronalG.fillRect(1, 1, 10, 30);
