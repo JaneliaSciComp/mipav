@@ -111,6 +111,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     /** The main tabbed pane in the volume view frame. */
     protected JTabbedPane tabbedPane;
 
+    /** The tabbed pane to hold teh LPS, RAS and absolution coordinate panels. */
+    protected JTabbedPane scannerTabbedPane;
+    
     /** Reference to the user interface. */
     protected ViewUserInterface userInterface;
 
