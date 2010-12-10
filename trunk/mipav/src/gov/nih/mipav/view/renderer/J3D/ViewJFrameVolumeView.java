@@ -1084,9 +1084,13 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         JPanel panelLabelsScanner = new JPanel();
         panelLabelsScanner.setLayout(new GridLayout(1, 2));
         panelLabelsScanner.setBorder(JPanelRendererBase.buildTitledBorder("Scanner Coordinates"));
-        panelLabelsScanner.add(scannerLPSPanel);
-        panelLabelsScanner.add(scannerRASPanel);
-        panelLabelsScanner.add(absolutePanel);
+        
+        scannerTabbedPane = new JTabbedPane();
+        absolutePanel.setBorder(JPanelRendererBase.buildTitledBorder(""));
+        scannerTabbedPane.add("Voxel", absolutePanel);
+        scannerTabbedPane.add("Scanner LPS", scannerLPSPanel);
+        scannerTabbedPane.add("Scanner RAS", scannerRASPanel);
+        panelLabelsScanner.add(scannerTabbedPane);
 
         panelLabels.setLayout(new GridLayout(3, 1));
         panelLabels.add(panelLabelsScanner);
