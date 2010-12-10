@@ -5527,9 +5527,9 @@ public class FileMATLAB extends FileBase {
     			image2 = null;
     			for (i = 0; i < totalNumber; i++) {
     				floatBuffer[4*i] = 0.0f;
-    				floatBuffer[4*i+1] = (float)doubleBuffer[3*(shortBuffer[i]-1)];
-    				floatBuffer[4*i+2] = (float)doubleBuffer[3*(shortBuffer[i]-1)+1];
-    				floatBuffer[4*i+3] = (float)doubleBuffer[3*(shortBuffer[i]-1)+2];
+    				floatBuffer[4*i+1] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)]);
+    				floatBuffer[4*i+2] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)+1]);
+    				floatBuffer[4*i+3] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)+2]);
     			}
     			try {
     				image.importData(0, floatBuffer, true);
