@@ -5590,8 +5590,14 @@ public class FileMATLAB extends FileBase {
     				scaledIndex = (scale*(shortBuffer[i] - shortMin));
     				lowIndex = Math.max(0,(int)(scale*(shortBuffer[i] - shortMin)));
     				highIndex = Math.min(maxColorIndex,lowIndex+1);
-    				lowFraction = Math.min(1.0, highIndex - scaledIndex);
-    				highFraction = Math.min(1.0, scaledIndex - lowIndex);
+    				if (lowIndex == highIndex) {
+    					lowFraction = 1.0;
+    					highFraction = 0.0;
+    				}
+    				else {
+    				    lowFraction = Math.min(1.0, highIndex - scaledIndex);
+    				    highFraction = Math.min(1.0, scaledIndex - lowIndex);
+    				}
     				floatBuffer[4*i+1] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]));
     				floatBuffer[4*i+2] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]));
     				floatBuffer[4*i+3] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]));
@@ -5656,8 +5662,14 @@ public class FileMATLAB extends FileBase {
         				scaledIndex = (scale*(shortBuffer[i] - shortMin));
         				lowIndex = Math.max(0,(int)(scale*(shortBuffer[i] - shortMin)));
         				highIndex = Math.min(maxColorIndex,lowIndex+1);
-        				lowFraction = Math.min(1.0, highIndex - scaledIndex);
-        				highFraction = Math.min(1.0, scaledIndex - lowIndex);
+        				if (lowIndex == highIndex) {
+        					lowFraction = 1.0;
+        					highFraction = 0.0;
+        				}
+        				else {
+        				    lowFraction = Math.min(1.0, highIndex - scaledIndex);
+        				    highFraction = Math.min(1.0, scaledIndex - lowIndex);
+        				}
         				floatBuffer[4*i+1] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]));
         				floatBuffer[4*i+2] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]));
         				floatBuffer[4*i+3] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]));
