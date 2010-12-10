@@ -338,6 +338,11 @@ public class FileMATLAB extends FileBase {
         int st;
         int elementNumber = 0;
         int totalNumber2;
+        int shortMin;
+        int shortMax;
+        int shortRange;
+        int maxColorIndex;
+        double scale;
 
         try {
            
@@ -585,7 +590,7 @@ public class FileMATLAB extends FileBase {
                     	Preferences.debug("Array type is sparse\n");
                     	break;
                     case mxDOUBLE_CLASS:
-                    	Preferences.debug("Array type is 8 byte float\n");
+                    	Preferences.debug("Array type is 8 byte double\n");
                     	break;
                     case mxSINGLE_CLASS:
                     	Preferences.debug("Array type is 4 byte float\n");
@@ -735,6 +740,17 @@ public class FileMATLAB extends FileBase {
 	                        	raFile = new RandomAccessFile(file, "r");
 	                        }
 	                    	continue;	
+	                	}
+	                	if ((nDim == 4) && (imageExtents[2] == 1)) {
+	                		nDim = 3;
+	                		newExtents = new int[3];
+	                		newExtents[0] = imageExtents[0];
+	                		newExtents[1] = imageExtents[1];
+	                		newExtents[2] = imageExtents[3];
+	                		imageExtents = new int[3];
+	                		imageExtents[0] = newExtents[0];
+	                		imageExtents[1] = newExtents[1];
+	                		imageExtents[2] = newExtents[2];
 	                	}
 	                	if (imagesFound == 1) {
 	                		fileInfo.setExtents(imageExtents);
@@ -5516,7 +5532,8 @@ public class FileMATLAB extends FileBase {
                 image.setFileInfo((FileInfoMATLAB)fileInfo.clone(), i);
             }
             
-            if ((image.getType() == ModelStorageBase.UBYTE) && (image2 != null) && (image2.getType() == ModelStorageBase.DOUBLE) &&
+            if (((image.getType() == ModelStorageBase.UBYTE)|| (image.getType() == ModelStorageBase.SHORT)) &&
+            	(image2 != null) && (image2.getType() == ModelStorageBase.DOUBLE) &&
             	(image2.getExtents()[0]  == 3)  && (image2.getExtents()[1] <= 256)) {
             	// image2 is really a lookup table for image
             	totalNumber = 1;
@@ -5531,6 +5548,17 @@ public class FileMATLAB extends FileBase {
         		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, shortBuffer)");
         		   throw e;
         		}
+        		shortMin = 65535;
+        		shortMax = -32768;
+        		for (i = 0; i < totalNumber; i++) {
+        			if (shortBuffer[i] < shortMin) {
+        				shortMin = shortBuffer[i];
+        			}
+        			if (shortBuffer[i] > shortMax) {
+        				shortMax = shortBuffer[i];
+        			}
+        		}
+        		shortRange = shortMax - shortMin;
         		image = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), image.getImageFileName());
     			fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
     			floatBuffer = new float[4 * totalNumber];
@@ -5539,6 +5567,8 @@ public class FileMATLAB extends FileBase {
     				totalNumber2 = totalNumber2 * image2.getExtents()[i];
     			}
     			doubleBuffer = new double[totalNumber2];
+    			maxColorIndex = (totalNumber2/3) - 1;
+    			scale = maxColorIndex/shortRange;
     			try {
     				image2.exportData(0, totalNumber2, doubleBuffer);
     			}
@@ -5550,9 +5580,9 @@ public class FileMATLAB extends FileBase {
     			image2 = null;
     			for (i = 0; i < totalNumber; i++) {
     				floatBuffer[4*i] = 0.0f;
-    				floatBuffer[4*i+1] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)]);
-    				floatBuffer[4*i+2] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)+1]);
-    				floatBuffer[4*i+3] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)+2]);
+    				floatBuffer[4*i+1] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))]);
+    				floatBuffer[4*i+2] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))+1]);
+    				floatBuffer[4*i+3] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))+2]);
     			}
     			try {
     				image.importData(0, floatBuffer, true);
@@ -5563,7 +5593,7 @@ public class FileMATLAB extends FileBase {
     			}
             }
             else if ((image.getType() == ModelStorageBase.DOUBLE) && (image.getExtents()[0]  == 3)  && (image.getExtents()[1] <= 256) &&
-            		 (image2 != null) && (image2.getType() == ModelStorageBase.UBYTE)) {
+            		 (image2 != null) && ((image2.getType() == ModelStorageBase.UBYTE) || (image2.getType() == ModelStorageBase.SHORT))) {
                 	// image2 is really a lookup table for image
                 	totalNumber = 1;
                 	for (i = 0; i < image2.getNDims(); i++) {
@@ -5577,13 +5607,25 @@ public class FileMATLAB extends FileBase {
             		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, shortBuffer)");
             		   throw e;
             		}
-            		
+            		shortMin = 65535;
+            		shortMax = -32768;
+            		for (i = 0; i < totalNumber; i++) {
+            			if (shortBuffer[i] < shortMin) {
+            				shortMin = shortBuffer[i];
+            			}
+            			if (shortBuffer[i] > shortMax) {
+            				shortMax = shortBuffer[i];
+            			}
+            		}
+            		shortRange = shortMax - shortMin;
         			floatBuffer = new float[4 * totalNumber];
         			totalNumber2 = 1;
         			for (i = 0; i < image.getNDims(); i++) {
         				totalNumber2 = totalNumber2 * image.getExtents()[i];
         			}
         			doubleBuffer = new double[totalNumber2];
+        			maxColorIndex = (totalNumber2/3) - 1;
+        			scale = maxColorIndex/shortRange;
         			try {
         				image.exportData(0, totalNumber2, doubleBuffer);
         			}
@@ -5599,9 +5641,9 @@ public class FileMATLAB extends FileBase {
         			image2 = null;
         			for (i = 0; i < totalNumber; i++) {
         				floatBuffer[4*i] = 0.0f;
-        				floatBuffer[4*i+1] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)]);
-        				floatBuffer[4*i+2] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)+1]);
-        				floatBuffer[4*i+3] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)+2]);
+        				floatBuffer[4*i+1] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))]);
+        				floatBuffer[4*i+2] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))+1]);
+        				floatBuffer[4*i+3] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))+2]);
         			}
         			try {
         				image.importData(0, floatBuffer, true);
@@ -5611,6 +5653,7 @@ public class FileMATLAB extends FileBase {
         				throw e;
         			}
                 }
+                
             
             
             if (image2 != null) {
