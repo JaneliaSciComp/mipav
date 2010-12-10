@@ -5585,8 +5585,8 @@ public class FileMATLAB extends FileBase {
     			image2 = null;
     			for (i = 0; i < totalNumber; i++) {
     				floatBuffer[4*i] = 0.0f;
-    				scaledIndex = (scale*shortBuffer[i] - shortMin);
-    				lowIndex = Math.max(0,(int)(scale*shortBuffer[i] - shortMin));
+    				scaledIndex = (scale*(shortBuffer[i] - shortMin));
+    				lowIndex = Math.max(0,(int)(scale*(shortBuffer[i] - shortMin)));
     				highIndex = Math.min(maxColorIndex,lowIndex+1);
     				lowFraction = Math.min(1.0, highIndex - scaledIndex);
     				highFraction = Math.min(1.0, scaledIndex - lowIndex);
@@ -5651,8 +5651,8 @@ public class FileMATLAB extends FileBase {
         			image2 = null;
         			for (i = 0; i < totalNumber; i++) {
         				floatBuffer[4*i] = 0.0f;
-        				scaledIndex = (scale*shortBuffer[i] - shortMin);
-        				lowIndex = Math.max(0,(int)(scale*shortBuffer[i] - shortMin));
+        				scaledIndex = (scale*(shortBuffer[i] - shortMin));
+        				lowIndex = Math.max(0,(int)(scale*(shortBuffer[i] - shortMin)));
         				highIndex = Math.min(maxColorIndex,lowIndex+1);
         				lowFraction = Math.min(1.0, highIndex - scaledIndex);
         				highFraction = Math.min(1.0, scaledIndex - lowIndex);
