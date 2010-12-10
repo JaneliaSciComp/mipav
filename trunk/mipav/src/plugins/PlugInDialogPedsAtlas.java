@@ -498,13 +498,11 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         edtiButton.addActionListener(this);
         edtiButton.setActionCommand("edti");
         group.add(edtiButton);
-        JButton testButton = new JButton("Test");
-        testButton.addActionListener(this);
-        testButton.setActionCommand("test");
+      
         modalitiesPanel.add(t1Button);
         modalitiesPanel.add(t2Button);
         modalitiesPanel.add(pdButton);
-        modalitiesPanel.add(testButton);
+
         //modalitiesPanel.add(dtiButton);
         //modalitiesPanel.add(edtiButton);
         
@@ -1020,24 +1018,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 	
 			}
-		}else if(command.equals("test")) {
-			  coronalG = coronalIconComponentImage.getGraphics().create();
-		        coronalG.setColor(Color.yellow);
-		        System.out.println(currentZSlice);
-		        System.out.println(numZSlices);
-		        float num = (((float)currentZSlice/numZSlices)*iconHeight);
-		        System.out.println(num);
-		        System.out.println(iconHeight);
-		        System.out.println(iconWidth);
-		        System.out.println((int)(((float)currentZSlice/numZSlices)*iconHeight));
-		        
-		        //coronalG.drawLine(0, (int)(((float)currentZSlice/numZSlices)*iconHeight), iconWidth, (int)(((float)currentZSlice/numZSlices)*iconHeight));
-		        //coronalG.drawLine(0,3,10,3);
-		        coronalG.fillRect(1, 1, 10, 30);
-		        coronalIconComponentImage.paint(coronalG);
-		        coronalIconComponentImage.repaint();
-		        repaint();
-		       
 		}
 
 	}
