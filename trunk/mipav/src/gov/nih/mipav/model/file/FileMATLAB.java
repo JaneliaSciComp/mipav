@@ -619,6 +619,15 @@ public class FileMATLAB extends FileBase {
                     }
                     if (arrayClass == mxCHAR_CLASS) {
                     	imagesFound--;
+                    	if (isCompressed) {
+                        	raFile.close();
+        	                try {
+        	                    ufile.delete();
+        	                } catch (final SecurityException sc) {
+        	                    MipavUtil.displayError("Security error occurs while trying to delete " + uncompressedName);
+        	                }
+                        	raFile = new RandomAccessFile(file, "r");
+                        }
                     	continue;
                     }
                     if (imagesFound == 2) {
@@ -713,6 +722,19 @@ public class FileMATLAB extends FileBase {
 	                				imageSlices2 = imageSlices2 * imageExtents[i];
 	                			}
 	                		}
+	                	}
+	                	if ((imageExtents[0] == 1) || (imageExtents[1] == 1)) {
+	                		imagesFound--;
+	                    	if (isCompressed) {
+	                        	raFile.close();
+	        	                try {
+	        	                    ufile.delete();
+	        	                } catch (final SecurityException sc) {
+	        	                    MipavUtil.displayError("Security error occurs while trying to delete " + uncompressedName);
+	        	                }
+	                        	raFile = new RandomAccessFile(file, "r");
+	                        }
+	                    	continue;	
 	                	}
 	                	if (imagesFound == 1) {
 	                		fileInfo.setExtents(imageExtents);
@@ -1043,6 +1065,7 @@ public class FileMATLAB extends FileBase {
 		                			}
 		                		}
 		                	}
+		                	
 		                	
 		                	// Note that imageLength only includes slices in one field of a structure
 		                	imageExtents[nDim] = fieldNumber;
@@ -5539,6 +5562,55 @@ public class FileMATLAB extends FileBase {
     				throw e;
     			}
             }
+            else if ((image.getType() == ModelStorageBase.DOUBLE) && (image.getExtents()[0]  == 3)  && (image.getExtents()[1] <= 256) &&
+            		 (image2 != null) && (image2.getType() == ModelStorageBase.UBYTE)) {
+                	// image2 is really a lookup table for image
+                	totalNumber = 1;
+                	for (i = 0; i < image2.getNDims(); i++) {
+                		totalNumber = totalNumber * image2.getExtents()[i];
+                	}
+                	shortBuffer = new short[totalNumber];
+            		try {
+            			image2.exportData(0, totalNumber, shortBuffer);
+            		}
+            		catch(IOException e) {
+            		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, shortBuffer)");
+            		   throw e;
+            		}
+            		
+        			floatBuffer = new float[4 * totalNumber];
+        			totalNumber2 = 1;
+        			for (i = 0; i < image.getNDims(); i++) {
+        				totalNumber2 = totalNumber2 * image.getExtents()[i];
+        			}
+        			doubleBuffer = new double[totalNumber2];
+        			try {
+        				image.exportData(0, totalNumber2, doubleBuffer);
+        			}
+        			catch(IOException e) {
+             		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber2, doubleBuffer)");
+             		   throw e;
+             		}
+        			
+        			image = new ModelImage(ModelStorageBase.ARGB_FLOAT, image2.getExtents(), image2.getImageFileName());
+        			fileInfo = (FileInfoMATLAB)fileInfo2.clone();
+        			fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
+        			image2.disposeLocal();
+        			image2 = null;
+        			for (i = 0; i < totalNumber; i++) {
+        				floatBuffer[4*i] = 0.0f;
+        				floatBuffer[4*i+1] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)]);
+        				floatBuffer[4*i+2] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)+1]);
+        				floatBuffer[4*i+3] = (float)(255*doubleBuffer[3*(shortBuffer[i]-1)+2]);
+        			}
+        			try {
+        				image.importData(0, floatBuffer, true);
+        			}
+        			catch(IOException e) {
+        				MipavUtil.displayError("IOException on image.importData(0, floatBuffer, true)");
+        				throw e;
+        			}
+                }
             
             
             if (image2 != null) {
