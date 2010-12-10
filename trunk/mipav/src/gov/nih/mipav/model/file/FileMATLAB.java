@@ -343,6 +343,11 @@ public class FileMATLAB extends FileBase {
         int shortRange;
         int maxColorIndex;
         double scale;
+        double scaledIndex;
+        int lowIndex;
+        int highIndex;
+        double lowFraction;
+        double highFraction;
 
         try {
            
@@ -5580,9 +5585,14 @@ public class FileMATLAB extends FileBase {
     			image2 = null;
     			for (i = 0; i < totalNumber; i++) {
     				floatBuffer[4*i] = 0.0f;
-    				floatBuffer[4*i+1] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))]);
-    				floatBuffer[4*i+2] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))+1]);
-    				floatBuffer[4*i+3] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))+2]);
+    				scaledIndex = (scale*shortBuffer[i] - shortMin);
+    				lowIndex = Math.max(0,(int)(scale*shortBuffer[i] - shortMin));
+    				highIndex = Math.min(maxColorIndex,lowIndex+1);
+    				lowFraction = Math.min(1.0, highIndex - scaledIndex);
+    				highFraction = Math.min(1.0, scaledIndex - lowIndex);
+    				floatBuffer[4*i+1] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]));
+    				floatBuffer[4*i+2] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]));
+    				floatBuffer[4*i+3] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]));
     			}
     			try {
     				image.importData(0, floatBuffer, true);
@@ -5641,9 +5651,14 @@ public class FileMATLAB extends FileBase {
         			image2 = null;
         			for (i = 0; i < totalNumber; i++) {
         				floatBuffer[4*i] = 0.0f;
-        				floatBuffer[4*i+1] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))]);
-        				floatBuffer[4*i+2] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))+1]);
-        				floatBuffer[4*i+3] = (float)(255*doubleBuffer[3*(int)Math.round(scale*(shortBuffer[i]-shortMin))+2]);
+        				scaledIndex = (scale*shortBuffer[i] - shortMin);
+        				lowIndex = Math.max(0,(int)(scale*shortBuffer[i] - shortMin));
+        				highIndex = Math.min(maxColorIndex,lowIndex+1);
+        				lowFraction = Math.min(1.0, highIndex - scaledIndex);
+        				highFraction = Math.min(1.0, scaledIndex - lowIndex);
+        				floatBuffer[4*i+1] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]));
+        				floatBuffer[4*i+2] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]));
+        				floatBuffer[4*i+3] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]));
         			}
         			try {
         				image.importData(0, floatBuffer, true);
