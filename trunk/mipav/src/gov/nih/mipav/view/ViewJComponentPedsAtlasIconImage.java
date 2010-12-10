@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -8,13 +9,25 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 
 public class ViewJComponentPedsAtlasIconImage extends ViewJComponentEditImage {
+	
+	/** selected orientation **/
+    private String selectedOrientation;
+    
+    private String thisOrientation;
+    
+    private int iconWidth, iconHeight;
+    
+    private int linePosition;
 
 	
 	public ViewJComponentPedsAtlasIconImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
-            int[] pixelBuffer, float zoom, int[] extents, boolean logMagDisplay, int _orientation) {
+            int[] pixelBuffer, float zoom, int[] extents, boolean logMagDisplay, int _orientation, String thisOrientation) {
 
         super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay,
                 _orientation);
+        this.thisOrientation = thisOrientation;
+        iconWidth = getWidth();
+        iconHeight = getHeight();
         this.imageA = _imageA;
 
 
@@ -34,8 +47,10 @@ public class ViewJComponentPedsAtlasIconImage extends ViewJComponentEditImage {
      * @return boolean to indicate if the show was successful
      */
     public boolean show(final int tSlice, final int zSlice, final ModelLUT _LUTa, final ModelLUT _LUTb,
-            final boolean forceShow) {
+            final boolean forceShow, int linePosition, String selectedOrientation) {
     	
+    	this.linePosition = linePosition;
+    	this.selectedOrientation = selectedOrientation;
     	
     	
     	return show(tSlice, zSlice, null, null, forceShow, interpMode);
@@ -83,6 +98,41 @@ public class ViewJComponentPedsAtlasIconImage extends ViewJComponentEditImage {
     } // end of show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow)
 	
 	
+    
+    public void paintComponent(Graphics g) {
+    	super.paintComponent(g);
+    	
+    	if(g!= null) {
+    		if(thisOrientation != selectedOrientation) {
+	    		g.setColor(Color.green);
+	    		if(selectedOrientation.equals("axial")) {
+	    			g.drawLine(0, linePosition, iconWidth, linePosition);
+	    		}else if(selectedOrientation.equals("coronal")) {
+	    			if(thisOrientation.equals("axial")) {
+	    				g.drawLine(0, linePosition, iconWidth, linePosition);
+	    			}else if(thisOrientation.equals("sagittal")) {
+	    				g.drawLine(linePosition, 0, linePosition, iconHeight);
+	    			}
+	    		}else if(selectedOrientation.equals("sagittal")) {
+	    			if(thisOrientation.equals("axial")) {
+	    				g.drawLine(linePosition, 0, linePosition, iconHeight);
+	    			}else if(thisOrientation.equals("coronal")) {
+	    				g.drawLine(linePosition, 0, linePosition, iconHeight);
+	    			}
+	    		
+	    		}
+	    		
+    		
+    		
+    		}
+    		
+    	}
+    	
+    }
+    
+    
+    
+    
 	/**
      * mouse clicked
      */
