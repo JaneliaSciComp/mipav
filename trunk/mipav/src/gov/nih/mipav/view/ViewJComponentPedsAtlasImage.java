@@ -16,7 +16,7 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
 
         super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay,
                 _orientation);
-        //this.imageA = _imageA;
+        interpMode = ViewJComponentBase.INTERPOLATE_A;
 
 
     }
