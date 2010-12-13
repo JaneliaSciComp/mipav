@@ -825,15 +825,20 @@ public class MipavCoordinateSystems {
             }
         }
 
+        
         final Vector3f kOutput = new Vector3f();
         kOutput.X = afUpperLeft[axisOrder[0]];
         kOutput.Y = afUpperLeft[axisOrder[1]];
         kOutput.Z = afUpperLeft[axisOrder[2]];
         
-        
-        kOutput.X = axisFlip[0] ? afLowerRight[axisOrder[0]] : afUpperLeft[axisOrder[0]];
-        kOutput.Y = axisFlip[1] ? afLowerRight[axisOrder[1]] : afUpperLeft[axisOrder[1]];
-        kOutput.Z = axisFlip[2] ? afLowerRight[axisOrder[2]] : afUpperLeft[axisOrder[2]];
+        if ( (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+                || (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+        }
+        else {
+	        kOutput.X = axisFlip[0] ? afLowerRight[axisOrder[0]] : afUpperLeft[axisOrder[0]];
+	        kOutput.Y = axisFlip[1] ? afLowerRight[axisOrder[1]] : afUpperLeft[axisOrder[1]];
+	        kOutput.Z = axisFlip[2] ? afLowerRight[axisOrder[2]] : afUpperLeft[axisOrder[2]];
+        }
         return kOutput;
     }
     
