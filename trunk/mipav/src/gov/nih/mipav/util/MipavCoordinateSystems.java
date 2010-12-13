@@ -808,6 +808,7 @@ public class MipavCoordinateSystems {
         MipavCoordinateSystems.toLPS(kImage, axisOrder, axisFlip);
 
         final float[] afUpperLeft = kImage.getOrigin();
+        
         if ( kImage.getExtents().length < 3 )
         {
             return new Vector3f( afUpperLeft[0], afUpperLeft[1], afUpperLeft[2] );
@@ -818,9 +819,9 @@ public class MipavCoordinateSystems {
         final float[] afRes = kImage.getResolutions(0);
         for (int i = 0; i < 3; i++) {
             if ( (axisOrient[i] == 1) || (axisOrient[i] == 4) || (axisOrient[i] == 5)) {
-                afLowerRight[i] = afUpperLeft[i] + (extents[0] * afRes[i]);
+                afLowerRight[i] = afUpperLeft[i] + ((extents[i] - 1) * afRes[i]);
             } else {
-                afLowerRight[i] = afUpperLeft[i] - (extents[0] * afRes[i]);
+                afLowerRight[i] = afUpperLeft[i] - ((extents[i] - 1) * afRes[i]);
             }
         }
 
@@ -829,15 +830,10 @@ public class MipavCoordinateSystems {
         kOutput.Y = afUpperLeft[axisOrder[1]];
         kOutput.Z = afUpperLeft[axisOrder[2]];
         
-        if ( (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
-                || (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
-        }
-        else
-        {
-            kOutput.X = axisFlip[0] ? afLowerRight[axisOrder[0]] : afUpperLeft[axisOrder[0]];
-            kOutput.Y = axisFlip[1] ? afLowerRight[axisOrder[1]] : afUpperLeft[axisOrder[1]];
-            kOutput.Z = axisFlip[2] ? afLowerRight[axisOrder[2]] : afUpperLeft[axisOrder[2]];
-        }
+        
+        kOutput.X = axisFlip[0] ? afLowerRight[axisOrder[0]] : afUpperLeft[axisOrder[0]];
+        kOutput.Y = axisFlip[1] ? afLowerRight[axisOrder[1]] : afUpperLeft[axisOrder[1]];
+        kOutput.Z = axisFlip[2] ? afLowerRight[axisOrder[2]] : afUpperLeft[axisOrder[2]];
         return kOutput;
     }
     
