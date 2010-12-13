@@ -282,8 +282,13 @@ public class FileAnalyze extends FileBase {
             completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[1];
         } else if (isImageFile(absolutePath)) {
             completeFileNameList[1] = absolutePath;
-
-            completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[0];
+            
+            int extLoc = absolutePath.lastIndexOf(".");
+            if(extLoc == -1) {
+                extLoc = absolutePath.length(); //isImageFile() allows for extension-less images
+            }
+            
+            completeFileNameList[0] = absolutePath.substring(0, extLoc) + EXTENSIONS[0];
         } else {
             completeFileNameList = null;
         }
