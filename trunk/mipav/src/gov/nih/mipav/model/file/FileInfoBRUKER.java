@@ -29,9 +29,6 @@ public class FileInfoBRUKER extends FileInfoBase {
     /** DOCUMENT ME! */
     private String sliceSeparationMode = null;
 
-    /** DOCUMENT ME! */
-    private float sliceThickness = -1.0f;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -63,8 +60,8 @@ public class FileInfoBRUKER extends FileInfoBase {
             dialog.append("Slice separation mode:" + sliceSeparationMode + "\n");
         }
 
-        if (sliceThickness > 0.0f) {
-            dialog.append("Slice thickness:      " + sliceThickness + " millimeters\n");
+        if (getSliceThickness() > 0.0f) {
+            dialog.append("Slice thickness:      " + getSliceThickness() + " millimeters\n");
         }
     }
 
@@ -111,14 +108,5 @@ public class FileInfoBRUKER extends FileInfoBase {
      */
     public void setSliceSeparationMode(String sliceSeparationMode) {
         this.sliceSeparationMode = sliceSeparationMode;
-    }
-
-    /**
-     * Accessor to set the slice thickness.
-     *
-     * @param  sliceThickness  Thickness to set.
-     */
-    public void setSliceThickness(float sliceThickness) {
-        this.sliceThickness = sliceThickness;
     }
 }
