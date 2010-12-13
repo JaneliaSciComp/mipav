@@ -1442,11 +1442,12 @@ public class FileUtility {
 
             // if the FileFormat object is null, there was probably a problem loading the hdf5 libraries
             if (h5F == null) {
-                if ( !quiet) {
-                    MipavUtil.displayError("Unable to load HDF5 libraries required for MINC-2.0 HDF files.");
-                }
+                
+                Preferences.debug("Unable to load HDF5 libraries required for MINC-2.0 HDF files.", Preferences.DEBUG_FILEIO);
 
-                return FileUtility.ERROR;
+                return FileUtility.UNDEFINED; //TODO: Until this library is available for 64-bit macs, 
+                                              //this has been changed to a FileUtility.UNKNOWN.  This was impeding the ability of users
+                                              //without this library to load SPM, and truly UNKNOWN images
             }
 
             final boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
