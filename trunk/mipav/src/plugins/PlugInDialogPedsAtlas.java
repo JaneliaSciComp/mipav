@@ -441,6 +441,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         sliceSlider.setPaintTicks(true);
         sliceSlider.addChangeListener(this);
         sliceSlider.setInverted(true);
+        sliceLabelTable.put(currentZSlice, new JLabel(String.valueOf(currentZSlice)));
         sliceSlider.setLabelTable(sliceLabelTable);
         sliceSlider.setPaintLabels(true);
         //sliceSlider.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
@@ -678,7 +679,14 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	public void stateChanged(ChangeEvent e) {
 		 Object source = e.getSource();
 		 if (source == sliceSlider) {
+			 if(currentZSlice != 0 && currentZSlice != (numZSlices-1)) {
+				 sliceLabelTable.remove(currentZSlice);
+			 }
+
 			 currentZSlice = sliceSlider.getValue();
+			 sliceLabelTable.put(currentZSlice, new JLabel(String.valueOf(currentZSlice)));
+			 sliceSlider.setLabelTable(sliceLabelTable);
+			 sliceSlider.repaint();
 			 currentComponentImage.setSlice(currentZSlice);
 			 currentComponentImage.show(0,currentZSlice,null,null,true);
 			  int linePosition;
@@ -1374,14 +1382,14 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         Object source = event.getSource();
         if (source == currentComponentImage || source == imageScrollPanel || source == sliceSlider) {
             if (wheelRotation < 0) {
-                if (currentZSlice != numZSlices - 1) {
-                	currentZSlice = currentZSlice + 1;
-                    sliceSlider.setValue(currentZSlice);
+                if (currentZSlice != 0) {
+                	//currentZSlice = currentZSlice + 1;
+                    sliceSlider.setValue(currentZSlice-1);
                 }
             } else {
-                if (currentZSlice != 0) {
-                	currentZSlice = currentZSlice - 1;
-                    sliceSlider.setValue(currentZSlice);
+                if (currentZSlice != numZSlices - 1) {
+                	//currentZSlice = currentZSlice - 1;
+                    sliceSlider.setValue(currentZSlice+1);
                 }
             }
         }
