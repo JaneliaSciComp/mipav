@@ -4,6 +4,7 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
+import java.util.ArrayList;
 
 
 /**
@@ -59,6 +60,57 @@ public class FileBRUKER extends FileBase {
 
         this.fileName = fileName;
         this.fileDir = fileDir;
+        
+        File f = new File(fileDir + fileName); //file separator already included
+        String tryFileDir = null;
+        if(!f.exists()) {  //since BRUKER is not a specific file, the user may enter one directory to high,
+                           //this method does a search by depth to 3 in looking for the d3proc file
+            tryFileDir = searchChildDir(new File(fileDir));
+        }
+        
+        if(tryFileDir != null) {
+            this.fileDir = tryFileDir;
+        }
+    }
+    
+    /**
+     * Utility method for searching for the d3proc file that indicates a BRUKER file has been found,
+     * note method is recursive to a maximum level of 3.
+     */
+    private String searchChildDir(File currentDir) {
+        System.out.println("Searching: "+currentDir.getAbsolutePath()+File.separator +fileName);
+        if(!new File(currentDir.getAbsolutePath() + File.separator + fileName).exists()) {
+            ArrayList<String> subDir = childDir(currentDir);
+            for(String dir : subDir) {
+                if(new File(dir + File.separator + fileName).exists()) {
+                    System.out.println("Returning "+dir+File.separator);
+                    return dir+File.separator;
+                }
+            }
+            for(String dir : subDir) {
+                String str = searchChildDir(new File(dir));
+                System.out.println("Returning "+str);
+                return str;
+            }
+        }
+        return currentDir.getAbsolutePath()+File.separator;
+    }
+
+    /**
+     * Returns an ArrayList of all the names of subdirectories of the 
+     * directory denoted by <code>currentDir</code>.
+     */
+    private ArrayList<String> childDir(File currentDir) {
+        ArrayList<String> subDir = new ArrayList<String>();
+        String[] fileList = currentDir.list();
+        for(int i=0; i<fileList.length; i++) {
+            if(new File(currentDir.getAbsolutePath() + File.separator + fileList[i]).isDirectory()) {
+                subDir.add(currentDir.getAbsolutePath() + File.separator + fileList[i]);
+                System.out.println("Adding "+currentDir.getAbsolutePath() + File.separator + fileList[i]);
+            }
+        }
+        
+        return subDir;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -656,6 +708,13 @@ public class FileBRUKER extends FileBase {
         } // while
 
         return tempString;
+    }
+
+    /**
+     * This convenience method is needed to establish the location of the 2dseq file
+     */
+    public String getFileDir() {
+        return fileDir;
     }
 
 }
