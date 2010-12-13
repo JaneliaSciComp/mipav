@@ -5259,11 +5259,13 @@ public class FileIO {
         FileBRUKER imageFile = null;
         FileInfoBase myFileInfo;
         File directoryFile;
+        String workingDirectory; //refers to loaction of 2dseq, d3proc, and reco file
         String parentDirectoryName;
 
         try {
             fileName = "d3proc";
             imageFile = new FileBRUKER(fileName, fileDir); // read in files
+            workingDirectory = imageFile.getFileDir();
             imageFile.readd3proc();
         } catch (final IOException error) {
 
@@ -5285,7 +5287,7 @@ public class FileIO {
             return null;
         }
 
-        (imageFile).setFileName("reco");
+        imageFile.setFileName("reco");
 
         try {
             imageFile.readreco();
@@ -5303,19 +5305,18 @@ public class FileIO {
             return null;
         }
 
-        (imageFile).setFileName("acqp");
-        directoryFile = new File(fileDir);
+        imageFile.setFileName("acqp");
 
-        final File tmpFile = new File(fileDir + File.separator + "acqp");
+        final File tmpFile = new File(workingDirectory + File.separator + "acqp");
 
         if ( !tmpFile.exists()) {
 
             // go up 2 parent directories
-            parentDirectoryName = directoryFile.getParent();
+            parentDirectoryName = new File(workingDirectory).getParent();
             directoryFile = new File(parentDirectoryName);
-            (imageFile).setFileDir(directoryFile.getParent() + File.separator);
+            imageFile.setFileDir(directoryFile.getParent() + File.separator);
         } else {
-            (imageFile).setFileDir(directoryFile + File.separator);
+            imageFile.setFileDir(workingDirectory + File.separator);
         }
 
         try {
@@ -5337,8 +5338,8 @@ public class FileIO {
             return null;
         }
 
-        (imageFile).setFileName("2dseq");
-        (imageFile).setFileDir(fileDir);
+        imageFile.setFileName("2dseq");
+        imageFile.setFileDir(workingDirectory);
 
         try {
             image = imageFile.readImage(one);
