@@ -4461,7 +4461,27 @@ public class ModelImage extends ModelStorageBase {
                     	} // if (destImage.getFileInfo(0) instanceof FileInfoNIFTI)
                     }
                 }
-            } // if (matHolder != null)    
+            } // if (matHolder != null) 
+            
+            if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+                    || (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+            	TransMatrix dicomMatrix = null;
+            	dicomMatrix = srcImage.getMatrix();
+            	TransMatrix newMatrix = new TransMatrix(4);
+            	for (i = 0; i < 3; i++) {
+                    for (j = 0; j < 3; j++) {
+                    	if (axisFlip[i]) {
+                    		newMatrix.set(j, i, -dicomMatrix.get(j, axisOrder[i]));
+                    	}
+                    	else {
+                            newMatrix.set(j, i, dicomMatrix.get(j, axisOrder[i]));
+                    	}
+                    }
+            	} // for (i = 0; i < 3; i++)
+            	newMatrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
+            	destImage.getMatrixHolder().clearMatrices();
+            	destImage.getMatrixHolder().addMatrix(newMatrix);
+            } // if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
         } // if (destImage.getNDims() >= 3)
         return true;
     }
