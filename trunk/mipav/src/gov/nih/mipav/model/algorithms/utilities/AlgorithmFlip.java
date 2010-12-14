@@ -286,6 +286,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                 	
                 	for (j = 0; j < 3; j++) {
                         dicomMatrix.set(j, index, -dicomMatrix.get(j, index));
+                        dicomMatrix.set(j, 3, fileInfo[0].getOrigin(j));
                     }
                 	dicomMatrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
                 	srcImage.getMatrixHolder().clearMatrices();
