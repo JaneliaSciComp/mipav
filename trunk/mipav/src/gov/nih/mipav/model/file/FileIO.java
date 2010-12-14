@@ -5321,6 +5321,12 @@ public class FileIO {
 
         try {
             imageFile.readacqp();
+            imageFile.setFileName("method"); //must reside in same location as acqp
+            final File methodFile = new File(imageFile.getFileDir() + File.separator + "method");
+            if(methodFile.exists()) {
+                imageFile.readMethod();
+            }
+            
         } catch (final IOException error) {
             Preferences.debug("IOExceoption in FileIO.readBRUKER\n", Preferences.DEBUG_FILEIO);
 
