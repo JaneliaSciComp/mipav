@@ -180,7 +180,7 @@ public class PlugInAlgorithmMTry extends AlgorithmBase {
     	    }
     	}
     	
-    	System.out.println("New precision value is: "+t1Precision);
+    	//System.out.println("New precision value is: "+t1Precision);
     	
     	t1Precision = Math.floor(t1Precision*(Math.pow(10, Math.ceil(-Math.log10(t1Precision/10)))))*Math.pow(10, Math.ceil(Math.log10(t1Precision/100)));
     	System.out.println("Numerical errors correction result: "+t1Precision);

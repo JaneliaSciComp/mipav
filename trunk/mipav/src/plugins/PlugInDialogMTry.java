@@ -399,7 +399,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
             }
         } else if(ViewUserInterface.getReference().getRegisteredImageByName(string).getFileInfo()[0] instanceof FileInfoBRUKER) {
             FileInfoBRUKER f = (FileInfoBRUKER) ViewUserInterface.getReference().getRegisteredImageByName(string).getFileInfo()[0];
-            invTime = Double.valueOf(f.getRecoSize());
+            invTime = Double.valueOf(f.getInversionTime());
         }
         return invTime;
     }
