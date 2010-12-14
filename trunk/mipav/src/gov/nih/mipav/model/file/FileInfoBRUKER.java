@@ -59,11 +59,15 @@ public class FileInfoBRUKER extends FileInfoBase {
         dialog.append("\n\n                Other information\n\n");
 
         if (sliceSeparationMode != null) {
-            dialog.append("Slice separation mode:" + sliceSeparationMode + "\n");
+            dialog.append("Slice separation mode:\t" + sliceSeparationMode + "\n");
         }
 
         if (getSliceThickness() > 0.0f) {
-            dialog.append("Slice thickness:      " + getSliceThickness() + " millimeters\n");
+            dialog.append("Slice thickness:\t" + getSliceThickness() + " mm\n");
+        }
+        
+        if(inversionTime != 0) {
+            dialog.append("Inversion time:\t\t" + inversionTime + " ms\n");
         }
     }
 
