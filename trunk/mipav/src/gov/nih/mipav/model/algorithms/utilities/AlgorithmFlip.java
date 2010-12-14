@@ -258,6 +258,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                 float loc = fileInfo[0].getOrigin(index);
                 int orient = fileInfo[0].getAxisOrientation(index);
 
+                
                 if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
                         (orient == FileInfoBase.ORI_A2P_TYPE) || 
                         (orient == FileInfoBase.ORI_I2S_TYPE)) {
@@ -276,6 +277,20 @@ public class AlgorithmFlip extends AlgorithmBase {
                         fileInfo[i].setOrigin(loc + (fileInfo[0].getResolutions()[index] * i), index);
                     }
                 }
+                
+                if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+                        || (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+                	int j;
+                	TransMatrix dicomMatrix = null;
+                	dicomMatrix = srcImage.getMatrix().clone();
+                	
+                	for (j = 0; j < 3; j++) {
+                        dicomMatrix.set(j, index, -dicomMatrix.get(j, index));
+                    }
+                	dicomMatrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
+                	srcImage.getMatrixHolder().clearMatrices();
+                	srcImage.getMatrixHolder().addMatrix(dicomMatrix);
+                } // if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                 
                 if (fileInfo[0] instanceof FileInfoNIFTI) {
                     MatrixHolder matHolder = null;
