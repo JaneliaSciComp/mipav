@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -149,6 +150,44 @@ public class FileBRUKER extends FileBase {
      */
     public ModelLUT getModelLUT() {
         return LUT;
+    }
+    
+    /**
+     * Reads the optional method file that may be part of the Bruker scan.
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public void readMethod() throws IOException {
+        String lineString = null;
+        String[] parseString;
+        file = new File(fileDir + fileName);
+        raFile = new RandomAccessFile(file, "r");
+        lineString = readLine();
+
+        while (lineString != null) {
+            parseString = parse(lineString);
+
+            if (parseString[0].equalsIgnoreCase("##$PVM_InversionTime")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        Double invTime = Double.valueOf(parseString[1]);
+                        fileInfo.setInversionTime(invTime.doubleValue());
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Inversion time for "+fileName+" could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$ACQ_slice_sepn_mode has parseString with length = " + parseString.length);
+                }
+
+            } 
+
+            lineString = readLine();
+        } // while (lineString != null)
+
+        raFile.close();
     }
 
     /**
