@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 
 import gov.nih.mipav.view.*;
 
@@ -28,41 +29,17 @@ public class JDialogBlankImage extends JDialogBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private int dataType;
+    /** The ModelStorageBase.DataType of the blank image */
+    private DataType dataType;
 
-    /** DOCUMENT ME! */
+    /** The blank image to be created. */
     private ModelImage image;
+    
+    /** The Radio buttons for selecting the new data type of the image */
+    private JRadioButton[] radioTypes = new JRadioButton[DataType.values().length];
 
-    /** DOCUMENT ME! */
-    private JRadioButton radioBool;
-
-    /** DOCUMENT ME! */
-    private JRadioButton radioByte;
-
-    /** DOCUMENT ME! */
-    private JRadioButton radioDouble;
-
-    /** DOCUMENT ME! */
-    private JRadioButton radioFloat;
-
-    /** DOCUMENT ME! */
-    private JRadioButton radioInt;
-
-    /** DOCUMENT ME! */
-    private JRadioButton radioLong;
-
-    /** DOCUMENT ME! */
-    private JRadioButton radioShort;
-
-    /** DOCUMENT ME! */
-    private JRadioButton radioUByte;
-
-    /** DOCUMENT ME! */
-    private JRadioButton radioUInt;
-
-    /** DOCUMENT ME! */
-    private JRadioButton radioUShort;
+    /** The composed group of radio buttons. */
+    private ButtonGroup group1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -75,46 +52,14 @@ public class JDialogBlankImage extends JDialogBase {
         super(theParentFrame, true);
         setTitle("Load blank image");
 
-        ButtonGroup group1 = new ButtonGroup();
-        radioBool = new JRadioButton("Boolean", false);
-        radioBool.setFont(serif12);
-        group1.add(radioBool);
-
-        radioByte = new JRadioButton("Byte", false);
-        radioByte.setFont(serif12);
-        group1.add(radioByte);
-
-        radioUByte = new JRadioButton("Unsigned Byte", false);
-        radioUByte.setFont(serif12);
-        group1.add(radioUByte);
-
-        radioShort = new JRadioButton("Short", true);
-        radioShort.setFont(serif12);
-        group1.add(radioShort);
-
-        radioUShort = new JRadioButton("Unsigned Short", false);
-        radioUShort.setFont(serif12);
-        group1.add(radioUShort);
-
-        radioInt = new JRadioButton("Integer", false);
-        radioInt.setFont(serif12);
-        group1.add(radioInt);
-
-        radioUInt = new JRadioButton("Unsigned Integer", false);
-        radioUInt.setFont(serif12);
-        group1.add(radioUInt);
-
-        radioLong = new JRadioButton("Long", false);
-        radioLong.setFont(serif12);
-        group1.add(radioLong);
-
-        radioFloat = new JRadioButton("Float", false);
-        radioFloat.setFont(serif12);
-        group1.add(radioFloat);
-
-        radioDouble = new JRadioButton("Double", false);
-        radioDouble.setFont(serif12);
-        group1.add(radioDouble);
+        group1 = new ButtonGroup();
+        for(int i=0; i<radioTypes.length; i++) {
+            radioTypes[i] = new JRadioButton(DataType.values()[i].name(), false);
+            radioTypes[i].setFont(MipavUtil.font12);
+            radioTypes[i].setActionCommand(DataType.values()[i].name());
+            group1.add(radioTypes[i]);
+        }
+        radioTypes[0].setSelected(true);
 
         JPanel panelImageType = new JPanel(new GridBagLayout());
         panelImageType.setBorder(buildTitledBorder("Image Type"));
@@ -125,27 +70,15 @@ public class JDialogBlankImage extends JDialogBase {
         gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0;
-        gbc.gridy = 0;
-        panelImageType.add(radioBool, gbc);
-        gbc.gridy = 1;
-        panelImageType.add(radioByte, gbc);
-        gbc.gridy = 2;
-        panelImageType.add(radioUByte, gbc);
-        gbc.gridy = 3;
-        panelImageType.add(radioShort, gbc);
-        gbc.gridy = 4;
-        panelImageType.add(radioUShort, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        panelImageType.add(radioInt, gbc);
-        gbc.gridy = 1;
-        panelImageType.add(radioUInt, gbc);
-        gbc.gridy = 2;
-        panelImageType.add(radioLong, gbc);
-        gbc.gridy = 3;
-        panelImageType.add(radioFloat, gbc);
-        gbc.gridy = 4;
-        panelImageType.add(radioDouble, gbc);
+        gbc.gridy = -1;
+        for(int i=0; i<radioTypes.length; i++) {
+            gbc.gridy++;
+            panelImageType.add(radioTypes[i], gbc);
+            if(gbc.gridy == radioTypes.length/2) {
+                gbc.gridx++;
+                gbc.gridy = -1;
+            }
+        }
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -171,36 +104,14 @@ public class JDialogBlankImage extends JDialogBase {
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-
-        if (source == OKButton) {
-
-            if (radioBool.isSelected()) {
-                dataType = ModelStorageBase.BOOLEAN;
-            } else if (radioByte.isSelected()) {
-                dataType = ModelStorageBase.BYTE;
-            } else if (radioUByte.isSelected()) {
-                dataType = ModelStorageBase.UBYTE;
-            } else if (radioShort.isSelected()) {
-                dataType = ModelStorageBase.SHORT;
-            } else if (radioUShort.isSelected()) {
-                dataType = ModelStorageBase.USHORT;
-            } else if (radioInt.isSelected()) {
-                dataType = ModelStorageBase.INTEGER;
-            } else if (radioUInt.isSelected()) {
-                dataType = ModelStorageBase.UINTEGER;
-            } else if (radioLong.isSelected()) {
-                dataType = ModelStorageBase.LONG;
-            } else if (radioFloat.isSelected()) {
-                dataType = ModelStorageBase.FLOAT;
-            } else if (radioDouble.isSelected()) {
-                dataType = ModelStorageBase.DOUBLE;
-            } else {
-                dataType = ModelStorageBase.BYTE;
-            }
+        if (source.equals(OKButton)) {
+            
+            dataType = DataType.valueOf(group1.getSelection().getActionCommand());
+            Preferences.debug("Data type of created image is "+dataType.name(), Preferences.DEBUG_MINOR);
 
             makeImage();
             dispose();
-        } else if (source == cancelButton) {
+        } else if (source.equals(cancelButton)) {
             cancelFlag = true;
             dispose();
         }
@@ -211,7 +122,7 @@ public class JDialogBlankImage extends JDialogBase {
      *
      * @return  the data type
      */
-    public int getDataType() {
+    public DataType getDataType() {
         return dataType;
     }
 
@@ -230,7 +141,6 @@ public class JDialogBlankImage extends JDialogBase {
     private void makeImage() {
         int[] destExtents = ((ViewJFrameImage) (parentFrame)).getImageA().getExtents();
         image = new ModelImage(dataType, destExtents, " Blank");
-
     }
 
 }
