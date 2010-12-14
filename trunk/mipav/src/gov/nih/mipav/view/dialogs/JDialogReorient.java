@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoNIFTI;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -684,7 +685,27 @@ public class JDialogReorient extends JDialogScriptableBase
 		                		matHolder.addMatrix(newMatrix2);
 		                	}
 		                }
-		            } // if (matHolder != null)    
+		            } // if (matHolder != null)  
+		            
+		            if ( (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+		                    || (image.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+		            	TransMatrix dicomMatrix = null;
+		            	dicomMatrix = image.getMatrix();
+		            	newMatrix = new TransMatrix(4);
+		            	for (i = 0; i < 3; i++) {
+		                    for (j = 0; j < 3; j++) {
+		                    	if (axisFlip[i]) {
+		                    		newMatrix.set(j, i, -dicomMatrix.get(j, axisOrder[i]));
+		                    	}
+		                    	else {
+		                            newMatrix.set(j, i, dicomMatrix.get(j, axisOrder[i]));
+		                    	}
+		                    }
+		            	} // for (i = 0; i < 3; i++)
+		            	newMatrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
+		            	resultImage.getMatrixHolder().clearMatrices();
+		            	resultImage.getMatrixHolder().addMatrix(newMatrix);
+		            } // if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
 		        } // if (destImage.getNDims() >= 3)
                 resultImage.clearMask();
 				resultImage.calcMinMax();
