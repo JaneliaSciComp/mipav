@@ -7,7 +7,7 @@ import gov.nih.mipav.view.dialogs.*;
 
 
 /**
- * DOCUMENT ME!
+ * File information related to the Bruker/Biospin scanner format.
  */
 
 public class FileInfoBRUKER extends FileInfoBase {
@@ -19,15 +19,17 @@ public class FileInfoBRUKER extends FileInfoBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Whether the z resolution is set in the acqp or reco files*/
     private boolean haveZResol = false;
 
-    /** DOCUMENT ME! */
+    /** The size of the reconstruction */
     private int recoSize = -1;
-
-
-    /** DOCUMENT ME! */
+    
+    /** The slice inversion time of the scan */
     private String sliceSeparationMode = null;
+
+    /** The inversion time of an MR scan. */
+    private double inversionTime;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -75,12 +77,21 @@ public class FileInfoBRUKER extends FileInfoBase {
     }
 
     /**
-     * Accessor to get the reco size.
+     * Gets the size of the reconstruction.
      *
      * @return  The reco size.
      */
     public int getRecoSize() {
         return recoSize;
+    }
+    
+    /**
+     * Gets the inversion time of the scan.
+     * 
+     * @return The inversion time.
+     */
+    public double getInversionTime() {
+        return inversionTime;
     }
 
     /**
@@ -108,5 +119,14 @@ public class FileInfoBRUKER extends FileInfoBase {
      */
     public void setSliceSeparationMode(String sliceSeparationMode) {
         this.sliceSeparationMode = sliceSeparationMode;
+    }
+
+    /**
+     * Accessor to set the inversion time of the scan
+     * 
+     * @param inversionTime the inversion time of the scan
+     */
+    public void setInversionTime(double inversionTime) {
+        this.inversionTime = inversionTime;        
     }
 }
