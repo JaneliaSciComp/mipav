@@ -8,6 +8,8 @@ import gov.nih.mipav.view.*;
 
 import java.util.*;
 
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+
 
 /**
  * This code fits data points to a 3D ellipsoid. The part of the code up to the derivation of v[0] through v[9] for the
@@ -290,19 +292,14 @@ public class AlgorithmEllipsoidFit {
         // Generate CA = inv(C)*A;
         Matrix matCA = (matC.inverse()).times(matA);
 
-        EigenvalueDecomposition eig;
-        double[] eigenvalue;
-        double[][] eigenvector;
+        double[] eigenvalue = new double[matCA.getColumnDimension()];
+        double[][] eigenvector = new double[matCA.getRowDimension()][matCA.getColumnDimension()];
         double temp;
         double[] tempCol = new double[6];
         int m, n, index;
-
-        eig = new EigenvalueDecomposition(matCA);
-        eigenvalue = eig.getRealEigenvalues();
-
         // In EigenvalueDecomposition the columns represent the
         // eigenvectors
-        eigenvector = eig.getV().getArray();
+        Eigenvalue.decompose( matCA.getArray(), eigenvector, eigenvalue);
 
         // Arrange the eigenvalues and corresponding eigenvectors
         // in descending order so that e0 >= e1 >= e2
@@ -445,13 +442,11 @@ public class AlgorithmEllipsoidFit {
         G1[2][1] = G1[1][2];
 
         Matrix matG1 = new Matrix(G1);
-
-        eig = new EigenvalueDecomposition(matG1);
-        eigenvalue = eig.getRealEigenvalues();
-
+        eigenvalue = new double[matG1.getColumnDimension()];
+        eigenvector = new double[matG1.getRowDimension()][matCA.getColumnDimension()];
         // In EigenvalueDecomposition the columns represent the
         // eigenvectors
-        eigenvector = eig.getV().getArray();
+        Eigenvalue.decompose( matCA.getArray(), eigenvector, eigenvalue);
 
         // Arrange the eigenvalues and corresponding eigenvectors
         // in descending order so that e0 >= e1 >= e2

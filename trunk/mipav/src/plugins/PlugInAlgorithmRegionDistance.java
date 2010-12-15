@@ -17,6 +17,8 @@ import java.util.*;
 
 import javax.swing.*;
 
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+
 
 /**
  * This shows how to extend the AlgorithmBase class.
@@ -2487,10 +2489,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         double ydiff;
         double zdiff;
         double[][] tensor = new double[3][3];
-        Matrix tensorMat;
-        EigenvalueDecomposition eig;
-        double[] eigenvalue;
-        double[][] eigenvector;
+        double[] eigenvalue = new double[3];;
+        double[][] eigenvector = new double[3][3];;
         double temp;
         double ellipVol;
         double normFactor;
@@ -4321,12 +4321,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             tensor[2][0] = izx[k];
             tensor[2][1] = iyz[k];
             tensor[2][2] = izz[k];
-            tensorMat = new Matrix(tensor);
-            eig = new EigenvalueDecomposition(tensorMat);
-            eigenvalue = eig.getRealEigenvalues();
-
             // In EigenvalueDecomposition the columns represent the eigenvectors
-            eigenvector = eig.getV().getArray();
+            Eigenvalue.decompose(tensor, eigenvector, eigenvalue);
 
             // Arrange the eigenvalues and the corresponding eigenvectors
             // in ascending order so that e0 <= e1 <= e2
