@@ -3,7 +3,6 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -14,6 +13,7 @@ import java.io.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 
 /**
@@ -356,10 +356,6 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         int totalLength;
         double[][] covar;
         double[] x;
-        Matrix matCovar;
-        EigenvalueDecomposition eig;
-        double[] eigenvalue;
-        double[][] eigenvector;
         int index;
         double max;
         double temp;
@@ -602,37 +598,33 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         fireProgressStateChanged("Calculating eigenvalues and eigenvectors");
 
+        double[] eigenvalue;
+        double[][] V;
+        double[][] eigenvector;
+        double[] e1;
         try {
-            matCovar = new Matrix(covar);
+            eigenvalue = new double[covar.length];
+            V = new double[covar.length][covar.length];
+            eigenvector= new double[covar.length][covar.length];
+            e1 = new double[covar.length];
         } catch (OutOfMemoryError e) {
-            matCovar = null;
-            System.gc();
-            displayError("Algorithm Principal component: Out of memory allocating matCovar");
-            setCompleted(false);
-            setThreadStopped(true);
-
-
-            return;
-        }
-
-        try {
-            eig = new EigenvalueDecomposition(matCovar);
-        } catch (OutOfMemoryError e) {
-            eig = null;
             System.gc();
             displayError("Algorithm Principal component: Out of memory allocating eig");
             setCompleted(false);
             setThreadStopped(true);
-
-
             return;
         }
-
-        eigenvalue = eig.getRealEigenvalues();
-
+        Eigenvalue.decompose( covar, V, eigenvalue, e1 );
+        
         // In EigenvalueDecomposition the columns of V represent the eigenvectors,
         // but in this algorithm we want the eigenvectors in rows.
-        eigenvector = eig.getV().transpose().getArray();
+        for ( i = 0; i < eigenvector.length; i++ )
+        {
+        	for ( j = 0; j < eigenvector[i].length; j++ )
+        	{
+        		eigenvector[i][j] = V[j][i];
+        	}
+        }
 
         // Arrange the eigenvalues and corresponding eigenvectors in descending order
         // so that ej >= ej+1

@@ -6,6 +6,8 @@ import java.awt.Polygon;
 import java.util.BitSet;
 import java.util.Vector;
 
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 import WildMagic.LibFoundation.Approximation.ApprEllipsoidFit3f;
@@ -1175,19 +1177,12 @@ public class VOIContour extends VOIBase {
 			}
 		}
 
-		Matrix argMat = new Matrix(DABE);
-		EigenvalueDecomposition eig;
-		double[] eigenvalue;
-		double[][] eigenvector;
+		double[] eigenvalue = new double[DABE.length];
+		double[][] eigenvector = new double[DABE.length][DABE.length];
 		double temp;
 		double[] tempCol = new double[3];
 		int m, n, index;
-		eig = new EigenvalueDecomposition(argMat);
-		eigenvalue = eig.getRealEigenvalues();
-
-		// In EigenvalueDecomposition the columns represent the
-		// eigenvectors
-		eigenvector = eig.getV().getArray();
+		Eigenvalue.decompose( DABE, eigenvector, eigenvalue );
 
 		// Arrange the eigenvalues and corresponding eigenvectors
 		// in descending order so that e0 >= e1 >= e2

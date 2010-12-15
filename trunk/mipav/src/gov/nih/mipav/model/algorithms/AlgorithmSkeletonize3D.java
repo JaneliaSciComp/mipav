@@ -11,6 +11,8 @@ import java.awt.*;
 
 import java.io.*;
 
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+
 
 /**
  * This is a port of the C++ code for pfSkel: Potential Field Based 3D Skeleton Extraction written by Nicu D. Cornea,
@@ -3025,8 +3027,6 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         double vdist;
         int i;
         double[][] jac;
-        Matrix jacMatrix;
-        EigenvalueDecomposition eig;
         double[] realEigen;
         double[][] eigenvec;
 
@@ -3040,6 +3040,9 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
             // 3 double values for each vector
             eigenvectors = new double[MAX_NUM_CRITPTS][3][3];
+
+            eigenvec = new double[3][3];
+            realEigen = new double[3];
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("Error allocating critical point memory");
 
@@ -3159,15 +3162,10 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             jac[2][2] = (cv[4][2] - cv[5][2]) / (2.0 * vdist);
 
             // Find the eigenvalues and eigenvectors of the Jacobian
-            jacMatrix = new Matrix(jac);
-            eig = new EigenvalueDecomposition(jacMatrix);
-            realEigen = eig.getRealEigenvalues();
-
             // The columns of eigenvec represent the eigenvectors
-            eigenvec = eig.getV().getArray();
-
+            Eigenvalue.decompose( jac, eigenvec, realEigen );
+            
             // Analyze the eigenvalues
-
             // If all real parts of the eigenvalues are negative, the point is an attracting node.
             if ((realEigen[0] < 0.0) && (realEigen[1] < 0.0) && (realEigen[2] < 0.0)) {
                 pointType[i] = CPT_ATTRACTING_NODE;

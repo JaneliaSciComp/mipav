@@ -12,6 +12,8 @@ import java.io.*;
 
 import java.util.*;
 
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+
 
 /**
  * This shows how to extend the AlgorithmBase class.
@@ -375,8 +377,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         double[][] tensor = new double[3][3];
         Matrix tensorMat;
         EigenvalueDecomposition eig;
-        double[] eigenvalue;
-        double[][] eigenvector;
+        double[] eigenvalue = new double[3];
+        double[][] eigenvector = new double[3][3];
         double temp;
         float tempf;
         double[] tempCol = new double[3];
@@ -665,13 +667,9 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                         tensor[2][0] = izx[k];
                         tensor[2][1] = iyz[k];
                         tensor[2][2] = izz[k];
-                        tensorMat = new Matrix(tensor);
-                        eig = new EigenvalueDecomposition(tensorMat);
-                        eigenvalue = eig.getRealEigenvalues();
-
                         // In EigenvalueDecomposition the columns represent the
                         // eigenvectors
-                        eigenvector = eig.getV().getArray();
+                        Eigenvalue.decompose(tensor, eigenvector, eigenvalue);
 
                         // Arrange the eigenvalues and corresponding eigenvectors
                         // in descending order so that e0 >= e1 >= e2

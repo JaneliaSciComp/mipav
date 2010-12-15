@@ -11,6 +11,8 @@ import java.io.*;
 
 import java.util.*;
 
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+
 
 /**
  * DOCUMENT ME!
@@ -2370,8 +2372,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int i;
         double[][] A;
         int n;
-        EigenvalueDecomposition eig;
         double[] eigenvalue;
+        double[][] eigenvector;
         double[] imagvalue;
         int qtl;
         int index;
@@ -2469,10 +2471,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         for (j = 0; j < n; j++) {
             A[0][j] = -q[j + 1] / q[0];
         }
-
-        eig = new EigenvalueDecomposition(new Matrix(A));
-        eigenvalue = eig.getRealEigenvalues();
-        imagvalue = eig.getImagEigenvalues();
+        
+        eigenvector = new double[A.length][A.length];
+        eigenvalue = new double[A.length];
+        imagvalue = new double[A.length];
+        Eigenvalue.decompose(A, eigenvector, eigenvalue, imagvalue );
 
         haveImag = false;
 
@@ -3402,7 +3405,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int inum;
         double sig2;
         double var;
-        EigenvalueDecomposition eig;
         double[] eigenvalue;
         double[][] S;
         double[][] iS;
@@ -3626,13 +3628,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
         // For modulating the local stdv of noise
         // For now leave out code for case with sig a vector
-
-        eig = new EigenvalueDecomposition(new Matrix(C_w));
-        eigenvalue = eig.getRealEigenvalues();
-
-        // In EigenvalueDecomposition the columns represent the
-        // eigenvectors
-        S = eig.getV().getArray();
+        S = new double[C_w.length][C_w.length];
+        eigenvalue = new double[C_w.length];
+        Eigenvalue.decompose(C_w, S, eigenvalue );
 
         // S * S' = C_w
         for (j = 0; j < N; j++) {
@@ -3710,13 +3708,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 C_x[j][i] = C_y[j][i] - C_w[j][i];
             }
         }
-
-        eig = new EigenvalueDecomposition(new Matrix(C_x));
-        eigenvalue = eig.getRealEigenvalues();
-
-        // In EigenvalueDecomposition the columns represent the
-        // eigenvectors
-        Q = eig.getV().getArray();
+        Q = new double[C_x.length][C_x.length];
+        Eigenvalue.decompose( C_x, Q, eigenvalue );
 
         // Correct possible negative eigenvalues, without changing
         // the overall variance
@@ -3775,8 +3768,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
         // Double diagonalization of signal and noise eigenvalues:
         // energy in the new representation
-        eig = new EigenvalueDecomposition(((new Matrix(iS)).times(new Matrix(C_x))).times((new Matrix(iS)).transpose()));
-        la = eig.getRealEigenvalues();
+        Matrix iS_Cx = ((new Matrix(iS)).times(new Matrix(C_x))).times((new Matrix(iS)).transpose());
+        double[][] iS_CxArray = iS_Cx.getArray();
+        Q = new double[iS_CxArray.length][iS_CxArray.length];
+        la = new double[iS_CxArray.length];
+        Eigenvalue.decompose( iS_CxArray, Q, la );
 
         for (i = 0; i < N; i++) {
 
@@ -3784,10 +3780,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 la[i] = 0.0;
             }
         }
-
-        // In EigenvalueDecomposition the columns represent the
-        // eigenvectors
-        Q = eig.getV().getArray();
 
         // Linearly transform the observations, and keep the quadratic
         // values (we do not model phase).
