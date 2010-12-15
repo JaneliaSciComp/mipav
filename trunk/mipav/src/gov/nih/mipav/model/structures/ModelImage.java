@@ -938,27 +938,59 @@ public class ModelImage extends ModelStorageBase {
      */
     private void calcStartLocations(final float[] newLoc, final int[] axisOrder, final boolean axisFlip[]) {
 
-        final float[] oldLoc = getFileInfo()[0].getOrigin();
-        final float[] oldRes = getFileInfo()[0].getResolutions();
         final int[] oldDims = getExtents();
+        int i;
+        float xOr = 0.0f;
+        float yOr = 0.0f;;
+        float zOr = 0.0f;
+        Vector3f position;
+        Vector3f out;
+        float origin[] = new float[3];
 
-        final int[] direct = new int[getNDims()];
         final int[] axisOrient = fileInfo[0].getAxisOrientation();
-        for (int i = 0; i < Math.min(3, getNDims()); i++) {
+        for (i = 0; i < Math.min(3, getNDims()); i++) {
             if ( (axisOrient[i] == FileInfoBase.ORI_R2L_TYPE) || (axisOrient[i] == FileInfoBase.ORI_A2P_TYPE)
                     || (axisOrient[i] == FileInfoBase.ORI_I2S_TYPE)) {
-                direct[i] = 1;
+                if (i == 0) {
+                	xOr = 0.0f;
+                }
+                else if (i == 1) {
+                	yOr = 0.0f;
+                }
+                else {
+                	zOr = 0.0f;
+                }
             } else {
-                direct[i] = -1;
+                if (i == 0) {
+                	xOr = oldDims[0] - 1;
+                }
+                else if (i == 1) {
+                	yOr = oldDims[1] - 1;
+                }
+                else {
+                	zOr = oldDims[2] - 1;
+                }
             }
         }
+        
+        
+        position = new Vector3f(xOr, yOr, zOr);
+        out = new Vector3f(position);
+        MipavCoordinateSystems.fileToScanner(position, out, this);
+        for (i = 0; i < Math.min(3, getNDims()); i++) {
+	        if ((axisOrient[i] == FileInfoBase.ORI_R2L_TYPE) || (axisOrient[i] == FileInfoBase.ORI_L2R_TYPE)) {
+	            origin[i] = out.X;
+	        }
+	        else if ((axisOrient[i] == FileInfoBase.ORI_A2P_TYPE) || (axisOrient[i] == FileInfoBase.ORI_P2A_TYPE)) {
+	            origin[i] = out.Y;
+	        }
+	        else {
+	            origin[i] = out.Z;
+	        }
+        }
 
-        for (int i = 0; i < newLoc.length; i++) {
-            newLoc[i] = oldLoc[axisOrder[i]];
-            if (axisFlip[i]) {
-                final int invert = direct[axisOrder[i]];
-                newLoc[i] = oldLoc[axisOrder[i]] + invert * ( (oldDims[axisOrder[i]] - 1) * oldRes[axisOrder[i]]);
-            }
+        for (i = 0; i < newLoc.length; i++) {
+            newLoc[i] = origin[axisOrder[i]];
             if (Math.abs(newLoc[i]) < .000001f) {
                 newLoc[i] = 0f;
             }
@@ -4225,6 +4257,9 @@ public class ModelImage extends ModelStorageBase {
     {
 
         int orientation = destImage.getImageOrientation();
+        int[] newDimExtents = null;
+        FileInfoDicom[] newDicomInfo = null;
+        int[] newAxisOrients = null;
 
         // Set the file info for the new rotated image identical to the original image,
         // and then adjusts the appropriate info.
@@ -4235,8 +4270,8 @@ public class ModelImage extends ModelStorageBase {
             }
         } else { // If file is DICOM...
 
-            int[] newDimExtents;
-            int[] newAxisOrients;
+            
+            
             float[] newResolutions;
             float[] newStartLocations;
             int[] newUnitsOfMeasure;
@@ -4261,7 +4296,7 @@ public class ModelImage extends ModelStorageBase {
                     newAxisOrients[i] = destImage.getAxisOrientation()[i];
                 }
             }
-            FileInfoDicom[] newDicomInfo = new FileInfoDicom[newDimExtents[2]];
+            newDicomInfo = new FileInfoDicom[newDimExtents[2]];
             StringBuffer newTagPixelSpc = null;
             StringBuffer newTagSliceSpc = null;
             String imageOrient = null;
@@ -4332,8 +4367,10 @@ public class ModelImage extends ModelStorageBase {
                 newDicomInfo[i].setImageOrientation(orientation);
                 newDicomInfo[i].setAxisOrientation(newAxisOrients);
                 newDicomInfo[i].setResolutions(newResolutions);
-                newDicomInfo[i].setOrigin(newStartLocations);
-                newDicomInfo[i].setOrigin(newStartLocations[2] + (newResolutions[2] * i), 2);
+                for (int j = 0; j < 3; j++) {
+                	// update changes with slice position later
+                	newDicomInfo[i].setOrigin(newStartLocations[j], j);
+            	}
                 newDicomInfo[i].getTagTable().setValue("0028,0011", new Short((short) newDimExtents[0]), 2); // columns
                 newDicomInfo[i].getTagTable().setValue("0028,0010", new Short((short) newDimExtents[1]), 2); // rows
                 newDicomInfo[i].getTagTable().setValue("0020,0013", Short.toString((short) (i + 1)),
@@ -4481,7 +4518,33 @@ public class ModelImage extends ModelStorageBase {
             	newMatrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
             	destImage.getMatrixHolder().clearMatrices();
             	destImage.getMatrixHolder().addMatrix(newMatrix);
+            	
+            	for (i = 0; i < newDimExtents[2]; i++) {
+    	            Vector3f pos = new Vector3f(0, 0, i);
+    	        	Vector3f out = new Vector3f(pos);
+    	            MipavCoordinateSystems.fileToScanner(pos, out, destImage);
+    	            float origin[] = new float[3];
+    	            origin[0] = out.X;
+    	            origin[1] = out.Y;
+    	            origin[2] = out.Z;
+    	            for (j = 0; j < 3; j++) {
+                		if ((newAxisOrients[j] == FileInfoBase.ORI_R2L_TYPE) ||
+                			(newAxisOrients[j] == FileInfoBase.ORI_L2R_TYPE)) {
+                	        newDicomInfo[i].setOrigin(origin[0],j);
+                		}
+                		else if ((newAxisOrients[j] == FileInfoBase.ORI_A2P_TYPE) ||
+                		        (newAxisOrients[j] == FileInfoBase.ORI_P2A_TYPE)) {
+                		    newDicomInfo[i].setOrigin(origin[1], j);
+                		}
+                		else {
+                		    newDicomInfo[i].setOrigin(origin[2], j);        	
+                	    }
+                	}
+    	            destImage.setFileInfo(newDicomInfo[i], i);
+                }
             } // if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+            
+            
         } // if (destImage.getNDims() >= 3)
         return true;
     }
