@@ -82,7 +82,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     protected JToolBar scriptToolBar;
 
     /** DOCUMENT ME! */
-    protected JSlider tImageSlider;
+    protected ViewJSlider tImageSlider;
 
     /** Main toolbar . */
     protected JToolBar toolBar;
@@ -91,7 +91,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     protected ViewToolBarBuilder toolBarObj;
 
     /** DOCUMENT ME! */
-    protected JSlider zImageSlider;
+    protected ViewJSlider zImageSlider;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -312,9 +312,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         } else {
             generalPanel.add(panelToolbars, "Center");
         }
-
         add(generalPanel, "North");
-
         panelActiveImage = new JPanel();
         panelActiveImage.setLayout(new BorderLayout());
         borderActiveImage = new TitledBorder("Active Image and Alpha Blending");

@@ -29,7 +29,7 @@ public class JDialogBlankImage extends JDialogBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** The ModelStorageBase.DataType of the blank image */
+    /** The ModelStorageBase.DataType of the blank image. */
     private DataType dataType;
 
     /** The blank image to be created. */
