@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -128,6 +129,8 @@ public class AlgorithmFlip extends AlgorithmBase {
         int buffFactor;
         boolean logMagDisplay = false;
         boolean evenNumberZSlices = true;
+        int i;
+        int j;
 
         try {
 
@@ -255,32 +258,38 @@ public class AlgorithmFlip extends AlgorithmBase {
             /* Update FileInfo for mapping into DICOM space: */
             if (changeOrientationOrigin) {
                 
-                float loc = fileInfo[0].getOrigin(index);
-                int orient = fileInfo[0].getAxisOrientation(index);
-
-                
-                if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
-                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
-                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
-                    loc = loc + ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
-                } else {
-                    loc = loc - ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
+                float origin[] = new float[3];
+                Vector3f position;
+                Vector3f out;
+                if (index == 0) {
+                	position = new Vector3f(fileInfo[0].getExtents()[0] - 1, 0, 0);
                 }
+                else if (index == 1) {
+                	position =  new Vector3f(0, fileInfo[0].getExtents()[1] - 1, 0);
+                }
+                else {
+                	position = new Vector3f(0, 0, fileInfo[0].getExtents()[2] - 1);
+                }
+                out = new Vector3f(position);
+                MipavCoordinateSystems.fileToScanner(position, out, srcImage);
+                origin[0] = out.X;
+                origin[1] = out.Y;
+                origin[2] = out.Z;
+            	
+                int orient = fileInfo[0].getAxisOrientation(index);
     
                 orient = FileInfoBase.oppositeOrient(orient);
     
-                for (int i = 0; i < fileInfo.length; i++) {
+                for (i = 0; i < fileInfo.length; i++) {
+                	for (j = 0; j < 3; j++) {
+                		// set change for each slice later on
+                	    fileInfo[i].setOrigin(origin[j],j);
+                	}
                     fileInfo[i].setAxisOrientation(orient, index);
-                    fileInfo[i].setOrigin(loc, index);
-    
-                    if (index == 2) {
-                        fileInfo[i].setOrigin(loc + (fileInfo[0].getResolutions()[index] * i), index);
-                    }
                 }
                 
                 if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                         || (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
-                	int j;
                 	TransMatrix dicomMatrix = null;
                 	dicomMatrix = srcImage.getMatrix().clone();
                 	
@@ -294,8 +303,6 @@ public class AlgorithmFlip extends AlgorithmBase {
                 
                 if (fileInfo[0] instanceof FileInfoNIFTI) {
                     MatrixHolder matHolder = null;
-                    int i;
-                    int j;
                     matHolder = srcImage.getMatrixHolder();
 
                     if (matHolder != null) {
@@ -312,7 +319,9 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 for (j = 0; j < 3; j++) {
                                     tempMatrix.set(j, index, -tempMatrix.get(j, index));
                                 }
-                                tempMatrix.set(index, 3, loc);
+                                tempMatrix.set(0, 3, origin[0]);
+                                tempMatrix.set(1, 3, origin[1]);
+                                tempMatrix.set(2, 3, origin[2]);
                                 if (tempMatrix.isQform()) {
                                     if (srcImage.getNDims() == 3) {
                                         for (i = 0; i < srcImage.getExtents()[2]; i++) {
@@ -341,6 +350,19 @@ public class AlgorithmFlip extends AlgorithmBase {
                         }
                     } // if (matHolder != null)    
                 } // if (fileInfo[0] instanceof FileInfoNIFTI)
+                
+                for (i = 0; i < fileInfo.length; i++) {
+                	position = new Vector3f(0, 0, i);
+                	out = new Vector3f(position);
+                    MipavCoordinateSystems.fileToScanner(position, out, srcImage);
+                    origin = new float[3];
+                    origin[0] = out.X;
+                    origin[1] = out.Y;
+                    origin[2] = out.Z;
+                    for (j = 0; j < 3; j++) {
+                    	fileInfo[i].setOrigin(origin[j], j);
+                    }
+                }
             } // if (changeOrientationOrigin)
 
             if (flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
@@ -349,10 +371,10 @@ public class AlgorithmFlip extends AlgorithmBase {
 
                 while (vecIter.hasNext()) {
                     VOI nextVoi = (VOI) vecIter.next();
-                    for ( int i = 0; i < nextVoi.getCurves().size(); i++ )
+                    for (i = 0; i < nextVoi.getCurves().size(); i++ )
                     {
                         VOIBase kVOI = nextVoi.getCurves().get(i);
-                        for ( int j = 0; j < kVOI.size(); j++ )
+                        for (j = 0; j < kVOI.size(); j++ )
                         {
                             if (flipAxis == X_AXIS) {
                                 kVOI.elementAt(i).Y = yDim - kVOI.elementAt(i).Y;
@@ -390,7 +412,7 @@ public class AlgorithmFlip extends AlgorithmBase {
             while (vecIter.hasNext()) {
                 VOI nextVoi = (VOI) vecIter.next();
                 if (nextVoi.isActive()) {
-                    for (int i = 0; i < nextVoi.getCurves().size(); i++) {
+                    for (i = 0; i < nextVoi.getCurves().size(); i++) {
                         VOIBase base = nextVoi.getCurves().get(i);
                         Iterator itr = base.iterator();
 
