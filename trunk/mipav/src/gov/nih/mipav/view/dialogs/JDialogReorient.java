@@ -18,6 +18,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.MatrixHolder;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.DialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -40,6 +41,8 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /** 
 *   
@@ -551,6 +554,9 @@ public class JDialogReorient extends JDialogScriptableBase
 		            MatrixHolder matHolder = null;
 		            int i;
 		            int j;
+		            int t;
+		            int index;
+		            int tDim;
 		            matHolder = resultImage.getMatrixHolder();
 		            
 		            float loc;
@@ -705,6 +711,38 @@ public class JDialogReorient extends JDialogScriptableBase
 		            	newMatrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
 		            	resultImage.getMatrixHolder().clearMatrices();
 		            	resultImage.getMatrixHolder().addMatrix(newMatrix);
+		            	if (resultImage.getNDims() >= 4) {
+		            		tDim = resultImage.getExtents()[3];
+		            	}
+		            	else {
+		            		tDim = 1;
+		            	}
+		            	
+		            	for (t = 0; t < tDim; t++) {
+			            	for (i = 0; i < resultImage.getExtents()[2]; i++) {
+			            		index = i + t * resultImage.getExtents()[2];
+			    	            Vector3f pos = new Vector3f(0, 0, i);
+			    	        	Vector3f out = new Vector3f(pos);
+			    	            MipavCoordinateSystems.fileToScanner(pos, out, resultImage);
+			    	            float origin[] = new float[3];
+			    	            origin[0] = out.X;
+			    	            origin[1] = out.Y;
+			    	            origin[2] = out.Z;
+			    	            for (j = 0; j < 3; j++) {
+			                		if ((resultImage.getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE) ||
+			                			(resultImage.getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE)) {
+			                	        resultImage.getFileInfo()[index].setOrigin(origin[0],j);
+			                		}
+			                		else if ((resultImage.getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE) ||
+			                		        (resultImage.getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE)) {
+			                		    resultImage.getFileInfo()[index].setOrigin(origin[1], j);
+			                		}
+			                		else {
+			                		    resultImage.getFileInfo()[index].setOrigin(origin[2], j);        	
+			                	    }
+			                	}
+			                }
+		            	}
 		            } // if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
 		        } // if (destImage.getNDims() >= 3)
                 resultImage.clearMask();
@@ -810,10 +848,16 @@ public class JDialogReorient extends JDialogScriptableBase
         int   ni[] = new int[3];
         float r0[] = new float[3];
         int   n0[] = new int[3];
+        float org[] = new float[3];
 		setVisible(false);
 		float origin[];
 		float newOrigin[];
 		int orient;
+		float xOr = 0.0f;
+	    float yOr = 0.0f;;
+	    float zOr = 0.0f;
+	    Vector3f position;
+	    Vector3f out;
         
 		fileInfo = (FileInfoBase)(image.getFileInfo()[0].clone());
 		
@@ -1009,22 +1053,53 @@ public class JDialogReorient extends JDialogScriptableBase
         }
         
         for (i = 0; i < 3; i++) {
-            
-            if (axisFlip[i]) {
-            	orient = image.getFileInfo(0).getAxisOrientation(axisOrder[i]);
-            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
-                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
-                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
-                	newOrigin[i] = origin[axisOrder[i]] + ((image.getFileInfo(0).getExtents()[axisOrder[i]] - 1) * image.getFileInfo(0).getResolutions()[axisOrder[i]]);
+            if ( (or[i] == FileInfoBase.ORI_R2L_TYPE) || (or[i] == FileInfoBase.ORI_A2P_TYPE)
+                    || (or[i] == FileInfoBase.ORI_I2S_TYPE)) {
+                if (i == 0) {
+                	xOr = 0.0f;
+                }
+                else if (i == 1) {
+                	yOr = 0.0f;
                 }
                 else {
-                	newOrigin[i] = origin[axisOrder[i]] - ((image.getFileInfo(0).getExtents()[axisOrder[i]] - 1) * image.getFileInfo(0).getResolutions()[axisOrder[i]]);	
+                	zOr = 0.0f;
+                }
+            } else {
+                if (i == 0) {
+                	xOr = ni[0] - 1;
+                }
+                else if (i == 1) {
+                	yOr = ni[1] - 1;
+                }
+                else {
+                	zOr = ni[2] - 1;
                 }
             }
-            else {
-            	newOrigin[i] = origin[axisOrder[i]];
+        }
+        
+        
+        position = new Vector3f(xOr, yOr, zOr);
+        out = new Vector3f(position);
+        MipavCoordinateSystems.fileToScanner(position, out, image);
+        for (i = 0; i < 3; i++) {
+	        if ((or[i] == FileInfoBase.ORI_R2L_TYPE) || (or[i] == FileInfoBase.ORI_L2R_TYPE)) {
+	            org[i] = out.X;
+	        }
+	        else if ((or[i] == FileInfoBase.ORI_A2P_TYPE) || (or[i] == FileInfoBase.ORI_P2A_TYPE)) {
+	            org[i] = out.Y;
+	        }
+	        else {
+	            org[i] = out.Z;
+	        }
+        }
+
+        for (i = 0; i < 3; i++) {
+            newOrigin[i] = org[axisOrder[i]];
+            if (Math.abs(newOrigin[i]) < .000001f) {
+                newOrigin[i] = 0f;
             }
-    	} // for (i = 0; i < 3; i++)
+        }
+        
         fileInfo.setOrigin(newOrigin);
         
         if ((newOr[2] == FileInfoBase.ORI_I2S_TYPE) || (newOr[2] == FileInfoBase.ORI_S2I_TYPE)) {
