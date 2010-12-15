@@ -281,11 +281,23 @@ public class AlgorithmFlip extends AlgorithmBase {
                 orient = FileInfoBase.oppositeOrient(orient);
     
                 for (i = 0; i < fileInfo.length; i++) {
-                	for (j = 0; j < 3; j++) {
-                		// set change for each slice later on
-                	    fileInfo[i].setOrigin(origin[j],j);
-                	}
                     fileInfo[i].setAxisOrientation(orient, index);
+                    for (j = 0; j < 3; j++) {
+                    	// set change for each slice later on
+                		if ((fileInfo[0].getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE) ||
+                			(fileInfo[0].getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE)) {
+                	        fileInfo[i].setOrigin(origin[0],j);
+                		}
+                		else if ((fileInfo[0].getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE) ||
+                		        (fileInfo[0].getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE)) {
+                		    fileInfo[i].setOrigin(origin[1], j);
+                		}
+                		else {
+                		    fileInfo[i].setOrigin(origin[2], j);        	
+                	    }
+                	}
+                	
+
                 }
                 
                 if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
@@ -360,8 +372,18 @@ public class AlgorithmFlip extends AlgorithmBase {
                     origin[1] = out.Y;
                     origin[2] = out.Z;
                     for (j = 0; j < 3; j++) {
-                    	fileInfo[i].setOrigin(origin[j], j);
-                    }
+                		if ((fileInfo[0].getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE) ||
+                			(fileInfo[0].getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE)) {
+                	        fileInfo[i].setOrigin(origin[0],j);
+                		}
+                		else if ((fileInfo[0].getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE) ||
+                		        (fileInfo[0].getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE)) {
+                		    fileInfo[i].setOrigin(origin[1], j);
+                		}
+                		else {
+                		    fileInfo[i].setOrigin(origin[2], j);        	
+                	    }
+                	}
                 }
             } // if (changeOrientationOrigin)
 
