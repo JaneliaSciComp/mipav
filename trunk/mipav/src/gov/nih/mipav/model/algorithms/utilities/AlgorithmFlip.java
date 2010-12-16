@@ -131,6 +131,7 @@ public class AlgorithmFlip extends AlgorithmBase {
         boolean evenNumberZSlices = true;
         int i;
         int j;
+        float loc;
 
         try {
 
@@ -337,9 +338,18 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 //to LPI being the negative directions.
                                 // However, our displayed matrixQ and  matrixS have been reworked
                                 // to display R-L, A-P, and I-S
-                                tempMatrix.set(0, 3, origin[0]);
-                                tempMatrix.set(1, 3, origin[1]);
-                                tempMatrix.set(2, 3, origin[2]);
+                                loc = tempMatrix.get(index, 3);
+                                orient = srcImage.getFileInfo(0).getAxisOrientation(index);
+                            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
+                                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
+                                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
+                                	loc = loc + ((srcImage.getFileInfo(0).getExtents()[index] - 1) * srcImage.getFileInfo(0).getResolutions()[index]);
+                                }
+                            	else {
+                            		loc = loc - ((srcImage.getFileInfo(0).getExtents()[index] - 1) * srcImage.getFileInfo(0).getResolutions()[index]);	
+                            	}
+                                tempMatrix.set(index, 3, loc);
+                                
                                 if (tempMatrix.isQform()) {
                                     if (srcImage.getNDims() == 3) {
                                         for (i = 0; i < srcImage.getExtents()[2]; i++) {
