@@ -376,7 +376,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             	
             }
 
-        	
+            loadMaskButton.setEnabled(true);
         }else if (command.equalsIgnoreCase("srcBrowse")) {
             JFileChooser chooser = new JFileChooser();
 
