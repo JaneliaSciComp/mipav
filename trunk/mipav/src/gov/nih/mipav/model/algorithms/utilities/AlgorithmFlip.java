@@ -343,10 +343,10 @@ public class AlgorithmFlip extends AlgorithmBase {
                             	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
                                         (orient == FileInfoBase.ORI_A2P_TYPE) || 
                                         (orient == FileInfoBase.ORI_I2S_TYPE)) {
-                                	loc = loc + ((srcImage.getFileInfo(0).getExtents()[index] - 1) * srcImage.getFileInfo(0).getResolutions()[index]);
+                                	loc = loc - ((srcImage.getFileInfo(0).getExtents()[index] - 1) * srcImage.getFileInfo(0).getResolutions()[index]);
                                 }
                             	else {
-                            		loc = loc - ((srcImage.getFileInfo(0).getExtents()[index] - 1) * srcImage.getFileInfo(0).getResolutions()[index]);	
+                            		loc = loc + ((srcImage.getFileInfo(0).getExtents()[index] - 1) * srcImage.getFileInfo(0).getResolutions()[index]);	
                             	}
                                 tempMatrix.set(index, 3, loc);
                                 
