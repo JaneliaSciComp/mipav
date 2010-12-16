@@ -853,6 +853,8 @@ public class JDialogReorient extends JDialogScriptableBase
 		float origin[];
 		float newOrigin[];
 		int orient;
+		float originalOr[] = new float[3];
+		float flippedOr[] = new float[3];
 		float xOr = 0.0f;
 	    float yOr = 0.0f;;
 	    float zOr = 0.0f;
@@ -1053,30 +1055,44 @@ public class JDialogReorient extends JDialogScriptableBase
         }
         
         for (i = 0; i < 3; i++) {
-            if ( (or[i] == FileInfoBase.ORI_R2L_TYPE) || (or[i] == FileInfoBase.ORI_A2P_TYPE)
-                    || (or[i] == FileInfoBase.ORI_I2S_TYPE)) {
-                if (i == 0) {
-                	xOr = 0.0f;
-                }
-                else if (i == 1) {
-                	yOr = 0.0f;
-                }
-                else {
-                	zOr = 0.0f;
-                }
-            } else {
-                if (i == 0) {
-                	xOr = ni[0] - 1;
-                }
-                else if (i == 1) {
-                	yOr = ni[1] - 1;
-                }
-                else {
-                	zOr = ni[2] - 1;
-                }
+            if (i == 0) {
+            	originalOr[0] = 0.0f;
+            	flippedOr[0] = ni[0] - 1;
+            }
+            else if (i == 1) {
+            	originalOr[1] = 0.0f;
+            	flippedOr[1] = ni[1] - 1;
+            }
+            else {
+            	originalOr[2] = 0.0f;
+            	flippedOr[2] = ni[2] - 1;
             }
         }
         
+        for (i = 0; i < 3; i++) {
+        	if (axisFlip[i]) {
+        		if (axisOrder[i] == 0) {
+        		    xOr = flippedOr[0];	
+        		}
+        		else if (axisOrder[i] == 1) {
+        			yOr = flippedOr[1];
+        		}
+        		else {
+        			zOr = flippedOr[2];
+        		}
+        	}
+        	else {
+        		if (axisOrder[i] == 0) {
+        			xOr = originalOr[0];
+        		}
+        		else if (axisOrder[i] == 1) {
+        			yOr = originalOr[1];
+        		}
+        		else {
+        			zOr = originalOr[2];
+        		}
+        	}
+        }
         
         position = new Vector3f(xOr, yOr, zOr);
         out = new Vector3f(position);
