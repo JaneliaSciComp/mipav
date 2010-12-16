@@ -335,8 +335,10 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 //transformations always describe resulting coordinates in LPI (sign
                                 //and order) orientation. The sign of those coordinates corresponds
                                 //to LPI being the negative directions.
-                                tempMatrix.set(0, 3, -origin[0]);
-                                tempMatrix.set(1, 3, -origin[1]);
+                                // However, our displayed matrixQ and  matrixS have been reworked
+                                // to display R-L, A-P, and I-S
+                                tempMatrix.set(0, 3, origin[0]);
+                                tempMatrix.set(1, 3, origin[1]);
                                 tempMatrix.set(2, 3, origin[2]);
                                 if (tempMatrix.isQform()) {
                                     if (srcImage.getNDims() == 3) {
