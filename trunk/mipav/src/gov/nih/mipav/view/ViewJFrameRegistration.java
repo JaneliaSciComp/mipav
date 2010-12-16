@@ -6,7 +6,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
 import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
 import gov.nih.mipav.model.structures.*;
 import Jama.*;
@@ -25,6 +24,8 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
+
+import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
 
 
 /**
@@ -2675,7 +2676,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         Matrix H;
         Matrix X;
         Matrix rotateBA;
-        SingularValueDecomposition SVD;
         double det;
 
         try {
@@ -2746,10 +2746,19 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             Q1 = new Matrix(q1, 2, refMark);
             Q2 = new Matrix(q2, 2, refMark);
             H = Q1.times(Q2.transpose());
-            SVD = H.svd();
+
+            int m = H.getRowDimension();
+            int n = H.getColumnDimension();
+            double[][] U = new double[m][n];
+            double[][] V = new double[n][n];
+            double[] singularValues = new double[Math.min(m+1,n)];
+
+            Singularvalue.decompose( H.getArray(), U, V, singularValues );
+            Matrix Vmat = new Matrix(V);
+            Matrix Umat = new Matrix(U);
+            X = Vmat.times(Umat.transpose());
 
             // X=V*U'
-            X = SVD.getV().times(SVD.getU().transpose());
             det = X.det();
             userInterface.setDataText("\ndet = " + det);
 

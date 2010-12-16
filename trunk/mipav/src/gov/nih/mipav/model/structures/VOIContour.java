@@ -8,7 +8,6 @@ import java.util.Vector;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
-import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 import WildMagic.LibFoundation.Approximation.ApprEllipsoidFit3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
