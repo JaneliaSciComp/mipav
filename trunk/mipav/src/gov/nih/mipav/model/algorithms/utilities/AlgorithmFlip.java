@@ -331,8 +331,12 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 for (j = 0; j < 3; j++) {
                                     tempMatrix.set(j, index, -tempMatrix.get(j, index));
                                 }
-                                tempMatrix.set(0, 3, origin[0]);
-                                tempMatrix.set(1, 3, origin[1]);
+                                //The qoffset_{x,y,z} values are explicitly LR, PA, IS, as the
+                                //transformations always describe resulting coordinates in LPI (sign
+                                //and order) orientation. The sign of those coordinates corresponds
+                                //to LPI being the negative directions.
+                                tempMatrix.set(0, 3, -origin[0]);
+                                tempMatrix.set(1, 3, -origin[1]);
                                 tempMatrix.set(2, 3, origin[2]);
                                 if (tempMatrix.isQform()) {
                                     if (srcImage.getNDims() == 3) {
