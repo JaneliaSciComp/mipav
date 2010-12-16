@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
+import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.structures.*;
 
@@ -2087,10 +2088,9 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         int j;
         double G[][];
         int len;
-        Matrix matG;
-        SingularValueDecomposition SVD;
-        double s[][];
+        double s[];
         double v[][];
+        double u[][];
         double S1;
         double S2;
         final double v1[][] = new double[2][2];
@@ -2124,6 +2124,9 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         gx = new float[windowSize * windowSize];
         gy = new float[windowSize * windowSize];
         G = new double[windowSize * windowSize][2];
+        v = new double[2][2];
+        u = new double[windowSize * windowSize][2];
+        s = new double[2];
         for (z = 0; z < zDim; z++) {
             // Mirror the horizontal and vertical gradients
             zPos = z * extents[0] * extents[1];
@@ -2203,14 +2206,11 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                     len = 0;
                     for (i = 0; i < K.length; i++) {
                         len += K[i];
-                    }
-                    matG = new Matrix(G);
-                    SVD = matG.svd();
-                    s = SVD.getS().getArray();
-                    v = SVD.getV().getArray();
-                    S1 = (s[0][0] + lambda) / (s[1][1] + lambda);
-                    S2 = (s[1][1] + lambda) / (s[0][0] + lambda);
-                    con = Math.pow( ( (s[0][0] * s[1][1] + 1.0E-7) / len), alpha);
+                    }                    
+                    Singularvalue.decompose( G, u, v, s );                    
+                    S1 = (s[0] + lambda) / (s[1] + lambda);
+                    S2 = (s[1] + lambda) / (s[0] + lambda);
+                    con = Math.pow( ( (s[0] * s[1] + 1.0E-7) / len), alpha);
                     v1[0][0] = S1 * v[0][0] * v[0][0];
                     v1[0][1] = S1 * v[0][0] * v[1][0];
                     v1[1][0] = S1 * v[1][0] * v[0][0];

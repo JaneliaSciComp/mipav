@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
+import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -250,13 +251,10 @@ public class AlgorithmRegValidation extends AlgorithmBase {
             Matrix H;
             Matrix X;
             Matrix rotateBA;
-            SingularValueDecomposition SVD;
             double det;
-            double[] singularValues;
             double ratio;
             int numberZeroes;
             boolean equalValues = false;
-            Matrix V;
             double[][] vArray;
 
             for (i = 0; i < dim; i++) {
@@ -286,10 +284,19 @@ public class AlgorithmRegValidation extends AlgorithmBase {
             Q1 = new Matrix(q1, dim, numCoords);
             Q2 = new Matrix(q2, dim, numCoords);
             H = Q1.times(Q2.transpose());
-            SVD = H.svd();
 
+            int m = H.getRowDimension();
+            int n = H.getColumnDimension();
+            double[][] U = new double[m][n];
+            double[][] V = new double[n][n];
+            double[] singularValues = new double[Math.min(m+1,n)];
+
+            Singularvalue.decompose( H.getArray(), U, V, singularValues );
+            Matrix Vmat = new Matrix(V);
+            Matrix Umat = new Matrix(U);
             // X=V*U'
-            X = SVD.getV().times(SVD.getU().transpose());
+            X = Vmat.times(Umat.transpose());
+            
             det = X.det();
             Preferences.debug("det=" + det + "\n");
 
@@ -300,7 +307,6 @@ public class AlgorithmRegValidation extends AlgorithmBase {
                 setCompleted(true);
                 // return 0;
             } else if ((det <= -0.99) && (det >= -1.01) && (dim == 3)) {
-                singularValues = SVD.getSingularValues();
 
                 // The singular values are ordered so that sigma[0] >=
                 // sigma[1] >= ... >= sigma[n-1] >= 0
@@ -340,13 +346,11 @@ public class AlgorithmRegValidation extends AlgorithmBase {
                         
                     }
 
-                    V = SVD.getV();
-                    vArray = V.getArray();
-                    vArray[0][2] = -vArray[0][2];
-                    vArray[1][2] = -vArray[1][2];
-                    vArray[2][2] = -vArray[2][2];
-                    //V.setArray(vArray);
-                    X = V.times(SVD.getU().transpose());
+                    V[0][2] = -V[0][2];
+                    V[1][2] = -V[1][2];
+                    V[2][2] = -V[2][2];
+                    Vmat = new Matrix(V);
+                    X = Vmat.times(Umat.transpose());
                     rotateBA = X.copy();
                     xfrmBA = buildXfrm(p1, p2, rotateBA);
                     Preferences.debug("Least Squares Succeeded in coplanar case\n");
@@ -365,7 +369,6 @@ public class AlgorithmRegValidation extends AlgorithmBase {
 
             // The points are colinear.
             else if ((det <= -0.99) && (det >= -1.01)) {
-                singularValues = SVD.getSingularValues();
 
                 // The singular values are ordered so that sigma[0] >=
                 // sigma[1] >= ... >= sigma[n-1] >= 0

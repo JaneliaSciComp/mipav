@@ -16,6 +16,7 @@ import java.util.concurrent.CountDownLatch;
 
 import Jama.*;
 import WildMagic.LibFoundation.Mathematics.GMatrixf;
+import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
 
 
 /**
@@ -773,12 +774,20 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
             final Matrix Y = ( (B2.transpose()).times(SIGMA2)).times(X2);
 
             Matrix D = new Matrix(7, 1);
-            final SingularValueDecomposition SVD = new SingularValueDecomposition(A);
-            final Matrix S = SVD.getS();
+
+            int m = A.getRowDimension();
+            int n = A.getColumnDimension();
+            double[][] u = new double[m][n];
+            double[][] v = new double[n][n];
+            double[] s = new double[Math.min(m+1,n)];
+            Singularvalue.decompose( A.getArray(), u, v, s );
+            Matrix uMat = new Matrix(u);
+            Matrix vMat = new Matrix(v);
+            Matrix S = new Matrix(s.length, s.length);
             for (int i = 0; i < S.getRowDimension(); i++) {
-                S.set(i, i, 1 / (S.get(i, i)));
+                S.set(i, i, 1 / s[i]);
             }
-            D = ( ( (SVD.getV()).times(S)).times(SVD.getU().transpose())).times(Y);
+            D = ( ( (vMat).times(S)).times(uMat.transpose())).times(Y);
 
             // D = [Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Amplitude]
             final float[] tensor = new float[10 + vol];
