@@ -81,7 +81,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	private JLabel sliceLabel, ageLabel, infoLabel;
 
 	/** buttons * */
-    private JButton magButton,unMagButton,zoomOneButton,saveButton,winLevelButton, resetButton;
+    private JButton magButton,unMagButton,zoomOneButton,saveButton,winLevelButton, resetButton, lutButton;
     
     /** modality buttons **/
     private JToggleButton t1Button, t2Button, pdButton, dtiButton, edtiButton;
@@ -445,7 +445,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         zoomOneButton = toolbarBuilder.buildButton("ZoomOne", "Magnify Image 1.0x", "zoom1");
         saveButton = toolbarBuilder.buildButton("Save", "Save screenshot of image", "save");
         winLevelButton = toolbarBuilder.buildButton("WinLevel", "Window/Level", "winlevel");
-        resetButton = toolbarBuilder.buildButton("resetLUT","Reset LUT","resetlut");
+        resetButton = toolbarBuilder.buildButton("resetLUT","Reset LUTs of all images in current modality","resetlut");
+        lutButton = toolbarBuilder.buildButton("copyLUT", "Apply LUT of current image to all images in current modailty", "histolut");
+        resetButton.setEnabled(false);
+        lutButton.setEnabled(false);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -458,13 +461,16 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         toolbarPanel.add(zoomOneButton, gbc);
         gbc.gridx = 3;
         gbc.gridy = 0;
-        toolbarPanel.add(saveButton, gbc);
+        //toolbarPanel.add(saveButton, gbc);
         gbc.gridx = 4;
         gbc.gridy = 0;
         toolbarPanel.add(winLevelButton, gbc);
         gbc.gridx = 5;
         gbc.gridy = 0;
         toolbarPanel.add(resetButton, gbc);
+        gbc.gridx = 6;
+        gbc.gridy = 0;
+        toolbarPanel.add(lutButton, gbc);
         gbc.anchor = GridBagConstraints.CENTER;
 
 
@@ -969,10 +975,38 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			 }
 			currentComponentImage.resetLUT(currentComponentImage.getActiveLUT(), img);
 			img.notifyImageDisplayListeners( currentComponentImage.getActiveLUT(), true );
+			
+			
+			
+			
+			if(currentModality.equals(T1)) {
+				for(int i=0;i<t1ComponentImages.length;i++) {
+					t1ComponentImages[i].resetLUT(t1ComponentImages[i].getActiveLUT(), t1AtlasImages[i]);
+					t1AtlasImages[i].notifyImageDisplayListeners( t1ComponentImages[i].getActiveLUT(), true );
+				}
+			}else if(currentModality.equals(T2)) {
+				for(int i=0;i<t2ComponentImages.length;i++) {
+					t2ComponentImages[i].resetLUT(t2ComponentImages[i].getActiveLUT(), t2AtlasImages[i]);
+					t2AtlasImages[i].notifyImageDisplayListeners( t2ComponentImages[i].getActiveLUT(), true );
+				}
+			}else if(currentModality.equals(PD)) {
+				for(int i=0;i<pdComponentImages.length;i++) {
+					pdComponentImages[i].resetLUT(pdComponentImages[i].getActiveLUT(), pdAtlasImages[i]);
+					pdAtlasImages[i].notifyImageDisplayListeners( pdComponentImages[i].getActiveLUT(), true );
+				}
+			}
+			
+			
+			
+			
+			
+			
 			//currentComponentImage.repaint();
 			//repaint();
 		}else if(command.equals("axial")) {
 			if(!currentOrientation.equals(AXIAL)) {
+				resetButton.setEnabled(false);
+		        lutButton.setEnabled(false);
 				nullifyStructures();
 				if(t1.isAlive()) {
 					((PopulateModelImages)t1).setIsInterrupted(true);
@@ -1013,6 +1047,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			}
 		}else if(command.equals("coronal")) {
 			if(!currentOrientation.equals(CORONAL)) {
+				resetButton.setEnabled(false);
+		        lutButton.setEnabled(false);
 				nullifyStructures();
 				if(t1.isAlive()) {
 					((PopulateModelImages)t1).setIsInterrupted(true);
@@ -1058,6 +1094,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			
 		}else if(command.equals("sagittal")) {
 			if(!currentOrientation.equals(SAGITTAL)) {
+				resetButton.setEnabled(false);
+		        lutButton.setEnabled(false);
 				nullifyStructures();
 				if(t1.isAlive()) {
 					((PopulateModelImages)t1).setIsInterrupted(true);
@@ -1140,6 +1178,21 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 			}
 			
+			
+		}else if(command.equals("copyLUT")) {
+			if(currentModality.equals(T1)) {
+				for(int i=0;i<t1ComponentImages.length;i++) {
+					t1ComponentImages[i].setLUTa((ModelLUT)(currentComponentImage.getActiveLUT().clone()));
+				}
+			}else if(currentModality.equals(T2)) {
+				for(int i=0;i<t2ComponentImages.length;i++) {
+					t2ComponentImages[i].setLUTa((ModelLUT)(currentComponentImage.getActiveLUT().clone()));
+				}
+			}else if(currentModality.equals(PD)) {
+				for(int i=0;i<pdComponentImages.length;i++) {
+					pdComponentImages[i].setLUTa((ModelLUT)(currentComponentImage.getActiveLUT().clone()));
+				}
+			}
 		}
 
 	}
@@ -1808,6 +1861,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		public void run() {
 			long begTime = System.currentTimeMillis();
 			populateModelImages(orient);
+			if(isInterrupted()) {
+				resetButton.setEnabled(false);
+				lutButton.setEnabled(false);
+			}else {
+				resetButton.setEnabled(true);
+				lutButton.setEnabled(true);
+			}
 			long endTime = System.currentTimeMillis();
 	        long diffTime = endTime - begTime;
 	        float seconds = ((float) diffTime) / 1000;
