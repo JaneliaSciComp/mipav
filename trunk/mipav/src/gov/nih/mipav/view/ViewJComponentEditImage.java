@@ -2900,11 +2900,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                 return;
             }
-
             Graphics2D offscreenGraphics2d = null;
 
             if (isDisplayable()) { // a component is displayable when it is connected to a screen resource
-
                 final int width = Math.round(zoomX * imageDim.width * resolutionX);
                 final int height = Math.round(zoomY * imageDim.height * resolutionY);
 
@@ -3062,7 +3060,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 // this method repaints the paint brush cursor without repainting the entire image
                 repaintPaintBrushCursorFast(offscreenGraphics2d);
             }
-
             draw3DVOIs(offscreenGraphics2d, false);
             if ( ! (this instanceof ViewJComponentRegistration)) {
                 //voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
@@ -5885,7 +5882,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param LUT DOCUMENT ME!
      * @param image DOCUMENT ME!
      */
-    private void resetLUT(final ModelLUT LUT, final ModelImage image) {
+    public void resetLUT(final ModelLUT LUT, final ModelImage image) {
         float min, max;
         final float[] x = new float[4];
         final float[] y = new float[4];
