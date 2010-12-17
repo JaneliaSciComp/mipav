@@ -1130,6 +1130,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHoughCircle(this, getActiveImage());
         } else if (command.equals("HoughEllipse")) {
             new JDialogHoughEllipse(this, getActiveImage());
+        } else if (command.equals("HoughHyperbola")) {
+            new JDialogHoughHyperbola(this, getActiveImage());
         } else if (command.equals("HoughLine")) {
             new JDialogHoughLine(this, getActiveImage());
         } else if (command.equals("HoughParabola")) {
