@@ -442,7 +442,7 @@ public class JDialogHoughHyperbola extends JDialogBase implements AlgorithmInter
         paramPanel.add(toleranceLabel, gbc);
         
         toleranceText = new JTextField(10);
-        toleranceText.setText("15.0");
+        toleranceText.setText("30.0");
         toleranceText.setFont(serif12);
         toleranceText.setEnabled(true);
         gbc.gridx = 1;
@@ -579,7 +579,7 @@ public class JDialogHoughHyperbola extends JDialogBase implements AlgorithmInter
             countThreshold = Integer.valueOf(countText.getText()).intValue();
         }
         
-        if (!testParameter(toleranceText.getText(), 1.0, 20.0)) {
+        if (!testParameter(toleranceText.getText(), 1.0, 50.0)) {
             toleranceText.requestFocus();
             toleranceText.selectAll();
 
