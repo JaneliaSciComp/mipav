@@ -2243,7 +2243,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                             }
 
                             if (sameDims == true) {
-                            	img.getTriImageFrame().setCenter(i, j, k, false);
+                            	// Link together identical Scanner coordinates rather than identical file coordinates
+                            	// in 2 images.  This will put the cursors over the same points in an image and a
+                            	// rotated version of the image.
+                            	Vector3f position = new Vector3f(i, j, k);
+                            	Vector3f kOut = new Vector3f(position);
+                            	MipavCoordinateSystems.fileToScanner(position, kOut, imageA);
+                            	Vector3f imgCenter = new Vector3f(kOut);
+                            	MipavCoordinateSystems.scannerToFile(kOut, imgCenter, img);
+                            	img.getTriImageFrame().setCenter((int)Math.round(imgCenter.X), (int)Math.round(imgCenter.Y),
+                            			                         (int)Math.round(imgCenter.Z), false);
                                 img.getTriImageFrame().setTimeSlice(tSlice, false);	
                             }
                         }
