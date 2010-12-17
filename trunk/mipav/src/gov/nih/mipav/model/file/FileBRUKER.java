@@ -47,6 +47,9 @@ public class FileBRUKER extends FileBase {
     /** DOCUMENT ME! */
     private ModelLUT LUT = null;
 
+    /** The preferred image name, used if inversion time exists. */
+    private String prefImageName = null;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -174,6 +177,7 @@ public class FileBRUKER extends FileBase {
                     try {
                         Double invTime = Double.valueOf(parseString[1]);
                         fileInfo.setInversionTime(invTime.doubleValue());
+                        prefImageName = "img:invTime:"+invTime.intValue();
                     } catch(NumberFormatException nfe) {
                         Preferences.debug("Inversion time for "+fileName+" could not be read.", Preferences.DEBUG_FILEIO);
                     }
@@ -418,6 +422,9 @@ public class FileBRUKER extends FileBase {
             imgBuffer = new float[length];
 
             image = new ModelImage(fileInfo.getDataType(), imageExtents, fileName);
+            if(prefImageName != null) {
+                image.setImageName(prefImageName);
+            }
 
             for (i = 0; i < imageSlice; i++) {
 
