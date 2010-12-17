@@ -195,7 +195,7 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
      *                              is allowed to occur
      * @param  maxBufferSize maximum Hough transform size in megabytes
      */
-    public AlgorithmHoughHyperbola(ModelImage destImg, ModelImage srcImg, int minPixels, double minCoverage, int sidePointsForTangent,
+    public AlgorithmHoughHyperbola(ModelImage destImg, ModelImage srcImg, int minPixels, int sidePointsForTangent,
                                  double maxPixelBinWidth, double maxDegreesBinWidth, double minPointDistance,
                                  double maxPointDistance, int pointSetsRequired, int countThreshold, 
                                  double hyperbolaRangeTolerance, int numHyperbolas, 
@@ -1594,7 +1594,7 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
                 // Convert a, b, and c to r1, r2, and orientation angle theta
                 // 2*r1 = transverse axis = distance between 2 vertices of hyperbola =
                 //        difference of distances of any point on hyperbola from foci
-                // 2*r2 = conjuate axis
+                // 2*r2 = conjugate axis
                 // sqrt(r1**2 + r2**2) = distance form center to either focus
                 // Convert a*x**2 + 2*b*x*y + c*y**2 = 1 to
                 // (y*sin(theta) + x*cos(theta))**2/r1**2 - (y*cos(theta) - x*sin(theta))**2/r2**2 = 1
