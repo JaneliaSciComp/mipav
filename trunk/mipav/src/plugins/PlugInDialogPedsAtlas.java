@@ -475,7 +475,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         sliceSlider.setMajorTickSpacing(10);
         sliceSlider.setPaintTicks(true);
         sliceSlider.addChangeListener(this);
-        sliceSlider.setInverted(true);
+        //sliceSlider.setInverted(true);
         sliceLabelTable.put(currentZSlice, new JLabel(String.valueOf(currentZSlice)));
         sliceSlider.setLabelTable(sliceLabelTable);
         sliceSlider.setPaintLabels(true);
