@@ -1495,7 +1495,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         int wheelRotation = event.getWheelRotation();
         Object source = event.getSource();
         if (source == currentComponentImage || source == imageScrollPanel || source == sliceSlider) {
-            if (wheelRotation < 0) {
+            if (wheelRotation > 0) {
                 if (currentZSlice != 0) {
                 	//currentZSlice = currentZSlice + 1;
                     sliceSlider.setValue(currentZSlice-1);
