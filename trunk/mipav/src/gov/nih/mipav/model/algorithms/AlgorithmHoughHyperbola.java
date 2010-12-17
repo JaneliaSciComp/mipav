@@ -11,6 +11,17 @@ import java.io.*;
 import java.awt.Color;
 
 /**
+ *  This work is made possible by the following mathematical theorem proved by Professor Alan Horwitz
+ *  of Penn State University:
+ *  
+    Finding the Center of a Hyperbola, H, given three nonparallel tangent lines to H and
+    the corresponding points of tangency.
+    Theorem: Let P1,P2,P3 be any three distinct points on the hyperbola, H; Let L1,L2,L3 be the
+    tangent lines to H at P1,P2,P3, and assume that no two of the Lj are parallel. Let t12 = Intersection
+    Point of L1 & L2, t23 = Intersection Point of L2 & L3,
+    m12 = midpoint of P1P2, m23 = midpoint of P2P3, J1 = line thru t12 & m12, J2 = line thru t23 & m23
+    Then the Intersection Point of J1 & J2 is the center of H
+
  *  This Hough transform uses (xi, yi) points in the original image space to generate p, q, r1, r2, and theta points in the Hough
  *  transform.  This Hough transform module only works with binary images.   Before it is used the user must 
  *  compute the gradient of an image and threshold it to obtain a binary image.  Noise removal and thinning should also
@@ -97,15 +108,18 @@ import java.awt.Color;
  *       thetaArray[i], and countArray[i] values, where the user will select a check box to have that
  *       hyperbola drawn.
  *  
- *  References: 1.) The Randomized Hough Transform used for ellipse detection by Andrew Schuler
+ *  References:
+ *  1.) Private communication from Professor Alan Horwitz of Penn State University
  *  
- *  2.) Technical Report - Randomized Hough Transform: Improved Ellipse Detection with Comparison by
+ *  2.) The Randomized Hough Transform used for ellipse detection by Andrew Schuler
+ *  
+ *  3.) Technical Report - Randomized Hough Transform: Improved Ellipse Detection with Comparison by
  *  Robert A. Mclaughlin
  *  
- *  3.) Digital Image Processing, Second Edition by Richard C. Gonzalez and Richard E. Woods, Section 10.2.2
+ *  4.) Digital Image Processing, Second Edition by Richard C. Gonzalez and Richard E. Woods, Section 10.2.2
  *  Global Processing via the Hough Transform, Prentice-Hall, Inc., 2002, pp. 587-591.
  *  
- *  4.) Shape Detection in Computer Vision Using the Hough Transform by V. F. Leavers, Springer-Verlag, 1992.
+ *  5.) Shape Detection in Computer Vision Using the Hough Transform by V. F. Leavers, Springer-Verlag, 1992.
  * 
  */
 public class AlgorithmHoughHyperbola extends AlgorithmBase {
@@ -287,6 +301,8 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
         double alpha;
         double cosalpha;
         double sinalpha;
+        double secalpha;
+        double tanalpha;
         double angle;
         double beta;
         double cosbeta;
@@ -469,14 +485,18 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
             yCenter = (yDim-1)/2.0;
             a1 = 50.0;
             b1 = 25.0;
-            for (i = 0; i < 360; i++) {
-                alpha = i * Math.PI/180.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha);
-                y = (int)(yCenter + b1 * sinalpha);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
+            for (i = -179; i <= 179; i++) {
+                alpha = i * Math.PI/360.0;
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter + a1 * secalpha);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter + b1 * tanalpha);
+                    if ((y >= 0) && (y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1; 
+                    }
+                }
             }
             
             a1 = 75.0;
@@ -485,53 +505,73 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
             beta = -angle;
             cosbeta = Math.cos(beta);
             sinbeta = Math.sin(beta);
-            for (i = 0; i < 720; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
+            for (i = -359; i <= 359; i++) {
+                alpha = i * Math.PI/720.0;
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter + 50.0 + a1 * secalpha * cosbeta - b1 * tanalpha * sinbeta);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter + 50.0 + a1 * secalpha * sinbeta + b1 * tanalpha * cosbeta);
+                    if ((y >= 0) && (y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1;
+                    }
+                }
             }
-            /*for (i = 0; i < 90; i++) {
+            /*for (i = -179; i <= -135; i++) {
                 alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-            
-            for (i = 180; i < 270; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter + 50.0 + a1 * secalpha * cosbeta - b1 * tanalpha * sinbeta);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter + 50.0 + a1 * secalpha * sinbeta + b1 * tanalpha * cosbeta);
+                    if ((y >= 0) && (y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1;
+                    }
+                } 
             }
             
-            for (i = 360; i < 450; i++) {
+            for (i = -90; i <= -45; i++) {
                 alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter + 50.0 + a1 * secalpha * cosbeta - b1 * tanalpha * sinbeta);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter + 50.0 + a1 * secalpha * sinbeta + b1 * tanalpha * cosbeta);
+                    if ((y >= 0) && (y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1; 
+                    }
+                }        
             }
             
-            for (i = 540; i < 630; i++) {
+            for (i = 0; i <= 45; i++) {
                 alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter + 50.0 + a1 * secalpha * cosbeta - b1 * tanalpha * sinbeta);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter + 50.0 + a1 * secalpha * sinbeta + b1 * tanalpha * cosbeta);
+                    if ((y >= 0) && (y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1; 
+                    }
+                }
+            }
+            
+            for (i = 90; i <= 135; i++) {
+                alpha = i * Math.PI/360.0;
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter + 50.0 + a1 * secalpha * cosbeta - b1 * tanalpha * sinbeta);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter + 50.0 + a1 * secalpha * sinbeta + b1 * tanalpha * cosbeta);
+                    if ((y >= 0) && ( y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1;
+                    }
+                } 
             }*/
             
             a1 = 50.0;
@@ -549,44 +589,60 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
             }*/
-            for (i = 0; i < 90; i++) {
+            for (i = -179; i <= -135; i++) {
                 alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter -50.0 + a1 * secalpha * cosbeta - b1 * tanalpha * sinbeta);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter -50.0 + a1 * secalpha * sinbeta + b1 * tanalpha * cosbeta);
+                    if ((y >= 0) && (y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1; 
+                    }
+                }
             }
             
-            for (i = 180; i < 270; i++) {
+            for (i = -90; i <= -45; i++) {
                 alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter -50.0 + a1 * secalpha * cosbeta - b1 * tanalpha * sinbeta);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter -50.0 + a1 * secalpha * sinbeta + b1 * tanalpha * cosbeta);
+                    if ((y >= 0) && (y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1; 
+                    }
+                }
             }
             
-            for (i = 360; i < 450; i++) {
+            for (i = 0; i <= 45; i++) {
                 alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter -50.0 + a1 * secalpha * cosbeta - b1 * tanalpha * sinbeta);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter -50.0 + a1 * secalpha * sinbeta + b1 * tanalpha * cosbeta);
+                    if ((y >= 0) && (y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1;
+                    }
+                }
             }
             
-            for (i = 540; i < 630; i++) {
+            for (i = 90; i <= 135; i++) {
                 alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
+                secalpha = 1.0/Math.cos(alpha);
+                tanalpha = Math.tan(alpha);
+                x = (int)(xCenter -50.0 + a1 * secalpha * cosbeta - b1 * tanalpha * sinbeta);
+                if ((x >= 0) && (x <= xDim - 1)) {
+                    y = (int)(yCenter -50.0 + a1 * secalpha * sinbeta + b1 * tanalpha * cosbeta);
+                    if ((y >= 0) && (y <= yDim - 1)) {
+                        index = x + (xDim*y);
+                        srcBuffer[index] = 1; 
+                    }
+                }
             }
    
             testImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "Hough Hyperbola Test Image");
@@ -1285,10 +1341,10 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
         maxXCenter = xDim - 1;
         minYCenter = 0.0f;
         maxYCenter = yDim - 1;
-        minR1 = (float)(2.0 * minPointDistance);
-        maxR1 = (float)Math.min(2.0 * maxPointDistance, Math.sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)));
-        minR2 = 0.0f;
-        maxR2 = (float)Math.min(2.0 * maxPointDistance, Math.min(xDim-1, yDim-1));
+        minR1 = (float)minPointDistance;
+        maxR1 = (float)Math.min(maxPointDistance, Math.sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)));
+        minR2 = (float)minPointDistance;
+        maxR2 = (float)Math.min(maxPointDistance, Math.sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)));
         minTheta = (float)(-Math.PI/2.0);
         bytesPerCell = 4 * 5 + 2; // float for each of 5 parameters and short for count;
         xCenterBins = (int)Math.ceil((maxXCenter - minXCenter)/maxPixelBinWidth);
@@ -1535,10 +1591,13 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
                 if ((a*c - b*b) >= 0.0) {
                     continue;
                 }
-                // Convert a, b, and c to semi major axis r1, semi minor axis r2, and orientation angle theta
+                // Convert a, b, and c to r1, r2, and orientation angle theta
+                // 2*r1 = transverse axis = distance between 2 vertices of hyperbola =
+                //        difference of distances of any point on hyperbola from foci
+                // 2*r2 = conjuate axis
+                // sqrt(r1**2 + r2**2) = distance form center to either focus
                 // Convert a*x**2 + 2*b*x*y + c*y**2 = 1 to
                 // (y*sin(theta) + x*cos(theta))**2/r1**2 - (y*cos(theta) - x*sin(theta))**2/r2**2 = 1
-                // if (a == c), 
                 // y**2*(sin(theta))**2/r1**2 + 2*x*y*cos(theta)*sin(theta)/r1**2 + x**2*(cos(theta))**2/r1**2
                 // - y**2*(cos(theta))**2/r2**2 + 2*x*y*cos(theta)*sin(theta)/r2**2 - x**2*(sin(theta))**2/r2**2 = 1
                 // a = (cos(theta))**2/r1**2 - (sin(theta))**2/r2**2
@@ -1564,20 +1623,13 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
                 // 1/r2**2 = (-2*a - 2*c + (a + c + sqrt(4*b**2 + (a - c)**2)))/2
                 // 1/r2**2 = (-a - c + sqrt(4*b**2 + (a - c)**2))/2
                 // r2 = sqrt(2)/sqrt(-a - c + sqrt(4*b**2 + (a - c)**2))
-                if (a == c) {
-                    r1 = a;
-                    r2 = a;
-                    theta = 0.0;
-                }
-                else {
-                    aminusc = a - c;
-                    twob = 2.0*b;
-                    var = Math.sqrt(twob*twob + aminusc*aminusc);
-                    aplusc = a + c;
-                    r1 = sqr2/Math.sqrt(aplusc - var);
-                    r2 = sqr2/Math.sqrt(aplusc + var);
-                    theta = 0.5 * Math.atan2(twob, aminusc);
-                }
+                aminusc = a - c;
+                twob = 2.0*b;
+                var = Math.sqrt(twob*twob + aminusc*aminusc);
+                aplusc = a + c;
+                r1 = sqr2/Math.sqrt(aplusc + var);
+                r2 = sqr2/Math.sqrt(-aplusc + var);
+                theta = 0.5 * Math.atan2(twob, aminusc);
                 if ((r1 < minR1) || (r1 > maxR1)) {
                     continue;
                 }
@@ -1642,7 +1694,7 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
                     yc = y - yCenter;
                     var1 = yc * sintheta1 + xc*costheta1;
                     var2 = yc * costheta1 - xc*sintheta1;
-                    checkVal = var1*var1/r1Sq + var2*var2/r2Sq;
+                    checkVal = var1*var1/r1Sq - var2*var2/r2Sq;
                     if ((checkVal >= lowerLimit) && (checkVal <= upperLimit)) {
                         pointsOnHyperbola1++;
                         if (foundPoint[i] == 0) {
@@ -1651,7 +1703,7 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
                     }
                     var1 = yc * sintheta2 + xc*costheta2;
                     var2 = yc * costheta2 - xc*sintheta2;
-                    checkVal = var1*var1/r1Sq + var2*var2/r2Sq;
+                    checkVal = var1*var1/r1Sq - var2*var2/r2Sq;
                     if ((checkVal >= lowerLimit) && (checkVal <= upperLimit)) {
                         pointsOnHyperbola2++;
                         if ((foundPoint[i] == 0) || (foundPoint[i] == 1)) {
@@ -1834,13 +1886,13 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
                 beta = thetaTable[i];
                 cosbeta = Math.cos(beta);
                 sinbeta = Math.sin(beta);
-                for (j = 0; j < 720; j++) {
-                    alpha = j * Math.PI/360.0;
-                    cosalpha = Math.cos(alpha);
-                    sinalpha = Math.sin(alpha);
-                    x = (int)(xCenterTable[i] + r1Table[i] * cosalpha * cosbeta - r2Table[i] * sinalpha * sinbeta);
+                for (j = -359; j <= 359; j++) {
+                    alpha = j * Math.PI/720.0;
+                    secalpha = 1.0/Math.cos(alpha);
+                    tanalpha = Math.tan(alpha);
+                    x = (int)(xCenterTable[i] + r1Table[i] * secalpha * cosbeta - r2Table[i] * tanalpha * sinbeta);
                     if ((x >= 0) && (x < xDim)) {
-                        y = (int)(yCenterTable[i] + r1Table[i] * cosalpha * sinbeta + r2Table[i] * sinalpha * cosbeta);
+                        y = (int)(yCenterTable[i] + r1Table[i] * secalpha * sinbeta + r2Table[i] * tanalpha * cosbeta);
                         if ((y >= 0) && (y < yDim)) {
                             index = x + (xDim*y);
                             srcBuffer[index] = value;
@@ -1865,13 +1917,13 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
                 beta = thetaTable[i];
                 cosbeta = Math.cos(beta);
                 sinbeta = Math.sin(beta);
-                for (j = 0; j < 720; j++) {
-                    alpha = j * Math.PI/360.0;
-                    cosalpha = Math.cos(alpha);
-                    sinalpha = Math.sin(alpha);
-                    x = (int)(xCenterTable[i] + r1Table[i] * cosalpha * cosbeta - r2Table[i] * sinalpha * sinbeta);
+                for (j =-359; j <= 359; j++) {
+                    alpha = j * Math.PI/720.0;
+                    secalpha = 1.0/Math.cos(alpha);
+                    tanalpha = Math.tan(alpha);
+                    x = (int)(xCenterTable[i] + r1Table[i] * secalpha * cosbeta - r2Table[i] * tanalpha * sinbeta);
                     if ((x >= 0) && (x < xDim)) {
-                        y = (int)(yCenterTable[i] + r1Table[i] * cosalpha * sinbeta + r2Table[i] * sinalpha * cosbeta);
+                        y = (int)(yCenterTable[i] + r1Table[i] * secalpha * sinbeta + r2Table[i] * tanalpha * cosbeta);
                         if ((y >= 0) && (y < yDim)) {
                             xArr[n] = x;
                             yArr[n++] = y;
