@@ -448,7 +448,7 @@ public class JDialogHoughHyperbola extends JDialogBase implements AlgorithmInter
         gbc.gridx = 1;
         paramPanel.add(toleranceText, gbc);
         
-        numHyperbolasLabel = new JLabel("Number of hyperoblas ");
+        numHyperbolasLabel = new JLabel("Number of hyperbolas ");
         numHyperbolasLabel.setForeground(Color.black);
         numHyperbolasLabel.setFont(serif12);
         numHyperbolasLabel.setEnabled(true);
