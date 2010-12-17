@@ -2,12 +2,14 @@ package gov.nih.mipav.view;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 
 public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
 
@@ -92,6 +94,47 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
      * mouse clicked
      */
     public void mouseClicked(MouseEvent mouseEvent) {
+
+    }
+    
+    
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param LUT DOCUMENT ME!
+     * @param image DOCUMENT ME!
+     */
+    public void resetLUT(final ModelLUT LUT, final ModelImage image) {
+        float min, max;
+        final float[] x = new float[4];
+        final float[] y = new float[4];
+        final float[] z = new float[4];
+        final Dimension dim = new Dimension(256, 256);
+
+        // Set LUT min max values;
+        if (image.getType() == ModelStorageBase.UBYTE) {
+            min = 0;
+            max = 255;
+        } else if (image.getType() == ModelStorageBase.BYTE) {
+            min = -128;
+            max = 127;
+        } else {
+            min = (float) image.getMin();
+            max = (float) image.getMax();
+        }
+
+        x[0] = min;
+        y[0] = dim.height - 1;
+
+        x[1] = (min + ( (max - min) / 3.0f));
+        y[1] = (dim.height - 1) - ( (dim.height - 1) / 3.0f);
+
+        x[2] = (min + ( (max - min) * 0.67f));
+        y[2] = (dim.height - 1) - ( (dim.height - 1) * 0.67f);
+
+        x[3] = max;
+        y[3] = 0;
+        LUT.getTransferFunction().importArrays(x, y, 4);
 
     }
 

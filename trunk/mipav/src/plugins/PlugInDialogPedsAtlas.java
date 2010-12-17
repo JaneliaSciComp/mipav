@@ -15,12 +15,16 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.BitSet;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -33,13 +37,17 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
@@ -50,9 +58,15 @@ import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 
-
-public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmInterface,ChangeListener, MouseWheelListener {
+/**
+ * This plugin is an atlas type plugin for the pediatrics group that displays annotations also
+ * @author pandyan
+ *
+ */
+public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmInterface,ChangeListener, MouseWheelListener, VOIManagerInterfaceListener {
 	
 	/** grid bag constraints **/
 	private GridBagConstraints gbc;
@@ -67,10 +81,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	private JLabel sliceLabel, ageLabel, infoLabel;
 
 	/** buttons * */
-    private JButton magButton,unMagButton,zoomOneButton,saveButton,winLevelButton;
+    private JButton magButton,unMagButton,zoomOneButton,saveButton,winLevelButton, resetButton;
     
     /** modality buttons **/
     private JToggleButton t1Button, t2Button, pdButton, dtiButton, edtiButton;
+    
+    /** test button **/
+    private JButton testButton;
     
     /** ViewToolBarBuilder * */
     private ViewToolBarBuilder toolbarBuilder;
@@ -92,6 +109,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     
     /** atlas images **/
     private ModelImage[] t1AtlasImages, t2AtlasImages, pdAtlasImages;
+    
+    private ModelImage activeImage;
     
     /** component images **/
     private ViewJComponentPedsAtlasImage[] t1ComponentImages, t2ComponentImages, pdComponentImages;
@@ -132,14 +151,23 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     /** current z slice **/
     private int currentZSlice;
     
-    /** test icon image **/
-    private File fCoronal = new File("C:\\images\\pedsAtlas\\icons\\coronal.jpg");
+    /** test: peds home **/
+    private String pedsHome = "C:" + File.separator + "images" + File.separator;
     
     /** test icon image **/
-    private File fAxial = new File("C:\\images\\pedsAtlas\\icons\\axial.jpg");
+    private File fCoronal = new File(pedsHome + "pedsAtlas" + File.separator + "icons" + File.separator + "coronal.jpg");
     
     /** test icon image **/
-    private File fSagittal = new File("C:\\images\\pedsAtlas\\icons\\sagittal.jpg");
+    private File fAxial = new File(pedsHome + "pedsAtlas" + File.separator + "icons" + File.separator + "axial.jpg");
+    
+    /** test icon image **/
+    private File fSagittal = new File(pedsHome + "pedsAtlas" + File.separator + "icons" + File.separator + "sagittal.jpg");
+    
+    /** annotations file dir **/
+    private String annotationsFileDir = pedsHome + "pedsAtlas" + File.separator + "annotations" + File.separator;
+    
+    /** coronal annotations file name **/
+    private String coronalAnnotationsFilename = "coronal.lbl";
     
     /** current modality **/
     private String currentModality;
@@ -162,8 +190,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     /** thread to load images **/
     private Thread t1;
     
-    /** test: peds home **/
-    private String pedsHome = "C:" + File.separator + "images" + File.separator;
+    /** File VOI **/
+    private FileVOI fileVOI;
     
     /** labels for age slider **/
     private Hashtable<Integer,JLabel> ageLabelTable;
@@ -174,6 +202,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     private Graphics axialG, coronalG, sagittalG;
     
     private int iconHeight, iconWidth;
+    
+    private VOIManagerInterface voiManager;
     
     /** constants **/
     public static final String AXIAL = "axial";
@@ -206,7 +236,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}
 		
 		//we will start plugin with axial
-		t1 = new Thread(new PopulateModelImages(this,AXIAL), "thread1");
+		//t1 = new Thread(new PopulateModelImages(this,AXIAL), "thread1");
+		t1 = new PopulateModelImages(this,AXIAL);
 		try {
 			t1.start();
 		}catch (Exception e) {
@@ -414,6 +445,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         zoomOneButton = toolbarBuilder.buildButton("ZoomOne", "Magnify Image 1.0x", "zoom1");
         saveButton = toolbarBuilder.buildButton("Save", "Save screenshot of image", "save");
         winLevelButton = toolbarBuilder.buildButton("WinLevel", "Window/Level", "winlevel");
+        resetButton = toolbarBuilder.buildButton("resetLUT","Reset LUT","resetlut");
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -430,6 +462,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         gbc.gridx = 4;
         gbc.gridy = 0;
         toolbarPanel.add(winLevelButton, gbc);
+        gbc.gridx = 5;
+        gbc.gridy = 0;
+        toolbarPanel.add(resetButton, gbc);
         gbc.anchor = GridBagConstraints.CENTER;
 
 
@@ -476,6 +511,14 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         imagePanel.add(currentComponentImage,imageGBC);
         
         
+        
+        
+        
+        
+        
+        
+        
+        
         modalitiesPanel = new JPanel();
         ButtonGroup group = new ButtonGroup();
 
@@ -499,6 +542,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         edtiButton.addActionListener(this);
         edtiButton.setActionCommand("edti");
         group.add(edtiButton);
+        testButton = new JButton("Test");
+        testButton.addActionListener(this);
+        testButton.setActionCommand("test");
       
         modalitiesPanel.add(t1Button);
         modalitiesPanel.add(t2Button);
@@ -506,6 +552,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
         //modalitiesPanel.add(dtiButton);
         //modalitiesPanel.add(edtiButton);
+        
+        //modalitiesPanel.add(testButton);
         
         
         //create radio buttons and icons
@@ -663,7 +711,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         
         getContentPane().add(mainPanel);
         pack();
-        setResizable(false);
+        this.setMinimumSize(this.getSize());
+        //setResizable(false);
         setVisible(true);
         
   
@@ -909,16 +958,30 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
                 winLevel.minSlider.setValue(min);
                 winLevel.maxSlider.setValue(max);
             }
+		}else if(command.equals("resetLUT")){
+			ModelImage img = null;
+			if(currentModality.equals(T1)) {
+		    	 img = t1AtlasImages[currentAge];
+			 }else if(currentModality.equals(T2)) {
+				 img = t2AtlasImages[currentAge];
+			 }else {
+				img = pdAtlasImages[currentAge];
+			 }
+			currentComponentImage.resetLUT(currentComponentImage.getActiveLUT(), img);
+			img.notifyImageDisplayListeners( currentComponentImage.getActiveLUT(), true );
+			//currentComponentImage.repaint();
+			//repaint();
 		}else if(command.equals("axial")) {
 			if(!currentOrientation.equals(AXIAL)) {
 				nullifyStructures();
 				if(t1.isAlive()) {
-					t1.interrupt();
+					((PopulateModelImages)t1).setIsInterrupted(true);
 					
 				}
 				currentOrientation = AXIAL;
 				setCursor(new Cursor(Cursor.WAIT_CURSOR));
-				t1 = new Thread(new PopulateModelImages(this,AXIAL), "thread1");
+				//t1 = new Thread(new PopulateModelImages(this,AXIAL), "thread1");
+				t1 = new PopulateModelImages(this,AXIAL);
 				try {
 					t1.start();
 				}catch (Exception ev) {
@@ -952,12 +1015,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			if(!currentOrientation.equals(CORONAL)) {
 				nullifyStructures();
 				if(t1.isAlive()) {
-					t1.interrupt();
+					((PopulateModelImages)t1).setIsInterrupted(true);
 					
 				}
 				currentOrientation = CORONAL;
 				setCursor(new Cursor(Cursor.WAIT_CURSOR));
-				t1 = new Thread(new PopulateModelImages(this,CORONAL), "thread1");
+				//t1 = new Thread(new PopulateModelImages(this,CORONAL), "thread1");
+				t1 = new PopulateModelImages(this,CORONAL);
 				try {
 					t1.start();
 				}catch (Exception ev) {
@@ -985,18 +1049,24 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			        coronalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 			        sagittalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 			        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
+			        
+			       
+			        
+			        
+			        
 			}
 			
 		}else if(command.equals("sagittal")) {
 			if(!currentOrientation.equals(SAGITTAL)) {
 				nullifyStructures();
 				if(t1.isAlive()) {
-					t1.interrupt();
+					((PopulateModelImages)t1).setIsInterrupted(true);
 					
 				}
 				currentOrientation = SAGITTAL;
 				setCursor(new Cursor(Cursor.WAIT_CURSOR));
-				t1 = new Thread(new PopulateModelImages(this,SAGITTAL), "thread1");
+				//t1 = new Thread(new PopulateModelImages(this,SAGITTAL), "thread1");
+				t1 = new PopulateModelImages(this,SAGITTAL);
 				try {
 					t1.start();
 				}catch (Exception ev) {
@@ -1026,6 +1096,50 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 	
 			}
+		}else if(command.equals("test")) {
+			if(currentOrientation.equals(CORONAL)) {
+				try {
+					System.out.println("here!!");	
+		        	ModelImage img = null;
+					if(currentModality.equals(T1)) {
+						img = t1AtlasImages[currentAge];
+					}else if(currentModality.equals(T2)) {
+						img = t2AtlasImages[currentAge];
+					}else if(currentModality.equals(PD)) {
+						img = pdAtlasImages[currentAge];
+					}
+					fileVOI = new FileVOI(coronalAnnotationsFilename, annotationsFileDir,img);
+					VOI[] vois = fileVOI.readVOI(true);
+					System.out.println(vois.length);
+					for (int k = 0; k < vois.length; k++) {
+						
+						if(vois[k].getColor() == null) {
+							vois[k].setColor(Color.white);
+		                }
+						vois[k].getGeometricCenter();	
+						
+						img.registerVOI(vois[k]);
+						
+			        }
+
+					img.notifyImageDisplayListeners();
+					
+					 try {
+				            currentComponentImage.paintComponent(currentComponentImage.getGraphics());
+				            // componentImage.repaint(); // problems with this method on some machines seems to eat lots of memory on
+				            // JVM 1.3
+				        } catch (final OutOfMemoryError error) {
+				            System.gc();
+				        }
+					imagePanel.validate();
+					this.repaint();
+
+					System.out.println(vois.length);
+				}catch(IOException ef) {
+					ef.printStackTrace();
+				}
+			}
+			
 		}
 
 	}
@@ -1651,6 +1765,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		this.pdComponentImages[index] = pdComponentImage;
 		notify();
 	}
+	
+	
+	
+	
 
 
 
@@ -1663,18 +1781,29 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	/**
 	 * This inner class is the thread that gets called
 	 */
-	public class PopulateModelImages implements Runnable {
+	public class PopulateModelImages extends Thread {
 		PlugInDialogPedsAtlas owner;
 		String orient;
 		String[] pathStrings;
 		int c = 1;
+	    public boolean isInterrupted;
 
 		
 		public PopulateModelImages(PlugInDialogPedsAtlas owner, String orient) {
 			this.owner = owner;
 			this.orient = orient;
+			isInterrupted = false;
 		}
 		
+		
+		public synchronized void setIsInterrupted(boolean flag) {
+			isInterrupted = flag;
+		}
+		
+		public synchronized boolean isInterrupted() {
+			return isInterrupted;
+			
+		}
 		
 		public void run() {
 			long begTime = System.currentTimeMillis();
@@ -1684,6 +1813,14 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	        float seconds = ((float) diffTime) / 1000;
 	        System.out.println("**Loading images took " + seconds + " seconds \n");
 		}
+		
+		 private void initVOI(ModelImage img, ViewJComponentPedsAtlasImage comp)
+		    {
+			 	owner.setActiveImage(img);
+		        voiManager = new VOIManagerInterface( owner, img, null, 1, false, null );
+		        voiManager.getVOIManager(0).init( owner, img, null, comp, comp, comp.getOrientation(), comp.getSlice() );
+		        comp.setVOIManager(voiManager.getVOIManager(0));
+		    }
 		
 		
 		public void populateModelImages(String orient) {
@@ -1714,18 +1851,45 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadAxialImages() {
 			if(currentModality.equals(T1)) {
+				if(isInterrupted()) {
+					return;
+				}
 				loadAxialT1();
+				if(isInterrupted()) {
+					return;
+				}
 				loadAxialT2();
+				if(isInterrupted()) {
+					return;
+				}
 				loadAxialPD();
 				
 			}else if(currentModality.equals(T2)) {
+				if(isInterrupted()) {
+					return;
+				}
 				loadAxialT2();
+				if(isInterrupted()) {
+					return;
+				}
 				loadAxialT1();
+				if(isInterrupted()) {
+					return;
+				}
 				loadAxialPD();
 				
 			}else if(currentModality.equals(PD)) {
+				if(isInterrupted()) {
+					return;
+				}
 				loadAxialPD();
+				if(isInterrupted()) {
+					return;
+				}
 				loadAxialT1();
+				if(isInterrupted()) {
+					return;
+				}
 				loadAxialT2();
 				
 			}
@@ -1734,7 +1898,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadAxialT1() {
 			for(int i=currentAge;i<numAgeTicks;i++) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading axial T1 images : " + c + "/" + numAgeTicks);
@@ -1753,7 +1917,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				setT1ComponentImage(comp,i);
 			}
 			for(int i=currentAge-1;i>=0;i--) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading axial T1 images : " + c + "/" + numAgeTicks);
@@ -1780,7 +1944,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadAxialT2() {
 			for(int i=currentAge;i<numAgeTicks;i++) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading axial T2 images : " + c + "/" + numAgeTicks);
@@ -1800,7 +1964,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				setT2ComponentImage(comp,i);
 			}
 			for(int i=currentAge-1;i>=0;i--) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading axial T2 images : " + c + "/" + numAgeTicks);
@@ -1822,7 +1986,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
 		public void loadAxialPD() {
 			for(int i=currentAge;i<numAgeTicks;i++) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading axial PD images : " + c + "/" + numAgeTicks);
@@ -1841,7 +2005,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				setPDComponentImage(comp,i);
 			}
 			for(int i=currentAge-1;i>=0;i--) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading axial PD images : " + c + "/" + numAgeTicks);
@@ -1864,18 +2028,45 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadCoronalImages() {
 			if(currentModality.equals(T1)) {
+				if(isInterrupted()) {
+					return;
+				}
 				loadCoronalT1();
+				if(isInterrupted()) {
+					return;
+				}
 				loadCoronalT2();
+				if(isInterrupted()) {
+					return;
+				}
 				loadCoronalPD();
 				
 			}else if(currentModality.equals(T2)) {
+				if(isInterrupted()) {
+					return;
+				}
 				loadCoronalT2();
+				if(isInterrupted()) {
+					return;
+				}
 				loadCoronalT1();
+				if(isInterrupted()) {
+					return;
+				}
 				loadCoronalPD();
 				
 			}else if(currentModality.equals(PD)) {
+				if(isInterrupted()) {
+					return;
+				}
 				loadCoronalPD();
+				if(isInterrupted()) {
+					return;
+				}
 				loadCoronalT1();
+				if(isInterrupted()) {
+					return;
+				}
 				loadCoronalT2();
 				
 			}
@@ -1885,7 +2076,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadCoronalT1() {
 			for(int i=currentAge;i<numAgeTicks;i++) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading coronal T1 images : " + c + "/" + numAgeTicks);
@@ -1901,11 +2092,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				initVOI(t1AtlasImages[i],comp);
 				setT1ComponentImage(comp,i);
 				//notify();
 			}
 			for(int i=currentAge-1;i>=0;i--) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading coronal T1 images : " + c + "/" + numAgeTicks);
@@ -1916,11 +2108,19 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				atlasFile = new File(pedsHome + coronalT1PathStrings[i]);
 				t1AtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
 				t1AtlasImages[i].addImageDisplayListener(owner);
+				try {
+					fileVOI = new FileVOI(coronalAnnotationsFilename, annotationsFileDir,t1AtlasImages[i]);
+					VOI[] vois = fileVOI.readVOI(true);
+					System.out.println(vois.length);
+				}catch(IOException e) {
+					e.printStackTrace();
+				}
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				initVOI(t1AtlasImages[i],comp);
 				setT1ComponentImage(comp,i);
 				//notify();
 			}
@@ -1928,7 +2128,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadCoronalT2() {
 			for(int i=currentAge;i<numAgeTicks;i++) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading coronal T2 images : " + c + "/" + numAgeTicks);
@@ -1944,10 +2144,11 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				
 				setT2ComponentImage(comp,i);
 			}
 			for(int i=currentAge-1;i>=0;i--) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading coronal T2 images : " + c + "/" + numAgeTicks);
@@ -1969,7 +2170,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadCoronalPD() {
 			for(int i=currentAge;i<numAgeTicks;i++) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading coronal PD images : " + c + "/" + numAgeTicks);
@@ -1988,7 +2189,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				setPDComponentImage(comp,i);
 			}
 			for(int i=currentAge-1;i>=0;i--) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading coronal PD images : " + c + "/" + numAgeTicks);
@@ -2013,18 +2214,45 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadSagittalImages() {
 			if(currentModality.equals(T1)) {
+				if(isInterrupted()) {
+					return;
+				}
 				loadSagittalT1();
+				if(isInterrupted()) {
+					return;
+				}
 				loadSagittalT2();
+				if(isInterrupted()) {
+					return;
+				}
 				loadSagittalPD();
 				
 			}else if(currentModality.equals(T2)) {
+				if(isInterrupted()) {
+					return;
+				}
 				loadSagittalT2();
+				if(isInterrupted()) {
+					return;
+				}
 				loadSagittalT1();
+				if(isInterrupted()) {
+					return;
+				}
 				loadSagittalPD();
 				
 			}else if(currentModality.equals(PD)) {
+				if(isInterrupted()) {
+					return;
+				}
 				loadSagittalPD();
+				if(isInterrupted()) {
+					return;
+				}
 				loadSagittalT1();
+				if(isInterrupted()) {
+					return;
+				}
 				loadSagittalT2();
 				
 			}
@@ -2037,7 +2265,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadSagittalT1() {
 			for(int i=currentAge;i<numAgeTicks;i++) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading sagittal T1 images : " + c + "/" + numAgeTicks);
@@ -2057,7 +2285,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				//notify();
 			}
 			for(int i=currentAge-1;i>=0;i--) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading sagittal T1 images : " + c + "/" + numAgeTicks);
@@ -2082,7 +2310,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadSagittalT2() {
 			for(int i=currentAge;i<numAgeTicks;i++) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading sagittal T2 images : " + c + "/" + numAgeTicks);
@@ -2101,7 +2329,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				setT2ComponentImage(comp,i);
 			}
 			for(int i=currentAge-1;i>=0;i--) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading sagittal T2 images : " + c + "/" + numAgeTicks);
@@ -2125,7 +2353,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void loadSagittalPD() {
 			for(int i=currentAge;i<numAgeTicks;i++) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				c++;
@@ -2144,7 +2372,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				setPDComponentImage(comp,i);
 			}
 			for(int i=currentAge-1;i>=0;i--) {
-				if(t1.isInterrupted()) {
+				if(isInterrupted()) {
 					return;
 				}
 				infoLabel.setText("loading axial PD images : " + c + "/" + numAgeTicks);
@@ -2166,6 +2394,234 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		
 		
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void PointerActive(boolean bActive) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public Vector3f PropDown(int iActive) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+
+
+
+
+	@Override
+	public Vector3f PropUp(int iActive) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+
+
+
+
+	@Override
+	public void create3DVOI(boolean bIntersection) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void enableBoth(boolean bEnable) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public ModelImage getActiveImage() {
+		// TODO Auto-generated method stub
+		return activeImage;
+	}
+
+
+
+
+
+
+
+	@Override
+	public ModelLUT getActiveLUT() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+
+
+
+
+	@Override
+	public ModelRGB getActiveRGB() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+
+
+
+
+	@Override
+	public Vector3f getCenterPt() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+
+
+
+
+	@Override
+	public JFrame getFrame() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+
+
+
+
+	@Override
+	public VOIManagerInterface getVOIManager() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+
+
+
+
+	@Override
+	public void maskToPaint() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void paintToShortMask() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void paintToUbyteMask() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	
+	public void setActiveImage(ModelImage kImage) {
+		this.activeImage = kImage;
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void setCenter(Vector3f kCenter) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void setModified() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void setPaintMask(BitSet mask) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void updateData(boolean bCopyToCPU) {
+		// TODO Auto-generated method stub
 		
 	}
 
