@@ -2262,37 +2262,43 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                             		Vector3f pt;
                                     int x, y, z;
                                 	float xTal,yTal,zTal;
-                                	try {
-                                        TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
-
-                                        if (tInfo != null) {
-                                            pt = tInfo.getTlrcAC();
-                                        } else {
-                                            tInfo.setAcpcRes(imageA.getResolutions(0)[0]);
-                                            pt = tInfo.getTlrcAC();
-                                        }
-
-                                        xTal = i - pt.X;
-                                        yTal = j - pt.Y;
-                                        zTal = k - pt.Z;
-                                    } catch (Exception ex) {
-                                        xTal = (i * imageA.getResolutions(0)[0]) - ATLAS_BBOX_LAT;
-                                        yTal = (j * imageA.getResolutions(0)[1]) - ATLAS_BBOX_ANT;
-
-                                        if (useInfNew) {
-                                            zTal = (k * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF_NEW;
-                                        } else {
-                                            zTal = (k * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF;
-                                        }
+                                    TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
+                                    if (tInfo != null) {
+	                                    pt = tInfo.getTlrcAC();
+	                                    if (pt == null) {
+	                                        tInfo.setAcpcRes(imageA.getResolutions(0)[0]);
+	                                        pt = tInfo.getTlrcAC();
+	                                    }
+	
+	                                    xTal = i - pt.X;
+	                                    yTal = j - pt.Y;
+	                                    zTal = k - pt.Z;
+                                    } // if (tInfo != null)
+                                    else {
+	                                    xTal = (i * imageA.getResolutions(0)[0]) - ATLAS_BBOX_LAT;
+	                                    yTal = (j * imageA.getResolutions(0)[1]) - ATLAS_BBOX_ANT;
+	
+	                                    if (useInfNew) {
+	                                        zTal = (k * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF_NEW;
+	                                    } else {
+	                                        zTal = (k * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF;
+	                                    }
                                     }
+                                        
                                     
-                            		TalairachTransformInfo tInfo = img.getTalairachTransformInfo();
-                                    pt = tInfo.getTlrcAC();
-                                       
-                                    x = Math.round(xTal + pt.X);
-                                    y = Math.round(yTal + pt.Y);
-                                    z = Math.round(zTal + pt.Z);
-                                	setCenter(x,y,z);	
+                            		TalairachTransformInfo tInfo2 = img.getTalairachTransformInfo();
+                                    if (tInfo2 != null) {
+	                                    pt = tInfo2.getTlrcAC();
+	                                    if (pt == null) {
+	                                        tInfo2.setAcpcRes(img.getResolutions(0)[0]);
+	                                        pt = tInfo2.getTlrcAC();
+	                                    }
+	                                       
+	                                    x = Math.round(xTal + pt.X);
+	                                    y = Math.round(yTal + pt.Y);
+	                                    z = Math.round(zTal + pt.Z);
+	                                    img.getTriImageFrame().setCenter(x,y,z);	
+                                    }
                             	} // else if (talairachPanel.isShowing())
                                 img.getTriImageFrame().setTimeSlice(tSlice, false);	
                             } // if (sameDims == true)
@@ -2663,7 +2669,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     public void setPositionLabels(int x, int y, int z) {
         setAbsPositionLabels(new Vector3f(x, y, z));
         setScannerPosition(new Vector3f(x, y, z));
-
+ 
         if (showTalairachPosition) {
             setTalairachPositionLabels(x, y, z);
         }
@@ -3899,7 +3905,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         xTalLabel = new JLabel("X:");
         xTalLabel.setForeground(Color.black);
         xTalLabel.setFont(MipavUtil.font14B);
-        //talairachSubPanel.add(xTalLabel, gbSubConstraints);
+        talairachSubPanel.add(xTalLabel, gbSubConstraints);
         //talairachSubPanel.add(labelXTal, gbSubConstraints);
   
 
@@ -4742,12 +4748,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         String strY = "";
         String strZ = "";
 
-        try {
-            TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
-
-            if (tInfo != null) {
-                pt = tInfo.getTlrcAC();
-            } else {
+        TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
+        if (tInfo != null) {
+            pt = tInfo.getTlrcAC();
+            if (pt == null) {
                 tInfo.setAcpcRes(imageA.getResolutions(0)[0]);
                 pt = tInfo.getTlrcAC();
             }
@@ -4755,7 +4759,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             xTal = x - pt.X;
             yTal = y - pt.Y;
             zTal = z - pt.Z;
-        } catch (Exception ex) {
+        } else {
             xTal = (x * imageA.getResolutions(0)[0]) - ATLAS_BBOX_LAT;
             yTal = (y * imageA.getResolutions(0)[1]) - ATLAS_BBOX_ANT;
 
