@@ -8,6 +8,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
@@ -199,11 +202,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     /** labels for slice slider **/
     private Hashtable<Integer,JLabel> sliceLabelTable;
     
-    private Graphics axialG, coronalG, sagittalG;
-    
+    /** icon width and height **/
     private int iconHeight, iconWidth;
     
+    /** voi manager **/
     private VOIManagerInterface voiManager;
+    
+    /** initial image panel size **/
+    private int initialImagePanelSize = 600;
+
     
     /** constants **/
     public static final String AXIAL = "axial";
@@ -256,13 +263,14 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					sliceLabelTable.put(numZSlices-1, new JLabel(numZSlicesString));
 					currentZSlice = (t1AtlasImages[0].getExtents()[2] - 1) / 2;
 					init();
-					
 					test = true;
 				}
 			}catch(Exception e) {
 				e.printStackTrace();
 			}
 		}
+		
+		
 	}
 	
 	
@@ -471,6 +479,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         gbc.gridx = 6;
         gbc.gridy = 0;
         toolbarPanel.add(lutButton, gbc);
+        gbc.gridx = 7;
+        toolbarPanel.add(infoLabel,gbc);
         gbc.anchor = GridBagConstraints.CENTER;
 
 
@@ -501,10 +511,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         
         imageGBC.anchor = GridBagConstraints.CENTER;
         TitledBorder titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
-        imagePanel.setMinimumSize(new Dimension(600, 600));
+        imagePanel.setMinimumSize(new Dimension(initialImagePanelSize, initialImagePanelSize));
         imageScrollPanel = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        imageScrollPanel.setPreferredSize(new Dimension(600, 600));
-        imageScrollPanel.setMinimumSize(new Dimension(600, 600));
+        //imageScrollPanel.setPreferredSize(new Dimension(initialImagePanelSize, initialImagePanelSize));
+        imageScrollPanel.setMinimumSize(new Dimension(initialImagePanelSize+200, initialImagePanelSize+200));
         imageScrollPanel.addMouseWheelListener(this);
         imageScrollPanel.setViewportView(imagePanel);
         
@@ -515,16 +525,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         currentComponentImage.setZoom(currentZoom, currentZoom);
         currentComponentImage.show(0,currentZSlice,null,null,true);
         imagePanel.add(currentComponentImage,imageGBC);
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         modalitiesPanel = new JPanel();
         ButtonGroup group = new ButtonGroup();
 
@@ -597,14 +598,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         //axialG = axialIconComponentImage.getGraphics();
         iconHeight = axialIconComponentImage.getHeight();
         iconWidth = axialIconComponentImage.getWidth();
-        //sagittalG = sagittalIconComponentImage.getGraphics();
-        //iconHeight = axialIconComponentImage.getSize().height;
-        //iconWidth = axialIconComponentImage.getSize().width;
-        //axialG.setColor(Color.yellow);
-       
-        //sagittalG.setColor(Color.yellow);
-        
-        
+
         coronalIconComponentImage.addMouseWheelListener(this);
         coronalIconComponentImage.setBuffers(imageBufferC, null, pixBufferC, null);
         axialIconComponentImage.addMouseWheelListener(this);
@@ -651,6 +645,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         gbc2.anchor = GridBagConstraints.WEST;
+        //gbc2.insets = new Insets(0,10,0,10);
         radioPanel.add(axialRadio,gbc2);
         gbc2.gridy = 1;
         radioPanel.add(coronalRadio,gbc2);
@@ -663,7 +658,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         radioPanel.add(coronalIconPanel,gbc2);
         gbc2.gridy = 2;
         radioPanel.add(sagittalIconPanel,gbc2);
-        
+        radioPanel.setMinimumSize(new Dimension(125,300));
         
         
         
@@ -675,49 +670,63 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         atlasPanel.add(ageLabel,gbc);
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridy = 1;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
         gbc.insets = new Insets(5,0,10,0);
         atlasPanel.add(ageSlider,gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.insets = new Insets(0,5,0,5);
+        gbc.weighty = 1;
+        gbc.weightx = 0;
+        gbc.insets = new Insets(0,10,0,5);
         atlasPanel.add(sliceLabel,gbc);
         gbc.gridx = 1;
-        gbc.insets = new Insets(0,0,0,10);
+        gbc.insets = new Insets(0,0,0,5);
         atlasPanel.add(sliceSlider,gbc);
         gbc.gridx = 2;
-        gbc.insets = new Insets(0,0,0,0);
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.insets = new Insets(0,10,0,5);
         atlasPanel.add(imageScrollPanel,gbc);
         gbc.gridx = 3;
-        gbc.insets = new Insets(0,0,0,5);
+        gbc.weightx = 0;
+        gbc.insets = new Insets(0,0,0,15);
         atlasPanel.add(radioPanel,gbc);
         gbc.gridx = 2;
         gbc.gridy = 3;
-        gbc.insets = new Insets(0,0,0,0);
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.insets = new Insets(10,0,10,0);
         atlasPanel.add(modalitiesPanel,gbc);
 
         
         gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.NONE;
-
+        
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridwidth = 1;
+        //gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = 0;
        
-        
+        gbc.weighty = 0;
+        gbc.weightx = .5;
         mainPanel.add(toolbarPanel,gbc);
         gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 1;
+        
         mainPanel.add(infoLabel,gbc);
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(atlasPanel,gbc);
         
         getContentPane().add(mainPanel);
         pack();
-        this.setMinimumSize(this.getSize());
+        this.setMinimumSize(new Dimension(840,840));
         //setResizable(false);
         setVisible(true);
         
@@ -1818,17 +1827,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		this.pdComponentImages[index] = pdComponentImage;
 		notify();
 	}
-	
-	
-	
-	
 
-
-
-
-
-	
-	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	/**
