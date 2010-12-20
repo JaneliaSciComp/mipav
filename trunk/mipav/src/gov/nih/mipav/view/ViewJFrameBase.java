@@ -62,6 +62,12 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** JPanel containing the absoulte position labels:. */
     protected JPanel absolutePanel = new JPanel(new GridBagLayout());
+    
+    protected JPanel talairachPanel = new JPanel(new GridBagLayout());
+    
+    /* Panel for switiching between radiological and neurological viewing
+     * conventions: */
+    protected JPanel viewPanel = new JPanel(new GridBagLayout());
 
     /** Indicates the amount of blending when two images are loaded in the image frame. */
     protected float alphaBlend = 0.5f;
