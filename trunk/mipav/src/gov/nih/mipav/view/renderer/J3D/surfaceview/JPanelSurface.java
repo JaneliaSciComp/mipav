@@ -49,6 +49,7 @@ public class JPanelSurface extends JPanelRendererJ3D
     private static final long serialVersionUID = -4600563188022683359L;
 
     /** The colors for the first six surfaces are fixed. */
+	/*
     private static Color3f[] fixedColor = {
         new Color3f(0.0f, 0.0f, 0.5f), // blue
         new Color3f(0.0f, 0.5f, 0.0f), // green
@@ -57,6 +58,8 @@ public class JPanelSurface extends JPanelRendererJ3D
         new Color3f(0.5f, 0.0f, 0.5f), // violet
         new Color3f(0.5f, 0.5f, 0.0f) // yellow
     };
+	*/
+	private static Color3f[] fixedColor;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -491,6 +494,11 @@ public class JPanelSurface extends JPanelRendererJ3D
         surfaceVector = new Vector();
         mSurfacePaint = new SurfacePaint(this, parentScene);
 
+		fixedColor = new Color3f[255];
+		ModelLUT lut = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});
+			
+		for (int n=0;n<255;n++) fixedColor[n] = new Color3f(lut.getColor(n+1));
+		
         initSphere();
         init();
     }
