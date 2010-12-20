@@ -2243,18 +2243,59 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                             }
 
                             if (sameDims == true) {
-                            	// Link together identical Scanner coordinates rather than identical file coordinates
-                            	// in 2 images.  This will put the cursors over the same points in an image and a
-                            	// rotated version of the image.
-                            	Vector3f position = new Vector3f(i, j, k);
-                            	Vector3f kOut = new Vector3f(position);
-                            	MipavCoordinateSystems.fileToScanner(position, kOut, imageA);
-                            	Vector3f imgCenter = new Vector3f(kOut);
-                            	MipavCoordinateSystems.scannerToFile(kOut, imgCenter, img);
-                            	img.getTriImageFrame().setCenter((int)Math.round(imgCenter.X), (int)Math.round(imgCenter.Y),
-                            			                         (int)Math.round(imgCenter.Z), false);
+                            	if (absolutePanel.isShowing() || viewPanel.isShowing()) {
+                            		img.getTriImageFrame().setCenter(i, j, k, false);
+                            	}
+                            	else if (scannerLPSPanel.isShowing() || scannerRASPanel.isShowing()) {
+	                            	// Link together identical Scanner coordinates rather than identical file coordinates
+	                            	// in 2 images.  This will put the cursors over the same points in an image and a
+	                            	// rotated version of the image.
+	                            	Vector3f position = new Vector3f(i, j, k);
+	                            	Vector3f kOut = new Vector3f(position);
+	                            	MipavCoordinateSystems.fileToScanner(position, kOut, imageA);
+	                            	Vector3f imgCenter = new Vector3f(kOut);
+	                            	MipavCoordinateSystems.scannerToFile(kOut, imgCenter, img);
+	                            	img.getTriImageFrame().setCenter((int)Math.round(imgCenter.X), (int)Math.round(imgCenter.Y),
+	                            			                         (int)Math.round(imgCenter.Z), false);
+                            	} // else if (scannerLPSPanel.isShowing() || scannerRASPanel.isShowing())
+                            	else if (talairachPanel.isShowing()) {
+                            		Vector3f pt;
+                                    int x, y, z;
+                                	float xTal,yTal,zTal;
+                                	try {
+                                        TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
+
+                                        if (tInfo != null) {
+                                            pt = tInfo.getTlrcAC();
+                                        } else {
+                                            tInfo.setAcpcRes(imageA.getResolutions(0)[0]);
+                                            pt = tInfo.getTlrcAC();
+                                        }
+
+                                        xTal = i - pt.X;
+                                        yTal = j - pt.Y;
+                                        zTal = k - pt.Z;
+                                    } catch (Exception ex) {
+                                        xTal = (i * imageA.getResolutions(0)[0]) - ATLAS_BBOX_LAT;
+                                        yTal = (j * imageA.getResolutions(0)[1]) - ATLAS_BBOX_ANT;
+
+                                        if (useInfNew) {
+                                            zTal = (k * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF_NEW;
+                                        } else {
+                                            zTal = (k * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF;
+                                        }
+                                    }
+                                    
+                            		TalairachTransformInfo tInfo = img.getTalairachTransformInfo();
+                                    pt = tInfo.getTlrcAC();
+                                       
+                                    x = Math.round(xTal + pt.X);
+                                    y = Math.round(yTal + pt.Y);
+                                    z = Math.round(zTal + pt.Z);
+                                	setCenter(x,y,z);	
+                            	} // else if (talairachPanel.isShowing())
                                 img.getTriImageFrame().setTimeSlice(tSlice, false);	
-                            }
+                            } // if (sameDims == true)
                         }
                     }
                 }
@@ -3798,10 +3839,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         GridBagLayout gbLayout = new GridBagLayout();
         GridBagConstraints gbConstraints = new GridBagConstraints();
-        gbLayout = new GridBagLayout();
         gbConstraints = new GridBagConstraints();
-
-        JPanel talairachPanel = new JPanel(gbLayout);
 
         chkShowTalairachGrid = new JCheckBox("Show Talairach grid");
         chkShowTalairachGrid.setActionCommand("ShowTalairachGrid");
@@ -3933,13 +3971,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 7;
         talairachSubPanel.add(talGoToPanel, gbSubConstraints);
-
-        gbLayout = new GridBagLayout();
         gbConstraints = new GridBagConstraints();
-
-        /* Panel for switiching between radiological and neurological viewing
-         * conventions: */
-        JPanel viewPanel = new JPanel(gbLayout);
         
 
         ButtonGroup displayGroup = new ButtonGroup();
