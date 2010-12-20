@@ -48,17 +48,7 @@ public class JPanelSurface extends JPanelRendererJ3D
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -4600563188022683359L;
 
-    /** The colors for the first six surfaces are fixed. */
-	/*
-    private static Color3f[] fixedColor = {
-        new Color3f(0.0f, 0.0f, 0.5f), // blue
-        new Color3f(0.0f, 0.5f, 0.0f), // green
-        new Color3f(0.5f, 0.0f, 0.0f), // red
-        new Color3f(0.0f, 0.5f, 0.5f), // cyan
-        new Color3f(0.5f, 0.0f, 0.5f), // violet
-        new Color3f(0.5f, 0.5f, 0.0f) // yellow
-    };
-	*/
+    /** The colors for the surfaces. */
 	private static Color3f[] fixedColor;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------

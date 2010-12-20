@@ -44,6 +44,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.vecmath.Color3f;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -63,15 +64,8 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -4600563188022683359L;
 
-    /** The colors for the first six surfaces are fixed. */
-    private static ColorRGB[] fixedColor = {
-        new ColorRGB(0.0f, 0.0f, 0.5f), // blue
-        new ColorRGB(0.0f, 0.5f, 0.0f), // green
-        new ColorRGB(0.5f, 0.0f, 0.0f), // red
-        new ColorRGB(0.0f, 0.5f, 0.5f), // cyan
-        new ColorRGB(0.5f, 0.0f, 0.5f), // violet
-        new ColorRGB(0.5f, 0.5f, 0.0f) // yellow
-    };
+    /** The colors for the surfaces. */
+	private static ColorRGB[] fixedColor;
 
     /** The area label. */
     private JLabel areaLabel;
@@ -183,6 +177,16 @@ public class JPanelSurface_WM extends JInterfaceBase
     {
         super(kVolumeViewer);
         m_kSurfacePaint = new SurfacePaint_WM(this, m_kVolumeViewer);
+        
+		fixedColor = new ColorRGB[255];
+		ModelLUT lut = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});	
+		Color lutColor;
+		for (int n=0;n<255;n++) 
+		{
+			lutColor = lut.getColor(n+1);
+			fixedColor[n] = new ColorRGB( lutColor.getRed()/255f,
+					lutColor.getGreen()/255f, lutColor.getBlue()/255f );
+		}
         init();
     }
     
