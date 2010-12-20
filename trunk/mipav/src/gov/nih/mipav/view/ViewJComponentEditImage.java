@@ -6418,7 +6418,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             FileInfoBase fileInfo;
 
             if (getSlice() >= 0) {
-                fileInfo = getActiveImage().getFileInfo()[getSlice()];
+                fileInfo = getActiveImage().getFileInfo()[Math.min(getSlice(), getActiveImage().getFileInfo().length-1)];
             } else {
                 fileInfo = getActiveImage().getFileInfo()[0];
             }
