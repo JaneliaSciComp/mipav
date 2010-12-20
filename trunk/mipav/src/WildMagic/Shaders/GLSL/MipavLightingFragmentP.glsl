@@ -511,6 +511,7 @@ void p_MipavLightingFragmentP()
     }
 
     vec4 LocalMaterialDiffuse = MaterialDiffuse;
+    vec3 LocalMaterialAmbient = MaterialAmbient;
     vec4 color;
 
     if ( bClipped == false )
@@ -552,6 +553,7 @@ void p_MipavLightingFragmentP()
                 }
             }
             LocalMaterialDiffuse.a = gl_Color.a;
+            LocalMaterialAmbient = LocalMaterialDiffuse.xyz;
         }
         else
         {
@@ -564,27 +566,27 @@ void p_MipavLightingFragmentP()
         vec4 color2 = vec4(0.0,0.0,0.0,0.0);
         vec4 color3 = vec4(0.0,0.0,0.0,0.0);
         color0 = computeColor( kInPos.xyz, kInNormal.xyz, CameraModelPosition.xyz,
-                               MaterialEmissive.xyz,  MaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                               MaterialEmissive.xyz,  LocalMaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                Light0Ambient.xyz, Light0Diffuse.xyz, Light0Specular.xyz,
                                Light0ModelPosition.xyz, Light0ModelDirection.xyz,
                                Light0SpotCutoff.xyzw, Light0Attenuation.xyzw,
                                Light0Type );
         
         // Assume second light is alwasy an ambient light:
-        color1 = AmbientLight( MaterialEmissive.xyz,  MaterialAmbient.xyz, 
+        color1 = AmbientLight( MaterialEmissive.xyz,  LocalMaterialAmbient.xyz, 
                                Light1Ambient.xyz,
                                Light1Attenuation.xyzw );
         
         // Remaining lights:
         color2 = computeColor( kInPos.xyz, kInNormal.xyz, CameraModelPosition.xyz,
-                               MaterialEmissive.xyz,  MaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                               MaterialEmissive.xyz,  LocalMaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                Light2Ambient.xyz, Light2Diffuse.xyz, Light2Specular.xyz,
                                Light2WorldPosition.xyz, Light2WorldDirection.xyz,
                                Light2SpotCutoff.xyzw, Light2Attenuation.xyzw,
                                Light2Type );
         
         color3 = computeColor( kInPos.xyz, kInNormal.xyz, CameraModelPosition.xyz,
-                               MaterialEmissive.xyz,  MaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                               MaterialEmissive.xyz,  LocalMaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                Light3Ambient.xyz, Light3Diffuse.xyz, Light3Specular.xyz,
                                Light3WorldPosition.xyz, Light3WorldDirection.xyz,
                                Light3SpotCutoff.xyzw, Light3Attenuation.xyzw,
