@@ -776,6 +776,8 @@ public class ModelImage extends ModelStorageBase {
         final ModelImage kReturn = new ModelImage(getType(), extentsOut, "");
         if (kReturn.fileInfo != null) {
             for (int i = 0; i < kReturn.getFileInfo().length; i++) {
+            	kReturn.fileInfo[i] = (FileInfoBase)this.getFileInfo(0).clone();
+            	kReturn.fileInfo[i].setExtents(extentsOut);
                 kReturn.fileInfo[i].setResolutions(resolutionsOut);
                 kReturn.fileInfo[i].setUnitsOfMeasure(unitsOfMeasureOut);
                 kReturn.fileInfo[i].setOrigin(startLocationsOut);
