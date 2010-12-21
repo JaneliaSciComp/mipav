@@ -59,6 +59,7 @@ import gov.nih.mipav.view.ViewJComponentPedsAtlasIconImage;
 import gov.nih.mipav.view.ViewJComponentPedsAtlasImage;
 import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
@@ -786,16 +787,17 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				while(!test) {
 					try{
 						//t1.wait();
-						
+						ViewJComponentPedsAtlasImage compImg = null;
 						if(currentModality.equals(T1)) {
-							 currentComponentImage = getT1ComponentImage(currentAge);
+							compImg = getT1ComponentImage(currentAge);
 						 }else if(currentModality.equals(T2)) {
-							 currentComponentImage = getT2ComponentImage(currentAge);
+							 compImg = getT2ComponentImage(currentAge);
 						 }else {
-							 currentComponentImage = getPDComponentImage(currentAge);
+							 compImg = getPDComponentImage(currentAge);
 						 }
 					
-						if(currentComponentImage != null) {
+						if(compImg != null) {
+							currentComponentImage = compImg;
 							setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 							
 							imagePanel.removeAll();
@@ -1549,7 +1551,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
      * @param event the window event that triggered this method
      */
     public void windowClosing(final WindowEvent event) {
+    	if(t1.isAlive()) {
+			((PopulateModelImages)t1).setIsInterrupted(true);
+			
+		}
     	nullifyStructures();
+    	ViewUserInterface.getReference().windowClosing(event);
         close();
     }
 	
@@ -1845,6 +1852,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		String[] pathStrings;
 		int c = 1;
 	    public boolean isInterrupted;
+	    int currAge;
 
 		
 		public PopulateModelImages(PlugInDialogPedsAtlas owner, String orient) {
@@ -1864,6 +1872,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}
 		
 		public void run() {
+			currAge = currentAge;
 			long begTime = System.currentTimeMillis();
 			populateModelImages(orient);
 			if(isInterrupted()) {
@@ -1895,7 +1904,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
 			if(orient.equals(AXIAL)) {
 				
-				
+				infoLabel.setForeground(Color.red);
 				loadAxialImages();
 				infoLabel.setText("");
 					
@@ -1962,11 +1971,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}
 		
 		public void loadAxialT1() {
-			for(int i=currentAge;i<numAgeTicks;i++) {
+			for(int i=currAge;i<numAgeTicks;i++) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading axial T1 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading axial T1 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -1981,11 +1994,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
 				setT1ComponentImage(comp,i);
 			}
-			for(int i=currentAge-1;i>=0;i--) {
+			for(int i=currAge-1;i>=0;i--) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading axial T1 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading axial T1 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2008,11 +2025,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		
 		public void loadAxialT2() {
-			for(int i=currentAge;i<numAgeTicks;i++) {
+			for(int i=currAge;i<numAgeTicks;i++) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading axial T2 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading axial T2 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2028,11 +2049,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
 				setT2ComponentImage(comp,i);
 			}
-			for(int i=currentAge-1;i>=0;i--) {
+			for(int i=currAge-1;i>=0;i--) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading axial T2 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading axial T2 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2050,11 +2075,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}
 
 		public void loadAxialPD() {
-			for(int i=currentAge;i<numAgeTicks;i++) {
+			for(int i=currAge;i<numAgeTicks;i++) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading axial PD images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading axial PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2069,11 +2098,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
 				setPDComponentImage(comp,i);
 			}
-			for(int i=currentAge-1;i>=0;i--) {
+			for(int i=currAge-1;i>=0;i--) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading axial PD images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading axial PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2140,11 +2173,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}
 		
 		public void loadCoronalT1() {
-			for(int i=currentAge;i<numAgeTicks;i++) {
+			for(int i=currAge;i<numAgeTicks;i++) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading coronal T1 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading coronal T1 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2161,11 +2198,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				setT1ComponentImage(comp,i);
 				//notify();
 			}
-			for(int i=currentAge-1;i>=0;i--) {
+			for(int i=currAge-1;i>=0;i--) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading coronal T1 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading coronal T1 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2192,11 +2233,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}
 		
 		public void loadCoronalT2() {
-			for(int i=currentAge;i<numAgeTicks;i++) {
+			for(int i=currAge;i<numAgeTicks;i++) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading coronal T2 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading coronal T2 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2212,11 +2257,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				
 				setT2ComponentImage(comp,i);
 			}
-			for(int i=currentAge-1;i>=0;i--) {
+			for(int i=currAge-1;i>=0;i--) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading coronal T2 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading coronal T2 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2234,11 +2283,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}
 		
 		public void loadCoronalPD() {
-			for(int i=currentAge;i<numAgeTicks;i++) {
+			for(int i=currAge;i<numAgeTicks;i++) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading coronal PD images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading coronal PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2253,11 +2306,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
 				setPDComponentImage(comp,i);
 			}
-			for(int i=currentAge-1;i>=0;i--) {
+			for(int i=currAge-1;i>=0;i--) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading coronal PD images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading coronal PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2329,11 +2386,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		
 		public void loadSagittalT1() {
-			for(int i=currentAge;i<numAgeTicks;i++) {
+			for(int i=currAge;i<numAgeTicks;i++) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading sagittal T1 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading sagittal T1 images : " + extraSpace + c + "/" + numAgeTicks +  " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2349,11 +2410,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				setT1ComponentImage(comp,i);
 				//notify();
 			}
-			for(int i=currentAge-1;i>=0;i--) {
+			for(int i=currAge-1;i>=0;i--) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading sagittal T1 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading sagittal T1 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2374,11 +2439,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		
 		public void loadSagittalT2() {
-			for(int i=currentAge;i<numAgeTicks;i++) {
+			for(int i=currAge;i<numAgeTicks;i++) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading sagittal T2 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading sagittal T2 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2393,11 +2462,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
 				setT2ComponentImage(comp,i);
 			}
-			for(int i=currentAge-1;i>=0;i--) {
+			for(int i=currAge-1;i>=0;i--) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading sagittal T2 images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading sagittal T2 images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
@@ -2417,7 +2490,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		
 		public void loadSagittalPD() {
-			for(int i=currentAge;i<numAgeTicks;i++) {
+			for(int i=currAge;i<numAgeTicks;i++) {
 				if(isInterrupted()) {
 					return;
 				}
@@ -2425,7 +2498,11 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(c==12) {
 					c=1;
 				}
-				infoLabel.setText("loading axial PD images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading axial PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				atlasFile = new File(pedsHome + sagittalPDPathStrings[i]);
 				pdAtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
 				pdAtlasImages[i].addImageDisplayListener(owner);
@@ -2436,11 +2513,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
 				setPDComponentImage(comp,i);
 			}
-			for(int i=currentAge-1;i>=0;i--) {
+			for(int i=currAge-1;i>=0;i--) {
 				if(isInterrupted()) {
 					return;
 				}
-				infoLabel.setText("loading axial PD images : " + c + "/" + numAgeTicks);
+				String extraSpace = " ";
+				if(c>=10) {
+					extraSpace = "";
+				}
+				infoLabel.setText("Loading axial PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
