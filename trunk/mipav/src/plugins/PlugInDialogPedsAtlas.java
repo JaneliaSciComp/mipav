@@ -448,14 +448,20 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         // toolbar panel
         toolbarPanel = new JPanel(new GridBagLayout());
         toolbarBuilder = new ViewToolBarBuilder(this);
-        magButton = toolbarBuilder.buildButton("MagImage", "Magnify Image", "zoomin");
-        unMagButton = toolbarBuilder.buildButton("UnMagImage", "Un-Mag Image", "zoomout");
+        magButton = toolbarBuilder.buildButton("MagImage", "Magnify Image", "zoomin2");
+        unMagButton = toolbarBuilder.buildButton("UnMagImage", "Un-Mag Image", "zoomout2");
         zoomOneButton = toolbarBuilder.buildButton("ZoomOne", "Magnify Image 1.0x", "zoom1");
         saveButton = toolbarBuilder.buildButton("Save", "Save screenshot of image", "save");
         winLevelButton = toolbarBuilder.buildButton("WinLevel", "Window/Level", "winlevel");
         resetButton = toolbarBuilder.buildButton("resetLUT","Reset LUTs of all images in current modality","resetlut");
         lutButton = toolbarBuilder.buildButton("copyLUT", "Apply LUT of current image to all images in current modailty", "histolut");
         resetButton.setEnabled(false);
+        
+        JButton separator = new JButton(MipavUtil.getIcon("separator.gif"));
+        separator.setMargin(new Insets(0, 0, 0, 0));
+        separator.setBorderPainted(false);
+        separator.setFocusPainted(false);
+        
         lutButton.setEnabled(false);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
@@ -469,7 +475,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         toolbarPanel.add(zoomOneButton, gbc);
         gbc.gridx = 3;
         gbc.gridy = 0;
-        //toolbarPanel.add(saveButton, gbc);
+        toolbarPanel.add(separator, gbc);
         gbc.gridx = 4;
         gbc.gridy = 0;
         toolbarPanel.add(winLevelButton, gbc);
