@@ -1,39 +1,32 @@
 package gov.nih.mipav.view;
 
-import WildMagic.LibFoundation.Mathematics.Vector2f;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.util.MipavCoordinateSystems;
-import gov.nih.mipav.util.MipavMath;
+import gov.nih.mipav.util.*;
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.registration.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegLeastSquares;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
-import java.io.*;
-
-import java.lang.reflect.*;
-
-import java.net.*;
-
-import java.text.*;
-
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
+
+import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
@@ -46,12 +39,15 @@ import javax.swing.event.*;
  * bottom. If the orientation is known, Z increases from bottom to top. If the image orientation is known XY has an
  * axial slice, ZY has a sagittal slice, and XZ has a coronal slice. The lower right quadrant displays the X, Y, and Z
  * coordinates of the point selected.
- *
- * <p>There are 2 menus - a file menu and an options menu. The file menu only has a close frame command. The Options
- * menu has a Show Axes command,a Show Crosshairs command, a show Talairach grid, a show Talairach position command, and
- * a Link to another image command.</p>
- *
- * <p>There are 2 rows of toolbar buttons. The first row has 15 toolbar buttons:<br>
+ * 
+ * <p>
+ * There are 2 menus - a file menu and an options menu. The file menu only has a close frame command. The Options menu
+ * has a Show Axes command,a Show Crosshairs command, a show Talairach grid, a show Talairach position command, and a
+ * Link to another image command.
+ * </p>
+ * 
+ * <p>
+ * There are 2 rows of toolbar buttons. The first row has 15 toolbar buttons:<br>
  * 1.) Traverse image with pressed mouse button. As you traverse the XY image, the XY image is unchanged. The X slice
  * shown in the ZY image changes and the Y coordinate in the ZY image changes. The Z coordinate in the ZY image remains
  * unchanged. The Y slice shown in the XZ image changes and the X coordinate in the XZ image changes. The Z coordinate
@@ -83,8 +79,9 @@ import javax.swing.event.*;
  * 15.) (**REMOVED**)Bring up a dialog for placing markers to create a new Talairach space image from an image in the
  * AC-PC aligned view.<br>
  * </p>
- *
- * <p>The second toolbar row is a paint toolbar with 14 buttons:<br>
+ * 
+ * <p>
+ * The second toolbar row is a paint toolbar with 14 buttons:<br>
  * 1.) Draw using a brush.<br>
  * 2.) Pick up a color from an image.<br>
  * 3.) Fills an area with the desired color - the Paint Grow dialog box appears. The box has an upper bound slider, a
@@ -109,16 +106,21 @@ import javax.swing.event.*;
  * 13.) Undo last paint region created by a mouse release.<br>
  * 14.) Calculate volume of paint.<br>
  * </p>
- *
- * <p>If imageA and imageB are both loaded, an Active Image Panel with 3 radio buttons, image A, imageB, and both
- * appears. Commit paint changes and apply rotations and translations may be selected for imageA, imageB, or both.</p>
- *
- * <p>With 4D images a slider for the fourth time dimension appears below the second toolbar.</p>
+ * 
+ * <p>
+ * If imageA and imageB are both loaded, an Active Image Panel with 3 radio buttons, image A, imageB, and both appears.
+ * Commit paint changes and apply rotations and translations may be selected for imageA, imageB, or both.
+ * </p>
+ * 
+ * <p>
+ * With 4D images a slider for the fourth time dimension appears below the second toolbar.
+ * </p>
  */
-public class ViewJFrameTriImage extends ViewJFrameBase
-        implements ItemListener, ChangeListener, KeyListener, MouseListener, VOIManagerInterfaceListener {
+public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, ChangeListener, KeyListener,
+        MouseListener, VOIManagerInterfaceListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -7588617549055746009L;
@@ -206,25 +208,26 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Constant to determine how many pixels would be optimal for the image to be initially zoomed to. */
     protected static final int DEFAULT_OPTIMAL_ZOOM = 256;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     // protected JScrollPane[] scrollPane = new JScrollPane[MAX_TRI_IMAGES];
     // made public for use by visualization plug-ins (PLB)
-    public JScrollPane[] scrollPane = new JScrollPane[MAX_TRI_IMAGES];
+    public JScrollPane[] scrollPane = new JScrollPane[ViewJFrameTriImage.MAX_TRI_IMAGES];
 
     /** DOCUMENT ME! */
     // protected ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[MAX_TRI_IMAGES];
     // made public for use by visualization plug-ins (PLB)
-    public ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[MAX_TRI_IMAGES];
+    public ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[ViewJFrameTriImage.MAX_TRI_IMAGES];
 
     /** DOCUMENT ME! */
     // protected JPanel[] triImagePanel = new JPanel[MAX_TRI_IMAGES];
     // made public for use by visualization plug-ins (PLB)
-    public JPanel[] triImagePanel = new JPanel[MAX_TRI_IMAGES];
+    public JPanel[] triImagePanel = new JPanel[ViewJFrameTriImage.MAX_TRI_IMAGES];
 
     /** DOCUMENT ME! */
-    protected JToggleButton[] btnInvisible = new JToggleButton[NUM_INVISIBLE_BUTTONS];
+    protected JToggleButton[] btnInvisible = new JToggleButton[ViewJFrameTriImage.NUM_INVISIBLE_BUTTONS];
 
     /** 1 for black and white, 4 for color. */
     protected int bufferFactor;
@@ -277,12 +280,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Image control toolbar. */
     protected JToolBar imageToolBar;
+
     ButtonGroup VOIGroup = new ButtonGroup();
-    
+
     protected JToolBar imageAlignToolBar;
 
     /** Spinner component for the paint intensity. */
     protected JSpinner intensitySpinner;
+
+    /** Panel for Talairach position display. */
+    protected JPanel talairachPanel = new JPanel(new GridBagLayout());
+
+    /** Panel for switching between radiological and neurological viewing conventions. */
+    protected JPanel viewPanel = new JPanel(new GridBagLayout());
 
     /** Label the Talairach position x value in the image volume. */
     protected JTextField labelXTal;
@@ -292,16 +302,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Label the Talairach position z value in the image volume. */
     protected JTextField labelZTal;
-    
-    protected JLabel xTalLabel,yTalLabel,zTalLabel;
+
+    protected JLabel xTalLabel, yTalLabel, zTalLabel;
 
     /** Menu items storage. */
     protected ViewMenuBuilder menuObj;
 
     /** DOCUMENT ME! */
     protected boolean oldLayout = Preferences.is(Preferences.PREF_TRIPLANAR_2X2_LAYOUT); // flag to indicated whether
-                                                                                         // or not to use the old
-                                                                                         // tri-planar layout
+
+    // or not to use the old
+    // tri-planar layout
 
     /** Opacity of paint. */
     protected float OPACITY = 0.25f;
@@ -311,7 +322,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Paint tool bar. */
     protected JToolBar paintToolBar;
-    
+
     public JToggleButton borderPaintButton, bogusBorderPaintButton;
 
     /** Panel for deciding which image is active; appears when 2 images are loaded. */
@@ -319,6 +330,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Panel that holds the toolbars. */
     protected JPanel panelToolbar = new JPanel();
+
     protected GridBagConstraints panelToolBarGBC = new GridBagConstraints();
 
     /** Reference to the parent window. */
@@ -384,7 +396,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** DOCUMENT ME! */
     private JToggleButton dropperPaintToggleButton;
 
-
     /** refs to indiviadual frame zooming in and out buttons. */
     private JToggleButton indivMagButton, indivMinButton;
 
@@ -405,7 +416,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** int used for quick-key painting for speedier paint brush access. */
     private int quickPaintBrushIndex = -1;
-    
+
     /** The button that indicates whether this triframe is linked with tri-frames of similar dimensionality. */
     private JCheckBox scrollButton;
 
@@ -423,28 +434,32 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
-    
+
     private JMenu voiMenu;
+
     private VOIManagerInterface voiManager;
 
-    /** talaraich intensity label**/
+    /** talaraich intensity label* */
     protected JLabel iTalLabel;
-    /** talairach voxel label **/
+
+    /** talairach voxel label * */
     public JLabel tTalVoxLabel;
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Make a frame and puts an image component into it.
-     *
-     * @param  _imageA   First image to display
-     * @param  LUTa      LUT of the imageA (if null grayscale LUT is constructed)
-     * @param  _imageB   Second loaded image
-     * @param  LUTb      LUT of the imageB
-     * @param  controls  controls used to obtain initial OPACITY and color
-     * @param  parent    main user interface frame.
+     * 
+     * @param _imageA First image to display
+     * @param LUTa LUT of the imageA (if null grayscale LUT is constructed)
+     * @param _imageB Second loaded image
+     * @param LUTb LUT of the imageB
+     * @param controls controls used to obtain initial OPACITY and color
+     * @param parent main user interface frame.
      */
-    public ViewJFrameTriImage(ModelImage _imageA, ModelLUT LUTa, ModelImage _imageB, ModelLUT LUTb,
-                              ViewControlsImage controls, ViewJFrameImage parent) {
+    public ViewJFrameTriImage(final ModelImage _imageA, final ModelLUT LUTa, final ModelImage _imageB,
+            final ModelLUT LUTb, final ViewControlsImage controls, final ViewJFrameImage parent) {
         super(_imageA, _imageB);
         userInterface = ViewUserInterface.getReference();
         this.LUTa = LUTa;
@@ -454,18 +469,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         try {
             scrollOriginalCrosshair = Preferences.is(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             scrollOriginalCrosshair = false;
         }
 
         try {
             setIconImage(MipavUtil.getIconImage("3plane_16x16.gif"));
-        } catch (Exception e) { }
+        } catch (final Exception e) {}
 
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
     // **************************** Action Events *****************************
@@ -473,31 +489,29 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Calls various methods depending on the action.
-     *
-     * @param  event  event that triggered function
+     * 
+     * @param event event that triggered function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-        Object source = event.getSource();
-        
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
+        final Object source = event.getSource();
+
         Preferences.debug(command, Preferences.DEBUG_MINOR);
 
-        if ( ViewMenuBar.isMenuCommand( voiMenu, command ) )
-        {
+        if (ViewMenuBar.isMenuCommand(voiMenu, command)) {
             voiManager.actionPerformed(event);
-        }
-        else if (command.equals("ScrollLink")) {
-            linkedScrolling = !linkedScrolling;    
-                
-            Enumeration names = userInterface.getRegisteredImageNames();
+        } else if (command.equals("ScrollLink")) {
+            linkedScrolling = !linkedScrolling;
+
+            final Enumeration names = userInterface.getRegisteredImageNames();
 
             boolean sameDims = false;
             while (names.hasMoreElements()) {
-                String name = (String) names.nextElement();
+                final String name = (String) names.nextElement();
                 sameDims = true;
 
-                if (!imageA.getImageName().equals(name)) {
-                    ModelImage img = userInterface.getRegisteredImageByName(name);
+                if ( !imageA.getImageName().equals(name)) {
+                    final ModelImage img = userInterface.getRegisteredImageByName(name);
 
                     if (img.getTriImageFrame() != null) {
 
@@ -517,7 +531,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     }
                 }
             }
-            
+
         } else if (command.equals("CloseFrame")) {
             windowClosing(null);
         } else if (command.equals("leastSquares")) {
@@ -528,15 +542,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             handleTPSpline();
 
             return;
-        } else if (command.equals(OLD_LAYOUT)) {
-            setOldLayout(!oldLayout);
-        } else if (command.equals(PANEL_PLUGIN)) {
+        } else if (command.equals(ViewJFrameTriImage.OLD_LAYOUT)) {
+            setOldLayout( !oldLayout);
+        } else if (command.equals(ViewJFrameTriImage.PANEL_PLUGIN)) {
             handlePluginPanelSelection();
 
             return;
         } else if (command.equals("ShowAxes")) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].displayAxes(menuObj.isMenuItemSelected("Show axes"));
@@ -546,7 +560,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             updateImages(true);
         } else if (command.equals("ShowXHairs")) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].displayXHairs(menuObj.isMenuItemSelected("Show crosshairs"));
@@ -557,20 +571,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         } else if (command.equals("ScrollOriginal")) {
 
             scrollOriginalCrosshair = menuObj.isMenuItemSelected("Scroll original image with crosshair");
-            Preferences.setProperty(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL,
-                                    Boolean.toString(scrollOriginalCrosshair));
+            Preferences.setProperty(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL, Boolean
+                    .toString(scrollOriginalCrosshair));
             updateImages(true);
         } else if (command.equals("FastPaint")) {
-            Preferences.setProperty(Preferences.PREF_FAST_TRIPLANAR_REPAINT,
-                                    (menuObj.isMenuItemSelected("Fast rendering in paint mode") ? "true" : "false"));
+            Preferences.setProperty(Preferences.PREF_FAST_TRIPLANAR_REPAINT, (menuObj
+                    .isMenuItemSelected("Fast rendering in paint mode") ? "true" : "false"));
         } else if (command.equals("Snap90")) {
-            Preferences.setProperty(Preferences.PREF_TRIPLANAR_SNAP90,
-                                    (menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple") ? "true"
-                                                                                                          : "false"));
+            Preferences.setProperty(Preferences.PREF_TRIPLANAR_SNAP90, (menuObj
+                    .isMenuItemSelected("Snap protractor to 90 degrees multiple") ? "true" : "false"));
 
             snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setSnapProtractor90(snapProtractor90);
@@ -582,25 +595,25 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             // volume position frame and the tabbed volume position pane in the plug-in
             // position could both be active at once, hence the need for this
             // sourceCheckbox logic
-            JCheckBox sourceCheckbox = (JCheckBox) (event.getSource());
+            final JCheckBox sourceCheckbox = (JCheckBox) (event.getSource());
 
             showTalairachGrid = sourceCheckbox.isSelected();
             chkShowTalairachGrid.setSelected(showTalairachGrid);
             chkShowTalairachGridMarkers.setEnabled(showTalairachGrid);
-            
-            if(!showTalairachGrid) {
-            	tTalVoxLabel.setText("Talairach Voxel:      ");
+
+            if ( !showTalairachGrid) {
+                tTalVoxLabel.setText("Talairach Voxel:      ");
             }
 
             menuObj.setMenuItemSelected("ShowXHairs", !showTalairachGrid);
             menuObj.setMenuItemSelected("ShowAxes", !showTalairachGrid);
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].showTalairachGrid(showTalairachGrid);
-                    triImage[i].displayAxes(!showTalairachGrid);
-                    triImage[i].displayXHairs(!showTalairachGrid);
+                    triImage[i].displayAxes( !showTalairachGrid);
+                    triImage[i].displayXHairs( !showTalairachGrid);
                 }
             }
 
@@ -611,12 +624,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             // volume position frame and the tabbed volume position pane in the plug-in
             // position could both be active at once, hence the need for this
             // sourceCheckbox logic
-            JCheckBox sourceCheckbox = (JCheckBox) (event.getSource());
+            final JCheckBox sourceCheckbox = (JCheckBox) (event.getSource());
 
-            boolean showGridMarkers = sourceCheckbox.isSelected();
+            final boolean showGridMarkers = sourceCheckbox.isSelected();
             chkShowTalairachGridMarkers.setSelected(showGridMarkers);
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].showTalairachGridmarkers(showGridMarkers);
@@ -625,15 +638,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             updateImages(true);
         } else if (command.equals("PaintBrush")) {
-            if ((imageB != null) && (!radioImageBoth.isEnabled())) {
+            if ( (imageB != null) && ( !radioImageBoth.isEnabled())) {
                 radioImageBoth.setEnabled(true);
             }
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.PAINT_VOI);
-                    //triImage[i].setProtractorVisible(false);
+                    // triImage[i].setProtractorVisible(false);
                     triImage[i].clearProtractor();
                     triImage[i].repaint();
                 }
@@ -641,42 +654,42 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         } else if (command.equals("Dropper")) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.DROPPER_PAINT);
-                    //triImage[i].setProtractorVisible(false);
+                    // triImage[i].setProtractorVisible(false);
                     triImage[i].clearProtractor();
                     triImage[i].repaint();
                 }
             }
         } else if (command.equals("Eraser")) {
 
-            if ((imageB != null) && (!radioImageBoth.isEnabled())) {
+            if ( (imageB != null) && ( !radioImageBoth.isEnabled())) {
                 radioImageBoth.setEnabled(true);
             }
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.ERASER_PAINT);
-                    //triImage[i].setProtractorVisible(false);
+                    // triImage[i].setProtractorVisible(false);
                     triImage[i].clearProtractor();
                     triImage[i].repaint();
                 }
             }
         } else if (command.equals("EraseAll")) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
-                    //triImage[i].setProtractorVisible(false);
+                    // triImage[i].setProtractorVisible(false);
                     triImage[i].clearProtractor();
                     triImage[i].repaint();
                 }
             }
 
-            triImage[AXIAL_A].eraseAllPaint(false);
+            triImage[ViewJFrameTriImage.AXIAL_A].eraseAllPaint(false);
 
             imageA.notifyImageDisplayListeners(null, true);
 
@@ -685,23 +698,25 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         } else if (command.equals("PaintMask")) {
 
-            if (triImage[AXIAL_AB] != null) {
-                triImage[AXIAL_AB].getActiveImage().setMask(triImage[AXIAL_AB].getActiveImage().generateVOIMask());
-                triImage[AXIAL_AB].setPaintMask(triImage[AXIAL_AB].getActiveImage().getMask());
+            if (triImage[ViewJFrameTriImage.AXIAL_AB] != null) {
+                triImage[ViewJFrameTriImage.AXIAL_AB].getActiveImage().setMask(
+                        triImage[ViewJFrameTriImage.AXIAL_AB].getActiveImage().generateVOIMask());
+                triImage[ViewJFrameTriImage.AXIAL_AB].setPaintMask(triImage[ViewJFrameTriImage.AXIAL_AB]
+                        .getActiveImage().getMask());
             }
 
             updateImages(true);
         } else if (command.equals("traverse")) {
             voiManager.actionPerformed(event);
-            if ((imageB != null) && (!radioImageBoth.isEnabled())) {
+            if ( (imageB != null) && ( !radioImageBoth.isEnabled())) {
                 radioImageBoth.setEnabled(true);
             }
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
-                    //triImage[i].setProtractorVisible(false);
+                    // triImage[i].setProtractorVisible(false);
                     triImage[i].clearProtractor();
 
                 }
@@ -711,24 +726,24 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         } else if (command.equals("Center")) {
             centerButtonSelected = !centerButtonSelected;
 
-            btnInvisible[3].setSelected(!centerButtonSelected);
+            btnInvisible[3].setSelected( !centerButtonSelected);
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
-                    //triImage[i].setProtractorVisible(false);
+                    // triImage[i].setProtractorVisible(false);
                     triImage[i].clearProtractor();
                     triImage[i].repaint();
                 }
             }
 
             if (centerButtonSelected) {
-                setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
+                setCenter( (extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
 
             } else {
 
-                for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+                for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                     if (triImage[i] != null) {
                         triImage[i].setDoCenter(false);
@@ -741,17 +756,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
 
-            //if (triImage[AXIAL_A].isProtractorVisible()) {
-            //    btnInvisible[2].setSelected(true);
-            //}
+            // if (triImage[AXIAL_A].isProtractorVisible()) {
+            // btnInvisible[2].setSelected(true);
+            // }
 
-            if (((JToggleButton) source).isSelected()) {
+            if ( ((JToggleButton) source).isSelected()) {
 
-                if ((imageB != null) && (!radioImageBoth.isEnabled())) {
+                if ( (imageB != null) && ( !radioImageBoth.isEnabled())) {
                     radioImageBoth.setEnabled(true);
                 }
 
-                for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+                for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                     if (triImage[i] != null) {
                         triImage[i].setSnapProtractor90(snapProtractor90);
@@ -761,7 +776,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 }
             } else {
 
-                for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+                for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                     if (triImage[i] != null) {
                         triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
@@ -770,154 +785,158 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     }
                 }
             }
-        } 
-        else if (command.equals("colorPaint")) {
+        } else if (command.equals("colorPaint")) {
             colorChooser = new ViewJColorChooser(this, "Pick paint color", new OkColorListener(), null);
         } else if (command.equals("OpacityPaint")) {
 
             if (controls != null) {
-               new JDialogOpacityControls(this, controls);
+                new JDialogOpacityControls(this, controls);
             } else {
-            	String prefOpacity = Preferences.getProperty(Preferences.PREF_PAINT_OPACITY);
-            	if (prefOpacity != null && ! prefOpacity.trim().equals("")) {
-            		try{
-            			float prefOpacityFloat = Float.valueOf(prefOpacity).floatValue();
-            			if(prefOpacityFloat < 0 || prefOpacityFloat > 1) {
-            				new JDialogOpacityControls(this, OPACITY);
-            			}else {
-            				new JDialogOpacityControls(this, prefOpacityFloat);
-            			}
-            			
-            		}catch(Exception e) {
-            			e.printStackTrace();
-            			new JDialogOpacityControls(this, OPACITY);
-            		}
-            	}else {
-            		new JDialogOpacityControls(this, OPACITY);
-            	}
+                final String prefOpacity = Preferences.getProperty(Preferences.PREF_PAINT_OPACITY);
+                if (prefOpacity != null && !prefOpacity.trim().equals("")) {
+                    try {
+                        final float prefOpacityFloat = Float.valueOf(prefOpacity).floatValue();
+                        if (prefOpacityFloat < 0 || prefOpacityFloat > 1) {
+                            new JDialogOpacityControls(this, OPACITY);
+                        } else {
+                            new JDialogOpacityControls(this, prefOpacityFloat);
+                        }
+
+                    } catch (final Exception e) {
+                        e.printStackTrace();
+                        new JDialogOpacityControls(this, OPACITY);
+                    }
+                } else {
+                    new JDialogOpacityControls(this, OPACITY);
+                }
             }
 
-            triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+            triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
         } else if (command.equals("DisplayBorder")) {
-        	if(Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
-            	getControls().getTools().bogusBorderPaintButton.setSelected(true);
-            	bogusBorderPaintButton.setSelected(true);
-            }else {
-            	getControls().getTools().borderPaintButton.setSelected(true);
-            	borderPaintButton.setSelected(true);
+            if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
+                getControls().getTools().bogusBorderPaintButton.setSelected(true);
+                bogusBorderPaintButton.setSelected(true);
+            } else {
+                getControls().getTools().borderPaintButton.setSelected(true);
+                borderPaintButton.setSelected(true);
             }
 
-        	Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
+            Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf(""
+                    + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
 
             updateImages(true);
-            triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners();
+            triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage().notifyImageDisplayListeners();
 
         } else if (command.equals("CommitPaint")) {
-        	//THIS MAY NOT BE CORRECT
-        	 boolean saveMasksAs4D = false;
-             if(imageA.getNDims() == 4) {
-             	JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
-             	if (dialogMask3D4D.isCancelled()) {
-                     return;
-                 } else {
-                 	saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
-                 }
-             }
-        	
+            // THIS MAY NOT BE CORRECT
+            boolean saveMasksAs4D = false;
+            if (imageA.getNDims() == 4) {
+                final JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
+                if (dialogMask3D4D.isCancelled()) {
+                    return;
+                } else {
+                    saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
+                }
+            }
 
             if (getSelectedImage() == ViewJComponentBase.BOTH) {
 
-                if (triImage[AXIAL_AB] != null) {
-                    triImage[AXIAL_AB].commitMask(ViewJComponentBase.BOTH, true, true, saveMasksAs4D);
-                    triImage[AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
+                if (triImage[ViewJFrameTriImage.AXIAL_AB] != null) {
+                    triImage[ViewJFrameTriImage.AXIAL_AB]
+                            .commitMask(ViewJComponentBase.BOTH, true, true, saveMasksAs4D);
+                    triImage[ViewJFrameTriImage.AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
                 } else {
                     // triImage[AXIAL_A].commitMask(ViewJComponentBase.BOTH, true, true);
                 }
             } else if (getSelectedImage() == ViewJComponentBase.IMAGE_A) {
 
-                if (triImage[AXIAL_A] != null) {
-                    triImage[AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, true, saveMasksAs4D);
-                    triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+                if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+                    triImage[ViewJFrameTriImage.AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, true,
+                            saveMasksAs4D);
+                    triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                 }
             } else if (getSelectedImage() == ViewJComponentBase.IMAGE_B) {
 
                 // must set IMAGE_A because in the AXIAL_B, SAGITTAL_B, and CORONAL_B images,
                 // imageB is in the imageA slot
-                if (triImage[AXIAL_B] != null) {
-                    triImage[AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, true, saveMasksAs4D);
-                    triImage[AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
+                if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
+                    triImage[ViewJFrameTriImage.AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, true,
+                            saveMasksAs4D);
+                    triImage[ViewJFrameTriImage.AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
                 }
             }
 
             updateImages(true);
         } else if (command.equals("CommitPaintExt")) {
-        	//THIS MAY NOT BE CORRECT
-       	 	boolean saveMasksAs4D = false;
-            if(imageA.getNDims() == 4) {
-            	JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
-            	if (dialogMask3D4D.isCancelled()) {
+            // THIS MAY NOT BE CORRECT
+            boolean saveMasksAs4D = false;
+            if (imageA.getNDims() == 4) {
+                final JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
+                if (dialogMask3D4D.isCancelled()) {
                     return;
                 } else {
-                	saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
+                    saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
                 }
             }
-            
-            
+
             if (getSelectedImage() == ViewJComponentBase.BOTH) {
 
-                if (triImage[AXIAL_AB] != null) {
-                    triImage[AXIAL_AB].commitMask(ViewJComponentBase.BOTH, true, false, saveMasksAs4D);
-                    triImage[AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
+                if (triImage[ViewJFrameTriImage.AXIAL_AB] != null) {
+                    triImage[ViewJFrameTriImage.AXIAL_AB].commitMask(ViewJComponentBase.BOTH, true, false,
+                            saveMasksAs4D);
+                    triImage[ViewJFrameTriImage.AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
                 } else {
                     // triImage[AXIAL_A].commitMask(ViewJComponentBase.BOTH, true, false);
                 }
 
             } else if (getSelectedImage() == ViewJComponentBase.IMAGE_A) {
 
-                if (triImage[AXIAL_A] != null) {
-                    triImage[AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, false, saveMasksAs4D);
-                    triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+                if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+                    triImage[ViewJFrameTriImage.AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, false,
+                            saveMasksAs4D);
+                    triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                 }
                 // triImage[AXIAL_A].getImageA().notifyImageDisplayListeners(null, true);
             } else if (getSelectedImage() == ViewJComponentBase.IMAGE_B) {
 
                 // must set IMAGE_A because in the AXIAL_B, SAGITTAL_B, and CORONAL_B images,
                 // imageB is in the imageA slot
-                if (triImage[AXIAL_B] != null) {
-                    triImage[AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, false, saveMasksAs4D);
-                    triImage[AXIAL_B].getImageA().notifyImageDisplayListeners(null, true);
+                if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
+                    triImage[ViewJFrameTriImage.AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, false,
+                            saveMasksAs4D);
+                    triImage[ViewJFrameTriImage.AXIAL_B].getImageA().notifyImageDisplayListeners(null, true);
                 }
             }
             updateImages(true);
         } else if (command.equals("PaintCan")) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.PAINT_CAN);
-                    //triImage[i].setProtractorVisible(false);
+                    // triImage[i].setProtractorVisible(false);
                     triImage[i].clearProtractor();
                     triImage[i].repaint();
                 }
             }
 
-            if ((triImage[AXIAL_A].growDialog != null) &&
-                    ((JDialogPaintGrow) triImage[AXIAL_A].growDialog).isShowing()) {
+            if ( (triImage[ViewJFrameTriImage.AXIAL_A].growDialog != null)
+                    && ((JDialogPaintGrow) triImage[ViewJFrameTriImage.AXIAL_A].growDialog).isShowing()) {
                 return;
             }
 
-            Vector listeners = new Vector();
+            final Vector listeners = new Vector();
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     listeners.add(triImage[i]);
                 }
             }
 
-            JDialogPaintGrow jdpg = new JDialogPaintGrow(this, listeners);
+            final JDialogPaintGrow jdpg = new JDialogPaintGrow(this, listeners);
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].growDialog = jdpg;
@@ -925,48 +944,49 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         } else if (command.equals("UndoPaint")) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].undoLastPaint();
                 }
             }
 
-            if (triImage[AXIAL_A] != null) {
-                triImage[AXIAL_A].getImageA().notifyImageDisplayListeners(null, true);
+            if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+                triImage[ViewJFrameTriImage.AXIAL_A].getImageA().notifyImageDisplayListeners(null, true);
             }
 
-            if (triImage[AXIAL_B] != null) {
-                triImage[AXIAL_B].getImageB().notifyImageDisplayListeners(null, true);
+            if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
+                triImage[ViewJFrameTriImage.AXIAL_B].getImageB().notifyImageDisplayListeners(null, true);
             }
         } else if (command.equals("CalcPaint")) {
 
-            if (triImage[AXIAL_A] != null) {
-                triImage[AXIAL_A].calcPaintedVolume(null);
+            if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+                triImage[ViewJFrameTriImage.AXIAL_A].calcPaintedVolume(null);
             }
         } else if (command.equals("UnMagImage")) {
-            float oldZoom = triImage[AXIAL_A].getZoomX();
+            final float oldZoom = triImage[ViewJFrameTriImage.AXIAL_A].getZoomX();
 
             float newZoom = 1;
 
-            if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[AXIAL_A].getZoomX() > 1.0f)) {
+            if ( (Preferences.is(Preferences.PREF_ZOOM_LINEAR))
+                    && (triImage[ViewJFrameTriImage.AXIAL_A].getZoomX() > 1.0f)) {
 
                 // linear zoom is prevented if getZoomX() <= 1.0
-                newZoom = triImage[AXIAL_A].getZoomX() - 1.0f;
+                newZoom = triImage[ViewJFrameTriImage.AXIAL_A].getZoomX() - 1.0f;
             } else {
-                newZoom = 0.5f * triImage[AXIAL_A].getZoomX();
+                newZoom = 0.5f * triImage[ViewJFrameTriImage.AXIAL_A].getZoomX();
             }
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setZoom(newZoom, newZoom);
 
-                    Vector2f oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                    final Vector2f oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
-                        int newX = MipavMath.round((oldCrosshairPoint.X * newZoom) / oldZoom);
-                        int newY = MipavMath.round((oldCrosshairPoint.Y * newZoom) / oldZoom);
+                        final int newX = MipavMath.round( (oldCrosshairPoint.X * newZoom) / oldZoom);
+                        final int newY = MipavMath.round( (oldCrosshairPoint.Y * newZoom) / oldZoom);
 
                         triImage[i].updateCrosshairPosition(newX, newY);
 
@@ -979,33 +999,34 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             updateImages(true);
             setTitle();
         } else if (command.equals("MagImage")) {
-            float oldZoom = triImage[AXIAL_A].getZoomX();
+            final float oldZoom = triImage[ViewJFrameTriImage.AXIAL_A].getZoomX();
 
             float newZoom = 1;
-            
-            if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[AXIAL_A] != null)) {
-            	if(triImage[AXIAL_A].getZoomX() < 1.0f) {
-            		newZoom = 2.0f * triImage[AXIAL_A].getZoomX();
-            	}else {
-            		newZoom = triImage[AXIAL_A].getZoomX() + 1.0f;
-            	}
-            } else if (triImage[AXIAL_A] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
+
+            if ( (Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[ViewJFrameTriImage.AXIAL_A] != null)) {
+                if (triImage[ViewJFrameTriImage.AXIAL_A].getZoomX() < 1.0f) {
+                    newZoom = 2.0f * triImage[ViewJFrameTriImage.AXIAL_A].getZoomX();
+                } else {
+                    newZoom = triImage[ViewJFrameTriImage.AXIAL_A].getZoomX() + 1.0f;
+                }
+            } else if (triImage[ViewJFrameTriImage.AXIAL_A] != null) // zoomMode ==
+            // ViewJComponentEditImage.EXPONENTIAL
             {
 
-            	newZoom = 2.0f * triImage[AXIAL_A].getZoomX();
+                newZoom = 2.0f * triImage[ViewJFrameTriImage.AXIAL_A].getZoomX();
 
             }
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setZoom(newZoom, newZoom);
 
-                    Vector2f oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                    final Vector2f oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
-                        int newX = MipavMath.round((oldCrosshairPoint.X * newZoom) / oldZoom);
-                        int newY = MipavMath.round((oldCrosshairPoint.Y * newZoom) / oldZoom);
+                        final int newX = MipavMath.round( (oldCrosshairPoint.X * newZoom) / oldZoom);
+                        final int newY = MipavMath.round( (oldCrosshairPoint.Y * newZoom) / oldZoom);
 
                         triImage[i].updateCrosshairPosition(newX, newY);
 
@@ -1019,18 +1040,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             setTitle();
         } else if (command.equals("ZoomOne")) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
-                    float oldZoom = triImage[i].getZoomX();
+                    final float oldZoom = triImage[i].getZoomX();
 
                     triImage[i].setZoom(1, 1);
 
-                    Vector2f oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                    final Vector2f oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
-                        int newX = (int) (oldCrosshairPoint.X / oldZoom);
-                        int newY = (int) (oldCrosshairPoint.Y / oldZoom);
+                        final int newX = (int) (oldCrosshairPoint.X / oldZoom);
+                        final int newY = (int) (oldCrosshairPoint.Y / oldZoom);
 
                         triImage[i].updateCrosshairPosition(newX, newY);
 
@@ -1046,7 +1067,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             setTitle();
         } else if (command.equals("IndivMagImage")) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
 
@@ -1059,7 +1080,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         } else if (command.equals("IndivMinImage")) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.ZOOMING_OUT);
@@ -1068,7 +1089,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         } else if (command.equals("createTransformation")) {
             JDialogTriImageTransformation dialog;
-            float originalZoom = triImage[AXIAL_A].getZoomX();
+            final float originalZoom = triImage[ViewJFrameTriImage.AXIAL_A].getZoomX();
 
             if (getSelectedImage() == ViewJComponentBase.IMAGE_A) {
                 dialog = new JDialogTriImageTransformation(this, imageA);
@@ -1079,19 +1100,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT.getActionCommand())) {
             voiManager.actionPerformed(event);
-        }  else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand())) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand())) {
             voiManager.actionPerformed(event);
-        } 
-        
+        }
+
         else if (command.equals("boundingBox")) {
 
             // this block of code is the logic for emulating the behavior
             // of the button group containing the invisible button
-            boolean showBoundingRect = !triImage[AXIAL_A].isShowBoundingRect();
+            boolean showBoundingRect = !triImage[ViewJFrameTriImage.AXIAL_A].isShowBoundingRect();
 
-            btnInvisible[1].setSelected(!showBoundingRect);
+            btnInvisible[1].setSelected( !showBoundingRect);
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setShowBoundingRect(showBoundingRect);
@@ -1105,8 +1126,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     }
 
                     triImage[i].setDoCenter(false);
-                    //triImage[i].deleteAllVOIs();
-                    //triImage[i].setProtractorVisible(false);
+                    // triImage[i].deleteAllVOIs();
+                    // triImage[i].setProtractorVisible(false);
                     triImage[i].clearProtractor();
                 }
             }
@@ -1132,9 +1153,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             dialogCrop.setSeparateThread(true);
 
-            int[] xBounds = { volumeBounds.lowX(), volumeBounds.highX() };
-            int[] yBounds = { volumeBounds.lowY(), volumeBounds.highY() };
-            int[] zBounds = { volumeBounds.lowZ(), volumeBounds.highZ() };
+            final int[] xBounds = {volumeBounds.lowX(), volumeBounds.highX()};
+            final int[] yBounds = {volumeBounds.lowY(), volumeBounds.highY()};
+            final int[] zBounds = {volumeBounds.lowZ(), volumeBounds.highZ()};
 
             dialogCrop.setXBounds(xBounds);
             dialogCrop.setYBounds(yBounds);
@@ -1156,14 +1177,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         } else if (command.equals("LinkFrame")) {
 
             if (isMultipleSameSizeTriImages() == true) {
-                new JDialogTriFrameLinker(this, triImage[AXIAL_A].getActiveImage()); // todo:  fix
+                new JDialogTriFrameLinker(this, triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage()); // todo: fix
             } else {
-                MipavUtil.displayError("There is no image with the same dimensions as\n" +
-                                       triImage[AXIAL_A].getActiveImage().getImageName() + " to operate on."); // todo:  fix
+                MipavUtil.displayError("There is no image with the same dimensions as\n"
+                        + triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage().getImageName() + " to operate on."); // todo:
+                // fix
 
                 return;
             }
-        } else if ((source == radioImageA) || (source == radioImageB) || (source == radioImageBoth)) {
+        } else if ( (source == radioImageA) || (source == radioImageB) || (source == radioImageBoth)) {
 
             if (radioImageA.isSelected()) {
                 setSpinnerValues(imageA.getType());
@@ -1179,10 +1201,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             ((SpinnerNumberModel) (intensitySpinner.getModel())).setMaximum(new Double(spinnerMax));
             ((SpinnerNumberModel) (intensitySpinner.getModel())).setStepSize(new Double(spinnerStep));
             ((SpinnerNumberModel) (intensitySpinner.getModel())).setValue(new Double(spinnerDefaultValue));
-            
-            /** updateImages(false) was commented to facilitate placement of VOI points during
-             * image registration. This allows the user to control the crosshairs and image slice independently of other
-             * images.
+
+            /**
+             * updateImages(false) was commented to facilitate placement of VOI points during image registration. This
+             * allows the user to control the crosshairs and image slice independently of other images.
              */
             // updateImages();
             return;
@@ -1203,7 +1225,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 imageB.setRadiologicalView(true);
             }
 
-            Vector3f kCenter = triImage[0].getCenter();
+            final Vector3f kCenter = triImage[0].getCenter();
             setPositionLabels((int) kCenter.X, (int) kCenter.Y, (int) kCenter.Z);
             updateImages(true);
         } else if (command.equals("NeurologicalView")) {
@@ -1213,35 +1235,31 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 imageB.setRadiologicalView(false);
             }
 
-            Vector3f kCenter = triImage[0].getCenter();
+            final Vector3f kCenter = triImage[0].getCenter();
             setPositionLabels((int) kCenter.X, (int) kCenter.Y, (int) kCenter.Z);
             updateImages(true);
-        } 
+        }
 
-        else if (command.equals("VOIToolbar")) 
-        {
+        else if (command.equals("VOIToolbar")) {
             voiManager.getToolBar().setVisible(menuObj.isMenuItemSelected("VOI toolbar"));
             updateLayout();
-        }
-        else if (command.equals("PaintToolbar") ) {
+        } else if (command.equals("PaintToolbar")) {
             paintToolBar.setVisible(menuObj.isMenuItemSelected("Paint toolbar"));
             updateLayout();
-        }
-        else if (command.equals("ImageAlignToolbar") ) {
+        } else if (command.equals("ImageAlignToolbar")) {
             imageAlignToolBar.setVisible(menuObj.isMenuItemSelected("Image Align toolbar"));
             updateLayout();
-        }else if(command.equals("absoluteGoTo")) {
-        	absoluteGoTo();
-        }else if(command.equals("scannerLPSGoTo")) {
-        	scannerLPSGoTo();
-        }else if(command.equals("scannerRASGoTo")) {
-        	scannerRASGoTo();
-        }else if(command.equals("talGoTo")) {
-        	talairachGoTo();
+        } else if (command.equals("absoluteGoTo")) {
+            absoluteGoTo();
+        } else if (command.equals("scannerLPSGoTo")) {
+            scannerLPSGoTo();
+        } else if (command.equals("scannerRASGoTo")) {
+            scannerRASGoTo();
+        } else if (command.equals("talGoTo")) {
+            talairachGoTo();
+        } else {
+            getParentFrame().actionPerformed(event);
         }
-        else {
-			getParentFrame().actionPerformed(event);	
-		}
 
         this.requestFocusInWindow();
     }
@@ -1250,201 +1268,189 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * Method that goes to the ras coordinate that is entered
      */
     private void scannerRASGoTo() {
-    	String rlString = scannerRAS_RLTextField.getText().trim();
-    	String apString = scannerRAS_APTextField.getText().trim();
-    	String isString = scannerRAS_ISTextField.getText().trim();
-    	if(rlString.equals("") || apString.equals("") || isString.equals("")) {
-    		MipavUtil.displayError("All textfields must have values");
-    		return;
-    	}
-    	float rl,ap,is;
-    	try{
-    		rl = Float.parseFloat(rlString);
-    		ap = Float.parseFloat(apString);
-    		is = Float.parseFloat(isString);
-    	}catch(NumberFormatException e) {
-    		MipavUtil.displayError("Invalid value(s)");
-    		return;
-    	}
-    	rl = -rl;
-    	ap = -ap;
-    	
-    	Vector3f ptIn = new Vector3f(rl, ap, is);
-    	Vector3f ptOut = new Vector3f();
-    	MipavCoordinateSystems.scannerToFile(ptIn, ptOut, imageA);
-    	int x,y,z;
-    	x = Math.round(ptOut.X);
-    	y = Math.round(ptOut.Y);
-    	z = Math.round(ptOut.Z);
-    	int[] exts = imageA.getExtents();
-    	if(x < 0 || x >= exts[0]) {
-    		MipavUtil.displayError("Value is out of range");
-    		return;
-    	}
-    	if(y < 0 || y >= exts[1]) {
-    		MipavUtil.displayError("Value is out of range");
-    		return;
-    	}
-    	if(z < 0 || z >= exts[2]) {
-    		MipavUtil.displayError("Value is out of range");
-    		return;
-    	}
-    	
-    	setCenter(x,y,z);
+        final String rlString = scannerRAS_RLTextField.getText().trim();
+        final String apString = scannerRAS_APTextField.getText().trim();
+        final String isString = scannerRAS_ISTextField.getText().trim();
+        if (rlString.equals("") || apString.equals("") || isString.equals("")) {
+            MipavUtil.displayError("All textfields must have values");
+            return;
+        }
+        float rl, ap, is;
+        try {
+            rl = Float.parseFloat(rlString);
+            ap = Float.parseFloat(apString);
+            is = Float.parseFloat(isString);
+        } catch (final NumberFormatException e) {
+            MipavUtil.displayError("Invalid value(s)");
+            return;
+        }
+        rl = -rl;
+        ap = -ap;
+
+        final Vector3f ptIn = new Vector3f(rl, ap, is);
+        final Vector3f ptOut = new Vector3f();
+        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, imageA);
+        int x, y, z;
+        x = Math.round(ptOut.X);
+        y = Math.round(ptOut.Y);
+        z = Math.round(ptOut.Z);
+        final int[] exts = imageA.getExtents();
+        if (x < 0 || x >= exts[0]) {
+            MipavUtil.displayError("Value is out of range");
+            return;
+        }
+        if (y < 0 || y >= exts[1]) {
+            MipavUtil.displayError("Value is out of range");
+            return;
+        }
+        if (z < 0 || z >= exts[2]) {
+            MipavUtil.displayError("Value is out of range");
+            return;
+        }
+
+        setCenter(x, y, z);
     }
-    
+
     /**
      * Method that goes to the lps coordinate that is entered
      */
     private void scannerLPSGoTo() {
-    	String rlString = scannerLPS_RLTextField.getText().trim();
-    	String apString = scannerLPS_APTextField.getText().trim();
-    	String isString = scannerLPS_ISTextField.getText().trim();
-    	if(rlString.equals("") || apString.equals("") || isString.equals("")) {
-    		MipavUtil.displayError("All textfields must have values");
-    		return;
-    	}
-    	float rl,ap,is;
-    	try{
-    		rl = Float.parseFloat(rlString);
-    		ap = Float.parseFloat(apString);
-    		is = Float.parseFloat(isString);
-    	}catch(NumberFormatException e) {
-    		MipavUtil.displayError("Invalid value(s)");
-    		return;
-    	}
-    	
-    	
-    	Vector3f ptIn = new Vector3f(rl, ap, is);
-    	Vector3f ptOut = new Vector3f();
-    	MipavCoordinateSystems.scannerToFile(ptIn, ptOut, imageA);
-    	int x,y,z;
-    	x = Math.round(ptOut.X);
-    	y = Math.round(ptOut.Y);
-    	z = Math.round(ptOut.Z);
-    	int[] exts = imageA.getExtents();
-    	if(x < 0 || x >= exts[0]) {
-    		MipavUtil.displayError("Value is out of range");
-    		return;
-    	}
-    	if(y < 0 || y >= exts[1]) {
-    		MipavUtil.displayError("Value is out of range");
-    		return;
-    	}
-    	if(z < 0 || z >= exts[2]) {
-    		MipavUtil.displayError("Value is out of range");
-    		return;
-    	}
-    	
-    	setCenter(x,y,z);
+        final String rlString = scannerLPS_RLTextField.getText().trim();
+        final String apString = scannerLPS_APTextField.getText().trim();
+        final String isString = scannerLPS_ISTextField.getText().trim();
+        if (rlString.equals("") || apString.equals("") || isString.equals("")) {
+            MipavUtil.displayError("All textfields must have values");
+            return;
+        }
+        float rl, ap, is;
+        try {
+            rl = Float.parseFloat(rlString);
+            ap = Float.parseFloat(apString);
+            is = Float.parseFloat(isString);
+        } catch (final NumberFormatException e) {
+            MipavUtil.displayError("Invalid value(s)");
+            return;
+        }
+
+        final Vector3f ptIn = new Vector3f(rl, ap, is);
+        final Vector3f ptOut = new Vector3f();
+        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, imageA);
+        int x, y, z;
+        x = Math.round(ptOut.X);
+        y = Math.round(ptOut.Y);
+        z = Math.round(ptOut.Z);
+        final int[] exts = imageA.getExtents();
+        if (x < 0 || x >= exts[0]) {
+            MipavUtil.displayError("Value is out of range");
+            return;
+        }
+        if (y < 0 || y >= exts[1]) {
+            MipavUtil.displayError("Value is out of range");
+            return;
+        }
+        if (z < 0 || z >= exts[2]) {
+            MipavUtil.displayError("Value is out of range");
+            return;
+        }
+
+        setCenter(x, y, z);
     }
-    
-    
+
     /**
      * Method that goes to the absolute voxel coordinate that is entered
      */
     private void absoluteGoTo() {
-    	String xString = super.absoluteXTextField.getText().trim();
-    	String yString = super.absoluteYTextField.getText().trim();
-    	String zString = super.absoluteZTextField.getText().trim();
-    	if(xString.equals("") || yString.equals("") || zString.equals("")) {
-    		MipavUtil.displayError("All textfields must have values");
-    		return;
-    	}
-    	int x,y,z;
-    	try{
-    		x = Integer.parseInt(xString);
-    		y = Integer.parseInt(yString);
-    		z = Integer.parseInt(zString);
-    	}catch(NumberFormatException e) {
-    		MipavUtil.displayError("Invalid value(s)");
-    		return;
-    	}
-    	int[] exts = imageA.getExtents();
-    	if(x < 0 || x >= exts[0]) {
-    		MipavUtil.displayError("X value is out of range");
-    		return;
-    	}
-    	if(y < 0 || y >= exts[1]) {
-    		MipavUtil.displayError("Y value is out of range");
-    		return;
-    	}
+        final String xString = super.absoluteXTextField.getText().trim();
+        final String yString = super.absoluteYTextField.getText().trim();
+        final String zString = super.absoluteZTextField.getText().trim();
+        if (xString.equals("") || yString.equals("") || zString.equals("")) {
+            MipavUtil.displayError("All textfields must have values");
+            return;
+        }
+        int x, y, z;
+        try {
+            x = Integer.parseInt(xString);
+            y = Integer.parseInt(yString);
+            z = Integer.parseInt(zString);
+        } catch (final NumberFormatException e) {
+            MipavUtil.displayError("Invalid value(s)");
+            return;
+        }
+        final int[] exts = imageA.getExtents();
+        if (x < 0 || x >= exts[0]) {
+            MipavUtil.displayError("X value is out of range");
+            return;
+        }
+        if (y < 0 || y >= exts[1]) {
+            MipavUtil.displayError("Y value is out of range");
+            return;
+        }
 
-    	if(z < 0 || z >= exts[2]) {
-    		MipavUtil.displayError("Z value is out of range");
-    		return;
-    	}
-    	
-    	setCenter(x,y,z);
+        if (z < 0 || z >= exts[2]) {
+            MipavUtil.displayError("Z value is out of range");
+            return;
+        }
+
+        setCenter(x, y, z);
     }
-    
-    
-    
+
     /**
      * Method that goes to the talairach coordinate that is entered
      */
     private void talairachGoTo() {
-    	String xTalString = talXTextField.getText().trim();
-    	String yTalString = talYTextField.getText().trim();
-    	String zTalString = talZTextField.getText().trim();
-    	if(xTalString.equals("") || yTalString.equals("") || zTalString.equals("")) {
-    		MipavUtil.displayError("All textfields must have values");
-    		return;
-    	}
-    	float xTal,yTal,zTal;
-    	try{
-    		xTal = Float.parseFloat(xTalString);
-    		yTal = Float.parseFloat(yTalString);
-    		zTal = Float.parseFloat(zTalString);
-    	}catch(NumberFormatException e) {
-    		e.printStackTrace();
-    		MipavUtil.displayError("Invalid value(s)");
-    		return;
-    	}
-    	
-    	Vector3f pt;
-    	int x,y,z;
-    	
-    	
-        TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
+        final String xTalString = talXTextField.getText().trim();
+        final String yTalString = talYTextField.getText().trim();
+        final String zTalString = talZTextField.getText().trim();
+        if (xTalString.equals("") || yTalString.equals("") || zTalString.equals("")) {
+            MipavUtil.displayError("All textfields must have values");
+            return;
+        }
+        float xTal, yTal, zTal;
+        try {
+            xTal = Float.parseFloat(xTalString);
+            yTal = Float.parseFloat(yTalString);
+            zTal = Float.parseFloat(zTalString);
+        } catch (final NumberFormatException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Invalid value(s)");
+            return;
+        }
 
-           
+        Vector3f pt;
+        int x, y, z;
+
+        final TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
+
         pt = tInfo.getTlrcAC();
-           
+
         x = Math.round(xTal + pt.X);
         y = Math.round(yTal + pt.Y);
         z = Math.round(zTal + pt.Z);
-        
-        int[] exts = imageA.getExtents();
-    	if(x < 0 || x >= exts[0]) {
-    		MipavUtil.displayError("X value is out of range");
-    		return;
-    	}
-    	if(y < 0 || y >= exts[1]) {
-    		MipavUtil.displayError("Y value is out of range");
-    		return;
-    	}
 
-    	if(z < 0 || z >= exts[2]) {
-    		MipavUtil.displayError("Z value is out of range");
-    		return;
-    	}
-    	
-    	setCenter(x,y,z);
+        final int[] exts = imageA.getExtents();
+        if (x < 0 || x >= exts[0]) {
+            MipavUtil.displayError("X value is out of range");
+            return;
+        }
+        if (y < 0 || y >= exts[1]) {
+            MipavUtil.displayError("Y value is out of range");
+            return;
+        }
+
+        if (z < 0 || z >= exts[2]) {
+            MipavUtil.displayError("Z value is out of range");
+            return;
+        }
+
+        setCenter(x, y, z);
     }
-    
-    
-    
-    
-    
-    
-    
+
     /**
      * Add someone who wants to be notified about crosshair coordinate changes.
-     *
-     * @param  listener  the listener
+     * 
+     * @param listener the listener
      */
-    public void addCoordinateChangeListener(CoordinateChangeListener listener) {
+    public void addCoordinateChangeListener(final CoordinateChangeListener listener) {
         coordinateListeners.add(listener);
     }
 
@@ -1464,7 +1470,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         if (imageB != null) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
                 triImage[i].setActiveImage(ViewJComponentBase.IMAGE_A);
             }
 
@@ -1476,19 +1482,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             imageB = null;
 
-            triImage[AXIAL_B] = null;
-            triImage[CORONAL_B] = null;
-            triImage[SAGITTAL_B] = null;
-            triImage[AXIAL_AB] = null;
-            triImage[SAGITTAL_AB] = null;
-            triImage[CORONAL_AB] = null;
+            triImage[ViewJFrameTriImage.AXIAL_B] = null;
+            triImage[ViewJFrameTriImage.CORONAL_B] = null;
+            triImage[ViewJFrameTriImage.SAGITTAL_B] = null;
+            triImage[ViewJFrameTriImage.AXIAL_AB] = null;
+            triImage[ViewJFrameTriImage.SAGITTAL_AB] = null;
+            triImage[ViewJFrameTriImage.CORONAL_AB] = null;
 
             setImageSelectorPanelVisible(false);
 
-            float optimalZoom = getOptimalZoom(256, 256);
-            triImage[AXIAL_A].setZoom(optimalZoom, optimalZoom);
-            triImage[SAGITTAL_A].setZoom(optimalZoom, optimalZoom);
-            triImage[CORONAL_A].setZoom(optimalZoom, optimalZoom);
+            final float optimalZoom = getOptimalZoom(256, 256);
+            triImage[ViewJFrameTriImage.AXIAL_A].setZoom(optimalZoom, optimalZoom);
+            triImage[ViewJFrameTriImage.SAGITTAL_A].setZoom(optimalZoom, optimalZoom);
+            triImage[ViewJFrameTriImage.CORONAL_A].setZoom(optimalZoom, optimalZoom);
 
             leastSquaresButton.setEnabled(false);
             tpSplineButton.setEnabled(false);
@@ -1516,7 +1522,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             volumePositionFrame = null;
         }
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].disposeLocal(true);
@@ -1528,59 +1534,57 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         controls = null;
 
         parentFrame.triPlanarClosing();
-        
-        if ( voiManager != null )
-        {
+
+        if (voiManager != null) {
             voiManager.disposeLocal(true);
             voiManager = null;
         }
     }
 
-    public void enableBoth( boolean bEnable )
-    {
+    public void enableBoth(final boolean bEnable) {
         radioImageBoth.setEnabled(bEnable);
     }
-    
+
     /**
      * Gets the axial position of the slice.
-     *
-     * @return  The axial location in the slice.
+     * 
+     * @return The axial location in the slice.
      */
     public int getAxialComponentSlice() {
-        return triImage[AXIAL_A].getSlice();
+        return triImage[ViewJFrameTriImage.AXIAL_A].getSlice();
     }
 
     /**
      * Returns the crop bounding volume as a CubeBounds object.
-     *
-     * @return  volumeBounds the crop volume
+     * 
+     * @return volumeBounds the crop volume
      */
     public CubeBounds getBoundedVolume() {
         return volumeBounds;
     }
 
-
     /**
      * Sets the x coordinate of the point to be the center of the transformed image.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public int[] getCenter() {
         return volumeCenter;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#getCenterPt()
      */
-    public Vector3f getCenterPt()
-    {
-        return new Vector3f( volumeCenter[0], volumeCenter[1], volumeCenter[2] );
+    public Vector3f getCenterPt() {
+        return new Vector3f(volumeCenter[0], volumeCenter[1], volumeCenter[2]);
     }
 
     /**
      * Gets reference to control widgets for frame.
-     *
-     * @return  controls
+     * 
+     * @return controls
      */
     public ViewControlsImage getControls() {
         return controls;
@@ -1588,17 +1592,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Gets the y position of the slice.
-     *
-     * @return  The y location in the slice.
+     * 
+     * @return The y location in the slice.
      */
     public int getCoronalComponentSlice() {
-        return triImage[CORONAL_A].getSlice();
+        return triImage[ViewJFrameTriImage.CORONAL_A].getSlice();
     }
 
     /**
      * Get the last point that the position labels got set to.
-     *
-     * @return  the current values for the absolute position labels
+     * 
+     * @return the current values for the absolute position labels
      */
     public Point3D getCurrentPositionLabels() {
         return currentAbsolutePositionLabels;
@@ -1606,13 +1610,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Accessor that returns the reference to imageA.
-     *
-     * @return  image
+     * 
+     * @return image
      */
     public ModelImage getImageA() {
 
-        if (triImage[AXIAL_A] != null) {
-            return triImage[AXIAL_A].getImageA();
+        if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+            return triImage[ViewJFrameTriImage.AXIAL_A].getImageA();
         } else {
             return null;
         }
@@ -1620,13 +1624,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Accessor that returns the reference to imageB.
-     *
-     * @return  imageB
+     * 
+     * @return imageB
      */
     public ModelImage getImageB() {
 
-        if (triImage[AXIAL_B] != null) {
-            return triImage[AXIAL_B].getImageB();
+        if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
+            return triImage[ViewJFrameTriImage.AXIAL_B].getImageB();
         } else {
             return null;
         }
@@ -1634,8 +1638,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Gets the linked ViewJFrameTriImage.
-     *
-     * @return  linkedFrame
+     * 
+     * @return linkedFrame
      */
     public ViewJFrameTriImage getLinkedTriFrame() {
         return linkTriFrame;
@@ -1643,8 +1647,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Returns a reference to the ViewJFrameImage object that is the parent of this frame.
-     *
-     * @return  a reference to the ViewJFrameImage object that is the parent of this frame
+     * 
+     * @return a reference to the ViewJFrameImage object that is the parent of this frame
      */
     public ViewJFrameImage getParentFrame() {
         return parentFrame;
@@ -1652,18 +1656,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Gets the x position of the slice.
-     *
-     * @return  The x location in the slice.
+     * 
+     * @return The x location in the slice.
      */
     public int getSagittalComponentSlice() {
-        return triImage[SAGITTAL_A].getSlice();
+        return triImage[ViewJFrameTriImage.SAGITTAL_A].getSlice();
     }
 
     /**
      * Returns an integer which represents the image that is selected. The possible values are ViewJComponentBase.BOTH,
      * ViewJComponentBase.IMAGE_A, ViewJComponentBase.IMAGE_B
-     *
-     * @return  int the image that is selected in the active image panel
+     * 
+     * @return int the image that is selected in the active image panel
      */
     public int getSelectedImage() {
 
@@ -1680,34 +1684,33 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Gets the text stored in the Talairach voxel label.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    //public String getTalairachVoxelLabelText() {
-        //return talairachVoxelLabel.getText();
-    //}
-
+    // public String getTalairachVoxelLabelText() {
+    // return talairachVoxelLabel.getText();
+    // }
     /**
      * Returns a reference to one of the component tri-image components.
-     *
-     * @param   index  int the index of the component tri-image to get. Possibilies are AXIAL_A, AXIAL_B, AXIAL_AB,
-     *                 CORONAL_A, CORONAL_B, CORONAL_AB, SAGITTAL_A, SAGITTAL_B, SAGITTAL_AB
-     *
-     * @return  ViewJComponentTriImage
+     * 
+     * @param index int the index of the component tri-image to get. Possibilies are AXIAL_A, AXIAL_B, AXIAL_AB,
+     *            CORONAL_A, CORONAL_B, CORONAL_AB, SAGITTAL_A, SAGITTAL_B, SAGITTAL_AB
+     * 
+     * @return ViewJComponentTriImage
      */
-    public ViewJComponentTriImage getTriImage(int index) {
+    public ViewJComponentTriImage getTriImage(final int index) {
         return triImage[index];
     }
 
     /**
      * Gets the color of the X slice crosshair.
-     *
-     * @return  Color the color of the X slice crosshair
+     * 
+     * @return Color the color of the X slice crosshair
      */
     public Color getXSliceHairColor() {
 
-        if (triImage[AXIAL_A] != null) {
-            return triImage[AXIAL_A].getXSliceHairColor();
+        if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+            return triImage[ViewJFrameTriImage.AXIAL_A].getXSliceHairColor();
         } else {
             return null;
         }
@@ -1715,13 +1718,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Gets the color of the Y slice crosshair.
-     *
-     * @return  Color the color of the Y slice crosshair
+     * 
+     * @return Color the color of the Y slice crosshair
      */
     public Color getYSliceHairColor() {
 
-        if (triImage[AXIAL_A] != null) {
-            return triImage[AXIAL_A].getYSliceHairColor();
+        if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+            return triImage[ViewJFrameTriImage.AXIAL_A].getYSliceHairColor();
         } else {
             return null;
         }
@@ -1729,13 +1732,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Gets the color of the Z slice crosshair.
-     *
-     * @return  Color the color of the Z slice crosshair
+     * 
+     * @return Color the color of the Z slice crosshair
      */
     public Color getZSliceHairColor() {
 
-        if (triImage[AXIAL_A] != null) {
-            return triImage[AXIAL_A].getZSliceHairColor();
+        if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+            return triImage[ViewJFrameTriImage.AXIAL_A].getZSliceHairColor();
         } else {
             return null;
         }
@@ -1743,8 +1746,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Always returns true.
-     *
-     * @return  boolean always returns true
+     * 
+     * @return boolean always returns true
      */
     public boolean isFocusable() {
         return true;
@@ -1752,27 +1755,26 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Does setBorderPainted for the appropriate button.
-     *
-     * @param  event  Event that triggered this function
+     * 
+     * @param event Event that triggered this function
      */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+    public void itemStateChanged(final ItemEvent event) {
+        final Object source = event.getSource();
 
         if (source.equals(paintBox)) {
-            int index = paintBox.getSelectedIndex();
-            
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-            	if(triImage[i] != null) {
-            		triImage[i].loadPaintBrush(paintBrushNames[index], false);
-            	}
-            }
-            
-            Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
+            final int index = paintBox.getSelectedIndex();
 
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                if (triImage[i] != null) {
+                    triImage[i].loadPaintBrush(paintBrushNames[index], false);
+                }
+            }
+
+            Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
 
         } else {
 
-            int state = event.getStateChange();
+            final int state = event.getStateChange();
 
             if (state == ItemEvent.SELECTED) {
                 ((AbstractButton) source).setBorderPainted(true);
@@ -1781,8 +1783,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 ((AbstractButton) source).setBorderPainted(false);
             }
 
-            if ((source == addPointToggleButton) || (source == dropperPaintToggleButton) ||
-                    (source == paintCanToggleButton)) {
+            if ( (source == addPointToggleButton) || (source == dropperPaintToggleButton)
+                    || (source == paintCanToggleButton)) {
 
                 // for certain operations, we don't support affecting both images
                 // so the "Both" radio button is disabled and imageA is selected by default
@@ -1806,16 +1808,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * keyPressed event method for KeyListener.
-     *
-     * @param  e  KeyEvent
+     * 
+     * @param e KeyEvent
      */
-    public void keyPressed(KeyEvent e) {
-        //System.err.println("ViewJFrameTriImage keyPressed" );
-        int keyCode = e.getKeyCode();
+    public void keyPressed(final KeyEvent e) {
+        // System.err.println("ViewJFrameTriImage keyPressed" );
+        final int keyCode = e.getKeyCode();
 
-        if (!e.isControlDown()) {
+        if ( !e.isControlDown()) {
 
-            if ((keyCode >= '0') && (keyCode <= '9')) {
+            if ( (keyCode >= '0') && (keyCode <= '9')) {
 
                 int index = keyCode - 49;
 
@@ -1823,34 +1825,35 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     index = 10;
                 }
 
-                if (!paintBrushLocked) {
+                if ( !paintBrushLocked) {
 
                     if (quickPaintBrushIndex == index) {
 
-                        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+                        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                             if (triImage[i] != null) {
                                 triImage[i].quickSwitchBrush();
                             }
                         }
 
-                        triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+                        triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                         paintBrushLocked = true;
                     } else {
                         quickPaintBrushIndex = index;
 
-                        String name = getControls().getTools().getPaintBrushName(index);
+                        final String name = getControls().getTools().getPaintBrushName(index);
 
                         if (name != null) {
 
-                            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+                            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                                 if (triImage[i] != null) {
                                     triImage[i].loadPaintBrush(name, true);
                                 }
                             }
 
-                            triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+                            triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage().notifyImageDisplayListeners(null,
+                                    true);
                             paintBrushLocked = true;
                         }
                     }
@@ -1859,10 +1862,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 return;
             }
         }
-		
-		// pass the key bindings to the underlying image (plb)
-		String command = null;
-        KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
+
+        // pass the key bindings to the underlying image (plb)
+        String command = null;
+        final KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
 
         command = Preferences.getShortcutCommand(ks);
 
@@ -1874,51 +1877,52 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * keyReleased event method for KeyListener.
-     *
-     * @param  e  KeyEvent
+     * 
+     * @param e KeyEvent
      */
-    public void keyReleased(KeyEvent e) {
-        //System.err.println("ViewJFrameTriImage keyReleased" );
-        int keyCode = e.getKeyCode();
+    public void keyReleased(final KeyEvent e) {
+        // System.err.println("ViewJFrameTriImage keyReleased" );
+        final int keyCode = e.getKeyCode();
 
         switch (keyCode) {
 
             case KeyEvent.VK_B:
 
                 // swap the border painting
-            	if(Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
-                	getControls().getTools().bogusBorderPaintButton.setSelected(true);
-                	bogusBorderPaintButton.setSelected(true);
-                }else {
-                	getControls().getTools().borderPaintButton.setSelected(true);
-                	borderPaintButton.setSelected(true);
+                if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
+                    getControls().getTools().bogusBorderPaintButton.setSelected(true);
+                    bogusBorderPaintButton.setSelected(true);
+                } else {
+                    getControls().getTools().borderPaintButton.setSelected(true);
+                    borderPaintButton.setSelected(true);
                 }
-            	
-                Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
-                triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-                if (triImage[AXIAL_B] != null) {
-                    triImage[AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
+
+                Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf(""
+                        + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
+                triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+                if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
+                    triImage[ViewJFrameTriImage.AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
                 }
 
                 break;
 
         }
 
-        if (!e.isControlDown()) {
+        if ( !e.isControlDown()) {
 
-            if ((keyCode >= '0') && (keyCode <= '9')) {
+            if ( (keyCode >= '0') && (keyCode <= '9')) {
 
                 if (paintBrushLocked) {
 
                     // getControls().getTools().setPaintBrush(previousPaintBrushIndex);
-                    for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+                    for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                         if (triImage[i] != null) {
                             triImage[i].quickSwitchBrush();
                         }
                     }
 
-                    triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+                    triImage[ViewJFrameTriImage.AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                     paintBrushLocked = false;
                 }
             }
@@ -1928,29 +1932,29 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  e  DOCUMENT ME!
+     * 
+     * @param e DOCUMENT ME!
      */
-    public void keyTyped(KeyEvent e) {
-        //System.err.println("ViewJFrameTriImage keyTyped" );
+    public void keyTyped(final KeyEvent e) {
+    // System.err.println("ViewJFrameTriImage keyTyped" );
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mouseClicked(MouseEvent event) {
+    public void mouseClicked(final MouseEvent event) {
 
         if (event.getButton() == MouseEvent.BUTTON3) {
 
             if (event.getSource() instanceof AbstractButton) {
-                AbstractButton btnSource = (AbstractButton) event.getSource();
+                final AbstractButton btnSource = (AbstractButton) event.getSource();
 
-                if (btnSource.getActionCommand().equals("MagImage") ||
-                        btnSource.getActionCommand().equals("UnMagImage") ||
-                        btnSource.getActionCommand().equals("IndivMagImage") ||
-                        btnSource.getActionCommand().equals("IndivMinImage")) {
+                if (btnSource.getActionCommand().equals("MagImage")
+                        || btnSource.getActionCommand().equals("UnMagImage")
+                        || btnSource.getActionCommand().equals("IndivMagImage")
+                        || btnSource.getActionCommand().equals("IndivMinImage")) {
 
                     handleZoomPopupMenu(btnSource, event);
 
@@ -1959,7 +1963,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
 
-
         if (event.getSource() instanceof ViewJComponentTriImage) {
 
             // since we set the mode to xooming in to all frames...we just need to check one of the frames
@@ -1967,13 +1970,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             if (triImage[0] != null) {
 
                 // get coordinates of where user clicked..used for adjusting scrollbars
-                int x = event.getX();
-                int y = event.getY();
+                final int x = event.getX();
+                final int y = event.getY();
 
                 if (triImage[0].getCursorMode() == ViewJComponentBase.ZOOMING_IN) {
 
                     // get frame number
-                    int frame = (new Integer(((ViewJComponentTriImage) event.getSource()).getName())).intValue();
+                    final int frame = (new Integer( ((ViewJComponentTriImage) event.getSource()).getName())).intValue();
 
                     // zoom in
                     zoomInFrame(frame);
@@ -1990,13 +1993,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                         traverseButton.setSelected(true);
                     }
 
-
                     // if after zooming a particular frame, all the frame are of the same zoom,
-                    // then we should enable the global  zooms...otherwise disable them
-                    float zoomX = triImage[0].getZoomX();
+                    // then we should enable the global zooms...otherwise disable them
+                    final float zoomX = triImage[0].getZoomX();
                     boolean test = true;
 
-                    for (int i = 1; i < MAX_TRI_IMAGES; i++) {
+                    for (int i = 1; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                         if (triImage[i] != null) {
 
@@ -2024,7 +2026,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 } else if (triImage[0].getCursorMode() == ViewJComponentBase.ZOOMING_OUT) {
 
                     // get frame number
-                    int frame = (new Integer(((ViewJComponentTriImage) event.getSource()).getName())).intValue();
+                    final int frame = (new Integer( ((ViewJComponentTriImage) event.getSource()).getName())).intValue();
 
                     // zoom out
                     zoomOutFrame(frame);
@@ -2042,11 +2044,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     }
 
                     // if after zooming a particular frame, all the frame are of the same zoom,
-                    // then we should enable the global  zooms...otherwise disable them
-                    float zoomX = triImage[0].getZoomX();
+                    // then we should enable the global zooms...otherwise disable them
+                    final float zoomX = triImage[0].getZoomX();
                     boolean test = true;
 
-                    for (int i = 1; i < MAX_TRI_IMAGES; i++) {
+                    for (int i = 1; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                         if (triImage[i] != null) {
 
@@ -2077,60 +2079,59 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         }
 
-
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mouseEntered(MouseEvent event) { }
+    public void mouseEntered(final MouseEvent event) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mouseExited(MouseEvent event) { }
+    public void mouseExited(final MouseEvent event) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mousePressed(MouseEvent event) { }
+    public void mousePressed(final MouseEvent event) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mouseReleased(MouseEvent event) { }
+    public void mouseReleased(final MouseEvent event) {}
 
     /**
      * Removes the menu and controls of the main frame so that a new frame can load the main frame with the proper
      * controls. Currently unused.
      */
-    public void removeControls() { }
+    public void removeControls() {}
 
     /**
      * Remove a coordinate change listener from this frame's list.
-     *
-     * @param  listener  a coordinate change listener (hopefully in the list..)
+     * 
+     * @param listener a coordinate change listener (hopefully in the list..)
      */
-    public void removeCoordinateChangeListener(CoordinateChangeListener listener) {
+    public void removeCoordinateChangeListener(final CoordinateChangeListener listener) {
         coordinateListeners.remove(listener);
     }
 
     /**
      * Set the active image for drawing VOIs. VOIs are only drawn in the active image. In addition, algorithms are
      * executed on the active window.
-     *
-     * @param  active  ViewJComponentBase.IMAGE_A or ViewJComponentBase.IMAGE_B
+     * 
+     * @param active ViewJComponentBase.IMAGE_A or ViewJComponentBase.IMAGE_B
      */
-    public void setActiveImage(int active) {
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+    public void setActiveImage(final int active) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setActiveImage(active);
@@ -2149,21 +2150,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             setSpinnerValues(imageA.getType());
         }
 
-        /** updateImages(false) was commented to facilitate placement of VOI points during
-         * image registration. This allows the user to control the crosshairs and image slice independently of other
-         * images.
+        /**
+         * updateImages(false) was commented to facilitate placement of VOI points during image registration. This
+         * allows the user to control the crosshairs and image slice independently of other images.
          */
         // updateImages(false);
     }
 
     /**
      * Sets the alpha blending of parameter for two image displaying.
-     *
-     * @param  value  amount [0,100] that is the percentage of Image A to be displayed
+     * 
+     * @param value amount [0,100] that is the percentage of Image A to be displayed
      */
-    public void setAlphaBlend(int value) {
+    public void setAlphaBlend(final int value) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setAlphaBlend(value);
@@ -2171,48 +2172,49 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
     }
 
+    /**
+     * sets the crosshair positions and slices for each of the triImages. The inputs are in FileCoordinates, and are
+     * passed to the triImages in FileCoordinates. Each triImage converts from FileCoordinates to the local
+     * PatientCoordinate space, based on the triImage orientation (FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL).
+     * 
+     * @param i model space coordinate
+     * @param j model space coordinate
+     * @param k model space coordinate
+     */
+    public void setCenter(final int i, final int j, final int k) {
+        setCenter(i, j, k, true);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setCenter(WildMagic.LibFoundation.Mathematics.Vector3f)
+     */
+    public void setCenter(final Vector3f kCenter) {
+        setCenter((int) kCenter.X, (int) kCenter.Y, (int) kCenter.Z, true);
+    }
 
     /**
      * sets the crosshair positions and slices for each of the triImages. The inputs are in FileCoordinates, and are
      * passed to the triImages in FileCoordinates. Each triImage converts from FileCoordinates to the local
      * PatientCoordinate space, based on the triImage orientation (FileInfoBase.AXIAL, FileInfoBase.CORONAL,
      * FileInfoBase.SAGITTAL).
-     *
-     * @param  i  model space coordinate
-     * @param  j  model space coordinate
-     * @param  k  model space coordinate
+     * 
+     * @param i model space coordinate
+     * @param j model space coordinate
+     * @param k model space coordinate
+     * @param checkLinkedScroll (boolean telling whether to look for linked images to sync scroll... necessary to avoid
+     *            infinite loop)
      */
-    public void setCenter(int i, int j, int k) {
-    	setCenter(i,j,k, true);
-    }
-    
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setCenter(WildMagic.LibFoundation.Mathematics.Vector3f)
-     */
-    public void setCenter( Vector3f kCenter )
-    {
-        setCenter( (int)kCenter.X, (int)kCenter.Y, (int)kCenter.Z, true );
-    }
-    
-    /**
-     * sets the crosshair positions and slices for each of the triImages. The inputs are in FileCoordinates, and are
-     * passed to the triImages in FileCoordinates. Each triImage converts from FileCoordinates to the local
-     * PatientCoordinate space, based on the triImage orientation (FileInfoBase.AXIAL, FileInfoBase.CORONAL,
-     * FileInfoBase.SAGITTAL).
-     *
-     * @param  i  model space coordinate
-     * @param  j  model space coordinate
-     * @param  k  model space coordinate
-     * @param checkLinkedScroll (boolean telling whether to look for linked images to sync scroll... necessary to avoid infinite loop)
-     */
-    public void setCenter(int i, int j, int k, boolean checkLinkedScroll) {
-        i = (i < 0) ? 0 : ((i >= extents[0]) ? (extents[0] - 1) : i);
-        j = (j < 0) ? 0 : ((j >= extents[1]) ? (extents[1] - 1) : j);
-        k = (k < 0) ? 0 : ((k >= extents[2]) ? (extents[2] - 1) : k);
+    public void setCenter(int i, int j, int k, final boolean checkLinkedScroll) {
+        i = (i < 0) ? 0 : ( (i >= extents[0]) ? (extents[0] - 1) : i);
+        j = (j < 0) ? 0 : ( (j >= extents[1]) ? (extents[1] - 1) : j);
+        k = (k < 0) ? 0 : ( (k >= extents[2]) ? (extents[2] - 1) : k);
 
         setVolumeCenter(i, j, k);
 
-        for (int image = 0; image < MAX_TRI_IMAGES; image++) {
+        for (int image = 0; image < ViewJFrameTriImage.MAX_TRI_IMAGES; image++) {
 
             if (triImage[image] != null) {
                 triImage[image].setCenter(i, j, k);
@@ -2220,16 +2222,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         if (checkLinkedScroll && linkedScrolling) {
-        	
-        	Enumeration names = userInterface.getRegisteredImageNames();
+
+            final Enumeration names = userInterface.getRegisteredImageNames();
 
             boolean sameDims = false;
             while (names.hasMoreElements()) {
-                String name = (String) names.nextElement();
+                final String name = (String) names.nextElement();
                 sameDims = true;
 
-                if (!imageA.getImageName().equals(name)) {
-                    ModelImage img = userInterface.getRegisteredImageByName(name);
+                if ( !imageA.getImageName().equals(name)) {
+                    final ModelImage img = userInterface.getRegisteredImageByName(name);
 
                     if (img.getTriImageFrame() != null) {
 
@@ -2243,98 +2245,98 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                             }
 
                             if (sameDims == true) {
-                            	if (absolutePanel.isShowing() || viewPanel.isShowing()) {
-                            		img.getTriImageFrame().setCenter(i, j, k, false);
-                            	}
-                            	else if (scannerLPSPanel.isShowing() || scannerRASPanel.isShowing()) {
-	                            	// Link together identical Scanner coordinates rather than identical file coordinates
-	                            	// in 2 images.  This will put the cursors over the same points in an image and a
-	                            	// rotated version of the image.
-	                            	Vector3f position = new Vector3f(i, j, k);
-	                            	Vector3f kOut = new Vector3f(position);
-	                            	MipavCoordinateSystems.fileToScanner(position, kOut, imageA);
-	                            	Vector3f imgCenter = new Vector3f(kOut);
-	                            	MipavCoordinateSystems.scannerToFile(kOut, imgCenter, img);
-	                            	img.getTriImageFrame().setCenter((int)Math.round(imgCenter.X), (int)Math.round(imgCenter.Y),
-	                            			                         (int)Math.round(imgCenter.Z), false);
-                            	} // else if (scannerLPSPanel.isShowing() || scannerRASPanel.isShowing())
-                            	else if (talairachPanel.isShowing()) {
-                            		Vector3f pt;
+                                if (absolutePanel.isShowing() || viewPanel.isShowing()) {
+                                    img.getTriImageFrame().setCenter(i, j, k, false);
+                                } else if (scannerLPSPanel.isShowing() || scannerRASPanel.isShowing()) {
+                                    // Link together identical Scanner coordinates rather than identical file
+                                    // coordinates
+                                    // in 2 images. This will put the cursors over the same points in an image and a
+                                    // rotated version of the image.
+                                    final Vector3f position = new Vector3f(i, j, k);
+                                    final Vector3f kOut = new Vector3f(position);
+                                    MipavCoordinateSystems.fileToScanner(position, kOut, imageA);
+                                    final Vector3f imgCenter = new Vector3f(kOut);
+                                    MipavCoordinateSystems.scannerToFile(kOut, imgCenter, img);
+                                    img.getTriImageFrame().setCenter(Math.round(imgCenter.X), Math.round(imgCenter.Y),
+                                            Math.round(imgCenter.Z), false);
+                                } // else if (scannerLPSPanel.isShowing() || scannerRASPanel.isShowing())
+                                else if (talairachPanel.isShowing()) {
+                                    Vector3f pt;
                                     int x, y, z;
-                                	float xTal,yTal,zTal;
-                                    TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
+                                    float xTal, yTal, zTal;
+                                    final TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
                                     if (tInfo != null) {
-	                                    pt = tInfo.getTlrcAC();
-	                                    if (pt == null) {
-	                                        tInfo.setAcpcRes(imageA.getResolutions(0)[0]);
-	                                        pt = tInfo.getTlrcAC();
-	                                    }
-	
-	                                    xTal = i - pt.X;
-	                                    yTal = j - pt.Y;
-	                                    zTal = k - pt.Z;
+                                        pt = tInfo.getTlrcAC();
+                                        if (pt == null) {
+                                            tInfo.setAcpcRes(imageA.getResolutions(0)[0]);
+                                            pt = tInfo.getTlrcAC();
+                                        }
+
+                                        xTal = i - pt.X;
+                                        yTal = j - pt.Y;
+                                        zTal = k - pt.Z;
                                     } // if (tInfo != null)
                                     else {
-	                                    xTal = (i * imageA.getResolutions(0)[0]) - ATLAS_BBOX_LAT;
-	                                    yTal = (j * imageA.getResolutions(0)[1]) - ATLAS_BBOX_ANT;
-	
-	                                    if (useInfNew) {
-	                                        zTal = (k * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF_NEW;
-	                                    } else {
-	                                        zTal = (k * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF;
-	                                    }
+                                        xTal = (i * imageA.getResolutions(0)[0]) - ViewJFrameTriImage.ATLAS_BBOX_LAT;
+                                        yTal = (j * imageA.getResolutions(0)[1]) - ViewJFrameTriImage.ATLAS_BBOX_ANT;
+
+                                        if (useInfNew) {
+                                            zTal = (k * imageA.getResolutions(0)[2])
+                                                    - ViewJFrameTriImage.ATLAS_BBOX_INF_NEW;
+                                        } else {
+                                            zTal = (k * imageA.getResolutions(0)[2])
+                                                    - ViewJFrameTriImage.ATLAS_BBOX_INF;
+                                        }
                                     }
-                                        
-                                    
-                            		TalairachTransformInfo tInfo2 = img.getTalairachTransformInfo();
+
+                                    final TalairachTransformInfo tInfo2 = img.getTalairachTransformInfo();
                                     if (tInfo2 != null) {
-	                                    pt = tInfo2.getTlrcAC();
-	                                    if (pt == null) {
-	                                        tInfo2.setAcpcRes(img.getResolutions(0)[0]);
-	                                        pt = tInfo2.getTlrcAC();
-	                                    }
-	                                       
-	                                    x = Math.round(xTal + pt.X);
-	                                    y = Math.round(yTal + pt.Y);
-	                                    z = Math.round(zTal + pt.Z);
-	                                    img.getTriImageFrame().setCenter(x,y,z);	
+                                        pt = tInfo2.getTlrcAC();
+                                        if (pt == null) {
+                                            tInfo2.setAcpcRes(img.getResolutions(0)[0]);
+                                            pt = tInfo2.getTlrcAC();
+                                        }
+
+                                        x = Math.round(xTal + pt.X);
+                                        y = Math.round(yTal + pt.Y);
+                                        z = Math.round(zTal + pt.Z);
+                                        img.getTriImageFrame().setCenter(x, y, z);
                                     }
-                            	} // else if (talairachPanel.isShowing())
-                                img.getTriImageFrame().setTimeSlice(tSlice, false);	
+                                } // else if (talairachPanel.isShowing())
+                                img.getTriImageFrame().setTimeSlice(tSlice, false);
                             } // if (sameDims == true)
                         }
                     }
                 }
             }
         }
-        
+
         // BEN
         if (scrollOriginalCrosshair) {
             parentFrame.setSlice(k);
         }
-        
+
         fireCoordinateChange(i, j, k);
         setPositionLabels(i, j, k);
         updateImages(true);
     }
 
-
     /**
      * Sets the menu and controls (i.e. toolbars) of the main frame! This puts the menus and controls needed to controls
      * the operations of this frame. Different image frames have different menu and controls. Currently unused.
      */
-    public void setControls() { }
+    public void setControls() {}
 
     /**
      * Sets the new crop volume in the ViewJComponentTriImage frames and sets the volumeBounds.
-     *
-     * @param  lower  the lower corner of the crop volume in File Coordinates
-     * @param  upper  the upper corner of the crop volume in File Coordinates
+     * 
+     * @param lower the lower corner of the crop volume in File Coordinates
+     * @param upper the upper corner of the crop volume in File Coordinates
      */
-    public void setCrop(Vector3f lower, Vector3f upper) {
+    public void setCrop(final Vector3f lower, final Vector3f upper) {
 
         /* set the crop dimensions for each triImage: */
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setCrop(lower, upper);
@@ -2350,7 +2352,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void setDefault() {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
@@ -2360,32 +2362,31 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Controls whether or not the images/VOIs of the frame can be modified.
-     *
-     * @param  flag  if true the image/VOIs can be modified; if false image/VOIs can NOT be modified
+     * 
+     * @param flag if true the image/VOIs can be modified; if false image/VOIs can NOT be modified
      */
-    public void setEnabled(boolean flag) {
+    public void setEnabled(final boolean flag) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setEnabled(flag);
             }
         }
-        if ( voiManager != null )
-        {
+        if (voiManager != null) {
             voiManager.setEnabled(flag);
         }
     }
 
     /**
      * Changes imageA to a new model image reference. Swaps the references in the frame and all the component images.
-     *
-     * @param  image  the new image to use
+     * 
+     * @param image the new image to use
      */
-    public void setImageA(ModelImage image) {
+    public void setImageA(final ModelImage image) {
         super.setImageA(image);
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setImageA(image);
@@ -2393,7 +2394,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         // Get all frames
-        Vector frameList = image.getImageFrameVector();
+        final Vector frameList = image.getImageFrameVector();
 
         if (frameList == null) {
             return;
@@ -2401,7 +2402,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         for (int i = 0; i < frameList.size(); i++) {
 
-            if (((ViewJFrameBase) frameList.elementAt(i)) != this) {
+            if ( ((ViewJFrameBase) frameList.elementAt(i)) != this) {
                 ((ViewJFrameBase) frameList.elementAt(i)).setImageA(image);
             }
         }
@@ -2420,10 +2421,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /**
      * Accessor that sets the reference to imageB. Includes changing the frame's reference and the references the
      * components keep.
-     *
-     * @param  _imageB  image to set the frame to
+     * 
+     * @param _imageB image to set the frame to
      */
-    public void setImageB(ModelImage _imageB) {
+    public void setImageB(final ModelImage _imageB) {
 
         if (imageB != null) {
             imageB.disposeLocal();
@@ -2433,17 +2434,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageB.setImageOrder(ModelImage.IMAGE_B);
 
         // tri image objects must be rebuilt with the new image B
-        triImage[AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.AXIAL);
-        triImage[SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.SAGITTAL);
-        triImage[CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.CORONAL);
-        triImage[AXIAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.AXIAL);
-        triImage[CORONAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.CORONAL);
-        triImage[SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.SAGITTAL);
+        triImage[ViewJFrameTriImage.AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.AXIAL);
+        triImage[ViewJFrameTriImage.SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.SAGITTAL);
+        triImage[ViewJFrameTriImage.CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.CORONAL);
+        triImage[ViewJFrameTriImage.AXIAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.AXIAL);
+        triImage[ViewJFrameTriImage.CORONAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.CORONAL);
+        triImage[ViewJFrameTriImage.SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.SAGITTAL);
 
         imageB.addImageDisplayListener(this);
 
         if (imageB.isColorImage() == false) {
-            int[] dimExtentsLUT = new int[2];
+            final int[] dimExtentsLUT = new int[2];
             dimExtentsLUT[0] = 4;
             dimExtentsLUT[1] = 256;
 
@@ -2464,8 +2465,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 max = (float) imageB.getMax();
             }
 
-            float imgMin = (float) imageB.getMin();
-            float imgMax = (float) imageB.getMax();
+            final float imgMin = (float) imageB.getMin();
+            final float imgMax = (float) imageB.getMax();
             LUTb.resetTransferLine(min, imgMin, max, imgMax);
             setLUTb(LUTb);
         }
@@ -2476,7 +2477,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         tpSplineButton.setEnabled(true);
 
         // Get all frames
-        Vector frameList = imageB.getImageFrameVector();
+        final Vector frameList = imageB.getImageFrameVector();
 
         if (frameList == null) {
             return;
@@ -2484,7 +2485,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         for (int i = 0; i < frameList.size(); i++) {
 
-            if (((ViewJFrameBase) frameList.elementAt(i)) != this) {
+            if ( ((ViewJFrameBase) frameList.elementAt(i)) != this) {
                 ((ViewJFrameBase) frameList.elementAt(i)).setImageB(imageB);
             }
         }
@@ -2495,29 +2496,29 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         setActiveImage(ViewJComponentBase.IMAGE_B);
 
-        zoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
+        zoom = getOptimalZoom(ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM, ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM);
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setZoom(zoom, zoom);
             }
         }
 
-
-        /* set the center after the triImage[].setResolutions and
-         * triImage[].setZoom calls have been made: */
-        setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
+        /*
+         * set the center after the triImage[].setResolutions and triImage[].setZoom calls have been made:
+         */
+        setCenter( (extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
 
         updateLayout();
     }
 
     /**
      * this method either shows or hides the image selector panel, based on the value of the parameter.
-     *
-     * @param  visible  DOCUMENT ME!
+     * 
+     * @param visible DOCUMENT ME!
      */
-    public void setImageSelectorPanelVisible(boolean visible) {
+    public void setImageSelectorPanelVisible(final boolean visible) {
 
         if (visible == true) {
 
@@ -2542,12 +2543,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets paint intensity in axial image.
-     *
-     * @param  intensityDropper  the paint intensity value for the XY image
+     * 
+     * @param intensityDropper the paint intensity value for the XY image
      */
-    public void setIntensityDropper(float intensityDropper) {
+    public void setIntensityDropper(final float intensityDropper) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setIntensityDropper(intensityDropper);
@@ -2557,43 +2558,43 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets integer value on intensityPaintButton.
-     *
-     * @param  intensityDropper  the paint button intensity value to show
+     * 
+     * @param intensityDropper the paint button intensity value to show
      */
-    public void setIntensityPaintName(float intensityDropper) {
-        Double doubleValue = new Double((double) intensityDropper);
+    public void setIntensityPaintName(final float intensityDropper) {
+        final Double doubleValue = new Double(intensityDropper);
         ((SpinnerNumberModel) intensitySpinner.getModel()).setValue(doubleValue);
     }
 
     /**
      * Accessor that sets the LUT.
-     *
-     * @param  LUT  the LUT
+     * 
+     * @param LUT the LUT
      */
-    public void setLUTa(ModelLUT LUT) {
+    public void setLUTa(final ModelLUT LUT) {
 
-        if (triImage[AXIAL_AB] != null) {
-            triImage[AXIAL_AB].setLUTa(LUT);
+        if (triImage[ViewJFrameTriImage.AXIAL_AB] != null) {
+            triImage[ViewJFrameTriImage.AXIAL_AB].setLUTa(LUT);
         }
 
-        if (triImage[CORONAL_AB] != null) {
-            triImage[CORONAL_AB].setLUTa(LUT);
+        if (triImage[ViewJFrameTriImage.CORONAL_AB] != null) {
+            triImage[ViewJFrameTriImage.CORONAL_AB].setLUTa(LUT);
         }
 
-        if (triImage[SAGITTAL_AB] != null) {
-            triImage[SAGITTAL_AB].setLUTa(LUT);
+        if (triImage[ViewJFrameTriImage.SAGITTAL_AB] != null) {
+            triImage[ViewJFrameTriImage.SAGITTAL_AB].setLUTa(LUT);
         }
 
-        if (triImage[AXIAL_B] != null) {
-            triImage[AXIAL_B].setLUTa(LUT);
+        if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
+            triImage[ViewJFrameTriImage.AXIAL_B].setLUTa(LUT);
         }
 
-        if (triImage[CORONAL_B] != null) {
-            triImage[CORONAL_B].setLUTa(LUT);
+        if (triImage[ViewJFrameTriImage.CORONAL_B] != null) {
+            triImage[ViewJFrameTriImage.CORONAL_B].setLUTa(LUT);
         }
 
-        if (triImage[SAGITTAL_B] != null) {
-            triImage[SAGITTAL_B].setLUTa(LUT);
+        if (triImage[ViewJFrameTriImage.SAGITTAL_B] != null) {
+            triImage[ViewJFrameTriImage.SAGITTAL_B].setLUTa(LUT);
         }
 
         updateImages(true);
@@ -2601,33 +2602,33 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Accessor that sets the LUT.
-     *
-     * @param  LUT  the LUT
+     * 
+     * @param LUT the LUT
      */
-    public void setLUTb(ModelLUT LUT) {
+    public void setLUTb(final ModelLUT LUT) {
 
-        if (triImage[AXIAL_AB] != null) {
-            triImage[AXIAL_AB].setLUTb(LUT);
+        if (triImage[ViewJFrameTriImage.AXIAL_AB] != null) {
+            triImage[ViewJFrameTriImage.AXIAL_AB].setLUTb(LUT);
         }
 
-        if (triImage[CORONAL_AB] != null) {
-            triImage[CORONAL_AB].setLUTb(LUT);
+        if (triImage[ViewJFrameTriImage.CORONAL_AB] != null) {
+            triImage[ViewJFrameTriImage.CORONAL_AB].setLUTb(LUT);
         }
 
-        if (triImage[SAGITTAL_AB] != null) {
-            triImage[SAGITTAL_AB].setLUTb(LUT);
+        if (triImage[ViewJFrameTriImage.SAGITTAL_AB] != null) {
+            triImage[ViewJFrameTriImage.SAGITTAL_AB].setLUTb(LUT);
         }
 
-        if (triImage[AXIAL_B] != null) {
-            triImage[AXIAL_B].setLUTa(LUT); // must set LUT a because image B is in image A slot
+        if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
+            triImage[ViewJFrameTriImage.AXIAL_B].setLUTa(LUT); // must set LUT a because image B is in image A slot
         }
 
-        if (triImage[CORONAL_B] != null) {
-            triImage[CORONAL_B].setLUTa(LUT); // must set LUT a because image B is in image A slot
+        if (triImage[ViewJFrameTriImage.CORONAL_B] != null) {
+            triImage[ViewJFrameTriImage.CORONAL_B].setLUTa(LUT); // must set LUT a because image B is in image A slot
         }
 
-        if (triImage[SAGITTAL_B] != null) {
-            triImage[SAGITTAL_B].setLUTa(LUT); // must set LUT a because image B is in image A slot
+        if (triImage[ViewJFrameTriImage.SAGITTAL_B] != null) {
+            triImage[ViewJFrameTriImage.SAGITTAL_B].setLUTa(LUT); // must set LUT a because image B is in image A slot
         }
 
         updateImages(true);
@@ -2636,22 +2637,22 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /**
      * When switching the active image, take the paintBitmap of the previous active image as the paintBitmap of the new
      * active image Currenlty unused.
-     *
-     * @param  paintBitmapSwitch  if true don't do a getMask on the new actve image
+     * 
+     * @param paintBitmapSwitch if true don't do a getMask on the new actve image
      */
-    public void setPaintBitmapSwitch(boolean paintBitmapSwitch) { }
+    public void setPaintBitmapSwitch(final boolean paintBitmapSwitch) {}
 
     /**
      * Sets the color of the paint.
-     *
-     * @param  color  Color the desired color of the paint
+     * 
+     * @param color Color the desired color of the paint
      */
-    public void setPaintColor(Color color) {
+    public void setPaintColor(final Color color) {
         this.color = color;
 
         colorPaintButton.setBackground(color);
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].getActiveImage().notifyImageDisplayListeners(null, true);
@@ -2661,15 +2662,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the labels which show the absolute position within the image volume and the patient position.
-     *
-     * @param  x  the x volume coordinate
-     * @param  y  the y volume coordinate
-     * @param  z  the z volume coordinate
+     * 
+     * @param x the x volume coordinate
+     * @param y the y volume coordinate
+     * @param z the z volume coordinate
      */
-    public void setPositionLabels(int x, int y, int z) {
+    public void setPositionLabels(final int x, final int y, final int z) {
         setAbsPositionLabels(new Vector3f(x, y, z));
         setScannerPosition(new Vector3f(x, y, z));
- 
+
         if (showTalairachPosition) {
             setTalairachPositionLabels(x, y, z);
         }
@@ -2686,12 +2687,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the RGB table for ARGB image A.
-     *
-     * @param  RGBT  the new RGB transfer functions for imageA
+     * 
+     * @param RGBT the new RGB transfer functions for imageA
      */
-    public void setRGBTA(ModelRGB RGBT) {
+    public void setRGBTA(final ModelRGB RGBT) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setRGBTA(RGBT);
@@ -2701,57 +2702,57 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the RGB table for image B.
-     *
-     * @param  RGBT  the new RGB transfer functions for imageB
+     * 
+     * @param RGBT the new RGB transfer functions for imageB
      */
-    public void setRGBTB(ModelRGB RGBT) {
+    public void setRGBTB(final ModelRGB RGBT) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setRGBTB(RGBT);
             }
         }
     }
-    
+
     /**
-     * Sets whether the linking button should be set for this image, implies that 
-     * this image will be linked to another tri-frame when true
+     * Sets whether the linking button should be set for this image, implies that this image will be linked to another
+     * tri-frame when true
      */
-    
-    public void setLinkButtonSelected(boolean selected) {
+
+    public void setLinkButtonSelected(final boolean selected) {
         scrollButton.setSelected(selected);
     }
 
     /**
      * Does nothing.
-     *
-     * @param  slice  the slice to show
+     * 
+     * @param slice the slice to show
      */
-    public void setSlice(int slice) { }
+    public void setSlice(final int slice) {}
 
     /**
      * Sets the slice index for each plane in the frame and components. Should be zero indexed.
-     *
-     * @param  x  slice index in the patient
-     * @param  y  slice index in the patient
-     * @param  z  slice index in the patient
+     * 
+     * @param x slice index in the patient
+     * @param y slice index in the patient
+     * @param z slice index in the patient
      */
-    public void setSlices(int x, int y, int z) {
+    public void setSlices(final int x, final int y, final int z) {
         setCenter(x, y, z);
     }
 
     /**
      * Called from the &quot;normal&quot; image component, sets the slices for the tri planar view to display.
      * Parameters are in terms of the image volume and so must be converted.
-     *
-     * @param  x  X Slice of image.
-     * @param  y  Y Slice of image.
-     * @param  z  Z Slice of image.
+     * 
+     * @param x X Slice of image.
+     * @param y Y Slice of image.
+     * @param z Z Slice of image.
      */
 
-    public void setSlicesFromFrame(int x, int y, int z) {
-        Vector3f inPoint = new Vector3f();
+    public void setSlicesFromFrame(final int x, final int y, final int z) {
+        final Vector3f inPoint = new Vector3f();
         inPoint.X = x;
         inPoint.Y = y;
         inPoint.Z = z;
@@ -2765,63 +2766,61 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /**
      * Sets the text to display in the Talairach voxel label. This text has a format corresponding to the Talairach
      * grid. Example: "AcL3" - an full explanation of what the text means is beyond the scope of this comment.
-     *
-     * @param  newLabelText  the text to display in the Talairach voxel label
+     * 
+     * @param newLabelText the text to display in the Talairach voxel label
      */
-   // public void setTalairachVoxelLabelText(String newLabelText) {
-        //talairachVoxelLabel.setText(newLabelText);
-    //}
-
+    // public void setTalairachVoxelLabelText(String newLabelText) {
+    // talairachVoxelLabel.setText(newLabelText);
+    // }
     /**
      * Sets the slice to be displayed and updates title frame.
-     *
-     * @param  slice  indicates image time-slice (4th dimension) to be displayed
+     * 
+     * @param slice indicates image time-slice (4th dimension) to be displayed
      */
-    public void setTimeSlice(int slice) {
+    public void setTimeSlice(final int slice) {
         setTimeSlice(slice, true);
     }
-    
+
     /**
      * Sets the slice to be displayed and updates title frame.
-     *
-     * @param  slice  indicates image time-slice (4th dimension) to be displayed
+     * 
+     * @param slice indicates image time-slice (4th dimension) to be displayed
      * @param checkedLinkedScroll whether corresponding tri-frames should also be scrolled
      */
-    public void setTimeSlice(int slice, boolean checkedLinkedScroll) {
+    public void setTimeSlice(final int slice, final boolean checkedLinkedScroll) {
 
-        if (((imageA.getNDims() <= 3) && (imageB == null)) ||
-                ((imageA.getNDims() <= 3) && (imageB != null) && (imageB.getNDims() <= 3))) {
+        if ( ( (imageA.getNDims() <= 3) && (imageB == null))
+                || ( (imageA.getNDims() <= 3) && (imageB != null) && (imageB.getNDims() <= 3))) {
             return;
         }
 
         ModelImage compImg = null;
-        if(((imageA.getNDims() == 4) && (tSlice < imageA.getExtents()[3]))) {
+        if ( ( (imageA.getNDims() == 4) && (tSlice < imageA.getExtents()[3]))) {
             compImg = imageA;
-        } else if((imageB != null) && (imageB.getNDims() == 4) && (tSlice < imageB.getExtents()[3])) {
+        } else if ( (imageB != null) && (imageB.getNDims() == 4) && (tSlice < imageB.getExtents()[3])) {
             compImg = imageB;
         }
-        
-        if (((imageA.getNDims() == 4) && (tSlice < imageA.getExtents()[3])) ||
-                ((imageB != null) && (imageB.getNDims() == 4) && (tSlice < imageB.getExtents()[3]))) {
+
+        if ( ( (imageA.getNDims() == 4) && (tSlice < imageA.getExtents()[3]))
+                || ( (imageB != null) && (imageB.getNDims() == 4) && (tSlice < imageB.getExtents()[3]))) {
             tSlice = slice;
             updateImages(true);
             setTitle();
             tImageSlider.setValue(slice);
         }
-       
-        
+
         if (checkedLinkedScroll && linkedScrolling && compImg != null) {
-            
-            int[] center = compImg.getTriImageFrame().getCenter();
-            Enumeration names = userInterface.getRegisteredImageNames();
+
+            final int[] center = compImg.getTriImageFrame().getCenter();
+            final Enumeration names = userInterface.getRegisteredImageNames();
 
             boolean sameDims = false;
             while (names.hasMoreElements()) {
-                String name = (String) names.nextElement();
+                final String name = (String) names.nextElement();
                 sameDims = true;
 
-                if (!compImg.getImageName().equals(name)) {
-                    ModelImage img = userInterface.getRegisteredImageByName(name);
+                if ( !compImg.getImageName().equals(name)) {
+                    final ModelImage img = userInterface.getRegisteredImageByName(name);
 
                     if (img.getTriImageFrame() != null) {
 
@@ -2836,7 +2835,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                             if (sameDims == true) {
                                 img.getTriImageFrame().setCenter(center[0], center[1], center[2], false);
-                                img.getTriImageFrame().setTimeSlice(tSlice, false);    
+                                img.getTriImageFrame().setTimeSlice(tSlice, false);
                             }
                         }
                     }
@@ -2844,30 +2843,30 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
     }
-    
+
     /**
-     * Sets the title bar for the tri-image frame.  Called for initialization and updating.
-     * Displays time series location for 4D volumes.
+     * Sets the title bar for the tri-image frame. Called for initialization and updating. Displays time series location
+     * for 4D volumes.
      */
     public void setTitle() {
         String str;
 
         if (displayMode == ViewJComponentBase.IMAGE_A) {
             if (imageA.getNDims() > 3) { // Setup the title for 4D image
-                str = imageA.getImageName() + "  "+ tSlice + "/" + (tDim - 1)
-                        + "t M:" + makeString(triImage[AXIAL_A].getZoomX(), 2);
+                str = imageA.getImageName() + "  " + tSlice + "/" + (tDim - 1) + "t M:"
+                        + makeString(triImage[ViewJFrameTriImage.AXIAL_A].getZoomX(), 2);
                 setTitle(str);
             } else {
-                str = imageA.getImageName() + "  M:" + makeString(triImage[AXIAL_A].getZoomX(), 2);
+                str = imageA.getImageName() + "  M:" + makeString(triImage[ViewJFrameTriImage.AXIAL_A].getZoomX(), 2);
                 setTitle(str);
             }
-        } else if ((imageB != null) && (triImage[AXIAL_B] != null)) { 
+        } else if ( (imageB != null) && (triImage[ViewJFrameTriImage.AXIAL_B] != null)) {
             if (imageB.getNDims() > 3) { // Setup the title for 4D image
-                str = imageB.getImageName() + "  " + tSlice + "/" + (tDim - 1)
-                        + "t M:" + makeString(triImage[AXIAL_B].getZoomX(), 2);
+                str = imageB.getImageName() + "  " + tSlice + "/" + (tDim - 1) + "t M:"
+                        + makeString(triImage[ViewJFrameTriImage.AXIAL_B].getZoomX(), 2);
                 setTitle(str);
             } else {
-                str = imageB.getImageName() + "  M:" + makeString(triImage[AXIAL_B].getZoomX(), 2);
+                str = imageB.getImageName() + "  M:" + makeString(triImage[ViewJFrameTriImage.AXIAL_B].getZoomX(), 2);
                 setTitle(str);
             }
         }
@@ -2879,15 +2878,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     public void setTraverseButton() {
         traverseButton.setSelected(true);
 
-        if ((imageB != null) && (!radioImageBoth.isEnabled())) {
+        if ( (imageB != null) && ( !radioImageBoth.isEnabled())) {
             radioImageBoth.setEnabled(true);
         }
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
-                //triImage[i].setProtractorVisible(false);
+                // triImage[i].setProtractorVisible(false);
                 triImage[i].clearProtractor();
             }
         }
@@ -2897,10 +2896,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the x coordinate of the point to be the center of the transformed image.
-     *
-     * @param  newVolumeCenter  The x coordinate of the center.
+     * 
+     * @param newVolumeCenter The x coordinate of the center.
      */
-    public void setVolumeCenter(Point3D newVolumeCenter) {
+    public void setVolumeCenter(final Point3D newVolumeCenter) {
         volumeCenter[0] = newVolumeCenter.x;
         volumeCenter[1] = newVolumeCenter.y;
         volumeCenter[2] = newVolumeCenter.z;
@@ -2908,12 +2907,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the x coordinate of the point to be the center of the transformed image.
-     *
-     * @param  x  The x coordinate of the center.
-     * @param  y  DOCUMENT ME!
-     * @param  z  DOCUMENT ME!
+     * 
+     * @param x The x coordinate of the center.
+     * @param y DOCUMENT ME!
+     * @param z DOCUMENT ME!
      */
-    public void setVolumeCenter(int x, int y, int z) {
+    public void setVolumeCenter(final int x, final int y, final int z) {
         volumeCenter[0] = x;
         volumeCenter[1] = y;
         volumeCenter[2] = z;
@@ -2921,12 +2920,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the color of the X slice crosshairs.
-     *
-     * @param  c  Color the color to set the X slice to
+     * 
+     * @param c Color the color to set the X slice to
      */
-    public void setXSliceHairColor(Color c) {
+    public void setXSliceHairColor(final Color c) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setXSliceHairColor(c);
@@ -2938,12 +2937,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the color of the Y slice crosshairs.
-     *
-     * @param  c  Color the color to set the Y slice to
+     * 
+     * @param c Color the color to set the Y slice to
      */
-    public void setYSliceHairColor(Color c) {
+    public void setYSliceHairColor(final Color c) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setYSliceHairColor(c);
@@ -2955,12 +2954,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the color of the Z slice crosshairs.
-     *
-     * @param  c  Color the color to set the Z slice to
+     * 
+     * @param c Color the color to set the Z slice to
      */
-    public void setZSliceHairColor(Color c) {
+    public void setZSliceHairColor(final Color c) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setZSliceHairColor(c);
@@ -2972,30 +2971,30 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets values based on knob along time slider.
-     *
-     * @param  e  Event that triggered this function
+     * 
+     * @param e Event that triggered this function
      */
-    public void stateChanged(ChangeEvent e) {
-        Object source = e.getSource();
-        
+    public void stateChanged(final ChangeEvent e) {
+        final Object source = e.getSource();
+
         if (source.equals(tImageSlider)) {
-            int newValue = tImageSlider.getValue();
+            final int newValue = tImageSlider.getValue();
             setTimeSlice(newValue);
             controls.setTimeSl(newValue);
         } else if (source.equals(intensitySpinner)) {
-            float paintIntensity = ((SpinnerNumberModel) intensitySpinner.getModel()).getNumber().floatValue();
+            final float paintIntensity = ((SpinnerNumberModel) intensitySpinner.getModel()).getNumber().floatValue();
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setIntensityDropper(paintIntensity);
                 }
             }
         } else if (source.equals(crosshairSpinner)) {
-            int crosshairPixelGap = ((SpinnerNumberModel) crosshairSpinner.getModel()).getNumber().intValue();
+            final int crosshairPixelGap = ((SpinnerNumberModel) crosshairSpinner.getModel()).getNumber().intValue();
 
             // System.err.println(crosshairPixelGap);
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCrosshairPixelGap(crosshairPixelGap);
@@ -3009,8 +3008,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Do nothing - required by ViewJFrameBase.
-     *
-     * @return  always false
+     * 
+     * @return always false
      */
     public boolean updateImageExtents() {
         return false;
@@ -3018,8 +3017,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * This methods calls the componentImage's update method to redraw the screen.
-     *
-     * @return  boolean confirming successful update
+     * 
+     * @return boolean confirming successful update
      */
     public boolean updateImages() {
         return updateImages(null, null, true, -1);
@@ -3027,28 +3026,28 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * This methods calls the componentImage's update method to redraw the screen. Without LUT changes.
-     *
-     * @param   forceShow  forces show to reimport image and calc. java image
-     *
-     * @return  boolean confirming successful update
+     * 
+     * @param forceShow forces show to reimport image and calc. java image
+     * 
+     * @return boolean confirming successful update
      */
-    public boolean updateImages(boolean forceShow) {
+    public boolean updateImages(final boolean forceShow) {
         return updateImages(null, null, forceShow, -1);
     }
 
     /**
      * This methods calls the componentImage's update method to redraw the screen.
-     *
-     * @param   LUTa        LUT used to update imageA
-     * @param   LUTb        LUT used to update imageB
-     * @param   forceShow   forces show to reimport image and calc. java image
-     * @param   interpMode  image interpolation method (Nearest or Smooth)
-     *
-     * @return  boolean confirming successful update
+     * 
+     * @param LUTa LUT used to update imageA
+     * @param LUTb LUT used to update imageB
+     * @param forceShow forces show to reimport image and calc. java image
+     * @param interpMode image interpolation method (Nearest or Smooth)
+     * 
+     * @return boolean confirming successful update
      */
-    public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
+    public boolean updateImages(final ModelLUT LUTa, final ModelLUT LUTb, final boolean forceShow, final int interpMode) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
 
@@ -3066,29 +3065,32 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  triImage  DOCUMENT ME!
+     * 
+     * @param triImage DOCUMENT ME!
      */
-    public void updateImageSubset(ViewJComponentTriImage triImage) {
+    public void updateImageSubset(final ViewJComponentTriImage triImage) {
 
-        if ((triImage == this.triImage[AXIAL_A]) || (triImage == this.triImage[CORONAL_A]) ||
-                (triImage == this.triImage[SAGITTAL_A])) {
-            this.triImage[AXIAL_A].show(tSlice, null, null, true, -1);
-            this.triImage[CORONAL_A].show(tSlice, null, null, true, -1);
-            this.triImage[SAGITTAL_A].show(tSlice, null, null, true, -1);
-        } else if ((triImage == this.triImage[AXIAL_B]) || (triImage == this.triImage[CORONAL_B]) ||
-                       (triImage == this.triImage[SAGITTAL_B])) {
-            this.triImage[AXIAL_B].show(tSlice, null, null, true, -1);
-            this.triImage[CORONAL_B].show(tSlice, null, null, true, -1);
-            this.triImage[SAGITTAL_B].show(tSlice, null, null, true, -1);
-        } else if ((triImage == this.triImage[AXIAL_AB]) || (triImage == this.triImage[CORONAL_AB]) ||
-                       (triImage == this.triImage[SAGITTAL_AB])) {
+        if ( (triImage == this.triImage[ViewJFrameTriImage.AXIAL_A])
+                || (triImage == this.triImage[ViewJFrameTriImage.CORONAL_A])
+                || (triImage == this.triImage[ViewJFrameTriImage.SAGITTAL_A])) {
+            this.triImage[ViewJFrameTriImage.AXIAL_A].show(tSlice, null, null, true, -1);
+            this.triImage[ViewJFrameTriImage.CORONAL_A].show(tSlice, null, null, true, -1);
+            this.triImage[ViewJFrameTriImage.SAGITTAL_A].show(tSlice, null, null, true, -1);
+        } else if ( (triImage == this.triImage[ViewJFrameTriImage.AXIAL_B])
+                || (triImage == this.triImage[ViewJFrameTriImage.CORONAL_B])
+                || (triImage == this.triImage[ViewJFrameTriImage.SAGITTAL_B])) {
+            this.triImage[ViewJFrameTriImage.AXIAL_B].show(tSlice, null, null, true, -1);
+            this.triImage[ViewJFrameTriImage.CORONAL_B].show(tSlice, null, null, true, -1);
+            this.triImage[ViewJFrameTriImage.SAGITTAL_B].show(tSlice, null, null, true, -1);
+        } else if ( (triImage == this.triImage[ViewJFrameTriImage.AXIAL_AB])
+                || (triImage == this.triImage[ViewJFrameTriImage.CORONAL_AB])
+                || (triImage == this.triImage[ViewJFrameTriImage.SAGITTAL_AB])) {
             updateImages();
         }
 
         if (linkTriFrame != null) {
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage == this.triImage[i]) {
                     linkTriFrame.updateImageSubset(linkTriFrame.getTriImage(i));
@@ -3101,25 +3103,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Updates the VOI ID for the three component images.
-     *
-     * @param  voiID  New VOI ID.
-    public void updatevoiID(int voiID) {
-
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-            if (triImage[i] != null) {
-                triImage[i].getVOIHandler().setVOI_ID(voiID);
-            }
-        }
-    }
+     * 
+     * @param voiID New VOI ID. public void updatevoiID(int voiID) {
+     * 
+     * for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+     * 
+     * if (triImage[i] != null) { triImage[i].getVOIHandler().setVOI_ID(voiID); } } }
      */
 
     /**
      * Closes window and disposes of frame and component.
-     *
-     * @param  event  Event that triggered function
+     * 
+     * @param event Event that triggered function
      */
-    public void windowClosing(WindowEvent event) {
+    public void windowClosing(final WindowEvent event) {
 
         if (volumePositionFrame != null) {
             volumePositionFrame.dispose();
@@ -3130,8 +3127,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         this.disposeLocal();
     }
 
-    public void windowOpened(final WindowEvent event)
-    {
+    public void windowOpened(final WindowEvent event) {
         setOldLayout(oldLayout);
     }
 
@@ -3142,12 +3138,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         panelActiveImage = new JPanel();
         panelActiveImage.setLayout(new GridLayout(1, 3));
 
-        TitledBorder borderActiveImage = new TitledBorder("Image to affect");
+        final TitledBorder borderActiveImage = new TitledBorder("Image to affect");
         borderActiveImage.setTitleColor(Color.black);
         borderActiveImage.setBorder(new EtchedBorder());
         panelActiveImage.setBorder(borderActiveImage);
 
-        ButtonGroup group1 = new ButtonGroup();
+        final ButtonGroup group1 = new ButtonGroup();
         radioImageA = new JRadioButton("Image A      ", true);
         radioImageA.setFont(MipavUtil.font12);
         group1.add(radioImageA);
@@ -3169,14 +3165,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Helper method to build a text button for the toolbar.
-     *
-     * @param  text     Text for button.
-     * @param  toolTip  Tool tip to be associated with button.
-     * @param  action   Action command for button.
-     * @param  toolbar  Tool bar to add this button to.
+     * 
+     * @param text Text for button.
+     * @param toolTip Tool tip to be associated with button.
+     * @param action Action command for button.
+     * @param toolbar Tool bar to add this button to.
      */
-    protected void buildDisabledTextButton(String text, String toolTip, String action, JToolBar toolbar) {
-        JButton button = new JButton(text);
+    protected void buildDisabledTextButton(final String text, final String toolTip, final String action,
+            final JToolBar toolbar) {
+        final JButton button = new JButton(text);
         button.addActionListener(this);
         button.setToolTipText(toolTip);
         button.setFont(MipavUtil.font12B);
@@ -3190,18 +3187,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Helper method to build an icon button for the toolbar.
-     *
-     * @param  icon      Name of icon for button.
-     * @param  toolTip   Tool tip to be associated with button.
-     * @param  action    Action command for button.
-     * @param  iconroll  Name of icon for rollover.
-     * @param  toolbar   Tool bar to add this button to.
+     * 
+     * @param icon Name of icon for button.
+     * @param toolTip Tool tip to be associated with button.
+     * @param action Action command for button.
+     * @param iconroll Name of icon for rollover.
+     * @param toolbar Tool bar to add this button to.
      */
-    protected void buildIconButton(String icon, String toolTip, String action, String iconroll, JToolBar toolbar) {
-        JButton button = new JButton(MipavUtil.getIcon(icon));
+    protected void buildIconButton(final String icon, final String toolTip, final String action, final String iconroll,
+            final JToolBar toolbar) {
+        final JButton button = new JButton(MipavUtil.getIcon(icon));
         button.addActionListener(this);
 
-        if ((action != null) && (action.equals("MagImage") || action.equals("UnMagImage"))) {
+        if ( (action != null) && (action.equals("MagImage") || action.equals("UnMagImage"))) {
             button.addMouseListener(this);
         }
 
@@ -3216,52 +3214,45 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Builds menus for the tri-planar view.
-     *
-     * @return  the tri-image frame menu bar
+     * 
+     * @return the tri-image frame menu bar
      */
     protected JMenuBar buildMenu() {
 
-        JSeparator separator = new JSeparator();
+        final JSeparator separator = new JSeparator();
 
-        //this.showTalairachPosition = ((imageA.getMatrixHolder().containsType(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX)) &&
-                                          //(imageA.getTalairachTransformInfo() != null));
-        
+        // this.showTalairachPosition =
+        // ((imageA.getMatrixHolder().containsType(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX)) &&
+        // (imageA.getTalairachTransformInfo() != null));
+
         this.showTalairachPosition = (imageA.getTalairachTransformInfo() != null);
 
         menuObj = new ViewMenuBuilder(this);
-        ViewMenuBar menuBarMaker = new ViewMenuBar(menuObj);
+        final ViewMenuBar menuBarMaker = new ViewMenuBar(menuObj);
 
-        JMenuBar menuBar = new JMenuBar();
-        menuBar.add(menuObj.makeMenu("File", false,
-                                     new JComponent[] {
-                                         separator, menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)
-                                     }));
+        final JMenuBar menuBar = new JMenuBar();
+        menuBar.add(menuObj.makeMenu("File", false, new JComponent[] {separator,
+                menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)}));
         voiMenu = menuBarMaker.makeVOIMenu();
         menuBar.add(voiMenu);
-        menuBar.add(menuObj.makeMenu("Options", false,
-                                     new JComponent[] {
-                                         menuObj.buildCheckBoxMenuItem("Show axes", "ShowAxes", true),
-                                         menuObj.buildCheckBoxMenuItem("Show crosshairs", "ShowXHairs", true),
-                                         separator,
-                                         menuObj.buildCheckBoxMenuItem("Scroll original image with crosshair",
-                                                                       "ScrollOriginal", scrollOriginalCrosshair),
-                                         separator,
-                                         menuObj.buildCheckBoxMenuItem("Fast rendering in paint mode", "FastPaint",
-                                                                       Preferences.is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)),
-                                         menuObj.buildCheckBoxMenuItem("Snap protractor to 90 degrees multiple",
-                                                                       "Snap90",
-                                                                       Preferences.is(Preferences.PREF_TRIPLANAR_SNAP90)),
-                                         menuObj.buildCheckBoxMenuItem("Use 2x2 tri-planar layout", OLD_LAYOUT,
-                                                                       oldLayout), separator,
-                                         menuObj.buildMenuItem("Show volume coordinates and Talairach controls",
-                                                               "PositionFrame", 0, null, false),
-                                         menuObj.buildMenuItem("Link to another TriImage frame", "LinkFrame", 0, null,
-                                                               false),
-                                         menuObj.buildMenuItem("Select panel plug-in", PANEL_PLUGIN, 0, null, false)
-                                     }));
-        
-        
-        
+        menuBar.add(menuObj.makeMenu("Options", false, new JComponent[] {
+                menuObj.buildCheckBoxMenuItem("Show axes", "ShowAxes", true),
+                menuObj.buildCheckBoxMenuItem("Show crosshairs", "ShowXHairs", true),
+                separator,
+                menuObj.buildCheckBoxMenuItem("Scroll original image with crosshair", "ScrollOriginal",
+                        scrollOriginalCrosshair),
+                separator,
+                menuObj.buildCheckBoxMenuItem("Fast rendering in paint mode", "FastPaint", Preferences
+                        .is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)),
+                menuObj.buildCheckBoxMenuItem("Snap protractor to 90 degrees multiple", "Snap90", Preferences
+                        .is(Preferences.PREF_TRIPLANAR_SNAP90)),
+                menuObj.buildCheckBoxMenuItem("Use 2x2 tri-planar layout", ViewJFrameTriImage.OLD_LAYOUT, oldLayout),
+                separator,
+                menuObj
+                        .buildMenuItem("Show volume coordinates and Talairach controls", "PositionFrame", 0, null,
+                                false),
+                menuObj.buildMenuItem("Link to another TriImage frame", "LinkFrame", 0, null, false),
+                menuObj.buildMenuItem("Select panel plug-in", ViewJFrameTriImage.PANEL_PLUGIN, 0, null, false)}));
 
         boolean showVOIToolbar = Preferences.is(Preferences.PREF_VOI_TOOLBAR_ON);
         final boolean showPaintToolbar = Preferences.is(Preferences.PREF_PAINT_TOOLBAR_ON);
@@ -3274,24 +3265,24 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         menuBar.add(menuObj.makeMenu("Toolbars", 'T', false, new JMenuItem[] {
                 menuObj.buildCheckBoxMenuItem("Paint toolbar", "PaintToolbar", showPaintToolbar),
                 menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", false),
-                menuObj.buildCheckBoxMenuItem("Image Align toolbar", "ImageAlignToolbar", false)
-                }));
+                menuObj.buildCheckBoxMenuItem("Image Align toolbar", "ImageAlignToolbar", false)}));
 
         return menuBar;
     }
 
     /**
      * Helper method to build a text button for the toolbar.
-     *
-     * @param   text     Text for button.
-     * @param   toolTip  Tool tip to be associated with button.
-     * @param   action   Action command for button.
-     * @param   toolbar  Tool bar to add this button to.
-     *
-     * @return  the new named text button
+     * 
+     * @param text Text for button.
+     * @param toolTip Tool tip to be associated with button.
+     * @param action Action command for button.
+     * @param toolbar Tool bar to add this button to.
+     * 
+     * @return the new named text button
      */
-    protected JButton buildNamedTextButton(String text, String toolTip, String action, JToolBar toolbar) {
-        JButton button = new JButton(text);
+    protected JButton buildNamedTextButton(final String text, final String toolTip, final String action,
+            final JToolBar toolbar) {
+        final JButton button = new JButton(text);
         button.addActionListener(this);
         button.setToolTipText(toolTip);
         button.setFont(MipavUtil.font12B);
@@ -3306,44 +3297,43 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Constructs progress bar.
-     *
-     * @param  imageName  The name of the image.
-     * @param  message    Message to be displayed in the frame
-     * @param  start      Start (typical = 0)
-     * @param  end        End (typical = 100)
+     * 
+     * @param imageName The name of the image.
+     * @param message Message to be displayed in the frame
+     * @param start Start (typical = 0)
+     * @param end End (typical = 100)
      */
-    protected void buildProgressBar(String imageName, String message, int start, int end) {
+    protected void buildProgressBar(final String imageName, final String message, final int start, final int end) {
         progressBar = new ViewJProgressBar(imageName, message, start, end, false, null, null);
     }
 
     /**
      * Builds the slider labels for the time slider.
-     *
-     * @param   min  Min value of slider
-     * @param   max  Max value of slider.
-     *
-     * @return  Slider labels hash.
+     * 
+     * @param min Min value of slider
+     * @param max Max value of slider.
+     * 
+     * @return Slider labels hash.
      */
-    protected Hashtable buildTImageSliderLabels(int min, int max) {
-        Hashtable tImageSliderDictionary = new Hashtable();
+    protected Hashtable buildTImageSliderLabels(final int min, final int max) {
+        final Hashtable tImageSliderDictionary = new Hashtable();
 
-        Font font12 = MipavUtil.font12;
-        float rangeF = (max) / 4.0f;
+        final Font font12 = MipavUtil.font12;
+        final float rangeF = (max) / 4.0f;
 
-        JLabel label1 = new JLabel("0");
+        final JLabel label1 = new JLabel("0");
         label1.setForeground(Color.black);
         label1.setFont(font12);
         tImageSliderDictionary.put(new Integer(0), label1);
 
-        
-        if ((max - min) > 3) {
-            JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)-1));
+        if ( (max - min) > 3) {
+            final JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2) - 1));
             label2.setForeground(Color.black);
             label2.setFont(font12);
-            tImageSliderDictionary.put(max/2, label2);
+            tImageSliderDictionary.put(max / 2, label2);
         }
 
-        JLabel label5 = new JLabel(Integer.toString(max));
+        final JLabel label5 = new JLabel(Integer.toString(max));
         label5.setForeground(Color.black);
         label5.setFont(font12);
         tImageSliderDictionary.put(max, label5);
@@ -3353,33 +3343,33 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Helper method to build a toggle button for the toolbar.
-     *
-     * @param  icon      Name of icon for button.
-     * @param  toolTip   Tool tip to be associated with button.
-     * @param  action    Action command for button.
-     * @param  iconroll  Name of icon for rollover.
-     * @param  group     Button group to add this toggle to.
-     * @param  toolbar   Tool bar to add this button to.
+     * 
+     * @param icon Name of icon for button.
+     * @param toolTip Tool tip to be associated with button.
+     * @param action Action command for button.
+     * @param iconroll Name of icon for rollover.
+     * @param group Button group to add this toggle to.
+     * @param toolbar Tool bar to add this button to.
      */
-    protected void buildToggleButton(String icon, String toolTip, String action, String iconroll, ButtonGroup group,
-                                     JToolBar toolbar) {
+    protected void buildToggleButton(final String icon, final String toolTip, final String action,
+            final String iconroll, final ButtonGroup group, final JToolBar toolbar) {
         buildToggleButton(icon, toolTip, action, iconroll, group, toolbar, false);
     }
 
     /**
      * Helper method to build a toggle button for the toolbar.
-     *
-     * @param  icon      Name of icon for button.
-     * @param  toolTip   Tool tip to be associated with button.
-     * @param  action    Action command for button.
-     * @param  iconroll  Name of icon for rollover.
-     * @param  group     Button group to add this toggle to.
-     * @param  toolbar   Tool bar to add this button to.
-     * @param  selected  whether or not the button is initially selected
+     * 
+     * @param icon Name of icon for button.
+     * @param toolTip Tool tip to be associated with button.
+     * @param action Action command for button.
+     * @param iconroll Name of icon for rollover.
+     * @param group Button group to add this toggle to.
+     * @param toolbar Tool bar to add this button to.
+     * @param selected whether or not the button is initially selected
      */
-    protected void buildToggleButton(String icon, String toolTip, String action, String iconroll, ButtonGroup group,
-                                     JToolBar toolbar, boolean selected) {
-        JToggleButton button = new JToggleButton(MipavUtil.getIcon(icon));
+    protected void buildToggleButton(final String icon, final String toolTip, final String action,
+            final String iconroll, final ButtonGroup group, final JToolBar toolbar, final boolean selected) {
+        final JToggleButton button = new JToggleButton(MipavUtil.getIcon(icon));
         button.setMargin(new Insets(0, 0, 0, 0));
         button.addActionListener(this);
         button.setToolTipText(toolTip);
@@ -3394,9 +3384,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         toolbar.add(button);
         button.setSelected(selected);
     }
-
-    
-    
 
     /**
      * Builds the toolbars for the tri-planar view.
@@ -3416,11 +3403,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         panelToolBarGBC.weightx = 1;
         panelToolBarGBC.weighty = 1;
 
-        for (int i = 0; i < NUM_INVISIBLE_BUTTONS; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.NUM_INVISIBLE_BUTTONS; i++) {
             btnInvisible[i] = new JToggleButton("");
         }
 
-        Border etchedBorder = BorderFactory.createEtchedBorder();
+        final Border etchedBorder = BorderFactory.createEtchedBorder();
 
         imageToolBar = new JToolBar();
         imageToolBar.setBorder(etchedBorder);
@@ -3434,7 +3421,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-
         magButton = toolbarBuilder.buildButton(CustomUIBuilder.PARAM_IMAGE_MAG);
         magButton.addMouseListener(this);
         imageToolBar.add(magButton);
@@ -3443,7 +3429,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(minButton);
         imageToolBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_IMAGE_MAG_ONE_TO_ONE));
 
-
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         // ButtonGroup indivMagGroup = new ButtonGroup();
@@ -3451,23 +3436,22 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         indivMagButton.addMouseListener(this);
         imageToolBar.add(indivMagButton);
 
-        indivMinButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_UNMAG,
-                                                          VOIGroup);
+        indivMinButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_UNMAG, VOIGroup);
         indivMinButton.addMouseListener(this);
         imageToolBar.add(indivMinButton);
 
         // bogusMagButton = toolbarBuilder.buildToggleButton("bogusMinImage", "Magnify individual frame 0.5x",
         // "trizoomout", indivMagGroup); bogusMagButton.setVisible(false); imageToolBar.add(bogusMagButton);
 
-        //imageToolBar.add(ViewToolBarBuilder.makeSeparator());
+        // imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         scrollButton = new JCheckBox(MipavUtil.getIcon("link_broken.gif"));
-        scrollButton.setPreferredSize(new Dimension(24,24));
+        scrollButton.setPreferredSize(new Dimension(24, 24));
         scrollButton.setSelectedIcon(MipavUtil.getIcon("link.gif"));
         scrollButton.addActionListener(this);
         scrollButton.setActionCommand("ScrollLink");
         scrollButton.setToolTipText("Link tri-images of like-dimensions for scrolling.");
-        
+
         imageToolBar.add(scrollButton);
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
@@ -3475,7 +3459,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         try {
             crosshairPixelGap = Integer.parseInt(Preferences.getProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP, "0");
         }
 
@@ -3512,25 +3496,25 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         // create the list of brushes
 
-        String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" +
-                             File.separator;
+        final String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+                + "brushes" + File.separator;
 
         int numBrushes = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL; // built in... 9 so far
 
-        File brushesDir = new File(userBrushes);
+        final File brushesDir = new File(userBrushes);
 
         if (brushesDir.isDirectory()) {
-            File[] brushes = brushesDir.listFiles();
+            final File[] brushes = brushesDir.listFiles();
 
-            for (int i = 0; i < brushes.length; i++) {
+            for (final File element : brushes) {
 
-                if (brushes[i].getName().endsWith(".png")) {
+                if (element.getName().endsWith(".png")) {
                     numBrushes++;
                 }
             }
         }
 
-        Integer[] intArray = new Integer[numBrushes];
+        final Integer[] intArray = new Integer[numBrushes];
 
         for (int i = 0; i < intArray.length; i++) {
             intArray[i] = new Integer(i);
@@ -3549,13 +3533,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         paintBrushNames[8] = "circle 20x20.gif";
 
         if (brushesDir.isDirectory()) {
-            File[] brushes = brushesDir.listFiles();
+            final File[] brushes = brushesDir.listFiles();
             int brushIndex = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL;
 
-            for (int i = 0; i < brushes.length; i++) {
+            for (final File element : brushes) {
 
-                if (brushes[i].getName().endsWith(".png")) {
-                    paintBrushNames[brushIndex] = brushes[i].getName();
+                if (element.getName().endsWith(".png")) {
+                    paintBrushNames[brushIndex] = element.getName();
                     brushIndex++;
                 }
             }
@@ -3565,7 +3549,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         paintBox = new JComboBox(intArray);
         paintBox.setFont(MipavUtil.font12);
 
-        String brushName = Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH);
+        final String brushName = Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH);
 
         if (brushName == null) {
             paintBox.setSelectedIndex(2);
@@ -3587,19 +3571,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         paintBox.setRenderer(new PaintBoxRenderer());
         paintBox.addItemListener(this);
 
-        Dimension buttonSize = paintCanToggleButton.getPreferredSize();
+        final Dimension buttonSize = paintCanToggleButton.getPreferredSize();
         buttonSize.setSize(150, buttonSize.getHeight());
-
 
         paintBox.setPreferredSize(buttonSize);
         paintBox.setMaximumSize(buttonSize);
 
         paintToolBar.add(paintBox);
 
-
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        if (!imageA.isColorImage()) {
+        if ( !imageA.isColorImage()) {
 
             if (imageB == null) {
                 setSpinnerValues(imageA.getType());
@@ -3608,8 +3590,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
 
-        intensitySpinner = new JSpinner(new SpinnerNumberModel(spinnerDefaultValue, spinnerMin, spinnerMax,
-                                                               spinnerStep));
+        intensitySpinner = new JSpinner(
+                new SpinnerNumberModel(spinnerDefaultValue, spinnerMin, spinnerMax, spinnerStep));
         intensitySpinner.setMaximumSize(new Dimension(56, 24)); // 56 pixlls wide, 24 tall
         intensitySpinner.setPreferredSize(new Dimension(56, 24)); // 56 pixlls wide, 24 tall
         intensitySpinner.addChangeListener(this);
@@ -3627,24 +3609,24 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         colorPaintButton.setBackground(color);
 
         paintToolBar.add(colorPaintButton);
-        
+
         paintToolBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_PAINT_OPACITY));
-        ButtonGroup borderPaintGroup = new ButtonGroup();
-        borderPaintButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_PAINT_BORDER,borderPaintGroup);
+        final ButtonGroup borderPaintGroup = new ButtonGroup();
+        borderPaintButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_PAINT_BORDER, borderPaintGroup);
         bogusBorderPaintButton = new JToggleButton();
         borderPaintGroup.add(bogusBorderPaintButton);
         if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
-        	borderPaintButton.setSelected(true);
-        }else {
-        	bogusBorderPaintButton.setSelected(true);
+            borderPaintButton.setSelected(true);
+        } else {
+            bogusBorderPaintButton.setSelected(true);
         }
         paintToolBar.add(borderPaintButton);
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
-        paintToolBar.add(toolbarBuilder.buildButton("CommitPaint", "Changes image where painted inside",
-                                                    "paintinside"));
+        paintToolBar
+                .add(toolbarBuilder.buildButton("CommitPaint", "Changes image where painted inside", "paintinside"));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
         paintToolBar.add(toolbarBuilder.buildButton("CommitPaintExt", "Changes image where painted outside",
-                                                    "paintoutside"));
+                "paintoutside"));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
         paintToolBar.add(toolbarBuilder.buildButton("UndoPaint", "Undo last region paint", "undopaint"));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
@@ -3663,21 +3645,22 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         panelToolbar.add(paintToolBar, panelToolBarGBC);
         paintToolBar.setVisible(menuObj.isMenuItemSelected("Paint toolbar"));
 
-        if ((imageA.getNDims() == 4) || ((imageB != null) && (imageB.getNDims() == 4))) {
-            JPanel panelImageSlider = new JPanel();
+        if ( (imageA.getNDims() == 4) || ( (imageB != null) && (imageB.getNDims() == 4))) {
+            final JPanel panelImageSlider = new JPanel();
             panelImageSlider.setLayout(new GridLayout(1, 1));
             panelImageSlider.setForeground(Color.black);
-            
+
             tDim = extents[3];
-            TitledBorder borderImageSlider = new TitledBorder(" Time slice index [total number volumes="+ tDim + "] ");
+            final TitledBorder borderImageSlider = new TitledBorder(" Time slice index [total number volumes=" + tDim
+                    + "] ");
             borderImageSlider.setTitleColor(Color.black);
             borderImageSlider.setTitleFont(MipavUtil.font12B);
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
- 
-            tImageSlider = new ViewJSlider(ViewJSlider.TIME, tDim-1);
+
+            tImageSlider = new ViewJSlider(ViewJSlider.TIME, tDim - 1);
             tImageSlider.addChangeListener(this);
-            
+
             panelImageSlider.add(tImageSlider);
             panelToolBarGBC.gridx = 0;
             panelToolBarGBC.gridy = 4;
@@ -3692,33 +3675,33 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         setImageSelectorPanelVisible(true);
     }
-    
-    protected void buildImageAlignToolBar()
-    {
-        Border etchedBorder = BorderFactory.createEtchedBorder();
+
+    protected void buildImageAlignToolBar() {
+        final Border etchedBorder = BorderFactory.createEtchedBorder();
         imageAlignToolBar = new JToolBar();
         imageAlignToolBar.setBorder(etchedBorder);
         imageAlignToolBar.setBorderPainted(true);
         imageAlignToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         imageAlignToolBar.setFloatable(false);
 
-        ButtonGroup intensityLineGroup = new ButtonGroup();
-        //imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_LINE, VOIGroup));
-        //intensityLineGroup.add(btnInvisible[0]);
+        final ButtonGroup intensityLineGroup = new ButtonGroup();
+        // imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_LINE, VOIGroup));
+        // intensityLineGroup.add(btnInvisible[0]);
 
-        //imageAlignToolBar.add(ViewToolBarBuilder.makeSeparator());
+        // imageAlignToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        ButtonGroup centerGroup = new ButtonGroup();
+        final ButtonGroup centerGroup = new ButtonGroup();
         imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_CENTER, VOIGroup));
 
         centerGroup.add(btnInvisible[3]);
 
-        imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_IMAGE_ALIGN_VOI_PROTRACTOR, VOIGroup));
+        imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_IMAGE_ALIGN_VOI_PROTRACTOR,
+                VOIGroup));
 
         intensityLineGroup.add(btnInvisible[2]);
 
         imageAlignToolBar.add(toolbarBuilder.buildTextButton("Apply", "Applies rotations and translations",
-                                                        "createTransformation"));
+                "createTransformation"));
         imageAlignToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         addPointToggleButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT, VOIGroup);
@@ -3757,42 +3740,41 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         imageAlignToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        ButtonGroup oneButtonToggleGroup = new ButtonGroup();
+        final ButtonGroup oneButtonToggleGroup = new ButtonGroup();
         oneButtonToggleGroup.add(btnInvisible[1]);
-        imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_BOUNDING_BOX, oneButtonToggleGroup));
+        imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_BOUNDING_BOX,
+                oneButtonToggleGroup));
 
         imageAlignToolBar.add(toolbarBuilder.buildTextButton("Crop", "Crops image delineated by the bounding cube",
-                                                        "cropVolume"));
-        
+                "cropVolume"));
 
         panelToolBarGBC.gridy++;
-        panelToolbar.add( imageAlignToolBar, panelToolBarGBC );
+        panelToolbar.add(imageAlignToolBar, panelToolBarGBC);
         imageAlignToolBar.setVisible(false);
 
     }
 
     /**
      * This method creates an image from the two ModelImage objects and ModelLUT objects passed as parameters.
-     *
-     * @param   imageA       ModelImage image A
-     * @param   lutA         ModelLUT image A's LUT
-     * @param   imageB       ModelImage image B
-     * @param   lutB         ModelLUT image B's LUT
-     * @param   orientation  the desired orientation of the result image
-     *
-     * @return  ViewJComponentTriImage
+     * 
+     * @param imageA ModelImage image A
+     * @param lutA ModelLUT image A's LUT
+     * @param imageB ModelImage image B
+     * @param lutB ModelLUT image B's LUT
+     * @param orientation the desired orientation of the result image
+     * 
+     * @return ViewJComponentTriImage
      */
-    protected ViewJComponentTriImage buildTriImage(ModelImage imageA, ModelLUT lutA, ModelImage imageB, ModelLUT lutB,
-                                                   int orientation) {
-        ViewJComponentTriImage triImage = new ViewJComponentTriImage(this, imageA, lutA, null, imageB, lutB, null, null,
-                                                                     zoom, extents, imageA.getLogMagDisplay(),
-                                                                     orientation);
+    protected ViewJComponentTriImage buildTriImage(final ModelImage imageA, final ModelLUT lutA,
+            final ModelImage imageB, final ModelLUT lutB, final int orientation) {
+        final ViewJComponentTriImage triImage = new ViewJComponentTriImage(this, imageA, lutA, null, imageB, lutB,
+                null, null, zoom, extents, imageA.getLogMagDisplay(), orientation);
 
-        int[] triExtents = triImage.getExtents();
-        float[] tmpResols = new float[3];
+        final int[] triExtents = triImage.getExtents();
+        final float[] tmpResols = new float[3];
         float minResol = 0;
 
-        float[] triResols = triImage.getResolutions();
+        final float[] triResols = triImage.getResolutions();
         minResol = triResols[0];
 
         if (triResols[1] < minResol) {
@@ -3808,7 +3790,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         tmpResols[2] = triResols[2] / minResol;
 
         triImage.setBuffers(triImage.getImageBufferA(), triImage.getImageBufferB(), triImage.getPixBuffer(),
-                            new int[triExtents[0] * triExtents[1]]);
+                new int[triExtents[0] * triExtents[1]]);
 
         triImage.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 
@@ -3817,21 +3799,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         float axialWidthResFactor = 1.0f;
         float axialHeightResFactor = 1.0f;
 
-        if (imageA.getType() == ModelImage.COMPLEX) {
+        if (imageA.getType() == ModelStorageBase.COMPLEX) {
             triImage.setResolutions(1, 1);
-        } else if ((tmpResols[1] > tmpResols[0]) && (tmpResols[1] < (50.0f * tmpResols[0])) && (units[0] == units[1])) {
+        } else if ( (tmpResols[1] > tmpResols[0]) && (tmpResols[1] < (50.0f * tmpResols[0])) && (units[0] == units[1])) {
             axialHeightResFactor = tmpResols[1] / tmpResols[0];
             triImage.setResolutions(1, axialHeightResFactor);
-        } else if ((tmpResols[0] > tmpResols[1]) && (tmpResols[0] < (50.0f * tmpResols[1])) && (units[0] == units[1])) {
+        } else if ( (tmpResols[0] > tmpResols[1]) && (tmpResols[0] < (50.0f * tmpResols[1])) && (units[0] == units[1])) {
             axialWidthResFactor = tmpResols[0] / tmpResols[1];
             triImage.setResolutions(axialWidthResFactor, 1);
-        } else if ((tmpResols[0] == tmpResols[1])) {
+        } else if ( (tmpResols[0] == tmpResols[1])) {
             triImage.setResolutions(tmpResols[0], tmpResols[0]);
         } else {
             triImage.setResolutions(1, 1);
         }
 
-        //triImage.addKeyListener(this);
+        // triImage.addKeyListener(this);
 
         return triImage;
     }
@@ -3843,7 +3825,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         cleanVolumePositionPanel();
         volumePositionPanel = new JPanel();
 
-        GridBagLayout gbLayout = new GridBagLayout();
+        final GridBagLayout gbLayout = new GridBagLayout();
         GridBagConstraints gbConstraints = new GridBagConstraints();
         gbConstraints = new GridBagConstraints();
 
@@ -3866,16 +3848,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         talairachPanel.add(chkShowTalairachGrid, gbConstraints);
 
         gbConstraints.gridy = 1;
-        
+
         talairachPanel.add(chkShowTalairachGridMarkers, gbConstraints);
 
-        GridBagLayout gbSubLayout = new GridBagLayout();
-        GridBagConstraints gbSubConstraints = new GridBagConstraints();
+        final GridBagLayout gbSubLayout = new GridBagLayout();
+        final GridBagConstraints gbSubConstraints = new GridBagConstraints();
 
-        JPanel talairachSubPanel = new JPanel(gbSubLayout);
-        //talairachSubPanel.setForeground(Color.black);
-        //talairachSubPanel.setFont(MipavUtil.font14B);
-        //talairachSubPanel.setBorder(BorderFactory.createTitledBorder("Talairach grid coordinates"));
+        final JPanel talairachSubPanel = new JPanel(gbSubLayout);
+        // talairachSubPanel.setForeground(Color.black);
+        // talairachSubPanel.setFont(MipavUtil.font14B);
+        // talairachSubPanel.setBorder(BorderFactory.createTitledBorder("Talairach grid coordinates"));
 
         gbConstraints.gridy++;
         gbConstraints.gridwidth = 3;
@@ -3883,31 +3865,24 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbConstraints.weighty = 1;
         talairachPanel.add(talairachSubPanel, gbConstraints);
 
-        
         gbSubConstraints.weightx = 0;
         gbSubConstraints.gridwidth = GridBagConstraints.RELATIVE;
         gbSubConstraints.anchor = GridBagConstraints.WEST;
         gbSubConstraints.insets = new Insets(0, 20, 0, 0);
-        
-        
-        
-        
-        
-        
+
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 1;
-        JLabel talLabel = new JLabel("Talairach Coordinates");
+        final JLabel talLabel = new JLabel("Talairach Coordinates");
         talLabel.setForeground(Color.black);
         talLabel.setFont(MipavUtil.font14B);
         talairachSubPanel.add(talLabel, gbSubConstraints);
-        
+
         gbSubConstraints.gridy = 2;
         xTalLabel = new JLabel("X:");
         xTalLabel.setForeground(Color.black);
         xTalLabel.setFont(MipavUtil.font14B);
         talairachSubPanel.add(xTalLabel, gbSubConstraints);
-        //talairachSubPanel.add(labelXTal, gbSubConstraints);
-  
+        // talairachSubPanel.add(labelXTal, gbSubConstraints);
 
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 3;
@@ -3915,8 +3890,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         yTalLabel.setForeground(Color.black);
         yTalLabel.setFont(MipavUtil.font14B);
         talairachSubPanel.add(yTalLabel, gbSubConstraints);
-        //gbSubConstraints.gridx = 1;
-        //talairachSubPanel.add(labelYTal, gbSubConstraints);
+        // gbSubConstraints.gridx = 1;
+        // talairachSubPanel.add(labelYTal, gbSubConstraints);
 
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 4;
@@ -3924,8 +3899,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         zTalLabel.setForeground(Color.black);
         zTalLabel.setFont(MipavUtil.font14B);
         talairachSubPanel.add(zTalLabel, gbSubConstraints);
-        //gbSubConstraints.gridx = 1;
-        //talairachSubPanel.add(labelZTal, gbSubConstraints);
+        // gbSubConstraints.gridx = 1;
+        // talairachSubPanel.add(labelZTal, gbSubConstraints);
 
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 5;
@@ -3933,18 +3908,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         tTalVoxLabel.setForeground(Color.black);
         tTalVoxLabel.setFont(MipavUtil.font14B);
         talairachSubPanel.add(tTalVoxLabel, gbSubConstraints);
-        //gbSubConstraints.gridx = 1;
-        //talairachSubPanel.add(talairachVoxelLabel, gbSubConstraints);
-        
+        // gbSubConstraints.gridx = 1;
+        // talairachSubPanel.add(talairachVoxelLabel, gbSubConstraints);
+
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 6;
         iTalLabel = new JLabel("Intensity: ");
         iTalLabel.setForeground(Color.black);
         iTalLabel.setFont(MipavUtil.font14B);
         talairachSubPanel.add(iTalLabel, gbSubConstraints);
-        
-        
-        
+
         talXLabel = new JLabel("X:");
         talXLabel.setForeground(Color.black);
         talXLabel.setFont(MipavUtil.font14B);
@@ -3967,23 +3940,22 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         talGoToButton.setForeground(Color.black);
         talGoToButton.setFont(MipavUtil.font14B);
         talGoToPanel = new JPanel();
-        talGoToPanel.add( talXLabel);
-        talGoToPanel.add( talXTextField);
-        talGoToPanel.add( talYLabel);
-        talGoToPanel.add( talYTextField);
-        talGoToPanel.add( talZLabel);
-        talGoToPanel.add( talZTextField);
-        talGoToPanel.add( talGoToButton);
+        talGoToPanel.add(talXLabel);
+        talGoToPanel.add(talXTextField);
+        talGoToPanel.add(talYLabel);
+        talGoToPanel.add(talYTextField);
+        talGoToPanel.add(talZLabel);
+        talGoToPanel.add(talZTextField);
+        talGoToPanel.add(talGoToButton);
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 7;
         talairachSubPanel.add(talGoToPanel, gbSubConstraints);
         gbConstraints = new GridBagConstraints();
-        
 
-        ButtonGroup displayGroup = new ButtonGroup();
+        final ButtonGroup displayGroup = new ButtonGroup();
 
         /* radiological radio button: */
-        JRadioButton radiologicalView = new JRadioButton();
+        final JRadioButton radiologicalView = new JRadioButton();
         radiologicalView.setSelected(true);
         radiologicalView.addActionListener(this);
         radiologicalView.setActionCommand("RadiologicalView");
@@ -3991,14 +3963,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbConstraints.gridy = 0;
         viewPanel.add(radiologicalView, gbConstraints);
         gbConstraints.gridx++;
-        JLabel rViewLabel = new JLabel("Radiological View");
+        final JLabel rViewLabel = new JLabel("Radiological View");
         rViewLabel.setForeground(Color.black);
         rViewLabel.setFont(MipavUtil.font14B);
         viewPanel.add(rViewLabel, gbConstraints);
         displayGroup.add(radiologicalView);
 
         /* neurological radio button: */
-        JRadioButton neurologicalView = new JRadioButton();
+        final JRadioButton neurologicalView = new JRadioButton();
         neurologicalView.setSelected(false);
         neurologicalView.addActionListener(this);
         neurologicalView.setActionCommand("NeurologicalView");
@@ -4006,7 +3978,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbConstraints.gridy++;
         viewPanel.add(neurologicalView, gbConstraints);
         gbConstraints.gridx++;
-        JLabel nViewLabel = new JLabel("Neurological View");
+        final JLabel nViewLabel = new JLabel("Neurological View");
         nViewLabel.setForeground(Color.black);
         nViewLabel.setFont(MipavUtil.font14B);
         viewPanel.add(nViewLabel, gbConstraints);
@@ -4030,19 +4002,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         volumePositionPanel.add(tabbedPane);
     }
 
-    
-    
-    
-    
     public JLabel gettTalVoxLabel() {
-		return tTalVoxLabel;
-	}
+        return tTalVoxLabel;
+    }
 
-	public void settTalVoxLabelText(String text) {
-		this.tTalVoxLabel.setText(text);
-	}
+    public void settTalVoxLabelText(final String text) {
+        this.tTalVoxLabel.setText(text);
+    }
 
-	/**
+    /**
      * Constructs main frame structures for 3 images (image A only) or 9 images (image A and image B). Assumes imageA is
      * not null. Builds the labels for the position frame. Adds the tri-images to this frame's layout.
      */
@@ -4052,7 +4020,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             return;
         }
 
-        JMenuBar menuBar = buildMenu();
+        final JMenuBar menuBar = buildMenu();
         setJMenuBar(menuBar);
         buildToolbars();
         buildImageAlignToolBar();
@@ -4064,44 +4032,43 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         buildLUTs();
 
         if (imageB != null) {
-            triImage[AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.AXIAL);
-            triImage[AXIAL_AB].addMouseListener(this);
-            triImage[AXIAL_AB].setName((new Integer(AXIAL_AB)).toString());
-            triImage[CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.CORONAL);
-            triImage[CORONAL_AB].addMouseListener(this);
-            triImage[CORONAL_AB].setName((new Integer(CORONAL_AB)).toString());
-            triImage[SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.SAGITTAL);
-            triImage[SAGITTAL_AB].addMouseListener(this);
-            triImage[SAGITTAL_AB].setName((new Integer(SAGITTAL_AB)).toString());
-            triImage[AXIAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.AXIAL);
-            triImage[AXIAL_B].addMouseListener(this);
-            triImage[AXIAL_B].setName((new Integer(AXIAL_B)).toString());
-            triImage[CORONAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.CORONAL);
-            triImage[CORONAL_B].addMouseListener(this);
-            triImage[CORONAL_B].setName((new Integer(CORONAL_B)).toString());
-            triImage[SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.SAGITTAL);
-            triImage[SAGITTAL_B].addMouseListener(this);
-            triImage[SAGITTAL_B].setName((new Integer(SAGITTAL_B)).toString());
+            triImage[ViewJFrameTriImage.AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.AXIAL);
+            triImage[ViewJFrameTriImage.AXIAL_AB].addMouseListener(this);
+            triImage[ViewJFrameTriImage.AXIAL_AB].setName( (new Integer(ViewJFrameTriImage.AXIAL_AB)).toString());
+            triImage[ViewJFrameTriImage.CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.CORONAL);
+            triImage[ViewJFrameTriImage.CORONAL_AB].addMouseListener(this);
+            triImage[ViewJFrameTriImage.CORONAL_AB].setName( (new Integer(ViewJFrameTriImage.CORONAL_AB)).toString());
+            triImage[ViewJFrameTriImage.SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.SAGITTAL);
+            triImage[ViewJFrameTriImage.SAGITTAL_AB].addMouseListener(this);
+            triImage[ViewJFrameTriImage.SAGITTAL_AB].setName( (new Integer(ViewJFrameTriImage.SAGITTAL_AB)).toString());
+            triImage[ViewJFrameTriImage.AXIAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.AXIAL);
+            triImage[ViewJFrameTriImage.AXIAL_B].addMouseListener(this);
+            triImage[ViewJFrameTriImage.AXIAL_B].setName( (new Integer(ViewJFrameTriImage.AXIAL_B)).toString());
+            triImage[ViewJFrameTriImage.CORONAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.CORONAL);
+            triImage[ViewJFrameTriImage.CORONAL_B].addMouseListener(this);
+            triImage[ViewJFrameTriImage.CORONAL_B].setName( (new Integer(ViewJFrameTriImage.CORONAL_B)).toString());
+            triImage[ViewJFrameTriImage.SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.SAGITTAL);
+            triImage[ViewJFrameTriImage.SAGITTAL_B].addMouseListener(this);
+            triImage[ViewJFrameTriImage.SAGITTAL_B].setName( (new Integer(ViewJFrameTriImage.SAGITTAL_B)).toString());
         }
 
-        triImage[AXIAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.AXIAL);
-        triImage[AXIAL_A].addMouseListener(this);
-        triImage[AXIAL_A].setName((new Integer(AXIAL_A)).toString());
-        triImage[SAGITTAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.SAGITTAL);
-        triImage[SAGITTAL_A].addMouseListener(this);
-        triImage[SAGITTAL_A].setName((new Integer(SAGITTAL_A)).toString());
-        triImage[CORONAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.CORONAL);
-        triImage[CORONAL_A].addMouseListener(this);
-        triImage[CORONAL_A].setName((new Integer(CORONAL_A)).toString());
-
+        triImage[ViewJFrameTriImage.AXIAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.AXIAL);
+        triImage[ViewJFrameTriImage.AXIAL_A].addMouseListener(this);
+        triImage[ViewJFrameTriImage.AXIAL_A].setName( (new Integer(ViewJFrameTriImage.AXIAL_A)).toString());
+        triImage[ViewJFrameTriImage.SAGITTAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.SAGITTAL);
+        triImage[ViewJFrameTriImage.SAGITTAL_A].addMouseListener(this);
+        triImage[ViewJFrameTriImage.SAGITTAL_A].setName( (new Integer(ViewJFrameTriImage.SAGITTAL_A)).toString());
+        triImage[ViewJFrameTriImage.CORONAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.CORONAL);
+        triImage[ViewJFrameTriImage.CORONAL_A].addMouseListener(this);
+        triImage[ViewJFrameTriImage.CORONAL_A].setName( (new Integer(ViewJFrameTriImage.CORONAL_A)).toString());
 
         tSlice = 0;
 
-        zoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
+        zoom = getOptimalZoom(ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM, ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM);
 
         // these lines of code set up the initial crosshair position - centered in the image and independent of
         // orientation
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setZoom(zoom, zoom);
@@ -4110,12 +4077,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
         updateLayout();
 
-        /* set the center after the triImage[].setResolutions and
-         * triImage[].setZoom calls have been made: */
-        setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
-        setCrop(new Vector3f(extents[0] * 0.25f, extents[1] * 0.25f, extents[2] * 0.25f),
-                new Vector3f(extents[0] * 0.75f, extents[1] * 0.75f, extents[2] * 0.75f));
-
+        /*
+         * set the center after the triImage[].setResolutions and triImage[].setZoom calls have been made:
+         */
+        setCenter( (extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
+        setCrop(new Vector3f(extents[0] * 0.25f, extents[1] * 0.25f, extents[2] * 0.25f), new Vector3f(
+                extents[0] * 0.75f, extents[1] * 0.75f, extents[2] * 0.75f));
 
         setTitle();
 
@@ -4130,10 +4097,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         MipavUtil.centerOnScreen(this);
         setVisible(true);
         updateImages(true);
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
         initVOI();
-        toolbarBuilder.setPointerButton( voiManager.getPointerButton() );
+        toolbarBuilder.setPointerButton(voiManager.getPointerButton());
     }
 
     /**
@@ -4141,8 +4108,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * tri-planar were merged into this class.
      */
     protected void doOldLayout() {
-        GridBagLayout gbLayout = new GridBagLayout();
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagLayout gbLayout = new GridBagLayout();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -4152,16 +4119,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbc.weightx = 0;
         gbc.weighty = 0;
 
-        int axialIndex = AXIAL_A;
-        int coronalIndex = CORONAL_A;
-        int sagittalIndex = SAGITTAL_A;
+        int axialIndex = ViewJFrameTriImage.AXIAL_A;
+        int coronalIndex = ViewJFrameTriImage.CORONAL_A;
+        int sagittalIndex = ViewJFrameTriImage.SAGITTAL_A;
 
-        if ((triImage[AXIAL_AB] != null) && (triImage[CORONAL_AB] != null) && (triImage[SAGITTAL_AB] != null)) {
+        if ( (triImage[ViewJFrameTriImage.AXIAL_AB] != null) && (triImage[ViewJFrameTriImage.CORONAL_AB] != null)
+                && (triImage[ViewJFrameTriImage.SAGITTAL_AB] != null)) {
 
             // if image B exists, show blended images in place of image A
-            axialIndex = AXIAL_AB;
-            coronalIndex = CORONAL_AB;
-            sagittalIndex = SAGITTAL_AB;
+            axialIndex = ViewJFrameTriImage.AXIAL_AB;
+            coronalIndex = ViewJFrameTriImage.CORONAL_AB;
+            sagittalIndex = ViewJFrameTriImage.SAGITTAL_AB;
         }
 
         triImagePanel[axialIndex] = new JPanel();
@@ -4180,32 +4148,28 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         triImagePanel[coronalIndex].add(triImage[coronalIndex], gbc);
         triImagePanel[sagittalIndex].add(triImage[sagittalIndex], gbc);
 
-        scrollPane[axialIndex] = new JScrollPane(triImagePanel[axialIndex], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane[axialIndex] = new JScrollPane(triImagePanel[axialIndex],
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane[sagittalIndex] = new JScrollPane(triImagePanel[sagittalIndex],
-                                                    JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane[coronalIndex] = new JScrollPane(triImagePanel[coronalIndex],
-                                                   JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         if (volumePositionPanel == null) {
             buildVolumePositionPanel();
         }
 
-
-        JPanel mainPanel = new JPanel(new GridLayout(1, 1, 8, 8));
-        JPanel topPanel = new JPanel(new GridLayout(1, 1, 8, 8));
-        JPanel bottomPanel = new JPanel(new GridLayout(1, 1, 8, 8));
-        JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[axialIndex],
-                                               scrollPane[sagittalIndex]);
+        final JPanel mainPanel = new JPanel(new GridLayout(1, 1, 8, 8));
+        final JPanel topPanel = new JPanel(new GridLayout(1, 1, 8, 8));
+        final JPanel bottomPanel = new JPanel(new GridLayout(1, 1, 8, 8));
+        final JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[axialIndex],
+                scrollPane[sagittalIndex]);
         splitPane1.setDividerLocation(0.5);
         splitPane1.setResizeWeight(0.5);
         splitPane1.setOneTouchExpandable(true);
         topPanel.add(splitPane1);
 
         JSplitPane splitPane2 = null;
-
 
         if (pluginPanel != null) {
 
@@ -4223,7 +4187,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         splitPane2.setOneTouchExpandable(true);
         bottomPanel.add(splitPane2);
 
-        JSplitPane splitPane3 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topPanel, bottomPanel);
+        final JSplitPane splitPane3 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topPanel, bottomPanel);
         splitPane3.setDividerLocation(0.5);
         splitPane3.setResizeWeight(0.5);
         splitPane3.setOneTouchExpandable(true);
@@ -4241,8 +4205,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @throws  Throwable  DOCUMENT ME!
+     * 
+     * @throws Throwable DOCUMENT ME!
      */
     protected void finalize() throws Throwable {
         disposeLocal();
@@ -4252,14 +4216,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /**
      * Tell coordinate change listeners about a coordinate change (after changing the coordinate to image volume space
      * from the tri-planar space).
-     *
-     * @param  i  the x coordinate
-     * @param  j  the y coordinate
-     * @param  k  the z coordinate
+     * 
+     * @param i the x coordinate
+     * @param j the y coordinate
+     * @param k the z coordinate
      */
-    protected void fireCoordinateChange(int i, int j, int k) {
+    protected void fireCoordinateChange(final int i, final int j, final int k) {
 
-        for (Enumeration e = coordinateListeners.elements(); e.hasMoreElements();) {
+        for (final Enumeration e = coordinateListeners.elements(); e.hasMoreElements();) {
             ((CoordinateChangeListener) e.nextElement()).coordinateChanged(i, j, k);
         }
     }
@@ -4268,7 +4232,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * Method handles transformations for least squares algorithm in the tri-planar frame.
      */
     protected void handleLeastSquares() {
-        final SwingWorker<Object,Object> worker = new SwingWorker<Object,Object>() {
+        final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
             public Object doInBackground() {
                 ViewJProgressBar progressBar = null;
 
@@ -4280,10 +4244,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                         return null;
                     }
 
-                    ViewVOIVector imageAVOIs = (ViewVOIVector) imageA.getVOIs();
-                    ViewVOIVector imageBVOIs = (ViewVOIVector) imageB.getVOIs();
+                    ViewVOIVector imageAVOIs = imageA.getVOIs();
+                    ViewVOIVector imageBVOIs = imageB.getVOIs();
 
-                    if ((imageAVOIs != null) && (imageBVOIs != null) && (imageAVOIs.size() != imageBVOIs.size())) {
+                    if ( (imageAVOIs != null) && (imageBVOIs != null) && (imageAVOIs.size() != imageBVOIs.size())) {
                         MipavUtil.displayError("Number of VOI points must be identical in each image.");
 
                         return null;
@@ -4303,7 +4267,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                         if (imageAVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                             Vector3f[] voiPoints = imageAVOIs.VOIAt(i).exportAllPoints();
 
-                            for (int j = 0; j < voiPoints.length; j++) {
+                            for (final Vector3f element : voiPoints) {
                                 pointVOIVector.add(voiPoints[i]);
                             }
                         }
@@ -4325,7 +4289,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     for (int i = nVOI - 1; i >= 0; i--) {
                         if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                             Vector3f[] voiPoints = imageBVOIs.VOIAt(i).exportAllPoints();
-                            for (int j = 0; j < voiPoints.length; j++) {
+                            for (final Vector3f element : voiPoints) {
                                 pointVOIVector.add(voiPoints[i]);
                             }
                         }
@@ -4353,7 +4317,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     }
 
                     progressBar = new ViewJProgressBar("Applying transformation", "Transforming", 0, 100, false, null,
-                                                       null);
+                            null);
                     progressBar.setVisible(true);
                     progressBar.setSeparateThread(true);
 
@@ -4391,9 +4355,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected void handlePluginPanelSelection() {
 
         if (oldLayout == false) {
-            int response = JOptionPane.showConfirmDialog(this,
-                                                         "You must be using the 2x2 layout to enable this feature. Change to this layout?",
-                                                         "Change layout?", JOptionPane.YES_NO_OPTION);
+            final int response = JOptionPane.showConfirmDialog(this,
+                    "You must be using the 2x2 layout to enable this feature. Change to this layout?",
+                    "Change layout?", JOptionPane.YES_NO_OPTION);
 
             if (response == JOptionPane.YES_OPTION) {
                 oldLayout = true;
@@ -4403,33 +4367,34 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
 
-        JFileChooser fileChooser = new JFileChooser();
+        final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
 
-        int response = fileChooser.showOpenDialog(this);
+        final int response = fileChooser.showOpenDialog(this);
 
         if (response == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
+            final File selectedFile = fileChooser.getSelectedFile();
 
             try {
                 String filename = selectedFile.getName();
                 filename = filename.substring(0, filename.lastIndexOf('.'));
 
-                Class pluginClass = Class.forName(filename);
+                final Class pluginClass = Class.forName(filename);
 
-                Constructor pluginConstructor = pluginClass.getConstructor(new Class[] { getClass() });
-                pluginPanel = (Component) pluginConstructor.newInstance(new Object[] { this });
+                final Constructor pluginConstructor = pluginClass.getConstructor(new Class[] {getClass()});
+                pluginPanel = (Component) pluginConstructor.newInstance(new Object[] {this});
                 Preferences.debug("Tri-planar plug-in loaded OK", Preferences.DEBUG_MINOR);
-            } catch (NoSuchMethodException nsme) {
-                MipavUtil.displayError("Class loading failed! The plug-in class must take ViewJFrameTriImage as an argument to its constructor.");
+            } catch (final NoSuchMethodException nsme) {
+                MipavUtil
+                        .displayError("Class loading failed! The plug-in class must take ViewJFrameTriImage as an argument to its constructor.");
 
                 return;
-            } catch (ClassCastException cce) {
+            } catch (final ClassCastException cce) {
                 MipavUtil.displayError("Class loading failed! The plug-in class must extend java.awt.Component.");
 
                 return;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 MipavUtil.displayError("Class loading failed!");
 
                 return;
@@ -4454,10 +4419,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             return;
         }
 
-        ViewVOIVector imageAVOIs = (ViewVOIVector) imageA.getVOIs();
-        ViewVOIVector imageBVOIs = (ViewVOIVector) imageB.getVOIs();
+        final ViewVOIVector imageAVOIs = imageA.getVOIs();
+        final ViewVOIVector imageBVOIs = imageB.getVOIs();
 
-        if ((imageAVOIs != null) && (imageBVOIs != null) && (imageAVOIs.size() != imageBVOIs.size())) {
+        if ( (imageAVOIs != null) && (imageBVOIs != null) && (imageAVOIs.size() != imageBVOIs.size())) {
             MipavUtil.displayError("Number of VOI points must be identical in each image.");
 
             return;
@@ -4469,12 +4434,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             return;
         }
 
-        double[] xSourceA = new double[imageAVOIs.size()];
-        double[] ySourceA = new double[imageAVOIs.size()];
-        double[] zSourceA = new double[imageAVOIs.size()];
-        double[] xTargetB = new double[imageBVOIs.size()];
-        double[] yTargetB = new double[imageBVOIs.size()];
-        double[] zTargetB = new double[imageBVOIs.size()];
+        final double[] xSourceA = new double[imageAVOIs.size()];
+        final double[] ySourceA = new double[imageAVOIs.size()];
+        final double[] zSourceA = new double[imageAVOIs.size()];
+        final double[] xTargetB = new double[imageBVOIs.size()];
+        final double[] yTargetB = new double[imageBVOIs.size()];
+        final double[] zTargetB = new double[imageBVOIs.size()];
 
         // extract point VOIs for image A
         Vector<Vector3f> pointVOIVector = new Vector<Vector3f>();
@@ -4482,15 +4447,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         for (int i = nVOI - 1; i >= 0; i--) {
             if (imageAVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                Vector3f[] voiPoints = imageAVOIs.VOIAt(i).exportAllPoints();
-                for (int j = 0; j < voiPoints.length; j++) {
+                final Vector3f[] voiPoints = imageAVOIs.VOIAt(i).exportAllPoints();
+                for (final Vector3f element : voiPoints) {
                     pointVOIVector.add(voiPoints[i]);
                 }
             }
         }
 
         for (int i = 0; i < pointVOIVector.size(); i++) {
-            Vector3f VectorA = pointVOIVector.elementAt(i);
+            final Vector3f VectorA = pointVOIVector.elementAt(i);
             xSourceA[i] = VectorA.X;
             ySourceA[i] = VectorA.Y;
             zSourceA[i] = VectorA.Z;
@@ -4502,15 +4467,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         for (int i = nVOI - 1; i >= 0; i--) {
             if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                Vector3f[] voiPoints = imageBVOIs.VOIAt(i).exportAllPoints();
-                for (int j = 0; j < voiPoints.length; j++) {
+                final Vector3f[] voiPoints = imageBVOIs.VOIAt(i).exportAllPoints();
+                for (final Vector3f element : voiPoints) {
                     pointVOIVector.add(voiPoints[i]);
                 }
             }
         }
 
         for (int i = 0; i < pointVOIVector.size(); i++) {
-            Vector3f VectorB = pointVOIVector.elementAt(i);
+            final Vector3f VectorB = pointVOIVector.elementAt(i);
             xTargetB[i] = VectorB.X;
             yTargetB[i] = VectorB.Y;
             zTargetB[i] = VectorB.Z;
@@ -4520,8 +4485,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         ModelImage clonedImage = (ModelImage) imageB.clone();
 
-        AlgorithmTPSpline algoTPSpline = new AlgorithmTPSpline(xSourceA, ySourceA, zSourceA, xTargetB, yTargetB,
-                                                               zTargetB, 0.0f, imageB, clonedImage);
+        final AlgorithmTPSpline algoTPSpline = new AlgorithmTPSpline(xSourceA, ySourceA, zSourceA, xTargetB, yTargetB,
+                zTargetB, 0.0f, imageB, clonedImage);
         algoTPSpline.setRunningInSeparateThread(false);
         algoTPSpline.setupTPSpline2D(xSourceA, ySourceA, xTargetB, yTargetB, 0.0f);
         algoTPSpline.runAlgorithm();
@@ -4536,7 +4501,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             clonedImage = null;
         }
 
-        ModelImage newImageB = algoTPSpline.getResultImage();
+        final ModelImage newImageB = algoTPSpline.getResultImage();
 
         parentFrame.setImageB(newImageB);
 
@@ -4560,8 +4525,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             imageB.setImageOrder(ModelImage.IMAGE_B);
         }
 
-        if (((imageA.getNDims() == 3) && (imageB == null)) ||
-                ((imageA.getNDims() == 3) && (imageB != null) && (imageB.getNDims() == 3))) {
+        if ( ( (imageA.getNDims() == 3) && (imageB == null))
+                || ( (imageA.getNDims() == 3) && (imageB != null) && (imageB.getNDims() == 3))) {
             extents = new int[3];
             extents[0] = imageA.getExtents()[0];
             extents[1] = imageA.getExtents()[1];
@@ -4589,7 +4554,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         resols[1] = Math.abs(imageA.getFileInfo()[0].getResolutions()[1]);
         resols[2] = Math.abs(imageA.getFileInfo()[0].getResolutions()[2]);
 
-        if ((resols[0] == 0.0f) || (resols[1] == 0.0f) || (resols[2] == 0.0f)) {
+        if ( (resols[0] == 0.0f) || (resols[1] == 0.0f) || (resols[2] == 0.0f)) {
             resols[0] = 1.0f;
             resols[1] = 1.0f;
             resols[2] = 1.0f;
@@ -4600,7 +4565,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         units[2] = imageA.getFileInfo()[0].getUnitsOfMeasure()[2];
 
         // Talaiarach images must already be in standard dicom order
-        if ((imageA.getExtents()[2] * resols[2]) > (ATLAS_BBOX_INF + ATLAS_BBOX_SUP + 6)) {
+        if ( (imageA.getExtents()[2] * resols[2]) > (ViewJFrameTriImage.ATLAS_BBOX_INF
+                + ViewJFrameTriImage.ATLAS_BBOX_SUP + 6)) {
 
             // Use ATLAS_BBOX_INF_NEW = 65.0f;
             useInfNew = true;
@@ -4619,7 +4585,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected void initProgressBar() {
 
         if (progressBar != null) {
-            int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
+            final int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
             progressBar.setLocation(xScreen / 2, 50);
             progressBar.setVisible(true);
         }
@@ -4628,31 +4594,31 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /**
      * Helper method to establish if there are images of the same dimensionality so that a dialog can be created. Used
      * by image calculator, concat, etc.
-     *
-     * @return  <code>true</code> if there are images to operate on.
+     * 
+     * @return <code>true</code> if there are images to operate on.
      */
     protected boolean isMultipleSameSizeTriImages() {
-        Enumeration registeredImageNames = userInterface.getRegisteredImageNames();
+        final Enumeration registeredImageNames = userInterface.getRegisteredImageNames();
         boolean createDialog = false;
         String activeImageName;
         ModelImage activeImage;
 
         if (imageB == null) {
-            activeImage = triImage[AXIAL_A].getImageA();
+            activeImage = triImage[ViewJFrameTriImage.AXIAL_A].getImageA();
         } else {
-            activeImage = triImage[AXIAL_AB].getActiveImage();
+            activeImage = triImage[ViewJFrameTriImage.AXIAL_AB].getActiveImage();
         }
 
         activeImageName = activeImage.getImageName();
 
         // Add images from user interface that have the same exact dimensionality
         while (registeredImageNames.hasMoreElements()) {
-            String registeredImageName = (String) registeredImageNames.nextElement();
+            final String registeredImageName = (String) registeredImageNames.nextElement();
 
-            if (!activeImageName.equals(registeredImageName)) {
+            if ( !activeImageName.equals(registeredImageName)) {
 
                 try {
-                    ModelImage img = userInterface.getRegisteredImageByName(registeredImageName);
+                    final ModelImage img = userInterface.getRegisteredImageByName(registeredImageName);
 
                     if (img.getTriImageFrame() != null) {
 
@@ -4671,13 +4637,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                             }
                         }
                     }
-                } catch (IllegalArgumentException iae) {
+                } catch (final IllegalArgumentException iae) {
 
                     // MipavUtil.displayError("There was a problem with the supplied name.\n" );
-                    Preferences.debug("Illegal Argument Exception in " +
-                                      "ViewJFrameTriImage.isMultipleSameSizeTriImages(). " +
-                                      "Somehow the Image list sent an incorrect name to " +
-                                      "the image image hashtable. " + "\n", 1);
+                    Preferences.debug("Illegal Argument Exception in "
+                            + "ViewJFrameTriImage.isMultipleSameSizeTriImages(). "
+                            + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. "
+                            + "\n", 1);
                 }
             }
         }
@@ -4687,11 +4653,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Makes a separator for the use in the toolbars.
-     *
-     * @return  Separator for the toolbar.
+     * 
+     * @return Separator for the toolbar.
      */
     protected JButton makeSeparator() {
-        JButton separator = new JButton(MipavUtil.getIcon("separator.gif"));
+        final JButton separator = new JButton(MipavUtil.getIcon("separator.gif"));
         separator.setBorderPainted(false);
         separator.setFocusPainted(false);
 
@@ -4700,34 +4666,33 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  activeImage  DOCUMENT ME!
+     * 
+     * @param activeImage DOCUMENT ME!
      */
-    protected void setImageActiveInTriComponents(int activeImage) {
+    protected void setImageActiveInTriComponents(final int activeImage) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setActiveImage(ViewJComponentBase.IMAGE_A);
-                if ( voiManager != null )
-                {
+                if (voiManager != null) {
                     voiManager.getVOIManager(i).setActiveImage(activeImage);
                 }
             }
         }
-        
+
         if (activeImage == ViewJComponentBase.IMAGE_B) {
 
-            if (triImage[AXIAL_AB] != null) {
-                triImage[AXIAL_AB].setActiveImage(ViewJComponentBase.IMAGE_B);
+            if (triImage[ViewJFrameTriImage.AXIAL_AB] != null) {
+                triImage[ViewJFrameTriImage.AXIAL_AB].setActiveImage(ViewJComponentBase.IMAGE_B);
             }
 
-            if (triImage[SAGITTAL_AB] != null) {
-                triImage[SAGITTAL_AB].setActiveImage(ViewJComponentBase.IMAGE_B);
+            if (triImage[ViewJFrameTriImage.SAGITTAL_AB] != null) {
+                triImage[ViewJFrameTriImage.SAGITTAL_AB].setActiveImage(ViewJComponentBase.IMAGE_B);
             }
 
-            if (triImage[CORONAL_AB] != null) {
-                triImage[CORONAL_AB].setActiveImage(ViewJComponentBase.IMAGE_B);
+            if (triImage[ViewJFrameTriImage.CORONAL_AB] != null) {
+                triImage[ViewJFrameTriImage.CORONAL_AB].setActiveImage(ViewJComponentBase.IMAGE_B);
             }
 
         }
@@ -4735,20 +4700,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the labels that refer to Talairach position within the image.
-     *
-     * @param  x  Absolute x value in slice.
-     * @param  y  Absolute y value in slice.
-     * @param  z  Absolute z value in slice.
+     * 
+     * @param x Absolute x value in slice.
+     * @param y Absolute y value in slice.
+     * @param z Absolute z value in slice.
      */
-    protected void setTalairachPositionLabels(int x, int y, int z) {
+    protected void setTalairachPositionLabels(final int x, final int y, final int z) {
         float xTal, yTal, zTal;
         Vector3f pt;
-        DecimalFormat nf = new DecimalFormat("#####0.0##");
+        final DecimalFormat nf = new DecimalFormat("#####0.0##");
         String strX = "";
         String strY = "";
         String strZ = "";
 
-        TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
+        final TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
         if (tInfo != null) {
             pt = tInfo.getTlrcAC();
             if (pt == null) {
@@ -4760,13 +4725,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             yTal = y - pt.Y;
             zTal = z - pt.Z;
         } else {
-            xTal = (x * imageA.getResolutions(0)[0]) - ATLAS_BBOX_LAT;
-            yTal = (y * imageA.getResolutions(0)[1]) - ATLAS_BBOX_ANT;
+            xTal = (x * imageA.getResolutions(0)[0]) - ViewJFrameTriImage.ATLAS_BBOX_LAT;
+            yTal = (y * imageA.getResolutions(0)[1]) - ViewJFrameTriImage.ATLAS_BBOX_ANT;
 
             if (useInfNew) {
-                zTal = (z * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF_NEW;
+                zTal = (z * imageA.getResolutions(0)[2]) - ViewJFrameTriImage.ATLAS_BBOX_INF_NEW;
             } else {
-                zTal = (z * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF;
+                zTal = (z * imageA.getResolutions(0)[2]) - ViewJFrameTriImage.ATLAS_BBOX_INF;
             }
         }
 
@@ -4774,11 +4739,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         strY = String.valueOf(nf.format(yTal));
         strZ = String.valueOf(nf.format(zTal));
 
-        int[] triExtents = triImage[AXIAL_A].getExtents();
-        
-        
+        final int[] triExtents = triImage[ViewJFrameTriImage.AXIAL_A].getExtents();
+
         final int[] dimExtents = imageA.getExtents();
-        final int index = (int) ( (z * dimExtents[0] * dimExtents[1]) + (y * dimExtents[0]) + x);
+        final int index = ( (z * dimExtents[0] * dimExtents[1]) + (y * dimExtents[0]) + x);
 
         final int iBuffFactor = imageA.isColorImage() ? 4 : 1;
         if ( (index * iBuffFactor > imageA.getSize()) || (index < 0)) {
@@ -4786,52 +4750,48 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         iTalLabel.setText("Intensity: " + imageA.getFloat(index * iBuffFactor));
-        
-        
-        
-        
 
-        if ((x >= 0) && (x < triExtents[0])) {
-            //labelXTal.setText(strX);
+        if ( (x >= 0) && (x < triExtents[0])) {
+            // labelXTal.setText(strX);
             xTalLabel.setText("X: " + strX);
             talXTextField.setText(strX);
         }
 
-        if ((y >= 0) && (y < triExtents[1])) {
-            //labelYTal.setText(strY);
+        if ( (y >= 0) && (y < triExtents[1])) {
+            // labelYTal.setText(strY);
             yTalLabel.setText("Y: " + strY);
             talYTextField.setText(strY);
         }
 
-        if ((z >= 0) && (z < triExtents[2])) {
-            //labelZTal.setText(strZ);
+        if ( (z >= 0) && (z < triExtents[2])) {
+            // labelZTal.setText(strZ);
             zTalLabel.setText("Z: " + strZ);
             talZTextField.setText(strZ);
         }
     }
 
-    
-
     /**
      * Displays histoLUT frame.
-     *
-     * @param  imageAorB  ViewJComponentBase.IMAGE_A or ViewJComponentBase.IMAGE_B
+     * 
+     * @param imageAorB ViewJComponentBase.IMAGE_A or ViewJComponentBase.IMAGE_B
      */
-    protected void updateHistoLUTFrame(int imageAorB) {
+    protected void updateHistoLUTFrame(final int imageAorB) {
         updateImages(true);
 
-        if ((imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJComponentBase.IMAGE_A) &&
-                (triImage[AXIAL_A] != null)) {
-            imageA.getHistoLUTFrame().updateHistoLUT(imageA, triImage[AXIAL_A].getLUTa(), null, null, true);
-        } else if ((imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJComponentBase.IMAGE_B) &&
-                       (triImage[AXIAL_B] != null)) {
-            imageA.getHistoLUTFrame().updateHistoLUT(null, null, imageB, triImage[AXIAL_B].getLUTb(), true);
-        } else if ((imageA.getHistoLUTFrame() != null) && (imageAorB == IMAGE_A_B) && (triImage[AXIAL_AB] != null)) {
-            imageA.getHistoLUTFrame().updateHistoLUT(imageA, triImage[AXIAL_AB].getLUTa(), imageB,
-                                                     triImage[AXIAL_AB].getLUTb(), true);
+        if ( (imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJComponentBase.IMAGE_A)
+                && (triImage[ViewJFrameTriImage.AXIAL_A] != null)) {
+            imageA.getHistoLUTFrame().updateHistoLUT(imageA, triImage[ViewJFrameTriImage.AXIAL_A].getLUTa(), null,
+                    null, true);
+        } else if ( (imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJComponentBase.IMAGE_B)
+                && (triImage[ViewJFrameTriImage.AXIAL_B] != null)) {
+            imageA.getHistoLUTFrame().updateHistoLUT(null, null, imageB,
+                    triImage[ViewJFrameTriImage.AXIAL_B].getLUTb(), true);
+        } else if ( (imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A_B)
+                && (triImage[ViewJFrameTriImage.AXIAL_AB] != null)) {
+            imageA.getHistoLUTFrame().updateHistoLUT(imageA, triImage[ViewJFrameTriImage.AXIAL_AB].getLUTa(), imageB,
+                    triImage[ViewJFrameTriImage.AXIAL_AB].getLUTb(), true);
         }
     }
-
 
     /**
      * This method should be called whenever the layout of the tri-images has changed. For example, when image B is
@@ -4848,8 +4808,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             return;
         }
 
-        GridBagLayout gbLayout = new GridBagLayout();
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagLayout gbLayout = new GridBagLayout();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -4860,92 +4820,96 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbc.weighty = 0;
 
         if (imageB != null) {
-            triImagePanel[AXIAL_AB] = new JPanel();
-            triImagePanel[AXIAL_AB].setLayout(gbLayout);
-            triImagePanel[AXIAL_AB].setBackground(Color.black);
+            triImagePanel[ViewJFrameTriImage.AXIAL_AB] = new JPanel();
+            triImagePanel[ViewJFrameTriImage.AXIAL_AB].setLayout(gbLayout);
+            triImagePanel[ViewJFrameTriImage.AXIAL_AB].setBackground(Color.black);
 
-            triImagePanel[SAGITTAL_AB] = new JPanel();
-            triImagePanel[SAGITTAL_AB].setLayout(gbLayout);
-            triImagePanel[SAGITTAL_AB].setBackground(Color.black);
+            triImagePanel[ViewJFrameTriImage.SAGITTAL_AB] = new JPanel();
+            triImagePanel[ViewJFrameTriImage.SAGITTAL_AB].setLayout(gbLayout);
+            triImagePanel[ViewJFrameTriImage.SAGITTAL_AB].setBackground(Color.black);
 
-            triImagePanel[CORONAL_AB] = new JPanel();
-            triImagePanel[CORONAL_AB].setLayout(gbLayout);
-            triImagePanel[CORONAL_AB].setBackground(Color.black);
+            triImagePanel[ViewJFrameTriImage.CORONAL_AB] = new JPanel();
+            triImagePanel[ViewJFrameTriImage.CORONAL_AB].setLayout(gbLayout);
+            triImagePanel[ViewJFrameTriImage.CORONAL_AB].setBackground(Color.black);
 
-            triImagePanel[AXIAL_B] = new JPanel();
-            triImagePanel[AXIAL_B].setLayout(gbLayout);
-            triImagePanel[AXIAL_B].setBackground(Color.black);
+            triImagePanel[ViewJFrameTriImage.AXIAL_B] = new JPanel();
+            triImagePanel[ViewJFrameTriImage.AXIAL_B].setLayout(gbLayout);
+            triImagePanel[ViewJFrameTriImage.AXIAL_B].setBackground(Color.black);
 
-            triImagePanel[CORONAL_B] = new JPanel();
-            triImagePanel[CORONAL_B].setLayout(gbLayout);
-            triImagePanel[CORONAL_B].setBackground(Color.black);
+            triImagePanel[ViewJFrameTriImage.CORONAL_B] = new JPanel();
+            triImagePanel[ViewJFrameTriImage.CORONAL_B].setLayout(gbLayout);
+            triImagePanel[ViewJFrameTriImage.CORONAL_B].setBackground(Color.black);
 
-            triImagePanel[SAGITTAL_B] = new JPanel();
-            triImagePanel[SAGITTAL_B].setLayout(gbLayout);
-            triImagePanel[SAGITTAL_B].setBackground(Color.black);
+            triImagePanel[ViewJFrameTriImage.SAGITTAL_B] = new JPanel();
+            triImagePanel[ViewJFrameTriImage.SAGITTAL_B].setLayout(gbLayout);
+            triImagePanel[ViewJFrameTriImage.SAGITTAL_B].setBackground(Color.black);
 
-            triImagePanel[AXIAL_AB].add(triImage[AXIAL_AB], gbc);
-            triImagePanel[CORONAL_AB].add(triImage[CORONAL_AB], gbc);
-            triImagePanel[SAGITTAL_AB].add(triImage[SAGITTAL_AB], gbc);
-            triImagePanel[AXIAL_B].add(triImage[AXIAL_B], gbc);
-            triImagePanel[CORONAL_B].add(triImage[CORONAL_B], gbc);
-            triImagePanel[SAGITTAL_B].add(triImage[SAGITTAL_B], gbc);
+            triImagePanel[ViewJFrameTriImage.AXIAL_AB].add(triImage[ViewJFrameTriImage.AXIAL_AB], gbc);
+            triImagePanel[ViewJFrameTriImage.CORONAL_AB].add(triImage[ViewJFrameTriImage.CORONAL_AB], gbc);
+            triImagePanel[ViewJFrameTriImage.SAGITTAL_AB].add(triImage[ViewJFrameTriImage.SAGITTAL_AB], gbc);
+            triImagePanel[ViewJFrameTriImage.AXIAL_B].add(triImage[ViewJFrameTriImage.AXIAL_B], gbc);
+            triImagePanel[ViewJFrameTriImage.CORONAL_B].add(triImage[ViewJFrameTriImage.CORONAL_B], gbc);
+            triImagePanel[ViewJFrameTriImage.SAGITTAL_B].add(triImage[ViewJFrameTriImage.SAGITTAL_B], gbc);
 
-            scrollPane[AXIAL_AB] = new JScrollPane(triImagePanel[AXIAL_AB], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            scrollPane[SAGITTAL_AB] = new JScrollPane(triImagePanel[SAGITTAL_AB],
-                                                      JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            scrollPane[CORONAL_AB] = new JScrollPane(triImagePanel[CORONAL_AB],
-                                                     JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            scrollPane[AXIAL_B] = new JScrollPane(triImagePanel[AXIAL_B], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                  JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            scrollPane[SAGITTAL_B] = new JScrollPane(triImagePanel[SAGITTAL_B],
-                                                     JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            scrollPane[CORONAL_B] = new JScrollPane(triImagePanel[CORONAL_B], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane[ViewJFrameTriImage.AXIAL_AB] = new JScrollPane(triImagePanel[ViewJFrameTriImage.AXIAL_AB],
+                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane[ViewJFrameTriImage.SAGITTAL_AB] = new JScrollPane(triImagePanel[ViewJFrameTriImage.SAGITTAL_AB],
+                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane[ViewJFrameTriImage.CORONAL_AB] = new JScrollPane(triImagePanel[ViewJFrameTriImage.CORONAL_AB],
+                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane[ViewJFrameTriImage.AXIAL_B] = new JScrollPane(triImagePanel[ViewJFrameTriImage.AXIAL_B],
+                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane[ViewJFrameTriImage.SAGITTAL_B] = new JScrollPane(triImagePanel[ViewJFrameTriImage.SAGITTAL_B],
+                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane[ViewJFrameTriImage.CORONAL_B] = new JScrollPane(triImagePanel[ViewJFrameTriImage.CORONAL_B],
+                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         }
 
-        triImagePanel[AXIAL_A] = new JPanel();
-        triImagePanel[AXIAL_A].setLayout(gbLayout);
-        triImagePanel[AXIAL_A].setBackground(Color.black);
+        triImagePanel[ViewJFrameTriImage.AXIAL_A] = new JPanel();
+        triImagePanel[ViewJFrameTriImage.AXIAL_A].setLayout(gbLayout);
+        triImagePanel[ViewJFrameTriImage.AXIAL_A].setBackground(Color.black);
 
-        triImagePanel[CORONAL_A] = new JPanel();
-        triImagePanel[CORONAL_A].setLayout(gbLayout);
-        triImagePanel[CORONAL_A].setBackground(Color.black);
+        triImagePanel[ViewJFrameTriImage.CORONAL_A] = new JPanel();
+        triImagePanel[ViewJFrameTriImage.CORONAL_A].setLayout(gbLayout);
+        triImagePanel[ViewJFrameTriImage.CORONAL_A].setBackground(Color.black);
 
-        triImagePanel[SAGITTAL_A] = new JPanel();
-        triImagePanel[SAGITTAL_A].setLayout(gbLayout);
-        triImagePanel[SAGITTAL_A].setBackground(Color.black);
+        triImagePanel[ViewJFrameTriImage.SAGITTAL_A] = new JPanel();
+        triImagePanel[ViewJFrameTriImage.SAGITTAL_A].setLayout(gbLayout);
+        triImagePanel[ViewJFrameTriImage.SAGITTAL_A].setBackground(Color.black);
 
-        triImagePanel[AXIAL_A].add(triImage[AXIAL_A], gbc);
-        triImagePanel[CORONAL_A].add(triImage[CORONAL_A], gbc);
-        triImagePanel[SAGITTAL_A].add(triImage[SAGITTAL_A], gbc);
+        triImagePanel[ViewJFrameTriImage.AXIAL_A].add(triImage[ViewJFrameTriImage.AXIAL_A], gbc);
+        triImagePanel[ViewJFrameTriImage.CORONAL_A].add(triImage[ViewJFrameTriImage.CORONAL_A], gbc);
+        triImagePanel[ViewJFrameTriImage.SAGITTAL_A].add(triImage[ViewJFrameTriImage.SAGITTAL_A], gbc);
 
-        scrollPane[AXIAL_A] = new JScrollPane(triImagePanel[AXIAL_A], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                              JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane[ViewJFrameTriImage.AXIAL_A] = new JScrollPane(triImagePanel[ViewJFrameTriImage.AXIAL_A],
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-        scrollPane[AXIAL_A].setName("axialA");
-        scrollPane[SAGITTAL_A] = new JScrollPane(triImagePanel[SAGITTAL_A], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane[CORONAL_A] = new JScrollPane(triImagePanel[CORONAL_A], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane[ViewJFrameTriImage.AXIAL_A].setName("axialA");
+        scrollPane[ViewJFrameTriImage.SAGITTAL_A] = new JScrollPane(triImagePanel[ViewJFrameTriImage.SAGITTAL_A],
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane[ViewJFrameTriImage.CORONAL_A] = new JScrollPane(triImagePanel[ViewJFrameTriImage.CORONAL_A],
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         getContentPane().removeAll();
         getContentPane().add(panelToolbar, BorderLayout.NORTH);
 
-        JPanel panelA = new JPanel(new GridLayout(1, 3, 10, 10));
+        final JPanel panelA = new JPanel(new GridLayout(1, 3, 10, 10));
 
         if (imageB == null) {
-            JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[AXIAL_A],
-                                                   scrollPane[SAGITTAL_A]);
+            final JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                    scrollPane[ViewJFrameTriImage.AXIAL_A], scrollPane[ViewJFrameTriImage.SAGITTAL_A]);
             splitPane1.setDividerLocation(0.5);
             splitPane1.setResizeWeight(0.5);
             splitPane1.setOneTouchExpandable(true);
 
-            JSplitPane splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, splitPane1, scrollPane[CORONAL_A]);
+            final JSplitPane splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, splitPane1,
+                    scrollPane[ViewJFrameTriImage.CORONAL_A]);
             splitPane2.setDividerLocation(0.67);
             splitPane2.setResizeWeight(0.5);
             splitPane2.setOneTouchExpandable(true);
@@ -4953,22 +4917,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             getContentPane().add(panelA, BorderLayout.CENTER);
             pack();
         } else {
-            JPanel panelAB = new JPanel(new GridLayout(1, 3, 10, 10));
-            JPanel panelB = new JPanel(new GridLayout(1, 3, 10, 10));
+            final JPanel panelAB = new JPanel(new GridLayout(1, 3, 10, 10));
+            final JPanel panelB = new JPanel(new GridLayout(1, 3, 10, 10));
 
-            panelAB.add(scrollPane[AXIAL_AB]);
-            panelAB.add(scrollPane[SAGITTAL_AB]);
-            panelAB.add(scrollPane[CORONAL_AB]);
-            panelA.add(scrollPane[AXIAL_A]);
-            panelA.add(scrollPane[SAGITTAL_A]);
-            panelA.add(scrollPane[CORONAL_A]);
-            panelB.add(scrollPane[AXIAL_B]);
-            panelB.add(scrollPane[SAGITTAL_B]);
-            panelB.add(scrollPane[CORONAL_B]);
+            panelAB.add(scrollPane[ViewJFrameTriImage.AXIAL_AB]);
+            panelAB.add(scrollPane[ViewJFrameTriImage.SAGITTAL_AB]);
+            panelAB.add(scrollPane[ViewJFrameTriImage.CORONAL_AB]);
+            panelA.add(scrollPane[ViewJFrameTriImage.AXIAL_A]);
+            panelA.add(scrollPane[ViewJFrameTriImage.SAGITTAL_A]);
+            panelA.add(scrollPane[ViewJFrameTriImage.CORONAL_A]);
+            panelB.add(scrollPane[ViewJFrameTriImage.AXIAL_B]);
+            panelB.add(scrollPane[ViewJFrameTriImage.SAGITTAL_B]);
+            panelB.add(scrollPane[ViewJFrameTriImage.CORONAL_B]);
 
-            JSplitPane splitPane1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, panelAB, panelA);
-            JSplitPane splitPane2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane1, panelB);
-
+            final JSplitPane splitPane1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, panelAB, panelA);
+            final JSplitPane splitPane2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane1, panelB);
 
             splitPane1.setOneTouchExpandable(true);
             splitPane2.setOneTouchExpandable(true);
@@ -4990,12 +4953,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * in image A/B resulted in image A also being painted but not image B. Painting in image B resulting in image B
      * being the only image affected. I thought this was weird so I created this method so that all images were painted
      * equally. -- lorsino
-     *
-     * @param  paintMap  BitSet the paint bitset object to set the images to
+     * 
+     * @param paintMap BitSet the paint bitset object to set the images to
      */
-    protected void updatePaint(BitSet paintMap) {
+    protected void updatePaint(final BitSet paintMap) {
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setPaintMask(paintMap);
@@ -5005,10 +4968,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  x           DOCUMENT ME!
-     * @param  y           DOCUMENT ME!
-     * @param  scrollPane  DOCUMENT ME!
+     * 
+     * @param x DOCUMENT ME!
+     * @param y DOCUMENT ME!
+     * @param scrollPane DOCUMENT ME!
      */
     private void adjustScrollbars(final int x, final int y, final JScrollPane scrollPane) {
 
@@ -5016,13 +4979,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             return;
         }
 
-        JViewport viewport = scrollPane.getViewport();
+        final JViewport viewport = scrollPane.getViewport();
 
         if (viewport == null) {
             return;
         }
 
-        Dimension extentSize = viewport.getExtentSize();
+        final Dimension extentSize = viewport.getExtentSize();
 
         if (extentSize == null) {
             return;
@@ -5031,7 +4994,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         final int scrollPaneX = extentSize.width / 2;
         final int scrollPaneY = extentSize.height / 2;
 
-        Runnable adjustScrollbarsAWTEvent = new Runnable() {
+        final Runnable adjustScrollbarsAWTEvent = new Runnable() {
             public void run() {
                 scrollPane.getHorizontalScrollBar().setValue(x - scrollPaneX);
                 scrollPane.getVerticalScrollBar().setValue(y - scrollPaneY);
@@ -5040,15 +5003,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         SwingUtilities.invokeLater(adjustScrollbarsAWTEvent);
     }
 
-
     /**
      * This method adjust the scrollbars to area where user clicked when doing individual frame zooming in and out.
-     *
-     * @param  frame  DOCUMENT ME!
-     * @param  x      int
-     * @param  y      int
+     * 
+     * @param frame DOCUMENT ME!
+     * @param x int
+     * @param y int
      */
-    private void adjustScrollbars(int frame, int x, int y) {
+    private void adjustScrollbars(final int frame, final int x, final int y) {
         final int theFrame = frame;
 
         if (triImage[frame] != null) {
@@ -5058,7 +5020,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             final int scrollPaneX = scrollPane[theFrame].getWidth() / 2;
             final int scrollPaneY = scrollPane[theFrame].getHeight() / 2;
 
-            Runnable adjustScrollbarsAWTEvent = new Runnable() {
+            final Runnable adjustScrollbarsAWTEvent = new Runnable() {
                 public void run() {
                     scrollPane[theFrame].getHorizontalScrollBar().setValue(xTemp - scrollPaneX);
                     scrollPane[theFrame].getVerticalScrollBar().setValue(yTemp - scrollPaneY);
@@ -5098,7 +5060,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         labelZTal.setBorder(BorderFactory.createEmptyBorder());
         labelZTal.setEditable(false);
 
-        //talairachVoxelLabel = new JLabel("     "); // must be initialized to 5 empty spaces
+        // talairachVoxelLabel = new JLabel(" "); // must be initialized to 5 empty spaces
     }
 
     /**
@@ -5108,7 +5070,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         // if not a color image and LUTa is null then make a LUT
         if (imageA.isColorImage() == false) {
-            int[] dimExtentsLUT = new int[2];
+            final int[] dimExtentsLUT = new int[2];
             dimExtentsLUT[0] = 4;
             dimExtentsLUT[1] = 256;
 
@@ -5128,12 +5090,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     max = (float) imageA.getMax();
                 }
 
-                float imgMin = (float) imageA.getMin();
-                float imgMax = (float) imageA.getMax();
+                final float imgMin = (float) imageA.getMin();
+                final float imgMax = (float) imageA.getMax();
                 LUTa.resetTransferLine(min, imgMin, max, imgMax);
             }
 
-            if ((imageB != null) && (LUTb == null)) {
+            if ( (imageB != null) && (LUTb == null)) {
                 LUTb = new ModelLUT(ModelLUT.HOTMETAL, 256, dimExtentsLUT);
 
                 float min, max;
@@ -5149,8 +5111,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     max = (float) imageB.getMax();
                 }
 
-                float imgMin = (float) imageB.getMin();
-                float imgMax = (float) imageB.getMax();
+                final float imgMin = (float) imageB.getMin();
+                final float imgMax = (float) imageB.getMax();
                 LUTb.resetTransferLine(min, imgMin, max, imgMax);
             }
         }
@@ -5176,45 +5138,52 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * MIPAV doesn't officially support images with differing zoom values, the zoom value returned will be that value
      * which, when applied to the image, will ensure the image size on screen is no more than both desiredWidth or
      * desiredHeight
-     *
-     * @param   desiredWidth   int the ideal width for the image displayed on-screen
-     * @param   desiredHeight  int the idea height for the image displayed on-screen
-     *
-     * @return  float the zoom value required to show the image on-screen at no more than desiredWidth and no more than
-     *          desired height
+     * 
+     * @param desiredWidth int the ideal width for the image displayed on-screen
+     * @param desiredHeight int the idea height for the image displayed on-screen
+     * 
+     * @return float the zoom value required to show the image on-screen at no more than desiredWidth and no more than
+     *         desired height
      */
-    private float getOptimalZoom(int desiredWidth, int desiredHeight) {
-        int[] extentsAxial = triImage[AXIAL_A].getExtents();
-        int[] extentsSagittal = triImage[SAGITTAL_A].getExtents();
-        int[] extentsCoronal = triImage[CORONAL_A].getExtents();
+    private float getOptimalZoom(final int desiredWidth, final int desiredHeight) {
+        final int[] extentsAxial = triImage[ViewJFrameTriImage.AXIAL_A].getExtents();
+        final int[] extentsSagittal = triImage[ViewJFrameTriImage.SAGITTAL_A].getExtents();
+        final int[] extentsCoronal = triImage[ViewJFrameTriImage.CORONAL_A].getExtents();
 
-        float zoomAxialWidth = (desiredWidth * triImage[AXIAL_A].getResolutionX()) / (extentsAxial[0] * triImage[AXIAL_A].getResolutionX());
-        float zoomSagittalWidth = (desiredWidth * triImage[SAGITTAL_A].getResolutionX()) / (extentsSagittal[0] * triImage[SAGITTAL_A].getResolutionX());
-        float zoomCoronalWidth = (desiredWidth * triImage[CORONAL_A].getResolutionX()) / (extentsCoronal[0] * triImage[CORONAL_A].getResolutionX());
+        final float zoomAxialWidth = (desiredWidth * triImage[ViewJFrameTriImage.AXIAL_A].getResolutionX())
+                / (extentsAxial[0] * triImage[ViewJFrameTriImage.AXIAL_A].getResolutionX());
+        final float zoomSagittalWidth = (desiredWidth * triImage[ViewJFrameTriImage.SAGITTAL_A].getResolutionX())
+                / (extentsSagittal[0] * triImage[ViewJFrameTriImage.SAGITTAL_A].getResolutionX());
+        final float zoomCoronalWidth = (desiredWidth * triImage[ViewJFrameTriImage.CORONAL_A].getResolutionX())
+                / (extentsCoronal[0] * triImage[ViewJFrameTriImage.CORONAL_A].getResolutionX());
 
-        float optimalZoomWidth = Math.min(zoomAxialWidth, Math.min(zoomSagittalWidth, zoomCoronalWidth));
+        final float optimalZoomWidth = Math.min(zoomAxialWidth, Math.min(zoomSagittalWidth, zoomCoronalWidth));
 
-        float zoomAxialHeight = (desiredHeight * triImage[AXIAL_A].getResolutionY()) / (extentsAxial[1] * triImage[AXIAL_A].getResolutionY());
-        float zoomSagittalHeight = (desiredHeight * triImage[SAGITTAL_A].getResolutionY())/ (extentsSagittal[1] * triImage[SAGITTAL_A].getResolutionY());
-        float zoomCoronal = (desiredHeight * triImage[CORONAL_A].getResolutionY())/ (extentsCoronal[1] * triImage[CORONAL_A].getResolutionY());
+        final float zoomAxialHeight = (desiredHeight * triImage[ViewJFrameTriImage.AXIAL_A].getResolutionY())
+                / (extentsAxial[1] * triImage[ViewJFrameTriImage.AXIAL_A].getResolutionY());
+        final float zoomSagittalHeight = (desiredHeight * triImage[ViewJFrameTriImage.SAGITTAL_A].getResolutionY())
+                / (extentsSagittal[1] * triImage[ViewJFrameTriImage.SAGITTAL_A].getResolutionY());
+        final float zoomCoronal = (desiredHeight * triImage[ViewJFrameTriImage.CORONAL_A].getResolutionY())
+                / (extentsCoronal[1] * triImage[ViewJFrameTriImage.CORONAL_A].getResolutionY());
 
-        float optimalZoomHeight = Math.min(zoomAxialHeight, Math.min(zoomSagittalHeight, zoomCoronal));
+        final float optimalZoomHeight = Math.min(zoomAxialHeight, Math.min(zoomSagittalHeight, zoomCoronal));
 
         return Math.min(optimalZoomWidth, optimalZoomHeight);
     }
 
     /**
      * Transition between the 2x2 window layout and 3x1 window layout:
-     *
-     * @param  bLayout  the new layout, = 2x2 layout when true and 3x1 when false
+     * 
+     * @param bLayout the new layout, = 2x2 layout when true and 3x1 when false
      */
-    private void setOldLayout(boolean bLayout) {
+    private void setOldLayout(final boolean bLayout) {
         oldLayout = bLayout;
         Preferences.setProperty(Preferences.PREF_TRIPLANAR_2X2_LAYOUT, String.valueOf(oldLayout));
 
-        float optimalZoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
+        final float optimalZoom = getOptimalZoom(ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM,
+                ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM);
 
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setZoom(optimalZoom, optimalZoom);
@@ -5226,10 +5195,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Sets the spinner values based on image type.
-     *
-     * @param  type  Image type (BYTE, FLOAT, ...)
+     * 
+     * @param type Image type (BYTE, FLOAT, ...)
      */
-    private void setSpinnerValues(int type) {
+    private void setSpinnerValues(final int type) {
         spinnerDefaultValue = 1.0;
 
         if (type == ModelStorageBase.BOOLEAN) {
@@ -5277,24 +5246,24 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /**
      * Sets the CubeBounds data member volumeBounds to the crop volume defined by the lower and upper volume points. The
      * CubeBounds are ordered low to high and are checked against the volume extents.
-     *
-     * @param  lower  the lower bound in File Coordinates
-     * @param  upper  the upper bound in File Coordinates
+     * 
+     * @param lower the lower bound in File Coordinates
+     * @param upper the upper bound in File Coordinates
      */
-    private void setVolumeBounds(Vector3f lower, Vector3f upper) {
-        int[] xBounds = new int[2];
+    private void setVolumeBounds(final Vector3f lower, final Vector3f upper) {
+        final int[] xBounds = new int[2];
         xBounds[0] = ((int) lower.X <= (int) upper.X) ? (int) lower.X : (int) upper.X;
         xBounds[1] = ((int) lower.X <= (int) upper.X) ? (int) upper.X : (int) lower.X;
         xBounds[0] = Math.max(xBounds[0], 0);
         xBounds[1] = Math.min(xBounds[1], extents[0] - 1);
 
-        int[] yBounds = new int[2];
+        final int[] yBounds = new int[2];
         yBounds[0] = ((int) lower.Y <= (int) upper.Y) ? (int) lower.Y : (int) upper.Y;
         yBounds[1] = ((int) lower.Y <= (int) upper.Y) ? (int) upper.Y : (int) lower.Y;
         yBounds[0] = Math.max(yBounds[0], 0);
         yBounds[1] = Math.min(yBounds[1], extents[1] - 1);
 
-        int[] zBounds = new int[2];
+        final int[] zBounds = new int[2];
         zBounds[0] = ((int) lower.Z <= (int) upper.Z) ? (int) lower.Z : (int) upper.Z;
         zBounds[1] = ((int) lower.Z <= (int) upper.Z) ? (int) upper.Z : (int) lower.Z;
         zBounds[0] = Math.max(zBounds[0], 0);
@@ -5303,37 +5272,36 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         volumeBounds = new CubeBounds(xBounds[1], xBounds[0], yBounds[1], yBounds[0], zBounds[1], zBounds[0]);
     }
 
-
     /**
      * this method will zoom in a particular frame.
-     *
-     * @param  frame  frame the frame number
+     * 
+     * @param frame frame the frame number
      */
-    private void zoomInFrame(int frame) {
-        float oldZoom = triImage[frame].getZoomX();
+    private void zoomInFrame(final int frame) {
+        final float oldZoom = triImage[frame].getZoomX();
 
         float newZoom = 1;
 
-        if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[frame] != null)) {
-        	if(triImage[frame].getZoomX() < 1.0f) {
-        		newZoom = 2.0f * triImage[frame].getZoomX();
-        	} else {
-        		newZoom = triImage[frame].getZoomX() + 1.0f;
-        	}
+        if ( (Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[frame] != null)) {
+            if (triImage[frame].getZoomX() < 1.0f) {
+                newZoom = 2.0f * triImage[frame].getZoomX();
+            } else {
+                newZoom = triImage[frame].getZoomX() + 1.0f;
+            }
         } else if (triImage[frame] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
         {
-        	newZoom = 2.0f * triImage[frame].getZoomX();
+            newZoom = 2.0f * triImage[frame].getZoomX();
 
         }
 
         if (triImage[frame] != null) {
             triImage[frame].setZoom(newZoom, newZoom);
 
-            Vector2f oldCrosshairPoint = triImage[frame].getCrosshairPoint();
+            final Vector2f oldCrosshairPoint = triImage[frame].getCrosshairPoint();
 
             if (oldCrosshairPoint != null) {
-                int newX = MipavMath.round((oldCrosshairPoint.X * newZoom) / oldZoom);
-                int newY = MipavMath.round((oldCrosshairPoint.Y * newZoom) / oldZoom);
+                final int newX = MipavMath.round( (oldCrosshairPoint.X * newZoom) / oldZoom);
+                final int newY = MipavMath.round( (oldCrosshairPoint.Y * newZoom) / oldZoom);
 
                 triImage[frame].updateCrosshairPosition(newX, newY);
 
@@ -5346,18 +5314,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     }
 
-
     /**
      * this method will zoom out a particular frame.
-     *
-     * @param  frame  frame the frame number
+     * 
+     * @param frame frame the frame number
      */
-    private void zoomOutFrame(int frame) {
-        float oldZoom = triImage[frame].getZoomX();
+    private void zoomOutFrame(final int frame) {
+        final float oldZoom = triImage[frame].getZoomX();
 
         float newZoom = 1;
 
-        if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[frame].getZoomX() > 1.0f)) {
+        if ( (Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[frame].getZoomX() > 1.0f)) {
 
             // linear zoom is prevented if getZoomX() <= 1.0
             newZoom = triImage[frame].getZoomX() - 1.0f;
@@ -5368,11 +5335,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         if (triImage[frame] != null) {
             triImage[frame].setZoom(newZoom, newZoom);
 
-            Vector2f oldCrosshairPoint = triImage[frame].getCrosshairPoint();
+            final Vector2f oldCrosshairPoint = triImage[frame].getCrosshairPoint();
 
             if (oldCrosshairPoint != null) {
-                int newX = MipavMath.round((oldCrosshairPoint.X * newZoom) / oldZoom);
-                int newY = MipavMath.round((oldCrosshairPoint.Y * newZoom) / oldZoom);
+                final int newX = MipavMath.round( (oldCrosshairPoint.X * newZoom) / oldZoom);
+                final int newY = MipavMath.round( (oldCrosshairPoint.Y * newZoom) / oldZoom);
 
                 triImage[frame].updateCrosshairPosition(newX, newY);
 
@@ -5384,7 +5351,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         updateImages(true);
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * Listener to pass to JColorChooser when user wants to change the color of the paint.
@@ -5393,10 +5361,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         /**
          * Pick up the selected color and call method to change the color.
-         *
-         * @param  e  Event that triggered this function.
+         * 
+         * @param e Event that triggered this function.
          */
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(final ActionEvent e) {
 
             if (colorChooser != null) {
                 color = colorChooser.getColor();
@@ -5408,7 +5376,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 controls.getTools().setPaintColor(color);
             }
 
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].getActiveImage().notifyImageDisplayListeners(null, true);
@@ -5430,28 +5398,28 @@ public class ViewJFrameTriImage extends ViewJFrameBase
          */
         public PaintBoxRenderer() {
             setOpaque(true);
-            setHorizontalAlignment(LEFT);
-            setVerticalAlignment(CENTER);
+            setHorizontalAlignment(SwingConstants.LEFT);
+            setVerticalAlignment(SwingConstants.CENTER);
         }
 
         /**
          * This method finds the image and text corresponding to the selected value and returns the label, set up to
          * display the text and image.
-         *
-         * @param   list          DOCUMENT ME!
-         * @param   value         DOCUMENT ME!
-         * @param   index         DOCUMENT ME!
-         * @param   isSelected    DOCUMENT ME!
-         * @param   cellHasFocus  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @param list DOCUMENT ME!
+         * @param value DOCUMENT ME!
+         * @param index DOCUMENT ME!
+         * @param isSelected DOCUMENT ME!
+         * @param cellHasFocus DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-                                                      boolean cellHasFocus) {
+        public Component getListCellRendererComponent(final JList list, final Object value, final int index,
+                final boolean isSelected, final boolean cellHasFocus) {
 
             // Get the selected index. (The index param isn't
             // always valid, so just use the value.)
-            int selectedIndex = ((Integer) value).intValue();
+            final int selectedIndex = ((Integer) value).intValue();
 
             if (isSelected) {
                 setBackground(list.getSelectionBackground());
@@ -5461,8 +5429,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 setForeground(list.getForeground());
             }
 
-
-            // Set the icon and text.  If icon was null, say so.
+            // Set the icon and text. If icon was null, say so.
             ImageIcon icon = null;
 
             setFont(MipavUtil.font12);
@@ -5474,27 +5441,28 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 URL res = null;
 
                 try {
-                    res = new File(ViewToolBarBuilder.USER_BRUSHES + File.separator + paintBrushNames[selectedIndex]).toURI().toURL();
+                    res = new File(ViewToolBarBuilder.USER_BRUSHES + File.separator + paintBrushNames[selectedIndex])
+                            .toURI().toURL();
                     icon = new ImageIcon(res);
 
-                    if ((icon.getIconHeight() >= 20) || (icon.getIconWidth() >= 20)) {
+                    if ( (icon.getIconHeight() >= 20) || (icon.getIconWidth() >= 20)) {
                         int newWidth, newHeight;
 
                         if (icon.getIconHeight() < icon.getIconWidth()) {
                             newWidth = 20;
 
-                            float factor = 24f / icon.getIconWidth();
+                            final float factor = 24f / icon.getIconWidth();
                             newHeight = (int) (icon.getIconHeight() * factor);
                         } else {
                             newHeight = 20;
 
-                            float factor = 24f / icon.getIconHeight();
+                            final float factor = 24f / icon.getIconHeight();
                             newWidth = (int) (icon.getIconWidth() * factor);
                         }
 
                         icon = new ImageIcon(icon.getImage().getScaledInstance(newWidth, newHeight, 0));
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     // e.printStackTrace();
                 }
             }
@@ -5504,142 +5472,146 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             setPreferredSize(new Dimension(90, 24));
             setIconTextGap(10);
-            setHorizontalTextPosition(LEFT);
+            setHorizontalTextPosition(SwingConstants.LEFT);
 
             return this;
         }
     }
-    
 
     /**
      * Initialize the 3D VOI interface.
      */
-    private void initVOI()
-    {
+    private void initVOI() {
         int iActiveCount = 0;
-        for ( int i = 0; i < triImage.length; i++ )
-        {
-            if ( triImage[i] != null )
-            {
+        for (final ViewJComponentTriImage element : triImage) {
+            if (element != null) {
                 iActiveCount++;
             }
         }
-        voiManager = new VOIManagerInterface( this, imageA, imageB, iActiveCount, false, VOIGroup );
+        voiManager = new VOIManagerInterface(this, imageA, imageB, iActiveCount, false, VOIGroup);
         panelToolBarGBC.gridy++;
-        panelToolbar.add( voiManager.getToolBar(), panelToolBarGBC );
-        
+        panelToolbar.add(voiManager.getToolBar(), panelToolBarGBC);
 
         if (imageB != null) {
-            voiManager.getVOIManager(AXIAL_AB).init( this, imageA, imageB,
-                    triImage[AXIAL_AB], triImage[AXIAL_AB],
-                    triImage[AXIAL_AB].getOrientation(), triImage[AXIAL_AB].getSlice() );
-            triImage[AXIAL_AB].setVOIManager(voiManager.getVOIManager(AXIAL_AB));
-            
-            voiManager.getVOIManager(CORONAL_AB).init( this, imageA, imageB,
-                    triImage[CORONAL_AB], triImage[CORONAL_AB],
-                    triImage[CORONAL_AB].getOrientation(), triImage[CORONAL_AB].getSlice() );
-            triImage[CORONAL_AB].setVOIManager(voiManager.getVOIManager(CORONAL_AB));
-            
-            voiManager.getVOIManager(SAGITTAL_AB).init( this, imageA, imageB,
-                    triImage[SAGITTAL_AB], triImage[SAGITTAL_AB],
-                    triImage[SAGITTAL_AB].getOrientation(), triImage[SAGITTAL_AB].getSlice() );
-            triImage[SAGITTAL_AB].setVOIManager(voiManager.getVOIManager(SAGITTAL_AB));
-            
+            voiManager.getVOIManager(ViewJFrameTriImage.AXIAL_AB).init(this, imageA, imageB,
+                    triImage[ViewJFrameTriImage.AXIAL_AB], triImage[ViewJFrameTriImage.AXIAL_AB],
+                    triImage[ViewJFrameTriImage.AXIAL_AB].getOrientation(),
+                    triImage[ViewJFrameTriImage.AXIAL_AB].getSlice());
+            triImage[ViewJFrameTriImage.AXIAL_AB].setVOIManager(voiManager.getVOIManager(ViewJFrameTriImage.AXIAL_AB));
 
-            voiManager.getVOIManager(AXIAL_B).init( this, null, imageB,
-                    triImage[AXIAL_B], triImage[AXIAL_B],
-                    triImage[AXIAL_B].getOrientation(), triImage[AXIAL_B].getSlice() );
-            triImage[AXIAL_B].setVOIManager(voiManager.getVOIManager(AXIAL_B));
-            
-            voiManager.getVOIManager(CORONAL_B).init( this, null, imageB,
-                    triImage[CORONAL_B], triImage[CORONAL_B],
-                    triImage[CORONAL_B].getOrientation(), triImage[CORONAL_B].getSlice() );
-            triImage[CORONAL_B].setVOIManager(voiManager.getVOIManager(CORONAL_B));
-            
-            voiManager.getVOIManager(SAGITTAL_B).init( this, null, imageB,
-                    triImage[SAGITTAL_B], triImage[SAGITTAL_B],
-                    triImage[SAGITTAL_B].getOrientation(), triImage[SAGITTAL_B].getSlice() );
-            triImage[SAGITTAL_B].setVOIManager(voiManager.getVOIManager(SAGITTAL_B));
+            voiManager.getVOIManager(ViewJFrameTriImage.CORONAL_AB).init(this, imageA, imageB,
+                    triImage[ViewJFrameTriImage.CORONAL_AB], triImage[ViewJFrameTriImage.CORONAL_AB],
+                    triImage[ViewJFrameTriImage.CORONAL_AB].getOrientation(),
+                    triImage[ViewJFrameTriImage.CORONAL_AB].getSlice());
+            triImage[ViewJFrameTriImage.CORONAL_AB].setVOIManager(voiManager
+                    .getVOIManager(ViewJFrameTriImage.CORONAL_AB));
+
+            voiManager.getVOIManager(ViewJFrameTriImage.SAGITTAL_AB).init(this, imageA, imageB,
+                    triImage[ViewJFrameTriImage.SAGITTAL_AB], triImage[ViewJFrameTriImage.SAGITTAL_AB],
+                    triImage[ViewJFrameTriImage.SAGITTAL_AB].getOrientation(),
+                    triImage[ViewJFrameTriImage.SAGITTAL_AB].getSlice());
+            triImage[ViewJFrameTriImage.SAGITTAL_AB].setVOIManager(voiManager
+                    .getVOIManager(ViewJFrameTriImage.SAGITTAL_AB));
+
+            voiManager.getVOIManager(ViewJFrameTriImage.AXIAL_B).init(this, null, imageB,
+                    triImage[ViewJFrameTriImage.AXIAL_B], triImage[ViewJFrameTriImage.AXIAL_B],
+                    triImage[ViewJFrameTriImage.AXIAL_B].getOrientation(),
+                    triImage[ViewJFrameTriImage.AXIAL_B].getSlice());
+            triImage[ViewJFrameTriImage.AXIAL_B].setVOIManager(voiManager.getVOIManager(ViewJFrameTriImage.AXIAL_B));
+
+            voiManager.getVOIManager(ViewJFrameTriImage.CORONAL_B).init(this, null, imageB,
+                    triImage[ViewJFrameTriImage.CORONAL_B], triImage[ViewJFrameTriImage.CORONAL_B],
+                    triImage[ViewJFrameTriImage.CORONAL_B].getOrientation(),
+                    triImage[ViewJFrameTriImage.CORONAL_B].getSlice());
+            triImage[ViewJFrameTriImage.CORONAL_B]
+                    .setVOIManager(voiManager.getVOIManager(ViewJFrameTriImage.CORONAL_B));
+
+            voiManager.getVOIManager(ViewJFrameTriImage.SAGITTAL_B).init(this, null, imageB,
+                    triImage[ViewJFrameTriImage.SAGITTAL_B], triImage[ViewJFrameTriImage.SAGITTAL_B],
+                    triImage[ViewJFrameTriImage.SAGITTAL_B].getOrientation(),
+                    triImage[ViewJFrameTriImage.SAGITTAL_B].getSlice());
+            triImage[ViewJFrameTriImage.SAGITTAL_B].setVOIManager(voiManager
+                    .getVOIManager(ViewJFrameTriImage.SAGITTAL_B));
         }
 
+        voiManager.getVOIManager(ViewJFrameTriImage.AXIAL_A).init(this, imageA, null,
+                triImage[ViewJFrameTriImage.AXIAL_A], triImage[ViewJFrameTriImage.AXIAL_A],
+                triImage[ViewJFrameTriImage.AXIAL_A].getOrientation(), triImage[ViewJFrameTriImage.AXIAL_A].getSlice());
+        triImage[ViewJFrameTriImage.AXIAL_A].setVOIManager(voiManager.getVOIManager(ViewJFrameTriImage.AXIAL_A));
 
-        voiManager.getVOIManager(AXIAL_A).init( this, imageA, null,
-                triImage[AXIAL_A], triImage[AXIAL_A],
-                triImage[AXIAL_A].getOrientation(), triImage[AXIAL_A].getSlice() );
-        triImage[AXIAL_A].setVOIManager(voiManager.getVOIManager(AXIAL_A));
-        
-        voiManager.getVOIManager(CORONAL_A).init( this, imageA, null,
-                triImage[CORONAL_A], triImage[CORONAL_A],
-                triImage[CORONAL_A].getOrientation(), triImage[CORONAL_A].getSlice() );
-        triImage[CORONAL_A].setVOIManager(voiManager.getVOIManager(CORONAL_A));
-        
-        voiManager.getVOIManager(SAGITTAL_A).init( this, imageA, null,
-                triImage[SAGITTAL_A], triImage[SAGITTAL_A],
-                triImage[SAGITTAL_A].getOrientation(), triImage[SAGITTAL_A].getSlice() );
-        triImage[SAGITTAL_A].setVOIManager(voiManager.getVOIManager(SAGITTAL_A));
-        
-        voiManager.getToolBar().setVisible(true);       
+        voiManager.getVOIManager(ViewJFrameTriImage.CORONAL_A).init(this, imageA, null,
+                triImage[ViewJFrameTriImage.CORONAL_A], triImage[ViewJFrameTriImage.CORONAL_A],
+                triImage[ViewJFrameTriImage.CORONAL_A].getOrientation(),
+                triImage[ViewJFrameTriImage.CORONAL_A].getSlice());
+        triImage[ViewJFrameTriImage.CORONAL_A].setVOIManager(voiManager.getVOIManager(ViewJFrameTriImage.CORONAL_A));
+
+        voiManager.getVOIManager(ViewJFrameTriImage.SAGITTAL_A).init(this, imageA, null,
+                triImage[ViewJFrameTriImage.SAGITTAL_A], triImage[ViewJFrameTriImage.SAGITTAL_A],
+                triImage[ViewJFrameTriImage.SAGITTAL_A].getOrientation(),
+                triImage[ViewJFrameTriImage.SAGITTAL_A].getSlice());
+        triImage[ViewJFrameTriImage.SAGITTAL_A].setVOIManager(voiManager.getVOIManager(ViewJFrameTriImage.SAGITTAL_A));
+
+        voiManager.getToolBar().setVisible(true);
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#getFrame()
      */
-    public JFrame getFrame()
-    {
+    public JFrame getFrame() {
         return this;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PointerActive(boolean)
      */
     public void PointerActive(boolean bActive) {
-        for ( int i = 0; i < triImage.length; i++ )
-        {
-            if ( triImage[i] != null )
-            {
-                if ( bActive )
-                {
-                    triImage[i].setCursorMode(ViewJComponentBase.VOI_3D);
-                }
-                else
-                {
-                    triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
+        for (final ViewJComponentTriImage element : triImage) {
+            if (element != null) {
+                if (bActive) {
+                    element.setCursorMode(ViewJComponentBase.VOI_3D);
+                } else {
+                    element.setCursorMode(ViewJComponentBase.DEFAULT);
                 }
             }
         }
-        traverseButton.setSelected(!bActive);
+        traverseButton.setSelected( !bActive);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PropDown(int)
      */
-    public Vector3f PropDown(int iActive) {
-        if ( triImage[iActive] != null )
-        {
+    public Vector3f PropDown(final int iActive) {
+        if (triImage[iActive] != null) {
             return triImage[iActive].downSlice();
         }
         return null;
     }
 
-
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PropUp(int)
      */
-    public Vector3f PropUp(int iActive) {
-        if ( triImage[iActive] != null )
-        {
+    public Vector3f PropUp(final int iActive) {
+        if (triImage[iActive] != null) {
             return triImage[iActive].upSlice();
         }
         return null;
     }
 
-
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#create3DVOI(boolean)
      */
-    public void create3DVOI(boolean bIntersection) {
-        ModelImage kImage = new ModelImage( ModelStorageBase.INTEGER, 
-                imageA.getExtents(), "Temp" );
+    public void create3DVOI(final boolean bIntersection) {
+        final ModelImage kImage = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), "Temp");
         kImage.copyFileTypeInfo(imageA);
 
         voiManager.make3DVOI(bIntersection, kImage);
@@ -5647,39 +5619,42 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         new JDialogExtractSurfaceCubes(this, kImage, true);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.awt.Window#setCursor(java.awt.Cursor)
      */
-    public void setCursor(Cursor kCursor) {
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+    public void setCursor(final Cursor kCursor) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
             if (triImage[i] != null) {
                 triImage[i].setCursor(kCursor);
             }
         }
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#getActiveImage()
      */
-    public ModelImage getActiveImage()
-    {
-        int iActive = getSelectedImage();
-        if (iActive == ViewJComponentBase.IMAGE_A)
-        {
+    public ModelImage getActiveImage() {
+        final int iActive = getSelectedImage();
+        if (iActive == ViewJComponentBase.IMAGE_A) {
             return imageA;
         }
-        if (iActive == ViewJComponentBase.IMAGE_B)
-        {
+        if (iActive == ViewJComponentBase.IMAGE_B) {
             return imageB;
         }
         return imageA;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setModified()
      */
     public void setModified() {
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].paintComponent(triImage[i].getGraphics());
@@ -5691,32 +5666,29 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#updateData(boolean)
      */
-    public void updateData(boolean bCopyToCPU) {}
+    public void updateData(final boolean bCopyToCPU) {}
 
     @Override
-    public void setActiveImage(ModelImage kImage) {
-        if ( kImage == imageA )
-        {
-            setActiveImage( IMAGE_A );
-        }
-        else
-        {
-            setActiveImage( IMAGE_B );
+    public void setActiveImage(final ModelImage kImage) {
+        if (kImage == imageA) {
+            setActiveImage(ViewJFrameBase.IMAGE_A);
+        } else {
+            setActiveImage(ViewJFrameBase.IMAGE_B);
         }
     }
 
     @Override
     public ModelLUT getActiveLUT() {
-        int iActive = getSelectedImage();
-        if (iActive == ViewJComponentBase.IMAGE_A)
-        {
+        final int iActive = getSelectedImage();
+        if (iActive == ViewJComponentBase.IMAGE_A) {
             return LUTa;
         }
-        if (iActive == ViewJComponentBase.IMAGE_B)
-        {
+        if (iActive == ViewJComponentBase.IMAGE_B) {
             return LUTb;
         }
         return LUTa;
@@ -5724,42 +5696,36 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     @Override
     public ModelRGB getActiveRGB() {
-        int iActive = getSelectedImage();
-        if (iActive == ViewJComponentBase.IMAGE_A)
-        {
-            return triImage[AXIAL_A].getRGBTA();
+        final int iActive = getSelectedImage();
+        if (iActive == ViewJComponentBase.IMAGE_A) {
+            return triImage[ViewJFrameTriImage.AXIAL_A].getRGBTA();
         }
-        if (iActive == ViewJComponentBase.IMAGE_B)
-        {
-            return triImage[AXIAL_A].getRGBTB();
+        if (iActive == ViewJComponentBase.IMAGE_B) {
+            return triImage[ViewJFrameTriImage.AXIAL_A].getRGBTB();
         }
-        return triImage[AXIAL_A].getRGBTA();
+        return triImage[ViewJFrameTriImage.AXIAL_A].getRGBTA();
     }
 
-    public VOIManagerInterface getVOIManager()
-    {
+    public VOIManagerInterface getVOIManager() {
         return voiManager;
     }
-    
+
     @Override
-    public void setPaintMask(BitSet mask) {
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+    public void setPaintMask(final BitSet mask) {
+        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setPaintMask(mask);
             }
         }
     }
-    
 
     @Override
-    public void paintToShortMask()
-    {
-        int iActive = getSelectedImage();
-        ViewJComponentEditImage componentImage = triImage[AXIAL_A];
-        if (iActive == ViewJComponentBase.IMAGE_B)
-        {
-            componentImage = triImage[AXIAL_B];
+    public void paintToShortMask() {
+        final int iActive = getSelectedImage();
+        ViewJComponentEditImage componentImage = triImage[ViewJFrameTriImage.AXIAL_A];
+        if (iActive == ViewJComponentBase.IMAGE_B) {
+            componentImage = triImage[ViewJFrameTriImage.AXIAL_B];
         }
         final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
                 componentImage.commitPaintToMask());
@@ -5769,16 +5735,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         ProvenanceRecorder.getReference().addLine(
                 new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
     }
-    
 
     @Override
-    public void paintToUbyteMask()
-    {
-        int iActive = getSelectedImage();
-        ViewJComponentEditImage componentImage = triImage[AXIAL_A];
-        if (iActive == ViewJComponentBase.IMAGE_B)
-        {
-            componentImage = triImage[AXIAL_B];
+    public void paintToUbyteMask() {
+        final int iActive = getSelectedImage();
+        ViewJComponentEditImage componentImage = triImage[ViewJFrameTriImage.AXIAL_A];
+        if (iActive == ViewJComponentBase.IMAGE_B) {
+            componentImage = triImage[ViewJFrameTriImage.AXIAL_B];
         }
         final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
                 componentImage.commitPaintToUbyteMask());
@@ -5789,10 +5752,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
     }
 
-
     @Override
-    public void maskToPaint()
-    {
+    public void maskToPaint() {
         imageA.getParentFrame().maskToPaint();
     }
 }

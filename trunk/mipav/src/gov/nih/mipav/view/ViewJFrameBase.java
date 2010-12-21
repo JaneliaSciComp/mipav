@@ -1,7 +1,6 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
@@ -9,7 +8,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -62,12 +60,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** JPanel containing the absoulte position labels:. */
     protected JPanel absolutePanel = new JPanel(new GridBagLayout());
-    
-    protected JPanel talairachPanel = new JPanel(new GridBagLayout());
-    
-    /* Panel for switiching between radiological and neurological viewing
-     * conventions: */
-    protected JPanel viewPanel = new JPanel(new GridBagLayout());
 
     /** Indicates the amount of blending when two images are loaded in the image frame. */
     protected float alphaBlend = 0.5f;
@@ -98,19 +90,19 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** Labels for the current scanner position:. */
     protected JLabel scannerLPSLabel = null;
-    
+
     /** Labels for the current scanner position:. */
     protected JLabel scannerRASLabel = null;
 
     /** Labels for the current scanner position values:. */
     protected JLabel[] scannerLPSLabelVals = null;
-    
+
     /** Labels for the current scanner position values:. */
     protected JLabel[] scannerRASLabelVals = null;
 
     /** JPanel containing the scanner position labels:. */
     protected JPanel scannerLPSPanel = new JPanel(new GridBagLayout());
-    
+
     /** JPanel containing the scanner position labels:. */
     protected JPanel scannerRASPanel = new JPanel(new GridBagLayout());
 
@@ -119,7 +111,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** The tabbed pane to hold teh LPS, RAS and absolution coordinate panels. */
     protected JTabbedPane scannerTabbedPane;
-    
+
     /** Reference to the user interface. */
     protected ViewUserInterface userInterface;
 
@@ -149,31 +141,42 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** Variable indicating if images of like dimensions should be scrolled simult. */
     protected boolean linkedScrolling = false;
-    
-    /** voxel absolute goto components**/
-    protected JLabel absoluteXLabel,absoluteYLabel,absoluteZLabel;
-    protected JTextField absoluteXTextField,absoluteYTextField,absoluteZTextField;
+
+    /** voxel absolute goto components* */
+    protected JLabel absoluteXLabel, absoluteYLabel, absoluteZLabel;
+
+    protected JTextField absoluteXTextField, absoluteYTextField, absoluteZTextField;
+
     protected JButton absoluteGoToButton;
+
     protected JPanel absoluteGoToPanel;
-    
-    /** scanner lps goto components**/
-    protected JLabel scannerLPS_RLLabel,scannerLPS_APLabel,scannerLPS_ISLabel;
-    protected JTextField scannerLPS_RLTextField,scannerLPS_APTextField,scannerLPS_ISTextField;
+
+    /** scanner lps goto components* */
+    protected JLabel scannerLPS_RLLabel, scannerLPS_APLabel, scannerLPS_ISLabel;
+
+    protected JTextField scannerLPS_RLTextField, scannerLPS_APTextField, scannerLPS_ISTextField;
+
     protected JButton scannerLPS_GoToButton;
+
     protected JPanel scannerLPS_GoToPanel;
-    
-    /** scanner ras goto components**/
-    protected JLabel scannerRAS_RLLabel,scannerRAS_APLabel,scannerRAS_ISLabel;
-    protected JTextField scannerRAS_RLTextField,scannerRAS_APTextField,scannerRAS_ISTextField;
+
+    /** scanner ras goto components* */
+    protected JLabel scannerRAS_RLLabel, scannerRAS_APLabel, scannerRAS_ISLabel;
+
+    protected JTextField scannerRAS_RLTextField, scannerRAS_APTextField, scannerRAS_ISTextField;
+
     protected JButton scannerRAS_GoToButton;
+
     protected JPanel scannerRAS_GoToPanel;
-    
-    /** talairach goto components**/
-    protected JLabel talXLabel,talYLabel,talZLabel;
-    protected JTextField talXTextField,talYTextField,talZTextField;
+
+    /** talairach goto components* */
+    protected JLabel talXLabel, talYLabel, talZLabel;
+
+    protected JTextField talXTextField, talYTextField, talZTextField;
+
     protected JButton talGoToButton;
+
     protected JPanel talGoToPanel;
-    
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -540,7 +543,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         if (scannerLPSLabel != null) {
             return;
         }
-        
+
         if (scannerRASLabel != null) {
             return;
         }
@@ -553,7 +556,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         scannerLPSLabelVals[1] = new JLabel("A-P: ");
         scannerLPSLabelVals[2] = new JLabel("I-S: ");
         scannerLPSLabelVals[3] = new JLabel("Intensity: ");
-        
+
         scannerLPS_RLLabel = new JLabel("R-L:");
         scannerLPS_RLLabel.setForeground(Color.black);
         scannerLPS_RLLabel.setFont(MipavUtil.font14B);
@@ -577,9 +580,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         scannerLPS_GoToPanel.add(scannerLPS_ISLabel);
         scannerLPS_GoToPanel.add(scannerLPS_ISTextField);
         scannerLPS_GoToPanel.add(scannerLPS_GoToButton);
-        
-        
-        
+
         scannerRASLabel = new JLabel("Scanner RAS Coordinates");
         scannerRASLabel.setForeground(Color.black);
         scannerRASLabel.setFont(MipavUtil.font14B);
@@ -588,7 +589,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         scannerRASLabelVals[1] = new JLabel("P-A: ");
         scannerRASLabelVals[2] = new JLabel("I-S: ");
         scannerRASLabelVals[3] = new JLabel("Intensity: ");
-        
+
         scannerRAS_RLLabel = new JLabel("L-R:");
         scannerRAS_RLLabel.setForeground(Color.black);
         scannerRAS_RLLabel.setFont(MipavUtil.font14B);
@@ -612,9 +613,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         scannerRAS_GoToPanel.add(scannerRAS_ISLabel);
         scannerRAS_GoToPanel.add(scannerRAS_ISTextField);
         scannerRAS_GoToPanel.add(scannerRAS_GoToButton);
-        
-        
-        
 
         absoluteLabel = new JLabel("Absolute Volume Coordinates");
         absoluteLabel.setToolTipText("Coordinates in 3D image space");
@@ -626,7 +624,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         absoluteLabelVals[2] = new JLabel("Z: ");
         absoluteLabelVals[3] = new JLabel("Intensity: ");
         absoluteLabelVals[4] = new JLabel("1D index: ");
-        
+
         absoluteXLabel = new JLabel("X:");
         absoluteXLabel.setForeground(Color.black);
         absoluteXLabel.setFont(MipavUtil.font14B);
@@ -650,12 +648,11 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         absoluteGoToPanel.add(absoluteZLabel);
         absoluteGoToPanel.add(absoluteZTextField);
         absoluteGoToPanel.add(absoluteGoToButton);
-        
 
         for (int i = 0; i < 4; i++) {
             scannerLPSLabelVals[i].setForeground(Color.black);
             scannerLPSLabelVals[i].setFont(MipavUtil.font14B);
-            
+
             scannerRASLabelVals[i].setForeground(Color.black);
             scannerRASLabelVals[i].setFont(MipavUtil.font14B);
 
@@ -667,11 +664,11 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         absoluteLabelVals[4].setFont(MipavUtil.font14B);
 
         final GridBagConstraints gbc2 = new GridBagConstraints();
-       
+
         gbc2.anchor = GridBagConstraints.NORTHWEST;
         gbc2.fill = GridBagConstraints.BOTH;
-        //gbc2.weightx = 1;
-        //gbc2.weighty = 1;
+        // gbc2.weightx = 1;
+        // gbc2.weighty = 1;
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
@@ -696,7 +693,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
         gbc2.gridy++;
         absolutePanel.add(absoluteLabelVals[4], gbc2);
-        
+
         gbc2.gridy++;
         absolutePanel.add(absoluteGoToPanel, gbc2);
         scannerLPSPanel.add(scannerLPS_GoToPanel, gbc2);
@@ -1062,11 +1059,11 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * @see JDialogLoadImage
      */
     public boolean loadImage(final Object obj, final ViewJComponentEditImage compImage, final boolean stackFlag,
-            final boolean doOrigins, final boolean doOrients,
-            double defaultValue, double defaultRed, double defaultGreen, double defaultBlue) {
-        boolean resample = false;
-        int[] axisA;
-        int[] axisB;
+            final boolean doOrigins, final boolean doOrients, final double defaultValue, final double defaultRed,
+            final double defaultGreen, final double defaultBlue) {
+        final boolean resample = false;
+        final int[] axisA;
+        final int[] axisB;
         boolean success = false;
 
         // get the model image for the image location
@@ -1104,68 +1101,46 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 this.setRGBTB(rgb);
             }
 
-            if ( imageA.isColorImage() != imageB.isColorImage() )
-            {
+            if (imageA.isColorImage() != imageB.isColorImage()) {
                 MipavUtil
                         .displayError("Image loading failed because the color space is different. Both images must be grayscale or both RGB.");
 
                 return false;
             }
-            
-            if ( (imageA.getNDims() == imageB.getNDims()) ||
-                    ((imageA.getNDims() == 4) && (imageB.getNDims() == 3)) )
-            {
-                matchImages( imageA, imageB, doOrigins, doOrients, defaultValue, defaultRed, defaultGreen, defaultBlue );
-            }
-            else
-            {
-                MipavUtil.displayError("Image loading failed because the image dimensions do not match. Images must both be 2D, 3D or 4D. Or ImageA must be 4D and imageB 3D.");
+
+            if ( (imageA.getNDims() == imageB.getNDims()) || ( (imageA.getNDims() == 4) && (imageB.getNDims() == 3))) {
+                matchImages(imageA, imageB, doOrigins, doOrients, defaultValue, defaultRed, defaultGreen, defaultBlue);
+            } else {
+                MipavUtil
+                        .displayError("Image loading failed because the image dimensions do not match. Images must both be 2D, 3D or 4D. Or ImageA must be 4D and imageB 3D.");
 
                 return false;
             }
 
             /*
-
-            // If axis orientation information is available for each of the 3 axes of
-            // image A and image B and the orientations are not identical, then reorder image B
-            // to have the same orientation as image A
-            if ( (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI) && (imageB.getNDims() > 2)
-                    && (axisA[0] != FileInfoBase.ORI_UNKNOWN_TYPE) && (axisB[0] != FileInfoBase.ORI_UNKNOWN_TYPE)
-                    && ( (axisA[0] != axisB[0]) || (axisA[1] != axisB[1]) || (axisA[2] != axisB[2]))) {
-
-                if (reorderAfni(imageB, axisA, axisB) == false) {
-                    return false;
-                }
-            }
-
-            if (isImageResampleable(imageB)) {
-                resample = isResampleNeeded(imageB);
-            }
-
-            if ( (resample == true) && (imageA.getFileInfo(0).getFileFormat() == FileUtility.AFNI)
-                    && (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI)) {
-                final int result = setImageBAfni(imageA, imageB);
-
-                if (result == -1) {
-                    return false;
-                } else if (result == 1) {
-                    return success = true; // AFNI is a special case - no need to go on to the rest of the method
-                }
-            }
-
-            if ( ( (imageA.getNDims() == 3) && (imageB.getNDims() == 3))
-                    || ( (imageA.getNDims() == 2) && (imageB.getNDims() == 2))) {
-
-                if ( !matchImages(imageB, doOrigins, doOrients)) {
-                    return false;
-                }
-            } else if (resample) {
-                loadResampledImage(imageB);
-            } else {
-                setImageB(imageB);
-            }
-            setImageB(imageB);
-*/
+             *  // If axis orientation information is available for each of the 3 axes of // image A and image B and the
+             * orientations are not identical, then reorder image B // to have the same orientation as image A if (
+             * (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI) && (imageB.getNDims() > 2) && (axisA[0] !=
+             * FileInfoBase.ORI_UNKNOWN_TYPE) && (axisB[0] != FileInfoBase.ORI_UNKNOWN_TYPE) && ( (axisA[0] != axisB[0]) ||
+             * (axisA[1] != axisB[1]) || (axisA[2] != axisB[2]))) {
+             * 
+             * if (reorderAfni(imageB, axisA, axisB) == false) { return false; } }
+             * 
+             * if (isImageResampleable(imageB)) { resample = isResampleNeeded(imageB); }
+             * 
+             * if ( (resample == true) && (imageA.getFileInfo(0).getFileFormat() == FileUtility.AFNI) &&
+             * (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI)) { final int result = setImageBAfni(imageA,
+             * imageB);
+             * 
+             * if (result == -1) { return false; } else if (result == 1) { return success = true; // AFNI is a special
+             * case - no need to go on to the rest of the method } }
+             * 
+             * if ( ( (imageA.getNDims() == 3) && (imageB.getNDims() == 3)) || ( (imageA.getNDims() == 2) &&
+             * (imageB.getNDims() == 2))) {
+             * 
+             * if ( !matchImages(imageB, doOrigins, doOrients)) { return false; } } else if (resample) {
+             * loadResampledImage(imageB); } else { setImageB(imageB); } setImageB(imageB);
+             */
             if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
 
                 // load any luts
@@ -1191,28 +1166,23 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
         return success;
     }
-    
-    private void matchImages( ModelImage imageA, ModelImage imageB,final boolean doOrigins, final boolean doOrients,
-            double defaultValue, double defaultRed, double defaultGreen, double defaultBlue )
-    {
-        ModelImage imageA_back = imageA;
+
+    private void matchImages(ModelImage imageA, ModelImage imageB, final boolean doOrigins, final boolean doOrients,
+            final double defaultValue, final double defaultRed, final double defaultGreen, final double defaultBlue) {
+        final ModelImage imageA_back = imageA;
         ModelImage imageB_back = imageB;
-    
-        AlgorithmMatchImages algoMatch = new AlgorithmMatchImages( imageA, imageB, doOrigins, doOrients );
-        if ( !imageB.isColorImage() )
-        {
-            algoMatch.setPadValue( (float)defaultValue );
-        }
-        else
-        {
-            algoMatch.setPadValue( (float)defaultRed, (float)defaultGreen, (float)defaultBlue );
+
+        final AlgorithmMatchImages algoMatch = new AlgorithmMatchImages(imageA, imageB, doOrigins, doOrients);
+        if ( !imageB.isColorImage()) {
+            algoMatch.setPadValue((float) defaultValue);
+        } else {
+            algoMatch.setPadValue((float) defaultRed, (float) defaultGreen, (float) defaultBlue);
         }
         algoMatch.setRunningInSeparateThread(false);
         algoMatch.run();
         imageA = algoMatch.getImageA();
         imageB = algoMatch.getImageB();
-        if ( imageB_back != imageB )
-        {
+        if (imageB_back != imageB) {
             imageB_back.disposeLocal();
             imageB_back = null;
         }
@@ -1224,8 +1194,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             newFrame.setImageB(imageB);
             newFrame.enableImageB(true);
             enableCloseImageB = true;
-        } 
-        else {
+        } else {
 
             // imgA is not new, so keep the same ViewJFrameImage, which is imgA's frame
             // because image A was not changed, we will just set either the untouched
@@ -1233,7 +1202,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             setImageB(imageB);
         }
     }
-    
 
     /**
      * This method loads the LUT for the active image. If the image is not a color image then both the functions and the
@@ -1523,46 +1491,44 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
             final JFileChooser chooser = fileChooser.getFileChooser();
 
-      
+            if (userInterface.getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
 
-                if (userInterface.getDefaultDirectory() != null) {
-                    chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
-                } else {
-                    chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+
+            // make sure that this filter has been added to chooser
+            if (filter != -1) {
+
+                // it seems that the set command adds the filter again...
+                // chooser.addChoosableFileFilter(new ViewImageFileFilter(filter));
+
+                // if filter is something we already added, then remove it before
+                // setting it..... (kludgy, kludgy....)
+                final javax.swing.filechooser.FileFilter found = findFilter(chooser, filter);
+
+                if (found != null) {
+                    chooser.removeChoosableFileFilter(found);
                 }
 
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+                // initially set to the preferences
+                chooser.setFileFilter(new ViewImageFileFilter(filter));
+            }
 
-                // make sure that this filter has been added to chooser
-                if (filter != -1) {
+            final int returnVal = chooser.showOpenDialog(this);
 
-                    // it seems that the set command adds the filter again...
-                    // chooser.addChoosableFileFilter(new ViewImageFileFilter(filter));
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                userInterface.setLastStackFlag(fileChooser.isMulti());
+                f = chooser.getSelectedFile();
+            } else {
+                return null;
+            }
 
-                    // if filter is something we already added, then remove it before
-                    // setting it..... (kludgy, kludgy....)
-                    final javax.swing.filechooser.FileFilter found = findFilter(chooser, filter);
-
-                    if (found != null) {
-                        chooser.removeChoosableFileFilter(found);
-                    }
-
-                    // initially set to the preferences
-                    chooser.setFileFilter(new ViewImageFileFilter(filter));
-                }
-
-                final int returnVal = chooser.showOpenDialog(this);
-
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    userInterface.setLastStackFlag(fileChooser.isMulti());
-                    f = chooser.getSelectedFile();
-                } else {
-                    return null;
-                }
-          
         } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameBase.loadImage");
 
@@ -1627,90 +1593,89 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                         // if prefill fails, do nothing
                     }
 
-              
-                        final JFileChooser chooser = fileChooser.getFileChooser();
+                    final JFileChooser chooser = fileChooser.getFileChooser();
 
-                        // chooser.setName("Save image as");
-                        if (userInterface.getDefaultDirectory() != null) {
-                            chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
-                        } else {
-                            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-                        }
+                    // chooser.setName("Save image as");
+                    if (userInterface.getDefaultDirectory() != null) {
+                        chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
+                    } else {
+                        chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+                    }
+
+                    if (filterType >= 0) {
+                        chooser.addChoosableFileFilter(new ViewImageFileFilter(filterType));
+                    } else {
+                        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+                        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+                    }
+
+                    final int returnVal = chooser.showSaveDialog(this);
+
+                    if (returnVal == JFileChooser.APPROVE_OPTION) {
+                        fileName = chooser.getSelectedFile().getName();
 
                         if (filterType >= 0) {
-                            chooser.addChoosableFileFilter(new ViewImageFileFilter(filterType));
-                        } else {
-                            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
-                            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-                        }
+                            i = fileName.lastIndexOf('.');
 
-                        final int returnVal = chooser.showSaveDialog(this);
+                            if ( (i > 0) && (i < (fileName.length() - 1))) {
+                                extension = fileName.substring(i + 1).toLowerCase();
+                                vFilter = new ViewImageFileFilter(filterType);
 
-                        if (returnVal == JFileChooser.APPROVE_OPTION) {
-                            fileName = chooser.getSelectedFile().getName();
+                                if ( !vFilter.accept(extension)) {
+                                    MipavUtil.displayError("Extension does not match filter type");
 
-                            if (filterType >= 0) {
-                                i = fileName.lastIndexOf('.');
+                                    return;
+                                }
+                            } // if ( i > 0 && i < fileName.length() - 1 )
+                            else if (i < 0) {
 
-                                if ( (i > 0) && (i < (fileName.length() - 1))) {
-                                    extension = fileName.substring(i + 1).toLowerCase();
-                                    vFilter = new ViewImageFileFilter(filterType);
+                                switch (filterType) {
 
-                                    if ( !vFilter.accept(extension)) {
-                                        MipavUtil.displayError("Extension does not match filter type");
+                                    case ViewImageFileFilter.AVI:
+                                        fileName = fileName + ".avi";
+                                        break;
 
-                                        return;
-                                    }
-                                } // if ( i > 0 && i < fileName.length() - 1 )
-                                else if (i < 0) {
+                                    case ViewImageFileFilter.VOI:
+                                        fileName = fileName + ".voi";
+                                        break;
 
-                                    switch (filterType) {
+                                    case ViewImageFileFilter.FUNCT:
+                                        fileName = fileName + ".fun";
+                                        break;
 
-                                        case ViewImageFileFilter.AVI:
-                                            fileName = fileName + ".avi";
-                                            break;
+                                    case ViewImageFileFilter.LUT:
+                                        fileName = fileName + ".lut";
+                                        break;
 
-                                        case ViewImageFileFilter.VOI:
-                                            fileName = fileName + ".voi";
-                                            break;
+                                    case ViewImageFileFilter.PLOT:
+                                        fileName = fileName + ".plt";
+                                        break;
 
-                                        case ViewImageFileFilter.FUNCT:
-                                            fileName = fileName + ".fun";
-                                            break;
+                                    case ViewImageFileFilter.CLASS:
+                                        fileName = fileName + ".class";
+                                        break;
 
-                                        case ViewImageFileFilter.LUT:
-                                            fileName = fileName + ".lut";
-                                            break;
+                                    case ViewImageFileFilter.SCRIPT:
+                                        fileName = fileName + ".sct";
+                                        break;
 
-                                        case ViewImageFileFilter.PLOT:
-                                            fileName = fileName + ".plt";
-                                            break;
+                                    case ViewImageFileFilter.SURFACE:
+                                        fileName = fileName + ".sur";
+                                        break;
 
-                                        case ViewImageFileFilter.CLASS:
-                                            fileName = fileName + ".class";
-                                            break;
+                                    case ViewImageFileFilter.FREESURFER:
+                                        fileName = fileName + ".asc";
+                                        break;
+                                }
+                            } // else if (i < 0)
+                        } // if (filterType >= 0)
 
-                                        case ViewImageFileFilter.SCRIPT:
-                                            fileName = fileName + ".sct";
-                                            break;
+                        directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                        userInterface.setDefaultDirectory(directory);
+                    } else {
+                        return;
+                    }
 
-                                        case ViewImageFileFilter.SURFACE:
-                                            fileName = fileName + ".sur";
-                                            break;
-
-                                        case ViewImageFileFilter.FREESURFER:
-                                            fileName = fileName + ".asc";
-                                            break;
-                                    }
-                                } // else if (i < 0)
-                            } // if (filterType >= 0)
-
-                            directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                            userInterface.setDefaultDirectory(directory);
-                        } else {
-                            return;
-                        }
-                   
                 } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
                     Preferences.debug("Out of memory: ViewJFrameBase.save\n", 3);
@@ -2354,7 +2319,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     } // end saveAllVOIs()
 
-    
     /**
      * This method saves all VOIs for the active image to a given directory.
      * 
@@ -2400,7 +2364,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     fileVOI.writeVOI(VOIs.VOIAt(i), true);
                 } else {
                     fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, currentImage);
-                    fileVOI.writeAnnotationInVoiAsXML(VOIs.VOIAt(i).getName(),true);
+                    fileVOI.writeAnnotationInVoiAsXML(VOIs.VOIAt(i).getName(), true);
                 }
             }
 
@@ -2924,9 +2888,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
-                if(!fileName.endsWith(".xml")) {
-                	MipavUtil.displayError("VOI files must end in .xml");
-                	return;
+                if ( !fileName.endsWith(".xml")) {
+                    MipavUtil.displayError("VOI files must end in .xml");
+                    return;
                 }
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
@@ -3485,10 +3449,10 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         absoluteLabelVals[0].setText("X: " + (int) position.X);
         absoluteLabelVals[1].setText("Y: " + (int) position.Y);
         absoluteLabelVals[2].setText("Z: " + (int) position.Z);
-        
+
         absoluteXTextField.setText(String.valueOf((int) position.X));
-    	absoluteYTextField.setText(String.valueOf((int) position.Y));
-    	absoluteZTextField.setText(String.valueOf((int) position.Z));
+        absoluteYTextField.setText(String.valueOf((int) position.Y));
+        absoluteZTextField.setText(String.valueOf((int) position.Z));
 
         final int[] dimExtents = imageA.getExtents();
         final int index = (int) ( (position.Z * dimExtents[0] * dimExtents[1]) + (position.Y * dimExtents[0]) + position.X);
@@ -3532,16 +3496,21 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         }
         scannerLPSLabelVals[3].setText("Intensity: " + imageA.getFloat(index * iBuffFactor));
         scannerRASLabelVals[3].setText("Intensity: " + imageA.getFloat(index * iBuffFactor));
-        
-        scannerLPS_RLTextField.setText(LPS_labelContents[0].substring(LPS_labelContents[0].lastIndexOf(":")+1, LPS_labelContents[0].length()));
-    	scannerLPS_APTextField.setText(LPS_labelContents[1].substring(LPS_labelContents[1].lastIndexOf(":")+1, LPS_labelContents[1].length()));
-    	scannerLPS_ISTextField.setText(LPS_labelContents[2].substring(LPS_labelContents[2].lastIndexOf(":")+1, LPS_labelContents[2].length()));
-    	
-    	scannerRAS_RLTextField.setText(RAS_labelContents[0].substring(RAS_labelContents[0].lastIndexOf(":")+1, RAS_labelContents[0].length()));
-    	scannerRAS_APTextField.setText(RAS_labelContents[1].substring(RAS_labelContents[1].lastIndexOf(":")+1, RAS_labelContents[1].length()));
-    	scannerRAS_ISTextField.setText(RAS_labelContents[2].substring(RAS_labelContents[2].lastIndexOf(":")+1, RAS_labelContents[2].length()));
-    
-    
+
+        scannerLPS_RLTextField.setText(LPS_labelContents[0].substring(LPS_labelContents[0].lastIndexOf(":") + 1,
+                LPS_labelContents[0].length()));
+        scannerLPS_APTextField.setText(LPS_labelContents[1].substring(LPS_labelContents[1].lastIndexOf(":") + 1,
+                LPS_labelContents[1].length()));
+        scannerLPS_ISTextField.setText(LPS_labelContents[2].substring(LPS_labelContents[2].lastIndexOf(":") + 1,
+                LPS_labelContents[2].length()));
+
+        scannerRAS_RLTextField.setText(RAS_labelContents[0].substring(RAS_labelContents[0].lastIndexOf(":") + 1,
+                RAS_labelContents[0].length()));
+        scannerRAS_APTextField.setText(RAS_labelContents[1].substring(RAS_labelContents[1].lastIndexOf(":") + 1,
+                RAS_labelContents[1].length()));
+        scannerRAS_ISTextField.setText(RAS_labelContents[2].substring(RAS_labelContents[2].lastIndexOf(":") + 1,
+                RAS_labelContents[2].length()));
+
     }
 
     /**
@@ -3717,7 +3686,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
         if (isColor) {
             bufferFactor = 4;
-        } else if(imageType == ModelStorageBase.COMPLEX){
+        } else if (imageType == ModelStorageBase.COMPLEX) {
             bufferFactor = Preferences.getComplexDisplay().getNumParts();
         }
 
@@ -4008,9 +3977,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     private boolean isImageResampleable(final ModelImage image) {
         final int minDims = Math.min(imageB.getNDims(), imageA.getNDims());
 
-        if ( (imageB.getNDims() == imageA.getNDims()) || 
-                ( ((imageB.getNDims() == 3) || (imageB.getNDims() == 4)) && 
-                        ((imageA.getNDims() == 3) || (imageA.getNDims() == 4)))) {
+        if ( (imageB.getNDims() == imageA.getNDims())
+                || ( ( (imageB.getNDims() == 3) || (imageB.getNDims() == 4)) && ( (imageA.getNDims() == 3) || (imageA
+                        .getNDims() == 4)))) {
 
             if (minDims == 4) {
 
@@ -4169,8 +4138,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             Preferences.debug("imageLocation == IMAGE_B ; no resampling necessary", Preferences.DEBUG_FILEIO);
         }
     }
-
-
 
     /**
      * Reorders the AFNI image based on the axis orientations. B0 to A1 indicates changing x to y; B0 to A2 indicates a
