@@ -154,125 +154,62 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	originRo = (sizeRo - roFilterSize)/2;
     	originPe = (sizePe - peFilterSize)/2;
     	
-    	ModelImage brainMask = new ModelImage(ModelImage.BOOLEAN, new int[]{sizeRo,sizePe,sizeSs}, "brainMask");
+    	ModelImage brainMask = createBrainMask();
     	
-    	for(int i=0; i<sizeRo; i++) {
-    	    for(int j=0; j<sizePe; j++) {
-    	        for(int k=0; k<sizeSs; k++) {
-    	            if(magImage.getDouble(i, j, k) > maskThreshold) {
-    	                brainMask.set(i, j, k, true);
-    	            }
-    	        }
-    	    }
-    	}
-    	brainMask.calcMinMax();
-    	
-    	ViewJFrameImage brainFrame = new ViewJFrameImage(brainMask);
-    	brainFrame.setVisible(true);
-    	
-    	ModelImage iImage = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iData");
-    	ModelImage kImage = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "kData");
     	double[] realData = new double[sizeRo*sizePe*sizeSs];
-    	double[] imagData = new double[sizeRo*sizePe*sizeSs];
-    	
-    	rescaleToComplex(magImage, phaseImage, realData, imagData);
-    	
-    	try {
-            iImage.importDComplexData(0, realData, imagData, true, false);
-            iImage.setOriginalExtents(iImage.getExtents());
-        } catch (IOException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
+        double[] imagData = new double[sizeRo*sizePe*sizeSs];
         
-        ViewJFrameImage iFrame = new ViewJFrameImage(iImage);
-        iFrame.setVisible(true);
-        
-        int a = 0;
+        rescaleToComplex(magImage, phaseImage, realData, imagData);
     	
-        //kImage is now at 512x512
-    	AlgorithmFFT fft = new AlgorithmFFT(kImage, iImage, AlgorithmFFT.FORWARD, false, false, true);
-    	fft.run();
+    	ModelImage iImage = createiImage(realData, imagData);
     	
-    	ViewJFrameImage kFrame = new ViewJFrameImage(kImage);
-    	kFrame.setVisible(true);
+    	ModelImage kImage = createkImage(iImage);
     	
-    	ModelImage kCenterImage = (ModelImage) kImage.clone();
-    	kCenterImage.setImageName("kCenterImage");
-    	for(int i=0; i<sizeRo; i++) {
-            if(i < originRo+1 || i > originRo+roFilterSize) {
-        	    for(int j=0; j<sizePe; j++) {
-                    if(j < originPe+1 || j > originPe + peFilterSize) {
-            	        for(int k=0; k<sizeSs; k++) {
-                                kCenterImage.set(i, j, k, 0);
-                        }
-                    }
-                }
-            }
-        }
-    	
-    	ViewJFrameImage kCenterFrame = new ViewJFrameImage(kCenterImage);
-    	kCenterFrame.setVisible(true);
+    	ModelImage kCenterImage = createKCenterImage(kImage);
     
-    	ModelImage iCenterImage = (ModelImage) iImage.clone(); //also needs to be 480x480
-        iCenterImage.setImageName("iCenterImage");
-        imageMarginsAlgo = new AlgorithmAddMargins(iCenterImage, 
-                new int[]{16,16}, new int[]{16,16}, new int[]{0, 0});
-        imageMarginsAlgo.setPadValue(new float[]{0});
+    	ModelImage iCenterImage = padiImage(iImage);
         
-        imageMarginsAlgo.runAlgorithm();
-        iCenterImage = imageMarginsAlgo.getSrcImage();
+    	iCenterImage = runFFToniCenter(iCenterImage, kCenterImage);
         
-    	if(a == 0) {
-    	    return;
-    	}
-        
-    	AlgorithmFFT fft2 = new AlgorithmFFT(iCenterImage, kCenterImage, AlgorithmFFT.INVERSE, false, false, true);
-        fft2.run();
-        
-        ViewJFrameImage iCenterFrame = new ViewJFrameImage(iCenterImage);
-        iCenterFrame.setVisible(true);
-        
-        double[] ixReal = new double[sizeRo*sizePe*sizeSs];
-        double[] ixImag = new double[sizeRo*sizePe*sizeSs];
-        double[] ixRealCenter = new double[sizeRo*sizePe*sizeSs];
-        double[] ixImagCenter = new double[sizeRo*sizePe*sizeSs];
-        BitSet brainMaskSet = new BitSet(sizeRo*sizePe*sizeSs);
+    	BitSet brainMaskSet = new BitSet(sizeRo*sizePe*sizeSs);
         try {
             brainMask.exportData(0, sizeRo*sizePe*sizeSs, brainMaskSet);
-            iImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixReal, ixImag);
-            iCenterImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixRealCenter, ixImagCenter);
-            
-        } catch (IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+        } catch(Exception e) {
+            e.printStackTrace();
         }
-        
+    	
         float[] ixRealFinal = new float[sizeRo*sizePe*sizeSs];
         float[] ixImagFinal = new float[sizeRo*sizePe*sizeSs];
         
-        ModelImage iFinal = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "complexData");
-        double mag = 0.0;
-        //this is equivalent to multiplying by the brain mask because calculation is occurring only at every set
-        //bit of the brainMask
-        for (int i = brainMaskSet.nextSetBit(0); i >= 0; i = brainMaskSet.nextSetBit(i+1)) {
-            mag = Math.pow(ixReal[i], 2) + Math.pow(ixImag[i], 2);
-            ixRealFinal[i] = (float) ((ixRealCenter[i]*ixReal[i] + ixImagCenter[i]*ixImag[i])/mag);
-            ixImagFinal[i] = (float) ((ixImagCenter[i]*ixReal[i] - ixRealCenter[i]*ixImag[i])/mag);
-        }
+    	ModelImage iFinal = generateIFinal(iImage, iCenterImage, brainMaskSet, ixRealFinal, ixImagFinal);
         
+    	float[] phaseMaskData = new float[sizeRo*sizePe*sizeSs];
+        ModelImage phaseMask = generatePhaseMask(brainMaskSet, ixRealFinal, ixImagFinal, phaseMaskData);
+
+        ModelImage magEnhanced = generateMagEnhanced(phaseMaskData, realData);
+    }
+    
+    private ModelImage generateMagEnhanced(float[] phaseMaskData, double[] realData) {
+        ModelImage magEnhanced = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "magEnhanced");
+        for(int i=0; i<realData.length; i++) {
+            realData[i] = realData[i]*(Math.pow(phaseMaskData[i], multFactor));
+        }
         try {
-            iFinal.importComplexData(0, ixRealFinal, ixImagFinal, true, false);
+            magEnhanced.importData(0, realData, true);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
-        ViewJFrameImage iFinalFrame = new ViewJFrameImage(iFinal);
-        iFinalFrame.setVisible(true);
+        ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhanced);
+        magEnhancedFrame.setVisible(true);
         
+        return magEnhanced;
+    }
+
+    private ModelImage generatePhaseMask(BitSet brainMaskSet, float[] ixRealFinal, float[] ixImagFinal, float[] phaseMaskData) {
         ModelImage phaseMask = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "phaseMask");
-        float[] phaseMaskData = new float[sizeRo*sizePe*sizeSs];
+        
         for(int i=0; i<sizeRo*sizePe*sizeSs; i++) {
             phaseMaskData[i] = 1;
         }
@@ -293,22 +230,147 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
         ViewJFrameImage phaseMaskFrame = new ViewJFrameImage(phaseMask);
         phaseMaskFrame.setVisible(true);
-    	
-        ModelImage magEnhanced = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "magEnhanced");
-        for(int i=0; i<realData.length; i++) {
-            realData[i] = realData[i]*(Math.pow(phaseMaskData[i], multFactor));
-        }
+        
+        return phaseMask;
+    }
+
+    private ModelImage generateIFinal(ModelImage iImage, ModelImage iCenterImage, BitSet brainMaskSet, float[] ixRealFinal, float[] ixImagFinal) {
+        ModelImage iFinal = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "complexData");
+        
+        double[] ixReal = new double[sizeRo*sizePe*sizeSs];
+        double[] ixImag = new double[sizeRo*sizePe*sizeSs];
+        double[] ixRealCenter = new double[sizeRo*sizePe*sizeSs];
+        double[] ixImagCenter = new double[sizeRo*sizePe*sizeSs];
         try {
-            magEnhanced.importData(0, realData, true);
+            iImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixReal, ixImag);
+            iCenterImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixRealCenter, ixImagCenter);
+            
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }      
+        
+        double mag = 0.0;
+        //this is equivalent to multiplying by the brain mask because calculation is occurring only at every set
+        //bit of the brainMask
+        for (int i = brainMaskSet.nextSetBit(0); i >= 0; i = brainMaskSet.nextSetBit(i+1)) {
+            mag = Math.pow(ixReal[i], 2) + Math.pow(ixImag[i], 2);
+            ixRealFinal[i] = (float) ((ixRealCenter[i]*ixReal[i] + ixImagCenter[i]*ixImag[i])/mag);
+            ixImagFinal[i] = (float) ((ixImagCenter[i]*ixReal[i] - ixRealCenter[i]*ixImag[i])/mag);
+        }
+        
+        try {
+            iFinal.importComplexData(0, ixRealFinal, ixImagFinal, true, false);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
-        ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhanced);
-        magEnhancedFrame.setVisible(true);
+        ViewJFrameImage iFinalFrame = new ViewJFrameImage(iFinal);
+        iFinalFrame.setVisible(true);
+        
+        return iFinal;
     }
-    
+
+    private ModelImage runFFToniCenter(ModelImage iCenterImage, ModelImage kCenterImage) {
+        AlgorithmFFT fft2 = new AlgorithmFFT(iCenterImage, new ModelImage(ModelImage.COMPLEX, new int[]{512,512,40}, "complexData"), AlgorithmFFT.INVERSE, false, false, true);
+        fft2.run();
+        
+        ViewJFrameImage iCenterFrame = new ViewJFrameImage(iCenterImage);
+        iCenterFrame.setVisible(true);
+        
+        return iCenterImage;
+    }
+
+    private ModelImage padiImage(ModelImage iImage) {
+        ModelImage iCenterImage = (ModelImage) iImage.clone(); //also needs to be 480x480
+        iCenterImage.setImageName("iCenterImage");
+        imageMarginsAlgo = new AlgorithmAddMargins(iCenterImage, 
+                new int[]{16,16}, new int[]{16,16}, new int[]{0, 0});
+        imageMarginsAlgo.setPadValue(new float[]{0});
+        
+        imageMarginsAlgo.runAlgorithm();
+        iCenterImage = imageMarginsAlgo.getSrcImage();
+        
+        ViewJFrameImage iCenterFrameBeforeFFT = new ViewJFrameImage(iCenterImage);
+        iCenterFrameBeforeFFT.setVisible(true);
+        
+        return iCenterImage;
+    }
+
+    private ModelImage createKCenterImage(ModelImage kImage) {
+        ModelImage kCenterImage = (ModelImage) kImage.clone();
+        kCenterImage.setImageName("kCenterImage");
+        for(int i=0; i<sizeRo; i++) {
+            if(i < originRo+1 || i > originRo+roFilterSize) {
+                for(int j=0; j<sizePe; j++) {
+                    if(j < originPe+1 || j > originPe + peFilterSize) {
+                        for(int k=0; k<sizeSs; k++) {
+                                kCenterImage.set(i, j, k, 0);
+                        }
+                    }
+                }
+            }
+        }
+        
+        ViewJFrameImage kCenterFrame = new ViewJFrameImage(kCenterImage);
+        kCenterFrame.setVisible(true);
+        
+        return kCenterImage;
+    }
+
+    private ModelImage createkImage(ModelImage iImage) {
+        ModelImage kImage = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "kData");
+        
+        int a = 0;
+        
+        //kImage is now at 512x512
+        AlgorithmFFT fft = new AlgorithmFFT(kImage, iImage, AlgorithmFFT.FORWARD, false, false, true);
+        fft.run();
+        
+        ViewJFrameImage kFrame = new ViewJFrameImage(kImage);
+        kFrame.setVisible(true);
+        
+        return kImage;
+    }
+
+    private ModelImage createiImage(double[] realData, double[] imagData) {
+        ModelImage iImage  = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iData");
+
+        try {
+            iImage.importDComplexData(0, realData, imagData, true, false);
+            iImage.setOriginalExtents(iImage.getExtents());
+        } catch (IOException e2) {
+            // TODO Auto-generated catch block
+            e2.printStackTrace();
+        }
+        
+        ViewJFrameImage iFrame = new ViewJFrameImage(iImage);
+        iFrame.setVisible(true);
+        
+        return iImage;
+    }
+
+    private ModelImage createBrainMask() {
+        ModelImage brainMask = new ModelImage(ModelImage.BOOLEAN, new int[]{sizeRo,sizePe,sizeSs}, "brainMask");
+        
+        for(int i=0; i<sizeRo; i++) {
+            for(int j=0; j<sizePe; j++) {
+                for(int k=0; k<sizeSs; k++) {
+                    if(magImage.getDouble(i, j, k) > maskThreshold) {
+                        brainMask.set(i, j, k, true);
+                    }
+                }
+            }
+        }
+        brainMask.calcMinMax();
+        
+        ViewJFrameImage brainFrame = new ViewJFrameImage(brainMask);
+        brainFrame.setVisible(true);
+        
+        return brainMask;
+    }
+
     private void rescaleToComplex(ModelImage magImage, ModelImage phaseImage, double[] realData, double[] complexData) {
         double[] magImageTemp = new double[realData.length];
         double[] phaseImageTemp = new double[realData.length];
