@@ -297,10 +297,8 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         while(imageStr.hasMoreElements()) {
             imageEl = imageStr.nextElement();
             if(imageEl.matches(".*(p|P)ha.*")) {
-                System.out.println("Here");
                 phaseDefault = index;
             } else if(imageEl.matches(".*(m|M)ag.*")) {
-                System.out.println("Here2");
                 magDefault = index;
             }
             titles[index] = imageEl;
