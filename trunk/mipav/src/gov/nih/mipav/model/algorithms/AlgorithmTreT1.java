@@ -24,9 +24,10 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewOpenFileUI;
 import gov.nih.mipav.view.ViewUserInterface;
 
-/** Swiss army knife for calculating the T1 relaxation time from any number of EFGRE (SPGR) images. 
- *  written: May 29, 2007 : S. Deoni
- *  status : in development
+/** 
+ * This class is adapted from the ImageJ version originally written by Sean Deoni while working at the
+ * National Institutes of Health. This class performs T1 calculations given any number of
+ * SPGR and IRSPGR images.
  * 
  **/
 
