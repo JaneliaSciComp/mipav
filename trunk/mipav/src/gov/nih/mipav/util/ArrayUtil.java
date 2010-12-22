@@ -12,7 +12,7 @@ public class ArrayUtil {
                 System.arraycopy(srcData, srcFrom + i * srcXDim, destData, destFrom + i * destXDim, srcXDim);
             }
         } else {
-            for (int i = 0; i < srcYDim; i++) {
+            for (int i = 0; i < destYDim; i++) {
                 System.arraycopy(srcData, srcFrom + i * srcXDim, destData, destFrom + i * destXDim, destXDim);
             }
         }
