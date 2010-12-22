@@ -292,12 +292,23 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         titles = new String[ViewUserInterface.getReference().getRegisteredImagesNum()];
         Enumeration<String> imageStr = ViewUserInterface.getReference().getRegisteredImageNames();
         int index = 0;
+        int phaseDefault = 0, magDefault = 0;
+        String imageEl = null;
         while(imageStr.hasMoreElements()) {
-            titles[index] = imageStr.nextElement();
+            imageEl = imageStr.nextElement();
+            if(imageEl.matches(".*(p|P)ha.*")) {
+                System.out.println("Here");
+                phaseDefault = index;
+            } else if(imageEl.matches(".*(m|M)ag.*")) {
+                System.out.println("Here2");
+                magDefault = index;
+            }
+            titles[index] = imageEl;
             index++;
         }
         
-        magnitudeCombo = guiBuilder.buildComboBox("Magnitude:", titles, 0);
+        
+        magnitudeCombo = guiBuilder.buildComboBox("Magnitude:", titles, magDefault);
         imagePanel.add(magnitudeCombo.getParent(), gbc);
         gbc.gridy++;
         
@@ -305,7 +316,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         if(index > 1) {
             numDefault = 1;
         }
-        phaseCombo = guiBuilder.buildComboBox("Phase:", titles, numDefault);
+        phaseCombo = guiBuilder.buildComboBox("Phase:", titles, phaseDefault);
         imagePanel.add(phaseCombo.getParent(), gbc);
         gbc.gridy++;
         
