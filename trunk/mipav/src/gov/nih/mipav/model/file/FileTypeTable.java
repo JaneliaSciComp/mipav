@@ -182,10 +182,6 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".NRRD", FileUtility.NRRD);
         FileTypeTable.FILE_EXT_TABLE.put(".NHDR", FileUtility.NRRD);
 
-        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.OSM, new FileTypeInfo("OSM", ".wu"));
-        FileTypeTable.FILE_EXT_TABLE.put(".wu", FileUtility.OSM);
-        FileTypeTable.FILE_EXT_TABLE.put(".WU", FileUtility.OSM);
-
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.PCX, new FileTypeInfo("PCX", ".pcx"));
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.PIC, new FileTypeInfo("PIC", ""));

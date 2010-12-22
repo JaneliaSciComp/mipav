@@ -70,8 +70,8 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         
         double radius;
         double xc, yc;
-        JacobianElliptic je;
-        EllipticIntegral ei;
+        //JacobianElliptic je;
+        //EllipticIntegral ei;
         double xr[] = new double[1];
         double yr[] = new double[1];
 
