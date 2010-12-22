@@ -9,6 +9,13 @@ import gov.nih.mipav.view.dialogs.JDialogTreT2;
 
 import java.io.IOException;
 
+/** 
+ * This class is adapted from the ImageJ version originally written by Sean Deoni while working at the
+ * National Institutes of Health. This class performs T2 calculations given any number of
+ * SPGR images.
+ * 
+ **/
+
 public class AlgorithmTreT2 extends AlgorithmTProcess {
 
     private double[] treFA_phase0;

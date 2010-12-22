@@ -24,7 +24,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 /**
  * This abstract class defines terms common to both T1 and T2 processing, such as thresholding and 
- * multithreading management methods.
+ * multithreading management methods.  Some methods were adapted from the ImageJ code by Sean Deoni.
  * 
  * @author senseneyj
  *
