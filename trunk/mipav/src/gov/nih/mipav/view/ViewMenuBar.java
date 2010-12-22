@@ -335,15 +335,11 @@ public class ViewMenuBar {
                 menuBuilder.makeMenu("Spatial statistics", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Circle pattern generation", "CircleGen", 0, null, false),
                         menuBuilder.buildMenuItem("Sphere pattern generation", "SphereGen", 0, null, false),
-                        menuBuilder.buildMenuItem("Two class segregation/association generation", "TwoClass", 0, null,
-                                false),
-                        menuBuilder.buildMenuItem("Three class segregation/association generation", "ThreeClass", 0,
-                                null, false)}),
+                        }),
                 menuBuilder.makeMenu("Transformation tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Barrel distortion correction", "Barrel", 0, null, false),
                         menuBuilder.buildMenuItem("Circle to rectangle", "CircleToRec", 0, null, false),
                         menuBuilder.buildMenuItem("Circular sector to rectangle", "CirToRec", 0, null, false),
-                        //menuBuilder.buildMenuItem("Ellipse to circle", "EllipseToCircle", 0, null, false),
                         menuBuilder.buildMenuItem("Nearly circle to circle", "NearlyCircleToCircle", 0, null, false),
                         menuBuilder.buildMenuItem("Reslice - isotropic voxels", null, 0, null, false),
                         menuBuilder.buildMenuItem("Subsample", "subsample", 0, null, false),

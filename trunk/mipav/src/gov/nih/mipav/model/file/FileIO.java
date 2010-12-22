@@ -2045,10 +2045,6 @@ public class FileIO {
                     image = readMRC(fileName, fileDir);
                     break;
 
-                case FileUtility.OSM:
-                    image = readOSM(fileName, fileDir);
-                    break;
-
                 case FileUtility.BFLOAT:
                     image = readBFLOAT(fileName, fileDir, one);
                     break;
@@ -3015,10 +3011,6 @@ public class FileIO {
 
             case FileUtility.MRC:
                 success = writeMRC(image, options);
-                break;
-
-            case FileUtility.OSM:
-                success = writeOSM(image, options);
                 break;
 
             case FileUtility.COR:
@@ -8475,62 +8467,7 @@ public class FileIO {
         return image;
     }
 
-    /**
-     * Reads an OSM file by calling the read method of the file.
-     * 
-     * @param fileName Name of the image file to read.
-     * @param fileDir Directory of the image file to read.
-     * 
-     * @return The image that was read in, or null if failure.
-     */
-    private ModelImage readOSM(final String fileName, final String fileDir) {
-        ModelImage image = null;
-        FileOSM imageFile;
-
-        try {
-            imageFile = new FileOSM(fileName, fileDir);
-            createProgressBar(imageFile, fileName, FileIO.FILE_READ);
-            image = imageFile.readImage();
-            // LUT = imageFile.getModelLUT();
-        } catch (final IOException error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-
-            if ( !quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            error.printStackTrace();
-
-            return null;
-        } catch (final OutOfMemoryError error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-
-            if ( !quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            error.printStackTrace();
-
-            return null;
-        }
-
-        imageFile.finalize();
-        imageFile = null;
-        return image;
-
-    }
+    
 
     /**
      * Reads a PARREC file by calling the read method of the file. This method contains special code to not display the
@@ -11861,45 +11798,6 @@ public class FileIO {
         return true;
     }
 
-    /**
-     * Writes an OSM file to store the image.
-     * 
-     * @param image The image to write.
-     * @param options The options to use to write the image.
-     * 
-     * @return Flag indicating that this was a successful write.
-     */
-    private boolean writeOSM(final ModelImage image, final FileWriteOptions options) {
-        FileOSM osmFile;
-
-        try { // Construct a new file object
-            osmFile = new FileOSM(options.getFileName(), options.getFileDirectory());
-            createProgressBar(osmFile, options.getFileName(), FileIO.FILE_READ);
-            osmFile.writeImage(image, options);
-            osmFile.finalize();
-            osmFile = null;
-        } catch (final IOException error) {
-
-            if ( !quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            error.printStackTrace();
-
-            return false;
-        } catch (final OutOfMemoryError error) {
-
-            if ( !quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            error.printStackTrace();
-
-            return false;
-        }
-
-        return true;
-    }
 
     /**
      * Writes a raw file to store the image.
