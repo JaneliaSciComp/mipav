@@ -166,11 +166,18 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	ModelImage kImage = createkImage(iImage);
     	
     	ModelImage kCenterImage = createKCenterImage(kImage);
-    
-    	ModelImage iCenterImage = padiImage(iImage);
         
-    	iCenterImage = runFFToniCenter(iCenterImage, kCenterImage);
+    	sizeRo = 512;
+    	sizePe = 512;
+    	
+    	ModelImage iCenterImage = runiFFTonKCenter(kCenterImage);
         
+    	sizeRo = 480;
+        sizePe = 480;
+        
+    	ModelImage iCenterImageRescale = rescaleICenter(iCenterImage);    	
+    	
+    	
     	BitSet brainMaskSet = new BitSet(sizeRo*sizePe*sizeSs);
         try {
             brainMask.exportData(0, sizeRo*sizePe*sizeSs, brainMaskSet);
@@ -181,7 +188,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         float[] ixRealFinal = new float[sizeRo*sizePe*sizeSs];
         float[] ixImagFinal = new float[sizeRo*sizePe*sizeSs];
         
-    	ModelImage iFinal = generateIFinal(iImage, iCenterImage, brainMaskSet, ixRealFinal, ixImagFinal);
+    	ModelImage iFinal = generateIFinal(iImage, iCenterImageRescale, brainMaskSet, ixRealFinal, ixImagFinal);
         
     	float[] phaseMaskData = new float[sizeRo*sizePe*sizeSs];
         ModelImage phaseMask = generatePhaseMask(brainMaskSet, ixRealFinal, ixImagFinal, phaseMaskData);
@@ -189,6 +196,19 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         ModelImage magEnhanced = generateMagEnhanced(phaseMaskData, realData);
     }
     
+    private ModelImage rescaleICenter(ModelImage iCenterImage) {
+        ModelImage iCenterImageRescale = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "iCenterRescale");
+        
+        AlgorithmAddMargins cropAlgo = new AlgorithmAddMargins(iCenterImage, iCenterImageRescale, new int[]{-16,-16}, new int[]{-16,16}, new int[]{0, 0});
+        cropAlgo.setRunningInSeparateThread(false);
+        cropAlgo.run();
+        
+        iCenterImageRescale = cropAlgo.getDestImage();
+
+        return iCenterImageRescale;
+        
+    }
+
     private ModelImage generateMagEnhanced(float[] phaseMaskData, double[] realData) {
         ModelImage magEnhanced = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "magEnhanced");
         for(int i=0; i<realData.length; i++) {
@@ -236,14 +256,14 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
     private ModelImage generateIFinal(ModelImage iImage, ModelImage iCenterImage, BitSet brainMaskSet, float[] ixRealFinal, float[] ixImagFinal) {
         ModelImage iFinal = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "complexData");
-        
+        System.out.println("Here");
         double[] ixReal = new double[sizeRo*sizePe*sizeSs];
         double[] ixImag = new double[sizeRo*sizePe*sizeSs];
         double[] ixRealCenter = new double[sizeRo*sizePe*sizeSs];
         double[] ixImagCenter = new double[sizeRo*sizePe*sizeSs];
         try {
             iImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixReal, ixImag);
-            iCenterImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixRealCenter, ixImagCenter);
+            iCenterImage.exportData(0, sizeRo*sizePe*sizeSs, ixRealCenter);
             
         } catch (IOException e1) {
             // TODO Auto-generated catch block
@@ -272,14 +292,17 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         return iFinal;
     }
 
-    private ModelImage runFFToniCenter(ModelImage iCenterImage, ModelImage kCenterImage) {
-        AlgorithmFFT fft2 = new AlgorithmFFT(iCenterImage, new ModelImage(ModelImage.COMPLEX, new int[]{512,512,40}, "complexData"), AlgorithmFFT.INVERSE, false, false, true);
+    private ModelImage runiFFTonKCenter(ModelImage kCenterImage) {
+        ModelImage iCenterDest = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "complexData");
+        kCenterImage.setImage25D(true);
+        iCenterDest.setImage25D(true);
+        AlgorithmFFT fft2 = new AlgorithmFFT(iCenterDest, kCenterImage, AlgorithmFFT.INVERSE, false, false, true);
         fft2.run();
         
-        ViewJFrameImage iCenterFrame = new ViewJFrameImage(iCenterImage);
+        ViewJFrameImage iCenterFrame = new ViewJFrameImage(iCenterDest);
         iCenterFrame.setVisible(true);
         
-        return iCenterImage;
+        return iCenterDest;
     }
 
     private ModelImage padiImage(ModelImage iImage) {
@@ -326,6 +349,8 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
         //kImage is now at 512x512
         AlgorithmFFT fft = new AlgorithmFFT(kImage, iImage, AlgorithmFFT.FORWARD, false, false, true);
+        iImage.setImage25D(true);
+        kImage.setImage25D(true);
         fft.run();
         
         ViewJFrameImage kFrame = new ViewJFrameImage(kImage);
