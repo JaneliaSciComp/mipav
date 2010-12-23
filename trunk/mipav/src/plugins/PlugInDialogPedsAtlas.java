@@ -1075,14 +1075,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			}
 		}else if(command.equals("coronal")) {
 			if(!currentOrientation.equals(CORONAL)) {
-				System.out.println("aaa");
 				resetButton.setEnabled(false);
 		        lutButton.setEnabled(false);
-		        System.out.println("bbb");
 				nullifyStructures();
-				System.out.println("ccc");
 				if(t1.isAlive()) {
-					System.out.println("interrupting");
 					((PopulateModelImages)t1).setIsInterrupted(true);
 					
 				}
@@ -1091,7 +1087,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				//t1 = new Thread(new PopulateModelImages(this,CORONAL), "thread1");
 				t1 = new PopulateModelImages(this,CORONAL);
 				try {
-					System.out.println("here");
 					t1.start();
 				}catch (Exception ev) {
 					ev.printStackTrace();
@@ -1169,7 +1164,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			if(currentOrientation.equals(CORONAL)) {
 				try {
 					if(testCounter != 1) {
-						System.out.println("here!!");	
 			        	ModelImage img = null;
 						if(currentModality.equals(T1)) {
 							img = t1AtlasImages[currentAge];
@@ -1180,7 +1174,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 						}
 						fileVOI = new FileVOI(coronalAnnotationsFilename, annotationsFileDir,img);
 						VOI[] vois = fileVOI.readVOI(true);
-						System.out.println(vois.length);
 						for (int k = 0; k < vois.length; k++) {
 							
 							if(vois[k].getColor() == null) {
@@ -1247,19 +1240,16 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(currentAge == 0) {
 					if(currentModality.equals(T1)) {
 						if(getT1ComponentImage(2) != null) {
-							System.out.println("yes");
 							imagePanel.removeAll();
 							currentComponentImage = t1ComponentImages[0];
 					        currentComponentImage.setSlice(currentZSlice);
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,null,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
-					        System.out.println("k");
 					        this.setImageA(t1AtlasImages[currentAge]);
 					        imagePanel.validate();
 					        this.validate();
 							this.repaint();
-							System.out.println("m");
 							test = true;
 						}
 					}else if(currentModality.equals(T2)) {
@@ -1895,7 +1885,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}
 		
 		public void run() {
-			System.out.println("starting loading thread");
 			currAge = currentAge;
 			long begTime = System.currentTimeMillis();
 			populateModelImages(orient);
@@ -1909,7 +1898,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			long endTime = System.currentTimeMillis();
 	        long diffTime = endTime - begTime;
 	        float seconds = ((float) diffTime) / 1000;
-	        System.out.println("ending loading thread");
 	        System.out.println("**Loading images took " + seconds + " seconds \n");
 		}
 		
@@ -2247,7 +2235,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				try {
 					fileVOI = new FileVOI(coronalAnnotationsFilename, annotationsFileDir,t1AtlasImages[i]);
 					VOI[] vois = fileVOI.readVOI(true);
-					System.out.println(vois.length);
 				}catch(IOException e) {
 					e.printStackTrace();
 				}
