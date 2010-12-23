@@ -133,7 +133,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     /** DOCUMENT ME! */
     protected boolean displayFuzzy = false;
 
-    /** Flag used ONLY by ViewJComponentRegistration to prohibit VOI drawing. */
+    /** Flag used  to prohibit VOI drawing. */
     protected boolean drawVOIs = true;
 
     /** Frame where the component image is displayed. */
@@ -3060,7 +3060,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 // this method repaints the paint brush cursor without repainting the entire image
                 repaintPaintBrushCursorFast(offscreenGraphics2d);
             }
-            draw3DVOIs(offscreenGraphics2d, false);
+            if(drawVOIs) {
+            	draw3DVOIs(offscreenGraphics2d, false);
+            }
             if ( ! (this instanceof ViewJComponentRegistration)) {
                 //voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
 
@@ -3142,7 +3144,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
     }
 
-    /**
+    public void setDrawVOIs(boolean drawVOIs) {
+		this.drawVOIs = drawVOIs;
+	}
+
+	/**
      * Paints the image and calls drawSelf for all VOIs and also resizes the image if it is too big for printer.
      * 
      * @param tx x translation
