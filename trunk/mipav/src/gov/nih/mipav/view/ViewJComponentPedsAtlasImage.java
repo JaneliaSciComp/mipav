@@ -169,6 +169,9 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
     
     
     
+    
+    
+    
 
     /**
      * mouse entered
