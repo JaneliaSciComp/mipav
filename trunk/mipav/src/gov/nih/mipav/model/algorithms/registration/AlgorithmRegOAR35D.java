@@ -2850,7 +2850,13 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             diffZ = (cog.Z - cogR.Z);
         }
 
-        double[][][][] preTransforms = new double[coarseNum][coarseNum][coarseNum][7];
+        double[][][][] preTransforms;
+        if (DOF > 6) {
+            preTransforms = new double[coarseNum][coarseNum][coarseNum][7];
+        }
+        else {
+        	preTransforms = new double[coarseNum][coarseNum][coarseNum][6];	
+        }
         double[][][][] transforms = new double[coarseNum][coarseNum][coarseNum][4];
 
         // Optimizing over translations and global scale
