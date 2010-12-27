@@ -2771,6 +2771,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                                          ((tranforms[ix0][iy0][iz1][2] * (z - iz0)) +
                                               (tranforms[ix0][iy0][iz0][2] * (1 - z + iz0)))))));
         }
+        
     }
 
     /**
@@ -2849,6 +2850,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             diffZ = (cog.Z - cogR.Z);
         }
 
+        double[][][][] preTransforms = new double[coarseNum][coarseNum][coarseNum][7];
         double[][][][] transforms = new double[coarseNum][coarseNum][coarseNum][4];
 
         // Optimizing over translations and global scale
@@ -2894,7 +2896,18 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         for (int i = 0; i < coarseNum; i++) {
             for (int j = 0; j < coarseNum; j++) {
                 for (int k = 0; k < coarseNum; k++) {
-                    transforms[i][j][k] = powell.getPoint(index++);
+                    preTransforms[i][j][k] = powell.getPoint(index++);
+                    if (DOF > 6) {
+                    	transforms[i][j][k][0] = preTransforms[i][j][k][6];
+                    	transforms[i][j][k][1] = preTransforms[i][j][k][3];
+                    	transforms[i][j][k][2] = preTransforms[i][j][k][4];
+                    	transforms[i][j][k][3] = preTransforms[i][j][k][5];
+                    }
+                    else {
+                    	transforms[i][j][k][0] = preTransforms[i][j][k][3];
+                    	transforms[i][j][k][1] = preTransforms[i][j][k][4];
+                    	transforms[i][j][k][2] = preTransforms[i][j][k][5];
+                    }
                 }
             }
         }
@@ -2915,9 +2928,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                     initial[2] = rotateBegin + (k * fineRate);
 
                     // sets up translation and global scaling factors
-                    factorX = (rotateBegin - rotateBegin + (i * fineRate)) / coarseRate;
-                    factorY = (rotateBegin - rotateBegin + (j * fineRate)) / coarseRate;
-                    factorZ = (rotateBegin - rotateBegin + (k * fineRate)) / coarseRate;
+                    factorX = (i * fineRate) / coarseRate;
+                    factorY = (j * fineRate) / coarseRate;
+                    factorZ = (k * fineRate) / coarseRate;
                     interpolate(factorX, factorY, factorZ, initial, transforms, (DOF > 6));
                     initial[7] = initial[8] = initial[6];
                     costs[index] = powell.measureCost(initial);
@@ -2937,7 +2950,12 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         if (threshold > costs[(int) (0.2 * costs.length)]) {
             threshold = costs[(int) (0.2 * costs.length)];
         }
-        initials = new Vectornd[fineNum*fineNum*fineNum];
+        index = Arrays.binarySearch(costs, threshold);
+        if (index < 0) {
+            index = -1 * (index + 1);
+        }
+        initials = new Vectornd[index];
+        //initials = new Vectornd[fineNum*fineNum*fineNum];
         index = 0;
         for (int i = 0; i < fineNum; i++) {
             for (int j = 0; j < fineNum; j++) {
@@ -2945,8 +2963,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
                     if (matrixList[i][j][k].cost < threshold) {
                         initials[index] = new Vectornd(matrixList[i][j][k].initial);
+                        index++;
                     }
-                    index++;
                 }
             }
         }
@@ -2964,8 +2982,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
                     if (matrixList[i][j][k].cost < threshold) {
                         matrixList[i][j][k] = new MatrixListItem(powell.getCost(index), powell.getMatrix(index), powell.getPoint(index));
+                        index++;
                     }
-                    index++;
                 }
             }
         }
