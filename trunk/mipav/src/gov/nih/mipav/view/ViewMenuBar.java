@@ -291,8 +291,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Mosaic", "Mosaic", 0, null, false),
                         menuBuilder.buildMenuItem("Optimized automatic registration", "OAR", 0, null, false),
                         menuBuilder.buildMenuItem("Optimized automatic registration 2.5D", "OAR25D", 0, null, false),
-                        // Doesn't seem to work at the moment - should handle wider search range than TSOAR.
-                        // menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
+                        menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
                         menuBuilder.buildMenuItem("Time series optimized automatic registration", "TSOAR", 0, null,
                                 false),
                         menuBuilder.buildMenuItem("Registration validation", "RegValidation", 0, null, false),
