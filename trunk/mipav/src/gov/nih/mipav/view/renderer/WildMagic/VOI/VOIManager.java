@@ -3862,32 +3862,36 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         int length = xDim * yDim;
         imageBufferActive = null;
+        // direction of the unit vector of the partial derivative in the x direction
+        xDirections = new float[length];
 
-        // for color images, arrays need to be 4 times bigger
+        // direction of the unit vector of the partial derivative in the y direction
+        yDirections = new float[length];
+        
+        imageBufferActive = new float[length];
+
         if (m_kLocalImage.isColorImage()) {
 
-            // direction of the unit vector of the partial derivative in the x direction
-            xDirections = new float[length * 4];
+            // for color images, average the array values
+            float[] temp = new float[length * 4];
 
-            // direction of the unit vector of the partial derivative in the y direction
-            yDirections = new float[length * 4];
-
-            imageBufferActive = new float[length * 4];
+            try {
+                m_kLocalImage.exportData(iSlice * temp.length, temp.length, temp);
+                m_abInitLevelSet[iSlice] = true;
+            } catch (IOException error) {
+                MipavUtil.displayError("Error while trying to retrieve RGB data.");
+            }
+            for ( int i = 0; i < imageBufferActive.length; i++ )
+            {
+            	imageBufferActive[i] = (temp[4*i+1] + temp[4*i+2] + temp[4*i+3])/3f;
+            }
         } else {
-
-            // direction of the unit vector of the partial derivative in the x direction
-            xDirections = new float[length];
-
-            // direction of the unit vector of the partial derivative in the y direction
-            yDirections = new float[length];
-
-            imageBufferActive = new float[length];
-        }
-
-        try {
-            m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
-        } catch (IOException error) {
-            MipavUtil.displayError("Error while trying to retrieve RGB data.");
+            try {
+                m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
+                m_abInitLevelSet[iSlice] = true;
+            } catch (IOException error) {
+                MipavUtil.displayError("Error while trying to retrieve RGB data.");
+            }
         }
 
         if ( bLiveWire )
@@ -3941,32 +3945,36 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         int length = xDim * yDim;
         imageBufferActive = null;
 
-        // for color images, arrays need to be 4 times bigger
+        // direction of the unit vector of the partial derivative in the x direction
+        xDirections = new float[length];
+
+        // direction of the unit vector of the partial derivative in the y direction
+        yDirections = new float[length];
+        
+        imageBufferActive = new float[length];
+
         if (m_kLocalImage.isColorImage()) {
 
-            // direction of the unit vector of the partial derivative in the x direction
-            xDirections = new float[length * 4];
+            // for color images, average the array values
+            float[] temp = new float[length * 4];
 
-            // direction of the unit vector of the partial derivative in the y direction
-            yDirections = new float[length * 4];
-
-            imageBufferActive = new float[length * 4];
+            try {
+                m_kLocalImage.exportData(iSlice * temp.length, temp.length, temp);
+                m_abInitLevelSet[iSlice] = true;
+            } catch (IOException error) {
+                MipavUtil.displayError("Error while trying to retrieve RGB data.");
+            }
+            for ( int i = 0; i < imageBufferActive.length; i++ )
+            {
+            	imageBufferActive[i] = (temp[4*i+1] + temp[4*i+2] + temp[4*i+3])/3f;
+            }
         } else {
-
-            // direction of the unit vector of the partial derivative in the x direction
-            xDirections = new float[length];
-
-            // direction of the unit vector of the partial derivative in the y direction
-            yDirections = new float[length];
-
-            imageBufferActive = new float[length];
-        }
-
-        try {
-            m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
-            m_abInitLevelSet[iSlice] = true;
-        } catch (IOException error) {
-            MipavUtil.displayError("Error while trying to retrieve RGB data.");
+            try {
+                m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
+                m_abInitLevelSet[iSlice] = true;
+            } catch (IOException error) {
+                MipavUtil.displayError("Error while trying to retrieve RGB data.");
+            }
         }
     }
 
