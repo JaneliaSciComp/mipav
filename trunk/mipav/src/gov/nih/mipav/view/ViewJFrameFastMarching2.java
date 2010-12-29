@@ -5,6 +5,9 @@ import gov.nih.mipav.model.algorithms.levelset.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.event.*;
+import java.util.Vector;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -92,13 +95,20 @@ public class ViewJFrameFastMarching2 extends ViewJFrameImage implements KeyListe
         float fXSpacing = 1.0f;
         float fYSpacing = 1.0f;
         boolean[] abMask = null;
-        int iXBound = imageA.getExtents()[0];
-        int iYBound = imageA.getExtents()[1];
+        int iXBound = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+        int iYBound = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;
         int iQuantity = iXBound * iYBound;
         float[] afImage = new float[iQuantity];
 
         for (int i = 0; i < iQuantity; i++) {
-            afImage[i] = imageA.getFloat((i * 4) + 1);
+        	if ( imageA.isColorImage() )
+        	{
+        		afImage[i] = imageA.getFloat((i * 4) + 1);
+        	}
+        	else
+        	{
+        		afImage[i] = imageA.getFloat(i);        		
+        	}
         }
 
         LseSegShapeDetection2 kSegmenter = new LseSegShapeDetection2(iXBound, iYBound, fXSpacing, fYSpacing, afImage,
@@ -116,11 +126,36 @@ public class ViewJFrameFastMarching2 extends ViewJFrameImage implements KeyListe
         kSegmenter.setDiffusionIterations(iDiffusionIterations);
         kSegmenter.setGradientMagnitudeScale(fGradientMagnitudeScale);
         kSegmenter.setSigmoidFilter(fSigmoidAlpha, fSigmoidBeta, fSigmoidMin, fSigmoidMax);
-
-        // Grow a region consisting of a single seed.
-        int iXSeed = 81, iYSeed = 114; // left ventricle
-        int[] aiSeeds = new int[1];
-        aiSeeds[0] = iXSeed + (iXBound * iYSeed);
+     // Grow a region consisting of a single seed.
+        VOIVector vois = imageA.getVOIs();
+        Vector<VOIPoint> kPointVOIs = new Vector<VOIPoint>();
+        for ( int i = 0; i < vois.size(); i++ )
+        {
+            for ( int j = 0; j < vois.elementAt(i).getCurves().size(); j++ )
+            {
+            	if ( vois.elementAt(i).getCurves().elementAt(j).getType() == VOI.POINT ) 
+            	{
+            		kPointVOIs.add( (VOIPoint)vois.elementAt(i).getCurves().elementAt(j) );
+            	}
+            }
+        }
+        int[] aiSeeds = new int[kPointVOIs.size()];
+        for ( int i = 0; i < aiSeeds.length; i++ )
+        {
+        	Vector3f kPos = kPointVOIs.elementAt(i).elementAt(0);
+        	aiSeeds[i] = (int)(kPos.X + (iXBound * kPos.Y));
+        }
+        if ( aiSeeds.length == 0 )
+        {
+        	aiSeeds = new int[1];
+            int iXSeed = iXBound/2, iYSeed = iYBound/2;
+        	aiSeeds[0] = iXSeed + (iXBound * iYSeed);
+        }
+        for ( int i = 0; i < aiSeeds.length; i++ )
+        {
+        	System.err.println( "Seed " + i + " " + aiSeeds[i] );
+        }
+        
         kSegmenter.beginCoarse(aiSeeds);
 
         int iMaxCoarse = 600;
@@ -209,11 +244,11 @@ public class ViewJFrameFastMarching2 extends ViewJFrameImage implements KeyListe
             for (int iX = 0; iX < iXBound; iX++, i++) {
                 i = (iY * iXBound) + iX;
 
-                float fValue = afImage[i];
+                //float fValue = afImage[i];
 
-                imageA.set((i * 4) + 1, fValue);
-                imageA.set((i * 4) + 2, fValue);
-                imageA.set((i * 4) + 3, fValue);
+                //imageA.set((i * 4) + 1, fValue);
+                //imageA.set((i * 4) + 2, fValue);
+                //imageA.set((i * 4) + 3, fValue);
 
                 if (kFilter.getMask(iX, iY)) {
                     float fDZ = kFilter.getU(iX, iY);
@@ -221,9 +256,10 @@ public class ViewJFrameFastMarching2 extends ViewJFrameImage implements KeyListe
                     float fDY = kFilter.getU(iX, iY + 1);
 
                     if (((fDX * fDZ) < 0.0f) || ((fDY * fDZ) < 0.0f)) {
-                        imageA.set((i * 4) + 1, fValue);
-                        imageA.set((i * 4) + 2, 0f);
-                        imageA.set((i * 4) + 3, 0f);
+                        imageA.getMask().set(i);
+                        //imageA.set((i * 4) + 1, fValue);
+                        //imageA.set((i * 4) + 2, 0f);
+                        //imageA.set((i * 4) + 3, 0f);
                     }
                 }
             }
@@ -248,34 +284,39 @@ public class ViewJFrameFastMarching2 extends ViewJFrameImage implements KeyListe
             for (int iX = 0; iX < iXBound; iX++) {
                 i = (iY * iXBound) + iX;
 
-                float fValue = afImage[i];
+                //float fValue = afImage[i];
 
                 if (kMarcher.isBoundary(i)) {
-                    imageA.set((i * 4) + 1, 0f);
-                    imageA.set((i * 4) + 2, 0f);
-                    imageA.set((i * 4) + 3, fValue);
+                    imageA.getMask().set(i);
+                    //imageA.set((i * 4) + 1, 0f);
+                    //imageA.set((i * 4) + 2, 0f);
+                    //imageA.set((i * 4) + 3, fValue);
                 } else if (kMarcher.isFar(i)) {
-                    imageA.set((i * 4) + 1, fValue);
-                    imageA.set((i * 4) + 2, fValue);
-                    imageA.set((i * 4) + 3, fValue);
+                    //imageA.set((i * 4) + 1, fValue);
+                    //imageA.set((i * 4) + 2, fValue);
+                    //imageA.set((i * 4) + 3, fValue);
                 } else if (kMarcher.isZeroSpeed(i)) {
-                    imageA.set((i * 4) + 1, fValue);
-                    imageA.set((i * 4) + 2, 0f);
-                    imageA.set((i * 4) + 3, 0f);
+                    imageA.getMask().set(i);
+                    //imageA.set((i * 4) + 1, fValue);
+                    //imageA.set((i * 4) + 2, 0f);
+                    //imageA.set((i * 4) + 3, 0f);
                 } else if (kMarcher.isTrial(i)) {
-                    imageA.set((i * 4) + 1, 0f);
-                    imageA.set((i * 4) + 2, fValue);
-                    imageA.set((i * 4) + 3, 0f);
+                    imageA.getMask().set(i);
+                    //imageA.set((i * 4) + 1, 0f);
+                    //imageA.set((i * 4) + 2, fValue);
+                    //imageA.set((i * 4) + 3, 0f);
                 } else {
 
                     if (kMarcher.getTime(i) >= 0.0f) {
-                        imageA.set((i * 4) + 1, fValue);
-                        imageA.set((i * 4) + 2, fValue);
-                        imageA.set((i * 4) + 3, 0f);
+                        imageA.getMask().set(i);
+                        //imageA.set((i * 4) + 1, fValue);
+                        //imageA.set((i * 4) + 2, fValue);
+                        //imageA.set((i * 4) + 3, 0f);
                     } else {
-                        imageA.set((i * 4) + 1, fValue);
-                        imageA.set((i * 4) + 2, 0f);
-                        imageA.set((i * 4) + 3, fValue);
+                        imageA.getMask().set(i);
+                        //imageA.set((i * 4) + 1, fValue);
+                        //imageA.set((i * 4) + 2, 0f);
+                        //imageA.set((i * 4) + 3, fValue);
                     }
                 }
             }
