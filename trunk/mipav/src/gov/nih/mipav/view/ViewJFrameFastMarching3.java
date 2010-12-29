@@ -5,6 +5,9 @@ import gov.nih.mipav.model.algorithms.levelset.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.event.*;
+import java.util.Vector;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -35,8 +38,6 @@ public class ViewJFrameFastMarching3 extends ViewJFrameImage implements KeyListe
      * @param  _LUT    DOCUMENT ME!
      */
     public ViewJFrameFastMarching3(ModelImage _image, ModelLUT _LUT) {
-
-        // super(_image, null, null, null, null, null, ViewJFrameVolumeView.SURFACE, ViewJFrameVolumeView.NONE, null );
         super(_image, (ModelLUT)null);
         userInterface = ViewUserInterface.getReference();
         addKeyListener(this);
@@ -89,14 +90,21 @@ public class ViewJFrameFastMarching3 extends ViewJFrameImage implements KeyListe
     public void run() {
 
         // Load the image to be segmented.
-        int iXBound = 128;
-        int iYBound = 128;
-        int iZBound = 128;
+        int iXBound = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+        int iYBound = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;
+        int iZBound = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;
         int iQuantity = iXBound * iYBound * iZBound;
         float[] afImage = new float[iQuantity];
 
         for (int i = 0; i < iQuantity; i++) {
-            afImage[i] = imageA.getFloat((i * 4) + 1);
+        	if ( imageA.isColorImage() )
+        	{
+        		afImage[i] = imageA.getFloat((i * 4) + 1);
+        	}
+        	else
+        	{
+        		afImage[i] = imageA.getFloat(i);        		
+        	}
         }
 
         // Create a segmenter for the image.
@@ -123,9 +131,34 @@ public class ViewJFrameFastMarching3 extends ViewJFrameImage implements KeyListe
         System.err.println("FastMarching3 Start Coarse");
 
         // Grow a region consisting of a single seed.
-        int iXSeed = 95, iYSeed = 67, iZSeed = 64;
-        int[] aiSeeds = new int[1];
-        aiSeeds[0] = iXSeed + (iXBound * (iYSeed + (iYBound * iZSeed)));
+        VOIVector vois = imageA.getVOIs();
+        Vector<VOIPoint> kPointVOIs = new Vector<VOIPoint>();
+        for ( int i = 0; i < vois.size(); i++ )
+        {
+            for ( int j = 0; j < vois.elementAt(i).getCurves().size(); j++ )
+            {
+            	if ( vois.elementAt(i).getCurves().elementAt(j).getType() == VOI.POINT ) 
+            	{
+            		kPointVOIs.add( (VOIPoint)vois.elementAt(i).getCurves().elementAt(j) );
+            	}
+            }
+        }
+        int[] aiSeeds = new int[kPointVOIs.size()];
+        for ( int i = 0; i < aiSeeds.length; i++ )
+        {
+        	Vector3f kPos = kPointVOIs.elementAt(i).elementAt(0);
+        	aiSeeds[i] = (int)(kPos.X + (iXBound * (kPos.Y + (iYBound * kPos.Z))));
+        }
+        if ( aiSeeds.length == 0 )
+        {
+        	aiSeeds = new int[1];
+            int iXSeed = iXBound/2, iYSeed = iYBound/2, iZSeed = iZBound/2;
+        	aiSeeds[0] = iXSeed + (iXBound * (iYSeed + (iYBound * iZSeed)));
+        }
+        for ( int i = 0; i < aiSeeds.length; i++ )
+        {
+        	System.err.println( "Seed " + i + " " + aiSeeds[i] );
+        }
         kSegmenter.beginCoarse(aiSeeds);
 
         int iMaxCoarse = 1000;
@@ -223,10 +256,10 @@ public class ViewJFrameFastMarching3 extends ViewJFrameImage implements KeyListe
             for (int iY = 0; iY < iYBound; iY++) {
 
                 for (int iX = 0; iX < iXBound; iX++, i++) {
-                    float fValue = afImage[i];
-                    imageA.set((i * 4) + 1, fValue);
-                    imageA.set((i * 4) + 2, fValue);
-                    imageA.set((i * 4) + 3, fValue);
+                    //float fValue = afImage[i];
+                    //imageA.set((i * 4) + 1, fValue);
+                    //imageA.set((i * 4) + 2, fValue);
+                    //imageA.set((i * 4) + 3, fValue);
 
                     if (kFilter.getMask(iX, iY, iZ)) {
                         float fCenter = kFilter.getU(iX, iY, iZ);
@@ -235,9 +268,10 @@ public class ViewJFrameFastMarching3 extends ViewJFrameImage implements KeyListe
                         float fDZ = kFilter.getU(iX, iY, iZ + 1);
 
                         if (((fDX * fCenter) < 0.0f) || ((fDY * fCenter) < 0.0f) || ((fDZ * fCenter) < 0.0f)) {
-                            imageA.set((i * 4) + 1, fValue);
-                            imageA.set((i * 4) + 2, 0f);
-                            imageA.set((i * 4) + 3, 0f);
+                            imageA.getMask().set(i);
+                            //imageA.set((i * 4) + 1, fValue);
+                            //imageA.set((i * 4) + 2, 0f);
+                            //imageA.set((i * 4) + 3, 0f);
                         }
                     }
                 }
@@ -264,34 +298,40 @@ public class ViewJFrameFastMarching3 extends ViewJFrameImage implements KeyListe
             for (int iY = 0; iY < iYBound; iY++) {
 
                 for (int iX = 0; iX < iXBound; iX++, i++) {
-                    float fValue = afImage[i];
+                    //float fValue = afImage[i];
 
                     if (kMarcher.isBoundary(i)) {
-                        imageA.set((i * 4) + 1, 0f);
-                        imageA.set((i * 4) + 2, 0f);
-                        imageA.set((i * 4) + 3, fValue);
+                        imageA.getMask().set(i);
+                        //imageA.set((i * 4) + 1, 0f);
+                        //imageA.set((i * 4) + 2, 0f);
+                        //imageA.set((i * 4) + 3, fValue);
                     } else if (kMarcher.isFar(i)) {
-                        imageA.set((i * 4) + 1, fValue);
-                        imageA.set((i * 4) + 2, fValue);
-                        imageA.set((i * 4) + 3, fValue);
+                        //imageA.getMask().set(i);
+                        //imageA.set((i * 4) + 1, fValue);
+                        //imageA.set((i * 4) + 2, fValue);
+                        //imageA.set((i * 4) + 3, fValue);
                     } else if (kMarcher.isZeroSpeed(i)) {
-                        imageA.set((i * 4) + 1, fValue);
-                        imageA.set((i * 4) + 2, 0f);
-                        imageA.set((i * 4) + 3, 0f);
+                        imageA.getMask().set(i);
+                        //imageA.set((i * 4) + 1, fValue);
+                        //imageA.set((i * 4) + 2, 0f);
+                        //imageA.set((i * 4) + 3, 0f);
                     } else if (kMarcher.isTrial(i)) {
-                        imageA.set((i * 4) + 1, 0f);
-                        imageA.set((i * 4) + 2, fValue);
-                        imageA.set((i * 4) + 3, 0f);
+                        imageA.getMask().set(i);
+                        //imageA.set((i * 4) + 1, 0f);
+                        //imageA.set((i * 4) + 2, fValue);
+                        //imageA.set((i * 4) + 3, 0f);
                     } else {
 
                         if (kMarcher.getTime(i) >= 0.0f) {
-                            imageA.set((i * 4) + 1, fValue);
-                            imageA.set((i * 4) + 2, fValue);
-                            imageA.set((i * 4) + 3, 0f);
+                            imageA.getMask().set(i);
+                            //imageA.set((i * 4) + 1, fValue);
+                            //imageA.set((i * 4) + 2, fValue);
+                            //imageA.set((i * 4) + 3, 0f);
                         } else {
-                            imageA.set((i * 4) + 1, fValue);
-                            imageA.set((i * 4) + 2, 0f);
-                            imageA.set((i * 4) + 3, fValue);
+                            imageA.getMask().set(i);
+                            //imageA.set((i * 4) + 1, fValue);
+                            //imageA.set((i * 4) + 2, 0f);
+                            //imageA.set((i * 4) + 3, fValue);
                         }
                     }
                 }

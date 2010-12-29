@@ -179,9 +179,11 @@ public abstract class LseFastMarch
      */
     public final boolean isValid (int i)
     {
-
-        // assert(0 <= i && i < m_iQuantity);
-        return 0.0f <= m_afTime[i] && m_afTime[i] < Float.MAX_VALUE;
+    	if (0 <= i && i < m_iQuantity)
+    	{
+    		return (0.0f <= m_afTime[i] && m_afTime[i] < Float.MAX_VALUE);
+    	}
+    	return false;
     }
 
     /**
@@ -194,8 +196,11 @@ public abstract class LseFastMarch
      */
     public final boolean isTrial (int i)
     {
-        // assert(0 <= i && i < m_iQuantity);
-        return m_akTrial[i] != null;
+    	if (0 <= i && i < m_iQuantity)
+    	{
+    		return m_akTrial[i] != null;
+    	}
+    	return false;
     }
 
     /**
@@ -208,8 +213,11 @@ public abstract class LseFastMarch
      */
     public final boolean isFar (int i)
     {
-        // assert(0 <= i && i < m_iQuantity);
-        return m_afTime[i] == Float.MAX_VALUE;
+    	if (0 <= i && i < m_iQuantity)
+    	{
+    		return m_afTime[i] == Float.MAX_VALUE;
+    	}
+    	return false;
     }
 
     /**
@@ -222,8 +230,11 @@ public abstract class LseFastMarch
      */
     public final boolean isZeroSpeed (int i)
     {
-        // assert(0 <= i && i < m_iQuantity);
-        return m_afTime[i] == -Float.MAX_VALUE;
+    	if (0 <= i && i < m_iQuantity)
+    	{
+    		return m_afTime[i] == -Float.MAX_VALUE;
+    	}
+    	return false;
     }
 
     /**
