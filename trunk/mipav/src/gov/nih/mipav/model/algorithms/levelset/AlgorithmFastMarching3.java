@@ -22,6 +22,9 @@ public class AlgorithmFastMarching3 extends AlgorithmBase {
     /** DOCUMENT ME! */
     private boolean m_bNext = false;
 
+    /** Type of level set diffusion filter to apply. */
+    private int m_iFilterType = 0;
+
     /** The number of iterations to use in the nonlinear diffusion
      * (curvature flow filter) applied to the input image. */
     private int m_iDiffusionIterations = 10;
@@ -95,12 +98,13 @@ public class AlgorithmFastMarching3 extends AlgorithmBase {
      *     controls the evolution.
      * @param iEvolveMax Number of evolution iterations
      */
-    public AlgorithmFastMarching3(ModelImage _image, int iIters, float fGMScale, 
+    public AlgorithmFastMarching3(ModelImage _image, int iFilterType, int iIters, float fGMScale, 
     		float fSAlpha, float fSBeta, float fSMin, float fSMax, 
     		int iCoarseMax, float fMaxDistance, 
     		float fAdvectionWeight,	float fPropagationWeight, float fCurvatureWeight, float fLaplacianWeight, 
     		int iEvolveMax) {
         super(null, _image);
+        m_iFilterType = iFilterType;
         m_iDiffusionIterations = iIters;
         m_fGradientMagnitudeScale = fGMScale;
         m_fSigmoidAlpha = fSAlpha;
@@ -145,8 +149,28 @@ public class AlgorithmFastMarching3 extends AlgorithmBase {
         float fYSpacing = srcImage.getExtents().length > 1 ? srcImage.getResolutions(0)[1] : 1;
         float fZSpacing = srcImage.getExtents().length > 2 ? srcImage.getResolutions(0)[2] : 1;
         boolean[] abMask = null;
-        LseSegShapeDetection3 kSegmenter = new LseSegShapeDetection3(iXBound, iYBound, iZBound, fXSpacing, fYSpacing,
-                                                                     fZSpacing, afImage, abMask);
+
+        LseSegmenter kSegmenter = null;
+        String kFilterType = null;
+        switch ( m_iFilterType )
+        {
+        case 0: kSegmenter = new LseSegShapeDetection3(iXBound, iYBound, iZBound, fXSpacing, fYSpacing,
+                fZSpacing, afImage, abMask); 
+        kFilterType = new String( "ShapeDetection" );
+        break;
+        case 1: kSegmenter = new LseSegGeodesicActiveContour3(iXBound, iYBound, iZBound, fXSpacing, fYSpacing,
+                fZSpacing, afImage, abMask);  
+        kFilterType = new String( "GeodesicActiveContour" );
+        break;
+        case 2: kSegmenter = new LseSegThreshold3(iXBound, iYBound, iZBound, fXSpacing, fYSpacing,
+                fZSpacing, afImage, abMask);  
+        kFilterType = new String( "Threshold" );
+        break;
+        default: kSegmenter = new LseSegShapeDetection3(iXBound, iYBound, iZBound, fXSpacing, fYSpacing,
+                fZSpacing, afImage, abMask);  
+        kFilterType = new String( "ShapeDetection" );
+        break;
+        }
 
         // Initialize the segmenter.
         float fTimeStep = 0.01f;
@@ -155,7 +179,7 @@ public class AlgorithmFastMarching3 extends AlgorithmBase {
         kSegmenter.setGradientMagnitudeScale(m_fGradientMagnitudeScale);
         kSegmenter.setSigmoidFilter(m_fSigmoidAlpha, m_fSigmoidBeta, m_fSigmoidMin, m_fSigmoidMax);
 
-        fireProgressStateChanged(srcImage.getImageName(), "FastMarching3 Start Coarse");
+        fireProgressStateChanged(srcImage.getImageName(), "FastMarching3 " + kFilterType + " Start Coarse");
 
         // Grow a region consisting of a single seed.
         VOIVector vois = srcImage.getVOIs();
@@ -185,7 +209,7 @@ public class AlgorithmFastMarching3 extends AlgorithmBase {
         kSegmenter.beginCoarse(aiSeeds);
 
         int i = 0;
-        float percent = 100f/(float)(m_iMaxCoarse + m_iMaxEvolution);
+        float percent = 100f/(m_iMaxCoarse + m_iMaxEvolution);
         while (!m_bNext) {
 
             while (m_bIterate && !m_bNext && (i < m_iMaxCoarse)) {
@@ -204,7 +228,7 @@ public class AlgorithmFastMarching3 extends AlgorithmBase {
         kSegmenter.endCoarse();
         DrawFastMarch(kSegmenter);
 
-        fireProgressStateChanged(srcImage.getImageName(), "FastMarching3 Start Distance Transform");
+        fireProgressStateChanged(srcImage.getImageName(), "FastMarching3 " + kFilterType + " Start Distance Transform");
 
         // Compute an annulus containing the coarse boundary.
         kSegmenter.beginDistanceTransform(m_fMaxDistance);
@@ -225,7 +249,7 @@ public class AlgorithmFastMarching3 extends AlgorithmBase {
         kSegmenter.endDistanceTransform();
         DrawFastMarch(kSegmenter);
 
-        fireProgressStateChanged(srcImage.getImageName(), "FastMarching3 Start Evolution");
+        fireProgressStateChanged(srcImage.getImageName(), "FastMarching3 " + kFilterType + " Start Evolution");
 
         float fEvolveTimeStep = 0.1f;
         // Evolve the coarse boundary.

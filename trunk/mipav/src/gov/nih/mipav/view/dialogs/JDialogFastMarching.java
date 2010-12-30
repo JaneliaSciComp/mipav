@@ -11,8 +11,6 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.util.*;
-
 import javax.swing.*;
 
 
@@ -26,17 +24,14 @@ import javax.swing.*;
 public class JDialogFastMarching extends JDialogBase implements AlgorithmInterface {
 
 
-    /** Process each slice independently, or as a 3D image. */
+    /** */
+	private static final long serialVersionUID = -2307387171411648198L;
+
+	/** Process each slice independently, or as a 3D image. */
     private JCheckBox image25DCheckbox;
     
     /** Source Image */
     private ModelImage image; // source image
-
-    /** normalization factor to adjust for resolution */
-    private float normFactor = 1; 
-
-    /** normalization factor to adjust for resolution */
-    private JCheckBox resolutionCheckbox;
 
     /** Number of Iterations */
     private JTextField textIters;
@@ -77,16 +72,18 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
     /** Maximum Evolution steps */
     private JTextField textMaxEvolution;
     
-
+    private int m_iFilterType;
+    
     /**
      * Creates new dialog for finding the level set.
      *
      * @param  theParentFrame  Parent frame
      * @param  im              Source image
      */
-    public JDialogFastMarching(Frame theParentFrame, ModelImage im) {
+    public JDialogFastMarching(Frame theParentFrame, ModelImage im, int iFilterType) {
         super(theParentFrame, false);
         image = im;
+        m_iFilterType = iFilterType;
 
         ViewVOIVector VOIs = image.getVOIs();
         int nVOI = VOIs.size();
@@ -191,7 +188,8 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
                 	
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                	AlgorithmFastMarching2 fastMarchAlgo = new AlgorithmFastMarching2(image, iIters, fGMScale, fSAlpha, fSBeta, fSMin, fSMax, iCoarseMax, fMaxDistance, fAdvectionWeight,
+                	AlgorithmFastMarching2 fastMarchAlgo = new AlgorithmFastMarching2(image, m_iFilterType, 
+                			iIters, fGMScale, fSAlpha, fSBeta, fSMin, fSMax, iCoarseMax, fMaxDistance, fAdvectionWeight,
                         	fPropagationWeight, fCurvatureWeight, fLaplacianWeight, iEvolveMax);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -218,7 +216,7 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
                 try {
 
                     // Make algorithm
-                	AlgorithmFastMarching3 fastMarchAlgo = new AlgorithmFastMarching3(image, iIters, fGMScale, fSAlpha, fSBeta, fSMin, fSMax, iCoarseMax, fMaxDistance, fAdvectionWeight,
+                	AlgorithmFastMarching3 fastMarchAlgo = new AlgorithmFastMarching3(image, m_iFilterType, iIters, fGMScale, fSAlpha, fSBeta, fSMin, fSMax, iCoarseMax, fMaxDistance, fAdvectionWeight,
                         	fPropagationWeight, fCurvatureWeight, fLaplacianWeight, iEvolveMax);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -258,7 +256,6 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        int i;
 
         if (algorithm instanceof AlgorithmFastMarching2 || algorithm instanceof AlgorithmFastMarching3) {
 
@@ -270,36 +267,19 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
         dispose();
     }
 
-
-    // *******************************************************************
-    // ************************* Item Events ****************************
-    // *******************************************************************
-
-    /**
-     * Changes scale based on resolution check box.
-     *
-     * @param  event  Event that cause the method to fire
-     */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-        float tempNum;
-
-        if (source == image25DCheckbox) {
-            if (image25DCheckbox.isSelected()) {
-                resolutionCheckbox.setEnabled(false); 
-            } else {
-                resolutionCheckbox.setEnabled(true);
-            }
-        }
-    }
-
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
         setForeground(Color.black);
 
-        setTitle("Diffusion Level Set");
+        switch ( m_iFilterType )
+        {
+        case 0: setTitle("LevelSet Diffusion"); break;
+        case 1: setTitle("LevelSet Geodesic Active Contour"); break;
+        case 2: setTitle("LevelSet Threshold"); break;
+        default: setTitle("LevelSet Diffusion"); break;
+        }
         getContentPane().setLayout(new BorderLayout());
 
         JPanel mainPanel;
@@ -380,38 +360,25 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
         gbc.gridx = 0;
         gbc.gridy = 1;
 
-        JPanel resPanel = new JPanel(new BorderLayout());
-        resPanel.setBorder(buildTitledBorder("Options"));
-        resolutionCheckbox = new JCheckBox("Use image resolutions to normalize Z scale.");
-        resolutionCheckbox.setFont(serif12);
-        resPanel.add(resolutionCheckbox, BorderLayout.NORTH);
-        resolutionCheckbox.setSelected(true);
+        if ( image.getNDims() >= 3 )
+        {
+        	JPanel resPanel = new JPanel(new BorderLayout());
+        	resPanel.setBorder(buildTitledBorder("Options"));
+
+        	image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
+        	image25DCheckbox.setFont(serif12);
+        	resPanel.add(image25DCheckbox, BorderLayout.SOUTH);
+        	image25DCheckbox.setSelected(false);
+
+        	if (image.getNDims() >= 3) { // if the source image is 3D then allow
+        		image25DCheckbox.setEnabled(true);
+        		image25DCheckbox.addItemListener(this);
+        	} else {
+        		image25DCheckbox.setEnabled(false);
+        	}
+        	mainPanel.add(resPanel, gbc);
+        }
         
-        image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
-        image25DCheckbox.setFont(serif12);
-        resPanel.add(image25DCheckbox, BorderLayout.SOUTH);
-        image25DCheckbox.setSelected(false);
-
-        if (image.getNDims() >= 3) { // if the source image is 3D then allow
-            resolutionCheckbox.setEnabled(true); // the user to indicate if it wishes to
-            resolutionCheckbox.addItemListener(this); // use the correction factor
-            image25DCheckbox.setEnabled(true);
-            image25DCheckbox.addItemListener(this);
-        } else {
-            resolutionCheckbox.setEnabled(false); // Image is only 2D, thus this checkbox
-            image25DCheckbox.setEnabled(false);
-        }
-
-        if (image.getNDims() >= 3) { // Source image is 3D, thus show correction factor
-
-            int index = image.getExtents()[2] / 2;
-            float xRes = image.getFileInfo(index).getResolutions()[0];
-            float zRes = image.getFileInfo(index).getResolutions()[2];
-            normFactor = xRes / zRes; // Calculate correction factor
-        }
-
-        mainPanel.add(resPanel, gbc);
-
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
