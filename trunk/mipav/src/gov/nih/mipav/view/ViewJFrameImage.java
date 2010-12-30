@@ -1528,7 +1528,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 new JDialogWatershed(this, getActiveImage());
             }
         } else if (command.equals("DiffusionLevelsetITK")) {
-        	new JDialogFastMarching( this, getActiveImage() );
+        	new JDialogFastMarching( this, getActiveImage(), 0 );
         	/*
         	if ( getActiveImage().getNDims() == 2 )
         	{
@@ -1539,9 +1539,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         		new ViewJFrameFastMarching3((ModelImage)getActiveImage().clone(), null);
         	}
         	*/
-        }
-        // Views
-        else if (command.equals("Animate")) {
+        } else if (command.equals("GeodesicActiveContourLevelsetITK")) {
+        	new JDialogFastMarching( this, getActiveImage(), 1 );
+        } else if (command.equals("ThresholdLevelsetITK")) {
+        	new JDialogFastMarching( this, getActiveImage(), 2 );
+        } else if (command.equals("Animate")) {
             JDialogAnimate dialogAnimate;
 
             if (componentImage.getImageA().getNDims() > 4) {

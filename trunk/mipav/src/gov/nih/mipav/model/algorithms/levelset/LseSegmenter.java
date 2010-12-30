@@ -90,6 +90,60 @@ public abstract class LseSegmenter
     //~ Methods --------------------------------------------------------------
 
     /**
+     * Parameters for the feature image creation.  You may set these anytime
+     * before a sequence of fast-march iterations.  The PDE filters require
+     * you to specify how to handle boundary values.  If you want Dirichlet
+     * conditions (constant boundary), set BorderValue to a finite number.
+     * If you want Neumann conditions (zero-derivative boundary), set the
+     * BorderValue to Float.MAX_VALUE.  If you want the original image to be
+     * scaled, choose the Type parameter appropriately.  The input image is
+     * processed by a curvature-based anisotropic diffusion filter; the
+     * number of iterations is DIterations.  The gradient magnitude at the
+     * specified Scale is computed for the output of the diffusion filter.
+     * The gradient magnitude is transformed to the feature image by a sigmoid
+     * function:
+     * <br/><br/>&nbsp;&nbsp;
+     *   feature(x) = min + (max-min)/(1 + exp(-(x-beta)/alpha))
+     * <br/><br/>
+     * The inverse of the feature image values are the speeds used in the
+     * fast marching algorithm.
+     * 
+     * @param fBorderValue The border value to use when processing boundary
+     *     pixels.
+     * @param eScaleType The scaling type for the image.
+     * @param fTimeStep The time step for the PDE solver.
+     */
+    public abstract void setPDEParameters (float fBorderValue, int eScaleType,
+        float fTimeStep);
+
+    /**
+     * Set the number of iterations to use in the nonlinear diffusion
+     * (curvature flow filter) applied to the input image.
+     * 
+     * @param iDIterations The number of iterations.
+     */
+    public abstract void setDiffusionIterations (int iDIterations);
+
+    /**
+     * Set the scale to use in computing the blurred gradient magnitude
+     * of the curvature flow image.
+     * 
+     * @param fScale The scale for the blurred gradient magnitude image.
+     */
+    public abstract void setGradientMagnitudeScale (float fScale);
+
+    /**
+     * Set the parameters for the sigmoid function through which the
+     * blurred gradient magnitude image is processed.
+     * 
+     * @param fAlpha The variance of the function.
+     * @param fBeta The center of the function.
+     * @param fMin The minimum of the function.
+     * @param fMax The maximum of the function.
+     */
+    public abstract void setSigmoidFilter (float fAlpha, float fBeta, float fMin, float fMax );
+    
+    /**
      * Get the fast marching object.  This object is used for the coarse-level
      * segmentation and for the signed-distance transform.
      * 

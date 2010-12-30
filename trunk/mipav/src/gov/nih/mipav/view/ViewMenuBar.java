@@ -315,8 +315,12 @@ public class ViewMenuBar {
                                         false),}),
                         menuBuilder.buildMenuItem("Watershed", null, 0, null, false),
                         menuBuilder.makeMenu("ITK", false, new JMenuItem[] {
-                                menuBuilder.buildMenuItem("Diffusion levelset", "DiffusionLevelsetITK", 0, null,
-                                        false),}),}),
+                        		menuBuilder.buildMenuItem("Levelset Diffusion", "DiffusionLevelsetITK", 0, null,
+                        				false),
+                                menuBuilder.buildMenuItem("Levelset Geodesic Active Contour", "GeodesicActiveContourLevelsetITK", 0, null,
+                                        false),
+                                menuBuilder.buildMenuItem("Levelset Threshold", "ThresholdLevelsetITK", 0, null,
+                                         false),}),}),
 
                 // menuBuilder.buildMenuItem("Non-parametric", "nonparametric", 0, null,
                 // false)}),
