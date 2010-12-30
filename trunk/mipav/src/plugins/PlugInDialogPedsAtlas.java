@@ -1,3 +1,4 @@
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.ComponentOrientation;
@@ -6,7 +7,11 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Robot;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -15,6 +20,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
+import java.awt.image.PixelGrabber;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,6 +41,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -46,10 +53,13 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -58,6 +68,7 @@ import gov.nih.mipav.view.ViewJComponentDTIImage;
 import gov.nih.mipav.view.ViewJComponentPedsAtlasIconImage;
 import gov.nih.mipav.view.ViewJComponentPedsAtlasImage;
 import gov.nih.mipav.view.ViewJFrameBase;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
@@ -273,6 +284,19 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					currentZSlice = (t1AtlasImages[0].getExtents()[2] - 1) / 2;
 					init();
 					test = true;
+					
+					this.addComponentListener(new java.awt.event.ComponentAdapter() 
+					{
+						public void componentResized(ComponentEvent e)
+						{
+							if(imageScrollPanel.getVerticalScrollBar().isVisible() || imageScrollPanel.getHorizontalScrollBar().isVisible()) {
+								saveButton.setEnabled(false);
+							}else {
+								saveButton.setEnabled(true);
+							}
+						}
+					});
+
 				}
 			}catch(Exception e) {
 				e.printStackTrace();
@@ -463,7 +487,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         magButton = toolbarBuilder.buildButton("MagImage", "Magnify Image", "zoomin2");
         unMagButton = toolbarBuilder.buildButton("UnMagImage", "Un-Mag Image", "zoomout2");
         zoomOneButton = toolbarBuilder.buildButton("ZoomOne", "Magnify Image 1.0x", "zoom1");
-        saveButton = toolbarBuilder.buildButton("Save", "Save screenshot of image", "save");
+        saveButton = toolbarBuilder.buildButton("Save", "Save screenshot of image", "camera");
         winLevelButton = toolbarBuilder.buildButton("WinLevel", "Window/Level", "winlevel");
         resetButton = toolbarBuilder.buildButton("resetLUT","Reset LUTs of all images in current modality","resetlut");
         lutButton = toolbarBuilder.buildButton("copyLUT", "Apply LUT of current image to all images in current modailty", "histolut");
@@ -487,18 +511,32 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         toolbarPanel.add(zoomOneButton, gbc);
         gbc.gridx = 3;
         gbc.gridy = 0;
-        toolbarPanel.add(separator, gbc);
+        
+        
+
+        toolbarPanel.add(separator,gbc);
         gbc.gridx = 4;
-        gbc.gridy = 0;
-        toolbarPanel.add(winLevelButton, gbc);
+        toolbarPanel.add(saveButton,gbc);
+        
+        separator = new JButton(MipavUtil.getIcon("separator.gif"));
+        separator.setMargin(new Insets(0, 0, 0, 0));
+        separator.setBorderPainted(false);
+        separator.setFocusPainted(false);
+        
         gbc.gridx = 5;
-        gbc.gridy = 0;
-        toolbarPanel.add(resetButton, gbc);
+        toolbarPanel.add(separator, gbc);
         gbc.gridx = 6;
         gbc.gridy = 0;
-        toolbarPanel.add(lutButton, gbc);
+        toolbarPanel.add(winLevelButton, gbc);
         gbc.gridx = 7;
+        gbc.gridy = 0;
+        toolbarPanel.add(resetButton, gbc);
+        gbc.gridx = 8;
+        gbc.gridy = 0;
+        toolbarPanel.add(lutButton, gbc);
+        gbc.gridx = 9;
         toolbarPanel.add(infoLabel,gbc);
+        
         gbc.anchor = GridBagConstraints.CENTER;
 
 
@@ -960,10 +998,25 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			}
 		}else if(command.equals("MagImage")) {
 			magImage();
+			if(imageScrollPanel.getVerticalScrollBar().isVisible() || imageScrollPanel.getHorizontalScrollBar().isVisible()) {
+				saveButton.setEnabled(false);
+			}else {
+				saveButton.setEnabled(true);
+			}
 		}else if(command.equals("UnMagImage")) {
 			unMagImage();
+			if(imageScrollPanel.getVerticalScrollBar().isVisible() || imageScrollPanel.getHorizontalScrollBar().isVisible()) {
+				saveButton.setEnabled(false);
+			}else {
+				saveButton.setEnabled(true);
+			}
 		}else if(command.equals("ZoomOne")) {
 			zoomOne();
+			if(imageScrollPanel.getVerticalScrollBar().isVisible() || imageScrollPanel.getHorizontalScrollBar().isVisible()) {
+				saveButton.setEnabled(false);
+			}else {
+				saveButton.setEnabled(true);
+			}
 		}else if(command.equals("WinLevel")) {
 			ModelImage img = null;
 			if(currentModality.equals(T1)) {
@@ -1224,8 +1277,86 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					pdComponentImages[i].setLUTa((ModelLUT)(currentComponentImage.getActiveLUT().clone()));
 				}
 			}
+		}else if(command.equals("Save")) {
+			System.out.println("here");
+			writeImage();
 		}
 
+	}
+	
+	
+	
+	public void writeImage() {
+		int[] extents = new int[2];
+		int[] pixels;
+        int bufferSize, xDim, yDim;
+        short[] buffer = null;
+        ModelImage screenCaptureImage = null;
+        Image imagePix = null;
+		try {
+			Robot robot = new Robot();
+	
+			Point p = new Point();
+            p.x = 0;
+            p.y = 0;
+            SwingUtilities.convertPointToScreen(p, currentComponentImage);
+            
+            Dimension d = new Dimension();
+            d.width = currentComponentImage.getWidth();
+            d.height = currentComponentImage.getHeight();
+            Rectangle currentRectangle = new Rectangle(p, d);
+
+            extents[0] = currentRectangle.width;
+            extents[1] = currentRectangle.height;
+            
+            pixels = new int[extents[0] * extents[1]];
+            bufferSize = extents[0] * extents[1];
+            
+            screenCaptureImage = new ModelImage(ModelStorageBase.UBYTE, extents, "screen capture");
+            //screenCaptureImage.getFileInfo()[0].setFileDirectory(resultImage.getFileInfo(0).getFileDirectory());
+            buffer = new short[bufferSize];
+            
+            // Turn off image slice #'s
+            currentComponentImage.setShowSliceNumber(false);
+            currentComponentImage.useHighlight(false);
+            
+            imagePix = robot.createScreenCapture(currentRectangle);
+
+            PixelGrabber pgTest = new PixelGrabber(imagePix, 0, 0, extents[0], extents[1], pixels, 0, extents[0]);
+            pgTest.grabPixels();
+            
+            for (int i = 0;i < (extents[0] * extents[1]);i++) {
+                buffer[i] = (byte)pixels[i];
+            }
+
+            screenCaptureImage.importData(0, buffer, false);
+            
+            currentComponentImage.setShowSliceNumber(true);
+            boolean endianness = currentComponentImage.getFrame().getImageA().getFileInfo(0).getEndianess();
+            int modality = currentComponentImage.getFrame().getImageA().getFileInfo(0).getModality();
+            float[] res = currentComponentImage.getFrame().getImageA().getFileInfo(0).getResolutions();
+            float[] newRes = {res[0],res[1]};
+            FileInfoImageXML fileInfo = new FileInfoImageXML(screenCaptureImage.getImageName(), null, FileUtility.XML);
+            
+            
+            fileInfo.setDataType(ModelStorageBase.UBYTE);
+            fileInfo.setEndianess(endianness);
+            fileInfo.setExtents(extents);
+            fileInfo.setModality(modality);
+            fileInfo.setResolutions(newRes);
+            
+            FileInfoImageXML[] fileInfos = {fileInfo};
+            screenCaptureImage.setFileInfo(fileInfos);
+            screenCaptureImage.calcMinMax();
+            
+            new ViewJFrameImage(screenCaptureImage);
+
+            
+            
+            
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	
@@ -1570,6 +1701,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     	ViewUserInterface.getReference().windowClosing(event);
         close();
     }
+    
+    
+    
+    
 	
 
 	 /**
