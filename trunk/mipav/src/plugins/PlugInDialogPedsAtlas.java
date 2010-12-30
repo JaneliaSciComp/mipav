@@ -1278,7 +1278,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 			}
 		}else if(command.equals("Save")) {
-			System.out.println("here");
 			writeImage();
 		}
 
