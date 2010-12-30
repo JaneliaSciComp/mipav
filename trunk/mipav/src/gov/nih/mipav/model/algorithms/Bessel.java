@@ -1294,7 +1294,7 @@ public class Bessel {
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
         // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
+        // epsilon = 2.2204460e-16
         // epsilon is called the largest relative spacing
         epsilon = 1.0;
         neweps = 1.0;
