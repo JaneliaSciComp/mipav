@@ -1,7 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.model.algorithms.levelset.AlgorithmFastMarching2;
-import gov.nih.mipav.model.algorithms.levelset.AlgorithmFastMarching3;
+import gov.nih.mipav.model.algorithms.levelset.AlgorithmFastMarching;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
@@ -188,9 +187,9 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
                 	
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                	AlgorithmFastMarching2 fastMarchAlgo = new AlgorithmFastMarching2(image, m_iFilterType, 
+                	AlgorithmFastMarching fastMarchAlgo = new AlgorithmFastMarching(image, m_iFilterType, 
                 			iIters, fGMScale, fSAlpha, fSBeta, fSMin, fSMax, iCoarseMax, fMaxDistance, fAdvectionWeight,
-                        	fPropagationWeight, fCurvatureWeight, fLaplacianWeight, iEvolveMax);
+                        	fPropagationWeight, fCurvatureWeight, fLaplacianWeight, iEvolveMax, false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -216,14 +215,13 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
                 try {
 
                     // Make algorithm
-                	AlgorithmFastMarching3 fastMarchAlgo = new AlgorithmFastMarching3(image, m_iFilterType, iIters, fGMScale, fSAlpha, fSBeta, fSMin, fSMax, iCoarseMax, fMaxDistance, fAdvectionWeight,
-                        	fPropagationWeight, fCurvatureWeight, fLaplacianWeight, iEvolveMax);
+                	AlgorithmFastMarching fastMarchAlgo = new AlgorithmFastMarching(image, m_iFilterType, iIters, fGMScale, fSAlpha, fSBeta, fSMin, fSMax, iCoarseMax, fMaxDistance, fAdvectionWeight,
+                        	fPropagationWeight, fCurvatureWeight, fLaplacianWeight, iEvolveMax, image25DCheckbox.isSelected() );
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                 	fastMarchAlgo.addListener(this);
-
                     createProgressBar(image.getImageName(), fastMarchAlgo);
                     
                     // Hide dialog
@@ -257,7 +255,7 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (algorithm instanceof AlgorithmFastMarching2 || algorithm instanceof AlgorithmFastMarching3) {
+        if (algorithm instanceof AlgorithmFastMarching) {
 
             if (algorithm.isCompleted()) {
                 image.notifyImageDisplayListeners(null, true);
