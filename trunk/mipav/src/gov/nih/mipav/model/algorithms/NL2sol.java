@@ -55,7 +55,7 @@ private boolean testMode = false;
     // Machine epsilon is the smallest positive epsilon such that
     // (1.0 + epsilon) != 1.0.
     // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
-    // epsilon = 2.224460e-16
+    // epsilon = 2.2204460e-16
     // epsilon is called the largest relative spacing
     private double epsilon = Math.pow(2, -52);
     private double huge = Double.MAX_VALUE; 
