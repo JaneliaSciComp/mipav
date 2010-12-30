@@ -1528,6 +1528,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 new JDialogWatershed(this, getActiveImage());
             }
         } else if (command.equals("DiffusionLevelsetITK")) {
+        	new JDialogFastMarching( this, getActiveImage() );
+        	/*
         	if ( getActiveImage().getNDims() == 2 )
         	{
         		new ViewJFrameFastMarching2((ModelImage)getActiveImage().clone(), null);
@@ -1536,6 +1538,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	{
         		new ViewJFrameFastMarching3((ModelImage)getActiveImage().clone(), null);
         	}
+        	*/
         }
         // Views
         else if (command.equals("Animate")) {
