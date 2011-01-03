@@ -1056,26 +1056,34 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			 }else {
 				img = pdAtlasImages[currentAge];
 			 }
-			currentComponentImage.resetLUT(currentComponentImage.getActiveLUT(), img);
-			img.notifyImageDisplayListeners( currentComponentImage.getActiveLUT(), true );
+			if(currentComponentImage.getActiveLUT() != null) {
+				currentComponentImage.resetLUT(currentComponentImage.getActiveLUT(), img);
+				img.notifyImageDisplayListeners( currentComponentImage.getActiveLUT(), true );
+			}
 			
 			
 			
 			
 			if(currentModality.equals(T1)) {
 				for(int i=0;i<t1ComponentImages.length;i++) {
-					t1ComponentImages[i].resetLUT(t1ComponentImages[i].getActiveLUT(), t1AtlasImages[i]);
-					t1AtlasImages[i].notifyImageDisplayListeners( t1ComponentImages[i].getActiveLUT(), true );
+					if(t1ComponentImages[i].getActiveLUT() != null) {
+						t1ComponentImages[i].resetLUT(t1ComponentImages[i].getActiveLUT(), t1AtlasImages[i]);
+						t1AtlasImages[i].notifyImageDisplayListeners( t1ComponentImages[i].getActiveLUT(), true );
+					}
 				}
 			}else if(currentModality.equals(T2)) {
 				for(int i=0;i<t2ComponentImages.length;i++) {
-					t2ComponentImages[i].resetLUT(t2ComponentImages[i].getActiveLUT(), t2AtlasImages[i]);
-					t2AtlasImages[i].notifyImageDisplayListeners( t2ComponentImages[i].getActiveLUT(), true );
+					if(t2ComponentImages[i].getActiveLUT() != null) {
+						t2ComponentImages[i].resetLUT(t2ComponentImages[i].getActiveLUT(), t2AtlasImages[i]);
+						t2AtlasImages[i].notifyImageDisplayListeners( t2ComponentImages[i].getActiveLUT(), true );
+					}
 				}
 			}else if(currentModality.equals(PD)) {
 				for(int i=0;i<pdComponentImages.length;i++) {
-					pdComponentImages[i].resetLUT(pdComponentImages[i].getActiveLUT(), pdAtlasImages[i]);
-					pdAtlasImages[i].notifyImageDisplayListeners( pdComponentImages[i].getActiveLUT(), true );
+					if(pdComponentImages[i].getActiveLUT() != null) {
+						pdComponentImages[i].resetLUT(pdComponentImages[i].getActiveLUT(), pdAtlasImages[i]);
+						pdAtlasImages[i].notifyImageDisplayListeners( pdComponentImages[i].getActiveLUT(), true );
+					}
 				}
 			}
 			
