@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -56,6 +57,7 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
@@ -1278,14 +1280,36 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 			}
 		}else if(command.equals("Save")) {
-			writeImage();
+			JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Save screen capture image as");
+            String defaultName = currentComponentImage.getFrame().getImageNameA() + "_"+ currentModality + "_slice" + currentZSlice + ".jpg";
+            File f = new File(defaultName);
+            chooser.setSelectedFile(f);
+            
+            final int returnVal = chooser.showSaveDialog(null);
+			
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                String fileName = chooser.getSelectedFile().getName();
+                if(!fileName.endsWith(".jpg")) {
+                	MipavUtil.displayError("Screen capture images need to end in jpg");
+                	return;
+                }
+                String fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                File file = new File(fileDir + fileName);
+                
+                writeImage(fileDir,fileName);
+            } else {
+                return;
+            }
+            
+			//writeImage();
 		}
 
 	}
 	
 	
 	
-	public void writeImage() {
+	public void writeImage(String fileDir, String filename) {
 		int[] extents = new int[2];
 		int[] pixels;
         int bufferSize, xDim, yDim;
@@ -1348,7 +1372,25 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
             screenCaptureImage.setFileInfo(fileInfos);
             screenCaptureImage.calcMinMax();
             
-            new ViewJFrameImage(screenCaptureImage);
+            FileIO fileIO = new FileIO();
+            fileIO.setQuiet(true);
+            
+            
+            
+            FileWriteOptions opts = new FileWriteOptions(true);
+            opts.setIsScript(true);
+            opts.setFileType(FileUtility.JPEG);
+            opts.setFileDirectory(fileDir);
+            opts.setFileName(filename);
+            opts.setBeginSlice(0);
+            opts.setOptionsSet(true);
+            
+            fileIO.writeImage(screenCaptureImage, opts);
+            
+            System.out.println("here");
+            
+            
+            //new ViewJFrameImage(screenCaptureImage);
 
             
             
