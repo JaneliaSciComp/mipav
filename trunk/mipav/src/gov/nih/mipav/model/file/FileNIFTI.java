@@ -3117,7 +3117,7 @@ public class FileNIFTI extends FileBase {
                     (sourceType != FileInfoNIFTI.NIFTI_TYPE_FLOAT64) &&
                     (sourceType != FileInfoNIFTI.NIFTI_TYPE_RGB24)) {
                 if ( (image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
-                    image.calcMinMaxMag(true);
+                    image.calcMinMaxMag(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
                 } else {
                     image.calcMinMax();
                 }
@@ -5264,7 +5264,7 @@ public class FileNIFTI extends FileBase {
             }
 
             if ( (image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
-                image.calcMinMaxMag(true);
+                image.calcMinMaxMag(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
             } else {
                 image.calcMinMax();
             }
@@ -5519,7 +5519,7 @@ public class FileNIFTI extends FileBase {
             }
 
             if ( (image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
-                image.calcMinMaxMag(true);
+                image.calcMinMaxMag(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
             } else {
                 image.calcMinMax();
             }

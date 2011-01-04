@@ -617,7 +617,7 @@ public class FileDM3 extends FileBase {
                         fileInfoCopy = (FileInfoDM3) fileInfo.clone();
                         image.setFileInfo(fileInfoCopy, i);
                         readComplexBuffer(i, imgBuffer, imgBufferI);
-                        image.importComplexData(2 * i * bufferSize, imgBuffer, imgBufferI, false, true);
+                        image.importComplexData(2 * i * bufferSize, imgBuffer, imgBufferI, false, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
                     }
 
                     break;
@@ -629,7 +629,7 @@ public class FileDM3 extends FileBase {
                         fileInfoCopy = (FileInfoDM3) fileInfo.clone();
                         image.setFileInfo(fileInfoCopy, i);
                         readDComplexBuffer(i, imgDBuffer, imgDBufferI);
-                        image.importDComplexData(2 * i * bufferSize, imgDBuffer, imgDBufferI, false, true);
+                        image.importDComplexData(2 * i * bufferSize, imgDBuffer, imgDBufferI, false, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
                     }
 
                     break;

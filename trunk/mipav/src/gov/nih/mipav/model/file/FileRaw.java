@@ -766,7 +766,7 @@ public class FileRaw extends FileBase {
                             imagBuffer[i] = tmpBuffer[ii + 1];
                         }
 
-                        image.importComplexData(2 * k * bufferSize, realBuffer, imagBuffer, false, true);
+                        image.importComplexData(2 * k * bufferSize, realBuffer, imagBuffer, false, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
                     } catch (IOException error) {
                         throw error;
                     }
@@ -786,7 +786,7 @@ public class FileRaw extends FileBase {
                             imagBuffer[i] = tmpBuffer[ii + 1];
                         }
 
-                        image.importDComplexData(2 * k * bufferSize, realBuffer, imagBuffer, false, true);
+                        image.importDComplexData(2 * k * bufferSize, realBuffer, imagBuffer, false, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
                     } catch (IOException error) {
                         throw error;
                     }
