@@ -227,9 +227,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     private JPanel displayImagePanel;
 
-    private String[] complexTypes;
-
+    /** The available choices for displaying the numerical values of complex data */
     private JComboBox complexDisplayChoices;
+
+    /** The checkbox to indicate whether images are displayed using the log of their magnitude */
+    private JCheckBox displayLogMag;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -280,6 +282,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayImagePanel.setLayout(gbl);
         displayImagePanel.setBorder(buildTitledBorder("Image"));
         makeComplexImageOptions(gbc, gbl);
+        makeLogMagImageOptions(gbc, gbl);
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -980,6 +983,28 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             complexDisplayChoices.setSelectedItem(defaultChoice);
         }
     }
+    
+    /**
+     * Makes checkbox for whether to display the log of image magnitude on user's screen
+     */
+     protected void makeLogMagImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
+     
+         displayLogMag = new JCheckBox("Display log magnitude of image");
+         displayLogMag.setFont(MipavUtil.font12);
+         displayLogMag.setForeground(Color.black);
+         displayLogMag.addActionListener(this);
+         gbc2.insets = new Insets(0, 0, 0, 0);
+         gbc2.gridwidth = GridBagConstraints.REMAINDER;
+         gbc2.anchor = GridBagConstraints.WEST;
+         displayImagePanel.add(displayLogMag, gbc2);
+         
+         if(Preferences.getProperty(Preferences.PREF_LOGMAG_DISPLAY) == null) {
+             Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, Boolean.valueOf(false).toString());
+         } else {
+             displayLogMag.setSelected(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
+         }
+     }
+    
     
     /**
      * Makes the options for crosshair display.

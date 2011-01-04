@@ -791,7 +791,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         logDisplayCheckbox = new JCheckBox("Display log magnitude");
         logDisplayCheckbox.setFont(serif12);
         logDisplayCheckbox.setForeground(Color.black);
-        logDisplayCheckbox.setSelected(false);
+        logDisplayCheckbox.setSelected(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
 
         if (image.getType() != ModelStorageBase.COMPLEX) {
             logDisplayCheckbox.setEnabled(true);

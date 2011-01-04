@@ -1481,7 +1481,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         }
 
         if (doComplex) {
-            srcImageA.calcMinMaxMag(true);
+            srcImageA.calcMinMaxMag(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
         } else {
             srcImageA.calcMinMax();
         }
@@ -1616,7 +1616,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         }
 
         if (doComplex) {
-            destImage.calcMinMaxMag(true);
+            destImage.calcMinMaxMag(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
             destImage.setOriginalExtents(srcImageA.getOriginalExtents());
             destImage.setOriginalMinimum(srcImageA.getOriginalMinimum());
             destImage.setOriginalMaximum(srcImageA.getOriginalMaximum());
@@ -2439,7 +2439,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         }
 
         if (doComplex) {
-            destImage.calcMinMaxMag(true);
+            destImage.calcMinMaxMag(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
             destImage.setOriginalExtents(srcImageA.getOriginalExtents());
             destImage.setOriginalMinimum(srcImageA.getOriginalMinimum());
             destImage.setOriginalMaximum(srcImageA.getOriginalMaximum());
