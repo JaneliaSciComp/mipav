@@ -732,10 +732,10 @@ public class FileICS extends FileBase {
                         }
                     }
 
-                    image.importComplexData(2 * i * bufferSize, imgBuffer2, imgBufferI2, false, true);
+                    image.importComplexData(2 * i * bufferSize, imgBuffer2, imgBufferI2, false, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
                 } // if (invertY)
                 else {
-                    image.importComplexData(2 * i * bufferSize, imgBuffer, imgBufferI, false, true);
+                    image.importComplexData(2 * i * bufferSize, imgBuffer, imgBufferI, false, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
                 }
             }
         } // else if (dataType == ModelStorageBase.COMPLEX)

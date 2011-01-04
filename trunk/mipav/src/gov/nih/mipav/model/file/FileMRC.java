@@ -416,7 +416,7 @@ public class FileMRC extends FileBase {
                     fileInfoCopy = (FileInfoMRC)fileInfo.clone();
                     image.setFileInfo(fileInfoCopy, i);
                     readComplexBuffer(i, imgBuffer, imgBuffer2);
-                    image.importComplexData(2 * i * bufferSize, imgBuffer, imgBuffer2, false, false);
+                    image.importComplexData(2 * i * bufferSize, imgBuffer, imgBuffer2, false, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
                 }
             } else { // mode == 16
                 bufferSize = 4 * imgExtents[0] * imgExtents[1];
