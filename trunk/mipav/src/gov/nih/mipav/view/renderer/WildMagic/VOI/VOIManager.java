@@ -3856,6 +3856,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return;
         }
+        for ( int i = 0; i < m_abInitLiveWire.length; i++ )
+        {
+            m_abInitLiveWire[i] = false;
+        }
 
         int xDim = m_kLocalImage.getExtents()[0];
         int yDim = m_kLocalImage.getExtents()[1];
@@ -3931,12 +3935,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_abInitLevelSet = new boolean[ nSlices ];
             for ( int i = 0; i < m_abInitLevelSet.length; i++ )
             {
-                m_abInitLevelSet[i] = false;
+            	m_abInitLevelSet[i] = false;
             }
         }
         if ( m_abInitLevelSet[iSlice] )
         {
             return;
+        }
+        for ( int i = 0; i < m_abInitLevelSet.length; i++ )
+        {
+            m_abInitLevelSet[i] = false;
         }
 
         int xDim = m_kLocalImage.getExtents()[0];
