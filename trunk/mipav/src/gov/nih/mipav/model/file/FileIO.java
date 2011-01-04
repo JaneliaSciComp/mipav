@@ -2164,7 +2164,7 @@ public class FileIO {
                 }
 
                 if ( (image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
-                    image.calcMinMaxMag(true);
+                    image.calcMinMaxMag(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
                 } else {
                     image.calcMinMax();
                     // image.setImageDirectory(fileDir);

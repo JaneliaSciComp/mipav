@@ -365,6 +365,9 @@ public class Preferences {
     /** Constant that indicates method used to display complex values. */
     public static final String PREF_COMPLEX_DISPLAY = "ComplexDisplay";
     
+    /** Constant that indicates whether the log of the magnitude of an image is used for image display */
+    public static final String PREF_LOGMAG_DISPLAY = "LogMagDisplay";
+    
     /** Constant that indicates the VOI Trim level variable. */
     public static final String PREF_TRIM = "TRIM";
 

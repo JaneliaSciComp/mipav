@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.Preferences;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -172,7 +173,7 @@ public class AlgorithmMask extends AlgorithmBase {
         int imgLength, volLength = 0, offset;
         float[] buffer;
         float[] bufferI;
-        boolean logMagDisplay;
+        boolean logMagDisplay = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
         float mag, norm;
 
         int[] lockedIntensities = null;
@@ -738,7 +739,7 @@ public class AlgorithmMask extends AlgorithmBase {
         int imgLength, volLength = 0, offset;
         float[] buffer;
         float[] bufferI;
-        boolean logMagDisplay;
+        boolean logMagDisplay = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
         float mag, norm;
 
         int[] lockedIntensities = null;

@@ -127,7 +127,7 @@ public class AlgorithmFlip extends AlgorithmBase {
         float[] sliceBuffer;
         float[] sliceBufferTemp = null;
         int buffFactor;
-        boolean logMagDisplay = false;
+        boolean logMagDisplay = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
         boolean evenNumberZSlices = true;
         int i;
         int j;

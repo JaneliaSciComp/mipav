@@ -81,7 +81,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     /** DOCUMENT ME! */
     protected JToolBar scriptToolBar;
 
-    /** DOCUMENT ME! */
+    /** tImageSlider */
     protected ViewJSlider tImageSlider;
 
     /** Main toolbar . */
