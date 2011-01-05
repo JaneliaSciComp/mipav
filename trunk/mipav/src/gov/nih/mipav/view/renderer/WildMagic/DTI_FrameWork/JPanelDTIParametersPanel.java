@@ -888,9 +888,9 @@ implements ListSelectionListener, ChangeListener {
                 Vector<Integer> kTract = inputTract(kFileReader);
                 iBufferNext += kTract.size() * 4 + 4;
                 int iVQuantity = kTract.size();
-                if (contains(kVOIImage, iNum3DVOI, kTract)) {
-                    if ((iVQuantity > iTractMinLength)
-                            && (iVQuantity < iTractMaxLength)) {
+                if ((iVQuantity > iTractMinLength)
+                        && (iVQuantity < iTractMaxLength)) {
+                	if (contains(kVOIImage, iNum3DVOI, kTract)) {
                         if (iNumTracts < iNumTractsLimit) {
                             iNumTracts++;
                             bTractsAdded = true;
