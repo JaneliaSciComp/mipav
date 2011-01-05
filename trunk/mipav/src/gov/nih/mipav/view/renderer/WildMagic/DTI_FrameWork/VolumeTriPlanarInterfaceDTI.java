@@ -99,6 +99,8 @@ implements ChangeListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        setSize( 1331, 925 );
+        setVisible(true);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

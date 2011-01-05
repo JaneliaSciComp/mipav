@@ -1720,6 +1720,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kDTIDisplay != null )
         {
             m_kDTIDisplay.setDisplayAllGlyphs(bDisplay);
+            m_bSurfaceUpdate |= bDisplay;
         }
     }
     
@@ -1732,6 +1733,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kDTIDisplay != null )
         {
             m_kDTIDisplay.setDisplayCylinders( bDisplay );
+            m_bSurfaceUpdate |= bDisplay;
         }
     }
 
@@ -1743,6 +1745,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kDTIDisplay != null )
         {
             m_kDTIDisplay.setDisplayEllipsoids( bDisplay );
+            m_bSurfaceUpdate |= bDisplay;
         }
     }
 
@@ -1754,6 +1757,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kDTIDisplay != null )
         {
             m_kDTIDisplay.setDisplayTubes( bDisplay );
+            m_bSurfaceUpdate |= bDisplay;
         }
     }
 
@@ -1765,6 +1769,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kDTIDisplay != null )
         {
             m_kDTIDisplay.setDisplayArrows( bDisplay );
+            m_bSurfaceUpdate |= bDisplay;
         }
     }
     
