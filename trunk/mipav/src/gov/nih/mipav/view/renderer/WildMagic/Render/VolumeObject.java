@@ -1,5 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -10,9 +12,11 @@ import WildMagic.LibGraphics.Rendering.PolygonOffsetState;
 import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.Rendering.ZBufferState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /**
  * VolumeObect: abstract base class for all rendered objects in the Volume
@@ -365,5 +369,21 @@ public abstract class VolumeObject
     public void Translate(Vector3f kTranslate)
     {
         m_kTranslate.Add(kTranslate);
+    }
+    
+    protected void scale( VertexBuffer kVertexBuffer )
+    {
+        ModelImage kImageA = m_kVolumeImageA.GetImage();
+        Vector3f kVolumeScale = new Vector3f(m_kVolumeImageA.GetScaleX()/(kImageA.getExtents()[0] - 1), 
+                m_kVolumeImageA.GetScaleY()/(kImageA.getExtents()[1] - 1), 
+                m_kVolumeImageA.GetScaleZ()/(kImageA.getExtents()[2] - 1)  );
+
+        for ( int i = 0; i < kVertexBuffer.GetVertexQuantity(); i++ )
+        {
+            Vector3f kPos = new Vector3f();
+            kVertexBuffer.GetPosition3(i, kPos);
+            kPos.Mult(kVolumeScale);
+            kVertexBuffer.SetPosition3(i, kPos);
+        }
     }
 }

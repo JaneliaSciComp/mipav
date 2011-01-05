@@ -6,6 +6,7 @@ import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 import WildMagic.LibFoundation.Mathematics.*;
 
@@ -209,6 +210,7 @@ public class AlgorithmDTITract extends AlgorithmBase
         try {
             kFileWriter.close();
         } catch ( IOException e2 ) {}
+        Preferences.debug( "\nNumber of tracts " + iCount +"\n");
     }
 
     /** Traces a single fiber bundle tract starting at the input
@@ -440,27 +442,27 @@ public class AlgorithmDTITract extends AlgorithmBase
         int iBufferSize = iVQuantity*4 + 4;
         if ( m_bFirstWrite )
         {
-            iBufferSize += (3*4 + 3);
+        	iBufferSize += (3*4 + 3);
         }
         ByteArrayOutputStream acBufferOut = new ByteArrayOutputStream( iBufferSize );
         DataOutputStream acDataOut = new DataOutputStream( acBufferOut );
         if ( kFileWriter != null )
         {
-            try {
-		if ( m_bFirstWrite )
-		{
-		    acDataOut.writeInt(iDimX);
-		    acDataOut.writeInt(iDimY);
-		    acDataOut.writeInt(iDimZ);
-            acDataOut.writeBoolean(m_bNegX);
-            acDataOut.writeBoolean(m_bNegY);
-            acDataOut.writeBoolean(m_bNegZ);
-		    m_bFirstWrite = false;
-		}
-                acDataOut.writeInt(iVQuantity);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        	try {
+        		if ( m_bFirstWrite )
+        		{
+        			acDataOut.writeInt(iDimX);
+        			acDataOut.writeInt(iDimY);
+        			acDataOut.writeInt(iDimZ);
+        			acDataOut.writeBoolean(m_bNegX);
+        			acDataOut.writeBoolean(m_bNegY);
+        			acDataOut.writeBoolean(m_bNegZ);
+        			m_bFirstWrite = false;
+        		}
+        		acDataOut.writeInt(iVQuantity);
+        	} catch (IOException e) {
+        		e.printStackTrace();
+        	}
         }
 
         for (int i = 0; i < iVQuantity; i++)

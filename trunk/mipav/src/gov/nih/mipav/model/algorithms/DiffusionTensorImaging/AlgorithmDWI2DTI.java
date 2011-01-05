@@ -772,9 +772,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
             final Matrix X2 = X.getMatrix(r, 0, 0);
             final Matrix A = ( (B2.transpose()).times(SIGMA2)).times(B2);
             final Matrix Y = ( (B2.transpose()).times(SIGMA2)).times(X2);
-
-            Matrix D = new Matrix(7, 1);
-
+          		            		
             int m = A.getRowDimension();
             int n = A.getColumnDimension();
             double[][] u = new double[m][n];
@@ -783,12 +781,12 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
             Singularvalue.decompose( A.getArray(), u, v, s );
             Matrix uMat = new Matrix(u);
             Matrix vMat = new Matrix(v);
-            Matrix S = new Matrix(s.length, s.length);
-            for (int i = 0; i < S.getRowDimension(); i++) {
-                S.set(i, i, 1 / s[i]);
+            Matrix S1 = new Matrix(s.length, s.length);
+            for (int i = 0; i < S1.getRowDimension(); i++) {
+                S1.set(i, i, 1 / s[i]);
             }
-            D = ( ( (vMat).times(S)).times(uMat.transpose())).times(Y);
-
+            Matrix D = ( ( (vMat).times(S1)).times(uMat.transpose())).times(Y);
+            
             // D = [Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Amplitude]
             final float[] tensor = new float[10 + vol];
             for (int i = 0; i < 6; i++) {

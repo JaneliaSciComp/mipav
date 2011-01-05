@@ -1007,16 +1007,7 @@ implements ListSelectionListener, ChangeListener {
                 float fY = ((2.0f * (iY * fYDelta)) - yBox)/(2.0f*maxBox);
                 float fZ = ((2.0f * (iZ * fZDelta)) - zBox)/(2.0f*maxBox);
                 
-                /*
-                float fX = (float)(iX)/(float)(iDimX-1);
-                float fY = (float)(iY)/(float)(iDimY-1);
-                float fZ = (float)(iZ)/(float)(iDimZ-1);
-
-                pkVBuffer.SetPosition3(i,
-                        (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) );
-                        */
-                pkVBuffer.SetPosition3(i,
-                        fX, fY, fZ ); 
+                pkVBuffer.SetPosition3(i, iX, iY, iZ);
                 pkVBuffer.SetColor3(0,i, new ColorRGB(fX, fY, fZ));
                 pkVBuffer.SetColor3(1,i, kColor1 );
                 iTractCount++;

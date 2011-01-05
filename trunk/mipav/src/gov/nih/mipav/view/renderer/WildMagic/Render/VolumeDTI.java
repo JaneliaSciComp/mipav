@@ -224,57 +224,53 @@ public class VolumeDTI extends VolumeObject
         int[] aiEllipsoids = new int[kLine.VBuffer.GetVertexQuantity()];
         int[] aiCylinders = new int[kLine.VBuffer.GetVertexQuantity()];
 
-        for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
+        if ( m_kEigenVectors != null )
         {
-            //int iX = (int)((kLine.VBuffer.GetPosition3fX(i) +.5f) * m_iDimX);
-            //int iY = (int)((kLine.VBuffer.GetPosition3fY(i) +.5f) * m_iDimY);
-            //int iZ = (int)((kLine.VBuffer.GetPosition3fZ(i) +.5f) * m_iDimZ);
-            
+        	for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
+        	{
+        		int iX = (int)kLine.VBuffer.GetPosition3fX(i);
+        		int iY = (int)kLine.VBuffer.GetPosition3fY(i);
+        		int iZ = (int)kLine.VBuffer.GetPosition3fZ(i);
 
+        		int iIndex = iZ * m_iDimY * m_iDimX + iY * m_iDimX + iX;
 
-            float xBox = (m_iDimX - 1) * fXDelta;
-            float yBox = (m_iDimY - 1) * fYDelta;
-            float zBox = (m_iDimZ - 1) * fZDelta;
-            float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-
-            float fX = kLine.VBuffer.GetPosition3fX(i);
-            float fY = kLine.VBuffer.GetPosition3fY(i);
-            float fZ = kLine.VBuffer.GetPosition3fZ(i);
-
-            int iX = (int)((xBox + (fX * 2.0f*maxBox))/(2.0f * fXDelta));
-            int iY = (int)((yBox + (fY * 2.0f*maxBox))/(2.0f * fYDelta));
-            int iZ = (int)((zBox + (fZ * 2.0f*maxBox))/(2.0f * fZDelta));
-            
-            int iIndex = iZ * m_iDimY * m_iDimX + iY * m_iDimX + iX;
-
-            if ( m_kEigenVectors != null )
-            {
-                if (  m_kEigenVectors.get( new Integer(iIndex) ) != null )
-                {
-                    aiEllipsoids[i] = iIndex;
-                    aiCylinders[i] = iIndex;
-                }
-                else
-                {
-                    aiEllipsoids[i] = -1;
-                    aiCylinders[i] = -1;
-                }
-            }
+        		if (  m_kEigenVectors.get( new Integer(iIndex) ) != null )
+        		{
+        			aiEllipsoids[i] = iIndex;
+        			aiCylinders[i] = iIndex;
+        		}
+        		else
+        		{
+        			aiEllipsoids[i] = -1;
+        			aiCylinders[i] = -1;
+        		}
+        	}
         }
 
-        //kLine.Local.SetScale( new Vector3f( m_fX, m_fY, m_fZ ) );
-
+        scale( kLine.VBuffer );
+        kLine.Local.SetTranslate(m_kTranslate);
+        
         Node kTractNode = null;
         Node kTubeNode = null;
         
         Integer iIGroup = new Integer(iGroup);
         if ( m_kTracts.containsKey( iIGroup ) )
         {
+        	kTractNode = m_kTracts.get(iIGroup);
+        	kTractNode.AttachChild(kLine);
+        	Vector<int[]> kGlyphVector = m_kGlyphs.get(iIGroup);
+        	kGlyphVector.add(aiEllipsoids);
             return;
         }
         
         if ( m_kTubes.containsKey( iIGroup ) )
         {   
+        	kTubeNode = m_kTubes.get(iIGroup);
+        	kTubeNode.AttachChild(createTube(kLine));
+            kTubeNode.UpdateGS();
+            kTubeNode.UpdateRS();
+        	Vector<int[]> kGlyphVector = m_kGlyphs.get(iIGroup);
+        	kGlyphVector.add(aiEllipsoids);
             return;                       
         }
         
@@ -334,7 +330,7 @@ public class VolumeDTI extends VolumeObject
         Vector2f kUVMax = new Vector2f(1.0f,1.0f);
         kTube = new TubeSurface(m_pkSpline,0.025f, false,Vector3f.UNIT_Z,
         		iNumCtrlPoints,8,kAttr,false,false,kUVMin,kUVMax);
-        //kTube.Local.SetTranslate( m_kTranslate );
+        kTube.Local.SetTranslate( m_kTranslate );
 
         if ( kTube.VBuffer.GetAttributes().HasTCoord(0) )
         {
@@ -365,8 +361,8 @@ public class VolumeDTI extends VolumeObject
         }
         
         //kAlpha.BlendEnabled = true;
-        Node kScaleNode = new Node();
-        kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
+        //Node kScaleNode = new Node();
+        //kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
         int iCount = 0;
         int iIndex;
         Integer kKey;
@@ -715,7 +711,7 @@ public class VolumeDTI extends VolumeObject
         float fYDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
         float fZDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
         
-        
+        int iCount = 0;
         for ( int i = 0; i < m_iLen; i++ )
         {
             boolean bAllZero = true;
@@ -775,6 +771,7 @@ public class VolumeDTI extends VolumeObject
                         kScale.Normalize();
                         kTransform.SetScale( kScale );
                         m_kEigenVectors.put( new Integer(i), kTransform );
+                        iCount++;
                     }
                 }
             }
@@ -784,6 +781,7 @@ public class VolumeDTI extends VolumeObject
                 kProgressBar.updateValueImmed( iValue );
             }
         }
+        System.err.println( iCount + " " + m_iLen );
         kProgressBar.dispose();
 
         Integer kKey;

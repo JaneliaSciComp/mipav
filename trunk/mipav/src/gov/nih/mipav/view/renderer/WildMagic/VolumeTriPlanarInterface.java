@@ -389,55 +389,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         progressBar.updateValueImmed(100);
         progressBar.dispose();
     }
-
-    public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB, final int iFilterType,
-            final boolean bCompute, final String kDir, final int[] aiExtents) {
-        userInterface = ViewUserInterface.getReference();
-        getContentPane().setLayout(new BorderLayout());
-        addWindowListener(this);
-
-        try {
-            setIconImage(MipavUtil.getIconImage("wm.gif"));
-        } catch (final FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
-        }
-
-        MipavInitGPU.InitGPU();
-        /** Progress bar show up during the volume view frame loading */
-        final ViewJProgressBar progressBar = new ViewJProgressBar("Creating Volume & Surface Renderer...",
-                "Creating Volume & Surface Renderer...", 0, 100, false, null, null);
-        MipavUtil.centerOnScreen(progressBar);
-        progressBar.setVisible(true);
-        progressBar.updateValueImmed(0);
-
-        final int iProgress = (_imageB == null) ? 10 : 5;
-        m_kVolumeImageA = new VolumeImage(_imageA, "A", progressBar, iProgress);
-        progressBar.updateValueImmed(progressBar.getValue() + iProgress);
-        if (_imageB != null) {
-            m_kVolumeImageB = new VolumeImage(_imageB, "B", progressBar, iProgress);
-            progressBar.updateValueImmed(progressBar.getValue() + iProgress);
-        } else {
-            m_kVolumeImageB = new VolumeImage();
-        }
-        m_kVolumeImageA.GetImage().setImageOrder(ModelImage.IMAGE_A);
-
-        if (m_kVolumeImageB.GetImage() != null) {
-            m_kVolumeImageB.GetImage().setImageOrder(ModelImage.IMAGE_B);
-        }
-        progressBar.setMessage("Configuring frame...");
-        this.configureFrame();
-        constructRenderers(progressBar);
-
-        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        gpuPanel.setVisible(true);
-
-        progressBar.updateValueImmed(100);
-        progressBar.dispose();
-    }
-
+    
     /**
      * Retrieve the progress bar used in the volume renderer (the one in the upper right hand corner).
      * 

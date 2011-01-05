@@ -205,6 +205,8 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
 
     /** parent directory for the DTI output images. */
     private String m_kParentDir = null;
+    
+    private boolean m_bDTIImageSet = false;
 
     /**
      * Create a new JDialogDTIInput of one of the four types:
@@ -240,15 +242,14 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
      */
     public JDialogDTIInput(final int iType, final JDialogDTIInput kParent) {
         super();
-        init(iType);
         m_iType = iType;
         m_kParentDialog = kParent;
+        init(iType);
     }
 
     /** Clean up local memory. */
     public void disposeLocal() {
         m_kEigenVectorImage = null;
-        ;
         m_kAnisotropyImage = null;
         m_kLUTa = null;
 
@@ -268,7 +269,7 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
         m_kParentDialog = null;
         m_kRawFormat = null;
         m_kParentDir = null;
-        dispose();
+        setVisible(false);
     }
 
     /**
@@ -1275,7 +1276,7 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        final JLabel kTractLabel = new JLabel(" DTI tract file: ");
+        final JLabel kTractLabel = new JLabel(" DTI tract file: " );
         filesPanel.add(kTractLabel, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -1283,6 +1284,10 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
         m_kTractPath = new JTextField(35);
         m_kTractPath.setEditable(true);
         m_kTractPath.setBackground(Color.white);
+        if ( m_kParentDialog != null && m_kParentDialog.getDTIImage() != null )
+        {
+        	m_kTractPath.setText(m_kParentDialog.getDTIImage().getImageFileName());
+        }
         filesPanel.add(m_kTractPath, gbc);
         gbc.gridx = 2;
         gbc.gridy = 0;
@@ -1378,7 +1383,6 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
                     }
                     m_kDTIImage = null;
                 }
-                m_kParentDialog.setDTIImage(m_kDTIImage);
             }
 
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
@@ -1424,8 +1428,9 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
             }
 
             int iDimX = 0, iDimY = 0, iDimZ = 0;
+            boolean negX = false, negY = false, negZ = false;
             final FileInputStream kFileReader = new FileInputStream(m_kTractFile);
-            final int iBufferSize = 3 * 4;
+            final int iBufferSize = 3 * 4 + 3;
 
             byte[] racBuffer = new byte[iBufferSize];
             kFileReader.read(racBuffer, 0, iBufferSize);
@@ -1435,12 +1440,21 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
                 iDimX = acDataIn.readInt();
                 iDimY = acDataIn.readInt();
                 iDimZ = acDataIn.readInt();
+                negX = acDataIn.readBoolean();
+                negY = acDataIn.readBoolean();
+                negZ = acDataIn.readBoolean();
             } catch (final IOException e) {
                 e.printStackTrace();
             }
             acBufferIn = null;
             acDataIn = null;
             racBuffer = null;
+            
+            if ( !m_bDTIImageSet && m_kParentDialog.getDTIImage() == null )
+            {
+                m_bDTIImageSet = true;
+                m_kParentDialog.setDTIImage(m_kDTIImage, negX, negY, negZ );
+            }
 
             final int iLength = (int) m_kTractFile.length();
             int iBufferNext = iBufferSize;
@@ -1457,7 +1471,8 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
                         if (iNumTracts < iNumTractsLimit) {
                             iNumTracts++;
                             bTractsAdded = true;
-                            m_kParentDialog.addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
+                            m_kParentDialog.addTract(kTract, iVQuantity, 
+                            		iDimX, iDimY, iDimZ);
                         }
                     }
                 }
@@ -1495,10 +1510,10 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
      * 
      * @param kDTIImage, new DTI image.
      */
-    protected void setDTIImage(final ModelImage kDTIImage) {
+    protected void setDTIImage(final ModelImage kDTIImage, boolean bNegX, boolean bNegY, boolean bNegZ) {
         m_kDTIImage = kDTIImage;
         if (rayBasedRenderWM != null) {
-            rayBasedRenderWM.setDTIImage(m_kDTIImage, false, false, false);
+            rayBasedRenderWM.setDTIImage(m_kDTIImage, bNegX, bNegY, bNegZ);
             rayBasedRenderWM.setEllipseMod(m_kDisplaySlider.getValue());
         }
     }
@@ -1521,23 +1536,9 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
      * @param iDimY, the y-dimensions of the DTI image used to create the tract.
      * @param iDimZ, the z-dimensions of the DTI image used to create the tract.
      */
-    protected void addTract(final Vector<Integer> kTract, final int iVQuantity, final int iDimX, final int iDimY,
-            final int iDimZ) {
-        final int iXBound = m_kImage.getExtents()[0];
-        final int iYBound = m_kImage.getExtents()[1];
-        final int iZBound = m_kImage.getExtents()[2];
-        final float fMaxX = (iXBound - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
-        final float fMaxY = (iYBound - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
-        final float fMaxZ = (iZBound - 1) * m_kImage.getFileInfo(0).getResolutions()[2];
-
-        float fMax = fMaxX;
-        if (fMaxY > fMax) {
-            fMax = fMaxY;
-        }
-        if (fMaxZ > fMax) {
-            fMax = fMaxZ;
-        }
-
+    protected void addTract(final Vector<Integer> kTract, final int iVQuantity, 
+    		final int iDimX, final int iDimY, final int iDimZ) {
+    	
         final Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
         kAttr.SetCChannels(0, 3);
@@ -1548,15 +1549,15 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
         for (int i = 0; i < iVQuantity; i++) {
             int iIndex = kTract.get(i);
 
-            final int iX = iIndex % iDimX;
+            int iX = iIndex % iDimX;
             iIndex -= iX;
             iIndex /= iDimX;
 
-            final int iY = iIndex % iDimY;
+            int iY = iIndex % iDimY;
             iIndex -= iY;
             iIndex /= iDimY;
 
-            final int iZ = iIndex;
+            int iZ = iIndex;
 
             iIndex = kTract.get(i);
             ColorRGB kColor1;
@@ -1574,7 +1575,7 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
             final float fY = (float) (iY) / (float) (iDimY);
             final float fZ = (float) (iZ) / (float) (iDimZ);
 
-            pkVBuffer.SetPosition3(i, fX - .5f, fY - .5f, fZ - .5f);
+            pkVBuffer.SetPosition3(i, iX, iY, iZ);
             pkVBuffer.SetColor3(0, i, new ColorRGB(fX, fY, fZ));
             pkVBuffer.SetColor3(1, i, kColor1);
         }
@@ -1645,8 +1646,6 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
                 pos_z = B_SPLINE(u, u_2, u_3, fZ_0, fZ_1, fZ_2, fZ_3);
 
                 int iIndex = kTract.get(i);
-
-                iIndex = kTract.get(i);
 
                 final int iX = iIndex % iDimX;
                 iIndex -= iX;
