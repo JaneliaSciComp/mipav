@@ -1,4 +1,4 @@
-package gov.nih.mipav.view;
+
 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -16,6 +16,9 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.view.ViewJComponentBase;
+import gov.nih.mipav.view.ViewJComponentEditImage;
+import gov.nih.mipav.view.ViewJFrameBase;
 
 public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
 	
@@ -213,6 +216,22 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
      * mouse pressed
      */
     public void mousePressed(MouseEvent mouseEvent) {
+    	float fMinImageWin = (float)imageActive.getMin();
+        float fMaxImageWin = (float)imageActive.getMax();
+        float fX = 0;
+        
+    	//fWindow = 2.0f * fX * (fMaxImageWin - fMinImageWin)
+    	
+    	
+    	if(modality.equals("t1")) {
+    		 
+ 		}else if(modality.equals("t2")) {
+
+ 		}else if(modality.equals("pd")) {
+ 
+ 		}
+    	
+    	
     	/*if(mouseEvent.getButton() == MouseEvent.BUTTON3	) {
     		System.out.println("right mouse pressed");
     		
