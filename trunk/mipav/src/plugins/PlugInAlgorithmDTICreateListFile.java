@@ -35,6 +35,27 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageFileFilter;
 
+/**
+ * This is the algorithm for the DTI Create List File Plug-In
+ * @author Nish Pandya
+ * 
+ * 
+ * References: This algorithm was developed in concert with Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS of
+ * the NIH/NICHD/LIMB/STBB group :
+ * 
+ * Section on Tissue Biophysics and Biomimetics (STBB)
+ * Laboratory of Integrative and Medical Biophysics (LIMB)
+ * National Institute of Child Health & Humann Development
+ * National Institutes of Health
+ * 
+ * This opening acknowledgment section must be included in all copies and modifications of this code.
+ * 
+ * A good reference on the B-matrix is:
+ * Analytical Expressions for the b Matrix in NMR Diffusion Imaging and Spectroscopy by James Mattiello,
+ * Peter J. Basser, and Denis LeBihan, Journal of Magnetic Resonance Series A, 108, 1994, pp. 131-141.
+ *
+ */
+
 
 public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
 
