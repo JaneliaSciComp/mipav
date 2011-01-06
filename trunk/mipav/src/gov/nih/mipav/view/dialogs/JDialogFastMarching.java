@@ -3,6 +3,13 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.levelset.AlgorithmFastMarching;
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterFloat;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -14,13 +21,8 @@ import javax.swing.*;
 
 
 /**
- * Dialog to get user input, then call the algorithm. The user is able to control the degree of blurring in all
- * dimensions and indicate if a correction factor be applied to the z-dimension to account for differing resolutions
- * between the xy resolutions (intra-plane) and the z resolution (inter-plane). The algorithms are executed in their own
- * thread.
- *
  */
-public class JDialogFastMarching extends JDialogBase implements AlgorithmInterface {
+public class JDialogFastMarching extends JDialogScriptableBase implements ActionDiscovery, AlgorithmInterface {
 
 
     /** */
@@ -71,8 +73,27 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
     /** Maximum Evolution steps */
     private JTextField textMaxEvolution;
     
+    private int m_iIters;
+    private float m_fGMScale;
+    private float m_fSAlpha;
+    private float m_fSBeta;
+    private float m_fSMin;
+    private float m_fSMax;
+    private int m_iCoarseMax;
+    private float m_fMaxDistance;
+    private float m_fAdvectionWeight;
+    private float m_fPropagationWeight;
+    private float m_fCurvatureWeight;
+    private float m_fLaplacianWeight;
+    private int m_iEvolveMax;
     private int m_iFilterType;
-    
+    private boolean m_bImage25D = false;
+
+	/**
+	 * Empty constructor needed for dynamic instantiation (used during scripting).
+	 */
+	public JDialogFastMarching() { }
+	
     /**
      * Creates new dialog for finding the level set.
      *
@@ -105,138 +126,86 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
         String tmpStr;
 
         if (source == OKButton) {
-        	int iIters = 0;
+        	m_iIters = 0;
         	tmpStr = textIters.getText();
         	if (testParameter(tmpStr, 1, 10000)) {
-        		iIters = Integer.valueOf(tmpStr).intValue();
+        		m_iIters = Integer.valueOf(tmpStr).intValue();
             } else {
             	textIters.requestFocus();
             	textIters.selectAll();
                 return;
             }
 
-        	float fGMScale = 0;
+        	m_fGMScale = 0;
         	tmpStr = textGMScale.getText();
         	if (testParameter(tmpStr, 0, Double.MAX_VALUE)) {
-        		fGMScale = Float.valueOf(tmpStr).floatValue();
+        		m_fGMScale = Float.valueOf(tmpStr).floatValue();
             } else {
             	textGMScale.requestFocus();
             	textGMScale.selectAll();
                 return;
             }
 
-        	float fSAlpha = 0;
+        	m_fSAlpha = 0;
         	tmpStr = textSigmoidAlpha.getText();
-        	fSAlpha = Float.valueOf(tmpStr).floatValue();
+        	m_fSAlpha = Float.valueOf(tmpStr).floatValue();
         	
-        	float fSBeta = 0;
+        	m_fSBeta = 0;
         	tmpStr = textSigmoiBeta.getText();
-        	fSBeta = Float.valueOf(tmpStr).floatValue();
+        	m_fSBeta = Float.valueOf(tmpStr).floatValue();
         	
-        	float fSMin = 0;
+        	m_fSMin = 0;
         	tmpStr = textSigmoidMin.getText();
-        	fSMin = Float.valueOf(tmpStr).floatValue();
+        	m_fSMin = Float.valueOf(tmpStr).floatValue();
         	
-        	float fSMax = 0;
+        	m_fSMax = 0;
         	tmpStr = textSigmoidMax.getText();
-        	fSMax = Float.valueOf(tmpStr).floatValue();
+        	m_fSMax = Float.valueOf(tmpStr).floatValue();
         	
-        	int iCoarseMax = 0;
+        	m_iCoarseMax = 0;
         	tmpStr = textCoarseMax.getText();
         	if (testParameter(tmpStr, 1, Integer.MAX_VALUE)) {
-        		iCoarseMax = Integer.valueOf(tmpStr).intValue();
+        		m_iCoarseMax = Integer.valueOf(tmpStr).intValue();
             } else {
             	textCoarseMax.requestFocus();
             	textCoarseMax.selectAll();
                 return;
             }
         	
-        	float fMaxDistance = 0;
+        	m_fMaxDistance = 0;
         	tmpStr = textMaxDistance.getText();
-        	fMaxDistance = Float.valueOf(tmpStr).floatValue();
+        	m_fMaxDistance = Float.valueOf(tmpStr).floatValue();
         	
-        	float fAdvectionWeight = 0;
+        	m_fAdvectionWeight = 0;
         	tmpStr = textAdvectionWeight.getText();
-        	fAdvectionWeight = Float.valueOf(tmpStr).floatValue();
+        	m_fAdvectionWeight = Float.valueOf(tmpStr).floatValue();
         	
-        	float fPropagationWeight = 0;
+        	m_fPropagationWeight = 0;
         	tmpStr = textPropagationWeight.getText();
-        	fPropagationWeight = Float.valueOf(tmpStr).floatValue();
+        	m_fPropagationWeight = Float.valueOf(tmpStr).floatValue();
         	
-        	float fCurvatureWeight = 0;
+        	m_fCurvatureWeight = 0;
         	tmpStr = textCurvatureWeight.getText();
-        	fCurvatureWeight = Float.valueOf(tmpStr).floatValue();
+        	m_fCurvatureWeight = Float.valueOf(tmpStr).floatValue();
         	
-        	float fLaplacianWeight = 0;
+        	m_fLaplacianWeight = 0;
         	tmpStr = textLaplacianWeight.getText();
-        	fLaplacianWeight = Float.valueOf(tmpStr).floatValue();
+        	m_fLaplacianWeight = Float.valueOf(tmpStr).floatValue();
 
-        	int iEvolveMax = 0;
+        	m_iEvolveMax = 0;
         	tmpStr = textMaxEvolution.getText();
         	if (testParameter(tmpStr, 1, Integer.MAX_VALUE)) {
-        		iEvolveMax = Integer.valueOf(tmpStr).intValue();
+        		m_iEvolveMax = Integer.valueOf(tmpStr).intValue();
             } else {
             	textMaxEvolution.requestFocus();
             	textMaxEvolution.selectAll();
                 return;
             }
-        	
-            if (image.getNDims() == 2) { // source image is 2D
-
-                try {
-                	
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                	AlgorithmFastMarching fastMarchAlgo = new AlgorithmFastMarching(image, m_iFilterType, 
-                			iIters, fGMScale, fSAlpha, fSBeta, fSMin, fSMax, iCoarseMax, fMaxDistance, fAdvectionWeight,
-                        	fPropagationWeight, fCurvatureWeight, fLaplacianWeight, iEvolveMax, false);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    fastMarchAlgo.addListener(this);
-                    
-                    createProgressBar(image.getImageName(), fastMarchAlgo);
-                    
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // Start the thread as a low priority because we wish to still have user interface.
-                    if (fastMarchAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog Diffusion: unable to allocate enough memory");
-
-                    return;
-                }
-            } else if (image.getNDims() == 3) {
-
-                try {
-
-                    // Make algorithm
-                	AlgorithmFastMarching fastMarchAlgo = new AlgorithmFastMarching(image, m_iFilterType, iIters, fGMScale, fSAlpha, fSBeta, fSMin, fSMax, iCoarseMax, fMaxDistance, fAdvectionWeight,
-                        	fPropagationWeight, fCurvatureWeight, fLaplacianWeight, iEvolveMax, image25DCheckbox.isSelected() );
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                	fastMarchAlgo.addListener(this);
-                    createProgressBar(image.getImageName(), fastMarchAlgo);
-                    
-                    // Hide dialog
-                    setVisible(false);
-                    
-                    // Start the thread as a low priority because we wish to still have user interface work fast
-                    if (fastMarchAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog diffusion: unable to allocate enough memory");
-
-                    return;
-                }
-            }
+        	if ( image25DCheckbox != null )
+        	{
+        		m_bImage25D = image25DCheckbox.isSelected();
+        	}
+        	callAlgorithm();
 
         } else if (source == cancelButton) {
             dispose();
@@ -260,6 +229,7 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
             if (algorithm.isCompleted()) {
                 image.notifyImageDisplayListeners(null, true);
             }
+			insertScriptLine();
         }
 
         dispose();
@@ -390,5 +360,184 @@ public class JDialogFastMarching extends JDialogBase implements AlgorithmInterfa
         setVisible(true);
 
     }
+
+	@Override
+	public ActionMetadata getActionMetadata() {
+		return new MipavActionMetadata() {
+			public String getCategory() {
+				return new String("Algorithms.Segmentation.ITK");
+			}
+
+			public String getDescription() {
+				return new String("Computes levelset filters of an image.");
+			}
+
+			public String getDescriptionLong() {
+				return new String("Computes levelset filters of an image.");
+			}
+
+			public String getShortLabel() {
+				return new String("FastMarchingLevelSet");
+			}
+
+			public String getLabel() {
+				return new String("FastMarching LevelSet");
+			}
+
+			public String getName() {
+				return new String("FastMarching LevelSet");
+			}
+		};
+	}
+
+	@Override
+	public ParameterTable createInputParameters() {
+		final ParameterTable table = new ParameterTable();
+
+		try {
+			table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+			table.put( new ParameterInt( "iterations" ) );
+			table.put( new ParameterFloat( "gradientMagnitudeScale" ) );
+			table.put( new ParameterFloat( "sigmoidAlpha" ) );
+			table.put( new ParameterFloat( "sigmoidBeta" ) );
+			table.put( new ParameterFloat( "sigmoidMin" ) );
+			table.put( new ParameterFloat( "sigmoidMax" ) );
+			table.put( new ParameterInt( "coarseIterationsMax" ) );
+			table.put( new ParameterFloat( "maxDistance" ) );
+			table.put( new ParameterFloat( "advectionWeight" ) );
+			table.put( new ParameterFloat( "propagationWeight" ) );
+			table.put( new ParameterFloat( "curvatureWeight" ) );
+			table.put( new ParameterFloat( "laplacianWeight" ) );
+			table.put( new ParameterInt( "evolutionIterationsMax" ) );
+			table.put( new ParameterInt( "filterType" ) );
+			table.put( new ParameterBoolean( "image25D" ) );
+		} catch (final ParserException e) {
+			// this shouldn't really happen since there isn't any real parsing going on...
+			e.printStackTrace();
+		}
+		return table;
+	}
+
+	@Override
+	public ParameterTable createOutputParameters() {
+		return null;
+	}
+
+	@Override
+	public String getOutputImageName(String imageParamName) {
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+		return null;
+	}
+
+	@Override
+	public boolean isActionComplete() {
+		return isComplete();
+	}
+
+	@Override
+	protected void callAlgorithm() {
+        if (image.getNDims() == 2) { // source image is 2D
+
+            try {
+            	
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+            	AlgorithmFastMarching fastMarchAlgo = new AlgorithmFastMarching(image, m_iFilterType, 
+            			m_iIters, m_fGMScale, m_fSAlpha, m_fSBeta, m_fSMin, m_fSMax, m_iCoarseMax,
+            			m_fMaxDistance, m_fAdvectionWeight,
+            			m_fPropagationWeight, m_fCurvatureWeight, m_fLaplacianWeight, m_iEvolveMax, false);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                fastMarchAlgo.addListener(this);
+                
+                createProgressBar(image.getImageName(), fastMarchAlgo);
+                
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // Start the thread as a low priority because we wish to still have user interface.
+                if (fastMarchAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog Diffusion: unable to allocate enough memory");
+
+                return;
+            }
+        } else if (image.getNDims() == 3) {
+
+            try {
+
+                // Make algorithm
+            	AlgorithmFastMarching fastMarchAlgo = new AlgorithmFastMarching(image, m_iFilterType, 
+            			m_iIters, m_fGMScale, m_fSAlpha, m_fSBeta, m_fSMin, m_fSMax, m_iCoarseMax, 
+            			m_fMaxDistance, m_fAdvectionWeight,
+            			m_fPropagationWeight, m_fCurvatureWeight, m_fLaplacianWeight, m_iEvolveMax, m_bImage25D );
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+            	fastMarchAlgo.addListener(this);
+                createProgressBar(image.getImageName(), fastMarchAlgo);
+                
+                // Hide dialog
+                setVisible(false);
+                
+                // Start the thread as a low priority because we wish to still have user interface work fast
+                if (fastMarchAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog diffusion: unable to allocate enough memory");
+
+                return;
+            }
+        }
+		
+	}
+
+	@Override
+	protected void setGUIFromParams() {
+		image = scriptParameters.retrieveInputImage();
+		parentFrame = image.getParentFrame();
+
+		m_iIters = scriptParameters.getParams().getInt("iterations");
+		m_fGMScale = scriptParameters.getParams().getFloat("gradientMagnitudeScale");
+		m_fSAlpha = scriptParameters.getParams().getFloat("sigmoidAlpha");
+		m_fSBeta = scriptParameters.getParams().getFloat("sigmoidBeta");
+		m_fSMin = scriptParameters.getParams().getFloat("sigmoidMin");
+		m_fSMax = scriptParameters.getParams().getFloat("sigmoidMax");
+		m_iCoarseMax = scriptParameters.getParams().getInt("coarseIterationsMax");
+		m_fMaxDistance = scriptParameters.getParams().getFloat("maxDistance");
+		m_fAdvectionWeight = scriptParameters.getParams().getFloat("advectionWeight");
+		m_fPropagationWeight = scriptParameters.getParams().getFloat("propagationWeight");
+		m_fCurvatureWeight = scriptParameters.getParams().getFloat("curvatureWeight");
+		m_fLaplacianWeight = scriptParameters.getParams().getFloat("laplacianWeight");
+		m_iEvolveMax = scriptParameters.getParams().getInt("evolutionIterationsMax");
+		m_iFilterType = scriptParameters.getParams().getInt("filterType");	
+		m_bImage25D = scriptParameters.getParams().getBoolean("image25D");	
+	}
+
+	@Override
+	protected void storeParamsFromGUI() throws ParserException {
+		scriptParameters.storeInputImage(image);
+		scriptParameters.getParams().put(ParameterFactory.newParameter("iterations", m_iIters ) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("gradientMagnitudeScale", m_fGMScale) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("sigmoidAlpha", m_fSAlpha) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("sigmoidBeta", m_fSBeta) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("sigmoidMin", m_fSMin) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("sigmoidMax", m_fSMax) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("coarseIterationsMax", m_iCoarseMax) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("maxDistance", m_fMaxDistance) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("advectionWeight", m_fAdvectionWeight) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("propagationWeight", m_fPropagationWeight) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("curvatureWeight", m_fCurvatureWeight) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("laplacianWeight", m_fLaplacianWeight) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("evolutionIterationsMax", m_iEvolveMax) );
+		scriptParameters.getParams().put(ParameterFactory.newParameter("filterType", m_iFilterType) );	
+		scriptParameters.getParams().put(ParameterFactory.newParameter("image25D", m_bImage25D) );	
+	}
 
 }

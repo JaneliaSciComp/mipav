@@ -21,8 +21,6 @@ import java.awt.event.*;
 
 import java.util.*;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.JCheckBox;
@@ -512,9 +510,6 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 			}
 			projection[i] = maximum[i] | minimum[i];
 		}
-
-
-
 	}
 
 	/**
@@ -1270,7 +1265,6 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	@Override
 	public String getOutputImageName(String imageParamName) {
         Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
-
         return null;
 
 	}

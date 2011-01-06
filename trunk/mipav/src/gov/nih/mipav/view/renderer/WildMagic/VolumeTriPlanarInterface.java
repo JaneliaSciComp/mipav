@@ -2237,7 +2237,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         final JMenuBar menuBar = new JMenuBar();
 
         menuBar.add(menuObj.makeMenu("File", false, new JComponent[] {separator,
-                menuObj.buildMenuItem("Open DTI Tract file", "DTI", 0, null, false),
+        		// Use VoluemTriPlanarRendererDTI instead? Systems analysis -> DTI -> visualization...
+                //menuObj.buildMenuItem("Open DTI Tract file", "DTI", 0, null, false),
                 menuObj.buildMenuItem("Open BrainSurface Flattener view", "BrainSurface", 0, null, false),
                 menuObj.buildMenuItem("Open Fly Through view", "FlyThru", 0, null, false),
                 menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)}));
