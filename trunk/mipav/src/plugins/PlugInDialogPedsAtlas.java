@@ -68,7 +68,6 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
 import gov.nih.mipav.view.ViewJComponentDTIImage;
 import gov.nih.mipav.view.ViewJComponentPedsAtlasIconImage;
-import gov.nih.mipav.view.ViewJComponentPedsAtlasImage;
 import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewToolBarBuilder;
@@ -234,16 +233,16 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     private int testCounter = 0;
     
     // lut presets
-    float t1LevelPreset;
-	float t1WindowPreset;
-	float t2LevelPreset ;
-	float t2WindowPreset ;
-	float pdLevelPreset ;
-	float pdWindowPreset;
+    public static float t1LevelPreset;
+    public static float t1WindowPreset;
+    public static float t2LevelPreset ;
+    public static float t2WindowPreset ;
+    public static float pdLevelPreset ;
+    public static float pdWindowPreset;
 	
-	float[] m_afXWin = new float[4];
+    public float[] m_afXWin = new float[4];
 
-    float[] m_afYWin = new float[4];
+    public float[] m_afYWin = new float[4];
 	
 	
 
