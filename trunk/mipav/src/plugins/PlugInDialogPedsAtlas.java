@@ -98,7 +98,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	private JLabel sliceLabel, ageLabel, infoLabel;
 
 	/** buttons * */
-    private JButton magButton,unMagButton,zoomOneButton,saveButton,winLevelButton, resetButton, lutButton;
+    private JButton magButton,unMagButton,zoomOneButton,saveButton,winLevelButton, resetButton, lutButton, presetButton;
     
     /** modality buttons **/
     private JToggleButton t1Button, t2Button, pdButton, dtiButton, edtiButton;
@@ -232,6 +232,20 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     private boolean showAnnotationsToggle = true;
     
     private int testCounter = 0;
+    
+    // lut presets
+    float t1LevelPreset;
+	float t1WindowPreset;
+	float t2LevelPreset ;
+	float t2WindowPreset ;
+	float pdLevelPreset ;
+	float pdWindowPreset;
+	
+	float[] m_afXWin = new float[4];
+
+    float[] m_afYWin = new float[4];
+	
+	
 
     
     /** constants **/
@@ -259,6 +273,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		infoLabel = new JLabel("");
 		ageLabelTable = new Hashtable<Integer,JLabel>();
 		sliceLabelTable = new Hashtable<Integer,JLabel>();
+		
+		m_afXWin[0] = 0;
+	    m_afXWin[3] = 255;
+	    m_afYWin[0] = 255;
+	    m_afYWin[3] = 0;
+	    
+	    
 		
 		if (!readConfigFile()) {
 			return;
@@ -326,8 +347,26 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			String str;
 	        fis = new FileInputStream(pedsHome + "pedsAtlas" + File.separator + "config" + File.separator + "config.txt");
 	        d = new BufferedReader(new InputStreamReader(fis));
+	        
+	        str =  d.readLine().trim();
+	        if(!str.equals("num of time points")) {
+	        	return false;
+	        }
+	        
+	        str =  d.readLine().trim();
+	        if(!str.equals("")) {
+	        	return false;
+	        }
+	        
 	        str =  d.readLine().trim();
 	        numAgeTicks = Integer.parseInt(str);
+	        
+	        str = d.readLine().trim();
+	        if(!str.startsWith("---")) {
+	        	return false;
+	        }
+	        
+	        
 	        
 	        t1AtlasImages = new ModelImage[numAgeTicks];
 	        t2AtlasImages = new ModelImage[numAgeTicks];
@@ -353,16 +392,112 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
 			
 	        str = d.readLine().trim();
-	        if(!str.equals("")) {
+	        if(!str.equals("time labels")) {
 	        	return false;
 	        }
-	        for(int i=0;i<numAgeTicks;i++) {
-	        	ageLabelTable.put(i,new JLabel(d.readLine().trim()));
-	        }
+	        
 	        str = d.readLine().trim();
 	        if(!str.equals("")) {
 	        	return false;
 	        }
+	        
+	        for(int i=0;i<numAgeTicks;i++) {
+	        	ageLabelTable.put(i,new JLabel(d.readLine().trim()));
+	        }
+	        
+	        str = d.readLine().trim();
+	        if(!str.startsWith("---")) {
+	        	return false;
+	        }
+	        
+	        
+	        
+	        str = d.readLine().trim();
+	        if(!str.equals("T1 preset Level:Window")) {
+	        	return false;
+	        }
+	        
+	        str = d.readLine().trim();
+	        if(!str.equals("")) {
+	        	return false;
+	        }
+	        
+	        str = d.readLine().trim();
+	        String[] strs = str.split(":");
+	        if(strs.length != 2) {
+	        	return false;
+	        }
+	        t1LevelPreset = Float.parseFloat(strs[0]);
+	        t1WindowPreset = Float.parseFloat(strs[1]);
+	        
+	        str = d.readLine().trim();
+	        if(!str.startsWith("---")) {
+	        	return false;
+	        }
+	        
+	        
+	        
+	        str = d.readLine().trim();
+	        if(!str.equals("T2 preset Level:Window")) {
+	        	return false;
+	        }
+	        
+	        str = d.readLine().trim();
+	        if(!str.equals("")) {
+	        	return false;
+	        }
+	        
+	        str = d.readLine().trim();
+	        strs = str.split(":");
+	        if(strs.length != 2) {
+	        	return false;
+	        }
+	        t2LevelPreset = Float.parseFloat(strs[0]);
+	        t2WindowPreset = Float.parseFloat(strs[1]);
+	        
+	        str = d.readLine().trim();
+	        if(!str.startsWith("---")) {
+	        	return false;
+	        }
+	        
+	        
+	        
+	        
+	        
+	        str = d.readLine().trim();
+	        if(!str.equals("PD preset Level:Window")) {
+	        	return false;
+	        }
+	        
+	        str = d.readLine().trim();
+	        if(!str.equals("")) {
+	        	return false;
+	        }
+	        
+	        str = d.readLine().trim();
+	        strs = str.split(":");
+	        if(strs.length != 2) {
+	        	return false;
+	        }
+	        pdLevelPreset = Float.parseFloat(strs[0]);
+	        pdWindowPreset = Float.parseFloat(strs[1]);
+	        
+	        str = d.readLine().trim();
+	        if(!str.startsWith("---")) {
+	        	return false;
+	        }
+	        
+	        
+	        str = d.readLine().trim();
+	        if(!str.equals("Images")) {
+	        	return false;
+	        }
+	        
+	        str = d.readLine().trim();
+	        if(!str.equals("")) {
+	        	return false;
+	        }
+	        
 	        for(int i=0;i<numAgeTicks;i++) {
 	        	str = d.readLine().trim();
 	        	str = str.replace("\\", File.separator);
@@ -492,8 +627,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         saveButton = toolbarBuilder.buildButton("Save", "Save screenshot of image", "camera");
         winLevelButton = toolbarBuilder.buildButton("WinLevel", "Window/Level", "winlevel");
         resetButton = toolbarBuilder.buildButton("resetLUT","Reset LUTs of all images in current modality","resetlut");
-        lutButton = toolbarBuilder.buildButton("copyLUT", "Apply LUT of current image to all images in current modailty", "histolut");
+        presetButton = toolbarBuilder.buildButton("presetLUT","Reload Preset-LUTs in current modality","presetlut");
+        lutButton = toolbarBuilder.buildButton("copyLUT", "Copy LUT of current image to all images in current modailty", "copylut");
         resetButton.setEnabled(false);
+        presetButton.setEnabled(false);
         
         JButton separator = new JButton(MipavUtil.getIcon("separator.gif"));
         separator.setMargin(new Insets(0, 0, 0, 0));
@@ -535,8 +672,11 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         toolbarPanel.add(resetButton, gbc);
         gbc.gridx = 8;
         gbc.gridy = 0;
-        toolbarPanel.add(lutButton, gbc);
+        toolbarPanel.add(presetButton, gbc);
         gbc.gridx = 9;
+        gbc.gridy = 0;
+        toolbarPanel.add(lutButton, gbc);
+        gbc.gridx = 10;
         toolbarPanel.add(infoLabel,gbc);
         
         gbc.anchor = GridBagConstraints.CENTER;
@@ -1094,9 +1234,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			
 			//currentComponentImage.repaint();
 			//repaint();
+		}else if(command.equals("presetLUT")) {
+			loadPresetLUTS() ;
 		}else if(command.equals("axial")) {
 			if(!currentOrientation.equals(AXIAL)) {
 				resetButton.setEnabled(false);
+				presetButton.setEnabled(false);
 		        lutButton.setEnabled(false);
 				nullifyStructures();
 				if(t1.isAlive()) {
@@ -1139,6 +1282,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}else if(command.equals("coronal")) {
 			if(!currentOrientation.equals(CORONAL)) {
 				resetButton.setEnabled(false);
+				presetButton.setEnabled(false);
 		        lutButton.setEnabled(false);
 				nullifyStructures();
 				if(t1.isAlive()) {
@@ -1184,6 +1328,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}else if(command.equals("sagittal")) {
 			if(!currentOrientation.equals(SAGITTAL)) {
 				resetButton.setEnabled(false);
+				presetButton.setEnabled(false);
 		        lutButton.setEnabled(false);
 				nullifyStructures();
 				if(t1.isAlive()) {
@@ -1247,6 +1392,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 							img.registerVOI(vois[k]);
 							
 				        }
+
+						
 	
 						img.notifyImageDisplayListeners();
 						
@@ -1566,6 +1713,118 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			}
 		}
 	}
+	
+	
+	public void loadPresetLUTS() {
+		if(currentModality.equals(T1)) {
+			 for(int i=0;i<t1AtlasImages.length;i++) {
+			    	float fLevel = t1LevelPreset;
+			    	float fWindow = t1WindowPreset;
+			    	float fMinImageWin = (float)t1AtlasImages[i].getMin();
+			    	
+			        float fMaxImageWin = (float)t1AtlasImages[i].getMax();
+			        
+			        m_afXWin[2] = fLevel + (fWindow / 2.0f);
+			         m_afXWin[1] = fLevel - (fWindow / 2.0f);
+			         m_afYWin[2] = m_afYWin[3];
+			         m_afYWin[1] = m_afYWin[0];
+
+			         if (m_afXWin[2] > fMaxImageWin) {
+			             m_afYWin[2] = 255.0f * (m_afXWin[2] - fMaxImageWin) / fWindow;
+
+			             if (m_afYWin[2] > 255.0f) {
+			                 m_afYWin[2] = 255.0f;
+			             }
+			             m_afXWin[2] = fMaxImageWin;
+			         }
+
+			         if (m_afXWin[1] < fMinImageWin) {
+			             m_afYWin[1] = 255.0f - (255.0f * (fMinImageWin - m_afXWin[1]) / fWindow);
+
+			             if (m_afYWin[1] < 0.0f) {
+			                 m_afYWin[1] = 0.0f;
+			             }
+			             m_afXWin[1] = fMinImageWin;
+			         }
+
+			         t1ComponentImages[i].getActiveLUT().getTransferFunction().importArrays( m_afXWin, m_afYWin, 4 );
+			         t1AtlasImages[i].notifyImageDisplayListeners( t1ComponentImages[i].getActiveLUT(), true );
+			    }
+		}else if(currentModality.equals(T2)) {
+			for(int i=0;i<t2AtlasImages.length;i++) {
+		    	float fLevel = t2LevelPreset;
+		    	float fWindow = t2WindowPreset;
+		    	float fMinImageWin = (float)t2AtlasImages[i].getMin();
+		    	
+		        float fMaxImageWin = (float)t2AtlasImages[i].getMax();
+		        
+		        m_afXWin[2] = fLevel + (fWindow / 2.0f);
+		         m_afXWin[1] = fLevel - (fWindow / 2.0f);
+		         m_afYWin[2] = m_afYWin[3];
+		         m_afYWin[1] = m_afYWin[0];
+
+		         if (m_afXWin[2] > fMaxImageWin) {
+		             m_afYWin[2] = 255.0f * (m_afXWin[2] - fMaxImageWin) / fWindow;
+
+		             if (m_afYWin[2] > 255.0f) {
+		                 m_afYWin[2] = 255.0f;
+		             }
+		             m_afXWin[2] = fMaxImageWin;
+		         }
+
+		         if (m_afXWin[1] < fMinImageWin) {
+		             m_afYWin[1] = 255.0f - (255.0f * (fMinImageWin - m_afXWin[1]) / fWindow);
+
+		             if (m_afYWin[1] < 0.0f) {
+		                 m_afYWin[1] = 0.0f;
+		             }
+		             m_afXWin[1] = fMinImageWin;
+		         }
+		    	
+		         
+		         t2ComponentImages[i].getActiveLUT().getTransferFunction().importArrays( m_afXWin, m_afYWin, 4 );
+		         t2AtlasImages[i].notifyImageDisplayListeners( t2ComponentImages[i].getActiveLUT(), true );
+		    }
+		}else if(currentModality.equals(PD)) {
+		    for(int i=0;i<pdAtlasImages.length;i++) {
+		    	float fLevel = pdLevelPreset;
+		    	float fWindow = pdWindowPreset;
+		    	float fMinImageWin = (float)pdAtlasImages[i].getMin();
+		    	
+		        float fMaxImageWin = (float)pdAtlasImages[i].getMax();
+		        
+		        m_afXWin[2] = fLevel + (fWindow / 2.0f);
+		         m_afXWin[1] = fLevel - (fWindow / 2.0f);
+		         m_afYWin[2] = m_afYWin[3];
+		         m_afYWin[1] = m_afYWin[0];
+
+		         if (m_afXWin[2] > fMaxImageWin) {
+		             m_afYWin[2] = 255.0f * (m_afXWin[2] - fMaxImageWin) / fWindow;
+
+		             if (m_afYWin[2] > 255.0f) {
+		                 m_afYWin[2] = 255.0f;
+		             }
+		             m_afXWin[2] = fMaxImageWin;
+		         }
+
+		         if (m_afXWin[1] < fMinImageWin) {
+		             m_afYWin[1] = 255.0f - (255.0f * (fMinImageWin - m_afXWin[1]) / fWindow);
+
+		             if (m_afYWin[1] < 0.0f) {
+		                 m_afYWin[1] = 0.0f;
+		             }
+		             m_afXWin[1] = fMinImageWin;
+		         }
+		    	
+		         
+		         pdComponentImages[i].getActiveLUT().getTransferFunction().importArrays( m_afXWin, m_afYWin, 4 );
+		         pdAtlasImages[i].notifyImageDisplayListeners( pdComponentImages[i].getActiveLUT(), true );
+		    }
+		}
+	}
+	
+	
+	
 
     /**
      * sets image zoom to 1
@@ -2074,14 +2333,17 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			populateModelImages(orient);
 			if(isInterrupted()) {
 				resetButton.setEnabled(false);
+				presetButton.setEnabled(false);
 				lutButton.setEnabled(false);
 			}else {
 				resetButton.setEnabled(true);
+				presetButton.setEnabled(true);
 				lutButton.setEnabled(true);
 			}
 			long endTime = System.currentTimeMillis();
 	        long diffTime = endTime - begTime;
 	        float seconds = ((float) diffTime) / 1000;
+	        //loadPresetLUTS();
 	        System.out.println("**Loading images took " + seconds + " seconds \n");
 		}
 		
@@ -2094,6 +2356,57 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			        comp.setVOIManager(voiManager.getVOIManager(0));
 			 	}
 		    }
+		 
+		 
+		 public void loadPresetLUT(ModelImage img, ViewJComponentPedsAtlasImage comp, String modality ) {
+			 
+			 float fLevel = 0;
+			 float fWindow = 0;
+		     
+		     if(modality.equals("t1")) {
+		    	 fLevel = t1LevelPreset;
+			     fWindow = t1WindowPreset;
+		     }else if(modality.equals("t2")) {
+		    	 fLevel = t2LevelPreset;
+			     fWindow = t2WindowPreset;
+		     }else if(modality.equals("pd")) {
+		    	 fLevel = pdLevelPreset;
+			     fWindow = pdWindowPreset;
+		     }
+		     
+		     
+		    	float fMinImageWin = (float)img.getMin();
+		    	
+		        float fMaxImageWin = (float)img.getMax();
+		        
+		        m_afXWin[2] = fLevel + (fWindow / 2.0f);
+		         m_afXWin[1] = fLevel - (fWindow / 2.0f);
+		         m_afYWin[2] = m_afYWin[3];
+		         m_afYWin[1] = m_afYWin[0];
+
+		         if (m_afXWin[2] > fMaxImageWin) {
+		             m_afYWin[2] = 255.0f * (m_afXWin[2] - fMaxImageWin) / fWindow;
+
+		             if (m_afYWin[2] > 255.0f) {
+		                 m_afYWin[2] = 255.0f;
+		             }
+		             m_afXWin[2] = fMaxImageWin;
+		         }
+
+		         if (m_afXWin[1] < fMinImageWin) {
+		             m_afYWin[1] = 255.0f - (255.0f * (fMinImageWin - m_afXWin[1]) / fWindow);
+
+		             if (m_afYWin[1] < 0.0f) {
+		                 m_afYWin[1] = 0.0f;
+		             }
+		             m_afXWin[1] = fMinImageWin;
+		         }
+
+		         comp.getActiveLUT().getTransferFunction().importArrays( m_afXWin, m_afYWin, 4 );
+		         img.notifyImageDisplayListeners( comp.getActiveLUT(), true );
+		         
+		         
+		 }
 		
 		
 		public void populateModelImages(String orient) {
@@ -2188,9 +2501,16 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL, T1);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t1AtlasImages[i], comp, "t1");
 				initVOI(t1AtlasImages[i],comp);
 				setT1ComponentImage(comp,i);
 			}
@@ -2212,9 +2532,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL, T1);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t1AtlasImages[i], comp, "t1");
 				initVOI(t1AtlasImages[i],comp);
 				setT1ComponentImage(comp,i);
 			}
@@ -2244,9 +2570,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL, T2);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t2AtlasImages[i], comp, "t2");
 				initVOI(t2AtlasImages[i],comp);
 				setT2ComponentImage(comp,i);
 			}
@@ -2268,9 +2600,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.AXIAL, T2);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t2AtlasImages[i], comp, "t2");
 				initVOI(t2AtlasImages[i],comp);
 				setT2ComponentImage(comp,i);
 			}
@@ -2295,9 +2633,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.AXIAL, PD);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(pdAtlasImages[i], comp, "pd");
 				initVOI(pdAtlasImages[i],comp);
 				setPDComponentImage(comp,i);
 			}
@@ -2319,9 +2663,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.AXIAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.AXIAL, PD);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(pdAtlasImages[i], comp, "pd");
 				initVOI(pdAtlasImages[i],comp);
 				setPDComponentImage(comp,i);
 			}
@@ -2395,9 +2745,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL, T1);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t1AtlasImages[i], comp, "t1");
 				initVOI(t1AtlasImages[i],comp);
 				setT1ComponentImage(comp,i);
 				//notify();
@@ -2426,9 +2782,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL, T1);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t1AtlasImages[i], comp, "t1");
 				initVOI(t1AtlasImages[i],comp);
 				setT1ComponentImage(comp,i);
 				//notify();
@@ -2454,9 +2816,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL, T2);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t2AtlasImages[i], comp, "t2");
 				initVOI(t2AtlasImages[i],comp);
 				setT2ComponentImage(comp,i);
 			}
@@ -2478,9 +2846,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.CORONAL, T2);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t2AtlasImages[i], comp, "t2");
 				initVOI(t2AtlasImages[i],comp);
 				setT2ComponentImage(comp,i);
 			}
@@ -2505,9 +2879,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.CORONAL, PD);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(pdAtlasImages[i], comp, "pd");
 				initVOI(pdAtlasImages[i],comp);
 				setPDComponentImage(comp,i);
 			}
@@ -2529,9 +2909,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.CORONAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.CORONAL, PD);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(pdAtlasImages[i], comp, "pd");
 				initVOI(pdAtlasImages[i],comp);
 				setPDComponentImage(comp,i);
 			}
@@ -2610,9 +2996,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL, T1);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t1AtlasImages[i], comp, "t1");
 				initVOI(t1AtlasImages[i],comp);
 				setT1ComponentImage(comp,i);
 				//notify();
@@ -2635,9 +3027,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t1AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t1AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t1AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t1AtlasImages[i], null, imageBuffer, pixBuffer, 1, t1AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL, T1);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t1AtlasImages[i], comp, "t1");
 				initVOI(t1AtlasImages[i],comp);
 				setT1ComponentImage(comp,i);
 				//notify();
@@ -2665,9 +3063,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL, T2);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t2AtlasImages[i], comp, "t2");
 				initVOI(t2AtlasImages[i],comp);
 				setT2ComponentImage(comp,i);
 			}
@@ -2689,9 +3093,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t2AtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(t2AtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(t2AtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, t2AtlasImages[i], null, imageBuffer, pixBuffer, 1, t2AtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL, T2);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(t2AtlasImages[i], comp, "t2");
 				initVOI(t2AtlasImages[i],comp);
 				setT2ComponentImage(comp,i);
 			}
@@ -2718,9 +3128,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL, PD);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(pdAtlasImages[i], comp, "pd");
 				initVOI(pdAtlasImages[i],comp);
 				setPDComponentImage(comp,i);
 			}
@@ -2742,9 +3158,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				pdAtlasImages[i].addImageDisplayListener(owner);
 				float[] imageBuffer = initImageBuffer(pdAtlasImages[i].getExtents(), true);
 				int[] pixBuffer = initPixelBuffer(pdAtlasImages[i].getExtents());
-				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL);
+				ViewJComponentPedsAtlasImage comp = new ViewJComponentPedsAtlasImage(owner, pdAtlasImages[i], null, imageBuffer, pixBuffer, 1, pdAtlasImages[i].getExtents(), false, FileInfoBase.SAGITTAL, PD);
 				comp.addMouseWheelListener(owner);
 				comp.setBuffers(imageBuffer, null, pixBuffer, null);
+				int[] dimExtentsLUT = new int[2];
+	            dimExtentsLUT[0] = 4;
+	            dimExtentsLUT[1] = 256;
+	            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+				comp.setLUTa(LUT);
+				loadPresetLUT(pdAtlasImages[i], comp, "pd");
 				initVOI(pdAtlasImages[i],comp);
 				setPDComponentImage(comp,i);
 			}
