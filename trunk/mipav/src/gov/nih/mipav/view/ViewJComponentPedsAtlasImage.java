@@ -7,17 +7,27 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIPoint;
+import gov.nih.mipav.model.structures.VOIVector;
 
 public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
+	
+	String modality;
 
 	public ViewJComponentPedsAtlasImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
-            int[] pixelBuffer, float zoom, int[] extents, boolean logMagDisplay, int _orientation) {
+            int[] pixelBuffer, float zoom, int[] extents, boolean logMagDisplay, int _orientation, String modality) {
 
         super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay,
                 _orientation);
+        
+        this.modality = modality;
         interpMode = ViewJComponentBase.INTERPOLATE_A;
 
 
@@ -95,6 +105,14 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
      */
     public void mouseClicked(MouseEvent mouseEvent) {
 
+    	
+    	
+         
+
+		
+		
+		
+    	
     }
     
     
@@ -162,6 +180,9 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
         if ( (xS < 0) || (xS >= xDim) || (yS < 0) || (yS >= yDim)) {
             return;
         }
+        
+        
+       
 
         processDefaultMouseDrag(mouseEvent, xS, yS);
 
@@ -192,7 +213,79 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
      * mouse pressed
      */
     public void mousePressed(MouseEvent mouseEvent) {
+    	/*if(mouseEvent.getButton() == MouseEvent.BUTTON3	) {
+    		System.out.println("right mouse pressed");
+    		
+    		String name = "";
+    		String label = "";
+    		
+    		if(modality.equals("t1")) {
+    			name = "T1";
+    			label = "T1";
+    		}else if(modality.equals("t2")) {
+    			name = "T2";
+    			label = "T2";
+    		}else if(modality.equals("pd")) {
+    			name = "PD";
+    			label = "PD";
+    		}
+    			
+    			
+    		
+    		VOI newPtVOI = null;
+            final float[] x = new float[1];
+            final float[] y = new float[1];
+            final float[] z = new float[1];
 
+            // STANDARD COLUMN IMAGE
+            
+            
+            newPtVOI = new VOI((short) 0, name, VOI.POINT, -1.0f);
+            newPtVOI.setUID(newPtVOI.hashCode());
+            newPtVOI.setColor(Color.white);
+           
+            x[0] = 20;
+   	     	y[0] = 20;
+   	     	z[0] = slice;
+   	     	
+   	     	
+   	     if(modality.equals("t1")) {
+   	    	x[0] = 170;
+   	     	y[0] = 150;
+   	     	z[0] = slice;
+ 		}else if(modality.equals("t2")) {
+ 			x[0] = 170;
+   	     	y[0] = 170;
+   	     	z[0] = slice;
+ 		}else if(modality.equals("pd")) {
+ 			x[0] = 170;
+   	     	y[0] = 210;
+   	     	z[0] = slice;
+ 		}
+   	     	
+   	     	VOIBase curve = new VOIPoint();
+   	     	curve.importArrays(x, y, z, x.length);
+   	     	curve.setLabel(label);
+   	     
+   	     	newPtVOI.importCurve(curve);
+
+            
+            imageActive.registerVOI(newPtVOI);
+            
+            imageActive.notifyImageDisplayListeners();
+            
+            
+            try {
+   			 this.setDrawVOIs(true);
+   	         this.paintComponent(this.getGraphics());
+   	        } catch (final OutOfMemoryError error) {
+   	            System.gc();
+   	        }
+   	        this.getFrame().repaint();
+   	    
+   	    
+   	    
+    	}*/
     }
 
     /**
@@ -206,7 +299,32 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
      * mouse released
      */
     public void mouseReleased(MouseEvent mouseEvent) {
-
+    	/*if(mouseEvent.getButton() == MouseEvent.BUTTON3) {
+    		System.out.println("right mouse released");
+    		VOIVector vois = imageActive.getVOIs();
+    		for(int i=0;i<vois.size();i++) {
+    			VOI voi = vois.get(i);
+    			if(voi.getName().equals("T1") || voi.getName().equals("T2") || voi.getName().equals("PD")) {
+    				vois.remove(i);
+    				
+    			}
+    				
+    			
+    		}
+    		
+    		imageActive.notifyImageDisplayListeners();
+            
+            
+            try {
+   			 this.setDrawVOIs(true);
+   	         this.paintComponent(this.getGraphics());
+   	        } catch (final OutOfMemoryError error) {
+   	            System.gc();
+   	        }
+   	        this.getFrame().repaint();
+    		
+    		
+    	}*/
     }
 
     /**

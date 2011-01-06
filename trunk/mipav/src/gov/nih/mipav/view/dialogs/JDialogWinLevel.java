@@ -260,7 +260,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                 min = dataSlice[i];
             }
         }
-
+System.out.println("b");
         // Set LUT min max values of the image slice !!
         x[0] = minImage;
         y[0] = 255;
