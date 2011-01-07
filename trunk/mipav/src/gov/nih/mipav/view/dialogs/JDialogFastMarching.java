@@ -8,6 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
 import gov.nih.mipav.model.scripting.parameters.ParameterFloat;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterInt;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
@@ -420,7 +421,14 @@ public class JDialogFastMarching extends JDialogScriptableBase implements Action
 
 	@Override
 	public ParameterTable createOutputParameters() {
-		return null;
+        final ParameterTable table = new ParameterTable();
+        try {
+        	table.put(new ParameterImage("resultImage"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+        return table;
 	}
 
 	@Override
