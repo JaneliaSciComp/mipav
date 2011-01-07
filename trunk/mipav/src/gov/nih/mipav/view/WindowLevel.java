@@ -132,6 +132,10 @@ public class WindowLevel
             } else if ( fLevel < fMinImageWin) {
                 fLevel = fMinImageWin;
             }
+            
+            
+            //System.out.println("flevel is " + fLevel);
+            //System.out.println("fwindow is " + fWindow); 
 
             /* The new x positions, and y positions of the middle points on
              * the transfer line: */
