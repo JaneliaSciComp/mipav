@@ -216,25 +216,48 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
      * mouse pressed
      */
     public void mousePressed(MouseEvent mouseEvent) {
-    	float fMinImageWin = (float)imageActive.getMin();
-        float fMaxImageWin = (float)imageActive.getMax();
-        float fX = 0;
-        
-    	//fWindow = 2.0f * fX * (fMaxImageWin - fMinImageWin)
-    	
-    	
-    	if(modality.equals("t1")) {
-    		 
- 		}else if(modality.equals("t2")) {
 
- 		}else if(modality.equals("pd")) {
- 
- 		}
-    	
-    	
-    	/*if(mouseEvent.getButton() == MouseEvent.BUTTON3	) {
-    		System.out.println("right mouse pressed");
+        
+        
+    	if(mouseEvent.getButton() == MouseEvent.BUTTON3	) {
+
+    		float fMinImageWin = (float)imageActive.getMin();
+	        float fMaxImageWin = (float)imageActive.getMax();
+	        float fX = 0;
+	        float fY = 0;
+	    	//fWindow = 2.0f * fX * (fMaxImageWin - fMinImageWin)
+	        //fLevel = fY * (fMaxImageWin - fMinImageWin);
+	    	
+	    	if(modality.equals("t1")) {
+	    		fX = PlugInDialogPedsAtlas.t1WindowPreset/(2.0f*(fMaxImageWin-fMinImageWin));
+	    		fY = PlugInDialogPedsAtlas.t1LevelPreset/((fMaxImageWin-fMinImageWin));
+	 		}else if(modality.equals("t2")) {
+	 			fX = PlugInDialogPedsAtlas.t2WindowPreset/(2.0f*(fMaxImageWin-fMinImageWin));
+	    		fY = PlugInDialogPedsAtlas.t2LevelPreset/((fMaxImageWin-fMinImageWin));
+	 		}else if(modality.equals("pd")) {
+	 			fX = PlugInDialogPedsAtlas.pdWindowPreset/(2.0f*(fMaxImageWin-fMinImageWin));
+	    		fY = PlugInDialogPedsAtlas.pdLevelPreset/((fMaxImageWin-fMinImageWin));
+	 		}
+	    	
+	    	int xDim = imageActive.getExtents()[0];
+	        int yDim = imageActive.getExtents()[1];
+	        
+	        int xS, yS;
+	        
+	        xS = (int) (xDim * fX);
+	        yS = (int) (yDim * fY);
+	
+	        //System.out.println(xS);
+	        //System.out.println(yS);
     		
+    		
+    		float xVal = xDim - xS;
+    		float yVal = yS;
+    		
+    		//System.out.println("xVal is " + xVal);
+    		//System.out.println("yVal is " + yVal);
+    		//System.out.println("--------------");
+
     		String name = "";
     		String label = "";
     		
@@ -269,16 +292,16 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
    	     	
    	     	
    	     if(modality.equals("t1")) {
-   	    	x[0] = 170;
-   	     	y[0] = 150;
+   	    	x[0] = xVal;
+   	     	y[0] = yVal;
    	     	z[0] = slice;
  		}else if(modality.equals("t2")) {
- 			x[0] = 170;
-   	     	y[0] = 170;
+ 			x[0] = xVal;
+   	     	y[0] = yVal;
    	     	z[0] = slice;
  		}else if(modality.equals("pd")) {
- 			x[0] = 170;
-   	     	y[0] = 210;
+ 			x[0] = xVal;
+   	     	y[0] = yVal;
    	     	z[0] = slice;
  		}
    	     	
@@ -304,7 +327,7 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
    	    
    	    
    	    
-    	}*/
+    	}
     }
 
     /**
@@ -318,8 +341,7 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
      * mouse released
      */
     public void mouseReleased(MouseEvent mouseEvent) {
-    	/*if(mouseEvent.getButton() == MouseEvent.BUTTON3) {
-    		System.out.println("right mouse released");
+    	if(mouseEvent.getButton() == MouseEvent.BUTTON3) {
     		VOIVector vois = imageActive.getVOIs();
     		for(int i=0;i<vois.size();i++) {
     			VOI voi = vois.get(i);
@@ -343,7 +365,7 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
    	        this.getFrame().repaint();
     		
     		
-    	}*/
+    	}
     }
 
     /**
