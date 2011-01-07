@@ -9,6 +9,7 @@ import java.awt.event.MouseWheelEvent;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -23,6 +24,7 @@ import gov.nih.mipav.view.ViewJFrameBase;
 public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
 	
 	String modality;
+	int orient;
 
 	public ViewJComponentPedsAtlasImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
             int[] pixelBuffer, float zoom, int[] extents, boolean logMagDisplay, int _orientation, String modality) {
@@ -31,6 +33,7 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
                 _orientation);
         
         this.modality = modality;
+        this.orient = _orientation;
         interpMode = ViewJComponentBase.INTERPOLATE_A;
 
 
@@ -253,6 +256,10 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
     		
     		float xVal = xDim - xS;
     		float yVal = yS;
+    		
+    		if(orient == FileInfoBase.SAGITTAL) {
+    			xVal = xS;
+    		}
     		
     		//System.out.println("xVal is " + xVal);
     		//System.out.println("yVal is " + yVal);
