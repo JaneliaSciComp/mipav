@@ -429,6 +429,16 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	        t1LevelPreset = Float.parseFloat(strs[0]);
 	        t1WindowPreset = Float.parseFloat(strs[1]);
 	        
+	        
+	        if(t1LevelPreset < 0  || t1LevelPreset > 255) {
+	        	MipavUtil.displayError("Invalid T1 Level value....must be between 0 and 255");
+	        	return false;
+	        }
+	        if(t1WindowPreset < 0  || t1WindowPreset > 510) {
+	        	MipavUtil.displayError("Invalid T1 Window value....must be between 0 and 510");
+	        	return false;
+	        }
+	        
 	        str = d.readLine().trim();
 	        if(!str.startsWith("---")) {
 	        	return false;
@@ -453,6 +463,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	        }
 	        t2LevelPreset = Float.parseFloat(strs[0]);
 	        t2WindowPreset = Float.parseFloat(strs[1]);
+	        
+	        if(t2LevelPreset < 0  || t2LevelPreset > 255) {
+	        	MipavUtil.displayError("Invalid T2 Level value....must be between 0 and 255");
+	        	return false;
+	        }
+	        if(t2WindowPreset < 0  || t2WindowPreset > 510) {
+	        	MipavUtil.displayError("Invalid T2 Window value....must be between 0 and 510");
+	        	return false;
+	        }
 	        
 	        str = d.readLine().trim();
 	        if(!str.startsWith("---")) {
@@ -480,6 +499,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	        }
 	        pdLevelPreset = Float.parseFloat(strs[0]);
 	        pdWindowPreset = Float.parseFloat(strs[1]);
+	        
+	        if(pdLevelPreset < 0  || pdLevelPreset > 255) {
+	        	MipavUtil.displayError("Invalid PD Level value....must be between 0 and 255");
+	        	return false;
+	        }
+	        if(pdWindowPreset < 0  || pdWindowPreset > 510) {
+	        	MipavUtil.displayError("Invalid PD Window value....must be between 0 and 510");
+	        	return false;
+	        }
 	        
 	        str = d.readLine().trim();
 	        if(!str.startsWith("---")) {
@@ -1541,9 +1569,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
             
             fileIO.writeImage(screenCaptureImage, opts);
             
-            System.out.println("here");
-            
-            
+
             //new ViewJFrameImage(screenCaptureImage);
 
             
