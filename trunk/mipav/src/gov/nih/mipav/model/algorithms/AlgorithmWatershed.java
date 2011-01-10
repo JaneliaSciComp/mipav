@@ -1502,7 +1502,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                     for (int cons = 0; cons < contours.size(); cons++) {
                         ((VOIContour) (contours.elementAt(cons))).getBounds(xB, yB, zB);
 
-                        for (z = (int) zB[0]; z < zB[1]; z++) {
+                        for (z = (int) zB[0]; z <= zB[1]; z++) {
                             for (y = (int) yB[0]; y < yB[1]; y++) {
 
                                 for (x = (int) xB[0]; x < xB[1]; x++) {
