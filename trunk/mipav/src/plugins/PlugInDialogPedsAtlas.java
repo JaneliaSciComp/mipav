@@ -653,9 +653,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         zoomOneButton = toolbarBuilder.buildButton("ZoomOne", "Magnify Image 1.0x", "zoom1");
         saveButton = toolbarBuilder.buildButton("Save", "Save screenshot of image", "camera");
         winLevelButton = toolbarBuilder.buildButton("WinLevel", "Window/Level", "winlevel");
-        resetButton = toolbarBuilder.buildButton("resetLUT","Reset LUTs of all images in current modality","resetlut");
-        presetButton = toolbarBuilder.buildButton("presetLUT","Reload Preset-LUTs in current modality","presetlut");
-        lutButton = toolbarBuilder.buildButton("copyLUT", "Copy LUT of current image to all images in current modailty", "copylut");
+        resetButton = toolbarBuilder.buildButton("resetLUT","Reset LUTs of all images in current modality","histolutReset");
+        presetButton = toolbarBuilder.buildButton("presetLUT","Reload Preset-LUTs in current modality","histolut");
+        lutButton = toolbarBuilder.buildButton("copyLUT", "Copy LUT of current image to all images in current modailty", "histolutCopy");
         resetButton.setEnabled(false);
         presetButton.setEnabled(false);
         
