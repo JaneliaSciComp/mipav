@@ -4480,16 +4480,16 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 switch(Preferences.getComplexDisplay()) {
                 case APLUSBI:
                     str.append("  Intensity:  ").append(imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS)]).append(" + ").append(
-                            imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS+1)]).append("*i");
+                            imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS) + 1]).append("*i");
                     break;
                 case REITHETA:
                     double a = imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS)];
-                    double b = imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS+1)];
+                    double b = imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS) + 1];
                     double r = Math.sqrt(a*a + b*b);
                     double theta = -Math.atan(b/a);
                     str.append("  Intensity:  ").append(r).append(" * e^(i*").append(theta).append(")");
                     break;
-                case MAGNITUDE:
+                case MAGNITUDE: //TODO: this displays differentg values depending on display preferences at time of image loading
                 default:
                     str.append("  Intensity:  ").append(String.valueOf(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS]));
                 }
