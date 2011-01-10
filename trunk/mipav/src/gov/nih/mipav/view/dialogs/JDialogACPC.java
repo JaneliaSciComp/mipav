@@ -88,10 +88,22 @@ public class JDialogACPC extends JDialogBase {
 				if ( (image.getExtents()[0]==transf.getOrigDim()[0]) && (image.getExtents()[1]==transf.getOrigDim()[1]) && (image.getExtents()[2]==transf.getOrigDim()[2]) ) {				
 					// set the points for AC, PC, mid sagittal
 					Vector3f ac = transf.getOrigAC();
+					if (ac ==  null) {
+						Preferences.debug("Talairach transform info does not have anterior comissure in original space\n");
+					}
 					Vector3f pc = transf.getOrigPC();
+					if (pc == null) {
+						Preferences.debug("Talairach transform info does not have posterior comissure in original space\n");
+					}
 					float[][] rot = transf.getOrigOrient();
+					if (rot == null) {
+						Preferences.debug("Talairach transform info does not have ACPC orientation in original image\n");
+					}
 					float acpcRes = transf.getAcpcRes();
 					float[] origRes = transf.getOrigRes();
+					if (origRes == null) {
+						Preferences.debug("Talairach transform info does not have original image voxel resolutions\n");
+					}
 					if ((ac != null) && (pc != null) && (rot != null) && (origRes != null)) {
 						haveACPCInfo = true;
 					
@@ -131,7 +143,16 @@ public class JDialogACPC extends JDialogBase {
 						((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.ANOTHER_PT,pt);
 					}
 				}
+				else {
+					Preferences.debug("Talairach transform dimensions do not match image dimensions\n");
+				}
+			} // if (transf.isAcpc())
+			else {
+				Preferences.debug("Talairach transform info does not have data to compute orig to acpc\n");
 			}
+		} // if (image.getTalairachTransformInfo()!=null)
+		else {
+			Preferences.debug("image.getTalairachTransformInfo() is null\n");
 		}
 		
 		if ((!haveACPCInfo) && (image.getFileInfo()[0] instanceof FileInfoAfni)) {
