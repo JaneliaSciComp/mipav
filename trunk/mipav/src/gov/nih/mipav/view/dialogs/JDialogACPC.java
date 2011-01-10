@@ -77,6 +77,7 @@ public class JDialogACPC extends JDialogBase {
         voxelLength = 1;
 		interpolation = interp;
         init();
+        boolean haveACPCInfo = false;
 		
 		// check for the transform info
 		if (image.getTalairachTransformInfo()!=null) {
@@ -91,42 +92,79 @@ public class JDialogACPC extends JDialogBase {
 					float[][] rot = transf.getOrigOrient();
 					float acpcRes = transf.getAcpcRes();
 					float[] origRes = transf.getOrigRes();
+					if ((ac != null) && (pc != null) && (rot != null) && (origRes != null)) {
+						haveACPCInfo = true;
 					
-					pt.X = ac.X - origRes[0]*rot[1][0]/origRes[0]*acpcRes;
-					pt.Y = ac.Y - origRes[1]*rot[1][1]/origRes[1]*acpcRes;
-					pt.Z = ac.Z - origRes[2]*rot[1][2]/origRes[2]*acpcRes;
-					setSuperiorEdge(pt);
-					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACS");
-					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.SUPERIOR_EDGE,pt);
-					
-					pt.X = ac.X - origRes[0]*rot[2][0]/origRes[0]*acpcRes;
-					pt.Y = ac.Y - origRes[1]*rot[2][1]/origRes[1]*acpcRes;
-					pt.Z = ac.Z - origRes[2]*rot[2][2]/origRes[2]*acpcRes;
-					setPosteriorMargin(pt);
-					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACP");
-					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.POSTERIOR_MARGIN,pt);
-	
-					setInferiorEdge(pc);
-					pt.X = pc.X;
-					pt.Y = pc.Y;
-					pt.Z = pc.Z;
-					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("PC");
-					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.INFERIOR_EDGE,pt);
-					
-					pt.X = ac.X + 50*rot[2][0]/origRes[0]*acpcRes;
-					pt.Y = ac.Y + 50*rot[2][1]/origRes[1]*acpcRes;
-					pt.Z = ac.Z + 50*rot[2][2]/origRes[2]*acpcRes;
-					setFirstPt(pt);
-					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS1");
-					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.FIRST_PT,pt);
-					
-					pt.X = pc.X + 50*rot[2][0]/origRes[0]*acpcRes;
-					pt.Y = pc.Y + 50*rot[2][1]/origRes[1]*acpcRes;
-					pt.Z = pc.Z + 50*rot[2][2]/origRes[2]*acpcRes;
-					setAnotherPt(pt);
-					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS2");
-					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.ANOTHER_PT,pt);
+						pt.X = ac.X - origRes[0]*rot[1][0]/origRes[0]*acpcRes;
+						pt.Y = ac.Y - origRes[1]*rot[1][1]/origRes[1]*acpcRes;
+						pt.Z = ac.Z - origRes[2]*rot[1][2]/origRes[2]*acpcRes;
+						setSuperiorEdge(pt);
+						((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACS");
+						((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.SUPERIOR_EDGE,pt);
+						
+						pt.X = ac.X - origRes[0]*rot[2][0]/origRes[0]*acpcRes;
+						pt.Y = ac.Y - origRes[1]*rot[2][1]/origRes[1]*acpcRes;
+						pt.Z = ac.Z - origRes[2]*rot[2][2]/origRes[2]*acpcRes;
+						setPosteriorMargin(pt);
+						((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACP");
+						((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.POSTERIOR_MARGIN,pt);
+		
+						setInferiorEdge(pc);
+						pt.X = pc.X;
+						pt.Y = pc.Y;
+						pt.Z = pc.Z;
+						((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("PC");
+						((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.INFERIOR_EDGE,pt);
+						
+						pt.X = ac.X + 50*rot[2][0]/origRes[0]*acpcRes;
+						pt.Y = ac.Y + 50*rot[2][1]/origRes[1]*acpcRes;
+						pt.Z = ac.Z + 50*rot[2][2]/origRes[2]*acpcRes;
+						setFirstPt(pt);
+						((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS1");
+						((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.FIRST_PT,pt);
+						
+						pt.X = pc.X + 50*rot[2][0]/origRes[0]*acpcRes;
+						pt.Y = pc.Y + 50*rot[2][1]/origRes[1]*acpcRes;
+						pt.Z = pc.Z + 50*rot[2][2]/origRes[2]*acpcRes;
+						setAnotherPt(pt);
+						((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS2");
+						((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.ANOTHER_PT,pt);
+					}
 				}
+			}
+		}
+		
+		if ((!haveACPCInfo) && (image.getFileInfo()[0] instanceof FileInfoAfni)) {
+			FileInfoAfni fileInfoAfni = (FileInfoAfni)(image.getFileInfo()[0]);
+			Vector3f superiorEdgePt = fileInfoAfni.getSuperiorEdge();
+			if (superiorEdgePt != null) {
+				setSuperiorEdge(superiorEdgePt);
+				((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACS");
+				((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.SUPERIOR_EDGE,superiorEdgePt);
+			}
+			Vector3f posteriorMarginPt = fileInfoAfni.getPosteriorMargin();
+			if (posteriorMarginPt != null) {
+				setPosteriorMargin(posteriorMarginPt);
+				((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACP");
+				((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.POSTERIOR_MARGIN,posteriorMarginPt);	
+			}
+			Vector3f inferiorEdgePt = fileInfoAfni.getInferiorEdge();
+			if (inferiorEdgePt != null) {
+				setInferiorEdge(inferiorEdgePt);
+				((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("PC");
+				((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.INFERIOR_EDGE,inferiorEdgePt);
+			}
+			Vector3f firstPt = fileInfoAfni.getFirstPt();
+			if (firstPt != null) {
+				setFirstPt(firstPt);
+				((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS1");
+				((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.FIRST_PT,firstPt);	
+			}
+			Vector3f anotherPt = fileInfoAfni.getAnotherPt();
+			if (anotherPt != null) {
+				setAnotherPt(anotherPt);
+				((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS2");
+				((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.ANOTHER_PT,anotherPt);	
 			}
 		}
 		pack();
