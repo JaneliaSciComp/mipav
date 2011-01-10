@@ -1012,7 +1012,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                             ((VOIContour) (contours.elementAt(cons))).getBounds(xB, yB, zB);
 
                             Found:
-                                for (z = (int) zB[0]; z < zB[1]; z++) {
+                                for (z = (int) zB[0]; z <= zB[1]; z++) {
                                     for (y = (int) yB[0]; y < yB[1]; y++) {
 
                                         for (x = (int) xB[0]; x < xB[1]; x++) {
@@ -1023,18 +1023,21 @@ public class AlgorithmWatershed extends AlgorithmBase {
                                         }
                                     }
 
-                                    try {
-                                        seedVector.addElement(new Seed(new Vector3f(x, y, z),
-                                                VOIs.VOIAt(i).getWatershedID()));
-                                    } catch (OutOfMemoryError error) {
-                                        energyImage = null;
-                                        System.gc();
-                                        displayError("Watershed: unable to allocate enough memory");
-                                        setCompleted(false);
-
-                                        return;
-                                    }
+                                    
                                 }
+                            
+                            try {
+                            	
+                                seedVector.addElement(new Seed(new Vector3f(x, y, z),
+                                        VOIs.VOIAt(i).getWatershedID()));
+                            } catch (OutOfMemoryError error) {
+                                energyImage = null;
+                                System.gc();
+                                displayError("Watershed: unable to allocate enough memory");
+                                setCompleted(false);
+
+                                return;
+                            }
                         }
                     } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
                     else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
@@ -1073,7 +1076,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
             temp = i % imageLength;
 
-            if ((i < imageLength) || (i > lastImageIndex)) {
+            if ((i < imageLength) || (i >= lastImageIndex)) {
                 destImage.setShort(i, BOUNDARY);
             } else if (((temp % xDim) == 0) || ((temp % xDim) == (xDim - 1))) {
                 destImage.setShort(i, BOUNDARY);
@@ -1119,7 +1122,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                     for (int cons = 0; cons < contours.size(); cons++) {
                         ((VOIContour) (contours.elementAt(cons))).getBounds(xB, yB, zB);
 
-                        for (z = (int) zB[0]; (z < zB[1]) && !threadStopped; z++) {
+                        for (z = (int) zB[0]; (z <= zB[1]) && !threadStopped; z++) {
                             for (y = (int) yB[0]; (y < yB[1]) && !threadStopped; y++) {
 
                                 for (x = (int) xB[0]; (x < xB[1]) && !threadStopped; x++) {
@@ -1359,7 +1362,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
         // Free up some memory
         hQueue.dispose();
-        energyImage.disposeLocal();
+        //energyImage.disposeLocal();
 
         float[] imgBuffer;
 
@@ -1394,6 +1397,9 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
             return;
         }
+        
+        int dir;
+        float max;
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1409,25 +1415,54 @@ public class AlgorithmWatershed extends AlgorithmBase {
                 pixW = pixC - 1;
                 pixU = pixC - imageSize;
                 pixD = pixC + imageSize;
+                dir = -1;
+                max = 0;
 
-                if ((destImage.getShort(pixN) == 0) || (destImage.getShort(pixE) == 0) ||
-                        (destImage.getShort(pixS) == 0) || (destImage.getShort(pixW) == 0) ||
-                        (destImage.getShort(pixU) == 0) || (destImage.getShort(pixD) == 0)) {
-                    imgBuffer[i] = 0;
-                } else if (destImage.getShort(pixN) > 0) {
-                    imgBuffer[i] = destImage.getShort(pixN);
-                } else if (destImage.getShort(pixE) > 0) {
-                    imgBuffer[i] = destImage.getShort(pixE);
-                } else if (destImage.getShort(pixS) > 0) {
-                    imgBuffer[i] = destImage.getShort(pixS);
-                } else if (destImage.getShort(pixW) > 0) {
-                    imgBuffer[i] = destImage.getShort(pixW);
-                } else if (destImage.getShort(pixU) > 0) {
-                    imgBuffer[i] = destImage.getShort(pixU);
-                } else if (destImage.getShort(pixD) > 0) {
-                    imgBuffer[i] = destImage.getShort(pixD);
-                } else {
-                    imgBuffer[i] = 0;
+                if (destImage.getShort(pixN) > 0) {
+                	dir = 0;
+                	max = energyImage.getFloat(pixN);
+                }
+                if ((destImage.getShort(pixE) > 0) && (energyImage.getFloat(pixE) > max)) {
+                	dir = 1;
+                	max = energyImage.getFloat(pixE);
+                }
+                if ((destImage.getShort(pixS) > 0) && (energyImage.getFloat(pixS) > max)) {
+                	dir = 2;
+                	max = energyImage.getFloat(pixS);
+                }
+                if ((destImage.getShort(pixW) > 0) && (energyImage.getFloat(pixW) > max)) {
+                	dir = 3;
+                	max = energyImage.getFloat(pixW);
+                }
+                if ((destImage.getShort(pixU) > 0) && (energyImage.getFloat(pixU) > max)) {
+                	dir = 4;
+                	max = energyImage.getFloat(pixU);
+                }
+                if ((destImage.getShort(pixD) > 0) && (energyImage.getFloat(pixD) > max)) {
+                	dir = 5;
+                	max = energyImage.getFloat(pixD);
+                }
+                
+                if (dir == 0) {
+                	imgBuffer[i] = destImage.getShort(pixN);
+                }
+                else if (dir == 1) {
+                	imgBuffer[i] = destImage.getShort(pixE);
+                }
+                else if (dir == 2) {
+                	imgBuffer[i] = destImage.getShort(pixS);
+                }
+                else if (dir == 3) {
+                	imgBuffer[i] = destImage.getShort(pixW);
+                }
+                else if (dir == 4) {
+                	imgBuffer[i] = destImage.getShort(pixU);
+                }
+                else if (dir == 5) {
+                	imgBuffer[i] = destImage.getShort(pixD);
+                }
+                else {
+                	imgBuffer[i] = 0;
                 }
             }
         }
