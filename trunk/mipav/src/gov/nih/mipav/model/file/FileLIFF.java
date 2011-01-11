@@ -525,7 +525,7 @@ public class FileLIFF extends FileBase {
         int dataWidth;
         byte compressedBuffer[];
         byte uncompressedBuffer[];
-        LZOCodec lzo;
+       
         int srcIndex;
         int destIndex;
         String channelArray[] = new String[10];
@@ -2976,16 +2976,11 @@ public class FileLIFF extends FileBase {
                                 else {
                                     i2Last = i;
                                 }
-                                lzo = new LZOCodec();
-                                try {
-                                    uncompressedBuffer = lzo.decompress(compressedBuffer);
-                                }
-                                catch (Exception e){
-                                    MipavUtil.displayError("Exception on LZOCodec.decompress(compressedBuffer)");
-                                    raFile.close();
-                                    return null;
-                                }
-                                Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                                raFile.close();
+                                MipavUtil.displayError("MIPAV does not support LZO decompression");
+                                return null;
+                                
+                                /*Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
                                 for (y = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++) {
                                         destIndex = 4*y*xDim + 4*x + color;
@@ -3010,7 +3005,7 @@ public class FileLIFF extends FileBase {
                                     i = i0Last;
                                     image.importData(4* sliceNumber * xDim * yDim, shortBuffer, false);
                                     sliceNumber++;
-                                }
+                                }*/
                             } // if (imageTypeLocation[i] == majorType)
                             else {
                                 i++;
@@ -3033,16 +3028,11 @@ public class FileLIFF extends FileBase {
 //                          The data is compressed using MiniLZO. 
                             compressedBuffer = new byte[compressedSize];
                             raFile.read(compressedBuffer);
-                            lzo = new LZOCodec();
-                            try {
-                                uncompressedBuffer = lzo.decompress(compressedBuffer);
-                            }
-                            catch (Exception e){
-                                MipavUtil.displayError("Exception on LZOCodec.decompress(compressedBuffer)");
-                                raFile.close();
-                                return null;
-                            }
-                            Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                            raFile.close();
+                            MipavUtil.displayError("MIPAV does not support LZO decompression");
+                            return null;
+                            
+                            /*Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
                             for (y = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++) {
                                     destIndex = y*xDim + x;
@@ -3051,7 +3041,7 @@ public class FileLIFF extends FileBase {
                                 }
                             }
                             image.importData(sliceNumber * xDim * yDim, shortBuffer, false);
-                            sliceNumber++;
+                            sliceNumber++;*/
                         } // if (imageTypeLocation[i] == majorType)
                     } // for (i = 0; i < greySubPictCount; i++)
                 } // else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
@@ -3072,16 +3062,11 @@ public class FileLIFF extends FileBase {
                             // The data is compressed using MiniLZO.
                             compressedBuffer = new byte[compressedSize];
                             raFile.read(compressedBuffer);
-                            lzo = new LZOCodec();
-                            try {
-                                uncompressedBuffer = lzo.decompress(compressedBuffer);
-                            }
-                            catch (Exception e){
-                                MipavUtil.displayError("Exception on LZOCodec.decompress(compressedBuffer)");
-                                raFile.close();
-                                return null;
-                            }
-                            Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                            raFile.close();
+                            MipavUtil.displayError("MIPAV does not support LZO decompression");
+                            return null;
+                            
+                            /*Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
                             if ((majorType == MAC_24_BIT_COLOR) && (pixelSizeArray[i][0] == 32)) {
                                 for (y = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++) {
@@ -3182,7 +3167,7 @@ public class FileLIFF extends FileBase {
                                 }
                                 image.importData(sliceNumber * sliceSize, booleanBuffer, false);
                             } // else if (majorType == MAC_1_BIT)
-                            sliceNumber++;
+                            sliceNumber++;*/
                         } // if (imageTypeLocation[i] == majorType)
                     } // for (i = 0; i < subPictCount; i++)
                 } // else
