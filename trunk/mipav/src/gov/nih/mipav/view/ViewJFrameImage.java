@@ -1323,13 +1323,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
                 MipavUtil.displayError("Must be 4D time series (3.5D)");
             }
-        } else if (command.equals("TSOAR")) {
-
-            if (getActiveImage().getNDims() == 4) {
-                new JDialogRegistrationTSOAR(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("Must be 4D time series.");
-            }
         } else if (command.equals("COSTS")) {
 
             if (isMultipleImages() == true) {
