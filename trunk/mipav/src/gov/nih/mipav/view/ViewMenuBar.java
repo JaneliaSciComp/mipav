@@ -292,8 +292,6 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Optimized automatic registration", "OAR", 0, null, false),
                         menuBuilder.buildMenuItem("Optimized automatic registration 2.5D", "OAR25D", 0, null, false),
                         menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
-                        menuBuilder.buildMenuItem("Time series optimized automatic registration", "TSOAR", 0, null,
-                                false),
                         menuBuilder.buildMenuItem("Registration validation", "RegValidation", 0, null, false),
                         menuBuilder.buildMenuItem("VOI landmark", "VOILandmark", 0, null, false),
                         //menuBuilder.buildMenuItem("REGTEST", "REGTEST", 0, null, false),
