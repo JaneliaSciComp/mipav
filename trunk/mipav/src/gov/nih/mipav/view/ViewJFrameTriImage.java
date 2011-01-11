@@ -4749,24 +4749,38 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             return;
         }
 
-        iTalLabel.setText("Intensity: " + imageA.getFloat(index * iBuffFactor));
+        if (iTalLabel != null) {
+            iTalLabel.setText("Intensity: " + imageA.getFloat(index * iBuffFactor));
+        }
 
         if ( (x >= 0) && (x < triExtents[0])) {
             // labelXTal.setText(strX);
-            xTalLabel.setText("X: " + strX);
-            talXTextField.setText(strX);
+        	if (xTalLabel != null) {
+                xTalLabel.setText("X: " + strX);
+        	}
+        	if (talXTextField != null) {
+                talXTextField.setText(strX);
+        	}
         }
 
         if ( (y >= 0) && (y < triExtents[1])) {
             // labelYTal.setText(strY);
-            yTalLabel.setText("Y: " + strY);
-            talYTextField.setText(strY);
+        	if (yTalLabel != null) {
+                yTalLabel.setText("Y: " + strY);
+        	}
+        	if (talYTextField != null) {
+                talYTextField.setText(strY);
+        	}
         }
 
         if ( (z >= 0) && (z < triExtents[2])) {
             // labelZTal.setText(strZ);
-            zTalLabel.setText("Z: " + strZ);
-            talZTextField.setText(strZ);
+        	if (zTalLabel != null) {
+                zTalLabel.setText("Z: " + strZ);
+        	}
+        	if (talZTextField != null) {
+                talZTextField.setText(strZ);
+        	}
         }
     }
 
