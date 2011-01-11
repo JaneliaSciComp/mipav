@@ -655,6 +655,7 @@ public class Preferences {
 
         // look and feel properties
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
+        Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
         
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT_SIZE, "12");
