@@ -496,6 +496,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Estimate tensor", "estimateTensor", 0, null, false),
                         menuBuilder.buildMenuItem("Fiber tracking / Statistics", "fiberTracking", 0, null, false),
                         menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, false)}),
+                menuBuilder.buildMenuItem("Graph/Network visualization", "HyperGraph", 0, null, false),
                 menuBuilder.buildMenuItem("Log slope mapping", "LogSlope", 0, null, false),
                 menuBuilder.makeMenu("Quantitative MRI", false, new JMenuItem[] {
                         menuBuilder.makeMenu("T1", false, new JMenuItem[] {menuBuilder.buildMenuItem("TreT1",
