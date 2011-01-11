@@ -225,6 +225,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** Check boxes for whether right and left mouse clicks produce default actions. */
 	private JCheckBox doIntensityOnLeftBox, doWinLevOnRightBox;
 
+	/** Gives user choices for displaying complex images. */
     private JPanel displayImagePanel;
 
     /** The available choices for displaying the numerical values of complex data */
@@ -452,8 +453,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         } else if (command.equalsIgnoreCase("close")) { // close box
             dispose();
         } else if (command.equalsIgnoreCase("apply")) {
+            String beforeComplexDisplayChoice = Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
+            boolean beforeDoLogMagChoice = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
+            
             // "apply" sets all the preferences in the dialog and then makes itself unset-able global preferences
-
             Preferences.setDebugLevels(new boolean[] {debugMinorBox.isSelected(), debugAlgorithmBox.isSelected(),
                     debugFileIOBox.isSelected(), debugCommsBox.isSelected(), debugScriptingBox.isSelected()});
 
@@ -475,6 +478,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices
                     .getSelectedIndex()]);
             Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay)complexDisplayChoices.getSelectedItem()).name());
+            Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, String.valueOf(displayLogMag.isSelected()));
             
             // check to see if provenance should be turned on (if it was off)
             if (Preferences.is(Preferences.PREF_DATA_PROVENANCE) != provenanceCheckBox.isSelected()) {
@@ -681,7 +685,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     }
                 } // end while loop
             }
-
+            
+            // set changes which affect image display
+            reloadComplexImages(beforeComplexDisplayChoice, beforeDoLogMagChoice);
+            
             // set changes which affect GUI display
             if (userInterface != null) {
                 userInterface.updateMultiCoreUsage();
@@ -775,6 +782,33 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * GridBagConstraints.NORTH; gbl.setConstraints(logMode, gbc); localChangesPanel.add(logMode);
      * this.getContentPane().add(localChangesPanel, BorderLayout.CENTER); pack(); setVisible(true); }
      */
+
+    /**
+     * Evaluates whether the user preferences which control complex image loading have changed in a way that requires reloading of all complex images
+     */
+    private void reloadComplexImages(String beforeComplexDisplayChoice, boolean beforeDoLogMagChoice) {
+        boolean complexRefreshReq = false;
+        if(beforeComplexDisplayChoice != null && Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY) != null) {
+            if(!beforeComplexDisplayChoice.equals(Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY))) {
+                Preferences.debug("\nSince complex display type has been changed, complex images must be reinitalized.\n", Preferences.DEBUG_MINOR);
+                complexRefreshReq = true;
+            }
+        }
+        if(beforeDoLogMagChoice != Preferences.is(Preferences.PREF_LOGMAG_DISPLAY)) { 
+            Preferences.debug("\nSince logmag display preference has changed, complex images must be reinitalized.\n", Preferences.DEBUG_MINOR);
+            complexRefreshReq = true;
+        }
+        
+        if(complexRefreshReq && userInterface != null) {
+            for(Enumeration<ModelImage> e = userInterface.getRegisteredImages(); e.hasMoreElements();) {
+                ModelImage m = e.nextElement();
+                if(m.isComplexImage()) {
+                    Preferences.debug("Reloading "+m.getImageName()+"\n", Preferences.DEBUG_MINOR);
+                    m.notifyImageExtentsListeners();
+                }
+            }
+        }
+    }
 
     /**
      * no information available.
@@ -969,7 +1003,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc2.gridwidth = GridBagConstraints.REMAINDER;
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(complexDisplayChoices, gbc2);
-
         
         ComplexDisplay defaultChoice = ComplexDisplay.MAGNITUDE;
         // preset the choices.
