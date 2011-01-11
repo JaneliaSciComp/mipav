@@ -14,6 +14,7 @@ import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
@@ -2268,6 +2269,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogTreT2(this, getActiveImage());
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
+        }  else if (command.equals("HyperGraph")) {
+        	new JDialogHyperGraph(this, getActiveImage());
         } 
     }
 

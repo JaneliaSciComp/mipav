@@ -13,6 +13,7 @@ import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterfaceDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 
@@ -767,6 +768,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new JDialogDTIFiberTracking();
         } else if (command.equals("dtiVisualization")) {
             invokeDTIframe();
+        } else if (command.equals("HyperGraph")) {
+        	new JDialogHyperGraph();
         } else if (command.equals("treT1")) {
             if (getActiveImageFrame() != null) {
                 new JDialogTreT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
