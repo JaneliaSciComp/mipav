@@ -126,14 +126,14 @@ public class JPanelAnonymizeImage extends JPanelChecklist {
 
         // turn all visible tags off to begin
         for (int i = 0; i < FileInfoDicom.anonymizeTagIDs.length; i++) {
-            setVisibleList(i, false); // visibleList[i] = false;
+            setEnabledList(i, false); // visibleList[i] = false;
 
             try {
 
                 if (dicomInfo.getTagTable().getValue(FileInfoDicom.anonymizeTagIDs[i]) != null) {
 
                     // only make a tag visible if it exists in the file info
-                    setVisibleList(i, true); // visibleTags[i] = true; // if the tag exists, then let the model of
+                    setEnabledList(i, true); // visibleTags[i] = true; // if the tag exists, then let the model of
                                              // the checkbox be visible.
                 }
             } catch (NullPointerException npe) {
@@ -158,16 +158,16 @@ public class JPanelAnonymizeImage extends JPanelChecklist {
             throw new NullPointerException("JPanelAnonymizeImage: mincInfo is null.");
         }
 
-        // turn all visible tags off to begin
+        // all tags are initially disabled
         for (int i = 0; i < FileInfoDicom.anonymizeTagIDs.length; i++) {
-            setVisibleList(i, false);
+            setEnabledList(i, false);
 
             try {
 
                 if (mincInfo.getDicomValue(FileInfoDicom.anonymizeTagIDs[i]) != null) {
 
-                    // only make a tag visible if it exists in the file info
-                    setVisibleList(i, true);
+                    // only make a tag enabled if it exists in the file info
+                    setEnabledList(i, true);
                     // if the tag exists, then let the model of the checkbox be visible.
                 }
             } catch (NullPointerException npe) {
