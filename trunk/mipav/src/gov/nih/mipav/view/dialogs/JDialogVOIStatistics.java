@@ -1410,22 +1410,22 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         /** Use serialVersionUID for interoperability. */
         private static final long serialVersionUID = 1471564039185960351L;
 
-        /** DOCUMENT ME! */
+        /** The lower bound of the exclusion */
         private final JTextField boundA;
 
-        /** DOCUMENT ME! */
+        /** The upper bound of the exclusion */
         private final JTextField boundB;
 
-        /** DOCUMENT ME! */
+        /** Lists available exclusion types */
         private final JComboBox excludeSelection;
 
-        /** DOCUMENT ME! */
+        /** Interior panel representing user options */
         private final JPanel exclusionPanel;
 
-        /** DOCUMENT ME! */
+        /** The lower limit of the exclusion */
         private Float lowerLimit;
 
-        /** DOCUMENT ME! */
+        /** Whether pixels will be excluded from a calculation based on intensity values */
         private final JCheckBox permitExclusion;
 
         /** held for switching between states of the exclusion. */
@@ -1441,11 +1441,14 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             this.setBorder(new TitledBorder(new EtchedBorder(), "Pixel Exclusion", TitledBorder.DEFAULT_JUSTIFICATION,
                     TitledBorder.DEFAULT_POSITION, MipavUtil.font12B));
 
+            ExcluderOptionsActionListener optionsListener = new ExcluderOptionsActionListener();
+            
             // add a checkbox to enable the enter-panel
             permitExclusion = new JCheckBox("Exclude Pixels from Calculation");
             permitExclusion.setFont(MipavUtil.font12);
             add(permitExclusion, BorderLayout.NORTH);
             permitExclusion.addActionListener(this);
+            permitExclusion.addActionListener(optionsListener);
 
             exclusionPanel = new JPanel(new BorderLayout());
 
@@ -1712,6 +1715,23 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             } catch (final NullPointerException inValidNumber) {
                 /* nothing to do */
             }
+        }
+        
+        /**
+         * This class listens to excluder options, changing the available statistics calculation options
+         * depending on whether all contours are still closed. 
+         * 
+         * @author senseneyj
+         */
+        private class ExcluderOptionsActionListener implements ActionListener {
+            
+            public void actionPerformed(ActionEvent e) {
+                if(permitExclusion.isSelected()) {
+                    checkBoxPanel.setContourType(true); //open contours are likely when pixels are being excluded from calculation
+                } else {
+                    checkBoxPanel.setContourType(false); //TODO: if statistics generator is able to handle non-closed VOIs, this should be changed
+                }
+            }        
         }
     }
 

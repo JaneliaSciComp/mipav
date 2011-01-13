@@ -52,7 +52,7 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
     protected JButton unCheckButton; // dialog button to set all checks to FALSE
 
     /** the list of the choices that can be selected. */
-    protected boolean[] visibleList;
+    protected boolean[] enabledList;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -167,9 +167,9 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
         int i;
         int numvis = 0;
 
-        for (i = 0; i < visibleList.length; i++) {
+        for (i = 0; i < enabledList.length; i++) {
 
-            if (visibleList[i]) {
+            if (enabledList[i]) {
                 numvis++;
             }
         }
@@ -251,7 +251,7 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
      * @return  boolean[] visibleTags
      */
     public boolean[] getVisible() {
-        return visibleList;
+        return enabledList;
     }
 
     /**
@@ -260,7 +260,7 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
      * @return  DOCUMENT ME!
      */
     public int getVisibleLength() {
-        return visibleList.length;
+        return enabledList.length;
     } // unless extended, should be same size as list length
 
     /**
@@ -277,7 +277,7 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
     }
 
     /**
-     * Set the checkboxes to be clickable. Only useful in applications where the tags which are availble to be used are
+     * Set the checkboxes to be clickable. Only useful in applications where the tags which are available to be used are
      * known before-hand.
      *
      * <p>The visible tags must be set first.</p>
@@ -286,9 +286,9 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
         int enabledCount = 0;
 
         // make checkbox enabled only if the box is visible.
-        for (int i = 0; i < visibleList.length; i++) {
+        for (int i = 0; i < enabledList.length; i++) {
 
-            if ((visibleList[i])) {
+            if ((enabledList[i])) {
                 checkboxList[i].setEnabled(true);
                 enabledCount++; // count how many are visible
             } else { // otherwise, uncheck those that cannot be checked.
@@ -382,9 +382,9 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
      */
     public void setSelectedList(boolean isSet) {
 
-        for (int i = 0; i < visibleList.length; i++) {
+        for (int i = 0; i < enabledList.length; i++) {
 
-            if (visibleList[i]) {
+            if (enabledList[i]) {
 
                 try {
                     checkboxList[i].setSelected(isSet);
@@ -396,16 +396,16 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
     }
 
     /**
-     * Sets the boxes which are to be visible.
+     * Sets the boxes which are enabled.
      *
      * @param  list  DOCUMENT ME!
      */
-    public void setVisibleList(boolean[] list) {
-        visibleList = list;
+    public void setEnabledList(boolean[] list) {
+        enabledList = list;
     }
 
     /**
-     * Sets whether or not all checkboxes can been selected.
+     * Sets whether or not all checkboxes are enabled.
      *
      * @param      isSet  the preselected value of all checkboxes in the list.
      *
@@ -413,12 +413,12 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
      *
      * @see        JPanelAnonymizeImage#getSelectedList()
      */
-    public void setVisibleList(boolean isSet) {
+    public void setEnabledList(boolean isSet) {
 
-        for (int i = 0; i < visibleList.length; i++) {
+        for (int i = 0; i < enabledList.length; i++) {
 
             try {
-                visibleList[i] = isSet;
+                enabledList[i] = isSet;
             } catch (NullPointerException npe) {
                 throw npe;
             } catch (ArrayIndexOutOfBoundsException aioobe) {
@@ -431,17 +431,33 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
      * Sets a particular box which to be visible.
      *
      * @param  i        the index of the checkbox in question
-     * @param  visible  DOCUMENT ME!
+     * @param  visible  whether the checkbox should be enabled
      */
-    public void setVisibleList(int i, boolean visible) {
+    public void setEnabledList(int i, boolean visible) {
 
         try {
-            visibleList[i] = visible;
+            enabledList[i] = visible;
         } catch (NullPointerException npe) {
             throw npe;
         } catch (ArrayIndexOutOfBoundsException aioobe) {
             throw aioobe;
         }
+    }
+    
+    /**
+     * Sets a particular box which to be visible by specifying the name of the label.
+     *
+     * @param  i        the index of the checkbox in question
+     * @param  visible  whether the checkbox should be enabled
+     */
+    public boolean setEnabledList(String label, boolean visible) {
+        for(int i=0; i<checkboxLabels.length; i++) {
+            if(label.equals(checkboxLabels[i])) {
+                enabledList[i] = visible;
+                return true;
+            }
+        }
+        return false; //label was not found
     }
 
     /**
@@ -467,7 +483,7 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
 
         // start by instantiating the boolean arrays:
         removeList = new boolean[listLength];
-        visibleList = new boolean[listLength];
+        enabledList = new boolean[listLength];
 
         JCheckBox[] list = new JCheckBox[listLength]; // selector for the user to choose which slices to remove.  TRUE
                                                       // means remove.
@@ -505,7 +521,7 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
 
         // place tagCount of check options for user and give them a name:
         for (int i = 0; i < listLength; i++) {
-            setVisibleList(i, true);
+            setEnabledList(i, true);
             setCheckBoxesEnabled(i, true);
             chkboxBox.add(checkboxList[i]);
         }

@@ -18,8 +18,11 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** just so the thing is non-null. */
+    /** Whether this list is dealing with lists of 2D contours. */
     private boolean singleSlice = true;
+    
+    /** Whether this list is dealing with open contours. */
+    private boolean openContour = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -77,7 +80,7 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
     public void setCheckBoxesDisabled() {
 
         for (int i = 0; i < listLength; i++) {
-            setVisibleList(i, false);
+            setEnabledList(i, false);
         }
 
         super.setCheckBoxesEnabled();
@@ -96,16 +99,25 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
     }
 
     /**
-     * we may need to tailor the checklist programmatically, so we will need to set the selectable choices. Currently,
-     * although this method takes the number of slices in the image, this is really no more than selecting whether or
-     * not this image is 2D or 3D.
+     * Controls how many slices are being used for statistics calculations.  Setting the sliceCount = 1 
+     * allows only calculations that are valid for 2D VOIs to be selected in the statistics list.
      *
-     * @param  sliceCount  DOCUMENT ME!
+     * @param  sliceCount  The number of slices that are used for statistics calculations.
      */
     public void setSliceCount(int sliceCount) {
         singleSlice = (sliceCount == 1);
         setCheckBoxesEnabled();
-
+    }
+    
+    /**
+     * Controls whether non-closed contours are being used for statistics calculations.  If 
+     * openContour = true, then several statistics will be disabled.
+     *
+     * @param  openContour whether non-closed contours are being used for statistics calculations
+     */
+    public void setContourType(boolean openContour) {
+        this.openContour = openContour;
+        setCheckBoxesEnabled();
     }
 
     /**
@@ -121,22 +133,25 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
      * these options off for 3D images. (this is not altogether correct, but will suffice).
      */
     private void findVisible() {
-        setVisibleList(true);
+        setEnabledList(true);
 
         if (singleSlice) {
-
             // turn off volume
-            setVisibleList(1, false);
+            setEnabledList(volumeDescription, false);
             // turn off largest distance
-            setVisibleList(18, false);
-        } else {
-
-            // turn off eccentricity, principal axis, major axis, and
-            // minor axis
-            //setVisibleList(11, false);
-            //setVisibleList(12, false);
-            //setVisibleList(13, false);
-            //setVisibleList(14, false);
+            setEnabledList(largestDistanceDescription, false);
+        } 
+        
+        if(openContour) { //the following statistics are invalid for non-closed contours
+            setEnabledList(perimeterDescription, false);
+            setEnabledList(skewnessDescription, false);
+            setEnabledList(kurtosisDescription, false);
+            setEnabledList(axisDescription, false);
+            setEnabledList(eccentricityDescription, false);
+            setEnabledList(majorAxisDescription, false);
+            setEnabledList(minorAxisDescription, false);
+            setEnabledList(largestSliceDistanceDescription, false);
+            setEnabledList(largestDistanceDescription, false);
         }
     }
 

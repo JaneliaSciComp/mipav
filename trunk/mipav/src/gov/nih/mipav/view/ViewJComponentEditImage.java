@@ -4489,7 +4489,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     double theta = -Math.atan(b/a);
                     str.append("  Intensity:  ").append(r).append(" * e^(i*").append(theta).append(")");
                     break;
-                case MAGNITUDE: //TODO: this displays differentg values depending on display preferences at time of image loading
+                case MAGNITUDE: //TODO: this displays different values depending on display preferences at time of image loading
                 default:
                     str.append("  Intensity:  ").append(String.valueOf(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS]));
                 }
