@@ -776,7 +776,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 changeTypeAlgo = null;
             }
             selectAllVOIs(true);
-            getActiveImage().groupVOIs();
 
             ScriptRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
             ProvenanceRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
