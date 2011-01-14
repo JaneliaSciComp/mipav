@@ -944,7 +944,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Nonlocal means filter", false);
             menuBuilder.setMenuItemEnabled("Point area average intensities", false);
             menuBuilder.setMenuItemEnabled("Principal component", false);
-            menuBuilder.setMenuItemEnabled("Quantify using mask", false);
             menuBuilder.setMenuItemEnabled("Shading correction", false);
             menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Skeletonize", false);
