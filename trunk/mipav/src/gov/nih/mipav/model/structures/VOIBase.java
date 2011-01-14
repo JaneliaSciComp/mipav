@@ -171,6 +171,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
     protected BitSet m_kMask = null;
     protected Vector<Vector3f> m_kMaskPositions = new Vector<Vector3f>();
     protected Vector3f m_kPositionSum = new Vector3f();
+    
+    
+    public static final int UNKNOWN_SUBTYPE = 0;
+    public static final int CIRCLE = 1;
+    public static final int SQUARE = 2;
+    
+    private int subtype = UNKNOWN_SUBTYPE;
 
     /**
      * Default Constructor. Initializes the Vector<> : start and the amount to increment the vector by.,
@@ -1528,7 +1535,17 @@ public abstract class VOIBase extends Vector<Vector3f> {
         return m_kMaskPositions.size();
     }
     
-    /**
+    
+    
+    public int getSubtype() {
+		return subtype;
+	}
+
+	public void setSubtype(int subtype) {
+		this.subtype = subtype;
+	}
+
+	/**
      * Returns the total length of this contour, based on the input resolutions.
      * @param resolutions.
      * @return total length of this contour, scaled by the resolutions.
@@ -1707,7 +1724,17 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
     }
 
-    /**
+    public boolean isM_bUpdateGeometricCenter() {
+		return m_bUpdateGeometricCenter;
+	}
+    
+    
+
+	public boolean isM_bUpdateBounds() {
+		return m_bUpdateBounds;
+	}
+
+	/**
      * Returns the type of this contour.
      * @return type of this contour.
      */

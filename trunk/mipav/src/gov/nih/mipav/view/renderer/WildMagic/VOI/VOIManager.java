@@ -469,6 +469,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private Vector3f m_kMouseOffset = new Vector3f();
     /** Set to true if the left mouse is pressed during drag. */
     private boolean m_bMouseDrag = false;
+    
+    private boolean m_bCtrlDown = false;
 
     /** Contour Retrace: */
     private int indexRetrace = -99;
@@ -1104,6 +1106,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             showSelectedVOI( kEvent );
         }       
         m_bMouseDrag = true;
+        if(kEvent.isControlDown()) {
+        	m_bCtrlDown = true;
+        }else {
+        	m_bCtrlDown = false;
+        }
         m_kParent.setActive(this, m_kImageActive);
         if ( !isActive() )
         {
@@ -1120,7 +1127,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 retraceContour( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
             }
             else
-            {
+            {  
             	// Otherwise process the left-mouse drag.
                 processLeftMouseDrag(kEvent);
             }
@@ -1183,7 +1190,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         // The levelset voi is created during a mouse moved event:
         else if ( m_bDrawVOI && (m_iDrawType == LEVELSET) )
         {
-            createVOI( kEvent.getX(), kEvent.getY() );
+            createVOI(kEvent);
         } 
         // Polylines and livewire contours are created during mouse moved:
         else if ( (m_kCurrentVOI != null) && m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
@@ -1286,7 +1293,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         // Points and PolyLineSlice points are added on mouse release:
         if ( m_bDrawVOI && ((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT)) )
         {
-            createVOI( kEvent.getX(), kEvent.getY() );
+            createVOI(kEvent );
         } 
         // Annotation VOIs are added on mouse release:
         else if ( m_bDrawVOI && (m_iDrawType == TEXT) )
@@ -1430,6 +1437,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kCurrentVOI = null;
         }
         m_bMouseDrag = false;
+        m_bCtrlDown = false;
     }
 
     /**
@@ -1991,8 +1999,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @param iX new x position in screen coordinates.
      * @param iY new y position in screen coordinates.
      */
-    private void createVOI( int iX, int iY )
+    private void createVOI(MouseEvent mouseEvent)
     {
+    	
+    	int iX = mouseEvent.getX();
+    	int iY = mouseEvent.getY();
+
+    	boolean isCtrlDown = mouseEvent.isControlDown();
+    	
         float fYStart = m_fMouseY;
         float fY = iY;
 
@@ -2030,23 +2044,46 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             float fRadiusX = Math.abs(m_fMouseX - iX);
             float fRadiusY = Math.abs(fYStart - fY);
+            
+            
+            
+            if(isCtrlDown) {
+            	if(fRadiusX > fRadiusY) {
+            		fRadiusY = fRadiusX;
+            	}else if(fRadiusX < fRadiusY){
+            		fRadiusX = fRadiusY;
+            	}
+            }
 
             if ( m_fMouseX + fRadiusX >= m_kDrawingContext.getWidth() )
             {
                 fRadiusX = m_kDrawingContext.getWidth() - m_fMouseX;
+                if(isCtrlDown) {
+                	fRadiusY = fRadiusX;
+                }
             }
             if ( m_fMouseY + fRadiusY >= m_kDrawingContext.getHeight() )
             {
                 fRadiusY = m_kDrawingContext.getHeight() - m_fMouseY;
+                if(isCtrlDown) {
+                	fRadiusX = fRadiusY;
+                }
             }
             if ( m_fMouseX - fRadiusX < 0 )
             {
                 fRadiusX = m_fMouseX;
+                if(isCtrlDown) {
+                	fRadiusY = fRadiusX;
+                }
             }
             if ( m_fMouseY - fRadiusY < 0 )
             {
                 fRadiusY = m_fMouseY;
+                if(isCtrlDown) {
+                	fRadiusX = fRadiusY;
+                }
             }
+
             if ( m_kCurrentVOI == null )
             {            
                 Vector<Vector3f> kPositions = new Vector<Vector3f>();
@@ -2056,6 +2093,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                             (float)(fYStart + fRadiusY * m_adSin[i]), m_kDrawingContext.getSlice()));
                 }
                 m_kCurrentVOI = createVOI( m_iDrawType, true, false, kPositions );
+                if(isCtrlDown) {
+                	m_kCurrentVOI.setSubtype(VOIBase.CIRCLE);
+                }else {
+                	m_kCurrentVOI.setSubtype(VOIBase.UNKNOWN_SUBTYPE);
+                }
+                
             }
             else
             {
@@ -2063,6 +2106,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     setPosition( m_kCurrentVOI, i, (float)(m_fMouseX + fRadiusX * m_adCos[i]),
                             (float)(fYStart + fRadiusY * m_adSin[i]), m_kDrawingContext.getSlice());
+                    if(isCtrlDown) {
+                    	m_kCurrentVOI.setSubtype(VOIBase.CIRCLE);
+                    }else {
+                    	m_kCurrentVOI.setSubtype(VOIBase.UNKNOWN_SUBTYPE);
+                    }
+                    
                 }
             }
         }
@@ -2747,7 +2796,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         Polygon gon = null;
         int j;
         new DecimalFormat(".##");
-
         gon = scalePolygon(kVOI);
 
         if ( !m_bMouseDrag && !(m_iDrawType == LIVEWIRE) && !(m_iDrawType == POLYLINE)) 
@@ -2767,6 +2815,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         if ( thickness == 1) {
             if (kVOI.isClosed() == true) {
                 g.drawPolygon(gon);
+                if(m_bMouseDrag && m_bCtrlDown && m_iDrawType == OVAL && kVOI.getSubtype() == VOIBase.CIRCLE && kVOI.getGroup().getBoundingBoxFlag() == false && kVOI == m_kCurrentVOI) {
+                	Vector3f kMin = kVOI.getImageBoundingBox()[0];
+	                Vector3f kMax = kVOI.getImageBoundingBox()[1];
+	                int width = (int) ((kMax.X  - kMin.X ) + 0.5f);
+	                Vector3f ctr = kVOI.getGeometricCenter();
+	                Vector3f sCtr = m_kDrawingContext.fileToScreenVOI( ctr );
+	                g.setColor(Color.WHITE);
+	                float measuredWidth = (width) * resols[0];
+	                DecimalFormat nf = new DecimalFormat( "0.0#" );
+	                String xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]);
+	                String measuredWidthString = String.valueOf(nf.format(measuredWidth)) + " " + xUnitsString;
+	                g.drawString("D: " + String.valueOf(width) + " pix " + "(" + measuredWidthString + ")", (int)sCtr.X, (int)sCtr.Y);
+            	
+                }
 
             } else {
                 g.drawPolyline(gon.xpoints, gon.ypoints, gon.npoints);
@@ -3996,6 +4058,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return;
         }
+        if(m_kCurrentVOI.getSubtype() == VOIBase.CIRCLE) {
+        	m_kCurrentVOI.setSubtype(VOIBase.UNKNOWN_SUBTYPE);
+        }
         setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_kDrawingContext.getSlice() ); 
         m_kParent.setCursor(MipavUtil.crosshairCursor); 
         m_kParent.updateDisplay();
@@ -4210,7 +4275,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 (m_iDrawType == LIVEWIRE) || (m_iDrawType == LEVELSET) || (m_iDrawType == TEXT) ||
                 (m_iDrawType == RETRACE))) )
         {
-            createVOI( kEvent.getX(), kEvent.getY() );
+            createVOI(kEvent);
         } 
         else if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI && (m_iDrawType != RETRACE))
         {
@@ -4230,7 +4295,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     m_kParent.saveVOIs( "scaleVOI" );
                     m_bFirstDrag = false;
                 }
-                scaleVOI( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );        
+                scaleVOI( m_kCurrentVOI, kEvent);        
             }
             else if ( m_bSelected && ( m_iNearStatus == NearNone ) )
             {
@@ -4245,7 +4310,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 Vector3f kNewGC = new Vector3f( kEvent.getX() + m_kMouseOffset.X, kEvent.getY() + m_kMouseOffset.Y, kGC.Z );
                 Vector3f kDiff = new Vector3f();
                 kDiff.Sub( kNewGC, kGC );
-
                 m_kParent.moveVOI( this, kDiff, m_iPlane, bTempFirstDrag, true );
                 m_fMouseX = kEvent.getX();
                 m_fMouseY = kEvent.getY();
@@ -4728,10 +4792,79 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
      */
+    
+    
+    public void editCircleDiameter(VOIBase kVOI, float radius) {
+    	for ( int i = 0; i < m_iCirclePts; i++ )
+        {
+            m_adCos[i] = Math.cos( Math.PI * 2.0 * i/m_iCirclePts );
+            m_adSin[i] = Math.sin( Math.PI * 2.0 * i/m_iCirclePts);
+        }
+
+    	Vector3f sCtr = m_kDrawingContext.fileToScreenVOI( kVOI.getGeometricCenter() );
+    	float geomCtrX = sCtr.X+0.5f;
+    	float geomCtrY = sCtr.Y+0.5f;
+    	for ( int i = 0; i < m_iCirclePts; i++ ) {
+             setPosition( kVOI, i, (float)(geomCtrX + radius * m_adCos[i]),
+                     (float)(geomCtrY + radius * m_adSin[i]), m_kDrawingContext.getSlice());
+         }
+
+    	 kVOI.update();
+         
+         m_kParent.updateDisplay();
+
+    }
 
 
-    private void scaleVOI( VOIBase kVOI, int iX, int iY )
-    {
+    public void scaleCircleVOI(VOIBase kVOI, float scale) {
+    	float xScale = scale;
+      	float yScale = scale;
+      	
+      	VOIBase backupVOI = kVOI.clone();
+      	
+      	Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(backupVOI) );
+        kScreenCenter.Add( getBoundingBoxUpperRight(backupVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerLeft(backupVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerRight(backupVOI) );
+        kScreenCenter.Scale( 0.25f );
+        
+        Vector3f kScreenScale = new Vector3f( xScale, yScale, 1 );
+        
+        Vector<Vector3f> newPoints = new Vector<Vector3f>();
+        for ( int i = 0; i < backupVOI.size(); i++ )
+        {
+            Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( backupVOI.elementAt(i) );
+            kScreen.Sub(kScreenCenter);
+            kScreen.Mult( kScreenScale );
+            kScreen.Add(kScreenCenter);
+            Vector3f kVolumePt = new Vector3f();
+            if ( m_kDrawingContext.screenToFileVOI( kScreen, kVolumePt ) )
+            {
+                return;
+            }
+            newPoints.add( kVolumePt );
+        }
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            kVOI.set( i, newPoints.elementAt(i) );
+        }
+
+        kVOI.update();
+        
+        m_kParent.updateDisplay();
+    	
+    }
+    
+    
+    
+    
+    private void scaleVOI( VOIBase kVOI, MouseEvent mouseEvent)
+    {    
+    	
+    	int iX = mouseEvent.getX();
+    	int iY = mouseEvent.getY();
+    	boolean isCtrlDown = mouseEvent.isControlDown();
+
         if ( kVOI == null )
         {
             return;
@@ -4774,9 +4907,19 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         kScreenCenter.Add( getBoundingBoxLowerLeft(m_kBackupVOI) );
         kScreenCenter.Add( getBoundingBoxLowerRight(m_kBackupVOI) );
         kScreenCenter.Scale( 0.25f );
+        
+        float xScale = (iX-kScreenCenter.X) / (kScreenBound.X-kScreenCenter.X);
+     	float yScale = (iY-kScreenCenter.Y) / (kScreenBound.Y-kScreenCenter.Y);
+     	
+     	 if(m_iDrawType == OVAL  && isCtrlDown) {
+          	if(xScale > yScale) {
+          		yScale = xScale;
+          	}else if(yScale > xScale) {
+          		xScale = yScale;
+          	}
+          }
 
-        Vector3f kScreenScale = new Vector3f( (iX-kScreenCenter.X) / (kScreenBound.X-kScreenCenter.X), 
-                (iY-kScreenCenter.Y) / (kScreenBound.Y-kScreenCenter.Y), 1 );
+        Vector3f kScreenScale = new Vector3f( xScale, yScale, 1 );
         
 
         switch( nearBound )
