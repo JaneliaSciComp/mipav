@@ -4804,9 +4804,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     	Vector3f sCtr = m_kDrawingContext.fileToScreenVOI( kVOI.getGeometricCenter() );
     	float geomCtrX = sCtr.X+0.5f;
     	float geomCtrY = sCtr.Y+0.5f;
+    	float zoomX = m_kDrawingContext.getZoomX();
     	for ( int i = 0; i < m_iCirclePts; i++ ) {
-             setPosition( kVOI, i, (float)(geomCtrX + radius * m_adCos[i]),
-                     (float)(geomCtrY + radius * m_adSin[i]), m_kDrawingContext.getSlice());
+             setPosition( kVOI, i, (float)(geomCtrX + (radius*zoomX) * m_adCos[i]),
+                     (float)(geomCtrY + (radius*zoomX) * m_adSin[i]), m_kDrawingContext.getSlice());
          }
 
     	 kVOI.update();
