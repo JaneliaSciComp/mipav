@@ -56,6 +56,8 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
     /** DOCUMENT ME! */
     private JMenu orderSubMenu;
+    
+    private JMenuItem editCircleDiameter;
 
     /** DOCUMENT ME! */
     private JPopupMenu popup;
@@ -130,6 +132,10 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         itemClose = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CLOSE, this, false);
         itemCrop = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CROP, this, false);
         itemOutputDistance = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PSLICE_DISTANCE, this, false);
+        
+        editCircleDiameter = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_EDIT_CIRCLE_DIAM, this, false);
+        
+        
         
         // popup will be filled by the checkPopup() method in response to specific mouse events with different types of
         // vois selected
@@ -291,6 +297,9 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                     popup.add(itemCrop);
                 }
             } 
+            if(selectedVOI.getSubtype() == VOIBase.CIRCLE) {
+            	popup.add(editCircleDiameter);
+            }
             int xAmount = 0;
             int yAmount = 0;
             if ( voiHandler.getActiveImage().getParentFrame()  != null ) {       

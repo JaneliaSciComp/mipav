@@ -21,7 +21,7 @@ public class CustomUIBuilder {
                                                                     "<html>" + "Draw rectangle VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
                                                                     "</html>", "rect", true);
     public static final UIParams PARAM_VOI_ELLIPSE = new UIParams("Draw Ellipse VOI","EllipseVOI", UIParams.INVALID_MNEMONIC,
-                                                                  "<html>" + "Draw ellipse VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
+                                                                  "<html>" + "Draw ellipse VOI" + "<br>" + "Hold SHIFT for multiple drawing"  + "<br>" + "Hold CTRL for circle" + 
                                                                   "</html>", "circle", true);
     public static final UIParams PARAM_VOI_POLYGON = new UIParams("Draw Polygon VOI","Polyline", UIParams.INVALID_MNEMONIC, 
                                                                   "Draw polygon/polyline VOI", "polygon", true);
@@ -46,7 +46,7 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_VOI_PROPERTIES = new UIParams("View VOI Properties", "VOIProperties", 'P', "View VOI Properties", null );
     public static final UIParams PARAM_VOI_STATISTICS = new UIParams("Statistics generator", "VOIStistics", 'G', null, null );
     public static final UIParams PARAM_VOI_LOGICAL_OPERATIONS = new UIParams("VOI Logical Operations", "VOILogicalOperations", UIParams.INVALID_MNEMONIC, null, null );
-
+    public static final UIParams PARAM_VOI_EDIT_CIRCLE_DIAM = new UIParams("Edit Circle Diameter", "editCircleDiameter", UIParams.INVALID_MNEMONIC, "Edit Circle Diameter", null );
 
     public static final UIParams PARAM_VOI_COLOR = new UIParams("VOIColor", "Current/change VOI Color", "transparent");
     public static final UIParams PARAM_VOI_NEW = new UIParams("New VOI", "NewVOI", UIParams.INVALID_MNEMONIC, "Initiate new VOI", "newvoi");
