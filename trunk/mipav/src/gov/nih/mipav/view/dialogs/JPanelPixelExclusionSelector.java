@@ -27,7 +27,7 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
         NO_RANGE,
         /** Pixels between boundA and boundB (inclusive) will be excluded from a calculation. */
         BETWEEN,
-        /** Pixels outside the range of boundA to boundB will be excluded from a calculation. */
+        /** Pixels outside the range of boundA to boundB (inclusive) will be excluded from a calculation. */
         OUTSIDE;
     }
     
