@@ -97,10 +97,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	private JLabel sliceLabel, ageLabel, infoLabel;
 
 	/** buttons * */
-    private JButton magButton,unMagButton,zoomOneButton,saveButton,winLevelButton, resetButton, lutButton, presetButton;
+    private JButton magButton,unMagButton,zoomOneButton,saveButton,winLevelButton, resetButton, lutButton, presetButton, sep1,sep2, sep3;
     
     /** modality buttons **/
-    private JToggleButton t1Button, t2Button, pdButton, dtiButton, edtiButton;
+    private JToggleButton t1Button, t2Button, pdButton, dtiButton, edtiButton, displayAnnotationsButton, hideAnnotationsButton;
     
     /** test button **/
     private JButton testButton, testToggleButton;
@@ -116,6 +116,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
     /** radio group */
     private ButtonGroup radioGroup;
+    
+    private ButtonGroup annotationsButtonGroup;
     
     /** dialog title **/
     private String title = "Peds Atlas                                                   ";
@@ -189,6 +191,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     /** coronal annotations file name **/
     private String coronalAnnotationsFilename = "coronal.lbl";
     
+    /** axial annotations file name **/
+    private String axialAnnotationsFilename = "axial.lbl";
+    
+    /** sagittal annotations file name **/
+    private String sagittalAnnotationsFilename = "sagittal.lbl";
+    
     /** current modality **/
     private String currentModality;
     
@@ -228,9 +236,11 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     /** initial image panel size **/
     private int initialImagePanelSize = 600;
     
-    private boolean showAnnotationsToggle = true;
+    private boolean displayAnnotations = true;
     
-    private int testCounter = 0;
+    private boolean finishedLoading = false;
+    
+    //private int testCounter = 0;
     
     // lut presets
     public static float t1LevelPreset;
@@ -312,9 +322,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 						public void componentResized(ComponentEvent e)
 						{
 							if(imageScrollPanel.getVerticalScrollBar().isVisible() || imageScrollPanel.getHorizontalScrollBar().isVisible()) {
-								saveButton.setEnabled(false);
+								if(finishedLoading) {
+									saveButton.setEnabled(false);
+								}
 							}else {
-								saveButton.setEnabled(true);
+								if(finishedLoading) {
+									saveButton.setEnabled(true);
+								}
 							}
 						}
 					});
@@ -633,6 +647,40 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		return success;
 	}
+	
+	
+	public void setToolBarEnabled() {
+		displayAnnotationsButton.setEnabled(true);
+		hideAnnotationsButton.setEnabled(true);
+		magButton.setEnabled(true);
+		unMagButton.setEnabled(true);
+		zoomOneButton.setEnabled(true);
+		saveButton.setEnabled(true);
+		winLevelButton.setEnabled(true);
+		resetButton.setEnabled(true);
+		presetButton.setEnabled(true);
+		lutButton.setEnabled(true);
+		sep1.setEnabled(true);
+		sep2.setEnabled(true);
+		sep3.setEnabled(true);
+		
+	}
+	
+	public void setToolBarDisabled() {
+		displayAnnotationsButton.setEnabled(false);
+		hideAnnotationsButton.setEnabled(false);
+		magButton.setEnabled(false);
+		unMagButton.setEnabled(false);
+		zoomOneButton.setEnabled(false);
+		saveButton.setEnabled(false);
+		winLevelButton.setEnabled(false);
+		resetButton.setEnabled(false);
+		presetButton.setEnabled(false);
+		lutButton.setEnabled(false);
+		sep1.setEnabled(false);
+		sep2.setEnabled(false);
+		sep3.setEnabled(false);
+	}
 
 	/**
 	 * init
@@ -648,6 +696,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         // toolbar panel
         toolbarPanel = new JPanel(new GridBagLayout());
         toolbarBuilder = new ViewToolBarBuilder(this);
+        displayAnnotationsButton = toolbarBuilder.buildToggleButton("displayAnnotations", "Display Annotations", "text");
+        hideAnnotationsButton = toolbarBuilder.buildToggleButton("hideAnnotations", "Hide Annotations", "clearcurrent");
         magButton = toolbarBuilder.buildButton("MagImage", "Magnify Image", "zoomin2");
         unMagButton = toolbarBuilder.buildButton("UnMagImage", "Un-Mag Image", "zoomout2");
         zoomOneButton = toolbarBuilder.buildButton("ZoomOne", "Magnify Image 1.0x", "zoom1");
@@ -656,54 +706,80 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         resetButton = toolbarBuilder.buildButton("resetLUT","Reset LUTs of all images in current modality","histolutReset");
         presetButton = toolbarBuilder.buildButton("presetLUT","Reload preset-LUTs of all images in current modality","histolut");
         lutButton = toolbarBuilder.buildButton("copyLUT", "Copy LUT of current image to all images in current modailty", "histolutCopy");
-        resetButton.setEnabled(false);
-        presetButton.setEnabled(false);
+        //resetButton.setEnabled(false);
+        //presetButton.setEnabled(false);
         
-        JButton separator = new JButton(MipavUtil.getIcon("separator.gif"));
+        annotationsButtonGroup = new ButtonGroup();
+        annotationsButtonGroup.add(displayAnnotationsButton);
+        annotationsButtonGroup.add(hideAnnotationsButton);
+        displayAnnotationsButton.setSelected(true);
+        
+        
+        
+/*        JButton separator = new JButton(MipavUtil.getIcon("separator.gif"));
         separator.setMargin(new Insets(0, 0, 0, 0));
         separator.setBorderPainted(false);
-        separator.setFocusPainted(false);
-        
-        lutButton.setEnabled(false);
+        separator.setFocusPainted(false);*/
+        //lutButton.setEnabled(false);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        toolbarPanel.add(magButton, gbc);
+        toolbarPanel.add(displayAnnotationsButton, gbc);
+        
         gbc.gridx = 1;
         gbc.gridy = 0;
-        toolbarPanel.add(unMagButton, gbc);
+        toolbarPanel.add(hideAnnotationsButton, gbc);
+        
+        sep1 = new JButton(MipavUtil.getIcon("separator.gif"));
+        sep1.setMargin(new Insets(0, 0, 0, 0));
+        sep1.setBorderPainted(false);
+        sep1.setFocusPainted(false);
+        
         gbc.gridx = 2;
         gbc.gridy = 0;
-        toolbarPanel.add(zoomOneButton, gbc);
+        toolbarPanel.add(sep1,gbc);
+        
         gbc.gridx = 3;
         gbc.gridy = 0;
-        
-        
-
-        toolbarPanel.add(separator,gbc);
+        toolbarPanel.add(magButton, gbc);
         gbc.gridx = 4;
-        toolbarPanel.add(saveButton,gbc);
-        
-        separator = new JButton(MipavUtil.getIcon("separator.gif"));
-        separator.setMargin(new Insets(0, 0, 0, 0));
-        separator.setBorderPainted(false);
-        separator.setFocusPainted(false);
-        
+        gbc.gridy = 0;
+        toolbarPanel.add(unMagButton, gbc);
         gbc.gridx = 5;
-        toolbarPanel.add(separator, gbc);
+        gbc.gridy = 0;
+        toolbarPanel.add(zoomOneButton, gbc);
+        
+        sep2 = new JButton(MipavUtil.getIcon("separator.gif"));
+        sep2.setMargin(new Insets(0, 0, 0, 0));
+        sep2.setBorderPainted(false);
+        sep2.setFocusPainted(false);
+        
         gbc.gridx = 6;
         gbc.gridy = 0;
-        toolbarPanel.add(winLevelButton, gbc);
+        toolbarPanel.add(sep2,gbc);
         gbc.gridx = 7;
-        gbc.gridy = 0;
-        toolbarPanel.add(resetButton, gbc);
+        toolbarPanel.add(saveButton,gbc);
+        
+        sep3 = new JButton(MipavUtil.getIcon("separator.gif"));
+        sep3.setMargin(new Insets(0, 0, 0, 0));
+        sep3.setBorderPainted(false);
+        sep3.setFocusPainted(false);
+        
         gbc.gridx = 8;
-        gbc.gridy = 0;
-        toolbarPanel.add(presetButton, gbc);
+        toolbarPanel.add(sep3, gbc);
         gbc.gridx = 9;
         gbc.gridy = 0;
-        toolbarPanel.add(lutButton, gbc);
+        toolbarPanel.add(winLevelButton, gbc);
         gbc.gridx = 10;
+        gbc.gridy = 0;
+        toolbarPanel.add(resetButton, gbc);
+        gbc.gridx = 11;
+        gbc.gridy = 0;
+        toolbarPanel.add(presetButton, gbc);
+        gbc.gridx = 12;
+        gbc.gridy = 0;
+        toolbarPanel.add(lutButton, gbc);
+        gbc.gridx = 13;
         toolbarPanel.add(infoLabel,gbc);
         
         gbc.anchor = GridBagConstraints.CENTER;
@@ -948,6 +1024,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(atlasPanel,gbc);
+        
+        
+        setToolBarDisabled();
+        
         
         getContentPane().add(mainPanel);
         pack();
@@ -1265,9 +1345,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			loadPresetLUTS() ;
 		}else if(command.equals("axial")) {
 			if(!currentOrientation.equals(AXIAL)) {
-				resetButton.setEnabled(false);
-				presetButton.setEnabled(false);
-		        lutButton.setEnabled(false);
+				//resetButton.setEnabled(false);
+				//presetButton.setEnabled(false);
+		        //lutButton.setEnabled(false);
+				setToolBarDisabled();
 				nullifyStructures();
 				if(t1.isAlive()) {
 					((PopulateModelImages)t1).setIsInterrupted(true);
@@ -1308,9 +1389,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			}
 		}else if(command.equals("coronal")) {
 			if(!currentOrientation.equals(CORONAL)) {
-				resetButton.setEnabled(false);
-				presetButton.setEnabled(false);
-		        lutButton.setEnabled(false);
+				//resetButton.setEnabled(false);
+				//presetButton.setEnabled(false);
+		        //lutButton.setEnabled(false);
+		        setToolBarDisabled();
 				nullifyStructures();
 				if(t1.isAlive()) {
 					((PopulateModelImages)t1).setIsInterrupted(true);
@@ -1347,16 +1429,17 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			        sagittalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 			        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 			        
-			       
+			          
 			        
 			        
 			}
 			
 		}else if(command.equals("sagittal")) {
 			if(!currentOrientation.equals(SAGITTAL)) {
-				resetButton.setEnabled(false);
-				presetButton.setEnabled(false);
-		        lutButton.setEnabled(false);
+				//resetButton.setEnabled(false);
+				//presetButton.setEnabled(false);
+		        //lutButton.setEnabled(false);
+		        setToolBarDisabled();
 				nullifyStructures();
 				if(t1.isAlive()) {
 					((PopulateModelImages)t1).setIsInterrupted(true);
@@ -1396,9 +1479,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	
 			}
 		}else if(command.equals("test")) {
-			if(currentOrientation.equals(CORONAL)) {
+			/*if(currentOrientation.equals(CORONAL)) {
+				System.out.println("here");
 				try {
-					if(testCounter != 1) {
+					//if(testCounter != 1) {
 			        	ModelImage img = null;
 						if(currentModality.equals(T1)) {
 							img = t1AtlasImages[currentAge];
@@ -1409,6 +1493,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 						}
 						fileVOI = new FileVOI(coronalAnnotationsFilename, annotationsFileDir,img);
 						VOI[] vois = fileVOI.readVOI(true);
+						System.out.println(vois.length);
 						for (int k = 0; k < vois.length; k++) {
 							
 							if(vois[k].getColor() == null) {
@@ -1424,10 +1509,11 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	
 						img.notifyImageDisplayListeners();
 						
-						testCounter++;
-					}
+						//testCounter++;
+					//}
 					
 					 try {
+						 System.out.println(showAnnotationsToggle);
 						 currentComponentImage.setDrawVOIs(showAnnotationsToggle);
 				            currentComponentImage.paintComponent(currentComponentImage.getGraphics());
 				            // componentImage.repaint(); // problems with this method on some machines seems to eat lots of memory on
@@ -1446,6 +1532,52 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				}
 			}
 			
+			*/
+		}else if(command.equals("displayAnnotations")) {
+			displayAnnotations = true;
+			ViewJComponentPedsAtlasImage comp;
+			for(int i=0;i<t1ComponentImages.length;i++) {
+				comp = t1ComponentImages[i];
+				comp.setDrawVOIs(true);
+				imagePanel.validate();
+				this.repaint();
+			}
+			for(int i=0;i<t2ComponentImages.length;i++) {
+				comp = t2ComponentImages[i];
+				comp.setDrawVOIs(true);
+				imagePanel.validate();
+				this.repaint();
+				
+			}
+			for(int i=0;i<pdComponentImages.length;i++) {
+				comp = pdComponentImages[i];
+				comp.setDrawVOIs(true);
+				imagePanel.validate();
+				this.repaint();
+			}
+			
+		}else if(command.equals("hideAnnotations")) {
+			displayAnnotations = false;
+			ViewJComponentPedsAtlasImage comp;
+			for(int i=0;i<t1ComponentImages.length;i++) {
+				comp = t1ComponentImages[i];
+				comp.setDrawVOIs(false);
+				imagePanel.validate();
+				this.repaint();
+			}
+			for(int i=0;i<t2ComponentImages.length;i++) {
+				comp = t2ComponentImages[i];
+				comp.setDrawVOIs(false);
+				imagePanel.validate();
+				this.repaint();
+				
+			}
+			for(int i=0;i<pdComponentImages.length;i++) {
+				comp = pdComponentImages[i];
+				comp.setDrawVOIs(false);
+				imagePanel.validate();
+				this.repaint();
+			}
 			
 		}else if(command.equals("copyLUT")) {
 			if(currentModality.equals(T1)) {
@@ -1488,6 +1620,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		}
 
 	}
+	
+	
+	
 	
 	
 	
@@ -2354,18 +2489,29 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		public void run() {
 			try {
+				finishedLoading = false;
 				currAge = currentAge;
 				long begTime = System.currentTimeMillis();
 				populateModelImages(orient);
-				if(isInterrupted()) {
-					resetButton.setEnabled(false);
-					presetButton.setEnabled(false);
-					lutButton.setEnabled(false);
+				/*if(orient.equals(CORONAL)) {
+					loadAnnotations(CORONAL);  
+				}else if(orient.equals(AXIAL)) {
+					loadAnnotations(AXIAL);  
 				}else {
-					resetButton.setEnabled(true);
-					presetButton.setEnabled(true);
-					lutButton.setEnabled(true);
+					loadAnnotations(SAGITTAL);  
+				}*/
+				if(isInterrupted()) {
+					//resetButton.setEnabled(false);
+					//presetButton.setEnabled(false);
+					//lutButton.setEnabled(false);
+					setToolBarDisabled();
+				}else {
+					//resetButton.setEnabled(true);
+					//presetButton.setEnabled(true);
+					//lutButton.setEnabled(true);
+					setToolBarEnabled();
 				}
+				finishedLoading = true;
 				long endTime = System.currentTimeMillis();
 		        long diffTime = endTime - begTime;
 		        float seconds = ((float) diffTime) / 1000;
@@ -2389,6 +2535,38 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			 		//do nothing
 			 	}
 		    }
+		 
+		 
+		 
+		 
+		 
+		 private void loadAnnotations(ModelImage img) {
+				String annotationsFileName;
+				if(orient.equals(CORONAL)) {
+					annotationsFileName = coronalAnnotationsFilename;
+				}else if(orient.equals(AXIAL)) {
+					annotationsFileName = axialAnnotationsFilename;
+				}else {
+					annotationsFileName = sagittalAnnotationsFilename;
+				}
+				try {
+					VOI[] vois;
+					
+					fileVOI = new FileVOI(annotationsFileName, annotationsFileDir,img);
+					vois = fileVOI.readVOI(true);
+					for (int k = 0; k < vois.length; k++) {
+						if(vois[k].getColor() == null) {
+							vois[k].setColor(Color.white);
+		                }
+						vois[k].getGeometricCenter();	
+						img.registerVOI(vois[k]);
+			        }
+
+					//System.out.println(vois.length);
+				}catch(Exception ef) {
+					ef.printStackTrace();
+				}
+			}
 		 
 		 
 		 public void loadPresetLUT(ModelImage img, ViewJComponentPedsAtlasImage comp, String modality ) {
@@ -2554,6 +2732,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t1AtlasImages[i],comp);
+				loadAnnotations(t1AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT1ComponentImage(comp,i);
 			}
 			for(int i=currAge-1;i>=0;i--) {
@@ -2593,6 +2777,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t1AtlasImages[i],comp);
+				loadAnnotations(t1AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT1ComponentImage(comp,i);
 			}
 			
@@ -2640,6 +2830,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t2AtlasImages[i],comp);
+				loadAnnotations(t2AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT2ComponentImage(comp,i);
 			}
 			for(int i=currAge-1;i>=0;i--) {
@@ -2679,6 +2875,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t2AtlasImages[i],comp);
+				loadAnnotations(t2AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT2ComponentImage(comp,i);
 			}
 		}
@@ -2721,6 +2923,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(pdAtlasImages[i],comp);
+				loadAnnotations(pdAtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setPDComponentImage(comp,i);
 			}
 			for(int i=currAge-1;i>=0;i--) {
@@ -2760,6 +2968,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(pdAtlasImages[i],comp);
+				loadAnnotations(pdAtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setPDComponentImage(comp,i);
 			}
 		}
@@ -2851,6 +3065,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t1AtlasImages[i],comp);
+				loadAnnotations(t1AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT1ComponentImage(comp,i);
 				//notify();
 			}
@@ -2897,6 +3117,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t1AtlasImages[i],comp);
+				loadAnnotations(t1AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT1ComponentImage(comp,i);
 				//notify();
 			}
@@ -2940,6 +3166,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t2AtlasImages[i],comp);
+				loadAnnotations(t2AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT2ComponentImage(comp,i);
 			}
 			for(int i=currAge-1;i>=0;i--) {
@@ -2979,6 +3211,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t2AtlasImages[i],comp);
+				loadAnnotations(t2AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT2ComponentImage(comp,i);
 			}
 		}
@@ -3021,6 +3259,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(pdAtlasImages[i],comp);
+				loadAnnotations(pdAtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setPDComponentImage(comp,i);
 			}
 			for(int i=currAge-1;i>=0;i--) {
@@ -3060,6 +3304,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(pdAtlasImages[i],comp);
+				loadAnnotations(pdAtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setPDComponentImage(comp,i);
 			}
 		
@@ -3156,6 +3406,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t1AtlasImages[i],comp);
+				loadAnnotations(t1AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT1ComponentImage(comp,i);
 				//notify();
 			}
@@ -3196,6 +3452,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t1AtlasImages[i],comp);
+				loadAnnotations(t1AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT1ComponentImage(comp,i);
 				//notify();
 			}
@@ -3241,6 +3503,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t2AtlasImages[i],comp);
+				loadAnnotations(t2AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT2ComponentImage(comp,i);
 			}
 			for(int i=currAge-1;i>=0;i--) {
@@ -3280,6 +3548,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(t2AtlasImages[i],comp);
+				loadAnnotations(t2AtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setT2ComponentImage(comp,i);
 			}
 		}
@@ -3324,6 +3598,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(pdAtlasImages[i],comp);
+				loadAnnotations(pdAtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setPDComponentImage(comp,i);
 			}
 			for(int i=currAge-1;i>=0;i--) {
@@ -3363,6 +3643,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					return;
 				}
 				initVOI(pdAtlasImages[i],comp);
+				loadAnnotations(pdAtlasImages[i]);
+				if(displayAnnotations) {
+					comp.setDrawVOIs(true);
+				}else {
+					comp.setDrawVOIs(false);
+				}
 				setPDComponentImage(comp,i);
 			}
 		}
