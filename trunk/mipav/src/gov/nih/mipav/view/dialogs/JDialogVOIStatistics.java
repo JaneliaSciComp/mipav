@@ -532,6 +532,17 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             checkBoxPanel.setCheckBoxesEnabled();
         }
         
+        boolean allClosed = true;
+        for(int i=0; i<voiList.size(); i++) {
+            VOIBaseVector v = voiList.get(i).getCurves();
+            for(int j=0; j<v.size(); j++) {
+                if(!v.get(j).isClosed()) {
+                    allClosed = false;
+                }
+            }
+        }
+        checkBoxPanel.isOpenContour(!allClosed); //if all the contours are not closed, then some statistics need to be disabled
+        
         
         outputOptionsPanel = new JPanelStatisticsOptions();
 
@@ -1727,9 +1738,9 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             
             public void actionPerformed(ActionEvent e) {
                 if(permitExclusion.isSelected()) {
-                    checkBoxPanel.setContourType(true); //open contours are likely when pixels are being excluded from calculation
+                    checkBoxPanel.isOpenContour(true); //open contours are possible when pixels are being excluded from calculation
                 } else {
-                    checkBoxPanel.setContourType(false); //TODO: if statistics generator is able to handle non-closed VOIs, this should be changed
+                    checkBoxPanel.isOpenContour(false); //TODO: if statistics generator is able to handle non-closed VOIs, this should be changed
                 }
             }        
         }
