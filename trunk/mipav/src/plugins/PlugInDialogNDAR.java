@@ -1551,14 +1551,37 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 }
 
             }
+            
+            TreeSet sortedNamesSet = new TreeSet(new AlphabeticalComparator());
+            for(int i=0;i<shortNameAL.size();i++) {
+            	sortedNamesSet.add(shortNameAL.get(i));
+            }
+            
+        	
+        	
+        	
+            
 
             final Object[] rowData = new Object[numColumns];
-            for (int i = 0; i < descAL.size(); i++) {
-
-                rowData[0] = shortNameAL.get(i);
-                rowData[1] = descAL.get(i);
-                rowData[2] = statusAL.get(i);
-                structsModel.addRow(rowData);
+            
+            Iterator iter = sortedNamesSet.iterator();
+            
+            while (iter.hasNext()) {
+				String name = (String)iter.next();
+				
+				 for (int i = 0; i < shortNameAL.size(); i++) {
+					 if(name.equals(shortNameAL.get(i))) {
+						 rowData[0] = shortNameAL.get(i);
+			                rowData[1] = descAL.get(i);
+			                rowData[2] = statusAL.get(i);
+			                structsModel.addRow(rowData);
+						 
+						 break;
+					 }
+					 
+				 }
+				
+				
             }
 
             structsTable.setRowSelectionInterval(0, 0);
@@ -1608,6 +1631,19 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         }
 
+        
+        
+        /**
+    	 * This inner class is used to sort
+    	 * the list by instance number
+    	 */
+    	private class AlphabeticalComparator implements Comparator {
+    		public int compare(Object a, Object b) {
+    			return (a.toString().compareTo(b.toString()));
+    			
+    		}
+    	}
+        
     }
 
     /**
