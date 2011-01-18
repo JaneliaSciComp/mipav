@@ -769,7 +769,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("dtiVisualization")) {
             invokeDTIframe();
         } else if (command.equals("HyperGraph")) {
-        	new JDialogHyperGraph();
+        	new JDialogHyperGraph(true, null);
         } else if (command.equals("treT1")) {
             if (getActiveImageFrame() != null) {
                 new JDialogTreT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
