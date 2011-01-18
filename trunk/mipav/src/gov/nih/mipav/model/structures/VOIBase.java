@@ -2,12 +2,12 @@ package gov.nih.mipav.model.structures;
 
 import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Vector;
 
@@ -443,7 +443,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param rangeFlag flag indicating (between, outside, none).
      * @return list of values inside this contour that fit the parameters.
      */
-    public Vector<Float> calcIntensity( ModelImage kImage, Vector3f kValues, float ignoreMin, float ignoreMax, int rangeFlag)
+    public Vector<Float> calcIntensity( ModelImage kImage, Vector3f kValues, float ignoreMin, float ignoreMax, ExclusionRangeType rangeFlag)
     {
         getMask();
         Vector<Float> values = new Vector<Float>();
@@ -455,7 +455,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int y = (int)kPos.Y;
             int z = (int)kPos.Z;
             fVal = kImage.getFloat(x,y,z);
-            if ( !inRange( ignoreMin, ignoreMax, fVal, rangeFlag ) )
+            if ( !MipavUtil.inRange( ignoreMin, ignoreMax, fVal, rangeFlag ) )
             {
                 values.add( new Float(fVal) );
                 if ( i == 0 )
@@ -506,7 +506,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param rangeFlag flag indicating (between, outside, none).
      * @return list of values inside this contour that fit the parameters.
      */
-    public Vector<ColorRGB> calcRGBIntensity(ModelImage kImage, ColorRGB kMin, ColorRGB kMax, ColorRGB kSum, float ignoreMin, float ignoreMax, int rangeFlag) {
+    public Vector<ColorRGB> calcRGBIntensity(ModelImage kImage, ColorRGB kMin, ColorRGB kMax, ColorRGB kSum, float ignoreMin, float ignoreMax, ExclusionRangeType rangeFlag) {
         Vector<ColorRGB> values = new Vector<ColorRGB>();
         float r, g, b;
         getMask();
@@ -520,9 +520,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
             r = kImage.getFloatC(x,y,z,1);
             g = kImage.getFloatC(x,y,z,2);
             b = kImage.getFloatC(x,y,z,3);
-            if ( !inRange( ignoreMin, ignoreMax, r, rangeFlag ) &&
-                    !inRange( ignoreMin, ignoreMax, g, rangeFlag ) &&
-                    !inRange( ignoreMin, ignoreMax, b, rangeFlag ) )
+            if ( !MipavUtil.inRange( ignoreMin, ignoreMax, r, rangeFlag ) &&
+                    !MipavUtil.inRange( ignoreMin, ignoreMax, g, rangeFlag ) &&
+                    !MipavUtil.inRange( ignoreMin, ignoreMax, b, rangeFlag ) )
             {
                 ColorRGB kColor = new ColorRGB(r,g,b);
                 values.add( kColor );
@@ -2971,41 +2971,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
         }
     }
-
-    /**
-     * Determines if a value is within the range.
-     * @param ignoreMin minimum intensity.
-     * @param ignoreMax maximum intensity.
-     * @param num value to test.
-     * @param rangeFlag (no test, between, outside) the min and max.
-     * @return true if num satisfies the test.
-     */
-    private boolean inRange(float ignoreMin, float ignoreMax, float num, int rangeFlag) {
-
-        if (rangeFlag == JDialogVOIStatistics.NO_RANGE) {
-            return false;
-        } else if (rangeFlag == JDialogVOIStatistics.BETWEEN) {
-
-            if ((num >= ignoreMin) && (num <= ignoreMax)) {
-                return true;
-            }
-            return false;
-        } else if (rangeFlag == JDialogVOIStatistics.OUTSIDE) {
-
-            if ((num <= ignoreMin) || (num >= ignoreMax)) {
-                return true;
-            }
-            return false;
-        } else {
-            if ((num >= ignoreMin) && (num <= ignoreMax)) {
-                return true;
-            }
-            return false;
-        }
-
-    }
-
-
 
     /**
      * Returns true if fX,fY is 'inside' the line specified by fX1,fY1 -> fX2,fY2.

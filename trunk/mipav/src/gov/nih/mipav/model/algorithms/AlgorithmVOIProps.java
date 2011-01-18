@@ -11,7 +11,7 @@ import gov.nih.mipav.model.structures.VOIStatisticalProperties;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewVOIVector;
-import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -388,7 +388,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 float fVal = srcImage.getFloat(x,y,z);
 
-                if (!inRange(ignoreMin, ignoreMax, fVal)) {
+                if (!MipavUtil.inRange(ignoreMin, ignoreMax, fVal, rangeFlag)) {
                     xMass += x * fVal;
                     yMass += y * fVal;
                     zMass += z * fVal;
@@ -476,9 +476,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 float fB = srcImage.getFloatC(x,y,z,3);
 
 
-                if ( !inRange(ignoreMin, ignoreMax, fR) &&
-                        !inRange(ignoreMin, ignoreMax, fG) &&
-                        !inRange(ignoreMin, ignoreMax, fB)) {
+                if ( !MipavUtil.inRange(ignoreMin, ignoreMax, fR, rangeFlag) &&
+                        !MipavUtil.inRange(ignoreMin, ignoreMax, fG, rangeFlag) &&
+                        !MipavUtil.inRange(ignoreMin, ignoreMax, fB, rangeFlag)) {
                     xMassR += x * fR;
                     yMassR += y * fG;
                     zMassR += z * fB;
@@ -1335,12 +1335,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             BitSet mask = new BitSet( xDim * yDim * zDim );
             kVOI.createBinaryMask3D(mask, xDim, yDim, false, false);
             
-            if(rangeFlag != JDialogVOIStatistics.NO_RANGE) { //some intensity values need to be ignored in relevant calculations
+            if(rangeFlag != ExclusionRangeType.NO_RANGE) { //some intensity values need to be ignored in relevant calculations
             
                 float fVal = 0.0f;   
                 for (int i = mask.nextSetBit(0); i >= 0; i = mask.nextSetBit(i+1)) {
                     fVal = srcImage.getFloat(i);
-                    if (inRange(ignoreMin, ignoreMax, fVal)) {
+                    if (MipavUtil.inRange(ignoreMin, ignoreMax, fVal, rangeFlag)) {
                        mask.set(i, false); 
                     }
                 }
@@ -1930,8 +1930,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     /** Vector to hold all properties calculated within the algorithm for later access. */
     protected Vector<VOIStatisticalProperties> propertyList;
 
-    /** Whether or not to exclude a range of values. */
-    protected int rangeFlag;
+    /**  Specifies how a range of pixels is excluded from VOI calculations. */
+    protected ExclusionRangeType rangeFlag;
 
     /** Whether or not to calculate largest slice distance, true by default */
     protected boolean sliceDistanceFlag;
@@ -1963,7 +1963,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  rangeFlag  Whether the range of values specified by the statistics generator should be ignored
      * @param  voiSet     The VOIs that will be calculated
      */
-    public AlgorithmVOIProps(ModelImage srcImg, int pType, int rangeFlag, ViewVOIVector voiSet) {
+    public AlgorithmVOIProps(ModelImage srcImg, int pType, ExclusionRangeType rangeFlag, ViewVOIVector voiSet) {
         nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
         nf.setMinimumFractionDigits(0);
@@ -2008,7 +2008,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  voiSet     The VOIs that will be calculated
      */
     public AlgorithmVOIProps(ModelImage srcImg, int processType, ViewVOIVector voiSet) {
-        this(srcImg, processType, 0, voiSet);
+        this(srcImg, processType, ExclusionRangeType.NO_RANGE, voiSet);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -2928,45 +2928,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
         }
         return 0;
-    }
-
-    /**
-     * Tests if the given <code>num</code> is within the ignorable range for this statistics calculation.
-     * For example, if <code>rangeFlag == JDialogVOIStatistics.OUTSIDE</code> and this method is called
-     * in the following way: <code>nRange(-100, 100, 243.0)</code>, this method will return true.
-     *
-     * @param   ignoreMin  The minimum intensity of the ignorable range.
-     * @param   ignoreMax  The maximum intensity of the ignorable range.
-     * @param   num        The pixel to test.
-     *
-     * @return  Whether the pixel is in the ignorable range for this statistics calculation.
-     */
-    protected boolean inRange(float ignoreMin, float ignoreMax, float num) {
-
-        if (rangeFlag == JDialogVOIStatistics.NO_RANGE) {
-            return false;
-        } else if (rangeFlag == JDialogVOIStatistics.BETWEEN) {
-
-            if ((num >= ignoreMin) && (num <= ignoreMax)) {
-                return true;
-            }
-            return false;
-        } else if (rangeFlag == JDialogVOIStatistics.OUTSIDE) {
-
-            if ((num <= ignoreMin) || (num >= ignoreMax)) {
-                return true;
-            }
-            return false;
-        } else {
-
-            if ((num >= ignoreMin) && (num <= ignoreMax)) {
-                System.out.println(" min  = " + ignoreMax + " max = " + ignoreMax);
-
-                return true;
-            }
-            return false;
-        }
-
     }
 
 

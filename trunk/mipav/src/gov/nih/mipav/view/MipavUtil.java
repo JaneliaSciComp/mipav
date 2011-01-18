@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.structures.TokenizerException;
 
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
 import gov.nih.mipav.view.icons.PlaceHolder;
 
 import java.awt.*;
@@ -791,6 +792,38 @@ public class MipavUtil extends JComponent {
         }
 
         return verString;
+    }
+    
+    /**
+     * Determines if a value is within the given pixel intensity range.
+     * @param ignoreMin minimum intensity.
+     * @param ignoreMax maximum intensity.
+     * @param num value to test.
+     * @param rangeFlag (no test, between, outside) the min and max.
+     * @return true if num satisfies the test.
+     */
+    public static boolean inRange(float ignoreMin, float ignoreMax, float num, ExclusionRangeType rangeFlag) {
+
+        if (rangeFlag == ExclusionRangeType.NO_RANGE) {
+            return false;
+        } else if (rangeFlag == ExclusionRangeType.BETWEEN) {
+
+            if ((num >= ignoreMin) && (num <= ignoreMax)) {
+                return true;
+            }
+            return false;
+        } else if (rangeFlag == ExclusionRangeType.OUTSIDE) {
+
+            if ((num <= ignoreMin) || (num >= ignoreMax)) {
+                return true;
+            }
+            return false;
+        } else {
+            if ((num >= ignoreMin) && (num <= ignoreMax)) {
+                return true;
+            }
+            return false;
+        }
     }
 
     /**
