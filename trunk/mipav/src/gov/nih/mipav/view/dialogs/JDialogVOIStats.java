@@ -1630,10 +1630,10 @@ public class JDialogVOIStats extends JDialogBase
         gbc2.weighty = 1;
         gbc2.gridx = 0;
         gbc2.gridy = 0;
-        checkPanel.add(checkboxExclude, gbc2);
-        gbc2.gridy++;
         checkPanel.add(checkboxSaveStats, gbc2);
-
+        gbc2.gridy++;
+        checkPanel.add(checkboxExclude, gbc2);
+        
         JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         rangePanel.add(labelMin);
