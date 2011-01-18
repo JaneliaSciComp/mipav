@@ -203,8 +203,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             if (cnt%2 == 1) {
                 median = sorted[cnt/2] ;   
-            }
-            else {
+            } else if (cnt == 0) { 
+                median = 0;
+            } else {
                 median = (sorted[cnt/2] + sorted[(cnt/2) - 1])/2.0;
             }
             stats.median = median;
@@ -770,13 +771,32 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             contour.getGroup().setAllActive(false);
             contour.setActive(true);
 
+            //Initialize contour intensity counts
+            ColorRGB kMin = new ColorRGB();
+            ColorRGB kMax = new ColorRGB();
+            ColorRGB kSum = new ColorRGB();
+            
+            Vector3f kMinMax = new Vector3f();
+            
+            if(srcImage.isColorImage()) {
+                stats.valuesRGB = contour.calcRGBIntensity( srcImage, kMin, kMax, kSum,
+                        ignoreMin, ignoreMax, rangeFlag );
+            } else {
+                stats.values = contour.calcIntensity( srcImage, kMinMax, ignoreMin, ignoreMax, rangeFlag );
+            }
+            
             // The following depend on each other: quantityDescription, volumeDescription, areaDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
                     statsList[ indexOf( areaDescription ) ] )
             {               
-                stats.nVox = contour.getNumVoxels();
+                if(srcImage.isColorImage()) {
+                    stats.nVox = stats.valuesRGB.size();
+                } else {
+                    stats.nVox = stats.values.size();
+                }
+
                 stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.volume = stats.area * fileInfo.getResolutions()[2]; 
 
@@ -809,12 +829,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             {                   
                 stats.nVox = contour.getNumVoxels();       
                 if (srcImage.isColorImage()) {
-                    ColorRGB kMin = new ColorRGB();
-                    ColorRGB kMax = new ColorRGB();
-                    ColorRGB kSum = new ColorRGB();
-
-                    stats.valuesRGB = contour.calcRGBIntensity( srcImage, kMin, kMax, kSum,
-                            ignoreMin, ignoreMax, rangeFlag );
+                    
 
 
                     stats.minIntenRed = kMin.R;
@@ -828,10 +843,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     stats.sumR = kSum.R;
                     stats.sumG = kSum.G;
                     stats.sumB = kSum.B;
-                    stats.avgIntenR = kSum.R/stats.nVox;
-                    stats.avgIntenG = kSum.G/stats.nVox;
-                    stats.avgIntenB = kSum.B/stats.nVox;                 
-
+                    if(stats.nVox != 0) {
+                        stats.avgIntenR = kSum.R/stats.nVox;
+                        stats.avgIntenG = kSum.G/stats.nVox;
+                        stats.avgIntenB = kSum.B/stats.nVox;                 
+                    } else {
+                        stats.avgIntenR = 0;
+                        stats.avgIntenG = 0;
+                        stats.avgIntenB = 0;   
+                    }
 
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Red" + end, nf.format(stats.minIntenRed));
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Red" + end, nf.format(stats.maxIntenRed));
@@ -850,12 +870,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
                 else
                 {
-                    Vector3f kMinMax = new Vector3f();
-                    stats.values = contour.calcIntensity( srcImage, kMinMax, ignoreMin, ignoreMax, rangeFlag );
+                    
                     stats.minIntensity = kMinMax.X;
                     stats.maxIntensity = kMinMax.Y;
                     stats.sum = kMinMax.Z;
-                    stats.avgInten = stats.sum/stats.nVox;
+                    if(stats.nVox != 0) {
+                        stats.avgInten = stats.sum/stats.nVox;
+                    } else {
+                        stats.avgInten = 0;
+                    }
 
                     statProperty.setProperty(VOIStatisticList.minIntensity + end, nf.format(stats.minIntensity));
                     statProperty.setProperty(VOIStatisticList.maxIntensity + end, nf.format(stats.maxIntensity));
@@ -1312,6 +1335,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             BitSet mask = new BitSet( xDim * yDim * zDim );
             kVOI.createBinaryMask3D(mask, xDim, yDim, false, false);
             
+            if(rangeFlag != JDialogVOIStatistics.NO_RANGE) { //some intensity values need to be ignored in relevant calculations
+            
+                float fVal = 0.0f;   
+                for (int i = mask.nextSetBit(0); i >= 0; i = mask.nextSetBit(i+1)) {
+                    fVal = srcImage.getFloat(i);
+                    if (inRange(ignoreMin, ignoreMax, fVal)) {
+                       mask.set(i, false); 
+                    }
+                }
+            }
+            
             double largestDistance = 0;
             if(distanceFlag) {
                 largestDistance = calcSelectedVOI.calcLargestDistance( mask, srcImage.getExtents(),
@@ -1417,9 +1451,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(stats.nVox));
                 if (srcImage.isColorImage()) {
 
-                    stats.avgIntenR = stats.sumR/stats.nVox;
-                    stats.avgIntenG = stats.sumG/stats.nVox;
-                    stats.avgIntenB = stats.sumB/stats.nVox;
+                    if(stats.nVox != 0) {
+                        stats.avgIntenR = stats.sumR/stats.nVox;
+                        stats.avgIntenG = stats.sumG/stats.nVox;
+                        stats.avgIntenB = stats.sumB/stats.nVox;
+                    } else {
+                        stats.avgIntenR = 0;
+                        stats.avgIntenG = 0;
+                        stats.avgIntenB = 0;
+                    }
+                    
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Red", nf.format(stats.minIntenRed));
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Red", nf.format(stats.maxIntenRed));
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Green", nf.format(stats.minIntenGreen));
@@ -1432,10 +1473,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Red", nf.format(stats.sumR));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Green", nf.format(stats.sumG));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue", nf.format(stats.sumB));
-                }
-                else
-                {
-                    stats.avgInten = stats.sum/stats.nVox;
+                } else {
+                    if(stats.nVox != 0) {
+                        stats.avgInten = stats.sum/stats.nVox;
+                    } else {
+                        stats.avgInten = 0;
+                    }
                     statProperty.setProperty(VOIStatisticList.minIntensity, nf.format(stats.minIntensity));
                     statProperty.setProperty(VOIStatisticList.maxIntensity, nf.format(stats.maxIntensity));
                     statProperty.setProperty(VOIStatisticList.avgIntensity, nf.format(stats.avgInten));
@@ -2888,13 +2931,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     }
 
     /**
-     * DOCUMENT ME!
+     * Tests if the given <code>num</code> is within the ignorable range for this statistics calculation.
+     * For example, if <code>rangeFlag == JDialogVOIStatistics.OUTSIDE</code> and this method is called
+     * in the following way: <code>nRange(-100, 100, 243.0)</code>, this method will return true.
      *
-     * @param   ignoreMin  DOCUMENT ME!
-     * @param   ignoreMax  DOCUMENT ME!
-     * @param   num        DOCUMENT ME!
+     * @param   ignoreMin  The minimum intensity of the ignorable range.
+     * @param   ignoreMax  The maximum intensity of the ignorable range.
+     * @param   num        The pixel to test.
      *
-     * @return  DOCUMENT ME!
+     * @return  Whether the pixel is in the ignorable range for this statistics calculation.
      */
     protected boolean inRange(float ignoreMin, float ignoreMax, float num) {
 
