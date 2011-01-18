@@ -317,16 +317,21 @@ public class JDialogHyperGraph extends JDialogBase {
 			System.exit(8);
 		}
 		Graph tree = graphSystem.createGraph();
+		AttributeManager attrMgr = tree.getAttributeManager();
 		Node root = tree.createNode();
 		root.setLabel( kImage.getImageName() );
+		attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, root, root ); 
+		attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, root, fixedColor[0] ); 
+		attrMgr.setAttribute( "TreeLevel", root, 0 ); 
 		for ( int i = 0; i < kMenu.getMenuCount(); i++ )
 		{
 			Node menu = tree.createNode();
 			menu.setLabel( kMenu.getMenu(i).getText() );
-    		AttributeManager attrMgr = tree.getAttributeManager();
-    		attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, menu, fixedColor[0] ); 
+    		attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, menu, fixedColor[1] ); 
+    		attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, menu, root ); 
+    		attrMgr.setAttribute( "TreeLevel", menu, 1 ); 
 			tree.createEdge(root, menu );
-			addSubTree( tree, menu, kMenu.getMenu(i).getMenuComponents(), 1 );
+			addSubTree( tree, root, menu, kMenu.getMenu(i).getMenuComponents(), 2 );
 		}
 
 		graphPanel = new MipavGraphPanel(tree, kParent);
@@ -339,7 +344,7 @@ public class JDialogHyperGraph extends JDialogBase {
 	}
 	
 
-    public void addSubTree( Graph tree, Node menu, Component[] menuComponents, int level )
+    public void addSubTree( Graph tree, Node root, Node menu, Component[] menuComponents, int level )
     {
         if ( menuComponents == null )
         {
@@ -353,8 +358,10 @@ public class JDialogHyperGraph extends JDialogBase {
             	subMenu.setLabel( ((JMenuItem)menuComponents[i]).getText() );
         		AttributeManager attrMgr = tree.getAttributeManager();
         		attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, subMenu, fixedColor[level] ); 
+        		attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, subMenu, root ); 
+        		attrMgr.setAttribute( "TreeLevel", subMenu, level ); 
             	tree.createEdge( menu, subMenu );
-    			addSubTree( tree, subMenu, ((JMenu)menuComponents[i]).getMenuComponents(), level+1 );
+    			addSubTree( tree, root, subMenu, ((JMenu)menuComponents[i]).getMenuComponents(), level+1 );
             }
             else if ( menuComponents[i] instanceof JMenuItem )
             {
@@ -362,6 +369,8 @@ public class JDialogHyperGraph extends JDialogBase {
             	subMenu.setLabel( ((JMenuItem)menuComponents[i]).getActionCommand() );;
         		AttributeManager attrMgr = tree.getAttributeManager();
         		attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, subMenu, fixedColor[level] ); 
+        		attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, subMenu, root ); 
+        		attrMgr.setAttribute( "TreeLevel", subMenu, level ); 
             	tree.createEdge( menu, subMenu );
             }
         }
