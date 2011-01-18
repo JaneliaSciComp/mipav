@@ -115,7 +115,7 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
      *
      * @param  openContour whether non-closed contours are being used for statistics calculations
      */
-    public void setContourType(boolean openContour) {
+    public void isOpenContour(boolean openContour) {
         this.openContour = openContour;
         setCheckBoxesEnabled();
     }
