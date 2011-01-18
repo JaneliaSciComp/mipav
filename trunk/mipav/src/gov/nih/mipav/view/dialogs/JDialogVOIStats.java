@@ -1625,7 +1625,7 @@ public class JDialogVOIStats extends JDialogBase
         JPanel checkPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.WEST;
-        gbc2.fill = gbc2.BOTH;
+        gbc2.fill = GridBagConstraints.BOTH;
         gbc2.weightx = 1;
         gbc2.weighty = 1;
         gbc2.gridx = 0;
