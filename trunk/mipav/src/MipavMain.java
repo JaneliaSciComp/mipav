@@ -27,7 +27,7 @@ public class MipavMain {
         System.setProperty("sun.awt.noerasebackground", "true");
 
         ViewUserInterface ui = ViewUserInterface.create();
-        ui.parseArguments(args);
+        ui.parseArguments(args, 0); //begin processing command line arguments
 
 
         if (ui.isAppFrameVisible() && Preferences.is(Preferences.PREF_SHOW_SPLASH)) {
