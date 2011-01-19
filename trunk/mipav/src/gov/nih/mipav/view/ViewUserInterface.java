@@ -2498,6 +2498,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     try {
                         thePlugIn = Class.forName(plugInName).newInstance();
 
+                        //some plugins can now process command line arguments, can also control next command to be read
+                        //once processing is complete
+                        if(thePlugIn instanceof CommandLineParser) {
+                            //plugin is given cursor position immediately after plugin name, but this can change
+                            i = ((CommandLineParser) thePlugIn).parseArguments(args, ++i);
+                        }
+                        
                         if (thePlugIn instanceof PlugInGeneric) {
                             // don't exit on an error (instead show the error dialog)
                             setPlugInFrameVisible(true);
@@ -2507,14 +2514,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         } else {
                         	MipavUtil.displayError("Plugin " + plugInName
                                     + " must implement the PlugInGeneric interface in order to be run from the command line.");
-                        }
-                        //some plugins can now process command line arguments, can also control next command to be read
-                        //once processing is complete
-                        if(thePlugIn instanceof CommandLineParser) {
-                            //plugin is given cursor position immediately after plugin name, but this can change
-                            i = ((CommandLineParser) thePlugIn).parseArguments(args, ++i);
-                        }
-                        
+                        }  
                     } catch (final ClassNotFoundException e) {
                         MipavUtil.displayError("PlugIn not found: " + plugInName);
                     } catch (final InstantiationException e) {
