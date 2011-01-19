@@ -57,6 +57,7 @@ import gov.nih.mipav.view.dialogs.JDialogBSmooth;
 import gov.nih.mipav.view.dialogs.JDialogBSnake;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogEditCircleDiameter;
+import gov.nih.mipav.view.dialogs.JDialogEditSquareLength;
 import gov.nih.mipav.view.dialogs.JDialogEvolveBoundaryManual;
 import gov.nih.mipav.view.dialogs.JDialogFlip;
 import gov.nih.mipav.view.dialogs.JDialogGVF;
@@ -905,7 +906,40 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	
         	new JDialogEditCircleDiameter((Component)m_kParent, widthString,measuredWidthString,xUnitsString, m_kParent.getActiveImage().getResolutions(0), activeVOI, voiManager);
         	
-        } else if (command.equals("ProstateMergedVOIs")) {
+        } else if(command.equals(CustomUIBuilder.PARAM_VOI_EDIT_SQUARE_LENGTH.getActionCommand())) {
+        	VOIManager voiManager = m_kVOIManagers.elementAt(m_iActive);
+        	
+        	VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        	VOIBase activeVOI = null;
+            for ( int i = 0; i < kVOIs.size(); i++ )
+            {
+                VOI kCurrentGroup = kVOIs.get(i);
+                for ( int j = 0; j < kCurrentGroup.getCurves().size(); j++ )
+                {
+                    VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
+                    if ( kCurrentVOI.isActive() )
+                    {
+                        activeVOI = kCurrentVOI;
+                        break;
+                    }
+                }
+            }
+
+        	Vector3f kMin = activeVOI.getImageBoundingBox()[0];
+            Vector3f kMax = activeVOI.getImageBoundingBox()[1];
+            int width = (int) ((kMax.X  - kMin.X ) + 0.5f);
+
+            float measuredWidth = (width) * m_kParent.getActiveImage().getResolutions(0)[0];
+            DecimalFormat nf = new DecimalFormat( "0.0#" );
+            
+            String xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(m_kParent.getActiveImage().getUnitsOfMeasure()[0]);
+            
+            String measuredWidthString = String.valueOf(nf.format(measuredWidth));
+            String widthString = String.valueOf(width);
+        	
+        	new JDialogEditSquareLength((Component)m_kParent, widthString,measuredWidthString,xUnitsString, m_kParent.getActiveImage().getResolutions(0), activeVOI, voiManager);
+        	
+        }else if (command.equals("ProstateMergedVOIs")) {
             saveMergedVOIs();
         } else if (command.equals("ProstateReconstruct")) {
             reconstructSurfaceFromVOIs();

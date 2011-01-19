@@ -18,7 +18,7 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_VOI_LINE = new UIParams("Draw Line VOI","Line", UIParams.INVALID_MNEMONIC, "Draw line VOI", "linear", true);
     public static final UIParams PARAM_VOI_PROTRACTOR = new UIParams("Draw Protractor VOI","protractor", UIParams.INVALID_MNEMONIC, "Protractor tool", "protractor", true);
     public static final UIParams PARAM_VOI_RECTANGLE = new UIParams("Draw Rectangle VOI","RectVOI", UIParams.INVALID_MNEMONIC,
-                                                                    "<html>" + "Draw rectangle VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
+                                                                    "<html>" + "Draw rectangle VOI" + "<br>" + "Hold SHIFT for multiple drawing" + "<br>" + "Hold CTRL for square" +
                                                                     "</html>", "rect", true);
     public static final UIParams PARAM_VOI_ELLIPSE = new UIParams("Draw Ellipse VOI","EllipseVOI", UIParams.INVALID_MNEMONIC,
                                                                   "<html>" + "Draw ellipse VOI" + "<br>" + "Hold SHIFT for multiple drawing"  + "<br>" + "Hold CTRL for circle" + 
@@ -47,6 +47,7 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_VOI_STATISTICS = new UIParams("Statistics generator", "VOIStistics", 'G', null, null );
     public static final UIParams PARAM_VOI_LOGICAL_OPERATIONS = new UIParams("VOI Logical Operations", "VOILogicalOperations", UIParams.INVALID_MNEMONIC, null, null );
     public static final UIParams PARAM_VOI_EDIT_CIRCLE_DIAM = new UIParams("Edit Circle Diameter", "editCircleDiameter", UIParams.INVALID_MNEMONIC, "Edit Circle Diameter", null );
+    public static final UIParams PARAM_VOI_EDIT_SQUARE_LENGTH = new UIParams("Edit Square Length", "editSquareLength", UIParams.INVALID_MNEMONIC, "Edit Square Length", null );
 
     public static final UIParams PARAM_VOI_COLOR = new UIParams("VOIColor", "Current/change VOI Color", "transparent");
     public static final UIParams PARAM_VOI_NEW = new UIParams("New VOI", "NewVOI", UIParams.INVALID_MNEMONIC, "Initiate new VOI", "newvoi");

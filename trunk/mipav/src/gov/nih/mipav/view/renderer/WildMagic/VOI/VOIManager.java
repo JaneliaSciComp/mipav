@@ -2021,15 +2021,47 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         else if ( m_iDrawType == RECTANGLE || m_iDrawType == RECTANGLE3D || m_iDrawType == LUT )
         {
+        	
+        	if(isCtrlDown) {
+            	float xDiff = iX - m_fMouseX;
+            	float yDiff = iY - fYStart;
+            	if(Math.abs(xDiff) > Math.abs(yDiff) ) {
+            		if(yDiff > 0) {
+            			iY = (int)(fYStart + Math.abs(xDiff));
+            			fY = iY;
+            		}else {
+            			iY = (int)(fYStart - Math.abs(xDiff));
+            			fY = iY;
+            		}
+            	}else {
+            		if(xDiff > 0) {
+            			iX = (int)(m_fMouseX + Math.abs(yDiff));
+            			
+            		}else {
+            			iX = (int)(m_fMouseX - Math.abs(yDiff));
+            		
+            		}
+            	}
+        
+
+            }
+        	
             if ( m_kCurrentVOI == null )
             {            
                 int iSlice = m_kDrawingContext.getSlice();
+                
+                
                 Vector<Vector3f> kPositions = new Vector<Vector3f>();
                 kPositions.add( new Vector3f (m_fMouseX, fYStart, iSlice));
                 kPositions.add( new Vector3f (iX, fYStart, iSlice));
                 kPositions.add( new Vector3f (iX, fY, iSlice));
                 kPositions.add( new Vector3f (m_fMouseX, fY, iSlice));
                 m_kCurrentVOI = createVOI( m_iDrawType, true, false, kPositions );
+                if(isCtrlDown) {
+                	m_kCurrentVOI.setSubtype(VOIBase.SQUARE);
+                }else {
+                	m_kCurrentVOI.setSubtype(VOIBase.UNKNOWN_SUBTYPE);
+                }
                 if ( m_iDrawType == LUT )
                 {
                     m_kCurrentVOI.setQuickLUT( true);
@@ -2038,6 +2070,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             else
             {      
                 updateRectangle( iX, (int)m_fMouseX, (int)fY, (int)fYStart );
+                if(isCtrlDown) {
+                	m_kCurrentVOI.setSubtype(VOIBase.SQUARE);
+                }else {
+                	m_kCurrentVOI.setSubtype(VOIBase.UNKNOWN_SUBTYPE);
+                }
             }
         }
         else if ( m_iDrawType == OVAL )
@@ -2827,6 +2864,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	                String xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]);
 	                String measuredWidthString = String.valueOf(nf.format(measuredWidth)) + " " + xUnitsString;
 	                g.drawString("D: " + String.valueOf(width) + " pix " + "(" + measuredWidthString + ")", (int)sCtr.X, (int)sCtr.Y);
+            	
+                }
+                if(m_bMouseDrag && m_bCtrlDown && m_iDrawType == RECTANGLE && kVOI.getSubtype() == VOIBase.SQUARE && kVOI.getGroup().getBoundingBoxFlag() == false && kVOI == m_kCurrentVOI) {
+                	Vector3f kMin = kVOI.getImageBoundingBox()[0];
+	                Vector3f kMax = kVOI.getImageBoundingBox()[1];
+	                int width = (int) ((kMax.X  - kMin.X ) + 0.5f);
+	                Vector3f ctr = kVOI.getGeometricCenter();
+	                Vector3f sCtr = m_kDrawingContext.fileToScreenVOI( ctr );
+	                g.setColor(Color.WHITE);
+	                float measuredWidth = (width) * resols[0];
+	                DecimalFormat nf = new DecimalFormat( "0.0#" );
+	                String xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]);
+	                String measuredWidthString = String.valueOf(nf.format(measuredWidth)) + " " + xUnitsString;
+	                g.drawString("L: " + String.valueOf(width) + " pix " + "(" + measuredWidthString + ")", (int)sCtr.X, (int)sCtr.Y);
             	
                 }
 
@@ -4058,7 +4109,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return;
         }
-        if(m_kCurrentVOI.getSubtype() == VOIBase.CIRCLE) {
+        if(m_kCurrentVOI.getSubtype() == VOIBase.CIRCLE || m_kCurrentVOI.getSubtype() == VOIBase.SQUARE) {
         	m_kCurrentVOI.setSubtype(VOIBase.UNKNOWN_SUBTYPE);
         }
         setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_kDrawingContext.getSlice() ); 
@@ -4815,6 +4866,67 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
          m_kParent.updateDisplay();
 
     }
+    
+    
+    public void editSquareLength(VOIBase kVOI, float length) {
+    	float halfLength = length/2;
+    	Vector3f sCtr = m_kDrawingContext.fileToScreenVOI( kVOI.getGeometricCenter() );
+    	float zoomX = m_kDrawingContext.getZoomX();
+    	int x1 = (int)(sCtr.X - (halfLength*zoomX));
+    	int y1 = (int)(sCtr.Y - (halfLength*zoomX));
+    	length = length * zoomX;
+    	updateRectangle( (x1 + (int)length), x1, (y1 + (int)length), y1 );
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	//updateRectangle( x1, (x1 + (int)length), y1, (y1 + (int)length));
+    	 m_kParent.updateDisplay();
+    	
+    }
+    
+    
+    public void scaleSquareVOI(VOIBase kVOI, float scale) {
+    	float xScale = scale;
+      	float yScale = scale;
+      	
+      	VOIBase backupVOI = kVOI.clone();
+      	
+      	Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(backupVOI) );
+        kScreenCenter.Add( getBoundingBoxUpperRight(backupVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerLeft(backupVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerRight(backupVOI) );
+        kScreenCenter.Scale( 0.25f );
+        
+        Vector3f kScreenScale = new Vector3f( xScale, yScale, 1 );
+        
+        Vector<Vector3f> newPoints = new Vector<Vector3f>();
+        for ( int i = 0; i < backupVOI.size(); i++ )
+        {
+            Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( backupVOI.elementAt(i) );
+            kScreen.Sub(kScreenCenter);
+            kScreen.Mult( kScreenScale );
+            kScreen.Add(kScreenCenter);
+            Vector3f kVolumePt = new Vector3f();
+            if ( m_kDrawingContext.screenToFileVOI( kScreen, kVolumePt ) )
+            {
+                return;
+            }
+            newPoints.add( kVolumePt );
+        }
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            kVOI.set( i, newPoints.elementAt(i) );
+        }
+
+        kVOI.update();
+        
+        m_kParent.updateDisplay();
+    	
+    }
 
 
     public void scaleCircleVOI(VOIBase kVOI, float scale) {
@@ -4912,7 +5024,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         float xScale = (iX-kScreenCenter.X) / (kScreenBound.X-kScreenCenter.X);
      	float yScale = (iY-kScreenCenter.Y) / (kScreenBound.Y-kScreenCenter.Y);
      	
-     	 if(m_iDrawType == OVAL  && isCtrlDown) {
+     	 if((m_iDrawType == OVAL || m_iDrawType == RECTANGLE)  && isCtrlDown) {
           	if(xScale > yScale) {
           		yScale = xScale;
           	}else if(yScale > xScale) {
@@ -5747,13 +5859,16 @@ voiSp:      for ( int j = 0; j < kVOICloneVoi.getCurves().size(); j++ ) { //iter
 
     private void updateRectangle( int iX, int iMouseX, int iY, int iYStart )
     {
+    	Vector3f kVolumePt0 = new Vector3f();
         Vector3f kVolumePt1 = new Vector3f();
         Vector3f kVolumePt2 = new Vector3f();
         Vector3f kVolumePt3 = new Vector3f();
-        if ( !m_kDrawingContext.screenToFileVOI( iX, iYStart, m_kDrawingContext.getSlice(), kVolumePt1 ) &&
+        if ( !m_kDrawingContext.screenToFileVOI( iMouseX, iYStart, m_kDrawingContext.getSlice(), kVolumePt0 ) &&
+        		!m_kDrawingContext.screenToFileVOI( iX, iYStart, m_kDrawingContext.getSlice(), kVolumePt1 ) &&
                 !m_kDrawingContext.screenToFileVOI( iX, iY, m_kDrawingContext.getSlice(), kVolumePt2 ) &&
                 !m_kDrawingContext.screenToFileVOI( iMouseX, iY, m_kDrawingContext.getSlice(), kVolumePt3 )   )
         {
+        	m_kCurrentVOI.set(0, kVolumePt0 );
             m_kCurrentVOI.set(1, kVolumePt1 );
             m_kCurrentVOI.set(2, kVolumePt2 );
             m_kCurrentVOI.set(3, kVolumePt3 );
