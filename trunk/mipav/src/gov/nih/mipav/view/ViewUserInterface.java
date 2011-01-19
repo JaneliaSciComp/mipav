@@ -39,7 +39,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * 
  * @version 1.0 June 1, 2005
  */
-public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener {
+public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener, CommandLineParser {
 
     // ~ Static fields/initializers ------------------------------------------------------------------
 
@@ -2188,11 +2188,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Parsing command line argument.
-     * 
-     * @param args command arguments
+     * Required by the CommandLineParser interface. Processes MIPAV command line arguments.
+     * Returns the next argument to be processed (finished if returns args.length)
      */
-    public void parseArguments(final String[] args) {
+    public int parseArguments(final String[] args, final int initArg) {
         int i = 0, j, idx, index;
         String arg;
         Vector<String> voiPerImages = new Vector<String>();
@@ -2209,7 +2208,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final Vector<Vector<String>> voiList = new Vector<Vector<String>>();
 
         if (args.length == 0) {
-            return;
+            return args.length;
         }
 
         // show the arguments
@@ -2250,7 +2249,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 printUsageAndExit();
             }
 
-            return;
+            return args.length;
         }
 
         // count the number of images in the arguments
@@ -2509,6 +2508,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         	MipavUtil.displayError("Plugin " + plugInName
                                     + " must implement the PlugInGeneric interface in order to be run from the command line.");
                         }
+                        //some plugins can now process command line arguments, can also control next command to be read
+                        //once processing is complete
+                        if(thePlugIn instanceof CommandLineParser) {
+                            //plugin is given cursor position immediately after plugin name, but this can change
+                            i = ((CommandLineParser) thePlugIn).parseArguments(args, ++i);
+                        }
+                        
                     } catch (final ClassNotFoundException e) {
                         MipavUtil.displayError("PlugIn not found: " + plugInName);
                     } catch (final InstantiationException e) {
@@ -2560,6 +2566,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         // scriptFile may be null if we don't have a script to run (e.g., if we just want to open images/vois specified
         // on cmd line)
         runCmdLine(scriptFile, imageList, voiList);
+        
+        return args.length;
     }
 
     /**
