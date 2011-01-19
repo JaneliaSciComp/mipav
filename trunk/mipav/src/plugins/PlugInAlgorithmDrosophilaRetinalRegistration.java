@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
 
 import java.io.IOException;
 
@@ -186,7 +187,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             final VOI VOIX = VOIsX.VOIAt(0);
             VOIX.setAllActive(true);
             algoVOIProps = new AlgorithmVOIProps(imageX, AlgorithmVOIProps.PROCESS_PER_VOI,
-                    JDialogVOIStatistics.NO_RANGE, getActiveVOIs(imageX));
+                    ExclusionRangeType.NO_RANGE, getActiveVOIs(imageX));
             algoVOIProps.run();
             minR_X = algoVOIProps.getMinIntensityRed();
             maxR_X = algoVOIProps.getMaxIntensityRed();
@@ -202,7 +203,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             final VOI VOIY = VOIsY.VOIAt(0);
             VOIY.setAllActive(true);
             algoVOIProps = new AlgorithmVOIProps(imageY, AlgorithmVOIProps.PROCESS_PER_VOI,
-                    JDialogVOIStatistics.NO_RANGE, getActiveVOIs(imageY));
+                    ExclusionRangeType.NO_RANGE, getActiveVOIs(imageY));
             algoVOIProps.run();
             minR_Y = algoVOIProps.getMinIntensityRed();
             maxR_Y = algoVOIProps.getMaxIntensityRed();
