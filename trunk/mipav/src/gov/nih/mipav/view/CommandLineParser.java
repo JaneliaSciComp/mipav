@@ -15,7 +15,7 @@ public interface CommandLineParser {
     /**
      * The <code>parseArguments</code> method parses command line arguments.  An internal cursor can be used to 
      * track the next argument to be processed.  The purpose of <code>initArg</code> is to tell this method
-     * which argument to start processing.  This method returns the next argument to be processed.
+     * which argument to start processing.  This method returns the location of the next argument to be processed.
      * If this method returns an integer equal to <code>args.length</code>, then it is implied that all arguments
      * have been processed.  Note that the cursor does not necessarily need to return a value greater
      * than <code>initArg</code>. 
