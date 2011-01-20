@@ -803,8 +803,8 @@ public class MipavUtil extends JComponent {
      * @return true if num satisfies the test.
      */
     public static boolean inRange(float ignoreMin, float ignoreMax, float num, ExclusionRangeType rangeFlag) {
-
-        if (rangeFlag == ExclusionRangeType.NO_RANGE) {
+        
+        if (rangeFlag == ExclusionRangeType.NO_RANGE || rangeFlag == null) {
             return false;
         } else if (rangeFlag == ExclusionRangeType.BETWEEN) {
 
