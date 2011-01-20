@@ -5408,7 +5408,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         if ( m_kCurrentVOI != null && (m_kDrawingContext.getSlice() == getSlice( m_kCurrentVOI )) )
         {
-            if ( nearPoint( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )
+            if ( nearBoundPoint( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )
+            {
+                m_kParent.setCursor(MipavUtil.crosshairCursor);
+                m_iNearStatus = NearBoundPoint;
+                m_kParent.updateDisplay();
+                return;
+            }
+            else if ( nearPoint( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )
             {
                 if ( m_kCurrentVOI.getType() == VOI.POINT )
                 {
@@ -5427,13 +5434,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     m_iNearStatus = NearPoint;
                     m_kParent.updateDisplay();
                 }
-                return;
-            }
-            else if ( nearBoundPoint( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )
-            {
-                m_kParent.setCursor(MipavUtil.crosshairCursor);
-                m_iNearStatus = NearBoundPoint;
-                m_kParent.updateDisplay();
                 return;
             }
             else if ( nearLine( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )
