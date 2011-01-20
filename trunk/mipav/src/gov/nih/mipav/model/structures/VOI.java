@@ -6,7 +6,6 @@ import gov.nih.mipav.model.structures.event.VOIListener;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameGraph;
-import gov.nih.mipav.view.ViewList;
 
 import java.awt.Color;
 import java.awt.Polygon;
@@ -136,9 +135,6 @@ public class VOI extends ModelSerialCloneable {
 	/** If true this flag indicates that the VOI should be included (applied) when processing the image. */
 	private boolean process;
 
-	/** Statistics list. */
-	private ViewList[] stats = null;
-
 	/** Unique ID for saving & retrieving. */
 	private int UID;
 
@@ -192,22 +188,6 @@ public class VOI extends ModelSerialCloneable {
 		setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0)); // important to use the access method
 
 		this.thickness = Preferences.getVOIThickness();
-
-		// this ensures that color gets set in
-		// all protractor contours.
-		stats = new ViewList[12];
-		stats[0] = new ViewList("No. of voxels", false);
-		stats[1] = new ViewList("Volume", false);
-		stats[2] = new ViewList("Area", true);
-		stats[3] = new ViewList("Average voxel intensity", false);
-		stats[4] = new ViewList("Std. dev. of voxel intensity", false);
-		stats[5] = new ViewList("Sum Intensities", false);
-		stats[6] = new ViewList("Geometric center", false);
-		stats[7] = new ViewList("Center of Mass", false);
-		stats[8] = new ViewList("Principal axis (only 2D)", false);
-		stats[9] = new ViewList("Eccentricity (only 2D)", false);
-		stats[10] = new ViewList("Major axis length (only 2D)", false);
-		stats[11] = new ViewList("Minor axis length (only 2D)", false);
 	}
 
 
@@ -252,22 +232,6 @@ public class VOI extends ModelSerialCloneable {
 		setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0)); // important to use the access method
 
 		this.thickness = Preferences.getVOIThickness();
-
-		// this ensures that color gets set in
-		// all protractor contours.
-		stats = new ViewList[12];
-		stats[0] = new ViewList("No. of voxels", false);
-		stats[1] = new ViewList("Volume", false);
-		stats[2] = new ViewList("Area", true);
-		stats[3] = new ViewList("Average voxel intensity", false);
-		stats[4] = new ViewList("Std. dev. of voxel intensity", false);
-		stats[5] = new ViewList("Sum Intensities", false);
-		stats[6] = new ViewList("Geometric center", false);
-		stats[7] = new ViewList("Center of Mass", false);
-		stats[8] = new ViewList("Principal axis (only 2D)", false);
-		stats[9] = new ViewList("Eccentricity (only 2D)", false);
-		stats[10] = new ViewList("Major axis length (only 2D)", false);
-		stats[11] = new ViewList("Minor axis length (only 2D)", false);
 	}
 
 	/**
@@ -309,15 +273,6 @@ public class VOI extends ModelSerialCloneable {
 		this.polarity = kVOI.polarity;
 
 		this.process = kVOI.process;
-
-		if ( kVOI.stats != null )
-		{
-			this.stats = new ViewList[kVOI.stats.length];
-			for ( int i = 0; i < kVOI.stats.length; i++ )
-			{
-				this.stats[i] = new ViewList( kVOI.stats[i].getString(), kVOI.stats[i].getState() );
-			}
-		}
 		this.UID = kVOI.UID;
 		this.visible = kVOI.visible;
 
@@ -1199,7 +1154,6 @@ public class VOI extends ModelSerialCloneable {
 			curves = null;
 		}
 
-		stats = null;
 		xBounds = null;
 		yBounds = null;
 		zBounds = null;
@@ -1733,15 +1687,6 @@ public class VOI extends ModelSerialCloneable {
 		}
 
 		return kTemp;
-	}
-
-	/**
-	 * Accessor that returns the statistic list used to indicate which statistics are to be calculated for the VOI.
-	 *
-	 * @return  statistics list
-	 */
-	public ViewList[] getStatisticList() {
-		return stats;
 	}
 
 	/**
@@ -2381,15 +2326,6 @@ public class VOI extends ModelSerialCloneable {
 	 */
 	public void setProcess(boolean flag) {
 		this.process = flag;
-	}
-
-	/**
-	 * Accessor that sets the statisitic list.
-	 *
-	 * @param  stats  list of statistics
-	 */
-	public void setStatisticList(ViewList[] stats) {
-		this.stats = stats;
 	}
 
 	/**
