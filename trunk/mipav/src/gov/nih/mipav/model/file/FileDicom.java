@@ -172,6 +172,8 @@ public class FileDicom extends FileDicomBase {
     private boolean isEnhanced4D = false;
 
     private int enhancedNumSlices;
+    
+    private int enhancedNumVolumes;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1587,7 +1589,11 @@ public class FileDicom extends FileDicomBase {
         }
     }
 
-    /**
+    public int getEnhancedNumVolumes() {
+		return enhancedNumVolumes;
+	}
+
+	/**
      * Reads a DICOM image file and stores the data into the given float buffer. This method reads the image header
      * (@see readHeader()) then sets various fields within the FileInfo which are relevant to correctly interpreting the
      * image. This list includes:
