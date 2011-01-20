@@ -551,7 +551,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         getContentPane().add(buildOKCancelPanel(), BorderLayout.SOUTH); // build OK/Cancel button Panel
 
         pack();
-        setSize(800, 500); // decent size??
+        setSize(800, 525); // decent size??
     }
 
     /**
