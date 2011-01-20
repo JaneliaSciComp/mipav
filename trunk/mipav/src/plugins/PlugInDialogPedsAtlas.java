@@ -3573,7 +3573,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(c>=10) {
 					extraSpace = "";
 				}
-				infoLabel.setText("Loading axial PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
+				infoLabel.setText("Loading sagittal PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				atlasFile = new File(pedsHome + sagittalPDPathStrings[i]);
 				pdAtlasImages[i] = fileIO.readImage(atlasFile.getName(), atlasFile.getParent() + File.separator, false, null);
 				pdAtlasImages[i].addImageDisplayListener(owner);
@@ -3614,7 +3614,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(c>=10) {
 					extraSpace = "";
 				}
-				infoLabel.setText("Loading axial PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
+				infoLabel.setText("Loading sagittal PD images : " + extraSpace + c + "/" + numAgeTicks + " ");
 				c++;
 				if(c==12) {
 					c=1;
