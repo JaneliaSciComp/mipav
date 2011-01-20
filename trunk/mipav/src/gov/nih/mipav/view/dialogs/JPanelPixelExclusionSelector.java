@@ -3,7 +3,9 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.view.JPanelStatisticsList;
 import gov.nih.mipav.view.MipavUtil;
 
-import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -43,9 +45,6 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
     /** Lists available exclusion types */
     private final JComboBox excludeSelection;
 
-    /** Interior panel representing user options */
-    private final JPanel exclusionPanel;
-
     /** The lower limit of the exclusion */
     private Float lowerLimit;
 
@@ -67,7 +66,7 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
      * these controls.
      */
     public JPanelPixelExclusionSelector(JPanelStatisticsList checkBoxPanel) {
-        super(new BorderLayout());
+        super(new GridBagLayout());
         this.setBorder(new TitledBorder(new EtchedBorder(), "Pixel Exclusion", TitledBorder.DEFAULT_JUSTIFICATION,
                 TitledBorder.DEFAULT_POSITION, MipavUtil.font12B));
 
@@ -75,20 +74,27 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
         
         ExcluderOptionsActionListener optionsListener = new ExcluderOptionsActionListener();
         
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 3;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        
         // add a checkbox to enable the enter-panel
-        permitExclusion = new JCheckBox("Exclude Pixels from Calculation");
+        permitExclusion = new JCheckBox("Exclude pixels from calculation");
         permitExclusion.setFont(MipavUtil.font12);
-        add(permitExclusion, BorderLayout.NORTH);
+        add(permitExclusion, gbc);
         permitExclusion.addActionListener(this);
         permitExclusion.addActionListener(optionsListener);
 
-        exclusionPanel = new JPanel(new BorderLayout());
-
-        final JPanel selection = new JPanel(new BorderLayout());
-        final JPanel excludeSelectionPanel = new JPanel(new BorderLayout());
-        final JLabel excludeLabel = new JLabel("Exclude Pixels");
+        final JLabel excludeLabel = new JLabel("Exclude pixels");
         excludeLabel.setFont(MipavUtil.font12);
-        excludeSelectionPanel.add(excludeLabel, BorderLayout.NORTH);
+        gbc.gridy++;
+        gbc.insets = new Insets(2, 2, 1, 2);
+        add(excludeLabel, gbc);
 
         final String[] selectors = {"Between", "Above", "Below", "Outside"};
         excludeSelection = new JComboBox(selectors);
@@ -96,25 +102,33 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
         excludeSelection.setEditable(false);
         excludeSelection.setEnabled(false);
         excludeSelection.addActionListener(this);
-        excludeSelectionPanel.add(excludeSelection, BorderLayout.CENTER);
-        selection.add(excludeSelectionPanel, BorderLayout.NORTH);
-
-        final JPanel values = new JPanel();
-        boundA = new JTextField(8);
+        
+        gbc.gridy++;
+        gbc.insets = new Insets(1, 2, 2, 2);
+        gbc.fill = GridBagConstraints.BOTH;
+        add(excludeSelection, gbc);
+        boundA = new JTextField(3);
         MipavUtil.makeNumericsOnly(boundA, true, true);
         boundA.setEnabled(false);
-        values.add(boundA);
+        gbc.gridy++;
+        gbc.insets = new Insets(7, 2, 7, 0);
+        gbc.gridwidth = 1;
+        gbc.weightx = .45;
+        add(boundA, gbc);
+        gbc.gridx++;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = .1;
+        gbc.insets = new Insets(7, 8, 7, 0);
+        add(new JLabel(" - "), gbc);
 
-        values.add(new JLabel(" - "));
-
-        boundB = new JTextField(8);
+        boundB = new JTextField(3);
         MipavUtil.makeNumericsOnly(boundB, true, true);
         boundB.setEnabled(false);
-        values.add(boundB);
-
-        selection.add(values, BorderLayout.CENTER);
-        exclusionPanel.add(selection, BorderLayout.CENTER);
-        add(exclusionPanel, BorderLayout.CENTER);
+        gbc.gridx++;
+        gbc.insets = new Insets(7, 0, 7, 2);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = .45;
+        add(boundB, gbc);
     }
 
     /**
