@@ -72,52 +72,46 @@ public class JDialogVOIStats extends JDialogBase
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Algorithm for computing VOI statistics */
     private AlgorithmVOIProps algoVOI;
 
-    /** DOCUMENT ME! */
+    /** Applies bounding box/shading/name display and other UI changes to ModelImage */
     protected JButton applyButton;
 
-    /** DOCUMENT ME! */
+    /** Performs statistics calculations */
     protected JButton calcButton;
     
-    /** DOCUMENT ME! */
+    /** Displays Stats dialog help */
     protected JButton helpButton;
-
-    /** DOCUMENT ME! */
-    //protected JCheckBox checkboxAdditiveOrSubtractive;
 
     /** DOCUMENT ME! */
     protected JCheckBox checkboxBoundary;
 
-    /** DOCUMENT ME! */
+    /** Whether to display bounding box around VOI */
     protected JCheckBox checkboxBoundingBox;
-
-    /** DOCUMENT ME! */
-    protected JCheckBox checkboxExclude;
     
-    /** DOCUMENT ME! */
+    /** Whether to save statistics to a file */
     protected JCheckBox checkboxSaveStats;
 
-    /** DOCUMENT ME! */
+    /** Whether to include the selected VOI for statistics processing */
     protected JCheckBox checkboxIncludeForProcessing;
 
-    /** DOCUMENT ME! */
+    /** Whether to display VOI name */
     protected JCheckBox checkboxVOIName;
 
-    /** DOCUMENT ME! */
+    /** Allows VOI color to be selected */
     protected JButton colorButton;
 
-    /** DOCUMENT ME! */
+    /** Internal dialog box for selecting VOI color */
     private ViewJColorChooser colorChooser;
 
-    /** DOCUMENT ME! */
+    /** The current color of the selected VOI */
     private Color colorVOI;
 
-    /** DOCUMENT ME! */
+    /** Displays points and name of selected VOI or contour */
     private JTextArea contourTextArea;
 
-    /** DOCUMENT ME! */
+    /** Displays current opacity level in slider */
     protected JLabel current;
 
     /** DOCUMENT ME! */
@@ -129,41 +123,26 @@ public class JDialogVOIStats extends JDialogBase
     /** DOCUMENT ME! */
     private boolean frameFollowsSelection = true;
 
-    /** DOCUMENT ME! */
+    /** Internal reference to the currently selected ModelImage */
     protected ModelImage image;
 
-    /** DOCUMENT ME! */
-    protected JLabel labelMax;
-
-    /** DOCUMENT ME! */
-    protected JLabel labelMin;
-
-    /** DOCUMENT ME! */
+    /** The list of statistics to calculate */
     protected JPanelStatisticsList listPanel;
 
-    /** DOCUMENT ME! */
+    /** The opacity slider for the selected VOI */
     protected JSlider opacitySlider;
 
     /** DOCUMENT ME! */
     private VOITreePopup popup = null;
 
-    /** DOCUMENT ME! */
+    /** A reference in the voiTree to the currently selected image */
     private DefaultMutableTreeNode root;
 
-    /** DOCUMENT ME! */
+    /** The seed value last entered by the user */
     private short seedValue;
 
-    /** DOCUMENT ME! */
+    /** Watershed seed value */
     protected JTextField seedValueTF;
-
-    /** DOCUMENT ME! */
-    protected JPanel statsPanel;
-
-    /** DOCUMENT ME! */
-    protected JTextField textMax;
-
-    /** DOCUMENT ME! */
-    protected JTextField textMin;
 
     /** DOCUMENT ME! */
     private boolean treeSelectionChange = false;
@@ -178,22 +157,26 @@ public class JDialogVOIStats extends JDialogBase
     /** The tree of VOIs, composed of an image with children VOIs */
     private DefaultTreeModel voiModel;
 
-    /** DOCUMENT ME! */
+    /** Name of the currently selected voi */
     protected JTextField VOIName;
 
-    /** DOCUMENT ME! */
+    /** Thickness of the currently selected voi */
     protected JTextField VOIThicknessField;
 
     /** The graphical representation of voiModel */
     private JTree voiTree;
 
-    /** DOCUMENT ME! */
+    /** Displays the orthoganal list of VOIs in the selected ModelImage */
     protected JScrollPane voiTreePane;
 
+    /** List of VOIs that will have statistics calculated */
     private ViewVOIVector processList;
 
     protected VOIHandlerInterface voiHandler;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    private JPanelPixelExclusionSelector excluder;
 
     /**
      * Constructor for the JDialogVOIStats.
@@ -369,33 +352,6 @@ public class JDialogVOIStats extends JDialogBase
         		MipavUtil.displayError("Please select a VOI.");
         		return;
         	}
-        	
-            if (textMin.isEnabled()) {
-                String tempStr = textMin.getText();
-
-                if (testParameter(tempStr, -10000000, 10000000)) {
-                    voi.setMinimumIgnore(Float.valueOf(tempStr).floatValue());
-                } else {
-                    textMin.requestFocus();
-                    textMin.selectAll();
-
-                    return;
-                }
-
-                tempStr = textMax.getText();
-
-                if (testParameter(tempStr, -10000000, 10000000)) {
-                    voi.setMaximumIgnore(Float.valueOf(tempStr).floatValue());
-                } else {
-                    textMax.requestFocus();
-                    textMax.selectAll();
-
-                    return;
-                }
-            } else {
-                voi.setMinimumIgnore(Float.MAX_VALUE);
-                voi.setMaximumIgnore(Float.MIN_VALUE);
-            }
 
             voi.setStatisticList(listPanel.getViewList());
 
@@ -423,14 +379,28 @@ public class JDialogVOIStats extends JDialogBase
                 }
             }
             
+            //set min/max ranges for all VOIs that are in the process list
+            for(int i=0; i<processList.size(); i++) {
+                try {
+                    processList.get(i).setMinimumIgnore(excluder.getLowerBound());
+                } catch(final NullPointerException npe) {
+                    processList.get(i).setMinimumIgnore(-Float.MAX_VALUE);
+                }
+                
+                try {
+                    processList.get(i).setMaximumIgnore(excluder.getUpperBound());
+                } catch(final NullPointerException npe) {
+                    processList.get(i).setMaximumIgnore(Float.MAX_VALUE);
+                }
+            }
+            
             // only loading the image works because we have been changing
             // the thing held BY the image.
-            algoVOI = new AlgorithmVOIProps(image, processList);
+            algoVOI = new AlgorithmVOIProps(image, AlgorithmVOIProps.PROCESS_PER_VOI, excluder.getRangeFlag(), processList); //TODO: Allow user to select processing method based on curves selected in processList
             
             algoVOI.addListener(this);
             //only calculate these if appropriate box is checked for speed.
-            algoVOI.setDistanceFlag(listPanel.getSelectedList(VOIStatisticList.largestDistanceDescription));
-            algoVOI.setSliceDistanceFlag(listPanel.getSelectedList(VOIStatisticList.largestSliceDistanceDescription));
+            algoVOI.setSelectedStatistics(listPanel.getSelectedList());
             createProgressBar(image.getImageName(), algoVOI);
             
             if (isRunInSeparateThread()) {
@@ -444,12 +414,6 @@ public class JDialogVOIStats extends JDialogBase
                 algoVOI.run();
             }
  
-        } else if (source == checkboxExclude) {
-            boolean flag = checkboxExclude.isSelected();
-            labelMax.setEnabled(flag);
-            labelMin.setEnabled(flag);
-            textMin.setEnabled(flag);
-            textMax.setEnabled(flag);
         } else if (source == cancelButton) {
             cancelFlag = true;
             setVisible(false);
@@ -1273,21 +1237,11 @@ public class JDialogVOIStats extends JDialogBase
 
                 listPanel.setCheckBoxesDisabled();
                 calcButton.setEnabled(false);
-
-                if (checkboxExclude.isSelected()) {
-                    textMin.setEnabled(false);
-                    textMax.setEnabled(false);
-                }
-
-                checkboxExclude.setEnabled(false);
+                
+                excluder.setEnabled(false);
                 seedValueTF.setEnabled(false);
             } else {
-                checkboxExclude.setEnabled(true);
-
-                if (checkboxExclude.isSelected()) {
-                    textMin.setEnabled(true);
-                    textMax.setEnabled(true);
-                }
+                excluder.setEnabled(true);
 
                 seedValueTF.setEnabled(true);
                 calcButton.setEnabled(true);
@@ -1595,28 +1549,8 @@ public class JDialogVOIStats extends JDialogBase
         } finally {
             listPanel.setCheckBoxesEnabled();
         }
-
-        checkboxExclude = new JCheckBox("Exclude intensity range");
-        checkboxExclude.setFont(serif12);
-        checkboxExclude.addActionListener(this);
         
-        labelMin = new JLabel("Range: ");
-        labelMin.setFont(serif12);
-        labelMin.setForeground(Color.black);
-        labelMin.setEnabled(false);
-
-        textMin = new JTextField(5);
-        textMin.setEnabled(false);
-        textMin.setFont(serif12);
-
-        labelMax = new JLabel(" to ");
-        labelMax.setFont(serif12);
-        labelMax.setForeground(Color.black);
-        labelMax.setEnabled(false);
-
-        textMax = new JTextField(5);
-        textMax.setEnabled(false);
-        textMax.setFont(serif12);
+        excluder = new JPanelPixelExclusionSelector(listPanel);
         
         checkboxSaveStats = new JCheckBox("Save statistics in header");
         checkboxSaveStats.setFont(serif12);
@@ -1631,24 +1565,11 @@ public class JDialogVOIStats extends JDialogBase
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         checkPanel.add(checkboxSaveStats, gbc2);
-        gbc2.gridy++;
-        checkPanel.add(checkboxExclude, gbc2);
-        
-        JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        rangePanel.add(labelMin);
-        rangePanel.add(textMin);
-        rangePanel.add(labelMax);
-        rangePanel.add(textMax);
-
-        JPanel intensityPanel = new JPanel();
-        intensityPanel.setLayout(new BoxLayout(intensityPanel, BoxLayout.Y_AXIS));
-        intensityPanel.add(checkPanel);
-        intensityPanel.add(rangePanel);
-
-        statsPanel = new JPanel(new BorderLayout());
+        JPanel statsPanel = new JPanel();
+        statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
         statsPanel.add(listPanel);
-        statsPanel.add(intensityPanel, BorderLayout.SOUTH);
+        statsPanel.add(excluder);
 
         JLabel labelSeed = new JLabel("Seed value (0-32K)");
         labelSeed.setFont(serif12);
@@ -1662,10 +1583,9 @@ public class JDialogVOIStats extends JDialogBase
         seedValuePanel.setBorder(buildTitledBorder("Watershed seed value"));
         seedValuePanel.add(labelSeed);
         seedValuePanel.add(seedValueTF);
-
-        JPanel calcPanel = new JPanel(new BorderLayout());
-        calcPanel.add(statsPanel);
-        calcPanel.add(seedValuePanel, BorderLayout.SOUTH);
+        
+        statsPanel.add(seedValuePanel);
+        statsPanel.add(checkPanel);
 
         applyButton = new JButton("Apply");
         applyButton.setPreferredSize(MipavUtil.defaultButtonSize);
@@ -1740,7 +1660,7 @@ public class JDialogVOIStats extends JDialogBase
         //rightButton.add(helpButton);
 
         JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.add(calcPanel);
+        rightPanel.add(statsPanel);
         rightPanel.add(rightButton, BorderLayout.SOUTH);
 
         mainDialogPanel.setLayout(new GridBagLayout());
