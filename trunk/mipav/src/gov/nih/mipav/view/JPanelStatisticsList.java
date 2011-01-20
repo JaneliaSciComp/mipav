@@ -45,23 +45,6 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * method here to preserve legacy functionality with the VOI class <code>statsList</code>. Creates a new ViewList
-     * array holding the checkbox labels and the state of the checkbox.
-     *
-     * @see  ViewList
-     * @see  VOI
-     */
-    public ViewList[] getViewList() {
-        ViewList[] statList = new ViewList[listLength];
-
-        for (int i = 0; i < listLength; i++) {
-            statList[i] = new ViewList(checkboxLabels[i], getSelectedList(i));
-        }
-
-        return statList;
-    }
-
-    /**
      * Creates the list of labels to use in the checkboxes.
      *
      * @return  DOCUMENT ME!
