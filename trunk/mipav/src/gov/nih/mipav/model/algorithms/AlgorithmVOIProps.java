@@ -1335,7 +1335,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             BitSet mask = new BitSet( xDim * yDim * zDim );
             kVOI.createBinaryMask3D(mask, xDim, yDim, false, false);
             
-            if(rangeFlag != ExclusionRangeType.NO_RANGE) { //some intensity values need to be ignored in relevant calculations
+            if(rangeFlag != ExclusionRangeType.NO_RANGE && rangeFlag != null) { //some intensity values need to be ignored in relevant calculations
             
                 float fVal = 0.0f;   
                 for (int i = mask.nextSetBit(0); i >= 0; i = mask.nextSetBit(i+1)) {
@@ -1931,7 +1931,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     protected Vector<VOIStatisticalProperties> propertyList;
 
     /**  Specifies how a range of pixels is excluded from VOI calculations. */
-    protected ExclusionRangeType rangeFlag;
+    protected ExclusionRangeType rangeFlag = ExclusionRangeType.NO_RANGE;
 
     /** Whether or not to calculate largest slice distance, true by default */
     protected boolean sliceDistanceFlag;
