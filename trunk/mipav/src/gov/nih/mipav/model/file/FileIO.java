@@ -1027,6 +1027,7 @@ public class FileIO {
         final boolean isEnhanced = imageFile.isEnhanced();
         boolean isEnhanced4D = imageFile.isEnhanced4D();
         int enhancedNumSlices = 1;
+        int enhancedNumVolumes = 1;
         FileInfoDicom[] enhancedFileInfos = null;
         if (isEnhanced) {
             enhancedFileInfos = imageFile.getEnhancedFileInfos();
@@ -1037,7 +1038,8 @@ public class FileIO {
             if (isEnhanced4D) {
                 extents = new int[4];
                 extents[2] = enhancedNumSlices;
-                extents[3] = nImages / enhancedNumSlices;
+                enhancedNumVolumes = nImages / enhancedNumSlices;
+                extents[3] = enhancedNumVolumes;
             } else {
                 extents = new int[3];
                 extents[2] = nImages;
@@ -1130,13 +1132,15 @@ public class FileIO {
             }
 
         }
-
+        int enhancedCounter1 = 0;
+        int enhancedCounter2 = 0;
+        
         for (int i = 0; i < nImages; i++) {
             if (multiframe) {
                 filename = fileList[0];
                 start = i;
                 location = i;
-            } else {
+            }else {
                 filename = fileList[i];
                 start = 0;
                 location = indicies[i];
@@ -1145,7 +1149,6 @@ public class FileIO {
                     location = 0;
                 }
             }
-
             Preferences.debug("location: " + location + "\timg: " + filename + "\n", Preferences.DEBUG_FILEIO);
 
             try {
@@ -1242,7 +1245,14 @@ public class FileIO {
                 } else {
                     image.setFileInfo(curFileInfo, location);
                 }
-
+                if(isEnhanced4D) {
+            		if(enhancedCounter1 == enhancedNumVolumes) {
+            			enhancedCounter1 = 0;
+            			enhancedCounter2++;
+            		}
+            		location = (enhancedCounter1 * enhancedNumSlices) + enhancedCounter2;
+            		enhancedCounter1++;
+            	}
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     image.importData(location * length, bufferFloat, false);
                 } else if (image.getType() == ModelStorageBase.UINTEGER) {
