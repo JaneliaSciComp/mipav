@@ -3686,7 +3686,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
         if (isColor) {
             bufferFactor = 4;
-        } else if (imageType == ModelStorageBase.COMPLEX) {
+        } else if (imageType == ModelStorageBase.COMPLEX || imageType == ModelStorageBase.DCOMPLEX) {
             bufferFactor = Preferences.getComplexDisplay().getNumParts();
         }
 

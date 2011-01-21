@@ -3799,7 +3799,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         float axialWidthResFactor = 1.0f;
         float axialHeightResFactor = 1.0f;
 
-        if (imageA.getType() == ModelStorageBase.COMPLEX) {
+        if (imageA.isComplexImage()) {
             triImage.setResolutions(1, 1);
         } else if ( (tmpResols[1] > tmpResols[0]) && (tmpResols[1] < (50.0f * tmpResols[0])) && (units[0] == units[1])) {
             axialHeightResFactor = tmpResols[1] / tmpResols[0];

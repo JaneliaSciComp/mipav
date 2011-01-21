@@ -634,7 +634,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         windowFilter.addActionListener(this);
         constructionGroup.add(windowFilter);
 
-        if (image.getType() != ModelStorageBase.COMPLEX) {
+        if (image.isComplexImage()) {
             windowFilter.setEnabled(true);
         } else {
             windowFilter.setEnabled(false);
@@ -651,7 +651,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         imageCropCheckbox.setFont(serif12);
         imageCropCheckbox.setForeground(Color.black);
 
-        if (image.getType() != ModelStorageBase.COMPLEX) {
+        if (image.isComplexImage()) {
             imageCropCheckbox.setEnabled(true);
             imageCropCheckbox.setSelected(true);
         } else {
@@ -663,7 +663,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
         textKernelDiameter = new JTextField(10);
 
-        if (image.getType() != ModelStorageBase.COMPLEX) {
+        if (image.isComplexImage()) {
             textKernelDiameter.setText("15");
         } else {
             kernelDiameter = image.getOriginalKernelDimension();
@@ -673,7 +673,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         textKernelDiameter.setFont(serif12);
         textKernelDiameter.setForeground(Color.black);
 
-        if (image.getType() != ModelStorageBase.COMPLEX) {
+        if (image.isComplexImage()) {
             textKernelDiameter.setEnabled(true);
         } else {
             textKernelDiameter.setEnabled(false);
@@ -685,7 +685,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         labelKernelDiameter.setForeground(Color.black);
         labelKernelDiameter.setFont(serif12);
 
-        if (image.getType() != ModelStorageBase.COMPLEX) {
+        if (image.isComplexImage()) {
             labelKernelDiameter.setEnabled(true);
         } else {
             labelKernelDiameter.setEnabled(false);
@@ -697,7 +697,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         gaussianFilter.addActionListener(this);
         constructionGroup.add(gaussianFilter);
 
-        if (image.getType() != ModelStorageBase.COMPLEX) {
+        if (image.isComplexImage()) {
             gaussianFilter.setEnabled(true);
         } else {
             gaussianFilter.setEnabled(false);
@@ -715,7 +715,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         butterworthFilter.addActionListener(this);
         constructionGroup.add(butterworthFilter);
 
-        if (image.getType() != ModelStorageBase.COMPLEX) {
+        if (image.isComplexImage()) {
             butterworthFilter.setEnabled(true);
         } else {
             butterworthFilter.setEnabled(false);
@@ -729,7 +729,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
         textOrder = new JTextField(10);
 
-        if (image.getType() != ModelStorageBase.COMPLEX) {
+        if (image.isComplexImage()) {
             textOrder.setText("1");
         } else {
             butterworthOrder = image.getOriginalButterworthOrder();
