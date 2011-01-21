@@ -517,12 +517,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         cursorMode = ViewJComponentBase.DEFAULT;
 
         if (imgBufferA == null) {
-            final int bufferFactor = (imageA.isColorImage() ? 4 : imageA.getType() == ModelStorageBase.COMPLEX ? Preferences.getComplexDisplay().getNumParts() : 1);
+            final int bufferFactor = (imageA.isColorImage() ? 4 : imageA.isComplexImage() ? Preferences.getComplexDisplay().getNumParts() : 1);
             imgBufferA = new float[bufferFactor * imageDim.width * imageDim.height];
         }
 
         if ( (imgBufferB == null) && (imageB != null)) {
-            final int bufferFactor = (imageB.isColorImage() ? 4 : imageA.getType() == ModelStorageBase.COMPLEX ? Preferences.getComplexDisplay().getNumParts() : 1);
+            final int bufferFactor = (imageB.isColorImage() ? 4 : imageB.isComplexImage() ? Preferences.getComplexDisplay().getNumParts() : 1);
             imgBufferB = new float[bufferFactor * imageDim.width * imageDim.height];
         }
 
@@ -736,7 +736,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
         if (imageA.isColorImage()) {
             cf = 4;
-        } else if ( (imageA.getType() == ModelStorageBase.COMPLEX) || (imageA.getType() == ModelStorageBase.DCOMPLEX)) {
+        } else if (imageA.isComplexImage()) {
             cf = 2;
         } else {
             cf = 1;
@@ -1185,8 +1185,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                     buffer = new double[length];
 
-                    if ( (imageACopy.getType() == ModelStorageBase.COMPLEX)
-                            || (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                    if (imageACopy.isComplexImage()) {
                         bufferI = new double[length];
                         imageACopy.exportDComplexData(0, length, buffer, bufferI);
                         imageACopy.reallocate(ModelStorageBase.UBYTE);
@@ -1488,8 +1487,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                     buffer = new double[length];
 
-                    if ( (imageACopy.getType() == ModelStorageBase.COMPLEX)
-                            || (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                    if ( imageACopy.isComplexImage()) {
                         bufferI = new double[length];
                         imageACopy.exportDComplexData(0, length, buffer, bufferI);
                         imageACopy.reallocate(ModelStorageBase.SHORT);
@@ -4476,7 +4474,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         "  R:  ").append(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1]).append(
                         "  G:  ").append(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2]).append(
                         "  B:  ").append(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]);
-            } else if(imageActive.getType() == ModelStorageBase.COMPLEX) { 
+            } else if(imageActive.isComplexImage()) { 
                 switch(Preferences.getComplexDisplay()) {
                 case APLUSBI:
                     str.append("  Intensity:  ").append(imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS)]).append(" + ").append(
@@ -5276,7 +5274,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 }
             }
 
-            if (imageActive.getType() == ModelStorageBase.COMPLEX) {
+            if (imageActive.isComplexImage()) {
                 int temp = iMin;
 
                 iMin = imageActive.getExtents()[0] - Math.max(iMax, 1);

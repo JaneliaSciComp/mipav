@@ -127,7 +127,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         super(theParentFrame, false);
         image = im;
 
-        if ((image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
+        if (image.isComplexImage()) {
             useComplex = true;
         }
 
