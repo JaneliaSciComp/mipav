@@ -34,6 +34,7 @@ import java.util.TreeMap;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
@@ -323,6 +324,12 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
             e.printStackTrace();
         }
     	
+        FileInfoBase.copyCoreInfo(minImage.getFileInfo(), destImage.getFileInfo());
+        
+        for(int i=0; i<destImage.getFileInfo().length; i++) {
+            destImage.getFileInfo(i).setSliceThickness(minImage.getFileInfo(i).getSliceThickness());
+        }
+        
     	ViewJFrameImage frame = new ViewJFrameImage(destImage);
     	frame.setVisible(true);
     	fireProgressStateChanged("Message 3D: "+srcImage.getImageName());
