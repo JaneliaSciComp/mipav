@@ -1,65 +1,21 @@
 package gov.nih.mipav.view.graphVisualization;
 
 
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewImageFileFilter;
-import gov.nih.mipav.view.ViewMenuBar;
-import gov.nih.mipav.view.ViewMenuBuilder;
-import gov.nih.mipav.view.ViewUserInterface;
-import hypergraph.applications.hexplorer.ContentHandlerFactory;
-import hypergraph.graphApi.Graph;
-import hypergraph.graphApi.GraphSystem;
-import hypergraph.graphApi.GraphSystemFactory;
-import hypergraph.graphApi.Node;
-import hypergraph.graphApi.algorithms.GraphUtilities;
-import hypergraph.graphApi.io.GraphWriter;
-import hypergraph.graphApi.io.GraphXMLWriter;
-import hypergraph.graphApi.io.SAXReader;
-import hypergraph.visualnet.ArrowLineRenderer;
-import hypergraph.visualnet.GraphPanel;
-import hypergraph.graph.GraphImpl;
-import hypergraph.graph.NodeImpl;
+import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Enumeration;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-
-import org.xml.sax.SAXException;
-
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewJColorChooser;
 
 public class JDialogGraphProperties extends JDialogBase {
 
@@ -79,6 +35,80 @@ public class JDialogGraphProperties extends JDialogBase {
 		m_kParent = parent;
 		init();
 		setVisible(true);
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		final String command = e.getActionCommand();
+
+		if (command.equalsIgnoreCase("backgroundColor")) {     
+			colorChooser = new ViewJColorChooser(null, "Pick background color", new ActionListener()
+			{ // OKAY listener
+				@Override
+				public void actionPerformed(final ActionEvent ae) {
+					m_kBackgroundButton.setBackground(colorChooser.getColor());
+					m_kParent.setBackgroundColor( m_kBackgroundButton.getBackground() );
+				}
+			}, new ActionListener() { // CANCEL listener
+				@Override
+				public void actionPerformed(final ActionEvent a) {}
+			});
+		}
+		if (command.equalsIgnoreCase("textColor")) {     
+			colorChooser = new ViewJColorChooser(null, "Pick text color", new ActionListener()
+			{ // OKAY listener
+				@Override
+				public void actionPerformed(final ActionEvent ae) {
+					m_kTextColorButton.setBackground(colorChooser.getColor());
+					m_kParent.setTextColor( m_kTextColorButton.getBackground() );
+				}
+			}, new ActionListener() { // CANCEL listener
+				@Override
+				public void actionPerformed(final ActionEvent a) {}
+			});
+		}
+		if (command.equalsIgnoreCase("lineColor")) {     
+			colorChooser = new ViewJColorChooser(null, "Pick line color", new ActionListener()
+			{ // OKAY listener
+				@Override
+				public void actionPerformed(final ActionEvent ae) {
+					m_kLineColorButton.setBackground(colorChooser.getColor());
+					m_kParent.setLineColor( m_kLineColorButton.getBackground() );
+				}
+			}, new ActionListener() { // CANCEL listener
+				@Override
+				public void actionPerformed(final ActionEvent a) {}
+			});
+		}
+		if (command.equalsIgnoreCase("DecreaseTextSize")) {     
+			m_kParent.increaseTextSize( false );
+		}
+		if (command.equalsIgnoreCase("IncreaseTextSize")) {     
+			m_kParent.increaseTextSize( true );
+		}
+		if (command.equalsIgnoreCase("lineColor")) {     
+			colorChooser = new ViewJColorChooser(null, "Pick line color", new ActionListener()
+			{ // OKAY listener
+				@Override
+				public void actionPerformed(final ActionEvent ae) {
+					m_kLineColorButton.setBackground(colorChooser.getColor());
+					m_kParent.setLineColor( m_kLineColorButton.getBackground() );
+				}
+			}, new ActionListener() { // CANCEL listener
+				@Override
+				public void actionPerformed(final ActionEvent a) {}
+			});
+		}
+		else if (command.equals("OK")) {
+			m_kParent.setBackgroundColor( m_kBackgroundButton.getBackground() );
+			m_kParent.savePreferences();
+			setVisible(false);
+		}
+		else if (command.equals("cancel")) {
+			m_kParent.setBackgroundColor( m_kBGBackup );
+			m_kParent.setTextSize( m_afTextSize );
+			dispose();
+		}
 	}
 
 	public void init( ) {
@@ -180,71 +210,6 @@ public class JDialogGraphProperties extends JDialogBase {
 		setMinimumSize(getSize());
 		setVisible(true);
 
-	}
-
-	public void actionPerformed(ActionEvent e) {
-		final String command = e.getActionCommand();
-
-		if (command.equalsIgnoreCase("backgroundColor")) {     
-			colorChooser = new ViewJColorChooser(null, "Pick background color", new ActionListener()
-			{ // OKAY listener
-				public void actionPerformed(final ActionEvent ae) {
-					m_kBackgroundButton.setBackground(colorChooser.getColor());
-					m_kParent.setBackgroundColor( m_kBackgroundButton.getBackground() );
-				}
-			}, new ActionListener() { // CANCEL listener
-				public void actionPerformed(final ActionEvent a) {}
-			});
-		}
-		if (command.equalsIgnoreCase("textColor")) {     
-			colorChooser = new ViewJColorChooser(null, "Pick text color", new ActionListener()
-			{ // OKAY listener
-				public void actionPerformed(final ActionEvent ae) {
-					m_kTextColorButton.setBackground(colorChooser.getColor());
-					m_kParent.setTextColor( m_kTextColorButton.getBackground() );
-				}
-			}, new ActionListener() { // CANCEL listener
-				public void actionPerformed(final ActionEvent a) {}
-			});
-		}
-		if (command.equalsIgnoreCase("lineColor")) {     
-			colorChooser = new ViewJColorChooser(null, "Pick line color", new ActionListener()
-			{ // OKAY listener
-				public void actionPerformed(final ActionEvent ae) {
-					m_kLineColorButton.setBackground(colorChooser.getColor());
-					m_kParent.setLineColor( m_kLineColorButton.getBackground() );
-				}
-			}, new ActionListener() { // CANCEL listener
-				public void actionPerformed(final ActionEvent a) {}
-			});
-		}
-		if (command.equalsIgnoreCase("DecreaseTextSize")) {     
-			m_kParent.increaseTextSize( false );
-		}
-		if (command.equalsIgnoreCase("IncreaseTextSize")) {     
-			m_kParent.increaseTextSize( true );
-		}
-		if (command.equalsIgnoreCase("lineColor")) {     
-			colorChooser = new ViewJColorChooser(null, "Pick line color", new ActionListener()
-			{ // OKAY listener
-				public void actionPerformed(final ActionEvent ae) {
-					m_kLineColorButton.setBackground(colorChooser.getColor());
-					m_kParent.setLineColor( m_kLineColorButton.getBackground() );
-				}
-			}, new ActionListener() { // CANCEL listener
-				public void actionPerformed(final ActionEvent a) {}
-			});
-		}
-		else if (command.equals("OK")) {
-			m_kParent.setBackgroundColor( m_kBackgroundButton.getBackground() );
-			m_kParent.savePreferences();
-			setVisible(false);
-		}
-		else if (command.equals("cancel")) {
-			m_kParent.setBackgroundColor( m_kBGBackup );
-			m_kParent.setTextSize( m_afTextSize );
-			dispose();
-		}
 	}
 
 

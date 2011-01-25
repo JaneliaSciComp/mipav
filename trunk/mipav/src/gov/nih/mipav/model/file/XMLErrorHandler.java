@@ -14,7 +14,7 @@ import org.xml.sax.*;
  * @see  FileVOI
  * @see  FileXML
  */
-class XMLErrorHandler implements ErrorHandler {
+public class XMLErrorHandler implements ErrorHandler {
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
