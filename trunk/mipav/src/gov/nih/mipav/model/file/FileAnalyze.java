@@ -24,7 +24,7 @@ import java.io.*;
  * unused1, unused2, and unused3.  Note that MIPAV's unused3 is at the same location as unused1 in any
  * original format.
  * 
- * Original Mayo Analyze 7.5 has at locations 112, 116, and 112 3 unused floats, funused1, funused2, and
+ * Original Mayo Analyze 7.5 has at locations 112, 116, and 120 3 unused floats, funused1, funused2, and
  * funused3.  SPM99 and SPM2 have at location 112 a float scale factor.  SPM2 has at location 116 a float 
  * dcoff, which is an intensity zero-intercept.  MIPAV analyze has hacked these 3 locations to store 3 floats
  * giving the x-origin, y-origin, and z-origin locations.
