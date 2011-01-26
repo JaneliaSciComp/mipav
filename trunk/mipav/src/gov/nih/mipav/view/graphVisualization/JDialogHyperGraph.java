@@ -190,12 +190,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", ".txt", ".pdf", ".jpg", ".tif"} ) );
 			final int returnValue = chooser.showSaveDialog(this);
 			if (returnValue == JFileChooser.APPROVE_OPTION) {
-				File kFile = chooser.getSelectedFile();
-				System.err.println( kFile.getAbsolutePath() );
-				System.err.println( kFile.getName() );
-				System.err.println( kFile.getParent() );
-				System.err.println( kFile.getPath() );
-				
+				File kFile = chooser.getSelectedFile();			
 				
 				m_kCurrentDir = chooser.getSelectedFile().getAbsolutePath();
 				final FileIO fileIO = new FileIO();
@@ -637,7 +632,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		doc = null;
 		try
 		{
-			doc = PDDocument.load( file );
+			doc = PDDocument.load( dir + File.separator + file );
 			PageFormat pf = doc.getPageFormat(0);
 			float width = (float)pf.getWidth();
 			float height = (float)pf.getHeight();
