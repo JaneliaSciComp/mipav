@@ -95,6 +95,14 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 
 	public JDialogHyperGraph(boolean bRead) {
         super();
+        try {
+            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        } catch (final FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+        }
 		if ( bRead )
 		{
 			final JFileChooser chooser = new JFileChooser();
@@ -118,6 +126,14 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 
 	public JDialogHyperGraph(String dir, String file) {
 		super();
+        try {
+            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        } catch (final FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+        }
 
 		//super(ViewUserInterface.getReference().getMainFrame(), false);
 		ModelLUT lut = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});		
@@ -133,6 +149,14 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	}
 	public JDialogHyperGraph(ViewJFrameImage kParent, ModelImage kImage) {
 		super();
+        try {
+            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        } catch (final FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+        }
 
 		//super(kParent, false);
 		ModelLUT lut = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});		
@@ -164,8 +188,15 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			chooser.setDialogTitle("Choose Output Graph");
 			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", ".txt", ".pdf", ".jpg", ".tif"} ) );
-			final int returnValue = chooser.showOpenDialog(this);
+			final int returnValue = chooser.showSaveDialog(this);
 			if (returnValue == JFileChooser.APPROVE_OPTION) {
+				File kFile = chooser.getSelectedFile();
+				System.err.println( kFile.getAbsolutePath() );
+				System.err.println( kFile.getName() );
+				System.err.println( kFile.getParent() );
+				System.err.println( kFile.getPath() );
+				
+				
 				m_kCurrentDir = chooser.getSelectedFile().getAbsolutePath();
 				final FileIO fileIO = new FileIO();
 				fileIO.setQuiet(true);
@@ -537,7 +568,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			return;
 		}
 
-    	File pdfFile = new File( file );
+    	File pdfFile = new File( dir, file );
 
 		// the document
     	PDDocument doc = null;
