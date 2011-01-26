@@ -387,7 +387,7 @@ public class FileInfoAnalyze extends FileInfoBase {
 
 
         editorChoice[0] = JDialogEditor.FLOAT_STRING;
-        dialog.appendSecondaryData("X-origin if SAVED MIPAV SCALE if SPM", Float.toString(getFunused1()), editorChoice);
+        dialog.appendSecondaryData("X-origin if saved to MIPAV SCALE if SPM", Float.toString(getFunused1()), editorChoice);
         dialog.appendSecondaryData("Y-origin (Funused2)", Float.toString(getFunused2()), editorChoice);
         dialog.appendSecondaryData("Z-origin (Funused3)", Float.toString(getFunused3()), editorChoice);
 
