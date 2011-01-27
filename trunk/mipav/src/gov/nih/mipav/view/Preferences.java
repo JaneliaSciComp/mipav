@@ -362,7 +362,8 @@ public class Preferences {
     /** Constant that indicates the crosshair cursor to be used. */
     public static final String PREF_CROSSHAIR_CURSOR = "CrosshairCursor";
 
-    /** Constant that indicates method used to display complex values. */
+    /** Constant that indicates method used to display complex data values on MIPAV toolbar 
+     * (MIPAV visually always shows magnitude or log magnitude). */
     public static final String PREF_COMPLEX_DISPLAY = "ComplexDisplay";
     
     /** Constant that indicates whether the log of the magnitude of an image is used for image display */
@@ -963,6 +964,24 @@ public class Preferences {
         }
 
         return false;
+    }
+
+    /**
+     * Returns how pixel values are displayed on the MIPAV toolbar for complex images.  Although
+     * MIPAV always displays the magnitude or log magnitude when viewing an image, the toolbar can
+     * display both real and complex components.
+     * 
+     * @return The complex display enumeration, includes number of parts that the complex display requires
+     */
+    public static ComplexDisplay getComplexDisplay() {
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+        String complexDisplay = Preferences.mipavProps.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
+        if (complexDisplay == null) {
+            complexDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
+        }
+        return ComplexDisplay.valueOf(complexDisplay); 
     }
 
     /**
@@ -1583,6 +1602,23 @@ public class Preferences {
     }
 
     /**
+     * The number of threads available for MIPAV for processing.  MIPAV typically uses this number
+     * for highly-parallel algorithm computations.
+     * 
+     * @return the number of threads available for mipav
+     */
+    public static int getNumberOfThreads() {
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+        String numberOfThreads = Preferences.mipavProps.getProperty(Preferences.PREF_NUMBER_OF_THREADS);
+        if (numberOfThreads == null) {
+            numberOfThreads = Preferences.defaultProps.getProperty(Preferences.PREF_NUMBER_OF_THREADS);
+        }
+        return Integer.parseInt(numberOfThreads);
+    }
+
+    /**
      * Retrieves the list of overlay names (user can type whatever).
      * 
      * @param isDicom boolean is this a dicom image
@@ -2078,6 +2114,49 @@ public class Preferences {
             }
         }
 
+        return false;
+    }
+
+    /**
+     * Indicates whether GPU-computing should be enabled.  The renderer and algorithms use this
+     * information for processing
+     * 
+     * @return true if gpu compinting is enabled
+     */
+    public static boolean isGpuCompEnabled() {
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+    
+        String gpuEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_GPU_COMP_ENABLED);
+        if (gpuEnabled == null) {
+            gpuEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_GPU_COMP_ENABLED);
+        }
+    
+        if (Boolean.valueOf(gpuEnabled)) {
+            return true;
+        }
+    
+        return false;
+    }
+
+    /**
+     * Indicates whether multi-threading should be enabled for algorithms.  Most algorithms check this before
+     * launching highly-parallel processes (such as FFT).
+     * 
+     * @return true if multi-threading is enabled
+     */
+    public static boolean isMultiThreadingEnabled() {
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+        String mtEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_MULTI_THREADING_ENABLED);
+        if (mtEnabled == null) {
+            mtEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_MULTI_THREADING_ENABLED);
+        }
+        if (Boolean.valueOf(mtEnabled)) {
+            return true;
+        }
         return false;
     }
 
@@ -2767,58 +2846,5 @@ public class Preferences {
         }
 
         return Preferences.defaultShortcutTable;
-    }
-
-    public static ComplexDisplay getComplexDisplay() {
-        if (Preferences.mipavProps == null) {
-            Preferences.read();
-        }
-        String complexDisplay = Preferences.mipavProps.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
-        if (complexDisplay == null) {
-            complexDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
-        }
-        return ComplexDisplay.valueOf(complexDisplay); 
-    }
-    
-    public static boolean isMultiThreadingEnabled() {
-        if (Preferences.mipavProps == null) {
-            Preferences.read();
-        }
-        String mtEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_MULTI_THREADING_ENABLED);
-        if (mtEnabled == null) {
-            mtEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_MULTI_THREADING_ENABLED);
-        }
-        if (Boolean.valueOf(mtEnabled)) {
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean isGpuCompEnabled() {
-        if (Preferences.mipavProps == null) {
-            Preferences.read();
-        }
-
-        String gpuEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_GPU_COMP_ENABLED);
-        if (gpuEnabled == null) {
-            gpuEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_GPU_COMP_ENABLED);
-        }
-
-        if (Boolean.valueOf(gpuEnabled)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public static int getNumberOfThreads() {
-        if (Preferences.mipavProps == null) {
-            Preferences.read();
-        }
-        String numberOfThreads = Preferences.mipavProps.getProperty(Preferences.PREF_NUMBER_OF_THREADS);
-        if (numberOfThreads == null) {
-            numberOfThreads = Preferences.defaultProps.getProperty(Preferences.PREF_NUMBER_OF_THREADS);
-        }
-        return Integer.parseInt(numberOfThreads);
     }
 }
