@@ -306,7 +306,7 @@ public class FileMATLAB extends FileBase {
         int adjustedFieldDim;
         int newExtents[] = null;
         int totalNumber = 1;
-        boolean logMagDisplay = true;
+        boolean logMagDisplay = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
         int maskExtents[] = null;
         boolean haveSmallRealData;
         boolean haveSmallImaginaryData;
@@ -1341,7 +1341,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importComplexData(2 * nonLogicalField* realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
@@ -1564,7 +1564,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
@@ -1725,7 +1725,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
@@ -1943,7 +1943,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
@@ -2110,7 +2110,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
@@ -2277,7 +2277,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
@@ -2447,7 +2447,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                     		}
@@ -2701,7 +2701,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
@@ -2886,7 +2886,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
@@ -3072,7 +3072,7 @@ public class FileMATLAB extends FileBase {
                         	    	raFile.readByte();
                         	    }
                     	    }   
-                            logMagDisplay = true;
+                            
                             try {
                     			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                     		}
@@ -3253,7 +3253,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
@@ -3476,7 +3476,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
@@ -3637,7 +3637,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
@@ -3855,7 +3855,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
@@ -4022,7 +4022,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
@@ -4189,7 +4189,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
@@ -4359,7 +4359,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
@@ -4613,7 +4613,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
@@ -4798,7 +4798,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
@@ -4983,7 +4983,7 @@ public class FileMATLAB extends FileBase {
                             	    	raFile.readByte();
                             	    }
                         	    }   
-                                logMagDisplay = true;
+                                
                                 try {
                         			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
@@ -5211,7 +5211,7 @@ public class FileMATLAB extends FileBase {
                         		}
                         		image.changeExtents(newExtents);
                         		image.recomputeDataSize();
-                        	    logMagDisplay = true;
+                        	    
                                 try {
                         			image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
@@ -5232,7 +5232,7 @@ public class FileMATLAB extends FileBase {
                         		}
                         		image.changeExtents(newExtents);
                         		image.recomputeDataSize();
-                        		logMagDisplay = true;
+                        		
                                 try {
                         			image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
@@ -5434,7 +5434,7 @@ public class FileMATLAB extends FileBase {
                         		}
                         		image2.changeExtents(newExtents);
                         		image2.recomputeDataSize();
-                        	    logMagDisplay = true;
+                        	    
                                 try {
                         			image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
                         		}
@@ -5455,7 +5455,7 @@ public class FileMATLAB extends FileBase {
                         		}
                         		image2.changeExtents(newExtents);
                         		image2.recomputeDataSize();
-                        		logMagDisplay = true;
+                        		
                                 try {
                         			image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
                         		}
