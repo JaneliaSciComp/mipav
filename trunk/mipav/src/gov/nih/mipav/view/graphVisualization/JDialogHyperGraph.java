@@ -90,6 +90,11 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 
 	private float[] m_afTextSize = new float[] {12, 10, 8, 0};
 
+	private PDFont m_kCurrentFont = null;
+	private int m_iCurrentFontSize = 0;
+	private float m_fPageWidth; 
+	private float m_fPageMargin; 
+	
 	/** Stores the graph that the applet shows. */
 	private MipavGraphPanel graphPanel;
 
@@ -574,27 +579,30 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 
             PDPage page = new PDPage();
             doc.addPage( page );
-            PDFont font = PDType1Font.HELVETICA_BOLD;
+            m_kCurrentFont = PDType1Font.HELVETICA_BOLD;
 
             contentStream[0] = new PDPageContentStream(doc, page);
             contentStream[0].beginText();
 
-            contentStream[0].setFont(font, 18);
+            contentStream[0].setFont(m_kCurrentFont, 18);
+            m_iCurrentFontSize = 18;
             String message  ="MIPAV: Graph Visualization";
 
+            m_fPageWidth = 7f * (PDPage.PAGE_SIZE_LETTER.getWidth() / 8.5f); 
+            m_fPageMargin = (PDPage.PAGE_SIZE_LETTER.getWidth() - m_fPageWidth) / 2f;
+    		float scale = m_fPageWidth / graphPanel.getWidth();
+    		float[] height = new float[]{PDPage.PAGE_SIZE_LETTER.getHeight() - scale * graphPanel.getHeight()};
 
-    		float scale = PDPage.PAGE_SIZE_LETTER.getWidth() / graphPanel.getWidth();
-    		float[] height = new float[]{PDPage.PAGE_SIZE_LETTER.getHeight() - scale * graphPanel.getHeight() - 30};
-
-            //contentStream.moveTextPositionByAmount((float) (PDPage.PAGE_SIZE_LETTER.getWidth()/2.0)-120, 750 );
-            contentStream[0].moveTextPositionByAmount( 0f, height[0] );
+            height[0] -= 4 * (m_iCurrentFontSize + 4);
+            contentStream[0].moveTextPositionByAmount(m_fPageMargin, height[0]);
             contentStream[0].drawString( message );
-
-            font = PDType1Font.HELVETICA_BOLD;
-            contentStream[0].setFont(font, 12);
             
-            height[0] -= 20;
-            contentStream[0].moveTextPositionByAmount(0, -20);
+            height[0] -= (m_iCurrentFontSize + 4);
+            contentStream[0].moveTextPositionByAmount(0, -(m_iCurrentFontSize + 4));
+
+            contentStream[0].setFont(m_kCurrentFont, 12);
+            m_iCurrentFontSize = 12;
+            
             writeGraph( visitedSet, doc, contentStream, height, root, 0 );
             
             contentStream[0].endText();
@@ -638,14 +646,14 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			float height = (float)pf.getHeight();
 
 
-			String imageName = writeImage( root.getLabel(), dir, file, ".jpg", width, height );
+			String imageName = writeImage( root.getLabel(), dir, file, ".jpg", m_fPageWidth, height );
 
 			//we will add the image to the first page.
 			PDPage page = (PDPage)doc.getDocumentCatalog().getAllPages().get( 0 );
 
 			PDXObjectImage ximage = new PDJpeg(doc, new FileInputStream( dir + File.separator + imageName ) );
 			contentStream[0] = new PDPageContentStream(doc, page, true, true);
-			contentStream[0].drawImage( ximage, 0f, height - ximage.getHeight() );
+			contentStream[0].drawImage( ximage, m_fPageMargin, height - ximage.getHeight() );
 
 			contentStream[0].close();
 			doc.save( pdfFile.toString() );
@@ -795,13 +803,12 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			return;
 		}
 		try {
-			for ( int i = 0; i < iLevel; i++ )
-			{
-				contentStream[0].drawString( "    " );
-			}
+
+            contentStream[0].moveTextPositionByAmount(m_fPageMargin * (iLevel+1), 0);
             contentStream[0].drawString( kNode.getLabel() );
-            height[0] -= 16;
-            if ( height[0] <= 0 )
+            contentStream[0].moveTextPositionByAmount(-(m_fPageMargin  * (iLevel+1)), 0);
+            height[0] -= (m_iCurrentFontSize + 4);
+            if ( height[0] <= 4 * (m_iCurrentFontSize + 4) )
             {
                 contentStream[0].endText();
                 contentStream[0].close();
@@ -815,10 +822,11 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 
                 contentStream[0].setFont(font, 12);
                 height[0] = PDPage.PAGE_SIZE_LETTER.getHeight();
+                height[0] -= 4 * (m_iCurrentFontSize + 4);
                 contentStream[0].moveTextPositionByAmount(0, height[0]);
-                height[0] -= 16;
+                height[0] -= (m_iCurrentFontSize + 4);
             }
-            contentStream[0].moveTextPositionByAmount(0, -16);
+            contentStream[0].moveTextPositionByAmount(0, -(m_iCurrentFontSize + 4));
 
 			if ( visitedSet != null )
 			{
