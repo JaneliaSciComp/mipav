@@ -323,8 +323,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** Locking status of the image. Default = UNLOCKED */
     private int lockStatus = ModelStorageBase.UNLOCKED;
 
-    /** Boolean telling if log magnitude display is used in complex image. - TO BE MOVED - redesigned */
-    private boolean logMagDisp;
+    /** Boolean telling if log magnitude display is used for the data buffer */
+    protected boolean logMagDisp;
 
     /**
      * Set to true when the image is the product of the ffts of two images, so that on an inverse_fft this image will be
