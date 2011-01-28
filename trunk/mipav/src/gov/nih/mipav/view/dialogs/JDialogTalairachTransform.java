@@ -72,6 +72,10 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 	private	JPanel			loadsavePanel;
 	private	JFileChooser	loadDialog;
 	private	JFileChooser	saveDialog;
+	private JLabel          acpcResLabel;
+	private JTextField      acpcResText;
+	private JPanel          acpcResPanel;
+	private float           acpcRes = 1.0f;
 	
 	/**
     *  Creates dialog for plugin.
@@ -202,10 +206,25 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		comboBoxTransform = new JComboBox(val);
 		comboBoxTransform.setFont(serif12);
         comboBoxTransform.setBackground(Color.white);
+        comboBoxTransform.addActionListener(this);
+        comboBoxTransform.setActionCommand("ChangeTransformType");
 
 		transPanel = new JPanel();
 		transPanel.add(labelTransform);
         transPanel.add(comboBoxTransform);
+        
+        acpcResLabel = new JLabel("acpc resolution (mm): ");
+        acpcResLabel.setForeground(Color.black);
+        acpcResLabel.setFont(serif12);
+        
+        acpcResText = new JTextField(10);
+        acpcResText.setText("1.0");
+        acpcResText.setForeground(Color.black);
+        acpcResText.setFont(serif12);
+        
+        acpcResPanel = new JPanel();
+        acpcResPanel.add(acpcResLabel);
+        acpcResPanel.add(acpcResText);
 
 		labelInterpolation = new JLabel("interpolation: ");
         labelInterpolation.setForeground(Color.black);
@@ -220,6 +239,8 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		interpPanel = new JPanel();
 		interpPanel.add(labelInterpolation);
         interpPanel.add(comboBoxInterpolation);
+        
+        
 		
 		computeImage = new JButton("Compute");
 		computeImage.setForeground(Color.black);
@@ -268,9 +289,14 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
         newImagePanel.add(transPanel, gbc);
         gbc.gridy = 7;
         gbc.weightx = 1;
+        gbc.anchor = gbc.EAST;
+        gbc.fill = gbc.HORIZONTAL;
+        newImagePanel.add(acpcResPanel, gbc);
+        gbc.gridy = 8;
+        gbc.weightx = 1;
         gbc.fill = gbc.HORIZONTAL;
         newImagePanel.add(interpPanel, gbc);
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         gbc.weightx = 1;
         gbc.anchor = gbc.CENTER;
         gbc.fill = gbc.HORIZONTAL;
@@ -526,6 +552,24 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 			MipavUtil.displayError( "image not found");
 			return;
 		}
+		
+		if ((transformType.equals("acpc to orig")) || (transformType.equals("acpc to Tlrc"))) {
+			acpcRes = image.getFileInfo()[0].getResolution(0);
+			transform.setAcpcRes(acpcRes);
+		}
+		else {
+			String tmpStr = acpcResText.getText();
+			if (testParameter(tmpStr, 0.1, 2.0)) {
+	            acpcRes = Float.valueOf(tmpStr).floatValue();
+	            transform.setAcpcRes(acpcRes);
+			}
+			else {
+				 MipavUtil.displayError("acpc resolution must be between 0.1 and 2.0");
+	             acpcResText.requestFocus();
+	             acpcResText.selectAll();
+	             return;
+			}
+		}
         int[] dims = null;
 		String suffix = "";
 		int transformID=-1;
@@ -612,7 +656,8 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 				int[] units = new int[3];
 				units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
 				float[] resol = new float[3];
-				resol[0] = resol[1] = resol[2] = transform.getAcpcRes();
+				
+				resol[0] = resol[1] = resol[2] = acpcRes;
 				int[] orient = new int[3];
 				orient[0] = FileInfoBase.ORI_R2L_TYPE;
 				orient[1] = FileInfoBase.ORI_A2P_TYPE;
@@ -706,7 +751,17 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 			buildLoadDialog();
             loadDialog.setSize(500,326);
 			
-		} 
+		} else if (command.equals("ChangeTransformType")) {
+			transformType = (String)comboBoxTransform.getSelectedItem();
+			if ((transformType.equals("acpc to orig")) || (transformType.equals("acpc to Tlrc"))) {
+				acpcResLabel.setEnabled(false);
+				acpcResText.setEnabled(false);
+			}
+			else {
+				acpcResLabel.setEnabled(true);
+				acpcResText.setEnabled(true);
+			}
+		}
     }
 	
 	public void loadFileActionPerformed(ActionEvent evt) {
