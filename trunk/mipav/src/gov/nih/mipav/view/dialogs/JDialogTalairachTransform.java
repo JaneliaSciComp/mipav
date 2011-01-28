@@ -553,7 +553,8 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 			return;
 		}
 		
-		if ((transformType.equals("acpc to orig")) || (transformType.equals("acpc to Tlrc"))) {
+		if ((transformType.equals("acpc to orig")) || (transformType.equals("acpc to Tlrc")) || 
+		    (transformType.equals("Tlrc to orig")) || (transformType.equals("Tlrc to acpc"))) {
 			acpcRes = image.getFileInfo()[0].getResolution(0);
 			transform.setAcpcRes(acpcRes);
 		}
@@ -753,7 +754,8 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 			
 		} else if (command.equals("ChangeTransformType")) {
 			transformType = (String)comboBoxTransform.getSelectedItem();
-			if ((transformType.equals("acpc to orig")) || (transformType.equals("acpc to Tlrc"))) {
+			if ((transformType.equals("acpc to orig")) || (transformType.equals("acpc to Tlrc")) ||
+			    (transformType.equals("Tlrc to orig")) || (transformType.equals("Tlrc to acpc"))) {
 				acpcResLabel.setEnabled(false);
 				acpcResText.setEnabled(false);
 			}
