@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.view.*;
 
 
@@ -1069,12 +1070,12 @@ public class JDialogACPC extends JDialogBase {
 		// Get the original resolutions in millimeters
         for (int i = 0; i <= 2; i++) {
             int unit = image.getFileInfo(0).getUnitsOfMeasure(i);
-            if ((unit == FileInfoBase.INCHES)      || (unit == FileInfoBase.MILS) ||
-                (unit == FileInfoBase.CENTIMETERS) ||
-                (unit == FileInfoBase.ANGSTROMS)   || (unit == FileInfoBase.NANOMETERS)  ||
-                (unit == FileInfoBase.MICROMETERS) || (unit == FileInfoBase.MILLIMETERS) ||
-                (unit == FileInfoBase.METERS)      || (unit == FileInfoBase.KILOMETERS)  ||
-                (unit == FileInfoBase.MILES)) {
+            if ((unit == Unit.INCHES.getLegacyNum())      || (unit == Unit.MILS.getLegacyNum()) ||
+                (unit == Unit.CENTIMETERS.getLegacyNum()) ||
+                (unit == Unit.ANGSTROMS.getLegacyNum())   || (unit == Unit.NANOMETERS.getLegacyNum())  ||
+                (unit == Unit.MICROMETERS.getLegacyNum()) || (unit == Unit.MILLIMETERS.getLegacyNum()) ||
+                (unit == Unit.METERS.getLegacyNum())      || (unit == Unit.KILOMETERS.getLegacyNum())  ||
+                (unit == Unit.MILES.getLegacyNum())) {
                 origRes[i] = image.getFileInfo(0).getResolutions()[i];
                 if (origRes[i] <= 0.0f) {
                     MipavUtil.displayWarning("resolution[" + i + "] was recorded as " + origRes[i] +
@@ -1082,16 +1083,16 @@ public class JDialogACPC extends JDialogBase {
                     origRes[i] = 1.0f;
                 }
                 // Be ready for conversions between different units.
-                if (unit == FileInfoBase.MILLIMETERS) 		origRes[i] = origRes[i];
-                else if (unit == FileInfoBase.INCHES) 		origRes[i] = 25.4f * origRes[i];
-                else if (unit == FileInfoBase.MILS)         origRes[i] = 2.54e-2f * origRes[i];
-                else if (unit == FileInfoBase.CENTIMETERS) 	origRes[i] = 10.0f * origRes[i];
-                else if (unit == FileInfoBase.ANGSTROMS) 	origRes[i] = 1.0e-7f * origRes[i];
-                else if (unit == FileInfoBase.NANOMETERS) 	origRes[i] = 1.0e-6f * origRes[i];
-                else if (unit == FileInfoBase.MICROMETERS) 	origRes[i] = 1.0e-3f * origRes[i];
-				else if (unit == FileInfoBase.METERS) 		origRes[i] = 1.0e3f * origRes[i];
-                else if (unit == FileInfoBase.KILOMETERS) 	origRes[i] = 1.0e6f * origRes[i];
-                else if (unit == FileInfoBase.MILES) 		origRes[i] = 1.6093e6f * origRes[i];
+                if (unit == Unit.MILLIMETERS.getLegacyNum()) 		origRes[i] = origRes[i];
+                else if (unit == Unit.INCHES.getLegacyNum()) 		origRes[i] = 25.4f * origRes[i];
+                else if (unit == Unit.MILS.getLegacyNum())         origRes[i] = 2.54e-2f * origRes[i];
+                else if (unit == Unit.CENTIMETERS.getLegacyNum()) 	origRes[i] = 10.0f * origRes[i];
+                else if (unit == Unit.ANGSTROMS.getLegacyNum()) 	origRes[i] = 1.0e-7f * origRes[i];
+                else if (unit == Unit.NANOMETERS.getLegacyNum()) 	origRes[i] = 1.0e-6f * origRes[i];
+                else if (unit == Unit.MICROMETERS.getLegacyNum()) 	origRes[i] = 1.0e-3f * origRes[i];
+				else if (unit == Unit.METERS.getLegacyNum()) 		origRes[i] = 1.0e3f * origRes[i];
+                else if (unit == Unit.KILOMETERS.getLegacyNum()) 	origRes[i] = 1.0e6f * origRes[i];
+                else if (unit == Unit.MILES.getLegacyNum()) 		origRes[i] = 1.6093e6f * origRes[i];
             }
             else {
                 MipavUtil.displayError("ResUnit[" + i + "] is not a distance unit");
@@ -1228,9 +1229,9 @@ public class JDialogACPC extends JDialogBase {
 		res[1] = transform.getAcpcRes();
 		res[2] = transform.getAcpcRes();
 		int[] units = new int[3];
-		units[0] = FileInfoBase.MILLIMETERS;
-		units[1] = FileInfoBase.MILLIMETERS;
-		units[2] = FileInfoBase.MILLIMETERS;
+		units[0] = Unit.MILLIMETERS.getLegacyNum();
+		units[1] = Unit.MILLIMETERS.getLegacyNum();
+		units[2] = Unit.MILLIMETERS.getLegacyNum();
 
         for(int i = 0; i < transform.getAcpcDim()[2]; i++){
 	        ACPCImage.getFileInfo(i).setUnitsOfMeasure(units);

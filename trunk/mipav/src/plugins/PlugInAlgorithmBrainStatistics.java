@@ -1,5 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -169,11 +170,8 @@ public class PlugInAlgorithmBrainStatistics extends AlgorithmBase {
 
         brainImage.releaseLock();
 
-        int[] units = brainImage.getUnitsOfMeasure();
-        String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
-
-        if (units[0] != FileInfoBase.MILLIMETERS) {
-            MipavUtil.displayError("Image units are not in millimeters.  It is in " + unitsStr + ".");
+        if (brainImage.getUnitsOfMeasure()[0] != Unit.MILLIMETERS.getLegacyNum()) {
+            MipavUtil.displayError("Image units are not in millimeters.  It is in " + Unit.getUnitFromLegacyNum(brainImage.getUnitsOfMeasure()[0]).toString() + ".");
 
             return;
         }

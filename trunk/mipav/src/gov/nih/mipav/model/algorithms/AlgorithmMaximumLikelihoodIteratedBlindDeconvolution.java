@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -743,25 +744,25 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         for (int i = 0; i < m_kOriginalSourceImage.getNDims(); i++) {
             m_afResolutions[i] = m_kOriginalSourceImage.getFileInfo()[0].getResolutions()[i];
 
-            if (m_aiUnits[i] == FileInfoBase.INCHES) {
+            if (m_aiUnits[i] == Unit.INCHES.getLegacyNum()) {
                 m_afResolutions[i] *= 2.54e7f; // 25400000f;
-            } else if (m_aiUnits[i] == FileInfoBase.MILS) {
+            } else if (m_aiUnits[i] == Unit.MILS.getLegacyNum()) {
                 m_afResolutions[i] *= 2.54e4f;
-            } else if (m_aiUnits[i] == FileInfoBase.CENTIMETERS) {
+            } else if (m_aiUnits[i] == Unit.CENTIMETERS.getLegacyNum()) {
                 m_afResolutions[i] *= 1e7f; // 10000000f;
-            } else if (m_aiUnits[i] == FileInfoBase.ANGSTROMS) {
+            } else if (m_aiUnits[i] == Unit.ANGSTROMS.getLegacyNum()) {
                 m_afResolutions[i] *= 0.1f;
-            } else if (m_aiUnits[i] == FileInfoBase.NANOMETERS) {
+            } else if (m_aiUnits[i] == Unit.NANOMETERS.getLegacyNum()) {
                 m_afResolutions[i] *= 1f;
-            } else if (m_aiUnits[i] == FileInfoBase.MICROMETERS) {
+            } else if (m_aiUnits[i] == Unit.MICROMETERS.getLegacyNum()) {
                 m_afResolutions[i] *= 1e3f; // 1000f;
-            } else if (m_aiUnits[i] == FileInfoBase.MILLIMETERS) {
+            } else if (m_aiUnits[i] == Unit.MILLIMETERS.getLegacyNum()) {
                 m_afResolutions[i] *= 1e6f; // 1000000f;
-            } else if (m_aiUnits[i] == FileInfoBase.METERS) {
+            } else if (m_aiUnits[i] == Unit.METERS.getLegacyNum()) {
                 m_afResolutions[i] *= 1e9f; // 1000000000f;
-            } else if (m_aiUnits[i] == FileInfoBase.KILOMETERS) {
+            } else if (m_aiUnits[i] == Unit.KILOMETERS.getLegacyNum()) {
                 m_afResolutions[i] *= 1e12f; // 1000000000000f;
-            } else if (m_aiUnits[i] == FileInfoBase.MILES) {
+            } else if (m_aiUnits[i] == Unit.MILES.getLegacyNum()) {
                 m_afResolutions[i] *= 1.609344e12f; // 1609344000000f;
             }
 

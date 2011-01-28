@@ -3,6 +3,7 @@ package gov.nih.mipav.model.file;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
@@ -2800,32 +2801,32 @@ public class FileAfni extends FileBase {
 
         for (i = 0; i <= 2; i++) {
 
-            if (units[i] == FileInfoBase.MILLIMETERS) { }
-            else if (units[i] == FileInfoBase.INCHES) {
+            if (units[i] == Unit.MILLIMETERS.getLegacyNum()) { }
+            else if (units[i] == Unit.INCHES.getLegacyNum()) {
                 resols[i] = 25.4f * resols[i];
                 origin[i] = 25.4f * origin[i];
-            } else if (units[i] == FileInfoBase.MILS) {
+            } else if (units[i] == Unit.MILS.getLegacyNum()) {
                 resols[i] = 2.54e-2f * resols[i];
                 origin[i] = 2.54e-2f * origin[i];
-            } else if (units[i] == FileInfoBase.CENTIMETERS) {
+            } else if (units[i] == Unit.CENTIMETERS.getLegacyNum()) {
                 resols[i] = 10.0f * resols[i];
                 origin[i] = 10.0f * origin[i];
-            } else if (units[i] == FileInfoBase.ANGSTROMS) {
+            } else if (units[i] == Unit.ANGSTROMS.getLegacyNum()) {
                 resols[i] = 1.0e-7f * resols[i];
                 origin[i] = 1.0e-7f * origin[i];
-            } else if (units[i] == FileInfoBase.NANOMETERS) {
+            } else if (units[i] == Unit.NANOMETERS.getLegacyNum()) {
                 resols[i] = 1.0e-6f * resols[i];
                 origin[i] = 1.0e-6f * origin[i];
-            } else if (units[i] == FileInfoBase.MICROMETERS) {
+            } else if (units[i] == Unit.MICROMETERS.getLegacyNum()) {
                 resols[i] = 1.0e-3f * resols[i];
                 origin[i] = 1.0e-3f * origin[i];
-            } else if (units[i] == FileInfoBase.METERS) {
+            } else if (units[i] == Unit.METERS.getLegacyNum()) {
                 resols[i] = 1.0e3f * resols[i];
                 origin[i] = 1.0e3f * origin[i];
-            } else if (units[i] == FileInfoBase.KILOMETERS) {
+            } else if (units[i] == Unit.KILOMETERS.getLegacyNum()) {
                 resols[i] = 1.0e6f * resols[i];
                 origin[i] = 1.0e6f * origin[i];
-            } else if (units[i] == FileInfoBase.MILES) {
+            } else if (units[i] == Unit.MILES.getLegacyNum()) {
                 resols[i] = 1.6093e6f * resols[i];
                 origin[i] = 1.6093e6f * origin[i];
             }
@@ -3815,11 +3816,11 @@ public class FileAfni extends FileBase {
             // 77003 means the units are in Hz
             lineString = lineString + Integer.toString(slicesWithTimeOffsets) + "  ";
 
-            if (units[3] == FileInfoBase.MILLISEC) {
+            if (units[3] == Unit.MILLISEC.getLegacyNum()) {
                 lineString = lineString + "77001\n\n";
-            } else if (units[3] == FileInfoBase.SECONDS) {
+            } else if (units[3] == Unit.SECONDS.getLegacyNum()) {
                 lineString = lineString + "77002\n\n";
-            } else if (units[3] == FileInfoBase.HZ) {
+            } else if (units[3] == Unit.HZ.getLegacyNum()) {
                 lineString = lineString + "77003\n\n";
             } else {
                 lineString = lineString + "77001\n\n";
@@ -5521,17 +5522,17 @@ public class FileAfni extends FileBase {
                             switch (timeStepUnit) {
 
                                 case UNITS_MSEC_TYPE:
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, 3);
+                                    fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 3);
                                     Preferences.debug("TAXIS_NUMS[2] = 77001 for UNITS_MSEC_TYPE\n");
                                     break;
 
                                 case UNITS_SEC_TYPE:
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, 3);
+                                    fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 3);
                                     Preferences.debug("TAXIS_NUMS[2] = 77002 for UNITS_SEC_TYPE\n");
                                     break;
 
                                 case UNITS_HZ_TYPE:
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.HZ, 3);
+                                    fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 3);
                                     Preferences.debug("TAXIS_NUMS[2] = 77003 for UNITS_HZ_TYPE\n");
                                     break;
                             }
@@ -7070,9 +7071,9 @@ public class FileAfni extends FileBase {
                 }
 
                 // x,y,z AFNI units are always in millimeters
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
 
                 if (doDicom) {
                     dicomOrientation = new int[3];

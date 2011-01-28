@@ -1,9 +1,11 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
+
 import gov.nih.mipav.view.*;
 
 /**
@@ -2482,28 +2484,28 @@ public class FileLIFF extends FileBase {
                 unitsOfMeasure = new int[3];
                 switch (units) {
                     case 3:
-                        unitsOfMeasure[0] = FileInfoBase.NANOMETERS;
+                        unitsOfMeasure[0] = Unit.NANOMETERS.getLegacyNum();
                         break;
                     case 4:
-                        unitsOfMeasure[0] = FileInfoBase.MICROMETERS;
+                        unitsOfMeasure[0] = Unit.MICROMETERS.getLegacyNum();
                         break;
                     case 5:
-                        unitsOfMeasure[0] = FileInfoBase.MILLIMETERS;
+                        unitsOfMeasure[0] = Unit.MILLIMETERS.getLegacyNum();
                         break;
                     case 6:
-                        unitsOfMeasure[0] = FileInfoBase.CENTIMETERS;
+                        unitsOfMeasure[0] = Unit.CENTIMETERS.getLegacyNum();
                         break;
                     case 7:
-                        unitsOfMeasure[0] = FileInfoBase.METERS;
+                        unitsOfMeasure[0] = Unit.METERS.getLegacyNum();
                         break;
                     case 8:
-                        unitsOfMeasure[0] = FileInfoBase.KILOMETERS;
+                        unitsOfMeasure[0] = Unit.KILOMETERS.getLegacyNum();
                         break;
                     case 10:
-                        unitsOfMeasure[0] = FileInfoBase.INCHES;
+                        unitsOfMeasure[0] = Unit.INCHES.getLegacyNum();
                         break;
                     case 13:
-                        unitsOfMeasure[0] = FileInfoBase.MILES;
+                        unitsOfMeasure[0] = Unit.MILES.getLegacyNum();
                         break;
                 } // switch (units)
                 unitsOfMeasure[1] = unitsOfMeasure[0];

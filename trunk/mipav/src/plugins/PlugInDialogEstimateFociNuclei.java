@@ -1,5 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
@@ -383,7 +384,7 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
 
         String unitString = null;
 
-        unitString = new String(FileInfoBase.sUnits[image.getFileInfo()[0].getUnitsOfMeasure(0)]);
+        unitString = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(0)).toString();
 
         if (image.getNDims() == 2) {
             labelKernelSizeOpen = new JLabel("Circle diameter - " + unitString);
@@ -474,7 +475,7 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
 
         unitString = null;
 
-        unitString = new String(FileInfoBase.sUnits[image.getFileInfo()[0].getUnitsOfMeasure(0)]);
+        unitString = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(0)).toString();
 
         if (image.getNDims() == 2) {
             labelKernelSizeClose = new JLabel("Circle diameter - " + unitString);

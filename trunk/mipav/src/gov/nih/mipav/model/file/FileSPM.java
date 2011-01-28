@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -885,22 +886,22 @@ public class FileSPM extends FileBase {
         
 
         if (image.getNDims() == 2) {
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
             image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
         } else if (image.getNDims() == 3) { // If there is more than one image
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
 
             for (i = 0; i < image.getExtents()[2]; i++) { // update all fileInfo
                 image.setFileInfo(fileInfo, i); // Set the array of fileInfos in ModelImage
             }
         } else if (image.getNDims() == 4) { // If there is more than one image
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 3);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 3);
 
             for (i = 0; i < (image.getExtents()[2] * image.getExtents()[3]); i++) { // update all fileInfo
                 image.setFileInfo(fileInfo, i); // Set the array of fileInfos in ModelImage
@@ -1103,9 +1104,9 @@ public class FileSPM extends FileBase {
         // if vox units defines the units of measure, then use that instead
         int units = FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
 
-        if (units == FileInfoBase.UNKNOWN_MEASURE) { // default to millimeters
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+        if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
         } else {
             fileInfo.setUnitsOfMeasure(units, 0);
             fileInfo.setUnitsOfMeasure(units, 1);
@@ -1133,9 +1134,9 @@ public class FileSPM extends FileBase {
 
         if (image.getNDims() == 2) {
 
-            if (units == FileInfoBase.UNKNOWN_MEASURE) { // default to millimeters
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+            if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
             } else {
                 fileInfo.setUnitsOfMeasure(units, 0);
                 fileInfo.setUnitsOfMeasure(units, 1);
@@ -1144,10 +1145,10 @@ public class FileSPM extends FileBase {
             image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
         } else if (image.getNDims() == 3) { // If there is more than one image
 
-            if (units == FileInfoBase.UNKNOWN_MEASURE) { // default to millimeters
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+            if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
             } else {
                 fileInfo.setUnitsOfMeasure(units, 0);
                 fileInfo.setUnitsOfMeasure(units, 1);
@@ -1160,11 +1161,11 @@ public class FileSPM extends FileBase {
             }
         } else if (image.getNDims() == 4) { // If there is more than one image
 
-            if (units == FileInfoBase.UNKNOWN_MEASURE) { // default to millimeters
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 3);
+            if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 3);
             } else {
                 fileInfo.setUnitsOfMeasure(units, 0);
                 fileInfo.setUnitsOfMeasure(units, 1);

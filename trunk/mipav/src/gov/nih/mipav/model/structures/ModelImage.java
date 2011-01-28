@@ -5,6 +5,8 @@ import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.ActionChangeName;
@@ -150,7 +152,7 @@ public class ModelImage extends ModelStorageBase {
         final int[] units = new int[5];
 
         for (i = 0; i < 5; i++) {
-            units[i] = FileInfoBase.MILLIMETERS;
+            units[i] = Unit.MILLIMETERS.getLegacyNum();
         }
 
         int length = 1;
@@ -4787,13 +4789,9 @@ public class ModelImage extends ModelStorageBase {
      * 
      */
     public void makeUnitsOfMeasureIdentical() {
-        final int OTHER = 0;
-        final int SPATIAL = 1;
-        final int TIME = 2;
-        final int FREQUENCY = 3;
         int i;
         final int nDims = getNDims();
-        int unitType[];
+        UnitType unitType[];
         boolean set1To0 = false;
         boolean set2To0 = false;
         boolean set2To1 = false;
@@ -4804,58 +4802,33 @@ public class ModelImage extends ModelStorageBase {
         } else if ( (nDims == 3) && (units[0] == units[1]) && (units[1] == units[2])) {
             return;
         }
-        unitType = new int[nDims];
+        unitType = new UnitType[nDims];
         for (i = 0; i < nDims; i++) {
-            switch (units[i]) {
-                case FileInfoBase.INCHES:
-                case FileInfoBase.MILS:
-                case FileInfoBase.CENTIMETERS:
-                case FileInfoBase.ANGSTROMS:
-                case FileInfoBase.NANOMETERS:
-                case FileInfoBase.MICROMETERS:
-                case FileInfoBase.MILLIMETERS:
-                case FileInfoBase.METERS:
-                case FileInfoBase.KILOMETERS:
-                case FileInfoBase.MILES:
-                    unitType[i] = SPATIAL;
-                    break;
-                case FileInfoBase.NANOSEC:
-                case FileInfoBase.MICROSEC:
-                case FileInfoBase.MILLISEC:
-                case FileInfoBase.SECONDS:
-                case FileInfoBase.MINUTES:
-                case FileInfoBase.HOURS:
-                    unitType[i] = TIME;
-                    break;
-                case FileInfoBase.HZ:
-                case FileInfoBase.RADS:
-                    unitType[i] = FREQUENCY;
-                    break;
-            } // switch(units[i])
+            unitType[i] = Unit.getUnitFromLegacyNum(units[i]).getType();
         } // for (i = 0; i < nDims; i++)
 
         if (nDims == 2) {
-            if ( (unitType[0] == OTHER) || (unitType[1] == OTHER) || (unitType[0] != unitType[1])) {
+            if ( (unitType[0] == UnitType.NONE) || (unitType[1] == UnitType.NONE) || (unitType[0] != unitType[1])) {
                 return;
             } else {
                 set1To0 = true;
             }
         } // if (nDims == 2)
         else if ( (nDims == 3) || (nDims == 4)) {
-            if ( (unitType[0] == OTHER) || (unitType[1] == OTHER) || (unitType[0] != unitType[1])) {
+            if ( (unitType[0] == UnitType.NONE) || (unitType[1] == UnitType.NONE) || (unitType[0] != unitType[1])) {
                 ;
             } else {
                 set1To0 = true;
             }
 
-            if ( (unitType[0] == OTHER) || (unitType[2] == OTHER) || (unitType[0] != unitType[2])) {
+            if ( (unitType[0] == UnitType.NONE) || (unitType[2] == UnitType.NONE) || (unitType[0] != unitType[2])) {
                 ;
             } else {
                 set2To0 = true;
             }
 
             if ( ( !set1To0) && ( !set2To0)) {
-                if ( (unitType[1] == OTHER) || (unitType[1] == OTHER) || (unitType[1] != unitType[2])) {
+                if ( (unitType[1] == UnitType.NONE) || (unitType[1] == UnitType.NONE) || (unitType[1] != unitType[2])) {
                     ;
                 } else {
                     set2To1 = true;
@@ -4900,458 +4873,10 @@ public class ModelImage extends ModelStorageBase {
         }
     } // public void make2UnitsOfMeasureIdentical(int newUnit, int originalUnit)
 
-    /**
-     * Gets the conversion factor for going between two units.
-     * 
-     * @return Double.MIN_VALUE when a valid conversion is not found
-     */
-    public static double getConversionFactor(final int newUnit, final int oldUnit) {
-        if (newUnit == oldUnit) {
-            return 1;
-        }
+    
 
-        switch (newUnit) {
-            case FileInfoBase.INCHES:
-                switch (oldUnit) {
-                    case FileInfoBase.CENTIMETERS:
-                        return 0.393700787;
-
-                    case FileInfoBase.ANGSTROMS:
-                        return 3.93700787E-9;
-
-                    case FileInfoBase.NANOMETERS:
-                        return 3.93700787E-8;
-
-                    case FileInfoBase.MICROMETERS:
-                        return 3.93700787E-5;
-
-                    case FileInfoBase.MILLIMETERS:
-                        return 3.93700787E-2;
-
-                    case FileInfoBase.METERS:
-                        return 39.3700787;
-
-                    case FileInfoBase.KILOMETERS:
-                        return 3.93700787E4;
-
-                    case FileInfoBase.MILES:
-                        return 6.336E4;
-
-                    case FileInfoBase.MILS:
-                        return 1.0E-3;
-
-                }
-                break;
-            case FileInfoBase.MILS:
-                switch (oldUnit) {
-                    case FileInfoBase.CENTIMETERS:
-                        return 3.93700787E2;
-
-                    case FileInfoBase.ANGSTROMS:
-                        return 3.93700787E-6;
-
-                    case FileInfoBase.NANOMETERS:
-                        return 3.93700787E-5;
-
-                    case FileInfoBase.MICROMETERS:
-                        return 3.93700787E-2;
-
-                    case FileInfoBase.MILLIMETERS:
-                        return 3.93700787E+1;
-
-                    case FileInfoBase.METERS:
-                        return 3.93700787E4;
-
-                    case FileInfoBase.KILOMETERS:
-                        return 3.93700787E7;
-
-                    case FileInfoBase.MILES:
-                        return 6.336E7;
-
-                    case FileInfoBase.INCHES:
-                        return 1.0E+3;
-
-                }
-                break;
-            case FileInfoBase.CENTIMETERS:
-                switch (oldUnit) {
-                    case FileInfoBase.INCHES:
-                        return 2.54;
-
-                    case FileInfoBase.MILS:
-                        return 2.54E-3;
-
-                    case FileInfoBase.ANGSTROMS:
-                        return 1.0E-8;
-
-                    case FileInfoBase.NANOMETERS:
-                        return 1.0E-7;
-
-                    case FileInfoBase.MICROMETERS:
-                        return 1.0E-4;
-
-                    case FileInfoBase.MILLIMETERS:
-                        return 0.1;
-
-                    case FileInfoBase.METERS:
-                        return 1.0E2;
-
-                    case FileInfoBase.KILOMETERS:
-                        return 1.0E5;
-
-                    case FileInfoBase.MILES:
-                        return 1.609344E5;
-
-                }
-                break;
-            case FileInfoBase.ANGSTROMS:
-                switch (oldUnit) {
-                    case FileInfoBase.INCHES:
-                        return 2.54E8;
-
-                    case FileInfoBase.MILS:
-                        return 2.54E5;
-
-                    case FileInfoBase.CENTIMETERS:
-                        return 1.0E8;
-
-                    case FileInfoBase.NANOMETERS:
-                        return 10.0;
-
-                    case FileInfoBase.MICROMETERS:
-                        return 1.0E4;
-
-                    case FileInfoBase.MILLIMETERS:
-                        return 1.0E7;
-
-                    case FileInfoBase.METERS:
-                        return 1.0E10;
-
-                    case FileInfoBase.KILOMETERS:
-                        return 1.0E13;
-
-                    case FileInfoBase.MILES:
-                        return 1.609344E13;
-
-                }
-                break;
-            case FileInfoBase.NANOMETERS:
-                switch (oldUnit) {
-                    case FileInfoBase.INCHES:
-                        return 2.54E7;
-
-                    case FileInfoBase.MILS:
-                        return 2.54E4;
-
-                    case FileInfoBase.CENTIMETERS:
-                        return 1.0E7;
-
-                    case FileInfoBase.ANGSTROMS:
-                        return 0.1;
-
-                    case FileInfoBase.MICROMETERS:
-                        return 1.0E3;
-
-                    case FileInfoBase.MILLIMETERS:
-                        return 1.0E6;
-
-                    case FileInfoBase.METERS:
-                        return 1.0E9;
-
-                    case FileInfoBase.KILOMETERS:
-                        return 1.0E12;
-
-                    case FileInfoBase.MILES:
-                        return 1.609344E12;
-
-                }
-                break;
-            case FileInfoBase.MICROMETERS:
-                switch (oldUnit) {
-                    case FileInfoBase.INCHES:
-                        return 2.54E4;
-
-                    case FileInfoBase.MILS:
-                        return 2.54E1;
-
-                    case FileInfoBase.CENTIMETERS:
-                        return 1.0E4;
-
-                    case FileInfoBase.ANGSTROMS:
-                        return 1.0E-4;
-
-                    case FileInfoBase.NANOMETERS:
-                        return 1.0E-3;
-
-                    case FileInfoBase.MILLIMETERS:
-                        return 1.0E3;
-
-                    case FileInfoBase.METERS:
-                        return 1.0E6;
-
-                    case FileInfoBase.KILOMETERS:
-                        return 1.0E9;
-
-                    case FileInfoBase.MILES:
-                        return 1.609344E9;
-
-                }
-                break;
-            case FileInfoBase.MILLIMETERS:
-                switch (oldUnit) {
-                    case FileInfoBase.INCHES:
-                        return 25.4;
-
-                    case FileInfoBase.MILS:
-                        return 2.54E-2;
-
-                    case FileInfoBase.CENTIMETERS:
-                        return 10.0;
-
-                    case FileInfoBase.ANGSTROMS:
-                        return 1.0E-7;
-
-                    case FileInfoBase.NANOMETERS:
-                        return 1.0E-6;
-
-                    case FileInfoBase.MICROMETERS:
-                        return 1.0E-3;
-
-                    case FileInfoBase.METERS:
-                        return 1.0E3;
-
-                    case FileInfoBase.KILOMETERS:
-                        return 1.0E6;
-
-                    case FileInfoBase.MILES:
-                        return 1.609344E6;
-
-                }
-                break;
-            case FileInfoBase.METERS:
-                switch (oldUnit) {
-                    case FileInfoBase.INCHES:
-                        return 2.54E-2;
-
-                    case FileInfoBase.MILS:
-                        return 2.54E-5;
-
-                    case FileInfoBase.CENTIMETERS:
-                        return 1.0E-2;
-
-                    case FileInfoBase.ANGSTROMS:
-                        return 1.0E-10;
-
-                    case FileInfoBase.NANOMETERS:
-                        return 1.0E-9;
-
-                    case FileInfoBase.MICROMETERS:
-                        return 1.0E-6;
-
-                    case FileInfoBase.MILLIMETERS:
-                        return 1.0E-3;
-
-                    case FileInfoBase.KILOMETERS:
-                        return 1.0E3;
-
-                    case FileInfoBase.MILES:
-                        return 1.609344E3;
-
-                }
-                break;
-            case FileInfoBase.KILOMETERS:
-                switch (oldUnit) {
-                    case FileInfoBase.INCHES:
-                        return 2.54E-5;
-
-                    case FileInfoBase.MILS:
-                        return 2.54E-8;
-
-                    case FileInfoBase.CENTIMETERS:
-                        return 1.0E-5;
-
-                    case FileInfoBase.ANGSTROMS:
-                        return 1.0E-13;
-
-                    case FileInfoBase.NANOMETERS:
-                        return 1.0E-12;
-
-                    case FileInfoBase.MICROMETERS:
-                        return 1.0E-9;
-
-                    case FileInfoBase.MILLIMETERS:
-                        return 1.0E-6;
-
-                    case FileInfoBase.METERS:
-                        return 1.0E-3;
-
-                    case FileInfoBase.MILES:
-                        return 1.609344;
-
-                }
-                break;
-            case FileInfoBase.MILES:
-                switch (oldUnit) {
-                    case FileInfoBase.INCHES:
-                        return 1.57828283E-5;
-
-                    case FileInfoBase.MILS:
-                        return 1.57828283E-8;
-
-                    case FileInfoBase.CENTIMETERS:
-                        return 6.21371192E-6;
-
-                    case FileInfoBase.ANGSTROMS:
-                        return 6.21371192E-14;
-
-                    case FileInfoBase.NANOMETERS:
-                        return 6.21371192E-13;
-
-                    case FileInfoBase.MICROMETERS:
-                        return 6.21371192E-10;
-
-                    case FileInfoBase.MILLIMETERS:
-                        return 6.21371192E-7;
-
-                    case FileInfoBase.METERS:
-                        return 6.21371192E-4;
-
-                    case FileInfoBase.KILOMETERS:
-                        return 6.21371192E-1;
-
-                }
-                break;
-            case FileInfoBase.NANOSEC:
-                switch (oldUnit) {
-                    case FileInfoBase.MICROSEC:
-                        return 1.0E3;
-
-                    case FileInfoBase.MILLISEC:
-                        return 1.0E6;
-
-                    case FileInfoBase.SECONDS:
-                        return 1.0E9;
-
-                    case FileInfoBase.MINUTES:
-                        return 6.0E10;
-
-                    case FileInfoBase.HOURS:
-                        return 3.6E12;
-
-                }
-                break;
-            case FileInfoBase.MICROSEC:
-                switch (oldUnit) {
-                    case FileInfoBase.NANOSEC:
-                        return 1.0E-3;
-
-                    case FileInfoBase.MILLISEC:
-                        return 1.0E3;
-
-                    case FileInfoBase.SECONDS:
-                        return 1.0E6;
-
-                    case FileInfoBase.MINUTES:
-                        return 6.0E7;
-
-                    case FileInfoBase.HOURS:
-                        return 3.6E9;
-
-                }
-                break;
-            case FileInfoBase.MILLISEC:
-                switch (oldUnit) {
-                    case FileInfoBase.NANOSEC:
-                        return 1.0E-6;
-
-                    case FileInfoBase.MICROSEC:
-                        return 1.0E-3;
-
-                    case FileInfoBase.SECONDS:
-                        return 1.0E3;
-
-                    case FileInfoBase.MINUTES:
-                        return 6.0E4;
-
-                    case FileInfoBase.HOURS:
-                        return 3.6E6;
-
-                }
-                break;
-            case FileInfoBase.SECONDS:
-                switch (oldUnit) {
-                    case FileInfoBase.NANOSEC:
-                        return 1.0E-9;
-
-                    case FileInfoBase.MICROSEC:
-                        return 1.0E-6;
-
-                    case FileInfoBase.MILLISEC:
-                        return 1.0E-3;
-
-                    case FileInfoBase.MINUTES:
-                        return 6.0E1;
-
-                    case FileInfoBase.HOURS:
-                        return 3.6E3;
-
-                }
-                break;
-            case FileInfoBase.MINUTES:
-                switch (oldUnit) {
-                    case FileInfoBase.NANOSEC:
-                        return 1.66666667E-11;
-
-                    case FileInfoBase.MICROSEC:
-                        return 1.66666667E-8;
-
-                    case FileInfoBase.MILLISEC:
-                        return 1.66666667E-5;
-
-                    case FileInfoBase.SECONDS:
-                        return 1.66666667E-2;
-
-                    case FileInfoBase.HOURS:
-                        return 6.0E1;
-
-                }
-                break;
-            case FileInfoBase.HOURS:
-                switch (oldUnit) {
-                    case FileInfoBase.NANOSEC:
-                        return 2.77777778E-13;
-
-                    case FileInfoBase.MICROSEC:
-                        return 2.77777778E-10;
-
-                    case FileInfoBase.MILLISEC:
-                        return 2.77777778E-7;
-
-                    case FileInfoBase.SECONDS:
-                        return 2.77777778E-4;
-
-                    case FileInfoBase.MINUTES:
-                        return 1.66666667E-2;
-
-                }
-                break;
-            case FileInfoBase.HZ:
-                switch (oldUnit) {
-                    case FileInfoBase.RADS:
-                        return 0.159154943274;
-
-                }
-                break;
-            case FileInfoBase.RADS:
-                switch (oldUnit) {
-                    case FileInfoBase.HZ:
-                        return 6.2831853;
-
-                }
-                break;
-        } // switch(newUnit)
-        // no valid conversion found
-        return Double.MIN_VALUE;
+    public static double getConversionFactor(int newUnit, int oldUnit) {
+        return Unit.getUnitFromLegacyNum(oldUnit).getConversionFactor(Unit.getUnitFromLegacyNum(newUnit));
     }
 
     /**

@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -621,7 +622,7 @@ public abstract class JDialogBase extends JDialog
             if (image.getNDims() == 2) {
                 newUnits[0] = image.getFileInfo()[0].getUnitsOfMeasure()[0];
                 newUnits[1] = image.getFileInfo()[0].getUnitsOfMeasure()[1];
-                newUnits[2] = FileInfoBase.UNKNOWN_MEASURE;
+                newUnits[2] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 newRes[0] = image.getFileInfo()[0].getResolutions()[0];
                 newRes[1] = image.getFileInfo()[0].getResolutions()[1];
                 newRes[2] = 1.0f;
@@ -674,8 +675,8 @@ public abstract class JDialogBase extends JDialog
             if (image.getNDims() == 2) {
                 newUnits[0] = image.getFileInfo()[0].getUnitsOfMeasure()[0];
                 newUnits[1] = image.getFileInfo()[0].getUnitsOfMeasure()[1];
-                newUnits[2] = FileInfoBase.UNKNOWN_MEASURE;
-                newUnits[3] = FileInfoBase.UNKNOWN_MEASURE;
+                newUnits[2] = Unit.UNKNOWN_MEASURE.getLegacyNum();
+                newUnits[3] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 newRes[0] = image.getFileInfo()[0].getResolutions()[0];
                 newRes[1] = image.getFileInfo()[0].getResolutions()[1];
                 newRes[2] = 1.0f;
@@ -688,7 +689,7 @@ public abstract class JDialogBase extends JDialog
                 newUnits[0] = image.getFileInfo()[0].getUnitsOfMeasure()[0];
                 newUnits[1] = image.getFileInfo()[0].getUnitsOfMeasure()[1];
                 newUnits[2] = image.getFileInfo()[0].getUnitsOfMeasure()[1];
-                newUnits[3] = FileInfoBase.UNKNOWN_MEASURE;
+                newUnits[3] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 newRes[0] = image.getFileInfo()[0].getResolutions()[0];
                 newRes[1] = image.getFileInfo()[0].getResolutions()[1];
                 newRes[2] = image.getFileInfo()[0].getResolutions()[2];

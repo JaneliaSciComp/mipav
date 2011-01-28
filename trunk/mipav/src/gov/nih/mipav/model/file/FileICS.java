@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -3841,45 +3842,45 @@ public class FileICS extends FileBase {
             for (i = 0; i < nDims; i++) {
 
                 if (unitsStr[i].equalsIgnoreCase("cm")) {
-                    unitsOfMeasure[i] = FileInfoBase.CENTIMETERS;
+                    unitsOfMeasure[i] = Unit.CENTIMETERS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("centimeters")) {
-                    unitsOfMeasure[i] = FileInfoBase.CENTIMETERS;
+                    unitsOfMeasure[i] = Unit.CENTIMETERS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("mm")) {
-                    unitsOfMeasure[i] = FileInfoBase.MILLIMETERS;
+                    unitsOfMeasure[i] = Unit.MILLIMETERS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("millimeters")) {
-                    unitsOfMeasure[i] = FileInfoBase.MILLIMETERS;
+                    unitsOfMeasure[i] = Unit.MILLIMETERS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("um")) {
-                    unitsOfMeasure[i] = FileInfoBase.MICROMETERS;
+                    unitsOfMeasure[i] = Unit.MICROMETERS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("mic")) {
-                    unitsOfMeasure[i] = FileInfoBase.MICROMETERS;
+                    unitsOfMeasure[i] = Unit.MICROMETERS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("micrometers")) {
-                    unitsOfMeasure[i] = FileInfoBase.MICROMETERS;
+                    unitsOfMeasure[i] = Unit.MICROMETERS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("nm")) {
-                    unitsOfMeasure[i] = FileInfoBase.NANOMETERS;
+                    unitsOfMeasure[i] = Unit.NANOMETERS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("nanometers")) {
-                    unitsOfMeasure[i] = FileInfoBase.NANOMETERS;
+                    unitsOfMeasure[i] = Unit.NANOMETERS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("A")) {
-                    unitsOfMeasure[i] = FileInfoBase.ANGSTROMS;
+                    unitsOfMeasure[i] = Unit.ANGSTROMS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("angstroms")) {
-                    unitsOfMeasure[i] = FileInfoBase.ANGSTROMS;
+                    unitsOfMeasure[i] = Unit.ANGSTROMS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("sec")) {
-                    unitsOfMeasure[i] = FileInfoBase.SECONDS;
+                    unitsOfMeasure[i] = Unit.SECONDS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("seconds")) {
-                    unitsOfMeasure[i] = FileInfoBase.SECONDS;
+                    unitsOfMeasure[i] = Unit.SECONDS.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("msec")) {
-                    unitsOfMeasure[i] = FileInfoBase.MILLISEC;
+                    unitsOfMeasure[i] = Unit.MILLISEC.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("milliseconds")) {
-                    unitsOfMeasure[i] = FileInfoBase.MILLISEC;
+                    unitsOfMeasure[i] = Unit.MILLISEC.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("usec")) {
-                    unitsOfMeasure[i] = FileInfoBase.MICROSEC;
+                    unitsOfMeasure[i] = Unit.MICROSEC.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("microseconds")) {
-                    unitsOfMeasure[i] = FileInfoBase.MICROSEC;
+                    unitsOfMeasure[i] = Unit.MICROSEC.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("nsec")) {
-                    unitsOfMeasure[i] = FileInfoBase.NANOSEC;
+                    unitsOfMeasure[i] = Unit.NANOSEC.getLegacyNum();
                 } else if (unitsStr[i].equalsIgnoreCase("nanoseconds")) {
-                    unitsOfMeasure[i] = FileInfoBase.NANOSEC;
+                    unitsOfMeasure[i] = Unit.NANOSEC.getLegacyNum();
                 } else {
-                    unitsOfMeasure[i] = FileInfoBase.UNKNOWN_MEASURE;
+                    unitsOfMeasure[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 }
             } // for (i = 0; i < nDims; i++)
 

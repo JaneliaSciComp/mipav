@@ -786,23 +786,23 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
 
         measure = srcImage.getFileInfo(0).getUnitsOfMeasure(0);
 
-        if (measure == FileInfoBase.INCHES) {
+        if (measure == Unit.INCHES.getLegacyNum()) {
             mStr = " inches^2";
-        } else if (measure == FileInfoBase.ANGSTROMS) {
+        } else if (measure == Unit.ANGSTROMS.getLegacyNum()) {
             mStr = " A^2";
-        } else if (measure == FileInfoBase.NANOMETERS) {
+        } else if (measure == Unit.NANOMETERS.getLegacyNum()) {
             mStr = " nm^2";
-        } else if (measure == FileInfoBase.MICROMETERS) {
+        } else if (measure == Unit.MICROMETERS.getLegacyNum()) {
             mStr = " um^2";
-        } else if (measure == FileInfoBase.MILLIMETERS) {
+        } else if (measure == Unit.MILLIMETERS.getLegacyNum()) {
             mStr = " mm^2";
-        } else if (measure == FileInfoBase.CENTIMETERS) {
+        } else if (measure == Unit.CENTIMETERS.getLegacyNum()) {
             mStr = " cm^2";
-        } else if (measure == FileInfoBase.METERS) {
+        } else if (measure == Unit.METERS.getLegacyNum()) {
             mStr = " m^2";
-        } else if (measure == FileInfoBase.KILOMETERS) {
+        } else if (measure == Unit.KILOMETERS.getLegacyNum()) {
             mStr = " km^2";
-        } else if (measure == FileInfoBase.MILES) {
+        } else if (measure == Unit.MILES.getLegacyNum()) {
             mStr = " miles^2";
         } else {
             mStr = "Unknown";

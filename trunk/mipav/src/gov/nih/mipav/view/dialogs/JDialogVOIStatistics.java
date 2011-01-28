@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
@@ -805,7 +806,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         
         xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
         yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
-        zUnits = FileInfoBase.UNKNOWN_MEASURE;
+        zUnits = Unit.UNKNOWN_MEASURE.getLegacyNum();
 
         if (image.getNDims() > 2) {
             zUnits = image.getFileInfo(0).getUnitsOfMeasure()[2];
@@ -1195,25 +1196,25 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             //add statistic to column list if selected by user
             if (checkList[i]) {
                 if ( (VOIStatisticList.statisticDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits)
-                        && (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                        && (xUnits == zUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
                     str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr().trim();
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Area") != -1)
-                        && (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                        && (xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
                     str = image.getFileInfo(0).getAreaUnitsOfMeasureStr().trim();
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Perimeter") != -1)
-                        && (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                        && (xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
                     str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits).trim();
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if (VOIStatisticList.statisticDescription[i].indexOf("Principal Axis") != -1) {
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (degrees)");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Major axis length") != -1)
-                        && (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                        && (xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
                     str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits).trim();
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Minor axis length") != -1)
-                        && (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                        && (xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
                     str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits).trim();
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else {

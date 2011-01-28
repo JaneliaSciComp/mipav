@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
@@ -613,14 +614,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             float ignoreMax = calcSelectedVOI.getMaximumIgnore();
 
             int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
-            if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
+            if (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                 xStr = "X " + FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);    
             }
             else {
                 xStr = "X ";
             }
             int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
-            if (yUnits != FileInfoBase.UNKNOWN_MEASURE) {
+            if (yUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                 yStr = "Y " + FileInfoBase.getUnitsOfMeasureAbbrevStr(yUnits);    
             }
             else {
@@ -629,7 +630,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             unit2DStr = xStr + "\t" + yStr;
             if (srcImage.getNDims() > 2) {
                 int zUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[2];
-                if (zUnits != FileInfoBase.UNKNOWN_MEASURE) {
+                if (zUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                     zStr = "Z " + FileInfoBase.getUnitsOfMeasureAbbrevStr(zUnits);
                     if ((srcImage.getFileInfo(0).getOrigin()[0] != 0) || (srcImage.getFileInfo(0).getOrigin()[1] != 0) ||
                             (srcImage.getFileInfo(0).getOrigin()[2] != 0)) {

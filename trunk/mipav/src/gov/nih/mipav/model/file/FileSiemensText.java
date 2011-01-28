@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -635,9 +636,9 @@ public class FileSiemensText extends FileBase {
         // updateUnitsOfMeasure(fileInfo);
         int units = FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
 
-        if (units == FileInfoBase.UNKNOWN_MEASURE) { // default to millimeters
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+        if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
         } else {
             fileInfo.setUnitsOfMeasure(units, 0);
             fileInfo.setUnitsOfMeasure(units, 1);

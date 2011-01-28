@@ -1,5 +1,6 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -781,9 +782,9 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
                     Preferences.debug("metalength = " + metaGroupLength + " location " + getFilePointer() + "\n",
                             Preferences.DEBUG_FILEIO);
                 } else if (name.equals("0018,602C")) {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 0);
+                    fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 0);
                 } else if (name.equals("0018,602E")) {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 1);
+                    fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 1);
                 } else if (name.equals("0002,0010")) {
 
                     // Transfer Syntax UID: DICOM part 10 page 13, part 5 p. 42-48, Part 6 p. 53

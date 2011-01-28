@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -829,7 +830,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         if (image.getNDims() == 2) {
             int[] units = image.getFileInfo()[0].getUnitsOfMeasure();
 
-            if ((units[0] != FileInfoBase.UNKNOWN_MEASURE) && (units[0] == units[1])) {
+            if ((units[0] != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (units[0] == units[1])) {
                 float[] res = image.getFileInfo()[0].getResolutions();
                 float pixelSize = res[0] * res[1];
                 String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
@@ -886,7 +887,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         else if (image.getNDims() == 3) {
             int[] units = image.getFileInfo()[0].getUnitsOfMeasure();
 
-            if ((units[0] != FileInfoBase.UNKNOWN_MEASURE) && (units[0] == units[1]) && (units[0] == units[2])) {
+            if ((units[0] != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (units[0] == units[1]) && (units[0] == units[2])) {
                 float[] res = image.getFileInfo()[0].getResolutions();
                 float pixelSize = res[0] * res[1] * res[2];
                 String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);

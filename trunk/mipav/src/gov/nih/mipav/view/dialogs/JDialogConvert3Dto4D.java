@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -350,7 +351,6 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
         gbc.gridy = 1;
         mainPanel.add(resolutionsPanel, gbc);
 
-        int index;
         JPanel comboPanel = new JPanel(new GridLayout(2, 2));
         comboPanel.setForeground(Color.black);
         comboPanel.setBorder(buildTitledBorder("Resolution units "));
@@ -364,9 +364,13 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
         comboBoxUnitOfMeasure3 = new JComboBox();
         comboBoxUnitOfMeasure3.setAlignmentX(Component.LEFT_ALIGNMENT);
         setComboBox(comboBoxUnitOfMeasure3);
-        index = image.getFileInfo()[0].getUnitsOfMeasure(2);
-        setIndex(comboBoxUnitOfMeasure3, index);
-        comboBoxUnitOfMeasure3.setEnabled(true);
+        if(image.getNDims() >= 3) {
+            String unitStr = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(2)).toString();
+            comboBoxUnitOfMeasure3.setSelectedItem(unitStr);
+            comboBoxUnitOfMeasure3.setEnabled(true);
+        } else {
+            comboBoxUnitOfMeasure3.setEnabled(false);
+        }
         comboPanel.add(comboBoxUnitOfMeasure3);
 
         JLabel dim4u = new JLabel("4rd dim.");
@@ -378,8 +382,13 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
         comboBoxUnitOfMeasure4 = new JComboBox();
         comboBoxUnitOfMeasure4.setAlignmentX(Component.LEFT_ALIGNMENT);
         setComboBox(comboBoxUnitOfMeasure4);
-        comboBoxUnitOfMeasure4.setSelectedIndex(12);
-        comboBoxUnitOfMeasure4.setEnabled(true);
+        if(image.getNDims() >= 4) {
+            String unitStr = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(3)).toString();
+            comboBoxUnitOfMeasure3.setSelectedItem(unitStr);
+            comboBoxUnitOfMeasure4.setEnabled(true);
+        } else {
+            comboBoxUnitOfMeasure4.setEnabled(false);
+        }
         comboPanel.add(comboBoxUnitOfMeasure4);
 
         gbc.gridx = 0;
@@ -404,110 +413,8 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
 
         cBox.setFont(serif12);
         cBox.setBackground(Color.white);
-        cBox.addItem(" UNKNOWN");
-        cBox.addItem(" INCHES ");
-        cBox.addItem(" MILS (.001 INCH) ");
-        cBox.addItem(" CENTIMETERS ");
-        cBox.addItem(" ANGSTROMS ");
-        cBox.addItem(" NANOMETERS ");
-        cBox.addItem(" MICROMETERS ");
-        cBox.addItem(" MILLIMETERS ");
-        cBox.addItem(" METERS ");
-        cBox.addItem(" KILOMETERS ");
-        cBox.addItem(" MILES ");
-        cBox.addItem(" NANOSECONDS ");
-        cBox.addItem(" MICROSECONDS ");
-        cBox.addItem(" MILLISECONDS ");
-        cBox.addItem(" SECONDS");
-        cBox.addItem(" MINUTES");
-        cBox.addItem(" HOURS");
-        cBox.addItem(" HZ");
-    }
-
-    /**
-     * Sets the selected index of the combo box based on what was set in the file info.
-     *
-     * @param  comboBox  Combo box to set.
-     * @param  index     Value read in the file info.
-     */
-    private void setIndex(JComboBox comboBox, int index) {
-
-        switch (index) {
-
-            case FileInfoBase.UNKNOWN_MEASURE:
-                comboBox.setSelectedIndex(0);
-                break;
-
-            case FileInfoBase.INCHES:
-                comboBox.setSelectedIndex(1);
-                break;
-                
-            case FileInfoBase.MILS:
-                comboBox.setSelectedIndex(2);
-                break;
-
-            case FileInfoBase.CENTIMETERS:
-                comboBox.setSelectedIndex(3);
-                break;
-
-            case FileInfoBase.ANGSTROMS:
-                comboBox.setSelectedIndex(4);
-                break;
-
-            case FileInfoBase.NANOMETERS:
-                comboBox.setSelectedIndex(5);
-                break;
-
-            case FileInfoBase.MICROMETERS:
-                comboBox.setSelectedIndex(6);
-                break;
-
-            case FileInfoBase.MILLIMETERS:
-                comboBox.setSelectedIndex(7);
-                break;
-
-            case FileInfoBase.METERS:
-                comboBox.setSelectedIndex(8);
-                break;
-
-            case FileInfoBase.KILOMETERS:
-                comboBox.setSelectedIndex(9);
-                break;
-
-            case FileInfoBase.MILES:
-                comboBox.setSelectedIndex(10);
-                break;
-
-            case FileInfoBase.NANOSEC:
-                comboBox.setSelectedIndex(11);
-                break;
-
-            case FileInfoBase.MICROSEC:
-                comboBox.setSelectedIndex(12);
-                break;
-
-            case FileInfoBase.MILLISEC:
-                comboBox.setSelectedIndex(13);
-                break;
-
-            case FileInfoBase.SECONDS:
-                comboBox.setSelectedIndex(14);
-                break;
-
-            case FileInfoBase.MINUTES:
-                comboBox.setSelectedIndex(15);
-                break;
-
-            case FileInfoBase.HOURS:
-                comboBox.setSelectedIndex(16);
-                break;
-
-            case FileInfoBase.HZ:
-                comboBox.setSelectedIndex(17);
-                break;
-
-            default:
-                comboBox.setSelectedIndex(0);
+        for(Unit u : Unit.values()) {
+            cBox.addItem(u.toString());
         }
     }
 
@@ -555,158 +462,158 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
         switch (comboBoxUnitOfMeasure3.getSelectedIndex()) {
 
             case 0:
-                measure3 = FileInfoBase.UNKNOWN_MEASURE;
+                measure3 = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 break;
 
             case 1:
-                measure3 = FileInfoBase.INCHES;
+                measure3 = Unit.INCHES.getLegacyNum();
                 break;
                 
             case 2:
-                measure3 = FileInfoBase.MILS;
+                measure3 = Unit.MILS.getLegacyNum();
                 break;
 
             case 3:
-                measure3 = FileInfoBase.CENTIMETERS;
+                measure3 = Unit.CENTIMETERS.getLegacyNum();
                 break;
 
             case 4:
-                measure3 = FileInfoBase.ANGSTROMS;
+                measure3 = Unit.ANGSTROMS.getLegacyNum();
                 break;
 
             case 5:
-                measure3 = FileInfoBase.NANOMETERS;
+                measure3 = Unit.NANOMETERS.getLegacyNum();
                 break;
 
             case 6:
-                measure3 = FileInfoBase.MICROMETERS;
+                measure3 = Unit.MICROMETERS.getLegacyNum();
                 break;
 
             case 7:
-                measure3 = FileInfoBase.MILLIMETERS;
+                measure3 = Unit.MILLIMETERS.getLegacyNum();
                 break;
 
             case 8:
-                measure3 = FileInfoBase.METERS;
+                measure3 = Unit.METERS.getLegacyNum();
                 break;
 
             case 9:
-                measure3 = FileInfoBase.KILOMETERS;
+                measure3 = Unit.KILOMETERS.getLegacyNum();
                 break;
 
             case 10:
-                measure3 = FileInfoBase.MILES;
+                measure3 = Unit.MILES.getLegacyNum();
                 break;
 
             case 11:
-                measure3 = FileInfoBase.NANOSEC;
+                measure3 = Unit.NANOSEC.getLegacyNum();
                 break;
 
             case 12:
-                measure3 = FileInfoBase.MICROSEC;
+                measure3 = Unit.MICROSEC.getLegacyNum();
                 break;
 
             case 13:
-                measure3 = FileInfoBase.MILLISEC;
+                measure3 = Unit.MILLISEC.getLegacyNum();
                 break;
 
             case 14:
-                measure3 = FileInfoBase.SECONDS;
+                measure3 = Unit.SECONDS.getLegacyNum();
                 break;
 
             case 15:
-                measure3 = FileInfoBase.MINUTES;
+                measure3 = Unit.MINUTES.getLegacyNum();
                 break;
 
             case 16:
-                measure3 = FileInfoBase.HOURS;
+                measure3 = Unit.HOURS.getLegacyNum();
                 break;
 
             case 17:
-                measure3 = FileInfoBase.HZ;
+                measure3 = Unit.HZ.getLegacyNum();
                 break;
 
             default:
 
-                measure3 = FileInfoBase.UNKNOWN_MEASURE;
+                measure3 = Unit.UNKNOWN_MEASURE.getLegacyNum();
         }
 
         switch (comboBoxUnitOfMeasure4.getSelectedIndex()) {
 
             case 0:
-                measure4 = FileInfoBase.UNKNOWN_MEASURE;
+                measure4 = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 break;
 
             case 1:
-                measure4 = FileInfoBase.INCHES;
+                measure4 = Unit.INCHES.getLegacyNum();
                 break;
                 
             case 2:
-                measure4 = FileInfoBase.MILS;
+                measure4 = Unit.MILS.getLegacyNum();
                 break;
 
             case 3:
-                measure4 = FileInfoBase.CENTIMETERS;
+                measure4 = Unit.CENTIMETERS.getLegacyNum();
                 break;
 
             case 4:
-                measure4 = FileInfoBase.ANGSTROMS;
+                measure4 = Unit.ANGSTROMS.getLegacyNum();
                 break;
 
             case 5:
-                measure4 = FileInfoBase.NANOMETERS;
+                measure4 = Unit.NANOMETERS.getLegacyNum();
                 break;
 
             case 6:
-                measure4 = FileInfoBase.MICROMETERS;
+                measure4 = Unit.MICROMETERS.getLegacyNum();
                 break;
 
             case 7:
-                measure4 = FileInfoBase.MILLIMETERS;
+                measure4 = Unit.MILLIMETERS.getLegacyNum();
                 break;
 
             case 8:
-                measure4 = FileInfoBase.METERS;
+                measure4 = Unit.METERS.getLegacyNum();
                 break;
 
             case 9:
-                measure4 = FileInfoBase.KILOMETERS;
+                measure4 = Unit.KILOMETERS.getLegacyNum();
                 break;
 
             case 10:
-                measure4 = FileInfoBase.MILES;
+                measure4 = Unit.MILES.getLegacyNum();
                 break;
 
             case 11:
-                measure4 = FileInfoBase.NANOSEC;
+                measure4 = Unit.NANOSEC.getLegacyNum();
                 break;
 
             case 12:
-                measure4 = FileInfoBase.MICROSEC;
+                measure4 = Unit.MICROSEC.getLegacyNum();
                 break;
 
             case 13:
-                measure4 = FileInfoBase.MILLISEC;
+                measure4 = Unit.MILLISEC.getLegacyNum();
                 break;
 
             case 14:
-                measure4 = FileInfoBase.SECONDS;
+                measure4 = Unit.SECONDS.getLegacyNum();
                 break;
 
             case 15:
-                measure4 = FileInfoBase.MINUTES;
+                measure4 = Unit.MINUTES.getLegacyNum();
                 break;
 
             case 16:
-                measure4 = FileInfoBase.HOURS;
+                measure4 = Unit.HOURS.getLegacyNum();
                 break;
 
             case 17:
-                measure4 = FileInfoBase.HZ;
+                measure4 = Unit.HZ.getLegacyNum();
                 break;
 
             default:
-                measure4 = FileInfoBase.UNKNOWN_MEASURE;
+                measure4 = Unit.UNKNOWN_MEASURE.getLegacyNum();
         }
 
         return true;
@@ -769,8 +676,8 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
             //There is no obvious way to display the string these integers represent in the dialog
             //8 == MILLIMETERS
             //13 == MICROSECONDS
-            table.put(new ParameterInt("3_dim_unit", FileInfoBase.MILLIMETERS));
-            table.put(new ParameterInt("4_dim_unit", FileInfoBase.MICROSEC));    
+            table.put(new ParameterInt("3_dim_unit", Unit.MILLIMETERS.getLegacyNum()));
+            table.put(new ParameterInt("4_dim_unit", Unit.MICROSEC.getLegacyNum()));    
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();

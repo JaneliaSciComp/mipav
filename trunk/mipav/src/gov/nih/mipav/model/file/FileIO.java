@@ -3,6 +3,7 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.provenance.actions.ActionOpenImage;
 import gov.nih.mipav.model.scripting.*;
@@ -6771,13 +6772,13 @@ public class FileIO {
                     extents[3] = nImages;
                     extents[2] = singleExtents[2];
                     unitsOfMeasure = new int[4];
-                    unitsOfMeasure[3] = FileInfoBase.SECONDS;
+                    unitsOfMeasure[3] = Unit.SECONDS.getLegacyNum();
                     unitsOfMeasure[2] = singleUnitsOfMeasure[2];
                 } else {
                     extents = new int[3];
                     extents[2] = nImages;
                     unitsOfMeasure = new int[3];
-                    unitsOfMeasure[2] = FileInfoBase.SECONDS;
+                    unitsOfMeasure[2] = Unit.SECONDS.getLegacyNum();
                 }
             } // if (nImages > 1)
             else {
@@ -10056,41 +10057,41 @@ public class FileIO {
             // Change other units to meters
             for (i = 0; i < image.getNDims(); i++) {
 
-                switch (image.getFileInfo()[0].getUnitsOfMeasure(i)) {
+                switch (Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(i))) {
 
-                    case FileInfoBase.METERS:
+                    case METERS:
                         meterResols[i] = image.getFileInfo()[0].getResolutions()[i];
                         break;
 
-                    case FileInfoBase.UNKNOWN_MEASURE:
+                    case UNKNOWN_MEASURE:
                         meterResols[i] = image.getFileInfo()[0].getResolutions()[i];
                         break;
 
-                    case FileInfoBase.CENTIMETERS:
+                    case CENTIMETERS:
                         meterResols[i] = 0.01f * image.getFileInfo()[0].getResolutions()[i];
                         break;
 
-                    case FileInfoBase.MILLIMETERS:
+                    case MILLIMETERS:
                         meterResols[i] = 0.001f * image.getFileInfo()[0].getResolutions()[i];
                         break;
 
-                    case FileInfoBase.INCHES:
+                    case INCHES:
                         meterResols[i] = 0.0254f * image.getFileInfo()[0].getResolutions()[i];
                         break;
 
-                    case FileInfoBase.MILS:
+                    case MILS:
                         meterResols[i] = 2.54e-5f * image.getFileInfo()[0].getResolutions()[i];
                         break;
 
-                    case FileInfoBase.MICROMETERS:
+                    case MICROMETERS:
                         meterResols[i] = 1.0e-6f * image.getFileInfo()[0].getResolutions()[i];
                         break;
 
-                    case FileInfoBase.NANOMETERS:
+                    case NANOMETERS:
                         meterResols[i] = 1.0e-9f * image.getFileInfo()[0].getResolutions()[i];
                         break;
 
-                    case FileInfoBase.ANGSTROMS:
+                    case ANGSTROMS:
                         meterResols[i] = 1.0e-10f * image.getFileInfo()[0].getResolutions()[i];
                         break;
 
@@ -10116,7 +10117,7 @@ public class FileIO {
 
                 for (j = 0; j < image.getFileInfo().length; j++) {
                     image.getFileInfo()[j].setResolutions(meterResols[i], i);
-                    image.getFileInfo()[j].setUnitsOfMeasure(FileInfoBase.METERS, i);
+                    image.getFileInfo()[j].setUnitsOfMeasure(Unit.METERS.getLegacyNum(), i);
                 }
             }
 

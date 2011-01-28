@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
@@ -489,9 +490,9 @@ public class FileCOR extends FileBase {
         }
 
         fileInfo.setResolutions(imgResols);
-        fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, 0);
-        fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, 1);
-        fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, 2);
+        fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 0);
+        fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 1);
+        fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 2);
         fileInfo.setDataType(ModelImage.UBYTE);
         fileInfo.setMultiFile(true);
 
@@ -644,41 +645,41 @@ public class FileCOR extends FileBase {
         // Change other units to meters
         for (i = 0; i < image.getNDims(); i++) {
 
-            switch (image.getFileInfo()[0].getUnitsOfMeasure(i)) {
+            switch (Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(i))) {
 
-                case FileInfoBase.METERS:
+                case METERS:
                     meterResols[i] = image.getFileInfo()[0].getResolutions()[i];
                     break;
 
-                case FileInfoBase.UNKNOWN_MEASURE:
+                case UNKNOWN_MEASURE:
                     meterResols[i] = image.getFileInfo()[0].getResolutions()[i];
                     break;
 
-                case FileInfoBase.CENTIMETERS:
+                case CENTIMETERS:
                     meterResols[i] = 0.01f * image.getFileInfo()[0].getResolutions()[i];
                     break;
 
-                case FileInfoBase.MILLIMETERS:
+                case MILLIMETERS:
                     meterResols[i] = 0.001f * image.getFileInfo()[0].getResolutions()[i];
                     break;
 
-                case FileInfoBase.INCHES:
+                case INCHES:
                     meterResols[i] = 0.0254f * image.getFileInfo()[0].getResolutions()[i];
                     break;
                     
-                case FileInfoBase.MILS:
+                case MILS:
                     meterResols[i] = 2.54e-5f * image.getFileInfo()[0].getResolutions()[i];
                     break;
 
-                case FileInfoBase.MICROMETERS:
+                case MICROMETERS:
                     meterResols[i] = 1.0e-6f * image.getFileInfo()[0].getResolutions()[i];
                     break;
 
-                case FileInfoBase.NANOMETERS:
+                case NANOMETERS:
                     meterResols[i] = 1.0e-9f * image.getFileInfo()[0].getResolutions()[i];
                     break;
 
-                case FileInfoBase.ANGSTROMS:
+                case ANGSTROMS:
                     meterResols[i] = 1.0e-10f * image.getFileInfo()[0].getResolutions()[i];
                     break;
 

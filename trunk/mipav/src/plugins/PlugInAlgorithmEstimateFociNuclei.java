@@ -1,6 +1,7 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -436,34 +437,9 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     	
     	// Printing the results in Output window
     	String mStr;
-        int measure;
         float area;
 
-        measure = srcImage.getFileInfo(0).getUnitsOfMeasure(0);
-
-        if (measure == FileInfoBase.INCHES) {
-            mStr = " inches^2";
-        } else if (measure == FileInfoBase.MILS) {
-            mStr = " mil^2";
-        } else if (measure == FileInfoBase.ANGSTROMS) {
-            mStr = " A^2";
-        } else if (measure == FileInfoBase.NANOMETERS) {
-            mStr = " nm^2";
-        } else if (measure == FileInfoBase.MICROMETERS) {
-            mStr = " um^2";
-        } else if (measure == FileInfoBase.MILLIMETERS) {
-            mStr = " mm^2";
-        } else if (measure == FileInfoBase.CENTIMETERS) {
-            mStr = " cm^2";
-        } else if (measure == FileInfoBase.METERS) {
-            mStr = " m^2";
-        } else if (measure == FileInfoBase.KILOMETERS) {
-            mStr = " km^2";
-        } else if (measure == FileInfoBase.MILES) {
-            mStr = " miles^2";
-        } else {
-            mStr = "Unknown";
-        }
+        mStr = srcImage.getFileInfo(0).getAreaUnitsOfMeasureStr();
     	
         ViewUserInterface.getReference().getMessageFrame().clear(0);
     	ViewUserInterface.getReference().getMessageFrame().getData().append("\nIdentified " + nObjects + 

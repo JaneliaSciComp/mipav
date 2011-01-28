@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.view.*;
 
 /**
@@ -746,9 +747,9 @@ public class JDialogTLRC extends JDialogBase {
 		imgRes[1] = transform.getAcpcRes();
 		imgRes[2] = transform.getAcpcRes();
 		int[] units = new int[3];
-		units[0] = FileInfoBase.MILLIMETERS;
-		units[1] = FileInfoBase.MILLIMETERS;
-		units[2] = FileInfoBase.MILLIMETERS;
+		units[0] = Unit.MILLIMETERS.getLegacyNum();
+		units[1] = Unit.MILLIMETERS.getLegacyNum();
+		units[2] = Unit.MILLIMETERS.getLegacyNum();
 
 		for (int i = 0; i < transform.getTlrcDim()[2]; i++) {
 			talairachImage.getFileInfo(i).setMin(talairachImage.getMin());

@@ -1274,27 +1274,27 @@ public class FileInfoMinc extends FileInfoBase {
                 if (element.name.equals("xspace")) {
 
                     if (element.units.equals("mm")) {
-                        setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
+                        setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
                     } else if (element.units.equals("in")) {
-                        setUnitsOfMeasure(FileInfoBase.INCHES, 0);
+                        setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 0);
                     }
                 }
 
                 if (element.name.equals("yspace")) {
 
                     if (element.units.equals("mm")) {
-                        setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+                        setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
                     } else if (element.units.equals("in")) {
-                        setUnitsOfMeasure(FileInfoBase.INCHES, 1);
+                        setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 1);
                     }
                 }
 
                 if (element.name.equals("zspace")) {
 
                     if (element.units.equals("mm")) {
-                        setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+                        setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
                     } else if (element.units.equals("in")) {
-                        setUnitsOfMeasure(FileInfoBase.INCHES, 2);
+                        setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 2);
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -542,13 +543,13 @@ public class FileDM3 extends FileBase {
             for (i = 0; i < nDimensions; i++) {
 
                 if (desiredPixelUnitsArray[i].equals("n")) {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, i);
+                    fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), i);
                 }
                 // micro sign = 00B5 Greek letter mu = 03BC
                 else if (desiredPixelUnitsArray[i].equals("\u00B5")) {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, i);
+                    fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), i);
                 } else {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, i);
+                    fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), i);
                 }
             }
 
