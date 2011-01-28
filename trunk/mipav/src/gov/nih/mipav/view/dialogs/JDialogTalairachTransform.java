@@ -77,6 +77,9 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 	private JTextField      acpcResText;
 	private JPanel          acpcResPanel;
 	private float           acpcRes = 1.0f;
+	private float           tlrcRes[];
+	private float           acpcResOrg;
+	private Vector3f        acpcPC;
 	
 	/**
     *  Creates dialog for plugin.
@@ -556,15 +559,28 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		
 		if ((transformType.equals("acpc to orig")) || (transformType.equals("acpc to Tlrc")) || 
 		    (transformType.equals("Tlrc to orig")) || (transformType.equals("Tlrc to acpc"))) {
-			acpcRes = image.getFileInfo()[0].getResolution(0);
+			acpcRes = otherImage.getFileInfo()[0].getResolution(0);
 			transform.setAcpcRes(acpcRes);
 		}
 		else {
 			String tmpStr = acpcResText.getText();
 			if (testParameter(tmpStr, 0.1, 2.0)) {
+				acpcResOrg = transform.getAcpcRes();
 	            acpcRes = Float.valueOf(tmpStr).floatValue();
 	            transform.setAcpcRes(acpcRes);
-			}
+	            if (transform.isTlrc()) {
+	            	tlrcRes = transform.getTlrcRes();
+	            	for (int i = 0; i < tlrcRes.length; i++) {
+	            		tlrcRes[i] = tlrcRes[i] * acpcRes / acpcResOrg;
+	            	}
+	            	transform.setTlrcRes(tlrcRes);
+	            	acpcPC = transform.getAcpcPC();
+	            	acpcPC.X = acpcPC.X * acpcResOrg / acpcRes;
+	            	acpcPC.Y = acpcPC.Y * acpcResOrg / acpcRes;
+	            	acpcPC.Z = acpcPC.Z * acpcResOrg / acpcRes;
+	            	transform.setAcpcPC(acpcPC);
+	            }
+ 			}
 			else {
 				 MipavUtil.displayError("acpc resolution must be between 0.1 and 2.0");
 	             acpcResText.requestFocus();
@@ -602,7 +618,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 			transformID = AlgorithmTalairachTransform.TLRC_TO_ACPC;
 			transform.tlrcToAcpc(currentOrigin, newOrigin);
 		} else if (transformType.equals("orig to Tlrc")) { 
-			dims = transform.getTlrcDim(); 
+			dims = transform.getTlrcDim();
 			suffix = "_Tlrc"; 
 			transformID = AlgorithmTalairachTransform.ORIG_TO_TLRC;
 			transform.origToTlrc(currentOrigin, newOrigin);
