@@ -65,7 +65,7 @@ public class TalairachTransformInfo implements Serializable {
     private Vector3f acpcAC = new Vector3f(95.0f, 95.0f, 70.0f);
 
     /** Image dimensions. */
-    private int[] acpcDim = { 192, 236, 171 };
+    private int[] acpcDim = { 191, 236, 171 };
 
     /** ACPC min and max extents of the brain. */
     private Vector3f acpcMax;
@@ -1061,7 +1061,7 @@ public class TalairachTransformInfo implements Serializable {
      */
     public void setAcpcRes(float res) {
         acpcRes = res;
-        acpcDim[0] = Math.round(2 * (ACPC_LATERAL + 1) / acpcRes);
+        acpcDim[0] = Math.round((2 * ACPC_LATERAL + 1) / acpcRes);
         acpcDim[1] = Math.round((ACPC_ANTERIOR + ACPC_POSTERIOR + 1) / acpcRes);
         acpcDim[2] = Math.round((ACPC_INFERIOR + ACPC_SUPERIOR + 1) / acpcRes);
         acpcAC = new Vector3f(ACPC_LATERAL / acpcRes, ACPC_ANTERIOR / acpcRes, ACPC_INFERIOR / acpcRes);
