@@ -9,6 +9,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmSnake;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
@@ -5099,11 +5100,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                 //add statistic to column list if selected by user
                 if (checkList[i]) {
                     if ( (PlugInStatisticsList.extendedStatisticsDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits)
-                            && (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            && (xUnits == zUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
                         str = "cm^3";
                         logModel.addColumn(PlugInStatisticsList.extendedStatisticsDescription[i] + " (" + str + ")");
                     } else if ( (PlugInStatisticsList.extendedStatisticsDescription[i].indexOf("Area") != -1)
-                            && (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            && (xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
                         str = "cm^2";
                         logModel.addColumn(PlugInStatisticsList.extendedStatisticsDescription[i] + " (" + str + ")");
                     } else {

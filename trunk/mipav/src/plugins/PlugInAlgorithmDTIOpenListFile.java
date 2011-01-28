@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileRaw;
@@ -211,8 +212,8 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
 		ext2D[1] = yDim;
 		buffer = new float[length];
 		int[] unitsOfMeas2D = new int[2];
-		unitsOfMeas2D[0] = FileInfoBase.MILLIMETERS;
-		unitsOfMeas2D[1] = FileInfoBase.MILLIMETERS;
+		unitsOfMeas2D[0] = Unit.MILLIMETERS.getLegacyNum();
+		unitsOfMeas2D[1] = Unit.MILLIMETERS.getLegacyNum();
 		float[] res2D = new float[2];
 		res2D[0] = xRes;
 		res2D[1] = yRes;
@@ -225,10 +226,10 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
 		resols[2] = zRes;
 		resols[3] = 0;
         int[] units = new int[4];
-        units[0] = FileInfoBase.MILLIMETERS;
-        units[1] = FileInfoBase.MILLIMETERS;
-        units[2] = FileInfoBase.MILLIMETERS;
-        units[3] = FileInfoBase.MILLIMETERS;
+        units[0] = Unit.MILLIMETERS.getLegacyNum();
+        units[1] = Unit.MILLIMETERS.getLegacyNum();
+        units[2] = Unit.MILLIMETERS.getLegacyNum();
+        units[3] = Unit.MILLIMETERS.getLegacyNum();
         float[] startLocs = new float[4];
         startLocs[0] = 0;
         startLocs[1] = 0;
@@ -342,7 +343,7 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
 			            startLocs[m] = fileInfo.getOrigin(m);
 			        }
 					resols[3] = 0;
-			        units[3] = FileInfoBase.MILLIMETERS;
+			        units[3] = Unit.MILLIMETERS.getLegacyNum();
 			        startLocs[3] = 0;
 			        
 			        destImage.getFileInfo(j).setResolutions(resols);

@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -523,11 +524,11 @@ public class FileGESigna5X extends FileBase {
         fileInfo.setResolutions(resols);
 
         int[] units = new int[5];
-        units[0] = FileInfoBase.MILLIMETERS;
-        units[1] = FileInfoBase.MILLIMETERS;
-        units[2] = FileInfoBase.MILLIMETERS;
-        units[3] = FileInfoBase.UNKNOWN_MEASURE;
-        units[4] = FileInfoBase.UNKNOWN_MEASURE;
+        units[0] = Unit.MILLIMETERS.getLegacyNum();
+        units[1] = Unit.MILLIMETERS.getLegacyNum();
+        units[2] = Unit.MILLIMETERS.getLegacyNum();
+        units[3] = Unit.UNKNOWN_MEASURE.getLegacyNum();
+        units[4] = Unit.UNKNOWN_MEASURE.getLegacyNum();
         fileInfo.setUnitsOfMeasure(units);
 
         fileInfo.pixelID = getString(14); // 58

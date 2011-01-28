@@ -1,5 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -122,7 +123,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
         String unitsString = null;
 
-        if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+        if ((xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
             unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
         }
 
@@ -281,7 +282,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         int zUnits = srcImage.getUnitsOfMeasure()[2];
         String unitsString = null;
 
-        if ((xUnits == yUnits) && (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+        if ((xUnits == yUnits) && (xUnits == zUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
             unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
         }
 

@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.JDialogSelectDICOMColumnHeaders;
@@ -456,7 +457,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             fileInfo = image.getFileInfo();
 
             for (int i = 0; i < fileInfo.length; i++) {
-                image.getFileInfo()[i].setUnitsOfMeasure(FileInfoBase.MICROSEC, 2);
+                image.getFileInfo()[i].setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 2);
                 image.getFileInfo()[i].setResolutions(microSecondsPerFrame, 2);
             }
 

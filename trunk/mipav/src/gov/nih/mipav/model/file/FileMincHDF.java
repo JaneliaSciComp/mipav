@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -1269,8 +1270,7 @@ public class FileMincHDF extends FileBase {
         xSpaceObj.writeMetadata(dirCosinesAttr);
 
         // units
-        unitsString = new String[] {FileInfoBase.getUnitsOfMeasureAbbrevStr()[image.getFileInfo()[0]
-                .getUnitsOfMeasure(0)]};
+        unitsString = new String[] {Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(0)).getAbbrev()};
         dType = fileFormat.createDatatype(Datatype.CLASS_STRING, alignmentString[0].length() + 1, -1, -1);
         attrDims[0] = 1;
         Attribute unitsAttr = new Attribute("units", dType, attrDims);
@@ -1339,8 +1339,8 @@ public class FileMincHDF extends FileBase {
 
         // units
         attrDims[0] = 1;
-        unitsString = new String[] {FileInfoBase.getUnitsOfMeasureAbbrevStr()[image.getFileInfo()[0]
-                .getUnitsOfMeasure(1)]};
+        
+        unitsString = new String[] {Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(1)).getAbbrev()};
         dType = fileFormat.createDatatype(Datatype.CLASS_STRING, alignmentString[0].length() + 1, -1, -1);
         unitsAttr = new Attribute("units", dType, attrDims);
         unitsAttr.setValue(unitsString);
@@ -1407,8 +1407,7 @@ public class FileMincHDF extends FileBase {
 
             // units
             attrDims[0] = 1;
-            unitsString = new String[] {FileInfoBase.getUnitsOfMeasureAbbrevStr()[image.getFileInfo()[0]
-                    .getUnitsOfMeasure(1)]};
+            unitsString = new String[] {Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(1)).getAbbrev()};
             dType = fileFormat.createDatatype(Datatype.CLASS_STRING, alignmentString[0].length() + 1, -1, -1);
             unitsAttr = new Attribute("units", dType, attrDims);
             unitsAttr.setValue(unitsString);
@@ -1458,8 +1457,7 @@ public class FileMincHDF extends FileBase {
                 
                 // units
                 attrDims[0] = 1;
-                unitsString = new String[] {FileInfoBase.getUnitsOfMeasureAbbrevStr()[image.getFileInfo()[0]
-                        .getUnitsOfMeasure(3)]};
+                unitsString = new String[] {Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(3)).getAbbrev()};
                 dType = fileFormat.createDatatype(Datatype.CLASS_STRING, alignmentString[0].length() + 1, -1, -1);
                 unitsAttr = new Attribute("units", dType, attrDims);
                 unitsAttr.setValue(unitsString);

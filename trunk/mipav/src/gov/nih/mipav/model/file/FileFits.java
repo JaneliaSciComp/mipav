@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -436,7 +437,7 @@ public class FileFits extends FileBase {
                     }
 
                     Preferences.debug("NAXIS1 = " + imgExtents[0] + "\n");
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 0);
+                    fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 0);
 
                     if (imgExtents[0] < 0) {
                         raFile.close();
@@ -488,7 +489,7 @@ public class FileFits extends FileBase {
                     }
 
                     Preferences.debug("NAXIS2 = " + imgExtents[1] + "\n");
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 1);
+                    fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 1);
 
                     if (imgExtents[1] < 0) {
                         raFile.close();
@@ -541,7 +542,7 @@ public class FileFits extends FileBase {
                         }
 
                         Preferences.debug("NAXIS3 = " + imgExtents[2] + "\n");
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 2);
+                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 2);
 
                         if (imgExtents[2] < 0) {
                             raFile.close();
@@ -595,7 +596,7 @@ public class FileFits extends FileBase {
                         }
 
                         Preferences.debug("NAXIS4 = " + imgExtents[3] + "\n");
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 3);
+                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 3);
 
                         if (imgExtents[3] < 0) {
                             raFile.close();
@@ -649,7 +650,7 @@ public class FileFits extends FileBase {
                         }
 
                         Preferences.debug("NAXIS5 = " + imgExtents[4] + "\n");
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 4);
+                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 4);
 
                         if (imgExtents[4] < 0) {
                             raFile.close();
@@ -868,40 +869,40 @@ public class FileFits extends FileBase {
                                 if ( (subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3)
                                         && (nDimensions == 3)) {
                                     isColorPlanar2D = true;
-                                } else if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MILS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.INCHES.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MILS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MILLIMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.CENTIMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.METERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.KILOMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.KILOMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MILES.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MILES.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.ANGSTROMS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.ANGSTROMS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.NANOMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MICROMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.NANOSEC.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MICROSEC.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MILLISEC.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.SECONDS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MINUTES.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.HOURS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), dimNumber - 1);
                                 } else if (subS.toUpperCase().substring(0, Math.min(subS.length(), 3)).equals("DEG")) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
+                                    fileInfo.setUnitsOfMeasure(Unit.DEGREES.getLegacyNum(), dimNumber - 1);
                                 } else {
                                     if (dimNumber == 1) {
                                         fileInfo.setCTYPE1(subS);
@@ -931,40 +932,40 @@ public class FileFits extends FileBase {
                                 subS = subS.trim();
                                 Preferences.debug("CUNIT" + s.substring(5, 6) + " = " + subS + "\n");
 
-                                if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MILS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
-                                } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                                if (subS.toUpperCase().equals(Unit.INCHES.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MILS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MILLIMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.CENTIMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.METERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.KILOMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.KILOMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MILES.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MILES.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.ANGSTROMS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.ANGSTROMS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.NANOMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MICROMETERS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.NANOSEC.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MICROSEC.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MILLISEC.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.SECONDS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.MINUTES.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(Unit.HOURS.toString().toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), dimNumber - 1);
                                 } else if (subS.toUpperCase().substring(0, Math.min(subS.length(), 3)).equals("DEG")) {
-                                    fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
+                                    fileInfo.setUnitsOfMeasure(Unit.DEGREES.getLegacyNum(), dimNumber - 1);
                                 } else {
                                     if (dimNumber == 1) {
                                         fileInfo.setCUNIT1(subS);
@@ -1268,7 +1269,7 @@ public class FileFits extends FileBase {
                         if (j <= 5) {
                             fileInfo.setUnitsOfMeasure(j - 1, fileInfo.getUnitsOfMeasure(j));
                         } else {
-                            fileInfo.setUnitsOfMeasure(j - 1, FileInfoBase.UNKNOWN_MEASURE);
+                            fileInfo.setUnitsOfMeasure(j - 1, Unit.UNKNOWN_MEASURE.getLegacyNum());
                         }
                     }
                     nDimensions--;
@@ -2024,91 +2025,7 @@ public class FileFits extends FileBase {
                 if (image.getType() == ModelStorageBase.ARGB && (i == 2)) {
                     mString = "RGB";
                 } else {
-                    switch (measure[i]) {
-
-                        case FileInfoBase.INCHES:
-                            mString = FileInfoBase.INCHES_STRING;
-                            break;
-
-                        case FileInfoBase.MILS:
-                            mString = FileInfoBase.MILS_STRING;
-                            break;
-
-                        case FileInfoBase.MILLIMETERS:
-                            mString = FileInfoBase.MILLIMETERS_STRING;
-                            break;
-
-                        case FileInfoBase.CENTIMETERS:
-                            mString = FileInfoBase.CENTIMETERS_STRING;
-                            break;
-
-                        case FileInfoBase.METERS:
-                            mString = FileInfoBase.METERS_STRING;
-                            break;
-
-                        case FileInfoBase.KILOMETERS:
-                            mString = FileInfoBase.KILOMETERS_STRING;
-                            break;
-
-                        case FileInfoBase.MILES:
-                            mString = FileInfoBase.MILES_STRING;
-                            break;
-
-                        case FileInfoBase.ANGSTROMS:
-                            mString = FileInfoBase.ANGSTROMS_STRING;
-                            break;
-
-                        case FileInfoBase.NANOMETERS:
-                            mString = FileInfoBase.MICROMETERS_STRING;
-                            break;
-
-                        case FileInfoBase.MICROMETERS:
-                            mString = FileInfoBase.NANOMETERS_STRING;
-                            break;
-
-                        case FileInfoBase.NANOSEC:
-                            mString = FileInfoBase.NANOSEC_STRING;
-                            break;
-
-                        case FileInfoBase.MICROSEC:
-                            mString = FileInfoBase.MICROSEC_STRING;
-                            break;
-
-                        case FileInfoBase.MILLISEC:
-                            mString = FileInfoBase.MILLISEC_STRING;
-                            break;
-
-                        case FileInfoBase.SECONDS:
-                            mString = FileInfoBase.SECONDS_STRING;
-                            break;
-
-                        case FileInfoBase.MINUTES:
-                            mString = FileInfoBase.MINUTES_STRING;
-                            break;
-
-                        case FileInfoBase.HOURS:
-                            mString = FileInfoBase.HOURS_STRING;
-                            break;
-
-                        case FileInfoBase.HZ:
-                            mString = FileInfoBase.HZ_STRING;
-                            break;
-
-                        case FileInfoBase.PPM:
-                            mString = FileInfoBase.PPM_STRING;
-                            break;
-
-                        case FileInfoBase.RADS:
-                            mString = FileInfoBase.RADS_STRING;
-                            break;
-
-                        case FileInfoBase.DEGREES:
-                            mString = FileInfoBase.DEGREES_STRING;
-
-                        default:
-                            mString = "Unknown";
-                            break;
-                    } // end of switch(measure[i])
+                    mString = Unit.getUnitFromLegacyNum(measure[i]).toString(); 
                 }
 
                 if ( (image.getType() == ModelStorageBase.ARGB) && (i == 2)) {

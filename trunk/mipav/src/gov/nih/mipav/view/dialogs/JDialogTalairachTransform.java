@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.algorithms.*;
 
 
@@ -655,7 +656,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 				resultImage.setImageOrientation(FileInfoBase.AXIAL);
 				
 				int[] units = new int[3];
-				units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
+				units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
 				float[] resol = new float[3];
 				
 				resol[0] = resol[1] = resol[2] = acpcRes;

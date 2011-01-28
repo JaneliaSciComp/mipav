@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -2840,13 +2841,13 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
              * resultImage.setImageOrientation(imageOrientation);
              * 
              * for (i = 0; i < fileInfo.length; i++) { final int[] units = new int[3]; units[0] = units[1] = units[2] =
-             * FileInfoBase.MILLIMETERS; fileInfo[i].setUnitsOfMeasure(units);
+             * Unit.MILLIMETERS.getLegacyNum(); fileInfo[i].setUnitsOfMeasure(units);
              * fileInfo[i].setResolutions(tInfo.getOrigRes()); fileInfo[i].setExtents(dims);
              * fileInfo[i].setAxisOrientation(axisOrientation); fileInfo[i].setImageOrientation(imageOrientation); } //
              * for (i = 0; i < fileInfo.length; i++) } // if ((transformType == ACPC_TO_ORIG) || (transformType ==
              * TLRC_TO_ORIG)) else { // not transformed to ORIG resultImage.setImageOrientation(FileInfoBase.AXIAL);
              * 
-             * final int[] units = new int[3]; units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
+             * final int[] units = new int[3]; units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
              * 
              * final float[] resol = new float[3]; resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes(); axisOrientation =
              * new int[3]; axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE; axisOrientation[1] =
@@ -2864,7 +2865,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 // new image in original space (only difference: units forced to millimeters)
                 final int[] units = new int[3];
-                units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
+                units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
 
                 for (i = 0; i < fileInfo.length; i++) {
                     fileInfo[i].setUnitsOfMeasure(units);
@@ -2888,7 +2889,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 resultImage.setImageOrientation(FileInfoBase.AXIAL);
 
                 final int[] units = new int[3];
-                units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
+                units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
 
                 final float[] resol = new float[3];
                 resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes();
@@ -2918,7 +2919,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 resultImage.setImageOrientation(FileInfoBase.AXIAL);
 
                 final int[] units = new int[3];
-                units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
+                units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
 
                 final float[] resol = new float[3];
                 resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes();

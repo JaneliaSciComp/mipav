@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -288,13 +289,13 @@ public class FileCheshire extends FileBase {
 
 
         if (image.getNDims() == 2) {
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
             image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
         } else if (image.getNDims() == 3) { // If there is more than one image
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
 
             image.setFileInfo(fileInfo, 0);
             for (i = 1; i < image.getExtents()[2]; i++) {
@@ -302,10 +303,10 @@ public class FileCheshire extends FileBase {
                 image.setFileInfo(fileInfoCopy, i); // Set the array of fileInfos in ModelImage
             }
         } else if (image.getNDims() == 4) { // If there is more than one image
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, 3);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
+            fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 3);
 
             image.setFileInfo(fileInfo, 0);
             for (i = 1; i < (image.getExtents()[2] * image.getExtents()[3]); i++) {

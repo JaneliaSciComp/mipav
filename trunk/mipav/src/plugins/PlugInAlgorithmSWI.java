@@ -38,10 +38,9 @@ import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
 
 /**
  * This class recalculates mo and dceFullTre to provide better estimates using the inverse Ernst equation
@@ -69,18 +68,25 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
     private int roFilterSize;
 
+    
     private int peFilterSize;
 
+    
     private int multFactor;
 
+    /** Slice size */    
     private int sizeRo;
+
 
     private int sizePe;
 
+    
     private int sizeSs;
 
+    
     private double originRo;
 
+    
     private double originPe;
 
     private AlgorithmAddMargins imageMarginsAlgo;
@@ -229,7 +235,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
     private ModelImage generatePhaseMask(BitSet brainMaskSet, float[] ixRealFinal, float[] ixImagFinal, float[] phaseMaskData) {
         ModelImage phaseMask = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "phaseMask");
-        
+
         for(int i=0; i<sizeRo*sizePe*sizeSs; i++) {
             phaseMaskData[i] = 1;
         }
@@ -275,12 +281,12 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         //bit of the brainMask
         for (int i = brainMaskSet.nextSetBit(0); i >= 0; i = brainMaskSet.nextSetBit(i+1)) {
             mag = Math.pow(ixReal[i], 2) + Math.pow(ixImag[i], 2);
-            ixRealFinal[i] = (float) ((ixRealCenter[i]*ixReal[i] + ixImagCenter[i]*ixImag[i])/mag);
+            ixRealFinal[i] = (float) ((ixRealCenter[i]*ixReal[i] + ixImagCenter[i]*ixImag[i])/mag); 
             ixImagFinal[i] = (float) ((ixImagCenter[i]*ixReal[i] - ixRealCenter[i]*ixImag[i])/mag);
         }
         
         try {
-            iFinal.importComplexData(0, ixRealFinal, ixImagFinal, true, false);
+            iFinal.importComplexData(0, ixRealFinal, ixImagFinal, true, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.*;
@@ -895,8 +896,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         comboBoxUnitOfMeasure1 = new JComboBox();
         setComboBox(comboBoxUnitOfMeasure1);
         comboBoxUnitOfMeasure1.setAlignmentX(Component.LEFT_ALIGNMENT);
-        index = image.getFileInfo()[0].getUnitsOfMeasure(0);
-        setIndex(comboBoxUnitOfMeasure1, index);
+        String unitStr = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(0)).toString();
+        comboBoxUnitOfMeasure1.setSelectedItem(unitStr);
         comboBoxUnitOfMeasure1.setEnabled(true);
         comboPanel.add(comboBoxUnitOfMeasure1);
         comboPanel.add(Box.createVerticalStrut(17));
@@ -904,10 +905,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         comboBoxUnitOfMeasure3 = new JComboBox();
         comboBoxUnitOfMeasure3.setAlignmentX(Component.LEFT_ALIGNMENT);
         setComboBox(comboBoxUnitOfMeasure3);
-        index = image.getFileInfo()[0].getUnitsOfMeasure(2);
 
         if (image.getNDims() >= 3) {
-            setIndex(comboBoxUnitOfMeasure3, index);
+            unitStr = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(2)).toString();
+            comboBoxUnitOfMeasure3.setSelectedItem(unitStr);
             comboBoxUnitOfMeasure3.setEnabled(true);
         } else {
             comboBoxUnitOfMeasure3.setEnabled(false);
@@ -919,10 +920,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         comboBoxUnitOfMeasure4 = new JComboBox();
         setComboBox(comboBoxUnitOfMeasure4);
         comboBoxUnitOfMeasure4.setAlignmentX(Component.LEFT_ALIGNMENT);
-        index = image.getFileInfo()[0].getUnitsOfMeasure(3);
 
         if (image.getNDims() >= 4) {
-            setIndex(comboBoxUnitOfMeasure4, index);
+            unitStr = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(3)).toString();
+            comboBoxUnitOfMeasure4.setSelectedItem(unitStr);
             comboBoxUnitOfMeasure4.setEnabled(true);
         } else {
             comboBoxUnitOfMeasure4.setEnabled(false);
@@ -937,7 +938,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         index = image.getFileInfo()[0].getUnitsOfMeasure(4);
 
         if (image.getNDims() == 5) {
-            setIndex(comboBoxUnitOfMeasure5, index);
+            unitStr = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(4)).toString();
+            comboBoxUnitOfMeasure5.setSelectedItem(unitStr);
             comboBoxUnitOfMeasure5.setEnabled(true);
         } else {
             comboBoxUnitOfMeasure5.setEnabled(false);
@@ -2224,119 +2226,16 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /**
      * Sets combo box choices that match resolution units listed in FileInfoBase and in the same order.
-     * 
-     * @param cBox Combo box to setup to display the units.
+     *
+     * @param  cBox  Combo box to setup to display the units.
      */
-    private void setComboBox(final JComboBox cBox) {
+    private void setComboBox(JComboBox cBox) {
 
         cBox.setFont(serif12);
         cBox.setBackground(Color.white);
-        cBox.addItem(" UNKNOWN");
-        cBox.addItem(" INCHES ");
-        cBox.addItem(" MILS (.001 INCH) ");
-        cBox.addItem(" CENTIMETERS ");
-        cBox.addItem(" ANGSTROMS ");
-        cBox.addItem(" NANOMETERS ");
-        cBox.addItem(" MICROMETERS ");
-        cBox.addItem(" MILLIMETERS ");
-        cBox.addItem(" METERS ");
-        cBox.addItem(" KILOMETERS ");
-        cBox.addItem(" MILES ");
-        cBox.addItem(" NANOSECONDS ");
-        cBox.addItem(" MICROSECONDS ");
-        cBox.addItem(" MILLISECONDS ");
-        cBox.addItem(" SECONDS ");
-        cBox.addItem(" MINUTES ");
-        cBox.addItem(" HOURS ");
-        cBox.addItem(" HZ ");
-    }
-
-    /**
-     * Sets the selected index of the combo box based on what was set in the file info.
-     * 
-     * @param comboBox Combo box to set.
-     * @param index Value read in the file info.
-     */
-    private void setIndex(final JComboBox comboBox, final int index) {
-
-        switch (index) {
-
-            case FileInfoBase.UNKNOWN_MEASURE:
-                comboBox.setSelectedIndex(0);
-                break;
-
-            case FileInfoBase.INCHES:
-                comboBox.setSelectedIndex(1);
-                break;
-
-            case FileInfoBase.MILS:
-                comboBox.setSelectedIndex(2);
-                break;
-
-            case FileInfoBase.CENTIMETERS:
-                comboBox.setSelectedIndex(3);
-                break;
-
-            case FileInfoBase.ANGSTROMS:
-                comboBox.setSelectedIndex(4);
-                break;
-
-            case FileInfoBase.NANOMETERS:
-                comboBox.setSelectedIndex(5);
-                break;
-
-            case FileInfoBase.MICROMETERS:
-                comboBox.setSelectedIndex(6);
-                break;
-
-            case FileInfoBase.MILLIMETERS:
-                comboBox.setSelectedIndex(7);
-                break;
-
-            case FileInfoBase.METERS:
-                comboBox.setSelectedIndex(8);
-                break;
-
-            case FileInfoBase.KILOMETERS:
-                comboBox.setSelectedIndex(9);
-                break;
-
-            case FileInfoBase.MILES:
-                comboBox.setSelectedIndex(10);
-                break;
-
-            case FileInfoBase.NANOSEC:
-                comboBox.setSelectedIndex(11);
-                break;
-
-            case FileInfoBase.MICROSEC:
-                comboBox.setSelectedIndex(12);
-                break;
-
-            case FileInfoBase.MILLISEC:
-                comboBox.setSelectedIndex(13);
-                break;
-
-            case FileInfoBase.SECONDS:
-                comboBox.setSelectedIndex(14);
-                break;
-
-            case FileInfoBase.MINUTES:
-                comboBox.setSelectedIndex(15);
-                break;
-
-            case FileInfoBase.HOURS:
-                comboBox.setSelectedIndex(16);
-                break;
-
-            case FileInfoBase.HZ:
-                comboBox.setSelectedIndex(17);
-                break;
-
-            default:
-                comboBox.setSelectedIndex(0);
+        for(Unit u : Unit.values()) {
+            cBox.addItem(u.toString());
         }
-
     }
 
     /**
@@ -2490,79 +2389,79 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         switch (comboBoxUnitOfMeasure1.getSelectedIndex()) {
 
             case 0:
-                measure1 = FileInfoBase.UNKNOWN_MEASURE;
+                measure1 = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 break;
 
             case 1:
-                measure1 = FileInfoBase.INCHES;
+                measure1 = Unit.INCHES.getLegacyNum();
                 break;
 
             case 2:
-                measure1 = FileInfoBase.MILS;
+                measure1 = Unit.MILS.getLegacyNum();
                 break;
 
             case 3:
-                measure1 = FileInfoBase.CENTIMETERS;
+                measure1 = Unit.CENTIMETERS.getLegacyNum();
                 break;
 
             case 4:
-                measure1 = FileInfoBase.ANGSTROMS;
+                measure1 = Unit.ANGSTROMS.getLegacyNum();
                 break;
 
             case 5:
-                measure1 = FileInfoBase.NANOMETERS;
+                measure1 = Unit.NANOMETERS.getLegacyNum();
                 break;
 
             case 6:
-                measure1 = FileInfoBase.MICROMETERS;
+                measure1 = Unit.MICROMETERS.getLegacyNum();
                 break;
 
             case 7:
-                measure1 = FileInfoBase.MILLIMETERS;
+                measure1 = Unit.MILLIMETERS.getLegacyNum();
                 break;
 
             case 8:
-                measure1 = FileInfoBase.METERS;
+                measure1 = Unit.METERS.getLegacyNum();
                 break;
 
             case 9:
-                measure1 = FileInfoBase.KILOMETERS;
+                measure1 = Unit.KILOMETERS.getLegacyNum();
                 break;
 
             case 10:
-                measure1 = FileInfoBase.MILES;
+                measure1 = Unit.MILES.getLegacyNum();
                 break;
 
             case 11:
-                measure1 = FileInfoBase.NANOSEC;
+                measure1 = Unit.NANOSEC.getLegacyNum();
                 break;
 
             case 12:
-                measure1 = FileInfoBase.MICROSEC;
+                measure1 = Unit.MICROSEC.getLegacyNum();
                 break;
 
             case 13:
-                measure1 = FileInfoBase.MILLISEC;
+                measure1 = Unit.MILLISEC.getLegacyNum();
                 break;
 
             case 14:
-                measure1 = FileInfoBase.SECONDS;
+                measure1 = Unit.SECONDS.getLegacyNum();
                 break;
 
             case 15:
-                measure1 = FileInfoBase.MINUTES;
+                measure1 = Unit.MINUTES.getLegacyNum();
                 break;
 
             case 16:
-                measure1 = FileInfoBase.HOURS;
+                measure1 = Unit.HOURS.getLegacyNum();
                 break;
 
             case 17:
-                measure1 = FileInfoBase.HZ;
+                measure1 = Unit.HZ.getLegacyNum();
                 break;
 
             default:
-                measure1 = FileInfoBase.UNKNOWN_MEASURE;
+                measure1 = Unit.UNKNOWN_MEASURE.getLegacyNum();
         }
 
         if (nDims > 2) {
@@ -2570,79 +2469,79 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             switch (comboBoxUnitOfMeasure3.getSelectedIndex()) {
 
                 case 0:
-                    measure3 = FileInfoBase.UNKNOWN_MEASURE;
+                    measure3 = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     break;
 
                 case 1:
-                    measure3 = FileInfoBase.INCHES;
+                    measure3 = Unit.INCHES.getLegacyNum();
                     break;
 
                 case 2:
-                    measure3 = FileInfoBase.MILS;
+                    measure3 = Unit.MILS.getLegacyNum();
                     break;
 
                 case 3:
-                    measure3 = FileInfoBase.CENTIMETERS;
+                    measure3 = Unit.CENTIMETERS.getLegacyNum();
                     break;
 
                 case 4:
-                    measure3 = FileInfoBase.ANGSTROMS;
+                    measure3 = Unit.ANGSTROMS.getLegacyNum();
                     break;
 
                 case 5:
-                    measure3 = FileInfoBase.NANOMETERS;
+                    measure3 = Unit.NANOMETERS.getLegacyNum();
                     break;
 
                 case 6:
-                    measure3 = FileInfoBase.MICROMETERS;
+                    measure3 = Unit.MICROMETERS.getLegacyNum();
                     break;
 
                 case 7:
-                    measure3 = FileInfoBase.MILLIMETERS;
+                    measure3 = Unit.MILLIMETERS.getLegacyNum();
                     break;
 
                 case 8:
-                    measure3 = FileInfoBase.METERS;
+                    measure3 = Unit.METERS.getLegacyNum();
                     break;
 
                 case 9:
-                    measure3 = FileInfoBase.KILOMETERS;
+                    measure3 = Unit.KILOMETERS.getLegacyNum();
                     break;
 
                 case 10:
-                    measure3 = FileInfoBase.MILES;
+                    measure3 = Unit.MILES.getLegacyNum();
                     break;
 
                 case 11:
-                    measure3 = FileInfoBase.NANOSEC;
+                    measure3 = Unit.NANOSEC.getLegacyNum();
                     break;
 
                 case 12:
-                    measure3 = FileInfoBase.MICROSEC;
+                    measure3 = Unit.MICROSEC.getLegacyNum();
                     break;
 
                 case 13:
-                    measure3 = FileInfoBase.MILLISEC;
+                    measure3 = Unit.MILLISEC.getLegacyNum();
                     break;
 
                 case 14:
-                    measure3 = FileInfoBase.SECONDS;
+                    measure3 = Unit.SECONDS.getLegacyNum();
                     break;
 
                 case 15:
-                    measure3 = FileInfoBase.MINUTES;
+                    measure3 = Unit.MINUTES.getLegacyNum();
                     break;
 
                 case 16:
-                    measure3 = FileInfoBase.HOURS;
+                    measure3 = Unit.HOURS.getLegacyNum();
                     break;
 
                 case 17:
-                    measure3 = FileInfoBase.HZ;
+                    measure3 = Unit.HZ.getLegacyNum();
                     break;
 
                 default:
-                    measure3 = FileInfoBase.UNKNOWN_MEASURE;
+                    measure3 = Unit.UNKNOWN_MEASURE.getLegacyNum();
             }
 
             if (nDims > 3) {
@@ -2650,79 +2549,79 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 switch (comboBoxUnitOfMeasure4.getSelectedIndex()) {
 
                     case 0:
-                        measure4 = FileInfoBase.UNKNOWN_MEASURE;
+                        measure4 = Unit.UNKNOWN_MEASURE.getLegacyNum();
                         break;
 
                     case 1:
-                        measure4 = FileInfoBase.INCHES;
+                        measure4 = Unit.INCHES.getLegacyNum();
                         break;
 
                     case 2:
-                        measure4 = FileInfoBase.MILS;
+                        measure4 = Unit.MILS.getLegacyNum();
                         break;
 
                     case 3:
-                        measure4 = FileInfoBase.CENTIMETERS;
+                        measure4 = Unit.CENTIMETERS.getLegacyNum();
                         break;
 
                     case 4:
-                        measure4 = FileInfoBase.ANGSTROMS;
+                        measure4 = Unit.ANGSTROMS.getLegacyNum();
                         break;
 
                     case 5:
-                        measure4 = FileInfoBase.NANOMETERS;
+                        measure4 = Unit.NANOMETERS.getLegacyNum();
                         break;
 
                     case 6:
-                        measure4 = FileInfoBase.MICROMETERS;
+                        measure4 = Unit.MICROMETERS.getLegacyNum();
                         break;
 
                     case 7:
-                        measure4 = FileInfoBase.MILLIMETERS;
+                        measure4 = Unit.MILLIMETERS.getLegacyNum();
                         break;
 
                     case 8:
-                        measure4 = FileInfoBase.METERS;
+                        measure4 = Unit.METERS.getLegacyNum();
                         break;
 
                     case 9:
-                        measure4 = FileInfoBase.KILOMETERS;
+                        measure4 = Unit.KILOMETERS.getLegacyNum();
                         break;
 
                     case 10:
-                        measure4 = FileInfoBase.MILES;
+                        measure4 = Unit.MILES.getLegacyNum();
                         break;
 
                     case 11:
-                        measure4 = FileInfoBase.NANOSEC;
+                        measure4 = Unit.NANOSEC.getLegacyNum();
                         break;
 
                     case 12:
-                        measure4 = FileInfoBase.MICROSEC;
+                        measure4 = Unit.MICROSEC.getLegacyNum();
                         break;
 
                     case 13:
-                        measure4 = FileInfoBase.MILLISEC;
+                        measure4 = Unit.MILLISEC.getLegacyNum();
                         break;
 
                     case 14:
-                        measure4 = FileInfoBase.SECONDS;
+                        measure4 = Unit.SECONDS.getLegacyNum();
                         break;
 
                     case 15:
-                        measure4 = FileInfoBase.MINUTES;
+                        measure4 = Unit.MINUTES.getLegacyNum();
                         break;
 
                     case 16:
-                        measure4 = FileInfoBase.HOURS;
+                        measure4 = Unit.HOURS.getLegacyNum();
                         break;
 
                     case 17:
-                        measure4 = FileInfoBase.HZ;
+                        measure4 = Unit.HZ.getLegacyNum();
                         break;
 
                     default:
-                        measure4 = FileInfoBase.UNKNOWN_MEASURE;
+                        measure4 = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 }
 
                 if (nDims > 4) {
@@ -2730,79 +2629,79 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     switch (comboBoxUnitOfMeasure5.getSelectedIndex()) {
 
                         case 0:
-                            measure5 = FileInfoBase.UNKNOWN_MEASURE;
+                            measure5 = Unit.UNKNOWN_MEASURE.getLegacyNum();
                             break;
 
                         case 1:
-                            measure5 = FileInfoBase.INCHES;
+                            measure5 = Unit.INCHES.getLegacyNum();
                             break;
 
                         case 2:
-                            measure5 = FileInfoBase.MILS;
+                            measure5 = Unit.MILS.getLegacyNum();
                             break;
 
                         case 3:
-                            measure5 = FileInfoBase.CENTIMETERS;
+                            measure5 = Unit.CENTIMETERS.getLegacyNum();
                             break;
 
                         case 4:
-                            measure5 = FileInfoBase.ANGSTROMS;
+                            measure5 = Unit.ANGSTROMS.getLegacyNum();
                             break;
 
                         case 5:
-                            measure5 = FileInfoBase.NANOMETERS;
+                            measure5 = Unit.NANOMETERS.getLegacyNum();
                             break;
 
                         case 6:
-                            measure5 = FileInfoBase.MICROMETERS;
+                            measure5 = Unit.MICROMETERS.getLegacyNum();
                             break;
 
                         case 7:
-                            measure5 = FileInfoBase.MILLIMETERS;
+                            measure5 = Unit.MILLIMETERS.getLegacyNum();
                             break;
 
                         case 8:
-                            measure5 = FileInfoBase.METERS;
+                            measure5 = Unit.METERS.getLegacyNum();
                             break;
 
                         case 9:
-                            measure5 = FileInfoBase.KILOMETERS;
+                            measure5 = Unit.KILOMETERS.getLegacyNum();
                             break;
 
                         case 10:
-                            measure5 = FileInfoBase.MILES;
+                            measure5 = Unit.MILES.getLegacyNum();
                             break;
 
                         case 11:
-                            measure5 = FileInfoBase.NANOSEC;
+                            measure5 = Unit.NANOSEC.getLegacyNum();
                             break;
 
                         case 12:
-                            measure5 = FileInfoBase.MICROSEC;
+                            measure5 = Unit.MICROSEC.getLegacyNum();
                             break;
 
                         case 13:
-                            measure5 = FileInfoBase.MILLISEC;
+                            measure5 = Unit.MILLISEC.getLegacyNum();
                             break;
 
                         case 14:
-                            measure5 = FileInfoBase.SECONDS;
+                            measure5 = Unit.SECONDS.getLegacyNum();
                             break;
 
                         case 15:
-                            measure5 = FileInfoBase.MINUTES;
+                            measure5 = Unit.MINUTES.getLegacyNum();
                             break;
 
                         case 16:
-                            measure5 = FileInfoBase.HOURS;
+                            measure5 = Unit.HOURS.getLegacyNum();
                             break;
 
                         case 17:
-                            measure5 = FileInfoBase.HZ;
+                            measure5 = Unit.HZ.getLegacyNum();
                             break;
 
                         default:
-                            measure5 = FileInfoBase.UNKNOWN_MEASURE;
+                            measure5 = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     }
                 }
             }

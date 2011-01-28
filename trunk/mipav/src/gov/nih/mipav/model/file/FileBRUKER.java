@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.Preferences;
 
@@ -259,7 +260,7 @@ public class FileBRUKER extends FileBase {
             imgResols = fileInfo.getResolutions();
             imgResols[2] = sliceSeparation;
             fileInfo.setResolutions(imgResols);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
             fileInfo.setHaveZResol(true);
         }
 
@@ -530,7 +531,7 @@ public class FileBRUKER extends FileBase {
 
                 for (i = 0; i < parseString.length; i++) {
                     fov[i] = Float.valueOf(parseString[i]).floatValue();
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, i);
+                    fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), i);
                 }
 
 

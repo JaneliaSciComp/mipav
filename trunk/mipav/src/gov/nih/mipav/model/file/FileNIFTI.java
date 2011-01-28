@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import Jama.*;
 
@@ -1684,27 +1685,27 @@ public class FileNIFTI extends FileBase {
 
                 case FileInfoNIFTI.NIFTI_UNITS_UNKNOWN:
                     Preferences.debug("Spatial units are unknown\n");
-                    unitMeasure = FileInfoBase.UNKNOWN_MEASURE;
+                    unitMeasure = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_METER:
                     Preferences.debug("Spatial units are meters\n");
-                    unitMeasure = FileInfoBase.METERS;
+                    unitMeasure = Unit.METERS.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_MM:
                     Preferences.debug("Spatial units are millimeters\n");
-                    unitMeasure = FileInfoBase.MILLIMETERS;
+                    unitMeasure = Unit.MILLIMETERS.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_MICRON:
                     Preferences.debug("Spatial units are micrometers\n");
-                    unitMeasure = FileInfoBase.MICROMETERS;
+                    unitMeasure = Unit.MICROMETERS.getLegacyNum();
                     break;
 
                 default:
                     Preferences.debug("Spatial units are an illegal " + spaceUnits + "\n");
-                    unitMeasure = FileInfoBase.UNKNOWN_MEASURE;
+                    unitMeasure = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     break;
             }
 
@@ -1720,42 +1721,42 @@ public class FileNIFTI extends FileBase {
 
                 case FileInfoNIFTI.NIFTI_UNITS_UNKNOWN:
                     Preferences.debug("Time units are unknown\n");
-                    unitMeasure = FileInfoBase.UNKNOWN_MEASURE;
+                    unitMeasure = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_SEC:
                     Preferences.debug("Time units are seconds\n");
-                    unitMeasure = FileInfoBase.SECONDS;
+                    unitMeasure = Unit.SECONDS.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_MSEC:
                     Preferences.debug("Time units are milliseconds\n");
-                    unitMeasure = FileInfoBase.MILLISEC;
+                    unitMeasure = Unit.MILLISEC.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_USEC:
                     Preferences.debug("Time units are microseconds\n");
-                    unitMeasure = FileInfoBase.MICROSEC;
+                    unitMeasure = Unit.MICROSEC.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_HZ:
                     Preferences.debug("Time units are hertz\n");
-                    unitMeasure = FileInfoBase.HZ;
+                    unitMeasure = Unit.HZ.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_PPM:
                     Preferences.debug("Time units are parts per million\n");
-                    unitMeasure = FileInfoBase.PPM;
+                    unitMeasure = Unit.PPM.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_RADS:
                     Preferences.debug("Time units are radians per second\n");
-                    unitMeasure = FileInfoBase.RADS;
+                    unitMeasure = Unit.RADS.getLegacyNum();
                     break;
 
                 default:
                     Preferences.debug("Time units are an illegal = " + timeUnits + "\n");
-                    unitMeasure = FileInfoBase.UNKNOWN_MEASURE;
+                    unitMeasure = Unit.UNKNOWN_MEASURE.getLegacyNum();
             }
 
             fileInfo.setUnitsOfMeasure(unitMeasure, spatialDims);
@@ -4147,8 +4148,8 @@ public class FileNIFTI extends FileBase {
         boolean found;
         int firstSpatialDim;
         int firstTimeDim;
-        int firstSpatialUnits = FileInfoBase.UNKNOWN_MEASURE;
-        int firstTimeUnits = FileInfoBase.UNKNOWN_MEASURE;
+        int firstSpatialUnits = Unit.UNKNOWN_MEASURE.getLegacyNum();
+        int firstTimeUnits = Unit.UNKNOWN_MEASURE.getLegacyNum();
         int niftiSpatialUnits = FileInfoNIFTI.NIFTI_UNITS_UNKNOWN;
         int niftiTimeUnits = FileInfoNIFTI.NIFTI_UNITS_UNKNOWN;
         int nDimsLength1;
@@ -4280,12 +4281,12 @@ public class FileNIFTI extends FileBase {
 
         for (i = 0; (i < unitsOfMeasure.length) && (!found); i++) {
 
-            if ((unitsOfMeasure[i] == FileInfoBase.UNKNOWN_MEASURE) || (unitsOfMeasure[i] == FileInfoBase.INCHES) ||
-                    (unitsOfMeasure[i] == FileInfoBase.MILS) ||
-                    (unitsOfMeasure[i] == FileInfoBase.CENTIMETERS) || (unitsOfMeasure[i] == FileInfoBase.ANGSTROMS) ||
-                    (unitsOfMeasure[i] == FileInfoBase.NANOMETERS) || (unitsOfMeasure[i] == FileInfoBase.MICROMETERS) ||
-                    (unitsOfMeasure[i] == FileInfoBase.MILLIMETERS) || (unitsOfMeasure[i] == FileInfoBase.METERS) ||
-                    (unitsOfMeasure[i] == FileInfoBase.KILOMETERS) || (unitsOfMeasure[i] == FileInfoBase.MILES)) {
+            if ((unitsOfMeasure[i] == Unit.UNKNOWN_MEASURE.getLegacyNum()) || (unitsOfMeasure[i] == Unit.INCHES.getLegacyNum()) ||
+                    (unitsOfMeasure[i] == Unit.MILS.getLegacyNum()) ||
+                    (unitsOfMeasure[i] == Unit.CENTIMETERS.getLegacyNum()) || (unitsOfMeasure[i] == Unit.ANGSTROMS.getLegacyNum()) ||
+                    (unitsOfMeasure[i] == Unit.NANOMETERS.getLegacyNum()) || (unitsOfMeasure[i] == Unit.MICROMETERS.getLegacyNum()) ||
+                    (unitsOfMeasure[i] == Unit.MILLIMETERS.getLegacyNum()) || (unitsOfMeasure[i] == Unit.METERS.getLegacyNum()) ||
+                    (unitsOfMeasure[i] == Unit.KILOMETERS.getLegacyNum()) || (unitsOfMeasure[i] == Unit.MILES.getLegacyNum())) {
                 found = true;
                 firstSpatialDim = i;
                 firstSpatialUnits = unitsOfMeasure[i];
@@ -4297,11 +4298,11 @@ public class FileNIFTI extends FileBase {
 
         for (i = 0; (i < unitsOfMeasure.length) && (!found); i++) {
 
-            if ((unitsOfMeasure[i] == FileInfoBase.NANOSEC) || (unitsOfMeasure[i] == FileInfoBase.MICROSEC) ||
-                    (unitsOfMeasure[i] == FileInfoBase.MILLISEC) || (unitsOfMeasure[i] == FileInfoBase.SECONDS) ||
-                    (unitsOfMeasure[i] == FileInfoBase.MINUTES) || (unitsOfMeasure[i] == FileInfoBase.HOURS) ||
-                    (unitsOfMeasure[i] == FileInfoBase.HZ) || (unitsOfMeasure[i] == FileInfoBase.PPM) ||
-                    (unitsOfMeasure[i] == FileInfoBase.RADS)) {
+            if ((unitsOfMeasure[i] == Unit.NANOSEC.getLegacyNum()) || (unitsOfMeasure[i] == Unit.MICROSEC.getLegacyNum()) ||
+                    (unitsOfMeasure[i] == Unit.MILLISEC.getLegacyNum()) || (unitsOfMeasure[i] == Unit.SECONDS.getLegacyNum()) ||
+                    (unitsOfMeasure[i] == Unit.MINUTES.getLegacyNum()) || (unitsOfMeasure[i] == Unit.HOURS.getLegacyNum()) ||
+                    (unitsOfMeasure[i] == Unit.HZ.getLegacyNum()) || (unitsOfMeasure[i] == Unit.PPM.getLegacyNum()) ||
+                    (unitsOfMeasure[i] == Unit.RADS.getLegacyNum())) {
                 found = true;
                 firstTimeDim = i;
                 firstTimeUnits = unitsOfMeasure[i];
@@ -4310,46 +4311,46 @@ public class FileNIFTI extends FileBase {
 
         if (firstSpatialDim >= 0) {
 
-            switch (firstSpatialUnits) {
+            switch (Unit.getUnitFromLegacyNum(firstSpatialUnits)) {
 
-                case FileInfoBase.UNKNOWN_MEASURE:
+                case UNKNOWN_MEASURE:
                     niftiSpatialUnits = FileInfoNIFTI.NIFTI_UNITS_UNKNOWN;
                     break;
 
-                case FileInfoBase.INCHES:
-                case FileInfoBase.MILS:
-                case FileInfoBase.CENTIMETERS:
-                case FileInfoBase.MILLIMETERS:
+                case INCHES:
+                case MILS:
+                case CENTIMETERS:
+                case MILLIMETERS:
 
                     // convert all spatial units to millimeters
                     niftiSpatialUnits = FileInfoNIFTI.NIFTI_UNITS_MM;
                     for (i = 0; i < extents.length; i++) {
 
-                        if (unitsOfMeasure[i] == FileInfoBase.INCHES) {
+                        if (unitsOfMeasure[i] == Unit.INCHES.getLegacyNum()) {
                             resols[i] = 25.4f * resols[i];
                             origin[i] = 25.4f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILS) {
+                        } else if (unitsOfMeasure[i] == Unit.MILS.getLegacyNum()) {
                             resols[i] = 2.54e-2f * resols[i];
                             origin[i] = 2.54e-2f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.CENTIMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.CENTIMETERS.getLegacyNum()) {
                             resols[i] = 10.0f * resols[i];
                             origin[i] = 10.0f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.ANGSTROMS) {
+                        } else if (unitsOfMeasure[i] == Unit.ANGSTROMS.getLegacyNum()) {
                             resols[i] = 1.0e-7f * resols[i];
                             origin[i] = 1.0e-7f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.NANOMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.NANOMETERS.getLegacyNum()) {
                             resols[i] = 1.0e-6f * resols[i];
                             origin[i] = 1.0e-6f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MICROMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.MICROMETERS.getLegacyNum()) {
                             resols[i] = 1.0e-3f * resols[i];
                             origin[i] = 1.0e-3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.METERS) {
+                        } else if (unitsOfMeasure[i] == Unit.METERS.getLegacyNum()) {
                             resols[i] = 1.0e3f * resols[i];
                             origin[i] = 1.0e3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.KILOMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.KILOMETERS.getLegacyNum()) {
                             resols[i] = 1.0e6f * resols[i];
                             origin[i] = 1.0e6f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILES) {
+                        } else if (unitsOfMeasure[i] == Unit.MILES.getLegacyNum()) {
                             resols[i] = 1.6093e6f * resols[i];
                             origin[i] = 1.6093e6f * origin[i];
                         }
@@ -4357,39 +4358,39 @@ public class FileNIFTI extends FileBase {
 
                     break;
 
-                case FileInfoBase.ANGSTROMS:
-                case FileInfoBase.NANOMETERS:
-                case FileInfoBase.MICROMETERS:
+                case ANGSTROMS:
+                case NANOMETERS:
+                case MICROMETERS:
 
                     // convert all spatial units to micrometers
                     niftiSpatialUnits = FileInfoNIFTI.NIFTI_UNITS_MICRON;
                     for (i = 0; i < extents.length; i++) {
 
-                        if (unitsOfMeasure[i] == FileInfoBase.INCHES) {
+                        if (unitsOfMeasure[i] == Unit.INCHES.getLegacyNum()) {
                             resols[i] = 2.54e5f * resols[i];
                             origin[i] = 2.54e5f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILS) {
+                        } else if (unitsOfMeasure[i] == Unit.MILS.getLegacyNum()) {
                             resols[i] = 2.54e2f * resols[i];
                             origin[i] = 2.54e2f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.CENTIMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.CENTIMETERS.getLegacyNum()) {
                             resols[i] = 1.0e5f * resols[i];
                             origin[i] = 1.0e5f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.ANGSTROMS) {
+                        } else if (unitsOfMeasure[i] == Unit.ANGSTROMS.getLegacyNum()) {
                             resols[i] = 1.0e-4f * resols[i];
                             origin[i] = 1.0e-4f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.NANOMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.NANOMETERS.getLegacyNum()) {
                             resols[i] = 1.0e-3f * resols[i];
                             origin[i] = 1.0e-3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILLIMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.MILLIMETERS.getLegacyNum()) {
                             resols[i] = 1.0e3f * resols[i];
                             origin[i] = 1.0e3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.METERS) {
+                        } else if (unitsOfMeasure[i] == Unit.METERS.getLegacyNum()) {
                             resols[i] = 1.0e6f * resols[i];
                             origin[i] = 1.0e6f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.KILOMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.KILOMETERS.getLegacyNum()) {
                             resols[i] = 1.0e9f * resols[i];
                             origin[i] = 1.0e9f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILES) {
+                        } else if (unitsOfMeasure[i] == Unit.MILES.getLegacyNum()) {
                             resols[i] = 1.6093e9f * resols[i];
                             origin[i] = 1.6093e9f * origin[i];
                         }
@@ -4397,39 +4398,39 @@ public class FileNIFTI extends FileBase {
 
                     break;
 
-                case FileInfoBase.METERS:
-                case FileInfoBase.KILOMETERS:
-                case FileInfoBase.MILES:
+                case METERS:
+                case KILOMETERS:
+                case MILES:
 
                     // convert all spatial units to meters
                     niftiSpatialUnits = FileInfoNIFTI.NIFTI_UNITS_METER;
                     for (i = 0; i < extents.length; i++) {
 
-                        if (unitsOfMeasure[i] == FileInfoBase.INCHES) {
+                        if (unitsOfMeasure[i] == Unit.INCHES.getLegacyNum()) {
                             resols[i] = 2.54e-2f * resols[i];
                             origin[i] = 2.54e-2f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILS) {
+                        } else if (unitsOfMeasure[i] == Unit.MILS.getLegacyNum()) {
                             resols[i] = 2.54e-5f * resols[i];
                             origin[i] = 2.54e-5f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.CENTIMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.CENTIMETERS.getLegacyNum()) {
                             resols[i] = 1.0e-2f * resols[i];
                             origin[i] = 1.0e-2f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.ANGSTROMS) {
+                        } else if (unitsOfMeasure[i] == Unit.ANGSTROMS.getLegacyNum()) {
                             resols[i] = 1.0e-10f * resols[i];
                             origin[i] = 1.0e-10f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.NANOMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.NANOMETERS.getLegacyNum()) {
                             resols[i] = 1.0e-9f * resols[i];
                             origin[i] = 1.0e-9f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MICROMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.MICROMETERS.getLegacyNum()) {
                             resols[i] = 1.0e-6f * resols[i];
                             origin[i] = 1.0e-6f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILLIMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.MILLIMETERS.getLegacyNum()) {
                             resols[i] = 1.0e-3f * resols[i];
                             origin[i] = 1.0e-3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.KILOMETERS) {
+                        } else if (unitsOfMeasure[i] == Unit.KILOMETERS.getLegacyNum()) {
                             resols[i] = 1.0e3f * resols[i];
                             origin[i] = 1.0e3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILES) {
+                        } else if (unitsOfMeasure[i] == Unit.MILES.getLegacyNum()) {
                             resols[i] = 1.6093e3f * resols[i];
                             origin[i] = 1.6093e3f * origin[i];
                         }
@@ -4440,28 +4441,28 @@ public class FileNIFTI extends FileBase {
         } // if (firstSpatialDim >= 0)
 
         if (firstTimeDim >= 0) {
-            switch (firstTimeUnits) {
+            switch (Unit.getUnitFromLegacyNum(firstTimeUnits)) {
 
-                case FileInfoBase.NANOSEC:
-                case FileInfoBase.MICROSEC:
+                case NANOSEC:
+                case MICROSEC:
 
                     // convert all spatial units to microseconds
                     niftiTimeUnits = FileInfoNIFTI.NIFTI_UNITS_USEC;
                     for (i = 0; i < extents.length; i++) {
 
-                        if (unitsOfMeasure[i] == FileInfoBase.NANOSEC) {
+                        if (unitsOfMeasure[i] == Unit.NANOSEC.getLegacyNum()) {
                             resols[i] = 1.0e-3f * resols[i];
                             origin[i] = 1.0e-3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILLISEC) {
+                        } else if (unitsOfMeasure[i] == Unit.MILLISEC.getLegacyNum()) {
                             resols[i] = 1.0e3f * resols[i];
                             origin[i] = 1.0e3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.SECONDS) {
+                        } else if (unitsOfMeasure[i] == Unit.SECONDS.getLegacyNum()) {
                             resols[i] = 1.0e6f * resols[i];
                             origin[i] = 1.0e6f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MINUTES) {
+                        } else if (unitsOfMeasure[i] == Unit.MINUTES.getLegacyNum()) {
                             resols[i] = 6.0e7f * resols[i];
                             origin[i] = 6.0e7f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.HOURS) {
+                        } else if (unitsOfMeasure[i] == Unit.HOURS.getLegacyNum()) {
                             resols[i] = 3.6e9f * resols[i];
                             origin[i] = 3.6e9f * origin[i];
                         }
@@ -4469,25 +4470,25 @@ public class FileNIFTI extends FileBase {
 
                     break;
 
-                case FileInfoBase.MILLISEC:
+                case MILLISEC:
 
                     // convert all spatial units to milliseconds
                     niftiTimeUnits = FileInfoNIFTI.NIFTI_UNITS_MSEC;
                     for (i = 0; i < extents.length; i++) {
 
-                        if (unitsOfMeasure[i] == FileInfoBase.NANOSEC) {
+                        if (unitsOfMeasure[i] == Unit.NANOSEC.getLegacyNum()) {
                             resols[i] = 1.0e-6f * resols[i];
                             origin[i] = 1.0e-6f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MICROSEC) {
+                        } else if (unitsOfMeasure[i] == Unit.MICROSEC.getLegacyNum()) {
                             resols[i] = 1.0e-3f * resols[i];
                             origin[i] = 1.0e-3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.SECONDS) {
+                        } else if (unitsOfMeasure[i] == Unit.SECONDS.getLegacyNum()) {
                             resols[i] = 1.0e3f * resols[i];
                             origin[i] = 1.0e3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MINUTES) {
+                        } else if (unitsOfMeasure[i] == Unit.MINUTES.getLegacyNum()) {
                             resols[i] = 6.0e4f * resols[i];
                             origin[i] = 6.0e4f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.HOURS) {
+                        } else if (unitsOfMeasure[i] == Unit.HOURS.getLegacyNum()) {
                             resols[i] = 3.6e6f * resols[i];
                             origin[i] = 3.6e6f * origin[i];
                         }
@@ -4495,27 +4496,27 @@ public class FileNIFTI extends FileBase {
 
                     break;
 
-                case FileInfoBase.SECONDS:
-                case FileInfoBase.MINUTES:
-                case FileInfoBase.HOURS:
+                case SECONDS:
+                case MINUTES:
+                case HOURS:
 
                     // convert all time units to seconds
                     niftiTimeUnits = FileInfoNIFTI.NIFTI_UNITS_SEC;
                     for (i = 0; i < extents.length; i++) {
 
-                        if (unitsOfMeasure[i] == FileInfoBase.NANOSEC) {
+                        if (unitsOfMeasure[i] == Unit.NANOSEC.getLegacyNum()) {
                             resols[i] = 1.0e-9f * resols[i];
                             origin[i] = 1.0e-9f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MICROSEC) {
+                        } else if (unitsOfMeasure[i] == Unit.MICROSEC.getLegacyNum()) {
                             resols[i] = 1.0e-6f * resols[i];
                             origin[i] = 1.0e-6f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MILLISEC) {
+                        } else if (unitsOfMeasure[i] == Unit.MILLISEC.getLegacyNum()) {
                             resols[i] = 1.0e-3f * resols[i];
                             origin[i] = 1.0e-3f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.MINUTES) {
+                        } else if (unitsOfMeasure[i] == Unit.MINUTES.getLegacyNum()) {
                             resols[i] = 6.0e1f * resols[i];
                             origin[i] = 6.0e1f * origin[i];
-                        } else if (unitsOfMeasure[i] == FileInfoBase.HOURS) {
+                        } else if (unitsOfMeasure[i] == Unit.HOURS.getLegacyNum()) {
                             resols[i] = 3.6e3f * resols[i];
                             origin[i] = 3.6e3f * origin[i];
                         }
@@ -4523,15 +4524,15 @@ public class FileNIFTI extends FileBase {
 
                     break;
 
-                case FileInfoBase.HZ:
+                case HZ:
                     niftiTimeUnits = FileInfoNIFTI.NIFTI_UNITS_HZ;
                     break;
 
-                case FileInfoBase.PPM:
+                case PPM:
                     niftiTimeUnits = FileInfoNIFTI.NIFTI_UNITS_PPM;
                     break;
 
-                case FileInfoBase.RADS:
+                case RADS:
                     niftiTimeUnits = FileInfoNIFTI.NIFTI_UNITS_RADS;
                     break;
             }

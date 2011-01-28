@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -193,7 +194,7 @@ public class JDialogLoadLeica extends JDialogBase {
                             .indexOf("]"));
 
                     if (unitsStr.equalsIgnoreCase("\u00B5" + "m")) {
-                        units[0] = FileInfoBase.MICROMETERS;
+                        units[0] = Unit.MICROMETERS.getLegacyNum();
                     }
 
                     currentLine = currentLine.substring(currentLine.indexOf("]") + 1, currentLine.length()).trim();
@@ -205,7 +206,7 @@ public class JDialogLoadLeica extends JDialogBase {
                             .indexOf("]"));
 
                     if (unitsStr.equalsIgnoreCase("\u00B5" + "m")) {
-                        units[1] = FileInfoBase.MICROMETERS;
+                        units[1] = Unit.MICROMETERS.getLegacyNum();
                     }
 
                     currentLine = currentLine.substring(currentLine.indexOf("]") + 1, currentLine.length()).trim();
@@ -225,7 +226,7 @@ public class JDialogLoadLeica extends JDialogBase {
                         currentLine = currentLine.substring(currentLine.indexOf("]") + 1, currentLine.length()).trim();
 
                         if (unitsStr.equalsIgnoreCase("\u00B5" + "m")) {
-                            units[2] = FileInfoBase.MICROMETERS;
+                            units[2] = Unit.MICROMETERS.getLegacyNum();
                         }
 
                         res[2] = Float.parseFloat(currentLine);
@@ -409,7 +410,7 @@ public class JDialogLoadLeica extends JDialogBase {
                 lut = tempTiff.getModelLUT();
                 image.getFileInfo()[0].setResolutions(new float[] {series.getResolutions()[0],
                         series.getResolutions()[1]});
-                image.getFileInfo()[0].setUnitsOfMeasure(FileInfoBase.MICROMETERS, 0);
+                image.getFileInfo()[0].setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), 0);
                 image.setImageName(series.getName());
             } else {
                 tempTiff = new FileTiff("", "");

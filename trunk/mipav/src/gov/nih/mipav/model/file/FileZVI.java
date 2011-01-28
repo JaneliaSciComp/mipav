@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
@@ -2921,7 +2922,7 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Scale unit for X\n");
                                 if (valueDType == VT_I4) {
                                     measureUnits = zviToMipavMeasurementUnits(intValue);
-                                    if (measureUnits != FileInfoBase.UNKNOWN_MEASURE) {
+                                    if (measureUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                                         fileInfo.setUnitsOfMeasure(measureUnits, 0);
                                     }
                                 }
@@ -2942,7 +2943,7 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Scale unit for Y\n");
                                 if (valueDType == VT_I4) {
                                     measureUnits = zviToMipavMeasurementUnits(intValue);
-                                    if (measureUnits != FileInfoBase.UNKNOWN_MEASURE) {
+                                    if (measureUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                                             fileInfo.setUnitsOfMeasure(measureUnits, 1);
                                     }
                                 }
@@ -2963,7 +2964,7 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Scale unit for Z\n");
                                 if (valueDType == VT_I4) {
                                     measureUnits = zviToMipavMeasurementUnits(intValue);
-                                    if (measureUnits != FileInfoBase.UNKNOWN_MEASURE) {
+                                    if (measureUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                                         fileInfo.setUnitsOfMeasure(measureUnits, 2);
                                     }
                                 }
@@ -4634,51 +4635,51 @@ public class FileZVI extends FileBase {
         switch (zviScalingUnit) {
             case 0:
                 Preferences.debug("Scaling unit type = no scaling\n");
-                measureUnits = FileInfoBase.UNKNOWN_MEASURE;
+                measureUnits = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 break;
             case 72:
                 Preferences.debug("Scaling unit type = meter\n");
-                measureUnits = FileInfoBase.METERS;
+                measureUnits = Unit.METERS.getLegacyNum();
                 break;
             case 76:
                 Preferences.debug("Scaling unit type = micrometer\n");
-                measureUnits = FileInfoBase.MICROMETERS;
+                measureUnits = Unit.MICROMETERS.getLegacyNum();
                 break;
             case 77:
                 Preferences.debug("Scaling unit type = nanometer\n");
-                measureUnits = FileInfoBase.NANOMETERS;
+                measureUnits = Unit.NANOMETERS.getLegacyNum();
                 break;
             case 81:
                  Preferences.debug("Scaling unit type = inch\n");
-                 measureUnits = FileInfoBase.INCHES;
+                 measureUnits = Unit.INCHES.getLegacyNum();
                  break;
             case 84:
                 Preferences.debug("Scaling unit type = mil (thousandth of an inch)\n");
-                measureUnits = FileInfoBase.MILS;
+                measureUnits = Unit.MILS.getLegacyNum();
                 break;
             case 136:
                 Preferences.debug("Scaling unit type = second\n");
-                measureUnits = FileInfoBase.SECONDS;
+                measureUnits = Unit.SECONDS.getLegacyNum();
                 break;
             case 139:
                 Preferences.debug("Scaling unit type = millisecond\n");
-                measureUnits = FileInfoBase.MILLISEC;
+                measureUnits = Unit.MILLISEC.getLegacyNum();
                 break;
             case 140:
                 Preferences.debug("Scaling unit type = microsecond\n");
-                measureUnits = FileInfoBase.MICROSEC;
+                measureUnits = Unit.MICROSEC.getLegacyNum();
                 break;
             case 145:
                 Preferences.debug("Scaling unit type = minute\n");
-                measureUnits = FileInfoBase.MINUTES;
+                measureUnits = Unit.MINUTES.getLegacyNum();
                 break;
             case 146:
                 Preferences.debug("Scaling unit type = hour\n");
-                measureUnits = FileInfoBase.HOURS;
+                measureUnits = Unit.HOURS.getLegacyNum();
                 break;
             default:
                 Preferences.debug("Scaling unit type is an unrecognized " + zviScalingUnit + "\n");
-                measureUnits = FileInfoBase.UNKNOWN_MEASURE;     
+                measureUnits = Unit.UNKNOWN_MEASURE.getLegacyNum();     
         }
         return measureUnits;
     } // private int zviToMipavMeasurementUnits (int zviScalingUnit)

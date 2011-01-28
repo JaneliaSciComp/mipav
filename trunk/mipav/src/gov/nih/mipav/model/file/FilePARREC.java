@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.file;
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.Preferences;
@@ -556,8 +557,8 @@ public class FilePARREC extends FileBase {
         fileInfo.setEndianess(LITTLE_ENDIAN);
         fileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE);
         for(int j=0;j<3;j++)
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS,j);
-        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE,3);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(),j);
+        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(),3);
 
 
 
@@ -1140,11 +1141,11 @@ public class FilePARREC extends FileBase {
         // if vox units defines the units of measure, then use that instead
         // updateUnitsOfMeasure(fileInfo);
         //only mm supported
-        int units = FileInfoBase.MILLIMETERS; //FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
+        int units = Unit.MILLIMETERS.getLegacyNum(); //FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
 
-        if (units == FileInfoBase.UNKNOWN_MEASURE) { // default to millimeters
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+        if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
         } else {
             fileInfo.setUnitsOfMeasure(units, 0);
             fileInfo.setUnitsOfMeasure(units, 1);
@@ -1306,13 +1307,13 @@ public class FilePARREC extends FileBase {
 
 // if vox units defines the units of measure, then use that instead
 //Only mm supported in PAR/REC
-        int units = FileInfoBase.MILLIMETERS; //FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
+        int units = Unit.MILLIMETERS.getLegacyNum(); //FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
 
         if (image.getNDims() == 2) {
 
-            if (units == FileInfoBase.UNKNOWN_MEASURE) { // default to millimeters
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+            if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
             } else {
                 fileInfo.setUnitsOfMeasure(units, 0);
                 fileInfo.setUnitsOfMeasure(units, 1);
@@ -1321,10 +1322,10 @@ public class FilePARREC extends FileBase {
             image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
         } else if (image.getNDims() == 3) { // If there is more than one image
 
-            if (units == FileInfoBase.UNKNOWN_MEASURE) { // default to millimeters
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+            if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
             } else {
                 fileInfo.setUnitsOfMeasure(units, 0);
                 fileInfo.setUnitsOfMeasure(units, 1);
@@ -1338,11 +1339,11 @@ public class FilePARREC extends FileBase {
             }
         } else if (image.getNDims() == 4) { // If there is more than one image
 
-            if (units == FileInfoBase.UNKNOWN_MEASURE) { // default to millimeters and msec.
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, 3);
+            if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters and msec.
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
+                fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
+                fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 3);
             } else {
                 fileInfo.setUnitsOfMeasure(units, 0);
                 fileInfo.setUnitsOfMeasure(units, 1);

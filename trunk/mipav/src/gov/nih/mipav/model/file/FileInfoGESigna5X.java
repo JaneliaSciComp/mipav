@@ -1407,11 +1407,11 @@ public class FileInfoGESigna5X extends FileInfoBase {
             extents[1] = getExtents()[1];
             resols[0] = getResolutions()[0];
             resols[1] = getResolutions()[1];
-            units[0] = FileInfoBase.MILLIMETERS;
-            units[1] = FileInfoBase.MILLIMETERS;
-            units[2] = FileInfoBase.MILLIMETERS;
-            units[3] = FileInfoBase.MILLIMETERS;
-            units[4] = FileInfoBase.MILLIMETERS;
+            units[0] = Unit.MILLIMETERS.getLegacyNum();
+            units[1] = Unit.MILLIMETERS.getLegacyNum();
+            units[2] = Unit.MILLIMETERS.getLegacyNum();
+            units[3] = Unit.MILLIMETERS.getLegacyNum();
+            units[4] = Unit.MILLIMETERS.getLegacyNum();
         } else if (getExtents().length == 3) {
             extents = new int[3];
             resols = new float[3];
@@ -1422,11 +1422,11 @@ public class FileInfoGESigna5X extends FileInfoBase {
             resols[0] = getResolutions()[0];
             resols[1] = getResolutions()[1];
             resols[2] = getResolutions()[2];
-            units[0] = FileInfoBase.MILLIMETERS;
-            units[1] = FileInfoBase.MILLIMETERS;
-            units[2] = FileInfoBase.MILLIMETERS;
-            units[3] = FileInfoBase.MILLIMETERS;
-            units[4] = FileInfoBase.MILLIMETERS;
+            units[0] = Unit.MILLIMETERS.getLegacyNum();
+            units[1] = Unit.MILLIMETERS.getLegacyNum();
+            units[2] = Unit.MILLIMETERS.getLegacyNum();
+            units[3] = Unit.MILLIMETERS.getLegacyNum();
+            units[4] = Unit.MILLIMETERS.getLegacyNum();
         }
 
         String name = JDialogBase.makeImageName(fileName, ".dcm");

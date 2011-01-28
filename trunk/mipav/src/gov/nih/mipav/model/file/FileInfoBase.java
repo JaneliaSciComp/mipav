@@ -6,7 +6,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.*;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 
 /**
@@ -36,6 +36,201 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 6605143084958470864L;
 
+    /**
+     * Each unit has a unit type with a given base. The base unit for a unit type is the SI base unit
+     * as reported here: http://physics.nist.gov/cuu/Units/units.html
+     * 
+     * @author senseneyj
+     *
+     */
+    public enum UnitType {
+        NONE(Unit.UNKNOWN_MEASURE),
+        LENGTH(Unit.METERS),
+        TIME(Unit.SECONDS),
+        FREQUENCY(Unit.HZ),
+        CONCENTRATION(Unit.SECONDS),
+        VELOCITY(Unit.METERS_PER_SEC),
+        ANGLE(Unit.DEGREES);
+        
+        private Unit base;
+
+        UnitType(Unit base) {
+            this.base = base;
+        }
+        
+        public static Unit[] getUnitsOfType(UnitType t) {
+            ArrayList<Unit> arUnit = new ArrayList<Unit>();
+            for(Unit u : Unit.values()) {
+                if(u.getType() == t) {
+                    arUnit.add(u);
+                }
+            }
+            
+            return arUnit.toArray(new Unit[arUnit.size()]);
+        }
+        
+    }
+    
+    public enum Unit {
+        /** Unit of measurement unknown. */
+        UNKNOWN_MEASURE(1, "Unknown", "unk", UnitType.NONE),
+        /** Unit of measurement inches. */
+        INCHES(2, "Inches", "in", UnitType.LENGTH, 39.3700787),
+        /** Units of measurement mil (thousandth of an inch) */
+        MILS(3, "Mils", "mils", UnitType.LENGTH, 3.93700787E4),
+        /** Unit of measurement centimeters. */
+        CENTIMETERS(4, "Centimeters", "cm", UnitType.LENGTH, 1.0E2),
+        /** Unit of measurement angstroms. */
+        ANGSTROMS(5, "Angstroms", "A", UnitType.LENGTH, 1.0E10),
+        /** Unit of measurement nanometers. */
+        NANOMETERS(6, "Nanometers", "nm", UnitType.LENGTH, 1.0E9),
+        /** Unit of measurement micrometers. */
+        MICROMETERS(7, "Micrometers", "um", UnitType.LENGTH, 1.0E6),
+        /** Unit of measurement millimeters. */
+        MILLIMETERS(8, "Millimeters", "mm", UnitType.LENGTH, 1.0E3),
+        /** Unit of measurement meters. */
+        METERS(9, "Meters", "m", UnitType.LENGTH, 1),
+        /** Unit of measurement kilometers. */
+        KILOMETERS(10, "Kilometers", "km", UnitType.LENGTH, 1.0E-3),
+        /** Unit of measurement miles. */
+        MILES(11, "Miles", "mi", UnitType.LENGTH, 6.21371192E-4),
+        /** Unit of measurement nanoseconds. */
+        NANOSEC(12, "Nanoseconds", "nsec", UnitType.TIME, 1.0E9),
+        /** Unit of measurement microseconds. */
+        MICROSEC(13, "Microseconds", "usec", UnitType.TIME, 1.0E6),
+        /** Unit of measurement milliseconds. */
+        MILLISEC(14, "Milliseconds", "msec", UnitType.TIME, 1.0E3),
+        /** Unit of measurement seconds. */
+        SECONDS(15, "Seconds", "sec", UnitType.TIME, 1),
+        /** Unit of measurement minutes. */
+        MINUTES(16, "Minutes", "min", UnitType.TIME, 1.66666667E-2),
+        /** Unit of measurement hours. */
+        HOURS(17, "Hours", "hr", UnitType.TIME, 2.77777778E-4),
+        /** Unit of measurement hertz. */
+        HZ(18, "Hertz", "hz", UnitType.FREQUENCY, 0.159154943274),
+        /** Unit of measurement part-per-million. */
+        PPM(19, "Part_Per_Million", "ppm", UnitType.CONCENTRATION),
+        /** Radians per second. */
+        RADS(20, "Radians_Per_Second", "rads", UnitType.FREQUENCY, 6.2831853),
+        /** Degrees */
+        DEGREES(21, "Degrees", "deg", UnitType.ANGLE),
+        /** Meters per second */
+        METERS_PER_SEC(22, "Meters_Per_Second", "m/s", UnitType.VELOCITY);
+        
+        public class UnsupportedUnitConversion extends Exception {
+
+            public UnsupportedUnitConversion(String string) {
+                super(string);
+            }
+        
+        }
+
+        private int legacyNum;
+        private String str;
+        private String abbrev;
+        private UnitType type;
+        private double convFactor;
+
+        Unit(int legacyNum, String str, String abbrev, UnitType type) {
+            this.legacyNum = legacyNum;
+            this.str = str;
+            this.abbrev = abbrev;
+            this.type = type;
+            
+        }
+        
+        Unit(int legacyNum, String str, String abbrev, UnitType type, double convFactor) {
+            this(legacyNum, str, abbrev, type);
+            
+            this.convFactor = convFactor;
+        }
+        
+        public String toString() {
+            return str;
+        }
+
+        public String getAbbrev() {
+            return abbrev;
+        }
+
+        public UnitType getType() {
+            return type;
+        }
+
+        public double getConvFactor() {
+            return convFactor;
+        }
+        
+        public int getLegacyNum() {
+            return legacyNum;
+        }
+        
+        public double convert(double orig, Unit resultUnit) {
+            
+            return orig*getConversionFactor(resultUnit);
+        }
+        
+        public double getConversionFactor(Unit resultUnit) {
+            if(type != resultUnit.type) {
+                System.err.println("Cannot convert from "+str+" to "+resultUnit);
+            }
+            
+           return (1/convFactor)*resultUnit.convFactor;
+        }
+        
+        public static Unit getUnit(String str) {
+            for(Unit u : Unit.values()) {
+                if(u.str.equals(str)) {
+                    return u;
+                }
+            }
+            
+            return null;
+        }
+        
+        public static Unit getUnitFromAbbrev(String abbrev) {
+            for(Unit u : Unit.values()) {
+                if(u.str.equals(abbrev)) {
+                    return u;
+                }
+            }
+            
+            return null;
+        }
+        
+        public static Unit getUnitFromLegacyNum(int legacyNum) {
+            for(Unit u : Unit.values()) {
+                if(u.getLegacyNum() == legacyNum) {
+                    return u;
+                }
+            }
+            
+            return null;
+        }
+
+        
+    }
+    
+    /**
+     * Array of all abbreviated units --- the first value is unknown since all of the* static definitions start at 1
+     * instead of 0. Each string* can be no more than 4 characters.
+     * @deprecated 
+     */
+    private static final String[] allAbbrevUnits = {"unk", "unk", "in", "mils", "cm", "A", "nm", "um", "mm", "m", "km", "mi",
+            "nsec", "usec", "msec", "sec", "min", "hr", "hz", "ppm", "rads", "deg"};
+
+    /** Array of space units: inches, mm, etc. 
+     * @deprecated 
+     * */
+    public static final String[] sUnits = {"Unknown", "Unknown", "Inches", "mils", "cm", "A", "nm", "um", "mm", "m", "km",
+            "miles"};
+
+    /** Array of time units: seconds, minutes, etc. 
+     * @deprecated 
+     */
+    public static final String[] tUnits = {"nano seconds", "micro seconds", "milli seconds", "seconds", "minutes",
+            "hours", "hertz", "part per million", "radians per second"};
+    
     /** Unit of measurement unknown. */
     public static final int UNKNOWN_MEASURE = 1;
 
@@ -161,43 +356,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** String version of units of measurement - degrees. */
     public static final String DEGREES_STRING = "Degrees";
 
-    /**
-     * Array of all units --- the first value is unknown since all of the* static definitions start at 1 instead of 0.
-     */
-    private static final String[] allUnits = {FileInfoBase.UNKNOWN_STRING, FileInfoBase.UNKNOWN_STRING,
-            FileInfoBase.INCHES_STRING, FileInfoBase.MILS_STRING,
-            FileInfoBase.CENTIMETERS_STRING, FileInfoBase.ANGSTROMS_STRING,
-            FileInfoBase.NANOMETERS_STRING, FileInfoBase.MICROMETERS_STRING, FileInfoBase.MILLIMETERS_STRING,
-            FileInfoBase.METERS_STRING, FileInfoBase.KILOMETERS_STRING, FileInfoBase.MILES_STRING,
-            FileInfoBase.NANOSEC_STRING, FileInfoBase.MICROSEC_STRING, FileInfoBase.MILLISEC_STRING,
-            FileInfoBase.SECONDS_STRING, FileInfoBase.MINUTES_STRING, FileInfoBase.HOURS_STRING,
-            FileInfoBase.HZ_STRING, FileInfoBase.PPM_STRING, FileInfoBase.RADS_STRING, FileInfoBase.DEGREES_STRING};
-
-    /**
-     * Array of all types for various units, For conversion, see the methods available in ModelImage L - length (meter)
-     * T - time (second) M - mass (kilogram) C - concentration (parts per million) A - angle (radians) F - frequency
-     * (hertz) E - energy (joule) X - dimensionless (1)
-     */
-    private static final char[] allUnitsConv = {'X', 'X', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'T', 'T', 'T',
-            'T', 'T', 'T', 'F', 'C', 'A', 'A'};
-
-    /**
-     * Array of all abbreviated units --- the first value is unknown since all of the* static definitions start at 1
-     * instead of 0. Each string* can be no more than 4 characters.
-     */
-    private static final String[] allAbbrevUnits = {"unk", "unk", "in", "mils", "cm", "A", "nm", "um", "mm", "m", "km", "mi",
-            "nsec", "usec", "msec", "sec", "min", "hr", "hz", "ppm", "rads", "deg"};
-
-    /** Array of space units: inches, mm, etc. */
-    public static final String[] sUnits = {"Unknown", "Unknown", "Inches", "mils", "cm", "A", "nm", "um", "mm", "m", "km",
-            "miles"};
-
-    /** Array of time units: seconds, minutes, etc. */
-    public static final String[] tUnits = {"nano seconds", "micro seconds", "milli seconds", "seconds", "minutes",
-            "hours", "hertz", "part per million", "radians per second"};
-    
-
-
     /** Converting between space units. Conversion is to millimeters (the default).
      *  Table converts to mm by multiplication. Converts from mm by division.
      *  Example:
@@ -219,7 +377,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         1.0e-9, 1.0e-6, 1.0e-3, 1, 1.0/60.0, 1.0/3600.0, 
         // hertz, ppm, radians per second:
         1, 1, 0.159154943274 };
-
+    
     /** Image modality unknown. */
     public static final int UNKNOWN_MODALITY = 0;
 
@@ -538,8 +696,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     private final int transformID = FileInfoBase.TRANSFORM_UNKNOWN;
 
     /** Describes the units of measure for the dataset. */
-    private int[] unitsOfMeasure = {FileInfoBase.MILLIMETERS, FileInfoBase.MILLIMETERS, FileInfoBase.MILLIMETERS,
-            FileInfoBase.SECONDS, FileInfoBase.UNKNOWN_MEASURE};
+    protected Unit[] unitsOfMeasure = {Unit.MILLIMETERS, Unit.MILLIMETERS, Unit.MILLIMETERS,
+            Unit.SECONDS, Unit.UNKNOWN_MEASURE};
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -573,17 +731,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param matrix Transformation matrix
      */
     public abstract void displayAboutInfo(JDialogBase dialog, TransMatrix matrix);
-
-    private static int getUnitLoc(final String unitStr) {
-        for (int i = 0; i < FileInfoBase.allUnits.length; i++) {
-            if (FileInfoBase.allUnits[i].equals(unitStr)) {
-                return i;
-            }
-        }
-
-        // unitStr not found
-        return -1;
-    }
 
     /**
      * Helper method to copy important file info type to another file info type.
@@ -671,42 +818,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                 j++; // increment the index into the newInfo
             }
         }
-    }
-
-    /**
-     * Gets all units which are the same dimension (time, spatial, frequency, etc.)
-     * 
-     * @param dim
-     * @return intergers that correspond to allUnit, allUnitsConv, and allAbbrevUnits
-     */
-    public static int[] getAllSameDimUnits(final String dim) {
-        final int dimLoc = FileInfoBase.getUnitLoc(dim);
-        if (dimLoc == -1) {
-            return new int[0];
-        }
-
-        return FileInfoBase.getAllSameDimUnits(dimLoc);
-    }
-
-    public static int[] getAllSameDimUnits(final int dim) {
-        if (dim < 0 || dim > FileInfoBase.allUnits.length) {
-            return new int[0];
-        }
-
-        final char unitType = FileInfoBase.allUnitsConv[dim];
-        final Vector<Integer> unitList = new Vector<Integer>();
-        for (int i = 0; i < FileInfoBase.allUnitsConv.length; i++) {
-            if (FileInfoBase.allUnitsConv[i] == unitType) {
-                unitList.add(Integer.valueOf(i));
-            }
-        }
-
-        final int[] unitArr = new int[unitList.size()];
-        for (int i = 0; i < unitArr.length; i++) {
-            unitArr[i] = unitList.get(i).intValue();
-        }
-
-        return unitArr;
     }
 
     /**
@@ -943,101 +1054,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                 throw new IllegalArgumentException("The data type is illegal argument : " + dataType);
         }
     }
-
-    /**
-     * Return all the abbreviated units of measure strings as an array.
-     * 
-     * @return String[] - array containing the abbreviated strings associated with units of measure.
-     */
-    public static String[] getUnitsOfMeasureAbbrevStr() {
-
-        return FileInfoBase.allAbbrevUnits;
-
-    } // end getUnitsOfMeasureAbbrevStr()
-
-    /**
-     * Return the abbreviated string associated with a units of measure.
-     * 
-     * @param units the units of measure (see the static definitions)
-     * 
-     * @return the abbreviated string associated with the units.
-     */
-    public static String getUnitsOfMeasureAbbrevStr(final int units) {
-
-        try {
-            return FileInfoBase.allAbbrevUnits[units];
-        } catch (final ArrayIndexOutOfBoundsException aie) {}
-
-        return "";
-
-    } // end getUnitsOfMeasureAbbrevStr()
-
-    /**
-     * Returns the units of measure.
-     * 
-     * @param s DOCUMENT ME!
-     * 
-     * @return int units (Inches or millimeters);
-     */
-    public static int getUnitsOfMeasureFromStr(final String s) {
-
-        // look through both the long and abbreviated arrays
-        // of strings to see if there's a match.
-        try {
-
-            for (int i = 0; i < FileInfoBase.allUnits.length; i++) {
-
-                if (FileInfoBase.getUnitsOfMeasureStr(i).regionMatches(true, 0, s, 0,
-                        FileInfoBase.getUnitsOfMeasureStr(i).length())) {
-                    if (i == 0) {
-                        // i = 1
-                        return FileInfoBase.UNKNOWN_MEASURE;
-                    }
-                    return i;
-                } else if (FileInfoBase.getUnitsOfMeasureAbbrevStr(i).regionMatches(true, 0, s, 0,
-                        FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
-                    if (i == 0) {
-                        // i = 1;
-                        return FileInfoBase.UNKNOWN_MEASURE;
-                    }
-                    return i;
-                }
-            }
-        } catch (final ArrayIndexOutOfBoundsException aie) {
-            return FileInfoBase.UNKNOWN_MEASURE;
-        }
-
-        return FileInfoBase.UNKNOWN_MEASURE;
-
-    } // end getUnitsOfMeasureFromStr()
-
-    /**
-     * Return all the units of measure strings as an array.
-     * 
-     * @return String[] - array containing the strings associated with units of measure.
-     */
-    public static String[] getUnitsOfMeasureStr() {
-
-        return FileInfoBase.allUnits;
-
-    } // end getUnitsOfMeasureStr()
-
-    /**
-     * Return the string associated with a units of measure.
-     * 
-     * @param units the units of measure (see the static definitions)
-     * 
-     * @return the string associated with the units.
-     */
-    public static String getUnitsOfMeasureStr(final int units) {
-
-        try {
-            return FileInfoBase.allUnits[units];
-        } catch (final ArrayIndexOutOfBoundsException aie) {}
-
-        return "";
-
-    } // end getUnitsOfMeasureStr()
 
     /**
      * Helper method that returns the opposite axis orientation of the one sent in; that is, R2L for L2R, A2P for P2A,
@@ -1429,45 +1445,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /* ****************************** Accessors ***************************** */
 
     /* ********************************************************************** */
-
-    /**
-     * Returns the area unit for the data. Assumes both dimensions are the same units.
-     * 
-     * @return String associated volume unit of measure.
-     */
-    public String getAreaUnitsOfMeasureStr() {
-        String mStr = new String();
-        int measure;
-
-        measure = getUnitsOfMeasure(0);
-
-        if (measure == FileInfoBase.INCHES) {
-            mStr = " inches^2";
-        } else if (measure == FileInfoBase.MILS) {
-            mStr = "  mils^2";
-        } else if (measure == FileInfoBase.ANGSTROMS) {
-            mStr = " A^2";
-        } else if (measure == FileInfoBase.NANOMETERS) {
-            mStr = " nm^2";
-        } else if (measure == FileInfoBase.MICROMETERS) {
-            mStr = " um^2";
-        } else if (measure == FileInfoBase.MILLIMETERS) {
-            mStr = " mm^2";
-        } else if (measure == FileInfoBase.CENTIMETERS) {
-            mStr = " cm^2";
-        } else if (measure == FileInfoBase.METERS) {
-            mStr = " m^2";
-        } else if (measure == FileInfoBase.KILOMETERS) {
-            mStr = " km^2";
-        } else if (measure == FileInfoBase.MILES) {
-            mStr = " miles^2";
-        } else {
-            mStr = "Unknown";
-        }
-
-        return mStr;
-    }
-
+    
     /**
      * Get the direction for accessing each axis of data. This is based on the values in the axisOrientation array.
      * 
@@ -1601,13 +1579,13 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     }
 
     /**
-     * Return whether or not the image is 2.5D (Z resolution).
+     * Return whether or not the image's slices are time based.
      * 
      * @return boolean is 2.5 D
      */
     public final boolean getIs2_5D() {
 
-        if ( (unitsOfMeasure.length > 2) && ( (unitsOfMeasure[2] > 10) && (unitsOfMeasure[2] < 17))) {
+        if ( (unitsOfMeasure.length > 2) && (unitsOfMeasure[2].getType() == UnitType.TIME)) {
             return true;
         }
 
@@ -1903,29 +1881,21 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     }
 
     /**
-     * Returns the transform ID associated with the matrix.
-     * 
-     * @return int transform ID
-     */
-    // public final int getTransformID() {
-    // return transformID;
-    // }
-    /**
      * Returns the units of measure.
      * 
      * @return int[] units (Inches or millimeters);
      */
     public final int[] getUnitsOfMeasure() {
-        for (int i = 0; i < unitsOfMeasure.length; i++) {
-            if (unitsOfMeasure[i] == 0) {
-                unitsOfMeasure[i] = FileInfoBase.UNKNOWN_MEASURE;
-            }
+        int[] unitsInt = new int[unitsOfMeasure.length];
+        for(int i = 0; i < unitsInt.length; i++) {
+            unitsInt[i] = unitsOfMeasure[i].getLegacyNum();
         }
-        return unitsOfMeasure;
+        
+        return unitsInt;
     }
 
     /**
-     * Returns the units of measure.
+     * Returns the units of measure for the given dimension.
      * 
      * @param dim dimension index
      * 
@@ -1935,15 +1905,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         // could try catch array out of bounds ...
         if ( (unitsOfMeasure != null) && (dim < unitsOfMeasure.length) && (dim >= 0)) {
-            if (unitsOfMeasure[dim] == 0) {
-                // = 1
-                unitsOfMeasure[dim] = FileInfoBase.UNKNOWN_MEASURE;
-            }
-            return unitsOfMeasure[dim];
-        } else {
-            Preferences.debug("Units of measure array is null.\n");
-
-            return FileInfoBase.UNKNOWN_MEASURE;
+            return unitsOfMeasure[dim].getLegacyNum();
+        } else { //The selected dimension does not exist in the image
+            return -1;
         }
     }
 
@@ -1953,36 +1917,25 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @return String associated volume unit of measure.
      */
     public String getVolumeUnitsOfMeasureStr() {
-        String mStr = new String();
-        int measure;
-
-        measure = getUnitsOfMeasure(0);
-
-        if (measure == FileInfoBase.INCHES) {
-            mStr = " inches^3";
-        } else if (measure == FileInfoBase.MILS) {
-            mStr = " mils^3";
-        } else if (measure == FileInfoBase.ANGSTROMS) {
-            mStr = " A^3";
-        } else if (measure == FileInfoBase.NANOMETERS) {
-            mStr = " nm^3";
-        } else if (measure == FileInfoBase.MICROMETERS) {
-            mStr = " um^3";
-        } else if (measure == FileInfoBase.MILLIMETERS) {
-            mStr = " mm^3";
-        } else if (measure == FileInfoBase.CENTIMETERS) {
-            mStr = " cm^3";
-        } else if (measure == FileInfoBase.METERS) {
-            mStr = " m^3";
-        } else if (measure == FileInfoBase.KILOMETERS) {
-            mStr = " km^3";
-        } else if (measure == FileInfoBase.MILES) {
-            mStr = " miles^3";
-        } else {
-            mStr = "Unknown";
+        if(getUnitsOfMeasure(0) != getUnitsOfMeasure(1) || getUnitsOfMeasure(1) != getUnitsOfMeasure(2)) {
+            return Unit.getUnitFromLegacyNum(getUnitsOfMeasure(0))+"*"+
+                        Unit.getUnitFromLegacyNum(getUnitsOfMeasure(1))+"*"+
+                        Unit.getUnitFromLegacyNum(getUnitsOfMeasure(2));
         }
-
-        return mStr;
+        return Unit.getUnitFromLegacyNum(getUnitsOfMeasure(0)).toString()+"^3";
+    }
+    
+    /**
+     * Returns the area unit for the data. Assumes both dimensions are the same units.
+     * 
+     * @return String associated volume unit of measure.
+     */
+    public String getAreaUnitsOfMeasureStr() {
+        if(getUnitsOfMeasure(0) != getUnitsOfMeasure(1)) {
+            return Unit.getUnitFromLegacyNum(getUnitsOfMeasure(0))+"*"+
+                            Unit.getUnitFromLegacyNum(getUnitsOfMeasure(1));
+        }
+        return Unit.getUnitFromLegacyNum(getUnitsOfMeasure(0))+"^2";
     }
 
     /**
@@ -2384,14 +2337,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     }
 
     /**
-     * Sets the transform ID for the matrix.
-     * 
-     * @param unitMeasure transform ID
-     */
-    // public void setTransformID(int t_id) {
-    // transformID = t_id;
-    // }
-    /**
      * Sets (copies) units of measure for image.
      * 
      * @param unitMeasure unit of measure for a specified dimension
@@ -2399,7 +2344,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public final void setUnitsOfMeasure(final int[] unitMeasure) {
 
         if (unitMeasure != null) {
-            unitsOfMeasure = unitMeasure.clone();
+            unitsOfMeasure = new Unit[unitMeasure.length];
+            for(int i=0; i<unitMeasure.length; i++) {
+                unitsOfMeasure[i] = Unit.getUnitFromLegacyNum(unitMeasure[i]);
+            }
         }
     }
 
@@ -2410,7 +2358,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param dim Dimension to set unit of measure in
      */
     public final void setUnitsOfMeasure(final int unitMeasure, final int dim) {
-        unitsOfMeasure[dim] = unitMeasure;
+        unitsOfMeasure[dim] = Unit.getUnitFromLegacyNum(unitMeasure);
     }
 
     /**
@@ -2453,8 +2401,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         s += "\nUnits of measure: ";
 
-        for (final int element : unitsOfMeasure) {
-            s += FileInfoBase.getUnitsOfMeasureStr(element) + " ";
+        for (final Unit element : unitsOfMeasure) {
+            s += element + " ";
         }
 
         s += "\nImage orientation: ";
@@ -2476,4 +2424,78 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         return s;
     }
+
+    /**
+     * 
+     * @deprecated should now use enum
+     * @param i
+     * @return
+     */
+    public static String getUnitsOfMeasureAbbrevStr(int i) {
+        return Unit.getUnitFromLegacyNum(i).getAbbrev();
+    }
+
+    /**
+     * @deprecated should now use enum
+     * @param xUnits
+     * @return
+     */
+    public static String getUnitsOfMeasureStr(int xUnits) {
+        return Unit.getUnitFromLegacyNum(xUnits).toString();
+    }
+
+    /**
+     * @deprecated should now use enum
+     * @param selectedOutput
+     * @return
+     */
+    public static int getUnitsOfMeasureFromStr(String selectedOutput) {
+        return Unit.getUnit(selectedOutput).getLegacyNum();
+    }
+
+    /**
+     * @deprecated should now use enum
+     * @param selectedOutput
+     * @return
+     */
+    public static int[] getAllSameDimUnits(int measure) {
+        Unit origUnit = Unit.getUnitFromLegacyNum(measure);
+        Unit[] allSame = UnitType.getUnitsOfType(origUnit.getType());
+        int[] allUnitNum = new int[allSame.length]; 
+        for(int i=0; i<allUnitNum.length; i++) {
+            allUnitNum[i] = allSame[i].getLegacyNum();
+        }
+        return allUnitNum;
+    }
+    
+    /**
+     * Return all the abbreviated units of measure strings as an array.
+     * 
+     * @deprecated should now use enum
+     * @return String[] - array containing the abbreviated strings associated with units of measure.
+     */
+    public static String[] getUnitsOfMeasureAbbrevStr() {
+
+        String[] strAbbrev = new String[Unit.values().length];
+        for(int i=0; i<strAbbrev.length; i++) {
+            strAbbrev[i] = Unit.values()[i].getAbbrev();
+        }
+        
+        return strAbbrev;
+
+    } // end getUnitsOfMeasureAbbrevStr()
+    
+    /**
+     * Return all the units of measure strings as an array.
+     * @deprecated should use enum
+     * @return String[] - array containing the strings associated with units of measure.
+     */
+    public static String[] getUnitsOfMeasureStr() {
+        String[] str = new String[Unit.values().length];
+        for(int i=0; i<str.length; i++) {
+            str[i] = Unit.values()[i].toString();
+        }
+        
+        return str;
+    } // end getUnitsOfMeasureStr()
 }

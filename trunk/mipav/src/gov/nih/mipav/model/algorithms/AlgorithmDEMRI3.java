@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import java.util.BitSet;
@@ -281,23 +282,23 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         tf = srcImage.getFileInfo()[0].getResolutions()[3];
         timeUnits = srcImage.getFileInfo()[0].getUnitsOfMeasure()[3];
         if (!perMinute) { // perSecond
-           switch (timeUnits) {
-               case FileInfoBase.NANOSEC:
+           switch (Unit.getUnitFromLegacyNum(timeUnits)) {
+               case NANOSEC:
                    tf = 1.0E-9 * tf;
                    break;
-               case FileInfoBase.MICROSEC:
+               case MICROSEC:
             	   tf = 1.0E-6 * tf;
             	   break;
-               case FileInfoBase.MILLISEC:
+               case MILLISEC:
             	   tf = 1.0E-3 * tf;
             	   break;
-               case FileInfoBase.SECONDS:
-               case FileInfoBase.UNKNOWN_MEASURE:
+               case SECONDS:
+               case UNKNOWN_MEASURE:
             	   break;
-               case FileInfoBase.MINUTES:
+               case MINUTES:
             	   tf = 60.0 * tf;
             	   break;
-               case FileInfoBase.HOURS:
+               case HOURS:
             	   tf = 3600.0 * tf;
             	   break;
                default:
@@ -307,23 +308,23 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
            }
         }
         else { // perMinute
-        	switch (timeUnits) {
-	            case FileInfoBase.NANOSEC:
+        	switch (Unit.getUnitFromLegacyNum(timeUnits)) {
+	            case NANOSEC:
 	                tf = 1.0E-9 * tf/60.0;
 	                break;
-	            case FileInfoBase.MICROSEC:
+	            case MICROSEC:
 	         	   tf = 1.0E-6 * tf/60.0;
 	         	   break;
-	            case FileInfoBase.MILLISEC:
+	            case MILLISEC:
 	         	   tf = 1.0E-3 * tf/60.0;
 	         	   break;
-	            case FileInfoBase.SECONDS:
-	            case FileInfoBase.UNKNOWN_MEASURE:
+	            case SECONDS:
+	            case UNKNOWN_MEASURE:
 	               tf = tf/60.0;
 	         	   break;
-	            case FileInfoBase.MINUTES:
+	            case MINUTES:
 	         	   break;
-	            case FileInfoBase.HOURS:
+	            case HOURS:
 	         	   tf = 60.0 * tf;
 	         	   break;
 	            default:

@@ -23,6 +23,7 @@ import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileInfoPARREC;
@@ -2644,8 +2645,8 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
         String dir = prFileDir + "_proc" + File.separator + studyName + "_slices" + File.separator;
 		String filename;
 		int[] sliceUnits = new int[2];
-		sliceUnits[0] = FileInfoBase.MILLIMETERS;
-		sliceUnits[1] = FileInfoBase.MILLIMETERS;
+		sliceUnits[0] = Unit.MILLIMETERS.getLegacyNum();
+		sliceUnits[1] = Unit.MILLIMETERS.getLegacyNum();
 		float[] sliceResols = new float[2];
 		float xRes = Float.valueOf(horizontalFOVString)/xDim;
 		float yRes = Float.valueOf(verticalFOVString)/yDim;

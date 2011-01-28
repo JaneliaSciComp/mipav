@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -505,7 +506,7 @@ public class JDialogTalairach extends JDialogBase {
         for (int i = 0; i <= 2; i++) {
             int unit = image.getFileInfo(0).getUnitsOfMeasure(i);
 
-            if (unit != FileInfoBase.MILLIMETERS) {
+            if (unit != Unit.MILLIMETERS.getLegacyNum()) {
                 MipavUtil.displayError("Units of measure[" + i + "] = " + unit +
                                        " instead of the required MILLIMETERS");
 

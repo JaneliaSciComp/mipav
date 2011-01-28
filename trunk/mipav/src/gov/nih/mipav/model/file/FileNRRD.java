@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -1750,70 +1751,70 @@ public class FileNRRD extends FileBase {
 
                         if ((nrrdUnits[i + 1] == null) || (nrrdUnits[i + 1].length() == 0) ||
                                 (nrrdUnits[i + 1].trim().length() == 0)) {
-                            mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                            mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MILLIMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.MILLIMETERS;
+                            mipavUnits[i] = Unit.MILLIMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("IN")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("INCHES"))) {
-                            mipavUnits[i] = FileInfoBase.INCHES;
+                            mipavUnits[i] = Unit.INCHES.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MIL")) ||
                                 (nrrdUnits[i + 1].equalsIgnoreCase("MILS"))) {
-                            mipavUnits[i] = FileInfoBase.MILS;
+                            mipavUnits[i] = Unit.MILS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("CM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("CENTIMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.CENTIMETERS;
+                            mipavUnits[i] = Unit.CENTIMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("A")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("ANGSTROMS"))) {
-                            mipavUnits[i] = FileInfoBase.ANGSTROMS;
+                            mipavUnits[i] = Unit.ANGSTROMS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("NM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("NANOMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.NANOMETERS;
+                            mipavUnits[i] = Unit.NANOMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("UM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MICROMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.MICROMETERS;
+                            mipavUnits[i] = Unit.MICROMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("M")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("METERS"))) {
-                            mipavUnits[i] = FileInfoBase.METERS;
+                            mipavUnits[i] = Unit.METERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("KM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("KILOMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.KILOMETERS;
+                            mipavUnits[i] = Unit.KILOMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MI")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MILES"))) {
-                            mipavUnits[i] = FileInfoBase.MILES;
+                            mipavUnits[i] = Unit.MILES.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("NSEC")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("NANOSECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.NANOSEC;
+                            mipavUnits[i] = Unit.NANOSEC.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("USEC")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MICROSECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.MICROSEC;
+                            mipavUnits[i] = Unit.MICROSEC.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MSEC")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MILLISECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.MILLISEC;
+                            mipavUnits[i] = Unit.MILLISEC.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("SEC")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("SECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.SECONDS;
+                            mipavUnits[i] = Unit.SECONDS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MIN")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MINUTES"))) {
-                            mipavUnits[i] = FileInfoBase.MINUTES;
+                            mipavUnits[i] = Unit.MINUTES.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("HR")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("HOURS"))) {
-                            mipavUnits[i] = FileInfoBase.HOURS;
+                            mipavUnits[i] = Unit.HOURS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("HZ")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("HERTZ"))) {
-                            mipavUnits[i] = FileInfoBase.HZ;
+                            mipavUnits[i] = Unit.HZ.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("PPM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("PARTS PER MILLION"))) {
-                            mipavUnits[i] = FileInfoBase.PPM;
+                            mipavUnits[i] = Unit.PPM.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("RADS")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("RADIANS PER SECOND"))) {
-                            mipavUnits[i] = FileInfoBase.RADS;
+                            mipavUnits[i] = Unit.RADS.getLegacyNum();
                         } else {
-                            mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                            mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                         }
                     } // if (nrrdUnits != null)
                     else { // nrrdUnits == null
-                        mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                        mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     } // nrrdUnits == null
 
                     if (nrrdLabels != null) {
@@ -1850,64 +1851,64 @@ public class FileNRRD extends FileBase {
 
                         if ((nrrdUnits[i] == null) || (nrrdUnits[i].length() == 0) ||
                                 (nrrdUnits[i].trim().length() == 0)) {
-                            mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                            mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("MM")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("MILLIMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.MILLIMETERS;
+                            mipavUnits[i] = Unit.MILLIMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("IN")) || (nrrdUnits[i].equalsIgnoreCase("INCHES"))) {
-                            mipavUnits[i] = FileInfoBase.INCHES;
+                            mipavUnits[i] = Unit.INCHES.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("MIL")) || (nrrdUnits[i].equalsIgnoreCase("MILS"))) {
-                            mipavUnits[i] = FileInfoBase.MILS;
+                            mipavUnits[i] = Unit.MILS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("CM")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("CENTIMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.CENTIMETERS;
+                            mipavUnits[i] = Unit.CENTIMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("A")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("ANGSTROMS"))) {
-                            mipavUnits[i] = FileInfoBase.ANGSTROMS;
+                            mipavUnits[i] = Unit.ANGSTROMS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("NM")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("NANOMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.NANOMETERS;
+                            mipavUnits[i] = Unit.NANOMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("UM")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("MICROMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.MICROMETERS;
+                            mipavUnits[i] = Unit.MICROMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("M")) || (nrrdUnits[i].equalsIgnoreCase("METERS"))) {
-                            mipavUnits[i] = FileInfoBase.METERS;
+                            mipavUnits[i] = Unit.METERS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("KM")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("KILOMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.KILOMETERS;
+                            mipavUnits[i] = Unit.KILOMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("MI")) || (nrrdUnits[i].equalsIgnoreCase("MILES"))) {
-                            mipavUnits[i] = FileInfoBase.MILES;
+                            mipavUnits[i] = Unit.MILES.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("NSEC")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("NANOSECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.NANOSEC;
+                            mipavUnits[i] = Unit.NANOSEC.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("USEC")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("MICROSECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.MICROSEC;
+                            mipavUnits[i] = Unit.MICROSEC.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("MSEC")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("MILLISECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.MILLISEC;
+                            mipavUnits[i] = Unit.MILLISEC.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("SEC")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("SECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.SECONDS;
+                            mipavUnits[i] = Unit.SECONDS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("MIN")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("MINUTES"))) {
-                            mipavUnits[i] = FileInfoBase.MINUTES;
+                            mipavUnits[i] = Unit.MINUTES.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("HR")) || (nrrdUnits[i].equalsIgnoreCase("HOURS"))) {
-                            mipavUnits[i] = FileInfoBase.HOURS;
+                            mipavUnits[i] = Unit.HOURS.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("HZ")) || (nrrdUnits[i].equalsIgnoreCase("HERTZ"))) {
-                            mipavUnits[i] = FileInfoBase.HZ;
+                            mipavUnits[i] = Unit.HZ.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("PPM")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("PARTS PER MILLION"))) {
-                            mipavUnits[i] = FileInfoBase.PPM;
+                            mipavUnits[i] = Unit.PPM.getLegacyNum();
                         } else if ((nrrdUnits[i].equalsIgnoreCase("RADS")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("RADIANS PER SECOND"))) {
-                            mipavUnits[i] = FileInfoBase.RADS;
+                            mipavUnits[i] = Unit.RADS.getLegacyNum();
                         } else {
-                            mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                            mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                         }
                     } // if (nrrdUnits != null)
                     else { // nrrdUnits == null
-                        mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                        mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     } // else nrrdUnits == null
 
                     if (nrrdLabels != null) {
@@ -1942,70 +1943,70 @@ public class FileNRRD extends FileBase {
 
                         if ((nrrdUnits[i + 1] == null) || (nrrdUnits[i + 1].length() == 0) ||
                                 (nrrdUnits[i + 1].trim().length() == 0)) {
-                            mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                            mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MILLIMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.MILLIMETERS;
+                            mipavUnits[i] = Unit.MILLIMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("IN")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("INCHES"))) {
-                            mipavUnits[i] = FileInfoBase.INCHES;
+                            mipavUnits[i] = Unit.INCHES.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MIL")) ||
                                 (nrrdUnits[i + 1].equalsIgnoreCase("MILS"))) {
-                            mipavUnits[i] = FileInfoBase.MILS;
+                            mipavUnits[i] = Unit.MILS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("CM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("CENTIMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.CENTIMETERS;
+                            mipavUnits[i] = Unit.CENTIMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("A")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("ANGSTROMS"))) {
-                            mipavUnits[i] = FileInfoBase.ANGSTROMS;
+                            mipavUnits[i] = Unit.ANGSTROMS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("NM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("NANOMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.NANOMETERS;
+                            mipavUnits[i] = Unit.NANOMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("UM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MICROMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.MICROMETERS;
+                            mipavUnits[i] = Unit.MICROMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("M")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("METERS"))) {
-                            mipavUnits[i] = FileInfoBase.METERS;
+                            mipavUnits[i] = Unit.METERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("KM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("KILOMETERS"))) {
-                            mipavUnits[i] = FileInfoBase.KILOMETERS;
+                            mipavUnits[i] = Unit.KILOMETERS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MI")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MILES"))) {
-                            mipavUnits[i] = FileInfoBase.MILES;
+                            mipavUnits[i] = Unit.MILES.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("NSEC")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("NANOSECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.NANOSEC;
+                            mipavUnits[i] = Unit.NANOSEC.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("USEC")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MICROSECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.MICROSEC;
+                            mipavUnits[i] = Unit.MICROSEC.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MSEC")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MILLISECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.MILLISEC;
+                            mipavUnits[i] = Unit.MILLISEC.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("SEC")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("SECONDS"))) {
-                            mipavUnits[i] = FileInfoBase.SECONDS;
+                            mipavUnits[i] = Unit.SECONDS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MIN")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("MINUTES"))) {
-                            mipavUnits[i] = FileInfoBase.MINUTES;
+                            mipavUnits[i] = Unit.MINUTES.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("HR")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("HOURS"))) {
-                            mipavUnits[i] = FileInfoBase.HOURS;
+                            mipavUnits[i] = Unit.HOURS.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("HZ")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("HERTZ"))) {
-                            mipavUnits[i] = FileInfoBase.HZ;
+                            mipavUnits[i] = Unit.HZ.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("PPM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("PARTS PER MILLION"))) {
-                            mipavUnits[i] = FileInfoBase.PPM;
+                            mipavUnits[i] = Unit.PPM.getLegacyNum();
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("RADS")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("RADIANS PER SECOND"))) {
-                            mipavUnits[i] = FileInfoBase.RADS;
+                            mipavUnits[i] = Unit.RADS.getLegacyNum();
                         } else {
-                            mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                            mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                         }
                     } // if (nrrdUnits != null)
                     else { // nrrdUnits == null
-                        mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                        mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     } // nrrdUnits == null
 
                     if (nrrdLabels != null) {
@@ -2060,70 +2061,70 @@ public class FileNRRD extends FileBase {
 
                     if ((nrrdUnits[i + 1] == null) || (nrrdUnits[i + 1].length() == 0) ||
                             (nrrdUnits[i + 1].trim().length() == 0)) {
-                        mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                        mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MM")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("MILLIMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.MILLIMETERS;
+                        mipavUnits[i] = Unit.MILLIMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("IN")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("INCHES"))) {
-                        mipavUnits[i] = FileInfoBase.INCHES;
+                        mipavUnits[i] = Unit.INCHES.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MIL")) ||
                             (nrrdUnits[i + 1].equalsIgnoreCase("MILS"))) {
-                        mipavUnits[i] = FileInfoBase.MILS;
+                        mipavUnits[i] = Unit.MILS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("CM")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("CENTIMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.CENTIMETERS;
+                        mipavUnits[i] = Unit.CENTIMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("A")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("ANGSTROMS"))) {
-                        mipavUnits[i] = FileInfoBase.ANGSTROMS;
+                        mipavUnits[i] = Unit.ANGSTROMS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("NM")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("NANOMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.NANOMETERS;
+                        mipavUnits[i] = Unit.NANOMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("UM")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("MICROMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.MICROMETERS;
+                        mipavUnits[i] = Unit.MICROMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("M")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("METERS"))) {
-                        mipavUnits[i] = FileInfoBase.METERS;
+                        mipavUnits[i] = Unit.METERS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("KM")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("KILOMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.KILOMETERS;
+                        mipavUnits[i] = Unit.KILOMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MI")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("MILES"))) {
-                        mipavUnits[i] = FileInfoBase.MILES;
+                        mipavUnits[i] = Unit.MILES.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("NSEC")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("NANOSECONDS"))) {
-                        mipavUnits[i] = FileInfoBase.NANOSEC;
+                        mipavUnits[i] = Unit.NANOSEC.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("USEC")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("MICROSECONDS"))) {
-                        mipavUnits[i] = FileInfoBase.MICROSEC;
+                        mipavUnits[i] = Unit.MICROSEC.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MSEC")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("MILLISECONDS"))) {
-                        mipavUnits[i] = FileInfoBase.MILLISEC;
+                        mipavUnits[i] = Unit.MILLISEC.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("SEC")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("SECONDS"))) {
-                        mipavUnits[i] = FileInfoBase.SECONDS;
+                        mipavUnits[i] = Unit.SECONDS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MIN")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("MINUTES"))) {
-                        mipavUnits[i] = FileInfoBase.MINUTES;
+                        mipavUnits[i] = Unit.MINUTES.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("HR")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("HOURS"))) {
-                        mipavUnits[i] = FileInfoBase.HOURS;
+                        mipavUnits[i] = Unit.HOURS.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("HZ")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("HERTZ"))) {
-                        mipavUnits[i] = FileInfoBase.HZ;
+                        mipavUnits[i] = Unit.HZ.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("PPM")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("PARTS PER MILLION"))) {
-                        mipavUnits[i] = FileInfoBase.PPM;
+                        mipavUnits[i] = Unit.PPM.getLegacyNum();
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("RADS")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("RADIANS PER SECOND"))) {
-                        mipavUnits[i] = FileInfoBase.RADS;
+                        mipavUnits[i] = Unit.RADS.getLegacyNum();
                     } else {
-                        mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                        mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     }
                 } // if (nrrdUnits != null)
                 else { // nrrdUnits == null
-                    mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                    mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 } // nrrdUnits == null
 
                 if (nrrdLabels != null) {
@@ -2168,59 +2169,59 @@ public class FileNRRD extends FileBase {
                 if (nrrdUnits != null) {
 
                     if ((nrrdUnits[i] == null) || (nrrdUnits[i].length() == 0) || (nrrdUnits[i].trim().length() == 0)) {
-                        mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                        mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("MM")) ||
                                    (nrrdUnits[i].equalsIgnoreCase("MILLIMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.MILLIMETERS;
+                        mipavUnits[i] = Unit.MILLIMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("IN")) || (nrrdUnits[i].equalsIgnoreCase("INCHES"))) {
-                        mipavUnits[i] = FileInfoBase.INCHES;
+                        mipavUnits[i] = Unit.INCHES.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("MIL")) || (nrrdUnits[i].equalsIgnoreCase("MILS"))) {
-                        mipavUnits[i] = FileInfoBase.MILS;
+                        mipavUnits[i] = Unit.MILS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("CM")) ||
                                    (nrrdUnits[i].equalsIgnoreCase("CENTIMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.CENTIMETERS;
+                        mipavUnits[i] = Unit.CENTIMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("A")) || (nrrdUnits[i].equalsIgnoreCase("ANGSTROMS"))) {
-                        mipavUnits[i] = FileInfoBase.ANGSTROMS;
+                        mipavUnits[i] = Unit.ANGSTROMS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("NM")) || (nrrdUnits[i].equalsIgnoreCase("NANOMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.NANOMETERS;
+                        mipavUnits[i] = Unit.NANOMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("UM")) ||
                                    (nrrdUnits[i].equalsIgnoreCase("MICROMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.MICROMETERS;
+                        mipavUnits[i] = Unit.MICROMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("M")) || (nrrdUnits[i].equalsIgnoreCase("METERS"))) {
-                        mipavUnits[i] = FileInfoBase.METERS;
+                        mipavUnits[i] = Unit.METERS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("KM")) || (nrrdUnits[i].equalsIgnoreCase("KILOMETERS"))) {
-                        mipavUnits[i] = FileInfoBase.KILOMETERS;
+                        mipavUnits[i] = Unit.KILOMETERS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("MI")) || (nrrdUnits[i].equalsIgnoreCase("MILES"))) {
-                        mipavUnits[i] = FileInfoBase.MILES;
+                        mipavUnits[i] = Unit.MILES.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("NSEC")) ||
                                    (nrrdUnits[i].equalsIgnoreCase("NANOSECONDS"))) {
-                        mipavUnits[i] = FileInfoBase.NANOSEC;
+                        mipavUnits[i] = Unit.NANOSEC.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("USEC")) ||
                                    (nrrdUnits[i].equalsIgnoreCase("MICROSECONDS"))) {
-                        mipavUnits[i] = FileInfoBase.MICROSEC;
+                        mipavUnits[i] = Unit.MICROSEC.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("MSEC")) ||
                                    (nrrdUnits[i].equalsIgnoreCase("MILLISECONDS"))) {
-                        mipavUnits[i] = FileInfoBase.MILLISEC;
+                        mipavUnits[i] = Unit.MILLISEC.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("SEC")) || (nrrdUnits[i].equalsIgnoreCase("SECONDS"))) {
-                        mipavUnits[i] = FileInfoBase.SECONDS;
+                        mipavUnits[i] = Unit.SECONDS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("MIN")) || (nrrdUnits[i].equalsIgnoreCase("MINUTES"))) {
-                        mipavUnits[i] = FileInfoBase.MINUTES;
+                        mipavUnits[i] = Unit.MINUTES.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("HR")) || (nrrdUnits[i].equalsIgnoreCase("HOURS"))) {
-                        mipavUnits[i] = FileInfoBase.HOURS;
+                        mipavUnits[i] = Unit.HOURS.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("HZ")) || (nrrdUnits[i].equalsIgnoreCase("HERTZ"))) {
-                        mipavUnits[i] = FileInfoBase.HZ;
+                        mipavUnits[i] = Unit.HZ.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("PPM")) ||
                                    (nrrdUnits[i].equalsIgnoreCase("PARTS PER MILLION"))) {
-                        mipavUnits[i] = FileInfoBase.PPM;
+                        mipavUnits[i] = Unit.PPM.getLegacyNum();
                     } else if ((nrrdUnits[i].equalsIgnoreCase("RADS")) ||
                                    (nrrdUnits[i].equalsIgnoreCase("RADIANS PER SECOND"))) {
-                        mipavUnits[i] = FileInfoBase.RADS;
+                        mipavUnits[i] = Unit.RADS.getLegacyNum();
                     } else {
-                        mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                        mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     }
                 } // if (nrrdUnits != null)
                 else { // nrrdUnits == null
-                    mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                    mipavUnits[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
                 } // else nrrdUnits == null
 
                 if (nrrdLabels != null) {
@@ -3218,13 +3219,13 @@ public class FileNRRD extends FileBase {
     		spaceString = "left-posterior-superior";
     		if(image.getNDims() == 4) {
     			if(image.getUnitsOfMeasure().length >= 4) {
-	    			if(image.getUnitsOfMeasure(3) == FileInfoBase.HOURS || 
-	    					image.getUnitsOfMeasure(3) == FileInfoBase.HZ ||
-	    					image.getUnitsOfMeasure(3) == FileInfoBase.MICROSEC ||
-	    					image.getUnitsOfMeasure(3) == FileInfoBase.MILLISEC ||
-	    					image.getUnitsOfMeasure(3) == FileInfoBase.MINUTES ||
-	    					image.getUnitsOfMeasure(3) == FileInfoBase.NANOSEC||
-	    					image.getUnitsOfMeasure(3) == FileInfoBase.SECONDS) {
+	    			if(image.getUnitsOfMeasure(3) == Unit.HOURS.getLegacyNum() || 
+	    					image.getUnitsOfMeasure(3) == Unit.HZ.getLegacyNum() ||
+	    					image.getUnitsOfMeasure(3) == Unit.MICROSEC.getLegacyNum() ||
+	    					image.getUnitsOfMeasure(3) == Unit.MILLISEC.getLegacyNum() ||
+	    					image.getUnitsOfMeasure(3) == Unit.MINUTES.getLegacyNum() ||
+	    					image.getUnitsOfMeasure(3) == Unit.NANOSEC.getLegacyNum()||
+	    					image.getUnitsOfMeasure(3) == Unit.SECONDS.getLegacyNum()) {
 	    				spaceString = spaceString + "-time";
 	    				isTime = true;	
 	    			}
@@ -3373,41 +3374,41 @@ public class FileNRRD extends FileBase {
     	spaceUnitsOfMeas = image.getFileInfo(0).getUnitsOfMeasure();
     	StringBuffer sb = new StringBuffer();
     	String s = "";
-    	if(spaceUnitsOfMeas[0] != FileInfoBase.UNKNOWN_MEASURE) {
+    	if(spaceUnitsOfMeas[0] != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
 	    	for(int i=0;(i<spaceUnitsOfMeas.length) && (i < image.getNDims());i++) {
-	    		if(spaceUnitsOfMeas[i] == FileInfoBase.MILLIMETERS) {
+	    		if(spaceUnitsOfMeas[i] == Unit.MILLIMETERS.getLegacyNum()) {
 	    			s = "\"mm\"";
-	    		} else if (spaceUnitsOfMeas[i] == FileInfoBase.INCHES) {
+	    		} else if (spaceUnitsOfMeas[i] == Unit.INCHES.getLegacyNum()) {
 	    			s = "\"in\"";
-                }else if (spaceUnitsOfMeas[i] == FileInfoBase.MILS) {
+                }else if (spaceUnitsOfMeas[i] == Unit.MILS.getLegacyNum()) {
                     s = "\"mil\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.CENTIMETERS) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.CENTIMETERS.getLegacyNum()) {
 	    			s = "\"cm\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.ANGSTROMS) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.ANGSTROMS.getLegacyNum()) {
 	    			s = "\"a\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.NANOMETERS) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.NANOMETERS.getLegacyNum()) {
 	    			s = "\"nm\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MICROMETERS) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.MICROMETERS.getLegacyNum()) {
 	    			s = "\"um\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.METERS) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.METERS.getLegacyNum()) {
 	    			s = "\"m\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.KILOMETERS) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.KILOMETERS.getLegacyNum()) {
 	    			s = "\"km\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MILES) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.MILES.getLegacyNum()) {
 	    			s = "\"mi\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.SECONDS) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.SECONDS.getLegacyNum()) {
 	    			s = "\"sec\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.NANOSEC) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.NANOSEC.getLegacyNum()) {
 	    			s = "\"nsec\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MICROSEC) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.MICROSEC.getLegacyNum()) {
 	    			s = "\"usec\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MILLISEC) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.MILLISEC.getLegacyNum()) {
 	    			s = "\"msec\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MINUTES) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.MINUTES.getLegacyNum()) {
 	    			s = "\"min\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.HOURS) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.HOURS.getLegacyNum()) {
 	    			s = "\"hr\"";
-	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.HZ) {
+	    		}else if (spaceUnitsOfMeas[i] == Unit.HZ.getLegacyNum()) {
 	    			s = "\"hz\"";
 	    		}
 	    		sb.append(s);

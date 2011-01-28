@@ -4,6 +4,7 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.rawjp2.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -1174,9 +1175,9 @@ public class FileDicom extends FileDicomBase {
                 Preferences.debug("metalength = " + metaGroupLength + " location " + getFilePointer() + "\n",
                         Preferences.DEBUG_FILEIO);
             } else if (name.equals("0018,602C")) {
-                fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 0);
+                fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 0);
             } else if (name.equals("0018,602E")) {
-                fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 1);
+                fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 1);
             } else if (name.equals("0004,1220")) {
                 Preferences.debug("DICOMDIR Found! \n");
                 flag = false;
@@ -1625,15 +1626,15 @@ public class FileDicom extends FileDicomBase {
 
         }
 
-        if (fileInfo.getUnitsOfMeasure(0) != FileInfoBase.CENTIMETERS) {
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
+        if (fileInfo.getUnitsOfMeasure(0) != Unit.CENTIMETERS.getLegacyNum()) {
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
         }
 
-        if (fileInfo.getUnitsOfMeasure(1) != FileInfoBase.CENTIMETERS) {
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+        if (fileInfo.getUnitsOfMeasure(1) != Unit.CENTIMETERS.getLegacyNum()) {
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
         }
 
-        fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+        fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
 
         // Needed for correct display of the image
         // set to null if there is no pixel pad value
@@ -1807,15 +1808,15 @@ public class FileDicom extends FileDicomBase {
             }
         }
 
-        if (fileInfo.getUnitsOfMeasure(0) != FileInfoBase.CENTIMETERS) {
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
+        if (fileInfo.getUnitsOfMeasure(0) != Unit.CENTIMETERS.getLegacyNum()) {
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
         }
 
-        if (fileInfo.getUnitsOfMeasure(1) != FileInfoBase.CENTIMETERS) {
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+        if (fileInfo.getUnitsOfMeasure(1) != Unit.CENTIMETERS.getLegacyNum()) {
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
         }
 
-        fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+        fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
 
         // Needed for correct display of the image
         // set to null if there is no pixel pad value
@@ -2000,15 +2001,15 @@ public class FileDicom extends FileDicomBase {
             }
         }
 
-        if (fileInfo.getUnitsOfMeasure(0) != FileInfoBase.CENTIMETERS) {
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
+        if (fileInfo.getUnitsOfMeasure(0) != Unit.CENTIMETERS.getLegacyNum()) {
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
         }
 
-        if (fileInfo.getUnitsOfMeasure(1) != FileInfoBase.CENTIMETERS) {
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+        if (fileInfo.getUnitsOfMeasure(1) != Unit.CENTIMETERS.getLegacyNum()) {
+            fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
         }
 
-        fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+        fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
 
         // Needed for correct display of the image
         // set to null if there is no pixel pad value

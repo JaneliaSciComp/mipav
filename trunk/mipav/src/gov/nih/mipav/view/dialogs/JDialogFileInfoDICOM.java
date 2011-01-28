@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
@@ -1804,19 +1805,19 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         tagsModel.setValueAt("Unit of measure", i, 2);
         tagsModel.setValueAt(null, i, 0);
 
-        if (measure == FileInfoBase.INCHES) {
+        if (measure == Unit.INCHES.getLegacyNum()) {
             tagsModel.setValueAt("Inches per pixel", i, 3);
-        } else if (measure == FileInfoBase.MILS) {
+        } else if (measure == Unit.MILS.getLegacyNum()) {
             tagsModel.setValueAt("Mils per pixel", i, 3);
-        } else if (measure == FileInfoBase.MILLIMETERS) {
+        } else if (measure == Unit.MILLIMETERS.getLegacyNum()) {
             tagsModel.setValueAt("Millimeters per pixel", i, 3);
-        } else if (measure == FileInfoBase.CENTIMETERS) {
+        } else if (measure == Unit.CENTIMETERS.getLegacyNum()) {
             tagsModel.setValueAt("Centimeters per pixel", i, 3);
-        } else if (measure == FileInfoBase.METERS) {
+        } else if (measure == Unit.METERS.getLegacyNum()) {
             tagsModel.setValueAt("Meters per pixel", i, 3);
-        } else if (measure == FileInfoBase.KILOMETERS) {
+        } else if (measure == Unit.KILOMETERS.getLegacyNum()) {
             tagsModel.setValueAt("Kilometers per pixel", i, 3);
-        } else if (measure == FileInfoBase.MILES) {
+        } else if (measure == Unit.MILES.getLegacyNum()) {
             tagsModel.setValueAt("Miles per pixel", i, 3);
         } else {
             tagsModel.setValueAt("Unknown", i, 3);

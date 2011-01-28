@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -3157,9 +3158,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         String sizeString = null;
 
         if (frame instanceof ViewJFrameImage) {
-            unitString = new String(((ViewJFrameImage) frame).getComponentImage().getActiveImage().getFileInfo()[0].sUnits[((ViewJFrameImage)
-                                                                                                                                frame)
-                                                                                                                               .getComponentImage().getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0)]);
+            unitString = Unit.getUnitFromLegacyNum(((ViewJFrameImage)frame).getComponentImage().getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0)).toString();
 
             if (((ViewJFrameImage) frame).getComponentImage().getActiveImage().getNDims() == 2) {
                 sizeString = unitString + "^2";
@@ -3167,9 +3166,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 sizeString = unitString + "^3";
             }
         } else if (frame instanceof ViewJFramePaintVasculature) {
-            unitString = new String(((ViewJFramePaintVasculature) frame).getComponentImage().getActiveImage().getFileInfo()[0].sUnits[((ViewJFramePaintVasculature)
-                                                                                                                                           frame)
-                                                                                                                                          .getComponentImage().getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0)]);
+            unitString = Unit.getUnitFromLegacyNum(((ViewJFramePaintVasculature)frame).getComponentImage().getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0)).toString();
 
             if (((ViewJFramePaintVasculature) frame).getComponentImage().getActiveImage().getNDims() == 2) {
                 sizeString = unitString + "^2";
@@ -3177,17 +3174,15 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 sizeString = unitString + "^3";
             }
         } else if (frame instanceof ViewJFrameTriImage) {
-            unitString = new String(((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getFileInfo()[0].sUnits[((ViewJFrameTriImage)
-                                                                                                                                                       frame)
-                                                                                                                                                      .getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0)]);
+            unitString = Unit.getUnitFromLegacyNum(((ViewJFrameTriImage)frame).getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0)).toString();
             sizeString = unitString + "^3";
         } else if ( (frame == null) && (surfacePaint != null) ) {
-            unitString = new String(surfacePaint.getPaintImage().getFileInfo()[0].sUnits[surfacePaint.getPaintImage().getFileInfo()[0].getUnitsOfMeasure(0)]);
+            unitString = Unit.getUnitFromLegacyNum(surfacePaint.getPaintImage().getFileInfo()[0].getUnitsOfMeasure(0)).toString();
             if (surfacePaint.getPaintImage().getNDims() == 3) {
                 sizeString = unitString + "^3";
             }
         } else if ( (frame == null) && (surfacePaint_WM != null) ) {
-            unitString = new String(surfacePaint_WM.getPaintImage().getFileInfo()[0].sUnits[surfacePaint_WM.getPaintImage().getFileInfo()[0].getUnitsOfMeasure(0)]);
+            unitString = Unit.getUnitFromLegacyNum(surfacePaint_WM.getPaintImage().getFileInfo()[0].getUnitsOfMeasure(0)).toString();
             if (surfacePaint_WM.getPaintImage().getNDims() == 3) {
                 sizeString = unitString + "^3";
             }

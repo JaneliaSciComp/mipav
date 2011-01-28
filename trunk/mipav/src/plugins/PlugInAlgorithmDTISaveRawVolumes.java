@@ -8,6 +8,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileRaw;
 import gov.nih.mipav.model.file.FileUtility;
@@ -278,9 +279,9 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
         float[] sliceResols = new float[2];
         int[] sliceUnits = new int[2];
         sliceResols[0] = xRes;
-        sliceUnits[0] = FileInfoBase.MILLIMETERS;
+        sliceUnits[0] = Unit.MILLIMETERS.getLegacyNum();
         sliceResols[1] = yRes;
-        sliceUnits[1] = FileInfoBase.MILLIMETERS;
+        sliceUnits[1] = Unit.MILLIMETERS.getLegacyNum();
         float[] startLocs = new float[3];
 		String saveDir = parentDir + File.separator + studyName + "_NIFTI-xyz" + File.separator;
 		new File(saveDir).mkdirs();
@@ -334,13 +335,13 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 
 					//set up additional info needed for file info
 					volResols[0] = xRes;
-					volUnits[0] = FileInfoBase.MILLIMETERS;
+					volUnits[0] = Unit.MILLIMETERS.getLegacyNum();
 			        startLocs[0] = 0;
 			        volResols[1] = yRes;
-			        volUnits[1] = FileInfoBase.MILLIMETERS;
+			        volUnits[1] = Unit.MILLIMETERS.getLegacyNum();
 			        startLocs[1] = 0;
 			        volResols[2] = zRes;
-			        volUnits[2] = FileInfoBase.MILLIMETERS;
+			        volUnits[2] = Unit.MILLIMETERS.getLegacyNum();
 			        startLocs[2] = 0;
 			        destImage.getFileInfo(slice).setResolutions(volResols);
 	                destImage.getFileInfo(slice).setUnitsOfMeasure(volUnits);
@@ -429,9 +430,9 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
         float[] sliceResols = new float[2];
         int[] sliceUnits = new int[2];
         sliceResols[0] = xRes;
-        sliceUnits[0] = FileInfoBase.MILLIMETERS;
+        sliceUnits[0] = Unit.MILLIMETERS.getLegacyNum();
         sliceResols[1] = xRes;
-        sliceUnits[1] = FileInfoBase.MILLIMETERS;
+        sliceUnits[1] = Unit.MILLIMETERS.getLegacyNum();
         float[] startLocs = new float[3];
 		String saveDir = parentDir + File.separator + studyName + "_NIFTI-xyr" + File.separator;
 		new File(saveDir).mkdirs();
@@ -485,13 +486,13 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 
 					//set up additional info needed for file info
 					volResols[0] = xRes;
-					volUnits[0] = FileInfoBase.MILLIMETERS;
+					volUnits[0] = Unit.MILLIMETERS.getLegacyNum();
 			        startLocs[0] = 0;
 			        volResols[1] = yRes;
-			        volUnits[1] = FileInfoBase.MILLIMETERS;
+			        volUnits[1] = Unit.MILLIMETERS.getLegacyNum();
 			        startLocs[1] = 0;
 			        volResols[2] = 0;
-			        volUnits[2] = FileInfoBase.MILLIMETERS;
+			        volUnits[2] = Unit.MILLIMETERS.getLegacyNum();
 			        startLocs[2] = 0;
 			        destImage.getFileInfo(volSlice).setResolutions(volResols);
 	                destImage.getFileInfo(volSlice).setUnitsOfMeasure(volUnits);

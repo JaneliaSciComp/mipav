@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -612,7 +613,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
         gbc.gridx = 0;
         gbc.gridy = 1;
         labelMaskSD = createLabel("Mask Gaussian SD (0 for flat response) " +
-                                  FileInfoBase.sUnits[image.getFileInfo()[0].getUnitsOfMeasure()[0]] + " ");
+                                  Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure()[0]).toString() + " ");
         optionsPanel.add(labelMaskSD, gbc);
 
         gbc.gridx = 1;

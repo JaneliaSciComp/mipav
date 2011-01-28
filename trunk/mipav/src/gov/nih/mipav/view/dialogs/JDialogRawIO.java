@@ -222,8 +222,8 @@ public class JDialogRawIO extends JDialogBase {
             }
 
             // button = (JRadioButton)group2.getSelection();
-            // if (radioMM.isSelected())   unitOfMeasure = FileInfoBase.MILLIMETERS;
-            // else                        unitOfMeasure = FileInfoBase.INCHES;
+            // if (radioMM.isSelected())   unitOfMeasure = Unit.MILLIMETERS.getLegacyNum();
+            // else                        unitOfMeasure = Unit.INCHES.getLegacyNum();
 
             for (int k = 0; k < unitsOfMeasure.length; k++) {
                 unitsOfMeasure[k] = -1;

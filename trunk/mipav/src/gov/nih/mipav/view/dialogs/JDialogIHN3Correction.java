@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -523,25 +524,25 @@ public class JDialogIHN3Correction extends JDialogScriptableBase
         textEndTol.setText("0.001");
         textEndTol.setFont(serif12);
 
-        if (resXUnit == FileInfoBase.MILLIMETERS) {
+        if (resXUnit == Unit.MILLIMETERS.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (mm.)");
-        } else if (resXUnit == FileInfoBase.INCHES) {
+        } else if (resXUnit == Unit.INCHES.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (in.)");
-        } else if (resXUnit == FileInfoBase.MILS) {
+        } else if (resXUnit == Unit.MILS.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (mil.)");
-        } else if (resXUnit == FileInfoBase.CENTIMETERS) {
+        } else if (resXUnit == Unit.CENTIMETERS.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (cm.)");
-        } else if (resXUnit == FileInfoBase.ANGSTROMS) {
+        } else if (resXUnit == Unit.ANGSTROMS.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (A.)");
-        } else if (resXUnit == FileInfoBase.NANOMETERS) {
+        } else if (resXUnit == Unit.NANOMETERS.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (nm.)");
-        } else if (resXUnit == FileInfoBase.MICROMETERS) {
+        } else if (resXUnit == Unit.MICROMETERS.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (um.)");
-        } else if (resXUnit == FileInfoBase.METERS) {
+        } else if (resXUnit == Unit.METERS.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (m.)");
-        } else if (resXUnit == FileInfoBase.KILOMETERS) {
+        } else if (resXUnit == Unit.KILOMETERS.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (km.)");
-        } else if (resXUnit == FileInfoBase.MILES) {
+        } else if (resXUnit == Unit.MILES.getLegacyNum()) {
             labelDistance = new JLabel("Field distance (mi.)");
         }
 
@@ -731,12 +732,12 @@ public class JDialogIHN3Correction extends JDialogScriptableBase
         orgResol = new float[image.getNDims()];
         resXUnit = image.getFileInfo(0).getUnitsOfMeasure(0);
 
-        if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.MILS) ||
-                (resXUnit == FileInfoBase.CENTIMETERS) ||
-                (resXUnit == FileInfoBase.ANGSTROMS) || (resXUnit == FileInfoBase.NANOMETERS) ||
-                (resXUnit == FileInfoBase.MICROMETERS) || (resXUnit == FileInfoBase.MILLIMETERS) ||
-                (resXUnit == FileInfoBase.METERS) || (resXUnit == FileInfoBase.KILOMETERS) ||
-                (resXUnit == FileInfoBase.MILES)) {
+        if ((resXUnit == Unit.INCHES.getLegacyNum()) || (resXUnit == Unit.MILS.getLegacyNum()) ||
+                (resXUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.ANGSTROMS.getLegacyNum()) || (resXUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.MICROMETERS.getLegacyNum()) || (resXUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.METERS.getLegacyNum()) || (resXUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.MILES.getLegacyNum())) {
             orgResol[0] = image.getFileInfo(0).getResolutions()[0];
 
             if (orgResol[0] <= 0.0f) {
@@ -745,23 +746,23 @@ public class JDialogIHN3Correction extends JDialogScriptableBase
             }
 
             // Be ready for conversions between different units.
-            if (resXUnit == FileInfoBase.INCHES) {
+            if (resXUnit == Unit.INCHES.getLegacyNum()) {
                 convertTomm = 25.4f;
-            } else if (resXUnit == FileInfoBase.MILS) {
+            } else if (resXUnit == Unit.MILS.getLegacyNum()) {
                 convertTomm = 2.54e-2f;
-            } else if (resXUnit == FileInfoBase.CENTIMETERS) {
+            } else if (resXUnit == Unit.CENTIMETERS.getLegacyNum()) {
                 convertTomm = 10.0f;
-            } else if (resXUnit == FileInfoBase.ANGSTROMS) {
+            } else if (resXUnit == Unit.ANGSTROMS.getLegacyNum()) {
                 convertTomm = 1.0e-7f;
-            } else if (resXUnit == FileInfoBase.NANOMETERS) {
+            } else if (resXUnit == Unit.NANOMETERS.getLegacyNum()) {
                 convertTomm = 1.0e-6f;
-            } else if (resXUnit == FileInfoBase.MICROMETERS) {
+            } else if (resXUnit == Unit.MICROMETERS.getLegacyNum()) {
                 convertTomm = 1.0e-3f;
-            } else if (resXUnit == FileInfoBase.METERS) {
+            } else if (resXUnit == Unit.METERS.getLegacyNum()) {
                 convertTomm = 1.0e3f;
-            } else if (resXUnit == FileInfoBase.KILOMETERS) {
+            } else if (resXUnit == Unit.KILOMETERS.getLegacyNum()) {
                 convertTomm = 1.0e6f;
-            } else if (resXUnit == FileInfoBase.MILES) {
+            } else if (resXUnit == Unit.MILES.getLegacyNum()) {
                 convertTomm = 1.6093e6f;
             }
         } else {
@@ -772,12 +773,12 @@ public class JDialogIHN3Correction extends JDialogScriptableBase
 
         resYUnit = image.getFileInfo(0).getUnitsOfMeasure(1);
 
-        if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.MILS) ||
-                (resYUnit == FileInfoBase.CENTIMETERS) ||
-                (resYUnit == FileInfoBase.ANGSTROMS) || (resYUnit == FileInfoBase.NANOMETERS) ||
-                (resYUnit == FileInfoBase.MICROMETERS) || (resYUnit == FileInfoBase.MILLIMETERS) ||
-                (resYUnit == FileInfoBase.METERS) || (resYUnit == FileInfoBase.KILOMETERS) ||
-                (resYUnit == FileInfoBase.MILES)) {
+        if ((resYUnit == Unit.INCHES.getLegacyNum()) || (resYUnit == Unit.MILS.getLegacyNum()) ||
+                (resYUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.ANGSTROMS.getLegacyNum()) || (resYUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.MICROMETERS.getLegacyNum()) || (resYUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.METERS.getLegacyNum()) || (resYUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.MILES.getLegacyNum())) {
             orgResol[1] = image.getFileInfo(0).getResolutions()[1];
 
             if (orgResol[1] <= 0.0f) {
@@ -787,25 +788,25 @@ public class JDialogIHN3Correction extends JDialogScriptableBase
 
             if (resYUnit != resXUnit) {
 
-                if (resYUnit == FileInfoBase.MILLIMETERS) {
+                if (resYUnit == Unit.MILLIMETERS.getLegacyNum()) {
                     orgResol[1] = orgResol[1] / convertTomm;
-                } else if (resYUnit == FileInfoBase.INCHES) {
+                } else if (resYUnit == Unit.INCHES.getLegacyNum()) {
                     orgResol[1] = 25.4f * orgResol[1] / convertTomm;
-                } else if (resYUnit == FileInfoBase.MILS) {
+                } else if (resYUnit == Unit.MILS.getLegacyNum()) {
                     orgResol[1] = 2.54e-2f * orgResol[1] / convertTomm;
-                } else if (resYUnit == FileInfoBase.CENTIMETERS) {
+                } else if (resYUnit == Unit.CENTIMETERS.getLegacyNum()) {
                     orgResol[1] = 10.0f * orgResol[1] / convertTomm;
-                } else if (resYUnit == FileInfoBase.ANGSTROMS) {
+                } else if (resYUnit == Unit.ANGSTROMS.getLegacyNum()) {
                     orgResol[1] = 1.0e-7f * orgResol[1] / convertTomm;
-                } else if (resYUnit == FileInfoBase.NANOMETERS) {
+                } else if (resYUnit == Unit.NANOMETERS.getLegacyNum()) {
                     orgResol[1] = 1.0e-6f * orgResol[1] / convertTomm;
-                } else if (resYUnit == FileInfoBase.MICROMETERS) {
+                } else if (resYUnit == Unit.MICROMETERS.getLegacyNum()) {
                     orgResol[1] = 1.0e-3f * orgResol[1] / convertTomm;
-                } else if (resYUnit == FileInfoBase.METERS) {
+                } else if (resYUnit == Unit.METERS.getLegacyNum()) {
                     orgResol[1] = 1.0e3f * orgResol[1] / convertTomm;
-                } else if (resYUnit == FileInfoBase.KILOMETERS) {
+                } else if (resYUnit == Unit.KILOMETERS.getLegacyNum()) {
                     orgResol[1] = 1.0e6f * orgResol[1] / convertTomm;
-                } else if (resYUnit == FileInfoBase.MILES) {
+                } else if (resYUnit == Unit.MILES.getLegacyNum()) {
                     orgResol[1] = 1.6093e6f * orgResol[1] / convertTomm;
                 }
             } // if (resYUnit != resXUnit)
@@ -818,12 +819,12 @@ public class JDialogIHN3Correction extends JDialogScriptableBase
         if (image.getNDims() == 3) {
             resZUnit = image.getFileInfo(0).getUnitsOfMeasure(2);
 
-            if ((resZUnit == FileInfoBase.INCHES) || (resZUnit == FileInfoBase.MILS) ||
-                    (resZUnit == FileInfoBase.CENTIMETERS) ||
-                    (resZUnit == FileInfoBase.ANGSTROMS) || (resZUnit == FileInfoBase.NANOMETERS) ||
-                    (resZUnit == FileInfoBase.MICROMETERS) || (resZUnit == FileInfoBase.MILLIMETERS) ||
-                    (resZUnit == FileInfoBase.METERS) || (resZUnit == FileInfoBase.KILOMETERS) ||
-                    (resZUnit == FileInfoBase.MILES)) {
+            if ((resZUnit == Unit.INCHES.getLegacyNum()) || (resZUnit == Unit.MILS.getLegacyNum()) ||
+                    (resZUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                    (resZUnit == Unit.ANGSTROMS.getLegacyNum()) || (resZUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                    (resZUnit == Unit.MICROMETERS.getLegacyNum()) || (resZUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                    (resZUnit == Unit.METERS.getLegacyNum()) || (resZUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                    (resZUnit == Unit.MILES.getLegacyNum())) {
                 orgResol[2] = image.getFileInfo(0).getResolutions()[2];
 
                 if (orgResol[2] <= 0.0f) {
@@ -834,27 +835,27 @@ public class JDialogIHN3Correction extends JDialogScriptableBase
 
                 if (resZUnit != resXUnit) {
 
-                    if (resZUnit == FileInfoBase.MILLIMETERS) {
+                    if (resZUnit == Unit.MILLIMETERS.getLegacyNum()) {
                         orgResol[2] = orgResol[2] / convertTomm;
                     }
 
-                    if (resZUnit == FileInfoBase.INCHES) {
+                    if (resZUnit == Unit.INCHES.getLegacyNum()) {
                         orgResol[2] = 25.4f * orgResol[2] / convertTomm;
-                    } else if (resZUnit == FileInfoBase.MILS) {
+                    } else if (resZUnit == Unit.MILS.getLegacyNum()) {
                         orgResol[2] = 2.54e-2f * orgResol[2] / convertTomm;
-                    } else if (resZUnit == FileInfoBase.CENTIMETERS) {
+                    } else if (resZUnit == Unit.CENTIMETERS.getLegacyNum()) {
                         orgResol[2] = 10.0f * orgResol[2] / convertTomm;
-                    } else if (resZUnit == FileInfoBase.ANGSTROMS) {
+                    } else if (resZUnit == Unit.ANGSTROMS.getLegacyNum()) {
                         orgResol[2] = 1.0e-7f * orgResol[2] / convertTomm;
-                    } else if (resZUnit == FileInfoBase.NANOMETERS) {
+                    } else if (resZUnit == Unit.NANOMETERS.getLegacyNum()) {
                         orgResol[2] = 1.0e-6f * orgResol[2] / convertTomm;
-                    } else if (resZUnit == FileInfoBase.MICROMETERS) {
+                    } else if (resZUnit == Unit.MICROMETERS.getLegacyNum()) {
                         orgResol[2] = 1.0e-3f * orgResol[2] / convertTomm;
-                    } else if (resZUnit == FileInfoBase.METERS) {
+                    } else if (resZUnit == Unit.METERS.getLegacyNum()) {
                         orgResol[2] = 1.0e3f * orgResol[2] / convertTomm;
-                    } else if (resZUnit == FileInfoBase.KILOMETERS) {
+                    } else if (resZUnit == Unit.KILOMETERS.getLegacyNum()) {
                         orgResol[2] = 1.0e6f * orgResol[2] / convertTomm;
-                    } else if (resZUnit == FileInfoBase.MILES) {
+                    } else if (resZUnit == Unit.MILES.getLegacyNum()) {
                         orgResol[2] = 1.6093e6f * orgResol[2] / convertTomm;
                     }
                 } // if (resZUnit != resXUnit)

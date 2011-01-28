@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
@@ -137,8 +138,8 @@ public class FileTMG extends FileBase {
             imgResols[0] = (float) rangeX / (float) imgExtents[0];
             imgResols[1] = (float) rangeY / (float) imgExtents[1];
             fileInfo.setResolutions(imgResols);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, 1);
+            fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), 0);
+            fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), 1);
 
             raFile.seek(68L);
             titleStr = readStr();

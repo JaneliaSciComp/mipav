@@ -2,6 +2,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -2000,13 +2001,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         UI.setDataText("Plugin 10/19/07 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
-        if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
+        if (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
             UI.setDataText("X resolution = " + xRes + "  " + FileInfoBase.getUnitsOfMeasureStr(xUnits) + "\n");
         } else {
             UI.setDataText("X resolution = " + xRes + "\n");
         }
 
-        if (yUnits != FileInfoBase.UNKNOWN_MEASURE) {
+        if (yUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
             UI.setDataText("Y resolution = " + yRes + "  " + FileInfoBase.getUnitsOfMeasureStr(yUnits) + "\n\n");
         } else {
             UI.setDataText("Y resolution = " + yRes + "\n\n");
@@ -4528,19 +4529,19 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         UI.setDataText("Plugin 10/19/07 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
-        if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
+        if (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
             UI.setDataText("X resolution = " + xRes + "  " + FileInfoBase.getUnitsOfMeasureStr(xUnits) + "\n");
         } else {
             UI.setDataText("X resolution = " + xRes + "\n");
         }
 
-        if (yUnits != FileInfoBase.UNKNOWN_MEASURE) {
+        if (yUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
             UI.setDataText("Y resolution = " + yRes + "  " + FileInfoBase.getUnitsOfMeasureStr(yUnits) + "\n");
         } else {
             UI.setDataText("Y resolution = " + yRes + "\n");
         }
 
-        if (zUnits != FileInfoBase.UNKNOWN_MEASURE) {
+        if (zUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
             UI.setDataText("Z resolution = " + zRes + "  " + FileInfoBase.getUnitsOfMeasureStr(zUnits) + "\n\n");
         } else {
             UI.setDataText("Z resolution = " + zRes + "\n\n");

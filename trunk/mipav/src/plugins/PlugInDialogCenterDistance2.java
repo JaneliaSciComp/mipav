@@ -3,6 +3,7 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -490,7 +491,7 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
         mainPanel.add(redFractionText, gbc);
         
         xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
-        if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
+        if (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
             unitStr = FileInfoBase.getUnitsOfMeasureStr(xUnits);
             greenMergingLabel = new JLabel("Green merging radius around peak (" + unitStr + ")");
         }

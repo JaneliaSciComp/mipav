@@ -3,6 +3,7 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
@@ -6426,31 +6427,31 @@ public class FileAvi extends FileBase {
         // RGB bitmaps.
         resXUnit = imageA.getFileInfo(0).getUnitsOfMeasure(0);
 
-        if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.MILS) || 
-                (resXUnit == FileInfoBase.CENTIMETERS) ||
-                (resXUnit == FileInfoBase.ANGSTROMS) || (resXUnit == FileInfoBase.NANOMETERS) ||
-                (resXUnit == FileInfoBase.MICROMETERS) || (resXUnit == FileInfoBase.MILLIMETERS) ||
-                (resXUnit == FileInfoBase.METERS) || (resXUnit == FileInfoBase.KILOMETERS) ||
-                (resXUnit == FileInfoBase.MILES)) {
+        if ((resXUnit == Unit.INCHES.getLegacyNum()) || (resXUnit == Unit.MILS.getLegacyNum()) || 
+                (resXUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.ANGSTROMS.getLegacyNum()) || (resXUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.MICROMETERS.getLegacyNum()) || (resXUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.METERS.getLegacyNum()) || (resXUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.MILES.getLegacyNum())) {
             xResol = imageA.getFileInfo(0).getResolutions()[0];
 
-            if (resXUnit == FileInfoBase.INCHES) {
+            if (resXUnit == Unit.INCHES.getLegacyNum()) {
                 xResol = 0.0254f * xResol;
-            } else if (resXUnit == FileInfoBase.MILS) {
+            } else if (resXUnit == Unit.MILS.getLegacyNum()) {
                 xResol = 2.54e-5f * xResol;
-            } else if (resXUnit == FileInfoBase.CENTIMETERS) {
+            } else if (resXUnit == Unit.CENTIMETERS.getLegacyNum()) {
                 xResol = 0.01f * xResol;
-            } else if (resXUnit == FileInfoBase.ANGSTROMS) {
+            } else if (resXUnit == Unit.ANGSTROMS.getLegacyNum()) {
                 xResol = 1.0e-10f * xResol;
-            } else if (resYUnit == FileInfoBase.NANOMETERS) {
+            } else if (resYUnit == Unit.NANOMETERS.getLegacyNum()) {
                 yResol = 1.0e-9f * yResol;
-            } else if (resXUnit == FileInfoBase.MICROMETERS) {
+            } else if (resXUnit == Unit.MICROMETERS.getLegacyNum()) {
                 xResol = 1.0e-6f * xResol;
-            } else if (resXUnit == FileInfoBase.MILLIMETERS) {
+            } else if (resXUnit == Unit.MILLIMETERS.getLegacyNum()) {
                 xResol = 1.0e-3f * xResol;
-            } else if (resXUnit == FileInfoBase.KILOMETERS) {
+            } else if (resXUnit == Unit.KILOMETERS.getLegacyNum()) {
                 xResol = 1.0e3f * xResol;
-            } else if (resXUnit == FileInfoBase.MILES) {
+            } else if (resXUnit == Unit.MILES.getLegacyNum()) {
                 xResol = 1.6093e3f * xResol;
             }
 
@@ -6464,31 +6465,31 @@ public class FileAvi extends FileBase {
         // per meter
         resYUnit = imageA.getFileInfo(0).getUnitsOfMeasure(1);
 
-        if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.MILS) ||
-                (resYUnit == FileInfoBase.CENTIMETERS) ||
-                (resYUnit == FileInfoBase.ANGSTROMS) || (resYUnit == FileInfoBase.NANOMETERS) ||
-                (resYUnit == FileInfoBase.MICROMETERS) || (resYUnit == FileInfoBase.MILLIMETERS) ||
-                (resYUnit == FileInfoBase.METERS) || (resYUnit == FileInfoBase.KILOMETERS) ||
-                (resYUnit == FileInfoBase.MILES)) {
+        if ((resYUnit == Unit.INCHES.getLegacyNum()) || (resYUnit == Unit.MILS.getLegacyNum()) ||
+                (resYUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.ANGSTROMS.getLegacyNum()) || (resYUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.MICROMETERS.getLegacyNum()) || (resYUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.METERS.getLegacyNum()) || (resYUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.MILES.getLegacyNum())) {
             yResol = imageA.getFileInfo(0).getResolutions()[1];
 
-            if (resYUnit == FileInfoBase.INCHES) {
+            if (resYUnit == Unit.INCHES.getLegacyNum()) {
                 yResol = 0.0254f * yResol;
-            } else if (resYUnit == FileInfoBase.MILS) {
+            } else if (resYUnit == Unit.MILS.getLegacyNum()) {
                 yResol = 2.54e-5f * yResol;
-            } else if (resYUnit == FileInfoBase.CENTIMETERS) {
+            } else if (resYUnit == Unit.CENTIMETERS.getLegacyNum()) {
                 yResol = 0.01f * yResol;
-            } else if (resYUnit == FileInfoBase.ANGSTROMS) {
+            } else if (resYUnit == Unit.ANGSTROMS.getLegacyNum()) {
                 yResol = 1.0e-10f * yResol;
-            } else if (resYUnit == FileInfoBase.NANOMETERS) {
+            } else if (resYUnit == Unit.NANOMETERS.getLegacyNum()) {
                 yResol = 1.0e-9f * yResol;
-            } else if (resYUnit == FileInfoBase.MICROMETERS) {
+            } else if (resYUnit == Unit.MICROMETERS.getLegacyNum()) {
                 yResol = 1.0e-6f * yResol;
-            } else if (resYUnit == FileInfoBase.MILLIMETERS) {
+            } else if (resYUnit == Unit.MILLIMETERS.getLegacyNum()) {
                 yResol = 1.0e-3f * yResol;
-            } else if (resYUnit == FileInfoBase.KILOMETERS) {
+            } else if (resYUnit == Unit.KILOMETERS.getLegacyNum()) {
                 yResol = 1.0e3f * yResol;
-            } else if (resYUnit == FileInfoBase.MILES) {
+            } else if (resYUnit == Unit.MILES.getLegacyNum()) {
                 yResol = 1.6093e3f * yResol;
             }
 
@@ -6805,17 +6806,17 @@ public class FileAvi extends FileBase {
         }
 
         // System.err.println("Res [2] type is: " + imageA.getFileInfo()[0].getResolutions()[2]);
-        if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == FileInfoBase.NANOSEC) {
+        if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == Unit.NANOSEC.getLegacyNum()) {
             newMicroSecPerFrame = (int) (imageA.getFileInfo()[0].getResolutions()[2] / 1000);
-        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == FileInfoBase.MICROSEC) {
+        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == Unit.MICROSEC.getLegacyNum()) {
             newMicroSecPerFrame = (int) (imageA.getFileInfo()[0].getResolutions()[2]);
-        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == FileInfoBase.MILLISEC) {
+        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == Unit.MILLISEC.getLegacyNum()) {
             newMicroSecPerFrame = (int) (imageA.getFileInfo()[0].getResolutions()[2] * 1000);
-        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == FileInfoBase.SECONDS) {
+        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == Unit.SECONDS.getLegacyNum()) {
             newMicroSecPerFrame = (int) (imageA.getFileInfo()[0].getResolutions()[2] * 1000000);
-        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == FileInfoBase.MINUTES) {
+        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == Unit.MINUTES.getLegacyNum()) {
             newMicroSecPerFrame = (int) (imageA.getFileInfo()[0].getResolutions()[2] * 1000000 * 60);
-        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == FileInfoBase.HOURS) {
+        } else if (imageA.getFileInfo()[0].getUnitsOfMeasure()[2] == Unit.HOURS.getLegacyNum()) {
             newMicroSecPerFrame = (int) (imageA.getFileInfo()[0].getResolutions()[2] * 1000000 * 60 * 60);
         }
         // System.err.println("new micro sec per frame: " + newMicroSecPerFrame);
@@ -7375,31 +7376,31 @@ public class FileAvi extends FileBase {
         // RGB bitmaps.
         resXUnit = imageA.getFileInfo(0).getUnitsOfMeasure(0);
 
-        if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.MILS) ||
-                (resXUnit == FileInfoBase.CENTIMETERS) ||
-                (resXUnit == FileInfoBase.ANGSTROMS) || (resXUnit == FileInfoBase.NANOMETERS) ||
-                (resXUnit == FileInfoBase.MICROMETERS) || (resXUnit == FileInfoBase.MILLIMETERS) ||
-                (resXUnit == FileInfoBase.METERS) || (resXUnit == FileInfoBase.KILOMETERS) ||
-                (resXUnit == FileInfoBase.MILES)) {
+        if ((resXUnit == Unit.INCHES.getLegacyNum()) || (resXUnit == Unit.MILS.getLegacyNum()) ||
+                (resXUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.ANGSTROMS.getLegacyNum()) || (resXUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.MICROMETERS.getLegacyNum()) || (resXUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.METERS.getLegacyNum()) || (resXUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                (resXUnit == Unit.MILES.getLegacyNum())) {
             xResol = imageA.getFileInfo(0).getResolutions()[0];
 
-            if (resXUnit == FileInfoBase.INCHES) {
+            if (resXUnit == Unit.INCHES.getLegacyNum()) {
                 xResol = 0.0254f * xResol;
-            } else if (resXUnit == FileInfoBase.MILS) {
+            } else if (resXUnit == Unit.MILS.getLegacyNum()) {
                 xResol = 2.54e-5f * xResol;
-            } else if (resXUnit == FileInfoBase.CENTIMETERS) {
+            } else if (resXUnit == Unit.CENTIMETERS.getLegacyNum()) {
                 xResol = 0.01f * xResol;
-            } else if (resXUnit == FileInfoBase.ANGSTROMS) {
+            } else if (resXUnit == Unit.ANGSTROMS.getLegacyNum()) {
                 xResol = 1.0e-10f * xResol;
-            } else if (resXUnit == FileInfoBase.NANOMETERS) {
+            } else if (resXUnit == Unit.NANOMETERS.getLegacyNum()) {
                 xResol = 1.0e-9f * xResol;
-            } else if (resXUnit == FileInfoBase.MICROMETERS) {
+            } else if (resXUnit == Unit.MICROMETERS.getLegacyNum()) {
                 xResol = 1.0e-6f * xResol;
-            } else if (resXUnit == FileInfoBase.MILLIMETERS) {
+            } else if (resXUnit == Unit.MILLIMETERS.getLegacyNum()) {
                 xResol = 1.0e-3f * xResol;
-            } else if (resXUnit == FileInfoBase.KILOMETERS) {
+            } else if (resXUnit == Unit.KILOMETERS.getLegacyNum()) {
                 xResol = 1.0e3f * xResol;
-            } else if (resXUnit == FileInfoBase.MILES) {
+            } else if (resXUnit == Unit.MILES.getLegacyNum()) {
                 xResol = 1.6093e3f * xResol;
             }
 
@@ -7413,31 +7414,31 @@ public class FileAvi extends FileBase {
         // per meter
         resYUnit = imageA.getFileInfo(0).getUnitsOfMeasure(1);
 
-        if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.MILS) ||
-                (resYUnit == FileInfoBase.CENTIMETERS) ||
-                (resYUnit == FileInfoBase.ANGSTROMS) || (resYUnit == FileInfoBase.NANOMETERS) ||
-                (resYUnit == FileInfoBase.MICROMETERS) || (resYUnit == FileInfoBase.MILLIMETERS) ||
-                (resYUnit == FileInfoBase.METERS) || (resYUnit == FileInfoBase.KILOMETERS) ||
-                (resYUnit == FileInfoBase.MILES)) {
+        if ((resYUnit == Unit.INCHES.getLegacyNum()) || (resYUnit == Unit.MILS.getLegacyNum()) ||
+                (resYUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.ANGSTROMS.getLegacyNum()) || (resYUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.MICROMETERS.getLegacyNum()) || (resYUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.METERS.getLegacyNum()) || (resYUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                (resYUnit == Unit.MILES.getLegacyNum())) {
             yResol = imageA.getFileInfo(0).getResolutions()[1];
 
-            if (resYUnit == FileInfoBase.INCHES) {
+            if (resYUnit == Unit.INCHES.getLegacyNum()) {
                 yResol = 0.0254f * yResol;
-            } else if (resYUnit == FileInfoBase.MILS) {
+            } else if (resYUnit == Unit.MILS.getLegacyNum()) {
                 yResol = 2.54e-5f * yResol;
-            } else if (resYUnit == FileInfoBase.CENTIMETERS) {
+            } else if (resYUnit == Unit.CENTIMETERS.getLegacyNum()) {
                 yResol = 0.01f * yResol;
-            } else if (resYUnit == FileInfoBase.ANGSTROMS) {
+            } else if (resYUnit == Unit.ANGSTROMS.getLegacyNum()) {
                 yResol = 1.0e-10f * yResol;
-            } else if (resYUnit == FileInfoBase.NANOMETERS) {
+            } else if (resYUnit == Unit.NANOMETERS.getLegacyNum()) {
                 yResol = 1.0e-9f * yResol;
-            } else if (resYUnit == FileInfoBase.MICROMETERS) {
+            } else if (resYUnit == Unit.MICROMETERS.getLegacyNum()) {
                 yResol = 1.0e-6f * yResol;
-            } else if (resYUnit == FileInfoBase.MILLIMETERS) {
+            } else if (resYUnit == Unit.MILLIMETERS.getLegacyNum()) {
                 yResol = 1.0e-3f * yResol;
-            } else if (resYUnit == FileInfoBase.KILOMETERS) {
+            } else if (resYUnit == Unit.KILOMETERS.getLegacyNum()) {
                 yResol = 1.0e3f * yResol;
-            } else if (resYUnit == FileInfoBase.MILES) {
+            } else if (resYUnit == Unit.MILES.getLegacyNum()) {
                 yResol = 1.6093e3f * yResol;
             }
 
@@ -8349,7 +8350,7 @@ public class FileAvi extends FileBase {
 
                 // System.err.println("xPixelsPerMeter = " + xPixelsPerMeter);
                 if (xPixelsPerMeter > 0) {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
+                    fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
                     imgResols[0] = (1.0f / xPixelsPerMeter) * 1000.0f;
                 }
 
@@ -8358,14 +8359,14 @@ public class FileAvi extends FileBase {
 
                 // System.err.println("yPixelsPerMeter = " + yPixelsPerMeter);
                 if (yPixelsPerMeter > 0) {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+                    fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
                     imgResols[1] = (1.0f / yPixelsPerMeter) * 1000.0f;
                 }
 
                 imgResols[2] = microSecPerFrame;
 
                 // System.err.println("Microseconds per frame (on read): " + microSecPerFrame);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, 2);
+                fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 2);
                 fileInfo.setResolutions(imgResols);
 
                 int colorsUsed = getInt(endianess);

@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 
 import java.io.*;
 
@@ -576,7 +577,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
         float area;
         float volume = 0.0f;
         int xUnits, yUnits;
-        int zUnits = FileInfoBase.UNKNOWN_MEASURE;
+        int zUnits = Unit.UNKNOWN_MEASURE.getLegacyNum();
         ViewUserInterface UI = ViewUserInterface.getReference();
         String units = "    ";
         xRes = srcImage.getFileInfo(0).getResolutions()[0];
@@ -595,29 +596,29 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
         UI.setDataText("            Number of pixels:     " + pixelsInRange + "\n");
         if (srcImage.getNDims() == 2) {
             if (xUnits == yUnits) {
-                switch (xUnits) {
-                    case FileInfoBase.INCHES:
+                switch (Unit.getUnitFromLegacyNum(xUnits)) {
+                    case INCHES:
                         units = "  in^2";
                         break;
-                    case FileInfoBase.MILS:
+                    case MILS:
                         units = "  mil^2";
                         break;
-                    case FileInfoBase.CENTIMETERS:
+                    case CENTIMETERS:
                         units = "  cm^2";
                         break;
-                    case FileInfoBase.ANGSTROMS:
+                    case ANGSTROMS:
                         units = "  A^2";
                         break;
-                    case FileInfoBase.NANOMETERS:
+                    case NANOMETERS:
                         units = "  nm^2";
                         break;
-                    case FileInfoBase.MICROMETERS:
+                    case MICROMETERS:
                         units = "  um^2";
                         break;
-                    case FileInfoBase.MILLIMETERS:
+                    case MILLIMETERS:
                         units = "  mm^2";
                         break;
-                    case FileInfoBase.METERS:
+                    case METERS:
                         units = "  m^2";
                         break;
                 } // switch (xUnits)
@@ -626,29 +627,29 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
         }
         else if (srcImage.getNDims() == 3) {
             if ((xUnits == yUnits) && (xUnits == zUnits)){
-                switch (xUnits) {
-                    case FileInfoBase.INCHES:
+                switch (Unit.getUnitFromLegacyNum(xUnits)) {
+                    case INCHES:
                         units = "  in^3";
                         break;
-                    case FileInfoBase.MILS:
+                    case MILS:
                         units = "  mil^3";
                         break;
-                    case FileInfoBase.CENTIMETERS:
+                    case CENTIMETERS:
                         units = "  cm^3";
                         break;
-                    case FileInfoBase.ANGSTROMS:
+                    case ANGSTROMS:
                         units = "  A^3";
                         break;
-                    case FileInfoBase.NANOMETERS:
+                    case NANOMETERS:
                         units = "  nm^3";
                         break;
-                    case FileInfoBase.MICROMETERS:
+                    case MICROMETERS:
                         units = "  um^3";
                         break;
-                    case FileInfoBase.MILLIMETERS:
+                    case MILLIMETERS:
                         units = "  mm^3";
                         break;
-                    case FileInfoBase.METERS:
+                    case METERS:
                         units = "  m^3";
                         break;
                 } // switch (xUnits)
