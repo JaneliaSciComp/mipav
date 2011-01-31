@@ -69,6 +69,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             return arUnit.toArray(new Unit[arUnit.size()]);
         }
 
+        public Unit[] getUnitsOfType() {
+            return getUnitsOfType(this);
+        }
+        
         public Unit getBase() {
             return base;
         }
