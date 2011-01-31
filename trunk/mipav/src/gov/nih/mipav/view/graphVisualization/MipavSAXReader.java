@@ -1,5 +1,10 @@
 package gov.nih.mipav.view.graphVisualization;
 
+import gov.nih.mipav.model.file.XMLErrorHandler;
+import gov.nih.mipav.view.MipavUtil;
+import hypergraph.graphApi.Graph;
+import hypergraph.graphApi.GraphSystem;
+
 import java.io.IOException;
 import java.net.URL;
 
@@ -7,44 +12,56 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.xerces.jaxp.JAXPConstants;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import org.apache.xerces.jaxp.*;
-
-import hypergraph.graphApi.Graph;
-import hypergraph.graphApi.GraphSystem;
-import gov.nih.mipav.model.file.XMLErrorHandler;
-import gov.nih.mipav.view.MipavUtil;
 
 
+/**
+ *  SAX Reader for the HyperGraph display. Sets up the parser, which parses the graph xml file and produces a Graph.
+ */
 public class MipavSAXReader {
 	private GraphSystem graphSystem;
 	private InputSource inputSource;
 	private Graph graph;
 	private XMLReader reader;
 
-	public MipavSAXReader(GraphSystem graphSystem, String filename) {
-		this.graphSystem = graphSystem; 
-		inputSource = new InputSource(filename);
-	}
+
+	/**
+	 * Creates the MipavSAXReader which sets up the XML parser for the graph xml file.
+	 * @param graphSystem GraphSystem creates the Graph.
+	 * @param url Input File
+	 * @throws IOException
+	 */
 	public MipavSAXReader(GraphSystem graphSystem, URL url) throws IOException {
 		this.graphSystem = graphSystem;
 		inputSource = new InputSource(url.openStream());
 		inputSource.setSystemId(url.toString());
 	}
-	public GraphSystem getGraphSystem() {
-		return graphSystem;
-	}
-	public XMLReader getReader() {
-		return reader;
-	}
-	public void setGraph(Graph graph) {
-		this.graph = graph;
-	}
+	
+	/**
+	 * Returns the Graph.
+	 * @return Graph
+	 */
 	public Graph getGraph() {
 		return graph;
 	}
+	
+	/**
+	 * Returns the GraphSystem.
+	 * @return GraphSystem.
+	 */
+	public GraphSystem getGraphSystem() {
+		return graphSystem;
+	}
+	
+	/**
+	 * Parses the XML file with the Graph description. Returns the new Graph.
+	 * @return new Graph from file.
+	 * @throws SAXException
+	 * @throws ParserConfigurationException
+	 */
 	public Graph parse() throws SAXException, ParserConfigurationException {
         SAXParserFactory parserFactory = SAXParserFactory.newInstance();
         SAXParser parser = parserFactory.newSAXParser();
@@ -80,4 +97,12 @@ public class MipavSAXReader {
         }
         return getGraph();
     }
+	
+	/**
+	 * Sets the Graph.
+	 * @param graph new Graph
+	 */
+	public void setGraph(Graph graph) {
+		this.graph = graph;
+	}
 }

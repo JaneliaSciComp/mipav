@@ -2263,7 +2263,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
         }  else if (command.equals("HyperGraph")) {
-        	new JDialogHyperGraph(this, getActiveImage());
+        	new JDialogHyperGraph(this);
         } 
     }
 

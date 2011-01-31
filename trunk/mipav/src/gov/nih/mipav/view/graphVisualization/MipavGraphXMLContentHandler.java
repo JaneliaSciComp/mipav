@@ -1,6 +1,5 @@
 package gov.nih.mipav.view.graphVisualization;
 
-import java.net.URL;
 
 import hypergraph.graphApi.AttributeManager;
 import hypergraph.graphApi.Edge;
@@ -10,8 +9,6 @@ import hypergraph.graphApi.GraphException;
 import hypergraph.graphApi.Group;
 import hypergraph.graphApi.Node;
 import hypergraph.graphApi.io.CSSColourParser;
-import hypergraph.graphApi.io.ContentHandler;
-import hypergraph.graphApi.io.SAXReader;
 import hypergraph.visualnet.GraphPanel;
 
 import org.xml.sax.Attributes;
@@ -19,29 +16,140 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 
+/**
+ * Parses the MIPAX Graph XML file.
+ */
 public class MipavGraphXMLContentHandler extends DefaultHandler {
-
 
 	private MipavSAXReader reader;
 	protected Graph graph;
 	protected Element currentElement;
 	protected StringBuffer currentText;
 	
-	public void setReader(MipavSAXReader reader) {
-		this.reader = reader;
+	/**
+     * Creates the content handler.
+     */
+    public MipavGraphXMLContentHandler() {
+		super();
 	}
-	public MipavSAXReader getReader() {
-		return reader;
+	
+	/* (non-Javadoc)
+	 * @see org.xml.sax.helpers.DefaultHandler#characters(char[], int, int)
+	 */
+	@Override
+	public void characters(char[] ch, int start, int length) throws SAXException {
+		if (currentText == null)
+			currentText = new StringBuffer();
+		currentText.append(ch, start, length);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.xml.sax.helpers.DefaultHandler#endDocument()
+	 */
+	@Override
 	public void endDocument() throws SAXException {
 		reader.setGraph(graph);
 	}
-	protected void startElementGraph(Attributes atts) {
-		graph = reader.getGraphSystem().createGraph();
-	}
-	protected void endElementGraph() {
+	
+	/* (non-Javadoc)
+	 * @see org.xml.sax.helpers.DefaultHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+		if (qName.equals("graph")) {
+			endElementGraph();
+			return;
+		}
+		if (qName.equals("node")) {
+			endElementNode();
+			return;
+		}
+		if (qName.equals("edge")) {
+			endElementEdge();
+			return;
+		}
+		if (qName.equals("label")) {
+			endElementLabel();
+			return;
+		}
 	}
 	
+	/**
+	 * Returns the MipavSAXReader.
+	 * @return
+	 */
+	public MipavSAXReader getReader() {
+		return reader;
+	}
+	
+	/**
+	 * Sets the MipavSAXReader. 
+	 * @param reader
+	 */
+	public void setReader(MipavSAXReader reader) {
+		this.reader = reader;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
+	 */
+	@Override
+	public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
+		if (qName.equals("graph")) {
+			startElementGraph(atts);
+			return;
+		}
+		if (qName.equals("node")) {
+			startElementNode(atts);
+			return;
+		}
+		if (qName.equals("edge")) {
+			startElementEdge(atts);
+			return;
+		}
+		if (qName.equals("label")) {
+			startElementLabel(atts);
+			return;
+		}
+	}
+	
+	/**
+	 * End Edge element. 
+	 */
+	protected void endElementEdge() {
+		currentElement = null;
+	}
+	
+	/**
+	 * Ends the Graph.
+	 */
+	protected void endElementGraph() {}
+
+	/**
+	 * Called when the end of the Label element is found. 
+	 */
+	protected void endElementLabel() {
+		if (currentText != null && currentElement != null) {
+			if (currentElement instanceof Node) {
+				((Node) currentElement).setLabel(currentText.toString());
+			}
+			if (currentElement instanceof Edge) {
+				((Edge) currentElement).setLabel(currentText.toString());
+			}
+		}
+	}
+	
+	/**
+	 * Called when the end of the Node Element is found.
+	 */
+	protected void endElementNode() {
+		currentElement = null;
+	}
+	
+	/**
+	 * Called when the Edge start element is found.
+	 * @param atts
+	 */
 	protected void startElementEdge(Attributes atts) {
 		String name = null;
 		Group group = null;
@@ -104,66 +212,27 @@ public class MipavGraphXMLContentHandler extends DefaultHandler {
 			ge.printStackTrace();
 		}
 	}
-	protected void endElementEdge() {
-		currentElement = null;
+	
+	/**
+	 * Called when the Graph start element is found.
+	 * @param atts
+	 */
+	protected void startElementGraph(Attributes atts) {
+		graph = reader.getGraphSystem().createGraph();
 	}
+	
+	/**
+	 * Called when the start of the Label element is found.
+	 * @param atts
+	 */
 	protected void startElementLabel(Attributes atts) {
 		currentText = new StringBuffer();
 	}
-	protected void endElementLabel() {
-		if (currentText != null && currentElement != null) {
-			if (currentElement instanceof Node) {
-				((Node) currentElement).setLabel(currentText.toString());
-			}
-			if (currentElement instanceof Edge) {
-				((Edge) currentElement).setLabel(currentText.toString());
-			}
-		}
-	}
-
-	public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
-		if (qName.equals("graph")) {
-			startElementGraph(atts);
-			return;
-		}
-		if (qName.equals("node")) {
-			startElementNode(atts);
-			return;
-		}
-		if (qName.equals("edge")) {
-			startElementEdge(atts);
-			return;
-		}
-		if (qName.equals("label")) {
-			startElementLabel(atts);
-			return;
-		}
-	}
-	public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
-		if (qName.equals("graph")) {
-			endElementGraph();
-			return;
-		}
-		if (qName.equals("node")) {
-			endElementNode();
-			return;
-		}
-		if (qName.equals("edge")) {
-			endElementEdge();
-			return;
-		}
-		if (qName.equals("label")) {
-			endElementLabel();
-			return;
-		}
-	}
-	public void characters(char[] ch, int start, int length) throws SAXException {
-		if (currentText == null)
-			currentText = new StringBuffer();
-		currentText.append(ch, start, length);
-	}
 	
-
+    /**
+	 * Called when the start of a Node Element is found.
+	 * @param atts
+	 */
 	protected void startElementNode(Attributes atts) {
         String name = null;
         Group group = null;
@@ -217,13 +286,5 @@ public class MipavGraphXMLContentHandler extends DefaultHandler {
             ge.printStackTrace();
         }
     }
-	
-	protected void endElementNode() {
-		currentElement = null;
-	}
-	
-    public MipavGraphXMLContentHandler() {
-		super();
-	}
 
 }

@@ -19,10 +19,8 @@ import hypergraph.graphApi.GraphSystem;
 import hypergraph.graphApi.GraphSystemFactory;
 import hypergraph.graphApi.Node;
 import hypergraph.graphApi.algorithms.GraphUtilities;
-import hypergraph.graphApi.io.CSSColourParser;
 import hypergraph.graphApi.io.GraphWriter;
 import hypergraph.graphApi.io.GraphXMLWriter;
-import hypergraph.graphApi.io.SAXReader;
 import hypergraph.visualnet.ArrowLineRenderer;
 import hypergraph.visualnet.GraphPanel;
 
@@ -54,7 +52,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 
 import org.apache.pdfbox.exceptions.COSVisitorException;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -72,63 +69,47 @@ import com.sun.jimi.core.JimiException;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
+/**
+ * Frame and user interface for displaying a HyperGraph in MIPAV.
+ *
+ */
 public class JDialogHyperGraph extends JFrame implements ActionListener {
 
-	/** */
+	/** generated serial id */
 	private static final long serialVersionUID = 7133468293112430462L;
 
-	JTextField m_kInputGraphTextField = null;
-
-	/** current directory * */
+	/** current directory */
 	private String m_kCurrentDir = null;
+	/** current file name */
 	private String m_kFileName = null;
 
-	private Color m_kLineColor = null;
-	private Color m_kTextColor = null;
-	private Color m_kBackgroundColor = null;
+	/** set of colors for tree nodes, based on the mipav striped lut */
 	private Color[] fixedColor = new Color[255];
 
-	private float[] m_afTextSize = new float[] {12, 10, 8, 0};
-
+	/** current font */
 	private PDFont m_kCurrentFont = null;
+	/** current font size */
 	private int m_iCurrentFontSize = 0;
+	/** page width */
 	private float m_fPageWidth; 
+	/** page margin */
 	private float m_fPageMargin; 
 	
-	/** Stores the graph that the applet shows. */
+	/** Displays the graph. */
 	private MipavGraphPanel graphPanel;
 
-	public JDialogHyperGraph(boolean bRead) {
-        super();
-        try {
-            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-        } catch (final FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
-        }
-		if ( bRead )
-		{
-			final JFileChooser chooser = new JFileChooser();
+	/**
+	 * Default Constructor.
+	 */
+	public JDialogHyperGraph() {}
 
-			if (m_kCurrentDir != null) {
-				chooser.setCurrentDirectory(new File(m_kCurrentDir, m_kFileName));
-			}
-			chooser.setDialogTitle("Choose Input Graph");
-			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", } ) );
-			final int returnValue = chooser.showOpenDialog(this);
-			if (returnValue == JFileChooser.APPROVE_OPTION) {
-				m_kCurrentDir = chooser.getSelectedFile().getAbsolutePath();
-				final FileIO fileIO = new FileIO();
-				fileIO.setQuiet(true);
-				m_kFileName = chooser.getSelectedFile().getName();
-				new JDialogHyperGraph( m_kCurrentDir, m_kFileName);
-			}
-		}
-	}
-
+	/**
+	 * Creates a HyperGraph visualization from the graph located in the given directory and file. 
+	 * If either or both are null, the constructor opens a file chooser so the user can select the
+	 * graph file to open. Graphs are in .xml format, described in the MIPAVGraphXML.xsd file. 
+	 * @param dir directory.
+	 * @param file file name.
+	 */
 	public JDialogHyperGraph(String dir, String file) {
 		super();
         try {
@@ -140,19 +121,42 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
                     + ">.  Check that this file is available.\n");
         }
 
-		//super(ViewUserInterface.getReference().getMainFrame(), false);
+
 		ModelLUT lut = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});		
 		for (int n=0;n<255;n++) fixedColor[n] = lut.getColor(n+1);
-		if ( dir == null || file == null )
+
+		m_kCurrentDir = dir;
+		m_kFileName = file;
+		if ( m_kCurrentDir == null || m_kFileName == null )
 		{
-			return;
+			final JFileChooser chooser = new JFileChooser();
+			chooser.setDialogTitle("Choose Input Graph");
+			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", } ) );
+			final int returnValue = chooser.showOpenDialog(this);
+			if (returnValue == JFileChooser.APPROVE_OPTION) {
+				m_kCurrentDir = chooser.getSelectedFile().getParent();
+				final FileIO fileIO = new FileIO();
+				fileIO.setQuiet(true);
+				m_kFileName = chooser.getSelectedFile().getName();
+			}
 		}
-		init(dir, file);      
-		buildMenu();
-		setSize( 900, 600 );
-		setVisible(true);
+		if ( m_kCurrentDir != null && m_kFileName != null )
+		{
+			init();      
+			buildMenu();
+			setSize( 900, 600 );
+			setVisible(true);
+		}
 	}
-	public JDialogHyperGraph(ViewJFrameImage kParent, ModelImage kImage) {
+	
+	/**
+	 * Creates a HyperGraph using the ViewJFrameImage active image and menu bars as the
+	 * root and tree of the graph. The graph leaves are the menu items. Double-click calls the 
+	 * corresponding action command for the active image.
+	 * @param kParent ViewJFrameImage.
+	 */
+	public JDialogHyperGraph(ViewJFrameImage kParent) {
 		super();
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
@@ -163,16 +167,17 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
                     + ">.  Check that this file is available.\n");
         }
 
-		//super(kParent, false);
 		ModelLUT lut = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});		
 		for (int n=0;n<255;n++) fixedColor[n] = lut.getColor(n+1);
-		initImage(kParent, kImage);   
+		initImage(kParent);   
 		buildMenu();   
 		setSize( 900, 600 );
 		setVisible(true);
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+	 */
 	public void actionPerformed(ActionEvent e) {
 		final String command = e.getActionCommand();
 		if ( command.equals("CenterGraph") ) {
@@ -188,26 +193,25 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			final JFileChooser chooser = new JFileChooser();
 
 			if (m_kCurrentDir != null) {
-				chooser.setCurrentDirectory(new File(m_kCurrentDir, m_kFileName));
+				chooser.setCurrentDirectory(new File(m_kCurrentDir));
 			}
 			chooser.setDialogTitle("Choose Output Graph");
 			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", ".txt", ".pdf", ".jpg", ".tif"} ) );
 			final int returnValue = chooser.showSaveDialog(this);
 			if (returnValue == JFileChooser.APPROVE_OPTION) {
-				File kFile = chooser.getSelectedFile();			
 				
-				m_kCurrentDir = chooser.getSelectedFile().getAbsolutePath();
+				m_kCurrentDir = chooser.getSelectedFile().getParent();
 				final FileIO fileIO = new FileIO();
 				fileIO.setQuiet(true);
 				m_kFileName = chooser.getSelectedFile().getName();
 				if ( m_kFileName.contains( ".xml" ) )
 				{
-					writeGraphXML( m_kCurrentDir );
+					writeGraphXML( chooser.getSelectedFile().getParent(), chooser.getSelectedFile().getName() );
 				}
 				else if ( m_kFileName.contains( ".txt" ) )
 				{
-					writeGraphTXT( m_kCurrentDir );
+					writeGraphTXT( chooser.getSelectedFile().getParent(), chooser.getSelectedFile().getName() );
 				}
 				else if ( m_kFileName.contains( ".pdf" ) )
 				{
@@ -223,83 +227,25 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 				}
 				else
 				{
-					writeGraphXML( m_kCurrentDir );
+					writeGraphXML( chooser.getSelectedFile().getParent(), chooser.getSelectedFile().getName() );
 				}
 			}
 		}
 	}
-	public void addSubTree( Graph tree, Node root, Node menu, Component[] menuComponents, int level )
-	{
-		if ( menuComponents == null )
-		{
-			return;
-		}
-		for ( int i = 0; i < menuComponents.length; i++ )
-		{
-			if ( menuComponents[i] instanceof JMenu )
-			{
-				Node subMenu = tree.createNode();
-				subMenu.setLabel( ((JMenuItem)menuComponents[i]).getText() );
-				AttributeManager attrMgr = tree.getAttributeManager();
-				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, subMenu, fixedColor[level] ); 
-				attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, subMenu, root ); 
-				attrMgr.setAttribute( "TreeLevel", subMenu, level ); 
-				tree.createEdge( menu, subMenu );
-				addSubTree( tree, root, subMenu, ((JMenu)menuComponents[i]).getMenuComponents(), level+1 );
-			}
-			else if ( menuComponents[i] instanceof JMenuItem )
-			{
-				Node subMenu = tree.createNode();
-				subMenu.setLabel( ((JMenuItem)menuComponents[i]).getActionCommand() );;
-				AttributeManager attrMgr = tree.getAttributeManager();
-				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, subMenu, fixedColor[level] ); 
-				attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, subMenu, root ); 
-				attrMgr.setAttribute( "TreeLevel", subMenu, level ); 
-				tree.createEdge( menu, subMenu );
-			}
-		}
-	}
-
+	
+	
 	/**
-	 * Builds menus for the User Interface.
+	 * Access to the graph panel.
+	 * @return the graph panel.
 	 */
-	public void buildMenu() {
-		JMenuItem centerGraph = new JMenuItem("Center root node");
-		centerGraph.addActionListener(this);
-		centerGraph.setActionCommand("CenterGraph");
-		JMenuItem saveGraph = new JMenuItem("Save Graph as...");
-		saveGraph.addActionListener(this);
-		saveGraph.setActionCommand("SaveGraph");
-		JMenuItem properties = new JMenuItem("Save Graph Properties");
-		properties.addActionListener(this);
-		properties.setActionCommand("SaveProperties");
-
-		JMenu propertiesMenu = new JMenu("File");
-		propertiesMenu.add(centerGraph);
-		propertiesMenu.add(saveGraph);
-		propertiesMenu.add(properties);
-		JMenuBar menuBar = new JMenuBar();
-		menuBar.add( propertiesMenu );
-		setJMenuBar(menuBar);
-	}
-
-	public Color getBackgroundColor()
-	{
-		if ( m_kBackgroundColor == null )
-		{
-			m_kBackgroundColor = getColorFromString( "hypergraph.hyperbolic.background.color" );
-		}
-		if ( m_kBackgroundColor == null )
-		{
-			m_kBackgroundColor = Color.gray;
-		}
-		return m_kBackgroundColor;
-	}
-
 	public GraphPanel getGraphPanel() {
 		return graphPanel;
 	}
 
+	/**
+	 * Returns an xml description of the graph as a String.
+	 * @return an xml description of the graph as a String.
+	 */
 	public String getGraphXML() {
 		try {
 			OutputStream os = new ByteArrayOutputStream();
@@ -312,148 +258,10 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		}
 	}
 
-
-	public Color getLineColor()
-	{
-		if ( m_kLineColor == null )
-		{
-			m_kLineColor = getColorFromString( "hypergraph.hyperbolic.line.color" );
-		}
-		if ( m_kLineColor == null )
-		{
-			m_kLineColor = Color.gray;
-		}
-		return m_kLineColor;
-	}
-
-	public Color getTextColor()
-	{
-		if ( m_kTextColor == null )
-		{
-			m_kTextColor = getColorFromString( "hypergraph.hyperbolic.text.color" );
-		}
-		if ( m_kTextColor == null )
-		{
-			m_kTextColor = Color.gray;
-		}
-		return m_kTextColor;
-	}
-
-	public float[] getTextSize()
-	{
-		for ( int i = 0; i < 4; i++ )
-		{
-			String kScaleString = (String)graphPanel.getPropertyManager().getProperty( "hypergraph.hyperbolic.text.size" + (i+1) );
-			if ( kScaleString != null )
-			{
-				m_afTextSize[i] = Float.parseFloat(kScaleString);
-			}
-		}
-		return m_afTextSize;
-	}
-
-	public void increaseTextSize( boolean bBigger )
-	{
-		for ( int i = 0; i < 4; i++ )
-		{
-			m_afTextSize[i] *= bBigger ? 1.1 : .9;
-			graphPanel.getPropertyManager().setProperty( "hypergraph.hyperbolic.text.size" + (i+1), String.valueOf(m_afTextSize[i]) );
-		}
-		graphPanel.refreshText();
-		graphPanel.refreshProperties();
-		graphPanel.repaint();
-	}
-
-	/**@inheritDoc */
-	public void init( String dir, String file ) {
-		m_kCurrentDir = dir;
-		m_kFileName = file;
-		setTitle("Graph/Network Visualization");
-		GraphSystem graphSystem = null;
-		try {
-			graphSystem = GraphSystemFactory.createGraphSystem("hypergraph.graph.GraphSystemImpl", null);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(8);
-		}
-		Graph graph = null;
-		URL url = null;
-		URL codeBase = null;
-		try {
-			codeBase = new File(dir).toURI().toURL();
-		} catch (MalformedURLException e1) {
-			System.err.println( "codeBass null" );
-			e1.printStackTrace();
-		}
-		try {
-			url = new URL(codeBase, file);
-			MipavSAXReader reader = new MipavSAXReader(graphSystem, url);
-			graph = reader.parse();
-		} catch (FileNotFoundException fnfe) {
-			JOptionPane.showMessageDialog(null,
-					"Could not find file " + url.getFile() + ". \n" +
-					"Start applet with default graph", "File not found", JOptionPane.ERROR_MESSAGE);
-			System.out.println("Exception : " + fnfe);
-			fnfe.printStackTrace(System.out);
-		} catch (SAXException saxe) {
-			JOptionPane.showMessageDialog(null,
-					"Error while parsing file" + url.getFile() + ". \n" +
-					"Exception : " + saxe + ". \n" +
-					"Start applet with default graph", "Parsing error", JOptionPane.ERROR_MESSAGE);
-			System.out.println("Exception : " + saxe);
-			saxe.getException().printStackTrace();
-			saxe.printStackTrace(System.out);
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(null,
-					"General error while reading file " + url + ". \n" +
-					"Exception : " + e + ". \n" +
-					"Start applet with default graph", "General error", JOptionPane.ERROR_MESSAGE);
-			System.out.println(url);
-			System.out.println("Exception : " + e);
-			e.printStackTrace(System.out);
-		}
-
-		if (graph == null) {
-			graph = GraphUtilities.createTree(graphSystem, 2, 3);
-		}
-
-		graphPanel = new MipavGraphPanel(graph, null);
-
-		loadPreferences();
-
-
-		graphPanel.setLineRenderer(new ArrowLineRenderer());
-
-		getContentPane().add(graphPanel);
-
-	}
-
-	public void loadPreferences()
-	{
-		String file = new String("mipavGraphLayout.prop");
-		File graphPreferencesFile = new File(Preferences.getPreferencesDir(), file);
-		URL codeBase = null;
-		URL url = null;
-		try {
-			codeBase = graphPreferencesFile.toURI().toURL();
-		} catch (MalformedURLException e1) {
-			System.err.println( "Cannot read file " + graphPreferencesFile );
-			savePreferences();
-		}
-		try {
-			url = new URL(codeBase, file);
-			graphPanel.loadProperties(url.openStream());
-		} catch (FileNotFoundException fnfe) {
-			System.err.println( "Cannot read file " + graphPreferencesFile );
-			savePreferences();
-		} catch (Exception e) {
-			System.err.println( "Cannot read file " + graphPreferencesFile );
-			savePreferences();
-		}
-
-	}
-
-
+	/**
+	 * Saves the global graph properties (background color, text sizes) to the
+	 * default mipav graph preferences file in the Preferences.getPreferencesDir directory.
+	 */
 	public void savePreferences()   
 	{
 		String file = new String("mipavGraphLayout.prop");
@@ -474,72 +282,11 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		} catch (IOException e) { }
 	}
 
-
-	public void setBackgroundColor( Color kColor )
-	{
-		if ( kColor == null )
-		{
-			return;
-		}
-		m_kBackgroundColor = new Color(kColor.getRGB());
-		//"hypergraph.hyperbolic.text.fontName"
-		//"hypergraph.hyperbolic.text.size1"
-		//"hypergraph.hyperbolic.text.scale1"
-		//"hypergraph.hyperbolic.text.size2"
-		//"hypergraph.hyperbolic.text.scale2"
-		//"hypergraph.hyperbolic.text.size3"
-		//"hypergraph.hyperbolic.text.scale3"
-		//"hypergraph.hyperbolic.text.size4"
-		//"hypergraph.hyperbolic.text.scale4"
-		//"hypergraph.hyperbolic.text.color"
-		//"hypergraph.hyperbolic.line.color"
-		String kColorString = new String( "#" + Integer.toHexString(kColor.getRGB()).substring(2) );
-		graphPanel.getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",
-				kColorString );
-		graphPanel.refreshProperties();
-	}
-
-	public void setLineColor( Color kColor )
-	{
-		if ( kColor == null )
-		{
-			return;
-		}
-		m_kLineColor = new Color(kColor.getRGB());
-		String kColorString = new String( "#" + Integer.toHexString(kColor.getRGB()).substring(2) );
-		graphPanel.getPropertyManager().setProperty( "hypergraph.hyperbolic.line.color",
-				kColorString );
-		graphPanel.refreshProperties();
-	}
-
-	public void setTextColor( Color kColor )
-	{
-		if ( kColor == null )
-		{
-			return;
-		}
-		m_kTextColor = new Color(kColor.getRGB());
-		String kColorString = new String( "#" + Integer.toHexString(kColor.getRGB()).substring(2) );
-		graphPanel.getPropertyManager().setProperty( "hypergraph.hyperbolic.text.color",
-				kColorString );
-		graphPanel.refreshProperties();
-	}
-
-	public void setTextSize( float[] afSize )
-	{
-		if ( afSize == null )
-		{
-			return;
-		}
-		for ( int i = 0; i < 4; i++ )
-		{
-			m_afTextSize[i] = afSize[i];
-			graphPanel.getPropertyManager().setProperty( "hypergraph.hyperbolic.text.size" + (i+1), String.valueOf(m_afTextSize[i]) );
-		}
-		graphPanel.refreshText();
-		graphPanel.refreshProperties();
-	}
-
+	/**
+	 * Writes the current HyperGraph as a JPG image.
+	 * @param dir directory. 
+	 * @param file file name.
+	 */
 	public void writeGraphJPG(String dir, String file)
 	{
 		Node root = graphPanel.findRoot();
@@ -551,9 +298,14 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		{
 			return;
 		}
-		writeImage( root.getLabel(), dir, file, null, graphPanel.getWidth(), graphPanel.getHeight() );
+		writeImage( root.getLabel(), dir, file, null, graphPanel.getWidth() );
 	}
 
+	/**
+	 * Writes the current HyperGraph as a PDF.
+	 * @param dir directory. 
+	 * @param file file name.
+	 */
 	public void writeGraphPDF(String dir, String file)
 	{
 		HashSet<Node> visitedSet = null;
@@ -642,11 +394,10 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		{
 			doc = PDDocument.load( dir + File.separator + file );
 			PageFormat pf = doc.getPageFormat(0);
-			float width = (float)pf.getWidth();
 			float height = (float)pf.getHeight();
 
 
-			String imageName = writeImage( root.getLabel(), dir, file, ".jpg", m_fPageWidth, height );
+			String imageName = writeImage( root.getLabel(), dir, file, ".jpg", m_fPageWidth );
 
 			//we will add the image to the first page.
 			PDPage page = (PDPage)doc.getDocumentCatalog().getAllPages().get( 0 );
@@ -677,6 +428,11 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		}    	
 	}
 
+	/**
+	 * Writes the current HyperGraph as a TIF image.
+	 * @param dir directory. 
+	 * @param file file name.
+	 */
 	public void writeGraphTIF(String dir, String file)
 	{
 		Node root = graphPanel.findRoot();
@@ -688,12 +444,18 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		{
 			return;
 		}
-		writeImage( root.getLabel(), dir, file, null, graphPanel.getWidth(), graphPanel.getHeight() );
+		writeImage( root.getLabel(), dir, file, null, graphPanel.getWidth() );
 	}
 
-	public void writeGraphTXT(String file)
+
+	/**
+	 * Writes the current HyperGraph as a text file.
+	 * @param dir directory. 
+	 * @param file file name.
+	 */
+	public void writeGraphTXT(String dir, String file)
 	{
-		File outPut = new File( file );
+		File outPut = new File( dir, file );
 		FileWriter kNewFile;
 		try {
 			kNewFile = new FileWriter( outPut );
@@ -712,8 +474,14 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		} catch (IOException e) { }
 	}
 
-	public void writeGraphXML(String file) {
-		File outPut = new File( file );
+	/**
+	 * Writes the current HyperGraph as a xml file.
+	 * @param dir directory. 
+	 * @param file file name.
+	 */
+	public void writeGraphXML(String dir, String file)
+	{
+		File outPut = new File( dir, file );
 		MipavGraphXMLWriter writer;
 		try {
 			writer = new MipavGraphXMLWriter(outPut);
@@ -723,13 +491,143 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		}
 	}
 
-	private Color getColorFromString( String key )
+	/**
+	 * Function recursively creates a tree structure based on an array of menu components. Used to build a demo
+	 * of the HyperGraph out of the MIPAV menus.
+	 * @param tree current graph.
+	 * @param root the root of the tree
+	 * @param menu the current node, or root of the current sub-tree
+	 * @param menuComponents array of menu items to add to the current sub-tree
+	 * @param level current level of the graph (root = 0).
+	 */
+	private void addSubTree( Graph tree, Node root, Node menu, Component[] menuComponents, int level )
 	{
-		String kColorString = (String)graphPanel.getPropertyManager().getProperty( key );
-		return CSSColourParser.stringToColor(kColorString);
+		if ( menuComponents == null )
+		{
+			return;
+		}
+		for ( int i = 0; i < menuComponents.length; i++ )
+		{
+			if ( menuComponents[i] instanceof JMenu )
+			{
+				Node subMenu = tree.createNode();
+				subMenu.setLabel( ((JMenuItem)menuComponents[i]).getText() );
+				AttributeManager attrMgr = tree.getAttributeManager();
+				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, subMenu, fixedColor[level] ); 
+				attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, subMenu, root ); 
+				attrMgr.setAttribute( "TreeLevel", subMenu, level ); 
+				tree.createEdge( menu, subMenu );
+				addSubTree( tree, root, subMenu, ((JMenu)menuComponents[i]).getMenuComponents(), level+1 );
+			}
+			else if ( menuComponents[i] instanceof JMenuItem )
+			{
+				Node subMenu = tree.createNode();
+				subMenu.setLabel( ((JMenuItem)menuComponents[i]).getActionCommand() );;
+				AttributeManager attrMgr = tree.getAttributeManager();
+				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, subMenu, fixedColor[level] ); 
+				attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, subMenu, root ); 
+				attrMgr.setAttribute( "TreeLevel", subMenu, level ); 
+				tree.createEdge( menu, subMenu );
+			}
+		}
 	}
 
-	private void initImage(ViewJFrameImage kParent, ModelImage kImage)
+	/**
+	 * Builds the File menu for the HyperGraph interface.
+	 */
+	private void buildMenu() {
+		JMenuItem centerGraph = new JMenuItem("Center root node");
+		centerGraph.addActionListener(this);
+		centerGraph.setActionCommand("CenterGraph");
+		JMenuItem saveGraph = new JMenuItem("Save Graph as...");
+		saveGraph.addActionListener(this);
+		saveGraph.setActionCommand("SaveGraph");
+		JMenuItem properties = new JMenuItem("Save Graph Properties");
+		properties.addActionListener(this);
+		properties.setActionCommand("SaveProperties");
+
+		JMenu propertiesMenu = new JMenu("File");
+		propertiesMenu.add(centerGraph);
+		propertiesMenu.add(saveGraph);
+		propertiesMenu.add(properties);
+		JMenuBar menuBar = new JMenuBar();
+		menuBar.add( propertiesMenu );
+		setJMenuBar(menuBar);
+	}
+
+	/**
+	 * Initialize the HyperGraph visualization.
+	 * The input file and directory are specified in the constructor.
+	 */
+	private void init( ) {
+		setTitle("Graph/Network Visualization");
+		GraphSystem graphSystem = null;
+		try {
+			graphSystem = GraphSystemFactory.createGraphSystem("hypergraph.graph.GraphSystemImpl", null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(8);
+		}
+		Graph graph = null;
+		URL url = null;
+		URL codeBase = null;
+		try {
+			codeBase = new File(m_kCurrentDir).toURI().toURL();
+		} catch (MalformedURLException e1) {
+			System.err.println( "codeBass null" );
+			e1.printStackTrace();
+		}
+		try {
+			url = new URL(codeBase, m_kFileName);
+			MipavSAXReader reader = new MipavSAXReader(graphSystem, url);
+			graph = reader.parse();
+		} catch (FileNotFoundException fnfe) {
+			JOptionPane.showMessageDialog(null,
+					"Could not find file " + url.getFile() + ". \n" +
+					"Start applet with default graph", "File not found", JOptionPane.ERROR_MESSAGE);
+			System.out.println("Exception : " + fnfe);
+			fnfe.printStackTrace(System.out);
+		} catch (SAXException saxe) {
+			JOptionPane.showMessageDialog(null,
+					"Error while parsing file" + url.getFile() + ". \n" +
+					"Exception : " + saxe + ". \n" +
+					"Start applet with default graph", "Parsing error", JOptionPane.ERROR_MESSAGE);
+			System.out.println("Exception : " + saxe);
+			saxe.getException().printStackTrace();
+			saxe.printStackTrace(System.out);
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(null,
+					"General error while reading file " + url + ". \n" +
+					"Exception : " + e + ". \n" +
+					"Start applet with default graph", "General error", JOptionPane.ERROR_MESSAGE);
+			System.out.println(url);
+			System.out.println("Exception : " + e);
+			e.printStackTrace(System.out);
+		}
+
+		if (graph == null) {
+			graph = GraphUtilities.createTree(graphSystem, 2, 3);
+		}
+
+		graphPanel = new MipavGraphPanel(graph, null);
+
+		loadPreferences();
+
+
+		graphPanel.setLineRenderer(new ArrowLineRenderer());
+
+		getContentPane().add(graphPanel);
+
+	}
+
+	/**
+	 * Initialize the HyperGraph interface based on the ViewJFrameImage parent.
+	 * The graph is build recursively from the mipav menus. The leaf nodes are active, when the
+	 * user double-clicks the action commands are sent to the ViewJFrameImage parent and are
+	 * performed on the current active image.
+	 * @param kParent
+	 */
+	private void initImage(ViewJFrameImage kParent)
 	{
 		setTitle("Graph/Network Visualization");
 		JMenuBar kMenu = kParent.getJMenuBar();
@@ -743,7 +641,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		Graph tree = graphSystem.createGraph();
 		AttributeManager attrMgr = tree.getAttributeManager();
 		Node root = tree.createNode();
-		root.setLabel( kImage.getImageName() );
+		root.setLabel( kParent.getActiveImage().getImageName() );
 		attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, root, root ); 
 		attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, root, fixedColor[0] ); 
 		attrMgr.setAttribute( "TreeLevel", root, 0 ); 
@@ -767,6 +665,42 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		getContentPane().add(graphPanel);
 	}
 
+	/**
+	 * Loads the graph preferences file from the Preferences.grtPreferencesDir directory.
+	 * If the graph preferences file doesn't exist, a new one is created with the default values.
+	 */
+	private void loadPreferences()
+	{
+		String file = new String("mipavGraphLayout.prop");
+		File graphPreferencesFile = new File(Preferences.getPreferencesDir(), file);
+		URL codeBase = null;
+		URL url = null;
+		try {
+			codeBase = graphPreferencesFile.toURI().toURL();
+		} catch (MalformedURLException e1) {
+			System.err.println( "Cannot read file " + graphPreferencesFile );
+			savePreferences();
+		}
+		try {
+			url = new URL(codeBase, file);
+			graphPanel.loadProperties(url.openStream());
+		} catch (FileNotFoundException fnfe) {
+			System.err.println( "Cannot read file " + graphPreferencesFile );
+			savePreferences();
+		} catch (Exception e) {
+			System.err.println( "Cannot read file " + graphPreferencesFile );
+			savePreferences();
+		}
+
+	}
+
+	/**
+	 * Recursively writes a graph to the text file.
+	 * @param visitedSet lists the nodes that have already been written. Prevents infinite recursion in graphs with loops.
+	 * @param kWriter output FileWriter.
+	 * @param kNode current node to write.
+	 * @param iLevel current level of the node in the graph.
+	 */
 	private void writeGraph( HashSet<Node> visitedSet, FileWriter kWriter, Node kNode, int iLevel )
 	{
 		if ( (visitedSet != null) && visitedSet.contains(kNode) )
@@ -796,6 +730,16 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		} catch (IOException e) {}
 	}
 
+
+	/**
+	 * Recursively writes a graph to the pdf file.
+	 * @param visitedSet lists the nodes that have already been written. Prevents infinite recursion in graphs with loops.
+	 * @param doc PDDocument
+	 * @param contentStream current page stream in the document.
+	 * @param height current height on the page, where the text is written.
+	 * @param kNode current node to write.
+	 * @param iLevel level in the tree of the current node.
+	 */
 	private void writeGraph( HashSet<Node> visitedSet, PDDocument doc, PDPageContentStream[] contentStream, float[] height, Node kNode, int iLevel )
 	{
 		if ( (visitedSet != null) && visitedSet.contains(kNode) )
@@ -846,7 +790,16 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	}
 
 
-	private String writeImage(String node, String dir, String file, String format, float width, float height ) {
+	/**
+	 * Writes the HyperGraph graph panel display as an image file.
+	 * @param node name of the root node.
+	 * @param dir output directory.
+	 * @param file output file name.
+	 * @param format format, may be .jpg, .tif, or null.
+	 * @param width desired width of the output image (maintains aspect ratio).
+	 * @return the name of the output file.
+	 */
+	private String writeImage(String node, String dir, String file, String format, float width ) {
 		int[] pixels;
 		int bufferSize, xDim, yDim;
 		short[] buffer = null;

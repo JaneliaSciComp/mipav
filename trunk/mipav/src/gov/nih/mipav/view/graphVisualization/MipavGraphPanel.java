@@ -19,17 +19,31 @@ import java.util.Iterator;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+/**
+ * Displays the Mipav HyperGraph.
+ */
 public class MipavGraphPanel extends GraphPanel implements ActionListener {
 
-	/** */
+	/** generated serial id */
 	private static final long serialVersionUID = -5403703931672321741L;
+	/** The ViewJFrameImage connect to this Graph, may be null. */
 	private ViewJFrameImage m_kImageFrame = null;
 
+	/** ColorChooser for changing graph colors. */
 	protected ViewJColorChooser colorChooser;
+	/** Current selected Node. */
 	protected Node pickedNode;
+	/** Last command, used for determining the action the color chooser is associated with. */
 	private String m_kLastCommand;
+	/** If there is no Root node, this is the Node with the smallest number of parent nodes, 
+	 * and serves as a default Root for the Graph. */
 	private Node m_kMinDegree = null;
 
+	/**
+	 * Creates the GraphPanel display.
+	 * @param kGraph Graph to display.
+	 * @param kImageFrame ViewJFrameImage (may be null).
+	 */
 	public MipavGraphPanel( Graph kGraph, ViewJFrameImage kImageFrame )
 	{
 		super(kGraph);
@@ -114,6 +128,9 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 	}
 
+	/**
+	 * Centers the root node in the display.
+	 */
 	public void centerRootNode()
 	{
 		Node root = findRoot();
@@ -123,6 +140,13 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 	}
 
+	/**
+	 * Finds the depth, or level of the target node from the Root node.
+	 * @param root Root node of the Graph.
+	 * @param target Target Node.
+	 * @param iLevel Current depth level.
+	 * @return the level of the Target in the Graph.
+	 */
 	public Integer findLevel(Node root, Node target, int iLevel)
 	{
 		for (Iterator iter = getGraph().getEdges(root).iterator(); iter.hasNext();) {
@@ -147,6 +171,12 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	}
 
 
+	/**
+	 * Returns the node with the smallest number of 'parent' nodes. If the tree has a true Root node,
+	 * with zero parents, the Root is returned. Otherwise the node with the smallest number of inputs is returned.
+	 * For Graphs without a true Root, there may be more than one MinRoot.
+	 * @return
+	 */
 	public Node findMinRoot()
 	{
 		findRoot();
@@ -154,6 +184,10 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	}
 
 
+	/**
+	 * Finds the Root of the tree. If there is no true Root (with zero inputs), returns null.
+	 * @return
+	 */
 	public Node findRoot()
 	{
 		m_kMinDegree = null;
@@ -186,6 +220,10 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	}
 
 
+	/**
+	 * Increases or decreases the displayed text size.
+	 * @param bBigger when true increases the size, when false decreases the size.
+	 */
 	public void increaseTextSize( boolean bBigger )
 	{
 		float[] defaults = new float[]{12,10,8,0};
@@ -199,6 +237,9 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		repaint();
 	}
 	
+	/* (non-Javadoc)
+	 * @see hypergraph.visualnet.GraphPanel#mouseClicked(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if ( e.getButton() == MouseEvent.BUTTON3 )
@@ -253,6 +294,9 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 	}
 	
+	/**
+	 * Refreshes the text display.
+	 */
 	public void refreshText()
 	{
 		setTextRenderer(null);
@@ -263,6 +307,13 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	}
 
 
+	/**
+	 * Sets the node color for all the nodes at the given level of the Graph. Uses the 
+	 * "TreeLevel" node Attribute.
+	 * @param iTreeLevel level of the Graph from the root.
+	 * @param kColor new color.
+	 * @return true on success, false if the "TreeLevel" node attribute is not set.
+	 */
 	public boolean setNodeColor( int iTreeLevel, Color kColor )
 	{
 		AttributeManager attrMgr = getGraph().getAttributeManager();
@@ -284,6 +335,13 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	}
 
 
+	/**
+	 * Uses recursion to set the node color for all the nodes at a given level of the Graph.
+	 * @param root Root Node.
+	 * @param iTreeLevel current level in the recursion.
+	 * @param iTargetLevel target level.
+	 * @param kColor new color.
+	 */
 	public void setNodeColor( Node root, int iTreeLevel, int iTargetLevel, Color kColor )
 	{
 		if ( iTreeLevel > iTargetLevel )
@@ -308,6 +366,10 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}		
 	}
 
+	/**
+	 * Opens up the background popup menu.
+	 * @param mouseEvent
+	 */
 	private void popupBackground(MouseEvent mouseEvent) {
 
 		// build VOI intensity popup menu
@@ -333,6 +395,11 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		popupMenu.show(this, mouseEvent.getX(), mouseEvent.getY() );
 	}
 	
+	/**
+	 * Opens the node popup menu.
+	 * @param mouseEvent
+	 * @param node
+	 */
 	private void popupNode(MouseEvent mouseEvent, Node node) {
 		pickedNode = node;
 
