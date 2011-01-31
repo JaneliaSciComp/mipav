@@ -48,7 +48,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         LENGTH(Unit.METERS),
         TIME(Unit.SECONDS),
         FREQUENCY(Unit.HZ),
-        CONCENTRATION(Unit.SECONDS),
+        CONCENTRATION(Unit.PPM),
         VELOCITY(Unit.METERS_PER_SEC),
         ANGLE(Unit.DEGREES);
         
