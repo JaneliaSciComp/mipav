@@ -68,6 +68,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             
             return arUnit.toArray(new Unit[arUnit.size()]);
         }
+
+        public Unit getBase() {
+            return base;
+        }
         
     }
     
@@ -2341,24 +2345,21 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * 
      * @param unitMeasure unit of measure for a specified dimension
      */
-    public final void setUnitsOfMeasure(final int[] unitMeasure) {
-
+    public final void setUnitsOfMeasure(final Unit[] unitMeasure) {
         if (unitMeasure != null) {
-            unitsOfMeasure = new Unit[unitMeasure.length];
-            for(int i=0; i<unitMeasure.length; i++) {
-                unitsOfMeasure[i] = Unit.getUnitFromLegacyNum(unitMeasure[i]);
-            }
+            unitsOfMeasure = unitMeasure.clone();
         }
     }
-
+    
     /**
      * Sets units of measure for image, on a per dimension basis.
+     * 
      * 
      * @param unitMeasure Unit of measure for the dimension
      * @param dim Dimension to set unit of measure in
      */
-    public final void setUnitsOfMeasure(final int unitMeasure, final int dim) {
-        unitsOfMeasure[dim] = Unit.getUnitFromLegacyNum(unitMeasure);
+    public final void setUnitsOfMeasure(final Unit unitMeasure, final int dim) {
+        unitsOfMeasure[dim] = unitMeasure;
     }
 
     /**
@@ -2423,6 +2424,34 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         s += "\nMin: " + min + "\nMax: " + max + "\n";
 
         return s;
+    }
+    
+    /**
+     * Sets units of measure for image, on a per dimension basis.
+     * 
+     * @deprecated should deal directly with enum type
+     * @param unitMeasure Unit of measure for the dimension
+     * @param dim Dimension to set unit of measure in
+     */
+    public final void setUnitsOfMeasure(final int unitMeasure, final int dim) {
+        setUnitsOfMeasure(Unit.getUnitFromLegacyNum(unitMeasure), dim);
+    }
+
+    /**
+     * Sets (copies) units of measure for image.
+     * 
+     * @deprecated should deal directly with enum type
+     * @param unitMeasure unit of measure for a specified dimension
+     */
+    public final void setUnitsOfMeasure(final int[] unitMeasure) {
+        if (unitMeasure != null) {
+            Unit[] localMeasure = new Unit[unitMeasure.length];
+            for(int i=0; i<unitMeasure.length; i++) {
+                localMeasure[i] = Unit.getUnitFromLegacyNum(unitMeasure[i]);
+            }
+            
+            setUnitsOfMeasure(localMeasure);
+        }
     }
 
     /**
