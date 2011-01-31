@@ -396,6 +396,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      *  seconds / 0.01667 = minutes.
      *  Hertz and radians per second convert to/from hz.
      *  parts-per-million does not convert.
+     *  @deprecated should use enum conversions
      *  */
     public static final double[] conversionSpaceTimeUnits = {1, 1,
         // space units:
