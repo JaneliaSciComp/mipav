@@ -173,9 +173,28 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             return legacyNum;
         }
         
-        public double convert(double orig, Unit resultUnit) {
-            
-            return orig*getConversionFactor(resultUnit);
+        /**
+         * Method converts the <code>origValue</code> quantity from the current units to the
+         * <code>resultUnit</code>.
+         * 
+         * @param origValue A value in units of <code>this</code>
+         * @param resultUnit The units to convert to
+         * @return The converted quantity
+         */
+        public double convertTo(double origValue, Unit resultUnit) {
+            return origValue*getConversionFactor(resultUnit);
+        }
+        
+        /**
+         * Method converts the <code>origValue</code> that is currently in units of <code>origUnit</code>
+         * to the units specified by <code>this</code> unit.
+         * 
+         * @param origValue A value in units of <code>origUnit</code>
+         * @param origUnit The current units of the quantity specified
+         * @return The quantity converted into the current units
+         */
+        public double convertFrom(double origValue, Unit origUnit) {
+            return origValue*origUnit.getConversionFactor(this);
         }
         
         public double getConversionFactor(Unit resultUnit) {
