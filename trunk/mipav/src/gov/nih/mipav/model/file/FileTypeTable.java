@@ -279,6 +279,8 @@ public class FileTypeTable {
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.MATLAB, new FileTypeInfo("MATLAB", ".mat"));
         FileTypeTable.FILE_EXT_TABLE.put(".mat", FileUtility.MATLAB);
         FileTypeTable.FILE_EXT_TABLE.put(".MAT", FileUtility.MATLAB);
+        
+        FileTypeTable.FILE_EXT_TABLE.put(".v", FileUtility.VISTA);
     }
 
     /**

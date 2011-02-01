@@ -1101,6 +1101,13 @@ public abstract class FileBase {
 
         raFile.write(FileBase.byteIntBuffer);
     }
+    
+    
+    
+    
+    public final void writeBytes(String s) throws IOException{
+    	raFile.writeBytes(s);
+    }
 
     /**
      * Writes a long as eight bytes to a file.

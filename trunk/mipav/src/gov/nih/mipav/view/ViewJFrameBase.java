@@ -344,6 +344,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         boolean xml = false; // special handling for XML files
         boolean minc = false;
         boolean mincHDF = false;
+        boolean vista = false;
 
         if (imageA.getFileInfo()[0] != null) {
 
@@ -386,6 +387,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MINC_HDF)
                     && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 mincHDF = true;
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.VISTA)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
+                vista = true;
             } else if ( (imageB != null) && (imageB.getFileInfo()[0] != null)) {
 
                 if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM)
@@ -447,6 +451,11 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                         && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     minc = true;
                 }
+                
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.VISTA)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
+                    vista = true;
+                }
             }
         }
 
@@ -486,7 +495,14 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 } else {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
                 }
-            } else if (geSigna) {
+            } else if (vista) {
+
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
+                    aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
+                } else {
+                    aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
+                }
+            }else if (geSigna) {
 
                 if (displayMode == ViewJFrameBase.IMAGE_A) {
                     aboutDialog = new JDialogTextGE(this, "Image Information", imageA, zSlice);

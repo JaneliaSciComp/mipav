@@ -246,6 +246,9 @@ public class FileUtility {
     
     /** extension .mat */
     public static final int MATLAB = 69;
+    
+    /** Vista file extension .v */
+    public static final int VISTA = 70;
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
             "biorad", "bmp", "bruker", "cheshire", "cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits",

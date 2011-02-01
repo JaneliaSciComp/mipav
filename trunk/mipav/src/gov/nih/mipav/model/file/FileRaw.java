@@ -1942,6 +1942,34 @@ public class FileRaw extends FileBase {
         }
     }
 
+    
+    
+    /**
+     * This method reads a file and puts the data in the buffer. 
+     *
+     * @param      buffer     double buffer where the data will be stored.
+     * @param      offset     points to where the data of the image is located. It is equal to the header length.
+     *
+     * @exception  IOException  if there is an error reading the file
+     *
+     * @see        FileInfoXML
+     * @see        FileRawChunk
+     */
+    public void readImage(double[] buffer, int offset) throws IOException {
+    	int bufferSize = buffer.length;
+    	try {
+            fileRW.readImage(ModelStorageBase.DOUBLE, offset, bufferSize);
+
+            double[] tmpBuffer = fileRW.getDoubleBuffer();
+
+
+            System.arraycopy(tmpBuffer, 0, buffer, 0, tmpBuffer.length);
+        } catch (IOException error) {
+            throw error;
+        }
+
+    	
+    }
     /**
      * This method reads a file and puts the data in the buffer. Added here to help speed the reading of DICOM images
      *
@@ -2768,8 +2796,11 @@ public class FileRaw extends FileBase {
                     fireProgressStateChanged(MipavMath.round((float) ((t * (endSlice - beginSlice)) + k) / (nImages) * 100));
 
                     try {
+                    	
                         fileRW.writeImage(image, (t * offset) + (k * bufferSize),
                                           (t * offset) + (k * bufferSize) + bufferSize, 0);
+                    	
+                    	
                     } catch (IOException error) {
 
                         if (compressionType == FileInfoBase.COMPRESSION_NONE) {
