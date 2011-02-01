@@ -21,6 +21,7 @@ import java.util.zip.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 
 import com.sun.jimi.core.*;
 
@@ -2107,6 +2108,10 @@ public class FileIO {
                 case FileUtility.JP2:
                     image = readJpeg2000(fileName, fileDir, one);
                     break;
+                    
+                case FileUtility.VISTA:
+                	image = readVista(fileName, fileDir, one);
+                	break;
 
                 default:
                     return null;
@@ -3060,6 +3065,10 @@ public class FileIO {
             case FileUtility.JP2:
                 success = writeJpeg2000(image, options);
                 break;
+                
+            case FileUtility.VISTA:
+            	success = writeVista(image, options);
+            	break;
 
             default:
                 if ( !quiet) {
@@ -8479,6 +8488,53 @@ public class FileIO {
     }
 
     
+    private ModelImage readVista(final String fileName, final String fileDir, final boolean one) {
+        ModelImage image = null;
+        FileVista imageFile;
+        
+        try{
+        	imageFile = new FileVista(fileName, fileDir);
+        	createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            image = imageFile.readImage();
+        }catch (final IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        } catch (final OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+        imageFile.finalize();
+        imageFile = null;
+        return image;
+    }
+    
+    
 
     /**
      * Reads a PARREC file by calling the read method of the file. This method contains special code to not display the
@@ -12058,6 +12114,55 @@ public class FileIO {
 
         return true;
     }
+    
+    /**
+     * writes Vista format files
+     * @param image
+     * @param options
+     * @return
+     */
+    private boolean writeVista(final ModelImage image, final FileWriteOptions options) {
+    	try {
+	    	 FileVista fv = new FileVista(options.getFileName(), options.getFileDirectory());
+	    	 
+	    	 
+	    	 JDialogSaveVistaParams dialog = new JDialogSaveVistaParams(UI.getMainFrame(), image);
+
+	            if (dialog.isCancelled()) {
+	                return false;
+	            }
+	    	 
+	            ArrayList<JTextField> vistaParamFields = dialog.getVistaParamTextfields();
+	            dialog.dispose();
+	
+	         createProgressBar(fv, options.getFileName(), FileIO.FILE_WRITE);
+	         fv.writeImage(image, options, vistaParamFields);
+	         fv.finalize();
+	         fv = null;
+    	}catch (final IOException error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        }
+    	
+    	return true;
+    }
+    
+    
 
     /**
      * Writes a PAR/REC file to store the image.
