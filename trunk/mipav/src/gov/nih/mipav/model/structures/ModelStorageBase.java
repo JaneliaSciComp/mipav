@@ -244,7 +244,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public static final String UINTEGER_STRING = "Unsigned Integer";
 
     
-    /** String representations of the data types supported by ModelStorageBase. */
+    /** String representations of the data types supported by ModelStorageBase. 
+     * @deprecated should use enums directly
+     * */
     public static final String[] bufferTypeStr;
     
     static {
