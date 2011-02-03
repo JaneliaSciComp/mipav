@@ -2,6 +2,8 @@ package gov.nih.mipav.model.file;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -17,6 +19,8 @@ public class FileInfoVista extends FileInfoBase {
     
     /** history info **/
     private ArrayList<String> historyInfo;
+    
+    int[] extents;
     
 	
 	/** constructor **/
@@ -35,7 +39,7 @@ public class FileInfoVista extends FileInfoBase {
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         JDialogFileInfo dialog = (JDialogFileInfo) dlog;
-        int[] extents;
+
         int i;
         int[] editorChoice = new int[1];
         editorChoice[0] = JDialogEditor.STRING;
@@ -93,6 +97,37 @@ public class FileInfoVista extends FileInfoBase {
             // when using displayAboutInfo(dialog) this doesn't appear
             // calling prg might use an editing panel to adjust this matrix
             dialog.appendPrimaryData("Matrix", matrix.matrixToString(10, 4));
+        }
+        
+        
+        
+        if(historyInfo != null && historyInfo.size() > 0) {
+        	String name = "";
+        	String value = "";
+        	
+        	for(int k=0;k<historyInfo.size();k++) {
+        		name = "history";
+        		value = historyInfo.get(k);
+        		dialog.appendSecondaryData(name, value);
+        	}
+        }
+        
+        HashMap<String,String> info = imagesInfo.get(0);
+        Set keySet = info.keySet();
+        Iterator iter = keySet.iterator();
+        while(iter.hasNext()) {
+        	String key = (String)iter.next();
+        	if(extents.length == 4) {
+	        	if(!key.equals("data") && !key.equals("length")) {
+	        		String val = info.get(key);
+	        		dialog.appendSecondaryData(key, val);
+	        		
+	        	}
+        	}else {
+        		String val = info.get(key);
+        		dialog.appendSecondaryData(key, val);
+        	}
+        	
         }
 
 
