@@ -2815,6 +2815,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
                             ((ViewJFrameImage) frame).setShiftDown(true);
                         }
+                    }else {
+                    	if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                            ((ViewJFrameImage) frame).setShiftDown(false);
+                        }
                     }
 
                     ((ViewJFrameImage) frame).incSlice();
@@ -2829,6 +2833,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                         if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
                             ((ViewJFrameImage) frame).setShiftDown(true);
+                        }
+                    }else {
+                    	if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                            ((ViewJFrameImage) frame).setShiftDown(false);
                         }
                     }
 
