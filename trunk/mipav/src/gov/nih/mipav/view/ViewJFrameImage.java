@@ -3240,6 +3240,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setTitle();
 
             // need to get all other images in sync if there are other matching images and if shift was down
+
             if (linkedScrolling || isShiftDown) {
                 doLinkedScrolling(1);
             }
