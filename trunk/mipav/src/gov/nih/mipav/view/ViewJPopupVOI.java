@@ -52,7 +52,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     private JMenuItem itemOutputDistance;
 
     /** DOCUMENT ME! */
-    private JMenuItem itemProps;
+    private JMenuItem itemProps, showBoundingBox;
 
     /** DOCUMENT ME! */
     private JMenu orderSubMenu;
@@ -91,12 +91,16 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, this, false));
         //selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL, this, false));
         selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_NONE, this, false));
+        
 
         editSubMenu = ViewMenuBuilder.buildMenu("Edit", 0, true);
         editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_DELETE, this, true));
         editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CUT, this, true));
         editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_COPY, this, true));
         editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PASTE, this, true));
+        editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SHOW_CONTOUR_BOUNDING_BOX, this, true));
+        
+        //showBoundingBox = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SHOW_CONTOUR_BOUNDING_BOX, this, false);
 
         orderSubMenu = ViewMenuBuilder.buildMenu("VOI Order", 0, true);
         orderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FRONT, this, true));
@@ -280,6 +284,8 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             popup.addSeparator();
             popup.add(selectionMenu);
             popup.add(editSubMenu);
+           // popup.add(showBoundingBox);
+            
 
             if (isPLineSliceVOI()) {
                 popup.addSeparator();

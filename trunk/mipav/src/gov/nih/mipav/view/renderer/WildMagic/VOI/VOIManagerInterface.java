@@ -1297,6 +1297,35 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             paste();
             setDefaultCursor();
         }
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SHOW_CONTOUR_BOUNDING_BOX.getActionCommand()) ) {
+        	VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        	
+            for ( int i = 0; i < kVOIs.size(); i++ )
+            {
+                VOI kCurrentGroup = kVOIs.get(i);
+                for ( int j = 0; j < kCurrentGroup.getCurves().size(); j++ )
+                {
+                    VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
+                    if ( kCurrentVOI.isActive() )
+                    {
+                    	 boolean flag = true;
+                    	 if (kCurrentGroup.getBoundingBoxFlag() == true) {
+                    		 flag = false;
+                    		 kCurrentGroup.setBoundingBoxFlag(flag);
+                         } else {
+                        	 flag = true;
+                        	 kCurrentGroup.setBoundingBoxFlag(flag);
+                         }
+                    	 updateDisplay();
+                    	 if(m_kVOIDialog != null) {
+                    		 m_kVOIDialog.setCheckboxBoundingBox(flag);
+                    	 }
+                        break;
+                    }
+                }
+            }
+            setDefaultCursor();
+        } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_FRONT.getActionCommand())) {
             changeVOIOrder(false, VOI.FRONT);
         } 
