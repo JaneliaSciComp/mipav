@@ -172,9 +172,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
     protected Vector3f m_kPositionSum = new Vector3f();
     
     
+    /** available subtypes for VOI **/
     public static final int UNKNOWN_SUBTYPE = 0;
     public static final int CIRCLE = 1;
     public static final int SQUARE = 2;
+    
+    /** initialize subtype to unknown **/
+    private int subtype = UNKNOWN_SUBTYPE;
     
     /**
      * Sorts the edge crossing points in place.
@@ -200,7 +204,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
     }
 
-    private int subtype = UNKNOWN_SUBTYPE;
+    
 
     private float[] xPts = null;
 
