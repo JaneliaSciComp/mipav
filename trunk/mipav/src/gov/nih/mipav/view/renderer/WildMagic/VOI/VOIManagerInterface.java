@@ -2778,7 +2778,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	int size = Math.min( limit, list.size() );
 		for ( int i = 0; i < size; i++ )
 		{
-			VOISaveState kState = list.remove(i);
+			VOISaveState kState = list.remove(0);
 			kState.dispose();
 			kState = null;
 		}
