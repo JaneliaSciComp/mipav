@@ -36,16 +36,20 @@ public class JDialogSaveVistaParams extends JDialogBase {
 	/** image **/
 	private ModelImage image;
 	
+	/** tabbed pane **/
 	private JTabbedPane tabbedPane;
 	
+	/** panels **/
 	private JPanel mainPanel, requiredPanel, optionalPanel, talairachPanel;
 	
+	/** textfields **/
 	private JTextField nameField, modalityField, patientField, birthField, sexField, deviceField, protocolField, sequenceField, 
 	CoilIDField, dateField, timeField, boundingBoxField, ori_nrowsField, ori_ncolumnsField, acquisitionOrientationField, 
 	caField, cpField, extentField, fixpointField, talairachField, nbandsField, nframesField, nrowsField, ncolumnsField, 
 	bandtypeField, repnField, voxelField, conventionField, orientationField, MPIL_vista_0Field, ntimestepsField, repetition_timeField, 
 	slice_timeField;
 	
+	/** array list of text fields **/
 	private ArrayList<JTextField> vistaParamTextfields = new ArrayList<JTextField>();
 	
 	
@@ -140,7 +144,10 @@ public class JDialogSaveVistaParams extends JDialogBase {
 
 	
 	
-	
+	/**
+	 * prepopulates fields
+	 * @param textfield
+	 */
 	private void prepopulateField(JTextField textfield) {
 		vistaParamTextfields.add(textfield);
 		String textfieldKey = textfield.getName();
@@ -229,7 +236,9 @@ public class JDialogSaveVistaParams extends JDialogBase {
 		}
 	}
 	
-	
+	/**
+	 * populates the options panel
+	 */
 	private void populateOptionalPanel() {
 		GridBagConstraints gbc = new GridBagConstraints();
 		
@@ -415,7 +424,9 @@ public class JDialogSaveVistaParams extends JDialogBase {
 	
 	
 	
-	
+	/**
+	 * popul
+	 */
 	private void populateTalairachPanel() {
 		GridBagConstraints gbc = new GridBagConstraints();
 		
