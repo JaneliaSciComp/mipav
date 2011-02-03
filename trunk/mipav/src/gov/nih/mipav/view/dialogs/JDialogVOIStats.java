@@ -1292,6 +1292,12 @@ public class JDialogVOIStats extends JDialogBase
 
         updateTree = false;
     }
+    
+    
+    public void setCheckboxBoundingBox(boolean flag) {
+    	checkboxBoundingBox.setSelected(flag);
+    }
+    
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 

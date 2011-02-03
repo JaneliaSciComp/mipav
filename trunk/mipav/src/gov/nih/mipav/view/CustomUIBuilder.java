@@ -48,7 +48,8 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_VOI_LOGICAL_OPERATIONS = new UIParams("VOI Logical Operations", "VOILogicalOperations", UIParams.INVALID_MNEMONIC, null, null );
     public static final UIParams PARAM_VOI_EDIT_CIRCLE_DIAM = new UIParams("Edit Circle Diameter", "editCircleDiameter", UIParams.INVALID_MNEMONIC, "Edit Circle Diameter", null );
     public static final UIParams PARAM_VOI_EDIT_SQUARE_LENGTH = new UIParams("Edit Square Length", "editSquareLength", UIParams.INVALID_MNEMONIC, "Edit Square Length", null );
-
+    public static final UIParams PARAM_VOI_SHOW_CONTOUR_BOUNDING_BOX = new UIParams("Show/Hide Bounding Box", "showContourBoundingBox", UIParams.INVALID_MNEMONIC, "Show contour bounding box", null );
+    
     public static final UIParams PARAM_VOI_COLOR = new UIParams("VOIColor", "Current/change VOI Color", "transparent");
     public static final UIParams PARAM_VOI_NEW = new UIParams("New VOI", "NewVOI", UIParams.INVALID_MNEMONIC, "Initiate new VOI", "newvoi");
     public static final UIParams PARAM_VOI_UNDO = new UIParams("Undo VOI Action", "undoVOI", UIParams.INVALID_MNEMONIC, "Undo last VOI change (Ctrl-Z)", "undopaint");
