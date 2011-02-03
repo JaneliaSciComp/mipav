@@ -69,7 +69,8 @@ public class VOIVector extends ViewVOIVector {
     public VOIVector(VOIVector voiVector)
     {
         super();
-        for ( int i = 0; i < voiVector.size(); i++ )
+        int size = voiVector.size();
+        for ( int i = 0; i < size; i++ )
         {
             add ( new VOI( voiVector.get(i) ) );
         }
