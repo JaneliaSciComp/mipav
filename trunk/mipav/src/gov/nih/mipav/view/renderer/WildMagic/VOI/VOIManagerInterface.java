@@ -353,7 +353,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 }
                 m_kParent.PointerActive(iActive);
             }
-            {
+            else {
                 setDefaultCursor();
             }
         } 
@@ -4871,11 +4871,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private void setVOIState( VOISaveState kVOIState )
     {
         m_kImageA.unregisterAllVOIs();
-        m_kImageA.setVOIs( kVOIState.voiVectorA );
+        m_kImageA.restoreVOIs( kVOIState.voiVectorA );
         if ( m_kImageB != null )
         {
             m_kImageB.unregisterAllVOIs();
-            m_kImageB.setVOIs( kVOIState.voiVectorB );
+            m_kImageB.restoreVOIs( kVOIState.voiVectorB );
         }
         if ( kVOIState.currentVOI != -1 )
         {

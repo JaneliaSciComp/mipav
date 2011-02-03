@@ -4389,7 +4389,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 			try {
 				m_kLocalImage.exportData(iSlice * temp.length, temp.length, temp);
-				m_abInitLevelSet[iSlice] = true;
+				m_abInitLiveWire[iSlice] = true;
 			} catch (IOException error) {
 				MipavUtil.displayError("Error while trying to retrieve RGB data.");
 			}
@@ -4400,7 +4400,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		} else {
 			try {
 				m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
-				m_abInitLevelSet[iSlice] = true;
+				m_abInitLiveWire[iSlice] = true;
 			} catch (IOException error) {
 				MipavUtil.displayError("Error while trying to retrieve RGB data.");
 			}

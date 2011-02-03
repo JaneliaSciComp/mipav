@@ -3472,6 +3472,16 @@ public class ModelImage extends ModelStorageBase {
         voiVector.addVOI(voi);
         // need to add voi to list object!!!
     }
+    
+
+    /**
+     * Sets VOI vector for with new VOIs.
+     * 
+     * @param VOIs VOIs to image VOIs
+     */
+    public void restoreVOIs(VOIVector VOIs) {
+        voiVector = VOIs;
+    }
 
     public int isRegistered(final VOI voi) {
         return voiVector.indexOf(voi);
