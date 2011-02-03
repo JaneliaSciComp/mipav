@@ -1,11 +1,12 @@
 package gov.nih.mipav.model.structures;
 
 
-import gov.nih.mipav.model.structures.event.*;
+import gov.nih.mipav.model.structures.event.VOIVectorEvent;
+import gov.nih.mipav.model.structures.event.VOIVectorListener;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewVOIVector;
 
-import gov.nih.mipav.view.*;
-
-import javax.swing.event.*;
+import javax.swing.event.EventListenerList;
 
 
 /**
@@ -93,7 +94,8 @@ public class VOIVector extends ViewVOIVector {
      * @exception  IllegalArgumentException  for any argument <code>o</code> which is not an instance of <code>
      *                                       gov.nih.mipav.model.structures.VOI</code>
      */
-    public boolean add(VOI o) {
+    @Override
+	public boolean add(VOI o) {
         VOI voi = null;
 
         // check that object is a VOI
@@ -101,7 +103,7 @@ public class VOIVector extends ViewVOIVector {
             throw new IllegalArgumentException();
         }
 
-        voi = (VOI) o;
+        voi = o;
 
         // check the voi name, fix if necessary
         if (contains(voi)) {
@@ -133,7 +135,8 @@ public class VOIVector extends ViewVOIVector {
      *
      * @param  o  index of the VOI
      */
-    public void addElement(VOI o) {
+    @Override
+	public void addElement(VOI o) {
         add(o); // add the voi to the vector
     }
 
@@ -211,14 +214,15 @@ public class VOIVector extends ViewVOIVector {
      * @exception  IllegalArgumentException  for any argument <code>o</code> which is not an instance of <code>
      *                                       gov.nih.mipav.model.structures.VOI</code>
      */
-    public void insertElementAt(VOI o, int index) {
+    @Override
+	public void insertElementAt(VOI o, int index) {
 
         // check that object is a VOI
         if (!(o instanceof VOI)) {
             throw new IllegalArgumentException();
         }
 
-        VOI voi = (VOI) o;
+        VOI voi = o;
 
         // check the voi name, fix if necessary
         if (contains(voi)) {
@@ -240,7 +244,8 @@ public class VOIVector extends ViewVOIVector {
      *
      * @return  DOCUMENT ME!
      */
-    public VOI remove(int index) {
+    @Override
+	public VOI remove(int index) {
 
         try {
             VOI voi = super.remove(index);
@@ -255,11 +260,24 @@ public class VOIVector extends ViewVOIVector {
     /**
      * DOCUMENT ME!
      */
-    public void removeAllElements() {
+    @Override
+	public void removeAllElements() {
         super.removeAllElements();
         // fireVOIremoved(null);
     }
 
+
+    public void removeAllVectorListeners() {
+    	if ( listenerList == null )
+    	{
+    		return;
+    	}
+    	VOIVectorListener[] list = listenerList.getListeners(VOIVectorListener.class);
+    	for ( int i = 0; i < list.length; i++ )
+    	{
+    		listenerList.remove(VOIVectorListener.class, list[i]);
+    	}
+    }
 
     /**
      * <b>Overides</b> <code>Vector.remove().</code>
@@ -268,7 +286,8 @@ public class VOIVector extends ViewVOIVector {
      *
      * @param  index  DOCUMENT ME!
      */
-    public void removeElementAt(int index) {
+    @Override
+	public void removeElementAt(int index) {
 
         try {
             VOI voi = VOIAt(index);
@@ -287,7 +306,8 @@ public class VOIVector extends ViewVOIVector {
      * @param  first  DOCUMENT ME!
      * @param  last   DOCUMENT ME!
      */
-    public void removeRange(int first, int last) {
+    @Override
+	public void removeRange(int first, int last) {
 
         try {
             super.removeRange(first, last);

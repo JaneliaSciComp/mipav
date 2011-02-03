@@ -1218,7 +1218,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         voiManager = new PlugInVOIManager( this, imageA, imageB, 1, false, VOIGroup );
         voiManager.getVOIManager(0).init( this, imageA, imageB,
                 componentImage, componentImage,
-                componentImage.getOrientation(), componentImage.getSlice() );
+                componentImage.getOrientation() );
         voiManager.getToolBar().setVisible(true);
         componentImage.setVOIManager(voiManager.getVOIManager(0));
     }

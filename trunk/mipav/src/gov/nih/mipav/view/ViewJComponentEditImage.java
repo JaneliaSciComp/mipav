@@ -5028,7 +5028,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         {
                             voiManager.draw( kVOI3D, 
                                     imageA.getResolutions(0), 
-                                    imageA.getUnitsOfMeasure(), slice, orientation, 
+                                    imageA.getUnitsOfMeasure(), slice, 
                                     offscreenGraphics2d );
                         }
                     }
@@ -5037,7 +5037,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
         if ( (imageB != null) && (imageB.getVOIs() != null) )
         {
-            ViewVOIVector VOIs = (ViewVOIVector) imageB.getVOIs();
+            ViewVOIVector VOIs = imageB.getVOIs();
             if (VOIs != null && voiManager != null) {
                 int nVOI = VOIs.size();
 
@@ -5054,7 +5054,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                             offscreenGraphics2d.setColor( kVOI.getColor() );
                             voiManager.draw( kVOI3D, 
                                     imageB.getResolutions(0), 
-                                    imageB.getUnitsOfMeasure(), slice, orientation, 
+                                    imageB.getUnitsOfMeasure(), slice, 
                                     offscreenGraphics2d );
                         }
                     }

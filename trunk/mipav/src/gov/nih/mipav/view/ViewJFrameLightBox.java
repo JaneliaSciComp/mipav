@@ -740,7 +740,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             {
                 componentImage[i].setVOIManager(voiManager.addVOIManager( imageA, imageB,
                         componentImage[i], componentImage[i],
-                        componentImage[i].getOrientation(), componentImage[i].getSlice() ));
+                        componentImage[i].getOrientation() ));
             }
 
         } // end loop on visible slices

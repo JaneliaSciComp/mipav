@@ -2528,7 +2528,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				 	if(img != null && comp != null) {
 					 	owner.setActiveImage(img);
 				        voiManager = new VOIManagerInterface( owner, img, null, 1, false, null );
-				        voiManager.getVOIManager(0).init( owner, img, null, comp, comp, comp.getOrientation(), comp.getSlice() );
+				        voiManager.getVOIManager(0).init( owner, img, null, comp, comp, comp.getOrientation() );
 				        comp.setVOIManager(voiManager.getVOIManager(0));
 				 	}
 			 	}catch(NullPointerException e) {

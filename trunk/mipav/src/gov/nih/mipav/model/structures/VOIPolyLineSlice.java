@@ -55,7 +55,8 @@ public class VOIPolyLineSlice extends VOIBase
      * Adds a point to the list, creates a new VOIPoint and adds to the list.
      * @see java.util.Vector#add(java.lang.Object)
      */
-    public boolean add( Vector3f kPt )
+    @Override
+	public boolean add( Vector3f kPt )
     {
         super.add( kPt );
         if ( m_kPoints != null )
@@ -88,14 +89,16 @@ public class VOIPolyLineSlice extends VOIBase
     /* (non-Javadoc)
      * @see gov.nih.mipav.model.structures.VOIBase#clone()
      */
-    public VOIPolyLineSlice clone() {
+    @Override
+	public VOIPolyLineSlice clone() {
         return new VOIPolyLineSlice(this);
     }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.model.structures.VOIBase#delete(int)
      */
-    public void delete( int iPos )
+    @Override
+	public void delete( int iPos )
     {
         m_kPoints.remove(iPos);
         super.delete(iPos);
@@ -113,7 +116,8 @@ public class VOIPolyLineSlice extends VOIBase
     /* (non-Javadoc)
      * @see java.util.Vector#set(int, java.lang.Object)
      */
-    public Vector3f set( int i, Vector3f kNew )
+    @Override
+	public Vector3f set( int i, Vector3f kNew )
     {
         Vector3f kOld = super.set(i,kNew);
         m_kPoints.get(i).set(0,kNew);
@@ -124,7 +128,8 @@ public class VOIPolyLineSlice extends VOIBase
      * Sets the active VOIPoint
      * @see gov.nih.mipav.model.structures.VOIBase#setActive(boolean)
      */
-    public void setActive(boolean active) {
+    @Override
+	public void setActive(boolean active) {
         this.active = active;
         for ( int i = 0; i < m_kPoints.size(); i++ )
         {

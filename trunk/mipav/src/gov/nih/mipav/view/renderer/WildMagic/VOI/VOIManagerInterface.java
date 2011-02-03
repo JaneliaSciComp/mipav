@@ -1,6 +1,5 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
-import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
@@ -8,7 +7,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
-import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
@@ -36,6 +35,7 @@ import gov.nih.mipav.model.structures.event.VOIEvent;
 import gov.nih.mipav.model.structures.event.VOIListener;
 import gov.nih.mipav.model.structures.event.VOIVectorEvent;
 import gov.nih.mipav.model.structures.event.VOIVectorListener;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -79,7 +79,6 @@ import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFe
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesTrain;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSaveFeatures;
 
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -99,7 +98,6 @@ import java.util.Vector;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -199,7 +197,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     
     private JDialogVOILogicalOperations m_kVOILogicalOperationsDialog;
     
-    
+    private int m_iMaxUndo = 1000;
     /** Saved VOI states for undo. */
     private Vector<VOISaveState> m_kUndoList = new Vector<VOISaveState>();
     /** Saved VOI states for re-do. */
@@ -216,9 +214,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     /** Bounding box for a group of selected VOIs for group-move. */
     private Vector3f[] m_akBounds = new Vector3f[]{ new Vector3f(), new Vector3f() };
-
-    /** Set to false to disable VOI interaction (not currently used). */
-    private boolean m_bEnabled = true;
 
     /**
      * created to handle VOI updates. Must fireVOIUpdate(...) to get listeners
@@ -246,9 +241,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * default pointer button is not part of the VOI toolbar, or if the VOI toolbar is not displayed.
      * The VOIManagers query the default pointer button to determine if VOI interaction is enabled. */
     private JToggleButton m_kPointerButton = null;
-
-    /** Used in the save VOI functions */
-    private String voiSavedFileName = null;
     
     /** Statistics dialog VOI->Statistics generator... */
     protected JDialogVOIStatistics imageStatList;
@@ -899,7 +891,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             float measuredWidth = (width) * m_kParent.getActiveImage().getResolutions(0)[0];
             DecimalFormat nf = new DecimalFormat( "0.0#" );
             
-            String xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(m_kParent.getActiveImage().getUnitsOfMeasure()[0]);
+            String xUnitsString = Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure()[0]).getAbbrev();
             
             String measuredWidthString = String.valueOf(nf.format(measuredWidth));
             String widthString = String.valueOf(width);
@@ -932,7 +924,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             float measuredWidth = (width) * m_kParent.getActiveImage().getResolutions(0)[0];
             DecimalFormat nf = new DecimalFormat( "0.0#" );
             
-            String xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(m_kParent.getActiveImage().getUnitsOfMeasure()[0]);
+            String xUnitsString = Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure()[0]).getAbbrev();
             
             String measuredWidthString = String.valueOf(nf.format(measuredWidth));
             String widthString = String.valueOf(width);
@@ -978,6 +970,27 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     }
 
+    @Override
+    public void addedCurve(VOIEvent added) {
+        if ( m_kVOIDialog != null )
+        {
+            m_kVOIDialog.updateVOI( added.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }
+    }
+    
+    @Override
+    public void addedVOI(VOIVectorEvent newVOIselection) {
+        //System.err.println( "addedVOI " + this );
+        newVOIselection.getVOI().addVOIListener(this);
+        if ( m_kVOIDialog != null )
+        {
+            m_kVOIDialog.updateVOI( newVOIselection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }
+        
+    }
+    
     /**
      * Add a new VOIBase. This function should only be called from VOIManager when a new VOIBase
      * is created with the mouse.
@@ -1003,18 +1016,26 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     }
     
     public VOIManager addVOIManager(ModelImage kImageA, ModelImage kImageB, Component kComponent, 
-            ScreenCoordinateListener kContext, int iOrientation, int iSlice)
+            ScreenCoordinateListener kContext, int iOrientation)
     {
         VOIManager kVOIManager = new VOIManager(this);
         kVOIManager.init(getFrame(), kImageA, kImageB,
                     kComponent, kContext,
-                    iOrientation, iSlice);
+                    iOrientation);
         kVOIManager.setPopupVOI(popup);
         kVOIManager.setPopupPt(popupPt);
         m_kVOIManagers.add(kVOIManager);
         return kVOIManager;
     }
-    
+
+    /**
+     * Adds a UpdateVOISelectionListener.
+     * @param listener will receive VOI selection events.
+     */
+    public void addVOIUpdateListener(UpdateVOISelectionListener listener) {
+        listenerList.add(UpdateVOISelectionListener.class, listener);
+    }
+
     public void algorithmPerformed()
     {
     	if ( !m_bDefaultImage && (m_kTempImage != null))
@@ -1065,23 +1086,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     	updateDisplay();
     }
-    
-    public void removeVOIManager( VOIManager kVOIManager )
-    {
-        if ( kVOIManager != null )
-        {
-            m_kVOIManagers.remove(kVOIManager);
-            kVOIManager.dispose();
-        }
-    }
 
-    /**
-     * Adds a UpdateVOISelectionListener.
-     * @param listener will receive VOI selection events.
-     */
-    public void addVOIUpdateListener(UpdateVOISelectionListener listener) {
-        listenerList.add(UpdateVOISelectionListener.class, listener);
-    }
+    @Override
+    public void colorChanged(Color c) { }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#deleteSelectedVOI(boolean)
@@ -1111,6 +1118,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         updateDisplay();
     }
 
+
+
     /**
      * Deletes the input VOIBase from the VOI. If it is the only VOIBase in
      * the VOI, that VOI is removed from the ModelImage.
@@ -1137,6 +1146,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         updateDisplay();
     }
 
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#deleteVOIs()
      */
@@ -1145,7 +1155,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         saveVOIs("deleteVOIs");
         deleteAllVOI();
     }
-
 
 
     /* (non-Javadoc)
@@ -1190,6 +1199,17 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_kUndoCommands = null;
         m_kRedoCommands = null;
 
+        if ( m_kUndoList != null )
+        {
+        	clearList( m_kUndoList, m_kUndoList.size() );
+        	m_kUndoList = null;
+        }
+        if ( m_kRedoList != null )
+        {
+        	clearList( m_kRedoList, m_kRedoList.size() );
+        	m_kRedoList = null;
+        }
+        
         for ( int i = m_kVOIManagers.size() - 1; i >= 0; i-- )
         {
             VOIManager kManager = m_kVOIManagers.remove(i);
@@ -1205,6 +1225,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         listenerList = null;
         m_kParent = null;
     }
+
 
 
     /**
@@ -1352,6 +1373,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } 
         else
         {
+        	if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE.getActionCommand()) )
+        	{
+        		selectAllVOIs(false);
+        	}
             boolean iActive = false;
             for (int i = 0; i < m_kVOIManagers.size(); i++) {
                 m_kVOIManagers.elementAt(i).doVOI( kCommand, bDraw );
@@ -1369,8 +1394,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         //fireVOISelectionChange(voi, null);
         //System.err.println( "fireVOISelectionChange 1" );
     }
-
-
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#fireVOISelectionChange(gov.nih.mipav.model.structures.VOI, gov.nih.mipav.model.structures.VOIBase)
@@ -1416,7 +1439,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public ModelImage getActiveImage() {
         return m_kParent.getActiveImage();
     }
-
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#getComponentImage()
      */
@@ -1434,7 +1457,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
         return m_kPointerButton;
     }
-    
+
     /**
      * Returns the VOIToolbar.
      * @return VOIToolbar.
@@ -1443,7 +1466,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
         return m_kVOIToolbar;
     }
-
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#getVOI_ID()
@@ -1545,10 +1567,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                                     rgbIntensities,
                                     "Intensity Graph",
                                     v,
-                                    FileInfoBase
-                                    .getUnitsOfMeasureAbbrevStr(kImage
-                                            .getFileInfo(0)
-                                            .getUnitsOfMeasure(2)));
+                                    Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure(2)).getAbbrev());
 
                             contourGraph
                             .setDefaultDirectory(ViewUserInterface
@@ -1620,10 +1639,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                                     intensity,
                                     "Intensity Graph",
                                     v,
-                                    FileInfoBase
-                                    .getUnitsOfMeasureAbbrevStr(kImage
-                                            .getFileInfo(0)
-                                            .getUnitsOfMeasure(0)),null);
+                                    Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure(0)).getAbbrev(),
+                                    null);
 
                             contourGraph
                             .setDefaultDirectory(ViewUserInterface
@@ -1652,8 +1669,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         
         else if (kImage.getNDims() == 4) {
-            int xDim = kImage.getExtents()[0];
-            int yDim = kImage.getExtents()[1];
             int zDim = kImage.getExtents()[2];
             int tDim = kImage.getExtents()[3];
             boolean useFrameRefTime = false;
@@ -1761,10 +1776,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                                 intensity,
                                 "Intensity Graph",
                                 v,
-                                FileInfoBase
-                                .getUnitsOfMeasureAbbrevStr(kImage
-                                        .getFileInfo(0)
-                                        .getUnitsOfMeasure(0)),null);
+                                Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure(0)).getAbbrev(),null);
 
                         contourGraph
                         .setDefaultDirectory(ViewUserInterface
@@ -1798,6 +1810,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public boolean isNewVoiNeeded(int voiType) {
         return false;
     }
+
 
     /**
      * Creates a 3D Surface out of the VOIs.
@@ -1838,6 +1851,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void mouseDragged(MouseEvent arg0) {}
 
+
+
     /* (non-Javadoc)
      * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
      */
@@ -1849,24 +1864,21 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void mouseExited(MouseEvent e) {}
 
-
-
     /* (non-Javadoc)
      * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
      */
     public void mouseMoved(MouseEvent arg0) {}
 
-
+    
     /* (non-Javadoc)
      * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
      */
     public void mousePressed(MouseEvent e) {}
-
+    
     /* (non-Javadoc)
      * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
      */
     public void mouseReleased(MouseEvent e) {}
-
     
     public void moveVOI( String kCommand, float fScale )
     {
@@ -1891,7 +1903,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f(fScale, 0, 0 ), -1, true, false  );
         }        
     }
-    
+
     /**
      * Called from the VOIManager class when multiple contours are selected and moved as
      * a group. This function calculates the group bounding box and tests the move to ensure
@@ -1947,40 +1959,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     }
     
     /**
-     * Increments the VOI uid for internal tracking, used during both creation and loading of a new VOI
-     */
-    private void advanceVOIUID() {
-        m_kCurrentVOIGroup = null;
-        voiUID++;
-        if (presetHue >= 0.0) {
-            Color color = Color.getHSBColor(presetHue, 1.0f, 1.0f);
-            toolbarBuilder.getVOIColorButton().setVOIColor(color);
-            toolbarBuilder.getVOIColorButton().setBackground(color);
-        }
-        else {
-            toolbarBuilder.getVOIColorButton().setVOIColor(voiUID);
-        }
-        setButtonColor(toolbarBuilder.getVOIColorButton(), 
-                toolbarBuilder.getVOIColorButton().getBackground() );
-    }
-
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.VOIHandlerInterface#newVOI(float)
-     */
-    public void newVOI( float presetHue )
-    {
-        selectAllVOIs(false);
-        doVOI(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand());
-        m_kCurrentVOIGroup = null;
-        setPresetHue(presetHue);
-        advanceVOIUID();
-        short sID = (short)(m_kParent.getActiveImage().getVOIs().getUniqueID());
-        m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
-        m_kCurrentVOIGroup.addVOIListener(this);
-        m_kCurrentVOIGroup.setOpacity(1f);
-    }
-    
-    /**
      * Initiate a new VOI.
      * @param bPropagate when true propagate the newVOI command to the VOIManagers.
      * @param bSplit true if this is a new SplitVOI.
@@ -2003,6 +1981,22 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         if (presetHue >= 0.0) {
         	m_kCurrentVOIGroup.setColor(presetHue);
         }
+        m_kCurrentVOIGroup.setOpacity(1f);
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.VOIHandlerInterface#newVOI(float)
+     */
+    public void newVOI( float presetHue )
+    {
+        selectAllVOIs(false);
+        doVOI(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand());
+        m_kCurrentVOIGroup = null;
+        setPresetHue(presetHue);
+        advanceVOIUID();
+        short sID = (short)(m_kParent.getActiveImage().getVOIs().getUniqueID());
+        m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
+        m_kCurrentVOIGroup.addVOIListener(this);
         m_kCurrentVOIGroup.setOpacity(1f);
     }
 
@@ -2056,6 +2050,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         return true;
     }
 
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#propVOIAll()
      */
@@ -2069,7 +2064,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         pasteAll();
         return true;        
     }
-
 
     /**
      * Called from the VOIManager class when a user has drawn the QuickLUT rectangle.
@@ -2105,6 +2099,57 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_kCurrentVOIGroup = saveGroup;
     }
 
+    @Override
+    public void removedCurve(VOIEvent removed) { 
+        //System.err.println( "removedCurve " + this );
+        if ( m_kVOIDialog != null )
+        {
+            ModelImage kActive = getActiveImage();
+            ViewVOIVector VOIs = kActive.getVOIs();
+            for (int i = 0; i < VOIs.size(); i++) {
+                if (VOIs.VOIAt(i).isActive()) {
+                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateTree();
+                    return;
+                }
+            }
+            if (VOIs.size() > 0) {
+                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateTree();
+            }
+        }
+     }
+
+    @Override
+    public void removedVOI(VOIVectorEvent removed) {
+        //System.err.println( "removedVOI " + this );
+        if ( m_kVOIDialog != null )
+        {
+            ModelImage kActive = getActiveImage();
+            ViewVOIVector VOIs = kActive.getVOIs();
+            for (int i = 0; i < VOIs.size(); i++) {
+                if (VOIs.VOIAt(i).isActive()) {
+                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateTree();
+                    return;
+                }
+            }
+            if (VOIs.size() > 0) {
+                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateTree();
+            }
+        }
+    }
+
+    public void removeVOIManager( VOIManager kVOIManager )
+    {
+        if ( kVOIManager != null )
+        {
+            m_kVOIManagers.remove(kVOIManager);
+            kVOIManager.dispose();
+        }
+    }
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#removeVOIUpdateListener(gov.nih.mipav.model.structures.UpdateVOISelectionListener)
      */
@@ -2122,6 +2167,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
 
+    public void saveProstateFeatures() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(m_kParent.getFrame(), getActiveImage(), false);
+        saveFeaturesDialog.validate();
+    }
+
     /**
      * Save the current VOIState to the undo/re-do list.
      * @param kCommand the VOI Action Command about to be issued.
@@ -2129,10 +2179,24 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void saveVOIs( String kCommand )
     {
         //System.err.println( "saveVOIs " + kCommand );
+        if ( m_kUndoList.size() > m_iMaxUndo )
+        {
+        	while ( m_kUndoList.size() > m_iMaxUndo )
+        	{
+        		VOISaveState state = m_kUndoList.remove(0);
+        		state.dispose();
+        		state = null;
+
+                m_kUndoCommands.remove( 0 );
+        	}
+        	System.gc();
+        }
+        
         m_kUndoCommands.add( kCommand );
         m_kUndoList.add( getVOIState() );
         m_kRedoCommands.clear();
-        m_kRedoList.clear();
+    	clearList( m_kRedoList, m_kRedoList.size() );
+        //m_kRedoList.clear();
     }
 
     /* (non-Javadoc)
@@ -2153,6 +2217,23 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	m_kParent.getActiveImage().getParentFrame().toFront();
         }
         updateDisplay();
+    }
+
+
+    @Override
+    public void selectedVOI(VOIEvent selection) {
+    	//System.out.println("selected voi");
+        //System.err.println( "VOIManagerInterface.selectedVOI" );
+        if ( m_kVOIDialog != null )
+        {
+            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }
+        if ( m_kVOILogicalOperationsDialog != null )
+        {
+        	m_kVOILogicalOperationsDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            
+        }
     }
 
     /**
@@ -2227,7 +2308,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_kParent.setCursor(kCursor);    
     }
 
-
     /**
      * Called from VOIManager to set the default mouse cursor.
      * This function triggers events in the parent frame.
@@ -2236,15 +2316,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         toolbarBuilder.setPointerSelected();
         actionPerformed( new ActionEvent ( this, 0, CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) );
     }
-
+    
     /**
      * Currently not used.
      * @param flag
      */
-    public void setEnabled( boolean flag )
-    {
-        m_bEnabled = flag;
-    }
+    public void setEnabled( @SuppressWarnings("unused") boolean flag ) {}
 
     /**
      * Called from JDialogOpacityControls. Sets the VOI opacity.
@@ -2258,6 +2335,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kCurrentVOIGroup.setOpacity( m_fOpacity );
         }
     }
+
 
     /**
      * Called when the Default Pointer Button is not part of the default VOI Toolbar.
@@ -2307,12 +2385,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 m_kCurrentVOIGroup.getColor());
         m_fOpacity = m_kCurrentVOIGroup.getOpacity();
     }
-
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#setVOI_IDs(int, int)
      */
     public void setVOI_IDs(int ID, int UID) {}
-    
+
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#showColorDialog()
      */
@@ -2388,14 +2466,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
             if (kVOI.getGroup().getContourGraph() == null) {
                 ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbColors, "Intensity Graph", kVOI.getGroup(),
-                        FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]));
+                		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev());
 
                 contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                 contourGraph.setVisible(true);
                 kVOI.getGroup().setContourGraph(contourGraph);
                 contourGraph.setVOI(kVOI.getGroup());
             } else {
-                kVOI.getGroup().getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]));
+                kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
                 kVOI.getGroup().getContourGraph().saveNewFunction(rgbPos, rgbColors, 0);
             }
 
@@ -2441,13 +2519,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
             if (kVOI.getGroup().getContourGraph() == null) {
                 lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", kVOI.getGroup(),
-                        FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]),xyCoords);
+                		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev(),xyCoords);
                 lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                 lineGraph.setVisible(true);
                 kVOI.getGroup().setContourGraph(lineGraph);
                 lineGraph.setVOI(kVOI.getGroup());
             } else {
-                kVOI.getGroup().getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]));
+                kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
                 kVOI.getGroup().getContourGraph().replaceFunction(pos, inten, xyCoords, kVOI.getGroup(), 0);
             }
 
@@ -2457,7 +2535,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             		"\t" + lineName + "\t" + min + "\t" + max + "\t" + totalInten + "\t" + rgbMeanIntenR + "\t" + rgbStdDevIntenR + "\t" + dec.format(length) +"\n");
         }
     }
-
+    
+    
+    public void testProstateFeatures() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(m_kParent.getFrame(), getActiveImage(), true);
+        saveFeaturesDialog.validate();
+    }
 
     /**
      * Called from VOIManager. Causes the parent frame to redraw the ModelImage and VOIs.
@@ -2481,6 +2564,16 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             graphPointVOI( kVOI.getGroup(), (VOIPoint)kVOI, kVOI.getGroup().getCurves().indexOf(kVOI),
                     true);
         }
+    }
+
+    @Override
+    public void vectorSelected(VOIVectorEvent selection) {
+        //System.err.println( "VOIManagerInterface.vectorSelected" );
+        if ( m_kVOIDialog != null )
+        {
+            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }        
     }
 
     private void addVOI( ModelImage kImage, VOIBase kNew, boolean bQuickLUT, boolean bUpdate, boolean isFinished )
@@ -2553,6 +2646,26 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             updateDisplay();
         }
     }
+
+
+    /**
+     * Increments the VOI uid for internal tracking, used during both creation and loading of a new VOI
+     */
+    private void advanceVOIUID() {
+        m_kCurrentVOIGroup = null;
+        voiUID++;
+        if (presetHue >= 0.0) {
+            Color color = Color.getHSBColor(presetHue, 1.0f, 1.0f);
+            toolbarBuilder.getVOIColorButton().setVOIColor(color);
+            toolbarBuilder.getVOIColorButton().setBackground(color);
+        }
+        else {
+            toolbarBuilder.getVOIColorButton().setVOIColor(voiUID);
+        }
+        setButtonColor(toolbarBuilder.getVOIColorButton(), 
+                toolbarBuilder.getVOIColorButton().getBackground() );
+    }
+
     private void changeVOIOrder(boolean doContour, int direction) {
         if ((direction != VOI.FORWARD) && (direction != VOI.BACKWARD)
                 && (direction != VOI.FRONT) && (direction != VOI.BACK))
@@ -2639,8 +2752,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         MipavUtil.displayWarning("Please select a VOI!");
     }
-
-
+    
     private boolean checkForActiveVOIs() {
         boolean foundActive = false;
         ViewVOIVector VOIs;
@@ -2661,6 +2773,17 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         return foundActive;
     }
 
+    private void clearList( Vector<VOISaveState> list, int limit )
+    {
+    	int size = Math.min( limit, list.size() );
+		for ( int i = 0; i < size; i++ )
+		{
+			VOISaveState kState = list.remove(i);
+			kState.dispose();
+			kState = null;
+		}
+		list.clear();
+    }
 
     private int copy()
     {        
@@ -2757,13 +2880,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
 
-
     private void deleteAllVOI()
     {
         if ( m_kImageA != null ) { m_kImageA.unregisterAllVOIs(); }
         if ( m_kImageB != null ) { m_kImageB.unregisterAllVOIs(); }
     }
-
+    
     private void deleteVOIActivePt()
     {
         Vector<VOIBase> activeList = new Vector<VOIBase>();
@@ -2816,7 +2938,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         updateDisplay();
     }
-    
+
     private void evolveBoundary2D(String command)
     {
     	m_bDefaultImage = true;
@@ -2848,6 +2970,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             kEvolve.setVOIManager(this);
         }
     }
+
 
     private void findCompatibleType( ModelImage kImage, VOIBase kNew, boolean isFinished)
     {
@@ -2915,6 +3038,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         return nActive;
     }
 
+
     private JFrame getFrame() {
         return m_kParent.getFrame();
     }
@@ -2925,23 +3049,65 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     private VOISaveState getVOIState( )
     {
-        VOISaveState kVOIState = new VOISaveState();
-        kVOIState.voiVectorA = m_kImageA.getVOIsCopy();
-        if ( m_kImageB != null )
-        {
-            kVOIState.voiVectorB = m_kImageB.getVOIsCopy();
-        }
-        if ( m_kCurrentVOIGroup != null )
-        {
-            kVOIState.currentVOI = m_kImageA.isRegistered( m_kCurrentVOIGroup );
-        }
-        else
-        {
-            kVOIState.currentVOI = -1;
-        }        
-        kVOIState.currentCenter.Copy( m_kParent.getCenterPt() );
-        return kVOIState;
+        //System.out.println(Runtime.getRuntime().maxMemory() / 1048576);
+        //System.out.println(Runtime.getRuntime().totalMemory() / 1048576);
+        //System.out.println(Runtime.getRuntime().freeMemory() / 1048576);
+        //if ( Runtime.getRuntime().totalMemory() >= (Runtime.getRuntime().maxMemory() / 10) )
+        //{
+        //	System.err.println( "Clearing undo/redo list to free up memory" );
+        //	clearList( m_kUndoList );
+        //	clearList( m_kRedoList );        	
+        //}
+    	try { 
+    		VOISaveState kVOIState = new VOISaveState();
+    		kVOIState.voiVectorA = m_kImageA.getVOIsCopy();
+    		if ( m_kImageB != null )
+    		{
+    			kVOIState.voiVectorB = m_kImageB.getVOIsCopy();
+    		}
+    		if ( m_kCurrentVOIGroup != null )
+    		{
+    			kVOIState.currentVOI = m_kImageA.isRegistered( m_kCurrentVOIGroup );
+    		}
+    		else
+    		{
+    			kVOIState.currentVOI = -1;
+    		}        
+    		kVOIState.currentCenter.Copy( m_kParent.getCenterPt() );
+            return kVOIState;
+    	} catch ( OutOfMemoryError e )
+    	{
+    		//System.err.println( "Too much memory, clearing undo/redo lists" );
+        	clearList( m_kUndoList, 10 );
+        	clearList( m_kRedoList, 10 );
+        	System.gc();
+        	try { 
+        		VOISaveState kVOIState = new VOISaveState();
+        		kVOIState.voiVectorA = m_kImageA.getVOIsCopy();
+        		if ( m_kImageB != null )
+        		{
+        			kVOIState.voiVectorB = m_kImageB.getVOIsCopy();
+        		}
+        		if ( m_kCurrentVOIGroup != null )
+        		{
+        			kVOIState.currentVOI = m_kImageA.isRegistered( m_kCurrentVOIGroup );
+        		}
+        		else
+        		{
+        			kVOIState.currentVOI = -1;
+        		}        
+        		kVOIState.currentCenter.Copy( m_kParent.getCenterPt() );
+                return kVOIState;
+        	} catch ( OutOfMemoryError e2 )
+        	{
+        		MipavUtil.displayError( "Memory error. All VOIs will be saved to file then deleted." );
+                saveAllVOIs();
+                deleteAllVOI();
+        	}
+    	}
+    	return null;
     }
+
 
     private void graphPointVOI(VOI v, VOIPoint voiPt, int j,
             boolean useFrameRefTime) {
@@ -2998,9 +3164,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if (v.getContourGraph() == null) {
                     ViewJFrameGraph contourGraph = new ViewJFrameGraph(
                             ptRGBPositions, ptRGBIntensities,
-                            "Intensity Graph", v, FileInfoBase
-                            .getUnitsOfMeasureAbbrevStr(kImage.getFileInfo(0)
-                                    .getUnitsOfMeasure(0)));
+                            "Intensity Graph", v, 
+                            Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                                    .getUnitsOfMeasure(0)).getAbbrev());
 
                     contourGraph.setDefaultDirectory(ViewUserInterface
                             .getReference().getDefaultDirectory());
@@ -3008,8 +3174,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                     v.setContourGraph(contourGraph);
                 } else {
                     v.getContourGraph().setUnitsInLabel(
-                            FileInfoBase.getUnitsOfMeasureAbbrevStr(kImage.getFileInfo(0)
-                                    .getUnitsOfMeasure(0)));
+                    		Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                                    .getUnitsOfMeasure(0)).getAbbrev());
                     v.getContourGraph().saveNewFunction(ptRGBPositions,
                             ptRGBIntensities, j);
                 }
@@ -3034,10 +3200,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if (v.getContourGraph() == null) {
                     ViewJFrameGraph contourGraph = new ViewJFrameGraph(
                             ptPosition, ptIntensity, "Intensity Graph", v,
-                            FileInfoBase
-                            .getUnitsOfMeasureAbbrevStr(kImage
-                                    .getFileInfo(0)
-                                    .getUnitsOfMeasure(0)),null);
+                            Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                                    .getUnitsOfMeasure(0)).getAbbrev(),null);
 
                     contourGraph.setDefaultDirectory(ViewUserInterface
                             .getReference().getDefaultDirectory());
@@ -3045,18 +3209,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                     v.setContourGraph(contourGraph);
                 } else if (useFrameRefTime) {
                     v.getContourGraph().setUnitsInLabel(
-                            FileInfoBase
-                            .getUnitsOfMeasureAbbrevStr(kImage
-                                    .getFileInfo(0)
-                                    .getUnitsOfMeasure(0)));
+                    		Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                                    .getUnitsOfMeasure(0)).getAbbrev());
                     v.getContourGraph().update(ptPosition,
                             ptIntensity, j);
                 }  else {
-                    v.getContourGraph().setUnitsInLabel(
-                            FileInfoBase
-                            .getUnitsOfMeasureAbbrevStr(kImage
-                                    .getFileInfo(0)
-                                    .getUnitsOfMeasure(0)));
+                    v.getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                            .getUnitsOfMeasure(0)).getAbbrev());
                     v.getContourGraph().saveNewFunction(ptPosition,
                             ptIntensity, j);
                 }
@@ -3118,22 +3277,21 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if (v.getContourGraph() == null) {
                     ViewJFrameGraph contourGraph = new ViewJFrameGraph(
                             ptPosition, ptIntensity, "Intensity Graph", v,
-                            FileInfoBase.getUnitsOfMeasureAbbrevStr(kImage.getFileInfo(0)
-                                    .getUnitsOfMeasure(3)),null);
+                            Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                                    .getUnitsOfMeasure(3)).getAbbrev(),null);
                     contourGraph.setDefaultDirectory(ViewUserInterface
                             .getReference().getDefaultDirectory());
                     contourGraph.setVisible(false);
                     v.setContourGraph(contourGraph);
                 } else if (useFrameRefTime) {
                     v.getContourGraph().setUnitsInLabel(
-                            FileInfoBase.getUnitsOfMeasureAbbrevStr(kImage.getFileInfo(0)
-                                    .getUnitsOfMeasure(3)));
+                    		Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                                    .getUnitsOfMeasure(3)).getAbbrev());
                     v.getContourGraph().replaceFunction(ptPosition,
                             ptIntensity, null, v, j);
                 } else {
-                    v.getContourGraph().setUnitsInLabel(
-                            FileInfoBase.getUnitsOfMeasureAbbrevStr(kImage.getFileInfo(0)
-                                    .getUnitsOfMeasure(3)));
+                    v.getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                            .getUnitsOfMeasure(3)).getAbbrev());
                     v.getContourGraph().saveNewFunction(ptPosition,
                             ptIntensity, j);
                 }
@@ -3167,6 +3325,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
         }
     }
+    
+
+
     
     private void interpolateVOIs()
     {
@@ -3246,8 +3407,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } 
         return false;
     }
-
-
+    
     /**
      * This method loads all VOIs to the active image from the default VOI directory for that image.
      * @param quietMode if true indicates that warnings should not be displayed.
@@ -3382,6 +3542,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     } // end loadAllVOIsFrom()
 
+    private void loadProstateMask() {
+        final JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(m_kParent.getFrame(), getActiveImage());
+        loadProstateMaskDialog.validate();
+    }
 
     private boolean make3DVOI( boolean bIntersection, ModelImage kSrc, ModelImage kVolume, BitSet kMask, int iValue )
     {
@@ -3423,6 +3587,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         return false;   
     }
 
+
     /**
      * This method opens an existing VOI.
      * @param quietMode if true indicates that warnings should not be displayed.
@@ -3461,7 +3626,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         return true;
     }
-
 
     private void paintToVOI()
     {
@@ -3584,43 +3748,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             kManager.pasteVOI( kCurrentVOI );  
         }
     }
-    
-
-
-    
-    private void propagate(int dir)
-    {
-        // Get the Global copy list:
-        Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
-        // Return if no contours to paste:
-        if ( copyList.size() == 0 )
-        {
-            return;
-        }
-        // If the copy list is from another image:
-        if ( copyList.elementAt(0).getGroup() != null && !copyList.elementAt(0).getGroup().hasListener(this) )
-        {
-            pasteFromViewUserInterface();
-            return;
-        }
-        // The copy list is from this image/manager: 
-        for ( int i = 0; i < copyList.size(); i++ )
-        {
-            VOIBase kCurrentVOI = copyList.get(i); 
-            VOIManager kManager = m_kVOIManagers.elementAt(0);
-            for ( int j = 0; j < m_kVOIManagers.size(); j++ )
-            {
-            	int iPlane = m_kVOIManagers.elementAt(j).getPlane();
-                if ( iPlane == (iPlane & kCurrentVOI.getPlane()) )
-                {
-                    kManager = m_kVOIManagers.elementAt(j);
-                    break;
-                }
-            }
-
-            kManager.propagateVOI( kCurrentVOI, dir );  
-        }
-    }
 
     private void pasteAll()
     {
@@ -3633,7 +3760,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             for ( int j = 0; j < m_kVOIManagers.size(); j++ )
             {
             	int iPlane = m_kVOIManagers.elementAt(j).getPlane();
-            	System.err.println( iPlane + " " + kCurrentVOI.getPlane() + " " + (iPlane & kCurrentVOI.getPlane()));
+            	//System.err.println( iPlane + " " + kCurrentVOI.getPlane() + " " + (iPlane & kCurrentVOI.getPlane()));
                 if ( iPlane == (iPlane & kCurrentVOI.getPlane()) )
                 {
                     kManager = m_kVOIManagers.elementAt(j);
@@ -3643,7 +3770,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             kManager.pasteAllVOI( kCurrentVOI );  
         }
     }
-    
+
     private void pasteFromViewUserInterface()
     {
         ModelImage kActive = getActiveImage();
@@ -3753,6 +3880,46 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         updateDisplay();
     }
 
+    private void propagate(int dir)
+    {
+        // Get the Global copy list:
+        Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
+        // Return if no contours to paste:
+        if ( copyList.size() == 0 )
+        {
+            return;
+        }
+        // If the copy list is from another image:
+        if ( copyList.elementAt(0).getGroup() != null && !copyList.elementAt(0).getGroup().hasListener(this) )
+        {
+            pasteFromViewUserInterface();
+            return;
+        }
+        // The copy list is from this image/manager: 
+        for ( int i = 0; i < copyList.size(); i++ )
+        {
+            VOIBase kCurrentVOI = copyList.get(i); 
+            VOIManager kManager = m_kVOIManagers.elementAt(0);
+            for ( int j = 0; j < m_kVOIManagers.size(); j++ )
+            {
+            	int iPlane = m_kVOIManagers.elementAt(j).getPlane();
+                if ( iPlane == (iPlane & kCurrentVOI.getPlane()) )
+                {
+                    kManager = m_kVOIManagers.elementAt(j);
+                    break;
+                }
+            }
+
+            kManager.propagateVOI( kCurrentVOI, dir );  
+        }
+    }
+
+
+    private void prostateSegAuto() {
+    	// final JDialogProstateSegmentationAuto prostateSegAutoDialog = new JDialogProstateSegmentationAuto(m_kParent.getFrame(), getActiveImage());
+    	// prostateSegAutoDialog.validate();
+    }
+
     private void quickLUT(Vector3f[] akMinMax, ModelImage image, ModelLUT LUT) {
         if ( !(((akMinMax[1].Z - akMinMax[0].Z) > 5) ||
                 ((akMinMax[1].Y - akMinMax[0].Y) > 5) ||
@@ -3811,6 +3978,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         LUT.getTransferFunction().importArrays(x, y, 4);
     }
+
+
+
 
     /**
      * DOCUMENT ME!
@@ -3876,6 +4046,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         RGB.makeRGB( -1);
     }
 
+    /**
+     * Reconstruct the prostate surface from the coarse VOIs cloudy points.
+     */
+    private void reconstructSurfaceFromVOIs() {
+        final JDialogBase reconstructSurfaceDialog = new JDialogSurfaceReconstruction(m_kParent.getFrame());
+        reconstructSurfaceDialog.validate();
+    }
+
+
     private void redoImage( )
     {
         if ( m_kImageARedo == null )
@@ -3921,7 +4100,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             redoVOIs();
         }
     }
-
 
     private void redoVOIs()
     {
@@ -4000,6 +4178,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     } // end saveAllVOIs()
 
+
+
     /**
      * This method saves all VOIs for the active image to a given directory.
      * @param voiDir directory that contains VOIs for this image.
@@ -4036,6 +4216,95 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     } // end saveAllVOIsTo()
 
+    /**
+     * Save the dicom matrix header info. The .ply file format can't save the dicom info. We decide to save the dicom
+     * info when save the VOI file. So, the dicom info will be read when load the .ply surface into the volume render.
+     * This ensures the correct scale of surface. The dicom matrix info is saved in the current image directory with the
+     * .dicomMatrix suffix.
+     */
+    private void saveDicomMatrixInfo() {
+        int iXDim, iYDim, iZDim;
+        final boolean flip = true;
+
+        iXDim = getActiveImage().getExtents()[0];
+        iYDim = getActiveImage().getExtents()[1];
+        iZDim = getActiveImage().getExtents()[2];
+
+        float fXRes, fYRes, fZRes;
+
+        fXRes = getActiveImage().getFileInfo()[0].getResolutions()[0];
+        fYRes = getActiveImage().getFileInfo()[0].getResolutions()[1];
+        fZRes = getActiveImage().getFileInfo()[0].getResolutions()[2];
+
+        final float[] box = new float[3];
+
+        box[0] = (iXDim - 1) * fXRes;
+        box[1] = (iYDim - 1) * fYRes;
+        box[2] = (iZDim - 1) * fZRes;
+
+        final int[] direction = MipavCoordinateSystems.getModelDirections(getActiveImage());
+        final float[] startLocation = getActiveImage().getFileInfo(0).getOrigin();
+
+        TransMatrix inverseDicomMatrix = null;
+        if (getActiveImage().getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+            inverseDicomMatrix = new TransMatrix(getActiveImage().getMatrix());
+            inverseDicomMatrix.Inverse();
+        }
+
+        final String fileDir = getActiveImage().getImageDirectory();
+        final String fName = getActiveImage().getImageFileName();
+        final int index = fName.indexOf('.');
+        final String fileName = fName.substring(0, index);
+
+        System.err.println("Dicom Matrix File Dir = " + fileDir);
+        System.err.println("Dicom Matrix File Name = " + (fileName + ".dicomMatrix"));
+
+        try {
+            final FileOutputStream fOut = new FileOutputStream(fileDir + fileName + ".dicomMatrix");
+            final DataOutputStream kOut = new DataOutputStream(fOut);
+
+            if (inverseDicomMatrix == null) {
+
+                if (flip) {
+                    kOut.writeInt(1);
+                } else {
+                    kOut.writeInt(0);
+                }
+            } else {
+
+                if (flip) {
+                    kOut.writeInt(3);
+                } else {
+                    kOut.writeInt(2);
+                }
+            }
+
+            kOut.writeInt(direction[0]);
+            kOut.writeInt(direction[1]);
+            kOut.writeInt(direction[2]);
+
+            kOut.writeFloat(startLocation[0]);
+            kOut.writeFloat(startLocation[1]);
+            kOut.writeFloat(startLocation[2]);
+            kOut.writeFloat(box[0]);
+            kOut.writeFloat(box[1]);
+            kOut.writeFloat(box[2]);
+
+            if (inverseDicomMatrix != null) {
+                for (int i = 0; i <= 3; i++) {
+                    for (int j = 0; j <= 3; j++) {
+                        kOut.writeDouble(inverseDicomMatrix.Get(i, j));
+                    }
+                }
+            }
+            kOut.close();
+
+        } catch (final Exception e) {
+            System.err.println("CAUGHT EXCEPTION WITHIN saveDicomMatrixInfo() of FileVOI");
+            e.printStackTrace();
+        }
+
+    }
     private void saveImage( String kCommand )
     {
         m_kUndoCommands.add( kCommand );
@@ -4060,6 +4329,45 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_kRedoList.clear();
     }
 
+    /*
+     * 
+    public LocalVolumeVOI getCurrentVOI()
+    {
+        if ( m_kVOIManager != null )
+        {
+            return m_kVOIManager.getCurrentVOI();
+        }
+        return null;
+    }
+
+    public void setCurrentVOI( LocalVolumeVOI kCurrentVOI )
+    {
+        if ( m_kVOIManager != null )
+        {
+            m_kVOIManager.setCurrentVOI( kCurrentVOI );
+        }
+        doVOI("");
+    }
+
+    public LocalVolumeVOIVector[] getVOICopy()
+    {
+        if ( m_kVOIManager != null )
+        {
+            return m_kVOIManager.getVOICopy();
+        }
+        return null;
+    }
+
+    public void setVOICopy(LocalVolumeVOIVector[] kList)
+    {       
+        if ( m_kVOIManager != null )
+        {
+            m_kVOIManager.setVOICopy(kList);
+        }
+        doVOI("");
+    }
+     */
+    
     private void saveLabels(final boolean saveAll) {
         String fileName;
         String directory;
@@ -4108,8 +4416,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
             ViewUserInterface.getReference().setDefaultDirectory(directory);
 
-            this.voiSavedFileName = directory + fileName;
-
         } else {
             return;
         }
@@ -4124,6 +4430,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             MipavUtil.displayError("Error writing labels");
         }
 
+    }
+
+    /**
+     * This method merges the 3 axial, sagittal, coronal VOIs and save them into one cloudy points file. This function
+     * is used by the prostate surface reconstruction analysis.
+     */
+    private void saveMergedVOIs() {
+        final JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(m_kParent.getFrame());
+        mergeVOIsDialog.validate();
     }
 
     /**
@@ -4173,7 +4488,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
 
-
+    
     /**
      * This method allows the user to choose how to save the VOI.
      * @param saveAllContours if true all contours are saved
@@ -4221,9 +4536,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             
             directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
             ViewUserInterface.getReference().setDefaultDirectory(directory);
-
-            this.voiSavedFileName = directory + fileName;
-
         } else {
             return;
         }
@@ -4257,7 +4569,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
 
     }
-
+    
     /**
      * Save intensities in VOI to a text file of format x,y,z,intensity on each line if not color or complex. If color
      * use format x,y,z,a,r,g,b on each line and if complex use format x,y,z,real,imaginary on each line.
@@ -4348,9 +4660,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             fileName = chooser.getSelectedFile().getName();
             directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
             ViewUserInterface.getReference().setDefaultDirectory(directory);
-
-            this.voiSavedFileName = directory + fileName;
-
         } else {
             return;
         }
@@ -4426,10 +4735,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
 
     }
-
-
-
-
+    
     private void setCurrentColor( )
     {
         setButtonColor(toolbarBuilder.getVOIColorButton(), 
@@ -4492,16 +4798,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                         && (VOIs.VOIAt(i).getContourGraph() != null)) {
                     if (kImage.getNDims() == 4) {
                         VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
-                                FileInfoBase
-                                .getUnitsOfMeasureAbbrevStr(kImage
-                                        .getFileInfo(0)
-                                        .getUnitsOfMeasure(3)));
+                        		Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                                        .getUnitsOfMeasure(3)).getAbbrev());
                     } else {
                         VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
-                                FileInfoBase
-                                .getUnitsOfMeasureAbbrevStr(kImage
-                                        .getFileInfo(0)
-                                        .getUnitsOfMeasure(0)));
+                        		Unit.getUnitFromLegacyNum(kImage.getFileInfo(0)
+                                        .getUnitsOfMeasure(0)).getAbbrev());
                     }
 
                     if (useFrameRefTime
@@ -4532,8 +4834,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
 
     }
-
-
+    
     private void setPAAIGraphVisible() {   
         int nVOI;
         ViewVOIVector VOIs;
@@ -4562,6 +4863,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     }
 
+    /*
+     * public void extractSurfaceFromVOIs() { JDialogBase extractSurfaceDialog = new JDialogExtractSurfaceVOIs(this);
+     * extractSurfaceDialog.validate(); }
+     */
+
     private void setVOIState( VOISaveState kVOIState )
     {
         m_kImageA.unregisterAllVOIs();
@@ -4584,6 +4890,80 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kCurrentVOIGroup = null;
         }        
         m_kParent.setCenter( new Vector3f( kVOIState.currentCenter ) );
+    }
+
+    private void testProstateFeaturesClassification() {
+    	JDialogBase classificationFeaturesDialog = new JDialogProstateFeaturesClassification(m_kParent.getFrame());
+    	classificationFeaturesDialog.validate();
+    }
+
+    private void testProstateFeaturesTrain() {
+    	JDialogBase trainFeaturesDialog = new JDialogProstateFeaturesTrain(m_kParent.getFrame());
+    	trainFeaturesDialog.validate();
+    }
+
+    private void undoImage( )
+    {
+        if ( m_kImageAUndo == null )
+        {
+            return;
+        }
+        setCursor( MipavUtil.waitCursor );
+        try {
+            m_kImageARedo = m_kImageA.exportData(0, m_kImageA.getSize() );
+            m_kImageA.importData(m_kImageAUndo);
+            if ( m_kImageB != null && m_kImageBUndo != null )
+            {
+                m_kImageBRedo = m_kImageB.exportData(0, m_kImageB.getSize() );
+                m_kImageB.importData(m_kImageBUndo);
+            }
+        } catch (IOException e) {}
+        updateDisplay();
+    }
+
+    private void undoVOI()
+    {
+        if ( m_kUndoCommands.isEmpty() )
+        {
+            return;
+        }        
+        String lastCommand = m_kUndoCommands.remove( m_kUndoCommands.size() -1 );
+        m_kRedoCommands.add(lastCommand);
+        if ( lastCommand.equals( CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand() ) ||
+                lastCommand.equals( CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand() ) )
+        {
+            if ( m_bGPURenderer )
+            {
+                m_kParent.getActiveImage().useMask(false);
+            }
+            else
+            {
+                undoImage();
+            }
+            m_kParent.updateData(false);
+        }
+        else
+        {
+            undoVOIs();
+        }
+    }
+
+    private void undoVOIs()
+    {
+        if ( m_kUndoList.size() <= 0 )
+        {
+            return;
+        }
+        m_kRedoList.add( getVOIState() );
+        setVOIState( m_kUndoList.remove( m_kUndoList.size() - 1) );
+        if ( imageStatList != null )
+        {
+            imageStatList.refreshVOIList(getActiveImage().getVOIs());
+        }
+        if (m_kVOIDialog != null) {
+            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
+        }
+        updateDisplay();
     }
 
     /**
@@ -4635,351 +5015,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kVOIDialog.setVisible(true);
             m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
         }
-    }
-
-
-
-    private void undoImage( )
-    {
-        if ( m_kImageAUndo == null )
-        {
-            return;
-        }
-        setCursor( MipavUtil.waitCursor );
-        try {
-            m_kImageARedo = m_kImageA.exportData(0, m_kImageA.getSize() );
-            m_kImageA.importData(m_kImageAUndo);
-            if ( m_kImageB != null && m_kImageBUndo != null )
-            {
-                m_kImageBRedo = m_kImageB.exportData(0, m_kImageB.getSize() );
-                m_kImageB.importData(m_kImageBUndo);
-            }
-        } catch (IOException e) {}
-        updateDisplay();
-    }
-
-    private void undoVOI()
-    {
-        if ( m_kUndoCommands.isEmpty() )
-        {
-            return;
-        }        
-        String lastCommand = m_kUndoCommands.remove( m_kUndoCommands.size() -1 );
-        m_kRedoCommands.add(lastCommand);
-        if ( lastCommand.equals( CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand() ) ||
-                lastCommand.equals( CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand() ) )
-        {
-            if ( m_bGPURenderer )
-            {
-                m_kParent.getActiveImage().useMask(false);
-            }
-            else
-            {
-                undoImage();
-            }
-            m_kParent.updateData(false);
-        }
-        else
-        {
-            undoVOIs();
-        }
-    }
-    private void undoVOIs()
-    {
-        if ( m_kUndoList.isEmpty() )
-        {
-            return;
-        }
-        m_kRedoList.add( getVOIState() );
-        setVOIState( m_kUndoList.remove( m_kUndoList.size() - 1) );
-        if ( imageStatList != null )
-        {
-            imageStatList.refreshVOIList(getActiveImage().getVOIs());
-        }
-        if (m_kVOIDialog != null) {
-            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
-        }
-        updateDisplay();
-    }
-
-    /*
-     * 
-    public LocalVolumeVOI getCurrentVOI()
-    {
-        if ( m_kVOIManager != null )
-        {
-            return m_kVOIManager.getCurrentVOI();
-        }
-        return null;
-    }
-
-    public void setCurrentVOI( LocalVolumeVOI kCurrentVOI )
-    {
-        if ( m_kVOIManager != null )
-        {
-            m_kVOIManager.setCurrentVOI( kCurrentVOI );
-        }
-        doVOI("");
-    }
-
-    public LocalVolumeVOIVector[] getVOICopy()
-    {
-        if ( m_kVOIManager != null )
-        {
-            return m_kVOIManager.getVOICopy();
-        }
-        return null;
-    }
-
-    public void setVOICopy(LocalVolumeVOIVector[] kList)
-    {       
-        if ( m_kVOIManager != null )
-        {
-            m_kVOIManager.setVOICopy(kList);
-        }
-        doVOI("");
-    }
-     */
-    
-    /**
-     * This method merges the 3 axial, sagittal, coronal VOIs and save them into one cloudy points file. This function
-     * is used by the prostate surface reconstruction analysis.
-     */
-    private void saveMergedVOIs() {
-        final JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(m_kParent.getFrame());
-        mergeVOIsDialog.validate();
-    }
-
-    public void saveProstateFeatures() {
-        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(m_kParent.getFrame(), getActiveImage(), false);
-        saveFeaturesDialog.validate();
-    }
-
-    public void testProstateFeatures() {
-        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(m_kParent.getFrame(), getActiveImage(), true);
-        saveFeaturesDialog.validate();
-    }
-
-    
-    private void testProstateFeaturesTrain() {
-    	JDialogBase trainFeaturesDialog = new JDialogProstateFeaturesTrain(m_kParent.getFrame());
-    	trainFeaturesDialog.validate();
-    }
-    
-    private void testProstateFeaturesClassification() {
-    	JDialogBase classificationFeaturesDialog = new JDialogProstateFeaturesClassification(m_kParent.getFrame());
-    	classificationFeaturesDialog.validate();
-    }
-    
-    private void loadProstateMask() {
-        final JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(m_kParent.getFrame(), getActiveImage());
-        loadProstateMaskDialog.validate();
-    }
-
-    private void prostateSegAuto() {
-    	// final JDialogProstateSegmentationAuto prostateSegAutoDialog = new JDialogProstateSegmentationAuto(m_kParent.getFrame(), getActiveImage());
-    	// prostateSegAutoDialog.validate();
-    }
-    
-    /**
-     * Reconstruct the prostate surface from the coarse VOIs cloudy points.
-     */
-    private void reconstructSurfaceFromVOIs() {
-        final JDialogBase reconstructSurfaceDialog = new JDialogSurfaceReconstruction(m_kParent.getFrame());
-        reconstructSurfaceDialog.validate();
-    }
-
-    /*
-     * public void extractSurfaceFromVOIs() { JDialogBase extractSurfaceDialog = new JDialogExtractSurfaceVOIs(this);
-     * extractSurfaceDialog.validate(); }
-     */
-
-    /**
-     * Save the dicom matrix header info. The .ply file format can't save the dicom info. We decide to save the dicom
-     * info when save the VOI file. So, the dicom info will be read when load the .ply surface into the volume render.
-     * This ensures the correct scale of surface. The dicom matrix info is saved in the current image directory with the
-     * .dicomMatrix suffix.
-     */
-    private void saveDicomMatrixInfo() {
-        int iXDim, iYDim, iZDim;
-        final boolean flip = true;
-
-        iXDim = getActiveImage().getExtents()[0];
-        iYDim = getActiveImage().getExtents()[1];
-        iZDim = getActiveImage().getExtents()[2];
-
-        float fXRes, fYRes, fZRes;
-
-        fXRes = getActiveImage().getFileInfo()[0].getResolutions()[0];
-        fYRes = getActiveImage().getFileInfo()[0].getResolutions()[1];
-        fZRes = getActiveImage().getFileInfo()[0].getResolutions()[2];
-
-        final float[] box = new float[3];
-
-        box[0] = (iXDim - 1) * fXRes;
-        box[1] = (iYDim - 1) * fYRes;
-        box[2] = (iZDim - 1) * fZRes;
-
-        final int[] direction = MipavCoordinateSystems.getModelDirections(getActiveImage());
-        final float[] startLocation = getActiveImage().getFileInfo(0).getOrigin();
-
-        TransMatrix dicomMatrix = null;
-        TransMatrix inverseDicomMatrix = null;
-        if (getActiveImage().getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-
-            // Get the DICOM transform that describes the transformation
-            // from
-            // axial to this image orientation
-            dicomMatrix = getActiveImage().getMatrix();
-            inverseDicomMatrix = new TransMatrix(getActiveImage().getMatrix());
-            inverseDicomMatrix.Inverse();
-        }
-
-        final String fileDir = getActiveImage().getImageDirectory();
-        final String fName = getActiveImage().getImageFileName();
-        final int index = fName.indexOf('.');
-        final String fileName = fName.substring(0, index);
-
-        System.err.println("Dicom Matrix File Dir = " + fileDir);
-        System.err.println("Dicom Matrix File Name = " + (fileName + ".dicomMatrix"));
-
-        try {
-            final FileOutputStream fOut = new FileOutputStream(fileDir + fileName + ".dicomMatrix");
-            final DataOutputStream kOut = new DataOutputStream(fOut);
-
-            if (inverseDicomMatrix == null) {
-
-                if (flip) {
-                    kOut.writeInt(1);
-                } else {
-                    kOut.writeInt(0);
-                }
-            } else {
-
-                if (flip) {
-                    kOut.writeInt(3);
-                } else {
-                    kOut.writeInt(2);
-                }
-            }
-
-            kOut.writeInt(direction[0]);
-            kOut.writeInt(direction[1]);
-            kOut.writeInt(direction[2]);
-
-            kOut.writeFloat(startLocation[0]);
-            kOut.writeFloat(startLocation[1]);
-            kOut.writeFloat(startLocation[2]);
-            kOut.writeFloat(box[0]);
-            kOut.writeFloat(box[1]);
-            kOut.writeFloat(box[2]);
-
-            if (inverseDicomMatrix != null) {
-                for (int i = 0; i <= 3; i++) {
-                    for (int j = 0; j <= 3; j++) {
-                        kOut.writeDouble(inverseDicomMatrix.Get(i, j));
-                    }
-                }
-            }
-            kOut.close();
-
-        } catch (final Exception e) {
-            System.err.println("CAUGHT EXCEPTION WITHIN saveDicomMatrixInfo() of FileVOI");
-            e.printStackTrace();
-        }
-
-    }
-
-    @Override
-    public void addedCurve(VOIEvent added) {
-        if ( m_kVOIDialog != null )
-        {
-            m_kVOIDialog.updateVOI( added.getVOI(), getActiveImage() );
-            m_kVOIDialog.updateTree();
-        }
-    }
-
-    @Override
-    public void colorChanged(Color c) { }
-
-    @Override
-    public void removedCurve(VOIEvent removed) { 
-        //System.err.println( "removedCurve " + this );
-        if ( m_kVOIDialog != null )
-        {
-            ModelImage kActive = getActiveImage();
-            ViewVOIVector VOIs = kActive.getVOIs();
-            for (int i = 0; i < VOIs.size(); i++) {
-                if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
-                    m_kVOIDialog.updateTree();
-                    return;
-                }
-            }
-            if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
-                m_kVOIDialog.updateTree();
-            }
-        }
-     }
-
-    @Override
-    public void selectedVOI(VOIEvent selection) {
-    	//System.out.println("selected voi");
-        //System.err.println( "VOIManagerInterface.selectedVOI" );
-        if ( m_kVOIDialog != null )
-        {
-            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
-            m_kVOIDialog.updateTree();
-        }
-        if ( m_kVOILogicalOperationsDialog != null )
-        {
-        	m_kVOILogicalOperationsDialog.updateVOI( selection.getVOI(), getActiveImage() );
-            
-        }
-    }
-
-    @Override
-    public void addedVOI(VOIVectorEvent newVOIselection) {
-        //System.err.println( "addedVOI " + this );
-        newVOIselection.getVOI().addVOIListener(this);
-        if ( m_kVOIDialog != null )
-        {
-            m_kVOIDialog.updateVOI( newVOIselection.getVOI(), getActiveImage() );
-            m_kVOIDialog.updateTree();
-        }
-        
-    }
-
-    @Override
-    public void removedVOI(VOIVectorEvent removed) {
-        //System.err.println( "removedVOI " + this );
-        if ( m_kVOIDialog != null )
-        {
-            ModelImage kActive = getActiveImage();
-            ViewVOIVector VOIs = kActive.getVOIs();
-            for (int i = 0; i < VOIs.size(); i++) {
-                if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
-                    m_kVOIDialog.updateTree();
-                    return;
-                }
-            }
-            if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
-                m_kVOIDialog.updateTree();
-            }
-        }
-    }
-
-    @Override
-    public void vectorSelected(VOIVectorEvent selection) {
-        //System.err.println( "VOIManagerInterface.vectorSelected" );
-        if ( m_kVOIDialog != null )
-        {
-            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
-            m_kVOIDialog.updateTree();
-        }        
     }
 
 }

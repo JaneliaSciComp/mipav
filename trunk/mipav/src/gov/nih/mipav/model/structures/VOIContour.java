@@ -6,12 +6,11 @@ import java.awt.Polygon;
 import java.util.BitSet;
 import java.util.Vector;
 
-import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
-
 import Jama.Matrix;
 import WildMagic.LibFoundation.Approximation.ApprEllipsoidFit3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 /**
  * This class is fundamental to the VOI class in which points are stored that
@@ -110,6 +109,43 @@ public class VOIContour extends VOIBase {
 	}
 
 	/**
+	 * Calculate the distance of the largest line segment contained entirely
+	 * within the slice of the VOI
+	 * 
+	 * @param xRes
+	 * @param yRes
+	 * @return largestDistance
+	 */
+	public double calcLargestSliceDistance(int[] extents, float[] res, Vector3f kPos1, Vector3f kPos2) {
+
+		float[] xPts = new float[size()];
+		float[] yPts = new float[size()];
+		float[] zPts = new float[size()];
+		int size = size();
+		for (int i = 0; i < size; i++) {
+			xPts[i] = elementAt(i).X;
+			yPts[i] = elementAt(i).Y;
+			zPts[i] = elementAt(i).Z;
+		}
+
+		int xDim = extents.length > 0 ? extents[0] : 1;
+		int yDim = extents.length > 1 ? extents[1] : 1;
+		int zDim = extents.length > 2 ? extents[2] : 1;
+		BitSet mask = new BitSet(xDim*yDim*zDim); 
+		setMask( mask, xDim, yDim, false, VOI.ADDITIVE );     
+		return VOI.calcLargestDistance( mask, extents, res[0], res[1], res[2], xPts, yPts, zPts, kPos1, kPos2 );		
+	}
+
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.model.structures.VOIBase#clone()
+	 */
+	@Override
+	public VOIBase clone() {
+		return new VOIContour(this);
+	}
+
+
+	/**
 	 * Forms the convexHull based on the set of points that defines this
 	 * contour. The contour can be either be clockwise or counter-clockwise.
 	 */
@@ -202,41 +238,6 @@ public class VOIContour extends VOIBase {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see gov.nih.mipav.model.structures.VOIBase#clone()
-	 */
-	public VOIBase clone() {
-		return new VOIContour(this);
-	}
-
-
-	/**
-	 * Exports the points of the contour as a polygon (z data can not be encoded
-	 * in the polygon).
-	 * 
-	 * @return returns polygon
-	 */
-	public Polygon exportPolygon() {
-		int i;
-		int x, y;
-		Polygon gon = null;
-
-		try {
-			gon = new Polygon();
-		} catch (OutOfMemoryError error) {
-			System.gc();
-			throw error;
-		}
-
-		for (i = 0; i < size(); i++) {
-			x = (int) (((elementAt(i))).X + 0.5);
-			y = (int) (((elementAt(i))).Y + 0.5);
-			gon.addPoint(x, y);
-		}
-
-		return gon;
-	}
-
 
 	/**
 	 * Return the VOI crop region's origin of rectangle.
@@ -304,6 +305,33 @@ public class VOIContour extends VOIBase {
 	}
 	 */
 
+
+	/**
+	 * Exports the points of the contour as a polygon (z data can not be encoded
+	 * in the polygon).
+	 * 
+	 * @return returns polygon
+	 */
+	public Polygon exportPolygon() {
+		int i;
+		int x, y;
+		Polygon gon = null;
+
+		try {
+			gon = new Polygon();
+		} catch (OutOfMemoryError error) {
+			System.gc();
+			throw error;
+		}
+
+		for (i = 0; i < size(); i++) {
+			x = (int) (((elementAt(i))).X + 0.5);
+			y = (int) (((elementAt(i))).Y + 0.5);
+			gon.addPoint(x, y);
+		}
+
+		return gon;
+	}
 
 	/**
 	 * Gets position/intensity along the boundary of this contour VOI.
@@ -656,6 +684,8 @@ public class VOIContour extends VOIBase {
 		}
 	}
 
+
+
 	/**
 	 * Forget about the last clicked (active) point in the contour.
 	 */
@@ -667,8 +697,6 @@ public class VOIContour extends VOIBase {
 			lastPoint = 0;
 		}
 	}
-
-
 
 	/**
 	 * Find the least squares fit of the points in the contour to an ellipsoid.
@@ -685,13 +713,7 @@ public class VOIContour extends VOIBase {
 
 		getMask();
 		int nPts = m_kMask.cardinality();
-
 		
-		
-		
-		int xUnits = kImage.getUnitsOfMeasure().length > 0 ? kImage.getUnitsOfMeasure()[0] : 1;
-		int yUnits = kImage.getUnitsOfMeasure().length > 1 ? kImage.getUnitsOfMeasure()[1] : 1;
-		int zUnits = kImage.getUnitsOfMeasure().length > 2 ? kImage.getUnitsOfMeasure()[2] : 1;
 		float xRes = kImage.getResolutions(0).length > 0 ? kImage.getResolutions(0)[0] : 1;
 		float yRes = kImage.getResolutions(0).length > 1 ? kImage.getResolutions(0)[1] : 1;
 		float zRes = kImage.getResolutions(0).length > 2 ? kImage.getResolutions(0)[2] : 1;
@@ -848,7 +870,7 @@ public class VOIContour extends VOIBase {
         }
 
         // Try different Powell for fitting the points.
-        ApprEllipsoidFit3f kFit = new ApprEllipsoidFit3f( kLPSPoints.size(), kLPSPoints, kUp, kMat, afScale );
+        new ApprEllipsoidFit3f( kLPSPoints.size(), kLPSPoints, kUp, kMat, afScale );
 
         double fMin = Float.MAX_VALUE;
         double fMax = -Float.MAX_VALUE;
@@ -877,7 +899,7 @@ public class VOIContour extends VOIBase {
             }
         }
 
-        double volumeEllipse = (4.0 * Math.PI / 3.0) * afScale[2] * afScale[1] * afScale[0];
+        //double volumeEllipse = (4.0 * Math.PI / 3.0) * afScale[2] * afScale[1] * afScale[0];
         double areaEllipse = (Math.PI / 4.0) * afScale[iMax] * afScale[iMid];
         double normFactor = Math.sqrt(nPts / areaEllipse);
 
@@ -1342,34 +1364,6 @@ public class VOIContour extends VOIBase {
 			((elementAt(i))).Y += yT;
 			((elementAt(i))).Z += zT;
 		}
-	}
-
-	/**
-	 * Calculate the distance of the largest line segment contained entirely
-	 * within the slice of the VOI
-	 * 
-	 * @param xRes
-	 * @param yRes
-	 * @return largestDistance
-	 */
-	public double calcLargestSliceDistance(int[] extents, float[] res, Vector3f kPos1, Vector3f kPos2) {
-
-		float[] xPts = new float[size()];
-		float[] yPts = new float[size()];
-		float[] zPts = new float[size()];
-		int size = size();
-		for (int i = 0; i < size; i++) {
-			xPts[i] = elementAt(i).X;
-			yPts[i] = elementAt(i).Y;
-			zPts[i] = elementAt(i).Z;
-		}
-
-		int xDim = extents.length > 0 ? extents[0] : 1;
-		int yDim = extents.length > 1 ? extents[1] : 1;
-		int zDim = extents.length > 2 ? extents[2] : 1;
-		BitSet mask = new BitSet(xDim*yDim*zDim); 
-		setMask( mask, xDim, yDim, false, VOI.ADDITIVE );     
-		return VOI.calcLargestDistance( mask, extents, res[0], res[1], res[2], xPts, yPts, zPts, kPos1, kPos2 );		
 	}
 
 
