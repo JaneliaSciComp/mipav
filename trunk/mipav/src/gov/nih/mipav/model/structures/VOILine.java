@@ -1,7 +1,6 @@
 package gov.nih.mipav.model.structures;
 
 import gov.nih.mipav.util.MipavMath;
-import gov.nih.mipav.model.file.FileInfoBase;
 
 import java.util.Vector;
 
@@ -53,7 +52,8 @@ public class VOILine extends VOIBase {
     /* (non-Javadoc)
      * @see gov.nih.mipav.model.structures.VOIBase#clone()
      */
-    public VOILine clone() {
+    @Override
+	public VOILine clone() {
         return new VOILine(this);
     }
     
@@ -62,7 +62,8 @@ public class VOILine extends VOIBase {
      * 
      * @return returns the geometric center
      */
-    public Vector3f getGeometricCenter() {     
+    @Override
+	public Vector3f getGeometricCenter() {     
         gcPt.X = MipavMath.round( (get(0).X + get(1).X) / 2f );
         gcPt.Y = MipavMath.round( (get(0).Y + get(1).Y) / 2f );
         gcPt.Z = MipavMath.round( (get(0).Z + get(1).Z) / 2f );

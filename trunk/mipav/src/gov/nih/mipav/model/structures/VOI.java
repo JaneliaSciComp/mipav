@@ -1,8 +1,8 @@
 package gov.nih.mipav.model.structures;
 
-import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.model.structures.event.VOIEvent;
 import gov.nih.mipav.model.structures.event.VOIListener;
+import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameGraph;
@@ -86,6 +86,287 @@ public class VOI extends ModelSerialCloneable {
 
 	//~ Instance fields ------------------------------------------------------------------------------------------------
 
+	public static double calcLargestDistance(BitSet mask, int[] extents, float xRes, float yRes, float zRes,
+			float[] xPts, float[] yPts, float zPts[], Vector3f kPos1, Vector3f kPos2 )
+	{
+		long time = System.currentTimeMillis();
+		double avg = 0, max = 0;
+		double[] maxAvg = determineMaxAvg(xRes, yRes, zRes, xPts, yPts, zPts);
+		max = maxAvg[0];
+		avg = maxAvg[1];
+
+		Preferences.debug("Traverse points\n");
+		time = System.currentTimeMillis();
+		double a = 0, lowerBound = Double.MAX_VALUE, upperBound = Double.MAX_VALUE;
+		int iter = 0;
+		boolean terminal = false;
+		while(a == 0 && !terminal) {
+			ArrayList<Integer> orig = new ArrayList<Integer>();
+			ArrayList<Integer> term = new ArrayList<Integer>();
+			upperBound = lowerBound;
+			lowerBound = Math.max(0, max-iter*(avg/Math.max(1, (int)Math.pow(xPts.length, 0.3)-9)));
+			gatherBoundedPoints(orig, term, lowerBound-1, upperBound, xRes, yRes, zRes, xPts, yPts, zPts);
+			time = System.currentTimeMillis();        
+			Preferences.debug("Completed points in "+(System.currentTimeMillis() - time)+"\tsize: "+orig.size()+"\n");
+			a = getLargest(mask, extents, orig, term, xRes, yRes, zRes, xPts, yPts, zPts, kPos1, kPos2 );
+			if(lowerBound == 0.0) {
+				terminal = true;
+			}
+			iter++;
+		}
+		return a;
+	}
+
+	/**
+	 * Gathers max and average statistics to build guessing intervals
+	 */
+	private static double[] determineMaxAvg(float xRes, float yRes, float zRes,
+			float[] xPts, float[] yPts, float zPts[]) {
+		double max = 0, avg = 0;
+		int n = xPts.length;
+		Random r = new Random(1);
+		//note that a stop that yields a non-representative average is fine, since worst case is more computations
+		int stop = n < 100 ? (int)(n*0.50) : (int)(n*0.10);
+		int[] search = new int[stop];
+		int[] end = new int[stop];
+		double startX, startY, startZ;
+		double endX, endY, endZ;
+		double delX, delY, delZ;
+		double distX, distY, distZ;
+		double distanceSq;
+		int i, j;
+		for(i = 0; i<stop; i++) {
+			search[i] = r.nextInt(n);
+			end[i] = r.nextInt(n);
+		}
+
+		int numBegin = 0, numEnd = 0;;
+		for (i = 0; i < search.length; i++) {
+
+			numBegin = search[i];
+			startX = xPts[numBegin];
+			startY = yPts[numBegin];
+			startZ = zPts[numBegin];
+			for (j = 0; j < end.length; j++) {
+				numEnd = end[j];
+				endX = xPts[numEnd];
+				endY = yPts[numEnd];
+				endZ = zPts[numEnd];
+				delX = endX - startX;
+				delY = endY - startY;
+				delZ = endZ - startZ;
+				distX = xRes * delX;
+				distY = yRes * delY;
+				distZ = zRes * delZ;
+				distanceSq = distX*distX + distY*distY + distZ*distZ;
+				avg = avg + distanceSq;
+				if (distanceSq > max) {
+					max = distanceSq;
+				} // if (distanceSq > largsestDistanceSq)
+			} // for (j = i+1; j < xPts.length; j++)
+		} // for (i = 0; i < xPts.length; i++)
+			avg = avg / (end.length * search.length);
+		return new double[]{max, avg};
+	}
+
+	/**
+	 * Gathers the points that fall within the required bounds
+	 */
+	private static void gatherBoundedPoints(ArrayList<Integer> orig, ArrayList<Integer> term, 
+			double lowerBound, double upperBound, 
+			float xRes, float yRes, float zRes, 
+			float[] xPts, float[] yPts, float zPts[]) {
+		int i, j;
+		double startX, startY, startZ;
+		double endX, endY, endZ;
+		double delX, delY, delZ;
+		double distX, distY, distZ;
+		double distanceSq;
+		for (i = 0; i < xPts.length; i++) {
+			startX = xPts[i];
+			startY = yPts[i];
+			startZ = zPts[i];
+			for (j = i+1; j < xPts.length; j++) {
+				endX = xPts[j];
+				endY = yPts[j];
+				endZ = zPts[j];
+				delX = endX - startX;
+				delY = endY - startY;
+				delZ = endZ - startZ;
+				distX = xRes * delX;
+				distY = yRes * delY;
+				distZ = zRes * delZ;
+				distanceSq = distX*distX + distY*distY + distZ*distZ;
+				if (distanceSq > lowerBound && distanceSq < upperBound) {
+					orig.add(Integer.valueOf(i));
+					term.add(Integer.valueOf(j));
+				} // if (distanceSq > largsestDistanceSq)
+			} // for (j = i+1; j < xPts.length; j++)
+		} // for (i = 0; i < xPts.length; i++)
+	}
+
+	/**
+	 * Finds the largest line that lies within entirely within the VOI.
+	 */  
+	private static double getLargest(BitSet mask, int[] extents, ArrayList<Integer> orig, ArrayList<Integer> term, 
+			float xRes, float yRes, float zRes, 
+			float[] xPoints, float[] yPoints, float zPoints[], Vector3f kPos1, Vector3f kPos2) {
+		int origPoint, termPoint;
+		double largestDistanceSq = 0, distanceSq;
+		double startX, startY, startZ;
+		double endX, endY, endZ;
+		double delX, delY, delZ;
+		double distX, distY, distZ;
+		double x, y, z;
+		double slope, slope2;
+		int xRound, yRound, zRound;
+		int j;
+		int maskIndex = 0;
+		int xDim = extents.length > 0 ? extents[0] : 1;
+		int yDim = extents.length > 1 ? extents[1] : 1;
+		boolean okay;
+		forj:
+			for(j=0; j<orig.size(); j++) {
+				origPoint = orig.get(j).intValue();
+				startX = xPoints[origPoint];
+				startY = yPoints[origPoint];
+				startZ = zPoints[origPoint];
+				termPoint = term.get(j).intValue();
+				endX = xPoints[termPoint];
+				endY = yPoints[termPoint];
+				endZ = zPoints[termPoint];
+				delX = endX - startX;
+				delY = endY - startY;
+				delZ = endZ - startZ;
+				distX = xRes * delX;
+				distY = yRes * delY;
+				distZ = zRes * delZ;
+				distanceSq = distX*distX + distY*distY + distZ*distZ;
+
+				kPos1.X = (float)startX;
+				kPos1.Y = (float)startY;
+				kPos1.Z = (float)startZ;
+				kPos2.X = (float)endX;
+				kPos2.Y = (float)endY;
+				kPos2.Z = (float)endZ;
+				
+				if(distanceSq > largestDistanceSq) {
+					if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ))) {
+						slope = delY/delX;
+						slope2 = delZ/delX;
+						if (endX >= startX) {
+							for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
+							z += 0.5 * slope2) {
+								xRound = (int)Math.round(x);
+								yRound = (int)Math.round(y);
+								zRound = (int)Math.round(z);
+								if ( xRound < endX && yRound < endY && zRound < endZ )
+								{
+									maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+									okay = mask.get( maskIndex );
+									if (!okay) {
+										continue forj;
+									}
+								}
+							} // for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
+						} // if (endX >= startX)
+							else { // endX < startX
+								for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
+								z -= 0.5 * slope2) {
+									xRound = (int)Math.round(x);
+									yRound = (int)Math.round(y);
+									zRound = (int)Math.round(z);
+									if ( xRound < endX && yRound < endY && zRound < endZ )
+									{
+										maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+										okay = mask.get( maskIndex );
+										if (!okay) {
+											continue forj;
+										}
+									}
+								} // for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
+							} // else endX < startX
+					} // if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ)))
+					else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ))){ 
+						slope = delX/delY;
+						slope2 = delZ/delY;
+						if (endY >= startY) {
+							for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
+							z += 0.5 * slope2) {
+								xRound = (int)Math.round(x);
+								yRound = (int)Math.round(y);
+								zRound = (int)Math.round(z);
+								if ( xRound < endX && yRound < endY && zRound < endZ )
+								{
+									maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+									okay = mask.get( maskIndex );
+									if (!okay) {
+										continue forj;
+									}
+								}
+							} // for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
+						} // if (endX >= startX)
+							else { // endX < startX
+								for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
+								z -= 0.5 * slope2) {
+									xRound = (int)Math.round(x);
+									yRound = (int)Math.round(y);
+									zRound = (int)Math.round(z);
+									if ( xRound < endX && yRound < endY && zRound < endZ )
+									{
+										maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+										okay = mask.get( maskIndex );
+										if (!okay) {
+											continue forj;
+										}
+									}
+								} // for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
+							} // else endX < startX    
+					} // else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ)))
+					else { // ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
+						slope = delX/delZ;
+						slope2 = delY/delZ;
+						if (endZ >= startZ) {
+							for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,
+							y += 0.5 * slope2) {
+								xRound = (int)Math.round(x);
+								yRound = (int)Math.round(y);
+								zRound = (int)Math.round(z);
+								if ( xRound < endX && yRound < endY && zRound < endZ )
+								{
+									maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+									okay = mask.get( maskIndex );
+									if (!okay) {
+										continue forj;
+									}
+								}
+							} // for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,   
+						} // if (endZ >= startZ)
+							else { // endZ < startZ
+								for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
+								y -= 0.5 * slope2) {
+									xRound = (int)Math.round(x);
+									yRound = (int)Math.round(y);
+									zRound = (int)Math.round(z);
+									if ( xRound < endX && yRound < endY && zRound < endZ )
+									{
+										maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
+										okay = mask.get( maskIndex );
+										if (!okay) {
+											continue forj;
+										}
+									}
+								} // for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
+							} // else (endZ < startZ)
+					} // else ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
+					largestDistanceSq = distanceSq;
+					Preferences.debug("New points for largest distance: "+kPos1+"\t"+kPos2+"\n", 
+					        Preferences.DEBUG_ALGORITHM);
+				}
+			}
+		return Math.sqrt(largestDistanceSq);
+	}
+
 	/** int indicating that no point was found. */
 	public final int NOT_A_POINT = -99;
 
@@ -110,6 +391,7 @@ public class VOI extends ModelSerialCloneable {
 	/** Indicates if the VOI should be shown as a boundary or a solid. */
 	private int displayMode;
 
+
 	/** If true the VOI cannot be moved, if false this VOI can be moved. */
 	private boolean fixed = false;
 
@@ -121,7 +403,6 @@ public class VOI extends ModelSerialCloneable {
 
 	/** Sets the minimum intensity value for operations on images segmented by this VOI */
 	private float ignoreMin = Float.MAX_VALUE;
-
 
 	/** Name of the VOI stored as a string. */
 	private String name;
@@ -153,18 +434,22 @@ public class VOI extends ModelSerialCloneable {
 	/** The z - dimension bounds: zBounds [0] = min and zBounds[1] = max. */
 	private float[] zBounds = new float[2];
 
+	//~ Constructors ---------------------------------------------------------------------------------------------------
+
+
 	/** extension of voi file name of voi was read in through file **/
 	private String extension = "";
+
 
 	private boolean active = false;
 
 	/** VOIListeners that are updated when this VOI changes */
 	public transient EventListenerList listenerList;
 
+	//~ Methods --------------------------------------------------------------------------------------------------------
+
+
 	private ArrayList<String> comments = new ArrayList<String>();
-
-	//~ Constructors ---------------------------------------------------------------------------------------------------
-
 
 	/**
 	 * Create a VOI with the given id and name.
@@ -190,8 +475,7 @@ public class VOI extends ModelSerialCloneable {
 		this.thickness = Preferences.getVOIThickness();
 	}
 
-
-	/**
+    /**
 	 * Constructs a Volume of Interest (VOI).
 	 *
 	 * @param  id         identifier of VOI
@@ -288,9 +572,6 @@ public class VOI extends ModelSerialCloneable {
 		//this.update();
 	}
 
-	//~ Methods --------------------------------------------------------------------------------------------------------
-
-
 	/**
 	 * adds the update listener.
 	 *
@@ -305,39 +586,6 @@ public class VOI extends ModelSerialCloneable {
 		{
 			listenerList.add(VOIListener.class, listener);        
 		}    
-	}
-
-	public boolean hasListener( VOIListener listener )
-	{
-		if (listenerList.getListenerCount(VOIListener.class) == 0)
-		{
-			return false;
-		}        
-		// Guaranteed to return a non-null array
-		Object[] listeners = listenerList.getListenerList();
-		// Process the listeners last to first, notifying
-		// those that are interested in this event
-		for (int i = listeners.length - 2; i >= 0; i -= 2) {
-			if (listeners[i] == VOIListener.class && 
-					((VOIListener) listeners[i + 1]) == listener) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * removes the update listener.
-	 *
-	 * @param  listener  VOIListener to remove.
-	 */
-	public void removeVOIListener(VOIListener listener) {
-
-		if (listenerList == null) {
-			listenerList = new EventListenerList();
-		}
-
-		listenerList.remove(VOIListener.class, listener);
 	}
 
 	/**
@@ -356,7 +604,8 @@ public class VOI extends ModelSerialCloneable {
 
 		return totalArea;
 	}
-
+	
+	
 	/**
 	 * Calculate the distance of the largest line segment contained entirely within the VOI
 	 * @param xRes
@@ -401,38 +650,6 @@ public class VOI extends ModelSerialCloneable {
 		Vector3f kPos1 = new Vector3f();
 		Vector3f kPos2 = new Vector3f();
 		return calcLargestDistance( mask, extents, res[0], res[1], res[2], xPts, yPts, zPts, kPos1, kPos2 );
-	}
-	
-	
-	public static double calcLargestDistance(BitSet mask, int[] extents, float xRes, float yRes, float zRes,
-			float[] xPts, float[] yPts, float zPts[], Vector3f kPos1, Vector3f kPos2 )
-	{
-		long time = System.currentTimeMillis();
-		double avg = 0, max = 0;
-		double[] maxAvg = determineMaxAvg(xRes, yRes, zRes, xPts, yPts, zPts);
-		max = maxAvg[0];
-		avg = maxAvg[1];
-
-		Preferences.debug("Traverse points\n");
-		time = System.currentTimeMillis();
-		double a = 0, lowerBound = Double.MAX_VALUE, upperBound = Double.MAX_VALUE;
-		int iter = 0;
-		boolean terminal = false;
-		while(a == 0 && !terminal) {
-			ArrayList<Integer> orig = new ArrayList<Integer>();
-			ArrayList<Integer> term = new ArrayList<Integer>();
-			upperBound = lowerBound;
-			lowerBound = Math.max(0, max-iter*(avg/Math.max(1, (int)Math.pow(xPts.length, 0.3)-9)));
-			gatherBoundedPoints(orig, term, lowerBound-1, upperBound, xRes, yRes, zRes, xPts, yPts, zPts);
-			time = System.currentTimeMillis();        
-			Preferences.debug("Completed points in "+(System.currentTimeMillis() - time)+"\tsize: "+orig.size()+"\n");
-			a = getLargest(mask, extents, orig, term, xRes, yRes, zRes, xPts, yPts, zPts, kPos1, kPos2 );
-			if(lowerBound == 0.0) {
-				terminal = true;
-			}
-			iter++;
-		}
-		return a;
 	}
 
 	/**
@@ -552,6 +769,7 @@ public class VOI extends ModelSerialCloneable {
 	 * Clone function that calls the super (modelserializable) clone and then manually copies references to the
 	 * transient VOIListeners (eventlistenerlist)
 	 */
+	@Override
 	public Object clone() {
 		final Object obj = super.clone();
 
@@ -1070,6 +1288,24 @@ public class VOI extends ModelSerialCloneable {
 		}
 	}
 
+	public void dispose(){
+		removeAllVOIListeners();
+		if (curves != null) {
+			for (int j = curves.size() - 1; j >= 0; j--) {
+				VOIBase base = curves.remove(j);
+				base.clear();
+				base.dispose();
+				base = null;
+			}
+			curves = null;
+		}
+
+		xBounds = null;
+		yBounds = null;
+		zBounds = null;
+	}
+
+
 	/**
 	 * two VOIs are the same if they have the same name.
 	 * @param   str  name of the VOI to compare this to.
@@ -1145,6 +1381,7 @@ public class VOI extends ModelSerialCloneable {
 	/* (non-Javadoc)
 	 * @see java.lang.Object#finalize()
 	 */
+	@Override
 	public void finalize() throws Throwable {
 		if (curves != null) {
 			for (int j = curves.size() - 1; j >= 0; j--) {
@@ -1162,144 +1399,6 @@ public class VOI extends ModelSerialCloneable {
 	}
 
 
-
-	// Notify all listeners that have registered interest for
-	// notification on this event type. The event instance
-	// is lazily created using the parameters passed into
-	// the fire method.
-	/**
-	 * Fires a VOI event based on the VOI. calls the listener's <code>addedVOI()</code> method.
-	 *
-	 * @param  curve new curve added to this VOI.
-	 */
-	protected void fireVOIBaseAdded(VOIBase curve) {
-		//System.err.println( "fireVOIBaseAdded" );
-		for ( int i = 0; i < curves.size(); i++ )
-		{
-			curves.elementAt(i).getLabel();
-		}
-
-		try {
-
-			// only if there are listeners to send events to should we
-			// bother with creating an event and bothering the event queue.
-			if (listenerList.getListenerCount(VOIListener.class) == 0) {
-				return;
-			}
-		} catch (NullPointerException npe) {
-			listenerList = new EventListenerList();
-		}
-
-		// always create a new Event, since we need to carry
-		// the changed VOI around.
-		VOIEvent voiUpdate = new VOIEvent(this, curve);
-
-		// Guaranteed to return a non-null array
-		Object[] listeners = listenerList.getListenerList();
-
-		// Process the listeners last to first, notifying
-		// those that are interested in this event
-		for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-			if (listeners[i] == VOIListener.class) {
-				((VOIListener) listeners[i + 1]).addedCurve(voiUpdate);
-			}
-		}
-	}
-
-	/**
-	 * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
-	 *
-	 * @param  curve curve removed from this VOI.
-	 */
-	protected void fireVOIBaseRemoved(VOIBase curve) {
-		//System.err.println( "fireVOIBaseRemoved" );
-
-		for ( int i = 0; i < curves.size(); i++ )
-		{
-			curves.elementAt(i).getLabel();
-		}
-
-		try {
-
-			// only if there are listeners to send events to should we
-			// bother with creating an event and bothering the event queue.
-			if (listenerList.getListenerCount(VOIListener.class) == 0) {
-				return;
-			}
-		} catch (NullPointerException npe) {
-			listenerList = new EventListenerList();
-		}
-
-		// always create a new Event, since we need to carry
-		// the changed VOI around.
-		VOIEvent voiUpdate = new VOIEvent(this, curve);
-
-		// Guaranteed to return a non-null array
-		Object[] listeners = listenerList.getListenerList();
-
-		// Process the listeners last to first, notifying
-		// those that are interested in this event
-		for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-			if (listeners[i] == VOIListener.class) {
-				((VOIListener) listeners[i + 1]).removedCurve(voiUpdate);
-			}
-		}
-	}
-
-	/**
-	 * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
-	 */
-	protected void fireVOIselection() {
-		//System.err.println( "fireVOIselection" );
-		for ( int i = 0; i < curves.size(); i++ )
-		{
-			curves.elementAt(i).getLabel();
-		}
-		//System.err.println( "VOI.fireVOIselection" );
-		try {
-
-			// only if there are listeners to send events to should we
-			// bother with creating an event and bothering the event queue.
-			if (listenerList.getListenerCount(VOIListener.class) == 0) {
-				return;
-			}
-		} catch (NullPointerException npe) {
-			listenerList = new EventListenerList();
-		}
-
-		// always create a new Event, since we need to carry
-		// the changed VOI around.
-		VOIEvent voiUpdate = new VOIEvent(this);
-
-		// Guaranteed to return a non-null array
-		Object[] listeners = listenerList.getListenerList();
-		// Process the listeners last to first, notifying
-		// those that are interested in this event
-		for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-			if (listeners[i] == VOIListener.class) {
-				((VOIListener) listeners[i + 1]).selectedVOI(voiUpdate);
-			}
-		}
-	}
-
-	protected void fireVOIColorChange(Color color)
-	{
-		if (listenerList != null) {
-			Object[] listeners = listenerList.getListenerList();
-			// Process the listeners last to first, notifying
-			// those that are interested in this event
-			for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-				if (listeners[i] == VOIListener.class) {
-					((VOIListener) listeners[i + 1]).colorChanged(color);
-				}
-			}
-		}
-
-	}
 
 	/**
 	 * Accessor that returns the bounding box flag.
@@ -1379,6 +1478,10 @@ public class VOI extends ModelSerialCloneable {
 	 */
 	public Color getColor() {
 		return color;
+	}
+
+	public ArrayList<String> getComments() {
+		return comments;
 	}
 
 	/**
@@ -1468,6 +1571,7 @@ public class VOI extends ModelSerialCloneable {
 	public float getMaximumIgnore() {
 		return ignoreMax;
 	}
+
 	/**
 	 * Accessor that returns the minimum of the range of intensities to ignore.
 	 *
@@ -1497,7 +1601,6 @@ public class VOI extends ModelSerialCloneable {
 		}
 		return curves.size();
 	}
-
 	/**
 	 * Accessor that returns the opacity of the VOI.
 	 *
@@ -1527,7 +1630,6 @@ public class VOI extends ModelSerialCloneable {
 	public int getPolarity() {
 		return polarity;
 	}
-
 
 	/**
 	 * Gets the position and intensity for this VOI if it's a line.
@@ -1581,6 +1683,7 @@ public class VOI extends ModelSerialCloneable {
 	{
 		return curves.size();
 	}
+
 
 	/**
 	 * Returns a list of contours on a given slice.
@@ -1727,6 +1830,25 @@ public class VOI extends ModelSerialCloneable {
 		return watershedID;
 	}
 
+	public boolean hasListener( VOIListener listener )
+	{
+		if (listenerList.getListenerCount(VOIListener.class) == 0)
+		{
+			return false;
+		}        
+		// Guaranteed to return a non-null array
+		Object[] listeners = listenerList.getListenerList();
+		// Process the listeners last to first, notifying
+		// those that are interested in this event
+		for (int i = listeners.length - 2; i >= 0; i -= 2) {
+			if (listeners[i] == VOIListener.class && 
+					((VOIListener) listeners[i + 1]) == listener) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Imports a new curve into this voi.
 	 * @param x x-positions of the curve.
@@ -1759,7 +1881,6 @@ public class VOI extends ModelSerialCloneable {
 		curves.addElement(curve);
 		return curve;
 	}
-
 
 	public void importCurve(int[] x, int[] y, int[] z) {
 		VOIBase curve;
@@ -1807,6 +1928,7 @@ public class VOI extends ModelSerialCloneable {
 		curves.addElement(curve);
 	}
 
+
 	/**
 	 * Imports the curve into the VOI.
 	 * @param  curve  curve to import
@@ -1844,7 +1966,6 @@ public class VOI extends ModelSerialCloneable {
 		}
 	}
 
-
 	/**
 	 * Import a new point into this VOI. This VOI must be of type POINT.
 	 * @param point
@@ -1861,7 +1982,6 @@ public class VOI extends ModelSerialCloneable {
 		voiPt.set(0, point);
 		curves.addElement(voiPt);
 	}
-
 
 	/**
 	 * Imports the polygon into the VOI (must be a contour).
@@ -1898,14 +2018,6 @@ public class VOI extends ModelSerialCloneable {
 		return anyActive;
 	}
 
-	public void updateActive()
-	{
-		boolean anyActive = false;
-		for (int i = 0; i < curves.size(); i++) {
-			anyActive |= (curves.elementAt(i)).isActive();
-		}
-		setActive( anyActive );        
-	}
 
 	/**
 	 * Returns true iff all contours in this VOI are active.
@@ -1918,6 +2030,7 @@ public class VOI extends ModelSerialCloneable {
 		}
 		return allActive;
 	}
+
 
 	/**
 	 * Test whether or not the VOI is empty.
@@ -2077,7 +2190,6 @@ public class VOI extends ModelSerialCloneable {
 		return false;
 	}
 
-
 	/**
 	 * Finds the minimum distance from a point to a contour. If the point is in a contour, the distance is given a
 	 * negative sign. If the point is outside contours, the distance is given a positive sign. The contour points are
@@ -2108,6 +2220,18 @@ public class VOI extends ModelSerialCloneable {
 		return minDistance;
 	}
 
+	public void removeAllVOIListeners() {
+    	if ( listenerList == null )
+    	{
+    		return;
+    	}
+    	VOIListener[] list = listenerList.getListeners(VOIListener.class);
+    	for ( int i = 0; i < list.length; i++ )
+    	{
+    		listenerList.remove(VOIListener.class, list[i]);
+    	}
+    }
+
 	/**
 	 * Clears VOI of all curves at a slice.
 	 *
@@ -2116,6 +2240,7 @@ public class VOI extends ModelSerialCloneable {
 	public void removeCurve(VOIBase kCurve) {
 		curves.removeElement(kCurve);
 	}
+
 
 	/**
 	 * Clears VOI of all curves.
@@ -2132,6 +2257,7 @@ public class VOI extends ModelSerialCloneable {
 	 * @param  slice  index of slice of curves to remove
 	 * @deprecated
 	 */
+	@Deprecated
 	public void removeCurves(int slice) {
 		Vector<VOIBase> removeCurves = getSliceCurves(slice);
 		for ( int i = 0; i < removeCurves.size(); i++ )
@@ -2140,6 +2266,19 @@ public class VOI extends ModelSerialCloneable {
 		}
 	}
 
+	/**
+	 * removes the update listener.
+	 *
+	 * @param  listener  VOIListener to remove.
+	 */
+	public void removeVOIListener(VOIListener listener) {
+
+		if (listenerList == null) {
+			listenerList = new EventListenerList();
+		}
+
+		listenerList.remove(VOIListener.class, listener);
+	}
 
 	/**
 	 * Sets whether or not the VOI is active.
@@ -2157,6 +2296,7 @@ public class VOI extends ModelSerialCloneable {
 			}
 		}
 	}
+
 
 	/**
 	 * Sets all contours in the VOI as active or inactive.
@@ -2195,6 +2335,10 @@ public class VOI extends ModelSerialCloneable {
 	 */
 	public void setColor(float hue) {
 		this.setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0));
+	}
+
+	public void setComments(String comment) {
+		comments.add(comment);
 	}
 
 	/**
@@ -2345,14 +2489,6 @@ public class VOI extends ModelSerialCloneable {
 		this.UID = uid;
 	}
 
-	public void setComments(String comment) {
-		comments.add(comment);
-	}
-
-	public ArrayList<String> getComments() {
-		return comments;
-	}
-
 	/**
 	 * Accessor that sets the ID to the parameter.
 	 *
@@ -2367,15 +2503,11 @@ public class VOI extends ModelSerialCloneable {
 	 *
 	 * @param  xDim  x dimension
 	 * @param  yDim  y dimension
+	 * @deprecated
 	 */
 	public void setXYDim(int xDim, int yDim) {	}
 
-
-	/**
-	 * Accessor that returns the name of the VOI.
-	 *
-	 * @return  the name
-	 */
+	@Override
 	public String toString() {
 		return name;
 	}
@@ -2395,59 +2527,23 @@ public class VOI extends ModelSerialCloneable {
 		}
 	}
 
-	/**
-	 * Gathers max and average statistics to build guessing intervals
-	 */
-	private static double[] determineMaxAvg(float xRes, float yRes, float zRes,
-			float[] xPts, float[] yPts, float zPts[]) {
-		double max = 0, avg = 0;
-		int n = xPts.length;
-		Random r = new Random(1);
-		//note that a stop that yields a non-representative average is fine, since worst case is more computations
-		int stop = n < 100 ? (int)(n*0.50) : (int)(n*0.10);
-		int[] search = new int[stop];
-		int[] end = new int[stop];
-		double startX, startY, startZ;
-		double endX, endY, endZ;
-		double delX, delY, delZ;
-		double distX, distY, distZ;
-		double distanceSq;
-		int i, j;
-		for(i = 0; i<stop; i++) {
-			search[i] = r.nextInt(n);
-			end[i] = r.nextInt(n);
+
+	public void update()
+	{
+		for ( int i = 0; i < curves.size(); i++ )
+		{
+			curves.elementAt(i).update();
 		}
-
-		int numBegin = 0, numEnd = 0;;
-		for (i = 0; i < search.length; i++) {
-
-			numBegin = search[i];
-			startX = xPts[numBegin];
-			startY = yPts[numBegin];
-			startZ = zPts[numBegin];
-			for (j = 0; j < end.length; j++) {
-				numEnd = end[j];
-				endX = xPts[numEnd];
-				endY = yPts[numEnd];
-				endZ = zPts[numEnd];
-				delX = endX - startX;
-				delY = endY - startY;
-				delZ = endZ - startZ;
-				distX = xRes * delX;
-				distY = yRes * delY;
-				distZ = zRes * delZ;
-				distanceSq = distX*distX + distY*distY + distZ*distZ;
-				avg = avg + distanceSq;
-				if (distanceSq > max) {
-					max = distanceSq;
-				} // if (distanceSq > largsestDistanceSq)
-			} // for (j = i+1; j < xPts.length; j++)
-		} // for (i = 0; i < xPts.length; i++)
-			avg = avg / (end.length * search.length);
-		return new double[]{max, avg};
 	}
 
-
+	public void updateActive()
+	{
+		boolean anyActive = false;
+		for (int i = 0; i < curves.size(); i++) {
+			anyActive |= (curves.elementAt(i)).isActive();
+		}
+		setActive( anyActive );        
+	}
 
 	/**
 	 * This is used by the method maxWidth.
@@ -2491,43 +2587,94 @@ public class VOI extends ModelSerialCloneable {
 
 
 
+	// Notify all listeners that have registered interest for
+	// notification on this event type. The event instance
+	// is lazily created using the parameters passed into
+	// the fire method.
+	/**
+	 * Fires a VOI event based on the VOI. calls the listener's <code>addedVOI()</code> method.
+	 *
+	 * @param  curve new curve added to this VOI.
+	 */
+	protected void fireVOIBaseAdded(VOIBase curve) {
+		//System.err.println( "fireVOIBaseAdded" );
+		for ( int i = 0; i < curves.size(); i++ )
+		{
+			curves.elementAt(i).getLabel();
+		}
+
+		try {
+
+			// only if there are listeners to send events to should we
+			// bother with creating an event and bothering the event queue.
+			if (listenerList.getListenerCount(VOIListener.class) == 0) {
+				return;
+			}
+		} catch (NullPointerException npe) {
+			listenerList = new EventListenerList();
+		}
+
+		// always create a new Event, since we need to carry
+		// the changed VOI around.
+		VOIEvent voiUpdate = new VOIEvent(this, curve);
+
+		// Guaranteed to return a non-null array
+		Object[] listeners = listenerList.getListenerList();
+
+		// Process the listeners last to first, notifying
+		// those that are interested in this event
+		for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+			if (listeners[i] == VOIListener.class) {
+				((VOIListener) listeners[i + 1]).addedCurve(voiUpdate);
+			}
+		}
+	}
+
+
+
 
 
 
 	/**
-	 * Gathers the points that fall within the required bounds
+	 * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
+	 *
+	 * @param  curve curve removed from this VOI.
 	 */
-	private static void gatherBoundedPoints(ArrayList<Integer> orig, ArrayList<Integer> term, 
-			double lowerBound, double upperBound, 
-			float xRes, float yRes, float zRes, 
-			float[] xPts, float[] yPts, float zPts[]) {
-		int i, j;
-		double startX, startY, startZ;
-		double endX, endY, endZ;
-		double delX, delY, delZ;
-		double distX, distY, distZ;
-		double distanceSq;
-		for (i = 0; i < xPts.length; i++) {
-			startX = xPts[i];
-			startY = yPts[i];
-			startZ = zPts[i];
-			for (j = i+1; j < xPts.length; j++) {
-				endX = xPts[j];
-				endY = yPts[j];
-				endZ = zPts[j];
-				delX = endX - startX;
-				delY = endY - startY;
-				delZ = endZ - startZ;
-				distX = xRes * delX;
-				distY = yRes * delY;
-				distZ = zRes * delZ;
-				distanceSq = distX*distX + distY*distY + distZ*distZ;
-				if (distanceSq > lowerBound && distanceSq < upperBound) {
-					orig.add(Integer.valueOf(i));
-					term.add(Integer.valueOf(j));
-				} // if (distanceSq > largsestDistanceSq)
-			} // for (j = i+1; j < xPts.length; j++)
-		} // for (i = 0; i < xPts.length; i++)
+	protected void fireVOIBaseRemoved(VOIBase curve) {
+		//System.err.println( "fireVOIBaseRemoved" );
+
+		for ( int i = 0; i < curves.size(); i++ )
+		{
+			curves.elementAt(i).getLabel();
+		}
+
+		try {
+
+			// only if there are listeners to send events to should we
+			// bother with creating an event and bothering the event queue.
+			if (listenerList.getListenerCount(VOIListener.class) == 0) {
+				return;
+			}
+		} catch (NullPointerException npe) {
+			listenerList = new EventListenerList();
+		}
+
+		// always create a new Event, since we need to carry
+		// the changed VOI around.
+		VOIEvent voiUpdate = new VOIEvent(this, curve);
+
+		// Guaranteed to return a non-null array
+		Object[] listeners = listenerList.getListenerList();
+
+		// Process the listeners last to first, notifying
+		// those that are interested in this event
+		for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+			if (listeners[i] == VOIListener.class) {
+				((VOIListener) listeners[i + 1]).removedCurve(voiUpdate);
+			}
+		}
 	}
 
 	/**
@@ -2617,173 +2764,56 @@ public class VOI extends ModelSerialCloneable {
 	 */
 
 
-	/**
-	 * Finds the largest line that lies within entirely within the VOI.
-	 */  
-	private static double getLargest(BitSet mask, int[] extents, ArrayList<Integer> orig, ArrayList<Integer> term, 
-			float xRes, float yRes, float zRes, 
-			float[] xPoints, float[] yPoints, float zPoints[], Vector3f kPos1, Vector3f kPos2) {
-		int origPoint, termPoint;
-		double largestDistanceSq = 0, distanceSq;
-		double startX, startY, startZ;
-		double endX, endY, endZ;
-		double delX, delY, delZ;
-		double distX, distY, distZ;
-		double x, y, z;
-		double slope, slope2;
-		int xRound, yRound, zRound;
-		int j, k;
-		int maskIndex = 0;
-		int xDim = extents.length > 0 ? extents[0] : 1;
-		int yDim = extents.length > 1 ? extents[1] : 1;
-		boolean okay;
-		forj:
-			for(j=0; j<orig.size(); j++) {
-				origPoint = orig.get(j).intValue();
-				startX = xPoints[origPoint];
-				startY = yPoints[origPoint];
-				startZ = zPoints[origPoint];
-				termPoint = term.get(j).intValue();
-				endX = xPoints[termPoint];
-				endY = yPoints[termPoint];
-				endZ = zPoints[termPoint];
-				delX = endX - startX;
-				delY = endY - startY;
-				delZ = endZ - startZ;
-				distX = xRes * delX;
-				distY = yRes * delY;
-				distZ = zRes * delZ;
-				distanceSq = distX*distX + distY*distY + distZ*distZ;
+	protected void fireVOIColorChange(Color color)
+	{
+		if (listenerList != null) {
+			Object[] listeners = listenerList.getListenerList();
+			// Process the listeners last to first, notifying
+			// those that are interested in this event
+			for (int i = listeners.length - 2; i >= 0; i -= 2) {
 
-				kPos1.X = (float)startX;
-				kPos1.Y = (float)startY;
-				kPos1.Z = (float)startZ;
-				kPos2.X = (float)endX;
-				kPos2.Y = (float)endY;
-				kPos2.Z = (float)endZ;
-				
-				if(distanceSq > largestDistanceSq) {
-					if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ))) {
-						slope = delY/delX;
-						slope2 = delZ/delX;
-						if (endX >= startX) {
-							for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
-							z += 0.5 * slope2) {
-								xRound = (int)Math.round(x);
-								yRound = (int)Math.round(y);
-								zRound = (int)Math.round(z);
-								if ( xRound < endX && yRound < endY && zRound < endZ )
-								{
-									maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
-									okay = mask.get( maskIndex );
-									if (!okay) {
-										continue forj;
-									}
-								}
-							} // for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
-						} // if (endX >= startX)
-							else { // endX < startX
-								for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
-								z -= 0.5 * slope2) {
-									xRound = (int)Math.round(x);
-									yRound = (int)Math.round(y);
-									zRound = (int)Math.round(z);
-									if ( xRound < endX && yRound < endY && zRound < endZ )
-									{
-										maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
-										okay = mask.get( maskIndex );
-										if (!okay) {
-											continue forj;
-										}
-									}
-								} // for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
-							} // else endX < startX
-					} // if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ)))
-					else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ))){ 
-						slope = delX/delY;
-						slope2 = delZ/delY;
-						if (endY >= startY) {
-							for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
-							z += 0.5 * slope2) {
-								xRound = (int)Math.round(x);
-								yRound = (int)Math.round(y);
-								zRound = (int)Math.round(z);
-								if ( xRound < endX && yRound < endY && zRound < endZ )
-								{
-									maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
-									okay = mask.get( maskIndex );
-									if (!okay) {
-										continue forj;
-									}
-								}
-							} // for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
-						} // if (endX >= startX)
-							else { // endX < startX
-								for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
-								z -= 0.5 * slope2) {
-									xRound = (int)Math.round(x);
-									yRound = (int)Math.round(y);
-									zRound = (int)Math.round(z);
-									if ( xRound < endX && yRound < endY && zRound < endZ )
-									{
-										maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
-										okay = mask.get( maskIndex );
-										if (!okay) {
-											continue forj;
-										}
-									}
-								} // for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
-							} // else endX < startX    
-					} // else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ)))
-					else { // ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
-						slope = delX/delZ;
-						slope2 = delY/delZ;
-						if (endZ >= startZ) {
-							for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,
-							y += 0.5 * slope2) {
-								xRound = (int)Math.round(x);
-								yRound = (int)Math.round(y);
-								zRound = (int)Math.round(z);
-								if ( xRound < endX && yRound < endY && zRound < endZ )
-								{
-									maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
-									okay = mask.get( maskIndex );
-									if (!okay) {
-										continue forj;
-									}
-								}
-							} // for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,   
-						} // if (endZ >= startZ)
-							else { // endZ < startZ
-								for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
-								y -= 0.5 * slope2) {
-									xRound = (int)Math.round(x);
-									yRound = (int)Math.round(y);
-									zRound = (int)Math.round(z);
-									if ( xRound < endX && yRound < endY && zRound < endZ )
-									{
-										maskIndex = zRound * xDim * yDim + yRound * xDim + xRound;
-										okay = mask.get( maskIndex );
-										if (!okay) {
-											continue forj;
-										}
-									}
-								} // for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
-							} // else (endZ < startZ)
-					} // else ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
-					largestDistanceSq = distanceSq;
-					Preferences.debug("New points for largest distance: "+kPos1+"\t"+kPos2+"\n", 
-					        Preferences.DEBUG_ALGORITHM);
+				if (listeners[i] == VOIListener.class) {
+					((VOIListener) listeners[i + 1]).colorChanged(color);
 				}
 			}
-		return Math.sqrt(largestDistanceSq);
+		}
+
 	}
 
-	public void update()
-	{
+	/**
+	 * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
+	 */
+	protected void fireVOIselection() {
+		//System.err.println( "fireVOIselection" );
 		for ( int i = 0; i < curves.size(); i++ )
 		{
-			curves.elementAt(i).update();
+			curves.elementAt(i).getLabel();
+		}
+		//System.err.println( "VOI.fireVOIselection" );
+		try {
+
+			// only if there are listeners to send events to should we
+			// bother with creating an event and bothering the event queue.
+			if (listenerList.getListenerCount(VOIListener.class) == 0) {
+				return;
+			}
+		} catch (NullPointerException npe) {
+			listenerList = new EventListenerList();
+		}
+
+		// always create a new Event, since we need to carry
+		// the changed VOI around.
+		VOIEvent voiUpdate = new VOIEvent(this);
+
+		// Guaranteed to return a non-null array
+		Object[] listeners = listenerList.getListenerList();
+		// Process the listeners last to first, notifying
+		// those that are interested in this event
+		for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+			if (listeners[i] == VOIListener.class) {
+				((VOIListener) listeners[i + 1]).selectedVOI(voiUpdate);
+			}
 		}
 	}
 }

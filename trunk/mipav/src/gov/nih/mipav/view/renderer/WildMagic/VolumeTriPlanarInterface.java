@@ -3349,7 +3349,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         {
             m_kVOIInterface.getVOIManager(i).init( this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(),                     
                     m_akPlaneRender[i].GetCanvas(), m_akPlaneRender[i], 
-                    m_akPlaneRender[i].getOrientation(), m_akPlaneRender[i].getSlice() );
+                    m_akPlaneRender[i].getOrientation() );
         }
     }
     

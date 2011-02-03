@@ -1,9 +1,5 @@
 package gov.nih.mipav.model.structures;
 
-import gov.nih.mipav.util.MipavMath;
-import gov.nih.mipav.model.file.FileInfoBase;
-
-import java.awt.Color;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -70,7 +66,8 @@ public class VOIProtractor extends VOIBase {
     /* (non-Javadoc)
      * @see gov.nih.mipav.model.structures.VOIBase#clone()
      */
-    public VOIProtractor clone() {
+    @Override
+	public VOIProtractor clone() {
         return new VOIProtractor(this);
     }
     

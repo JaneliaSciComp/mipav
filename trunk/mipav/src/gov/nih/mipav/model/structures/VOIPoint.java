@@ -1,9 +1,5 @@
 package gov.nih.mipav.model.structures;
 
-import gov.nih.mipav.util.MipavMath;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
-
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -71,11 +67,10 @@ public class VOIPoint extends VOIBase {
      * @param iType
      * @param kPosition
      */
-    public VOIPoint(int iType, Vector3f kPosition )
+    public VOIPoint(int iType, Vector<Vector3f> kPosition)
     {
-        super( false, false);
+        super( false, false, kPosition);
         m_iVOIType = iType;
-        add(kPosition);
     }
     
     /**
@@ -83,10 +78,11 @@ public class VOIPoint extends VOIBase {
      * @param iType
      * @param kPosition
      */
-    public VOIPoint(int iType, Vector<Vector3f> kPosition)
+    public VOIPoint(int iType, Vector3f kPosition )
     {
-        super( false, false, kPosition);
+        super( false, false);
         m_iVOIType = iType;
+        add(kPosition);
     }
 
     /**
@@ -112,10 +108,64 @@ public class VOIPoint extends VOIBase {
     /* (non-Javadoc)
      * @see gov.nih.mipav.model.structures.VOIBase#clone()
      */
-    public VOIPoint clone() {
+    @Override
+	public VOIPoint clone() {
         return new VOIPoint(this);
     }
     
+    /**
+     * Returns true if the input iX, iY is contained within this contour.  
+     * The z-value of the contour is ignored.
+     * @param iX
+     * @param iY
+     * @return
+     */
+    @Override
+	public boolean contains(float iX, float iY)
+    {
+        if ( m_kRotationInverse != null )
+        {
+            Vector3f kPos = new Vector3f( iX, iY, 0 );
+            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
+            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
+        }
+        Vector3f[] kBounds = getImageBoundingBox();
+        if ( iX < kBounds[0].X || iX > kBounds[1].X ||
+                iY < kBounds[0].Y || iY > kBounds[1].Y  )
+        {
+            return false;
+        }        
+        return true;
+    }
+
+
+    /**
+     * Returns true if the input iX,iY,iZ is contained within this contour.
+     * @param iX
+     * @param iY
+     * @param iZ
+     * @return
+     */
+    @Override
+	public boolean contains(float iX, float iY, float iZ )
+    {
+        if ( m_kRotationInverse != null )
+        {
+            Vector3f kPos = new Vector3f( iX, iY, 0 );
+            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
+            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
+        }
+        Vector3f[] kBounds = getImageBoundingBox();
+        if ( iX < kBounds[0].X || iX > kBounds[1].X ||
+                iY < kBounds[0].Y || iY > kBounds[1].Y ||
+                iZ < kBounds[0].Z || iZ > kBounds[1].Z   )
+        {
+            return false;
+        }
+        return true;
+    }
+
+
     /**
      * Returns the distance string.
      * @return
@@ -124,8 +174,7 @@ public class VOIPoint extends VOIBase {
     {
         return distanceString;
     }
-
-
+    
     /**
      *  Method to access point VOI coordinate
      *  @return       3d point
@@ -133,7 +182,6 @@ public class VOIPoint extends VOIBase {
     public Vector3f exportPoint() {
         return ( elementAt( 0 ) );
     }
-
 
     /**
      *   This method gets the coordinates of the point
@@ -147,17 +195,18 @@ public class VOIPoint extends VOIBase {
         if ( coord.length > 1 ) coord[1] = pt.Y;
         if ( coord.length > 2 ) coord[2] = pt.Z;
     }
-    
+
     /**
      * Gets the geometric center of the contour.
      * 
      * @return returns the geometric center
      */
-    public Vector3f getGeometricCenter() {     
+    @Override
+	public Vector3f getGeometricCenter() {     
         gcPt.Copy( getPosition() );
         return new Vector3f(gcPt);
     }
-
+    
     /**
      * Returns ID in PolyLineSlice object.
      * @return
@@ -167,15 +216,7 @@ public class VOIPoint extends VOIBase {
         return m_iID;
     }
 
-    /**
-     * True if this is the active point in the PolyLineSlice object.
-     * @return
-     */
-    public boolean isActivePoint()
-    {
-        return isActivePoint;
-    }
-    
+
     public Vector3f getPosition()
     {
         if ( m_kRotation == null )
@@ -191,6 +232,15 @@ public class VOIPoint extends VOIBase {
         return kPos;
     }
 
+    /**
+     * True if this is the active point in the PolyLineSlice object.
+     * @return
+     */
+    public boolean isActivePoint()
+    {
+        return isActivePoint;
+    }
+    
 
     /**
      * Returns true if this is the first point in the PolyLineSlice object.
@@ -200,6 +250,7 @@ public class VOIPoint extends VOIBase {
     {
         return firstSlicePoint;
     }
+    
 
     /**
      *  Sets the point at (xP,yP,zP). Bounds checking is performed
@@ -225,7 +276,8 @@ public class VOIPoint extends VOIBase {
         pt.Y = yP;
         pt.Z = zP;
     }
-    
+
+
 
     /**
      *  Moves the point to the new location. Bounds checking is performed
@@ -252,58 +304,6 @@ public class VOIPoint extends VOIBase {
         pt.Y = pt.Y + yM;
         pt.Z = pt.Z + zM;
     }
-    
-
-    /**
-     * Returns true if the input iX, iY is contained within this contour.  
-     * The z-value of the contour is ignored.
-     * @param iX
-     * @param iY
-     * @return
-     */
-    public boolean contains(float iX, float iY)
-    {
-        if ( m_kRotationInverse != null )
-        {
-            Vector3f kPos = new Vector3f( iX, iY, 0 );
-            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
-            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
-        }
-        Vector3f[] kBounds = getImageBoundingBox();
-        if ( iX < kBounds[0].X || iX > kBounds[1].X ||
-                iY < kBounds[0].Y || iY > kBounds[1].Y  )
-        {
-            return false;
-        }        
-        return true;
-    }
-
-
-
-    /**
-     * Returns true if the input iX,iY,iZ is contained within this contour.
-     * @param iX
-     * @param iY
-     * @param iZ
-     * @return
-     */
-    public boolean contains(float iX, float iY, float iZ )
-    {
-        if ( m_kRotationInverse != null )
-        {
-            Vector3f kPos = new Vector3f( iX, iY, 0 );
-            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
-            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
-        }
-        Vector3f[] kBounds = getImageBoundingBox();
-        if ( iX < kBounds[0].X || iX > kBounds[1].X ||
-                iY < kBounds[0].Y || iY > kBounds[1].Y ||
-                iZ < kBounds[0].Z || iZ > kBounds[1].Z   )
-        {
-            return false;
-        }
-        return true;
-    }
 
     
 
@@ -314,7 +314,8 @@ public class VOIPoint extends VOIBase {
      * @param iZ input z-position
      * @return true if the input position is near one of the contour points.
      */
-    public boolean nearPoint( int iX, int iY, int iZ) {
+    @Override
+	public boolean nearPoint( int iX, int iY, int iZ) {
         if ( m_kRotationInverse != null )
         {
             Vector3f kPos = new Vector3f( iX, iY, 0 );

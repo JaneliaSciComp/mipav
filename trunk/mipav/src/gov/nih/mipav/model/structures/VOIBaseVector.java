@@ -15,35 +15,33 @@ public class VOIBaseVector extends Vector<VOIBase> {
         this.parent = parent;
     }
 
-
-
-    public boolean add(VOIBase e)
-    {
-        boolean result = super.add(e);
-        e.setGroup(parent);
-        parent.fireVOIBaseAdded(e);
-        return result;
-    }
-    
-    public void add( int index, VOIBase element )
+    @Override
+	public void add( int index, VOIBase element )
     {
         super.add(index,element);
         element.setGroup(parent);
         parent.fireVOIBaseAdded(element);
     }
     
-    //public boolean addAll( Collection<> c ){}
-    
-    //public boolean addAll( int index, Collection<> c ) {}
-    
-    public void addElement(VOIBase obj )
+    @Override
+	public boolean add(VOIBase e)
+    {
+        boolean result = super.add(e);
+        e.setGroup(parent);
+        parent.fireVOIBaseAdded(e);
+        return result;
+    }
+        
+    @Override
+	public void addElement(VOIBase obj )
     {
         super.addElement(obj);
         obj.setGroup(parent);
         parent.fireVOIBaseAdded(obj);
     }
     
-    public int indexOf(Object o)
+    @Override
+	public int indexOf(Object o)
     {
         for ( int i = 0; i < size(); i++ )
         {
@@ -55,14 +53,16 @@ public class VOIBaseVector extends Vector<VOIBase> {
         return -1;
     }
     
-    public void insertElementAt(VOIBase obj, int index)
+    @Override
+	public void insertElementAt(VOIBase obj, int index)
     {
         super.insertElementAt(obj, index);
         obj.setGroup(parent);
         parent.fireVOIBaseAdded(obj);
     }
     
-    public VOIBase remove(int index)
+    @Override
+	public VOIBase remove(int index)
     {
         VOIBase element = super.remove(index);
         element.setGroup(null);
@@ -78,10 +78,6 @@ public class VOIBaseVector extends Vector<VOIBase> {
         return result;
     }
     
-    //public boolean removeAll( Collection<> c ) {}
-    
-    //public void removeAllElements() {}
-    
     public boolean removeElement(VOIBase obj)
     {
         boolean result = super.removeElement(obj);
@@ -90,19 +86,11 @@ public class VOIBaseVector extends Vector<VOIBase> {
         return result;
     }
     
-    public void removeElementAt(int index)
+    @Override
+	public void removeElementAt(int index)
     {
         VOIBase element = super.remove(index);
         element.setGroup(null);
         parent.fireVOIBaseRemoved(element);
-    }
-    
-    //protected void removeRange(int fromIndex, int toIndex) {}
-    
-    //public VOIBase set(int index, VOIBase element) {}
-    
-    //public void setElementAt( VOIBase obj, int index ) {}
-    
-    //public void setSize(int newSize) {}
-
+    }    
 }

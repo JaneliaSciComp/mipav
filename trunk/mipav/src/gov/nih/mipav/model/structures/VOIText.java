@@ -34,6 +34,10 @@ public class VOIText extends VOIBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    public static int xCor(int len, double dir) {return (int)(len * Math.sin(dir));}
+
+    public static int yCor(int len, double dir) {return (int)(len * Math.cos(dir));}
+
     /**
      * The descriptors for the font which start at PLAIN and are additive (PLAIN + BOLD = bold) (BOLD+ITALIC = bold and
      * italic) etc.
@@ -45,7 +49,7 @@ public class VOIText extends VOIBase {
 
     /** The size of the font (half-sizes not allowed...int). */
     private int fontSize = 12;
-
+    
     /** This must be kept separate (but parallel) to the VOI color. */
     private Color textColor = Color.WHITE;
 
@@ -57,7 +61,7 @@ public class VOIText extends VOIBase {
      * beginning or if the fontDescriptors variable changes
      */
     private Font textFont = new Font(fontName, fontDescriptors, fontSize);
-
+    
     /** The String to be displayed. */
     private String textString = new String();
     
@@ -66,9 +70,8 @@ public class VOIText extends VOIBase {
     
     /** If this is set to true, a draggable arrow will be displayed */
     private boolean useMarker = true;
-    
-    private int m_iTextWidth = 0;
-    
+
+
     private ArrayList<String> comments = new ArrayList<String>();
     
     /**
@@ -87,7 +90,6 @@ public class VOIText extends VOIBase {
         m_iVOIType = VOI.ANNOTATION;
     }
 
-
     /**
      * Constructor, sets positions of the annotation.
      * @param kPositions
@@ -97,7 +99,7 @@ public class VOIText extends VOIBase {
         super( false, false, kPositions );
         m_iVOIType = VOI.ANNOTATION;
     }
-    
+
     /**
      * Copy contructor.
      * @param kVOI
@@ -118,14 +120,11 @@ public class VOIText extends VOIBase {
         m_iVOIType = VOI.ANNOTATION;
     }
 
-    public static int xCor(int len, double dir) {return (int)(len * Math.sin(dir));}
-
-    public static int yCor(int len, double dir) {return (int)(len * Math.cos(dir));}
-
     /* (non-Javadoc)
      * @see gov.nih.mipav.model.structures.VOIBase#clone()
      */
-    public VOIText clone() {
+    @Override
+	public VOIText clone() {
         return new VOIText(this);
     }
 
@@ -164,6 +163,10 @@ public class VOIText extends VOIBase {
         return new String(textColor.getRed() + "," + textColor.getGreen() + "," + textColor.getBlue());
     }
     
+    public ArrayList<String> getComments() {
+    	return comments;
+    }
+    
     /**
      * Gets the font's descriptors (PLAN, BOLD, ITALIC).
      *
@@ -172,7 +175,8 @@ public class VOIText extends VOIBase {
     public int getFontDescriptors() {
         return fontDescriptors;
     }
-    
+
+
     /**
      * Gets the name (type) of the font.
      *
@@ -182,7 +186,6 @@ public class VOIText extends VOIBase {
         return fontName;
     }
 
-
     /**
      * Returns the size of the font.
      *
@@ -191,7 +194,7 @@ public class VOIText extends VOIBase {
     public int getFontSize() {
         return fontSize;
     }
-
+    
     /**
      * Gets a string describing the text location (in the slice, does not include which slice).
      *
@@ -200,7 +203,7 @@ public class VOIText extends VOIBase {
     public String getLocationString() {
         return new String(((elementAt(0))).X + "," + ((elementAt(0))).Y);
     }
-    
+
     /**
      * Gets the contained note.
      *
@@ -209,7 +212,7 @@ public class VOIText extends VOIBase {
     public String getNote() {
         return noteString;
     }
-
+    
     /**
      * Gets the displayed text.
      *
@@ -227,7 +230,7 @@ public class VOIText extends VOIBase {
     {
         return textFont;
     }
-    
+
     public Vector3f getTextWidth()
     {
         if ( size() < 3 )
@@ -236,7 +239,7 @@ public class VOIText extends VOIBase {
         }
         return elementAt(2);
     }
-
+    
     /**
      * Moves the point to the new location. NO bounds checking is performed
      *
@@ -271,6 +274,11 @@ public class VOIText extends VOIBase {
     public void setColor(Color color) {
         this.textColor = color;
     }
+
+
+    public void setComments(String comment) {
+    	comments.add(comment);
+    }
     
     /**
      * Sets the font's descriptors.
@@ -280,8 +288,8 @@ public class VOIText extends VOIBase {
     public void setFontDescriptors(int fontDescriptors) {
         this.fontDescriptors = fontDescriptors;
     }
-
-
+    
+    
     /**
      * Sets the name (type) of the font.
      *
@@ -298,15 +306,6 @@ public class VOIText extends VOIBase {
      */
     public void setFontSize(int fontSize) {
         this.fontSize = fontSize;
-    }
-    
-    
-    public void setComments(String comment) {
-    	comments.add(comment);
-    }
-    
-    public ArrayList<String> getComments() {
-    	return comments;
     }
     
     

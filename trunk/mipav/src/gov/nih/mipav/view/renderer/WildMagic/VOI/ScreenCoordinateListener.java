@@ -28,18 +28,18 @@ public interface ScreenCoordinateListener
      */
     public int getHeight();
     
-    public int getSlice();
+    public float getResolutionX();
     
+    public float getResolutionY();
+
+    public int getSlice();
     /**
      * Returns the width of the display canvas.
      * @return width of the display canvas.
      */
     public int getWidth();
-
     public float getZoomX();
     public float getZoomY();
-    public float getResolutionX();
-    public float getResolutionY();
     /**
      * Converts local patient coordinate view (Axial, Coronal, Sagittal) of the image into the original file coordinate
      * representation of the image. 
