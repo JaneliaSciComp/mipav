@@ -402,10 +402,16 @@ public class ViewMenuBuilder {
         menuName.setText(text);
         menuName.setFont(MipavUtil.defaultMenuFont);
 
-        int paddingX = 5;
+        /*int paddingX = 5;
 
         if (iconPadding) {
             paddingX += MipavUtil.DEFAULT_ICON_WIDTH;
+        }*/
+        
+        int paddingX = 8;
+
+        if (iconPadding) {
+            paddingX = 5 + MipavUtil.DEFAULT_ICON_WIDTH;
         }
 
         gbc.gridx = 0;
@@ -414,7 +420,8 @@ public class ViewMenuBuilder {
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
 
-        gbc.insets = new Insets(0, paddingX, 5, 0);
+        //gbc.insets = new Insets(0, paddingX, 5, 0);
+        gbc.insets = new Insets(0, paddingX, 0, 0);
 
         menuEntry.add(menuName, gbc);
 

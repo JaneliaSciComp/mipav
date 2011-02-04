@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
 
+import java.awt.Component;
 import java.awt.event.*;
 
 import java.util.*;
@@ -87,44 +88,45 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
         itemProps = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, this, false);
 
-        selectionMenu = ViewMenuBuilder.buildMenu("Select", 0, true);
+        selectionMenu = ViewMenuBuilder.buildMenu("Select", 0, false);
         selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, this, false));
         //selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL, this, false));
         selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_NONE, this, false));
         
 
-        editSubMenu = ViewMenuBuilder.buildMenu("Edit", 0, true);
+        editSubMenu = ViewMenuBuilder.buildMenu("Edit", 0, false);
         editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_DELETE, this, true));
         editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CUT, this, true));
         editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_COPY, this, true));
         editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PASTE, this, true));
         editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SHOW_CONTOUR_BOUNDING_BOX, this, true));
         
+        
         //showBoundingBox = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SHOW_CONTOUR_BOUNDING_BOX, this, false);
 
-        orderSubMenu = ViewMenuBuilder.buildMenu("VOI Order", 0, true);
+        orderSubMenu = ViewMenuBuilder.buildMenu("VOI Order", 0, false);
         orderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FRONT, this, true));
         orderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_BACK, this, true));
         orderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FORWARD, this, true));
         orderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_BACKWARD, this, true));
 
-        contourOrderSubMenu = ViewMenuBuilder.buildMenu("Contour Order", 0, true);
+        contourOrderSubMenu = ViewMenuBuilder.buildMenu("Contour Order", 0, false);
         contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_FRONT, this, true));
         contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_BACK, this, true));
         contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_FORWARD, this, true));
         contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_BACKWARD, this, true));
 
-        propSubMenu = ViewMenuBuilder.buildMenu("Propagate", 0, true);
+        propSubMenu = ViewMenuBuilder.buildMenu("Propagate", 0, false);
         propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP, this, true));
         propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN, this, true));
         propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL, this, true));
 
-        flipSubMenu = ViewMenuBuilder.buildMenu("Flip VOI", 0, true);
+        flipSubMenu = ViewMenuBuilder.buildMenu("Flip VOI", 0, false);
         flipSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPX, this, true));
         flipSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPY, this, true));
         flipSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPZ, this, true));
 
-        graphSubMenu = ViewMenuBuilder.buildMenu("Graph", 0, true);
+        graphSubMenu = ViewMenuBuilder.buildMenu("Graph", 0, false);
         graphSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY, this, false));
 
        if ((handler.getActiveImage().getNDims() == 3) ||
@@ -280,6 +282,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         if (event.isPopupTrigger()) {
             popup.removeAll();
 
+           
             popup.add(itemProps);
             popup.addSeparator();
             popup.add(selectionMenu);
@@ -311,6 +314,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             if(selectedVOI.getSubtype() == VOIBase.SQUARE) {
             	popup.add(editSquareLength);
             }
+           
             int xAmount = 0;
             int yAmount = 0;
             if ( voiHandler.getActiveImage().getParentFrame()  != null ) {       
