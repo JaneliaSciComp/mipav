@@ -20,6 +20,9 @@ import javax.swing.JTextField;
 /**
  * @author pandyan
  * Vista format reader and writer
+ * 
+ * Spec:  http://static.cbs.mpg.de/lipsia/START/index3.html
+ * 
  * 2/1/2011
  */
 public class FileVista extends FileBase {

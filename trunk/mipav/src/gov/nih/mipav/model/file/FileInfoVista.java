@@ -12,6 +12,16 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogEditor;
 import gov.nih.mipav.view.dialogs.JDialogFileInfo;
 
+
+
+/**
+ * File Info Vista
+ * @author pandyan
+ * 
+ * 
+ * Spec: http://static.cbs.mpg.de/lipsia/START/index3.html
+ *
+ */
 public class FileInfoVista extends FileInfoBase {
 
     /** image info **/
