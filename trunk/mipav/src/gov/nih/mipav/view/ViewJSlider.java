@@ -28,7 +28,20 @@ import javax.swing.SwingConstants;
  */
 public class ViewJSlider extends JSlider {
 
-    public static final String TIME = "TIME";
+    @Override
+	public int getValue() {
+		// TODO Auto-generated method stub
+		return super.getValue();
+	}
+
+
+	@Override
+	public void setValue(int n) {
+		// TODO Auto-generated method stub
+		super.setValue(n);
+	}
+
+	public static final String TIME = "TIME";
     public static final String SLICE = "SLICE";
     public static final String CONTRAST = "CONTRAST";
     public static final String CUSTOM = "CUSTOM";
@@ -324,9 +337,13 @@ public class ViewJSlider extends JSlider {
         int majTickSpacing = 0,minTickSpacing = 0;
         buildMinimumTickSpacing();
         if(getOrientation() == ViewJSlider.HORIZONTAL) {
+        	this.setMinimumSize(new Dimension(100, 55));
+        	this.setPreferredSize(new Dimension(100, 55));
             maxMinorTicks = getSize().getWidth()/minAllowableMinorTickSpacing;
             maxMajorTicks = getSize().getWidth()/minAllowableMajorTickSpacing;
         } else {
+        	this.setMinimumSize(new Dimension(55, 100));
+        	this.setPreferredSize(new Dimension(55, 100));
             maxMinorTicks = getSize().getHeight()/minAllowableMinorTickSpacing;
             maxMajorTicks = getSize().getHeight()/minAllowableMajorTickSpacing;
         }
