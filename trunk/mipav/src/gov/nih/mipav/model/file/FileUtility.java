@@ -1077,6 +1077,11 @@ public class FileUtility {
 
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isMincHDF(fileName, fileDir, quiet);
+                if (fileType == FileUtility.ERROR) {
+                	// If Minc HDF5 library is missing don't want to abort 
+                	// file processing for all other types
+                	fileType = FileUtility.UNDEFINED;
+                }
             }
 
             if (fileType == FileUtility.UNDEFINED) {
@@ -1331,7 +1336,7 @@ public class FileUtility {
 
         try {
 
-            final String fileHeaderName = FileInterfile.isInterfile(fileName, fileDir);
+        	final String fileHeaderName = FileInterfile.isInterfile(fileName, fileDir);
 
             if (fileHeaderName != null) {
                 return FileUtility.INTERFILE;
