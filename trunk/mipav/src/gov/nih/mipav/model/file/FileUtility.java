@@ -1079,7 +1079,7 @@ public class FileUtility {
                 fileType = FileUtility.isMincHDF(fileName, fileDir, quiet);
                 if (fileType == FileUtility.ERROR) {
                 	// If Minc HDF5 library is missing don't want to abort 
-                	// file processing for all other types
+                	// file processing for all other following types
                 	fileType = FileUtility.UNDEFINED;
                 }
             }
