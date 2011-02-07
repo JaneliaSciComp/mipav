@@ -340,10 +340,22 @@ public class FileInterfile extends FileBase {
                 if (fileHeader.exists() == false) {
                     fileHeaderName = fName;
                     fileHeader = new File(fDir + fileHeaderName);
+                    if (fileHeader.exists()  == false) {
+                    	Preferences.debug("FileInterfile: Error reading file: File not found - " +
+                    			fDir + File.separator + fName + "\n", Preferences.DEBUG_FILEIO);	
+                    	return null;
+                    }
                 }
             }
 
             raFile = new RandomAccessFile(fileHeader, "r");
+            if (raFile.length() == 0) {
+            	// Needed because raFile.read returns null without an IOException if the EOF
+            	// is encountered before even one byte is read.
+            	Preferences.debug("FileInterfile: Error reading file: File is zero length - " +
+            			fDir + File.separator + fName + "\n", Preferences.DEBUG_FILEIO);	
+            	return null;	
+            }
 
             // Check that this is an Interfile file
             String tempString = null;
@@ -353,10 +365,10 @@ public class FileInterfile extends FileBase {
 
                 try {
                     tempString = raFile.readLine();
-                } catch (EOFException error) {
+                } catch (IOException error) {
                     tempString = null;
                     foundEOF = true;
-                }
+                } 
 
                 if (tempString != null) {
 
