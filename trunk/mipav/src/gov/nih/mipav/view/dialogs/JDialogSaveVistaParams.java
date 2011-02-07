@@ -164,22 +164,51 @@ public class JDialogSaveVistaParams extends JDialogBase {
 					 break;
 				 }
 			 }
+			 
+			 //even though bandttype is required....sometimes it is not there
+			 //so set it
+			 if(textfield == bandtypeField) {
+				 if(bandtypeField.getText().trim().equals("")) {
+					 if(image.is3DImage()) {
+							bandtypeField.setText("spatial");
+						}else {
+							bandtypeField.setText("temporal");
+						}
+				 }
+			 }
 		}else {
 			String value = "";
 			if(image.is3DImage()) {
-				nbandsField.setText(String.valueOf(image.getExtents()[2]));
-				nframesField.setText(String.valueOf(image.getExtents()[2]));
-				bandtypeField.setText("spatial");
+				 if(textfield == nbandsField) {
+					 nbandsField.setText(String.valueOf(image.getExtents()[2]));
+				 }
+				 if(textfield == nframesField) {
+					 nframesField.setText(String.valueOf(image.getExtents()[2]));
+				 }
+				 if(textfield == bandtypeField) {
+					 bandtypeField.setText("spatial");
+				 }
 			}else {
-				nbandsField.setText(String.valueOf(image.getExtents()[3]));
-				nframesField.setText(String.valueOf(image.getExtents()[3]));
-				ntimestepsField.setText(String.valueOf(image.getExtents()[3]));
-				bandtypeField.setText("temporal");
+				 if(textfield == nbandsField) {
+					 nbandsField.setText(String.valueOf(image.getExtents()[3]));
+				 }
+				 if(textfield == nframesField) {
+					 nframesField.setText(String.valueOf(image.getExtents()[3]));
+				 }
+				 if(textfield == ntimestepsField) {
+					 ntimestepsField.setText(String.valueOf(image.getExtents()[3]));
+				 }
+				 if(textfield == bandtypeField) {
+					 bandtypeField.setText("temporal");
+				 }
 			}
 			
-				
-				nrowsField.setText(String.valueOf(image.getExtents()[1]));
-				ncolumnsField.setText(String.valueOf(image.getExtents()[0]));
+			 	if(textfield == nrowsField) {
+			 		nrowsField.setText(String.valueOf(image.getExtents()[1]));
+			 	}
+			 	 if(textfield == ncolumnsField) {
+			 		 ncolumnsField.setText(String.valueOf(image.getExtents()[0]));
+			 	 }
 				
     			 if(image.getType() == ModelStorageBase.UBYTE) {
     				 value = "ubyte";
@@ -192,9 +221,13 @@ public class JDialogSaveVistaParams extends JDialogBase {
     			 }else if(image.getType() == ModelStorageBase.DOUBLE) {
     				 value = "double";
     			 }
-				repnField.setText(value);
-				value = "\"" + image.getResolutions(0) + " " + image.getResolutions(1) + " " + image.getResolutions(2) + "\"";
-				voxelField.setText(value);
+    			 if(textfield == repnField) {
+    				 repnField.setText(value);
+    			 }
+				value = "\"" + image.getResolutions(0)[0] + " " + image.getResolutions(0)[1] + " " + image.getResolutions(0)[2] + "\"";
+				 if(textfield == voxelField) {
+					 voxelField.setText(value);
+				 }
 				value = "";
 				if(image.getImageOrientation() == FileInfoBase.AXIAL) {
 	   				 if(image.getAxisOrientation()[0] == FileInfoBase.ORI_R2L_TYPE) {
@@ -215,7 +248,9 @@ public class JDialogSaveVistaParams extends JDialogBase {
 	   					 value = "radiological";
 	   				 }
 	   			 }
-				conventionField.setText(value);
+				if(textfield == conventionField) {
+					conventionField.setText(value);
+				}
 				value = "";
 	   			 if(image.getImageOrientation() == FileInfoBase.AXIAL) {
 	   				 value = "axial";
@@ -224,7 +259,9 @@ public class JDialogSaveVistaParams extends JDialogBase {
 	   			 }else if(image.getImageOrientation() == FileInfoBase.SAGITTAL) {
 	   				 value = "sagittal";
 	   			 }
-	   			 orientationField.setText(value);
+	   			 if(textfield == orientationField) {
+	   				 orientationField.setText(value);
+	   			 }
 	   			 
 				
 				
@@ -242,7 +279,7 @@ public class JDialogSaveVistaParams extends JDialogBase {
 	private void populateOptionalPanel() {
 		GridBagConstraints gbc = new GridBagConstraints();
 		
-		
+		gbc.insets = new Insets(5,5,5,5);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		JLabel nameLabel = new JLabel("name");
@@ -430,6 +467,7 @@ public class JDialogSaveVistaParams extends JDialogBase {
 	private void populateTalairachPanel() {
 		GridBagConstraints gbc = new GridBagConstraints();
 		
+		gbc.insets = new Insets(5,5,5,5);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		JLabel caLabel = new JLabel("ca");
@@ -497,7 +535,7 @@ public class JDialogSaveVistaParams extends JDialogBase {
 	private void populateRequiredPanel() {
 		GridBagConstraints gbc = new GridBagConstraints();
 		
-		
+		gbc.insets = new Insets(5,5,5,5);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		JLabel nbandsLabel = new JLabel("nbands");
