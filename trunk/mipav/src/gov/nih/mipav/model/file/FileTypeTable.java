@@ -108,6 +108,7 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".gif", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".pict", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".png", FileUtility.JIMI);
+        FileTypeTable.FILE_EXT_TABLE.put(".psd", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".tga", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".xbm", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".xpm", FileUtility.JIMI);
@@ -120,6 +121,7 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".GIF", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".PICT", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".PNG", FileUtility.JIMI);
+        FileTypeTable.FILE_EXT_TABLE.put(".PSD", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".TGA", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".XBM", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".XPM", FileUtility.JIMI);
