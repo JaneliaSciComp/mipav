@@ -10,7 +10,7 @@ import java.io.*;
 
 /**
  * Quantify image data based on a mask image. At present calculates the number of voxels, volume, total
- * intensity , mean intensity, and standard deviatio for an object defined in a mask image.
+ * intensity , mean intensity, and standard deviation for an object defined in a mask image.
  *
  * @version  0.1 Feb 11, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
