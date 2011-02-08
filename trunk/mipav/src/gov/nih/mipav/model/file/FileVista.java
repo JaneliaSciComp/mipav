@@ -397,16 +397,121 @@ public class FileVista extends FileBase {
     			 value = String.valueOf(len);
     			 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
     			 
-    			 
-    			 for(int i=0;i<vistaParamFields.size();i++) {
-    				 JTextField field = vistaParamFields.get(i);
-    				 key = field.getName();
-    				 value = field.getText().trim();
-    				 
-    				 if(!value.equals("")) {
-    					 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
-    				 }
-    				 
+    			 if(vistaParamFields == null) {
+    				 //this means fileIO is set to quiet 
+    				 if(image.getFileInfo(0)instanceof  FileInfoVista) {
+    						ArrayList<HashMap<String,String>> imagesInfo = ((FileInfoVista)(image.getFileInfo(0))).getImagesInfo();
+    						 HashMap<String,String> info = imagesInfo.get(0);
+    						 Set keys = info.keySet();
+    						 Iterator iter = keys.iterator();
+    						 boolean hasBandtype = false;
+    						 while(iter.hasNext()) {
+    							 key = (String)iter.next();
+    						
+    						     value = info.get(key);
+    						     if(key.equals("bandtype")) {
+    						    	 hasBandtype = true;
+    						     }
+    						     rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    								 
+    						 }
+    						 
+    						 //even though bandttype is required....sometimes it is not there
+    						 //so set it
+    						 
+    							 if(!hasBandtype) {
+    								 key = "bandtype";
+									 value = "spatial";
+									 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							 }
+    						 
+    					}else {
+    							key = "nbands";
+    							value = String.valueOf(image.getExtents()[2]);
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							key = "nframes";
+    							value = String.valueOf(image.getExtents()[2]);
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							key = "bandtype";
+    							value = "spatial";
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							
+    							key = "nrows";
+    							value = String.valueOf(image.getExtents()[1]);
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							key = "ncolumns";
+    							value = String.valueOf(image.getExtents()[0]);
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							key = "repn";
+    							value = "";
+    							 if(image.getType() == ModelStorageBase.UBYTE) {
+    			    				 value = "ubyte";
+    			    			 }else if(image.getType() == ModelStorageBase.SHORT) {
+    			    				 value = "short";
+    			    			 }else if(image.getType() == ModelStorageBase.LONG) {
+    			    				 value = "long";
+    			    			 }else if(image.getType() == ModelStorageBase.FLOAT) {
+    			    				 value = "float";
+    			    			 }else if(image.getType() == ModelStorageBase.DOUBLE) {
+    			    				 value = "double";
+    			    			 }
+    							 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							 
+    							 key = "voxel";
+    							 value = "\"" + image.getResolutions(0)[0] + " " + image.getResolutions(0)[1] + " " + image.getResolutions(0)[2] + "\"";
+    							 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+
+    							 key = "convention";
+    							 value = "";
+    							 if(image.getImageOrientation() == FileInfoBase.AXIAL) {
+    				   				 if(image.getAxisOrientation()[0] == FileInfoBase.ORI_R2L_TYPE) {
+    				   					 value = "natural";
+    				   				 }else {
+    				   					 value = "radiological";
+    				   				 }
+    				   			}else if(image.getImageOrientation() == FileInfoBase.CORONAL) {
+    				   				 if(image.getAxisOrientation()[2] == FileInfoBase.ORI_R2L_TYPE) {
+    				   					 value = "natural";
+    				   				 }else {
+    				   					 value = "radiological";
+    				   				 }
+    				   			}else if(image.getImageOrientation() == FileInfoBase.SAGITTAL) {
+    				   				 if(image.getAxisOrientation()[2] == FileInfoBase.ORI_R2L_TYPE) {
+    				   					 value = "natural";
+    				   				 }else {
+    				   					 value = "radiological";
+    				   				 }
+    				   			 }
+    							 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							 
+    							 
+    							 key = "orientation";
+    							 value = "";
+    							 if(image.getImageOrientation() == FileInfoBase.AXIAL) {
+    				   				 value = "axial";
+    				   			 }else if(image.getImageOrientation() == FileInfoBase.CORONAL) {
+    				   				 value = "coronal";
+    				   			 }else if(image.getImageOrientation() == FileInfoBase.SAGITTAL) {
+    				   				 value = "sagittal";
+    				   			 }
+    							 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    					} 
+    			 }else {
+	    			 for(int i=0;i<vistaParamFields.size();i++) {
+	    				 JTextField field = vistaParamFields.get(i);
+	    				 key = field.getName();
+	    				 value = field.getText().trim();
+	    				 
+	    				 if(!value.equals("")) {
+	    					 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+	    				 }
+	    				 
+	    			 }
     			 }
     			 
     			 
@@ -445,16 +550,125 @@ public class FileVista extends FileBase {
         			 value = String.valueOf(len);
         			 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
         			 
-        			 
-        			 for(int k=0;k<vistaParamFields.size();k++) {
-        				 JTextField field = vistaParamFields.get(k);
-        				 key = field.getName();
-        				 value = field.getText().trim();
-        				 
-        				 if(!value.equals("")) {
-        					 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
-        				 }
-        				 
+        			 if(vistaParamFields == null) {
+        				 //this means fileIO is set to quiet 
+        				 if(image.getFileInfo(0)instanceof  FileInfoVista) {
+        						ArrayList<HashMap<String,String>> imagesInfo = ((FileInfoVista)(image.getFileInfo(0))).getImagesInfo();
+        						 HashMap<String,String> info = imagesInfo.get(0);
+        						 Set keys = info.keySet();
+        						 Iterator iter = keys.iterator();
+        						 boolean hasBandtype = false;
+        						 while(iter.hasNext()) {
+        							 key = (String)iter.next();
+        						
+        						     value = info.get(key);
+        						     if(key.equals("bandtype")) {
+        						    	 hasBandtype = true;
+        						     }
+        						     rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+        								 
+        						 }
+        						 
+        						 //even though bandttype is required....sometimes it is not there
+        						 //so set it
+        						 
+        							 if(!hasBandtype) {
+        								 key = "bandtype";
+    									 value = "temporal";
+    									 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+        							 }
+        						 
+        					}else {
+    							key = "nbands";
+    							value = String.valueOf(image.getExtents()[3]);
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							key = "nframes";
+    							value = String.valueOf(image.getExtents()[3]);
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							key = "ntimesteps";
+    							value = String.valueOf(image.getExtents()[3]);
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							key = "bandtype";
+    							value = "spatial";
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							
+    							key = "nrows";
+    							value = String.valueOf(image.getExtents()[1]);
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							key = "ncolumns";
+    							value = String.valueOf(image.getExtents()[0]);
+    							rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							
+    							key = "repn";
+    							value = "";
+    							 if(image.getType() == ModelStorageBase.UBYTE) {
+    			    				 value = "ubyte";
+    			    			 }else if(image.getType() == ModelStorageBase.SHORT) {
+    			    				 value = "short";
+    			    			 }else if(image.getType() == ModelStorageBase.LONG) {
+    			    				 value = "long";
+    			    			 }else if(image.getType() == ModelStorageBase.FLOAT) {
+    			    				 value = "float";
+    			    			 }else if(image.getType() == ModelStorageBase.DOUBLE) {
+    			    				 value = "double";
+    			    			 }
+    							 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							 
+    							 key = "voxel";
+    							 value = "\"" + image.getResolutions(0)[0] + " " + image.getResolutions(0)[1] + " " + image.getResolutions(0)[2] + "\"";
+    							 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+
+    							 key = "convention";
+    							 value = "";
+    							 if(image.getImageOrientation() == FileInfoBase.AXIAL) {
+    				   				 if(image.getAxisOrientation()[0] == FileInfoBase.ORI_R2L_TYPE) {
+    				   					 value = "natural";
+    				   				 }else {
+    				   					 value = "radiological";
+    				   				 }
+    				   			}else if(image.getImageOrientation() == FileInfoBase.CORONAL) {
+    				   				 if(image.getAxisOrientation()[2] == FileInfoBase.ORI_R2L_TYPE) {
+    				   					 value = "natural";
+    				   				 }else {
+    				   					 value = "radiological";
+    				   				 }
+    				   			}else if(image.getImageOrientation() == FileInfoBase.SAGITTAL) {
+    				   				 if(image.getAxisOrientation()[2] == FileInfoBase.ORI_R2L_TYPE) {
+    				   					 value = "natural";
+    				   				 }else {
+    				   					 value = "radiological";
+    				   				 }
+    				   			 }
+    							 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    							 
+    							 
+    							 key = "orientation";
+    							 value = "";
+    							 if(image.getImageOrientation() == FileInfoBase.AXIAL) {
+    				   				 value = "axial";
+    				   			 }else if(image.getImageOrientation() == FileInfoBase.CORONAL) {
+    				   				 value = "coronal";
+    				   			 }else if(image.getImageOrientation() == FileInfoBase.SAGITTAL) {
+    				   				 value = "sagittal";
+    				   			 }
+    							 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+    					} 
+        			 }else {
+	        			 for(int k=0;k<vistaParamFields.size();k++) {
+	        				 JTextField field = vistaParamFields.get(k);
+	        				 key = field.getName();
+	        				 value = field.getText().trim();
+	        				 
+	        				 if(!value.equals("")) {
+	        					 rawFile.writeBytes("\t\t" + key + ":" + value + "\n");
+	        				 }
+	        				 
+	        			 }
         			 }
 
         			 rawFile.writeBytes("\t}\n");
