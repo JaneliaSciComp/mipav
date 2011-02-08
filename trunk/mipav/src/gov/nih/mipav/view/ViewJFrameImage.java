@@ -3733,7 +3733,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         userInterface.getMainFrame().setJMenuBar(menuBar);
         userInterface.getMainFrame().getContentPane().add(controls, BorderLayout.CENTER);
         userInterface.getMainFrame().pack();
-        userInterface.getMainFrame().setMinimumSize(userInterface.getMainFrame().getSize());
+
         componentImage.useHighlight(true); // the controls point to this componentImage. Display the highlighter
         getActiveImage().notifyImageDisplayListeners(); // ie., componentImage.repaint();
     }
