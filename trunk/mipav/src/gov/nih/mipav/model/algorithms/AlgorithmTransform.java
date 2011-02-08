@@ -4860,11 +4860,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                     if (image.getExtents()[2] > i) {
 
                         // more correct information for a Z-axis rotation, so copy the file info on a slice basis
-                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) image.getFileInfo(i));
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) image.getFileInfo(i).clone());
                     } else {
 
                         // not possible for other rotations because the z-dimension is different
-                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags(oldDicomInfo);
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom)oldDicomInfo.clone());
                     }
                     ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0010", new Short((short) resultImage.getExtents()[1]), 2);
                     ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0011", new Short((short) resultImage.getExtents()[0]), 2);
@@ -4912,6 +4912,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                         matrix.transform(coord[0], coord[1], coord[2], firstPos);
                 } // if (orientation != null)
                 orientation = (String) ((FileInfoDicom) fileInfo[image.getExtents()[2]-1]).getTagTable().getValue("0020,0032");
+                
                 if (orientation != null) {
             		
                     int index1 = -1, index2 = -1;
@@ -4931,6 +4932,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
                     coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
                     coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+                    
                     lastPos = new float[3];
 
                     matrix.transform(coord[0], coord[1], coord[2], lastPos);
@@ -4942,6 +4944,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                 } // if ((firstPos != null) && (lastPos != null)
             } // if ((image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) &&
+            
             
             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
 
