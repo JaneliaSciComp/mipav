@@ -12125,20 +12125,27 @@ public class FileIO {
     	try {
 	    	 FileVista fv = new FileVista(options.getFileName(), options.getFileDirectory());
 	    	 
-	    	 
-	    	 JDialogSaveVistaParams dialog = new JDialogSaveVistaParams(UI.getMainFrame(), image);
+	    	 if(isQuiet()) {
+	    		 createProgressBar(fv, options.getFileName(), FileIO.FILE_WRITE);
+		         fv.writeImage(image, options, null);
+		         fv.finalize();
+		         fv = null;
+	    	 }else {
+	    		 JDialogSaveVistaParams dialog = new JDialogSaveVistaParams(UI.getMainFrame(), image);
 
-	            if (dialog.isCancelled()) {
-	                return false;
-	            }
+		            if (dialog.isCancelled()) {
+		                return false;
+		            }
+		    	 
+		            ArrayList<JTextField> vistaParamFields = dialog.getVistaParamTextfields();
+		            dialog.dispose();
+		
+		         createProgressBar(fv, options.getFileName(), FileIO.FILE_WRITE);
+		         fv.writeImage(image, options, vistaParamFields);
+		         fv.finalize();
+		         fv = null;
+	    	 }
 	    	 
-	            ArrayList<JTextField> vistaParamFields = dialog.getVistaParamTextfields();
-	            dialog.dispose();
-	
-	         createProgressBar(fv, options.getFileName(), FileIO.FILE_WRITE);
-	         fv.writeImage(image, options, vistaParamFields);
-	         fv.finalize();
-	         fv = null;
     	}catch (final IOException error) {
 
             if ( !quiet) {
