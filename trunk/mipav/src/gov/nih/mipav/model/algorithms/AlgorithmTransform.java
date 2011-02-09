@@ -4802,6 +4802,8 @@ public class AlgorithmTransform extends AlgorithmBase {
     	final FileInfoBase[] fileInfo = resultImage.getFileInfo();
     	float firstPos[] = null;
     	float delPos[] = null;
+    	float sliceLocation0 = Float.NaN;
+    	float delLoc = Float.NaN;
 
         if (resultImage.getNDims() == 2) {
             fileInfo[0] = (FileInfoBase) image.getFileInfo(0).clone();
@@ -4943,6 +4945,21 @@ public class AlgorithmTransform extends AlgorithmBase {
                     	delPos[i] = (lastPos[i] - firstPos[i])/(resultImage.getExtents()[2] - 1);
                     }
                 } // if ((firstPos != null) && (lastPos != null)
+                if ((((FileInfoDicom)fileInfo[0]).getTagTable().containsTag("0020,1041")) &&
+                		(((FileInfoDicom)fileInfo[1]).getTagTable().containsTag("0020,1041")))	{
+                	if (((String)((FileInfoDicom)fileInfo[0]).getTagTable().getValue("0020,1041") != null) &&
+                			((String)((FileInfoDicom)fileInfo[1]).getTagTable().getValue("0020,1041") != null)) {
+                		try {
+                		    sliceLocation0 = Float.parseFloat((String)((FileInfoDicom)fileInfo[0]).getTagTable().getValue("0020,1041"));
+                		    float sliceLocation1 = Float.parseFloat((String)((FileInfoDicom)fileInfo[1]).getTagTable().getValue("0020,1041"));
+                		    delLoc = (sliceLocation1 - sliceLocation0) * resolutions[2]/image.getFileInfo()[0].getResolutions()[2];
+                		}
+                		catch (NumberFormatException nfe) {
+                			
+                		}
+                	}
+                	
+                }
             } // if ((image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) &&
             
             
@@ -5003,6 +5020,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                         	              (firstPos[2] + i * delPos[2]);
                         	((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,0032", orientation);
                         } // if (delPos != null)
+                        if (!Float.isNaN(delLoc)) {
+                        	String sliceLoc = Float.toString(sliceLocation0 + i * delLoc);
+                        	// slice location
+                        	((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0020,1041", sliceLoc, sliceLoc.length()); 
+                        }
                         String instanceString = Integer.toString(i+1);
                         ((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0020,0013", instanceString, instanceString.length());
                         String imagesInAcquisition = Integer.toString(resultImage.getExtents()[2]);
