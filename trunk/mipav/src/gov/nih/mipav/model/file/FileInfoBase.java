@@ -1909,14 +1909,18 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     }
 
     /**
-     * Returns the units of measure.
+     * Returns the units of measure. 
      * 
      * @return int[] units (Inches or millimeters);
      */
     public final int[] getUnitsOfMeasure() {
         int[] unitsInt = new int[unitsOfMeasure.length];
         for(int i = 0; i < unitsInt.length; i++) {
-            unitsInt[i] = unitsOfMeasure[i].getLegacyNum();
+            if(unitsOfMeasure[i] != null) {
+                unitsInt[i] = unitsOfMeasure[i].getLegacyNum();
+            } else {
+                unitsInt[i] = Unit.UNKNOWN_MEASURE.getLegacyNum();
+            }
         }
         
         return unitsInt;
@@ -1932,10 +1936,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public int getUnitsOfMeasure(final int dim) {
 
         // could try catch array out of bounds ...
-        if ( (unitsOfMeasure != null) && (dim < unitsOfMeasure.length) && (dim >= 0)) {
+        if ( (unitsOfMeasure != null) && (dim < unitsOfMeasure.length) && (dim >= 0) && (unitsOfMeasure[dim] != null)) {
             return unitsOfMeasure[dim].getLegacyNum();
         } else { //The selected dimension does not exist in the image
-            return -1;
+            return Unit.UNKNOWN_MEASURE.getLegacyNum();
         }
     }
 
@@ -2376,6 +2380,22 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     }
     
     /**
+     * Sets (copies) units of measure for image.
+     * 
+     * @param unitMeasure unit of measure for a specified dimension
+     */
+    public final void setUnitsOfMeasure(final int[] unitMeasure) {
+        if (unitMeasure != null) {
+            Unit[] localMeasure = new Unit[unitMeasure.length];
+            for(int i=0; i<unitMeasure.length; i++) {
+                localMeasure[i] = Unit.getUnitFromLegacyNum(unitMeasure[i]);
+            }
+            
+            setUnitsOfMeasure(localMeasure);
+        }
+    }
+
+    /**
      * Sets units of measure for image, on a per dimension basis.
      * 
      * 
@@ -2384,6 +2404,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public final void setUnitsOfMeasure(final Unit unitMeasure, final int dim) {
         unitsOfMeasure[dim] = unitMeasure;
+    }
+
+    /**
+     * Sets units of measure for image, on a per dimension basis.
+     * 
+     * @param unitMeasure Unit of measure for the dimension
+     * @param dim Dimension to set unit of measure in
+     */
+    public final void setUnitsOfMeasure(final int unitMeasure, final int dim) {
+        setUnitsOfMeasure(Unit.getUnitFromLegacyNum(unitMeasure), dim);
     }
 
     /**
@@ -2451,41 +2481,18 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     }
     
     /**
-     * Sets units of measure for image, on a per dimension basis.
-     * 
-     * @deprecated should deal directly with enum type
-     * @param unitMeasure Unit of measure for the dimension
-     * @param dim Dimension to set unit of measure in
-     */
-    public final void setUnitsOfMeasure(final int unitMeasure, final int dim) {
-        setUnitsOfMeasure(Unit.getUnitFromLegacyNum(unitMeasure), dim);
-    }
-
-    /**
-     * Sets (copies) units of measure for image.
-     * 
-     * @deprecated should deal directly with enum type
-     * @param unitMeasure unit of measure for a specified dimension
-     */
-    public final void setUnitsOfMeasure(final int[] unitMeasure) {
-        if (unitMeasure != null) {
-            Unit[] localMeasure = new Unit[unitMeasure.length];
-            for(int i=0; i<unitMeasure.length; i++) {
-                localMeasure[i] = Unit.getUnitFromLegacyNum(unitMeasure[i]);
-            }
-            
-            setUnitsOfMeasure(localMeasure);
-        }
-    }
-
-    /**
      * 
      * @deprecated should now use enum
      * @param i
      * @return
      */
     public static String getUnitsOfMeasureAbbrevStr(int i) {
-        return Unit.getUnitFromLegacyNum(i).getAbbrev();
+        Unit measure = Unit.getUnitFromLegacyNum(i);
+        if(measure == null) {
+            measure = Unit.UNKNOWN_MEASURE;
+        }
+        
+        return measure.getAbbrev();
     }
 
     /**
@@ -2494,7 +2501,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @return
      */
     public static String getUnitsOfMeasureStr(int xUnits) {
-        return Unit.getUnitFromLegacyNum(xUnits).toString();
+        Unit measure = Unit.getUnitFromLegacyNum(xUnits);
+        if(measure == null) {
+            measure = Unit.UNKNOWN_MEASURE;
+        }
+        
+        return measure.toString();
     }
 
     /**
@@ -2503,7 +2515,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @return
      */
     public static int getUnitsOfMeasureFromStr(String selectedOutput) {
-        return Unit.getUnit(selectedOutput).getLegacyNum();
+        Unit measure = Unit.getUnit(selectedOutput);
+        if(measure == null) {
+            measure = Unit.UNKNOWN_MEASURE;
+        }
+        
+        return measure.getLegacyNum();
     }
 
     /**
@@ -2513,6 +2530,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public static int[] getAllSameDimUnits(int measure) {
         Unit origUnit = Unit.getUnitFromLegacyNum(measure);
+        if(origUnit == null) {
+            origUnit = Unit.UNKNOWN_MEASURE;
+        }
+        
         Unit[] allSame = UnitType.getUnitsOfType(origUnit.getType());
         int[] allUnitNum = new int[allSame.length]; 
         for(int i=0; i<allUnitNum.length; i++) {
