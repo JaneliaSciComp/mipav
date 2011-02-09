@@ -5005,6 +5005,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                         } // if (delPos != null)
                         String instanceString = Integer.toString(i+1);
                         ((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0020,0013", instanceString, instanceString.length());
+                        String imagesInAcquisition = Integer.toString(resultImage.getExtents()[2]);
+                        ((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0020,1002", imagesInAcquisition, imagesInAcquisition.length());
                     } // else image.getExtents()[2] != resultImage.getExtents()[2]
                 } // if (fileInfo[i].getFileFormat() == FileUtility.DICOM)
             } // for (int i = 0; i < resultImage.getExtents()[2]; i++)
