@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.file;
 
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
@@ -238,7 +239,7 @@ public class FileVista extends FileBase {
     	
     	
     	image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
-    	
+
     	
     	int[] extents = fileInfo.getExtents();
         if (image.getNDims() == 2) {
@@ -279,8 +280,38 @@ public class FileVista extends FileBase {
         		int counter2 = 0;
         		int location = 0;
             	for(int i=0;i<numSlices;i++) {
-            		
+
             		rawFile.readImage(buffer, offset);
+            		
+            		
+            		if(counter1 == numVolumes) {
+            			counter1 = 0;
+            			counter2++;
+            		}
+            		location = (counter1 * extents[2]) + counter2;
+            		counter1++;
+            		
+            		
+            		image.importData(location * length, buffer, false);
+            		
+            		
+            		
+            		offset = (int)rawFile.getRaFile().getFilePointer();
+            		
+            	}
+            	image.calcMinMax();
+        	}else if(fileInfo.getDataType() == ModelStorageBase.FLOAT) {
+        		float[] buffer;	
+        		buffer = new float[extents[0] * extents[1]];
+        		int length = extents[0] * extents[1];
+        		int numVolumes = extents[3];
+        		int numSlices = extents[2] * extents[3];
+        		int counter1 = 0;
+        		int counter2 = 0;
+        		int location = 0;
+            	for(int i=0;i<numSlices;i++) {
+            		
+            		rawFile.readImage(buffer, offset,ModelStorageBase.FLOAT);
             		
             		
             		if(counter1 == numVolumes) {
@@ -691,64 +722,407 @@ public class FileVista extends FileBase {
      */
     public void writeImage(ModelImage image, FileWriteOptions options, ArrayList<JTextField> vistaParamFields) throws IOException {
 
-    	FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
-    	tempInfo.setEndianess(FileBase.BIG_ENDIAN);
-        FileRaw rawFile = new FileRaw(fileName, fileDir, tempInfo, FileBase.READ_WRITE);
-        
-        writeHeader(image, rawFile, vistaParamFields);
-        
+    	//first check to see if endianess is big or little...if it is little...convert it to big b/c vista is always big endian
+    	
+    	if(image.getFileInfo(0).getEndianess() == LITTLE_ENDIAN) {
+    		int[] destExtents;
 
-        
-        linkProgress(rawFile);
-        rawFile.setStartPosition(rawFile.getRaFile().length());
-        rawFile.setZeroLengthFlag(false);
-        
-        if(image.is4DImage()) {
-        	RandomAccessFile ra = rawFile.getRaFile();
-        	
-        	 FileRawChunk rawChunkFile;
-             rawChunkFile = new FileRawChunk(ra, image.getFileInfo(0));
-        	
-        	if(image.getFileInfo(0).getDataType() == ModelStorageBase.BYTE) {
-        		
-        	}
-             
-             
-            short[] buffer;	
-            int[] extents = image.getExtents();
-     		buffer = new short[extents[0] * extents[1]];
-     		int length = extents[0] * extents[1];
-     		int numVolumes = extents[3];
-     		int numSlices = extents[2] * extents[3];
-     		int counter1 = 0;
-     		int counter2 = 0;
-     		int location = 0;
-         	for(int i=0;i<numSlices;i++) {
-         		
-         		if(counter1 == numVolumes) {
-         			counter1 = 0;
-         			counter2++;
-         		}
-         		location = (counter1 * extents[2]) + counter2;
-         		counter1++;
-         		
-         		
-         		image.exportData(location * length, buffer.length, buffer);
-         		
-         		
-         		rawChunkFile.writeBufferShort(buffer, 0, length, FileBase.BIG_ENDIAN);
-         		
+            if (image.getNDims() == 3) {
+                destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0];
+                destExtents[1] = image.getExtents()[1];
+                destExtents[2] = image.getExtents()[2];
 
-         		
-         	}
+            } else {
+                destExtents = new int[4];
+                destExtents[0] = image.getExtents()[0];
+                destExtents[1] = image.getExtents()[1];
+                destExtents[2] = image.getExtents()[2];
+                destExtents[3] = image.getExtents()[3];
 
-        }else {
-        	rawFile.writeImage(image, options);
-        }
-        
-        
+            }
+    		
+            
+            ModelImage bigEndianImage = new ModelImage(image.getDataType(), destExtents, image.getImageName() + "bigEndian");
+            if (image.getNDims() == 3) {
+                for (int n = 0; n < bigEndianImage.getExtents()[2]; n++) {
+                	bigEndianImage.getFileInfo(n).setEndianess(BIG_ENDIAN);
+                }
+            }else {
+                for (int n = 0; n < bigEndianImage.getExtents()[2]*bigEndianImage.getExtents()[3]; n++) {
+                	bigEndianImage.getFileInfo(n).setEndianess(BIG_ENDIAN);
+                 }	
+            }
+            
+            
+            float inTempMin = (float) image.getMin();
+            float inTempMax = (float) image.getMax();
+            float outTempMin = inTempMin;
+            float outTempMax = inTempMax;
+            
+            
+            AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(bigEndianImage, image, inTempMin, inTempMax, outTempMin,
+                    outTempMax, false);
 
-        rawFile.close();
+            
+            changeTypeAlgo.run();
+            
+            
+            
+            
+            FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
+        	tempInfo.setEndianess(FileBase.BIG_ENDIAN);
+            FileRaw rawFile = new FileRaw(fileName, fileDir, tempInfo, FileBase.READ_WRITE);
+            
+            writeHeader(bigEndianImage, rawFile, vistaParamFields);
+            
+
+            
+            linkProgress(rawFile);
+            rawFile.setStartPosition(rawFile.getRaFile().length());
+            rawFile.setZeroLengthFlag(false);
+            
+            if(bigEndianImage.is4DImage()) {
+            	RandomAccessFile ra = rawFile.getRaFile();
+            	
+            	 FileRawChunk rawChunkFile;
+                 rawChunkFile = new FileRawChunk(ra, bigEndianImage.getFileInfo(0));
+            	
+                 if(bigEndianImage.getFileInfo(0).getDataType() == ModelStorageBase.BYTE || bigEndianImage.getFileInfo(0).getDataType() == ModelStorageBase.UBYTE) {
+             		byte[] buffer;	
+                     int[] extents = bigEndianImage.getExtents();
+              		buffer = new byte[extents[0] * extents[1]];
+              		int length = extents[0] * extents[1];
+              		int numVolumes = extents[3];
+              		int numSlices = extents[2] * extents[3];
+              		int counter1 = 0;
+              		int counter2 = 0;
+              		int location = 0;
+                  	for(int i=0;i<numSlices;i++) {
+                  		
+                  		if(counter1 == numVolumes) {
+                  			counter1 = 0;
+                  			counter2++;
+                  		}
+                  		location = (counter1 * extents[2]) + counter2;
+                  		counter1++;
+                  		
+                  		
+                  		bigEndianImage.exportData(location * length, buffer.length, buffer);
+                  		
+                  		
+                  		rawChunkFile.writeBufferByte(buffer, 0, length);
+                  		
+
+                  		
+                  	}
+             	}else if(bigEndianImage.getFileInfo(0).getDataType() == ModelStorageBase.SHORT) {
+             		short[] buffer;	
+                     int[] extents = bigEndianImage.getExtents();
+              		buffer = new short[extents[0] * extents[1]];
+              		int length = extents[0] * extents[1];
+              		int numVolumes = extents[3];
+              		int numSlices = extents[2] * extents[3];
+              		int counter1 = 0;
+              		int counter2 = 0;
+              		int location = 0;
+                  	for(int i=0;i<numSlices;i++) {
+                  		
+                  		if(counter1 == numVolumes) {
+                  			counter1 = 0;
+                  			counter2++;
+                  		}
+                  		location = (counter1 * extents[2]) + counter2;
+                  		counter1++;
+                  		
+                  		
+                  		bigEndianImage.exportData(location * length, buffer.length, buffer);
+                  		
+                  		
+                  		rawChunkFile.writeBufferShort(buffer, 0, length, FileBase.BIG_ENDIAN);
+                  		
+
+                  		
+                  	}
+             	}else if(bigEndianImage.getFileInfo(0).getDataType() == ModelStorageBase.FLOAT) {
+             		float[] buffer;	
+                     int[] extents = bigEndianImage.getExtents();
+              		buffer = new float[extents[0] * extents[1]];
+              		int length = extents[0] * extents[1];
+              		int numVolumes = extents[3];
+              		int numSlices = extents[2] * extents[3];
+              		int counter1 = 0;
+              		int counter2 = 0;
+              		int location = 0;
+                  	for(int i=0;i<numSlices;i++) {
+                  		
+                  		if(counter1 == numVolumes) {
+                  			counter1 = 0;
+                  			counter2++;
+                  		}
+                  		location = (counter1 * extents[2]) + counter2;
+                  		counter1++;
+                  		
+                  		
+                  		bigEndianImage.exportData(location * length, buffer.length, buffer);
+                  		
+                  		
+                  		rawChunkFile.writeBufferFloat(buffer, 0, length, FileBase.BIG_ENDIAN);
+                  		
+
+                  		
+                  	}
+             	}else if(bigEndianImage.getFileInfo(0).getDataType() == ModelStorageBase.LONG) {
+             		long[] buffer;	
+                     int[] extents = bigEndianImage.getExtents();
+              		buffer = new long[extents[0] * extents[1]];
+              		int length = extents[0] * extents[1];
+              		int numVolumes = extents[3];
+              		int numSlices = extents[2] * extents[3];
+              		int counter1 = 0;
+              		int counter2 = 0;
+              		int location = 0;
+                  	for(int i=0;i<numSlices;i++) {
+                  		
+                  		if(counter1 == numVolumes) {
+                  			counter1 = 0;
+                  			counter2++;
+                  		}
+                  		location = (counter1 * extents[2]) + counter2;
+                  		counter1++;
+                  		
+                  		
+                  		bigEndianImage.exportData(location * length, buffer.length, buffer);
+                  		
+                  		
+                  		rawChunkFile.writeBufferLong(buffer, 0, length, FileBase.BIG_ENDIAN);
+                  		
+
+                  		
+                  	}
+             	}else if(bigEndianImage.getFileInfo(0).getDataType() == ModelStorageBase.DOUBLE) {
+             		double[] buffer;	
+                     int[] extents = bigEndianImage.getExtents();
+              		buffer = new double[extents[0] * extents[1]];
+              		int length = extents[0] * extents[1];
+              		int numVolumes = extents[3];
+              		int numSlices = extents[2] * extents[3];
+              		int counter1 = 0;
+              		int counter2 = 0;
+              		int location = 0;
+                  	for(int i=0;i<numSlices;i++) {
+                  		
+                  		if(counter1 == numVolumes) {
+                  			counter1 = 0;
+                  			counter2++;
+                  		}
+                  		location = (counter1 * extents[2]) + counter2;
+                  		counter1++;
+                  		
+                  		
+                  		bigEndianImage.exportData(location * length, buffer.length, buffer);
+                  		
+                  		
+                  		rawChunkFile.writeBufferDouble(buffer, 0, length, FileBase.BIG_ENDIAN);
+                  		
+
+                  		
+                  	}
+             	}
+
+            }else {
+            	rawFile.writeImage(bigEndianImage, options);
+            }
+            
+            
+
+            rawFile.close();
+            
+            
+            bigEndianImage.disposeLocal();
+            bigEndianImage = null;
+            
+            
+    		
+    	}else {
+    		FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
+        	tempInfo.setEndianess(FileBase.BIG_ENDIAN);
+            FileRaw rawFile = new FileRaw(fileName, fileDir, tempInfo, FileBase.READ_WRITE);
+            
+            writeHeader(image, rawFile, vistaParamFields);
+            
+
+            
+            linkProgress(rawFile);
+            rawFile.setStartPosition(rawFile.getRaFile().length());
+            rawFile.setZeroLengthFlag(false);
+            
+            if(image.is4DImage()) {
+            	RandomAccessFile ra = rawFile.getRaFile();
+            	
+            	 FileRawChunk rawChunkFile;
+                 rawChunkFile = new FileRawChunk(ra, image.getFileInfo(0));
+            	
+            	if(image.getFileInfo(0).getDataType() == ModelStorageBase.BYTE || image.getFileInfo(0).getDataType() == ModelStorageBase.UBYTE) {
+            		byte[] buffer;	
+                    int[] extents = image.getExtents();
+             		buffer = new byte[extents[0] * extents[1]];
+             		int length = extents[0] * extents[1];
+             		int numVolumes = extents[3];
+             		int numSlices = extents[2] * extents[3];
+             		int counter1 = 0;
+             		int counter2 = 0;
+             		int location = 0;
+                 	for(int i=0;i<numSlices;i++) {
+                 		
+                 		if(counter1 == numVolumes) {
+                 			counter1 = 0;
+                 			counter2++;
+                 		}
+                 		location = (counter1 * extents[2]) + counter2;
+                 		counter1++;
+                 		
+                 		
+                 		image.exportData(location * length, buffer.length, buffer);
+                 		
+                 		
+                 		rawChunkFile.writeBufferByte(buffer, 0, length);
+                 		
+
+                 		
+                 	}
+            	}else if(image.getFileInfo(0).getDataType() == ModelStorageBase.SHORT) {
+            		short[] buffer;	
+                    int[] extents = image.getExtents();
+             		buffer = new short[extents[0] * extents[1]];
+             		int length = extents[0] * extents[1];
+             		int numVolumes = extents[3];
+             		int numSlices = extents[2] * extents[3];
+             		int counter1 = 0;
+             		int counter2 = 0;
+             		int location = 0;
+                 	for(int i=0;i<numSlices;i++) {
+                 		
+                 		if(counter1 == numVolumes) {
+                 			counter1 = 0;
+                 			counter2++;
+                 		}
+                 		location = (counter1 * extents[2]) + counter2;
+                 		counter1++;
+                 		
+                 		
+                 		image.exportData(location * length, buffer.length, buffer);
+                 		
+                 		
+                 		rawChunkFile.writeBufferShort(buffer, 0, length, FileBase.BIG_ENDIAN);
+                 		
+
+                 		
+                 	}
+            	}else if(image.getFileInfo(0).getDataType() == ModelStorageBase.FLOAT) {
+            		float[] buffer;	
+                    int[] extents = image.getExtents();
+             		buffer = new float[extents[0] * extents[1]];
+             		int length = extents[0] * extents[1];
+             		int numVolumes = extents[3];
+             		int numSlices = extents[2] * extents[3];
+             		int counter1 = 0;
+             		int counter2 = 0;
+             		int location = 0;
+                 	for(int i=0;i<numSlices;i++) {
+                 		
+                 		if(counter1 == numVolumes) {
+                 			counter1 = 0;
+                 			counter2++;
+                 		}
+                 		location = (counter1 * extents[2]) + counter2;
+                 		counter1++;
+                 		
+                 		
+                 		image.exportData(location * length, buffer.length, buffer);
+                 		
+                 		
+                 		rawChunkFile.writeBufferFloat(buffer, 0, length, FileBase.BIG_ENDIAN);
+                 		
+
+                 		
+                 	}
+            	}else if(image.getFileInfo(0).getDataType() == ModelStorageBase.LONG) {
+            		long[] buffer;	
+                    int[] extents = image.getExtents();
+             		buffer = new long[extents[0] * extents[1]];
+             		int length = extents[0] * extents[1];
+             		int numVolumes = extents[3];
+             		int numSlices = extents[2] * extents[3];
+             		int counter1 = 0;
+             		int counter2 = 0;
+             		int location = 0;
+                 	for(int i=0;i<numSlices;i++) {
+                 		
+                 		if(counter1 == numVolumes) {
+                 			counter1 = 0;
+                 			counter2++;
+                 		}
+                 		location = (counter1 * extents[2]) + counter2;
+                 		counter1++;
+                 		
+                 		
+                 		image.exportData(location * length, buffer.length, buffer);
+                 		
+                 		
+                 		rawChunkFile.writeBufferLong(buffer, 0, length, FileBase.BIG_ENDIAN);
+                 		
+
+                 		
+                 	}
+            	}else if(image.getFileInfo(0).getDataType() == ModelStorageBase.DOUBLE) {
+            		double[] buffer;	
+                    int[] extents = image.getExtents();
+             		buffer = new double[extents[0] * extents[1]];
+             		int length = extents[0] * extents[1];
+             		int numVolumes = extents[3];
+             		int numSlices = extents[2] * extents[3];
+             		int counter1 = 0;
+             		int counter2 = 0;
+             		int location = 0;
+                 	for(int i=0;i<numSlices;i++) {
+                 		
+                 		if(counter1 == numVolumes) {
+                 			counter1 = 0;
+                 			counter2++;
+                 		}
+                 		location = (counter1 * extents[2]) + counter2;
+                 		counter1++;
+                 		
+                 		
+                 		image.exportData(location * length, buffer.length, buffer);
+                 		
+                 		
+                 		rawChunkFile.writeBufferDouble(buffer, 0, length, FileBase.BIG_ENDIAN);
+                 		
+
+                 		
+                 	}
+            	}
+                 
+                 
+                
+
+            }else {
+            	rawFile.writeImage(image, options);
+            }
+            
+            
+
+            rawFile.close();
+    		
+    		
+    	}
+    	
+    	
+    	
+    	
+    	
     }
     
     
