@@ -5007,6 +5007,15 @@ public class AlgorithmTransform extends AlgorithmBase {
                         ((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0020,0013", instanceString, instanceString.length());
                         String imagesInAcquisition = Integer.toString(resultImage.getExtents()[2]);
                         ((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0020,1002", imagesInAcquisition, imagesInAcquisition.length());
+                        String res2 = String.valueOf(resolutions[2]);
+                        if (((FileInfoDicom)fileInfo[i]).getTagTable().containsTag("0018,0050")) {
+                        	// Slice thickness
+                        	((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0018,0050", res2, res2.length());    	
+                        }
+                        if (((FileInfoDicom)fileInfo[i]).getTagTable().containsTag("0018,0088")) {
+                        	// Spacing  between slices
+                        	((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0018,0088", res2, res2.length());    	
+                        }
                     } // else image.getExtents()[2] != resultImage.getExtents()[2]
                 } // if (fileInfo[i].getFileFormat() == FileUtility.DICOM)
             } // for (int i = 0; i < resultImage.getExtents()[2]; i++)
