@@ -2466,6 +2466,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2],
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]);
                 frame.getControls().getTools().setPaintColor(dropperColor);
+            } else if(imageActive.isComplexImage()) {
+                int loc = ((yS * imageActive.getExtents()[0]) + xS)*2;
+                intensityDropper = (float) Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + imageBufferActive[loc+1]*imageBufferActive[loc+1]);
+                frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             } else {
                 intensityDropper = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
@@ -2619,6 +2623,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                             + String.valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2])
                             + "  B:  "
                             + String.valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]));
+                } else if(imageActive.isComplexImage()) { 
+                    int loc = ((yS * imageActive.getExtents()[0]) + xS)*2;
+                    float magValue = (float) Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + imageBufferActive[loc+1]*imageBufferActive[loc+1]);
+                    growDialog.setPositionText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS)
+                            + "  Intensity:  "+ String.valueOf(magValue));
                 } else {
                     growDialog.setPositionText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS)
                             + "  Intensity:  "
@@ -2766,6 +2775,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 seedValG = imageBufferActive[index + 2];
                 seedValB = imageBufferActive[index + 3];
                 regionGrow((short) xS, (short) yS, (short) slice, seedValR, seedValG, seedValB, null, true);
+            } else if(imageActive.isComplexImage()) { 
+                int loc = ((yS * imageActive.getExtents()[0]) + xS)*2;
+                seedVal = (float) Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + imageBufferActive[loc+1]*imageBufferActive[loc+1]);
             } else {
                 seedVal = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
                 regionGrow((short) xS, (short) yS, (short) slice, seedVal, null, true);
@@ -3369,12 +3381,13 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                             if ( (pix >= 0) && (pix < imageBufferActive.length)) {
 
                                 if ( (imageType == ModelStorageBase.FLOAT) || (imageType == ModelStorageBase.DOUBLE)
-                                        || (imageType == ModelStorageBase.COMPLEX)
-                                        || (imageType == ModelStorageBase.DCOMPLEX)
                                         || (imageType == ModelStorageBase.ARGB)
                                         || (imageType == ModelStorageBase.ARGB_FLOAT)
                                         || (imageType == ModelStorageBase.ARGB_USHORT)) {
                                     sliceString = nf.format(imageBufferActive[pix]);
+                                } else if((imageType == ModelStorageBase.COMPLEX)
+                                        || (imageType == ModelStorageBase.DCOMPLEX)) {
+                                    sliceString = nf.format(Math.sqrt(imageBufferActive[pix*2]*imageBufferActive[pix*2] + imageBufferActive[pix*2+1]*imageBufferActive[pix*2+1]));
                                 } else {
                                     sliceString = Integer.toString((int) imageBufferActive[pix]);
                                 }
@@ -4496,8 +4509,26 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     double a = imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS)];
                     double b = imageBufferActive[2*((yS * imageActive.getExtents()[0]) + xS) + 1];
                     double r = Math.sqrt(a*a + b*b);
-                    double theta = -Math.atan(b/a);
-                    str.append("  Intensity:  ").append(r).append(" * e^(i*").append(theta).append(")");
+                    double theta = Math.atan(b/a);
+                    str.append("  Intensity:  ").append(r).append(" * e^(i*");
+                    if(a > 0) {
+                        ; //no action necessary
+                    } else if(a < 0) {
+                        if(b >= 0) {
+                            str.append(theta+Math.PI);
+                        } else {
+                            str.append(theta-Math.PI);
+                        }
+                    } else if(a == 0) {
+                        if(b > 0) {
+                            str.append(Math.PI/2);
+                        } else if(b < 0) {
+                            str.append(-Math.PI/2);
+                        } else {
+                            str.append(0);
+                        }
+                    }
+                    str.append(")");
                     break;
                 case MAGNITUDE: //TODO: this displays different values depending on display preferences at time of image loading
                 default:
@@ -5157,12 +5188,16 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         if (cursorMode == ViewJComponentBase.DROPPER_PAINT) {
 
-            if (imageActive.isColorImage() == true) {
+            if (imageActive.isColorImage()) {
                 final Color dropperColor = new Color(
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1],
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2],
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]);
                 frame.getControls().getTools().setPaintColor(dropperColor);
+            } else if(imageActive.isComplexImage()) { 
+                int loc = ((yS * imageActive.getExtents()[0]) + xS)*2;
+                intensityDropper = (float) Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + imageBufferActive[loc+1]*imageBufferActive[loc+1]);
+                frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             } else {
                 intensityDropper = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
@@ -5818,9 +5853,16 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         + blue, x, y - 40);
             }
         } else {
-            final String intensity = df.format(new Float(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS])
-            .doubleValue());
-
+            final String intensity;
+            if(imageActive.isComplexImage()) {
+                int loc = ((yS * imageActive.getExtents()[0]) + xS)*2;
+                intensity = df.format(new Double(Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + 
+                                                            imageBufferActive[loc+1]*imageBufferActive[loc+1])).doubleValue());
+            } else {
+                intensity = df.format(new Float(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS])
+                .doubleValue());
+            }
+            
             if ( ( (wC - xC) > 100) && ( (hC - yC) > 50)) {
                 graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x + 1, y);
                 graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 1, y);
