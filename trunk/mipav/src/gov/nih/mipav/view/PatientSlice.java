@@ -700,12 +700,25 @@ public class PatientSlice {
             fillImageBuffer(slice);
 
             float imageMinA = (float) Math.min(0, imageA.getMin());
-
+            //set variables related to display of complex images
+            int imageAsf = imageA.isComplexImage() ? 2 : 1; //defines the mapping between image buffer locations and pixel buffer locations
+            int imageBsf = 1;
+            if(imageB != null) {
+                imageBsf = imageB.isComplexImage() ? 2 : 1;
+            }
+            boolean logMagDisplay = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
+            boolean imageAComplex = false, imageBComplex = false;
+            imageAComplex  = imageA.isComplexImage();
+            if(imageB != null) {
+                imageBComplex = imageB.isComplexImage();
+            }
+            
             for (int j = 0; j < localImageExtents[1]; j++) {
 
                 for (int i = 0; i < localImageExtents[0]; i++) {
-                    int ind4 = (j * localImageExtents[0]) + i;
-                    int index = 4 * ind4;
+                    int pixelBufferInd = (j * localImageExtents[0]) + i;
+                    
+                    int index = 4 * pixelBufferInd;
 
                     if (hasThreshold1) {
 
@@ -718,13 +731,13 @@ public class PatientSlice {
                             imageBufferA[i] = imageMinA;
                         }
                     }
-
+                    
                     if (imageB == null) {
-                        int pixValueA = (int) (tf_imgA.getRemappedValue(imageBufferA[ind4], 256) + 0.5f);
-                        bufferA[ind4] = lutBufferRemapped[pixValueA];
+                        int pixValueA = (int) (tf_imgA.getRemappedValue(getBufferValue(logMagDisplay, imageAComplex, imageBufferA, pixelBufferInd*imageAsf), 256) + 0.5f);
+                        bufferA[pixelBufferInd] = lutBufferRemapped[pixValueA];
                     } else {
-                        int indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[ind4], 256) + 0.5f);
-                        int indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[ind4], 256) + 0.5f);
+                        int indexA = (int) (tf_imgA.getRemappedValue(getBufferValue(logMagDisplay, imageAComplex, imageBufferA, pixelBufferInd*imageAsf), 256) + 0.5f);
+                        int indexB = (int) (tf_imgB.getRemappedValue(getBufferValue(logMagDisplay, imageBComplex, imageBufferB, pixelBufferInd*imageBsf), 256) + 0.5f);
 
                         float Ra = RGB_LUTa[0][indexA];
                         float Ga = RGB_LUTa[1][indexA];
@@ -739,11 +752,11 @@ public class PatientSlice {
                             Ba = (fAlpha * Ba) + ((1.0f - fAlpha) * Bb);
                         } else {
                             int pixValueB = 0xff000000 | (((int) Rb) << 16) | (((int) Gb) << 8) | ((int) Bb);
-                            bufferB[ind4] = pixValueB;
+                            bufferB[pixelBufferInd] = pixValueB;
                         }
 
                         int pixValueA = 0xff000000 | (((int) Ra) << 16) | (((int) Ga) << 8) | ((int) Ba);
-                        bufferA[ind4] = pixValueA;
+                        bufferA[pixelBufferInd] = pixValueA;
                     }
 
                     /* Blend in mask: */
@@ -757,13 +770,13 @@ public class PatientSlice {
                             int iMaskGa = (int) (alpha * m_afMask[index + 2]);
                             int iMaskBa = (int) (alpha * m_afMask[index + 3]);
 
-                            int iRa = (int) ((1 - alpha) * ((bufferA[ind4] & 0x00ff0000) >> 16));
-                            int iGa = (int) ((1 - alpha) * ((bufferA[ind4] & 0x0000ff00) >> 8));
-                            int iBa = (int) ((1 - alpha) * (bufferA[ind4] & 0x000000ff));
+                            int iRa = (int) ((1 - alpha) * ((bufferA[pixelBufferInd] & 0x00ff0000) >> 16));
+                            int iGa = (int) ((1 - alpha) * ((bufferA[pixelBufferInd] & 0x0000ff00) >> 8));
+                            int iBa = (int) ((1 - alpha) * (bufferA[pixelBufferInd] & 0x000000ff));
 
                             int pixValue = 0xff000000 | ((iMaskRa + iRa) << 16) | ((iMaskGa + iGa) << 8) |
                                                (iMaskBa + iBa);
-                            bufferA[ind4] = pixValue;
+                            bufferA[pixelBufferInd] = pixValue;
                         }
                     }
                 }
@@ -775,6 +788,23 @@ public class PatientSlice {
         return true;
     }
 
+
+    /**
+     * Helper method for calculating complex values.  Performing isComplexBuffer and logMagDsplay checks elsewhere improves performance.
+     */
+    private float getBufferValue(boolean logMagDisplay, boolean isComplexBuffer, float[] imageBuffer, int ind4) {
+        if(isComplexBuffer) { //complex images in MIPAV are always stored in a+bi form           
+            double mag = Math.sqrt(imageBuffer[ind4]*imageBuffer[ind4] + imageBuffer[ind4+1]*imageBuffer[ind4+1]);
+            
+            if(logMagDisplay) {
+                return (float) Math.log(mag);
+            } else {
+                return (float) mag;
+            }
+        } else {
+            return imageBuffer[ind4];
+        }
+    }
 
     /**
      * updates the slice value when the wheel is moved or the page_up, page_down keys are pressed. Does bounds checking
