@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2005 rel. 3 U (http://www.altova.com) by Matthew Mcauliffe (National Institutes of Health) -->
+<!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Linda Myles (NIH/CIT) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="VOI">
+		<xs:annotation>
+			<xs:documentation>Comment describing your root element</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Unique-ID" type="xs:int"/>
+				<xs:element name="Curve-type" type="xs:int"/>
+				<xs:element name="LPS-origin" type="xs:string" minOccurs="0"/>
+				<xs:element name="Color" type="xs:string"/>
+				<xs:element name="Thickness" type="xs:positiveInteger" minOccurs="0"/>
+				<xs:element name="Comment" type="xs:string"  minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Contour" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Pt" type="xs:string" maxOccurs="unbounded"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
