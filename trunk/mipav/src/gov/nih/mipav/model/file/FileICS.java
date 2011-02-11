@@ -247,7 +247,7 @@ public class FileICS extends FileBase {
     /** DOCUMENT ME! */
     private String sign = null;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int significant_bits = -1;
 
     /** DOCUMENT ME! */
@@ -863,6 +863,7 @@ public class FileICS extends FileBase {
         int bitSize;
         boolean haveRed = false;
         boolean haveGreen = false;
+        @SuppressWarnings("unused")
         boolean haveBlue = false;
         float[] resols;
         float[] startLocation;
@@ -1174,7 +1175,7 @@ public class FileICS extends FileBase {
         lineString = new String("parameter\tunits\tbits");
 
         for (i = 0; i < image.getNDims(); i++) {
-            lineString = lineString + "\t" + FileInfoBase.getUnitsOfMeasureStr(units[i]);
+            lineString = lineString + "\t" + (Unit.getUnitFromLegacyNum(units[i])).toString();
         }
 
         if (image.isColorImage()) {
