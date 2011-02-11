@@ -78,7 +78,7 @@ public class FileInfoLSM extends FileInfoBase {
     /** DOCUMENT ME! */
     private int[] greenArray = null;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private String imageDescription = null;
 
     /** DOCUMENT ME! */
