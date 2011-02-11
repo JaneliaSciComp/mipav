@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.*;
@@ -125,6 +126,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         /** Meters per second */
         METERS_PER_SEC(22, "Meters_Per_Second", "m/s", UnitType.VELOCITY);
         
+        @SuppressWarnings("serial")
         public class UnsupportedUnitConversion extends Exception {
 
             public UnsupportedUnitConversion(String string) {
@@ -238,13 +240,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         
     }
     
-    /**
-     * Array of all abbreviated units --- the first value is unknown since all of the* static definitions start at 1
-     * instead of 0. Each string* can be no more than 4 characters.
-     * @deprecated 
-     */
-    private static final String[] allAbbrevUnits = {"unk", "unk", "in", "mils", "cm", "A", "nm", "um", "mm", "m", "km", "mi",
-            "nsec", "usec", "msec", "sec", "min", "hr", "hz", "ppm", "rads", "deg"};
 
     /** Array of space units: inches, mm, etc. 
      * @deprecated 
@@ -583,10 +578,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** MNI 152 transform ID. */
     public static final int TRANSFORM_MNI_152 = 4;
 
-    /** Array of transform ID strings. */
-    private static final String[] transformIDStr = {"Unknown", "Scanner Anatomical", "Another Dataset",
-            "Talairach Tournoux", "MNI 152"};
-
     /** Indicates no compression. */
     public static final int COMPRESSION_NONE = 0;
 
@@ -665,9 +656,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** File format as defined in the Filebase. */
     private int fileFormat;
 
-    /** If the image is 2.5D. */
-    private final boolean is2_5D = false;
-
     /** Image maximum intensity for single channel image. */
     private double max;
 
@@ -719,9 +707,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * other file formats.
      */
     private float sliceThickness = 0;
-
-    /** Transform ID associated with the matrix. */
-    private final int transformID = FileInfoBase.TRANSFORM_UNKNOWN;
 
     /** Describes the units of measure for the dataset. */
     protected Unit[] unitsOfMeasure = {Unit.MILLIMETERS, Unit.MILLIMETERS, Unit.MILLIMETERS,
@@ -901,9 +886,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public static int getDataTypeFromStr(final String s) {
 
-        for (int i = 0; i < ModelStorageBase.bufferTypeStr.length; i++) {
+        for (int i = 0; i < DataType.values().length; i++) {
 
-            if (ModelStorageBase.bufferTypeStr[i].regionMatches(true, 0, s, 0, s.length())) {
+            if ((DataType.values()[i].toString()).regionMatches(true, 0, s, 0, s.length())) {
+            
                 return i;
             }
         }
@@ -1893,8 +1879,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         if ( (extents == null) || (extents.length < 2)) {
             return -1;
         }
-
-        final int dataType = getDataType();
 
         return extents[0] * extents[1] * FileInfoBase.getNumOfBytesPerPixel(getDataType());
     }
