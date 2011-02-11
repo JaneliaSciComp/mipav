@@ -570,6 +570,7 @@ public class FileInfoMinc extends FileInfoBase {
 
         boolean isXCentered = false;
         boolean isYCentered = false;
+        @SuppressWarnings("unused")
         boolean isZCentered = false;
 
         String spacex, spacey, spacez;
