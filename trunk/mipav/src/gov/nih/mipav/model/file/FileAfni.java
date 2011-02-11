@@ -1333,7 +1333,6 @@ public class FileAfni extends FileBase {
         TransMatrix xfrm;
         float oXres, oYres, oZres;
         int oXdim, oYdim, oZdim;
-        double[][] M;
 
         // acpc
         Vector3f TCenter = new Vector3f(0.0f, 0.0f, 0.0f);
@@ -1341,7 +1340,6 @@ public class FileAfni extends FileBase {
         // Talairach
         Vector3f TalCenter = new Vector3f(0.0f, 0.0f, 0.0f);
         int i, j;
-        double[][] frm;
         double Tx = 0.0;
         double Ty = 0.0;
         double Tz = 0.0;
@@ -4161,7 +4159,7 @@ public class FileAfni extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Vector3f dataMarker(Vector3f pMarker) {
+    /*private Vector3f dataMarker(Vector3f pMarker) {
 
         // This expects the marker to be in dicom ordering
         // Reorders to dataset order
@@ -4257,7 +4255,7 @@ public class FileAfni extends FileBase {
 
         return dMarker;
 
-    }
+    }*/
 
     /**
      * DOCUMENT ME!
