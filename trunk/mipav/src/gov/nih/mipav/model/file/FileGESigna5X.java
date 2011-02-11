@@ -29,7 +29,7 @@ public class FileGESigna5X extends FileBase {
                              // 3 compressed
                              // 4 compressed and packed
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int depth; // number of bits
 
     /** DOCUMENT ME! */
