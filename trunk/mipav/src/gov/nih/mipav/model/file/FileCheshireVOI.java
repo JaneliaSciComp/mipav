@@ -5,7 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 
@@ -56,9 +55,6 @@ public class FileCheshireVOI extends FileBase {
     private Polygon contourPolygon;
 
     /** DOCUMENT ME! */
-    private Vector[] curves;
-
-    /** DOCUMENT ME! */
     private short[] expImgBuffer;
 
     /** DOCUMENT ME! */
@@ -105,9 +101,6 @@ public class FileCheshireVOI extends FileBase {
 
     /** DOCUMENT ME! */
     private BitSet maskW = null;
-
-    /** DOCUMENT ME! */
-    private int nCurves;
 
     /** DOCUMENT ME! */
     private int neighbors;
@@ -194,6 +187,7 @@ public class FileCheshireVOI extends FileBase {
         int ROIl; // length of ROI bytes
         long currentLocation;
         long nextROIAddress;
+        @SuppressWarnings("unused")
         int field; // 4 bytes that are always 3 or 2
         int upperLeftY, upperLeftX, lowerRightY, lowerRightX;
         int field2; // 4 bytes that are always 2
@@ -209,7 +203,6 @@ public class FileCheshireVOI extends FileBase {
         int rowsRead;
         int bytesToRead;
         VOI[] voi = null;
-        ModelImage maskImage;
         byte[] maskBuffer;
         int offset;
         int position;
@@ -231,9 +224,6 @@ public class FileCheshireVOI extends FileBase {
 
         fireProgressStateChanged(0);
 
-        String name = JDialogBase.makeImageName(image.getImageName(), "_result");
-
-        maskImage = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), name);
         xDim = image.getExtents()[0];
         yDim = image.getExtents()[1];
         sliceSize = xDim * yDim;
