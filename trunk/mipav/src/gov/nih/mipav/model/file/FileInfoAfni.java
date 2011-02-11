@@ -379,7 +379,6 @@ public class FileInfoAfni extends FileInfoBase {
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         JDialogText dialog = (JDialogText) dlog;
-        int[] extents;
         int i, j;
         int AFNITypeString;
         int AFNIViewType;
@@ -673,10 +672,10 @@ public class FileInfoAfni extends FileInfoBase {
                                       " for number of parameters that follow\n");
                         i++;
                         a = brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + brickStatAux[i] + " for parameter a\n");
+                        dialog.append("BRICK_STATAUX[" + i + "]: " + a + " for parameter a\n");
                         i++;
                         b = brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + brickStatAux[i] + " for parameter b\n");
+                        dialog.append("BRICK_STATAUX[" + i + "]: " + b + " for parameter b\n");
                         i++;
                         break;
 
@@ -691,7 +690,7 @@ public class FileInfoAfni extends FileInfoBase {
                         dialog.append("BRICK_STATAUX[" + i + "]: " + numTrials + " number of trials\n");
                         i++;
                         prob = brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + brickStatAux[i] + " for probability per trial\n");
+                        dialog.append("BRICK_STATAUX[" + i + "]: " + prob + " for probability per trial\n");
                         i++;
                         break;
 
@@ -703,10 +702,10 @@ public class FileInfoAfni extends FileInfoBase {
                                       " for number of parameters that follow\n");
                         i++;
                         shape = brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + brickStatAux[i] + " for shape\n");
+                        dialog.append("BRICK_STATAUX[" + i + "]: " + shape + " for shape\n");
                         i++;
                         scale = brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + brickStatAux[i] + " for scale\n");
+                        dialog.append("BRICK_STATAUX[" + i + "]: " + scale + " for scale\n");
                         i++;
                         break;
 
@@ -718,7 +717,7 @@ public class FileInfoAfni extends FileInfoBase {
                                       " for number of parameters that follow\n");
                         i++;
                         mean = brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + brickStatAux[i] + " for mean\n");
+                        dialog.append("BRICK_STATAUX[" + i + "]: " + mean + " for mean\n");
                         i++;
                         break;
 
@@ -786,20 +785,20 @@ public class FileInfoAfni extends FileInfoBase {
                     dialog.append("STAT_AUX[" + i + "]: " + numTrials + " number of trials\n");
                     i++;
                     prob = statAux[i];
-                    dialog.append("STAT_AUX[" + i + "]: " + statAux[i] + " for probability per trial\n");
+                    dialog.append("STAT_AUX[" + i + "]: " + prob + " for probability per trial\n");
                     break;
 
                 case FUNC_GT_TYPE:
                     shape = statAux[i];
-                    dialog.append("STAT_AUX[" + i + "]: " + statAux[i] + " for shape\n");
+                    dialog.append("STAT_AUX[" + i + "]: " + shape + " for shape\n");
                     i++;
                     scale = statAux[i];
-                    dialog.append("STAT_AUX[" + i + "]: " + statAux[i] + " for scale\n");
+                    dialog.append("STAT_AUX[" + i + "]: " + scale + " for scale\n");
                     break;
 
                 case FUNC_PT_TYPE:
                     mean = statAux[i];
-                    dialog.append("STAT_AUX[" + i + "]: " + statAux[i] + " for mean\n");
+                    dialog.append("STAT_AUX[" + i + "]: " + mean + " for mean\n");
                     break;
 
                 default:
