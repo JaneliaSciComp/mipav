@@ -274,6 +274,7 @@ public class FileAvi extends FileBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private boolean AVIF_ISINTERLEAVED;
 
     /** globals needed for read - set in readHeader, used in readImage. */
@@ -396,6 +397,7 @@ public class FileAvi extends FileBase {
     private int newCompressionType = 0;
 
     /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private ProgressBarInterface progressBar = null;
 
     /** DOCUMENT ME! */
@@ -474,8 +476,10 @@ public class FileAvi extends FileBase {
     private int last_dc[];
     // GetBitContext
     private byte gbc_buffer[];
+    @SuppressWarnings("unused")
     private int gbc_buffer_end;
     private int gbc_index;
+    @SuppressWarnings("unused")
     private int gbc_size_in_bits;
     private byte ff_cropTbl[];
 
@@ -621,6 +625,7 @@ public class FileAvi extends FileBase {
         int signature;
         int CHUNKtype;
         boolean haveMoviSubchunk = false;
+        @SuppressWarnings("unused")
         int subchunkDataArea = 0;
         int subchunkBytesRead = 0;
         int subchunkBlocksRead = 0;
@@ -637,7 +642,6 @@ public class FileAvi extends FileBase {
         System.err.println("AVI readImage(" + one + ")");
 
         try {
-            int compressionType = 0;
 
             // if file is QuickTime... we must transcode before reading the header
             // else if file is compressed (readHeader > 0) we must transcode, then
@@ -3665,7 +3669,6 @@ public class FileAvi extends FileBase {
                 int org_height = imgExtents[1]; /* Size at codec init */
                 boolean first_picture = true; /* true if decoding first picture */
                 boolean bottom_field = false; /* true if bottom field */
-                byte bottomField = -1;
                 int nb_components = 0;
                 int h_max = 0;
                 int v_max = 0;
@@ -3691,6 +3694,7 @@ public class FileAvi extends FileBase {
                  int lowres = 0;
                  boolean cs_itu601 = false;
                  // If buggy avid, it puts EOI only at every 10th frame
+                 @SuppressWarnings("unused")
                  boolean buggy_avid = false;
                  int pix_fmt = PIX_FMT_NONE;
                  byte buffer[] = null;
@@ -5006,12 +5010,6 @@ public class FileAvi extends FileBase {
                                         // 4 bytes fieldSizeLessPadding
                                         polarity = fileBuffer[j++];
                                         Preferences.debug("polarity = " + polarity + "\n");
-                                        if (polarity == 2) {
-                                            bottomField = 1;
-                                        }
-                                        else if (polarity == 1) {
-                                            bottomField = 0;
-                                        }
                                         j++; // Skip zero byte
                                         fieldSize = (fileBuffer[j++] & 0xff) << 24;
                                         fieldSize |= (fileBuffer[j++] & 0xff) << 16;
