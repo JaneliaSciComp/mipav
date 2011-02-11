@@ -45,7 +45,7 @@ public class FileInfoMGH extends FileInfoBase {
     private String transformFileName = null;
     
     private String cmdlines[] = null;
-    
+    @SuppressWarnings("unused")
     private TransMatrix matrix;
 
     
@@ -316,10 +316,11 @@ public class FileInfoMGH extends FileInfoBase {
      *
      * @param  ce  DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void stateChanged(Vector ce) {
         String tname = (String) ce.elementAt(2); // [t]able [name]
         Vector tcvalue = (Vector) ce.elementAt(3); // [t]able [c]ode [value]
-        String tvalue = (String) ce.elementAt(4); // [t]able [value]
+        //String tvalue = (String) ce.elementAt(4); // [t]able [value]
 
         
         if (tname.equalsIgnoreCase("Orientation")) {
