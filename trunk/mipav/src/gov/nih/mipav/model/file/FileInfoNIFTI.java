@@ -1,8 +1,6 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.*;
@@ -970,7 +968,7 @@ public class FileInfoNIFTI extends FileInfoBase {
                 break;
         }
 
-        dialog.append("Source type = sourceTypeString\n");
+        dialog.append("Source type = " + sourceTypeString + "\n");
 
         dialog.append("Slope scale = " + Float.toString(scl_slope) + "\n");
 
@@ -1847,6 +1845,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      *
      * @param  ce  DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void stateChanged(Vector ce) {
         String tname = (String) ce.elementAt(2); // [t]able [name]
         Vector tcvalue = (Vector) ce.elementAt(3); // [t]able [c]ode [value]
