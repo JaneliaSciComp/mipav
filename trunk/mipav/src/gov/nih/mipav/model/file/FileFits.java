@@ -1541,7 +1541,6 @@ public class FileFits extends FileBase {
         int tEnd; // last t time to write
         int z, t;
         int zDim;
-        int tDim;
         int count;
         // double array[][];
 
@@ -2081,15 +2080,12 @@ public class FileFits extends FileBase {
         if (image.getNDims() == 2) {
             numberSlices = 1;
             zDim = 1;
-            tDim = 1;
         } else if (image.getNDims() == 3) {
             numberSlices = sEnd - sBegin + 1;
             zDim = image.getExtents()[2];
-            tDim = 1;
         } else {
             numberSlices = (sEnd - sBegin + 1) * (tEnd - tBegin + 1);
             zDim = image.getExtents()[2];
-            tDim = image.getExtents()[3];
         }
 
         sliceSize = image.getSliceSize();
