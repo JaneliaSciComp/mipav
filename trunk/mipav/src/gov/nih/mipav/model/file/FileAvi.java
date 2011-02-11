@@ -43,17 +43,17 @@ public class FileAvi extends FileBase {
     private final int SOF3  = 0xc3;       /* lossless, huffman */
     private final int DHT   = 0xc4;       /* define huffman tables */
 
-    private final int SOF5  = 0xc5;       /* differential sequential, huffman */
-    private final int SOF6  = 0xc6;       /* differential progressive, huffman */
-    private final int SOF7  = 0xc7;       /* differential lossless, huffman */
-    private final int JPG   = 0xc8;       /* reserved for JPEG extension */
-    private final int SOF9  = 0xc9;       /* extended sequential, arithmetic */
-    private final int SOF10 = 0xca;       /* progressive, arithmetic */
-    private final int SOF11 = 0xcb;       /* lossless, arithmetic */
+    //private final int SOF5  = 0xc5;       /* differential sequential, huffman */
+    //private final int SOF6  = 0xc6;       /* differential progressive, huffman */
+    //private final int SOF7  = 0xc7;       /* differential lossless, huffman */
+    //private final int JPG   = 0xc8;       /* reserved for JPEG extension */
+    //private final int SOF9  = 0xc9;       /* extended sequential, arithmetic */
+    //private final int SOF10 = 0xca;       /* progressive, arithmetic */
+    //private final int SOF11 = 0xcb;       /* lossless, arithmetic */
 
-    private final int SOF13 = 0xcd;       /* differential sequential, arithmetic */
-    private final int SOF14 = 0xce;       /* differential progressive, arithmetic */
-    private final int SOF15 = 0xcf;      /* differential lossless, arithmetic */
+    //private final int SOF13 = 0xcd;       /* differential sequential, arithmetic */
+    //private final int SOF14 = 0xce;       /* differential progressive, arithmetic */
+    //private final int SOF15 = 0xcf;      /* differential lossless, arithmetic */
     /* restart with modulo 8 count "m" */
     private final int RST0  = 0xd0;
     private final int RST1  = 0xd1;
@@ -85,19 +85,19 @@ public class FileAvi extends FileBase {
     private final int APP14 = 0xee;
     private final int APP15 = 0xef;
     
-    private final int JPG0  = 0xf0;
-    private final int JPG1  = 0xf1;
-    private final int JPG2  = 0xf2;
-    private final int JPG3  = 0xf3;
-    private final int JPG4  = 0xf4;
-    private final int JPG5  = 0xf5;
-    private final int JPG6  = 0xf6;
-    private final int SOF48 = 0xf7;       ///< JPEG-LS
-    private final int LSE   = 0xf8;       ///< JPEG-LS extension parameters
-    private final int JPG9  = 0xf9;
-    private final int JPG10 = 0xfa;
-    private final int JPG11 = 0xfb;
-    private final int JPG12 = 0xfc;
+    //private final int JPG0  = 0xf0;
+    //private final int JPG1  = 0xf1;
+    //private final int JPG2  = 0xf2;
+    //private final int JPG3  = 0xf3;
+    //private final int JPG4  = 0xf4;
+    //private final int JPG5  = 0xf5;
+    //private final int JPG6  = 0xf6;
+    //private final int SOF48 = 0xf7;       ///< JPEG-LS
+    //private final int LSE   = 0xf8;       ///< JPEG-LS extension parameters
+    //private final int JPG9  = 0xf9;
+    //private final int JPG10 = 0xfa;
+    //private final int JPG11 = 0xfb;
+    //private final int JPG12 = 0xfc;
     private final int JPG13 = 0xfd;
     private final int COM   = 0xfe;       /* comment */
     
@@ -209,50 +209,50 @@ public class FileAvi extends FileBase {
      */
         private final int PIX_FMT_NONE= -1;
         private final int PIX_FMT_YUV420P = 0;   ///< Planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
-        private final int PIX_FMT_YUYV422 = 1;   ///< Packed YUV 4:2:2, 16bpp, Y0 Cb Y1 Cr
+        //private final int PIX_FMT_YUYV422 = 1;   ///< Packed YUV 4:2:2, 16bpp, Y0 Cb Y1 Cr
         private final int PIX_FMT_RGB24 = 2;     ///< Packed RGB 8:8:8, 24bpp, RGBRGB...
-        private final int PIX_FMT_BGR24 = 3;     ///< Packed RGB 8:8:8, 24bpp, BGRBGR...
+        //private final int PIX_FMT_BGR24 = 3;     ///< Packed RGB 8:8:8, 24bpp, BGRBGR...
         private final int PIX_FMT_YUV422P = 4;   ///< Planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
         private final int PIX_FMT_YUV444P = 5;  ///< Planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
         private final int PIX_FMT_RGB32 = 6;    ///< Packed RGB 8:8:8, 32bpp, (msb)8A 8R 8G 8B(lsb), in cpu endianness
-        private final int PIX_FMT_YUV410P = 7;   ///< Planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
-        private final int PIX_FMT_YUV411P = 8;   ///< Planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
-        private final int PIX_FMT_RGB565 = 9;    ///< Packed RGB 5:6:5, 16bpp, (msb)   5R 6G 5B(lsb), in cpu endianness
-        private final int PIX_FMT_RGB555 = 10;    ///< Packed RGB 5:5:5, 16bpp, (msb)1A 5R 5G 5B(lsb), in cpu endianness most significant bit to 0
+        //private final int PIX_FMT_YUV410P = 7;   ///< Planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
+        //private final int PIX_FMT_YUV411P = 8;   ///< Planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
+        //private final int PIX_FMT_RGB565 = 9;    ///< Packed RGB 5:6:5, 16bpp, (msb)   5R 6G 5B(lsb), in cpu endianness
+        //private final int PIX_FMT_RGB555 = 10;    ///< Packed RGB 5:5:5, 16bpp, (msb)1A 5R 5G 5B(lsb), in cpu endianness most significant bit to 0
         private final int PIX_FMT_GRAY8 = 11;     ///<        Y        ,  8bpp
-        private final int PIX_FMT_MONOWHITE = 12; ///<        Y        ,  1bpp, 0 is white, 1 is black
-        private final int PIX_FMT_MONOBLACK = 13; ///<        Y        ,  1bpp, 0 is black, 1 is white
-        private final int PIX_FMT_PAL8 = 14;      ///< 8 bit with PIX_FMT_RGB32 palette
+        //private final int PIX_FMT_MONOWHITE = 12; ///<        Y        ,  1bpp, 0 is white, 1 is black
+        //private final int PIX_FMT_MONOBLACK = 13; ///<        Y        ,  1bpp, 0 is black, 1 is white
+        //private final int PIX_FMT_PAL8 = 14;      ///< 8 bit with PIX_FMT_RGB32 palette
         private final int PIX_FMT_YUVJ420P = 15;  ///< Planar YUV 4:2:0, 12bpp, full scale (jpeg)
         private final int PIX_FMT_YUVJ422P= 16;  ///< Planar YUV 4:2:2, 16bpp, full scale (jpeg)
         private final int PIX_FMT_YUVJ444P = 17;  ///< Planar YUV 4:4:4, 24bpp, full scale (jpeg)
-        private final int PIX_FMT_XVMC_MPEG2_MC = 18;///< XVideo Motion Acceleration via common packet passing(xvmc_render.h)
-        private final int PIX_FMT_XVMC_MPEG2_IDCT = 19;
-        private final int PIX_FMT_UYVY422 = 20;   ///< Packed YUV 4:2:2, 16bpp, Cb Y0 Cr Y1
-        private final int PIX_FMT_UYYVYY411 = 21; ///< Packed YUV 4:1:1, 12bpp, Cb Y0 Y1 Cr Y2 Y3
-        private final int PIX_FMT_BGR32 = 22;     ///< Packed RGB 8:8:8, 32bpp, (msb)8A 8B 8G 8R(lsb), in cpu endianness
-        private final int PIX_FMT_BGR565 = 23;    ///< Packed RGB 5:6:5, 16bpp, (msb)   5B 6G 5R(lsb), in cpu endianness
-        private final int PIX_FMT_BGR555 = 24;    ///< Packed RGB 5:5:5, 16bpp, (msb)1A 5B 5G 5R(lsb), in cpu endianness most significant bit to 1
-        private final int PIX_FMT_BGR8 = 25;      ///< Packed RGB 3:3:2,  8bpp, (msb)2B 3G 3R(lsb)
-        private final int PIX_FMT_BGR4 = 26;      ///< Packed RGB 1:2:1,  4bpp, (msb)1B 2G 1R(lsb)
-        private final int PIX_FMT_BGR4_BYTE = 27; ///< Packed RGB 1:2:1,  8bpp, (msb)1B 2G 1R(lsb)
-        private final int PIX_FMT_RGB8 = 28;      ///< Packed RGB 3:3:2,  8bpp, (msb)2R 3G 3B(lsb)
-        private final int PIX_FMT_RGB4 = 29;      ///< Packed RGB 1:2:1,  4bpp, (msb)1R 2G 1B(lsb)
-        private final int PIX_FMT_RGB4_BYTE = 30; ///< Packed RGB 1:2:1,  8bpp, (msb)1R 2G 1B(lsb)
-        private final int PIX_FMT_NV12 = 31;      ///< Planar YUV 4:2:0, 12bpp, 1 plane for Y and 1 for UV
-        private final int PIX_FMT_NV21 = 32;      ///< as above, but U and V bytes are swapped
+        //private final int PIX_FMT_XVMC_MPEG2_MC = 18;///< XVideo Motion Acceleration via common packet passing(xvmc_render.h)
+        //private final int PIX_FMT_XVMC_MPEG2_IDCT = 19;
+        //private final int PIX_FMT_UYVY422 = 20;   ///< Packed YUV 4:2:2, 16bpp, Cb Y0 Cr Y1
+        //private final int PIX_FMT_UYYVYY411 = 21; ///< Packed YUV 4:1:1, 12bpp, Cb Y0 Y1 Cr Y2 Y3
+        //private final int PIX_FMT_BGR32 = 22;     ///< Packed RGB 8:8:8, 32bpp, (msb)8A 8B 8G 8R(lsb), in cpu endianness
+        //private final int PIX_FMT_BGR565 = 23;    ///< Packed RGB 5:6:5, 16bpp, (msb)   5B 6G 5R(lsb), in cpu endianness
+        //private final int PIX_FMT_BGR555 = 24;    ///< Packed RGB 5:5:5, 16bpp, (msb)1A 5B 5G 5R(lsb), in cpu endianness most significant bit to 1
+        //private final int PIX_FMT_BGR8 = 25;      ///< Packed RGB 3:3:2,  8bpp, (msb)2B 3G 3R(lsb)
+        //private final int PIX_FMT_BGR4 = 26;      ///< Packed RGB 1:2:1,  4bpp, (msb)1B 2G 1R(lsb)
+        //private final int PIX_FMT_BGR4_BYTE = 27; ///< Packed RGB 1:2:1,  8bpp, (msb)1B 2G 1R(lsb)
+        //private final int PIX_FMT_RGB8 = 28;      ///< Packed RGB 3:3:2,  8bpp, (msb)2R 3G 3B(lsb)
+        //private final int PIX_FMT_RGB4 = 29;      ///< Packed RGB 1:2:1,  4bpp, (msb)1R 2G 1B(lsb)
+        //private final int PIX_FMT_RGB4_BYTE = 30; ///< Packed RGB 1:2:1,  8bpp, (msb)1R 2G 1B(lsb)
+        //private final int PIX_FMT_NV12 = 31;      ///< Planar YUV 4:2:0, 12bpp, 1 plane for Y and 1 for UV
+        //private final int PIX_FMT_NV21 = 32;      ///< as above, but U and V bytes are swapped
 
-        private final int PIX_FMT_RGB32_1 = 33;   ///< Packed RGB 8:8:8, 32bpp, (msb)8R 8G 8B 8A(lsb), in cpu endianness
-        private final int PIX_FMT_BGR32_1 = 34;   ///< Packed RGB 8:8:8, 32bpp, (msb)8B 8G 8R 8A(lsb), in cpu endianness
+        //private final int PIX_FMT_RGB32_1 = 33;   ///< Packed RGB 8:8:8, 32bpp, (msb)8R 8G 8B 8A(lsb), in cpu endianness
+        //private final int PIX_FMT_BGR32_1 = 34;   ///< Packed RGB 8:8:8, 32bpp, (msb)8B 8G 8R 8A(lsb), in cpu endianness
 
         private final int PIX_FMT_GRAY16BE = 35;  ///<        Y        , 16bpp, big-endian
         private final int PIX_FMT_GRAY16LE = 36;  ///<        Y        , 16bpp, little-endian
         private final int PIX_FMT_YUV440P = 37;  ///< Planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
         private final int PIX_FMT_YUVJ440P = 38;  ///< Planar YUV 4:4:0 full scale (jpeg)
-        private final int PIX_FMT_YUVA420P = 39;  ///< Planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
+        //private final int PIX_FMT_YUVA420P = 39;  ///< Planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
         
         // frame type
-        private final int FF_I_TYPE = 1; ///< Intra
+        //private final int FF_I_TYPE = 1; ///< Intra
         
         private final int MIN_CACHE_BITS = 25;
         
