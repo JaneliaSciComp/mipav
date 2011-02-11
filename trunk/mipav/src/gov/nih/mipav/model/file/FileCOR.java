@@ -516,7 +516,6 @@ public class FileCOR extends FileBase {
      * @exception  IOException  if there is an error writing the file
      */
     public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
-        int xScreen, yScreen;
         int sBegin; // first z slice to write
         int sEnd; // last z slice to write
         byte[] line;
