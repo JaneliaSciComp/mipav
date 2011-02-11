@@ -314,7 +314,7 @@ public class FileInfoAnalyze extends FileInfoBase {
             if (resolutions[i] > 0.0) {
                 String pixelRes = "Pixel resolution " + i;
                 dialog.appendPrimaryData(pixelRes,
-                                         Float.toString(resolutions[i]) + " " + getUnitsOfMeasureStr(measure[i]));
+                                         Float.toString(resolutions[i]) + " " + (Unit.getUnitFromLegacyNum(measure[i])).toString());
             } // end of if (resolutions[i] > 0.0)
         } // for (i=0; i < 5; i++)
 
@@ -1506,6 +1506,7 @@ public class FileInfoAnalyze extends FileInfoBase {
      *
      * @param  ce  DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void stateChanged(Vector ce) {
         String tname = (String) ce.elementAt(2); // [t]able [name]
         Vector tcvalue = (Vector) ce.elementAt(3); // [t]able [c]ode [value]
