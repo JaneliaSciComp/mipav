@@ -532,9 +532,9 @@ public class FileGESigna4X extends FileBase {
     private short compression;
     
     private short bitsPerPixel;
-    
+    @SuppressWarnings("unused")
     private float resX;
-    
+    @SuppressWarnings("unused")
     private float resY;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
