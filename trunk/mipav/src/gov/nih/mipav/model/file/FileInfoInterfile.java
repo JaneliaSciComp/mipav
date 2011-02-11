@@ -83,9 +83,6 @@ public class FileInfoInterfile extends FileInfoBase {
     private String elapsedStudyDuration = null;
 
     /** DOCUMENT ME! */
-    private boolean endianess;
-
-    /** DOCUMENT ME! */
     private int energyNumber = 0;
 
     /** DOCUMENT ME! */
@@ -238,7 +235,7 @@ public class FileInfoInterfile extends FileInfoBase {
     /** DOCUMENT ME! */
     private int numberFormatIndex = 0;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int numberImages; // numberImagesPerEWindow * energyNumber
 
     /** DOCUMENT ME! */
@@ -442,8 +439,6 @@ public class FileInfoInterfile extends FileInfoBase {
     private String organ = null;
     
     private String gatedFrameMode[] = null;
-    
-    private String oldGatedFrameMode[] = null;
     
     private int gatedFrameModeIndex = 0;
     
