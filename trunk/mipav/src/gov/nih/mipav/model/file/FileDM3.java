@@ -1495,7 +1495,6 @@ public class FileDM3 extends FileBase {
      * @throws IOException DOCUMENT ME!
      */
     private void readTagEntry(final int index) throws IOException {
-        final int i;
         byte dataByte;
         int entryStringLength;
         String entryString;
@@ -1637,13 +1636,6 @@ public class FileDM3 extends FileBase {
     private void readTagType(final int index) throws IOException {
         String delimString;
         int encodedType;
-        final byte[] dataByte = new byte[1];
-        final int dataShort;
-        final int dataInt;
-        final long dataUInt;
-        final float dataFloat;
-        final double dataDouble;
-        final String s;
 
         try {
             delimString = getString(4);
