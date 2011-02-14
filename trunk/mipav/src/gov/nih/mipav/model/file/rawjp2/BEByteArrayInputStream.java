@@ -15,7 +15,6 @@ import jj2000.j2k.io.RandomAccessIO;
 public class BEByteArrayInputStream extends ByteArrayInputStream
 		implements RandomAccessIO {
 	// Our JP2 format is Big Endian
-	private boolean bigEndian = true;
 	
 	public BEByteArrayInputStream(byte[] buf, int offset, int length) {
 		super(buf, offset, length);
