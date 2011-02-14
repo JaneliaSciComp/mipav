@@ -305,7 +305,7 @@ public class FileInfoSPM extends FileInfoBase {
             if (resolutions[i] > 0.0) {
                 String pixelRes = "Pixel resolution " + i;
                 dialog.appendPrimaryData(pixelRes,
-                                         Float.toString(resolutions[i]) + " " + getUnitsOfMeasureStr(measure[i]));
+                                         Float.toString(resolutions[i]) + " " + (Unit.getUnitFromLegacyNum(measure[i])).toString());
             } // end of if (resolutions[i] > 0.0)
         } // for (i=0; i < 5; i++)
 
@@ -952,13 +952,13 @@ public class FileInfoSPM extends FileInfoBase {
      */
     public void setDataType(short dtype) {
 
-        if ((dtype == (short) this.DT_UNSIGNED_SHORT) || // mipav specific MODE
-                (dtype == (short) this.DT_NONE) || (dtype == (short) this.DT_UNKNOWN) ||
-                (dtype == (short) this.DT_BINARY) || (dtype == (short) this.DT_BYTE) ||
-                (dtype == (short) this.DT_UNSIGNED_CHAR) || (dtype == (short) this.DT_SIGNED_SHORT) ||
-                (dtype == (short) this.DT_SIGNED_INT) || (dtype == (short) this.DT_FLOAT) ||
-                (dtype == (short) this.DT_COMPLEX) || (dtype == (short) this.DT_RGB) ||
-                (dtype == (short) this.DT_ALL)) {
+        if ((dtype == (short) FileInfoSPM.DT_UNSIGNED_SHORT) || // mipav specific MODE
+                (dtype == (short) FileInfoSPM.DT_NONE) || (dtype == (short) FileInfoSPM.DT_UNKNOWN) ||
+                (dtype == (short) FileInfoSPM.DT_BINARY) || (dtype == (short) FileInfoSPM.DT_BYTE) ||
+                (dtype == (short) FileInfoSPM.DT_UNSIGNED_CHAR) || (dtype == (short) FileInfoSPM.DT_SIGNED_SHORT) ||
+                (dtype == (short) FileInfoSPM.DT_SIGNED_INT) || (dtype == (short) FileInfoSPM.DT_FLOAT) ||
+                (dtype == (short) FileInfoSPM.DT_COMPLEX) || (dtype == (short) FileInfoSPM.DT_RGB) ||
+                (dtype == (short) FileInfoSPM.DT_ALL)) {
             datatype = dtype;
         } else {
             datatype = -1;
@@ -1359,6 +1359,7 @@ public class FileInfoSPM extends FileInfoBase {
      *
      * @param  ce  DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void stateChanged(Vector ce) {
         String tname = (String) ce.elementAt(2); // [t]able [name]
         Vector tcvalue = (Vector) ce.elementAt(3); // [t]able [c]ode [value]
