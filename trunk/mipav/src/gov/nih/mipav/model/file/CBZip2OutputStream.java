@@ -604,7 +604,9 @@ public class CBZip2OutputStream extends OutputStream implements BZip2Constants {
 
         int v, t, i, j, gs, ge, totc, bt, bc, iter;
         int nSelectors = 0, alphaSize, minLen, maxLen, selCtr;
-        int nGroups, nBytes;
+        int nGroups;
+        @SuppressWarnings("unused")
+        int nBytes;
 
         alphaSize = nInUse + 2;
         for (t = 0; t < N_GROUPS; t++) {
