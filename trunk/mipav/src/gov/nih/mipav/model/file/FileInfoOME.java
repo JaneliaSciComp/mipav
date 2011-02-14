@@ -168,34 +168,34 @@ public class FileInfoOME extends FileInfoBase {
      */
     public class OME {
 
-        private Vector datasets; // Vector of Datasets
+        private Vector<Dataset> datasets; // Vector of Datasets
 
         /** DOCUMENT ME! */
-        private Vector documentGroup; // Vector of Includes
+        private Vector<Include> documentGroup; // Vector of Includes
 
         /** DOCUMENT ME! */
-        private Vector experimenters; // Vector of Experimenters
+        private Vector<Experimenter> experimenters; // Vector of Experimenters
 
         /** DOCUMENT ME! */
-        private Vector experiments; // Vector of Experiments
+        private Vector<Experiment> experiments; // Vector of Experiments
 
         /** DOCUMENT ME! */
-        private Vector groups; // Vector of Groups
+        private Vector<Group> groups; // Vector of Groups
 
         /** DOCUMENT ME! */
-        private Vector images; // Vector of images
+        private Vector<Image> images; // Vector of images
 
         /** DOCUMENT ME! */
-        private Vector instruments; // Vector of instruments
+        private Vector<Instrument> instruments; // Vector of instruments
 
         /** DOCUMENT ME! */
-        private Vector plates; // Vector of Plates
+        private Vector<Plate> plates; // Vector of Plates
 
         /** DOCUMENT ME! */
-        private Vector projects; // Vector of Projects
+        private Vector<Project> projects; // Vector of Projects
 
         /** DOCUMENT ME! */
-        private Vector screens; // Vector of Screens
+        private Vector<Screen> screens; // Vector of Screens
 
         /**
          * DOCUMENT ME!
@@ -207,7 +207,7 @@ public class FileInfoOME extends FileInfoBase {
         public void addDataset(String name, Integer id, Boolean locked) {
 
             if (datasets == null) {
-                datasets = new Vector();
+                datasets = new Vector<Dataset>();
             }
 
             datasets.add(new Dataset(name, id, locked));
@@ -221,7 +221,7 @@ public class FileInfoOME extends FileInfoBase {
         public void addExperiment(Integer id) {
 
             if (experiments == null) {
-                experiments = new Vector();
+                experiments = new Vector<Experiment>();
             }
 
             experiments.add(new Experiment(id));
@@ -235,7 +235,7 @@ public class FileInfoOME extends FileInfoBase {
         public void addExperimenter(Integer id) {
 
             if (experimenters == null) {
-                experimenters = new Vector();
+                experimenters = new Vector<Experimenter>();
             }
 
             experimenters.add(new Experimenter(id));
@@ -250,7 +250,7 @@ public class FileInfoOME extends FileInfoBase {
         public void addGroup(String name, Integer id) {
 
             if (groups == null) {
-                groups = new Vector();
+                groups = new Vector<Group>();
             }
 
             groups.add(new Group(name, id));
@@ -279,7 +279,7 @@ public class FileInfoOME extends FileInfoBase {
                              Float timeInc, Integer waveS, Integer waveInc) {
 
             if (images == null) {
-                images = new Vector();
+                images = new Vector<Image>();
             }
 
             images.add(new Image(guid, type, name, sizeX, sizeY, sizeZ, numChannels, numTimes, pSizeX, pSizeY, pSizeZ,
@@ -296,7 +296,7 @@ public class FileInfoOME extends FileInfoBase {
         public void addInclude(Integer id, URI href, String sha1) {
 
             if (documentGroup == null) {
-                documentGroup = new Vector();
+                documentGroup = new Vector<Include>();
             }
 
             documentGroup.add(new Include(id, href, sha1));
@@ -310,7 +310,7 @@ public class FileInfoOME extends FileInfoBase {
         public void addInstrument(Integer id) {
 
             if (instruments == null) {
-                instruments = new Vector();
+                instruments = new Vector<Instrument>();
             }
 
             instruments.add(new Instrument(id));
@@ -326,7 +326,7 @@ public class FileInfoOME extends FileInfoBase {
         public void addPlate(Integer id, String name, String ref) {
 
             if (plates == null) {
-                plates = new Vector();
+                plates = new Vector<Plate>();
             }
 
             plates.add(new Plate(id, name, ref));
@@ -341,7 +341,7 @@ public class FileInfoOME extends FileInfoBase {
         public void addProject(String name, Integer id) {
 
             if (projects == null) {
-                projects = new Vector();
+                projects = new Vector<Project>();
             }
 
             projects.add(new Project(name, id));
@@ -357,7 +357,7 @@ public class FileInfoOME extends FileInfoBase {
         public void addScreen(Integer id, String name, String ref) {
 
             if (screens == null) {
-                screens = new Vector();
+                screens = new Vector<Screen>();
             }
 
             screens.add(new Screen(id, name, ref));
@@ -477,7 +477,7 @@ public class FileInfoOME extends FileInfoBase {
             private String name;
 
             /** DOCUMENT ME! */
-            private Vector projectRefs; // Vector of ProjectsRefs
+            private Vector<ProjectRef> projectRefs; // Vector of ProjectsRefs
 
             /**
              * Creates a new Dataset object.
@@ -501,7 +501,7 @@ public class FileInfoOME extends FileInfoBase {
             public void addProjectRef(Integer docRef, Integer id) {
 
                 if (projectRefs == null) {
-                    projectRefs = new Vector();
+                    projectRefs = new Vector<ProjectRef>();
                 }
 
                 projectRefs.add(new ProjectRef(docRef, id));
@@ -597,7 +597,7 @@ public class FileInfoOME extends FileInfoBase {
             private String firstName;
 
             /** DOCUMENT ME! */
-            private Vector groupRefs; // Vector of GroupRefs
+            private Vector<GroupRef> groupRefs; // Vector of GroupRefs
 
             @SuppressWarnings("unused")
             private String institution;
@@ -625,7 +625,7 @@ public class FileInfoOME extends FileInfoBase {
             public void addGroupRef(Integer id) {
 
                 if (groupRefs == null) {
-                    groupRefs = new Vector();
+                    groupRefs = new Vector<GroupRef>();
                 }
 
                 groupRefs.add(new GroupRef(id));
@@ -859,7 +859,7 @@ public class FileInfoOME extends FileInfoBase {
             private Float airPressure;
 
             /** DOCUMENT ME! */
-            private Vector channelInfos; // Vector of channel infos
+            private Vector<ChannelInfo> channelInfos; // Vector of channel infos
 
             @SuppressWarnings("unused")
             private Float cO2Percent; // percentage
@@ -872,7 +872,7 @@ public class FileInfoOME extends FileInfoBase {
             private Data data;
 
             /** DOCUMENT ME! */
-            private Vector datasetRefs; // Vector for DatasetRefs (Integers)
+            private Vector<Integer> datasetRefs; // Vector for DatasetRefs (Integers)
 
             @SuppressWarnings("unused")
             private String derivedImage;
@@ -1064,7 +1064,7 @@ public class FileInfoOME extends FileInfoBase {
                                        Float ndFilter) {
 
                 if (channelInfos == null) {
-                    channelInfos = new Vector();
+                    channelInfos = new Vector<ChannelInfo>();
                 }
 
                 channelInfos.add(new ChannelInfo(name, spp, illType, phs, photoInt, mode, contrastMethod, exWave,
@@ -1079,7 +1079,7 @@ public class FileInfoOME extends FileInfoBase {
             public void addDatasetRef(Integer datasetID) {
 
                 if (datasetRefs == null) {
-                    datasetRefs = new Vector();
+                    datasetRefs = new Vector<Integer>();
                 }
 
                 datasetRefs.add(datasetID);
@@ -1279,7 +1279,7 @@ public class FileInfoOME extends FileInfoBase {
             public class ChannelInfo {
 
                 /** DOCUMENT ME! */
-                private Vector channelComponents; // Vector of channel components
+                private Vector<ChannelComponent> channelComponents; // Vector of channel components
 
                 @SuppressWarnings("unused")
                 private String contrastMethod;
@@ -1317,7 +1317,7 @@ public class FileInfoOME extends FileInfoBase {
                 private String illuminationType;
 
                 /** Elements. */
-                private Vector lightSourceRefs; // Vector of light source refs
+                private Vector<LightSourceRef> lightSourceRefs; // Vector of light source refs
 
                 @SuppressWarnings("unused")
                 private String mode;
@@ -1385,7 +1385,7 @@ public class FileInfoOME extends FileInfoBase {
                 public void addChannelComponent(String cd, Integer ccn) {
 
                     if (channelComponents == null) {
-                        channelComponents = new Vector();
+                        channelComponents = new Vector<ChannelComponent>();
                     }
 
                     channelComponents.add(new ChannelComponent(cd, ccn));
@@ -1403,7 +1403,7 @@ public class FileInfoOME extends FileInfoBase {
                 public void addLightSourceRef(Integer docRef, Integer id, String auxTech, Float atten, Integer wl) {
 
                     if (lightSourceRefs == null) {
-                        lightSourceRefs = new Vector();
+                        lightSourceRefs = new Vector<LightSourceRef>();
                     }
 
                     lightSourceRefs.add(new LightSourceRef(docRef, id, auxTech, atten, wl));
@@ -1486,10 +1486,10 @@ public class FileInfoOME extends FileInfoBase {
                  */
                 public class ChannelComponent {
 
-                    /** DOCUMENT ME! */
+                    @SuppressWarnings("unused")
                     private Integer channelComponentNumber;
 
-                    /** DOCUMENT ME! */
+                    @SuppressWarnings("unused")
                     private String colorDomain;
 
                     /**
@@ -1681,7 +1681,7 @@ public class FileInfoOME extends FileInfoBase {
                 private Integer redWhiteLevel;
 
                 /** DOCUMENT ME! */
-                private Vector rois; // Vector of ROIs
+                private Vector<ROI> rois; // Vector of ROIs
 
                 /** Time. */
                 @SuppressWarnings("unused")
@@ -1725,7 +1725,7 @@ public class FileInfoOME extends FileInfoBase {
                                    String t1) {
 
                     if (rois == null) {
-                        rois = new Vector();
+                        rois = new Vector<ROI>();
                     }
 
                     rois.add(new ROI(x0, y0, z0, x1, y1, z1, t0, t1));
@@ -2185,27 +2185,27 @@ public class FileInfoOME extends FileInfoBase {
         public class Instrument {
 
             /** DOCUMENT ME! */
-            private Vector detectors; // Vector of dectectors
+            private Vector<Detector> detectors; // Vector of dectectors
 
             /** DOCUMENT ME! */
-            private Vector filters; // Vector of filters
+            private Vector<Filter> filters; // Vector of filters
 
             /** Attributes. */
             @SuppressWarnings("unused")
             private Integer instrumentID;
 
             /** DOCUMENT ME! */
-            private Vector lightsources; // Vector of lightsources
+            private Vector<LightSource> lightsources; // Vector of lightsources
 
             /** Elements. */
             @SuppressWarnings("unused")
             private Microscope microscope;
 
             /** DOCUMENT ME! */
-            private Vector objectives; // Vector of objectives
+            private Vector<Objective> objectives; // Vector of objectives
 
             /** DOCUMENT ME! */
-            private Vector otfs; // Vector of OTFs
+            private Vector<OTF> otfs; // Vector of OTFs
 
             /**
              * Creates a new Instrument object.
@@ -2232,7 +2232,7 @@ public class FileInfoOME extends FileInfoBase {
                                     Integer id, String type) {
 
                 if (detectors == null) {
-                    detectors = new Vector();
+                    detectors = new Vector<Detector>();
                 }
 
                 detectors.add(new Detector(man, mod, sn, gain, voltage, offset, id, type));
@@ -2246,7 +2246,7 @@ public class FileInfoOME extends FileInfoBase {
             public void addFilter(Integer id) {
 
                 if (filters == null) {
-                    filters = new Vector();
+                    filters = new Vector<Filter>();
                 }
 
                 filters.add(new Filter(id));
@@ -2263,7 +2263,7 @@ public class FileInfoOME extends FileInfoBase {
             public void addLightSource(String man, String mod, String sn, Integer id) {
 
                 if (lightsources == null) {
-                    lightsources = new Vector();
+                    lightsources = new Vector<LightSource>();
                 }
 
                 lightsources.add(new LightSource(man, mod, sn, id));
@@ -2280,7 +2280,7 @@ public class FileInfoOME extends FileInfoBase {
             public void addObjective(String man, String mod, String sn, Integer id) {
 
                 if (objectives == null) {
-                    objectives = new Vector();
+                    objectives = new Vector<Objective>();
                 }
 
                 objectives.add(new Objective(man, mod, sn, id));
@@ -2301,7 +2301,7 @@ public class FileInfoOME extends FileInfoBase {
                                Integer sizeY) {
 
                 if (otfs == null) {
-                    otfs = new Vector();
+                    otfs = new Vector<OTF>();
                 }
 
                 otfs.add(new OTF(otfID, objID, fID, pt, oaa, sizeX, sizeY));
@@ -2935,7 +2935,7 @@ public class FileInfoOME extends FileInfoBase {
             private Integer plateID;
 
             /** Elements. */
-            private Vector screenRefs; // Vector of Screen Refs
+            private Vector<ScreenRef> screenRefs; // Vector of Screen Refs
 
             /**
              * Creates a new Plate object.
@@ -2959,7 +2959,7 @@ public class FileInfoOME extends FileInfoBase {
             public void addScreenRef(Integer docRef, Integer id) {
 
                 if (screenRefs == null) {
-                    screenRefs = new Vector();
+                    screenRefs = new Vector<ScreenRef>();
                 }
 
                 screenRefs.add(new ScreenRef(docRef, id));
