@@ -20,10 +20,6 @@ public class FileInfoNRRD extends FileInfoBase {
 
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    
-    /** Transformation matrix. */
-    private TransMatrix matrix = new TransMatrix(4);
     
     /** Version of the NRRD file format being used. */
     private float versionNumber = -1.0f;
@@ -221,7 +217,7 @@ public class FileInfoNRRD extends FileInfoBase {
             if (resolutions[i] > 0.0) {
                 String pixelRes = "Pixel resolution " + i;
                 dialog.appendPrimaryData(pixelRes,
-                                         Float.toString(resolutions[i]) + " " + getUnitsOfMeasureStr(measure[i]));
+                                         Float.toString(resolutions[i]) + " " + (Unit.getUnitFromLegacyNum(measure[i])).toString());
             } // end of if (resolutions[i] > 0.0)
         } // for (i=0; i < 5; i++)
 
