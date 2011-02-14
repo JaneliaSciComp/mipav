@@ -162,7 +162,7 @@ public class FileInfoZVI extends FileInfoBase {
      * @param  matrix  transformation matrix
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
-        int i;
+     
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
