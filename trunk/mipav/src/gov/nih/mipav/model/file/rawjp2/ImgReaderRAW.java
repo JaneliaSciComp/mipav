@@ -43,12 +43,12 @@ public class ImgReaderRAW extends ImgReader {
     private DataBlkInt intBlk;
 
     /** image store*/
+    @SuppressWarnings("unused")
 	private ModelImage image;
 	
 	/** Number of slices in 3D image */
+    @SuppressWarnings("unused")
 	private int numSlice;
-	
-	private int packByte;
 	
     /**
      * Creates a new PGM file reader from the specified file.
@@ -359,7 +359,8 @@ public class ImgReaderRAW extends ImgReader {
      *
      * @exception IOException If an I/O error occurs.
      * @exception EOFException If an EOF is read
-     * */        
+     * */ 
+    @SuppressWarnings("unused")
     private void confirmFileType() throws IOException, EOFException{
         byte[] type={80,53}; // 'P5'
         int i;
@@ -387,6 +388,7 @@ public class ImgReaderRAW extends ImgReader {
      * @exception IOException If an I/O error occurs.  
      * @exception EOFException if an EOF is read
      * */
+    @SuppressWarnings("unused")
     private void skipCommentAndWhiteSpace() throws IOException, EOFException {
 
         boolean done=false;
@@ -416,6 +418,7 @@ public class ImgReaderRAW extends ImgReader {
      * @exception IOException If an I/O error occurs.
      * @exception EOFException If an EOF is read 
      * */
+    @SuppressWarnings("unused")
     private int readHeaderInt() throws IOException, EOFException{
         int res=0;
         byte b=0;
