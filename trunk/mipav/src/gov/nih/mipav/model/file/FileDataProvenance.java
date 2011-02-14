@@ -16,10 +16,10 @@ public class FileDataProvenance extends FileXML {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** The tab character (makes writing out files cleaner-looking). */
-    private static final String TAB = "\t";
+    //private static final String TAB = "\t";
 
     /** The W3C XML schema. */
-    private static final String W3C_XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
+    //private static final String W3C_XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
 
     /** The charset the XML file is written in. */
     private static final String XML_ENCODING = "UTF-8";
