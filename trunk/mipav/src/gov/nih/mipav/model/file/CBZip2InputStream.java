@@ -75,10 +75,12 @@ public class CBZip2InputStream extends InputStream implements BZip2Constants {
         //throw new CCoruptionError();
     }
 
+    @SuppressWarnings("unused")
     private static void badBGLengths() {
         cadvise();
     }
 
+    @SuppressWarnings("unused")
     private static void bitStreamEOF() {
         cadvise();
     }
