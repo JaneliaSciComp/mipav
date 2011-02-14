@@ -69,7 +69,7 @@ public class ImgReaderRAWColorSlice extends ImgReaderRAWSlice {
 	
 	
 	public DataBlk getInternCompData(DataBlk blk, int c) {
-		int k,j,i,mi;
+		int j,i,mi;
 		int barr[];
 
 
