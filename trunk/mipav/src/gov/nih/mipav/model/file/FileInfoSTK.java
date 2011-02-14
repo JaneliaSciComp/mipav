@@ -47,7 +47,6 @@ public class FileInfoSTK extends FileInfoBase {
      * @param  matrix  transformation matrix
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
-        int extentsNumber;
         int i;
         int j;
         int planeNumber;
