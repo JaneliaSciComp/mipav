@@ -1210,6 +1210,7 @@ public class FileDicomTag extends ModelSerialCloneable {
      * 
      * @return DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private String fromVisibleStringToDS(final String tempValue) {
         int i;
         final StringBuffer newStr = new StringBuffer();
@@ -1265,6 +1266,7 @@ public class FileDicomTag extends ModelSerialCloneable {
      * 
      * @return DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private String fromVisibleStringToDT(final String tempValue) {
         final StringBuffer dateTime = new StringBuffer();
 
@@ -1364,6 +1366,7 @@ public class FileDicomTag extends ModelSerialCloneable {
      * 
      * @return DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private String fromVisibleStringToPN(final String tmpValue) {
         return tmpValue.replace('^', ',');
     }
