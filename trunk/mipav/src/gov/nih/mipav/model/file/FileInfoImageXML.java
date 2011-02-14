@@ -48,9 +48,6 @@ public class FileInfoImageXML extends FileInfoXML {
     /** DOCUMENT ME! */
     private String bodyPart;
 
-    /** Used to keep track of the current parameter name. */
-    private String currentPName;
-
     /** String for the current PSet description (for key). */
     private String currentPSetDesc;
 
@@ -77,12 +74,6 @@ public class FileInfoImageXML extends FileInfoXML {
 
     /** Investigators (up to 3). Optional XML tag. */
     private Investigator[] investigators;
-
-    /**
-     * Full path to an image that is linked to this image file. It is typically used to load a second image into the
-     * same frame. Optional XML tag.
-     */
-    private String linkedFilePath;
 
     /** linked image path (optional). */
     private String linkedImagePath;
@@ -272,13 +263,13 @@ public class FileInfoImageXML extends FileInfoXML {
                 String pixelRes = "Pixel resolution " + i;
 
                 dialog.appendPrimaryData(pixelRes, Float.toString(resolutions[i]) + " "
-                        + getUnitsOfMeasureStr(measure[i]));
+                        + (Unit.getUnitFromLegacyNum(measure[i])).toString());
             } // end of if (resolutions[i] > 0.0)
         } // for (i=0; i < 5; i++)
 
         if ( (extents.length > 2) && (extents[2] > 0)) {
             dialog.appendPrimaryData("Slice thickness ", Float.toString(getSliceThickness()) + " "
-                    + getUnitsOfMeasureStr(measure[2]));
+                    + (Unit.getUnitFromLegacyNum(measure[2])).toString());
         }
 
         float[] origin; // = new float[4];
@@ -853,7 +844,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @param pData Vector Vector of changed parameter data + set description
      */
-    public void parameterChanged(Vector pData) {
+    public void parameterChanged(Vector<String> pData) {
         String setDesc = (String) pData.elementAt(0);
         String name = (String) pData.elementAt(1);
         String paramdesc = (String) pData.elementAt(2);
@@ -1172,9 +1163,10 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @param ce Vector Vector of new data
      */
+    @SuppressWarnings("unchecked")
     public void stateChanged(Vector ce) {
         String tname = (String) ce.elementAt(2); // [t]able [name]
-        Vector tcvalue = (Vector) ce.elementAt(3); // [t]able [c]ode [value]
+        //Vector tcvalue = (Vector) ce.elementAt(3); // [t]able [c]ode [value]
         String tvalue = (String) ce.elementAt(4); // [t]able [value]
 
         if (tname.equalsIgnoreCase("Description")) {
