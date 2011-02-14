@@ -6,7 +6,6 @@ import java.io.*;
 
 import jj2000.j2k.image.*;
 import jj2000.j2k.image.output.*;
-import jj2000.j2k.util.*;
 
 /**
  * This class extends the ImgWriter abstract class for writing JP2 3D files. 
@@ -78,8 +77,6 @@ public class ImgWriterRAW extends ImgWriter {
     // This makes the class not thrad safe
     // (but it is not the only one making it so)
     private byte buf[];
-    
-    private int intBuf[] = null;
     
     /** Model image pointer*/
     protected ModelImage modImg = null;
