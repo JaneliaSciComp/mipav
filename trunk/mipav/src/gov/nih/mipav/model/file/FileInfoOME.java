@@ -32,7 +32,7 @@ public class FileInfoOME extends FileInfoBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private String headerFileName;
 
     /** DOCUMENT ME! */
@@ -122,10 +122,10 @@ public class FileInfoOME extends FileInfoBase {
      */
     public class ExperimenterRef {
 
-        /** DOCUMENT ME! */
+        @SuppressWarnings("unused")
         private Integer documentRef;
 
-        /** DOCUMENT ME! */
+        @SuppressWarnings("unused")
         private Integer experimentID;
 
         /**
@@ -145,10 +145,10 @@ public class FileInfoOME extends FileInfoBase {
      */
     public class ExperimentRef {
 
-        /** DOCUMENT ME! */
+        @SuppressWarnings("unused")
         private Integer documentRef;
 
-        /** DOCUMENT ME! */
+        @SuppressWarnings("unused")
         private String experimentID;
 
         /**
@@ -168,7 +168,6 @@ public class FileInfoOME extends FileInfoBase {
      */
     public class OME {
 
-        /** DOCUMENT ME! */
         private Vector datasets; // Vector of Datasets
 
         /** DOCUMENT ME! */
@@ -459,25 +458,22 @@ public class FileInfoOME extends FileInfoBase {
          */
         public class Dataset {
 
-            /** DOCUMENT ME! */
-            private String customAttributes;
-
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Integer datasetID;
 
-            /** Elements. */
+            @SuppressWarnings("unused")
             private String description;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private ExperimenterRef experimenterRef;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private GroupRef groupRef;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Boolean locked;
 
-            /** Attributes. */
+            @SuppressWarnings("unused")
             private String name;
 
             /** DOCUMENT ME! */
@@ -546,12 +542,13 @@ public class FileInfoOME extends FileInfoBase {
         public class Experiment {
 
             /** Elements. */
+        	@SuppressWarnings("unused")
             private String description;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private ExperimenterRef experimenterRef;
 
-            /** Attributes. */
+            @SuppressWarnings("unused")
             private Integer experimentID;
 
             /**
@@ -588,25 +585,27 @@ public class FileInfoOME extends FileInfoBase {
          */
         public class Experimenter {
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String email;
 
             /** Attributes. */
+            @SuppressWarnings("unused")
             private Integer experimenterID;
 
             /** Elements. */
+            @SuppressWarnings("unused")
             private String firstName;
 
             /** DOCUMENT ME! */
             private Vector groupRefs; // Vector of GroupRefs
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String institution;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String lastName;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String omeName;
 
             /**
@@ -683,46 +682,47 @@ public class FileInfoOME extends FileInfoBase {
          */
         public class Group {
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String contactEmail;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private ExperimenterRef contactExperimenterRef;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String contactFirstName;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String contactInstitution;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Boolean contactIsPerson; // is the contact data a person or a ref
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String contactLastName;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Integer groupID;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String leaderEmail;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private ExperimenterRef leaderExperimenterRef;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String leaderFirstName;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String leaderInstitution;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Boolean leaderIsPerson; // is the leader data a person or a ref
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String leaderLastName;
 
             /** Attributes. */
+            @SuppressWarnings("unused")
             private String name;
 
             /**
@@ -837,6 +837,7 @@ public class FileInfoOME extends FileInfoBase {
         public class GroupRef {
 
             /** Attributes. */
+        	@SuppressWarnings("unused")
             private Integer groupID;
 
             /**
@@ -854,16 +855,17 @@ public class FileInfoOME extends FileInfoBase {
          */
         public class Image {
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Float airPressure;
 
             /** DOCUMENT ME! */
             private Vector channelInfos; // Vector of channel infos
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Float cO2Percent; // percentage
 
             /** Elements. */
+            @SuppressWarnings("unused")
             private String creationDate;
 
             /** DOCUMENT ME! */
@@ -872,43 +874,45 @@ public class FileInfoOME extends FileInfoBase {
             /** DOCUMENT ME! */
             private Vector datasetRefs; // Vector for DatasetRefs (Integers)
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String derivedImage;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String description;
 
             /** DOCUMENT ME! */
             private DisplayOptions displayOptions;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private ExperimentRef experimentRef;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private GroupRef groupRef;
 
             /** Attributes. */
+            @SuppressWarnings("unused")
             private String guid; // ?
 
             /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Float humidity; // percentage
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String imageType;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private InstrumentRef instrumentRef;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String mimeType; // for thumbnail
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private String name;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Integer numChannels;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Integer numTimes;
 
             /** DOCUMENT ME! */
@@ -923,31 +927,32 @@ public class FileInfoOME extends FileInfoBase {
             /** DOCUMENT ME! */
             private PlateInfo plateInfo;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Integer sizeX;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Integer sizeY;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Integer sizeZ;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private StageLabel stageLabel;
 
             /** For Imaging Environment. */
+            @SuppressWarnings("unused")
             private Float temperature;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private URI thumbnail; // web location of thumbnail pic
 
             /** DOCUMENT ME! */
             private Float timeIncrement;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Integer waveIncrement;
 
-            /** DOCUMENT ME! */
+            @SuppressWarnings("unused")
             private Integer waveStart;
 
             /**
@@ -1276,64 +1281,68 @@ public class FileInfoOME extends FileInfoBase {
                 /** DOCUMENT ME! */
                 private Vector channelComponents; // Vector of channel components
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private String contrastMethod;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Integer detectorRefDetectorID;
 
                 /** DetectorRef. */
+                @SuppressWarnings("unused")
                 private Integer detectorRefDocumentRef;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Float detectorRefGain;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Float detectorRefOffset;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Integer emWave;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Integer exWave;
 
                 /** FilterRef. */
+                @SuppressWarnings("unused")
                 private Integer filterRefDocumentRef;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Integer filterRefFilterID;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private String fluor;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private String illuminationType;
 
                 /** Elements. */
                 private Vector lightSourceRefs; // Vector of light source refs
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private String mode;
 
                 /** attributes. */
+                @SuppressWarnings("unused")
                 private String name;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Float ndFilter;
 
                 /** OTF Ref. */
+                @SuppressWarnings("unused")
                 private Integer otfRefDocumentRef;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Integer otfRefOTFID;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private String photometricInterpretation;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Integer pinholeSize;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Integer samplesPerPixel;
 
                 /**
@@ -1500,19 +1509,20 @@ public class FileInfoOME extends FileInfoBase {
                  */
                 public class LightSourceRef {
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Float attenuation; // percent fraction
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String auxTechnique;
 
                     /** attributes. */
+                	@SuppressWarnings("unused")
                     private Integer documentRef;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer lightSourceID;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer wavelength;
 
                     /**
@@ -1539,16 +1549,18 @@ public class FileInfoOME extends FileInfoBase {
              */
             public class Data {
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Boolean bigEndian;
 
                 /** Elements. */
+            	@SuppressWarnings("unused")
                 private BinExternal binExt;
 
                 /** Attributes. */
+            	@SuppressWarnings("unused")
                 private String dimensionOrder;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String pixelType;
 
                 /**
@@ -1581,16 +1593,16 @@ public class FileInfoOME extends FileInfoBase {
                  */
                 public class BinExternal {
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String compression;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private URI hRef;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer offset;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String sha1;
 
                     /**
@@ -1615,73 +1627,77 @@ public class FileInfoOME extends FileInfoBase {
              */
             public class DisplayOptions {
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer blueBlackLevel;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer blueChannelNumber;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float blueGamma;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer blueWhiteLevel;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer greenBlackLevel;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer greenChannelNumber;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float greenGamma;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer greenWhiteLevel;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer greyBlackLevel;
 
                 /** for Grey:. */
+            	@SuppressWarnings("unused")
                 private Integer greyChannelNumber;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String greyColorMap;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float greyGamma;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer greyWhiteLevel;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer redBlackLevel;
 
                 /** either RGB channels or Grey Channel... for RGB: */
+            	@SuppressWarnings("unused")
                 private Integer redChannelNumber;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float redGamma;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer redWhiteLevel;
 
                 /** DOCUMENT ME! */
                 private Vector rois; // Vector of ROIs
 
                 /** Time. */
+                @SuppressWarnings("unused")
                 private Integer tStart;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Integer tStop;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Float zoom;
 
                 /** for Projection. */
+                @SuppressWarnings("unused")
                 private Integer zStart;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private Integer zStop;
 
                 /**
@@ -1909,28 +1925,28 @@ public class FileInfoOME extends FileInfoBase {
                  */
                 public class ROI {
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String t0;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String t1;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer x0;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer x1;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer y0;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer y1;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer z0;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer z1;
 
                     /**
@@ -1964,10 +1980,7 @@ public class FileInfoOME extends FileInfoBase {
              */
             public class Feature {
 
-                /** DOCUMENT ME! */
-                private String name;
-
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String tag;
 
                 /**
@@ -1986,12 +1999,13 @@ public class FileInfoOME extends FileInfoBase {
             public class InstrumentRef {
 
                 /** Attributes. */
+            	@SuppressWarnings("unused")
                 private Integer documentRef;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer instrumentID;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer objectiveID;
 
                 /**
@@ -2014,21 +2028,23 @@ public class FileInfoOME extends FileInfoBase {
             public class PlateInfo {
 
                 /** attributes. */
+            	@SuppressWarnings("unused")
                 private Integer plateID;
 
                 /** elements. */
+            	@SuppressWarnings("unused")
                 private String sampleExternRef;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer sampleNumber;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String wellAddress;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String wellExternRef;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String wellString;
 
                 /**
@@ -2091,16 +2107,16 @@ public class FileInfoOME extends FileInfoBase {
              */
             public class StageLabel {
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String name;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float x;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float y;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float z;
 
                 /**
@@ -2127,15 +2143,17 @@ public class FileInfoOME extends FileInfoBase {
         public class Include {
 
             /** attributes. */
+        	@SuppressWarnings("unused")
             private Integer documentID;
 
-            /** DOCUMENT ME! */
+        	@SuppressWarnings("unused")
             private URI hRef;
 
             /** elements. */
+        	@SuppressWarnings("unused")
             private String includeString;
 
-            /** DOCUMENT ME! */
+        	@SuppressWarnings("unused")
             private String SHA1; // hex40
 
             /**
@@ -2173,12 +2191,14 @@ public class FileInfoOME extends FileInfoBase {
             private Vector filters; // Vector of filters
 
             /** Attributes. */
+            @SuppressWarnings("unused")
             private Integer instrumentID;
 
             /** DOCUMENT ME! */
             private Vector lightsources; // Vector of lightsources
 
             /** Elements. */
+            @SuppressWarnings("unused")
             private Microscope microscope;
 
             /** DOCUMENT ME! */
@@ -2340,28 +2360,29 @@ public class FileInfoOME extends FileInfoBase {
              */
             public class Detector {
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer detectorID;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float gain;
 
                 /** attributes. */
+            	@SuppressWarnings("unused")
                 private String manufacturer;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String model;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float offset;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String serialNumber;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String type;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float voltage;
 
                 /**
@@ -2395,22 +2416,24 @@ public class FileInfoOME extends FileInfoBase {
              */
             public class Filter {
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private FilterType dichroic;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private FilterType emFilter;
 
                 /** must have these 3:. */
+            	@SuppressWarnings("unused")
                 private FilterType exFilter;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer filterID;
 
                 /** or this one:. */
+            	@SuppressWarnings("unused")
                 private FilterType filterSet;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Boolean isFilterSet; // is this a filterSet?
 
                 /**
@@ -2476,16 +2499,16 @@ public class FileInfoOME extends FileInfoBase {
                  */
                 public class FilterType {
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String lotNumber;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String manufacturer;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String model;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String type; // optional
 
                     /**
@@ -2522,7 +2545,7 @@ public class FileInfoOME extends FileInfoBase {
                 /** DOCUMENT ME! */
                 String serialNumber;
 
-                /** DOCUMENT ME! */
+                @SuppressWarnings("unused")
                 private FilamentArc filarc;
 
                 /** Elements has one of the following...laser, filament, or arc. */
@@ -2621,28 +2644,30 @@ public class FileInfoOME extends FileInfoBase {
                  */
                 public class Laser {
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Boolean frequencyDoubled;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String medium;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Float power;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String pulse;
 
                     /** elements. */
+                	@SuppressWarnings("unused")
                     private Pump pump;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Boolean tunable;
 
                     /** attributes. */
+                	@SuppressWarnings("unused")
                     private String type;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer wavelength;
 
                     /**
@@ -2682,10 +2707,10 @@ public class FileInfoOME extends FileInfoBase {
                      */
                     public class Pump {
 
-                        /** DOCUMENT ME! */
+                    	@SuppressWarnings("unused")
                         private Integer documentRef;
 
-                        /** DOCUMENT ME! */
+                    	@SuppressWarnings("unused")
                         private Integer lightSourceID;
 
                         /**
@@ -2708,15 +2733,16 @@ public class FileInfoOME extends FileInfoBase {
             public class Microscope {
 
                 /** Attributes. */
+            	@SuppressWarnings("unused")
                 private String manufacturer;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String model;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String serialNumber;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String type;
 
                 /**
@@ -2740,22 +2766,22 @@ public class FileInfoOME extends FileInfoBase {
              */
             public class Objective {
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float lensNA;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Float magnification;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String manufacturer;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String model;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer objectiveID;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String serialNumber;
 
                 /**
@@ -2799,27 +2825,28 @@ public class FileInfoOME extends FileInfoBase {
             public class OTF {
 
                 /** must have either: Bin:External or Bin:BinData. */
+            	@SuppressWarnings("unused")
                 private BinExternal binExternal;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer filterID;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer objectiveID;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Boolean opticalAxisAvrg;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer otfID;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private String pixelType;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer sizeX;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer sizeY;
 
                 /**
@@ -2861,16 +2888,16 @@ public class FileInfoOME extends FileInfoBase {
                  */
                 public class BinExternal {
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String compression;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private URI hRef;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private Integer offset;
 
-                    /** DOCUMENT ME! */
+                	@SuppressWarnings("unused")
                     private String SHA1;
 
                     /**
@@ -2897,13 +2924,14 @@ public class FileInfoOME extends FileInfoBase {
          */
         public class Plate {
 
-            /** DOCUMENT ME! */
+        	@SuppressWarnings("unused")
             private String externRef;
 
-            /** DOCUMENT ME! */
+        	@SuppressWarnings("unused")
             private String name;
 
             /** Attributes. */
+        	@SuppressWarnings("unused")
             private Integer plateID;
 
             /** Elements. */
@@ -2942,10 +2970,10 @@ public class FileInfoOME extends FileInfoBase {
              */
             public class ScreenRef {
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer documentRef;
 
-                /** DOCUMENT ME! */
+            	@SuppressWarnings("unused")
                 private Integer screenID;
 
                 /**
@@ -2967,18 +2995,20 @@ public class FileInfoOME extends FileInfoBase {
         public class Project {
 
             /** Elements. */
+        	@SuppressWarnings("unused")
             private String description;
 
-            /** DOCUMENT ME! */
+        	@SuppressWarnings("unused")
             private ExperimenterRef experimenterRef;
 
-            /** DOCUMENT ME! */
+        	@SuppressWarnings("unused")
             private GroupRef groupRef;
 
             /** Attributes. */
+        	@SuppressWarnings("unused")
             private String name;
 
-            /** DOCUMENT ME! */
+        	@SuppressWarnings("unused")
             private Integer projectID;
 
             /**
@@ -3028,15 +3058,17 @@ public class FileInfoOME extends FileInfoBase {
         public class Screen {
 
             /** Elements. */
+        	@SuppressWarnings("unused")
             private String description;
 
-            /** DOCUMENT ME! */
+        	@SuppressWarnings("unused")
             private String externRef;
 
-            /** DOCUMENT ME! */
+        	@SuppressWarnings("unused")
             private String name;
 
             /** Attributes. */
+        	@SuppressWarnings("unused")
             private Integer screenID;
 
             /**
@@ -3070,16 +3102,16 @@ public class FileInfoOME extends FileInfoBase {
      */
     public class Person {
 
-        /** DOCUMENT ME! */
+    	@SuppressWarnings("unused")
         private String email;
 
-        /** Attributes. */
+    	@SuppressWarnings("unused")
         private String firstName;
 
-        /** DOCUMENT ME! */
+    	@SuppressWarnings("unused")
         private String institution;
 
-        /** DOCUMENT ME! */
+    	@SuppressWarnings("unused")
         private String lastName;
 
         /**
@@ -3103,10 +3135,10 @@ public class FileInfoOME extends FileInfoBase {
      */
     public class ProjectRef {
 
-        /** DOCUMENT ME! */
+    	@SuppressWarnings("unused")
         private Integer documentRef;
 
-        /** DOCUMENT ME! */
+    	@SuppressWarnings("unused")
         private Integer projectID;
 
         /**
