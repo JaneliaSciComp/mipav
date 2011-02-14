@@ -2,8 +2,6 @@ package gov.nih.mipav.model.file.rawjp2;
 
 import java.io.*;
 
-import javax.swing.JOptionPane;
-
 import jj2000.j2k.io.*;
 
 //import pluginJP2.jj2000.j2k.io.BEBufferedRandomAccessFile;
@@ -152,7 +150,7 @@ public class RAWJP2Header {
 			return null;
 		}
 */		
-		int n;
+
 		try {
 			FileInputStream f = new FileInputStream(fName);
 			imgType = (int)f.read();
