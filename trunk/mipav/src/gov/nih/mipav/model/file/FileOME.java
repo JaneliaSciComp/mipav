@@ -49,6 +49,7 @@ public class FileOME extends FileBase {
     private ModelLUT LUT;
 
     /** Whether to show a progress bar while processing the file. */
+    @SuppressWarnings("unused")
     private boolean showProgress;
 
     /** Whether the image has a lut already. One is generated if this variable is false. */
@@ -238,9 +239,6 @@ public class FileOME extends FileBase {
 
         /** The data for the current element being parsed. */
         String elementBuffer = new String("");
-
-        /** The image transformation matrix. */
-        TransMatrix matrix;
 
         /** The parent XML tag of the element we are currently parsing. */
         String superKey;
@@ -819,6 +817,7 @@ public class FileOME extends FileBase {
 
                 fileInfo.getOME().getCurrentImage().addDatasetRef(datasetID);
             } else if (currentKey.equals("InstrumentRef")) {
+            	@SuppressWarnings("unused")
                 Integer docRef = null, instID, objID;
 
                 String temp = atts.getValue("DocumentRef");
@@ -971,8 +970,8 @@ public class FileOME extends FileBase {
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setOTFRefDocumentRef(docRef);
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setOTFRefOTFID(otfID);
             } else if (currentKey.equals("DetectorRef")) {
+            	@SuppressWarnings("unused")
                 Integer docRef = null, id;
-                Float offset = null, gain = null;
 
                 String temp = atts.getValue("DocumentRef");
 
