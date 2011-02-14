@@ -258,13 +258,11 @@ public class EncoderRAWColor implements Runnable {
 	        boolean imsigned[];
 	        BlkImgDataSrc imgsrc;
 	        int i;
-	        int imgcmpidxs[];
 	        int tw,th;
 	        int refx,refy;
 	        int trefx,trefy;
 	        int pktspertp;
 	        Tiler imgtiler;
-	        BlkImgDataSrc cursrc;
 	        ForwCompTransf fctransf;
 		ImgDataConverter converter;
 	        EncoderSpecs encSpec;
@@ -790,13 +788,13 @@ public class EncoderRAWColor implements Runnable {
 	
 	            // **** Tile-parts and packed packet headers ****
 	            if(pktspertp>0 || pphTile || pphMain) {
-	                int headInc;
+	              
 	                try {
 	                    CodestreamManipulator cm = new 
 	                        CodestreamManipulator(outname,ntiles,pktspertp,
 	                                              pphMain,pphTile,tempSop,tempEph);
 	                    fileLength += cm.doCodestreamManipulation();
-	                    String res="";
+	              
 	                    if(pktspertp>0) {
 	                        FacilityManager.
 	                            getMsgLogger().println("Created tile-parts "+
@@ -946,7 +944,6 @@ public class EncoderRAWColor implements Runnable {
         PostCompRateAllocator ralloc;
         HeaderEncoder headenc;
         CodestreamWriter bwriter;
-        FileFormatWriter ffw;
         String outname;
         ByteArrayOutputStream outstream; 
         BEByteArrayOutputStream newoutstream = new BEByteArrayOutputStream();
@@ -1385,13 +1382,13 @@ public class EncoderRAWColor implements Runnable {
 
             // **** Tile-parts and packed packet headers ****
             if(pktspertp>0 || pphTile || pphMain) {
-                int headInc;
+            
                 try {
                     CodestreamManipulator cm = new 
                         CodestreamManipulator(outname,ntiles,pktspertp,
                                               pphMain,pphTile,tempSop,tempEph);
                     fileLength += cm.doCodestreamManipulation();
-                    String res="";
+             
                     if(pktspertp>0) {
                         FacilityManager.
                             getMsgLogger().println("Created tile-parts "+
@@ -1631,7 +1628,7 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
      * @see #getParameterInfo
      * */
     public static String[][] getAllParameters() {
-        Vector vec = new Vector();
+        Vector<String[]> vec = new Vector<String[]>();
         
         String[][] str = getParameterInfo();
         if(str!=null)
@@ -1735,8 +1732,7 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
      * is written for all modules in the encoder.
      * */
     private void printUsage() {
-        String opts[][];
-        int i;
+        
         MsgLogger ml = FacilityManager.getMsgLogger();
 
         ml.println("Usage:",0,0);
