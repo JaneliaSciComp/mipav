@@ -35,9 +35,6 @@ public abstract class FileInfoSurfaceRefXML extends FileInfoXML {
 
     /** surface level of detail:. */
     private int m_kLevelDetail;
-
-    /** mesh index. */
-    private int meshIndex = 0;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
