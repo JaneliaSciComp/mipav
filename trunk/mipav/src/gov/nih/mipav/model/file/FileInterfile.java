@@ -145,7 +145,7 @@ public class FileInterfile extends FileBase {
     /** DOCUMENT ME! */
     private boolean haveSliceThickness = false;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private boolean haveTDim = false;
 
     /** DOCUMENT ME! */
@@ -246,6 +246,7 @@ public class FileInterfile extends FileBase {
     /** DOCUMENT ME! */
     private int zDim = 1;
     
+    @SuppressWarnings("unused")
     private boolean haveStaticStudy = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -1445,13 +1446,11 @@ public class FileInterfile extends FileBase {
         boolean simple = false;
         String imagingModality = null;
         String originatingSystem = null;
-        String keysVersion = null;
         String keysDate = null;
         String conversionProgram = null;
         String programAuthor = null;
         String programVersion = null;
         String programDate = null;
-        boolean generalData = false;
         String originalInstitution = null;
         String contactPerson = null;
         String dataDescription = null;
@@ -1462,12 +1461,7 @@ public class FileInterfile extends FileBase {
         String studyID = null;
         String examType = null;
         String organ = null;
-        String dataCompression = null;
-        String dataEncode = null;
-        boolean generalImageData = false;
         String interfileDataType = null;
-        String totalImageNumber = null;
-        boolean haveTomographic = false;
         String studyDate = null;
         String studyTime = null;
         String isotopeNumber = null;
@@ -1484,20 +1478,14 @@ public class FileInterfile extends FileBase {
         String[] upperLevel = null;
         String floodCorrected = null;
         String decayCorrected = null;
-        boolean PETStudyGeneral = false;
         String scannerQuantificationFactor = null;
         String quantificationUnits = null;
         String PETDataType = null;
         String startHorizontalBedPosition = null;
-        String timeFrames = null;
-        int timeFrameNumber = 0;
-        boolean spectStudyGeneral = false;
         String detectorHeadNumber = null;
         String imagesPerEWindow = null;
         int numberImagesPerEWindow = 1;
         String processStatus = null;
-        String dimensionNumber = null;
-        boolean haveReconstructed = false;
         String projectionNumber = null;
         String rotationExtent = null;
         String projectionTime = null;
