@@ -1585,6 +1585,7 @@ public class FileDicom extends FileDicomBase {
 
             return true;
         } else {
+        	@SuppressWarnings("unused")
             final JDialogDicomDir dirBrowser = new JDialogDicomDir(null, fileHeader, this);
             return true;
         }
@@ -3774,6 +3775,7 @@ public class FileDicom extends FileDicomBase {
         return sq;
     }
 
+    @SuppressWarnings("unused")
     private void setPerFrameEnhancedSequenceTags(final boolean endianess) {
         try {
             getNextElement(endianess); // gets the first ITEM tag
