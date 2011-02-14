@@ -343,8 +343,7 @@ public class DecoderRAWColor extends Decoder {//implements Runnable {
 	BlkImgDataSrc color;
 	int i;
         int depth[];
-        float rate;
-        int nbytes;
+      
 	boolean disp = false;
 	Image img = null;
 	Dimension winDim,scrnDim;
@@ -388,7 +387,7 @@ public class DecoderRAWColor extends Decoder {//implements Runnable {
 
             // **** Check parameters ****
             try {
-                pl.checkList(vprfxs,pl.toNameArray(pinfo));
+                pl.checkList(vprfxs,ParameterList.toNameArray(pinfo));
             } catch (IllegalArgumentException e) {
                 error(e.getMessage(),2);
                 if(pl.getParameter("debug").equals("on")) {
@@ -954,7 +953,7 @@ public class DecoderRAWColor extends Decoder {//implements Runnable {
                             isp.addMouseMotionListener(iml);
                         } else { // Check again in 100 ms
                             try {
-                                Thread.currentThread().sleep(100);
+                                Thread.sleep(100);
                             } catch (InterruptedException e) { }
                         }
                     } while((status &
@@ -1188,7 +1187,7 @@ public class DecoderRAWColor extends Decoder {//implements Runnable {
 
             // **** Check parameters ****
             try {
-                pl.checkList(vprfxs,pl.toNameArray(pinfo));
+                pl.checkList(vprfxs,ParameterList.toNameArray(pinfo));
             } catch (IllegalArgumentException e) {
                 error(e.getMessage(),2);
                 if(pl.getParameter("debug").equals("on")) {
@@ -1399,7 +1398,7 @@ public class DecoderRAWColor extends Decoder {//implements Runnable {
             }
 
 //        BlkImgDataSrc decodedImage = ictransf;
-	    int nCompImg = decodedImage.getNumComps();
+	    //int nCompImg = decodedImage.getNumComps();
 
         // **** Create image writers/image display ****
 
@@ -1555,7 +1554,7 @@ public class DecoderRAWColor extends Decoder {//implements Runnable {
      * @see #getParameterInfo 
      * */
     public static String[][] getAllParameters() {
-	Vector vec = new Vector();
+	Vector<String[]> vec = new Vector<String[]>();
 	int i;
 
 	String[][] str = BitstreamReaderAgent.getParameterInfo();
@@ -1595,6 +1594,7 @@ public class DecoderRAWColor extends Decoder {//implements Runnable {
      *
      * @param msg The error message
      * */
+    @SuppressWarnings("unused")
     private void warning(String msg) {
         FacilityManager.getMsgLogger().printmsg(MsgLogger.WARNING,msg);
     }
@@ -1619,8 +1619,7 @@ public class DecoderRAWColor extends Decoder {//implements Runnable {
      * written for all modules in the decoder.
      * */
     private void printUsage() {
-        String opts[][];
-        int i;
+     
         MsgLogger ml = FacilityManager.getMsgLogger();
 
         ml.println("Usage:",0,0);
