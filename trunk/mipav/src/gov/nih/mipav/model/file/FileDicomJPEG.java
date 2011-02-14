@@ -159,7 +159,7 @@ public class FileDicomJPEG {
     private static final byte M_DHT = (byte) 0xc4;
 
     /** DOCUMENT ME! */
-    private static final byte M_DAC = (byte) 0xcc;
+    //private static final byte M_DAC = (byte) 0xcc;
 
     /** DOCUMENT ME! */
     private static final byte M_RST0 = (byte) 0xd0;
@@ -198,37 +198,37 @@ public class FileDicomJPEG {
     private static final byte M_DQT = (byte) 0xdb;
 
     /** DOCUMENT ME! */
-    private static final byte M_DNL = (byte) 0xdc;
+    //private static final byte M_DNL = (byte) 0xdc;
 
     /** DOCUMENT ME! */
     private static final byte M_DRI = (byte) 0xdd;
 
     /** DOCUMENT ME! */
-    private static final byte M_DHP = (byte) 0xde;
+    //private static final byte M_DHP = (byte) 0xde;
 
     /** DOCUMENT ME! */
-    private static final byte M_EXP = (byte) 0xdf;
+    //private static final byte M_EXP = (byte) 0xdf;
 
     /** Required marker in this standard. */
     private static final byte M_APP0 = (byte) 0xe0;
 
     /** DOCUMENT ME! */
-    private static final byte M_APP15 = (byte) 0xef;
+    //private static final byte M_APP15 = (byte) 0xef;
 
     /** DOCUMENT ME! */
-    private static final byte M_JPG0 = (byte) 0xf0;
+    //private static final byte M_JPG0 = (byte) 0xf0;
 
     /** DOCUMENT ME! */
-    private static final byte M_JPG13 = (byte) 0xfd;
+    //private static final byte M_JPG13 = (byte) 0xfd;
 
     /** DOCUMENT ME! */
-    private static final byte M_COM = (byte) 0xfe;
+    //private static final byte M_COM = (byte) 0xfe;
 
     /** DOCUMENT ME! */
     private static final byte M_TEM = (byte) 0x01;
 
     /** DOCUMENT ME! */
-    private static final byte M_ERROR = (byte) 0x100;
+    //private static final byte M_ERROR = (byte) 0x100;
 
     /** Entry n is 2**(n-1); used to test whether we need to make a number negative. */
     private static int[] extendTest = {0, 0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080, 0x0100,
@@ -317,6 +317,7 @@ public class FileDicomJPEG {
     private int restartInterval;
 
     /** Numbers needed for restart. Hasn't been tested! */
+    @SuppressWarnings("unused")
     private int restartRowsToGo;
 
     /** Byte indicating which location to use as the predictor. */
@@ -488,7 +489,7 @@ public class FileDicomJPEG {
      * @param curRowBuf Current row buffer; 2D because if image is color, there are 4 components.
      */
     private void decodeFirstRow(final HuffTable table, final short[][] curRowBuf) {
-        short curComp, ci;
+        short curComp;
         int col, numCOL;
         int d;
 
@@ -496,7 +497,6 @@ public class FileDicomJPEG {
 
         // the start of the scan or at the beginning of restart interval.
         for (curComp = 0; curComp < compsInScan; curComp++) {
-            ci = curComp; // ?????
             d = table.huffDecode(tableNo[curComp]);
 
             if (d == -1) {
@@ -541,12 +541,12 @@ public class FileDicomJPEG {
      */
     private int[] decodeImage(int index) {
         int d, col, row;
-        short curComp, ci;
+        short curComp;
         int predictor;
         int numCOL, numROW;
-        int imagewidth, psv;
+        int psv;
         // System.out.println("Image: "+image[index]+" "+image[index+1]+" "+image[index+2]+" "+image[index+3]+"\tIndex: "+index+" to "+(index+3));
-        numCOL = imagewidth = imageWidth;
+        numCOL = imageWidth;
         numROW = imageHeight;
         psv = Ss;
 
@@ -630,7 +630,6 @@ public class FileDicomJPEG {
 
             // The upper neighbors are predictors for the first column.
             for (curComp = 0; curComp < compsInScan; curComp++) {
-                ci = curComp;
                 d = table.huffDecode(tableNo[curComp]);
 
                 if (d == -1) {
@@ -649,7 +648,6 @@ public class FileDicomJPEG {
             for (col = 1; col < numCOL; col++) {
 
                 for (curComp = 0; curComp < compsInScan; curComp++) {
-                    ci = curComp;
                     d = table.huffDecode(tableNo[curComp]);
                     // if(index > 75)
                     //    
