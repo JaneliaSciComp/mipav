@@ -6,8 +6,6 @@ import jj2000.j2k.*;
 
 import java.io.*;
 
-import javax.swing.JOptionPane;
-
 import gov.nih.mipav.model.structures.*;
 
 /**
@@ -53,6 +51,7 @@ public class ImgReaderRAWSlice extends ImgReader {
     
     protected String fName;
     
+    @SuppressWarnings("unused")
     private boolean savingAsEncJP2 = false;
     
     private int blah = 0;
