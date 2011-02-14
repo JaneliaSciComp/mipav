@@ -7,6 +7,8 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+
 import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
@@ -405,10 +407,8 @@ public class FileImageXML extends FileXML {
         ZipInputStream zin;
         GZIPInputStream gzin;
         CBZip2InputStream bz2in;
-        FileOutputStream out;
         int bytesRead;
         String uncompressedName = null;
-        String tempDir = null;
 
         float[][] resolutions = null;
 
@@ -475,7 +475,7 @@ public class FileImageXML extends FileXML {
 
         try { // Construct a FileRaw to actually read the image.
         	 if ( !new File(fileDir + File.separator + imageFileName).exists()) { 
-        		 int imageDataSize = image.getDataSize();
+        		 
         		 byte[] buffer = new byte[256];
         		 if (new File(fileDir + File.separator + imageFileName + ".zip").exists()) {
         			 int offset = 0;
@@ -1594,7 +1594,7 @@ public class FileImageXML extends FileXML {
         units = myFileInfo.getUnitsOfMeasure();
 
         for (i = 0; i < nDims; i++) {
-            closedTag(datasetAttributesStr[9], FileInfoBase.getUnitsOfMeasureStr(units[i]));
+            closedTag(datasetAttributesStr[9], (Unit.getUnitFromLegacyNum(units[i])).toString());
         }
 
         
@@ -1647,6 +1647,7 @@ public class FileImageXML extends FileXML {
         Iterator iter = matrixMap.keySet().iterator();
 
         // boolean to see if talairach transform info should be used
+        @SuppressWarnings("unused")
         boolean useTal = false;
 
         String currentKey = null;
@@ -2858,7 +2859,7 @@ public class FileImageXML extends FileXML {
         /** DOCUMENT ME! */
         private float contrast = 1f;
 
-        /** DOCUMENT ME! */
+        @SuppressWarnings("unused")
         private int[] data;
 
         /** DOCUMENT ME! */
@@ -2986,7 +2987,7 @@ public class FileImageXML extends FileXML {
      */
     private class LUValue {
 
-        /** DOCUMENT ME! */
+        @SuppressWarnings("unused")
         private boolean hasAlpha = false;
 
         /** DOCUMENT ME! */
@@ -3046,9 +3047,6 @@ public class FileImageXML extends FileXML {
         int acpcPCCount = -1;
 
         /** DOCUMENT ME! */
-        float acpcRes = 0;
-
-        /** DOCUMENT ME! */
         Vector<VOI> annotationVector;
 
         /** DOCUMENT ME! */
@@ -3080,9 +3078,6 @@ public class FileImageXML extends FileXML {
         /** DOCUMENT ME! */
         TransMatrix matrix;
 
-        /** TransformID for each matrix */
-        int transformID;
-
         /** DOCUMENT ME! */
         int matrixCol = -1;
 
@@ -3097,9 +3092,6 @@ public class FileImageXML extends FileXML {
 
         /** DOCUMENT ME! */
         int numParameters;
-
-        /** DOCUMENT ME! */
-        int orientationCount = -1;
 
         /** DOCUMENT ME! */
         float[] origAC = null;
@@ -3163,24 +3155,13 @@ public class FileImageXML extends FileXML {
         int thumbnailYDim = 64;
 
         /** DOCUMENT ME! */
-        int tlrcACPCMaxCount = -1;
-
-        /** DOCUMENT ME! */
-        int tlrcACPCMinCount = -1;
-
-        /** DOCUMENT ME! */
         float[] tlrcRes = null;
 
         /** DOCUMENT ME! */
         int tlrcResCount = -1;
 
         /** DOCUMENT ME! */
-        int tResCount = -1;
-
-        /** DOCUMENT ME! */
         int unitsCount = -1;
-
-        float sliceThickness = 0;
 
         /**
          * Creates a new MyXMLHandler object.
@@ -3269,7 +3250,7 @@ public class FileImageXML extends FileXML {
             } else if (currentKey.equals("Units")) {
                 unitsCount++;
                 Preferences.debug("Units " + unitsCount + ": " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.getUnitsOfMeasureFromStr(elementBuffer), unitsCount);
+                fileInfo.setUnitsOfMeasure(Unit.getUnit(elementBuffer), unitsCount);
             } else if (currentKey.equals("Compression")) {
                 Preferences.debug("Compression: " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
 
