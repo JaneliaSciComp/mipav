@@ -30,15 +30,18 @@ public class FileBioRad extends FileBase {
     private short byteFormat;
 
     /** LUT1 color status. */
+    @SuppressWarnings("unused")
     private int color1;
 
     /** LUT2 color status. */
+    @SuppressWarnings("unused")
     private int color2;
 
     /** DOCUMENT ME! */
     private int dataType;
 
     /** not used in disk files. */
+    @SuppressWarnings("unused")
     private short edited;
 
     /** DOCUMENT ME! */
@@ -85,16 +88,18 @@ public class FileBioRad extends FileBase {
     /** if 0 no notes are present if nonzero 96 byte notes follow after the image data at the end of the file. */
     private int notes;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private short ramp1Max; // LUT1 ramp max
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private short ramp1Min; // LUT1 ramp min
 
     /** LUT2 ramp max. */
+    @SuppressWarnings("unused")
     private short ramp2Max;
 
     /** LUT2 ramp min. */
+    @SuppressWarnings("unused")
     private short ramp2Min;
 
     /** DOCUMENT ME! */
@@ -159,6 +164,7 @@ public class FileBioRad extends FileBase {
     public ModelImage readImage(boolean one) throws IOException {
 
         int i;
+        @SuppressWarnings("unused")
         int num;
         boolean moreNotes;
         int noteNumber;
