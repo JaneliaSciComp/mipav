@@ -97,7 +97,7 @@ public class FileInfoPARREC extends FileInfoBase {
                     if (resolutions[i] > 0.0) {
                         String pixelRes = "Pixel resolution " + i;
                         dialog.appendPrimaryData(pixelRes,
-                                                 Float.toString(resolutions[i]) + " " + getUnitsOfMeasureStr(measure[i]));
+                                                 Float.toString(resolutions[i]) + " " + (Unit.getUnitFromLegacyNum(measure[i])).toString());
                     } // end of if (resolutions[i] > 0.0)
                 } // for (i=0; i < 5; i++)
 
