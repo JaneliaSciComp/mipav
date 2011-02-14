@@ -66,8 +66,7 @@ public void writeShortInt(int b) {
  * */
 public int writeFileFormat() throws IOException {
     byte[] codestream;
-	ByteArrayOutputStream bytestream;
-	int nc = 1;
+
     try{
         // Read and buffer the codestream
 //        fi = new BEBufferedRandomAccessFile(filename,"rw+");
