@@ -95,12 +95,12 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
         float[] buffer;
         float[] sliceBuffer;
         int sliceNumber;
-        Vector vectRand;
+        Vector<Integer> vectRand;
         RandomNumberGen randomGen;
 
         try {
             randomGen = new RandomNumberGen();
-            vectRand = new Vector();
+            vectRand = new Vector<Integer>();
             sliceNumber = srcImage.getExtents()[2];
             randomOrder = new int[sliceNumber];
 
