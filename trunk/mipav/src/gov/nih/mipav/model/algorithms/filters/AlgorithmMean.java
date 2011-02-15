@@ -798,7 +798,6 @@ public class AlgorithmMean extends AlgorithmBase {
         float dotProduct;
         double normI;
         double normJ;
-        double angle;
         double angleSum;
         int index;
         width = srcImage.getExtents()[0];
