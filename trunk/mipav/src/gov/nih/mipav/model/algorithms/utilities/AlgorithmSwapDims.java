@@ -99,8 +99,7 @@ public class AlgorithmSwapDims extends AlgorithmBase {
         int[] axis;
         int imageOrientation;
         float[] startLocs;
-        Vector mats;
-        TransMatrix xfrm;
+        Vector<TransMatrix> mats;
 
         try {
 
@@ -252,7 +251,7 @@ public class AlgorithmSwapDims extends AlgorithmBase {
      */
     private void swap14() {
 
-        int yz, index, t, x, y, z, c;
+        int index, t, x, y, z, c;
         int length;
         float[] buffer;
         float[] resultBuffer;
@@ -260,8 +259,7 @@ public class AlgorithmSwapDims extends AlgorithmBase {
         int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
         int tDim = srcImage.getExtents()[3];
-        int sliceSize;
-        int yzSize;
+        //int yzSize;
         int colorFactor;
         FileInfoBase[] fileInfo, fileInfoR;
         int[] extents;
@@ -280,8 +278,7 @@ public class AlgorithmSwapDims extends AlgorithmBase {
         int[] axis;
         int imageOrientation;
         float[] startLocs;
-        Vector mats;
-        TransMatrix xfrm;
+        Vector<TransMatrix> mats;
 
         try {
 
@@ -291,8 +288,6 @@ public class AlgorithmSwapDims extends AlgorithmBase {
                 colorFactor = 1;
             }
 
-            sliceSize = xDim * yDim * colorFactor;
-            yzSize = yDim * zDim * colorFactor;
             length = colorFactor * xDim * yDim * zDim * tDim;
             buffer = new float[length];
             resultBuffer = new float[length];
