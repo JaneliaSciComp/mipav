@@ -47,19 +47,19 @@ public class FilePARREC extends FileBase {
     
     
     /** vol map **/
-    private HashMap VolMap;
+    private HashMap<String,String> VolMap;
     
     /** slice map **/
-    private HashMap SliceMap;
+    private HashMap<String,Integer> SliceMap;
     
     /** vol parameters **/
-    private HashMap VolParameters;
+    private HashMap<String,String> VolParameters;
     
     /** slice parameters **/
-    private Vector SliceParameters;
+    private Vector<String> SliceParameters;
     
     /** sliecs **/
-    private Vector Slices;
+    private Vector<String> Slices;
     
     /** floating point value = raw value/scaleSlope + rescaleIntercept/(rescaleSlope*scaleSlope) **/
     private float rescaleIntercept[];
@@ -473,9 +473,9 @@ public class FilePARREC extends FileBase {
         VolMap = buildParVolMap();
         SliceMap = buildParSliceMap();
 
-        VolParameters = new HashMap();
-        SliceParameters = new Vector();
-        Slices = new Vector();
+        VolParameters = new HashMap<String,String>();
+        SliceParameters = new Vector<String>();
+        Slices = new Vector<String>();
 
         String nextLine = raFile.readLine();
         
@@ -579,7 +579,9 @@ public class FilePARREC extends FileBase {
         String sl = (String)Slices.get(0);
         String[] values = sl.split("\\s+");
 
+        @SuppressWarnings("unused")
         float slicethk=0;
+        @SuppressWarnings("unused")
         float slicegap =0;
         int ori=0;
         int dim1=0, dim2=0;
@@ -1253,6 +1255,7 @@ public class FilePARREC extends FileBase {
      *
      * @param  fileInfo  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void updateStartLocations(FileInfoBase[] fileInfo) {
         int axisOrient;
 
@@ -1453,7 +1456,9 @@ public class FilePARREC extends FileBase {
 
     //todo: monitor options for cropped data
     public void writeHeader(ModelImage writeImage, FileWriteOptions options) throws IOException {
+    	@SuppressWarnings("unused")
         int bpp=0;
+    	@SuppressWarnings("unused")
         int ori=0;
         switch(outInfo.getDataType()) {
             case ModelStorageBase.FLOAT:
@@ -2089,8 +2094,8 @@ public class FilePARREC extends FileBase {
     }
 
     
-    private HashMap buildParVolMap() {
-        HashMap map = new HashMap();
+    private HashMap<String,String> buildParVolMap() {
+        HashMap<String,String> map = new HashMap<String,String>();
         map.put(".    Patient name","info_patient_name");
         map.put(".    Examination name","scn_exam_name");
         map.put(".    Protocol name","scn_protocol_name");
@@ -2145,8 +2150,8 @@ public class FilePARREC extends FileBase {
         return map;
     }
 
-    private HashMap buildParSliceMap() {
-        HashMap map = new HashMap();
+    private HashMap<String,Integer> buildParSliceMap() {
+        HashMap<String,Integer> map = new HashMap<String,Integer>();
         map.put("#  slice number                             (integer)",new Integer(1));
         map.put("#  echo number                              (integer)",new Integer(1));
         map.put("#  dynamic scan number                      (integer)",new Integer(1));
