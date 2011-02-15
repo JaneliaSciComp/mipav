@@ -239,9 +239,6 @@ public class FileSTK extends FileBase {
     private int planeOffset;
 
     /** DOCUMENT ME! */
-    private float resolution;
-
-    /** DOCUMENT ME! */
     private int samplesPerPixel = 1;
 
     /** DOCUMENT ME! */
@@ -656,6 +653,7 @@ public class FileSTK extends FileBase {
         int index;
         int timeOffset = 0; // used to offset for writing one time slice of a 4D image
         boolean oneFile = true;
+        @SuppressWarnings("unused")
         int offset = 0;
         String prefix, fileSuffix;
         int stripCount, totStripCount;
@@ -980,7 +978,6 @@ public class FileSTK extends FileBase {
         int zDistanceNumerator;
         int zDistanceDenominator;
         boolean zSameDistance;
-        int tag1Reads = 0;
 
         fileInfo.setEndianess(endianess);
         nDirEntries = getUnsignedShort(endianess);
