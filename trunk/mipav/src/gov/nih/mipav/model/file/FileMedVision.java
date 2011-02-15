@@ -57,10 +57,7 @@ public class FileMedVision extends FileBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private byte[] bufferByte = null;
-
-    /** DOCUMENT ME! */
-    private boolean endianess = BIG_ENDIAN;
+    //private boolean endianess = BIG_ENDIAN;
 
     /** DOCUMENT ME! */
     private File file;
@@ -511,7 +508,6 @@ public class FileMedVision extends FileBase {
      */
     private double getMedVisionDouble(boolean endianess) throws IOException {
         double tmp = 0;
-        Double tmpDouble = new Double(0);
         long tmpLong;
         int b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, b7 = 0, b8 = 0;
         int tmpInt;
@@ -546,11 +542,11 @@ public class FileMedVision extends FileBase {
         if (endianess) {
             tmpLong = (((long) b1 << 56) + ((long) b2 << 48) + ((long) b3 << 40) + ((long) b4 << 32) +
                        ((long) b5 << 24) + ((long) b6 << 16) + ((long) b7 << 8) + b8);
-            tmp = tmpDouble.longBitsToDouble(tmpLong);
+            tmp = Double.longBitsToDouble(tmpLong);
         } else {
             tmpLong = (((long) b8 << 56) + ((long) b7 << 48) + ((long) b6 << 40) + ((long) b5 << 32) +
                        ((long) b4 << 24) + ((long) b3 << 16) + ((long) b2 << 8) + b1);
-            tmp = tmpDouble.longBitsToDouble(tmpLong);
+            tmp = Double.longBitsToDouble(tmpLong);
         }
 
         return tmp;
