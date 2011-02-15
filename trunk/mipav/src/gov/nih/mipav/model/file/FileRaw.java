@@ -1,8 +1,6 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.*;
-
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.util.MipavMath;
@@ -37,7 +35,7 @@ public class FileRaw extends FileBase {
     /** DOCUMENT ME! */
     private FileInfoBase fileInfo;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private String fileName;
 
     /** DOCUMENT ME! */
