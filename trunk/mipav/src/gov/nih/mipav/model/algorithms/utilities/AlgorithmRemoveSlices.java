@@ -120,9 +120,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
      * Calculates the final output and stores it in the source image.
      */
     public void calcInPlace() {
-        int plate;
         int zSrc, zDest; // zSrc is slice-depth of srcImage; zDest is slice-depth of destination
-        int axisOfChange;
         float[] imageBuffer;
         float[] resultBuffer = null;
         ModelImage resultImage;
@@ -171,21 +169,6 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
 
         srcImage.releaseLock();
 
-        // make a location & view the progressbar; make length & increment of progressbar.
-
-
-        // get the axis of change
-        try {
-            axisOfChange = getAxisOfChange();
-        } catch (Exception err) {
-            MipavUtil.displayError(err.getMessage());
-            srcImage.releaseLock();
-            setCompleted(false);
-
-
-            return;
-        }
-
         // need to know what the new extents will be
         // there are some cases that need to be checked which may
         // change the number of dimensions of the image
@@ -203,13 +186,11 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             tDestOffset = getOffset(newNDims, newExtents, colorFactor, t);
             tSrcOffset = getOffset(srcImage, colorFactor, t);
 
-            plate = 0;
             zDest = 0;
 
             // start counting the slices of the destination image at the first slice.
             // for all slices in the old image
             for (zSrc = 0; (zSrc < oldZdim) && !threadStopped; zSrc++) {
-                plate = zSrc * sliceArea;
 
                 // let user know something is happening by updating the progressbar
                 fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100));
@@ -354,9 +335,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
      * Calculates the final output and puts it in a destination image.
      */
     public void calcStoreInDest() {
-        int plate;
         int zSrc, zDest; // zSrc is slice-depth of srcImage; zDest is slice-depth of destination
-        int axisOfChange;
         float[] imageBuffer;
         int t;
         int tDim;
@@ -400,19 +379,15 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             return;
         }
 
-        axisOfChange = -1;
-
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             tDestOffset = getOffset(destImage, colorFactor, t);
             tSrcOffset = getOffset(srcImage, colorFactor, t);
 
-            plate = 0;
             zDest = 0;
 
             // start counting the slices of the destination image at the first slice.
             // for all slices in the old image
             for (zSrc = 0; (zSrc < oldZdim) && !threadStopped; zSrc++) {
-                plate = zSrc * sliceArea;
 
                 // let user know something is happening by updating the progressbar
                 fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100));
