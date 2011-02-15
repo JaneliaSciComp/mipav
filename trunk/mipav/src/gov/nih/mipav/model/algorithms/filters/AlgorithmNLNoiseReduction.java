@@ -702,11 +702,7 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
      * @return median value
      */
     private float median3D(final float[] data, final int x, final int y, final int z) {
-        final int i, j;
-        final float tmp;
         int index1, indexX1, indexX2, indexX3;
-        final int N = 25;
-        final int inc = 1;
 
         indexX1 = (x - 1) * xSize;
         indexX2 = x * xSize;
