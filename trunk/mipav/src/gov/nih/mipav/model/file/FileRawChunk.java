@@ -69,13 +69,13 @@ public class FileRawChunk extends FileBase {
     /** DOCUMENT ME! */
     private InflaterInputStream inflaterStream;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int numColors = 3;
 
     /** DOCUMENT ME! */
     private int planarConfig = 0; // 0 = rgb,rgb, 1 = rrr, ggg, bbb
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private boolean RGBAOrder = false;
 
     /** DOCUMENT ME! */
