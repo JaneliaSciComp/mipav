@@ -176,9 +176,6 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private float freqV; // Frequency along V axis before rotation by theta range -1 to 1
 
     /** DOCUMENT ME! */
-    private int halfKDim; // (kernel diameter - 1)/2
-
-    /** DOCUMENT ME! */
     private float highGain; // HOMOMORPHIC variable > 1 for multiplication of high frequencies
 
     /** DOCUMENT ME! */
@@ -205,9 +202,6 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private int kDim; // kernel diameter
 
     /** DOCUMENT ME! */
-    private boolean logMagDisplay; // if true display log10 of 1 + magnitude
-
-    /** DOCUMENT ME! */
     private float lowGain; // HOMOMORPHIC variable < 1 for multiplication of low frequencies
 
     /** DOCUMENT ME! */
@@ -230,12 +224,6 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int newSliceSize;
-
-    /** DOCUMENT ME! */
-    private int originalArrayLength; // size of original buffers (realData and imagData)
-
-    /** DOCUMENT ME! */
-    private int[] originalDimLengths; // original dimension sizes
 
     /** DOCUMENT ME! */
     private float[] phaseData; // phase data
@@ -2526,6 +2514,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     /**
      * Calculates magnitude from real and imaginary parts magnitude = ( (realData)^2 + (imagData)^2 )^(1/2);
      */
+    @SuppressWarnings("unused")
     private void magnitude() {
 
         int i;
@@ -3622,9 +3611,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private void makeKernelData() {
 
         int i;
-        int x, y, z, halfKDim, pos;
-
-        halfKDim = (kDim - 1) / 2;
+        int x, y, z, pos;
 
         if ((ndim == 2) || (image25D)) {
 
@@ -3775,6 +3762,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      *
      * @param  phase  = arctan(imagData/realData);
      */
+    @SuppressWarnings("unused")
     private void phase(float[] phase) {
 
         int i;
