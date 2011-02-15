@@ -4,7 +4,6 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
-import gov.nih.mipav.model.file.*;
 
 import java.io.*;
 
