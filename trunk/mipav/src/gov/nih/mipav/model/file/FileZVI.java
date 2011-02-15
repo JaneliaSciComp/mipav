@@ -5,7 +5,6 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
-import java.util.*;
 import gov.nih.mipav.view.*;
 
 /**
@@ -61,7 +60,7 @@ public class FileZVI extends FileBase {
     
     private static final short VT_I2 = 2;
     
-    private static final short VT_UI2 = 18;
+    //private static final short VT_UI2 = 18;
     
     private static final short VT_I4 = 3;
     
@@ -75,11 +74,11 @@ public class FileZVI extends FileBase {
     
     private static final short VT_DISPATCH = 9;
     
-    private static final short VT_UNKNOWN = 13;
+    //private static final short VT_UNKNOWN = 13;
     
     private static final short VT_BLOB = 65;
     
-    private static final short VT_CLSID = 72;
+    //private static final short VT_CLSID = 72;
    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -308,7 +307,6 @@ public class FileZVI extends FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
-        long fileLength;
         int i, j;
         int sliceBytes;
         int bytesToRead;
@@ -381,10 +379,6 @@ public class FileZVI extends FileBase {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
-            
-            fileLength = raFile.length();
-            
-            
             
             fileInfo = new FileInfoZVI(fileName, fileDir, FileUtility.ZVI); // dummy fileInfo
             fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
@@ -1169,6 +1163,7 @@ public class FileZVI extends FileBase {
         long directoryStart;
         int intValue = 0;
         int stringBytes;
+        @SuppressWarnings("unused")
         String stringValue = null;
         double doubleValue = 0.0;
         short shortValue;
