@@ -430,8 +430,7 @@ public class FileMincHDF extends FileBase {
                 final String attrName = attr.getName();
 
                 if (attrName.equals(FileMincHDF.ATTR_DIM_UNITS)) {
-                    units[dimReorderIndexes[i]] = FileInfoBase
-                            .getUnitsOfMeasureFromStr( ((String[]) attr.getValue())[0]);
+                    units[dimReorderIndexes[i]] = (Unit.getUnit( ((String[]) attr.getValue())[0])).getLegacyNum();
                 } else if (attrName.equals(FileMincHDF.ATTR_DIM_START)) {
                     mincStartLoc[dimReorderIndexes[i]] = ((double[]) attr.getValue())[0];
                 } else if (attrName.equals(FileMincHDF.ATTR_DIM_LENGTH)) {
@@ -627,7 +626,7 @@ public class FileMincHDF extends FileBase {
 
                 // determine the Datatype class (int)
                 final int dataType = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeClass();
-                final int sign = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeSign();
+                //final int sign = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeSign();
                 final boolean isUnsigned = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().isUnsigned();
                 final int order = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeOrder();
                 final int size = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeSize();
@@ -1027,6 +1026,7 @@ public class FileMincHDF extends FileBase {
         try {
             h5File = (H5File) fileFormat.createInstance(fileDir + fileName, FileFormat.READ);
             // h5File = new H5File(fileDir + fileName, FileFormat.READ);
+            @SuppressWarnings("unused")
             final int fid = h5File.open();
         } catch (final Exception e) {
             e.printStackTrace();
