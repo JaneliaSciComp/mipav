@@ -28,17 +28,36 @@ public interface ScreenCoordinateListener
      */
     public int getHeight();
     
+    /**
+     * Returns the image resolution factor in the screen x-direction.
+     * @return image resolution factor in the screen x-direction.
+     */
     public float getResolutionX();
-    
+    /**
+     * Returns the image resolution factor in the screen y-direction.
+     * @return image resolution factor in the screen y-direction.
+     */
     public float getResolutionY();
 
+    /**
+     * Returns the currently displayed image slice.
+     * @return the currently displayed image slice.
+     */
     public int getSlice();
     /**
      * Returns the width of the display canvas.
      * @return width of the display canvas.
      */
     public int getWidth();
+    /**
+     * Returns the image magnification factor in the screen x-direction.
+     * @return the image magnification factor in the screen x-direction.
+     */
     public float getZoomX();
+    /**
+     * Returns the image magnification factor in the screen y-direction.
+     * @return the image magnification factor in the screen y-direction.
+     */
     public float getZoomY();
     /**
      * Converts local patient coordinate view (Axial, Coronal, Sagittal) of the image into the original file coordinate
