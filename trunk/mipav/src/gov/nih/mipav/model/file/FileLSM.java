@@ -3972,6 +3972,7 @@ public class FileLSM extends FileBase {
         int timeStampBytes;
         int timeStampNumber = 0;
         boolean haveTimeStamps = false;
+        @SuppressWarnings("unused")
         int allEventsBytes;
         int thisEventBytes;
         int eventNumber;
