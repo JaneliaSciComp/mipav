@@ -55,6 +55,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
     private float[] norm; // one slice long to store [hi-pass]/[lo-pass]
 
     /** when true, indicates whether to process the colour channel. */
+    @SuppressWarnings("unused")
     private boolean rChannel, gChannel, bChannel;
 
     /** UnsharpMask sigmas, for blurring. */
@@ -65,9 +66,6 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
 
     /** the UnsharpMask algorithm, to hi-pass filter the image. */
     private AlgorithmUnsharpMask unsharper;
-
-    /** Indicitive of the number of colours per pixel. Monochrome is 1; Colour is 4 (alpha, red, green, blue). */
-    private int valuesPerPixel = 1;
 
     /** UnsharpMask weighting factor. */
     private float weightingFactor;
@@ -110,7 +108,6 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
 
         if (src.isColorImage()) {
             isColourImage = true;
-            valuesPerPixel = 4;
         }
     }
 
