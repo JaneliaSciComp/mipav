@@ -29,10 +29,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
     private int colorFactor = 1;
 
     /** DOCUMENT ME! */
-    private Vector inputRanges = null;
-
-    /** DOCUMENT ME! */
-    private double inputVal;
+    private Vector<Values> inputRanges = null;
 
     /** DOCUMENT ME! */
     private double outputVal;
@@ -47,7 +44,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
      * @param  input      double input value to replace
      * @param  output     double value to replace with
      */
-    public AlgorithmReplaceValue(ModelImage destImage, ModelImage srcImage, Vector input, double output) {
+    public AlgorithmReplaceValue(ModelImage destImage, ModelImage srcImage, Vector<Values> input, double output) {
         super(destImage, srcImage);
 
         // this.inputVal = input;
