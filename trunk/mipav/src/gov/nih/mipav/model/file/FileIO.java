@@ -390,7 +390,6 @@ public class FileIO {
         int nListImages;
         final float[] tPt = new float[3];
         TransMatrix matrix = null;
-        final TransMatrix tMatrix = null;
         String studyID = new String();
         String seriesNo = new String();
         String acqNo = new String();
@@ -420,7 +419,7 @@ public class FileIO {
             // use the selectedFileName as the reference slice for the file info tag tables
             imageFile = new FileDicom(selectedFileName, fileDir);
             imageFile.setQuiet(quiet); // if we want quiet, we tell the reader, too.
-            final boolean headerRead = imageFile.readHeader(true); // can we read the header?
+            //final boolean headerRead = imageFile.readHeader(true); // can we read the header?
             final String modality = getModality(imageFile);
             if (modality.equals("SR")) {
                 // TODO:Structured report handling would be implemented here (since the rest of this method reads the
@@ -848,7 +847,6 @@ public class FileIO {
                         tz.add(ref0); // remove 1st orient, put in timezone
                         Preferences.debug("Loading, and making comparison to: " + ref0.getIndex() + ".."
                                 + ref0.getLocation() + "\n", Preferences.DEBUG_FILEIO);
-
                         Vector<OrientStatus> orientsClone = (Vector<OrientStatus>) orientsList.clone();
 
                         for (final Enumeration<OrientStatus> e = orientsClone.elements(); e.hasMoreElements();) {
@@ -8603,6 +8601,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
+    @SuppressWarnings("unused")
     private ModelImage readQT(final String fileName, final String fileDir) {
 
         // QuickTime
@@ -11534,7 +11533,6 @@ public class FileIO {
 
         final int beginSlice = options.getBeginSlice();
         final int endSlice = options.getEndSlice();
-        final MemoryImageSource memImageA;
 
         for (int i = beginSlice; i <= endSlice; i++) {
 
@@ -12340,7 +12338,6 @@ public class FileIO {
      */
     private boolean writeJpeg2000(final ModelImage image, final FileWriteOptions options) {
         FileJP2 imageFile;
-        final int[] extents;
 
         try { // Construct a new file object
             progressBar = new ViewJProgressBar(options.getFileName(), FileIO.FILE_WRITE + options.getFileName()
