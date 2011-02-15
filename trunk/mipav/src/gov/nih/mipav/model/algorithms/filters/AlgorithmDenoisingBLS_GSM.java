@@ -912,8 +912,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Vector buildFullSFpyr2(double[] im, int imx, int imy, int ht, int order, double twidth, Vector pind) {
-        Vector pyr = null;
+    private Vector<double[]> buildFullSFpyr2(double[] im, int imx, int imy, int ht, int order, double twidth, Vector<int[]> pind) {
+        Vector<double[]> pyr = null;
         int max_ht;
         int nbands;
         int ctrx;
@@ -1207,7 +1207,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  pyr A vector containing the N pyramid subbands, ordered from fine to coarse
      */
-    private Vector buildSFpyr(double[] im, int imx, int imy, int ht, int order, double twidth, Vector pind) {
+    private Vector<double[]> buildSFpyr(double[] im, int imx, int imy, int ht, int order, double twidth, Vector<int[]> pind) {
         int max_ht;
         int nbands;
         int ctrx;
@@ -1232,7 +1232,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double[][] hi0mask;
         double[] hi0dftr;
         double[] hi0dfti;
-        Vector pyr;
+        Vector<double[]> pyr;
         int[] intMat;
 
         // log2(x) = loge(x)/loge(2)
@@ -1404,9 +1404,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Vector buildSFpyrLevs(double[] lodftr_orig, double[] lodfti_orig, int lodx, int lody,
+    private Vector<double[]> buildSFpyrLevs(double[] lodftr_orig, double[] lodfti_orig, int lodx, int lody,
                                   double[][] lograd_orig, double[] xrcos, double[] yrcos, double[][] angle_orig, int ht,
-                                  int nbands, Vector pind) {
+                                  int nbands, Vector<int[]> pind) {
         FFTUtility fftUtil;
         double[][] bands;
         int[][] bind;
@@ -1437,9 +1437,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double[][] temp;
         double[] yircos;
         double[][] lomask;
-        Vector pyr = new Vector();
-        Vector npyr;
-        Vector nind = new Vector();
+        Vector<double[]> pyr = new Vector<double[]>();
+        Vector<double[]> npyr;
+        Vector<int[]> nind = new Vector<int[]>();
         logy = lograd_orig.length;
         logx = lograd_orig[0].length;
 
@@ -1726,10 +1726,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Vector buildWpyr(double[] im, int imx, int imy, int ht, int filt, int edges, Vector pind) {
+    private Vector<double[]> buildWpyr(double[] im, int imx, int imy, int ht, int filt, int edges, Vector<int[]> pind) {
 
         // pyr is a vector containing the N pyramid subbands, ordered from fine to coarse.
-        Vector pyr = new Vector();
+        Vector<double[]> pyr = new Vector<double[]>();
         double[] kernel;
         double[] hkernel;
         int stag;
@@ -1757,8 +1757,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int[] lohiy = new int[1];
         int[] hilox = new int[1];
         int[] hiloy = new int[1];
-        Vector nind = new Vector();
-        Vector npyr;
+        Vector<int[]> nind = new Vector<int[]>();
+        Vector<double[]> npyr;
 
         kernel = namedFilter(filt, 0);
 
@@ -1798,7 +1798,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
 
             if (pyr == null) {
-                pyr = new Vector();
+                pyr = new Vector<double[]>();
             }
 
             pyr.add(im);
@@ -1811,7 +1811,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
 
             if (pind == null) {
-                pind = new Vector();
+                pind = new Vector<int[]>();
             }
 
             pind.add(intMat);
@@ -1848,7 +1848,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
 
                 if (pyr == null) {
-                    pyr = new Vector();
+                    pyr = new Vector<double[]>();
                 }
 
                 pyr.add(hihi);
@@ -1859,7 +1859,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
 
                 if (pind == null) {
-                    pind = new Vector();
+                    pind = new Vector<int[]>();
                 }
 
                 intMat = new int[2];
@@ -1874,7 +1874,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
 
                 if (pyr == null) {
-                    pyr = new Vector();
+                    pyr = new Vector<double[]>();
                 }
 
                 pyr.add(lohi);
@@ -1887,7 +1887,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
 
                 if (pind == null) {
-                    pind = new Vector();
+                    pind = new Vector<int[]>();
                 }
 
                 intMat = new int[2];
@@ -1925,8 +1925,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  A vector containing the N pyramid subbands, ordered from fine to coarse.
      */
-    private Vector buildWUpyr(double[] im, int imx, int imy, int nScales, int daubOrder, Vector pind) {
-        Vector pyr = new Vector();
+    private Vector<double[]> buildWUpyr(double[] im, int imx, int imy, int nScales, int daubOrder, Vector<int[]> pind) {
+        Vector<double[]> pyr = new Vector<double[]>();
         double[] dummy = new double[1];
         double[] h;
         double[][] lpr = null;
@@ -2654,10 +2654,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      */
     private double[] decompReconst(double[] fn, int fnx, int fny, double[] noise, int noisex, int noisey) {
         double[] fh = null;
-        Vector pind = new Vector();
-        Vector pyr = null;
-        Vector pyrN = null;
-        Vector pyrh = new Vector();
+        Vector<int[]> pind = new Vector<int[]>();
+        Vector<double[]> pyr = null;
+        Vector<double[]> pyrN = null;
+        Vector<double[]> pyrh = new Vector<double[]>();
         int bandNum;
         int nband;
         double[] aux = null;
@@ -2829,11 +2829,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      */
     private double[] decompReconstFull(double[] im, int imx, int imy, double[] noise, int noisex, int noisey) {
         double[] fh = null;
-        Vector pind = new Vector();
-        Vector pindN = new Vector();
-        Vector pyr = null;
-        Vector pyrN = null;
-        Vector pyrh;
+        Vector<int[]> pind = new Vector<int[]>();
+        Vector<int[]> pindN = new Vector<int[]>();
+        Vector<double[]> pyr = null;
+        Vector<double[]> pyrN = null;
+        Vector<double[]> pyrh;
         int bandNum;
         int nband;
         double[] aux = null;
@@ -3017,10 +3017,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      */
     private double[] decompReconstW(double[] im, int imx, int imy, int filter, double[] noise, int noisex, int noisey) {
         double[] fh = null;
-        Vector pind = new Vector();
-        Vector pyr = null;
-        Vector pyrN = null;
-        Vector pyrh;
+        Vector<int[]> pind = new Vector<int[]>();
+        Vector<double[]> pyr = null;
+        Vector<double[]> pyrN = null;
+        Vector<double[]> pyrh;
         int bandNum;
         int nband;
         double[] aux = null;
@@ -3199,10 +3199,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private double[] decompReconstWU(double[] im, int imx, int imy, int daubOrder, double[] noise, int noisex,
                                      int noisey) {
         double[] fh = null;
-        Vector pind = new Vector();
-        Vector pyr = null;
-        Vector pyrN = null;
-        Vector pyrh = new Vector();
+        Vector<int[]> pind = new Vector<int[]>();
+        Vector<double[]> pyr = null;
+        Vector<double[]> pyrN = null;
+        Vector<double[]> pyrh = new Vector<double[]>();
         int bandNum;
         int nband;
         double[] aux = null;
@@ -5755,7 +5755,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return   DOCUMENT ME!
      */
-    private double[] pyrBand(Vector pyr, Vector pind, int band, int[] x, int[] y) {
+    private double[] pyrBand(Vector<double[]> pyr, Vector<int[]> pind, int band, int[] x, int[] y) {
         double[] arr;
         int[] intMat;
 
@@ -5817,7 +5817,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private double[] reconFullSFpyr2(Vector pyr, Vector pind, int[] levs, int[] bands, double twidth) {
+    private double[] reconFullSFpyr2(Vector<double[]> pyr, Vector<int[]> pind, int[] levs, int[] bands, double twidth) {
         boolean allLevs = false;
         boolean allBands = false;
         int nbands;
@@ -6220,7 +6220,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private double[] reconSFpyr(Vector pyr, Vector pind, int[] levs, int[] bands, double twidth) {
+    private double[] reconSFpyr(Vector<double[]> pyr, Vector<int[]> pind, int[] levs, int[] bands, double twidth) {
         boolean allLevs = false;
         boolean allBands = false;
         int nbands;
@@ -6497,7 +6497,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private double[][] reconSFpyrLevs(Vector pyr, Vector pind, double[][] log_rad_orig, double[] xrcos, double[] yrcos,
+    private double[][] reconSFpyrLevs(Vector<double[]> pyr, Vector<int[]> pind, double[][] log_rad_orig, double[] xrcos, double[] yrcos,
                                       double[][] angle, int nbands, int[] levs, int[] bands) {
         int lo_ind;
         int dimX;
@@ -6793,7 +6793,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private double[] reconWpyr(Vector pyr, Vector ind, int filt, int edges, int[] levs, int[] bands, int[] resX,
+    private double[] reconWpyr(Vector<double[]> pyr, Vector<int[]> ind, int filt, int edges, int[] levs, int[] bands, int[] resX,
                                int[] resY) {
         double[] res = null;
         boolean allLevs = false;
@@ -7067,7 +7067,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private double[] reconWUpyr(Vector pyr, Vector pind, int daubOrder) {
+    private double[] reconWUpyr(Vector<double[]> pyr, Vector<int[]> pind, int daubOrder) {
         double[] res = null;
         double[] h;
         double[] yh = null;
@@ -7533,7 +7533,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private int spyrHt(Vector pind) {
+    private int spyrHt(Vector<int[]> pind) {
         int ht = 0;
         int nbands;
 
@@ -7558,7 +7558,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private int spyrNumBands(Vector pind) {
+    private int spyrNumBands(Vector<int[]> pind) {
         int nbands = 0;
         int b;
         int x;
@@ -7664,7 +7664,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private int wpyrHt(Vector pind) {
+    private int wpyrHt(Vector<int[]> pind) {
         int[] intMat;
         int nbands;
         int ht;
