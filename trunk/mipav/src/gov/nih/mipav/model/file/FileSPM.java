@@ -63,7 +63,7 @@ public class FileSPM extends FileBase {
     private static final int DT_NONE = 0;
 
     /** DOCUMENT ME! */
-    private static final int DT_UNKNOWN = 0;
+    //private static final int DT_UNKNOWN = 0;
 
     /** DOCUMENT ME! */
     private static final int DT_BINARY = 1;
@@ -99,7 +99,7 @@ public class FileSPM extends FileBase {
     private static final int DT_RGB = 128;
 
     /** DOCUMENT ME! */
-    private static final int DT_ALL = 255;
+    //private static final int DT_ALL = 255;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -122,8 +122,6 @@ public class FileSPM extends FileBase {
 
     /** DOCUMENT ME! */
     private ModelImage image;
-    
-    private int extendedHeaderSize = 0;
     
     private String headerFileName;
     
@@ -1042,9 +1040,6 @@ public class FileSPM extends FileBase {
         int nImagesSaved;
         int nTimePeriodsSaved;
 
-        int beginSlice = options.getBeginSlice();
-        int endSlice = options.getEndSlice();
-
         index = fileName.lastIndexOf(".");
 
         if (index != -1) {
@@ -1102,7 +1097,7 @@ public class FileSPM extends FileBase {
     protected void updateUnitsOfMeasure(FileInfoSPM fileInfo) {
 
         // if vox units defines the units of measure, then use that instead
-        int units = FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
+        int units = (Unit.getUnit(fileInfo.getVoxUnits())).getLegacyNum();
 
         if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
             fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
@@ -1130,7 +1125,7 @@ public class FileSPM extends FileBase {
         int[] extents = fileInfo.getExtents();
 
         // if vox units defines the units of measure, then use that instead
-        int units = FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
+        int units = (Unit.getUnit(fileInfo.getVoxUnits())).getLegacyNum();
 
         if (image.getNDims() == 2) {
 
@@ -1379,7 +1374,7 @@ public class FileSPM extends FileBase {
             // make sure that VoxUnits has been updated to match the unitsOfMeasure
             // in FileInfoBase.  Assume that this is the unit of measure for the x and
             // y dimensions.
-            fileInfo.setVoxUnits(FileInfoBase.getUnitsOfMeasureAbbrevStr(fileInfo.getUnitsOfMeasure(0)));
+            fileInfo.setVoxUnits((Unit.getUnitFromLegacyNum(fileInfo.getUnitsOfMeasure(0))).getAbbrev());
             setBufferString(bufferByte, fileInfo.getVoxUnits(), 56);
             setBufferString(bufferByte, fileInfo.getCalUnits(), 60);
 
@@ -1467,7 +1462,7 @@ public class FileSPM extends FileBase {
 
             // set the voxUnits based on the Units of Measure
             int[] units = myFileInfo.getUnitsOfMeasure();
-            String voxUnits = FileInfoBase.getUnitsOfMeasureAbbrevStr(units[0]);
+            String voxUnits = (Unit.getUnitFromLegacyNum(units[0])).getAbbrev();
             fileInfo.setUnitsOfMeasure(units);
             fileInfo.setVoxUnits(voxUnits);
             setBufferString(bufferByte, voxUnits, 56);
