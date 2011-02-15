@@ -32,9 +32,6 @@ public class AlgorithmNoise extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Used to store string representation of the noise type. */
-    private String[] algorithmName = { "GAUSSIAN", "POISSON", "UNIFORM" };
-
     /** Noise level to be added to the image. Default in NaN. */
     private double level = Double.NaN;
 
