@@ -74,7 +74,7 @@ public class FileMRC extends FileBase {
     /** DOCUMENT ME! */
     private int nx, ny, nz;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int nXStart, nYStart, nZStart; /* Starting point of each sub image. */
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
