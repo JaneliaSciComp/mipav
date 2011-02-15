@@ -48,8 +48,6 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
     /** Whether to perform trilinear filtering when getting intensities of points on the source image. */
     private boolean trilinearFlag = true;
-    
-    private ModelImage testImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
