@@ -2738,6 +2738,7 @@ public class FileRaw extends FileBase {
     public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
         int i, k;
         int[] extents;
+        @SuppressWarnings("unused")
         int nBuffers;
         int bufferSize;
         int offset = 0;
@@ -2843,7 +2844,6 @@ public class FileRaw extends FileBase {
         int k, seq;
         int[] extents;
         int bufferSize;
-        int offset = 0;
         int beginSlice = options.getBeginSlice();
         int endSlice = options.getEndSlice();
 
@@ -2951,9 +2951,6 @@ public class FileRaw extends FileBase {
 
         int[] extents;
         int volSize = 0;
-        int offset = 0;
-        int beginSlice = options.getBeginSlice();
-        int endSlice = options.getEndSlice();
 
         int beginTimePeriod = options.getBeginTime();
         int endTimePeriod = options.getEndTime();
