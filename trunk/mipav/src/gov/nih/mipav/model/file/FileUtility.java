@@ -622,7 +622,6 @@ public class FileUtility {
 
                     if (fileListBuffer[i].trim().toLowerCase().endsWith(suffix.toLowerCase())) { // note: not case
                         // sensitive!
-                        final String text = FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim());
                         if (FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim()).equals(subName)) {
                             fileList[j] = fileListBuffer[i];
                             j++;
