@@ -63,12 +63,6 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
     /** Red channel. */
     private static final int RED_OFFSET = 1;
 
-    /** Green channel. */
-    private static final int GREEN_OFFSET = 2;
-
-    /** Blue channel. */
-    private static final int BLUE_OFFSET = 3;
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** If true calculate angular second moment Sum over i,j of Probability(i,j) * Probability(i,j). */
