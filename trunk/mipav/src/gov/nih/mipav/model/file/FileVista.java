@@ -431,8 +431,8 @@ public class FileVista extends FileBase {
     				 if(image.getFileInfo(0)instanceof  FileInfoVista) {
     						ArrayList<HashMap<String,String>> imagesInfo = ((FileInfoVista)(image.getFileInfo(0))).getImagesInfo();
     						 HashMap<String,String> info = imagesInfo.get(0);
-    						 Set keys = info.keySet();
-    						 Iterator iter = keys.iterator();
+    						 Set<String> keys = info.keySet();
+    						 Iterator<String> iter = keys.iterator();
     						 boolean hasBandtype = false;
     						 while(iter.hasNext()) {
     							 key = (String)iter.next();
@@ -584,8 +584,8 @@ public class FileVista extends FileBase {
         				 if(image.getFileInfo(0)instanceof  FileInfoVista) {
         						ArrayList<HashMap<String,String>> imagesInfo = ((FileInfoVista)(image.getFileInfo(0))).getImagesInfo();
         						 HashMap<String,String> info = imagesInfo.get(0);
-        						 Set keys = info.keySet();
-        						 Iterator iter = keys.iterator();
+        						 Set<String> keys = info.keySet();
+        						 Iterator<String> iter = keys.iterator();
         						 boolean hasBandtype = false;
         						 while(iter.hasNext()) {
         							 key = (String)iter.next();
