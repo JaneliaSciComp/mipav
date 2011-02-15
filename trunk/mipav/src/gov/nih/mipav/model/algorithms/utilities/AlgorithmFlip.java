@@ -9,8 +9,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -54,10 +52,6 @@ public class AlgorithmFlip extends AlgorithmBase {
 
     /** Type of object to flip. */
     private int flipObject;
-
-    /** Whether all VOIs shouold be flipped when the image is flipped. */
-
-    private boolean flipVoiWithImage;
     
     /** Whether orientation and origin should change with flipping. */
     private boolean changeOrientationOrigin;
@@ -82,8 +76,6 @@ public class AlgorithmFlip extends AlgorithmBase {
         } else {
             flipAxis = Y_AXIS;
         }
-
-        flipVoiWithImage = false;
     }
 
     /**
@@ -405,7 +397,7 @@ public class AlgorithmFlip extends AlgorithmBase {
 
             if (flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
                 VOIVector vec = srcImage.getVOIs();
-                Iterator vecIter = vec.iterator();
+                Iterator<VOI> vecIter = vec.iterator();
 
                 while (vecIter.hasNext()) {
                     VOI nextVoi = (VOI) vecIter.next();
@@ -445,14 +437,14 @@ public class AlgorithmFlip extends AlgorithmBase {
             
         } else if (flipObject == AlgorithmFlip.VOI_TYPE) {
             ViewVOIVector vec = srcImage.getVOIs();
-            Iterator vecIter = vec.iterator();
+            Iterator<VOI> vecIter = vec.iterator();
             
             while (vecIter.hasNext()) {
                 VOI nextVoi = (VOI) vecIter.next();
                 if (nextVoi.isActive()) {
                     for (i = 0; i < nextVoi.getCurves().size(); i++) {
                         VOIBase base = nextVoi.getCurves().get(i);
-                        Iterator itr = base.iterator();
+                        Iterator<Vector3f> itr = base.iterator();
 
                         while (itr.hasNext()) {
                             Vector3f point = (Vector3f) itr.next();
@@ -495,23 +487,24 @@ public class AlgorithmFlip extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private class ShapeHolder {
 
         /** DOCUMENT ME! */
         private boolean isConstructed;
 
         /** DOCUMENT ME! */
-        private ArrayList shapeList;
+        private ArrayList<Object> shapeList;
 
         /** DOCUMENT ME! */
-        private ArrayList sliceList;
+        private ArrayList<Integer> sliceList;
 
         /**
          * Creates a new ShapeHolder object.
          */
         private ShapeHolder() {
-            shapeList = new ArrayList();
-            sliceList = new ArrayList();
+            shapeList = new ArrayList<Object>();
+            sliceList = new ArrayList<Integer>();
             isConstructed = true;
         }
 
@@ -575,7 +568,7 @@ public class AlgorithmFlip extends AlgorithmBase {
          * @return  DOCUMENT ME!
          */
         private Object[] getShapesAtSlice(int slice) {
-            ArrayList tempShapes = new ArrayList();
+            ArrayList<Object> tempShapes = new ArrayList<Object>();
 
             for (int i = 0; i < sliceList.size(); i++) {
 
