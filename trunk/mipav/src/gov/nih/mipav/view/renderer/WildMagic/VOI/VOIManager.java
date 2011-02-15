@@ -796,225 +796,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}    
 	}
 
+
 	/**
-	 * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
-	 * starting point.
-	 *
-	 * @param  startPtX  the start point
-	 * @param  startPtY  the start point
-	 * @param  level     the level of the level set
-    private VOIBase singleLevelSet(float startPtX, float startPtY, float level) {
-
-        int x, y;
-        int index;
-        double distance;
-        stack.removeAllElements();
-
-        if (imageBufferActive == null) {
-            return;
-        }
-
-        int xDim = m_aiLocalImageExtents[0];
-        int yDim = m_aiLocalImageExtents[1];
-
-        for (int i = 0; i < map.size(); i++) {
-            map.clear(i);
-        }
-
-        if (startPtX >= (xDim - 1)) {
-            return;
-        }
-
-        if (startPtY >= (yDim - 1)) {
-            return;
-        }
-
-        x = (int) (startPtX + 0.5);
-        y = (int) (startPtY + 0.5);
-
-        levelSetStack.reset();
-        levelSetStack.addPoint(x, y);
-        map.set((y * xDim) + x);
-
-        int dir = -1;
-        float diff = 100000;
-
-        do {
-            index = (y * xDim) + x;
-
-            if ((x >= 2) && (x < (xDim - 2)) && (y >= 2) && (y < (yDim - 2))) {
-
-                if ((avgPix(index - xDim) >= level) &&
-                        ((avgPix(index - xDim + 1) < level) || (avgPix(index) < level) ||
-                             (avgPix(index - xDim - 1) < level) || (avgPix(index - (2 * xDim)) < level)) &&
-                        (map.get(index - xDim) == false)) {
-                    dir = 1;
-                    diff = Math.abs(avgPix(index - xDim) - avgPix(index));
-                }
-
-                if ((avgPix(index - xDim + 1) >= level) &&
-                        ((avgPix(index - xDim + 2) < level) || (avgPix(index + 1) < level) ||
-                             (avgPix(index - xDim) < level) || (avgPix(index - (2 * xDim) + 1) < level)) &&
-                        (map.get(index - xDim + 1) == false)) {
-
-                    if (Math.abs(avgPix(index - xDim + 1) - avgPix(index)) < diff) {
-                        dir = 2;
-                        diff = Math.abs(avgPix(index - xDim + 1) - avgPix(index));
-                    }
-                }
-
-                if ((avgPix(index + 1) >= level) &&
-                        ((avgPix(index + 2) < level) || (avgPix(index + xDim + 1) < level) || (avgPix(index) < level) ||
-                             (avgPix(index - xDim + 1) < level)) && (map.get(index + 1) == false)) {
-
-                    if (Math.abs(avgPix(index + 1) - avgPix(index)) < diff) {
-                        dir = 3;
-                        diff = Math.abs(avgPix(index + 1) - avgPix(index));
-                    }
-                }
-
-                if ((avgPix(index + xDim + 1) >= level) &&
-                        ((avgPix(index + xDim + 2) < level) || (avgPix(index + (2 * xDim) + 1) < level) ||
-                             (avgPix(index + 1) < level) || (avgPix(index + xDim) < level)) &&
-                        (map.get(index + xDim + 1) == false)) {
-
-                    if (Math.abs(avgPix(index + xDim + 1) - avgPix(index)) < diff) {
-                        dir = 4;
-                        diff = Math.abs(avgPix(index + xDim + 1) - avgPix(index));
-                    }
-                }
-
-                if ((avgPix(index + xDim) >= level) &&
-                        ((avgPix(index + xDim + 1) < level) || (avgPix(index + (2 * xDim)) < level) ||
-                             (avgPix(index + xDim - 1) < level) || (avgPix(index) < level)) &&
-                        (map.get(index + xDim) == false)) {
-
-                    if (Math.abs(avgPix(index + xDim) - avgPix(index)) < diff) {
-                        dir = 5;
-                        diff = Math.abs(avgPix(index + xDim) - avgPix(index));
-                    }
-                }
-
-                if ((avgPix(index + xDim - 1) >= level) &&
-                        ((avgPix(index + xDim) < level) || (avgPix(index + (2 * xDim) - 1) < level) ||
-                             (avgPix(index + xDim - 2) < level) || (avgPix(index - 1) < level)) &&
-                        (map.get(index + xDim - 1) == false)) {
-
-                    if (Math.abs(avgPix(index + xDim - 1) - avgPix(index)) < diff) {
-                        dir = 6;
-                        diff = Math.abs(avgPix(index + xDim - 1) - avgPix(index));
-                    }
-                }
-
-                if ((avgPix(index - 1) >= level) &&
-                        ((avgPix(index) < level) || (avgPix(index + xDim - 1) < level) || (avgPix(index - 2) < level) ||
-                             (avgPix(index - xDim - 1) < level)) && (map.get(index - 1) == false)) {
-
-                    if (Math.abs(avgPix(index - 1) - avgPix(index)) < diff) {
-                        dir = 7;
-                        diff = Math.abs(avgPix(index - 1) - avgPix(index));
-                    }
-                }
-
-                if ((avgPix(index - xDim - 1) >= level) &&
-                        ((avgPix(index - xDim) < level) || (avgPix(index - 1) < level) ||
-                             (avgPix(index - xDim - 2) < level) || (avgPix(index - (2 * xDim) - 1) < level)) &&
-                        (map.get(index - xDim - 1) == false)) {
-
-                    if (Math.abs(avgPix(index - xDim - 1) - avgPix(index)) < diff) {
-                        dir = 0;
-                        // diff = Math.abs(imageBufferActive[index-xDim-1] - imageBufferActive[index]);
-                    }
-                }
-
-                diff = 1000000;
-
-                if (dir == 1) {
-                    // x = x;
-                    y = y - 1;
-                    map.set(index - xDim);
-                    paths(index, 1, level);
-                } else if (dir == 2) {
-                    x = x + 1;
-                    y = y - 1;
-                    map.set(index - xDim + 1);
-                    paths(index, 2, level);
-                } else if (dir == 3) {
-                    x = x + 1;
-                    // y = y;
-                    map.set(index + 1);
-                    paths(index, 3, level);
-                } else if (dir == 4) {
-                    x = x + 1;
-                    y = y + 1;
-                    map.set(index + xDim + 1);
-                    paths(index, 4, level);
-                } else if (dir == 5) {
-                    // x = x;
-                    y = y + 1;
-                    map.set(index + xDim);
-                    paths(index, 5, level);
-                } else if (dir == 6) {
-                    x = x - 1;
-                    y = y + 1;
-                    map.set(index + xDim - 1);
-                    paths(index, 6, level);
-                } else if (dir == 7) {
-                    x = x - 1;
-                    // y = y;
-                    map.set(index - 1);
-                    paths(index, 7, level);
-                } else if (dir == 0) {
-                    x = x - 1;
-                    y = y - 1;
-                    map.set(index - xDim - 1);
-                    paths(index, 0, level);
-                } else {
-
-                    if (!stack.empty()) {
-                        int ptr = ((int[]) stack.pop())[0];
-                        x = levelSetStack.getPointX(ptr);
-                        y = levelSetStack.getPointY(ptr);
-                        levelSetStack.setIndex(ptr);
-                    } else {
-                        x = y = -1;
-                    }
-                }
-
-                dir = -1;
-            } else { // near edge of image
-                levelSetStack.reset();
-
-                break;
-            }
-
-            if ((x == -1) || (y == -1)) {
-                levelSetStack.reset();
-
-                break;
-            }
-
-            levelSetStack.addPoint(x, y);
-
-            distance = ((x - startPtX) * (x - startPtX)) + ((y - startPtY) * (y - startPtY));
-
-            if ((distance < 2.1) && (levelSetStack.size() < 10)) {
-                distance = 10;
-            }
-        } while (distance > 2.1);
-
-
-        if (levelSetStack.size() != 0) {
-            return levelSetStack.exportPolygon();
-        } else {
-            System.err.println( "singleLevelSet return null" );
-            return null;
-        }
-    }
-
+	 * Called from the JDialogEditCircleDiameter. Changes the diameter of a circly VOI.
+	 * @param kVOI the selected VOI to change.
+	 * @param radius the new diameter.
 	 */
-
-
 	public void editCircleDiameter(VOIBase kVOI, float radius) {
 		for ( int i = 0; i < m_iCirclePts; i++ )
 		{
@@ -1037,6 +824,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 	}
 
+	/**
+	 * Called from JDialogEditSquareLenth, changes the length of the selected square VOI.
+	 * @param kVOI the selected square VOI to change.
+	 * @param length the new length.
+	 */
 	public void editSquareLength(VOIBase kVOI, float length) {
 		float halfLength = length/2;
 		Vector3f sCtr = m_kDrawingContext.fileToScreenVOI( kVOI.getGeometricCenter() );
@@ -1045,13 +837,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		int y1 = (int)(sCtr.Y - (halfLength*zoomX));
 		length = length * zoomX;
 		updateRectangle( (x1 + (int)length), x1, (y1 + (int)length), y1 );
-
-
-
-
-
-
-
 		//updateRectangle( x1, (x1 + (int)length), y1, (y1 + (int)length));
 		m_kParent.updateDisplay();
 
@@ -1067,6 +852,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return m_kComponent;
 	}
 
+	/**
+	 * Returns a ModelImage in the local image space, if a local ModelImage has already been created it is returned.
+	 * @return a ModelImage in the local image space.
+	 */
 	public ModelImage getLocalImage()
 	{
 		if ( m_iPlaneOrientation == FileInfoBase.UNKNOWN_ORIENT )
@@ -1175,7 +964,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see java.awt.event.KeyListener#keyPressed(java.awt.event.KeyEvent)
 	 */
-	@Override
 	public void keyPressed(KeyEvent e) {
 		if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
 		{
@@ -1209,7 +997,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see java.awt.event.KeyListener#keyReleased(java.awt.event.KeyEvent)
 	 */
-	@Override
 	public void keyReleased(KeyEvent e) {
 		if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
 		{
@@ -1242,7 +1029,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see java.awt.event.KeyListener#keyTyped(java.awt.event.KeyEvent)
 	 */
-	@Override
 	public void keyTyped(KeyEvent e){}
 
 	/**
@@ -1276,7 +1062,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
-	@Override
 	public void mouseClicked(MouseEvent kEvent) {
 		m_fMouseX = kEvent.getX();
 		m_fMouseY = kEvent.getY();
@@ -1337,7 +1122,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
 	 */
-	@Override
 	public void mouseDragged(MouseEvent kEvent) {
 		m_bMouseDrag = true;
 		if(kEvent.isControlDown()) {
@@ -1374,7 +1158,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
 	 */
-	@Override
 	public void mouseEntered(MouseEvent arg0) {}
 
 
@@ -1382,7 +1165,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
 	 */
-	@Override
 	public void mouseExited(MouseEvent arg0) 
 	{
 		// Delete any levelset vois that are in progress when the mouse exits the window:
@@ -1398,7 +1180,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
 	 */
-	@Override
 	public void mouseMoved(MouseEvent kEvent) 
 	{      
 		if ( !isActive() )
@@ -1445,7 +1226,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
 	 */
-	@Override
 	public void mousePressed(MouseEvent kEvent) {
 		m_fMouseX = kEvent.getX();
 		m_fMouseY = kEvent.getY();
@@ -1520,7 +1300,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseReleased(java.awt.event.MouseEvent)
 	 */
-	@Override
 	public void mouseReleased(MouseEvent kEvent) {
 		m_kParent.setActive(this, m_kImageActive);
 		if ( !isActive() || kEvent.getButton() != MouseEvent.BUTTON1 )
@@ -1780,6 +1559,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+	/**
+	 * @param kVOI
+	 * @param scale
+	 */
 	public void scaleCircleVOI(VOIBase kVOI, float scale) {
 		float xScale = scale;
 		float yScale = scale;
@@ -1819,6 +1602,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 	}
 
+	/**
+	 * @param kVOI
+	 * @param scale
+	 */
 	public void scaleSquareVOI(VOIBase kVOI, float scale) {
 		float xScale = scale;
 		float yScale = scale;
@@ -3632,6 +3419,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	}
 
 
+	/**
+	 * Draw the VOILine.
+	 * @param kVOI input VOILine to draw.
+	 * @param resols image resolutions.
+	 * @param unitsOfMeasure image units.
+	 * @param g Graphics for drawing.
+	 * @param thickness line thickness.
+	 */
 	private void drawVOILine( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness  ) {
 
 		Vector3f kStart = m_kDrawingContext.fileToScreenVOI( kVOI.get(0) );
@@ -3691,10 +3486,21 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+	/**
+	 * Draw the input VOIPoint.
+	 * @param kVOI VOIPoint to draw.
+	 * @param g Graphics object.
+	 */
 	private void drawVOIPoint( VOIPoint kVOI, Graphics g  ) {
 		drawVOIPoint( kVOI, g, kVOI.getLabel() );
 	}
 
+	/**
+	 * Draw the input VOIPoint with the input label.
+	 * @param kVOI input VOIPoint.
+	 * @param g Graphics.
+	 * @param label point label.
+	 */
 	private void drawVOIPoint( VOIPoint kVOI, Graphics g, String label )
 	{
 		boolean doName = (Preferences.is(Preferences.PREF_SHOW_VOI_NAME) && kVOI.getName() != null);
@@ -3887,6 +3693,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+	/**
+	 * Draws the input VOIPolyLineSlice. A PolyLineSlice voi is a set of linked points. This function calls
+	 * drawVOIPoint for each VOIPoint in the PolyLine, which may be defined over multiple slices.
+	 * When two contiguous points are on the same slice, the are drawn connected by a line with the line
+	 * lenght displayed in the image resolutions and units.
+	 * @param kVOI input VOIPolyLineSlice
+	 * @param resols image resolutions
+	 * @param unitsOfMeasure image units
+	 * @param g Graphics.
+	 */
 	private void drawVOIPolyLineSlice( VOIPolyLineSlice kVOI, float[] resols, int[] unitsOfMeasure, Graphics g ) {
 		Color color = g.getColor();
 
@@ -3916,6 +3732,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+	/**
+	 * Draws the input VOIProtractor. Displays the angle and lengths of the protractor arms.
+	 * @param kVOI input VOIProtractor.
+	 * @param resols image resolutions.
+	 * @param unitsOfMeasure image units.
+	 * @param g Graphics.
+	 */
 	private void drawVOIProtractor( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g ) {
 
 		Vector3f kStart = m_kDrawingContext.fileToScreenVOI( kVOI.get(0) );
@@ -3950,6 +3773,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		} 
 	}
 
+	/**
+	 * Draws the input VOIText.
+	 * @param kVOI input VOIText.
+	 * @param g Graphics.
+	 */
 	private void drawVOIText( VOIText kVOI, Graphics g) {
 
 		Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( kVOI.get(0) );
@@ -4032,6 +3860,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return kPatient;
 	}
 
+	/**
+	 * Calculates and returns the bounding box middle left-edge point for the input VOI.
+	 * @param kVOI input VOI.
+	 * @return the bounding box middle left-edge pointsfor the input VOI.
+	 */
 	private Vector3f getBoundingBoxLeftMiddle( VOIBase kVOI )
 	{
 		Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
@@ -4041,7 +3874,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		kLeftMid.Scale( 0.5f );
 		return kLeftMid;
 	}
-
+	/**
+	 * Calculates and returns the bounding box lower edge left corner for the input VOI.
+	 * @param kVOI input VOI.
+	 * @return the bounding box lower edge left corner for the input VOI.
+	 */
 	private Vector3f getBoundingBoxLowerLeft( VOIBase kVOI )
 	{
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
@@ -4053,6 +3890,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return new Vector3f( kScreenMin.X, kScreenMax.Y, kScreenMin.Z );
 	}
 
+	/**
+	 * Calculates and returns the bounding box lower edge middle point for the input VOI.
+	 * @param kVOI input VOI.
+	 * @return the bounding box lower edge middle point for the input VOI.
+	 */
 	private Vector3f getBoundingBoxLowerMiddle( VOIBase kVOI )
 	{
 		Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
@@ -4062,7 +3904,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		kLowerMid.Scale( 0.5f );
 		return kLowerMid;
 	}
-
+	/**
+	 * Calculates and returns the bounding box lower edge right corner for the input VOI.
+	 * @param kVOI input VOI.
+	 * @return the bounding box lower edge right corner for the input VOI.
+	 */
 	private Vector3f getBoundingBoxLowerRight( VOIBase kVOI )
 	{
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
@@ -4074,6 +3920,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return new Vector3f( kScreenMax );
 	}
 
+	/**
+	 * Calculates and returns the bounding box middle right-edge point for the input VOI.
+	 * @param kVOI input VOI.
+	 * @return the bounding box middle right-edge pointsfor the input VOI.
+	 */
 	private Vector3f getBoundingBoxRightMiddle( VOIBase kVOI )
 	{
 		Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
@@ -4084,6 +3935,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return kRightMid;
 	}
 
+	/**
+	 * Calculates and returns the bounding box upper edge left corner for the input VOI.
+	 * @param kVOI input VOI.
+	 * @return the bounding box upper edge left corner for the input VOI.
+	 */
 	private Vector3f getBoundingBoxUpperLeft( VOIBase kVOI )
 	{
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
@@ -4095,6 +3951,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return new Vector3f( kScreenMin );
 	}
 
+	/**
+	 * Calculates and returns the bounding box upper edge middle point for the input VOI.
+	 * @param kVOI input VOI.
+	 * @return the bounding box upper edge middle point for the input VOI.
+	 */
 	private Vector3f getBoundingBoxUpperMiddle( VOIBase kVOI )
 	{
 		Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
@@ -4105,6 +3966,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return kUpperMid;
 	}
 
+	/**
+	 * Calculates and returns the bounding box upper edge right corner for the input VOI.
+	 * @param kVOI input VOI.
+	 * @return the bounding box upper edge right corner for the input VOI.
+	 */
 	private Vector3f getBoundingBoxUpperRight( VOIBase kVOI )
 	{
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
@@ -4116,6 +3982,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return new Vector3f( kScreenMax.X, kScreenMin.Y, kScreenMin.Z );
 	}
 
+	/**
+	 * Calculates the screen coordinates for the VOILine tickmarks. The inputs are the endpoints of the VOILine
+	 * and a fraction distance along that line where the perpendicular tick-mark lines will intersect the VOILine.
+	 * This function returns the screen coordinates for the tickmark line at that location along the VOILine.
+	 * @param linePtsX input position x-coordinates
+	 * @param linePtsY input position y-coordinates
+	 * @param fraction fraction along the VOILine for the current tick mark.
+	 * @param coords calculated tickmark xy-coordinates
+	 */
 	private void getCoordsLine(float[] linePtsX, float[] linePtsY, double fraction, float[] coords) {
 		float x1, y1;
 		double vector1, vector2, tmp;
@@ -4145,6 +4020,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		coords[3] = (int) (y1 - vector2 + 0.5);
 	}
 
+	/**
+	 * Calculates and returns the screen location for the angle and length display for the VOIProtractor.
+	 * The function is called with the end points along one of the protractors 'arms' and a fraction
+	 * of a distance along that arm. It returns the on-screen pixel location for where to draw the annotation,
+	 * which will be either the lenght of the arm or the angle the two arms make.
+	 * @param x input protractor x-coordinates.
+	 * @param y input protractor x-coordinates.
+	 * @param fraction
+	 * @param coords returned screen coordinates for drawing the protractor annotation.
+	 */
 	private void getCoordsProtractor(float[] x, float[] y, double fraction, float[] coords) {
 		float x1, y1;
 		double vector1, vector2, tmp;
@@ -4174,6 +4059,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		coords[3] = (int) (y1 - vector2 + 0.5);
 	}
 
+	/**
+	 * Calculates and returns the inverted-arrow coordinates for the VOILine tickmark display.
+	 * The inputs are the coordinates of the VOILine and the component of the inverted-arrow to calculate.
+	 * This function returns the coordinates of the inverted-arrow component for drawing on screen.
+	 * @param linePtsX
+	 * @param linePtsY
+	 * @param line
+	 * @param coords
+	 */
 	private void getEndLinesLine(float[] linePtsX, float[] linePtsY, int line, float[] coords) {
 		double vector1, vector2, tmp;
 		double length;
@@ -4209,6 +4103,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+	/**
+	 * Calculates and returns the arrow-head coordinates for the VOIProtractor tickmark display.
+	 * The inputs are the coordinates of one of the 'arms' of the VOIProtractor 
+	 * and the component of the arrow-head to calculate.
+	 * This function returns the coordinates of the arrow-head component for drawing on screen.
+	 * @param linePtsX
+	 * @param linePtsY
+	 * @param line
+	 * @param coords
+	 */
 	private void getEndLinesProtractor(float[] x, float[] y, int line, float[] coords) {
 		double vector1, vector2, tmp;
 		double length;
@@ -4234,6 +4138,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+	/**
+	 * Returns the slice of the input VOI in the patient coordinates displayed locally.
+	 * This function is used to determine if a particular VOI should be drawn in the currently-displayed
+	 * image slice.
+	 * If the VOI is a VOIProtractor from the image-align toolbar, the protractor is displayed on
+	 * all slices so the current slice is returned.
+	 * @param kVOI input VOI.
+	 * @return the slice that the VOI is on in local patient coordinates.
+	 */
 	private int getSlice( VOIBase kVOI )
 	{
 		if ( kVOI.getType() == VOI.PROTRACTOR && ((VOIProtractor)kVOI).getAllSlices() )
@@ -4248,9 +4161,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	}
 
 	/**
-	 * DOCUMENT ME!
-	 *
-	 * @param  mouseEvent  DOCUMENT ME!
+	 * Opens the VOIIntensity line drawing popup menu.
+	 * @param  mouseEvent  the MouseEvent that triggered the popup.
 	 */
 	private void handleIntensityLineBtn3(MouseEvent mouseEvent) {
 
@@ -4280,6 +4192,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		popupMenu.show(m_kImageActive.getParentFrame(), x, y);
 	}
 
+	/**
+	 * Initializes the Levelset VOI calculation. LevelSet VOI calculations is based on image data, and
+	 * uses the data from the currently-displayed image slice. This function determines if the levelset
+	 * data has been initialized for the current slice. If it has, no re-initialization occurs. If the levelset
+	 * has not yet been calculated for the given slice, or if the levelset has been calculated most recently
+	 * for a different slice, the levelset data is initialized.
+	 * @param iSlice currently displayed image slice.
+	 */
 	private void initLevelSet( int iSlice )
 	{
 		if ( !m_bLevelSetInit )
@@ -4343,7 +4263,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			}
 		}
 	}
-
+	/**
+	 * Initializes the Livewire VOI calculation. Livewire VOI calculations is based on image data, and
+	 * uses the data from the currently-displayed image slice. This function determines if the Livewire
+	 * data has been initialized for the current slice. If it has, no re-initialization occurs. If the Livewire
+	 * has not yet been calculated for the given slice, or if the Livewire has been calculated most recently
+	 * for a different slice, the Livewire data is initialized.
+	 * @param iSlice currently displayed image slice.
+	 * @param bLiveWire when true this was triggered by the first livewire for the slice, so the cost calculation
+	 * is calculated.
+	 */
 	private void initLiveWire( int iSlice, boolean bLiveWire )
 	{
 		if ( !m_bLiveWireInit )
@@ -4430,8 +4359,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
-	private void moveVOIPoint( int iX, int iY )
-	{
+	/**
+	 * Called when the left-mouse is used to drag a point on the VOI.
+	 * @param kEvent current MouseEvent.
+	 */
+	private void moveVOIPoint( MouseEvent kEvent )
+	{		
 		if ( m_kCurrentVOI == null )
 		{            
 			return;
@@ -4443,6 +4376,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		if(m_kCurrentVOI.getSubtype() == VOIBase.CIRCLE || m_kCurrentVOI.getSubtype() == VOIBase.SQUARE) {
 			m_kCurrentVOI.setSubtype(VOIBase.UNKNOWN_SUBTYPE);
 		}
+		int iX = kEvent.getX();
+		int iY = kEvent.getY();
 		setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_kDrawingContext.getSlice() ); 
 		m_kParent.setCursor(MipavUtil.crosshairCursor); 
 		m_kParent.updateDisplay();
@@ -4533,6 +4468,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return false;
 	}
 
+	/**
+	 * Called when the user is selecting a VOI or during MouseDrag to show if a VOI can be selected, or
+	 * for selected VOIs, to show if the Mouse is close enough to the contour for the user to add a point
+	 * to the contour line.
+	 * @param kVOI input VOI to test.
+	 * @param iX input Mouse x-position.
+	 * @param iY input MOuse y-position.
+	 * @param iZ current slice.
+	 * @return true if the mouse is near enough to the input VOI contour for adding a point to the line or
+	 * showing that the voi can be selected.
+	 */
 	private boolean nearLine( VOIBase kVOI, int iX, int iY, int iZ) {
 		VOIBase kBase = kVOI.clone();
 		for ( int i = 0; i < kVOI.size(); i++ )
@@ -4551,6 +4497,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		return false;
 	}
 
+	/**
+	 * Called when the user is selecting a VOI or during MouseDrag to show if a VOI can be selected, or
+	 * for selected VOIs, to show if the Mouse is close enough to one of the points on the contour 
+	 * for the user to move that contour point
+	 * @param kVOI input VOI to test.
+	 * @param iX input Mouse x-position.
+	 * @param iY input MOuse y-position.
+	 * @param iZ current slice.
+	 * @return true if the mouse is near a point on the contour of the input VOI.
+	 */
 	private boolean nearPoint( VOIBase kVOI, int iX, int iY, int iZ) {
 
 		Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
@@ -4589,34 +4545,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		m_kCurrentVOI.setActive(true);
 		m_kParent.pasteVOI(m_kCurrentVOI);
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	/**
 	 * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
@@ -4696,7 +4624,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 					m_kParent.saveVOIs( "movePoint" );
 					m_bFirstDrag = false;
 				}
-				moveVOIPoint( kEvent.getX(), kEvent.getY() );
+				moveVOIPoint( kEvent );
 			}
 			else if ( m_iNearStatus == NearBoundPoint )
 			{
