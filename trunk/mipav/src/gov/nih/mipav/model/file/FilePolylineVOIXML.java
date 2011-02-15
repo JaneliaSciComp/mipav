@@ -154,11 +154,6 @@ public class FilePolylineVOIXML extends FileXML {
 
         /** The data for the current element being parsed. */
         private String elementBuffer = new String();
-
-        /** The slice the VOI contour should be on. */
-        private int sliceNumber = 0;
-
-        private float [] coords;
         
         /**
          * Construct our custom XML data handler.
