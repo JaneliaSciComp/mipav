@@ -145,7 +145,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
     private void calcInPlace2D(int nImages) {
 
         int i, s;
-        int length, totalLength;
+        int length;
         int start;
         float[] buffer;
         float[] resultBuffer;
@@ -163,7 +163,6 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
 
         try {
             length = srcImage.getSliceSize();
-            totalLength = length * nImages;
             buffer = new float[length];
             resultBuffer = new float[length];
             resultBuffer2 = new float[length];
