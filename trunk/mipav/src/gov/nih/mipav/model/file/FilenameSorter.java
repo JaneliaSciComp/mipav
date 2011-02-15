@@ -94,7 +94,7 @@ public class FilenameSorter {
         Arrays.sort(filenames);
 
         Vector allSetsVector = new Vector();
-        Vector setVector = new Vector();
+        Vector<String> setVector = new Vector();
 
         for (int i = 0; i < filenames.length; i++) {
             setVector.addElement(filenames[i]);
@@ -110,7 +110,7 @@ public class FilenameSorter {
             }
 
             allSetsVector.addElement(setVector);
-            setVector = new Vector();
+            setVector = new Vector<String>();
         }
 
         return allSetsVector;
