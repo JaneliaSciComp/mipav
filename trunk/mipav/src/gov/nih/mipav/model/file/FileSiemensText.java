@@ -634,7 +634,7 @@ public class FileSiemensText extends FileBase {
 
         // if vox units defines the units of measure, then use that instead
         // updateUnitsOfMeasure(fileInfo);
-        int units = FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
+        int units = (Unit.getUnit(fileInfo.getVoxUnits())).getLegacyNum();
 
         if (units == Unit.UNKNOWN_MEASURE.getLegacyNum()) { // default to millimeters
             fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
