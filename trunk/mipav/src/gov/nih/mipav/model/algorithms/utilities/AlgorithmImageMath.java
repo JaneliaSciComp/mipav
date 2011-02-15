@@ -68,11 +68,6 @@ public class AlgorithmImageMath extends AlgorithmBase {
     /** DOCUMENT ME! */
     public static final int CONVERT_FLOAT = 2; // Convert the result image to type float.
 
-    /** DOCUMENT ME! */
-    private static final String[] opString = {
-        "ABSOLUTE_VALUE", "ADD", "AVERAGE", "CONSTANT", "DIVIDE", "LOG", "MULTIPLY", "SQRT", "SQUARE_ROOT", "SUBTRACT", "SUM"
-    };
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Maximum clipping modes if data result value exceeds the capacity of image's data type. */
