@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -230,8 +231,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             afResB[i] = imageB.getResolutions(0)[i];
             if ( imageA.getUnitsOfMeasure()[i] != imageB.getUnitsOfMeasure()[1] )
             {
-                afResB[i] = (float)((FileInfoBase.conversionSpaceTimeUnits[ imageB.getUnitsOfMeasure()[i]] * imageB.getResolutions(0)[i])/
-                        FileInfoBase.conversionSpaceTimeUnits[ imageA.getUnitsOfMeasure()[i]]);
+                afResB[i] = (float)((Unit.getUnitFromLegacyNum( imageB.getUnitsOfMeasure()[i])).
+                		getConversionFactor(Unit.getUnitFromLegacyNum(imageA.getUnitsOfMeasure()[i])) * imageB.getResolutions(0)[i]);
             }
         }
         if ( imageB.getFileInfo() != null ) {
