@@ -597,7 +597,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         resols = fInfoBase[0].getResolutions();
         axisOrient = fInfoBase[0].getAxisOrientation();
         
-        Vector mats = srcImage.getMatrixHolder().getMatrices();
+        Vector<TransMatrix> mats = srcImage.getMatrixHolder().getMatrices();
 
         for (i = 0; i < nDims; i++) {
 
@@ -898,7 +898,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         //}
 
         axisOrient = fInfoBase[0].getAxisOrientation();
-        Vector mats = srcImage.getMatrixHolder().getMatrices();
+        Vector<TransMatrix> mats = srcImage.getMatrixHolder().getMatrices();
 
         for (i = 0; i < nDims; i++) {
 
@@ -1261,7 +1261,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         //} // for (t = 0; t < tDim; t++)
 
         axisOrient = fInfoBase[0].getAxisOrientation();
-        Vector mats = srcImage.getMatrixHolder().getMatrices();
+        Vector<TransMatrix> mats = srcImage.getMatrixHolder().getMatrices();
 
         for (i = 0; i < 3; i++) {
 
