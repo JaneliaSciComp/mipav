@@ -13,14 +13,12 @@ import java.awt.event.ActionListener;
 import java.io.*;
 
 import java.text.DecimalFormat;
-import java.util.*;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
@@ -46,18 +44,6 @@ import gov.nih.mipav.model.file.rawjp2.*;
 public class FileJP2 extends FileBase implements ActionListener{
 
     /** DOCUMENT ME! */
-    private byte[] byteBuffer = null;
-
-    /** DOCUMENT ME! */
-    private byte[] dateTime;
-
-    /** doTile: true if tiles are used. */
-    private boolean doTile = false;
-
-    /** DOCUMENT ME! */
-    private double[] doubleBuffer;
-
-    /** DOCUMENT ME! */
     private boolean endianess;
 
     /** File directory. */
@@ -72,45 +58,8 @@ public class FileJP2 extends FileBase implements ActionListener{
     /** File name. */
     private String fileName;
 
-     /** DOCUMENT ME! */
-    private byte[] hostComputer;
-
-    /** DOCUMENT ME! */
-    private byte[] imageDescription;
-
-    /** DOCUMENT ME! */
-    //private int imageSlice = 0;
-
-    /** DOCUMENT ME! */
-    private float[] imgBuffer = null;
-
     /** DOCUMENT ME! */
     private int[] intBuffer = null;
-
-    /** DOCUMENT ME! */
-    private float[] imgResols;
-
-    /** DOCUMENT ME! */
-    private byte[] software;
-
-    
-    /** DOCUMENT ME! */
-    private double tRes = 1.0;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
-    private int xDim = 0;
-
-    /** DOCUMENT ME! */
-    private int yDim = 0;
-
-    /** DOCUMENT ME! */
-    private double zRes = 1.0;
-    
-    /** Save the compressed image */
-    private File outFile;
     
     /** The width of image */
     //private int w;
@@ -144,7 +93,6 @@ public class FileJP2 extends FileBase implements ActionListener{
      * @exception  IOException  if there is an error making the file
      */
     public FileJP2(String fileName, String fileDir, ViewJProgressBar progressBar) throws IOException {
-        UI = ViewUserInterface.getReference();
         this.fileName = fileName;
         this.fileDir = fileDir;
         this.progressBar = progressBar;
@@ -171,7 +119,6 @@ public class FileJP2 extends FileBase implements ActionListener{
      */
     public void finalize() {
 
-        imgBuffer = null;
         intBuffer = null;
 
         try {
@@ -205,7 +152,6 @@ public class FileJP2 extends FileBase implements ActionListener{
         BlkImgDataSrc slc;
         //DecoderRAW dec;
         ParameterList defpl = new ParameterList();
-        ImgWriterRAW wr = null;
         
         //createDecGui();
         //advDecOptDialog.setVisible(true);
@@ -399,7 +345,7 @@ public class FileJP2 extends FileBase implements ActionListener{
         	System.out.println("Error opening input file!");
         	return null;
         }
-        int nslice = rawhd.getNumOfSlices();
+        //int nslice = rawhd.getNumOfSlices();
 
         boolean is2D = rawhd.getIs2D();
         
@@ -419,7 +365,7 @@ public class FileJP2 extends FileBase implements ActionListener{
         int imgType = rawhd.getImgType();
         int imgModality = rawhd.getImgModality();
         int imgOrientation= rawhd.getImgOrientation();
-        float[] imgRes = rawhd.getImgResolution();
+        //float[] imgRes = rawhd.getImgResolution();
         float[] imgRes_2d = new float[2];
         
         if(is2D) {
@@ -667,6 +613,7 @@ public class FileJP2 extends FileBase implements ActionListener{
      * @throws  IOException  DOCUMENT ME!
      */
     
+    @SuppressWarnings("unused")
     private void writeHeader() throws IOException {
 /*        boolean endianess = image.getFileInfo(0).getEndianess();
         byte[] hdr = new byte[8];
@@ -697,6 +644,8 @@ public class FileJP2 extends FileBase implements ActionListener{
     public ModelLUT getModelLUT() {
         return null;
     }
+    
+    @SuppressWarnings("unused")
     private void createDecGui() {
     	
     	
