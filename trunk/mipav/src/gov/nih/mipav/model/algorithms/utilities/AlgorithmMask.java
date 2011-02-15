@@ -167,7 +167,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param intensityLockVector Vector containing Integer objects that represent the intensity values that are not
      *            mutable
      */
-    public void calcInPlace25D(BitSet mask, float fillValue, int tSlice, Vector intensityLockVector) {
+    public void calcInPlace25D(BitSet mask, float fillValue, int tSlice, Vector<Integer> intensityLockVector) {
 
         int i, z, t, end = 1, tEnd = 1;
         int imgLength, volLength = 0, offset;
@@ -451,7 +451,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param fillColor color to be placed in the image where the mask is true
      * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25DC(BitSet mask, Color fillColor, int tSlice, String rgbString, Vector intensityLockVector) {
+    public void calcInPlace25DC(BitSet mask, Color fillColor, int tSlice, String rgbString, Vector<Integer> intensityLockVector) {
 
         int i, j, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -733,7 +733,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      * @param intensityLockVector DOCUMENT ME!
      */
-    public void calcInPlace25DMask(BitSet mask, float fillValue, int tSlice, Vector intensityLockVector) {
+    public void calcInPlace25DMask(BitSet mask, float fillValue, int tSlice, Vector<Integer> intensityLockVector) {
 
         int i, z, end = 1;
         int imgLength, volLength = 0, offset;
