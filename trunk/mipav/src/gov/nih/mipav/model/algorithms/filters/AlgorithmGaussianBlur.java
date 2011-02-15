@@ -194,6 +194,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
      * @param  nImages  number of images to be blurred. If 2D image then nImage = 1, if 3D image where each image is to
      *                  processed independently then nImages equals the number of images in the volume.
      */
+    @SuppressWarnings("unused")
     private void calcInPlace2D(int nImages) {
 
         int i, s;
@@ -326,6 +327,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
     /**
      * Calculates the blurred image and replaces the source image with the blurred image.
      */
+    @SuppressWarnings("unused")
     private void calcInPlace3D() {
 
         int i;
@@ -442,6 +444,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
     /**
      * Calculates the blurred image and replaces the source image with the blurred image.
      */
+    @SuppressWarnings("unused")
     private void calcInPlace4D() {
 
         int i, t;
@@ -581,6 +584,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
      * @param  nImages  number of images to be blurred. If 2D image then nImage = 1, if 3D image where each image is to
      *                  processed independently then nImages equals the number of images in the volume.
      */
+    @SuppressWarnings("unused")
     private void calcStoreInDest2D(int nImages) {
         int length, totalLength;
         int cFactor = 1;
@@ -645,6 +649,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
     /**
      * Produces a new image that has been blurred.
      */
+    @SuppressWarnings("unused")
     private void calcStoreInDest3D() {
         int length;
         float[] buffer;
@@ -900,6 +905,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
     /**
      * Produces a new image that has been blurred.
      */
+    @SuppressWarnings("unused")
     private void calcStoreInDest4D() {
 
         int i, t;
