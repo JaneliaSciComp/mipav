@@ -33,9 +33,6 @@ public class AlgorithmReslice extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Used for logging. */
-    private String[] algorithmName = { "LINEAR", "CUBIC BSPLINE", "CUBIC" };
-
     /** Interpolation mode (Linear, Cubic Bspline, Cubic Convolution). */
     private int interpMode;
 
