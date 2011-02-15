@@ -707,11 +707,14 @@ public class FileTiff extends FileBase {
     // Options with group 3, also known as T4, fax coding
     // Default is for basic 1-dimensional coding
     private boolean group3_2D_Coding = false;
+    @SuppressWarnings("unused")
     private boolean group3Uncompressed = false;
+    @SuppressWarnings("unused")
     private boolean group3Fillbits = false;
     
     // Options with group 4, also know as T6, fax coding
     // Default is for uncompressed mode not allowed
+    @SuppressWarnings("unused")
     private boolean group4Uncompressed = false;
     
     private boolean haveMultiSpectraImage = false;
@@ -723,9 +726,9 @@ public class FileTiff extends FileBase {
     private JPEGInputStream tableStream = null;
     
     private boolean ThunderScanCompression = false;
-    
+    @SuppressWarnings("unused")
     private boolean isLogL = false; // photometric CIE Log2(L)
-    
+    @SuppressWarnings("unused")
     private boolean isLogLuv = false; // photometric CIE Log2(L) (u',
     
     private boolean SGILogCompression = false; // SGI Log Luminance RLE
@@ -788,11 +791,10 @@ public class FileTiff extends FileBase {
     private byte firstChar[]; // first token of string
     
     private short nBits; // # of bits/code
+    @SuppressWarnings("unused")
     private short maxCode; // maximum code for nBits
-    private short free_ent; // next entry in hash table
     private long nextData; // next bits of i/o
     private long nextBits; // # of valid bits in nextData
-    private int rw_mode; // preserve rw_mode from init
     
     private long nBitsMask; // LZWBaseState nBits 1 bits, right adjusted
     private long restart; // restart count
@@ -5149,11 +5151,15 @@ public class FileTiff extends FileBase {
             case 3: scanins[i].setShift(24); break;   // alpha
             }
           }
+          @SuppressWarnings("unused")
           int ss=readIn(in);
+          @SuppressWarnings("unused")
           int se=readIn(in);
           
           int b=readIn(in);
+          @SuppressWarnings("unused")
           int ah =((b>>4)&0x0F);
+          @SuppressWarnings("unused")
           int al = (b    &0x0F);
         }
 
@@ -5585,7 +5591,6 @@ public class FileTiff extends FileBase {
     public void writeImage(ModelImage image, ModelLUT LUT, FileWriteOptions options) throws IOException {
         int k, s, sEnd = 1, sBegin = 0;
         ModelImage tmpImage = null;
-        ModelImage resultImage = null;
         int seq;
         int imgOffset;
         int nextIFD;
@@ -5597,7 +5602,7 @@ public class FileTiff extends FileBase {
         int samplesPerPixel;
         int resolutionCount = 16; // xResolution = 2 * (4 bytes) + yResolution = 2 * (4 bytes)
         int rgbCount = 0; // Set to 6 for storage of 3 short bitsPerSample values
-        int x, y, i, j, n;
+        int x, y, i, n;
 
         // in ARGB, ARGB_USHORT, and ARGB_FLOAT
         int rgbFormat = 0; // Set to 6 for storage of 3 short sampleFormat values
@@ -5989,8 +5994,6 @@ public class FileTiff extends FileBase {
 
         if (tmpImage != null) {
             image = tmpImage;
-            resultImage.disposeLocal();
-            resultImage = null;
         }
 
         raFile.close();
