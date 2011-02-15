@@ -92,7 +92,8 @@ public class FileInfoVista extends FileInfoBase {
             if (resolutions[i] > 0.0) {
                 String pixelRes = "Pixel resolution " + i;
                 dialog.appendPrimaryData(pixelRes,
-                                         Float.toString(resolutions[i]) + " " + getUnitsOfMeasureStr(measure[i]));
+                                         Float.toString(resolutions[i]) + " " +
+                                         (Unit.getUnitFromLegacyNum(measure[i])).toString());
             } // end of if (resolutions[i] > 0.0)
         } // for (i=0; i < 5; i++)
 
@@ -123,8 +124,8 @@ public class FileInfoVista extends FileInfoBase {
         }
         
         HashMap<String,String> info = imagesInfo.get(0);
-        Set keySet = info.keySet();
-        Iterator iter = keySet.iterator();
+        Set<String> keySet = info.keySet();
+        Iterator<String> iter = keySet.iterator();
         while(iter.hasNext()) {
         	String key = (String)iter.next();
         	if(extents.length == 4) {
