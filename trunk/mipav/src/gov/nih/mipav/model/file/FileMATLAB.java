@@ -4,7 +4,6 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
@@ -213,13 +212,9 @@ public class FileMATLAB extends FileBase {
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         long fileLength;
         boolean endianess;
-        int i, j, k;
-        int xDim = 0;
-        int yDim = 0;
+        int i, j;
         int imageSlices = 1;
         int imageSlices2 = 1;
-        int byteCount;
-        int totalByteCount = 0;
         byte firstEndianByte;
         byte secondEndianByte;
         String headerTextField;
@@ -237,18 +232,15 @@ public class FileMATLAB extends FileBase {
         byte buffer[] = null;
         String str;
         boolean isCompressed = false;
-        FileInputStream fis;
-        int totalBytesRead = 0;
-        long currentLocation;
         int s;
         File ufile = null;
-        long bytesSkipped;
         byte[] decomp = null;
         int resultLength = 0;
         int arrayFlagsDataType;
         int arrayFlagsBytes;
         int arrayFlags;
         boolean complexFlag = false;
+        @SuppressWarnings("unused")
         boolean globalFlag = false;
         boolean logicalFlag = false;
         int arrayClass;
@@ -275,8 +267,6 @@ public class FileMATLAB extends FileBase {
         int imageLength = 1;
         int x;
         int y;
-        int z;
-        int t;
         long decompSize;
         String uncompressedName = null;
         int imagesFound = 0;
@@ -6000,7 +5990,6 @@ public class FileMATLAB extends FileBase {
         int tEnd; // last t time to write
         int z, t;
         int zDim;
-        int tDim;
         byte arrayClass;
         int matDataType;
         boolean complexFlag;
@@ -6259,15 +6248,12 @@ public class FileMATLAB extends FileBase {
     	if (image.getNDims() == 2) {
             numberSlices = 1;
             zDim = 1;
-            tDim = 1;
         } else if (image.getNDims() == 3) {
             numberSlices = sEnd - sBegin + 1;
             zDim = imageExtents[2];
-            tDim = 1;
         } else {
             numberSlices = (sEnd - sBegin + 1) * (tEnd - tBegin + 1);
             zDim = imageExtents[2];
-            tDim = imageExtents[3];
         }
 
         sliceSize = image.getSliceSize();
