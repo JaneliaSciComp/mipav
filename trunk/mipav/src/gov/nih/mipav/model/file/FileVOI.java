@@ -45,9 +45,6 @@ public class FileVOI extends FileXML {
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
 
-    /** The tab character (makes writing out files cleaner-looking). */
-    private static final String TAB = "\t";
-
     /** The W3C XML schema. */
     private static final String W3C_XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
 
@@ -771,9 +768,6 @@ public class FileVOI extends FileXML {
 
         Vector[] contours;
 
-        final boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
-        final boolean is2D = (image.getNDims() == 2);
-
         if (isXML) {
             writeXML(voi, saveAllContours);
             return;
@@ -868,7 +862,6 @@ public class FileVOI extends FileXML {
      */
     public void writeXML(final VOI voi, final boolean saveAllContours) throws IOException {
         int i, j, k, m;
-        int length;
         int nPts;
         int nContours, nActiveContours;
         float[] x = new float[100];
@@ -921,7 +914,6 @@ public class FileVOI extends FileXML {
             bw = new BufferedWriter(fw);
 
             contours = voi.getCurves();
-            length = contours.size();
 
             bw.write(FileVOI.XML_HEADER);
             bw.newLine();
@@ -1846,9 +1838,6 @@ public class FileVOI extends FileXML {
         /** id for the VOI */
         private short id = -1;
 
-        /** the slice where the VOI will be located */
-        private int slice = 0;
-
         /** The VOI that we are building from the XML. */
         private VOI voi;
 
@@ -1859,6 +1848,7 @@ public class FileVOI extends FileXML {
         private final VOIVector voiVector;
 
         /** the Z dimension of the image */
+        @SuppressWarnings("unused")
         private int zDim = 1;
         
         private boolean lps = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
