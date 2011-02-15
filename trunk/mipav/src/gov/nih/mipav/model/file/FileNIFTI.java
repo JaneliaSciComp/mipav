@@ -2705,7 +2705,6 @@ public class FileNIFTI extends FileBase {
             	
             	
             	int bytesRead;
-            	byte[] offsetBuff = new byte[4];
             	String ext = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
             	if (ext.equalsIgnoreCase("zip")) {
             		
