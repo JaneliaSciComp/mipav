@@ -32,7 +32,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
     private boolean convert4Dto3D = false;
 
     /** List of slices to extract from source image. */
-    private Vector extractList;
+    private Vector<String> extractList;
 
     /** Original Z dimension of the image. */
     private int oldZdim;
@@ -60,7 +60,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
         super(destImage, srcImage);
 
         // create extractList from the array
-        extractList = new Vector(extractSlices.length);
+        extractList = new Vector<String>(extractSlices.length);
 
         for (int i = 0; i < extractSlices.length; i++) {
             extractList.addElement(extractSlices[i]);
@@ -81,7 +81,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    public Vector getExtractList() {
+    public Vector<String> getExtractList() {
         return extractList;
     }
 
