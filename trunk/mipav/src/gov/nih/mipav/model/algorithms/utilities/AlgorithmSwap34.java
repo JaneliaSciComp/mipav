@@ -94,8 +94,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         int[] axis;
         int imageOrientation;
         float[] startLocs;
-        Vector mats;
-        TransMatrix xfrm;
+        Vector<TransMatrix> mats;
 
         try {
 
