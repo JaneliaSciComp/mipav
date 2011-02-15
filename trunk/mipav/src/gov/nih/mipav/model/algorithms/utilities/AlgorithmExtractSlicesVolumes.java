@@ -26,7 +26,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
     private boolean[] extract;
 
     /** DOCUMENT ME! */
-    private Vector extractedImages;
+    private Vector<ModelImage> extractedImages;
 
     /** Original Z dimension of the image. */
     private int oldZdim;
@@ -59,7 +59,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
         oldZdim = srcImage.getExtents()[2]; //
 
-        extractedImages = new Vector();
+        extractedImages = new Vector<ModelImage>();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
