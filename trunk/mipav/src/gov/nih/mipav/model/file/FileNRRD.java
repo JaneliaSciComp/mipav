@@ -62,21 +62,21 @@ public class FileNRRD extends FileBase {
 
     /** A patient-based right-handed coordinate frame, with ordered basis vectors pointing towards right, anterior, and
      *  superior, respectivley.  Used in NIFTI. */
-    private static final int RAS = 1;
+    //private static final int RAS = 1;
 
     /** A patient-based left-handed coordinate frame, with ordered basis vectors pointing towards left, anterior, and
      *  superior, respectively.  Used in Analyze. */
-    private static final int LAS = 2;
+    //private static final int LAS = 2;
 
     /** A patient-based right-handed coordinate frame, with ordered basis vectors pointing towards left, posterior, and
      *  superior, respectively.  Used in DICOM. */
     private static final int LPS = 3;
 
     /** Like RAS, but with time along the fourth axis. */
-    private static final int RAST = 4;
+    //private static final int RAST = 4;
 
     /** Like LAS, but with time along the fourth axis. */
-    private static final int LAST = 5;
+    //private static final int LAST = 5;
 
     /** Like LPS, but with time along the fourth axis. */
     private static final int LPST = 6;
@@ -336,6 +336,7 @@ public class FileNRRD extends FileBase {
 
     /** RAS, LAS, LPS, RAST, LAST, LPST, SCANNER_XYZ, SCANNER_XYZ_TIME, THREED_RIGHT_HANDED, THREED_LEFT_HANDED,
      *  THREED_RIGHT_HANDED_TIME, or THREED_LEFT_HANDED_TIME */
+    @SuppressWarnings("unused")
     private int space = UNKNOWN;
 
     /** Second index of spaceDirections specifies row of matrix to set. */
