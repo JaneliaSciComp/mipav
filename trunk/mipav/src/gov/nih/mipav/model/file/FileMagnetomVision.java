@@ -159,7 +159,9 @@ public class FileMagnetomVision extends FileBase {
         // The data types are Sun, hence the byte order is big-endian and all the floats
         // seem to be doubles.  The uncompressed image data starts at offset 6144.
         String s;
+        @SuppressWarnings("unused")
         int temp;
+        @SuppressWarnings("unused")
         float temp2;
 
         try {
