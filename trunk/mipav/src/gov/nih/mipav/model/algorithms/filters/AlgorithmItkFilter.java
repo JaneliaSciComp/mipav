@@ -124,7 +124,7 @@ public class AlgorithmItkFilter extends AlgorithmBase {
         // Make note of the sample spacing.  The ITK image created will
         // already have the sample spacing applied to it, but Gaussian
         // is to be applied in sample space not in real space.
-        float[] afResolutions = srcImage.getFileInfo(0).getResolutions();
+        // float[] afResolutions = srcImage.getFileInfo(0).getResolutions();
 
         // 2D or 2.5D
         if ((2 == srcImage.getNDims()) || ((3 == srcImage.getNDims()) && image25D)) {
