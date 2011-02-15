@@ -138,8 +138,6 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             return;
         }
 
-        int mod = length / 100; // mod is 1 percent of length
-
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             fireProgressStateChanged(Math.round((float) t / (tDim - 1) * 100));
