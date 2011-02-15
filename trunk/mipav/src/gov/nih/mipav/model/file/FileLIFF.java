@@ -94,26 +94,26 @@ public class FileLIFF extends FileBase {
     private static final int MAC_24_BIT_COLOR = 8;
     private static final int DEEP_GREY_9 = 9;
     private static final int DEEP_GREY_10 = 10;
-    private static final int DEEP_GREY_11 = 11;
-    private static final int DEEP_GREY_12 = 12;
-    private static final int DEEP_GREY_13 = 13;
-    private static final int DEEP_GREY_14 = 14;
-    private static final int DEEP_GREY_15 = 15;
+    //private static final int DEEP_GREY_11 = 11;
+    //private static final int DEEP_GREY_12 = 12;
+    //private static final int DEEP_GREY_13 = 13;
+    //private static final int DEEP_GREY_14 = 14;
+    //private static final int DEEP_GREY_15 = 15;
     private static final int DEEP_GREY_16 = 16;
     
-    private static final short kUnitsPixels = 1;
-    private static final short kUnitsNanometers = 3;
-    private static final short kUnitsMicrons = 4;
-    private static final short kUnitsMillimeters = 5;
-    private static final short kUnitsCentimeters = 6;
-    private static final short kUnitsMeters = 7;
-    private static final short kUnitsKilometers = 8;
-    private static final short kUnused = 9;
-    private static final short kUnitsInches = 10;
-    private static final short kUnitsFeet = 11;
-    private static final short kUnitsYards = 12;
-    private static final short kUnitsMiles = 13;
-    private static final short kUnused2 = 14;
+    //private static final short kUnitsPixels = 1;
+    //private static final short kUnitsNanometers = 3;
+    //private static final short kUnitsMicrons = 4;
+    //private static final short kUnitsMillimeters = 5;
+    //private static final short kUnitsCentimeters = 6;
+    //private static final short kUnitsMeters = 7;
+    //private static final short kUnitsKilometers = 8;
+    //private static final short kUnused = 9;
+    //private static final short kUnitsInches = 10;
+    //private static final short kUnitsFeet = 11;
+    //private static final short kUnitsYards = 12;
+    //private static final short kUnitsMiles = 13;
+    //private static final short kUnused2 = 14;
     private static final short kUnitsOther = 15;
     
     private static final short NOP = 0x0000;
@@ -266,6 +266,7 @@ public class FileLIFF extends FileBase {
         byte layerStoreFlag[] = new byte[1];
         byte layerPrintFlag[] = new byte[1];
         byte layerHasGWorld[] = new byte[1];
+        @SuppressWarnings("unused")
         int layerImage;
         int imageType;
         int redColor;
@@ -292,6 +293,7 @@ public class FileLIFF extends FileBase {
         typeStr[14] = "DEEP_GREY_14";
         typeStr[15] = "DEEP_GREY_15";
         typeStr[16] = "DEEP_GREY_16";
+        @SuppressWarnings("unused")
         int refCon;
         int layerTimeStamp;
         byte markDeleted[] = new byte[1];
@@ -311,6 +313,7 @@ public class FileLIFF extends FileBase {
         int compressedSize;
         int picBlkSize;
         short bitDepth = 0;
+        @SuppressWarnings("unused")
         short bitShift;
         String platform;
         short units = 0;
@@ -329,6 +332,7 @@ public class FileLIFF extends FileBase {
         unitStr[13] = "miles";
         unitStr[14] = "unused2";
         unitStr[15] = "other";
+        @SuppressWarnings("unused")
         short calLayerID;
         byte square[] = new byte[1];
         byte positiveY[] = new byte[1];
@@ -470,7 +474,9 @@ public class FileLIFF extends FileBase {
         short clipRight;
         int totalByteCount = 0;
         short headerVersion;
+        @SuppressWarnings("unused")
         short headerReservedShort;
+        @SuppressWarnings("unused")
         int headerReservedInt;
         int userTagNum = 0;
         String className;
@@ -526,10 +532,10 @@ public class FileLIFF extends FileBase {
         int uncompressedSize;
         int dataWidth;
         byte compressedBuffer[];
-        byte uncompressedBuffer[];
+        //byte uncompressedBuffer[];
        
-        int srcIndex;
-        int destIndex;
+        //int srcIndex;
+        //int destIndex;
         String channelArray[] = new String[10];
         int channelNumber = 0;
         String channelStr;
