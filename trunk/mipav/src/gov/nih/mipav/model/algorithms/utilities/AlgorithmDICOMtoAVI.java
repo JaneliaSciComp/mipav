@@ -35,9 +35,6 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
     private String outputPath; //
 
     /** DOCUMENT ME! */
-    private ViewJProgressBar progressBar = null;
-
-    /** DOCUMENT ME! */
     private float quality;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -74,7 +71,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
      * DOCUMENT ME!
      */
     public void runAlgorithm() {
-        Vector fileVector = new Vector();
+        Vector<String> fileVector = new Vector<String>();
 
         fireProgressStateChanged("DICOM -> Compressed AVI", "Searching for DICOM images");
         fireProgressStateChanged(0);
@@ -124,7 +121,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
      * @param  name  The name of either file or directory
      * @param  vec   Vector that holds all files to be processed
      */
-    private void addFilesToVector(String name, Vector vec) {
+    private void addFilesToVector(String name, Vector<String> vec) {
         File tempFile = new File(name);
 
         if (tempFile.isDirectory()) {
