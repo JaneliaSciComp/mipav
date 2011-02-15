@@ -151,9 +151,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     private int opType;
 
     /** DOCUMENT ME! */
-    private int pos;
-
-    /** DOCUMENT ME! */
     private JButton powButton, commaButton, fourButton, fiveButton, sixButton, multButton;
 
     /** DOCUMENT ME! */
@@ -1203,9 +1200,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                 diffExtentsFactor *= srcImageB.getExtents()[d];
             }
         }
-        
-
-        boolean doneOnce = false;
 
         
         if(opType ==  ADVANCED) {
@@ -1244,8 +1238,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                             } else {
                                 srcImageB.exportData(offset, length, bufferB); // locks and releases lock
                             }
-
-                            doneOnce = true;
                         } else if(diffExtents) {
                             
                             if (doComplex) {
@@ -1255,8 +1247,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                 pseudoSliceNum = offset / diffExtentsFactor;
                                 srcImageB.exportData(offset - pseudoSliceNum*diffExtentsFactor, length, bufferB); // locks and releases lock
                             }
-                            
-                            doneOnce = true;
                         }
                     } catch (IOException error) {
                         displayError("Algorithm ImageCalculator : Image(s) locked");
@@ -2156,8 +2146,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             }
         }
 
-        boolean doneOnce = false;
-
         int totalLength = f * t * z * length;
         //The current "slice" of srcImageA
         int pseudoSliceNum = 0;
@@ -2196,8 +2184,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                             } else {
                                 srcImageB.exportData(offset, length, bufferB); // locks and releases lock
                             }
-
-                            doneOnce = true;
                         } else if(diffExtents) {
                             
                             if (doComplex) {
@@ -2207,8 +2193,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                 pseudoSliceNum = offset / diffExtentsFactor;
                                 srcImageB.exportData(offset - pseudoSliceNum*diffExtentsFactor, length, bufferB); // locks and releases lock
                             }
-                            
-                            doneOnce = true;
                         }
                     } catch (IOException error) {
                         displayError("Algorithm Image Calculator : Image(s) locked");
@@ -2850,7 +2834,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     public double evaluateRPNExpression(double a, double b, String rpn) {
     	this.aVal = a;
         this.bVal = b;
-        pos = 0;
         OK = true;
 		double finalAnswer = Double.NaN;
 		try {
