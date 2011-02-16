@@ -299,8 +299,6 @@ public class AlgorithmHoughHyperbola extends AlgorithmBase {
         double a1;
         double b1;
         double alpha;
-        double cosalpha;
-        double sinalpha;
         double secalpha;
         double tanalpha;
         double angle;
