@@ -167,9 +167,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
     /** if true subsample. */
     private boolean doSubsample;
 
-    /** Dummy initial values used to create a Powell's algorithm instance before setting initial. */
-    private double[] dummy = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
     /**
      * If true this algorithm skips all subsample and goes directly to the level 1 optimization. This assumes that
      * images are fairly well aligned to begin with and therefore no sophisticated search is needed.
@@ -759,8 +756,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             imageWeightIso.disposeLocal();
         }
 
-        dummy = null;
-
         simpleInput_1 = null;
         simpleInputSub2_1 = null;
         simpleInputSub4_1 = null;
@@ -865,7 +860,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         int[] extentsIso = null;
         float[] resIso = null;
         int volumeSize;
-        double[][] OARmat;
         MatrixListItem item;
 
         if (inputImage.getNDims() != 4) {
@@ -1699,7 +1693,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 time = System.currentTimeMillis();
                 Preferences.debug(" Starting level 8 ************************************************\n");
 
-                Vector[] minimas;
+                Vector<MatrixListItem>[] minimas;
 
                 if (allowLevel16XY) {
                     minimas = levelEight(simpleRefSub16_1, simpleInputSub16_1);
@@ -2587,6 +2581,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
      * @param  tranforms  DOCUMENT ME!
      * @param  scale      <code>true</code> means set the scale in the vector.
      */
+    @SuppressWarnings("unused")
     private void interpolate(double x, double[] initial, double[][] tranforms, boolean scale) {
         int ix0, ix1;
 
@@ -3410,7 +3405,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
      *
      * @return  The optimized minimum.
      */
-    @SuppressWarnings("unchecked")
+  
     private MatrixListItem levelTwo(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima) {
         AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 128, 1);
 
@@ -3452,7 +3447,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         dims[1] = ref.yDim;
         dims[2] = ref.zDim;
 
-        float resol = ref.xRes; // all resolutions are the same
         int degree = (DOF < 7) ? DOF : 7;
         maxIter = baseNumIter * 4;
 
@@ -3822,7 +3816,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
      * differences between the images. Implements Comparable, so that a list of MatrixListItems can be sorted using
      * Java's sort.
      */
-    class MatrixListItem implements Comparable {
+    class MatrixListItem implements Comparable<MatrixListItem> {
 
         /** Cost of function at this minimum. */
         protected double cost;
@@ -3858,11 +3852,11 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
          *
          * @return  -1 if this is less than, 1 if greater than, 0 if equal.
          */
-        public int compareTo(Object o) {
+        public int compareTo(MatrixListItem o) {
 
-            if (cost < ((MatrixListItem) o).cost) {
+            if (cost < o.cost) {
                 return -1;
-            } else if (cost > ((MatrixListItem) o).cost) {
+            } else if (cost > o.cost) {
                 return 1;
             } else {
                 return 0;
