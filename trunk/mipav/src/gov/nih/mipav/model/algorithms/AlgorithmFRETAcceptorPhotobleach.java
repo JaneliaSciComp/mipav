@@ -9,7 +9,6 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 
 import java.io.*;
-import java.util.Vector;
 
 
 /**
@@ -509,12 +508,10 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
             int DOF = 3; // rigid transformation
             int interp = AlgorithmTransform.BILINEAR;
             int interp2 = AlgorithmTransform.BILINEAR;
-            boolean doAdjacent = false;
             float rotateBegin = -3.0f;
             float rotateEnd = 3.0f;
             float coarseRate = 3.0f;
             float fineRate = 1.0f;
-            boolean doGraph = false;
             boolean doSubsample = false;
             int bracketBound = 10;
             int maxIterations = 2;
