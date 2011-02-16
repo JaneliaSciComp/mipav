@@ -170,7 +170,6 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
         short labelNum = 0;
         int xp;
         int yp;
-        int zp;
         ViewVOIVector VOIs = null;
         int nVOIs;
         int nPoints;
