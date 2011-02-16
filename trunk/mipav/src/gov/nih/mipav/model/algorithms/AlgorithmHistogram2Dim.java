@@ -50,6 +50,7 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
     private boolean useBlue = false;
 
     /**  For color images only. If true green image is used as one of the images to create a 2D Histogram */
+    @SuppressWarnings("unused")
     private boolean useGreen = false;
 
     /**  For color images only. If true red image is used as one of the images to create a 2D Histogram */
