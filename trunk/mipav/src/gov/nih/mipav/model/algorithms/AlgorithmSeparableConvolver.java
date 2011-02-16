@@ -163,6 +163,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * @param kernelBuffer
      * @param resultBuffer
      */
+    @SuppressWarnings("unused")
     private void convolve(final double[] imageBuffer, final float[] kernelBuffer, final double[] resultBuffer) {
         boolean skipRed = false;
         boolean skipGreen = false;
