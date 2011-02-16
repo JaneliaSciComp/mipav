@@ -1141,6 +1141,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
      *            for transformDir == INVERSE One dimensional discrete wavelet transform. Note that the length of a must
      *            be an integer power of 2
      */
+    @SuppressWarnings("unused")
     private void wt1(final float[] a) {
         int nn;
         int len;
