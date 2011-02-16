@@ -32,10 +32,10 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
     private int[] axisDirA, axisDirB;
 
     /** DOCUMENT ME! */
-    private double[] coordA, inOrderA;
+    private double[] coordA;
 
     /** DOCUMENT ME! */
-    private double[] coordB, inOrderB;
+    private double[] coordB;
 
     /** private double dimA[], resA[];. */
     private double[] dimB, resB;
@@ -446,10 +446,9 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
      * Add image margins to image B, or crop to match Image A.
      */
     private void matchOrigin() {
-        double orderOrigA[][], diffD[];
+        double diffD[];
         int[] destExtentsA, destExtentsC;
         int[] diffI, add, cropAmt, boundX, boundY, boundZ;
-        TransMatrix tmpTransMatrix;
 
         try {
             coordA = new double[] { 0, 0, 0 };
@@ -462,7 +461,6 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             boundX = new int[] { 0, 0 };
             boundY = new int[] { 0, 0 };
             boundZ = new int[] { 0, 0 };
-            tmpTransMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmRegPatientPos reports: Out of memory");
@@ -565,8 +563,6 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             }
         }
 
-        // clean up this method
-        tmpTransMatrix = null;
         setCompleted(true);
     }
 
@@ -575,17 +571,13 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
      */
     private void reOrient() {
         double[] fieldOfView;
-        TransMatrix tmpTransMatrix;
         int switchOrig;
         int[] tempI3 = new int[3];
         double[] tempD1 = new double[3];
-        double[] tempD2 = new double[3];
-        double[] tempD3 = new double[3];
         float[] tempF3 = new float[3];
 
         try {
             fieldOfView = new double[] { 0, 0, 0 };
-            tmpTransMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmRegPatientPos reports: Out of memory");
@@ -759,7 +751,6 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
 
         // clean up this method
         alignmentXfrm = null;
-        tmpTransMatrix = null;
 
         resultImg = orientedImgB;
         tempImg = null;
