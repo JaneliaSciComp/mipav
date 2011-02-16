@@ -150,9 +150,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /** DOCUMENT ME! */
     private static final int PURE_1D = 3;
 
-    /** DOCUMENT ME! */
-    private static final int STATIC_EXPONENTIAL = 4;
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -275,7 +272,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         ModelImage bwImage3 = null;
         ModelImage colorImageReg = null;
         VOIVector VOIs;
-        int nCurves;
         AlgorithmRegOAR25D2 regAlgo = null;
         boolean haveLower;
         boolean haveUpper;
@@ -284,7 +280,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         short[] mask;
         short[] organMask = null;
         float[] wholeOrganIntensity = null;
-        float[] woIntensity;
         float[] photoBleachedIntensity;
         float[] pIntensity;
         float backgroundIntensity;
@@ -294,8 +289,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         int backgroundCount;
         double[] initial;
         double[] tValues;
-        double[] initialSecondHalf = new double[2];
-        double[] trValues;
         float[][] tfValues;
         float[][] pfValues;
         float[][] pfValues2 = null;
@@ -322,6 +315,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         ViewJFrameGraph photoBleachGraph2;
         ViewJFrameGraph ucPhotoBleachGraph;
         ViewJFrameGraph wholeOrganGraph;
+        @SuppressWarnings("unused")
         ViewJFrameImage imageFrame;
         ModelImage errorImage;
         ViewJFrameImage errorFrame;
@@ -331,7 +325,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         boolean haveGreen = false;
         boolean haveBlue = false;
         int colorsPresent = 0;
-        double chiSquared;
         Color[] colorArray;
 
         // By default a ViewJFrameGraph is put at 50,50 by setVisible
@@ -361,16 +354,16 @@ public class AlgorithmFRAP extends AlgorithmBase {
         String dataString = "";
 
         if (useTestData) {
-            double[] cyr = new double[1];
-            double[] cyi = new double[1];
-            int[] nz = new int[1];
-            int[] errorFlag = new int[1];
-            double rek0;
-            double imk0;
-            double rek1;
-            double imk1;
-            double reVar;
-            double imVar;
+            //double[] cyr = new double[1];
+            //double[] cyi = new double[1];
+            //int[] nz = new int[1];
+            //int[] errorFlag = new int[1];
+            //double rek0;
+            //double imk0;
+            //double rek1;
+            //double imk1;
+            //double reVar;
+            //double imVar;
 
             // Bessel testBessel = new Bessel( Bessel.AIRY_AI, true );
             // new Bessel(Bessel.AIRY_BI,2.0,0.0,0,Bessel.UNSCALED_FUNCTION,cyr,cyi,nz,errorFlag);
@@ -1595,7 +1588,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 double alphaScale;
                 double betaScale;
                 int xysep;
-                int xlimit;
                 short voiID;
                 VOI globalPtVOI;
                 VOI[] localPtVOI = null;
@@ -1625,7 +1617,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     for (y = 0; y <= 200; y++) {
                         indexY = indexZ + (201 * y);
                         beta = 0.05 * params[2] * Math.pow(400.0, 0.005 * y);
-                        xlimit = Math.min(200, y + xysep);
 
                         for (x = 0; x <= 200; x++) {
                             index = indexY + x;
@@ -1925,7 +1916,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
             int kmin = 0;
             initial = new double[2];
 
-            double[] yfit;
             double[] residuals;
 
             // Must strip out value with time = 0 or inverseLaplace will blow up
@@ -2050,10 +2040,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             if (paramVary) {
 
                 // Find the sum of square of errors for variations in kon and koff
-                double sse;
                 double ssemin = Double.MAX_VALUE;
                 double ssemax = -Double.MAX_VALUE;
-                int nPts = zDim - (firstSliceNum + 1);
                 sses = new double[201 * 201];
 
                 int y;
@@ -2852,6 +2840,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private double actInt(double x) {
         return 2.0 * Math.sqrt(x);
     }
@@ -2859,14 +2848,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void runFullModelTest() {
         File file;
         RandomAccessFile raFile;
-        long fileLength;
         String lineString = null;
         double[] tValues = null;
         float[] pIntensity = null;
-        DecimalFormat nf;
         double[][] timeM = null;
         float[][] dataM = null;
         StringTokenizer t;
@@ -2875,7 +2863,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         int i;
         int j;
         String dataString = "";
-        int k;
         double[] initial_kon = new double[401 * 401];
         double[] initial_koff = new double[401 * 401];
         int count = 0;
@@ -2890,65 +2877,65 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
         // An estimate for the maximum of the real parts of the singularities
         // of F. If unknown, set largestPole = 0.0
-        double largestPole = 0.0;
+        //double largestPole = 0.0;
 
         // numerical tolerance of approaching pole (default = 1.0e-9)
-        double tol = 1.0e-9;
-        FitFullModel lmod;
-        FitFullModel2 lmod2;
-        FitFullModelqd lmodqd;
-        FitWholeNL2solModel nonlinmod;
-        FitWholeNLConModel nlinmod2;
-        FitWholeNLConModel2 nlinmod4;
-        FitWholeNLConModel3 nlinmod6;
-        FitWholeNLConModelqd nlinmod8;
+        //double tol = 1.0e-9;
+        //FitFullModel lmod;
+        //FitFullModel2 lmod2;
+        //FitFullModelqd lmodqd;
+        //FitWholeNL2solModel nonlinmod;
+        //FitWholeNLConModel nlinmod2;
+        //FitWholeNLConModel2 nlinmod4;
+        //FitWholeNLConModel3 nlinmod6;
+        //FitWholeNLConModelqd nlinmod8;
         FitWholeNL2solInt2 nlinmod11;
         FitWholeNLConInt2 nlinmod12;
-        FitFullIntModel imod;
-        FitFullIntModel imod2;
-        FitFullIntModel imod3;
-        FitFullIntModel2i imod2i;
-        FitFullIntModel2s imod2s;
-        double bound;
-        double lowers = 0.0;
-        double uppers;
-        int inf = 1;
-        int routinei = Integration2.DQAGIE;
-        int routines = Integration2.DQAGSE;
-        double epsabsi = 0.0;
-        double epsabss = 0.0;
-        double epsreli = 1.0E-3;
-        double epsrels = 1.0E-3;
-        int limiti = 100;
-        int limits = 100;
+        //FitFullIntModel imod;
+        //FitFullIntModel imod2;
+        //FitFullIntModel imod3;
+        //FitFullIntModel2i imod2i;
+        //FitFullIntModel2s imod2s;
+        //double bound;
+        //double lowers = 0.0;
+        //double uppers;
+        //int inf = 1;
+        //int routinei = Integration2.DQAGIE;
+        //int routines = Integration2.DQAGSE;
+        //double epsabsi = 0.0;
+        //double epsabss = 0.0;
+        //double epsreli = 1.0E-3;
+        //double epsrels = 1.0E-3;
+        //int limiti = 100;
+        //int limits = 100;
         double[] timeFunction = null;
-        double[] fitR = new double[200];
-        double[] sses = new double[401 * 401];
+        //double[] fitR = new double[200];
+        //double[] sses = new double[401 * 401];
         double minsses;
-        int kmin = 0;
+        //int kmin = 0;
         double[] initial = new double[2];
         double[] params;
-        double abscissa = 0.0;
-        double relEps = 1.0E-12;
-        double absEps = 1.0E-12;
+        //double abscissa = 0.0;
+        //double relEps = 1.0E-12;
+        //double absEps = 1.0E-12;
         double[] result = new double[200];
-        double[] estErr = new double[200];
-        int[] evaluations = new int[200];
-        int[] errStatus = new int[200];
-        double eps = 3.0E-6;
-        double part1;
-        double part2;
+        //double[] estErr = new double[200];
+        //int[] evaluations = new int[200];
+        //int[] errStatus = new int[200];
+        //double eps = 3.0E-6;
+        //double part1;
+        //double part2;
         double[] tValuesWithZero;
-        double[] tOne = new double[1];
-        int nLaguerre = 16;
-        double sig0 = 0.0;
+        //double[] tOne = new double[1];
+        //int nLaguerre = 16;
+        //double sig0 = 0.0;
         double sigmax;
         double bmax;
-        double tols = 1.0e-6;
-        double tolb = 1.0e-6;
-        double sig;
-        double b;
-        double[] estimatedError;
+        //double tols = 1.0e-6;
+        //double tolb = 1.0e-6;
+        //double sig;
+        //double b;
+        //double[] estimatedError;
         long time;
 
         radius = 1.0f;
@@ -2960,10 +2947,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             pIntensity = new float[200];
             timeM = new double[8][200];
             dataM = new float[8][200];
-            nf = new DecimalFormat("0.00E0");
             file = new File("C:/images/FRAP/Sample_data.txt");
             raFile = new RandomAccessFile(file, "r");
-            fileLength = raFile.length();
             lineString = raFile.readLine();
             lineString = raFile.readLine();
             lineString = raFile.readLine();
@@ -3306,13 +3291,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * Preferences.debug("Numerical Integral = " + numInt + " after " + neval +" integrand evaluations used\n");
      * Preferences.debug("Error status = " + errorStatus +" with absolute error = " + absError + "\n"); 
      */
+    @SuppressWarnings("unused")
     private void runIntegrationTest2() {
         IntModel2 imod;
-        IntModel iCheck;
-        double boun = 0.0;
         int routine = Integration2.DQAGE;
         int key = 6;
-        int inf = 2;
         double epsabs = 0.0;
         double epsrel = 1.0E-3;
         int limit = 100;
@@ -3335,6 +3318,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void runLapTest() {
 
         // This routine tests the numerical inverse laplace transform of a
@@ -3382,6 +3366,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void runLapTest2() {
 
         // This routine tests the numerical inverese Laplace transform of a
@@ -3422,6 +3407,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void runLapTestqd() {
 
         // This routine tests the numerical inverse laplace transform of a
@@ -3488,10 +3474,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void runTest() {
         File file;
         RandomAccessFile raFile;
-        long fileLength;
+        //long fileLength;
         String lineString = null;
         int i, j;
         double[] tValues = null;
@@ -3509,7 +3496,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         boolean haveHalf;
         float pHalf;
         float pNorm;
-        FitDoubleExponentialNoWholeModel fdemnw = null;
         FitDoubleExponentialNoWholeNL2solModel fdemNL2solnw = null;
         FitDoubleExponentialNoWholeConstrainedModel fdemConstrainednw = null;
         FitSingleExponentialNoWholeModel fsemnw = null;
@@ -3520,12 +3506,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
         double dTemp;
         DecimalFormat nf;
         String dataString = "";
-        float mf;
         double s1, s2;
         double kdD;
-        double num;
-        double denom;
-        double ka, kd, Dt, Deff;
+        double ka, kd, Dt;
 
         try {
             tValues = new double[200];
@@ -3538,7 +3521,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
             nf = new DecimalFormat("0.00E0");
             file = new File("C:/images/Sample_data_model5.txt");
             raFile = new RandomAccessFile(file, "r");
-            fileLength = raFile.length();
             lineString = raFile.readLine();
 
             for (j = 0; j < 200; j++) {
@@ -3969,8 +3951,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
             this.xData = xData;
             this.yData = yData;
 
-            int i;
-
             bounds = 2; // bounds = 0 means unconstrained
 
             // bounds = 1 means same lower and upper bounds for
@@ -4031,7 +4011,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
             int ctrl;
             int i;
             double ymodel = 0.0;
-            double e1, e2;
 
             try {
                 ctrl = ctrlMat[0];
@@ -4048,8 +4027,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                     // Calculate the Jacobian analytically
                     for (i = 0; i < nPts; i++) {
-                        e1 = Math.exp(a[1] * xData[i]);
-                        e2 = Math.exp(a[2] * xData[i]);
                         covarMat[i][0] = 1.0;
                         covarMat[i][1] = -Math.pow(a[2], xData[i]);
                         covarMat[i][2] = -xData[i] * a[1] * Math.pow(a[2], xData[i] - 1.0);
@@ -4235,8 +4212,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
             super(nPoints, 4);
             this.xData = xData;
             this.yData = yData;
-
-            int i;
 
             bounds = 2; // bounds = 0 means unconstrained
 
@@ -5344,7 +5319,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // Port of lelpa_m5_web.m
             // Laplace transform for scaled total fluorescence
             // Local equilibrium model
-            int i;
             double feq;
             double denom;
             double partDenom;
@@ -6482,10 +6456,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
             int ctrl;
             int i;
-            double e1, e2;
             FitFullIntModel2s imods;
             FitFullIntModel2i imodi;
-            double[] timeFunction;
 
             try {
                 ctrl = ctrlMat[0];
@@ -6600,7 +6572,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
             int ctrl;
             int i;
-            double e1, e2;
             FitFullModel lmod;
             double[] timeFunction;
 
@@ -6736,9 +6707,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
             int ctrl;
             int i;
-            double e1, e2;
             FitFullModel2 lmod;
-            double[] timeFunction;
 
             try {
                 ctrl = ctrlMat[0];
@@ -6856,9 +6825,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
             int ctrl;
             int i;
-            double e1, e2;
             FitFullIntModel imod;
-            double[] timeFunction;
 
             try {
                 ctrl = ctrlMat[0];
@@ -6957,7 +6924,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
             int ctrl;
             int i;
-            double e1, e2;
             FitFullModelqd lmod;
             double[] timeFunctionWithZero;
             double[] xSeriesWithZero;
