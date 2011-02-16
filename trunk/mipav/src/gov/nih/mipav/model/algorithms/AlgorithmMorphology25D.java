@@ -102,13 +102,6 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
     private int algorithm;
 
     /** DOCUMENT ME! */
-    private String[] algorithmName = {
-        "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
-        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "PARTICLE_ANALYSIS_NEW", "FILL_HOLES",
-        "MORPHOLOGICAL_GRADIENT"
-    };
-
-    /** DOCUMENT ME! */
     private float circleDiameter;
 
     /** DOCUMENT ME! */
@@ -134,7 +127,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private BitSet kernel;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int kernelType;
 
     /** Number pixels to prune. */
@@ -217,9 +210,9 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
         int sliceSize = xDim * yDim;
-        Vector endpoints;
-        Vector branch;
-        Vector branchesVector;
+        Vector<Integer> endpoints;
+        Vector<Integer> branch;
+        Vector<Vector<Integer>> branchesVector;
         short[] tempBuffer;
 
         if (iter < 1) {
@@ -228,8 +221,8 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
         try {
             tempBuffer = new short[imgBuffer.length];
-            endpoints = new Vector();
-            branchesVector = new Vector();
+            endpoints = new Vector<Integer>();
+            branchesVector = new Vector<Vector<Integer>>();
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology25D: Out of memory");
             setCompleted(false);
@@ -341,7 +334,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                         p5 = processBuffer[pix];
 
                         if (p5 == 1) {
-                            branch = new Vector();
+                            branch = new Vector<Integer>();
                             branch.addElement(new Integer(pix));
                             branchesVector.addElement(branch);
                         }
@@ -356,7 +349,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             int branchesSize = branchesVector.size();
 
             while (branchesDone != branchesSize) {
-                branch = (Vector) branchesVector.elementAt(currentBranch);
+                branch = (Vector<Integer>) branchesVector.elementAt(currentBranch);
 
                 for (i = 2; i <= (iter + 1); i++) {
                     pix = ((Integer) branch.elementAt(i - 2)).intValue();
@@ -410,7 +403,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
             // creates final image which contains only branches of more than iter in length
             while (!branchesVector.isEmpty()) {
-                branch = (Vector) branchesVector.firstElement();
+                branch = (Vector<Integer>) branchesVector.firstElement();
                 branchesVector.removeElementAt(0);
 
                 while (!branch.isEmpty()) {
@@ -846,7 +839,6 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         int endX, endY;
 
         int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
 
         int halfKDim = kDim / 2;
@@ -864,8 +856,6 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         for (pix = 0; pix < imgLength; pix++) {
             processBuffer[pix] = 0;
         }
-
-        int mod = (iters * sliceLength * zDim) / 20; // mod is 5 percent of length
 
         for (c = 0; (c < iters) && !threadStopped; c++) {
 
@@ -994,7 +984,6 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         int endX, endY;
 
         int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
 
         int halfKDim = kDim / 2;
@@ -1224,7 +1213,7 @@ kernelLoop:
         z = stIndex/sliceSize;
         indexZ = z * sliceSize;
         Point seedPt = new Point((stIndex % sliceSize) % xDim, (stIndex % sliceSize) / xDim);
-        Stack stack = new Stack();
+        Stack<Point> stack = new Stack<Point>();
 
         if (imgBuffer[indexZ + (seedPt.y * xDim) + seedPt.x] == objValue) {
             stack.push(seedPt);
