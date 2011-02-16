@@ -33,9 +33,6 @@ public class AlgorithmRegValidation extends AlgorithmBase {
     
     /** Input point set B (2D or 3D) */
     private double[][] pointSetB;
-
-    /**The measure to use for analysis. */
-    private RegistrationMeasure measure;
     
     /** The transformation matrix that describes the transform from point set B to point set A. */
     private TransMatrix xfrmBA;
@@ -254,8 +251,6 @@ public class AlgorithmRegValidation extends AlgorithmBase {
             double det;
             double ratio;
             int numberZeroes;
-            boolean equalValues = false;
-            double[][] vArray;
 
             for (i = 0; i < dim; i++) {
                 p1[i] = 0;
