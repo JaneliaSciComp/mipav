@@ -37,7 +37,7 @@ public class AlgorithmEllipsoidFit {
      *
      * @param  kPoints  a vector of points, each vector element is of type Point3f
      */
-    public AlgorithmEllipsoidFit(Vector kPoints) {
+    public AlgorithmEllipsoidFit(Vector<Vector3f> kPoints) {
         double[][] S11 = new double[6][6];
         double[][] S12 = new double[6][4];
         double[][] S22 = new double[4][4];
