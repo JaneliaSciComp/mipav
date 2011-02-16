@@ -140,7 +140,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     protected Vector3f m_kCenter = new Vector3f();
 
     /** Edge map. */
-    protected HashMap m_kEMap;
+    protected HashMap<Edge,Integer> m_kEMap;
 
     /** Used to rotate the initial mesh into the same orientation as the data. */
     protected Matrix3f m_kRotate;
@@ -1045,11 +1045,11 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_fMeanEdgeLength = 0.0f;
 
         final Iterator kEIter = m_kEMap.entrySet().iterator();
-        Map.Entry kEntry = null;
+        Map.Entry<Edge,Integer> kEntry = null;
         final Vector3f kEdge = new Vector3f();
 
         while (kEIter.hasNext()) {
-            kEntry = (Map.Entry) kEIter.next();
+            kEntry = (Map.Entry<Edge,Integer>) kEIter.next();
 
             final Edge kE = (Edge) kEntry.getKey();
             final Vector3f kP0 = m_akVertex[kE.m_i0];
@@ -1325,8 +1325,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // array with the smaller number of voxels represents the scalp
         // voxels in the upper-half of the head. The comparison of counts
         // is based on empirical studies.
-        final Vector kLess = new Vector();
-        final Vector kGreater = new Vector();
+        final Vector<Vector3f> kLess = new Vector<Vector3f>();
+        final Vector<Vector3f> kGreater = new Vector<Vector3f>();
         final int iHalfYBound = m_iYBound / 2;
         final int iHalfZBound = m_iZBound / 2;
 
@@ -1653,7 +1653,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_aiConnect[22] = 0;
         m_aiConnect[23] = 3;
 
-        m_kEMap = new HashMap();
+        m_kEMap = new HashMap<Edge,Integer>();
 
         final Integer kInvalid = new Integer( -1);
         m_kEMap.put(new Edge(0, 4), kInvalid);
@@ -1676,10 +1676,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             // generate midpoints of edges
             final Iterator kEIter = m_kEMap.entrySet().iterator();
-            Map.Entry kEntry = null;
+            Map.Entry<Edge,Integer> kEntry = null;
 
             while (kEIter.hasNext()) {
-                kEntry = (Map.Entry) kEIter.next();
+                kEntry = (Map.Entry<Edge,Integer>) kEIter.next();
 
                 final Edge kE = (Edge) kEntry.getKey();
                 final Vector3f kP0 = m_akVertex[kE.m_i0];
@@ -2758,6 +2758,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         /**
          * Construct an empty unordered set. The initial maximum quantity and growth values are DEFAULT_GROW. When
          */
+        @SuppressWarnings("unused")
         public UnorderedSetInt() {
             reset();
         }
@@ -2767,6 +2768,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * 
          * @param kSet The input set to copy.
          */
+        @SuppressWarnings("unused")
         public UnorderedSetInt(final UnorderedSetInt kSet) {
             copy(kSet);
         }
@@ -2792,6 +2794,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * @return The array location that contains the newly appended element. A side effect of this call is
          *         reallocation of the storage array, if necessary.
          */
+        @SuppressWarnings("unused")
         public int append(final int iElement) {
 
             if (m_iQuantity == m_iMaxQuantity) {
@@ -2812,6 +2815,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * Use exactly the amount of array storage for the current elements in the set. After the call, getQuantity()
          * and getMaximumQuantity() return the same value. This call does cause a reallocation.
          */
+        @SuppressWarnings("unused")
         public void compactify() {
 
             if (m_iQuantity > 0) {
@@ -2846,6 +2850,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * 
          * @return The value is true if and only if the element is found in the set.
          */
+        @SuppressWarnings("unused")
         public final boolean exists(final int iElement) {
 
             for (int i = 0; i < m_iQuantity; i++) {
@@ -2876,6 +2881,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * 
          * @return The growth value.
          */
+        @SuppressWarnings("unused")
         public final int getGrow() {
             return m_iGrow;
         }
@@ -2886,6 +2892,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * 
          * @return The maximum quantity of elements in the set.
          */
+        @SuppressWarnings("unused")
         public final int getMaxQuantity() {
             return m_iMaxQuantity;
         }
@@ -2898,6 +2905,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * 
          * @return The new location of the last element that was moved.
          */
+        @SuppressWarnings("unused")
         public final int getNewIndex() {
             return m_iNewIndex;
         }
@@ -2909,6 +2917,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * 
          * @return The old location of the last element that was moved.
          */
+        @SuppressWarnings("unused")
         public final int getOldIndex() {
             return m_iOldIndex;
         }
@@ -2965,6 +2974,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          *         last element can be retrieved by calls to getOldIndex() and getNewIndex(). If the last element was
          *         the one removed, getNewIndex() returns -1.
          */
+        @SuppressWarnings("unused")
         public boolean remove(final int iElement) {
 
             for (int i = 0; i < m_iQuantity; i++) {
@@ -2997,6 +3007,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          *         If needed, the old and new locations of the last element can be retrieved by calls to getOldIndex()
          *         and getNewIndex(). If the last element was the one removed, getNewIndex() returns -1.
          */
+        @SuppressWarnings("unused")
         public boolean removeAt(final int i) {
 
             if ( (0 <= i) && (i < m_iQuantity)) {
@@ -3053,6 +3064,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * @param i The array location to assign to.
          * @param iElement The element to assign to array location i.
          */
+        @SuppressWarnings("unused")
         public final void set(final int i, final int iElement) {
             m_aiElement[i] = iElement;
         }
