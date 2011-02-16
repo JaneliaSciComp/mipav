@@ -984,7 +984,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         FitCovarianceModel fcm = null;
         float[] xValues = null;
         float[] yValues = null;
-        float[] zValues = null;
         double[] initial = null;
         boolean found;
         int xLast = 0;
@@ -1174,7 +1173,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         nPoints = (xLast + 1) * (yDim - yLast) * (zLast + 1);
         xValues = new float[nPoints];
         yValues = new float[nPoints];
-        zValues = new float[nPoints];
 
         for (i = 0, z = 0; z <= zLast; z++) {
             z2 = z * z;
@@ -1243,7 +1241,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         FitCovarianceModel fcm = null;
         float[] xValues = null;
         float[] yValues = null;
-        float[] zValues = null;
         double[] initial = null;
         boolean found;
         int xLast = 0;
@@ -1450,7 +1447,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             nPoints = (xLast + 1) * (yDim - yLast) * (zLast + 1);
             xValues = new float[nPoints];
             yValues = new float[nPoints];
-            zValues = new float[nPoints];
 
             for (i = 0, z = 0; z <= zLast; z++) {
                 z2 = z * z;
@@ -1657,7 +1653,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             nPoints = (xLast + 1) * (yDim - yLast) * (zLast + 1);
             xValues = new float[nPoints];
             yValues = new float[nPoints];
-            zValues = new float[nPoints];
 
             for (i = 0, z = 0; z <= zLast; z++) {
                 z2 = z * z;
@@ -1863,7 +1858,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             nPoints = (xLast + 1) * (yDim - yLast) * (zLast + 1);
             xValues = new float[nPoints];
             yValues = new float[nPoints];
-            zValues = new float[nPoints];
 
             for (i = 0, z = 0; z <= zLast; z++) {
                 z2 = z * z;
@@ -2107,7 +2101,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         int newValue = 0;
         int lastValue = 0;
         int colorsPresent = 0;
-        int colorsDone = 0;
         int thisPos, nextPos, resultPos;
         int this1, next1, result1, this2, next2, result2, this3, next3, result3;
         int ymdelta, zmdelta, tmdelta;
