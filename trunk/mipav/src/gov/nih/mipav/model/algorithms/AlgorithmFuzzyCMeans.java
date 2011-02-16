@@ -159,9 +159,10 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
     private int iterations;
 
     /** jacobiIters1 and jacobiIter2 are only used with gain correction. */
+    @SuppressWarnings("unused")
     private int jacobiIters1 = 1;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int jacobiIters2 = 2;
 
     /** DOCUMENT ME! */
@@ -206,13 +207,14 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int orgXDim;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private boolean outputGainField = false;
 
     /** DOCUMENT ME! */
     private boolean powEIntFlag = true;
 
     /** pyramidLevels is only used with gain correction. */
+    @SuppressWarnings("unused")
     private int pyramidLevels = 4;
 
     /** DOCUMENT ME! */
@@ -231,9 +233,10 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
     private int sliceSize;
 
     /** smooth1 and smooth2 are only used with gain field correction. */
+    @SuppressWarnings("unused")
     private float smooth1 = 20000;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private float smooth2 = 200000;
 
     /** DOCUMENT ME! */
@@ -777,7 +780,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                 if ((units[0] != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (units[0] == units[1])) {
                     float[] res = srcImage.getFileInfo()[0].getResolutions();
                     float pixelSize = res[0] * res[1];
-                    String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
+                    String unitsStr = Unit.getUnitFromLegacyNum(units[0]).toString();
 
                     for (i = 0; i < nClass; i++) {
                         ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " +  (i + 1) + " count = " +
@@ -850,7 +853,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         int zLow, zHigh;
         int c;
         int x, y, z;
-        int i, j;
+        int i;
         float dTemp;
         int indexM;
         int index;
@@ -1181,7 +1184,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                 if ((units[0] != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (units[0] == units[1]) && (units[0] == units[2])) {
                     float[] res = srcImage.getFileInfo()[0].getResolutions();
                     float voxelSize = res[0] * res[1] * res[2];
-                    String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
+                    String unitsStr = Unit.getUnitFromLegacyNum(units[0]).toString();
 
                     for (i = 0; i < nClass; i++) {
                         ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (i + 1) + " count = " +
