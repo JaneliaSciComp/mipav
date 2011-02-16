@@ -1890,6 +1890,7 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
      *
      * @return  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private double distance(int x1, int x2, int y1, int y2) {
         return Math.sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)));
     }
@@ -2008,6 +2009,7 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
      *                    by the sum over 0.5*alpha*|first order derivative|**2 + Eext, where v = -grad(Eext). The first
      *                    derivative of the curve and Eext would also have to be calculated to obtain the energy.
      */
+    @SuppressWarnings("unused")
     private void runSnake(float[] xPoints, float[] yPoints, float[] u, float[] v, Polygon resultGon) {
         int i, j;
         int nPts;
@@ -2204,6 +2206,7 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
      * @param  yPoints  storage location array of y coord. points
      * @param  gon      initial polygon
      */
+    @SuppressWarnings("unused")
     private void setPoints(float[] xPoints, float[] yPoints, Polygon gon) {
         int i;
 
