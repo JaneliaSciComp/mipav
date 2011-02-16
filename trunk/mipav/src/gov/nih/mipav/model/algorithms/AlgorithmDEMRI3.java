@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
@@ -29,17 +28,12 @@ import java.io.*;
  Geoff J. M. Parker and Anwar R. Padhani.
  */
 public class AlgorithmDEMRI3 extends AlgorithmBase {
-	
-    private int CONSTANT_TISSUE = 1;
     
     private int FIRST_VOLUME_TISSUE = 2;
     
     private int SEPARATE_VOLUME_TISSUE = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
     
     /** Contrast relaxivity rate in 1/(mMol*sec) (0.0 - 1000.0) */
     private double r1;
@@ -127,8 +121,6 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         this.perMinute = perMinute;
         this.nFirst = nFirst;
         this.useVe = useVe;
-        
-        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -508,6 +500,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
     }
     
     class FitDEMRI3ConstrainedModel extends NLConstrainedEngine {
+    	@SuppressWarnings("unused")
     	private double xData[];
     	private double yData[];
 
