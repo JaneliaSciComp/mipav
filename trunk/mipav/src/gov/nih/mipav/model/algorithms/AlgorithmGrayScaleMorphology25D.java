@@ -107,13 +107,6 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
     private int algorithm;
 
     /** DOCUMENT ME! */
-    private String[] algorithmName = {
-        "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
-        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "PARTICLE_ANALYSIS_NEW", "FILL_HOLES",
-        "MORPHOLOGICAL_GRADIENT", "TOP_HAT", "BOTTOM_HAT", "MORPHOLOGICAL_LAPLACIAN"
-    };
-
-    /** DOCUMENT ME! */
     private float circleDiameter;
 
     /** DOCUMENT ME! */
@@ -139,10 +132,11 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private BitSet kernel;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int kernelType;
 
     /** Number pixels to prune. */
+    @SuppressWarnings("unused")
     private int numPruningPixels;
 
     /** DOCUMENT ME! */
