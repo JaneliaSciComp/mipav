@@ -266,7 +266,6 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
             
             double ratio;
             int numberZeroes;
-            boolean equalValues = false;
 
             for (i = 0; i < dim; i++) {
                 p1[i] = 0;
