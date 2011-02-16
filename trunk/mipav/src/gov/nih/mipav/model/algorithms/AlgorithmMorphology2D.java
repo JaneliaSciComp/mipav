@@ -2,7 +2,6 @@ package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
@@ -115,13 +114,6 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
     /** algorithm type (i.e. erode, dilate) */
     private int algorithm;
 
-    /** DOCUMENT ME! */
-    private String[] algorithmName = {
-        "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
-        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "PARTICLE_ANALYSIS_NEW", "FILL_HOLES",
-        "DISTANCE_MAP_FOR_SHAPE_INTERPOLATION", "MORPHOLOGICAL_GRADIENT"
-    };
-
     /** kernel diameter. */
     private float circleDiameter;
 
@@ -158,6 +150,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
     private BitSet kernel;
 
     /** kernel size (i.e. connectedness) */
+    @SuppressWarnings("unused")
     private int kernelType;
 
     /** Erosion kernel type. */
@@ -169,17 +162,17 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
     /** Number pixels to prune. */
     private int numPruningPixels;
 
-    /** Vector that holding the current availaible objects in the 2D image. */
-    private Vector objects = new Vector();
+    /** Vector that holding the current available objects in the 2D image. */
+    private Vector<intObject> objects = new Vector<intObject>();
 
     /** DOCUMENT ME! */
     private float pixDist = 1;
 
-    /** intermediate prcessing buffer, same size with imgBuffer. */
+    /** intermediate processing buffer, same size with imgBuffer. */
     private short[] processBuffer;
 
-    /** Vector that hold the prunce seeding pixels. */
-    private Vector pruneSeeds = new Vector();
+    /** Vector that hold the prune seeding pixels. */
+    private Vector<Integer> pruneSeeds = new Vector<Integer>();
 
     /** Flag to show frame during each algorithm method call. */
     private boolean showFrame = false;
@@ -895,9 +888,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int sliceSize = xDim * yDim;
-        Vector endpoints;
-        Vector branch;
-        Vector branchesVector;
+        Vector<Integer> endpoints;
+        Vector<Integer> branch;
+        Vector <Vector<Integer>>branchesVector;
         short[] tempBuffer;
 
         if (iter < 1) {
@@ -906,8 +899,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         try {
             tempBuffer = new short[imgBuffer.length];
-            endpoints = new Vector();
-            branchesVector = new Vector();
+            endpoints = new Vector<Integer>();
+            branchesVector = new Vector<Vector<Integer>>();
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
@@ -999,7 +992,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             }
         }
 
-        // for each occurance of 1 (the endpoint of a branch),
+        // for each occurrence of 1 (the endpoint of a branch),
         // a new element is added to branchesVector
         for (int y = 1; (y < (yDim - 1)) && !threadStopped; y++) {
 
@@ -1010,7 +1003,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                     p5 = processBuffer[pix];
 
                     if (p5 == 1) {
-                        branch = new Vector();
+                        branch = new Vector<Integer>();
                         branch.addElement(new Integer(pix));
                         branchesVector.addElement(branch);
                     }
@@ -1031,7 +1024,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int branchesSize = branchesVector.size();
 
         while ((branchesDone != branchesSize) && !threadStopped) {
-            branch = (Vector) branchesVector.elementAt(currentBranch);
+            branch = (Vector<Integer>) branchesVector.elementAt(currentBranch);
 
             for (i = 2; (i <= (iter + 1)) && !threadStopped; i++) {
                 pix = ((Integer) branch.elementAt(i - 2)).intValue();
@@ -1090,7 +1083,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         // creates final image which contains only branches of more than iter in length
         while (!branchesVector.isEmpty() && !threadStopped) {
-            branch = (Vector) branchesVector.firstElement();
+            branch = (Vector<Integer>) branchesVector.firstElement();
             branchesVector.removeElementAt(0);
 
             while (!branch.isEmpty() && !threadStopped) {
@@ -1149,15 +1142,15 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int sliceSize = xDim * yDim;
-        Vector endpoints;
-        Vector branch;
-        Vector branchesVector;
+        Vector<Integer> endpoints;
+        Vector<Integer> branch;
+        Vector<Vector<Integer>> branchesVector;
         short[] tempBuffer;
 
         try {
             tempBuffer = new short[imgBuffer.length];
-            endpoints = new Vector();
-            branchesVector = new Vector();
+            endpoints = new Vector<Integer>();
+            branchesVector = new Vector<Vector<Integer>>();
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
@@ -1282,7 +1275,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         iter = i;
 
-        // for each occurance of 1 (the endpoint of a branch),
+        // for each occurrence of 1 (the endpoint of a branch),
         // a new element is added to branchesVector
         for (int y = 1; (y < (yDim - 1)) && !threadStopped; y++) {
 
@@ -1293,7 +1286,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                     p5 = processBuffer[pix];
 
                     if (p5 == 1) {
-                        branch = new Vector();
+                        branch = new Vector<Integer>();
                         branch.addElement(new Integer(pix));
                         branchesVector.addElement(branch);
                     }
@@ -1315,7 +1308,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int index;
 
         while ((branchesDone != branchesSize) && !threadStopped) {
-            branch = (Vector) branchesVector.elementAt(currentBranch);
+            branch = (Vector<Integer>) branchesVector.elementAt(currentBranch);
 
             for (i = 2; (i <= (iter)) && !threadStopped; i++) {
                 index = ((Integer) branch.elementAt(i - 2)).intValue();
@@ -1358,7 +1351,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int[] pixArray = new int[branchesVector.size()];
 
         for (i = 0; i < branchesVector.size(); i++) {
-            branch = (Vector) branchesVector.elementAt(i);
+            branch = (Vector<Integer>) branchesVector.elementAt(i);
             maxPix = 0;
             maxIndex = 0;
 
@@ -3001,7 +2994,7 @@ kernelLoop:
         int yDim = srcImage.getExtents()[1];
         Point pt;
         Point tempPt;
-        Stack stack = new Stack();
+        Stack<Point> stack = new Stack<Point>();
         int indexY;
         int x, y;
 
@@ -3329,7 +3322,7 @@ kernelLoop:
         int yDim = srcImage.getExtents()[1];
         Point pt;
         Point tempPt;
-        Stack stack = new Stack();
+        Stack<Point> stack = new Stack<Point>();
         int indexY;
         int x, y;
         int pixCount = 0;
@@ -3483,8 +3476,6 @@ kernelLoop:
     private boolean isSinglePoint(int index, short[] tmpBuffer) {
         short p1, p2, p3, p4, p6, p7, p8, p9;
         int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int size = xDim * yDim;
 
         short bgColor = 0;
 
@@ -3645,7 +3636,6 @@ kernelLoop:
         int yDim = srcImage.getExtents()[1];
         int sliceSize = xDim * yDim;
         int pix, i;
-        Point bgPoint;
         Vector3f[] seeds;
         int[] destExtents = null;
         ModelImage wsImage = null;
@@ -3676,7 +3666,6 @@ kernelLoop:
 
 
             srcImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
-            bgPoint = new Point(-1, -1);
             destExtents = new int[2];
         } catch (NullPointerException npe) {
 
