@@ -168,14 +168,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
         boolean logMagDisplay = true;
         boolean unequalDim = false;
         boolean image25D = false;
-        boolean imageCrop = true;
-        int kernelDiameter = 15;
-        int filterType = 2;
-        float freq1 = 0.4f;
-        float freq2 = 0.7f;
-        int constructionMethod = 1;
-        int butterworthOrder = 0;
-
 
         // take the FFT of the inImage
         AlgorithmFFT blurredFFT = new AlgorithmFFT(blurredImageSpectrum, inImage, forwardTransformDir, logMagDisplay,
@@ -257,7 +249,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
 
         initAlgorithm();
         
-        float a, b, c, d, denom, blurredMagVal, psfMagVal;
+        float blurredMagVal, psfMagVal;
         Complex blurredVal = new Complex();
         Complex estimatedVal = new Complex();
         Complex psfVal = new Complex();
@@ -266,9 +258,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
         Complex tmpComplexVal3 = new Complex();
         Complex tmpComplexVal4 = new Complex();
         Complex tmpComplexVal5 = new Complex();
-        float psfRealVal, psfImagVal;
-        float blurredRealVal, blurredImagVal;
-        float estimatedRealVal, estimatedImagVal;
         float beta = 0.9f;
         Complex BETA = new Complex(beta);
         Complex OneMinusBETA = new Complex(1.0f - beta);
