@@ -226,9 +226,10 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
     private int iterations;
 
     /** jacobiIters1 and jacobiIter2 are only used with gain field correction. */
+    @SuppressWarnings("unused")
     private int jacobiIters1 = 2;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int jacobiIters2 = 3;
 
     /** DOCUMENT ME! */
@@ -273,13 +274,14 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int orgXDim;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private boolean outputGainField = false;
 
     /** DOCUMENT ME! */
     private boolean powEIntFlag = true;
 
     /** pyramidLevels is only used with gain correction. */
+    @SuppressWarnings("unused")
     private int pyramidLevels = 4;
 
     /** DOCUMENT ME! */
@@ -295,9 +297,10 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
     private int sliceSize;
 
     /** smooth1 and smooth2 are only used with gain field correction. */
+    @SuppressWarnings("unused")
     private float smooth1 = 5e4f;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private float smooth2 = 5e5f;
 
     /** DOCUMENT ME! */
