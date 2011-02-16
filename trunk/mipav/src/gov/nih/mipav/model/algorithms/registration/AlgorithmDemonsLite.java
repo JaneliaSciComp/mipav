@@ -10,13 +10,6 @@ import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-import java.util.*;
-import java.lang.*;
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
 
  /**
  *
@@ -40,7 +33,6 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
     private ModelImage  targetImage;
     private ModelImage[]	destImage;
 	private String      output;
-    private ViewUserInterface       userInterface;
 
 	private     int         nix,niy,niz;
 	private float           rix,riy,riz;
@@ -55,8 +47,6 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 	private int			Ni;
 	private int			regType;
 	
-	private boolean		verbose = true;
-	private     boolean		debug = true;
     // Test images for 2D registration
     private ModelImage circleImage;
     private ModelImage cImage;
@@ -72,7 +62,6 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 									String out_) {
 			
 		super(null, srcImg);
-		userInterface = ViewUserInterface.getReference();
 		srcImage = srcImg;
         targetImage = targetImg;  // Put results in destination image.
         output = out_;
