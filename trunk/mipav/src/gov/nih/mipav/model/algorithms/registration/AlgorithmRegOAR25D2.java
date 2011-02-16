@@ -20,7 +20,6 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
 import java.awt.Color;
-import java.awt.Polygon;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -912,7 +911,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         VOIVector VOI2s = null;
         int nVOIs = 0;
         VOI[] newVOI = null;
-        Polygon[] gons;
         short[] id = null;
         String[] name = null;
         int[] curveType = null;
@@ -1536,7 +1534,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             if (DOF >= 3) {
                 Preferences.debug(" Starting level 8 ************************************************\n");
 
-                Vector[] minimas;
+                Vector<MatrixListItem>[] minimas;
 
                 if (allowLevel16) {
                     minimas = levelEight(simpleRefSub16_1, simpleInputSub16_1);
@@ -1792,7 +1790,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
                 for (i = 0; i < nVOIs; i++) {
                     Vector<VOIBase> sliceCurves = VOI2s.VOIAt(i).getCurves();
-                    VOIs.VOIAt(i).removeCurves(iNumber);
+                    Vector<VOIBase> removeCurves = VOIs.VOIAt(i).getSliceCurves(iNumber);
+                    for (j = 0; j < removeCurves.size(); j++ ) {
+                        VOIs.VOIAt(i).removeCurve(removeCurves.elementAt(j));	
+                    }
 
                     for (j = 0; j < sliceCurves.size(); j++) {
                         VOIs.VOIAt(i).importPolygon(((VOIContour)sliceCurves.elementAt(j)).exportPolygon(), iNumber);
