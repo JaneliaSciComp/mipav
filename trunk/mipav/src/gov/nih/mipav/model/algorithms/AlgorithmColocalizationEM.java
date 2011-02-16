@@ -516,10 +516,11 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         ModelImage registeredSrcImage;
         boolean transformVOI = false;
         boolean clip = true;
+        @SuppressWarnings("unused")
         ViewJFrameImage imageFrame;
+        @SuppressWarnings("unused")
         ViewJFrameImage imageFrame2;
         TransMatrix xfrm;
-        double[][] mat;
         double min1, min2, max1, max2, range1, range2, scale1, scale2;
         int ch1, ch2;
         int length;
@@ -527,6 +528,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         ViewVOIVector VOIs;
         int nVOIs;
         int nBoundingVOIs;
+        @SuppressWarnings("unused")
         ViewJFrameColocalizationEM frameColocalize;
         Vector frameList;
         ViewJFrameBase controlFrame = null;
@@ -981,10 +983,11 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         ModelImage registeredBaseImage;
         boolean transformVOI = false;
         boolean clip = true;
+        @SuppressWarnings("unused")
         ViewJFrameImage imageFrame;
+        @SuppressWarnings("unused")
         ViewJFrameImage imageFrame2;
         TransMatrix xfrm;
-        double[][] mat;
         double min1, min2, max1, max2, range1, range2, scale1, scale2;
         int ch1, ch2;
         int length;
@@ -996,6 +999,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         ViewVOIVector VOIs;
         int nVOIs;
         int nBoundingVOIs;
+        @SuppressWarnings("unused")
         ViewJFrameColocalizationEM frameColocalize;
         Vector frameList;
         ViewJFrameBase controlFrame = null;
@@ -1495,9 +1499,9 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         boolean transformVOI = false;
         boolean clip = true;
         int c;
+        @SuppressWarnings("unused")
         ViewJFrameImage imageFrame;
         TransMatrix xfrm;
-        double[][] mat;
         double min1, min2, max1, max2, range1, range2, scale1, scale2;
         int ch1, ch2;
         int length;
@@ -1507,6 +1511,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         int nBoundingVOIs;
         int color;
         int secondColor;
+        @SuppressWarnings("unused")
         ViewJFrameColocalizationEM frameColocalize;
         Vector frameList;
         ViewJFrameBase controlFrame = null;
@@ -2059,9 +2064,9 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         boolean transformVOI = false;
         boolean clip = true;
         int c;
+        @SuppressWarnings("unused")
         ViewJFrameImage imageFrame;
         TransMatrix xfrm;
-        double[][] mat;
         double min1, min2, max1, max2, range1, range2, scale1, scale2;
         int ch1, ch2;
         int length;
@@ -2075,6 +2080,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         int nBoundingVOIs;
         int color;
         int secondColor;
+        @SuppressWarnings("unused")
         ViewJFrameColocalizationEM frameColocalize;
         Vector frameList;
         ViewJFrameBase controlFrame = null;
