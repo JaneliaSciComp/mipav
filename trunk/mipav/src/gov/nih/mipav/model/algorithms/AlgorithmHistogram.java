@@ -1,7 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
@@ -833,7 +831,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             if ((units[0] != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (units[0] == units[1])) {
                 float[] res = image.getFileInfo()[0].getResolutions();
                 float pixelSize = res[0] * res[1];
-                String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
+                String unitsStr = Unit.getUnitFromLegacyNum(units[0]).toString();
 
                 if (sameLowHigh) {
                     UI.setDataText("intensity\tcount \tarea in square "+ unitsStr + "\n");
@@ -890,7 +888,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             if ((units[0] != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (units[0] == units[1]) && (units[0] == units[2])) {
                 float[] res = image.getFileInfo()[0].getResolutions();
                 float pixelSize = res[0] * res[1] * res[2];
-                String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
+                String unitsStr = Unit.getUnitFromLegacyNum(units[0]).toString();
                 if (sameLowHigh) {
                     UI.setDataText("intensity\tcount \tvolume in cubic "+ unitsStr + "\n");
                 }
