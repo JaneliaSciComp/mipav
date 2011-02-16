@@ -1228,6 +1228,7 @@ public class AlgorithmAHE extends AlgorithmBase {
      *
      * @param  histo  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void printhisto(int[] histo) {
 
         for (int i = 0; i < histo.length; i++) {
