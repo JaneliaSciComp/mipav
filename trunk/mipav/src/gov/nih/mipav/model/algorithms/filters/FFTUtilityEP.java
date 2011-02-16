@@ -573,7 +573,6 @@ outer:
                         break;
                     }
 
-outer2:
                     do { // while goBack2
                         goBack2 = false;
 
@@ -1867,8 +1866,6 @@ outer:
         int[] nc = new int[] {
                        2, 3, 5, 210, 1000, 2000, 1024, 2048, 4096, 2187, 3125, 2401, 1331, 2197, 289, 361, 529
                    };
-        int[] ia = new int[64];
-        int[] ib = new int[64];
         DoubleDouble[] ra = new DoubleDouble[64];
         DoubleDouble[] rb = new DoubleDouble[64];
         RandomNumberGen randomGen;
