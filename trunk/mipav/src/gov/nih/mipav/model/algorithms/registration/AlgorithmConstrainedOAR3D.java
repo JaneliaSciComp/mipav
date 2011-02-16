@@ -157,9 +157,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
     /** Dummy initial values used to create a Powell's algorithm instance before setting initial. */
     private double[] dummy = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-    /** DOCUMENT ME! */
-    private String exitMessage = new String("Exiting Powell and point is out of bounds!\n");
-
     /**
      * If true this algorithm skips all subsample and goes directly to the level 1 optimization. This assumes that
      * images are fairly well aligned to begin with and therefore no sophisticated search is needed.
@@ -1719,7 +1716,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             time = System.currentTimeMillis();
             Preferences.debug(" Starting level 8 ************************************************\n");
 
-            Vector[] minimas = levelEight(simpleRefSub8, simpleInputSub8);
+            Vector<MatrixListItem>[] minimas = levelEight(simpleRefSub8, simpleInputSub8);
 
             // "minimas" is an array of Vector, because it will have two Vectors - one with
             // the original minima and one with the optimized minima.
@@ -1749,7 +1746,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
             Preferences.debug(" Starting level 4 ************************************************\n");
 
-            Vector minima = levelFour(simpleRefSub4, simpleInputSub4, minimas[0], minimas[1]);
+            Vector<MatrixListItem> minima = levelFour(simpleRefSub4, simpleInputSub4, minimas[0], minimas[1]);
             time = System.currentTimeMillis() - time;
             Preferences.debug(" Level 4  minutes = " + ((float) time / 60000.0f) + "\n");
             time = System.currentTimeMillis();
@@ -2280,7 +2277,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
      *
      * @return  List of preoptimized and optimized points.
      */
-    private Vector[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
+    private Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
         AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 32, 1);
 
         /*
@@ -2498,7 +2495,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         }
 
         // Examine points to see if they are minima
-        Vector minima = new Vector();
+        Vector<MatrixListItem> minima = new Vector<MatrixListItem>();
         boolean possibleMinima[][][] = new boolean[fineNumX][fineNumY][fineNumZ];
 
         for (int i = 0; i < fineNumX; i++) {
@@ -2586,7 +2583,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         Preferences.debug("Number of minima: " + minima.size() + "\n");
 
-        Vector optMinima = new Vector();
+        Vector<MatrixListItem> optMinima = new Vector<MatrixListItem>();
 
         // Now freely optimizes over rotations:
         fireProgressStateChanged("Optimizing minima");
@@ -2602,7 +2599,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         MatrixListItem item;
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             fireProgressStateChanged(20 + ((count + 1) / minima.size() * 5));
             tempInitial = ((MatrixListItem) en.nextElement()).initial;
 
@@ -2626,7 +2623,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         cost.disposeLocal();
         powell.disposeLocal();
 
-        return new Vector[] { minima, optMinima };
+        return new Vector [] { minima, optMinima };
     }
 
     /**
@@ -2645,7 +2642,8 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
      *
      * @return  A vector of perturbed, optimized minima.
      */
-    private Vector levelFour(ModelSimpleImage ref, ModelSimpleImage input, Vector minima, Vector optMinima) {
+    private Vector<MatrixListItem> levelFour(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima,
+    		                 Vector<MatrixListItem> optMinima) {
         AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 64, 1);
 
         /*
@@ -2676,14 +2674,14 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         MatrixListItem item = null;
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements();) {
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
             item = ((MatrixListItem) en.nextElement());
             item.initial[3] *= level4FactorXY;
             item.initial[4] *= level4FactorXY;
             item.initial[5] *= level4FactorZ;
         }
 
-        for (Enumeration en = optMinima.elements(); en.hasMoreElements();) {
+        for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements();) {
             item = ((MatrixListItem) en.nextElement());
             item.initial[3] *= level4FactorXY;
             item.initial[4] *= level4FactorXY;
@@ -2697,7 +2695,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                                                                          getTolerance(degree), maxIter, bracketBound);
         powell.setLimits(limits);
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = ((MatrixListItem) en.nextElement());
             powell.setInitialPoint(item.initial);
             powell.measureCost();
@@ -2708,7 +2706,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             return null;
         }
 
-        for (Enumeration en = optMinima.elements(); en.hasMoreElements() && !threadStopped;) {
+        for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = ((MatrixListItem) en.nextElement());
             powell.setInitialPoint(item.initial);
             powell.measureCost();
@@ -2729,7 +2727,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         powell.setMaxIterations(3);
 
-        Vector newMinima = new Vector();
+        Vector<MatrixListItem> newMinima = new Vector<MatrixListItem>();
         fireProgressStateChanged("Optimizing new minima");
 
         double currentMinimum = 2, powellCost;
@@ -2828,7 +2826,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         double fineDeltaY = fineRateY / 8.0;
         double fineDeltaZ = fineRateZ / 8.0;
         double[] initial;
-        Vector perturbList = new Vector();
+        Vector<MatrixListItem> perturbList = new Vector<MatrixListItem>();
         int sign = 1;
         currentMinimum = 2;
         minimumIndex = 0;
@@ -3145,7 +3143,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
      *
      * @return  The optimized minimum.
      */
-    private MatrixListItem levelTwo(ModelSimpleImage ref, ModelSimpleImage input, Vector minima) {
+    private MatrixListItem levelTwo(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima) {
         AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 128, 1);
 
         /*
@@ -3175,7 +3173,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         // Some problem here b/c initial point is starting off way out of bounds.
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements();) {
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
             item = ((MatrixListItem) en.nextElement());
             item.initial[3] *= level2FactorXY;
             item.initial[4] *= level2FactorXY;
@@ -3191,7 +3189,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         fireProgressStateChanged("Measuring costs of minima");
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = ((MatrixListItem) en.nextElement());
 
             if (testBounds3D(item.initial, initialMessage)) {
@@ -3292,7 +3290,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
      * differences between the images. Implements Comparable, so that a list of MatrixListItems can be sorted using
      * Java's sort.
      */
-    class MatrixListItem implements Comparable {
+    class MatrixListItem implements Comparable <MatrixListItem>{
 
         /** Cost of function at this minimum. */
         protected double cost;
@@ -3349,11 +3347,11 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
          *
          * @return  -1 if this is less than, 1 if greater than, 0 if equal.
          */
-        public int compareTo(Object o) {
+        public int compareTo(MatrixListItem o) {
 
-            if (cost < ((MatrixListItem) o).cost) {
+            if (cost < o.cost) {
                 return -1;
-            } else if (cost > ((MatrixListItem) o).cost) {
+            } else if (cost > o.cost) {
                 return 1;
             } else {
                 return 0;
