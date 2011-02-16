@@ -96,24 +96,15 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     /** algorithm type (i.e. erode, dilate) */
     private int algorithm;
 
-    /** DOCUMENT ME! */
-    private String[] algorithmName = {
-        "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
-        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "PARTICLE_ANALYSIS_NEW", "FILL_HOLES",
-        "DISTANCE_MAP_FOR_SHAPE_INTERPOLATION", "MORPHOLOGICAL_GRADIENT", "TOP_HAT", "BOTTOM_HAT",
-        "MORPHOLOGICAL_LAPLACIAN"
-    };
-
     /** kernel diameter. */
     private float circleDiameter;
 
     /** Erosion kernel diameter. */
+    @SuppressWarnings("unused")
     private float circleDiameterErode;
 
-    /** DOCUMENT ME! */
-    private float[] distanceMap = null;
-
     /** Edge type. */
+    @SuppressWarnings("unused")
     private int edgingType;
 
     /** if true, indicates that the VOIs should NOT be used and that entire image should be processed. */
@@ -130,7 +121,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     /** Erosion iteration times. */
     private int iterationsE;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int iterationsOpen;
 
     /** Kernel dimension. */
@@ -140,28 +131,32 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     private BitSet kernel;
 
     /** kernel size (i.e. connectedness) */
+    @SuppressWarnings("unused")
     private int kernelType;
 
     /** Erosion kernel type. */
+    @SuppressWarnings("unused")
     private int kernelTypeErode;
 
     /** maximum, minimum size of objects. */
+    @SuppressWarnings("unused")
     private int min = 1, max = 1000000;
 
     /** Number pixels to prune. */
+    @SuppressWarnings("unused")
     private int numPruningPixels;
 
-    /** Vector that holding the current availaible objects in the 2D image. */
-    private Vector objects = new Vector();
+    /** Vector that holding the current available objects in the 2D image. */
+    private Vector<intObject> objects = new Vector<intObject>();
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private float pixDist = 1;
 
-    /** intermediate prcessing buffer, same size with imgBuffer. */
+    /** intermediate processing buffer, same size with imgBuffer. */
     private double[] processBuffer;
 
-    /** Vector that hold the prunce seeding pixels. */
-    private Vector pruneSeeds = new Vector();
+    /** Vector that hold the prune seeding pixels. */
+    //private Vector<Integer> pruneSeeds = new Vector<Integer>();
 
     /** Flag to show frame during each algorithm method call. */
     private boolean showFrame = false;
@@ -706,7 +701,6 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
             ultErodeObjects = null;
         }
 
-        distanceMap = null;
         super.finalize();
     }
 
@@ -3384,12 +3378,13 @@ kernelLoop:
      *
      * @return  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private int floodFill(short[] idBuffer, int stIndex, short floodValue, short objValue) {
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         Point pt;
         Point tempPt;
-        Stack stack = new Stack();
+        Stack<Point> stack = new Stack<Point>();
         int indexY;
         int x, y;
         int pixCount = 0;
@@ -3459,6 +3454,7 @@ kernelLoop:
      *
      * @return  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private boolean isEndpoint(int pix, short[] tmpBuffer) {
         short p1, p2, p3, p4, p6, p7, p8, p9;
         int xDim = srcImage.getExtents()[0];
@@ -3510,6 +3506,7 @@ kernelLoop:
      *
      * @return  boolean is connected neighbor or not
      */
+    @SuppressWarnings("unused")
     private boolean isNeighbor(int index, int pixNeighbor) {
         int p1, p2, p3, p4, p6, p7, p8, p9;
         int xDim = srcImage.getExtents()[0];
@@ -3540,11 +3537,10 @@ kernelLoop:
      *
      * @return  boolean
      */
+    @SuppressWarnings("unused")
     private boolean isSinglePoint(int index, short[] tmpBuffer) {
         short p1, p2, p3, p4, p6, p7, p8, p9;
         int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int size = xDim * yDim;
 
         short bgColor = 0;
 
@@ -3676,6 +3672,7 @@ kernelLoop:
      *
      * @return  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private boolean onePixel(short[] buffer, int index, int xDim) {
 
         if ((buffer[index] > 0) && (buffer[index - xDim] == 0) && (buffer[index - xDim + 1] == 0) &&
@@ -4642,13 +4639,13 @@ kernelLoop:
      */
     private class intObject {
 
-        /** DOCUMENT ME! */
+    	@SuppressWarnings("unused")
         public short id = 0;
 
-        /** DOCUMENT ME! */
+        @SuppressWarnings("unused")
         public int index = 0;
 
-        /** DOCUMENT ME! */
+        @SuppressWarnings("unused")
         public int size = 0;
 
         /**
@@ -4658,6 +4655,7 @@ kernelLoop:
          * @param  objectID    the flood seed having a value >= 0.
          * @param  objectSize  the number of voxels in the object
          */
+        @SuppressWarnings("unused")
         public intObject(int idx, short objectID, int objectSize) {
             index = idx;
             id = objectID;
