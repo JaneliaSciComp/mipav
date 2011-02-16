@@ -264,28 +264,28 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
         }
 
         if (test) {
-            ConfluentHypergeometric cf;
-            int Lnchf = 0;
-            int ip = 776;
-            double[] result = new double[1];
+            //ConfluentHypergeometric cf;
+            //int Lnchf = 0;
+            //int ip = 776;
+            //double[] result = new double[1];
             double[] realResult = new double[1];
             double[] imagResult = new double[1];
-            double[] realResult2 = new double[1];
-            double[] imagResult2 = new double[1];
-            double mag;
-            double mag2;
+            //double[] realResult2 = new double[1];
+            //double[] imagResult2 = new double[1];
+            //double mag;
+            //double mag2;
             double x = -30.0;
-            double realZ;
-            double imagZ;
+            //double realZ;
+            //double imagZ;
             Gamma gam;
             double[] resultB = new double[1];
             double[] resultBMinusA = new double[1];
-            double gamConstant;
+            //double gamConstant;
             gam = new Gamma((double) numReceivers, resultB);
             gam.run();
             gam = new Gamma( (numReceivers + 0.5), resultBMinusA);
             gam.run();
-            gamConstant = resultB[0] / resultBMinusA[0];
+            //gamConstant = resultB[0] / resultBMinusA[0];
 
             double imaginaryArg = 0.0;
             double initialOrder = (double) (numReceivers - 1);
