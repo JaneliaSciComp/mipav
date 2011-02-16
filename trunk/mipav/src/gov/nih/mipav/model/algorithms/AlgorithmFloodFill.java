@@ -138,7 +138,7 @@ public class AlgorithmFloodFill extends AlgorithmBase {
         int yDim = dims[1];
         Point pt;
         Point tempPt;
-        Stack stack = new Stack();
+        Stack<Point> stack = new Stack<Point>();
         int indexY;
         int x, y;
 
@@ -208,7 +208,7 @@ public class AlgorithmFloodFill extends AlgorithmBase {
         int yDim = dims[1];
         Point pt;
         Point tempPt;
-        Stack stack = new Stack();
+        Stack<Point> stack = new Stack<Point>();
         int indexY;
         int x, y;
 
@@ -282,7 +282,7 @@ public class AlgorithmFloodFill extends AlgorithmBase {
 
         Point3D pt; // = new Point3D();
         Point3D tempPt;
-        Stack stack = new Stack();
+        Stack<Point3D> stack = new Stack<Point3D>();
 
         if (mask.get((seed3DPt.z * imageSize) + (seed3DPt.y * xDim) + seed3DPt.x)) {
             stack.push(seed3DPt);
@@ -375,7 +375,7 @@ public class AlgorithmFloodFill extends AlgorithmBase {
 
         Point3D pt; // = new Point3D();
         Point3D tempPt;
-        Stack stack = new Stack();
+        Stack<Point3D> stack = new Stack<Point3D>();
 
         if (mask.get((seed3DPt.z * imageSize) + (seed3DPt.y * xDim) + seed3DPt.x)) {
             stack.push(seed3DPt);
