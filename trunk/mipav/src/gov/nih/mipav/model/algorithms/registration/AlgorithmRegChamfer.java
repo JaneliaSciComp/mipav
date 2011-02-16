@@ -26,9 +26,6 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
     private float[] baseBuffer;
 
     /** DOCUMENT ME! */
-    private String baseName;
-
-    /** DOCUMENT ME! */
     private int DIM;
 
     /** DOCUMENT ME! */
@@ -65,7 +62,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
     private int xdimB, ydimB, zdimB, xdimM, ydimM, zdimM;
 
     /** DOCUMENT ME! */
-    private float xresB, yresB, zresB, xresM, yresM, zresM;
+    private float xresB, yresB, zresB, xresM;
     
     private CostFunction func;
 
@@ -104,7 +101,6 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
             xresB = base.getFileInfo(0).getResolutions()[0];
             yresB = base.getFileInfo(0).getResolutions()[1];
             xresM = match.getFileInfo(0).getResolutions()[0];
-            yresM = match.getFileInfo(0).getResolutions()[1];
             volLength = xdimB * ydimB;
 
             if (DIM == 2) {
@@ -112,7 +108,6 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
             } else if (DIM == 3) {
                 simplexDim = 6;
                 zresB = base.getFileInfo(0).getResolutions()[2];
-                zresM = match.getFileInfo(0).getResolutions()[2];
                 zdimB = base.getExtents()[2];
                 zdimM = match.getExtents()[2];
                 volLength *= zdimB;
@@ -133,7 +128,6 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
             return;
         }
 
-        baseName = base.getImageName();
     }
 
     /**
@@ -168,7 +162,6 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
         xresB = volume25D.getFileInfo(0).getResolutions()[0];
         yresB = volume25D.getFileInfo(0).getResolutions()[1];
         xresM = volume25D.getFileInfo(0).getResolutions()[0];
-        yresM = volume25D.getFileInfo(0).getResolutions()[1];
         volLength = xdimB * ydimB;
         baseBuffer = new float[volLength];
     }
@@ -289,6 +282,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
      * @param  tMatrixMatchtoBase  Array of matrices to concatenate
      * @param  matchSlice          Last slice to concatenate
      */
+    @SuppressWarnings("unused")
     private void concatenateMatrix(TransMatrix[] tMatrixMatchtoBase, int matchSlice) {
 
         for (int i = matchSlice - 1; i > 0; i--) {
@@ -301,6 +295,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
      * Chamfer matching: Distance transformation coverts binary surface image into grey-level image where each pixel's
      * intensity = distance to nearest surface pixel.
      */
+    @SuppressWarnings("unused")
     private void distanceTransform() {
         Preferences.debug("distanceTransform...\n");
 
@@ -447,6 +442,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
     /**
      * Generates the coordinate list.
      */
+    @SuppressWarnings("unused")
     private void generateCoordList() {
         Preferences.debug("generateCoordList...\n");
 
@@ -538,6 +534,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
      *
      * @return  The number of match points.
      */
+    @SuppressWarnings("unused")
     private int getNumberMatchPts() {
         Preferences.debug("getNumberMatchPts...\n");
 
