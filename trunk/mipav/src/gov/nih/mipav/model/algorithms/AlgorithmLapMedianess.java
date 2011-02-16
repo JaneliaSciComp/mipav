@@ -406,6 +406,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
      *
      * @return  resultBuffer
      */
+    @SuppressWarnings("unused")
     private float[] calcInPlace3DBuffer(float[] buffer, int[] extents) {
 
         int i, s;
@@ -496,14 +497,13 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
      */
     private void calcStoreInDest2D(int nImages) {
         int i, s;
-        int length, totalLength;
+        int length;
         float[] buffer;
         float[] resultBuffer;
         float lap;
 
         try {
             length = srcImage.getSliceSize();
-            totalLength = length * nImages;
             buffer = new float[length];
             resultBuffer = new float[length];
             fireProgressStateChanged(srcImage.getImageName(), "Calculating the Laplacian ...");
