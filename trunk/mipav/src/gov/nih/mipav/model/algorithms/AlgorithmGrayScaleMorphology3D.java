@@ -95,15 +95,9 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     /** algorithm type (i.e. erode, dilate) */
     private int algorithm;
 
-    /** DOCUMENT ME! */
-    private String[] algorithmName = {
-        "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
-        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "FILL_HOLES", "MORPHOLOGICAL_GRADIENT",
-        "TOP_HAT", "BOTTOM_HAT", "MORPHOLOGICAL_LAPLACIAN"
-    };
-
 
     /** Edge type. */
+    @SuppressWarnings("unused")
     private int edgingType;
 
     /** if true, indicates that the VOIs should NOT be used and that entire image should be processed. */
@@ -130,25 +124,22 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     private BitSet kernel;
 
     /** kernel size (i.e. connectedness) */
+    @SuppressWarnings("unused")
     private int kernelType;
 
     /** maximum, minimum size of objects. */
+    @SuppressWarnings("unused")
     private int min = 1, max = 20000000;
 
     /** Number pixels to prune. */
+    @SuppressWarnings("unused")
     private int numPruningPixels;
 
-    /** Vector that holding the current availaible objects in the 3D image. */
-    private Vector objects = new Vector();
-
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private float pixDist = 0;
 
-    /** intermediate prcessing buffer, same size with imgBuffer. */
+    /** intermediate processing buffer, same size with imgBuffer. */
     private double[] processBuffer;
-
-    /** Not used now. Flag to show frame during each algorithm method call. */
-    private boolean showFrame = false;
 
     /** kernel diameter. */
     private float sphereDiameter;
@@ -220,11 +211,6 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
         processBuffer = null;
         imgBuffer = null;
         srcImage = null;
-
-        if (objects != null) {
-            objects.removeAllElements();
-            objects = null;
-        }
 
         super.finalize();
     }
