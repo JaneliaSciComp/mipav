@@ -81,9 +81,6 @@ public class AlgorithmBSnake extends AlgorithmBase {
     /** The initial VOI to initialize the evolution process. */
     private VOI srcVOI;
 
-    /** Starting slice to evolve contour. */
-    private int stSlice;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -258,18 +255,12 @@ public class AlgorithmBSnake extends AlgorithmBase {
 
         int length;
         float[] imgBuffer;
-        int slice;
-        float baseEnergy = 0, energy, tempEnergy;
-        int baseNPts = 0, nPts;
-        Polygon tempGon;
-        Polygon baseGon;
+        float baseEnergy = 0;
+        int baseNPts = 0;
         float[] xPoints, yPoints, zPoints;
 
-        Polygon resultGon = null;
-        Polygon[] gons = null;
         Vector<VOIBase> contours;
         int nContours;
-        int nSlices = srcImage.getExtents()[2];
         boolean failureFlag = false;
 
         try {
@@ -658,6 +649,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
      *
      * @return  the sum of the energy along the boundary of the <code>resultGon</code>
      */
+    @SuppressWarnings("unused")
     private float runSnake(float[] xPoints, float[] yPoints, float[] image, Polygon resultGon) {
         int i, j;
         int nPts;
@@ -948,6 +940,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
      * @param  yPoints  storage location array of y coord. points
      * @param  gon      initial polygon
      */
+    @SuppressWarnings("unused")
     private void setPoints(float[] xPoints, float[] yPoints, Polygon gon) {
         int i;
 
