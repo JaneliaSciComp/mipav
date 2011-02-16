@@ -253,8 +253,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
     /** If true, do second iteration excluded subtrhesholded region from first iteration. */
     private boolean doSecondIteration = false;
-
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private boolean doVOISubtraction = false;
 
     /** DOCUMENT ME! */
@@ -291,15 +290,16 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
     private float hue;
 
     /** on the contour VOI occurs. */
+    @SuppressWarnings("unused")
     private ViewJFrameImage imageFrame = null;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private ViewJFrameImage imageFrame2 = null;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private ViewJFrameImage imageFrame3 = null;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private ViewJFrameImage imageFrame4 = null;
 
     /** DOCUMENT ME! */
@@ -3815,7 +3815,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         boolean transformVOI = true;
         boolean clip = true;
         TransMatrix xfrm;
-        double[][] mat;
         double max1, max2, range1, range2;
         double averagex, averagey;
         double diffx, diffy;
@@ -4796,7 +4795,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 destImage.registerVOI(fitLineVOI);
                 fitLineVOI.setFixed(true);
                 fitLineVOI.setColor(Color.orange);
-                fitLineVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
             } // if (!doSecondIteration)
 
             if (threadStopped) { // do before copying back into image
@@ -5486,7 +5484,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             destImage.registerVOI(fitLineVOI);
             fitLineVOI.setFixed(true);
             fitLineVOI.setColor(Color.orange);
-            fitLineVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
 
             // secondBuffer[i] = a*buffer[i] + b;
             // buffer[i] = (secondBuffer[i] - b)/a;
@@ -5963,7 +5960,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         // Don't draw point - draw square with blue inside and yellow edge
         pointVOI.setColor(Color.green);
-        pointVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
 
         /*UI.setDataText("Linear correlation coefficient = " + r + "\n");
          * UI.setDataText(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName()+ " + " + b + "\n");
@@ -7144,7 +7140,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 destImage.registerVOI(fitLineVOI);
                 fitLineVOI.setFixed(true);
                 fitLineVOI.setColor(Color.orange);
-                fitLineVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
             } // if (!doSecondIteration)
 
             if (threadStopped) { // do before copying back into image
@@ -7825,7 +7820,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             destImage.registerVOI(fitLineVOI);
             fitLineVOI.setFixed(true);
             fitLineVOI.setColor(Color.orange);
-            fitLineVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
 
             // secondBuffer[i] = a*buffer[i] + b;
             // buffer[i] = (secondBuffer[i] - b)/a;
@@ -8303,7 +8297,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         // Don't draw point - draw square with blue inside and yellow edge
         pointVOI.setColor(Color.green);
-        pointVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
 
         /*UI.setDataText("Linear correlation coefficient = " + r + "\n");
          * UI.setDataText(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName()+ " + " + b + "\n");
@@ -8379,7 +8372,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         boolean clip = true;
         int c;
         TransMatrix xfrm;
-        double[][] mat;
         double max1, max2, range1, range2;
         double averagex, averagey;
         double diffx, diffy;
@@ -9515,7 +9507,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 destImage.registerVOI(fitLineVOI);
                 fitLineVOI.setFixed(true);
                 fitLineVOI.setColor(Color.orange);
-                fitLineVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
             }
 
             if (threadStopped) { // do before copying back into image
@@ -10249,7 +10240,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             destImage.registerVOI(fitLineVOI);
             fitLineVOI.setFixed(true);
             fitLineVOI.setColor(Color.orange);
-            fitLineVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
 
             // secondBuffer[i] = a*buffer[i] + b;
             // buffer[i] = (secondBuffer[i] - b)/a;
@@ -10763,7 +10753,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         // Don't draw point - draw square with blue inside and yellow edge
         pointVOI.setColor(Color.green);
-        pointVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
 
         /*UI.setDataText("Linear correlation coefficient = " + r + "\n");
          * if ((useRed) && (useGreen)) { UI.setDataText("green = " + a + "*red" + " + " + b + "\n"); } else if ((useRed)
@@ -12091,7 +12080,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 destImage.registerVOI(fitLineVOI);
                 fitLineVOI.setFixed(true);
                 fitLineVOI.setColor(Color.orange);
-                fitLineVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
             } // if (!doSecondIteration)
 
             if (threadStopped) { // do before copying back into image
@@ -12832,7 +12820,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             destImage.registerVOI(fitLineVOI);
             fitLineVOI.setFixed(true);
             fitLineVOI.setColor(Color.orange);
-            fitLineVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
 
             // secondBuffer[i] = a*buffer[i] + b;
             // buffer[i] = (secondBuffer[i] - b)/a;
@@ -13342,7 +13329,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         // Don't draw point - draw square with blue inside and yellow edge
         pointVOI.setColor(Color.green);
-        pointVOI.setXYDim(bin1 + leftPad + rightPad, bin2 + bottomPad + topPad);
 
         /*UI.setDataText("Linear correlation coefficient = " + r + "\n");
          * if ((useRed) && (useGreen)) { UI.setDataText("green = " + a + "*red" + " + " + b + "\n"); } else if ((useRed)
