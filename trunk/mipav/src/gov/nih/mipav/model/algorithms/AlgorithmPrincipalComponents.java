@@ -357,7 +357,6 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         double[][] covar;
         double[] x;
         int index;
-        double max;
         double temp;
         double[] tempRow;
         float[][] p;
@@ -643,13 +642,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         for (i = 0; i < nPlanes; i++) {
             index = i;
-            max = eigenvalue[i];
 
             for (j = i + 1; j < nPlanes; j++) {
 
                 if (eigenvalue[j] > eigenvalue[i]) {
                     index = j;
-                    max = eigenvalue[j];
                 }
             } // for (j = i+1; j < nPlanes; j++)
 
