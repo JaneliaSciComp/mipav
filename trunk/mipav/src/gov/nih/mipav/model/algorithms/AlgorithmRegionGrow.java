@@ -138,7 +138,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
     /** DOCUMENT ME! */
     private RegionGrowDialog growDialog = null;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private ViewJFrameImage imageFrame = null;
 
     /** DOCUMENT ME! */
@@ -2635,8 +2635,6 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
         this.paintMask = paintMask;
         this.growDialog = growDialog;
 
-        final int pCtr = 0;
-
         try {
 
             if (fuzzyThreshold < 0.0f) { // don't use fuzzy connectedness
@@ -3237,7 +3235,6 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
         double tmp2;
         double centerPixel;
         int x, y;
-        final double affTmp;
 
         centerPixel = srcImage.getDouble(current);
         x = current % xDim;
