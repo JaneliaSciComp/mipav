@@ -2,18 +2,12 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.Dimension;
-import java.awt.Frame;
 import java.io.*;
 import java.util.*;
-
-import javax.swing.JOptionPane;
 
 
 /**
@@ -70,12 +64,6 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
     
     /** Red channel. */
     private static final int RED_OFFSET = 1;
-
-    /** Green channel. */
-    private static final int GREEN_OFFSET = 2;
-
-    /** Blue channel. */
-    private static final int BLUE_OFFSET = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -246,26 +234,16 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private float[] buffer2;
-
-    /** DOCUMENT ME! */
     private float[] centroids;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private int[] classNumber;
 
     /** DOCUMENT ME! */
     private boolean cropBackground = false; // When cropBackground is true,
 
-
-    /** DOCUMENT ME! */
-    private int destNum = 0; // number of the destination image
-
     /** 1/(qValue - 1). */
     private double exponent;
-
-    /** DOCUMENT ME! */
-    private int iterations;
 
     /** jacobiIters1 and jacobiIter2 are only used with gain correction. */
     private int jacobiIters1 = 1;
@@ -274,51 +252,18 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
     private int jacobiIters2 = 2;
 
     /** DOCUMENT ME! */
-    private float maxChange;
-
-    /** DOCUMENT ME! */
     private int maxIter = 100;
-
-    /** DOCUMENT ME! */
-    private float[] mems;
-
-    /** DOCUMENT ME! */
-    private float[] memsBuffer;
-
-    /** DOCUMENT ME! */
-    private int memSize;
 
     /** DOCUMENT ME! */
     private int nClass = 3;
 
-    /** DOCUMENT ME! */
-    private int newSliceSize;
-
-    /** DOCUMENT ME! */
-    private int newXDim, newYDim, newZDim;
-
-    /** DOCUMENT ME! */
-    private BitSet objMask;
-
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private float[] oldMember;
-
-    /** DOCUMENT ME! */
-    private int oldX, oldY, oldZ;
-
-    /** DOCUMENT ME! */
-    private int orgSlice;
-
-    /** DOCUMENT ME! */
-    private int orgVol;
-
-    /** DOCUMENT ME! */
-    private int orgXDim;
 
     /** DOCUMENT ME! */
     private boolean outputGainField = false;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private boolean powEIntFlag = true;
 
     /** pyramidLevels is only used with gain correction. */
@@ -327,17 +272,11 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
     /** DOCUMENT ME! */
     private float qValue = 2.0f;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private float[] sCentroids;
 
     /** DOCUMENT ME! */
-    private byte[] segBuffer;
-
-    /** DOCUMENT ME! */
     private int segmentation = FUZZY_ONLY;
-
-    /** DOCUMENT ME! */
-    private int sliceSize;
 
     /** smooth1 and smooth2 are only used with gain field correction. */
     private float smooth1 = 20000;
@@ -351,7 +290,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
     /** DOCUMENT ME! */
     private float tolerance = 0.01f;
 
-    /** DOCUMENT ME! */
+    @SuppressWarnings("unused")
     private boolean[] unusedCentroids;
     
     private boolean wholeImage;
@@ -816,6 +755,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
          }
     }
     
+    @SuppressWarnings("unused")
     private void calculateGM() {
 
 		float sigmas[] = new float[2];
@@ -928,7 +868,6 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         float sum;
         float product;
         int z;
-        VOI voi, outVOI;
         
         
         if (srcImage.getNDims() == 2) {
