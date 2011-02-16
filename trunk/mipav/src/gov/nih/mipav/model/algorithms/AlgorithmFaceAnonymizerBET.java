@@ -500,7 +500,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         imageSet.set(0, srcImage.getSize()-1);
         BitSet imageSetEdge = bitUtil.getEdgePoints(imageSet);
         interestEdge.andNot(imageSetEdge);
-        Vector interestEdgePoints = bitUtil.convertSetToPoints(interestEdge);
+        Vector<Point3D> interestEdgePoints = bitUtil.convertSetToPoints(interestEdge);
         fireProgressStateChanged(65);
         Random pointPick = new Random();
         int totalPointsRemoved = initialRegion.cardinality();
@@ -581,7 +581,8 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
          * Calculates the distance between the closest point in this <code>BitSet</code> and the given <code>value</code>.
          */
         
-        float getMinDistance(int value, BitSet set)
+        @SuppressWarnings("unused")
+    	float getMinDistance(int value, BitSet set)
         {
             return getMinDistance(value, convertSetToPoints(set));
         }
@@ -591,7 +592,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
          * Calculates the distance between the closest point in this <code>Vector</code> and the given <code>value</code>.
          */
         
-        float getMinDistance(int value, Vector setPoints)
+        float getMinDistance(int value, Vector<Point3D> setPoints)
         {
             int xValue = 0, yValue = 0, zValue = 0;
             xValue = value % xDim;
@@ -665,6 +666,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         static final int IN_EXP = 4;
         static final int OUT_EXP = 5;
         
+        @SuppressWarnings("unused")
         int getBoundaryCode(BitSet set, int value)
         {
             int sum = 0;
@@ -700,6 +702,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
          * 
          */
         
+        @SuppressWarnings("unused")
         BitSet connectNearNeighbors(int loc, BitSet connectingRegion, int maxNeighborDistance)
         {
             BitSet connectingRegionCopy = (BitSet)connectingRegion.clone();
@@ -787,9 +790,9 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
             
         }
         
-        private Vector convertSetToPoints(BitSet set)
+        private Vector<Point3D> convertSetToPoints(BitSet set)
         {
-            Vector setPoints = new Vector();
+            Vector<Point3D> setPoints = new Vector<Point3D>();
             int xEdge = 0, yEdge = 0, zEdge = 0;
             for(int i=set.nextSetBit(0); i>=0; i=set.nextSetBit(i+1)) {
                 xEdge = i % xDim;
