@@ -36,9 +36,6 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                                              true // blue
                                          };
 
-    /** Dimensionality of the kernel. */
-    private int[] kExtents;
-
     private float conductance;
     private int iterations;
     private float threshold;
@@ -92,7 +89,6 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
     public void finalize() {
         destImage = null;
         srcImage = null;
-        kExtents = null;
         abProcessChannel = null;
         super.finalize();
     }
