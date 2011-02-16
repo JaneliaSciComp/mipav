@@ -81,7 +81,7 @@ public class AlgorithmQuadraticFit {
      *
      * @param  kPoints  a vector of points, each vector element is of type Point3f
      */
-    public AlgorithmQuadraticFit(Vector kPoints) {
+    public AlgorithmQuadraticFit(Vector<Vector3f> kPoints) {
         Eigenf kES = new Eigenf(10);
         int iRow, iCol;
 
