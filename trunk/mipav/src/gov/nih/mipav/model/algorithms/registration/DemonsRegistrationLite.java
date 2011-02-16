@@ -1,9 +1,4 @@
 package gov.nih.mipav.model.algorithms.registration;
-
-import java.io.*;
-import java.util.*;
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.jama.*;
  
 /**
  *
@@ -531,7 +526,6 @@ public class DemonsRegistrationLite {
             
             //if (debug) MipavUtil.displayMessage("update: ");
             
-            float maxU = 0.0f;
             for (int x=1;x<nfx-1;x++) for (int y=1;y<nfy-1;y++)  {
                 int xy = x+nfx*y;
             
@@ -635,7 +629,6 @@ public class DemonsRegistrationLite {
 			
 			//if (debug) MipavUtil.displayMessage("update: ");
 			
-			float maxU = 0.0f;
 			for (int x=1;x<nfx-1;x++) for (int y=1;y<nfy-1;y++) for (int z=1;z<nfz-1;z++) {
 				int xyz = x+nfx*y+nfx*nfy*z;
 			
