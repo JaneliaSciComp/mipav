@@ -309,8 +309,6 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      */
     private Vector<Vector3f> optimalPath = new Vector<Vector3f>();
 
-    private final boolean pathRecorded = false;
-
     private static final Vector3f[] originalPath = {new Vector3f(18.0f, 27.201007843017578f, 35.089054107666016f),
             new Vector3f(18.0f, 26.926931381225586f, 35.089054107666016f),
             new Vector3f(18.0f, 26.926931381225586f, 37.107540130615234f),
@@ -1667,6 +1665,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
     }
 
+    @SuppressWarnings("unused")
     private void createTerrain() {
         searchOptimalPath();
         print(optimalPath, "Optimal Path: ");
