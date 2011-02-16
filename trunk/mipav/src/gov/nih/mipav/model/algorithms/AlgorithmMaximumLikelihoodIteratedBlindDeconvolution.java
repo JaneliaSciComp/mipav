@@ -3,7 +3,6 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
@@ -593,15 +592,12 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         kRGBAlgoMulti = null;
 
         JDialogRGBtoGrays kDialogTemp = new JDialogRGBtoGrays(kImage.getParentFrame(), kImage);
-        kDialogTemp.updateFileInfo(kImage, m_kSourceRed);
 
-        // JDialogBase.updateFileInfo(kImage, m_kSourceRed);
-        kDialogTemp.updateFileInfo(kImage, m_kSourceGreen);
+        JDialogBase.updateFileInfo(kImage, m_kSourceRed);
 
-        // JDialogBase.updateFileInfo(kImage, m_kSourceGreen);
-        kDialogTemp.updateFileInfo(kImage, m_kSourceBlue);
+        JDialogBase.updateFileInfo(kImage, m_kSourceGreen);
 
-        // JDialogBase.updateFileInfo(kImage, m_kSourceBlue);
+        JDialogBase.updateFileInfo(kImage, m_kSourceBlue);
         kDialogTemp.dispose();
         kDialogTemp = null;
 
@@ -702,13 +698,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         boolean logMagDisplay = false;
         boolean unequalDim = true;
         boolean image25D = false;
-        boolean imageCrop = true;
-        int kernelDiameter = 0;
-        int filterType = 2;
-        float freq1 = 0.0f;
-        float freq2 = 1.0f;
-        int constructionMethod = 1;
-        int butterworthOrder = 0;
 
         // take the FFT of the first input image:
         AlgorithmFFT kFFT = new AlgorithmFFT(kImageFFT, kImage, iDir, logMagDisplay, unequalDim, image25D);
