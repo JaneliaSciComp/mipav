@@ -422,6 +422,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         return;
     }
     
+    @SuppressWarnings("unused")
     private void selfTest() {
         // Maximum radius on top originally
         // Put maximum radius on bottom with testOrientation == testBottom
@@ -592,6 +593,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         new ViewJFrameImage(srcImage);
     }
     
+    @SuppressWarnings("unused")
     private void selfTest2() {
         // Maximum radius on top originally
         // Put maximum radius on bottom with testOrientation == testBottom
