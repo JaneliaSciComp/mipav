@@ -341,11 +341,11 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
      *
      * @return  DOCUMENT ME!
      */
-    protected Vector cleanLine(float[] xPts, float[] yPts) {
+    protected Vector<Vector2f> cleanLine(float[] xPts, float[] yPts) {
         int i;
         double distance;
         float midX, midY;
-        Vector pts = new Vector(50, 50);
+        Vector<Vector2f> pts = new Vector<Vector2f>(50, 50);
 
         for (i = 0; i < xPts.length; i++) {
             pts.addElement(new Vector2f(xPts[i], yPts[i]));
@@ -528,7 +528,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
         int position;
         boolean finished = false;
 
-        Vector ptsArray;
+        Vector<Vector2f> ptsArray;
 
         for (int s = 2; s >= 2.0; s--) {
 
@@ -2422,6 +2422,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
      * @param  yPoints  storage location array of y coord. points
      * @param  gon      initial polygon
      */
+    @SuppressWarnings("unused")
     private void setPoints(float[] xPoints, float[] yPoints, Polygon gon) {
         int i;
 
