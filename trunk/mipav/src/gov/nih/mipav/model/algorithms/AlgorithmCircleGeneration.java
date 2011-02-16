@@ -288,7 +288,6 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         boolean intermediateRejected;
         double change;
         erfcModel erfc;
-        int steps;
         double numInt;
         double eps = 1.0e-8;
         erfcModel2 erfc2;
