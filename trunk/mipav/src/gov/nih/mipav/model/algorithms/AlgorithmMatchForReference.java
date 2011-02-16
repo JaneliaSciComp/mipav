@@ -292,7 +292,6 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
         //xfrmAdj.setTranslate(-centerAdj.X, -centerAdj.Y);
 
         TransMatrix xfrmRef;
-        Vector3f centerRef = refImage.getImageCentermm(false);
         xfrmRef = new TransMatrix(res.length + 1);
         xfrmRef.MakeIdentity();
         //xfrmRef.setTranslate(centerRef.X, centerRef.Y);
