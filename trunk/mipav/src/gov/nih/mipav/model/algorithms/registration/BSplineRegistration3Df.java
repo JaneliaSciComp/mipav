@@ -994,7 +994,6 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
      * @param  iMaxZ  int Maximum Z axis sample index.
      */
     protected void updateSamplesST(int iMinX, int iMaxX, int iMinY, int iMaxY, int iMinZ, int iMaxZ) {
-		  long startTime = System.nanoTime();
         int iLimitX = m_iNumSamplesSrcX - 1;
         int iLimitY = m_iNumSamplesSrcY - 1;
         int iLimitZ = m_iNumSamplesSrcZ - 1;
