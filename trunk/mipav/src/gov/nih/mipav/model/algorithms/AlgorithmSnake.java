@@ -97,9 +97,6 @@ public class AlgorithmSnake extends AlgorithmBase {
     /** The initial VOI to initialize the evolution process. */
     private VOI srcVOI;
 
-    /** Starting slice to evolve contour. */
-    private int stSlice;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -204,8 +201,6 @@ public class AlgorithmSnake extends AlgorithmBase {
         float[] xPoints = null;
         float[] yPoints = null;
         float[] zPoints = null;
-        Polygon resultGon = null;
-        Polygon[] gons = null;
         Vector<VOIBase> contours;
         int nContours;
 
@@ -280,8 +275,6 @@ public class AlgorithmSnake extends AlgorithmBase {
         float[] xPoints, yPoints, zPoints;
 
         boolean failureFlag = false;
-
-        int[] extents = srcImage.getExtents();
 
         Vector<VOIBase> contours = srcVOI.getCurves();
         fireProgressStateChanged(30);
@@ -361,11 +354,11 @@ public class AlgorithmSnake extends AlgorithmBase {
      *
      * @return  an ordered list of the points along the cleaned-up line
      */
-    private Vector cleanLine(float[] xPts, float[] yPts) {
+    private Vector<Vector2f> cleanLine(float[] xPts, float[] yPts) {
         int i;
         double distance;
         float midX, midY;
-        Vector pts = new Vector(50, 50);
+        Vector<Vector2f> pts = new Vector<Vector2f>(50, 50);
 
         for (i = 0; i < xPts.length; i++) {
             pts.addElement(new Vector2f(xPts[i], yPts[i]));
@@ -518,6 +511,7 @@ public class AlgorithmSnake extends AlgorithmBase {
      *
      * @return  the distance between the points <code>(x1,y1)</code> and <code>(x2,y2)</code>
      */
+    @SuppressWarnings("unused")
     private double distance(int x1, int x2, int y1, int y2) {
         return Math.sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)));
     }
@@ -649,6 +643,7 @@ public class AlgorithmSnake extends AlgorithmBase {
      *
      * @return  the sum of the energy along the boundary of the <code>resultGon</code>
      */
+    @SuppressWarnings("unused")
     private float runSnake(float[] xPoints, float[] yPoints, float[] image, Polygon resultGon) {
         int i, j;
         int nPts;
@@ -665,7 +660,7 @@ public class AlgorithmSnake extends AlgorithmBase {
         float gradMag, inGradMag, outGradMag;
         float energy = 0, oldEnergy = 0;
 
-        Vector ptsArray;
+        Vector<Vector2f> ptsArray;
 
         for (int s = 2; s >= 2.0; s--) {
 
@@ -781,8 +776,6 @@ public class AlgorithmSnake extends AlgorithmBase {
     private float runSnake(float[] xPoints, float[] yPoints, float[] zPoints, float[] image, VOIBase contour) {
         int i, j;
         int nPts;
-        Vector3f inPlane = new Vector3f();
-        Vector3f midPt = new Vector3f();
         Vector3f interpPt = new Vector3f();
         Vector3f inNormPt = new Vector3f();
         Vector3f outNormPt = new Vector3f();
@@ -792,11 +785,10 @@ public class AlgorithmSnake extends AlgorithmBase {
         float normLength = 0;
         float[] newXPts = null, newYPts = null, newZPts = null;
         float stepPct = (float) 0.45;
-        float ix = 1, iy = 1, iz = 1;
+        float ix = 1, iy = 1;
         float gradMag, inGradMag, outGradMag;
         float energy = 0, oldEnergy = 0;
 
-        Vector3f center = contour.getGeometricCenter();
         Vector<Vector3f> ptsArray;
 
         Vector3f kPlaneFactor = new Vector3f( 1, 1, 1 );
@@ -1134,6 +1126,7 @@ public class AlgorithmSnake extends AlgorithmBase {
      * @param  yPoints  storage location array of y coord. points
      * @param  gon      initial polygon
      */
+    @SuppressWarnings("unused")
     private void setPoints(float[] xPoints, float[] yPoints, Polygon gon) {
         int i;
 
