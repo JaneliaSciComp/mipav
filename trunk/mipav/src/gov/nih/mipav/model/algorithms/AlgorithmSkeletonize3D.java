@@ -267,9 +267,6 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
     private int sliceSize;
 
     /** DOCUMENT ME! */
-    private ModelImage solidImage = null;
-
-    /** DOCUMENT ME! */
     private int totLength;
 
     /** DOCUMENT ME! */
@@ -331,7 +328,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
      * DOCUMENT ME!
      */
     public void runAlgorithm() {
-        int i, j, k;
+        int i, j;
         ModelImage gvfImage;
         boolean[] used;
         float[] xArr = new float[1];
@@ -1996,6 +1993,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void createCylinder() {
         byte[] vol = new byte[250 * 250 * 250];
         int x, y, z;
@@ -2648,7 +2646,6 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                                       int[] critPtInSkeleton) {
 
         // Creates an entire skeleton segment
-        int i;
         double[] startPos = new double[3];
         double[] nextPos = new double[3];
         double[] lastAddedSkelPoint = new double[3];
