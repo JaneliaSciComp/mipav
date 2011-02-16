@@ -15,8 +15,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -124,16 +122,13 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
     protected Vector3f m_kCenter;
 
     /** DOCUMENT ME! */
-    protected HashMap m_kEMap; // map<Edge,int>
+    protected HashMap<Edge,Integer> m_kEMap;
 
     /** DOCUMENT ME! */
     protected Matrix3f m_kRotate;
 
     /** DOCUMENT ME! */
     protected TriMesh triMesh = null;
-
-    /** DOCUMENT ME! */
-    private int[] axisOrientation;
 
     /** DOCUMENT ME! */
     private float[] box;
@@ -199,7 +194,6 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
      */
     public AlgorithmObjectExtractor(ModelImage srcImg, VOI voi, boolean justInit, boolean saveGVF,
                                     TriMesh triMesh, float[] uVal, float[] vVal, float[] wVal) {
-        int i;
         onlyInit = justInit;
         this.saveGVF = saveGVF;
         this.triMesh = triMesh;
@@ -486,7 +480,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
                 m_akAdjacent[i] = new UnorderedSetInt(6, 1);
             }
 
-            m_kEMap = new HashMap();
+            m_kEMap = new HashMap<Edge,Integer>();
 
             Integer kInvalid = new Integer(-1);
 
@@ -704,7 +698,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         m_fMeanEdgeLength = 0.0f;
 
         Iterator kEIter = m_kEMap.entrySet().iterator();
-        Map.Entry kEntry = null;
+        Map.Entry <Edge,Integer>kEntry = null;
         Vector3f kEdge = new Vector3f();
 
         while (kEIter.hasNext()) {
@@ -856,7 +850,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         float fYScale = m_fYDelta * fInvBMax;
         float fZScale = m_fZDelta * fInvBMax;
 
-        Vector kPts = new Vector();
+        Vector<Vector3f> kPts = new Vector<Vector3f>();
         VOIContour contour;
         Vector3f tmp3Pt = new Vector3f();
         Vector curves = voi.getCurves();
@@ -1128,7 +1122,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         m_aiConnect[22] = 0;
         m_aiConnect[23] = 3;
 
-        m_kEMap = new HashMap();
+        m_kEMap = new HashMap<Edge,Integer>();
 
         Integer kInvalid = new Integer(-1);
         m_kEMap.put(new Edge(0, 4), kInvalid);
@@ -1151,7 +1145,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
 
             // generate midpoints of edges
             Iterator kEIter = m_kEMap.entrySet().iterator();
-            Map.Entry kEntry = null;
+            Map.Entry<Edge,Integer> kEntry = null;
 
             while (kEIter.hasNext()) {
                 kEntry = (Map.Entry) kEIter.next();
@@ -1836,6 +1830,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void calcGradMag() {
         ModelImage energyImage = null;
         AlgorithmGradientMagnitude gradMagAlgo = null;
@@ -1960,8 +1955,6 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
             return;
         }
 
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         fireProgressStateChanged(image.getImageName(), "Calculating 3D GVF ...");
 
         // Make 3D kernels
@@ -2905,6 +2898,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         /**
          * Construct an empty unordered set. The initial maximum quantity and growth values are DEFAULT_GROW. When
          */
+        @SuppressWarnings("unused")
         public UnorderedSetInt() {
             reset();
         }
@@ -2914,6 +2908,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          *
          * @param  kSet  The input set to copy.
          */
+        @SuppressWarnings("unused")
         public UnorderedSetInt(UnorderedSetInt kSet) {
             copy(kSet);
         }
@@ -2939,6 +2934,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          * @return  The array location that contains the newly appended element. A side effect of this call is
          *          reallocation of the storage array, if necessary.
          */
+        @SuppressWarnings("unused")
         public int append(int iElement) {
 
             if (m_iQuantity == m_iMaxQuantity) {
@@ -2959,6 +2955,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          * Use exactly the amount of array storage for the current elements in the set. After the call, getQuantity()
          * and getMaximumQuantity() return the same value. This call does cause a reallocation.
          */
+        @SuppressWarnings("unused")
         public void compactify() {
 
             if (m_iQuantity > 0) {
@@ -2993,6 +2990,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          *
          * @return  The value is true if and only if the element is found in the set.
          */
+        @SuppressWarnings("unused")
         public boolean exists(int iElement) {
 
             for (int i = 0; i < m_iQuantity; i++) {
@@ -3023,6 +3021,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          *
          * @return  The growth value.
          */
+        @SuppressWarnings("unused")
         public final int getGrow() {
             return m_iGrow;
         }
@@ -3033,6 +3032,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          *
          * @return  The maximum quantity of elements in the set.
          */
+        @SuppressWarnings("unused")
         public final int getMaxQuantity() {
             return m_iMaxQuantity;
         }
@@ -3045,6 +3045,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          *
          * @return  The new location of the last element that was moved.
          */
+        @SuppressWarnings("unused")
         public final int getNewIndex() {
             return m_iNewIndex;
         }
@@ -3056,6 +3057,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          *
          * @return  The old location of the last element that was moved.
          */
+        @SuppressWarnings("unused")
         public final int getOldIndex() {
             return m_iOldIndex;
         }
@@ -3112,6 +3114,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          *          locations of the last element can be retrieved by calls to getOldIndex() and getNewIndex(). If the
          *          last element was the one removed, getNewIndex() returns -1.
          */
+        @SuppressWarnings("unused")
         public boolean remove(int iElement) {
 
             for (int i = 0; i < m_iQuantity; i++) {
@@ -3144,6 +3147,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          *          If needed, the old and new locations of the last element can be retrieved by calls to getOldIndex()
          *          and getNewIndex(). If the last element was the one removed, getNewIndex() returns -1.
          */
+        @SuppressWarnings("unused")
         public boolean removeAt(int i) {
 
             if ((0 <= i) && (i < m_iQuantity)) {
@@ -3200,6 +3204,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
          * @param  i         The array location to assign to.
          * @param  iElement  The element to assign to array location i.
          */
+        @SuppressWarnings("unused")
         public final void set(int i, int iElement) {
             m_aiElement[i] = iElement;
         }
