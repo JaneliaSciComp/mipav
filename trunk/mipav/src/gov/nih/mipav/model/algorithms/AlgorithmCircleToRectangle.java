@@ -105,8 +105,6 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         double xw[] = new double[1];
         double yw[] = new double[1];
         double modulus;
-        double first[] = new double[1];
-        double second[] = new double[1];
         double K;
         double Kp;
         boolean test = false;
