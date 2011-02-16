@@ -156,7 +156,6 @@ public class AlgorithmImageHessian extends AlgorithmBase {
      * DOCUMENT ME!
      */
     private void run2D() {
-        DecimalFormat fltFmt = new DecimalFormat("0.00");
 
         fireProgressStateChanged(srcImage.getImageName(), "Hessian/Eigen System ...");
 
@@ -200,7 +199,6 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         double[][] evecs = new double[2][2];
         double tmp;
 
-        double a = 0.5f;
         double b = 0.5f;
         double c = 50.0f;
         double expRb = 0, expS = 0;
@@ -318,8 +316,8 @@ public class AlgorithmImageHessian extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void run3D() {
-        DecimalFormat fltFmt = new DecimalFormat("0.00");
 
         fireProgressStateChanged(srcImage.getImageName(), "Hessian/Eigen System ...");
 
@@ -364,10 +362,6 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         double[][] hess = null;
         double[] evals = new double[3];
         double[] magEvals = new double[3];
-        double[] sortedEvals = new double[3];
-        double[] evec0 = new double[3];
-        double[] evec1 = new double[3];
-        double[] evec2 = new double[3];
         int[] lut = new int[3];
         lut[0] = 0;
         lut[1] = 1;
@@ -599,7 +593,6 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         double[][] hess = null;
         double[] evals = new double[2];
         double[] magEvals = new double[2];
-        double[] sortedEvals = new double[2];
         double[][] evecs = new double[2][2];
 
         double b = 0.5f;
