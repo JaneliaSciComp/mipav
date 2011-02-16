@@ -231,13 +231,6 @@ iteration:
 
         try {
 
-            // Setup to use the progress bar.
-            
-
-            // The control points along the edge do not move.
-            int iNumIterationControlPoints = (kOptions.iBSplineNumControlPoints - 2) *
-                                                 (kOptions.iBSplineNumControlPoints - 2);
-
             // Create class which performs the registration.
             BSplineBasisf kBasisX = new BSplineBasisf(kOptions.iBSplineNumControlPoints, kOptions.iBSplineDegree);
             BSplineBasisf kBasisY = new BSplineBasisf(kOptions.iBSplineNumControlPoints, kOptions.iBSplineDegree);
@@ -253,7 +246,6 @@ iteration:
             if (dErrorPrev > 0.0) {
 
                 for (int iIteration = 0; iIteration < kOptions.iMaxIterations; iIteration++) {
-                    int iIterationControlPoint = 0;
 
                     // Skip the control points on the boundary.
                     for (int iControlX = 1; iControlX < (kOptions.iBSplineNumControlPoints - 1); iControlX++) {
