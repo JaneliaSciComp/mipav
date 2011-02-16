@@ -408,7 +408,6 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
         float scale; // scale factor that scales the value in the last bin of a cumulative
 
         // histogram to the maximum value of the source image.
-        float range; // range of the equalized slice
         float baseRange; // range of the reference slice
         float srcMin; // min for equalized slice
         float baseMin; // min for reference slice
@@ -447,8 +446,6 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
         }
 
         unitSize = (bufMax - bufMin) / (totalBins - 1); // one unit is the distance of one totalBin-th in brightness
-
-        range = bufMax - bufMin;
 
         mapping = new float[totalBins];
         hist = new int[totalBins]; // hist is both normal histogram & cumulative histogram
