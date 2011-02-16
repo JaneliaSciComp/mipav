@@ -116,11 +116,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     private int algorithm;
 
     /** DOCUMENT ME! */
-    private final String[] algorithmName = {"ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS",
-            "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP", "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE",
-            "FIND_EDGES", "FILL_HOLES", "DISTANCE_MAP_FOR_SHAPE_INTERPOLATION", "MORPHOLOGICAL_GRADIENT"};
-
-    /** DOCUMENT ME! */
     private float[] distanceMap = null;
 
     /** Edge type. */
@@ -150,6 +145,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     private BitSet kernel;
 
     /** kernel size (i.e. connectedness) */
+    @SuppressWarnings("unused")
     private final int kernelType;
 
     /** maximum, minimum size of objects. */
@@ -158,13 +154,13 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     /** Number pixels to prune. */
     private final int numPruningPixels;
 
-    /** Vector that holding the current availaible objects in the 3D image. */
-    private Vector objects = new Vector();
+    /** Vector that holding the current available objects in the 3D image. */
+    private Vector<intObject> objects = new Vector<intObject>();
 
     /** DOCUMENT ME! */
     private float pixDist = 0;
 
-    /** intermediate prcessing buffer, same size with imgBuffer. */
+    /** intermediate processing buffer, same size with imgBuffer. */
     private short[] processBuffer;
 
     /** Not used now. Flag to show frame during each algorithm method call. */
@@ -592,9 +588,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         final int yDim = srcImage.getExtents()[1];
         final int zDim = srcImage.getExtents()[2];
         final int sliceSize = xDim * yDim;
-        Vector endpoints;
-        Vector branch;
-        Vector branchesVector;
+        Vector<Integer> endpoints;
+        Vector<Integer> branch;
+        Vector<Vector<Integer>> branchesVector;
         short[] tempBuffer;
 
         if (iter < 1) {
@@ -603,8 +599,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         try {
             tempBuffer = new short[imgBuffer.length];
-            endpoints = new Vector();
-            branchesVector = new Vector();
+            endpoints = new Vector<Integer>();
+            branchesVector = new Vector<Vector<Integer>>();
         } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
@@ -694,7 +690,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             endpoints.removeAllElements();
 
-            // for each occurance of 1 (the endpoint of a branch), a new element is added to branchesVector
+            // for each occurrence of 1 (the endpoint of a branch), a new element is added to branchesVector
             for (int y = 1; y < (yDim - 1); y++) {
 
                 for (int x = 1; x < (xDim - 1); x++) {
@@ -704,7 +700,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                         p5 = processBuffer[pix];
 
                         if (p5 == 1) {
-                            branch = new Vector();
+                            branch = new Vector<Integer>();
                             branch.addElement(new Integer(pix));
                             branchesVector.addElement(branch);
                         }
@@ -719,7 +715,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             final int branchesSize = branchesVector.size();
 
             while (branchesDone != branchesSize) {
-                branch = (Vector) branchesVector.elementAt(currentBranch);
+                branch = (Vector<Integer>) branchesVector.elementAt(currentBranch);
 
                 for (i = 2; i <= (iter + 1); i++) {
                     pix = ((Integer) branch.elementAt(i - 2)).intValue();
@@ -773,7 +769,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             // creates final image which contains only branches of more than iter in length
             while ( !branchesVector.isEmpty()) {
-                branch = (Vector) branchesVector.firstElement();
+                branch = (Vector<Integer>) branchesVector.firstElement();
                 branchesVector.removeElementAt(0);
 
                 while ( !branch.isEmpty()) {
@@ -1191,7 +1187,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         int x, y, z;
 
         float[] minDistanceBuffer;
-        final Vector edgePoints = new Vector();
+        final Vector<Point3D> edgePoints = new Vector<Point3D>();
 
         fireProgressStateChanged("Bg. distance image ...");
         fireProgressStateChanged(0);
@@ -1386,7 +1382,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         int x, y, z;
 
         float[] minDistanceBuffer;
-        final Vector edgePoints = new Vector();
+        final Vector<Point3D> edgePoints = new Vector<Point3D>();
 
         fireProgressStateChanged("Bg. distance image ...");
         fireProgressStateChanged(0);
@@ -1801,7 +1797,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                             offsetXU = xDim;
                         }
 
-                        kernelLoop: for (k = startZ; k < endZ; k += sliceSize) {
+                        for (k = startZ; k < endZ; k += sliceSize) {
 
                             // only work on valid pixels
                             // essentially process only the overlap between
@@ -1895,7 +1891,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         Point3D pt;
 
         float[] minDistanceBuffer;
-        final Vector edgePoints = new Vector();
+        final Vector<Point3D> edgePoints = new Vector<Point3D>();
         fireProgressStateChanged("Distance image ...");
 
         try {
@@ -2360,7 +2356,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         Point3D tempPt;
         final Point3D seed3DPt = new Point3D( (stIndex % sliceSize) % xDim, (stIndex % sliceSize) / xDim,
                 (stIndex / sliceSize));
-        final Stack stack = new Stack();
+        final Stack<Point3D> stack = new Stack<Point3D>();
 
         if (imgBuffer[ (seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] == objValue) {
             stack.push(seed3DPt);
@@ -2468,7 +2464,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         Point3D tempPt;
         final Point3D seed3DPt = new Point3D( (stIndex % sliceSize) % xDim, (stIndex % sliceSize) / xDim,
                 (stIndex / sliceSize));
-        final Stack stack = new Stack();
+        final Stack<Point3D> stack = new Stack<Point3D>();
 
         if (imgBuffer[ (seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] > 0) {
             stack.push(seed3DPt);
@@ -2790,6 +2786,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      * 
      * @return true if single pixel, false if not single pixel.
      */
+    @SuppressWarnings("unused")
     private boolean onePixel(final short[] buffer, final int index, final int sliceSize, final int xDim) {
 
         if ( (buffer[index] > 0) && (buffer[index - sliceSize] == 0) && (buffer[index - sliceSize - xDim] == 0)
@@ -2839,7 +2836,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         final int sliceSize = xDim * yDim;
         final int volSize = xDim * yDim * zDim;
         int pix;
-        Vector3f bgPoint;
         Vector3f[] seeds;
         int[] destExtents = null;
         ModelImage wsImage = null;
@@ -2888,7 +2884,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         try {
             srcImage.exportData(0, volSize, imgBuffer);
-            bgPoint = new Vector3f( -1, -1, -1);
             destExtents = new int[3];
         } catch (final IOException error) {
             displayError("Algorithm Morphology3D.particleAnalysis: Image(s) locked");
@@ -3276,7 +3271,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             return;
         }
 
-        int vox, voxel, i, j, index;
+        int vox, voxel, i, j;
         final int xDim = srcImage.getExtents()[0];
         final int yDim = srcImage.getExtents()[1];
         final int zDim = srcImage.getExtents()[2];
@@ -3294,21 +3289,19 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         Vector3f[] erodeObjsOrdered;
         float max;
         float cPt;
-        float xRes, xResSquared, yRes, yResSquared, zRes, zResSquared;
-        Vector edgePoints = null;
-        Vector edgePointsSlice = null;
-        Vector uPointsSlice = null;
-        Vector uPointsSliceOrdered = null;
+        float xRes, xResSquared, yRes, yResSquared;
+        Vector<Vector3f> edgePointsSlice = null;
+        Vector<Vector3f> uPointsSlice = null;
+        Vector<Vector3f> uPointsSliceOrdered = null;
 
         float[] minDistanceBuffer;
         short imgBuffer2[];
 
         try {
             minDistanceBuffer = new float[sliceSize];
-            edgePoints = new Vector();
-            edgePointsSlice = new Vector();
-            uPointsSlice = new Vector();
-            uPointsSliceOrdered = new Vector();
+            edgePointsSlice = new Vector<Vector3f>();
+            uPointsSlice = new Vector<Vector3f>();
+            uPointsSliceOrdered = new Vector<Vector3f>();
             maxPt = new Vector3f();
         } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
@@ -3538,8 +3531,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         xResSquared = xRes * xRes;
         yRes = srcImage.getFileInfo(0).getResolutions()[1];
         yResSquared = yRes * yRes;
-        zRes = srcImage.getFileInfo(0).getResolutions()[2];
-        zResSquared = zRes * zRes;
 
         try {
             erodeObjs = new Vector4f[nErodeObj];
@@ -3554,7 +3545,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             }
 
             // order points
-            for (j = 0, index = 0; j < erodeObjs.length; j++) {
+            for (j = 0; j < erodeObjs.length; j++) {
                 max = -1;
                 indexMax = j;
                 maxPt.X = erodeObjs[j].X;
