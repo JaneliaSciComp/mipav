@@ -2929,7 +2929,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	int j;
             double ktrans;
             double ve;
-            double vp;
+            //double vp;
             int m;
             double intSumDerivKtrans;
             double intSumDerivVe;
@@ -2937,7 +2937,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	// Calculate the Jacobian analytically
             ktrans = x[1];
             ve = x[2];
-            vp = x[3];
+            //vp = x[3];
             ktransDivVe = ktrans / ve;
             for (j = 0; j <= tDim - 1; j++) {
                 for (m = 0; m <= tDim - 1; m++) {
