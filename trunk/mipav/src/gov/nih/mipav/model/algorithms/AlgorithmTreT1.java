@@ -1,27 +1,14 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import gov.nih.mipav.model.algorithms.AlgorithmTProcess.CalculateT;
-import gov.nih.mipav.model.algorithms.AlgorithmTProcess.LoadResultDataOuter;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJFrameMessage;
-import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.view.ViewOpenFileUI;
 import gov.nih.mipav.view.ViewUserInterface;
 
 /** 
@@ -41,7 +28,9 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     private ModelImage largestImage = null;
     
     private double treTR = 5.00;
+    @SuppressWarnings("unused")
     private double irspgrTR = 5.00;
+    @SuppressWarnings("unused")
     private double irspgrKy = 96.00;
     private double irspgrFA = 5.00;
     private double maxT1 = 5000;
@@ -52,27 +41,45 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     
     private double[] spgrData;
     private double[] irspgrData;
-    private double scale, pointScale, scaleIncrement;
-    private double[] estimates, residuals;
+    @SuppressWarnings("unused")
+    private double scale;
+    @SuppressWarnings("unused")
+    private double pointScale;
+    @SuppressWarnings("unused")
+    private double scaleIncrement;
+    @SuppressWarnings("unused")
+    private double[] estimates;
+    @SuppressWarnings("unused")
+    private double[] residuals;
+    @SuppressWarnings("unused")
     private int[] direction;
     
     private int[] spgrImageIndex;
     private int[] irspgrImageIndex;
     private int b1ImageIndex;
+    @SuppressWarnings("unused")
     private double angleIncrement;
     private int Nsa = 2;
     private int Nti = 1;
+    @SuppressWarnings("unused")
     private double maxAngle = 20;
     
     private boolean smoothB1Field = true;
+    @SuppressWarnings("unused")
     private boolean performStraightTreT1 = true;
     private boolean performTreT1withPreCalculatedB1Map = false;
     private boolean performTreT1HIFI = false;
+    @SuppressWarnings("unused")
     private boolean doubleInversion = true;
+    @SuppressWarnings("unused")
     private boolean singleInversion = false;
+    @SuppressWarnings("unused")
     private boolean geScanner = true;
+    @SuppressWarnings("unused")
     private boolean siemensScanner = false;
+    @SuppressWarnings("unused")
     private boolean threeTField = true;
+    @SuppressWarnings("unused")
     private boolean onefiveTField = false;
     
     private boolean calculateT1 = true;
@@ -81,12 +88,13 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     private boolean invertT1toR1 = false;
     
     private boolean useWeights = true;
-    
+    @SuppressWarnings("unused")
     private boolean uniformAngleSpacing = true;
     
     
     
     private String[] wList;
+    @SuppressWarnings("unused")
     private String[] titles;
     private boolean completed;
     
@@ -377,8 +385,6 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         int width, height, tSeries, irspgrSlices;
         int irwidth, irheight;
         
-        int calculateB1 = 1;
-        
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
         width = image.getExtents()[0];
         height = image.getExtents()[1];
@@ -553,11 +559,11 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         
         double sumX, sumY, sumXY, sumXX, slope, intercept, residuals;
         double t1Guess, m0Guess;
-        double[] treGuess, irspgrGuess, guess;
+        double[] treGuess, irspgrGuess;
         
         double m0Scale;
         
-        int p, pulse, i,j;
+        int p;
         
         treGuess = new double[Nfa];
         irspgrGuess = new double[Nti];
@@ -806,9 +812,10 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         
         public void run() {
             dataBar.setVisible(true);
-            float[] ctable;
             String prefix;
-            double Inversion, ax, bx, cx, fax, fbx, fcx, R, C, precision, x0, x1, x2, x3, f1, f2, xmin;
+            @SuppressWarnings("unused")
+            double fbx;
+            double Inversion, ax, bx, cx, fax, fcx, R, C, precision, x0, x1, x2, x3, f1, f2, xmin;
             double smoothedB1;
             ModelImage image;
             
@@ -818,10 +825,10 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             precision = 0.003;
             
             double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
-            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, m0, r1, d, a, b, b1;
+            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, m0, r1, d, a;
             float noiseSum, threshold;
             int noiseIndex;
-            int x,y,i,j,k,p, ti, angle, p1, p2, pixelIndex;
+            int x,y,k,p, ti, angle, p1, p2, pixelIndex;
             
             double[] fa;
             double[] scaledFA;
@@ -865,7 +872,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             for (angle=0; angle<Nsa;angle++) {
                 fa[angle] = Math.toRadians(treFA[angle]);
             }
-            double irFA = Math.toRadians(irspgrFA);
+            //double irFA = Math.toRadians(irspgrFA);
             
             for (k=0; k<irspgrSlices; k++) {
             
@@ -1289,17 +1296,17 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         public void run() {
             dataBar.setVisible(true);
             
-            int x,y,k,angle, pixelIndex, noiseIndex;
+            int x,y,k,angle, pixelIndex;
             
             double b1;
             double[] fa, b1Values;
             double[][] pixelValues;
             float[][] t1Values, m0Values, r1Values;
             
-            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, m0, r1, d, a, b;
+            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, m0, r1, d, a;
             double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
             
-            float noiseSum, threshold;
+            float threshold;
             
             ModelImage image, b1FieldImage = null;
             
@@ -1322,7 +1329,6 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             }
             
             for (k=0; k<nSlices; k++) { //changed slice size
-                noiseSum = (float) 0.00;
                 image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
                 
                 threshold = hardNoiseThreshold;
