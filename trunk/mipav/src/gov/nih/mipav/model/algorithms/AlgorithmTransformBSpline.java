@@ -61,8 +61,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
     /** DOCUMENT ME! */
     private ModelImage m_kImageSource;
 
-    /** DOCUMENT ME! */
-    private ModelSimpleImage m_kSimpleImageResult;
+    //private ModelSimpleImage m_kSimpleImageResult;
 
     /** DOCUMENT ME! */
     private ModelSimpleImage m_kSimpleImageSource;
@@ -140,7 +139,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
         m_kImageSource = null;
         m_kSimpleImageSource = null;
-        m_kSimpleImageResult = null;
+        //m_kSimpleImageResult = null;
         destExtents = null;
 
         if (controlMat != null) {
@@ -224,8 +223,8 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                     m_kImageResult.getFileInfo(slice).setResolutions(outResolutions);
                 }
 
-                m_kSimpleImageResult = new ModelSimpleImage(m_kImageResult.getExtents(), outResolutions,
-                                                            m_kImageResult.isColorImage());
+                //m_kSimpleImageResult = new ModelSimpleImage(m_kImageResult.getExtents(), outResolutions,
+                                                            //m_kImageResult.isColorImage());
 
                 // create B-spline lattice
                 m_kBSplineBasisX = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree,
@@ -310,8 +309,8 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                     m_kImageResult.getFileInfo(0).setResolutions(outResolutions);
 
                     // Setup access to image data.
-                    m_kSimpleImageResult = new ModelSimpleImage(m_kImageResult.getExtents(), outResolutions,
-                                                                m_kImageResult.isColorImage());
+                    //m_kSimpleImageResult = new ModelSimpleImage(m_kImageResult.getExtents(), outResolutions,
+                                                                //m_kImageResult.isColorImage());
 
                     // create B-spline lattice
                     m_kBSplineBasisX = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree,
@@ -356,8 +355,8 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                     }
 
                     // Setup access to image data.
-                    m_kSimpleImageResult = new ModelSimpleImage(m_kImageResult.getExtents(), outResolutions,
-                                                                m_kImageResult.isColorImage());
+                    //m_kSimpleImageResult = new ModelSimpleImage(m_kImageResult.getExtents(), outResolutions,
+                                                                //m_kImageResult.isColorImage());
 
                     // create B-spline lattice
                     m_kBSplineBasisX = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree,
