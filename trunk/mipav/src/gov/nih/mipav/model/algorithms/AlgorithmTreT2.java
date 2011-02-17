@@ -32,6 +32,7 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
     private double[][] twoPSimplex;
     private int[] bestToWorst;
     
+    @SuppressWarnings("unused")
     private boolean hardInterrupt = false;
     
     private ModelImage t2ResultStack;
@@ -165,7 +166,6 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
     
     public void calculateT2with0Phase() {
         ModelImage image;
-        float[] ctable;
         
         double[] fa_phase0;
         double[] scaledFA_phase0;
@@ -177,13 +177,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         float[][] t2Values, m0Values, r2Values;
         
         double a, d, e2;
-        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, lnslope, t1, t2, e1, m0, r2;
-        double x1, x2, y1, y2;
-        double[] possibleT2s, possibleMos;
-        float noiseSum, threshold;
+        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, t2, e1, m0, r2;
         
         int width, height, nSlices, tSeries;
-        int x,y,i,j,k,t,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
+        int x,y,k,t,angle, p, pixelIndex;
         
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[0]]);
         width = image.getExtents()[0];
@@ -468,8 +465,6 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
     
     public void calculateT2with180Phase() {
         ModelImage image;
-        float[] ctable;
-        
         
         double[] fa_phase180;
         double[] scaledFA_phase180;
@@ -481,13 +476,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         float[][] t2Values, m0Values, r2Values;
         
         double a, d, e2;
-        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, lnslope, t1, t2, e1, m0, r2;
-        double x1, x2, y1, y2;
-        double[] possibleT2s, possibleM0s;
-        float noiseSum, threshold;
+        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, t2, e1, m0, r2;
         
         int width, height, nSlices, tSeries;
-        int x,y,i,j,k,t,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
+        int x,y,k,t,angle, p, pixelIndex;
 
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[0]]);
         width = image.getExtents()[0];
@@ -765,8 +757,6 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
 
     public void calculateT2withApproximateModelling() {
         ModelImage image;
-        float[] ctable;
-        
         
         double[] fa_phase0, fa_phase180;
         double[] scaledFA_phase0, scaledFA_phase180;
@@ -778,15 +768,11 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         float[][] t2Values, m0Values, r2Values;
         
         double a, d, e2;
-        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, lnslope, t1, t2, e1, m0, r2;
-        double x1, x2, y1, y2;
+        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, t2, e1, m0, r2;
         double[] possibleT2s, possibleM0s;
-        float noiseSum, threshold;
-        float Residuals, guessDiffence;
-        float [] lastGuess, recentGuess;
         
         int width, height, nSlices, tSeries;
-        int x,y,i,j,k,t,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
+        int x,y,k,t,angle, p, pixelIndex;
 
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[0]]);
         width = image.getExtents()[0];
@@ -1179,7 +1165,6 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
     public void calculateT2withFullModelling() {
         fireProgressStateChanged("prepping data - hang on");
         ModelImage image;
-        float[] ctable;
         
         double[] FA, scaledFA, phaseIncrements, sina, cosa;
         
@@ -1193,32 +1178,22 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         
         double[] optimization, initialGuess;
         double[] twoPOptimization, twoPInitialGuess;
-        double Residuals, guessDifference, lowestResiduals;
-        double[] lastGuess, recentGuess, bestGuess;
-        int restartIndex;
         int numParams, numVertices;
         
-        double offResonanceMod, resonancePeriod;
-        int repetitionCycle;
+        @SuppressWarnings("unused")
+        double resonancePeriod;
         
         optimization = new double[3];
         initialGuess = new double[3];
         twoPOptimization = new double[2];
         twoPInitialGuess = new double[2];
         
-        lastGuess = new double[3];
-        recentGuess = new double[3];
-        bestGuess = new double[3];
-        
-        int iterations;
-        
         double t2, m0, b0, r2;
-        double rtol; 
         
         double t1, tr;
         
         int width, height, nSlices, tSeries;
-        int x,y,i,j,k,t,angle, p, pixelIndex, p1,p2;
+        int x,y,k,t,angle, p, pixelIndex, p1,p2;
         
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[0]]);
         width = image.getExtents()[0];
