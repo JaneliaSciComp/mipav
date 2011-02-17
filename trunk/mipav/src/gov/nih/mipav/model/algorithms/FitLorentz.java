@@ -145,6 +145,7 @@ public class FitLorentz extends NLFittedFunction {
     /**
      * Apply small Gaussian kernel to smooth out data.  Note should not be called if doing data comparison.
      */
+    @SuppressWarnings("unused")
     private double[] applyKernel() {
     	
         int size = 7;
