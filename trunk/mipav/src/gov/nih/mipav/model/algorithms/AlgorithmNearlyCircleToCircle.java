@@ -117,7 +117,7 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
         ViewVOIVector VOIs = null;
         int nVOIs;
         int contourVOIs;
-        Vector contours = null;
+        Vector<VOIBase> contours = null;
         int nContours = 0;
         Vector3f geometricCenter;
         VOI selectedVOI = null;
