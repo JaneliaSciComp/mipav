@@ -697,13 +697,13 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
     protected void computeMeanEdgeLength() {
         m_fMeanEdgeLength = 0.0f;
 
-        Iterator kEIter = m_kEMap.entrySet().iterator();
+        Iterator<Map.Entry<Edge, Integer>> kEIter = m_kEMap.entrySet().iterator();
         Map.Entry <Edge,Integer>kEntry = null;
         Vector3f kEdge = new Vector3f();
 
         while (kEIter.hasNext()) {
-            kEntry = (Map.Entry) kEIter.next();
-
+            kEntry = (Map.Entry<Edge, Integer>) kEIter.next();
+        	
             Edge kE = (Edge) kEntry.getKey();
             Vector3f kP0 = m_akVertex[kE.m_i0];
             Vector3f kP1 = m_akVertex[kE.m_i1];
@@ -1144,11 +1144,11 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         for (iStep = 1; iStep <= iSubdivisions; iStep++) {
 
             // generate midpoints of edges
-            Iterator kEIter = m_kEMap.entrySet().iterator();
+            Iterator<Map.Entry<Edge, Integer>> kEIter = m_kEMap.entrySet().iterator();
             Map.Entry<Edge,Integer> kEntry = null;
 
             while (kEIter.hasNext()) {
-                kEntry = (Map.Entry) kEIter.next();
+                kEntry = (Map.Entry<Edge, Integer>) kEIter.next();
 
                 Edge kE = (Edge) kEntry.getKey();
                 Vector3f kP0 = m_akVertex[kE.m_i0];
