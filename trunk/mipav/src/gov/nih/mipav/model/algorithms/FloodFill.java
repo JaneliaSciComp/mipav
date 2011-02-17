@@ -81,7 +81,7 @@ public class FloodFill {
         int yDim = dims[1];
         Point pt;
         Point tempPt;
-        Stack stack = new Stack();
+        Stack<Point> stack = new Stack<Point>();
         int indexY;
         int x, y;
 
@@ -155,7 +155,7 @@ public class FloodFill {
 
         Point3D pt; // = new Point3D();
         Point3D tempPt;
-        Stack stack = new Stack();
+        Stack<Point3D> stack = new Stack<Point3D>();
 
         if (mask.get((seedPt.z * imageSize) + (seedPt.y * xDim) + seedPt.x)) {
             stack.push(seedPt);
