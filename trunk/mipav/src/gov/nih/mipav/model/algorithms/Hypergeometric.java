@@ -1256,6 +1256,7 @@ public class Hypergeometric {
      * @param cchr double[]
      * @param cchi double[]
      */
+    @SuppressWarnings("unused")
     private void zshch(double zr, final double zi, final double[] cshr, final double[] cshi, final double[] cchr,
             final double[] cchi) {
         double pexp;
@@ -1287,6 +1288,7 @@ public class Hypergeometric {
      * @param br double[]
      * @param bi double[]
      */
+    @SuppressWarnings("unused")
     private void zsqrt(final double ar, final double ai, final double[] br, final double[] bi) {
         final double drt = 1.0 / Math.sqrt(2.0);
         double zm;
