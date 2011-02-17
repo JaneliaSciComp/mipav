@@ -139,7 +139,7 @@ public abstract class InverseLaplaceqd {
 
         int N = 2 * tPts;
         int qd = (2 * p) + 1;
-        int i, j, n;
+        int i, n;
         double NT;
         double omega;
         double realS;
