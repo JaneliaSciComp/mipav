@@ -23,11 +23,11 @@ import gov.nih.mipav.view.*;
 *	@see		JDialogTLRC
 */
 public class JDialogACPC extends JDialogBase {
-    private static final float ATLAS_ALIGNBOX_LAT    = 95.0f;  /* dimensions in mm. used for AC-PC */
-    private static final float ATLAS_ALIGNBOX_ANT    = 95.0f;  /* aligned view clipping box */
-    private static final float ATLAS_ALIGNBOX_INF    = 70.0f;
-    private static final float ATLAS_ALIGNBOX_POS    = 140.0f; /* Maximum distances allowed above and */
-    private static final float ATLAS_ALIGNBOX_SUP    = 100.0f; /* below Talairach zero point */
+    //private static final float ATLAS_ALIGNBOX_LAT    = 95.0f;  /* dimensions in mm. used for AC-PC */
+    //private static final float ATLAS_ALIGNBOX_ANT    = 95.0f;  /* aligned view clipping box */
+    //private static final float ATLAS_ALIGNBOX_INF    = 70.0f;
+    //private static final float ATLAS_ALIGNBOX_POS    = 140.0f; /* Maximum distances allowed above and */
+    //private static final float ATLAS_ALIGNBOX_SUP    = 100.0f; /* below Talairach zero point */
 
 	private JComboBox            comboBoxOrientX, comboBoxOrientY, comboBoxOrientZ;
 	private ButtonGroup          ACPCGroup;
@@ -54,11 +54,10 @@ public class JDialogACPC extends JDialogBase {
 	private Vector3f             posteriorMarginPt;
 	private Vector3f             inferiorEdgePt;
 	private Vector3f             firstMidSagPt;
+	@SuppressWarnings("unused")
 	private Vector3f             anotherMidSagPt;
 	private	int					 interpolation;
 	
-	private     Vector3f                 originalSuperiorEdge;
-	private     Vector3f                 originalPosteriorMargin;
 	private float voxelLength;
 	public	ModelImage ACPCImage = null;
         
@@ -418,7 +417,7 @@ public class JDialogACPC extends JDialogBase {
 		JPanel buttonPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         buttonPanel.add(setACPCButton, gbc);
 		gbc.gridx = 1;
 		buttonPanel.add(clearACPCButton, gbc);
@@ -428,7 +427,7 @@ public class JDialogACPC extends JDialogBase {
         buttonPanel.add(cancelACPCButton, gbc);
 
 		JPanel mainPanel = new JPanel(new GridBagLayout());
-		gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 1; gbc.fill = gbc.HORIZONTAL;
+		gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
 		int y = 0;
 		if (orient[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
 		    mainPanel.add(orientPanel, gbc);
@@ -449,7 +448,7 @@ public class JDialogACPC extends JDialogBase {
      */
      public  JPanel getMainPanel() {
                JPanel pointPanel;
-               JPanel orientPanel = null;
+               //JPanel orientPanel = null;
                JPanel voxelPanel;
                JLabel labelVoxelLength;
 			   setTitle("Create AC-PC image");
@@ -602,7 +601,7 @@ public class JDialogACPC extends JDialogBase {
          // buttonPanel.add(cancelACPCButton, gbc);
 
                  JPanel mainPanel = new JPanel(new GridBagLayout());
-                 gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 1; gbc.fill = gbc.HORIZONTAL;
+                 gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
                  int y = 0;
 				 /*
                  if (orient[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
@@ -630,7 +629,7 @@ public class JDialogACPC extends JDialogBase {
     */
 	public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        boolean found, success;
+        boolean found;
         int pointType;
 	    Vector3f pt;
 
@@ -1057,6 +1056,7 @@ public class JDialogACPC extends JDialogBase {
     *   @return <code>true</code> if successful conversion.
     */
     protected boolean convertToACPC(){
+    	@SuppressWarnings("unused")
 		ViewJFrameImage imageFrame;
 
 		// compute AC, PC and orientations
@@ -1360,6 +1360,7 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt2      Second point.
     *   @param resol    Resolutions of each dimension.
     */
+	@SuppressWarnings("unused")
     private float dist(Vector3f pt1, Vector3f pt2, float[] resol) {
        float distX, distY, distZ;
        float length;
@@ -1380,6 +1381,7 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt2  Vector to be subtracted.
     *   @return     pt1 - pt2
     */
+	@SuppressWarnings("unused")
     private Vector3f sub(Vector3f pt1, Vector3f pt2) {
         Vector3f pt = new Vector3f(0.0f,0.0f,0.0f);
         pt.X = pt1.X - pt2.X;
@@ -1393,6 +1395,7 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt   Vector to find normal to.
     *   @return     Normal of pt.
     */
+	@SuppressWarnings("unused")
     private Vector3f norm(Vector3f pt) {
         float scale;
         Vector3f normPt = new Vector3f(0.0f,0.0f,0.0f);
@@ -1411,6 +1414,7 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt2  Second vector
     *   @return     Cross product of pt1 and pt2.
     */
+	@SuppressWarnings("unused")
     private Vector3f crossProduct(Vector3f pt1, Vector3f pt2) {
         Vector3f crossPt = new Vector3f(0.0f,0.0f,0.0f);
         crossPt.X = pt1.Y * pt2.Z - pt1.Z * pt2.Y;
@@ -1425,6 +1429,7 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt2  Second vector
     *   @return     Dot product of pt1 and pt2.
     */
+	@SuppressWarnings("unused")
     private float dotProduct(Vector3f pt1, Vector3f pt2) {
         float dot;
         dot = pt1.X * pt2.X + pt1.Y * pt2.Y + pt1.Z * pt2.Z;
@@ -1438,6 +1443,7 @@ public class JDialogACPC extends JDialogBase {
     *   @param fb   Scale for vector b.
     *   @param b    Vector b.
     */
+	@SuppressWarnings("unused")
     private Vector3f sclAdd(float fa, Vector3f a, float fb, Vector3f b) {
         Vector3f pt = new Vector3f(0.0f,0.0f,0.0f);
         pt.X = fa * a.X + fb * b.X;
@@ -1452,6 +1458,7 @@ public class JDialogACPC extends JDialogBase {
     *   @param resol    Resolutions to use when converting.
     *   @return         Same point in mm.
     */
+	@SuppressWarnings("unused")
     private Vector3f makemmVector3f(Vector3f pt, float[] resol) {
         Vector3f mmPt = new Vector3f(0.0f,0.0f,0.0f);
         mmPt.X = resol[0] * pt.X;
@@ -1466,6 +1473,7 @@ public class JDialogACPC extends JDialogBase {
     *   @param resol    Resolutions to use when converting.
     *   @return         Same point in pixel space.
     */
+	@SuppressWarnings("unused")
     private Vector3f makeVoxelCoord3Df(Vector3f pt, float[] resol) {
         Vector3f voxelPt = new Vector3f(0.0f,0.0f,0.0f);
         voxelPt.X = pt.X/resol[0];
@@ -1499,6 +1507,7 @@ public class JDialogACPC extends JDialogBase {
     *   @param oZhigh       Out Z high.
     *   @param progressBar  Progress bar.
     */
+	@SuppressWarnings("unused")
    private void transformACPCTrilinear(ModelImage image, float imgBuffer[], double xfrm[][],
                                        float iXres, float iYres, float iZres, int iXdim, int iYdim, int iZdim,
                                        float oXres, float oYres, float oZres, int oXdim, int oYdim, int oZdim, ViewJProgressBar progressBar) {
@@ -1515,14 +1524,13 @@ public class JDialogACPC extends JDialogBase {
         float temp1, temp2, temp3, temp4, temp5, temp6, temp7;
         int roundX, roundY, roundZ;
         sliceSize   = iXdim * iYdim;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23, T30, T31, T32, T33;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
         int mod = oXdim/50;
 
         T00 = (float)xfrm[0][0]; T01 = (float)xfrm[0][1]; T02 = (float)xfrm[0][2]; T03 = (float)xfrm[0][3];
         T10 = (float)xfrm[1][0]; T11 = (float)xfrm[1][1]; T12 = (float)xfrm[1][2]; T13 = (float)xfrm[1][3];
         T20 = (float)xfrm[2][0]; T21 = (float)xfrm[2][1]; T22 = (float)xfrm[2][2]; T23 = (float)xfrm[2][3];
-        T30 = (float)xfrm[3][0]; T31 = (float)xfrm[3][1]; T32 = (float)xfrm[3][2]; T33 = (float)xfrm[3][3];
 
 
         for (i=0; i < oXdim; i++) {
