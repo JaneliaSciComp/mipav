@@ -13,6 +13,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -24,19 +25,27 @@ import java.awt.image.PixelGrabber;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.GZIPInputStream;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -47,6 +56,9 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import com.ice.tar.TarEntry;
+import com.ice.tar.TarInputStream;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -65,6 +77,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ProgressChangeEvent;
 import gov.nih.mipav.view.ViewControlsImage;
 import gov.nih.mipav.view.ViewJComponentDTIImage;
 import gov.nih.mipav.view.ViewJComponentPedsAtlasIconImage;
@@ -76,7 +89,8 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
-
+import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ProgressChangeListener;
 /**
  * This plugin is an atlas type plugin for the pediatrics group that displays annotations also
  * @author pandyan
@@ -84,6 +98,15 @@ import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
  */
 public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmInterface,ChangeListener, MouseWheelListener, VOIManagerInterfaceListener {
 	
+
+	
+
+
+
+
+
+
+
 	/** grid bag constraints **/
 	private GridBagConstraints gbc;
 	
@@ -174,19 +197,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     private int currentZSlice;
     
     /** test: peds home **/
-    private String pedsHome = "C:" + File.separator + "images" + File.separator;
+    //private String pedsHome = "C:" + File.separator + "images" + File.separator;
+    private String pedsHome = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "pedsAtlas" + File.separator;
+    
+    
     
     /** test icon image **/
-    private File fCoronal = new File(pedsHome + "pedsAtlas" + File.separator + "icons" + File.separator + "coronal.jpg");
+    private File fCoronal = new File(pedsHome + "icons" + File.separator + "coronal.jpg");
     
     /** test icon image **/
-    private File fAxial = new File(pedsHome + "pedsAtlas" + File.separator + "icons" + File.separator + "axial.jpg");
+    private File fAxial = new File(pedsHome + "icons" + File.separator + "axial.jpg");
     
     /** test icon image **/
-    private File fSagittal = new File(pedsHome + "pedsAtlas" + File.separator + "icons" + File.separator + "sagittal.jpg");
+    private File fSagittal = new File(pedsHome + "icons" + File.separator + "sagittal.jpg");
     
     /** annotations file dir **/
-    private String annotationsFileDir = pedsHome + "pedsAtlas" + File.separator + "annotations" + File.separator;
+    private String annotationsFileDir = pedsHome + "annotations" + File.separator;
     
     /** coronal annotations file name **/
     private String coronalAnnotationsFilename = "coronal.lbl";
@@ -215,8 +241,11 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     /** atlas image file **/
     private File atlasFile;
     
-    /** thread to load images **/
+    /** thread to download and extract images **/
     private Thread t1;
+    
+    /** thread to load images **/
+    private Thread t2;
     
     /** File VOI **/
     private FileVOI fileVOI;
@@ -268,6 +297,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     public static final String EDTI = "edti";
     
     
+    /** booleans indicating what has been successfully downloaded and extracted **/
+    private boolean extractedMisc = false;
+    private boolean extractedAxialT1 = false;
+    private boolean extractedAxialT2 = false;
+    private boolean extractedAxialPD = false;
+    private boolean extractedCoronalT1 = false;
+    private boolean extractedCoronalT2 = false;
+    private boolean extractedCoronalPD = false;
+    private boolean extractedSagittalT1 = false;
+    private boolean extractedSagittalT2 = false;
+    private boolean extractedSagittalPD = false;
+    
+    
+    private ViewJProgressBar progressBar;
+    
+   
     
     
     
@@ -289,6 +334,36 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	    m_afYWin[3] = 0;
 	    
 	    
+	    //Check to see if PedsHome exists...if it doesnt, download and extract images
+	    File pedsHomeFile = new File(pedsHome);
+	    if(!pedsHomeFile.exists()) {
+	    	//start thread to download and extract images
+	    	t1 = new DownloadAndExtractImages();
+	    	try {
+	    		t1.start();
+	    	}catch (Exception e) {
+				e.printStackTrace();
+				return;
+			}
+	    }else {
+	    	extractedMisc = true;
+	    	extractedAxialT1 = true;
+	    	extractedAxialT2 = true;
+	    	extractedAxialPD = true;
+	    	extractedCoronalT1 = true;
+	    	extractedCoronalT2 = true;
+	    	extractedCoronalPD = true;
+	    	extractedSagittalT1 = true;
+	    	extractedSagittalT2 = true;
+	    	extractedSagittalPD = true;
+	    	
+	    	
+	    }
+	    
+	    while(!isExtractedMisc()) {
+	    	//do nothing until misc has been extracted
+	    }
+	    
 		
 		if (!readConfigFile()) {
 			return;
@@ -296,9 +371,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		//we will start plugin with axial
 		//t1 = new Thread(new PopulateModelImages(this,AXIAL), "thread1");
-		t1 = new PopulateModelImages(this,AXIAL);
+		t2 = new PopulateModelImages(this,AXIAL);
 		try {
-			t1.start();
+			t2.start();
 		}catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -358,7 +433,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		BufferedReader d = null;
 		try {
 			String str;
-	        fis = new FileInputStream(pedsHome + "pedsAtlas" + File.separator + "config" + File.separator + "config.txt");
+	        fis = new FileInputStream(pedsHome + "config" + File.separator + "config.txt");
 	        d = new BufferedReader(new InputStreamReader(fis));
 	        
 	        str =  d.readLine().trim();
@@ -1350,16 +1425,16 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		        //lutButton.setEnabled(false);
 				setToolBarDisabled();
 				nullifyStructures();
-				if(t1.isAlive()) {
-					((PopulateModelImages)t1).setIsInterrupted(true);
+				if(t2.isAlive()) {
+					((PopulateModelImages)t2).setIsInterrupted(true);
 					
 				}
 				currentOrientation = AXIAL;
 				setCursor(new Cursor(Cursor.WAIT_CURSOR));
 				//t1 = new Thread(new PopulateModelImages(this,AXIAL), "thread1");
-				t1 = new PopulateModelImages(this,AXIAL);
+				t2 = new PopulateModelImages(this,AXIAL);
 				try {
-					t1.start();
+					t2.start();
 				}catch (Exception ev) {
 					ev.printStackTrace();
 					return;
@@ -1394,16 +1469,16 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		        //lutButton.setEnabled(false);
 		        setToolBarDisabled();
 				nullifyStructures();
-				if(t1.isAlive()) {
-					((PopulateModelImages)t1).setIsInterrupted(true);
+				if(t2.isAlive()) {
+					((PopulateModelImages)t2).setIsInterrupted(true);
 					
 				}
 				currentOrientation = CORONAL;
 				setCursor(new Cursor(Cursor.WAIT_CURSOR));
 				//t1 = new Thread(new PopulateModelImages(this,CORONAL), "thread1");
-				t1 = new PopulateModelImages(this,CORONAL);
+				t2 = new PopulateModelImages(this,CORONAL);
 				try {
-					t1.start();
+					t2.start();
 				}catch (Exception ev) {
 					ev.printStackTrace();
 					return;
@@ -1441,16 +1516,16 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		        //lutButton.setEnabled(false);
 		        setToolBarDisabled();
 				nullifyStructures();
-				if(t1.isAlive()) {
-					((PopulateModelImages)t1).setIsInterrupted(true);
+				if(t2.isAlive()) {
+					((PopulateModelImages)t2).setIsInterrupted(true);
 					
 				}
 				currentOrientation = SAGITTAL;
 				setCursor(new Cursor(Cursor.WAIT_CURSOR));
 				//t1 = new Thread(new PopulateModelImages(this,SAGITTAL), "thread1");
-				t1 = new PopulateModelImages(this,SAGITTAL);
+				t2 = new PopulateModelImages(this,SAGITTAL);
 				try {
-					t1.start();
+					t2.start();
 				}catch (Exception ev) {
 					ev.printStackTrace();
 					return;
@@ -2161,8 +2236,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
      * @param event the window event that triggered this method
      */
     public void windowClosing(final WindowEvent event) {
-    	if(t1.isAlive()) {
-			((PopulateModelImages)t1).setIsInterrupted(true);
+    	if(t2.isAlive()) {
+			((PopulateModelImages)t2).setIsInterrupted(true);
 			
 		}
     	nullifyStructures();
@@ -2454,9 +2529,442 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		this.pdComponentImages[index] = pdComponentImage;
 		notify();
 	}
+	
+	
+	public synchronized void setExtractedMisc(boolean extractedMisc) {
+		this.extractedMisc = extractedMisc;
+		notify();
+	}
+
+
+
+
+
+
+
+	public synchronized void setExtractedAxialT1(boolean extractedAxialT1) {
+		this.extractedAxialT1 = extractedAxialT1;
+		notify();
+	}
+
+
+
+
+
+
+
+	public synchronized void setExtractedAxialT2(boolean extractedAxialT2) {
+		this.extractedAxialT2 = extractedAxialT2;
+		notify();
+	}
+
+
+
+
+
+
+
+	public synchronized void setExtractedAxialPD(boolean extractedAxialPD) {
+		this.extractedAxialPD = extractedAxialPD;
+		notify();
+	}
+
+
+
+
+
+
+
+	public synchronized void setExtractedCoronalT1(boolean extractedCoronalT1) {
+		this.extractedCoronalT1 = extractedCoronalT1;
+		notify();
+	}
+
+
+
+
+
+
+
+	public synchronized void setExtractedCoronalT2(boolean extractedCoronalT2) {
+		this.extractedCoronalT2 = extractedCoronalT2;
+		notify();
+	}
+
+
+
+
+
+
+
+	public synchronized void setExtractedCoronalPD(boolean extractedCoronalPD) {
+		this.extractedCoronalPD = extractedCoronalPD;
+		notify();
+	}
+
+
+
+
+
+
+
+	public synchronized void setExtractedSagittalT1(boolean extractedSagittalT1) {
+		this.extractedSagittalT1 = extractedSagittalT1;
+		notify();
+	}
+
+
+
+
+
+
+
+	public synchronized void setExtractedSagittalT2(boolean extractedSagittalT2) {
+		this.extractedSagittalT2 = extractedSagittalT2;
+		notify();
+	}
+
+
+
+
+
+
+
+	public synchronized void setExtractedSagittalPD(boolean extractedSagittalPD) {
+		this.extractedSagittalPD = extractedSagittalPD;
+		notify();
+	}
+	
+	
+	
+
+
+
+
+
+
+	public synchronized boolean isExtractedMisc() {
+		notify();
+		return extractedMisc;
+	}
+
+
+
+
+
+
+
+	public synchronized boolean isExtractedAxialT1() {
+		notify();
+		return extractedAxialT1;
+	}
+
+
+
+
+
+
+
+	public synchronized boolean isExtractedAxialT2() {
+		notify();
+		return extractedAxialT2;
+	}
+
+
+
+
+
+
+
+	public synchronized boolean isExtractedAxialPD() {
+		notify();
+		return extractedAxialPD;
+	}
+
+
+
+
+
+
+
+	public synchronized boolean isExtractedCoronalT1() {
+		notify();
+		return extractedCoronalT1;
+	}
+
+
+
+
+
+
+
+	public synchronized boolean isExtractedCoronalT2() {
+		notify();
+		return extractedCoronalT2;
+	}
+
+
+
+
+
+
+
+	public synchronized boolean isExtractedCoronalPD() {
+		notify();
+		return extractedCoronalPD;
+	}
+
+
+
+
+
+
+
+	public synchronized boolean isExtractedSagittalT1() {
+		notify();
+		return extractedSagittalT1;
+	}
+
+
+
+
+
+
+
+	public synchronized boolean isExtractedSagittalT2() {
+		notify();
+		return extractedSagittalT2;
+	}
+
+
+
+
+
+
+
+	public synchronized boolean isExtractedSagittalPD() {
+		notify();
+		return extractedSagittalPD;
+	}
+
+
+
+
+	
+	
+	public void progressStateChanged(ProgressChangeEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	
+
+
+
+
+
+	public class DownloadAndExtractImages extends Thread {
+		
+		public void run() {
+			downloadAndExtractImages();
+		}
+		
+		
+		public void downloadAndExtractImages() {
+	        progressBar = new ViewJProgressBar("PedsAtlas", "Downloading and extracting image files...", 0, 100, true);
+	        progressBar.setSeparateThread(true);
+            progressBar.setVisible(true);
+       
+	        
+			String pedsHomeString = pedsHome;
+			
+			long begTime = System.currentTimeMillis();
+			
+			ArrayList<String> urlStrings = new ArrayList<String>();
+			
+			
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_misc.tar.gz");
+			
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_t1_byte_00-08.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_t1_byte_08-17.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_t1_byte_17-33.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_t1_byte_33-60.tar.gz"); 
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_t2_byte_00-08.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_t2_byte_08-17.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_t2_byte_17-33.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_t2_byte_33-60.tar.gz"); 
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_pd_byte_00-08.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_pd_byte_08-17.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_pd_byte_17-33.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_axial_pd_byte_33-60.tar.gz");
+			
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_t1_byte_00-08.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_t1_byte_08-17.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_t1_byte_17-33.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_t1_byte_33-60.tar.gz"); 
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_t2_byte_00-08.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_t2_byte_08-17.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_t2_byte_17-33.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_t2_byte_33-60.tar.gz"); 
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_pd_byte_00-08.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_pd_byte_08-17.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_pd_byte_17-33.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_coronal_pd_byte_33-60.tar.gz");
+			
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_t1_byte_00-08.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_t1_byte_08-17.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_t1_byte_17-33.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_t1_byte_33-60.tar.gz"); 
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_t2_byte_00-08.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_t2_byte_08-17.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_t2_byte_17-33.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_t2_byte_33-60.tar.gz"); 
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_pd_byte_00-08.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_pd_byte_08-17.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_pd_byte_17-33.tar.gz");
+			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_sagittal_pd_byte_33-60.tar.gz");
+			
+			
+			
+			try {
+				
+				for(int i=0;i<urlStrings.size();i++) {
+					
+					
+					
+					
+					String urlString = urlStrings.get(i);
+					
+					File pedsHomeFile = new File(pedsHomeString);
+					if(!pedsHomeFile.exists()) {
+						pedsHomeFile.mkdir();
+					}
+					
+					URL url = new URL(urlString);
+					URLConnection urlc = url.openConnection();
+
+					GZIPInputStream gis = new GZIPInputStream(urlc.getInputStream());
+					TarInputStream tin = new TarInputStream(gis);
+					
+					//CBZip2InputStream bis = new CBZip2InputStream(urlc.getInputStream());
+					//TarInputStream tin = new TarInputStream(bis);
+
+					
+				    TarEntry tarEntry = tin.getNextEntry();
+
+				     while (tarEntry != null) {
+			                File destPath = new File(pedsHomeString + File.separatorChar + tarEntry.getName());
+			                Preferences.debug("Processing " + destPath.getAbsoluteFile() + "\n", Preferences.DEBUG_MINOR);
+
+			                if (!tarEntry.isDirectory()) {
+			                	FileOutputStream fout = new FileOutputStream(destPath);
+			                    tin.copyEntryContents(fout);
+			                    fout.close();
+			                } else {
+			                    destPath.mkdir();
+			                }
+
+			                tarEntry = tin.getNextEntry();
+			         }
+
+			         tin.close();
+					
+					if(i == 0) {
+						if (progressBar != null) {
+							progressBar.setMessage("Downloading and extracting Axial T1 images");
+						}
+						setExtractedMisc(true);
+					}else if(i == 4) {
+						if (progressBar != null) {
+							progressBar.setMessage("Downloading and extracting Axial T2 images");
+						}
+						setExtractedAxialT1(true);
+					}else if(i == 8) {
+						if (progressBar != null) {
+							progressBar.setMessage("Downloading and extracting Axial PD images");
+						}
+						setExtractedAxialT2(true);
+					}else if(i == 12) {
+						if (progressBar != null) {
+							progressBar.setMessage("Downloading and extracting Coronal T1 images");
+						}
+						setExtractedAxialPD(true);
+					}else if(i == 16) {
+						if (progressBar != null) {
+							progressBar.setMessage("Downloading and extracting Coronal T2 images");
+						}
+						setExtractedCoronalT1(true);
+					}else if(i == 20) {
+						if (progressBar != null) {
+							progressBar.setMessage("Downloading and extracting Coronal PD images");
+						}
+						setExtractedCoronalT2(true);
+					}else if(i == 24) {
+						if (progressBar != null) {
+							progressBar.setMessage("Downloading and extracting Sagittal T1 images");
+						}
+						setExtractedCoronalPD(true);
+					}else if(i == 28) {
+						if (progressBar != null) {
+							progressBar.setMessage("Downloading and extracting Sagittal T2 images");
+						}
+						setExtractedSagittalT1(true);
+					}else if(i == 32) {
+						if (progressBar != null) {
+							progressBar.setMessage("Downloading and extracting Sagittal PD images");
+						}
+						setExtractedSagittalT2(true);
+					}else if(i == 36) {
+						setExtractedSagittalPD(true);
+					}
+					
+					int value = (int)(((float)(i+1)/urlStrings.size())*100);
+					if (progressBar != null) {
+						progressBar.updateValue(value);
+						progressBar.update(progressBar.getGraphics());
+					}
+				}
+				
+				
+				
+			        
+				
+
+				
+			}catch(MalformedURLException e) {
+				e.printStackTrace();
+			}catch(IOException e) {
+				e.printStackTrace();
+			}finally {
+				
+		        final long endTime = System.currentTimeMillis();
+		        final long diffTime = endTime - begTime;
+		        final float seconds = ((float) diffTime) / 1000;
+		        if (progressBar != null) {
+                    progressBar.setVisible(false);
+                    progressBar.dispose();
+		        }
+		        System.out.println("Downloading and extracting took " + seconds + " seconds");
+
+			}
+			
+			
+		}
+
+
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	/**
@@ -2651,13 +3159,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedAxialT1()) {
+					//do nothing until axial t1 images are extracted
+				}
 				loadAxialT1();
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedAxialT2()) {
+					//do nothing until axial t2 images are extracted
+				}
 				loadAxialT2();
 				if(isInterrupted()) {
 					return;
+				}
+				while(!isExtractedAxialPD()) {
+					//do nothing until axial pd images are extracted
 				}
 				loadAxialPD();
 				
@@ -2665,13 +3182,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedAxialT2()) {
+					//do nothing until axial t2 images are extracted
+				}
 				loadAxialT2();
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedAxialT1()) {
+					//do nothing until axial t1 images are extracted
+				}
 				loadAxialT1();
 				if(isInterrupted()) {
 					return;
+				}
+				while(!isExtractedAxialPD()) {
+					//do nothing until axial pd images are extracted
 				}
 				loadAxialPD();
 				
@@ -2679,13 +3205,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedAxialPD()) {
+					//do nothing until axialpd images are extracted
+				}
 				loadAxialPD();
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedAxialT1()) {
+					//do nothing until axial t1 images are extracted
+				}
 				loadAxialT1();
 				if(isInterrupted()) {
 					return;
+				}
+				while(!isExtractedAxialT2()) {
+					//do nothing until axial t2 images are extracted
 				}
 				loadAxialT2();
 				
@@ -2984,13 +3519,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedCoronalT1()) {
+					//do nothing until axial t1 images are extracted
+				}
 				loadCoronalT1();
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedCoronalT2()) {
+					//do nothing until axial t2 images are extracted
+				}
 				loadCoronalT2();
 				if(isInterrupted()) {
 					return;
+				}
+				while(!isExtractedCoronalPD()) {
+					//do nothing until axial pd images are extracted
 				}
 				loadCoronalPD();
 				
@@ -2998,13 +3542,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedCoronalT2()) {
+					//do nothing until axial t2 images are extracted
+				}
 				loadCoronalT2();
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedCoronalT1()) {
+					//do nothing until axial t1 images are extracted
+				}
 				loadCoronalT1();
 				if(isInterrupted()) {
 					return;
+				}
+				while(!isExtractedCoronalPD()) {
+					//do nothing until axial pd images are extracted
 				}
 				loadCoronalPD();
 				
@@ -3012,13 +3565,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedCoronalPD()) {
+					//do nothing until axial t1 images are extracted
+				}
 				loadCoronalPD();
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedCoronalT1()) {
+					//do nothing until axial t1 images are extracted
+				}
 				loadCoronalT1();
 				if(isInterrupted()) {
 					return;
+				}
+				while(!isExtractedCoronalT2()) {
+					//do nothing until axial t2 images are extracted
 				}
 				loadCoronalT2();
 				
@@ -3322,13 +3884,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedSagittalT1()) {
+					//do nothing until sagittal t1 images are extracted
+				}
 				loadSagittalT1();
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedSagittalT2()) {
+					//do nothing until sagittal t2 images are extracted
+				}
 				loadSagittalT2();
 				if(isInterrupted()) {
 					return;
+				}
+				while(!isExtractedSagittalPD()) {
+					//do nothing until sagittal pd images are extracted
 				}
 				loadSagittalPD();
 				
@@ -3336,13 +3907,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedSagittalT2()) {
+					//do nothing until sagittal t2 images are extracted
+				}
 				loadSagittalT2();
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedSagittalT1()) {
+					//do nothing until sagittal t1 images are extracted
+				}
 				loadSagittalT1();
 				if(isInterrupted()) {
 					return;
+				}
+				while(!isExtractedSagittalPD()) {
+					//do nothing until sagittal pd images are extracted
 				}
 				loadSagittalPD();
 				
@@ -3350,13 +3930,22 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedSagittalPD()) {
+					//do nothing until sagittal pd images are extracted
+				}
 				loadSagittalPD();
 				if(isInterrupted()) {
 					return;
 				}
+				while(!isExtractedSagittalT1()) {
+					//do nothing until sagittal t1 images are extracted
+				}
 				loadSagittalT1();
 				if(isInterrupted()) {
 					return;
+				}
+				while(!isExtractedSagittalT2()) {
+					//do nothing until sagittal t2 images are extracted
 				}
 				loadSagittalT2();
 				
