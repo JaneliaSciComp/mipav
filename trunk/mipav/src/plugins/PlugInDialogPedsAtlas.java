@@ -2765,7 +2765,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
 
 
-
+	/**
+	 * This inner class downloads and extracts atlas images to user_home/mipav/pedsAtas folder
+	 */
 	public class DownloadAndExtractImages extends Thread {
 		
 		public void run() {
@@ -2783,8 +2785,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			
 			long begTime = System.currentTimeMillis();
 			
+			//the order below is very important.
 			ArrayList<String> urlStrings = new ArrayList<String>();
-			
 			
 			urlStrings.add("http://mipav.cit.nih.gov/distribution/pedsAtlas/pedsAtlas_misc.tar.gz");
 			
@@ -2848,11 +2850,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
 					GZIPInputStream gis = new GZIPInputStream(urlc.getInputStream());
 					TarInputStream tin = new TarInputStream(gis);
-					
-					//CBZip2InputStream bis = new CBZip2InputStream(urlc.getInputStream());
-					//TarInputStream tin = new TarInputStream(bis);
 
-					
 				    TarEntry tarEntry = tin.getNextEntry();
 
 				     while (tarEntry != null) {
@@ -2922,16 +2920,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					}
 					
 					int value = (int)(((float)(i+1)/urlStrings.size())*100);
-					if (progressBar != null) {
+					if (progressBar != null && mainPanel != null) {
 						progressBar.updateValue(value);
-						progressBar.update(progressBar.getGraphics());
+						//progressBar.update(progressBar.getGraphics());
+					}else if(progressBar != null) {
+						progressBar.updateValueImmed(value);
 					}
 				}
-				
-				
-				
-			        
-				
 
 				
 			}catch(MalformedURLException e) {
