@@ -1,11 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-
-import javax.help.plaf.basic.BasicFavoritesNavigatorUI.AddAction;
-
-import com.sun.org.apache.xpath.internal.operations.Gt;
-import com.sun.org.apache.xpath.internal.operations.Lt;
-
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.util.DoubleDouble;
 
@@ -7292,7 +7286,6 @@ loop:
         DoubleDouble delta2;
         DoubleDouble delta3;
         DoubleDouble epsinf;
-        DoubleDouble esptab;
 
         // error = abs(e1-e0) + abs(e2-e1) + abs(new-e2)
         DoubleDouble error;
@@ -9743,9 +9736,6 @@ loop:
 
         // half-length of integration interval
         DoubleDouble hlgth;
-
-        // abscissa
-        DoubleDouble asbc;
 
         // function value
         DoubleDouble fval;
