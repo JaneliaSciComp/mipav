@@ -7380,7 +7380,6 @@ loop:
         double delta2;
         double delta3;
         double epsinf;
-        double esptab;
 
         // error = abs(e1-e0) + abs(e2-e1) + abs(new-e2)
         double error;
@@ -9598,9 +9597,6 @@ loop:
 
         // half-length of integration interval
         double hlgth;
-
-        // abscissa
-        double asbc;
 
         // function value
         double fval;
