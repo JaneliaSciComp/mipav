@@ -1044,7 +1044,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     protected void computeMeanEdgeLength() {
         m_fMeanEdgeLength = 0.0f;
 
-        final Iterator kEIter = m_kEMap.entrySet().iterator();
+        final Iterator<Map.Entry<Edge, Integer>> kEIter = m_kEMap.entrySet().iterator();
         Map.Entry<Edge,Integer> kEntry = null;
         final Vector3f kEdge = new Vector3f();
 
@@ -1675,7 +1675,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         for (iStep = 1; iStep <= iSubdivisions; iStep++) {
 
             // generate midpoints of edges
-            final Iterator kEIter = m_kEMap.entrySet().iterator();
+            final Iterator<Map.Entry<Edge, Integer>> kEIter = m_kEMap.entrySet().iterator();
             Map.Entry<Edge,Integer> kEntry = null;
 
             while (kEIter.hasNext()) {
