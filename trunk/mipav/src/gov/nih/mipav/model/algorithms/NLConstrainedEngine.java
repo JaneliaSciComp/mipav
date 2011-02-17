@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import gov.nih.mipav.model.algorithms.AlgorithmSM2.FitAll;
 import gov.nih.mipav.view.*;
 
 
