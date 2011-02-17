@@ -31,6 +31,7 @@
 										<xs:enumeration value="ARGB Float"/>
 										<xs:enumeration value="Complex"/>
 										<xs:enumeration value="Complex Double"/>
+										<xs:enumeration value="Unsigned Integer"/>
 									</xs:restriction>
 								</xs:simpleType>
 							</xs:element>
