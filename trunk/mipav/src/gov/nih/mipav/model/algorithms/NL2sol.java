@@ -187,7 +187,6 @@ private boolean testMode = false;
 		!    pages 465-486,
 		!    Academic Press, New York, 1970.
 		*/
-		int i;
 		irc = new String[prob_max+1];
 		is = new int[7][prob_max+1];
 		iv = new int[101];
@@ -197,6 +196,7 @@ private boolean testMode = false;
 		int mxfcsv;
 		int mxitsv;
 		name = new String[prob_max+1];
+		@SuppressWarnings("unused")
 		int pu;
 		rs = new double[6][prob_max+1];
 		boolean rstart;
@@ -1058,7 +1058,6 @@ private boolean testMode = false;
 	*/
 
 	  final int p_max = 40;
-	  final int prob_max = 60;
 
 	  int i;
 	  int irun;
@@ -1068,7 +1067,6 @@ private boolean testMode = false;
 	  String rc[] = new String[11];
 	  final int reldx = 17;
 	  boolean rstrt;
-	  double t;
 	  uiparm = new int[2];
 	  urparm = new double[2];
 	  String version;
@@ -1232,7 +1230,6 @@ private boolean testMode = false;
 	*/
 
 	  int i;
-	  double pp1inv;
 	//
 	//  Rosenbrock.
 	//
@@ -2213,7 +2210,6 @@ private boolean testMode = false;
 		  final int covreq = 15;
 		  final int d = 27;
 		  int d1;
-		  final int dinit = 38;
 		  int dk;
 		  final int dltfdj = 36;
 		  final int dtype = 16;
@@ -2280,7 +2276,7 @@ private boolean testMode = false;
 			  } // if (0 < iv[dtype]
 		  } // else
 
-		  loop1: while (true) {
+        while (true) {
 		  if (do10) {
           do10 = false;
 		  nf = iv[nfcall];
@@ -5367,7 +5363,6 @@ private boolean testMode = false;
 	  final double kappa = 2.0;
 	  double lk = 0.0;
 	  int lk0;
-	  double lsvmin;
 	  final int nreduc = 6;
 	  double oldphi;
 	  double phi = 0.0;
@@ -6779,7 +6774,6 @@ private boolean testMode = false;
 	  final int epslon = 19;
 	  int i;
 	  int i1;
-	  int ip1;
 	  int j1;
 	  int k;
 	  int kalim;
@@ -6809,7 +6803,6 @@ private boolean testMode = false;
 	  int uk0;
 	  double wl = 0.0;
 	  int m;
-	  int lstart;
 	  double arr[];
 	  double arr2[];
 	  double arr3[];
@@ -7122,7 +7115,6 @@ private boolean testMode = false;
 	//
 	//  Now use Givens transformations to zero elements of temporary row.
 	//
-	         ip1 = i + 1;
 	         do180 = true;
      } // if (do170)
 	         for (i1 = i + 1; i1 <= p; i1++) {
@@ -7598,9 +7590,7 @@ private boolean testMode = false;
   int j0;
   int ji;
   int jj;
-  int jjj;
   double result;
-  int pplus1;
   double psj;
   double sminus;
   double splus;
@@ -7860,7 +7850,6 @@ private boolean testMode = false;
 	  int smh;
 	  int sstep;
 	  int step1 = 0;
-	  boolean stopx;
 	  int stpmod = 0;
 	  final int stppar = 5;
 	  double sttsst;
@@ -9476,7 +9465,6 @@ private boolean testMode = false;
 	!    abs(IERR) - 1 transformations will be used.
 	*/
 	  
-	  int i;
 	  int k;
 	  int l;
 	  int nl1;
@@ -9879,7 +9867,6 @@ private boolean testMode = false;
 	  
 	  int i;
 	  int k;
-	  int km1;
 	  double zk;
 	  int m;
 	  double arr[];
@@ -10047,7 +10034,6 @@ private boolean testMode = false;
 	  int i;
 	  int j;
 	  int k;
-	  double xi;
 	  double arr[];
 	  int m;
 	//
