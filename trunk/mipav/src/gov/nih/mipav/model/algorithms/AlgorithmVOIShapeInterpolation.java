@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import java.awt.Dimension;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -11,12 +10,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.util.ThreadUtil;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewVOIVector;
 /**
  * 
@@ -247,7 +241,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
             VOI tempVOI = (VOI)(VOIs.VOIAt(0).clone());
         	tempVOI.setUID(tempVOI.hashCode());
             Vector contours = tempVOI.getCurves();
-            finalContours[0] = (VOIContour)(VOIContour)contours.elementAt(0);
+            finalContours[0] = (VOIContour)contours.elementAt(0);
             
             boolean isLineVertical = false;
             float diffX = Math.abs(geomCenter1.X - geomCenter2.X);
