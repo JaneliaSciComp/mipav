@@ -12,8 +12,6 @@ public class DQED {
 	
 	private int idope[] = new int[6];
 	
-	private final double one = 1.0;
-	
 	private boolean outputMes = true;
 	
 	// epsilon = D1MACH(4)
@@ -289,7 +287,6 @@ public class DQED {
 	// dqed variables
 	private int iflag = 0;
 	private int iiwaav;
-	private int level;
 	private int milast;
 	private int mind;
 	private int mindb;
@@ -304,13 +301,11 @@ public class DQED {
 	private int nall;
 	private boolean noquad;
 	private int npmax;
-	private double rdum;
 	
 	private int mode;
 	private double sigma[] = new double[9];
 	
 	private boolean testMode = true;
-	private int testCase;
 	private final int funcProb1Case = 101;
 	private final int fjaprxCase = 102;
 	private final int dqedhdCase = 103;
@@ -331,6 +326,7 @@ public class DQED {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private void dqedProb1() {
 	/*****************************************************************************80
 	!
@@ -375,7 +371,6 @@ public class DQED {
 	  int i;
 	  int ind[] = new int[nvars+3];
 	  int iopt[] = new int[29];
-	  int ios;
 	  int iwa[] = new int[liwa+1];
 	  double ropt[] = new double[2];
 	  sigma = new double[nvars+1];
@@ -1133,6 +1128,7 @@ public class DQED {
 	  return;
     } // jacProb1
 	
+	@SuppressWarnings("unused")
 	private void dqedProb2() {
 
 	/*****************************************************************************80
@@ -1394,6 +1390,7 @@ public class DQED {
 	  return;
 	} // dqedhd2
 	
+	@SuppressWarnings("unused")
 	private void dqedProb3() {
 
 	/*****************************************************************************80
@@ -1612,6 +1609,7 @@ public class DQED {
 	  return;
 	} // dqedProb3
 	
+	@SuppressWarnings("unused")
 	private void dqedProb4() {
 
 	/*****************************************************************************80
@@ -1971,7 +1969,6 @@ public class DQED {
 
 	  int mrows[] = new int[]{5};
 	  final int ncols = 3;
-	  final int ni = 1;
 	  final int nx = 0;
 
 	  final int mdw = mrows[0];
@@ -2086,142 +2083,6 @@ public class DQED {
 
 	  return;
 	} // dqedProb5()
-	
-	private double damax(int n, double x[], int incx) {
-		/*****************************************************************************80
-		!
-		!! DAMAX returns the maximum absolute value of the entries in a vector.
-		!
-		!  Modified:
-		!
-		!    08 April 1999
-		!
-		!  Parameters:
-		!
-		!    Input, integer N, the number of entries in the vector.
-		!
-		!    Input, double X(*), the vector to be examined.
-		!
-		!    Input, integer INCX, the increment between successive entries of X.
-		!
-		!    Output, double DAMAX, the maximum absolute value of an 
-		!    element of X.
-		*/
-
-		  int i;
-		  int ix;
-		  double result = 0.0;
-
-		  if ( n <= 0 ) {
-		    result = 0.0;
-		  }
-		  else if ( n == 1 ) {
-		    result = Math.abs ( x[1] );
-		  }
-		  else if ( incx == 1 ) {
-		    result = Math.abs ( x[1] );
-
-		    for (i = 2; i <= n; i++) {
-		      if ( Math.abs ( x[i] ) > result ) {
-		        result = Math.abs ( x[i] );
-		      }
-		    }
-		  }
-		  else {
-		    if ( incx >= 0 ) {
-		      ix = 1;
-		    }
-		    else {
-		      ix = ( - n + 1 ) * incx + 1;
-		    }
-
-		    result = Math.abs ( x[ix] );
-		    ix = ix + incx;
-
-		    for (i = 2; i <= n; i++) {
-		      if ( Math.abs ( x[ix] ) > result ) {
-		        result = Math.abs ( x[ix] );
-		      }
-		      ix = ix + incx;
-		    }
-
-		  }
-
-		  return result;
-	} // damax
-	
-	private double damsum(int n, double x[], int incx) {
-		/*****************************************************************************80
-		!
-		!! DASUM sums the absolute values of the entries of a vector.
-		!
-		!  Modified:
-		!
-		!    08 April 1999
-		!
-		!  Author:
-		!
-		!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh
-		!
-		!  Reference:
-		!
-		!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh,
-		!    Basic Linear Algebra Subprograms for Fortran Usage,
-		!    Algorithm 539,
-		!    ACM Transactions on Mathematical Software,
-		!    Volume 5, Number 3, September 1979, pages 308-323.
-		!
-		!  Parameters:
-		!
-		!    Input, integer N, the number of entries in the vector.
-		!
-		!    Input, double X(*), the vector to be examined.
-		!
-		!    Input, integer INCX, the increment between successive entries of X.
-		!
-		!    Output, double DASUM, the sum of the absolute values of 
-		!    the vector.
-		*/
-
-		  int i;
-		  int ix;
-		  int m;
-		  double result = 0.0;
-
-		  if ( n <= 0 ) {
-			  
-		  }
-		  else if ( incx == 1 ) {
-
-		    m =  ( n  % 6 );
-
-		    for (i = 1; i <=  m; i++) {
-		      result = result + Math.abs ( x[i] );
-		    }
-
-		    for (i = m+1; i <= n; i += 6) {
-		      result = result + Math.abs ( x[i]   ) + Math.abs ( x[i+1] ) + Math.abs ( x[i+2] )
-		                    + Math.abs ( x[i+3] ) + Math.abs ( x[i+4] ) + Math.abs ( x[i+5] );
-		    }
-		  }
-		  else {
-
-		    if ( incx >= 0 ) {
-		      ix = 1;
-		    }
-		    else {
-		      ix = ( - n + 1 ) * incx + 1;
-		    }
-
-		    for (i = 1; i <= n; i++) {
-		      result = result + Math.abs ( x[ix] );
-		      ix = ix + incx;
-		    }
-
-		  }
-
-		  return result;
-	} // dasum
 	
 	private void daxpy(int n, double sa, double x[], int incx, double y[], int incy) {
 		/*****************************************************************************80
@@ -5984,80 +5845,6 @@ public class DQED {
 
     } // dbolsm
 	
-	private void dcopy ( int n, double x[], int incx, double y[], int incy ) {
-
-	/*****************************************************************************80
-	!
-	!! DCOPY copies one double precision vector into another.
-	!
-	!  Modified:
-	!
-	!    08 April 1999
-	!
-	!  Author:
-	!
-	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh
-	!
-	!  Reference:
-	!
-	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh,
-	!    Basic Linear Algebra Subprograms for Fortran Usage,
-	!    Algorithm 539,
-	!    ACM Transactions on Mathematical Software,
-	!    Volume 5, Number 3, September 1979, pages 308-323.
-	!
-	!  Parameters:
-	!
-	!    Input, integer N, the number of entries in the vector.
-	!
-	!    Input, double X(*), the vector to be copied into Y.
-	!
-	!    Input, integer INCX, the increment between successive entries of X.
-	!
-	!    Output, real double Y(*), the copy of X.
-	!
-	!    Input, integer INCY, the increment between successive elements of Y.
-	*/
-
-	  int i;
-	  int ix;
-	  int iy;
-
-	  if ( n <= 0 ) {
-		  
-	  }
-
-	  else if ( incx == 1 && incy == 1 ) {
-        for (i = 1; i <= n; i++) {
-	        y[i] = x[i];
-        }
-	  }
-	    else {
-
-	    if ( incx >= 0 ) {
-	      ix = 1;
-	    }
-	    else {
-	      ix = ( - n + 1 ) * incx + 1;
-	    }
-
-	    if ( incy >= 0 ) {
-	      iy = 1;
-	    }
-	    else {
-	      iy = ( - n + 1 ) * incy + 1;
-	    }
-
-	    for (i = 1; i <= n; i++) {
-	      y[iy] = x[ix];
-	      ix = ix + incx;
-	      iy = iy + incy;
-	    } // for (i = 1; i <= n; i++)
-
-	    } // else 
-
-	  return;
-	} // dcopy
 	
 	private double ddot ( int n, double x[], int incx, double y[], int incy ) {
 
@@ -6815,6 +6602,7 @@ public class DQED {
 	  return;
    } // difcen
 	
+	@SuppressWarnings("unused")
 	private void diffor (double fj[][], int func, double fx[], int iopt[], int ldfj,
 			             int mcon, int mequa, int nvars, double ropt[], double x[] ) {
 
@@ -8524,7 +8312,6 @@ public class DQED {
 			  //external :: dqedev
 			  //double fjac(ldfjac,*)
 			  int i;
-			  int idum;
 			  
 			  int iwaav;
 			  int j;
@@ -8614,13 +8401,10 @@ public class DQED {
 			! X          DUMMY-ARG     REAL      ADJ-ARY Values of the variables
 			! XMESS      /S$A$V$E/ SAV CHAR*128          Hold error message
 			*/
-			  idum = 0;
-			  rdum = 0.0;
 
 			  if ( iflag == 0 ) {
 
 			      noquad = false;
-			      level = 1;
 
 			      if ( mequa <= 0 ) {
 			        System.err.println("DQED - Fatal error!");
@@ -12413,105 +12197,6 @@ C     FROM THE ERROR PROCESSOR CALL.
 
 	  return;
 	} // dscal
-	
-	private void dswap (int n, double x[], int incx, double y[], int incy ) {
-
-	/*****************************************************************************80
-	!
-	!! DSWAP interchanges two vectors.
-	!
-	!  Modified:
-	!
-	!    08 April 1999
-	!
-	!  Author:
-	!
-	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh
-	!
-	!  Reference:
-	!
-	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh,
-	!    Basic Linear Algebra Subprograms for Fortran Usage,
-	!    Algorithm 539,
-	!    ACM Transactions on Mathematical Software,
-	!    Volume 5, Number 3, September 1979, pages 308-323.
-	!
-	!  Parameters:
-	!
-	!    Input, integer N, the number of entries in the vectors.
-	!
-	!    Input/output, double X(*), one of the vectors to swap.
-	!
-	!    Input, integer INCX, the increment between successive entries of X.
-	!
-	!    Input/output, double Y(*), one of the vectors to swap.
-	!
-	!    Input, integer INCY, the increment between successive elements of Y.
-	*/
-
-	  int i;
-	  int ix;
-	  int iy;
-	  int m;
-	  double stemp;
-
-	  if ( n <= 0 ) {
-		  
-	  }
-	  else if ( (incx == 1) && (incy == 1) ) {
-
-	    m = ( n % 3 );
-
-	    for (i = 1; i <= m; i++) {
-	      stemp = x[i];
-	      x[i] = y[i];
-	      y[i] = stemp;
-	    } // for (i = 1; i <= m; i++)
-
-	    for (i = m+1; i <= n; i += 3) {
-
-	      stemp = x[i];
-	      x[i] = y[i];
-	      y[i] = stemp;
-
-	      stemp = x[i + 1];
-	      x[i + 1] = y[i + 1];
-	      y[i + 1] = stemp;
-
-	      stemp = x[i + 2];
-	      x[i + 2] = y[i + 2];
-	      y[i + 2] = stemp;
-
-	    } // for (i = m+1; i <= n; i += 3)
-	  } // else if ( (incx == 1) && (incy == 1) )
-	  else {
-
-	    if ( incx >= 0 ) {
-	      ix = 1;
-	    }
-	    else {
-	      ix = ( - n + 1 ) * incx + 1;
-	    }
-
-	    if ( incy >= 0 ) {
-	      iy = 1;
-	    }
-	    else {
-	      iy = ( - n + 1 ) * incy + 1;
-	    }
-
-	    for (i = 1; i <= n; i++) {
-	      stemp = x[ix];
-	      x[ix] = y[iy];
-	      y[iy] = stemp;
-	      ix = ix + incx;
-	      iy = iy + incy;
-	    } // for (i = 1; i <= n; i++)
-
-	  } // else
-
-	  return;
-	} // dswap
 	
 	private void dvout (int n, double dx[], String ifmt, int idigit ) {
 
