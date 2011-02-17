@@ -65,8 +65,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         USHORT(4, "Unsigned Short", 0, 65535),
         /** Data buffer is of type signed integer (32 bits per voxel). */
         INTEGER(5, "Integer", Integer.MIN_VALUE, Integer.MAX_VALUE),
-        /** Data buffer is of type unsigned integer (32 bits per voxel). */
-        UINTEGER(14, "Unsigned Integer", 0, 4294967295L),
         /** Data buffer is of type signed long integer (64 bits per voxel). */
         LONG(6, "Long", Long.MIN_VALUE, Long.MAX_VALUE),
         /** Data buffer is of type float (32 bits per voxel). */
@@ -91,7 +89,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
         /** Data buffer is of type complex type floats (2 x 64 bits per voxel). */
         COMPLEX(12, "Complex", -Float.MAX_VALUE, Float.MAX_VALUE),
         /** Data buffer is of type complex type of doubles (2 x 128 bits per voxel). */
-        DCOMPLEX(13, "Complex Double", -Double.MAX_VALUE, Double.MAX_VALUE);
+        DCOMPLEX(13, "Complex Double", -Double.MAX_VALUE, Double.MAX_VALUE),
+        /** Data buffer is of type unsigned integer (32 bits per voxel). */
+        UINTEGER(14, "Unsigned Integer", 0, 4294967295L);
         
         /** These variables preserve the legacy ordering of these enums. */
         private int legacyNum;
