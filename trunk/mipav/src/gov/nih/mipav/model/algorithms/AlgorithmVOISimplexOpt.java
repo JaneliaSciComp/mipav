@@ -3,7 +3,6 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
 
