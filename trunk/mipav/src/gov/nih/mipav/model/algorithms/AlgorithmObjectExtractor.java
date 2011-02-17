@@ -853,7 +853,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         Vector<Vector3f> kPts = new Vector<Vector3f>();
         VOIContour contour;
         Vector3f tmp3Pt = new Vector3f();
-        Vector curves = voi.getCurves();
+        Vector<VOIBase> curves = voi.getCurves();
 
         for (int i = 0; i < curves.size(); i++) {
             contour = (VOIContour) (curves.elementAt(i));
