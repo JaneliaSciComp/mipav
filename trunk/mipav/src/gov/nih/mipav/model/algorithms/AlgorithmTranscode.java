@@ -220,7 +220,7 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
         // Put the Processor into configured state.
         p.configure();
 
-        if (!waitForState(p, p.Configured)) {
+        if (!waitForState(p, Processor.Configured)) {
             MipavUtil.displayError("Failed to configure the processor.");
 
             return;
@@ -307,7 +307,7 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
 
         p.realize();
 
-        if (!waitForState(p, p.Realized)) {
+        if (!waitForState(p, Processor.Realized)) {
             MipavUtil.displayError("Failed to realize the processor.");
 
             return;
