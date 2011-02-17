@@ -419,7 +419,7 @@ public class FileIO {
             // use the selectedFileName as the reference slice for the file info tag tables
             imageFile = new FileDicom(selectedFileName, fileDir);
             imageFile.setQuiet(quiet); // if we want quiet, we tell the reader, too.
-            //final boolean headerRead = imageFile.readHeader(true); // can we read the header?
+            final boolean headerRead = imageFile.readHeader(true); // can we read the header?
             final String modality = getModality(imageFile);
             if (modality.equals("SR")) {
                 // TODO:Structured report handling would be implemented here (since the rest of this method reads the
