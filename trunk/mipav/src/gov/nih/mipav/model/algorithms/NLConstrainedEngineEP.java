@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import gov.nih.mipav.model.algorithms.AlgorithmSM2.FitAll;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.util.DoubleDouble;
 
@@ -663,7 +662,6 @@ public abstract class NLConstrainedEngineEP {
     	xSeries = new DoubleDouble[99];
     	ySeries = new DoubleDouble[nPts];
     	gues = new DoubleDouble[param];
-    	DoubleDouble temp;
     	DoubleDouble exp;
     	for (i = 1; i <= 99; i++) {
     		xSeries[i-1] = (DoubleDouble.valueOf(0.01)).multiply(DoubleDouble.valueOf(i));
