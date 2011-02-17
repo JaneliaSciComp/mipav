@@ -1270,7 +1270,6 @@ public class Bessel {
         double cc;
         double fnu;
         int k1;
-        final int k2;
         double dig;
         double alaz;
         double bb;
@@ -4458,10 +4457,8 @@ public class Bessel {
         final int kmax = 30;
         final double ctwor = 2.0;
         final double r1 = 2.0;
-        final double dpi = Math.PI;
         final double rthpi = 1.25331413731550025;
         final double spi = 1.90985931710274403;
-        final double hpi = Math.PI / 2.0;
         final double fpi = 1.89769999331517738;
         final double tth = 2.0 / 3.0;
         final double[] cc = new double[] {5.77215664901532861E-01, -4.20026350340952355E-02, -4.21977345555443367E-02,
@@ -6220,8 +6217,6 @@ public class Bessel {
         double ertol;
         double rm;
         double atol;
-        final double fpi = Math.PI / 4.0;
-        final double hpi = Math.PI / 2.0;
         final double rpi = 1.0 / Math.PI;
         final double spi = Math.PI / 6.0;
         double con1r;
@@ -7314,7 +7309,6 @@ public class Bessel {
         double rm;
         double r2;
         double atol;
-        final double hpi = Math.PI / 2.0;
         int nL;
         int il;
         final double[] t = new double[20];
@@ -8749,7 +8743,6 @@ public class Bessel {
         double rm;
         double r2;
         double atol;
-        final double hpi = Math.PI / 2.0;
         int nL;
         int il;
         final double[] t = new double[20];
@@ -10038,7 +10031,6 @@ public class Bessel {
         final double ex1 = 3.33333333333333333E-01;
         final double ex2 = 6.66666666666666667E-01;
         final double hpi = Math.PI / 2.0;
-        final double gpi = Math.PI;
         final double thpi = 1.5 * Math.PI;
         double rfnu;
         double test;
