@@ -71,9 +71,11 @@ public class Gamma {
     private double x;
 
     /** Real part of input argument */
+    @SuppressWarnings("unused")
     private double realX;
 
     /** Imaginary part of input argument */
+    @SuppressWarnings("unused")
     private double imagX;
 
     /**
@@ -85,9 +87,11 @@ public class Gamma {
     private double result[];
 
     /** Real part of outputted result */
+    @SuppressWarnings("unused")
     private double realResult[];
 
     /** Imaginary part of outputted result */
+    @SuppressWarnings("unused")
     private double imagResult[];
 
     /** GAMMA, LGAMMA, CGAMMA, or INCOG */
