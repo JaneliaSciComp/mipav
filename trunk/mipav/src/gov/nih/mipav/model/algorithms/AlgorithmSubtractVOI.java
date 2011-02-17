@@ -37,12 +37,6 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
     // the new image type. ( ie. byte to short).
 
-    /** DOCUMENT ME! */
-    private static final String[] averageString = { "MEAN", "MEDIAN" };
-
-    /** DOCUMENT ME! */
-    private static final String[] clipString = { "CLIP", "PROMOTE" };
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -222,7 +216,6 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         int offset;
         int length; // total number of data-elements (pixels) in image
         double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
-        double bestMin, bestMax;
 
         try {
             length = srcImage.getSliceSize();
@@ -581,7 +574,6 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         int offset;
         int length; // total number of data-elements (pixels) in image
         double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
-        double bestMin, bestMax;
 
         try {
             length = srcImage.getSliceSize();
@@ -912,7 +904,6 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
      * DOCUMENT ME!
      */
     private void getAverage() {
-        int slice;
         ViewVOIVector VOIs;
         int nVOI;
         int i, j, k, m;
@@ -921,7 +912,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         int offset;
         int mod;
         int nVOIContour = 0;
-        Vector contours;
+        Vector<VOIBase> contours;
         int nContours;
         int totalContours = 0;
         int activeContours = 0;
@@ -935,8 +926,6 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         float[] contourBufferB;
         int p;
         double sum;
-
-        slice = srcImage.getParentFrame().getComponentImage().getSlice();
 
         for (i = 0; i < srcImage.getNDims(); i++) {
             totalLength *= srcImage.getExtents()[i];
