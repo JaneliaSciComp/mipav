@@ -68,7 +68,7 @@ public class FileImageXML extends FileXML {
     // ------------------------------------------------------------------------------------------------
 
     /** A listing of all the additional <code>PSets</code> to be written into the saved file. */
-    private Enumeration additionalSets = null;
+    private Enumeration<XMLPSet> additionalSets = null;
 
     /** DOCUMENT ME! */
     private Vector<VOI> annotationVector = new Vector<VOI>();
@@ -315,7 +315,7 @@ public class FileImageXML extends FileXML {
      * 
      * @return the additional parameter sets that will be written out to the header
      */
-    public Enumeration getAdditionalSets() {
+    public Enumeration<XMLPSet> getAdditionalSets() {
         return additionalSets;
     }
 
@@ -1259,7 +1259,7 @@ public class FileImageXML extends FileXML {
      * 
      * @param moreSets additional parameter sets to be written
      */
-    public void setAdditionalSets(Enumeration moreSets) {
+    public void setAdditionalSets(Enumeration<XMLPSet> moreSets) {
         additionalSets = moreSets;
     }
 
@@ -1414,20 +1414,20 @@ public class FileImageXML extends FileXML {
             
             
             //add psets and parameters
-            HashMap pSetsHashMap = options.getPSetsHashMap();
+            HashMap<String,XMLPSet> pSetsHashMap = options.getPSetsHashMap();
             if(pSetsHashMap != null) {
-            	Set psetKeys = pSetsHashMap.keySet();
-            	Iterator psetIter = psetKeys.iterator();
+            	Set<String> psetKeys = pSetsHashMap.keySet();
+            	Iterator<String> psetIter = psetKeys.iterator();
             	while(psetIter.hasNext()) {
-            		String psetDesc = (String)psetIter.next();
-            		XMLPSet pset = (XMLPSet)pSetsHashMap.get(psetDesc);
+            		String psetDesc = psetIter.next();
+            		XMLPSet pset = pSetsHashMap.get(psetDesc);
             		((FileInfoImageXML) fileInfo).addPset(psetDesc, pset);
-            		Hashtable parameterTable = pset.getTable();
-            		Set paramKeys = parameterTable.keySet();
-            		Iterator paramIter = paramKeys.iterator();
+            		Hashtable<String, XMLParameter> parameterTable = pset.getTable();
+            		Set<String> paramKeys = parameterTable.keySet();
+            		Iterator<String> paramIter = paramKeys.iterator();
             		while(paramIter.hasNext()) {
-            			String paramName = (String)paramIter.next();
-            			XMLParameter param = (XMLParameter)parameterTable.get(paramName);
+            			String paramName = paramIter.next();
+            			XMLParameter param = parameterTable.get(paramName);
             			String value =  param.getValue();
             			String description = param.getDescription();
             			String type = param.getValueType();
@@ -1643,8 +1643,8 @@ public class FileImageXML extends FileXML {
         // (nDims == 4)))) {
 
         // BEN: change this here to save all associated matrices...
-        LinkedHashMap matrixMap = img.getMatrixHolder().getMatrixMap();
-        Iterator iter = matrixMap.keySet().iterator();
+        LinkedHashMap<String,TransMatrix> matrixMap = img.getMatrixHolder().getMatrixMap();
+        Iterator<String> iter = matrixMap.keySet().iterator();
 
         // boolean to see if talairach transform info should be used
         @SuppressWarnings("unused")
@@ -1654,9 +1654,9 @@ public class FileImageXML extends FileXML {
 
         boolean useMatrices = true;
         while (useMatrices && iter.hasNext()) {
-            currentKey = (String) iter.next();
+            currentKey = iter.next();
 
-            TransMatrix tMatrix = (TransMatrix) matrixMap.get(currentKey);
+            TransMatrix tMatrix = matrixMap.get(currentKey);
             if (tMatrix != null && tMatrix.getDim() >= img.getNDims()) {
                 openTag(datasetAttributesStr[13], true);
 
@@ -2114,21 +2114,21 @@ public class FileImageXML extends FileXML {
         if ( !simple) {
             writeSet(bw, ((FileInfoImageXML) fileInfo).getPSetHashtable().elements());
 
-            Enumeration voiEnum = ((FileInfoImageXML) fileInfo).getVOIKeys();
+            Enumeration<String> voiEnum = ((FileInfoImageXML) fileInfo).getVOIKeys();
 
             while (voiEnum.hasMoreElements()) {
                 openTag(imageStr[5], true);
-                temp = (String) voiEnum.nextElement();
+                temp = voiEnum.nextElement();
                 closedTag(voiStr[0], temp);
                 closedTag(voiStr[1], Boolean.toString( ((FileInfoImageXML) fileInfo).getVOI(temp).getDisplay()));
                 openTag(imageStr[5], false);
             }
 
-            Enumeration surfaceEnum = ((FileInfoImageXML) fileInfo).getSurfaceKeys();
+            Enumeration<String> surfaceEnum = ((FileInfoImageXML) fileInfo).getSurfaceKeys();
 
             while (surfaceEnum.hasMoreElements()) {
                 openTag(imageStr[6], true);
-                temp = (String) surfaceEnum.nextElement();
+                temp = surfaceEnum.nextElement();
                 closedTag(surfaceStr[0], temp);
                 closedTag(surfaceStr[1], Boolean.toString( ((FileInfoImageXML) fileInfo).getSurface(temp).getDisplay()));
                 closedTag(surfaceStr[2], Float.toString( ((FileInfoImageXML) fileInfo).getSurface(temp).getOpacity()));
@@ -2776,13 +2776,13 @@ public class FileImageXML extends FileXML {
      * @param bw The writer to which we will write the data.
      * @param setEnum An enumerated list of set data.
      */
-    private void writeSet(BufferedWriter bw, Enumeration setEnum) {
+    private void writeSet(BufferedWriter bw, Enumeration<XMLPSet> setEnum) {
 
         boolean openTagFalseFlag = false; // Flag to specify whether end tag is needed.
 
         while (setEnum.hasMoreElements()) {
-            XMLPSet currentSet = (XMLPSet) setEnum.nextElement();
-            Enumeration paramEnum = currentSet.getTable().elements();
+            XMLPSet currentSet = setEnum.nextElement();
+            Enumeration<XMLParameter> paramEnum = currentSet.getTable().elements();
             openTagFalseFlag = false;
 
             // Write set description only if paraEnum has atleast one parameter.
@@ -2797,7 +2797,7 @@ public class FileImageXML extends FileXML {
             }
 
             while (paramEnum.hasMoreElements()) {
-                XMLParameter currentParam = (XMLParameter) paramEnum.nextElement();
+                XMLParameter currentParam = paramEnum.nextElement();
 
                 // if (!(currentParam.getValue() == null) &&
                 // !(currentParam.getValue().equals("")))
