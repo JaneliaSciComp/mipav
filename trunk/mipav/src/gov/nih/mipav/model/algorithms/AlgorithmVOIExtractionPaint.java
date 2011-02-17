@@ -233,8 +233,8 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    public Vector findPaintBorder(int slice) {
-        Vector paintBorders = new Vector();
+    public Vector<Polygon> findPaintBorder(int slice) {
+        Vector<Polygon> paintBorders = new Vector<Polygon>();
 
         int offset;
 
