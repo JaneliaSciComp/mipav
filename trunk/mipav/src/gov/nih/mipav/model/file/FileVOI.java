@@ -284,7 +284,7 @@ public class FileVOI extends FileXML {
             final int numVOIs = VOIs.size();
 
             VOI currentVOI = null;
-            Vector curves = null;
+            Vector<VOIBase> curves = null;
             VOIText vText = null;
 
             Vector3f arrowPt, textPt, arrowPtScanner, textPtScanner;
@@ -446,7 +446,7 @@ public class FileVOI extends FileXML {
             final int numVOIs = VOIs.size();
 
             VOI currentVOI = null;
-            Vector curves = null;
+            Vector<VOIBase> curves = null;
             VOIText vText = null;
 
             Vector3f arrowPt, textPt, arrowPtScanner, textPtScanner;
@@ -594,7 +594,7 @@ public class FileVOI extends FileXML {
         float[] y;
         float[] z;
 
-        Vector[] contours;
+        Vector<VOIBase>[] contours;
 
         // Should add code to open dialog if file exists!!!
         if (file.exists() == true) {
@@ -625,7 +625,7 @@ public class FileVOI extends FileXML {
             nContours = contours[i].size();
 
             for (j = 0, nPts = 0; j < nContours; j++) {
-                nPts += ((Vector) (contours[i].elementAt(j))).size();
+                nPts +=  (contours[i].elementAt(j)).size();
             }
 
             raFile.writeBytes("V " + nPts + " z " + i + "\n");
@@ -634,7 +634,7 @@ public class FileVOI extends FileXML {
 
                 for (j = 0; j < nContours; j++) {
                     raFile.writeBytes("{\n");
-                    nPts = ((Vector) (contours[i].elementAt(j))).size();
+                    nPts = (contours[i].elementAt(j)).size();
 
                     x = new float[nPts];
                     y = new float[nPts];
@@ -670,7 +670,7 @@ public class FileVOI extends FileXML {
         float[] z;
         Color color;
 
-        Vector[] contours;
+        Vector<VOIBase>[] contours;
 
         if (file.exists() == true) {
             raFile.close();
@@ -766,7 +766,7 @@ public class FileVOI extends FileXML {
         float[] z;
         Color color;
 
-        Vector[] contours;
+        Vector<VOIBase>[] contours;
 
         if (isXML) {
             writeXML(voi, saveAllContours);
@@ -832,7 +832,7 @@ public class FileVOI extends FileXML {
                 for (j = 0; j < nContours; j++) {
 
                     if (saveAllContours || ((VOIBase) contours[i].elementAt(j)).isActive()) {
-                        nPts = ((Vector) (contours[i].elementAt(j))).size();
+                        nPts = (contours[i].elementAt(j)).size();
                         raFile.writeBytes(Integer.toString(nPts) + "\t\t# number of pts in contour\r\n");
                         x = new float[nPts];
                         y = new float[nPts];
@@ -867,7 +867,7 @@ public class FileVOI extends FileXML {
         float[] x = new float[100];
         float[] y = new float[100];
         float[] z = new float[100];
-        Vector contours;
+        Vector<VOIBase> contours;
 
         FileWriter fw;
 
@@ -947,7 +947,7 @@ public class FileVOI extends FileXML {
             if ( (voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE)
                     || (voi.getCurveType() == VOI.POINT)) {
 
-                Vector pointVector = new Vector();
+                Vector<VOISortItem> pointVector = new Vector<VOISortItem>();
 
                 // add all contours to a vector for sorting
                 nContours = contours.size();
@@ -1047,7 +1047,7 @@ public class FileVOI extends FileXML {
                             if (saveAllContours || ((VOIBase) contours.elementAt(j)).isActive()) {
                                 openTag("Contour", true);
 
-                                nPts = ((Vector) (contours.elementAt(j))).size();
+                                nPts = (contours.elementAt(j)).size();
 
                                 if (x.length < nPts) {
                                     x = new float[nPts];
@@ -1606,7 +1606,7 @@ public class FileVOI extends FileXML {
     private class MyXMLHandler extends DefaultHandler {
 
         /** The contours of the VOI we are building. */
-        private final Vector contourVector;
+        private final Vector<Vector2f> contourVector;
 
         /** The current XML tag we are parsing. */
         private String currentKey;
@@ -1627,7 +1627,7 @@ public class FileVOI extends FileXML {
          */
         public MyXMLHandler(final VOI voi) {
             this.voi = voi;
-            contourVector = new Vector();
+            contourVector = new Vector<Vector2f>();
         }
 
         /**
@@ -1747,7 +1747,7 @@ public class FileVOI extends FileXML {
     /**
      * DOCUMENT ME!
      */
-    private class VOIComparator implements Comparator {
+    private class VOIComparator implements Comparator<VOISortItem> {
 
         /**
          * DOCUMENT ME!
@@ -1757,9 +1757,9 @@ public class FileVOI extends FileXML {
          * 
          * @return DOCUMENT ME!
          */
-        public int compare(final Object o1, final Object o2) {
-            final int a = ((VOISortItem) o1).getIndex();
-            final int b = ((VOISortItem) o2).getIndex();
+        public int compare(final VOISortItem o1, final VOISortItem o2) {
+            final int a = o1.getIndex();
+            final int b = o2.getIndex();
 
             if (a < b) {
                 return -1;
@@ -2059,7 +2059,7 @@ public class FileVOI extends FileXML {
     private class XMLCoordHandler extends DefaultHandler {
 
         /** The contours of the VOI we are building. */
-        private final Vector contourVector;
+        private final Vector<Vector3f> contourVector;
 
         /** The current XML tag we are parsing. */
         private String currentKey;
@@ -2070,6 +2070,7 @@ public class FileVOI extends FileXML {
         /** The VOI that we are building from the XML. */
         private final VOI voi;
         
+        @SuppressWarnings("unused")
         private Vector3f LPSOrigin;
 
         /**
@@ -2079,7 +2080,7 @@ public class FileVOI extends FileXML {
          */
         public XMLCoordHandler(final VOI voi) {
             this.voi = voi;
-            contourVector = new Vector();
+            contourVector = new Vector<Vector3f>();
         }
 
         /**
