@@ -83,9 +83,6 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
     /** Estimate decay. */
     private boolean estDecay;
 
-    /** Number of iterations complete before making a backup. */
-    private int itBack;
-
     /** Maximum number of iterations. */
     private int itMax;
 
@@ -207,7 +204,6 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         _2xperc = percentIterationsHalfSize;
         _4xperc = percentIterationsQuaterSize;
         itMax = maxIterations;
-        itBack = backIterations;
 
         if (penaltyIntensity == true) {
             weightZero = penaltyValue;
@@ -446,7 +442,6 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
             // Divide the complex OTF array by the complex value (H000, 0.0)
             int x, y, z, plSize = (Rx + 2) * (Ry + 2), offsetZ, offset;
-            float scaleVal = 1.0f / (nx * ny * nz / 2.0f);
 
             for (z = 0; z < nz; z++) {
                 offsetZ = z * plSize;
@@ -1369,7 +1364,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         int oplSize = ox * oy;
 
         int iz, iy, ix;
-        int i1, inOffSet, o1, out1Offset, o2, out2OffSet;
+        //int i1, inOffSet, o1, out1Offset, o2, out2OffSet;
         int inIdx, out1Idx, out2Idx, endIdx;
         int deltX = ox - nx;
 
@@ -1613,8 +1608,6 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         int halfNx = nx / 2;
         int cx = xdim;
         int cxy = cx * ydim;
-        int xadd = xdim - nx;
-        int pl_size = xdim * ydim;
 
         int i1, i2, i3, tmpI;
         final NumberFormat nf = NumberFormat.getInstance();
@@ -2200,10 +2193,9 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
      * @param  nz   DOCUMENT ME!
      */
     void zeroOut(float[] arr, int nx1, int ny1, int nx, int ny, int nz) {
-        int idx, ix, iy, iz, pl_size, deltx;
+        int idx, ix, iy, iz, deltx;
         float fval;
 
-        pl_size = nx1 * ny1;
         deltx = nx1 - nx;
         idx = 0;
 
@@ -2240,8 +2232,6 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
     private void run3D() {
 
         fireProgressStateChanged(srcImage.getImageName(), "Xcosm Expectation Maximization ...");
-
-        int iterations = 0;
 
         // OK, here is where the meat of the algorithm goes
 
