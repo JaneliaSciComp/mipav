@@ -76,15 +76,19 @@ public class Psi {
     private final int version;
 
     /** Real part of input argument */
+    @SuppressWarnings("unused")
     private double realX;
 
     /** Imaginary part of input argument */
+    @SuppressWarnings("unused")
     private double imagX;
 
     /** Real part of output result */
+    @SuppressWarnings("unused")
     private double realResult[];
 
     /** Imaginary part of output result */
+    @SuppressWarnings("unused")
     private double imagResult[];
 
     /**
