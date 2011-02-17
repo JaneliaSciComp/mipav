@@ -91,8 +91,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public double volume;
             public double perimeter;
             public double largestContourDistance;
+            @SuppressWarnings("unused")
             public double[] xMass, yMass, zMass;
 
+            @SuppressWarnings("unused")
             public double[] massI;
             Vector<Float> values;
 
@@ -597,7 +599,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         }
 
         public void run() {
-            long time = System.currentTimeMillis();
             double largestDistance = 0;
             String xStr, yStr, zStr;
             String unit2DStr = null;
@@ -615,14 +616,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
             if (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-                xStr = "X " + FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);    
+                xStr = "X " + Unit.getUnitFromLegacyNum(xUnits).getAbbrev();    
             }
             else {
                 xStr = "X ";
             }
             int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
             if (yUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-                yStr = "Y " + FileInfoBase.getUnitsOfMeasureAbbrevStr(yUnits);    
+                yStr = "Y " + Unit.getUnitFromLegacyNum(yUnits).getAbbrev();    
             }
             else {
                 yStr = "Y ";
@@ -631,7 +632,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if (srcImage.getNDims() > 2) {
                 int zUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[2];
                 if (zUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-                    zStr = "Z " + FileInfoBase.getUnitsOfMeasureAbbrevStr(zUnits);
+                    zStr = "Z " + Unit.getUnitFromLegacyNum(zUnits).getAbbrev();
                     if ((srcImage.getFileInfo(0).getOrigin()[0] != 0) || (srcImage.getFileInfo(0).getOrigin()[1] != 0) ||
                             (srcImage.getFileInfo(0).getOrigin()[2] != 0)) {
                         zStr = zStr + "\tR-L:\tA-P:\tI-S:";
@@ -732,7 +733,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             else
             {
-                Vector<VOIBase> contours = calcSelectedVOI.getCurves();
                 calcStatsTotal( calcSelectedVOI, statProperty, fileInfo, unit2DStr, unit3DStr, ignoreMin, ignoreMax );
             }
 
