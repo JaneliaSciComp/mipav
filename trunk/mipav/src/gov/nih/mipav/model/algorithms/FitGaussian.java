@@ -145,6 +145,7 @@ public class FitGaussian extends NLFittedFunction {
     /**
      * Apply small kernel to smooth out data.  Often helpful when too many bins have been applied by user.
      */
+    @SuppressWarnings("unused")
     private double[] applyKernel() {
     	
         int size = 7;
