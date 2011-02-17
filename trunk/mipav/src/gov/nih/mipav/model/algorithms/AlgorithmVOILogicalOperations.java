@@ -1,23 +1,11 @@
 package gov.nih.mipav.model.algorithms;
 
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Vector;
-
-import WildMagic.LibFoundation.Mathematics.Vector3f;
-
-import gov.nih.mipav.model.provenance.ProvenanceRecorder;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.actions.ActionMaskToVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
