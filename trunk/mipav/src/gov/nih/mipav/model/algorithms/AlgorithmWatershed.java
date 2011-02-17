@@ -46,7 +46,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
     private ModelImage energyImage = null;
 
     /** DOCUMENT ME! */
-    private Vector seedVector = null;
+    private Vector<Seed> seedVector = null;
 
     /** DOCUMENT ME! */
     private float[] sigmas;
@@ -65,7 +65,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
      * @param  sigmas   Gaussian's standard deviations in the each dimension
      * @param  seeds    Seed points for starting watershed
      */
-    public AlgorithmWatershed(ModelImage destImg, ModelImage srcImg, ModelImage gmImg, float[] sigmas, Vector seeds) {
+    public AlgorithmWatershed(ModelImage destImg, ModelImage srcImg, ModelImage gmImg, float[] sigmas, Vector<Seed> seeds) {
 
         super(destImg, srcImg);
         energyImage = gmImg;
@@ -84,7 +84,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
      * @param  seeds    Seed points for starting watershed
      * @param  entireImage If true, ignore VOIs and process entire image
      */
-    public AlgorithmWatershed(ModelImage destImg, ModelImage srcImg, ModelImage gmImg, float[] sigmas, Vector seeds,
+    public AlgorithmWatershed(ModelImage destImg, ModelImage srcImg, ModelImage gmImg, float[] sigmas, Vector<Seed> seeds,
             boolean entireImage) {
 
         super(destImg, srcImg);
@@ -160,7 +160,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
         try {
 
             if (seedVector == null) {
-                seedVector = new Vector();
+                seedVector = new Vector<Seed>();
             }
 
             seedVector.removeAllElements();
@@ -184,7 +184,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
         int xDim, yDim;
         int length;
         ViewVOIVector VOIs;
-        Vector contours;
+        Vector<VOIBase> contours;
         AlgorithmGradientMagnitudeSep gradMagAlgo;
         int x, y;
         float[] xB = null, yB = null, zB = null;
@@ -328,7 +328,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
         }
 
         if (seedVector == null) {
-            seedVector = new Vector();
+            seedVector = new Vector<Seed>();
 
             // Get VOI mask
             // Set grad. mag. to the gradient magnitude minimum where there is a VOI
@@ -678,13 +678,12 @@ public class AlgorithmWatershed extends AlgorithmBase {
         }
 
         int dir;
-        float max, gmC;
+        float max;
 
         for (i = 0; i < length; i++) {
 
             if (destImage.getShort(i) == WSHED) {
                 pixC = i;
-                gmC = energyImage.getFloat(pixC);
                 pixN = pixC - xDim;
                 pixS = pixC + xDim;
                 pixE = pixC + 1;
@@ -795,9 +794,8 @@ public class AlgorithmWatershed extends AlgorithmBase {
         AlgorithmGradientMagnitudeSep gradMagAlgo = null;
         ViewVOIVector VOIs;
         int xDim, yDim, zDim;
-        Vector contours;
+        Vector<VOIBase> contours;
         int x, y, z;
-        short currentBasin = 0;
         // The dimensions of the Gaussian kernel used in 3D calculations of AlgorithmGradientMagSep
         // 2D calculations are performed on the end slices where the 3D kernel does not fit
         int kExtents[];
@@ -988,7 +986,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
         if (seedVector == null) {
 
             try {
-                seedVector = new Vector();
+                seedVector = new Vector<Seed>();
             } catch (OutOfMemoryError error) {
                 displayError("Watershed: unable to allocate enough memory");
             }
@@ -1234,7 +1232,6 @@ public class AlgorithmWatershed extends AlgorithmBase {
                     }
                 } else if (destImage.getShort(pixC) == MASK) { // West neighbor has to be basin
                     destImage.setShort(pixC, destImage.getShort(pixW)); // extend basin to center;
-                    currentBasin = destImage.getShort(pixW);
                 }
             } else {
 
@@ -1254,7 +1251,6 @@ public class AlgorithmWatershed extends AlgorithmBase {
                     }
                 } else if (destImage.getShort(pixC) == MASK) {
                     destImage.setShort(pixC, destImage.getShort(pixE));
-                    currentBasin = destImage.getShort(pixE);
                 }
             } else {
 
@@ -1275,7 +1271,6 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
                 } else if (destImage.getShort(pixC) == MASK) {
                     destImage.setShort(pixC, destImage.getShort(pixN));
-                    currentBasin = destImage.getShort(pixN);
                 }
             } else {
 
@@ -1296,7 +1291,6 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
                 } else if (destImage.getShort(pixC) == MASK) {
                     destImage.setShort(pixC, destImage.getShort(pixS));
-                    currentBasin = destImage.getShort(pixS);
                 }
             } else {
 
@@ -1316,7 +1310,6 @@ public class AlgorithmWatershed extends AlgorithmBase {
                     }
                 } else if (destImage.getShort(pixC) == MASK) {
                     destImage.setShort(pixC, destImage.getShort(pixU));
-                    currentBasin = destImage.getShort(pixU);
                 }
             } else {
 
@@ -1335,7 +1328,6 @@ public class AlgorithmWatershed extends AlgorithmBase {
                     }
                 } else if (destImage.getShort(pixC) == MASK) {
                     destImage.setShort(pixC, destImage.getShort(pixD));
-                    currentBasin = destImage.getShort(pixD);
                 }
             } else {
 
