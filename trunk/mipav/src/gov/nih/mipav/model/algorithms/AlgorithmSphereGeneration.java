@@ -321,9 +321,6 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double highestForbiddenSquared;
         double highestRegenerationSquared;
         boolean intermediateRejected;
-        IntModelMean meanModel;
-        IntModelMeanSquared meanSquaredModel;
-        int steps;
         double numInt;
         double eps = 1.0e-8;
         IntModelMean2 meanModel2;
