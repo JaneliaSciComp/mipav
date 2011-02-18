@@ -154,7 +154,7 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
         String tmpStr;
-        int i, j;
+        int i;
         propagationType = AlgorithmBSnake.PROP_SINGLE;
 
         if (source == OKButton) {
@@ -240,7 +240,7 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                     titles = new String[imageFrames.size()];
 
                     for (i = 0; i < imageFrames.size(); i++) {
@@ -284,7 +284,7 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                     titles = new String[imageFrames.size()];
 
                     for (i = 0; i < imageFrames.size(); i++) {
@@ -327,11 +327,6 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
      * @param  algorithm  algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        int slice;
-        int element;
-        Vector[] contours;
-        int sliceNum;
-        int nContours;
         VOI resultVOI;
 
         // ViewJFrameImage imageFrame = null;
@@ -361,7 +356,7 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
             // These next lines set the titles in all frames where the source image is displayed to
             // image name so as to indicate that the image is now unlocked!
             // The image frames are enabled and then registed to the userinterface.
-            Vector imageFrames = image.getImageFrameVector();
+            Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -379,13 +374,9 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
      */
     public void focusLost(FocusEvent event) {
         Object source = event.getSource();
-        JTextField field;
-        String text;
         float tempNum;
 
         if (source == textGaussZ) {
-            field = (JTextField) source;
-            text = field.getText();
 
             if (resolutionCheckbox.isSelected()) {
                 tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
