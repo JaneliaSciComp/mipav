@@ -202,7 +202,7 @@ public class JDialogCropBoundaryParam extends JDialogScriptableBase implements A
 
                 resultImage = null;
 
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
