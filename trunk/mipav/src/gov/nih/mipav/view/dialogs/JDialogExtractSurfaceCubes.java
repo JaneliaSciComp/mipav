@@ -68,9 +68,6 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
     private JCheckBox decimateSurfaceCB;
 
     /** DOCUMENT ME! */
-    private String directory = null;
-
-    /** DOCUMENT ME! */
     private AlgorithmExtractSurfaceCubes extractSurAlgo;
 
     /** DOCUMENT ME! */
@@ -184,7 +181,6 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
-                    directory = chooser.getCurrentDirectory().getName() + File.separatorChar;
                     fileTF.setText(fileName);
 
                     if (userInterface.getDefaultDirectory() != null) {
@@ -877,7 +873,6 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         blurFlag = blurCheck.isSelected();
         fileName = fileTF.getText();
 
-        String extension;
         int idx = fileName.lastIndexOf('.');
 
         if (idx < 0) {
@@ -939,7 +934,7 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                 return false;
             }
 
-            short oldID = 0;
+            //short oldID = 0;
             int contourVOI = 0;
             int activeContourVOI = 0;
 
