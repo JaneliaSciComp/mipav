@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -312,7 +313,7 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 
         final int[] measure = mincInfo.getUnitsOfMeasure();
         for (int i = 0; i < extents.length; i++) {
-            tableModel.addRow(new Object[] {"", "Unit of measure " + i, FileInfoBase.getUnitsOfMeasureStr(measure[i])});
+            tableModel.addRow(new Object[] {"", "Unit of measure " + i, Unit.getUnitFromLegacyNum(measure[i]).toString()});
         }
 
         tableModel.addRow(new Object[] {"", "Transformation matrix",});
