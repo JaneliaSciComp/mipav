@@ -170,7 +170,7 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 							String title = (titleAndAuthors.substring(0, firstPeriodIndex + 1)).trim();
 							String authors = (titleAndAuthors.substring(firstPeriodIndex + 1, titleAndAuthors.length())).trim();
 							String[] authsAndUnivs = parseAuthorsAndUnivs(authors);
-							ArrayList allAuthorsList = parseAllAuthors(authors);
+							ArrayList<String> allAuthorsList = parseAllAuthors(authors);
 							StringBuffer allAuthors = new StringBuffer();
 							for(int i=0;i<allAuthorsList.size();i++) {
 								allAuthors.append(allAuthorsList.get(i));
@@ -751,7 +751,7 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 	 * @param authorsAndUnivs
 	 * @return
 	 */
-	public ArrayList parseAllAuthors(String authorsAndUnivs) {
+	public ArrayList<String> parseAllAuthors(String authorsAndUnivs) {
 	ArrayList<String> authorsList = new ArrayList<String>();
 	String affiliationString;
 	int affiliationNumber, affiliationNumber2;

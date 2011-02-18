@@ -43,7 +43,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     private ModelImage srcImage;
 
     /** slices * */
-    private final Vector<ArrayList> slicesVector = new Vector<ArrayList>();;
+    private final Vector<ArrayList<String>> slicesVector = new Vector<ArrayList<String>>();;
 
     /** textfields * */
     private JTextField bValueTextField, xdimTextField, ydimTextField, numSlicesTextField, numVolumesTextField,
@@ -1255,7 +1255,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             for (int i = 0; i < numSlicesPer3DVolume; i++) {
                 final Iterator iter = slicesVector.iterator();
                 while (iter.hasNext()) {
-                    final ArrayList slicesList = (ArrayList) iter.next();
+                    final ArrayList<String> slicesList = (ArrayList<String>) iter.next();
                     final String path = (String) slicesList.get(i);
                     printStream.println(path);
                 }

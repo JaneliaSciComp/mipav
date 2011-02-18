@@ -136,7 +136,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
     private float[][] direction;
     
     /** this is an array of b-values that for each volume.* */
-    private ArrayList bValuesArrayList = new ArrayList();
+    private ArrayList<Float> bValuesArrayList = new ArrayList<Float>();
     
     /** FileParRec handle **/
 	private FilePARREC fileParRec;
@@ -206,7 +206,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
     private String rawImageFormatString = "float";
     
     /** arraylist of unsorted path strings to image slices **/
-    private ArrayList unsortedPathsArrayList = new ArrayList();
+    private ArrayList<String> unsortedPathsArrayList = new ArrayList<String>();
     
     /** xDIm of 4d image **/
     private int xDim;
@@ -1624,7 +1624,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 			PrintStream printStream = new PrintStream(outputStream);
 			Set ketSet = seriesFileInfoTreeMap.keySet();
 			Iterator iter = ketSet.iterator();
-			ArrayList numSlicesCheckList = new ArrayList();
+			ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 			while (iter.hasNext()) {
 				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
 				Iterator iter2 = seriesFITS.iterator();
@@ -1720,7 +1720,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             PrintStream printStream = new PrintStream(outputStream);
             Set ketSet = seriesFileInfoTreeMap.keySet();
             Iterator iter = ketSet.iterator();
-            ArrayList numSlicesCheckList = new ArrayList();
+            ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 
             while (iter.hasNext()) {
                 TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
@@ -1996,8 +1996,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             BufferedReader d = new BufferedReader(new InputStreamReader(fis));
             String firstLine = d.readLine();
             String[] firstLineSplits = firstLine.split("\\s+");
-            ArrayList arrList = new ArrayList();
-            ArrayList arrList2 = new ArrayList();
+            ArrayList<Float> arrList = new ArrayList<Float>(); 
+            ArrayList<Float> arrList2 = new ArrayList<Float>();
 
             for (int i = 0; i < firstLineSplits.length; i++) {
 

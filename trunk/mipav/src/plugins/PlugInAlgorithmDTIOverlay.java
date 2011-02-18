@@ -44,7 +44,7 @@ public class PlugInAlgorithmDTIOverlay extends AlgorithmBase {
 	private ModelLUT lutb;
 	
 	/** Mask Colors added to LUT **/
-	private ArrayList addedColors = new ArrayList();
+	private ArrayList<Color> addedColors = new ArrayList<Color>();
 	
 	
 	

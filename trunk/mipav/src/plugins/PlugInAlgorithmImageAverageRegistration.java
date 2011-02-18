@@ -80,7 +80,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
     private ViewJProgressBar progressBar;
 
     /** ArrayList for each registered image. */
-    private ArrayList registeredImages = new ArrayList();
+    private ArrayList<ModelImage> registeredImages = new ArrayList<ModelImage>();
 
     /** floats needed for algorithm..x direction. */
     private float rotateBeginX, rotateEndX, coarseRateX, fineRateX;
@@ -98,7 +98,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
     private ModelImage sourceImage, targetImage, registeredImage, resultImage, bufferImage;
 
     /** List of source filenames. */
-    private ArrayList srcFilenamesArrList;
+    private ArrayList<String> srcFilenamesArrList;
 
     /** handle to ViewUserInterface. */
     private ViewUserInterface UI;
@@ -132,7 +132,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
      * @param  doColor                    DOCUMENT ME!
      * @param  isTargetDICOM              DOCUMENT ME!
      */
-    public PlugInAlgorithmImageAverageRegistration(ArrayList srcFilenamesArrList, ModelImage targetImage, int cost,
+    public PlugInAlgorithmImageAverageRegistration(ArrayList<String> srcFilenamesArrList, ModelImage targetImage, int cost,
                                                    int DOF, int interp, int interp2, float rotateBeginX,
                                                    float rotateEndX, float coarseRateX, float fineRateX,
                                                    float rotateBeginY, float rotateEndY, float coarseRateY,

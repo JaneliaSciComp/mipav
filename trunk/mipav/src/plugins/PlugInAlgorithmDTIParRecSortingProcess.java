@@ -116,7 +116,7 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
     private String relativeImageSlicesDirPath;
     
     /** arraylist of unsorted path strings to image slices **/
-    private ArrayList unsortedPathsArrayList = new ArrayList();
+    private ArrayList<String> unsortedPathsArrayList = new ArrayList<String>();
     
     /** xDIm of 4d image **/
     private int xDim;

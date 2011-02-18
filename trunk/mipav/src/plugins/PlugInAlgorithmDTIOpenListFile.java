@@ -85,7 +85,7 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
 	private boolean endianness = FileBase.LITTLE_ENDIAN;;
 	
 	
-	ArrayList pathsAL;
+	ArrayList<String> pathsAL;
 	
 
 	
@@ -395,7 +395,7 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
 		}
 
 		
-		pathsAL = new ArrayList(Arrays.asList(paths));
+		pathsAL = new ArrayList<String>(Arrays.asList(paths));
 		
 		return true;
 	}
