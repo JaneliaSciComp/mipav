@@ -91,9 +91,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     private int cost;
 
     /** DOCUMENT ME! */
-    private boolean createInfoLine = false;
-
-    /** DOCUMENT ME! */
     private JCheckBox createRegCheckBox;
 
     /** DOCUMENT ME! */
@@ -126,9 +123,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
     /** DOCUMENT ME! */
     private ModelImage image;
-
-    /** DOCUMENT ME! */
-    private JPanel infoPanel;
 
     /** DOCUMENT ME! */
     private double[] knotX = null;
@@ -168,9 +162,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
     /** DOCUMENT ME! */
     private JRadioButton oneDButton;
-
-    /** DOCUMENT ME! */
-    private JPanel paramPanel;
 
     /** DOCUMENT ME! */
     private boolean paramVary = false;
@@ -217,15 +208,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
     /** DOCUMENT ME! */
     private ButtonGroup VOIGroup;
-
-    /** DOCUMENT ME! */
-    private int VOIIndex1;
-
-    /** DOCUMENT ME! */
-    private int VOIIndex2;
-
-    /** DOCUMENT ME! */
-    private int VOIIndex3;
 
     /** DOCUMENT ME! */
     private ViewVOIVector VOIs;
@@ -714,12 +696,10 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
             if (fileInfo.getFirstSliceAfterBleach() >= 0) {
                 firstSliceAfterBleach = fileInfo.getFirstSliceAfterBleach();
-                createInfoLine = true;
             }
 
             if (fileInfo.getBleachedROIShape() >= 0) {
                 bleachedROIShape = fileInfo.getBleachedROIShape();
-                createInfoLine = true;
             }
 
             if (fileInfo.getKnotX() != null) {
@@ -735,23 +715,21 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             fileInfoImageXML = (FileInfoImageXML) image.getFileInfo(0);
 
             /** go through the hashtable of parameter sets */
-            Enumeration setEnum = fileInfoImageXML.getPSetKeys();
+            Enumeration<String> setEnum = fileInfoImageXML.getPSetKeys();
 
             while (setEnum.hasMoreElements()) {
-                String temp = (String) setEnum.nextElement();
-                Enumeration paramEnum = fileInfoImageXML.getPSet(temp).getParameterKeys();
+                String temp = setEnum.nextElement();
+                Enumeration<String> paramEnum = fileInfoImageXML.getPSet(temp).getParameterKeys();
 
                 while (paramEnum.hasMoreElements()) {
-                    String paramName = (String) paramEnum.nextElement();
+                    String paramName = paramEnum.nextElement();
 
                     if (paramName.equals("firstSliceAfterBleach")) {
                         String firstSliceAfterBleachStr = fileInfoImageXML.getPSet(temp).getParameter(paramName).getValue();
                         firstSliceAfterBleach = Integer.valueOf(firstSliceAfterBleachStr).intValue();
-                        createInfoLine = true;
                     } else if (paramName.equals("bleachedROIShape")) {
                         String bleachedROIShapeStr = fileInfoImageXML.getPSet(temp).getParameter(paramName).getValue();
                         bleachedROIShape = Integer.valueOf(bleachedROIShapeStr).intValue();
-                        createInfoLine = true;
                     } else if ((paramName.length() > 7) && (paramName.substring(0, 6).equals("knotX["))) {
                         int endIndex = paramName.indexOf(']');
                         String arrayIndexString = paramName.substring(6, endIndex);
