@@ -39,7 +39,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
     private int[] extents;
 
     /** DOCUMENT ME! */
-    private int fileFormat;
+    //private int fileFormat;
 
     /** DOCUMENT ME! */
     private FileInfoBase fileInfoBuffer;
@@ -79,7 +79,6 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
         setVisible(false);
 
         fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
-        fileFormat = fileInfoBuffer.getFileFormat();
         space = fileInfoBuffer.getResolution(2);
         thick = fileInfoBuffer.getSliceThickness();
         
@@ -139,7 +138,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -167,7 +166,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
                 for (int i = 0; i < imageFrames.size(); i++) {
@@ -225,7 +224,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
 
                 createProgressBar(image.getImageName(), correctSpaceAlgo);
 
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
                 for (int i = 0; i < imageFrames.size(); i++) {
@@ -283,7 +282,6 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
         parentFrame = image.getParentFrame();
 
         fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
-        fileFormat = fileInfoBuffer.getFileFormat();
         space = fileInfoBuffer.getResolution(2);
         thick = fileInfoBuffer.getSliceThickness();
 
