@@ -44,7 +44,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     private static final int FULL_STEERABLE_PYRAMID = 4;
 
     /** Possible repres2 values. */
-    private static final int NONE = 0;
+    //private static final int NONE = 0;
 
     /** DOCUMENT ME! */
     private static final int HAAR = 1; // Haar wavelet
@@ -68,7 +68,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     private static final int QMF16 = 7;
 
     /** Daubechies wavelet. */
-    private static final int DAUB1 = 8;
+    //private static final int DAUB1 = 8;
 
     /** DOCUMENT ME! */
     private static final int DAUB2 = 9;
@@ -339,7 +339,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -581,7 +581,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                 // "locked - " image name so as to indicate that the image is now read/write locked!
                 // The image frames are disabled and then unregisted from the userinterface until the
                 // algorithm has completed.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
                 for (int i = 0; i < imageFrames.size(); i++) {
