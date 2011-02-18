@@ -99,10 +99,16 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     // tpe holds the type of editor to be used; editor holds the editor dialog
     /** Type holds the type of editor, editor holds the actual editor dialog. */
-    private final Hashtable primaryTypeHolder, primaryEditorHolder;
+    private final Hashtable<Integer,Vector<Integer>> primaryTypeHolder;
+    private final Hashtable <Integer,JDialogEditor>primaryEditorHolder;
 
-    private Hashtable subjectTypeHolder, subjectEditorHolder, scanTypeHolder, scanEditorHolder, investigatorTypeHolder,
-            investigatorEditorHolder, tagTypeHolder, tagEditorHolder;
+    private Hashtable<Integer,Vector<Integer>> subjectTypeHolder;
+    private Hashtable<Integer,JDialogEditor> subjectEditorHolder;
+    private Hashtable<Integer,Vector<Integer>> scanTypeHolder;
+    private Hashtable<Integer,JDialogEditor> scanEditorHolder;
+    private Hashtable<Integer,Vector<Integer>> investigatorTypeHolder;
+    private Hashtable<Integer,JDialogEditor> investigatorEditorHolder;
+    private Hashtable<Integer,Vector<Integer>> tagTypeHolder;
 
     /** button for removing parameters. */
     private JButton removeParam;
@@ -127,7 +133,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     private String setDescforAddParam;
 
     /** hash table holding set information. */
-    private final Hashtable setHashtable;
+    private final Hashtable<String,PSetDisplay> setHashtable;
 
     /** model associated with subject information. */
     private ViewTableModel subjectModel;
@@ -160,11 +166,11 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
         }
         image = img;
-        primaryTypeHolder = new Hashtable(); // all editable lines in primary, keyed by location in Jtable
-        primaryEditorHolder = new Hashtable(); // all editable lines in primary, keyed by location in Jtable
+        primaryTypeHolder = new Hashtable<Integer,Vector<Integer>>(); // all editable lines in primary, keyed by location in Jtable
+        primaryEditorHolder = new Hashtable<Integer,JDialogEditor>(); // all editable lines in primary, keyed by location in Jtable
         surfaces = new SurfaceDisplay();
 
-        setHashtable = new Hashtable();
+        setHashtable = new Hashtable<String,PSetDisplay>();
         addParam = new JMenuItem("Add Parameter");
         addParam.setActionCommand("AddParameter");
         addParam.addActionListener(this);
@@ -223,19 +229,19 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         if (e.getActionCommand().equals("Close")) { // close
 
             // clear out the editor dialog boxes
-            for (final Enumeration en = editorDialogTable.elements(); en.hasMoreElements();) {
-                editor = (JDialogEditor) en.nextElement();
+            for (final Enumeration<JDialogEditor> en = editorDialogTable.elements(); en.hasMoreElements();) {
+                editor = en.nextElement();
                 editor.dispose();
             }
 
             editorDialogTable.clear();
             this.dispose(); // remove self
         } else if (e.getActionCommand().equals("RemoveParameter")) {
-            final Enumeration eset = setHashtable.keys();
+            final Enumeration<String> eset = setHashtable.keys();
             boolean atLeastOne = false;
 
             while (eset.hasMoreElements()) {
-                final String psetdesc = (String) eset.nextElement();
+                final String psetdesc = eset.nextElement();
                 final PSetDisplay pset = (PSetDisplay) setHashtable.get(psetdesc);
                 final int[] rows = pset.getTable().getSelectedRows();
                 final boolean[] deleterows = new boolean[rows.length];
@@ -314,8 +320,6 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                 editor = new JDialogEditor(this, new String("NewParameter"), values, editors);
                 editor.setTitle("New Parameter Data");
                 editor.setVisible(true);
-
-                final Hashtable tmp = fileinfo.getParameterTable(setDescforAddParam);
 
                 editor.setTable(fileinfo.getParameterTable(this.setDescforAddParam), false);
                 editor.addWindowListener(new WindowAdapter() {
@@ -557,10 +561,10 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                 scrollingBox.remove(tagTable);
 
                 // create set displays for each set
-                final Enumeration a = fileinfo.getPSetKeys();
+                final Enumeration<String> a = fileinfo.getPSetKeys();
 
                 while (a.hasMoreElements()) {
-                    final String desc = fileinfo.getPSet((String) a.nextElement()).getDescription();
+                    final String desc = fileinfo.getPSet(a.nextElement()).getDescription();
 
                     setHashtable.put(desc, new PSetDisplay(desc));
                     scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getLabel());
@@ -568,15 +572,15 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                     scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getTable());
                 }
 
-                final Enumeration ee = fileinfo.getPSetKeys();
+                final Enumeration<String> ee = fileinfo.getPSetKeys();
 
                 while (ee.hasMoreElements()) {
-                    final XMLPSet temp = fileinfo.getPSet((String) ee.nextElement());
+                    final XMLPSet temp = fileinfo.getPSet(ee.nextElement());
                     final String desc = temp.getDescription();
-                    final Enumeration pe = temp.getParameterKeys();
+                    final Enumeration<String> pe = temp.getParameterKeys();
                     final int editorChoice[] = new int[1];
                     while (pe.hasMoreElements()) {
-                        final XMLParameter tp = temp.getParameter((String) pe.nextElement());
+                        final XMLParameter tp = temp.getParameter(pe.nextElement());
                         editorChoice[0] = JDialogEditor.STRING;
                         appendParameter(desc, tp.getName(), tp.getDescription(), tp.getValueType(), tp.getValue(), tp
                                 .getDate(), tp.getTime());
@@ -587,10 +591,10 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
                 expandTags.setText("Collapse Tags");
             } else {
-                final Enumeration a = fileinfo.getPSetKeys();
+                final Enumeration<String> a = fileinfo.getPSetKeys();
 
                 while (a.hasMoreElements()) {
-                    final String desc = fileinfo.getPSet((String) a.nextElement()).getDescription();
+                    final String desc = fileinfo.getPSet(a.nextElement()).getDescription();
 
                     // setHashtable.put(desc, new PSetDisplay(desc));
                     scrollingBox.remove( ((PSetDisplay) setHashtable.get(desc)).getLabel());
@@ -615,7 +619,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             int[] rows;
             int i = 0;
             Object obj;
-            Vector objs;
+            Vector<Integer> objs;
 
             // go through primary table, editing highlighted (selected ) rows
             rows = primaryTable.getSelectedRows();
@@ -634,7 +638,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                     if (obj != null) {
                         ((JDialogEditor) (obj)).toFront();
                     } else {
-                        objs = (Vector) primaryTypeHolder.get(named);
+                        objs = (Vector<Integer>) primaryTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
                         // foresee
@@ -673,7 +677,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                                 ed = (JDialogEditor) e.getSource();
 
                                 final Integer edID = (Integer) ed.getKey();
-                                Vector changed = new Vector(5);
+                                Vector<Object> changed = new Vector<Object>(5);
 
                                 changed.add(0, new Integer(1)); // table
                                 changed.add(1, edID); // line
@@ -734,7 +738,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                     if (obj != null) {
                         ((JDialogEditor) (obj)).toFront();
                     } else {
-                        objs = (Vector) subjectTypeHolder.get(named);
+                        objs = (Vector<Integer>) subjectTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
                         // foresee
@@ -778,7 +782,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                                 ed.removeWindowListener(ed);
 
                                 final Integer edID = (Integer) ed.getKey();
-                                Vector changed = new Vector(4);
+                                Vector<Object> changed = new Vector<Object>(4);
 
                                 changed.add(0, new Integer(1)); // table
                                 changed.add(1, edID); // line
@@ -839,7 +843,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                     if (obj != null) {
                         ((JDialogEditor) (obj)).toFront();
                     } else {
-                        objs = (Vector) scanTypeHolder.get(named);
+                        objs = (Vector<Integer>) scanTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
                         // foresee
@@ -882,7 +886,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                                 ed = (JDialogEditor) e.getSource();
 
                                 final Integer edID = (Integer) ed.getKey();
-                                Vector changed = new Vector(4);
+                                Vector<Object> changed = new Vector<Object>(4);
 
                                 changed.add(0, new Integer(1)); // table
                                 changed.add(1, edID); // line
@@ -939,7 +943,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                     if (obj != null) {
                         ((JDialogEditor) (obj)).toFront();
                     } else {
-                        objs = (Vector) investigatorTypeHolder.get(named);
+                        objs = (Vector<Integer>) investigatorTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
                         // foresee
@@ -982,7 +986,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                                 ed = (JDialogEditor) e.getSource();
 
                                 final Integer edID = (Integer) ed.getKey();
-                                Vector changed = new Vector(4);
+                                Vector<Object> changed = new Vector<Object>(4);
 
                                 changed.add(0, new Integer(1)); // table
                                 changed.add(1, edID); // line
@@ -1023,7 +1027,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             }
 
             // Check to see if any Parameters are highlighted
-            final Enumeration eset = setHashtable.keys();
+            final Enumeration<String> eset = setHashtable.keys();
 
             while (eset.hasMoreElements()) {
                 final PSetDisplay pset = (PSetDisplay) setHashtable.get(eset.nextElement());
@@ -1091,10 +1095,10 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                                     temp.getModel().setValueAt(date, row, 4);
                                     temp.getModel().setValueAt(time, row, 5);
 
-                                    final Vector pData = new Vector(7);
+                                    final Vector<String> pData = new Vector<String>(7);
 
                                     pData.add(0, ed.getPSetDescription());
-                                    pData.add(1, temp.getModel().getValueAt(row, 0));
+                                    pData.add(1, (String)temp.getModel().getValueAt(row, 0));
                                     pData.add(2, desc);
                                     pData.add(3, vt);
                                     pData.add(4, val);
@@ -1196,7 +1200,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         investigatorModel.addRow(rose);
 
-        final Vector editorInts = new Vector();
+        final Vector<Integer> editorInts = new Vector<Integer>();
 
         for (final int element : editor) { // set the list of editors to use
             editorInts.addElement(new Integer(element));
@@ -1218,7 +1222,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         final String[] rose = {tag, name, value};
 
         tagModel.addRow(rose);
-        final Vector editorInts = new Vector();
+        final Vector<Integer> editorInts = new Vector<Integer>();
 
         for (final int element : editor) { // set the list of editors to use
             editorInts.addElement(new Integer(element));
@@ -1312,7 +1316,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         primaryModel.addRow(rose);
 
-        final Vector editorInts = new Vector();
+        final Vector<Integer> editorInts = new Vector<Integer>();
 
         for (final int element : editor) { // set the list of editors to use
             editorInts.addElement(new Integer(element));
@@ -1333,7 +1337,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         scanModel.addRow(rose);
 
-        final Vector editorInts = new Vector();
+        final Vector<Integer> editorInts = new Vector<Integer>();
 
         for (final int element : editor) { // set the list of editors to use
             editorInts.addElement(new Integer(element));
@@ -1354,7 +1358,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         subjectModel.addRow(rose);
 
-        final Vector editorInts = new Vector();
+        final Vector<Integer> editorInts = new Vector<Integer>();
 
         for (final int element : editor) { // set the list of editors to use
             editorInts.addElement(new Integer(element));
@@ -1374,29 +1378,28 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         try {
             this.fileinfo = fileInfo;
 
-            subjectTypeHolder = new Hashtable();
-            subjectEditorHolder = new Hashtable();
+            subjectTypeHolder = new Hashtable<Integer,Vector<Integer>>();
+            subjectEditorHolder = new Hashtable<Integer,JDialogEditor>();
             subjectModel = new ViewTableModel();
             subjectTable = new JTable(subjectModel);
             subjectTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             subjectTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-            scanTypeHolder = new Hashtable();
-            scanEditorHolder = new Hashtable();
+            scanTypeHolder = new Hashtable<Integer,Vector<Integer>>();
+            scanEditorHolder = new Hashtable<Integer,JDialogEditor>();
             scanModel = new ViewTableModel();
             scanTable = new JTable(scanModel);
             scanTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             scanTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-            investigatorTypeHolder = new Hashtable();
-            investigatorEditorHolder = new Hashtable();
+            investigatorTypeHolder = new Hashtable<Integer,Vector<Integer>>();
+            investigatorEditorHolder = new Hashtable<Integer,JDialogEditor>();
             investigatorModel = new ViewTableModel();
             investigatorTable = new JTable(investigatorModel);
             investigatorTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             investigatorTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-            tagTypeHolder = new Hashtable();
-            tagEditorHolder = new Hashtable();
+            tagTypeHolder = new Hashtable<Integer,Vector<Integer>>();
             tagModel = new ViewTableModel();
             sorter = new TableSorter(tagModel);
             tagTable = new JTable(sorter);
@@ -1488,10 +1491,10 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         scrollingBox.add(investigatorTable.getTableHeader());
         scrollingBox.add(investigatorTable);
 
-        final Enumeration e = fileInfo.getSurfaceKeys();
+        final Enumeration<String> e = fileInfo.getSurfaceKeys();
 
         while (e.hasMoreElements()) {
-            final String path = (String) e.nextElement();
+            final String path = e.nextElement();
             surfaces.addSurface(fileInfo.getSurface(path).getPath(), fileInfo.getSurface(path).getOpacity(), fileInfo
                     .getSurface(path).getDisplay());
         }
@@ -1663,7 +1666,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
      * 
      * @return true if both a tag with the tagkey existed in the list and the associated dialog was brought to front.
      */
-    private boolean bringToFront(final String tagKey, final Hashtable model) {
+    @SuppressWarnings("unused")
+    private boolean bringToFront(final String tagKey, final Hashtable<String,JDialogEditor> model) {
         JDialogEditor editor; // temporary tag editor dialog
 
         // list is empty
@@ -1840,6 +1844,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
              * 
              * @param e DOCUMENT ME!
              */
+            @SuppressWarnings("unused")
             public void mouseDragged(final MouseEvent e) {}
 
             /**
@@ -1877,9 +1882,6 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
      * deletable, so each set display must be stored in a hashtable for easy access/deletion.
      */
     public class SurfaceDisplay {
-
-        /** DOCUMENT ME! */
-        private String file;
 
         /** DOCUMENT ME! */
         private final JLabel surLabel;
@@ -1988,6 +1990,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
              * 
              * @param e DOCUMENT ME!
              */
+            @SuppressWarnings("unused")
             public void mouseDragged(final MouseEvent e) {}
 
             /**
