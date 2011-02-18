@@ -41,7 +41,7 @@ public class JDialogChangeMaskNumber extends JDialogBase {
     private JButton correspButton;
     
     /** this is the array list of the texts on the buttons */
-    private ArrayList btArrayList;
+    private ArrayList<Integer> btArrayList;
     
     /** this represents the current index of the btArrayList */
     private int currentMaskNumberIndex;
@@ -56,7 +56,7 @@ public class JDialogChangeMaskNumber extends JDialogBase {
     private ModelImage image;
     
     /** ref to IntensityLockVector **/
-    private Vector intensityLockVector;
+    private Vector<Integer> intensityLockVector;
     
     /** src button text number **/
     private int srcValue;
@@ -66,7 +66,7 @@ public class JDialogChangeMaskNumber extends JDialogBase {
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if(command.equals("change mask number")) {
-			for(Iterator iter = btArrayList.iterator();iter.hasNext();) {
+			for(Iterator<Integer> iter = btArrayList.iterator();iter.hasNext();) {
 				Integer num = (Integer)iter.next();
 				int numCheck = num.intValue();
 				try {
@@ -128,11 +128,11 @@ public class JDialogChangeMaskNumber extends JDialogBase {
 	
 
 	
-	public JDialogChangeMaskNumber(JButton theSrcButton, JButton theCorrespButton, ArrayList buttonTextArrayList, Color[] color, ModelLUT lutB, ModelImage image, int selected, Vector theIntensityLockVector) {
+	public JDialogChangeMaskNumber(JButton theSrcButton, JButton theCorrespButton, ArrayList<Integer> buttonTextArrayList, Color[] color, ModelLUT lutB, ModelImage image, int selected, Vector<Integer> theIntensityLockVector) {
 		init(theSrcButton,theCorrespButton,buttonTextArrayList,color,lutB,image,selected, theIntensityLockVector);
 	}
 	
-	public void init(JButton theSrcButton, JButton theCorrespButton, ArrayList buttonTextArrayList, Color[] color, ModelLUT lutB, ModelImage image, int selected, Vector theIntensityLockVector) {
+	public void init(JButton theSrcButton, JButton theCorrespButton, ArrayList<Integer> buttonTextArrayList, Color[] color, ModelLUT lutB, ModelImage image, int selected, Vector<Integer> theIntensityLockVector) {
 		
 		srcButton = theSrcButton;
 		srcValue = Integer.parseInt(srcButton.getText());
