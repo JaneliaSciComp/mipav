@@ -1665,8 +1665,8 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
         // ep_b and before #   2. If GE, then extract b-value from private tag 0043,1039....the b-value is the first
         // number in the string
 
-        Set ketSet = seriesFileInfoTreeMap.keySet();
-        Iterator iter = ketSet.iterator();
+        Set<Integer> ketSet = seriesFileInfoTreeMap.keySet();
+        Iterator<Integer> iter = ketSet.iterator();
 
         Preferences.debug(" - b-values :\n", Preferences.DEBUG_ALGORITHM);
 
