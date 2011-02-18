@@ -48,9 +48,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
     private int bin1;
 
     /** DOCUMENT ME! */
-    private boolean bin1Default;
-
-    /** DOCUMENT ME! */
     private JLabel bin1Label;
 
     /** DOCUMENT ME! */
@@ -58,9 +55,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
 
     /** DOCUMENT ME! */
     private int bin2;
-
-    /** DOCUMENT ME! */
-    private boolean bin2Default;
 
     /** DOCUMENT ME! */
     private JLabel bin2Label;
@@ -99,9 +93,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
     private int cost;
 
     /** DOCUMENT ME! */
-    private String directory = null;
-
-    /** DOCUMENT ME! */
     private boolean doColocWithThresholds = true;
 
     /** DOCUMENT ME! */
@@ -112,9 +103,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
 
     /** DOCUMENT ME! */
     private boolean entireImage = true;
-
-    /** DOCUMENT ME! */
-    private String fileName = null;
 
     /** DOCUMENT ME! */
     private ModelImage firstImage;
@@ -154,9 +142,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
 
     /** DOCUMENT ME! */
     private ModelImage maskImage = null;
-
-    /** DOCUMENT ME! */
-    private String maskName; // name of mask image
 
     /** DOCUMENT ME! */
     private JRadioButton maskRadio;
@@ -220,9 +205,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
 
     /** DOCUMENT ME! */
     private String secondName = null;
-
-    /** DOCUMENT ME! */
-    private String[] titles;
 
     /** DOCUMENT ME! */
     private int topPad = 20;
@@ -298,7 +280,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
      * @param  event  Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
-        int i;
         String command = event.getActionCommand();
 
         if (command.equals("OK")) {
@@ -590,28 +571,10 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
     /**
      * DOCUMENT ME!
      *
-     * @param  bin1Default  DOCUMENT ME!
-     */
-    public void setBin1Default(boolean bin1Default) {
-        this.bin1Default = bin1Default;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
      * @param  bin2  DOCUMENT ME!
      */
     public void setBin2(int bin2) {
         this.bin2 = bin2;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  bin2Default  DOCUMENT ME!
-     */
-    public void setBin2Default(boolean bin2Default) {
-        this.bin2Default = bin2Default;
     }
 
     /**
@@ -1016,7 +979,7 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
