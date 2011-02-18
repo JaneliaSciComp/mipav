@@ -2206,7 +2206,7 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
 
         if (imageA.getAnimateFrame() == null) {
 
-            dialogAnimate = new JDialogAnimate(this, destImage, LUTa, null, null, userInterface, false);
+            dialogAnimate = new JDialogAnimate(this, destImage, LUTa, null, null, false);
             dialogAnimate.animate();
             dialogAnimate.invokeSaveImgAs(5);
         }
