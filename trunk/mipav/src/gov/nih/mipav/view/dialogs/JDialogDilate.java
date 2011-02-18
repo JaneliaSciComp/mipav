@@ -2,7 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
@@ -10,7 +9,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.*;
-import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -243,7 +241,7 @@ public class JDialogDilate extends JDialogScriptableBase
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -285,7 +283,7 @@ public class JDialogDilate extends JDialogScriptableBase
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -327,7 +325,7 @@ public class JDialogDilate extends JDialogScriptableBase
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -370,7 +368,7 @@ public class JDialogDilate extends JDialogScriptableBase
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -412,7 +410,7 @@ public class JDialogDilate extends JDialogScriptableBase
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -454,7 +452,7 @@ public class JDialogDilate extends JDialogScriptableBase
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -699,7 +697,7 @@ public class JDialogDilate extends JDialogScriptableBase
                         // "locked - " image name so as to indicate that the image is now read/write locked!
                         // The image frames are disabled and then unregisted from the userinterface until the
                         // algorithm has completed.
-                        Vector imageFrames = image.getImageFrameVector();
+                        Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                         titles = new String[imageFrames.size()];
     
                         for (int i = 0; i < imageFrames.size(); i++) {
@@ -800,7 +798,7 @@ public class JDialogDilate extends JDialogScriptableBase
                         // "locked - " image name so as to indicate that the image is now read/write locked!
                         // The image frames are disabled and then unregisted from the userinterface until the
                         // algorithm has completed.
-                        Vector imageFrames = image.getImageFrameVector();
+                        Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                         titles = new String[imageFrames.size()];
     
                         for (int i = 0; i < imageFrames.size(); i++) {
@@ -915,7 +913,7 @@ public class JDialogDilate extends JDialogScriptableBase
                         // "locked - " image name so as to indicate that the image is now read/write locked!
                         // The image frames are disabled and then unregisted from the userinterface until the
                         // algorithm has completed.
-                        Vector imageFrames = image.getImageFrameVector();
+                        Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                         titles = new String[imageFrames.size()];
     
                         for (int i = 0; i < imageFrames.size(); i++) {
@@ -1021,7 +1019,7 @@ public class JDialogDilate extends JDialogScriptableBase
                         // "locked - " image name so as to indicate that the image is now read/write locked!
                         // The image frames are disabled and then unregisted from the userinterface until the
                         // algorithm has completed.
-                        Vector imageFrames = image.getImageFrameVector();
+                        Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                         titles = new String[imageFrames.size()];
     
                         for (int i = 0; i < imageFrames.size(); i++) {
@@ -1122,7 +1120,7 @@ public class JDialogDilate extends JDialogScriptableBase
                         // "locked - " image name so as to indicate that the image is now read/write locked!
                         // The image frames are disabled and then unregisted from the userinterface until the
                         // algorithm has completed.
-                        Vector imageFrames = image.getImageFrameVector();
+                        Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                         titles = new String[imageFrames.size()];
     
                         for (int i = 0; i < imageFrames.size(); i++) {
@@ -1237,7 +1235,7 @@ public class JDialogDilate extends JDialogScriptableBase
                         // "locked - " image name so as to indicate that the image is now read/write locked!
                         // The image frames are disabled and then unregisted from the userinterface until the
                         // algorithm has completed.
-                        Vector imageFrames = image.getImageFrameVector();
+                        Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                         titles = new String[imageFrames.size()];
     
                         for (int i = 0; i < imageFrames.size(); i++) {
