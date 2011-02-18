@@ -123,9 +123,6 @@ public class JDialogEditor extends JDialogBase {
     /** DOCUMENT ME! */
     private int row;
 
-    /** DOCUMENT ME! */
-    private Font serif12B = MipavUtil.font12B;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -348,8 +345,8 @@ public class JDialogEditor extends JDialogBase {
      *
      * @see     JPanelEdit#getCodedValue()
      */
-    public Vector getValue() {
-        Vector outputValues = new Vector(newValue.length);
+    public Vector<Object> getValue() {
+        Vector<Object> outputValues = new Vector<Object>(newValue.length);
 
         for (int i = 0; i < newValue.length; i++) {
             outputValues.add(i, newValue[i].getCodedValue());
