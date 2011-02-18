@@ -58,9 +58,6 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
     /** boolean determining if this is the system's data provenance, or an open image's */
     private boolean isSystem;
     
-    /** The name of the provenance (system or image name) */
-    private String name;
-    
     /** The path to the provenance file*/
     private String path;
     
@@ -75,7 +72,6 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
         pHolder.addProvenanceChangeListener(this);
         setResizable(true);
         
-        this.name = name;
         this.path = pth;
         
         this.isSystem = is_system;
@@ -126,7 +122,6 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
      * @param  title  Title of the dialog box.
      */
     private void init(String title) {
-        JPanel scrollPanel;
 
         Box scrollingBox = new Box(BoxLayout.Y_AXIS);
         
