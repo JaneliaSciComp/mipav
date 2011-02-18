@@ -51,8 +51,6 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
     
     private JLabel mainLabel2;
     
-    private JLabel mainLabel3;
-    
     private JLabel aLabel;
     
     private JLabel bLabel;
