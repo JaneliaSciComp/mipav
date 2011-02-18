@@ -260,9 +260,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
     /** DOCUMENT ME! */
     private boolean yRSelected = false;
-
-    /** DOCUMENT ME! */
-    private boolean zRSelected = false;
     
     private JLabel outOfBoundsLabel;
     
@@ -718,7 +715,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                     rotatePanel.remove(coarsePanelZ);
 
                     // rotatePanel.remove(finePanelZ);
-                    zRSelected = false;
                 } // else if zRSelected
 
                 xRSelected = true;
@@ -760,7 +756,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                     rotatePanel.remove(coarsePanelZ);
 
                     // rotatePanel.remove(finePanelZ);
-                    zRSelected = false;
                 } // else if zRSelected
 
                 xRSelected = true;
@@ -796,7 +791,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                     rotatePanel.remove(coarsePanelZ);
 
                     // rotatePanel.remove(finePanelZ);
-                    zRSelected = false;
                 } // else zRSelected
 
                 yRSelected = true;
@@ -836,7 +830,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                     return;
                 } // else zRSelected
 
-                zRSelected = true;
                 gbc.gridx = 0;
                 gbc.gridy = 2;
                 gbc.gridwidth = 1;
@@ -1631,7 +1624,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
@@ -2886,7 +2879,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             rotatePanel.remove(coarsePanelZ);
 
             // rotatePanel.remove(finePanelZ);
-            zRSelected = false;
         } // else if zRSelected
 
         xRSelected = true;
@@ -2936,7 +2928,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             rotatePanel.remove(coarsePanelZ);
 
             // rotatePanel.remove(finePanelZ);
-            zRSelected = false;
         } // else zRSelected
 
         yRSelected = true;
@@ -2990,7 +2981,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             return;
         } // else zRSelected
 
-        zRSelected = true;
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
