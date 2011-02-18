@@ -89,7 +89,7 @@ public class JDialogCaptureScreens extends JDialogBase {
      */
     private boolean writeImage() {
         int[] pixels;
-        int bufferSize, xDim, yDim;
+        int bufferSize;
         short[] buffer = null;
         int[] extents = new int[3];
         ModelImage testImage = null;
