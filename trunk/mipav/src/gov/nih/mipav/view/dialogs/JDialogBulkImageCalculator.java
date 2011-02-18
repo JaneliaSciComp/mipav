@@ -202,7 +202,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 	         		addImage = null;
 	 				return;
 	         	}
-	         	Vector rowData = new Vector();
+	         	Vector<String> rowData = new Vector<String>();
                 rowData.add(addImage.getImageName());
                 srcTableModel.addRow(rowData);
                 additionalImagesList.add(addImage);
@@ -364,7 +364,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         srcPanel.add(srcImagesScrollPane);
         
         //populate with images of like dimensionality that are open in MIPAV
-        Vector rowData = new Vector();
+        Vector<String> rowData = new Vector<String>();
         rowData.add(imageA.getImageName());
         srcTableModel.addRow(rowData);
         srcImagesList = new ArrayList<ModelImage>();
@@ -465,7 +465,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         // Add images from user interface that have the same exact dimensionality
         // Guaranteed to have at least one unique potential image B, because it's
@@ -489,7 +489,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
                         }
 
                         if ((sameDims == true) && (isColor == img.isColorImage())) {
-                            Vector rowData = new Vector();
+                            Vector<String> rowData = new Vector<String>();
                             rowData.add(img.getImageName());
                             srcTableModel.addRow(rowData);
                             srcImagesList.add(img);
