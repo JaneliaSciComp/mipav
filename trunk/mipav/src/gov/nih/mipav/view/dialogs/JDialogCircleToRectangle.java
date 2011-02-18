@@ -165,7 +165,6 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
      * @param  event  DOCUMENT ME!
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
     }
 
 
@@ -239,7 +238,7 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
         GridBagConstraints gbc4 = new GridBagConstraints();
         gbc4.gridwidth = 1;
         gbc4.gridheight = 1;
-        gbc4.anchor = gbc4.WEST;
+        gbc4.anchor = GridBagConstraints.WEST;
         gbc4.weightx = 1;
         gbc4.insets = new Insets(3, 3, 3, 3);
         gbc4.fill = GridBagConstraints.HORIZONTAL;
@@ -265,7 +264,7 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
 
         gbc6.gridwidth = 1;
         gbc6.gridheight = 1;
-        gbc6.anchor = gbc6.WEST;
+        gbc6.anchor = GridBagConstraints.WEST;
         gbc6.weightx = 1;
         gbc6.insets = new Insets(3, 3, 3, 3);
         gbc6.fill = GridBagConstraints.HORIZONTAL;
@@ -315,7 +314,7 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
      */
     private boolean setVariables() {
         int i;
-        Vector curves;
+        Vector<VOIBase> curves;
         int nPts;
         Vector3f[] pts = null;
 
