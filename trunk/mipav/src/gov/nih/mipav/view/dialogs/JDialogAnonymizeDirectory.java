@@ -289,11 +289,11 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             keyLog = newKeyLog(); // write in selected anonymize choices, create 'new' log-table.
 
             if (randTopButton.isSelected()) {
-                toplevelOnly = this.RANDOM_DIRECTORY_NAME;
+                toplevelOnly = JDialogAnonymizeDirectory.RANDOM_DIRECTORY_NAME;
             } else if (randChildButton.isSelected()) {
-                toplevelOnly = this.RANDOM_SUBDIRECTORY_NAME;
+                toplevelOnly = JDialogAnonymizeDirectory.RANDOM_SUBDIRECTORY_NAME;
             } else {
-                toplevelOnly = this.NO_RANDOM_NAMES;
+                toplevelOnly = JDialogAnonymizeDirectory.NO_RANDOM_NAMES;
             }
 
             AnonymizeDicomDirectories da = new AnonymizeDicomDirectories(s, imageDestDirectory, genericImageName,
@@ -1189,7 +1189,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
      * @return  the new KeyLog String.
      */
     private String newKeyLog() {
-        int i;
+        //int i;
         String kl = "";
         // kl ="#\tMIPAV will attempt to remove all of the following tags \n" +
         // "#\tfrom the images it processes.\n" +
@@ -1335,7 +1335,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         private ModelImage mi;
 
         /** DOCUMENT ME! */
-        private Vector notifierList;
+        private Vector<JTextArea> notifierList;
 
         /** DOCUMENT ME! */
         private String outputLog = "";
@@ -1420,7 +1420,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             try {
 
                 if (notifierList == null) {
-                    notifierList = new Vector();
+                    notifierList = new Vector<JTextArea>();
                 }
 
                 notifierList.add(jta);
@@ -1758,7 +1758,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
          * @param  destinationDirectory  DOCUMENT ME!
          */
         private void processMainDirectory(File sourceDirectory, File destinationDirectory) {
-            Vector childDirsVector = new Vector();
+            Vector<File> childDirsVector = new Vector<File>();
             File childDest;
             File[] filesHere = sourceDirectory.listFiles();
             int[] randomSuffixList = new int[filesHere.length];
@@ -1872,7 +1872,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
          */
         private void processSubDirectory(File destParentDirectory, File sourceParentDirectory) {
             File childDest;
-            Vector childDirsVector = new Vector();
+            Vector<File> childDirsVector = new Vector<File>();
             File[] filesHere = sourceParentDirectory.listFiles();
             int[] randomSuffixList = new int[filesHere.length];
             int numberSuffices = 0;
