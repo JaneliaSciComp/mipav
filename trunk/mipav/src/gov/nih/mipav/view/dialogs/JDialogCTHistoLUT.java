@@ -61,7 +61,7 @@ public class JDialogCTHistoLUT extends JDialogBase implements ItemListener {
     private int origNPts;
 
     /** x, y, z arrays of the LUT transfer function. */
-    private float[] origX, origY, origZ;
+    private float[] origX, origY;
 
     /** Preset radio buttons. */
     private JRadioButton radioAbdomen;
