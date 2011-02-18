@@ -13,7 +13,6 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.text.DecimalFormat;
 import java.util.*;
 
 import javax.swing.*;
@@ -78,6 +77,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     private int m_iWeights = 0;
 
     /** Slice thickness read from .list file */
+    @SuppressWarnings("unused")
     private float m_fResX = 1f, m_fResY = 1f, m_fResZ = 1f;
 
 
@@ -414,7 +414,6 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 currDir = chooser.getSelectedFile().getAbsolutePath();
-                final boolean success = readBValGradientFile(chooser.getSelectedFile().getAbsolutePath());
 
             }
 
@@ -816,8 +815,6 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                     }
 
                     if (isMultifile) {
-                        final String firstImageSliceAbsPath = srcImage.getFileInfo(0).getFileDirectory()
-                                + srcImage.getFileInfo(0).getFileName();
                         final String firstImageSliceName = srcImage.getFileInfo(0).getFileName();
                         final ArrayList<String> slicesArrayList = new ArrayList<String>();
                         for (int i = 0; i < numSlices; i++) {
@@ -829,7 +826,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                         slicesVector.add(slicesArrayList);
 
                         // we will display the full path
-                        final Vector rowData = new Vector();
+                        final Vector<String> rowData = new Vector<String>();
                         rowData.add(firstImageSliceName + " - multifile");
                         rowData.add("");
                         rowData.add("");
@@ -852,7 +849,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                         }
                         slicesVector.add(slicesArrayList);
 
-                        final Vector rowData = new Vector();
+                        final Vector<String> rowData = new Vector<String>();
                         rowData.add(imageName);
                         rowData.add("");
                         rowData.add("");
@@ -894,7 +891,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 
                         slicesVector.add(slicesArrayList);
 
-                        final Vector rowData = new Vector();
+                        final Vector<String> rowData = new Vector<String>();
                         rowData.add(imageName + "_vol_" + i);
                         rowData.add("");
                         rowData.add("");
@@ -1097,7 +1094,6 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             final File bMatrixFile = new File(outputDirTextField.getText() + File.separator + "dti.BMTXT");
             final FileOutputStream outputStream = new FileOutputStream(bMatrixFile);
             final PrintStream printStream = new PrintStream(outputStream);
-            final DecimalFormat decFormat = new DecimalFormat("%16f");
 
             final int numRows = srcTableModel.getRowCount();
             // formula for bmtxt values is :
@@ -1246,7 +1242,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             final PrintStream printStream = new PrintStream(outputStream);
 
             for (int i = 0; i < numSlicesPer3DVolume; i++) {
-                final Iterator iter = slicesVector.iterator();
+                final Iterator<ArrayList<String>> iter = slicesVector.iterator();
                 while (iter.hasNext()) {
                     final ArrayList<String> slicesList = (ArrayList<String>) iter.next();
                     final String path = (String) slicesList.get(i);
