@@ -35,7 +35,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
     private boolean convert4Dto3D = false;
 
     /** DOCUMENT ME! */
-    private Vector extractList = null; // the list of slices to extract
+    private Vector<String> extractList = null; // the list of slices to extract
 
     /** DOCUMENT ME! */
     private AlgorithmExtractSlices extractSlicesAlgo;
@@ -60,7 +60,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
      * @param  image           source image
      * @param  eList           DOCUMENT ME!
      */
-    public JDialogExtractSlices(Frame theParentFrame, ModelImage image, Vector eList) {
+    public JDialogExtractSlices(Frame theParentFrame, ModelImage image, Vector<String> eList) {
         super(theParentFrame, false);
 
         srcImage = image;
@@ -340,7 +340,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
 
         convert4Dto3D = scriptParameters.getParams().getBoolean("do_convert_4D_to_3D");
 
-        extractList = new Vector();
+        extractList = new Vector<String>();
 
         int[] slices = scriptParameters.getParams().getList("slices").getAsIntArray();
 
