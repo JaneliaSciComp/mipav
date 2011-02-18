@@ -42,7 +42,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     private JLabel labelColumnNumber, labelRowNumber;
 
     /** DOCUMENT ME! */
-    private Hashtable labelTable, labelTable2;
+    private Hashtable<Integer,JLabel> labelTable, labelTable2;
 
     /** DOCUMENT ME! */
     private int maxColumn;
@@ -151,12 +151,12 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
                 labelRowNumber.setEnabled(true);
                 labelColumnNumber.setEnabled(true);
 
-                for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                    ((JLabel) en.nextElement()).setEnabled(true);
+                for (Enumeration<JLabel> en = slider.getLabelTable().elements(); en.hasMoreElements();) {
+                    (en.nextElement()).setEnabled(true);
                 }
 
-                for (Enumeration en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
-                    ((JLabel) en.nextElement()).setEnabled(true);
+                for (Enumeration<JLabel> en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
+                    (en.nextElement()).setEnabled(true);
                 }
             } else {
                 slider.setEnabled(false);
@@ -164,12 +164,12 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
                 labelRowNumber.setEnabled(false);
                 labelColumnNumber.setEnabled(false);
 
-                for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                    ((JLabel) en.nextElement()).setEnabled(false);
+                for (Enumeration<JLabel> en = slider.getLabelTable().elements(); en.hasMoreElements();) {
+                    (en.nextElement()).setEnabled(false);
                 }
 
-                for (Enumeration en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
-                    ((JLabel) en.nextElement()).setEnabled(false);
+                for (Enumeration<JLabel> en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
+                    (en.nextElement()).setEnabled(false);
                 }
             }
         }
@@ -233,7 +233,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         slider.setPaintTicks(true);
         slider.addChangeListener(this);
         slider.setVisible(true);
-        labelTable = new Hashtable();
+        labelTable = new Hashtable<Integer,JLabel>();
         labelTable.put(new Integer(2), createLabel("2"));
         labelTable.put(new Integer(maxRow), createLabel(String.valueOf(maxRow)));
         slider.setLabelTable(labelTable);
@@ -264,7 +264,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         slider2.setPaintTicks(true);
         slider2.addChangeListener(this);
         slider2.setVisible(true);
-        labelTable2 = new Hashtable();
+        labelTable2 = new Hashtable<Integer,JLabel>();
         labelTable2.put(new Integer(2), createLabel("2"));
         labelTable2.put(new Integer(maxColumn), createLabel(String.valueOf(maxColumn)));
         slider2.setLabelTable(labelTable2);
