@@ -49,9 +49,6 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
     private JButton edit;
 
     /** DOCUMENT ME! */
-    private JDialogEditor editorDialog;
-
-    /** DOCUMENT ME! */
     private Hashtable editorDialogTable;
 
     /** DOCUMENT ME! */
@@ -61,16 +58,14 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
     private final ModelImage image;
 
     /** DOCUMENT ME! */
-    private ListSelectionModel listSelector;
-
-    /** DOCUMENT ME! */
     private ViewTableModel primaryModel;
 
     /** DOCUMENT ME! */
     private JTable primaryTable;
 
     /** tpe holds the type of editor to be used; editor holds the editor dialog. */
-    private final Hashtable primaryTypeHolder, primaryEditorHolder;
+    private final Hashtable<Integer,Vector<Integer>> primaryTypeHolder;
+    private final Hashtable<Integer,JDialogEditor> primaryEditorHolder;
 
     /** DOCUMENT ME! */
     private JScrollPane scrollPane;
@@ -82,10 +77,8 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
     private JTable secondaryTable;
 
     /** DOCUMENT ME! */
-    private final Hashtable secondaryTypeHolder, secondaryEditorHolder;
-
-    /** DOCUMENT ME! */
-    private int selectedRow;
+    private final Hashtable<Integer,Vector<Integer>> secondaryTypeHolder;
+    private final Hashtable<Integer,JDialogEditor> secondaryEditorHolder;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -109,10 +102,10 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
         }
 
         image = img;
-        primaryTypeHolder = new Hashtable(); // all editable lines in primary, keyed by location in Jtable
-        secondaryTypeHolder = new Hashtable(); // all editable lines in secondary, keyed by location in Jtable
-        primaryEditorHolder = new Hashtable(); // all editable lines in primary, keyed by location in Jtable
-        secondaryEditorHolder = new Hashtable(); // all editable lines in secondary, keyed by location in Jtable
+        primaryTypeHolder = new Hashtable<Integer,Vector<Integer>>(); // all editable lines in primary, keyed by location in Jtable
+        secondaryTypeHolder = new Hashtable<Integer,Vector<Integer>>(); // all editable lines in secondary, keyed by location in Jtable
+        primaryEditorHolder = new Hashtable<Integer,JDialogEditor>(); // all editable lines in primary, keyed by location in Jtable
+        secondaryEditorHolder = new Hashtable<Integer,JDialogEditor>(); // all editable lines in secondary, keyed by location in Jtable
     }
 
     // ~ Methods
@@ -168,8 +161,8 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
         if (e.getActionCommand().equals("Close")) { // close
 
             // clear out the editor dialog boxes
-            for (final Enumeration en = editorDialogTable.elements(); en.hasMoreElements();) {
-                editor = (JDialogEditor) en.nextElement();
+            for (final Enumeration<JDialogEditor> en = editorDialogTable.elements(); en.hasMoreElements();) {
+                editor = en.nextElement();
                 editor.dispose();
             }
 
@@ -181,7 +174,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
             int[] rows;
             int i = 0;
             Object obj;
-            Vector objs;
+            Vector<Integer> objs;
 
             // go thruough primary table, editing highlighted (selected ) rows
             rows = primaryTable.getSelectedRows();
@@ -200,7 +193,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                     if (obj != null) {
                         ((JDialogEditor) (obj)).toFront();
                     } else {
-                        objs = (Vector) primaryTypeHolder.get(named);
+                        objs = primaryTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
                         // foresee
@@ -234,7 +227,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                                 ed = (JDialogEditor) e.getSource();
 
                                 final Integer edID = (Integer) ed.getKey();
-                                Vector changed = new Vector(5);
+                                Vector<Object> changed = new Vector<Object>(5);
                                 changed.add(0, new Integer(1)); // table
                                 changed.add(1, edID); // line
                                 changed.add(2, primaryModel.getValueAt(edID.intValue(), 0));
@@ -293,7 +286,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                     if (obj != null) {
                         ((JDialogEditor) (obj)).toFront();
                     } else {
-                        objs = (Vector) secondaryTypeHolder.get(named);
+                        objs = (Vector<Integer>) secondaryTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
                         // foresee
@@ -330,7 +323,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                                 ed = (JDialogEditor) e.getSource();
 
                                 final Integer edID = (Integer) ed.getKey();
-                                Vector changed = new Vector(4);
+                                Vector<Object> changed = new Vector<Object>(4);
                                 changed.add(0, new Integer(1)); // table
                                 changed.add(1, edID); // line
                                 changed.add(2, secondaryModel.getValueAt(edID.intValue(), 0));
@@ -431,7 +424,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
         final String[] rose = {name, value};
         primaryModel.addRow(rose);
 
-        final Vector editorInts = new Vector();
+        final Vector<Integer> editorInts = new Vector<Integer>();
 
         for (final int element : editor) { // set the list of editors to use
             editorInts.addElement(new Integer(element));
@@ -498,7 +491,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
         final String[] rose = {name, value};
         secondaryModel.addRow(rose);
 
-        final Vector editorInts = new Vector();
+        final Vector<Integer> editorInts = new Vector<Integer>();
 
         for (final int element : editor) { // set the list of editors to use
             editorInts.addElement(new Integer(element));
@@ -643,7 +636,8 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
      * 
      * @return true if both a tag with the tagkey existed in the list and the associated dialog was brought to front.
      */
-    private boolean bringToFront(final String tagKey, final Hashtable model) {
+    @SuppressWarnings("unused")
+    private boolean bringToFront(final String tagKey, final Hashtable<String,JDialogEditor> model) {
         JDialogEditor editor; // temporary tag editor dialog
 
         // list is empty
