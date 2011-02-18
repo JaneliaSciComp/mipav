@@ -49,7 +49,7 @@ public class JDialogAnimate extends JDialogBase {
     private ViewJColorChooser colorChooser = null;
 
     /** DOCUMENT ME! */
-    private JComboBox comboBoxImage, comboBoxInterp;
+    private JComboBox comboBoxInterp;
 
     /** DOCUMENT ME! */
     private ViewJFrameBase controlFrame = null;
@@ -108,9 +108,6 @@ public class JDialogAnimate extends JDialogBase {
     /** DOCUMENT ME! */
     private boolean showFrameBorder = true; // tells whether or not to show borders around
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface ui = null;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -121,18 +118,15 @@ public class JDialogAnimate extends JDialogBase {
      * @param  LUTa            Look up table for image A.
      * @param  _imageB         Source image B.
      * @param  LUTb            Look up table for image B.
-     * @param  ui              User interface.
      */
-    public JDialogAnimate(Frame theParentFrame, ModelImage _imageA, ModelLUT LUTa, ModelImage _imageB, ModelLUT LUTb,
-                          ViewUserInterface ui) {
+    public JDialogAnimate(Frame theParentFrame, ModelImage _imageA, ModelLUT LUTa, ModelImage _imageB, ModelLUT LUTb) {
         super(theParentFrame, false);
         this.LUTa = LUTa;
         this.LUTb = LUTb;
-        this.ui = ui;
         imageA = _imageA;
         imageB = _imageB;
 
-        Vector frameList = imageA.getImageFrameVector();
+        Vector<ViewImageUpdateInterface> frameList = imageA.getImageFrameVector();
 
         for (int i = 0; i < frameList.size(); i++) {
 
@@ -166,15 +160,13 @@ public class JDialogAnimate extends JDialogBase {
      * @param  LUTa            Look up table for image A.
      * @param  _imageB         Source image B.
      * @param  LUTb            Look up table for image B.
-     * @param  ui              User interface.
      * @param  _isVisible      DOCUMENT ME!
      */
     public JDialogAnimate(Frame theParentFrame, ModelImage _imageA, ModelLUT LUTa, ModelImage _imageB, ModelLUT LUTb,
-                          ViewUserInterface ui, boolean _isVisible) {
+                          boolean _isVisible) {
         super(theParentFrame, false);
         this.LUTa = LUTa;
         this.LUTb = LUTb;
-        this.ui = ui;
         imageA = _imageA;
         imageB = _imageB;
 
