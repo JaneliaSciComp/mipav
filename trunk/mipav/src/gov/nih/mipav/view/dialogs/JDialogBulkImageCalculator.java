@@ -64,10 +64,10 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
     private JTable srcImagesTable;
     
     /** list of images to send to algorithm **/
-    private ArrayList srcImagesList;
+    private ArrayList<ModelImage> srcImagesList;
     
     /** list of any additional images browsed to  **/
-    private ArrayList additionalImagesList = new ArrayList();;
+    private ArrayList<ModelImage> additionalImagesList = new ArrayList<ModelImage>();
     
     /** clip radio button **/
     //private JRadioButton radioClip;
@@ -367,7 +367,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         Vector rowData = new Vector();
         rowData.add(imageA.getImageName());
         srcTableModel.addRow(rowData);
-        srcImagesList = new ArrayList();
+        srcImagesList = new ArrayList<ModelImage>();
         srcImagesList.add(imageA);
         populateImagesTable();
         
@@ -509,7 +509,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 	 */
 	protected void setGUIFromParams() {
 		imageA = scriptParameters.retrieveInputImage(1);
-		srcImagesList = new ArrayList();
+		srcImagesList = new ArrayList<ModelImage>();
 		srcImagesList.add(imageA);
 		isColor = imageA.isColorImage();
 		int size = scriptParameters.getParams().getInt("size");

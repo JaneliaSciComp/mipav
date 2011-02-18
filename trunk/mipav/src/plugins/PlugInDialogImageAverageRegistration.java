@@ -102,7 +102,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
     private boolean saveResultImage;
 
     /** List of Source filenames. */
-    private ArrayList srcFilenamesArrList = new ArrayList();
+    private ArrayList<String> srcFilenamesArrList = new ArrayList<String>();
 
     /** array to store the srcImage files. */
     private File[] srcFiles;

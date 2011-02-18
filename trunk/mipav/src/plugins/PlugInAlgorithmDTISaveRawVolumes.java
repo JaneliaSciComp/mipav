@@ -84,7 +84,7 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 	private int[] sliceExtents,volExtents;
 	
 	/** array list of path strings **/
-	private ArrayList pathsAL;
+	private ArrayList<String> pathsAL;
 	
 	
 	/**
@@ -234,7 +234,7 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 		}
 
 		
-		pathsAL = new ArrayList(Arrays.asList(paths));
+		pathsAL = new ArrayList<String>(Arrays.asList(paths));
 		
 		return true;
 	}

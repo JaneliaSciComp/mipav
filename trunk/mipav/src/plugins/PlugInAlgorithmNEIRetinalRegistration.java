@@ -57,7 +57,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     private ModelImage reference;
     
     /** Array holding nonRegistered Images **/
-    private ArrayList notReg = new ArrayList();
+    private ArrayList<String> notReg = new ArrayList<String>();
     
     /** Cost of current images **/
     private double currCost; //alert
@@ -189,7 +189,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     @Override
     public void runAlgorithm() {
         
-        ArrayList imgLoc1= new ArrayList(), imgLoc2 = new ArrayList();
+        ArrayList<String> imgLoc1= new ArrayList<String>(), imgLoc2 = new ArrayList<String>();
         File  f1 = new File(imagePath1);
         File  f2 = new File(imagePath2);   
         
