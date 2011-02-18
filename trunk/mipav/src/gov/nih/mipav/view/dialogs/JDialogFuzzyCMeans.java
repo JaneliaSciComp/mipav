@@ -2,8 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileInfoNIFTI;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -12,8 +10,6 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 
 import javax.swing.*;
 
@@ -84,22 +80,13 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
     private JLabel labelExpo;
 
     /** DOCUMENT ME! */
-    private JLabel labelJacobi;
-
-    /** DOCUMENT ME! */
     private JLabel labelMaxIter;
 
     /** DOCUMENT ME! */
     private JLabel labelNClasses;
 
     /** DOCUMENT ME! */
-    private JLabel labelNPyramid;
-
-    /** DOCUMENT ME! */
     private JLabel labelSignal;
-
-    /** DOCUMENT ME! */
-    private JLabel labelSmooth;
 
     /** DOCUMENT ME! */
     private int maxIter;
@@ -159,22 +146,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
     private JTextField textNClasses;
 
     /** DOCUMENT ME! */
-    private JTextField textNPyramid;
-
-    /** DOCUMENT ME! */
-    private JTextField textOneJacobiIter;
-
-    /** DOCUMENT ME! */
-    private JTextField textOneSmooth;
-
-    /** DOCUMENT ME! */
     private JTextField textSignal;
-
-    /** DOCUMENT ME! */
-    private JTextField textTwoJacobiIter;
-
-    /** DOCUMENT ME! */
-    private JTextField textTwoSmooth;
 
     /** DOCUMENT ME! */
     private float threshold;
@@ -403,7 +375,6 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
      */
     protected void callAlgorithm() {
         int i;
-        String name = makeImageName(image.getImageName(), "_FCmeans");
 
         // Calculate the number of result images.
         resultNumber = 0;
