@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -253,7 +254,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 
 				resultImage = null;
 
-				Vector imageFrames = image.getImageFrameVector();
+				Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
 				for (int i = 0; i < imageFrames.size(); i++) {
 					((Frame) (imageFrames.elementAt(i))).setEnabled(true);
@@ -632,7 +633,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		resXUnit = image.getFileInfo(0).getUnitsOfMeasure(0);
 
 		JLabel labelLowerXmm = new JLabel("Xmin ("
-				+ FileInfoBase.getUnitsOfMeasureAbbrevStr(resXUnit) + ") ",
+				+ Unit.getUnitFromLegacyNum(resXUnit).getAbbrev() + ") ",
 				JLabel.RIGHT);
 		labelLowerXmm.setForeground(Color.black);
 		labelLowerXmm.setFont(serif12);
@@ -648,7 +649,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		resYUnit = image.getFileInfo(0).getUnitsOfMeasure(1);
 
 		JLabel labelLowerYmm = new JLabel("Ymin ("
-				+ FileInfoBase.getUnitsOfMeasureAbbrevStr(resYUnit) + ") ",
+				+ Unit.getUnitFromLegacyNum(resYUnit).getAbbrev() + ") ",
 				JLabel.RIGHT);
 		labelLowerYmm.setForeground(Color.black);
 		labelLowerYmm.setFont(serif12);
@@ -662,7 +663,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		coordinatesPanel.add(textLowerYmm);
 
 		JLabel labelLowerZmm = new JLabel("Zmin ("
-				+ FileInfoBase.getUnitsOfMeasureAbbrevStr(resYUnit) + ") ",
+				+ Unit.getUnitFromLegacyNum(resYUnit).getAbbrev() + ") ",
 				JLabel.RIGHT);
 		labelLowerZmm.setForeground(Color.black);
 		labelLowerZmm.setFont(serif12);
