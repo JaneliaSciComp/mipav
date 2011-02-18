@@ -37,9 +37,6 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
     private int bin1;
 
     /** DOCUMENT ME! */
-    private boolean bin1Default;
-
-    /** DOCUMENT ME! */
     private JLabel bin1Label;
 
     /** DOCUMENT ME! */
@@ -47,9 +44,6 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
 
     /** DOCUMENT ME! */
     private int bin2;
-
-    /** DOCUMENT ME! */
-    private boolean bin2Default;
 
     /** DOCUMENT ME! */
     private JLabel bin2Label;
@@ -197,9 +191,6 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
 
     /** DOCUMENT ME! */
     private JTextField threshold2Text;
-
-    /** DOCUMENT ME! */
-    private String[] titles;
 
     /** DOCUMENT ME! */
     private int topPad = 40;
@@ -572,28 +563,10 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
     /**
      * DOCUMENT ME!
      *
-     * @param  bin1Default  DOCUMENT ME!
-     */
-    public void setBin1Default(boolean bin1Default) {
-        this.bin1Default = bin1Default;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
      * @param  bin2  DOCUMENT ME!
      */
     public void setBin2(int bin2) {
         this.bin2 = bin2;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  bin2Default  DOCUMENT ME!
-     */
-    public void setBin2Default(boolean bin2Default) {
-        this.bin2Default = bin2Default;
     }
 
     /**
@@ -888,7 +861,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
