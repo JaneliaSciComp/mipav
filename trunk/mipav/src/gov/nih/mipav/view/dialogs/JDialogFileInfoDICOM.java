@@ -45,7 +45,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     private JDialogDICOMTagEditor editorDialogDicom;
 
     /** DOCUMENT ME! */
-    private Vector editorDialogDicomList;
+    private Vector<JDialogDICOMTagEditor> editorDialogDicomList;
 
     /** DOCUMENT ME! */
     private ModelImage imageA;
@@ -141,12 +141,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
      * @param show boolean that indicates whether or not to show private tags
      */
     public static void showTags(final ViewTableModel tagsModel, final FileInfoDicom DicomInfo, final boolean show) {
-        Enumeration e;
+        Enumeration <FileDicomKey>e;
         String name;
         FileDicomKey key;
         String[] tags = null;
         final Object[] rowData = {new Boolean(false), "", "", ""};
-        final Hashtable tagsList = DicomInfo.getTagTable().getTagList();
+        final Hashtable<FileDicomKey,FileDicomTag> tagsList = DicomInfo.getTagTable().getTagList();
 
         // check preferences to see if any dicom tags were selected for saving
         final String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
@@ -159,7 +159,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         int ii;
 
         for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
-            key = (FileDicomKey) e.nextElement();
+            key = e.nextElement();
             
             name = key.getKey();
 
@@ -211,15 +211,15 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         }
                     } else if (vr.equals("SQ")) {
                         final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
-                        final Vector display = sq.getSequenceDisplay();
+                        final Vector<String> display = sq.getSequenceDisplay();
 
                         rowData[3] = "";
 
-                        for (final Enumeration f = display.elements(); f.hasMoreElements();) {
+                        for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
                             if (JDialogFileInfoDICOM.addRow(rowData, show)) {
                                 tagsModel.addRow(rowData);
 
-                                final StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+                                final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
 
                                 rowData[2] = st.nextToken();
 
@@ -498,15 +498,15 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
-                    final Vector display = sq.getSequenceDisplay();
+                    final Vector<String> display = sq.getSequenceDisplay();
 
                     rowData[3] = "";
 
-                    for (final Enumeration f = display.elements(); f.hasMoreElements();) {
+                    for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
                         if (JDialogFileInfoDICOM.addRow(rowData, show)) {
                             tagsModel.addRow(rowData);
 
-                           StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+                           StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
 
                             rowData[2] = st.nextToken();
 
@@ -582,12 +582,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
      */
     public static void showTagsNoCheckbox(final ViewTableModel tagsModel, final FileInfoDicom DicomInfo,
             final boolean show) {
-        Enumeration e;
+        Enumeration<FileDicomKey> e;
         String name;
+        @SuppressWarnings("unused")
+        String [] tags = null;
         FileDicomKey key;
-        String[] tags = null;
         final Object[] rowData = {"", "", ""};
-        final Hashtable tagsList = DicomInfo.getTagTable().getTagList();
+        final Hashtable<FileDicomKey,FileDicomTag> tagsList = DicomInfo.getTagTable().getTagList();
 
         // check preferences to see if any dicom tags were selected for saving
         final String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
@@ -640,15 +641,15 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         }
                     } else if (vr.equals("SQ")) {
                         final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
-                        final Vector display = sq.getSequenceDisplay();
+                        final Vector<String> display = sq.getSequenceDisplay();
 
                         rowData[2] = "";
 
-                        for (final Enumeration f = display.elements(); f.hasMoreElements();) {
+                        for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
                             if (JDialogFileInfoDICOM.addRow(rowData, show)) {
                                 tagsModel.addRow(rowData);
 
-                                final StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+                                final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
 
                                 rowData[1] = st.nextToken();
 
@@ -917,15 +918,15 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
-                    final Vector display = sq.getSequenceDisplay();
+                    final Vector<String> display = sq.getSequenceDisplay();
 
                     rowData[2] = "";
 
-                    for (final Enumeration f = display.elements(); f.hasMoreElements();) {
+                    for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
                         if (JDialogFileInfoDICOM.addRow(rowData, show)) {
                             tagsModel.addRow(rowData);
 
-                            final StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+                            final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
 
                             rowData[1] = st.nextToken();
 
@@ -994,6 +995,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         Iterator<String> e;
         String name;
         String key;
+        @SuppressWarnings("unused")
         String[] tags = null;
         final Object[] rowData = {"", "", ""};
         final TreeMap<String, FileDicomTag> tagsList = DicomInfo.getDataSet();
@@ -1049,15 +1051,15 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         }
                     } else if (vr.equals("SQ")) {
                         final FileDicomSQ sq = (FileDicomSQ) (tagsList.get(key)).getValue(true);
-                        final Vector display = sq.getSequenceDisplay();
+                        final Vector<String> display = sq.getSequenceDisplay();
 
                         rowData[2] = "";
 
-                        for (final Enumeration f = display.elements(); f.hasMoreElements();) {
+                        for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
                             if (JDialogFileInfoDICOM.addRow(rowData, show)) {
                                 tagsModel.addRow(rowData);
 
-                                final StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+                                final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
 
                                 rowData[1] = st.nextToken();
 
@@ -1182,15 +1184,15 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) (tagsList.get(key)).getValue(true);
-                    final Vector display = sq.getSequenceDisplay();
+                    final Vector<String> display = sq.getSequenceDisplay();
 
                     rowData[2] = "";
 
-                    for (final Enumeration f = display.elements(); f.hasMoreElements();) {
+                    for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
                         if (JDialogFileInfoDICOM.addRow(rowData, show)) {
                             tagsModel.addRow(rowData);
 
-                            final StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+                            final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
 
                             rowData[1] = st.nextToken();
 
@@ -1397,7 +1399,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             // so we don't need to remember the dialog.
             // now that dialog has finished,
             // tell any other objects that care that there are new data (ie, a new name) & update
-            final Vector imageFrames = imageA.getImageFrameVector();
+            final Vector<ViewImageUpdateInterface> imageFrames = imageA.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle();
@@ -1532,7 +1534,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
                                         // tell any other objects that care that there are new data
                                         // (ie, a new name) & update
-                                        final Vector imageFrames = imageA.getImageFrameVector();
+                                        final Vector<ViewImageUpdateInterface> imageFrames = imageA.getImageFrameVector();
 
                                         for (i = 0; i < imageFrames.size(); i++) {
                                             ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle();
@@ -1661,7 +1663,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             };
             tagsTable = new JTable(tagsModel);
 
-            editorDialogDicomList = new Vector(); // Vector to hold editing dialogs
+            editorDialogDicomList = new Vector<JDialogDICOMTagEditor>(); // Vector to hold editing dialogs
         } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("JDialogFileInfoDICOM reports: Out of memory!");
 
@@ -2244,6 +2246,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
          * 
          * @param e DOCUMENT ME!
          */
+        @SuppressWarnings("unused")
         public void mouseDragged(final MouseEvent e) {}
 
         /**
@@ -2441,6 +2444,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             }
         }
 
+        @SuppressWarnings("unused")
         public Component getComponent() {
             return cellEditor.getComponent();
         }
@@ -2469,10 +2473,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             cellEditor.removeCellEditorListener(l);
         }
 
+        @SuppressWarnings("unused")
         public void setClickCountToStart(final int n) {
             cellEditor.setClickCountToStart(n);
         }
 
+        @SuppressWarnings("unused")
         public int getClickCountToStart() {
             return cellEditor.getClickCountToStart();
         }
