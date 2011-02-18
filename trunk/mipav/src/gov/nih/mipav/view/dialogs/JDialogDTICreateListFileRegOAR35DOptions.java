@@ -2,9 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
-import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewUserInterface;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -92,9 +90,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
     /** DOCUMENT ME! */
     private boolean ySelected = false;
     
-    /** DOCUMENT ME! */
-    private boolean zSelected = false;
-    
     private JPanel rotatePanel;
 
 
@@ -140,14 +135,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
     private JCheckBox minMaxCheckbox;
 
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-
-    /** DOCUMENT ME! */
-    private boolean useOutsideReferenceVolume = false;
-
-
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -162,7 +149,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
      */
     public JDialogDTICreateListFileRegOAR35DOptions(boolean isDICOM) {
     	super(true);
-        UI = ViewUserInterface.getReference();
         this.isDICOM = isDICOM;
         init();
     }
@@ -283,7 +269,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
                     rotatePanel.remove(rotateRangePanelZ);
                     rotatePanel.remove(coarsePanelZ);
                     rotatePanel.remove(finePanelZ);
-                    zSelected = false;
                 } // else if zSelected
 
                 xSelected = true;
@@ -323,7 +308,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
                     rotatePanel.remove(rotateRangePanelZ);
                     rotatePanel.remove(coarsePanelZ);
                     rotatePanel.remove(finePanelZ);
-                    zSelected = false;
                 } // else if zSelected
 
                 xSelected = true;
@@ -357,7 +341,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
                     rotatePanel.remove(rotateRangePanelZ);
                     rotatePanel.remove(coarsePanelZ);
                     rotatePanel.remove(finePanelZ);
-                    zSelected = false;
                 } // else zSelected
 
                 ySelected = true;
@@ -395,7 +378,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
                     return;
                 } // else zSelected
 
-                zSelected = true;
                 gbc.gridx = 0;
                 gbc.gridy = 2;
                 gbc.gridwidth = 1;
@@ -1211,7 +1193,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
      * @return  <code>true</code> if the variables are properly set, <code>false</code> otherwise.
      */
     public boolean setVariables() {
-        int i;
         
         switch (comboBoxCostFunct.getSelectedIndex()) {
 
@@ -1721,7 +1702,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
             rotatePanel.remove(rotateRangePanelZ);
             rotatePanel.remove(coarsePanelZ);
             rotatePanel.remove(finePanelZ);
-            zSelected = false;
         } // else if zSelected
 
         xSelected = true;
@@ -1768,7 +1748,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
             rotatePanel.remove(rotateRangePanelZ);
             rotatePanel.remove(coarsePanelZ);
             rotatePanel.remove(finePanelZ);
-            zSelected = false;
         } // else zSelected
 
         ySelected = true;
@@ -1819,7 +1798,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
             return;
         } // else zSelected
 
-        zSelected = true;
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
