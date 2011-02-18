@@ -1,7 +1,5 @@
 package gov.nih.mipav.view.dialogs;
 
-
-import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -17,8 +15,6 @@ import java.io.IOException;
 import java.util.BitSet;
 
 import javax.swing.*;
-
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 public class JDialogEvolveBoundaryManual extends JDialogBase {
@@ -50,22 +46,7 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
     private float scaleX = 0;
 
     /** DOCUMENT ME! */
-    private float scaleY = 0;
-
-    /** DOCUMENT ME! */
-    private float scaleZ = 0;
-
-    /** DOCUMENT ME! */
-    private JRadioButton singleSlice;
-
-    /** DOCUMENT ME! */
     private VOI srcVOI;
-
-    /** DOCUMENT ME! */
-    private String[] titles;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
     private Color voiColor;
@@ -83,7 +64,6 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
      */
     public JDialogEvolveBoundaryManual(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        userInterface = ViewUserInterface.getReference();
         VOIs = im.getVOIs();
 
         int nVOI;
@@ -188,7 +168,7 @@ public class JDialogEvolveBoundaryManual extends JDialogBase {
      * @param  event  Event that cause the method to fire
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+        
     }
     
     private void evolveContour ( VOIBase srcContour )
