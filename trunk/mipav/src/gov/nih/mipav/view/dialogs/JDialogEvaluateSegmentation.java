@@ -181,7 +181,7 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
             // These next lines set the titles in all frames where the source image is displayed to
             // image name so as to indicate that the image is now unlocked!
             // The image frames are enabled and then registed to the userinterface.
-            Vector imageFrames = trueImage.getImageFrameVector();
+            Vector<ViewImageUpdateInterface> imageFrames = trueImage.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -235,7 +235,7 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
@@ -327,7 +327,7 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
         // is displayed to "locked - " image name so as to indicate that the image
         // is now read/write locked!  The image frames are disabled and then
         // unregisted from the userinterface until the algorithm has completed.
-        Vector imageFrames = trueImage.getImageFrameVector();
+        Vector<ViewImageUpdateInterface> imageFrames = trueImage.getImageFrameVector();
         titles = new String[imageFrames.size()];
 
         for (int i = 0; i < imageFrames.size(); i++) {
