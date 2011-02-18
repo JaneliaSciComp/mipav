@@ -5,9 +5,7 @@ package gov.nih.mipav.view.dialogs;
 //import edu.jhmi.rad.medic.utilities.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.scripting.*;
@@ -16,11 +14,8 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import java.awt.event.*;
 import java.awt.*;
 import java.util.*;
-import java.io.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
 
 /** 
 *   
@@ -59,8 +54,6 @@ public class JDialogDemonsLite extends JDialogScriptableBase
 	
 	// dialog elements
 	private 	JPanel  	mainPanel;
-    
-	private 	JPanel  	paramPanel;
 	
 	private 	JLabel  	labelImage;
     private 	JLabel  	labelTarget;
@@ -192,7 +185,7 @@ public class JDialogDemonsLite extends JDialogScriptableBase
 		GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         mainPanel = new JPanel(new GridBagLayout());
@@ -203,96 +196,96 @@ public class JDialogDemonsLite extends JDialogScriptableBase
         gbc.gridy = 0;
         gbc.weightx = 0;
         gbc.gridwidth = 4;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(labelImage, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(labelTarget, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
 		gbc.gridwidth = 3;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(comboTarget, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(labelSmoothing, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 1;
         gbc.gridwidth = 3;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(textSmoothing, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(labelScale, gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 1;
         gbc.gridwidth = 3;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(textScale, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(labelRegLevels, gbc);
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.gridwidth = 3;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.EAST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(textRegLevels, gbc);
 		gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(labelRegIter, gbc);
         gbc.gridx = 1;
         gbc.gridy = 5;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 3;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(textRegIter, gbc);
 		gbc.gridx = 0;
         gbc.gridy = 8;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(labelRegType, gbc);
         gbc.gridx = 1;
         gbc.gridy = 8;
         gbc.weightx = 1;
         gbc.gridwidth = 3;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(comboRegType, gbc);
         gbc.gridx = 0;
         gbc.gridy = 11;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(labelOutput, gbc);
         gbc.gridx = 1;
         gbc.gridy = 11;
         gbc.weightx = 1;
         gbc.gridwidth = 3;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(comboOutput, gbc);
         
 		getContentPane().add(mainPanel);
@@ -307,14 +300,13 @@ public class JDialogDemonsLite extends JDialogScriptableBase
 	
 	
    private JComboBox buildImageList() {
-        int j;
 		JComboBox combo;
        
         combo = new JComboBox();
         combo.setFont(serif12);
         combo.setBackground(Color.white);
 
-        Enumeration names = userInterface.getRegisteredImageNames();
+        Enumeration<String> names = userInterface.getRegisteredImageNames();
 
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
