@@ -145,7 +145,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                     // The image frames are enabled and then registed to the userinterface.
                     resultImage = mathAlgo.getResultImage();
 
-                    Vector imageFrames = imageA.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = imageA.getImageFrameVector();
 
                     for (int i = 0; i < imageFrames.size(); i++) {
                         ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -399,7 +399,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = imageA.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = imageA.getImageFrameVector();
                     titles = new String[imageFrames.size()];
 
                     for (int i = 0; i < imageFrames.size(); i++) {
@@ -490,7 +490,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         // Add images from user interface that have the same correct dimensionality
         // Possibilities: 2D-2D,2D-3D,3D-2D,3D-3D,3D-4D,4D-3D,4D-4D
