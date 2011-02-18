@@ -47,9 +47,6 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
     private JTextField backInput;
 
     /** DOCUMENT ME! */
-    private int borderSize = 0;
-
-    /** DOCUMENT ME! */
     private JTextField bottomInput;
 
     /** DOCUMENT ME! */
@@ -217,7 +214,7 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
 
                 resultImage = null;
 
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
