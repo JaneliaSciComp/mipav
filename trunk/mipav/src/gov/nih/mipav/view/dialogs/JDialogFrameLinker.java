@@ -43,13 +43,7 @@ public class JDialogFrameLinker extends JDialogBase {
     private ModelImage imageB;
 
     /** DOCUMENT ME! */
-    private int imageRef;
-
-    /** DOCUMENT ME! */
     private JButton linkButton;
-
-    /** DOCUMENT ME! */
-    private String[] titles;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
@@ -90,7 +84,6 @@ public class JDialogFrameLinker extends JDialogBase {
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("Link")) {
 
@@ -137,13 +130,13 @@ public class JDialogFrameLinker extends JDialogBase {
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         // Add images from user interface that have the same exact dimensionality
         // Guaranteed to have at least one unique potential image B, because it's
         // tested for in ViewJFrameImage before this dialog is created.
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             sameDims = true;
 
             if (!imageA.getImageName().equals(name)) {
