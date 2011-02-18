@@ -75,22 +75,10 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JCheckBox fastModeCheckbox;
-
-    /** DOCUMENT ME! */
-    private String fileNameWInput, directoryWInput;
     
     /** DOCUMENT ME! */
     private boolean maxOfMinResol;
 
-
-    /** DOCUMENT ME! */
-    private JCheckBox graphCheckBox;
-
-    /** DOCUMENT ME! */
-    private ModelImage inputWeightImage;
-
-    /** DOCUMENT ME! */
-    private boolean isScript;
 
     /** DOCUMENT ME! */
     private JLabel labelInterp2;
@@ -108,9 +96,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
     private boolean zSelected = false;
     
     private JPanel rotatePanel;
-    
-    /** DOCUMENT ME! */
-    private boolean calcCOG = true;
 
 
     /** DOCUMENT ME! */
@@ -507,14 +492,6 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
 
 
 
-    /**
-     * Accessor to set the input weight image.
-     *
-     * @param  im  Input weight image.
-     */
-    public void setInputWeightImage(ModelImage im) {
-        inputWeightImage = im;
-    }
 
     /**
      * Accessor to set the initial interpolation.

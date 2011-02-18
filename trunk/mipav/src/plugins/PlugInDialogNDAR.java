@@ -738,8 +738,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                                 final LinkedHashMap<String, String> infoMap = infoList.get(i);
 
-                                final Set keySet = infoMap.keySet();
-                                final Iterator iter = keySet.iterator();
+                                final Set<String> keySet = infoMap.keySet();
+                                final Iterator<String> iter = keySet.iterator();
                                 String key;
                                 String value;
                                 while (iter.hasNext()) {
@@ -871,8 +871,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 } else {
                     // need to get appropriat value
 
-                    final Set keySet = infoMap.keySet();
-                    final Iterator iter = keySet.iterator();
+                    final Set<String> keySet = infoMap.keySet();
+                    final Iterator<String> iter = keySet.iterator();
                     String key;
                     while (iter.hasNext()) {
                         key = (String) iter.next();
@@ -1637,7 +1637,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     	 * This inner class is used to sort
     	 * the list by instance number
     	 */
-    	private class AlphabeticalComparator implements Comparator {
+    	private class AlphabeticalComparator implements Comparator<Object> {
     		public int compare(Object a, Object b) {
     			return (a.toString().compareTo(b.toString()));
     			
@@ -1853,8 +1853,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
             JPanel panel;
             JScrollPane sp;
-            final Set keySet = labelsAndComps.keySet();
-            final Iterator iter = keySet.iterator();
+            final Set<JLabel> keySet = labelsAndComps.keySet();
+            final Iterator<JLabel> iter = keySet.iterator();
             while (iter.hasNext()) {
                 final JLabel l = (JLabel) iter.next();
                 final JComponent t = labelsAndComps.get(l);
@@ -2027,16 +2027,16 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         public void populateFieldsFromCompletedState(final TreeMap<JLabel, JComponent> labelsAndComps,
                 final LinkedHashMap<String, String> infoMap2) {
 
-            final Set keySet = infoMap2.keySet();
-            final Iterator iter = keySet.iterator();
+            final Set<String> keySet = infoMap2.keySet();
+            final Iterator<String> iter = keySet.iterator();
             String key;
             String value;
             while (iter.hasNext()) {
                 key = (String) iter.next();
                 value = infoMap2.get(key);
 
-                final Set keySet2 = labelsAndComps.keySet();
-                final Iterator iter2 = keySet2.iterator();
+                final Set<JLabel> keySet2 = labelsAndComps.keySet();
+                final Iterator<JLabel> iter2 = keySet2.iterator();
                 while (iter2.hasNext()) {
                     final JLabel l = (JLabel) iter2.next();
                     final Component comp = labelsAndComps.get(l);
@@ -2076,8 +2076,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             final int orient = img.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
             // get index for extents
-            final Set keySet = labelsAndComps.keySet();
-            final Iterator iter = keySet.iterator();
+            final Set<JLabel> keySet = labelsAndComps.keySet();
+            final Iterator<JLabel> iter = keySet.iterator();
             while (iter.hasNext()) {
                 final JLabel label = (JLabel) iter.next();
                 final String l = label.getName();
@@ -2341,8 +2341,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                         final File file = chooser.getSelectedFile();
 
-                        final Set keySet = labelsAndComps.keySet();
-                        final Iterator iter = keySet.iterator();
+                        final Set<JLabel> keySet = labelsAndComps.keySet();
+                        final Iterator<JLabel> iter = keySet.iterator();
                         while (iter.hasNext()) {
                             final JLabel l = (JLabel) iter.next();
                             if (l.getName().equalsIgnoreCase(labelName)) {
@@ -2529,8 +2529,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 final boolean isComplete) {
             final LinkedHashMap<String, String> infoMap = new LinkedHashMap<String, String>();
             String value = "";
-            final Set keySet = labelsAndComps.keySet();
-            final Iterator iter = keySet.iterator();
+            final Set<JLabel> keySet = labelsAndComps.keySet();
+            final Iterator<JLabel> iter = keySet.iterator();
             while (iter.hasNext()) {
                 final JLabel label = (JLabel) iter.next();
                 final JComponent comp = labelsAndComps.get(label);
@@ -2644,7 +2644,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         /**
          * This inner class is used to sort the list by instance number
          */
-        private class JLabelComparator implements Comparator {
+        private class JLabelComparator implements Comparator<Object> {
             public int compare(final Object oA, final Object oB) {
                 final JLabel lA = (JLabel) oA;
                 final JLabel lB = (JLabel) oB;
