@@ -80,14 +80,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     /** Slice thickness read from .list file */
     private float m_fResX = 1f, m_fResY = 1f, m_fResZ = 1f;
 
-    /** Set to true if the slice resolution is read from the .list file: (xRes) */
-    private boolean m_bUseXRes = false;
 
-    /** Set to true if the slice resolution is read from the .list file: (yRes) */
-    private boolean m_bUseYRes = false;
-
-    /** Set to true if the slice resolution is read from the .list file: (zRes) */
-    private boolean m_bUseZRes = false;
 
     /** General matrix storing BMatrix values. */
     private GMatrixf m_kBMatrix = null;
@@ -1320,18 +1313,18 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                             lineString.indexOf("</x_field_of_view>")).trim();
                     final float xFOV = Float.parseFloat(xFOVStr);
                     m_fResX = xFOV;
-                    m_bUseXRes = true;
+                  
                 } else if (lineString.startsWith("<y_field_of_view>")) {
                     final String yFOVStr = lineString.substring(lineString.indexOf("<y_field_of_view>") + 17,
                             lineString.indexOf("</y_field_of_view>")).trim();
                     final float yFOV = Float.parseFloat(yFOVStr);
                     m_fResY = yFOV;
-                    m_bUseYRes = true;
+                   
                 } else if (lineString.startsWith("<slice_thickness>")) {
                     final String zResStr = lineString.substring(lineString.indexOf("<slice_thickness>") + 17,
                             lineString.indexOf("</slice_thickness>")).trim();
                     m_fResZ = Float.parseFloat(zResStr);
-                    m_bUseZRes = true;
+                    
                 } else if (lineString.startsWith("<noise_mean_ori>")) {
                     final String noiseStr = lineString.substring(lineString.indexOf("<noise_mean_ori>") + 16,
                             lineString.indexOf("</noise_mean_ori>")).trim();

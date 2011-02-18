@@ -86,10 +86,10 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
     private JTextArea outputTextArea;
     
     /** This is an ordered map of series number and seriesFileInfoTreeSet.* */
-    private TreeMap seriesFileInfoTreeMap;
+    private TreeMap<Integer,TreeSet<String[]>> seriesFileInfoTreeMap;
     
     /** This is an ordered list of files per series number.* */
-    private TreeSet seriesFileInfoTreeSet;
+    private TreeSet<String[]> seriesFileInfoTreeSet;
 
     /** boolean indicating if we are dealing with dicom or par/rec **/
     private boolean isDICOM;
@@ -251,7 +251,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
         this.listFileName = studyName + ".list";
 		this.bmatrixFileName = studyName + ".BMTXT";
 		this.pathFileName = studyName + ".path";
-        seriesFileInfoTreeMap = new TreeMap();
+        seriesFileInfoTreeMap = new TreeMap<Integer,TreeSet<String[]>>();
         isDICOM = true;
     }
     
@@ -1135,12 +1135,12 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
 			File pathFile = new File(studyPath + "_proc" + File.separator + studyName + ".path");
 			FileOutputStream outputStream = new FileOutputStream(pathFile);
 			PrintStream printStream = new PrintStream(outputStream);
-			Set ketSet = seriesFileInfoTreeMap.keySet();
-			Iterator iter = ketSet.iterator();
+			Set<Integer> ketSet = seriesFileInfoTreeMap.keySet();
+			Iterator<Integer> iter = ketSet.iterator();
 			ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 			while (iter.hasNext()) {
-				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-				Iterator iter2 = seriesFITS.iterator();
+				TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+				Iterator<String[]> iter2 = seriesFITS.iterator(); 
 				// lets get the first element and remember its imageSlice
 				String imageSlice = ((String) (((String[]) seriesFITS.first())[7])).trim();
 
@@ -1231,13 +1231,13 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
             File pathFile = new File(studyPath + "_proc" + File.separator + pathFileName);
             FileOutputStream outputStream = new FileOutputStream(pathFile);
             PrintStream printStream = new PrintStream(outputStream);
-            Set ketSet = seriesFileInfoTreeMap.keySet();
-            Iterator iter = ketSet.iterator();
+            Set<Integer> ketSet = seriesFileInfoTreeMap.keySet();
+            Iterator<Integer> iter = ketSet.iterator();
             ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 
             while (iter.hasNext()) {
-                TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-                Iterator iter2 = seriesFITS.iterator();
+                TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+                Iterator<String[]> iter2 = seriesFITS.iterator(); 
 
                 // lets get the first element and remember its slice location
                 String sliceLocation = ((String) (((String[]) seriesFITS.first())[1])).trim();
@@ -2937,7 +2937,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
     /**
      * This inner class is used to sort the list by instance number and vol. the vol is determined by the filename
      */
-    private class InstanceNumberVolComparator implements Comparator {
+    private class InstanceNumberVolComparator implements Comparator<Object> {
 
         /**
          *
@@ -3005,7 +3005,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
 	 * This inner class is used to sort
 	 * the list by instance number
 	 */
-	private class InstanceNumberComparator implements Comparator {
+	private class InstanceNumberComparator implements Comparator<Object> {
 		public int compare(Object oA, Object oB) {
 			String[] aA = (String[]) oA;
 			String[] aB = (String[]) oB;

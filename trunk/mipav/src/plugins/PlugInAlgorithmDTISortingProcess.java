@@ -89,10 +89,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
     private JTextArea outputTextArea;
 
     /** This is an ordered map of series number and seriesFileInfoTreeSet.* */
-    private TreeMap seriesFileInfoTreeMap;
+    private TreeMap<Integer,TreeSet<String[]>> seriesFileInfoTreeMap;
 
     /** This is an ordered list of files per series number.* */
-    private TreeSet seriesFileInfoTreeSet;
+    private TreeSet<String[]> seriesFileInfoTreeSet; 
 
     /** This is the dir name of the study.* */
     private String studyName;
@@ -131,7 +131,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
         this.bmtxtFilePath = bmtxtFilePath;
         this.outputTextArea = outputTextArea;
         this.isInterleaved = isInterleaved;
-        seriesFileInfoTreeMap = new TreeMap();
+        seriesFileInfoTreeMap = new TreeMap<Integer,TreeSet<String[]>>();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -816,13 +816,13 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
             File pathFile = new File(studyPath + "_proc" + File.separator + studyName + ".path");
             FileOutputStream outputStream = new FileOutputStream(pathFile);
             PrintStream printStream = new PrintStream(outputStream);
-            Set ketSet = seriesFileInfoTreeMap.keySet();
-            Iterator iter = ketSet.iterator();
+            Set<Integer> ketSet = seriesFileInfoTreeMap.keySet();
+            Iterator<Integer> iter = ketSet.iterator();
             ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 
             while (iter.hasNext()) {
-                TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-                Iterator iter2 = seriesFITS.iterator();
+                TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+                Iterator<String[]> iter2 = seriesFITS.iterator();
 
                 // lets get the first element and remember its slice location
                 String sliceLocation = ((String) (((String[]) seriesFITS.first())[1])).trim();
@@ -949,12 +949,12 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			File pathFile = new File(studyPath + "_proc" + File.separator + studyName + ".path");
 			FileOutputStream outputStream = new FileOutputStream(pathFile);
 			PrintStream printStream = new PrintStream(outputStream);
-			Set ketSet = seriesFileInfoTreeMap.keySet();
-			Iterator iter = ketSet.iterator();
+			Set<Integer> ketSet = seriesFileInfoTreeMap.keySet();
+			Iterator<Integer> iter = ketSet.iterator();
 			ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 			while (iter.hasNext()) {
-				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-				Iterator iter2 = seriesFITS.iterator();
+				TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+				Iterator<String[]> iter2 = seriesFITS.iterator();
 				// lets get the first element and remember its imageSlice
 				String imageSlice = ((String) (((String[]) seriesFITS.first())[7])).trim();
 
@@ -1151,8 +1151,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
         // ep_b and before #   2. If GE, then extract b-value from private tag 0043,1039....the b-value is the first
         // number in the string
 
-        Set ketSet = seriesFileInfoTreeMap.keySet();
-        Iterator iter = ketSet.iterator();
+        Set<Integer> ketSet = seriesFileInfoTreeMap.keySet();
+        Iterator<Integer> iter = ketSet.iterator();
 
         Preferences.debug(" - b-values :\n", Preferences.DEBUG_ALGORITHM);
 
@@ -1163,7 +1163,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
         System.out.println(" - b-values :\n");
 
         while (iter.hasNext()) {
-            TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+            TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
             int seriesFITSSize = seriesFITS.size();
             int numVols = seriesFITSSize / numSlicesPerVolume;
             Object[] fidArr = seriesFITS.toArray();
@@ -1876,7 +1876,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
     /**
      * This inner class is used to sort the list by instance number and vol. the vol is determined by the filename
      */
-    private class InstanceNumberVolComparator implements Comparator {
+    private class InstanceNumberVolComparator implements Comparator<Object> {
 
         /**
          *
@@ -1943,7 +1943,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 * This inner class is used to sort
 	 * the list by instance number
 	 */
-	private class InstanceNumberComparator implements Comparator {
+	private class InstanceNumberComparator implements Comparator<Object> {
 		public int compare(Object oA, Object oB) {
 			String[] aA = (String[]) oA;
 			String[] aB = (String[]) oB;

@@ -395,22 +395,21 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         	sourceRoot.removeAllChildren();
 
             ViewVOIVector VOIs = image.getVOIs();
-            Enumeration e = VOIs.elements();
+            Enumeration<VOI> e = VOIs.elements();
 
             VOI tempVOI = null;
 
             VOIGroupNode currentNode = null;
-            Vector curves = null;
+            Vector<VOIBase> curves = null;
 
             int index = 0;
 
-            Enumeration voiEnum = null;
+            Enumeration<VOIBase> voiEnum = null; 
             VOIBase voiBase = null;
 
-            Enumeration voiNodeEnum = null;
+            Enumeration<VOIFrameNode> voiNodeEnum = null;
             VOINode currentVOINode = null;
-            VOIFrameNode currentVOIFrameNode = null;
-            Enumeration voiFrameEnum = null;
+            Enumeration<TreeNode> voiFrameEnum = null;
 
             Vector<TreePath> treePaths = new Vector<TreePath>();
 
@@ -457,7 +456,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
                                     while (voiNodeEnum.hasMoreElements()) {
                                         
                                         VOIFrameNode currentFrameNode = (VOIFrameNode) voiNodeEnum.nextElement();
-                                        Enumeration voiFrameEnum2 = currentFrameNode.children();
+                                        Enumeration<VOINode> voiFrameEnum2 = currentFrameNode.children();
                                         
                                         // find the child that matches this selected contour
                                         while (voiFrameEnum2.hasMoreElements()) {
@@ -519,7 +518,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         sourceRoot = new DefaultMutableTreeNode(image.getImageName());
         sourceVoiModel = new DefaultTreeModel(sourceRoot);
 
-        Enumeration e = VOIs.elements();
+        Enumeration<VOI> e = VOIs.elements();
 
         VOI currentVOI = null;
 

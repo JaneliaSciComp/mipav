@@ -76,10 +76,10 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
     private JTextField dwiPathTextField;
     
     /** This is an ordered map of series number and seriesFileInfoTreeSet.* */
-    private TreeMap seriesFileInfoTreeMap;
+    private TreeMap<Integer,TreeSet<String[]>> seriesFileInfoTreeMap; 
     
     /** This is an ordered list of files per series number.* */
-    private TreeSet seriesFileInfoTreeSet;
+    private TreeSet<String[]> seriesFileInfoTreeSet;
 
     /** boolean indicating if we are dealing with dicom or par/rec **/
     private boolean isDICOM;
@@ -298,7 +298,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		this.bmatrixFileName = studyName + ".BMTXT";
 		this.pathFileName = studyName + ".path";
 		this.performRegistration = performRegsitration;
-        seriesFileInfoTreeMap = new TreeMap();
+        seriesFileInfoTreeMap = new TreeMap<Integer,TreeSet<String[]>>();
         isDICOM = true;
     }
     
@@ -1500,22 +1500,22 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                     Integer seriesNumber = new Integer(seriesNumber_String);
                     if(isInterleaved) {
 	                    if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
-	                        seriesFileInfoTreeSet = new TreeSet(new InstanceNumberVolComparator());
+	                        seriesFileInfoTreeSet = new TreeSet<String[]>(new InstanceNumberVolComparator());
 	                        seriesFileInfoTreeSet.add(dicomInfo);
 	                        seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
 	                    } else {
-	                        seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
+	                        seriesFileInfoTreeSet = (TreeSet<String[]>) seriesFileInfoTreeMap.get(seriesNumber);
 	                        seriesFileInfoTreeSet.add(dicomInfo);
 	                        seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
 	                    }
                     }
                     else {
                     	if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
-    						seriesFileInfoTreeSet = new TreeSet(new InstanceNumberComparator());
+    						seriesFileInfoTreeSet = new TreeSet<String[]>(new InstanceNumberComparator());
     						seriesFileInfoTreeSet.add(dicomInfo);
     						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
     					} else {
-    						seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
+    						seriesFileInfoTreeSet = (TreeSet<String[]>) seriesFileInfoTreeMap.get(seriesNumber);
     						seriesFileInfoTreeSet.add(dicomInfo);
     						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
     					}
@@ -1622,12 +1622,12 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 			File pathFile = new File(studyPath + "_proc" + File.separator + studyName + ".path");
 			FileOutputStream outputStream = new FileOutputStream(pathFile);
 			PrintStream printStream = new PrintStream(outputStream);
-			Set ketSet = seriesFileInfoTreeMap.keySet();
-			Iterator iter = ketSet.iterator();
+			Set<Integer> ketSet = seriesFileInfoTreeMap.keySet();
+			Iterator<Integer> iter = ketSet.iterator();
 			ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 			while (iter.hasNext()) {
-				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-				Iterator iter2 = seriesFITS.iterator();
+				TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+				Iterator<String[]> iter2 = seriesFITS.iterator();
 				// lets get the first element and remember its imageSlice
 				String imageSlice = ((String) (((String[]) seriesFITS.first())[7])).trim();
 
@@ -3429,7 +3429,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
     /**
      * This inner class is used to sort the list by instance number and vol. the vol is determined by the filename
      */
-    private class InstanceNumberVolComparator implements Comparator {
+    private class InstanceNumberVolComparator implements Comparator<Object> {
 
         /**
          *
@@ -3497,7 +3497,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	 * This inner class is used to sort
 	 * the list by instance number
 	 */
-	private class InstanceNumberComparator implements Comparator {
+	private class InstanceNumberComparator implements Comparator<Object> {
 		public int compare(Object oA, Object oB) {
 			String[] aA = (String[]) oA;
 			String[] aB = (String[]) oB;

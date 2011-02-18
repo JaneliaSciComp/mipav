@@ -357,7 +357,7 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
 	    /**
 	     * This inner class is used to sort the treeSet based on the sorting value
 	     */
-	    private class SortingValueComparator implements Comparator {
+	    private class SortingValueComparator implements Comparator<Object> {
 
 	    	/**
 	         *
