@@ -52,9 +52,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
     private ModelImage[] gvfImage = null;
 
     /** DOCUMENT ME! */
-    private int gvfIndex = 0;
-
-    /** DOCUMENT ME! */
     private DefaultListModel gvfModel;
 
     /** DOCUMENT ME! */
@@ -88,9 +85,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
     private VOI srcVOI = null;
 
     /** DOCUMENT ME! */
-    private int surIndex = 0;
-
-    /** DOCUMENT ME! */
     private String surName;
 
     /** DOCUMENT ME! */
@@ -101,9 +95,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private Color voiColor;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -148,7 +139,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
                 return;
             }
 
-            voiColor = VOIs.VOIAt(groupNum).getColor();
             srcVOI = VOIs.VOIAt(groupNum);
         } // if (nVOI > 0)
 
@@ -173,7 +163,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
                 model.addElement(surName);
                 removeButton.setEnabled(true);
                 chooserButton.setEnabled(false);
-                surIndex = 1;
             }
         } // if (command.equals("Choose"))
         else if (command.equals("Remove")) {
@@ -181,7 +170,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             triMesh = null;
             removeButton.setEnabled(false);
             chooserButton.setEnabled(true);
-            surIndex = 0;
         } // else if ((command.equals("Remove"))
 
         if (command.equals("Choose2")) {
@@ -203,7 +191,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             gvfModel.addElement(gvfName);
             removeButton2.setEnabled(true);
             chooserButton2.setEnabled(false);
-            gvfIndex = 1;
         } // if (command.equals("Choose2"))
         else if (command.equals("Remove2")) {
             gvfModel.removeElement(gvfName);
@@ -216,7 +203,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             gvfImage = null;
             removeButton2.setEnabled(false);
             chooserButton2.setEnabled(true);
-            gvfIndex = 0;
         } // else if ((command.equals("Remove2"))
 
         if (command.equals("OK")) {
@@ -255,7 +241,7 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             // These next lines set the titles in all frames where the source image is displayed to
             // image name so as to indicate that the image is now unlocked!
             // The image frames are enabled and then registed to the userinterface.
-            Vector imageFrames = image.getImageFrameVector();
+            Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -356,7 +342,7 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             // "locked - " image name so as to indicate that the image is now read/write locked!
             // The image frames are disabled and then unregisted from the userinterface until the
             // algorithm has completed.
-            Vector imageFrames = image.getImageFrameVector();
+            Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
             titles = new String[imageFrames.size()];
 
             for (int i = 0; i < imageFrames.size(); i++) {
@@ -555,8 +541,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
      */
     private void open() {
         JFileChooser chooser = null;
-        FileIO fileIO = null;
-        boolean multiFile = false;
         File surFile;
         String directory;
 
@@ -599,8 +583,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
         // open the file containing one or more meshes
         RandomAccessFile in;
         int iType, iQuantity;
-        int numTriangles = 0;
-        float volume = 0;
         boolean isSur = true;
 
         if (surName.endsWith("sur")) {
