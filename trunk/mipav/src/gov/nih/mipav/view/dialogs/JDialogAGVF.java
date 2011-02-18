@@ -77,9 +77,6 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
     /** DOCUMENT ME! */
     private JLabel labelGaussZ;
 
-    /** DOCUMENT ME! */
-    private JLabel labelGVFIterations;
-
     /** user-interface for setting the estimated cell-radius (pixels). */
     private JLabel labelRadius;
 
@@ -189,9 +186,6 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
     /** DOCUMENT ME! */
     private String[] titles;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     /** default initial velocity (dx):. */
     private float velocityDx = 0;
 
@@ -214,7 +208,6 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
      */
     public JDialogAGVF(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        userInterface = ViewUserInterface.getReference();
 
         VOIs = im.getVOIs();
 
@@ -263,7 +256,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
         propagationFlag = false;
 
         String tmpStr;
-        int i, j;
+        int i;
 
         if ((source == propagate) || (source == singleSlice)) {
 
@@ -491,7 +484,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                     titles = new String[imageFrames.size()];
 
                     for (i = 0; i < imageFrames.size(); i++) {
@@ -595,7 +588,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                     titles = new String[imageFrames.size()];
 
                     for (i = 0; i < imageFrames.size(); i++) {
@@ -642,11 +635,6 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        int slice;
-        int element;
-        Vector[] contours;
-        int sliceNum;
-        int nContours;
         VOI resultVOI;
 
         if (algorithm instanceof AlgorithmAGVF) {
@@ -692,7 +680,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
             // These next lines set the titles in all frames where the source image is displayed to
             // image name so as to indicate that the image is now unlocked!
             // The image frames are enabled and then registed to the userinterface.
-            Vector imageFrames = image.getImageFrameVector();
+            Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
