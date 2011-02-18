@@ -2,7 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmBilateralFilter;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.scripting.ParserException;
@@ -10,19 +9,12 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
-import gov.nih.mipav.view.components.JPanelSigmas;
 
 import java.awt.*;
 import java.awt.event.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.util.*;
 
 import javax.swing.*;
 
@@ -116,8 +108,6 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
     
     private ModelImage tissueImage = null;
     
-    private double tissue[] = null;
-    
     private JLabel labelFlipAngle;
     
     private JTextField textFlipAngle;
@@ -152,22 +142,9 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
     
     private JButton buttonMpFile;
     
-    private JTextField textMpFile;
-    
     private String directoryMp;
     
     private String fileNameMp;
-    
-    private File fileMp;
-    
-    // Contents of Mp(t) file
-    private double mcp[] = null;
-    
-    private int nx;
-    
-    private int ny;
-    
-    private int mp_len;
     
     private JLabel labelNFirst;
     
@@ -267,7 +244,6 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         FileVOI fileVOI;
         VOI[] voi;
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -704,57 +680,6 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
     }
 
     /**
-     * Builds a list of images. Returns combobox. List must be all color or all black and white.
-     *
-     * @param   image  DOCUMENT ME!
-     *
-     * @return  Newly created combo box.
-     */
-    private JComboBox buildComboBox(ModelImage image) {
-        ViewUserInterface UI;
-        ModelImage nextImage;
-        boolean doAdd;
-        int i;
-
-        JComboBox comboBox = new JComboBox();
-        comboBox.setFont(serif12);
-        comboBox.setBackground(Color.white);
-
-        UI = ViewUserInterface.getReference();
-
-        Enumeration names = UI.getRegisteredImageNames();
-
-        while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
-
-            if (!name.equals(image.getImageName())) {
-                nextImage = UI.getRegisteredImageByName(name);
-
-                if (UI.getFrameContainingImage(nextImage) != null) {
-
-                    if ((image.isColorImage() == nextImage.isColorImage()) && (nextImage.getNDims() == 2)) {
-                        doAdd = true;
-
-                        for (i = 0; i < image.getNDims(); i++) {
-
-                            if (image.getExtents()[i] != nextImage.getExtents()[i]) {
-                                doAdd = false;
-                            }
-                        }
-
-                        if (doAdd) {
-                            comboBox.addItem(name);
-                        }
-                    }
-                }
-            }
-        }
-
-        return comboBox;
-    }
-
-
-    /**
      * Initializes GUI components and displays dialog.
      */
     private void init() {
@@ -1099,7 +1024,6 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
      */
     private boolean setVariables() {
         String tmpStr;
-        BufferedReader br = null;
         
         tmpStr = textMinConstr0.getText();
         min_constr[0] = Double.parseDouble(tmpStr);
