@@ -299,7 +299,41 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             voiManager.actionPerformed(event);
         }
         else if (command.equals("ScrollLink")) {
-            linkedScrolling = !linkedScrolling;
+        	System.out.println("hello");
+        	
+        	
+        	final Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
+            // add only the framed ones to a new list...also..dont include the active image
+        	int activeImageNumDims = getImageA().getNDims();
+        	boolean hasMatch = false;
+            while (regImages.hasMoreElements()) {
+                final ModelImage image = (ModelImage) regImages.nextElement();
+                // check if it is a framed image...and if its not the active image...also make sure its just imageA
+                if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(getImageA().getImageName()))
+                        && ( ( (image.getParentFrame())).getImageA() == image)) {
+
+                    // now check the dimensionality to see if it matches with the active image
+                    final int regFramedNumDims = image.getNDims();
+
+                    if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
+                    	hasMatch = true;
+                    	break;
+                       
+                    }
+                }
+            }
+        	
+        	if(!hasMatch) {
+        		getControls().getTools().scrollButton.setSelected(false);
+        		linkedScrolling = false;
+        	}else {
+        		linkedScrolling = !linkedScrolling;
+        	}
+        	
+        	
+        	
+        	
+            
         } else if (command.equals("QuantifyMasks")) {
             new JDialogQuantifyMask(this, this.getActiveImage());
         } else if (command.equals("PaintBrushEditor")) {
