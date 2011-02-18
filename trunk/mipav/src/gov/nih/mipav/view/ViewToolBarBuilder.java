@@ -54,6 +54,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
 
     /** The button for presets used only for CT images. */
     protected JButton ctButton;
+    
+    public JCheckBox scrollButton;
 
     /**
      * The combo box containing the possible choices for the current script in the script toolbar. Filled with entries
@@ -322,7 +324,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
 
         tBar.add(makeSeparator());
         
-        JCheckBox scrollButton = new JCheckBox(MipavUtil.getIcon(CustomUIBuilder.PARAM_IMAGE_LINK.getIconBase()));
+        scrollButton = new JCheckBox(MipavUtil.getIcon(CustomUIBuilder.PARAM_IMAGE_LINK.getIconBase()));
         scrollButton.setPreferredSize(new Dimension(35,24));
         scrollButton.setMinimumSize(new Dimension(24,24));
         scrollButton.setSelectedIcon(MipavUtil.getIcon("link.gif"));
