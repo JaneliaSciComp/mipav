@@ -220,7 +220,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
                 // "locked - " image name so as to indicate that the image is now read/write locked!
                 // The image frames are disabled and then unregisted from the userinterface until the
                 // algorithm has completed.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
                 for (i = 0; i < imageFrames.size(); i++) {
@@ -262,10 +262,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         VOI resultVOI;
-        int slice;
         int element;
         Vector<VOIBase> contours;
-        int sliceNum;
         int nContours;
 
         // ViewJFrameImage imageFrame = null;
@@ -279,13 +277,6 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
                 if (removeOriginal) {
                     resultVOI.setColor(voiColor);
                     resultVOI.setAllActive(true);
-
-                    if (image.getNDims() == 2) {
-                        sliceNum = 1;
-                    } else {
-                        sliceNum = image.getExtents()[2];
-                    }
-
                     contours = VOIs.VOIAt(groupNum).getCurves();
 
                     int resultIndex = 0;
@@ -293,12 +284,9 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
                     for (element = nContours - 1; element >= 0; element--) {
 
                         if (((VOIContour) (contours.elementAt(element))).isActive()) {
-                            //System.err.println("slice is: " + slice + " element is: " + element + " groupnum is: " +
-                            //groupNum);
                             VOIs.VOIAt(groupNum).removeCurve(contours.elementAt(element));
 
                             VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getCurves().elementAt(resultIndex++));
-                            //  VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getActiveContour(slice), slice);
                         }
                     }
 
@@ -311,7 +299,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
             // These next lines set the titles in all frames where the source image is displayed to
             // image name so as to indicate that the image is now unlocked!
             // The image frames are enabled and then registed to the userinterface.
-            Vector imageFrames = image.getImageFrameVector();
+            Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
