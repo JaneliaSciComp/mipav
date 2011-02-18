@@ -12,7 +12,6 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.JTreeDICOM;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.PreviewImageContainer;
 import gov.nih.mipav.view.ScrollCorrector;
 import gov.nih.mipav.view.ViewFileChooserSubsample;
