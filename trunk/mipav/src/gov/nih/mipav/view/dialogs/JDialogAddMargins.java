@@ -86,13 +86,13 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     private JTextField leftSideInput;
 
     /** DOCUMENT ME! */
-    private ButtonGroup loopingGroup;
+    //private ButtonGroup loopingGroup;
 
     /** DOCUMENT ME! */
     private JRadioButton newImage;
 
     /** DOCUMENT ME! */
-    private JRadioButton noBuffer;
+    //private JRadioButton noBuffer;
 
     /** DOCUMENT ME! */
     private double redValue = 0.0;
@@ -112,7 +112,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
 
     /** DOCUMENT ME! */
-    private JRadioButton usingBuffer;
+    //private JRadioButton usingBuffer;
 
     private int[] marginX = new int[2];
     private int[] marginY = new int[2];
