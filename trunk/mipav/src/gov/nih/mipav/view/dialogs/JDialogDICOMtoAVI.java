@@ -61,12 +61,6 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
     private JTextField dirField = null;
 
     /** DOCUMENT ME! */
-    private JRadioButton mjpegButton = null;
-
-    /** DOCUMENT ME! */
-    private JRadioButton mp4Button = null;
-
-    /** DOCUMENT ME! */
     private JTextField qualityField = null;
 
     /** DOCUMENT ME! */
