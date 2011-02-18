@@ -1581,7 +1581,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (componentImage.getImageA().getAnimateFrame() == null) {
 
                 dialogAnimate = new JDialogAnimate(this, componentImage.getImageA(), componentImage.getLUTa(),
-                        componentImage.getImageB(), componentImage.getLUTb(), userInterface);
+                        componentImage.getImageB(), componentImage.getLUTb());
 
                 if (imageA.isColorImage()) {
                     dialogAnimate.setRGBs(componentImage.getRGBTA(), componentImage.getRGBTB());
