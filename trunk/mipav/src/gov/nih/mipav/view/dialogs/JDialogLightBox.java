@@ -100,12 +100,6 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
     private JTextField gridsizeText;
 
     /** DOCUMENT ME! */
-    private Color lastBgColor;
-
-    /** DOCUMENT ME! */
-    private Color lastBorderColor;
-
-    /** DOCUMENT ME! */
     private int lastBorderSize;
 
     /** DOCUMENT ME! */
@@ -115,16 +109,10 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
     private int lastGridSize;
 
     /** DOCUMENT ME! */
-    private float lastMagnification;
-
-    /** DOCUMENT ME! */
     private int lastRow;
 
     /** DOCUMENT ME! */
     private boolean lastRowBFlag;
-
-    /** DOCUMENT ME! */
-    private int lastTSlice;
 
     /** DOCUMENT ME! */
     private float magnification;
@@ -136,7 +124,7 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
     private JSlider magSlider;
 
     /** DOCUMENT ME! */
-    private Hashtable magSliderDictionary = new Hashtable();
+    private Hashtable<Integer,JLabel> magSliderDictionary = new Hashtable<Integer,JLabel>();
 
     /** DOCUMENT ME! */
     private JPanel magSliderPanel;
@@ -175,13 +163,10 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
     private JLabel toolTip;
 
     /** DOCUMENT ME! */
-    private int tSlice;
-
-    /** DOCUMENT ME! */
     private JSlider tSlider;
 
     /** DOCUMENT ME! */
-    private Hashtable tSliderDictionary = new Hashtable();
+    private Hashtable<Integer,JLabel> tSliderDictionary = new Hashtable<Integer,JLabel>();
 
     /** DOCUMENT ME! */
     private JPanel tSliderPanel;
@@ -473,7 +458,6 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
 
             magSlider.setToolTipText(Integer.toString(magSlider.getValue()) + "%");
             magSliderPanel.setToolTipText(Integer.toString(magSlider.getValue()) + "%");
-            lastMagnification = magnification;
             magnification = magSlider.getValue();
             frame.updateMagnification((int) magnification);
         } else if (source == tSlider) {
@@ -481,9 +465,6 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
             if (tSlider.getValueIsAdjusting() == true) {
                 return;
             }
-
-            lastTSlice = tSlice;
-            tSlice = tSlider.getValue();
 
             if (frame.getImageA().getNDims() == 4) {
                 newValue = Math.round((tSlider.getValue() / 100.0f * (frame.getImageA().getExtents()[3] - 1)) - 0.01f);
@@ -509,7 +490,6 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
         colorPanel.setBorder(buildTitledBorder("Color settings"));
 
         bgColor = frame.getGridColor();
-        lastBgColor = bgColor;
 
         l1 = new JLabel("Background color:");
         l1.setFont(font12);
@@ -522,7 +502,6 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
         colorPanel.add(backgroundB);
 
         borderColor = frame.getBorderColor();
-        lastBorderColor = borderColor;
 
         l2 = new JLabel("Border color:");
         l2.setFont(font12);
@@ -550,7 +529,6 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
         m_min = frame.getMagMin();
 
         magnification = frame.getMagnification();
-        lastMagnification = magnification;
 
         buildMagSliderLabels(m_min, m_max);
         magSlider = new JSlider(JSlider.HORIZONTAL, Math.round(m_min), Math.round(m_max), Math.round(magnification));
@@ -775,9 +753,6 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
         tSliderPanel.setLayout(new BorderLayout());
         tSliderPanel.setForeground(Color.black);
         tSliderPanel.setBorder(buildTitledBorder("Time slices"));
-
-        tSlice = frame.getCurrentTSlice();
-        lastTSlice = tSlice;
 
         buildTSliderLabels(1, frame.getImageA().getExtents()[3]);
         tSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 0);
@@ -1084,7 +1059,6 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
          * @param  e  DOCUMENT ME!
          */
         public void actionPerformed(ActionEvent e) {
-            lastBgColor = bgColor;
             bgColor = colorChooser.getColor();
             backgroundB.setBackground(bgColor);
             frame.updateGridColor(bgColor);
@@ -1103,7 +1077,6 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
          * @param  e  DOCUMENT ME!
          */
         public void actionPerformed(ActionEvent e) {
-            lastBorderColor = borderColor;
             borderColor = colorChooser.getColor();
             borderB.setBackground(borderColor);
             frame.updateBorderColor(borderColor);
