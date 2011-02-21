@@ -205,9 +205,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     private JTabbedPane tabbedPane;
 
     /** DOCUMENT ME! */
-    private JToolBar tBar;
-
-    /** DOCUMENT ME! */
     private JTextField[][] textMatrix;
 
     /** DOCUMENT ME! */
@@ -241,12 +238,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     private boolean wcSystem = false;
 
     private boolean resizeOnClose = false;
-
-    /** text area showing the */
-    private JTextArea provenanceArea;
-
-    /** Column names for data provenance */
-    private static final String[] dpColumnNames = new String[] {"Time", "Action", "JVM", "Mipav", "User"};
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -587,7 +578,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         if (algorithm instanceof AlgorithmChangeType) {
 
-            final Vector imageFrames = image.getImageFrameVector();
+            final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -891,8 +882,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         comboPanel.setLayout(new BoxLayout(comboPanel, BoxLayout.Y_AXIS));
 
-        int index;
-
         comboBoxUnitOfMeasure1 = new JComboBox();
         setComboBox(comboBoxUnitOfMeasure1);
         comboBoxUnitOfMeasure1.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -935,7 +924,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         comboBoxUnitOfMeasure5 = new JComboBox();
         setComboBox(comboBoxUnitOfMeasure5);
         comboBoxUnitOfMeasure5.setAlignmentX(Component.LEFT_ALIGNMENT);
-        index = image.getFileInfo()[0].getUnitsOfMeasure(4);
 
         if (image.getNDims() == 5) {
             unitStr = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(4)).toString();
@@ -1657,6 +1645,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * 
      * @return The Dataset Origin panel.
      */
+    @SuppressWarnings("unused")
     private JPanel buildStartLocationsPanel() {
 
         final int nDims = image.getNDims();
@@ -3226,8 +3215,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         matrixBox.removeAllItems();
 
         final MatrixHolder mHolder = image.getMatrixHolder();
-        final Set matrixKeys = mHolder.getMatrixMap().keySet();
-        final Iterator iter = matrixKeys.iterator();
+        final Set<String> matrixKeys = mHolder.getMatrixMap().keySet();
+        final Iterator<String> iter = matrixKeys.iterator();
 
         while (iter.hasNext()) {
             matrixBox.addItem(iter.next());
