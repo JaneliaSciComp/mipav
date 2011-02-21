@@ -464,7 +464,7 @@ public class JDialogListSaveSelection extends JDialogBase implements ActionListe
                         }
                     }
 
-                    Vector vec = new Vector();
+                    Vector<Object> vec = new Vector<Object>();
 
                     for (int i = 0; i < getSourceList().getModel().getSize(); i++) {
                         vec.add(getSourceList().getModel().getElementAt(i));
@@ -473,7 +473,7 @@ public class JDialogListSaveSelection extends JDialogBase implements ActionListe
                     Collections.sort(vec, comp);
                     getSourceList().setListData(vec);
 
-                    Vector vec2 = new Vector();
+                    Vector<Object> vec2 = new Vector<Object>();
 
                     for (int i = 0; i < getSelectedList().getModel().getSize(); i++) {
                         vec2.add(getSelectedList().getModel().getElementAt(i));
@@ -510,7 +510,7 @@ public class JDialogListSaveSelection extends JDialogBase implements ActionListe
     /**
      * DOCUMENT ME!
      */
-    public class TagComparator implements Comparator {
+    public class TagComparator implements Comparator<Object> {
 
         /** DOCUMENT ME! */
         public static final int COMPARE_TAG = 0;
