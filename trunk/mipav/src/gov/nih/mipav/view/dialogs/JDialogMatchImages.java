@@ -310,13 +310,13 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
         comboBoxImage.setFont(serif12);
         comboBoxImage.setBackground(Color.white);
 
-        Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
+        Enumeration<String> names = ViewUserInterface.getReference().getRegisteredImageNames();
 
         // Add images from user interface
         // Guaranteed to have at least one unique potential image B, because it's
         // tested for in ViewJFrameImage before this dialog is created.
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
 
             if (ViewUserInterface.getReference().getFrameContainingImage(img) != null) {
