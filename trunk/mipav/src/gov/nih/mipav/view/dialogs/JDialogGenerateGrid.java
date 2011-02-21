@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.parameters.*;
@@ -11,7 +11,6 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -66,9 +65,6 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	private ModelImage image;
 	
 	private ModelImage newImage;
-	
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
 
 	
 	 /**
@@ -78,13 +74,12 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	
 	public JDialogGenerateGrid(Frame theParentFrame, ViewJComponentEditImage componentImage) {
         super(theParentFrame, false);
-        userInterface = ViewUserInterface.getReference();
         this.componentImage = componentImage;
         type = componentImage.getActiveImage().getType();
         isColor = componentImage.getActiveImage().isColorImage();
         width = componentImage.getGridSpacingX();
         height = componentImage.getGridSpacingY();
-        unitsStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(componentImage.getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0));
+        unitsStr = (Unit.getUnitFromLegacyNum(componentImage.getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0))).getAbbrev();
         
     	xDim = componentImage.getActiveImage().getExtents()[0];
         yDim = componentImage.getActiveImage().getExtents()[1];
@@ -337,7 +332,7 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 		
         type = newImage.getType();
         isColor = newImage.isColorImage();
-        unitsStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(newImage.getFileInfo()[0].getUnitsOfMeasure(0));
+        unitsStr = (Unit.getUnitFromLegacyNum(newImage.getFileInfo()[0].getUnitsOfMeasure(0))).getAbbrev();
         
     	xDim = newImage.getExtents()[0];
         yDim = newImage.getExtents()[1];
@@ -405,7 +400,6 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 
 	protected void setGUIFromParams() {
 		image = scriptParameters.retrieveInputImage();
-		userInterface = ViewUserInterface.getReference();
 		parentFrame = image.getParentFrame();
 		
 		width = scriptParameters.getParams().getFloat("width");
