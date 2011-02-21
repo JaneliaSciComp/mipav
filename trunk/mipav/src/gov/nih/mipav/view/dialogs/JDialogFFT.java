@@ -793,7 +793,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         logDisplayCheckbox.setForeground(Color.black);
         logDisplayCheckbox.setSelected(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
 
-        if (!image.isComplexImage()) {
+        if (image.isComplexImage()) {
             logDisplayCheckbox.setEnabled(true);
         } else {
             logDisplayCheckbox.setEnabled(false);
