@@ -101,7 +101,6 @@ public class JDialogHoughEllipseChoice extends JDialogBase {
      */
     public void actionPerformed(ActionEvent event) {
         int i;
-        String tmpStr;
 
         if (event.getSource() == OKButton) {
             for (i = 0; i < numEllipsesFound; i++) {
@@ -125,7 +124,6 @@ public class JDialogHoughEllipseChoice extends JDialogBase {
      * @param  event  (combo box event)
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
         
     }
 
