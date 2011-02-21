@@ -88,8 +88,6 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
                 classPath = classPath.substring(0, ind);
             }
 
-            File fileSource = null;
-
 
             for (i = 1; i < 100; i++) {
                 plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_ALGORITHM + i);
@@ -193,7 +191,7 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
             }
 
             // updates menubar for each image
-            Vector imageFrames = ViewUserInterface.getReference().getImageFrameVector();
+            Vector<Frame> imageFrames = ViewUserInterface.getReference().getImageFrameVector();
 
             if (imageFrames.size() < 1) {
                 ViewUserInterface.getReference().buildMenu();
@@ -225,7 +223,7 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
 
         int i;
         String plugInName;
-        Vector plugins = new Vector();
+        Vector<String> plugins = new Vector<String>();
 
         // obtains all 3 types of plugins from the Preferences File
         // and adds them to a vector
