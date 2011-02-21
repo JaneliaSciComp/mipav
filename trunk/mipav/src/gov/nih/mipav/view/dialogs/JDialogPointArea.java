@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -568,7 +569,7 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
             }
 
             graph = new ViewJFrameGraph(pos, rgbAverageIntensities, "Point Area Average Intensities");
-            graph.setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getFileInfo(0).getUnitsOfMeasure(0)));
+            graph.setUnitsInLabel((Unit.getUnitFromLegacyNum(srcImage.getFileInfo(0).getUnitsOfMeasure(0))).getAbbrev());
         } else {
             float[] pos = null;
             pos = new float[averageIntensities.length];
@@ -578,7 +579,7 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
             }
 
             graph = new ViewJFrameGraph(pos, averageIntensities, "Point Area Average Intensities",(int[][])null);
-            graph.setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getFileInfo(0).getUnitsOfMeasure(0)));
+            graph.setUnitsInLabel((Unit.getUnitFromLegacyNum(srcImage.getFileInfo(0).getUnitsOfMeasure(0))).getAbbrev());
         }
     }
 
