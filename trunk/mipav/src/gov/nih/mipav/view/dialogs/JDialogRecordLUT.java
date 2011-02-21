@@ -222,7 +222,6 @@ public class JDialogRecordLUT extends JDialogBase {
         Robot robot;
         boolean save = true;
         ViewUserInterface userInterface = ViewUserInterface.getReference();
-        Point startPos = this.getLocation();
 
         Dimension d = new Dimension();
         Point p = new Point();
