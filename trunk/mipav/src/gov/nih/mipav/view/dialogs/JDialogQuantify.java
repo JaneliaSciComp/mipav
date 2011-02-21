@@ -51,9 +51,6 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
     /** DOCUMENT ME! */
     private JTextField textFile;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
     
     private JButton buttonFile;
     
@@ -77,7 +74,6 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
     public JDialogQuantify(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -218,7 +214,6 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         setMaskImage(scriptParameters.retrieveImage("mask_image"));
@@ -270,10 +265,10 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             sameDims = true;
 
             if (!image.getImageName().equals(name)) {
@@ -311,7 +306,7 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
