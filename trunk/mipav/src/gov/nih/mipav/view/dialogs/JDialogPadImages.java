@@ -174,7 +174,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                final Vector imageFrames = image.getImageFrameVector();
+                final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
 
