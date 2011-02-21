@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -384,7 +385,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
 
                     ViewJFrameGraph transGraph = new ViewJFrameGraph(posT, trans, "Translations", "Slice number",
                                                                      "Translations in " +
-                                                                     FileInfoBase.getUnitsOfMeasureAbbrevStr(matchImage.getFileInfo(0).getUnitsOfMeasure(0)));
+                                                                     (Unit.getUnitFromLegacyNum(matchImage.getFileInfo(0).getUnitsOfMeasure(0))).getAbbrev());
                     transGraph.makeRangeSymmetric();
                     transGraph.showXYZLegends();
                     transGraph.setDefaultDirectory(UI.getDefaultDirectory());
