@@ -464,7 +464,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         int j;
         int count = 0;
         ViewUserInterface UI;
-        Enumeration names;
+        Enumeration<String> names;
 
         UI = ViewUserInterface.getReference();
         names = UI.getRegisteredImageNames();
@@ -481,7 +481,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
 
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             ModelImage img = UI.getRegisteredImageByName(name);
 
             if (UI.getFrameContainingImage(img) != null) {
@@ -766,10 +766,10 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
             }
         }
 
-        Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
+        Enumeration<String> names = ViewUserInterface.getReference().getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
 
             tmpStr = (String) comboBoxImageRed.getSelectedItem();
