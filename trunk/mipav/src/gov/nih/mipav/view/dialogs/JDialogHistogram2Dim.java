@@ -201,7 +201,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = firstImage.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = firstImage.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -741,10 +741,10 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        Enumeration names = userInterface.getRegisteredImageNames();
+        Enumeration<String> names = userInterface.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
 
             if (!name.equals(image.getImageName())) {
                 nextImage = userInterface.getRegisteredImageByName(name);
