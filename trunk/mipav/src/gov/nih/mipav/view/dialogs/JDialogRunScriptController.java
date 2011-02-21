@@ -295,7 +295,7 @@ public class JDialogRunScriptController implements ActionListener {
         int numImagePlaceHolders = scriptNode.getChildCount();
 
         // find out how many times the script will run
-        int numExecuters = ((ScriptTreeNode) scriptNode.getChildAt(0)).getChildCount();
+        //int numExecuters = ((ScriptTreeNode) scriptNode.getChildAt(0)).getChildCount();
 
         ScriptTreeNode imagePHNode = null;
         ScriptTreeNode imageNode = null;
@@ -417,10 +417,10 @@ public class JDialogRunScriptController implements ActionListener {
      * all open VOIs associated with those images.
      */
     private void populateAvailableObjectsLists() {
-        Enumeration images = ViewUserInterface.getReference().getRegisteredImages();
+        Enumeration<ModelImage> images = ViewUserInterface.getReference().getRegisteredImages();
 
         while (images.hasMoreElements()) {
-            model.addToAvailableImageList((ModelImage) images.nextElement());
+            model.addToAvailableImageList(images.nextElement());
         }
     }
 
@@ -471,14 +471,14 @@ public class JDialogRunScriptController implements ActionListener {
 
             String[] scriptVars = model.getScriptImageVars();
 
-            Vector scriptExecutors = new Vector();
-            Vector scriptExecutorsVOIs = new Vector();
+            Vector<Vector<String>> scriptExecutors = new Vector<Vector<String>>();
+            Vector<Vector<String>> scriptExecutorsVOIs = new Vector<Vector<String>>();
             view.fillImagesVOIs(scriptExecutors, scriptExecutorsVOIs);
 
 
             for (int i = 0; i < scriptExecutors.size(); i++) {
-                Vector scriptImages = (Vector) scriptExecutors.elementAt(i);
-                Vector imagesOpenedByDialog = new Vector();
+                Vector<String> scriptImages = scriptExecutors.elementAt(i);
+                Vector<ModelImage> imagesOpenedByDialog = new Vector<ModelImage>();
                 Preferences.debug("run dialog:\tScript execution #" + i + " images to be used:\n",
                                   Preferences.DEBUG_SCRIPTING);
 
@@ -486,7 +486,7 @@ public class JDialogRunScriptController implements ActionListener {
 
                     // open any images which were selected from disk in this dialog, then replace their filepath with
                     // their new image name
-                    ScriptImage si = model.getScriptImage((String) scriptImages.elementAt(j));
+                    ScriptImage si = model.getScriptImage(scriptImages.elementAt(j));
 
                     try {
                         ViewUserInterface.getReference().getRegisteredImageByName(si.getImageName());
@@ -501,7 +501,7 @@ public class JDialogRunScriptController implements ActionListener {
                                       scriptImages.elementAt(j) + "\n", Preferences.DEBUG_SCRIPTING);
                 }
 
-                Vector scriptVOIs = (Vector) scriptExecutorsVOIs.elementAt(i);
+                Vector<String> scriptVOIs = scriptExecutorsVOIs.elementAt(i);
                 Preferences.debug("run dialog:\tScript execution #" + i + " VOIs to be used:\n",
                                   Preferences.DEBUG_SCRIPTING);
                 // do it here
@@ -536,7 +536,7 @@ public class JDialogRunScriptController implements ActionListener {
         }
         else if (view.isTreeReadyForScriptExecution() && view.getScriptNodeChildCount() == 0) {
         	view.getFrame().setVisible(false);
-        	if (ScriptRunner.getReference().runScript(model.getScriptFile(), new Vector(), new Vector())) {
+        	if (ScriptRunner.getReference().runScript(model.getScriptFile(), new Vector<String>(), new Vector<String>())) {
 
             } else {
                 Preferences.debug("run dialog:\tError during script execution \n",
