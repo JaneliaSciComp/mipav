@@ -774,7 +774,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         image25DCheckbox.setFont(serif12);
         image25DCheckbox.setForeground(Color.black);
 
-        if ((image.getNDims() == 3) && (image.isComplexImage())) {
+        if ((image.getNDims() == 3) && (!image.isComplexImage())) {
             image25DCheckbox.setEnabled(true);
             image25DCheckbox.setSelected(false);
         } else if ((image.getNDims() == 3) && (image.isComplexImage())) {
@@ -793,7 +793,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         logDisplayCheckbox.setForeground(Color.black);
         logDisplayCheckbox.setSelected(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             logDisplayCheckbox.setEnabled(true);
         } else {
             logDisplayCheckbox.setEnabled(false);
@@ -806,7 +806,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         unequalDimCheckbox.setFont(serif12);
         unequalDimCheckbox.setForeground(Color.black);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             unequalDimCheckbox.setEnabled(true);
             unequalDimCheckbox.setSelected(false);
         } else {
@@ -827,7 +827,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         windowFilter.addActionListener(this);
         constructionGroup.add(windowFilter);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             windowFilter.setEnabled(true);
         } else {
             windowFilter.setEnabled(false);
@@ -844,7 +844,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         imageCropCheckbox.setFont(serif12);
         imageCropCheckbox.setForeground(Color.black);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             imageCropCheckbox.setEnabled(true);
             imageCropCheckbox.setSelected(true);
         } else {
@@ -856,7 +856,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
         textKernelDiameter = new JTextField(10);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             textKernelDiameter.setText("15");
         } else {
             kernelDiameter = image.getOriginalKernelDimension();
@@ -866,7 +866,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         textKernelDiameter.setFont(serif12);
         textKernelDiameter.setForeground(Color.black);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             textKernelDiameter.setEnabled(true);
         } else {
             textKernelDiameter.setEnabled(false);
@@ -878,7 +878,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         labelKernelDiameter.setForeground(Color.black);
         labelKernelDiameter.setFont(serif12);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             labelKernelDiameter.setEnabled(true);
         } else {
             labelKernelDiameter.setEnabled(false);
@@ -890,7 +890,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         gaussianFilter.addActionListener(this);
         constructionGroup.add(gaussianFilter);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             gaussianFilter.setEnabled(true);
         } else {
             gaussianFilter.setEnabled(false);
@@ -908,7 +908,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         butterworthFilter.addActionListener(this);
         constructionGroup.add(butterworthFilter);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             butterworthFilter.setEnabled(true);
         } else {
             butterworthFilter.setEnabled(false);
@@ -922,7 +922,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
         textOrder = new JTextField(10);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             textOrder.setText("1");
         } else {
             butterworthOrder = image.getOriginalButterworthOrder();
@@ -1018,7 +1018,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         directionGroup.add(inverseFFT);
         directionPanel.add(inverseFFT);
 
-        if (image.isComplexImage()) {
+        if (!image.isComplexImage()) {
             forwardFFT.setSelected(true);
             frequencyFilter.setEnabled(false);
             inverseFFT.setEnabled(false);
@@ -1026,6 +1026,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             frequencyFilter.setEnabled(true);
             inverseFFT.setEnabled(true);
             inverseFFT.setSelected(true);
+            forwardFFT.setSelected(false);
+            forwardFFT.setEnabled(false);
         }
 
         filterPanel = new JPanel(new GridBagLayout());
