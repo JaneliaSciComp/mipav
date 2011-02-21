@@ -90,7 +90,7 @@ public class JDialogPaintVasculature extends JDialogBase
     private int oldSeedIntensity = intensityValue;
 
     /** List of frames that want to know about paint updates. */
-    private Vector paintGrowListeners;
+    private Vector<ViewJComponentEditImage> paintGrowListeners;
 
     /** The point selection mode. */
     private int paintGrowMode = AUTO_POINT;
@@ -99,7 +99,7 @@ public class JDialogPaintVasculature extends JDialogBase
     private ViewJFrameImage rfastFrame;
 
     /** List of points where we have grown a region from. */
-    private Vector seedPoints;
+    private Vector<Vector3f> seedPoints;
 
     /** The dialog's toolbar panel. */
     private JPanel toolbarPanel;
@@ -129,11 +129,11 @@ public class JDialogPaintVasculature extends JDialogBase
 
         rfastFrame = (ViewJFrameImage) ((ViewJFramePaintVasculature) parentFrame).getParentFrame();
 
-        paintGrowListeners = new Vector();
+        paintGrowListeners = new Vector<ViewJComponentEditImage>();
         paintGrowListeners.add(((ViewJFramePaintVasculature) parentFrame).getComponentImage());
         paintGrowListeners.add(rfastFrame.getComponentImage());
 
-        seedPoints = new Vector();
+        seedPoints = new Vector<Vector3f>();
 
         ((ViewJFramePaintVasculature) parentFrame).getComponentImage().addMouseListener(this);
         ((ViewJFramePaintVasculature) parentFrame).getComponentImage().addMouseMotionListener(this);
@@ -159,7 +159,7 @@ public class JDialogPaintVasculature extends JDialogBase
 
             // region grow from all currently selected points in the MIP
             VOI voi = ((ViewJFramePaintVasculature) parentFrame).getSeedPoints();
-            Vector points = voi.getCurves();
+            Vector<VOIBase> points = voi.getCurves();
 
             for (int i = 0; i < points.size(); i++) {
 
@@ -707,7 +707,7 @@ public class JDialogPaintVasculature extends JDialogBase
         lowerDeltaSlider.setValue(lowerInit);
         lowerDeltaSlider.setMajorTickSpacing((int) (lowerMax - lowerMin) / 10);
 
-        Hashtable sliderDictionary = new Hashtable();
+        Hashtable<Integer,JLabel> sliderDictionary = new Hashtable<Integer,JLabel>();
 
         JLabel minLabel = new JLabel(Float.toString(lowerMin / 100f));
         minLabel.setForeground(Color.black);
@@ -748,7 +748,7 @@ public class JDialogPaintVasculature extends JDialogBase
         upperDeltaSlider.setValue(upperInit);
         upperDeltaSlider.setMajorTickSpacing((int) (upperMax - upperMin) / 10);
 
-        Hashtable sliderDictionary = new Hashtable();
+        Hashtable<Integer,JLabel> sliderDictionary = new Hashtable<Integer,JLabel>();
 
         JLabel minLabel = new JLabel(Float.toString(upperMin / 100f));
         minLabel.setForeground(Color.black);
