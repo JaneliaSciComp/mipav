@@ -409,7 +409,7 @@ public class JDialogOverlay extends JDialogBase {
 
                 FileDicomKey key = null;
                 FileDicomTagInfo info = null;
-                Enumeration e = DicomDictionary.getDicomTagTable().keys();
+                Enumeration<FileDicomKey> e = DicomDictionary.getDicomTagTable().keys();
 
                 model.addColumn("Tag");
                 model.addColumn("Name");
@@ -422,7 +422,7 @@ public class JDialogOverlay extends JDialogBase {
                 model.addRow(new String[] { BLANK_OVERLAY, "" });
 
                 while (e.hasMoreElements()) {
-                    key = (FileDicomKey) e.nextElement();
+                    key = e.nextElement();
                     info = DicomDictionary.getInfo(key);
 
                     if (info != null) {
@@ -513,6 +513,7 @@ public class JDialogOverlay extends JDialogBase {
              *
              * @param  e  DOCUMENT ME!
              */
+            @SuppressWarnings("unused")
             public void mouseDragged(MouseEvent e) { }
 
             /**
