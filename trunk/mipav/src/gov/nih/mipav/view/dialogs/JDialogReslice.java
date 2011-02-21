@@ -8,7 +8,6 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -49,9 +48,6 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
     /** resliced image. */
     private ModelImage resultImage = null;
 
-    /** User interface pointer. */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -69,7 +65,6 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
         super(theParentFrame, false);
         image = im;
         image.makeUnitsOfMeasureIdentical();
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -215,7 +210,6 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
         image.makeUnitsOfMeasureIdentical();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         setMode(scriptParameters.getParams().getInt("interpolation_type"));
