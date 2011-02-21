@@ -10,7 +10,6 @@ import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
-import gov.nih.mipav.model.scripting.parameters.ParameterFloat;
 import gov.nih.mipav.model.scripting.parameters.ParameterImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterInt;
 import gov.nih.mipav.model.scripting.parameters.ParameterString;
@@ -349,7 +348,7 @@ public class JDialogReorient extends JDialogScriptableBase
 		GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
 		mainPanel = new JPanel(new GridBagLayout());
@@ -359,49 +358,49 @@ public class JDialogReorient extends JDialogScriptableBase
         gbc.gridy = 0;
         gbc.weightx = 0;
         gbc.gridwidth = 2;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(presentOrientPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 1;
 		gbc.gridwidth = 2;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(newOrientPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(labelResType, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 1;
 		gbc.gridwidth = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(comboResType, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(labelInterpType, gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 1;
 		gbc.gridwidth = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(comboInterpType, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(labelTemplate, gbc);
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.weightx = 1;
 		gbc.gridwidth = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(comboTemplate, gbc);
         
 		getContentPane().add(mainPanel);
@@ -421,11 +420,11 @@ public class JDialogReorient extends JDialogScriptableBase
         comboTemplate.setBackground(Color.white);
         comboTemplate.setEnabled(false);
 
-        Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
+        Enumeration<String> names = ViewUserInterface.getReference().getRegisteredImageNames();
 
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
 			if (ViewUserInterface.getReference().getFrameContainingImage(img) != null) {
 				comboTemplate.addItem(name);
@@ -852,7 +851,6 @@ public class JDialogReorient extends JDialogScriptableBase
 		setVisible(false);
 		float origin[];
 		float newOrigin[];
-		int orient;
 		float originalOr[] = new float[3];
 		float flippedOr[] = new float[3];
 		float xOr = 0.0f;
