@@ -1,19 +1,12 @@
 package gov.nih.mipav.view.dialogs;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
-
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.event.*;
-
-import java.util.*;
 
 import javax.swing.*;
 
@@ -47,8 +40,8 @@ public class JDialogRegistrationValidation extends JDialogRegistrationLeastSquar
 	/**SimpleImages to describe ModelImage data, simpleImg2 is always registered image*/
 	private ModelSimpleImage simpleImg1, simpleImg2;
 
-	/** Bins to use for pixel comparisons*/
-	private int bin1, bin2;
+	/** Bin to use for pixel comparisons*/
+	private int bin1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -187,12 +180,6 @@ public class JDialogRegistrationValidation extends JDialogRegistrationLeastSquar
                  (image.getType() == ModelStorageBase.UINTEGER) ||
                  (image.getType() == ModelStorageBase.LONG)) && (possibleIntValues1 < 256)) {
             bin1 = (int) Math.round(possibleIntValues1);
-        }
-
-        if (resultImage.getMax() == resultImage.getMin()) {
-            bin2 = 1;
-        } else {
-            bin2 = bin1;
         }
     	
     	simpleImg1 = new ModelSimpleImage(image.getExtents(), image.getFileInfo(0).getResolutions(),
