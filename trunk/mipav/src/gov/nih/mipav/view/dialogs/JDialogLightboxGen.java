@@ -9,7 +9,6 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 
 import javax.swing.*;
 
@@ -43,9 +42,6 @@ public class JDialogLightboxGen extends JDialogScriptableBase implements Algorit
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -62,7 +58,6 @@ public class JDialogLightboxGen extends JDialogScriptableBase implements Algorit
     public JDialogLightboxGen(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -232,33 +227,6 @@ public class JDialogLightboxGen extends JDialogScriptableBase implements Algorit
     protected void storeParamsFromGUI() throws ParserException {
 
 
-    }
-
-    /**
-     * Builds a list of images to operate on from the template image.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private JComboBox buildComboBoxImage() {
-        JComboBox comboBoxImage = new JComboBox();
-        comboBoxImage.setFont(serif12);
-        comboBoxImage.setBackground(Color.white);
-
-        Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
-
-        // Add images from user interface
-        // Guaranteed to have at least one unique potential image B, because it's
-        // tested for in ViewJFrameImage before this dialog is created.
-        while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
-            ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
-
-            if (ViewUserInterface.getReference().getFrameContainingImage(img) != null) {
-                comboBoxImage.addItem(name);
-            }
-        }
-
-        return comboBoxImage;
     }
 
     /**
