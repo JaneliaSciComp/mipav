@@ -216,9 +216,6 @@ public class JDialogPowerPaint extends JDialogBase
     private JPanel movePanel;
 
     /** DOCUMENT ME! */
-    private JDialogMultiPaint multiPaintDialog;
-
-    /** DOCUMENT ME! */
     private int nx, ny, nz; // image dimensions
 
     /** DOCUMENT ME! */
