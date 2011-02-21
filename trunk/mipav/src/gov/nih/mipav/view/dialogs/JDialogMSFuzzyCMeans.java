@@ -87,22 +87,10 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
     private JLabel labelExpo;
 
     /** DOCUMENT ME! */
-    private JLabel labelJacobi;
-
-    /** DOCUMENT ME! */
-    private JLabel labelLoaded;
-
-    /** DOCUMENT ME! */
     private JLabel labelMaxIter;
 
     /** DOCUMENT ME! */
     private JLabel labelNClasses;
-
-    /** DOCUMENT ME! */
-    private JLabel labelNPyramid;
-
-    /** DOCUMENT ME! */
-    private JLabel labelSmooth;
 
     /** DOCUMENT ME! */
     private int maxIter;
@@ -178,21 +166,6 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
 
     /** DOCUMENT ME! */
     private JTextField textNClasses;
-
-    /** DOCUMENT ME! */
-    private JTextField textNPyramid;
-
-    /** DOCUMENT ME! */
-    private JTextField textOneJacobiIter;
-
-    /** DOCUMENT ME! */
-    private JTextField textOneSmooth;
-
-    /** DOCUMENT ME! */
-    private JTextField textTwoJacobiIter;
-
-    /** DOCUMENT ME! */
-    private JTextField textTwoSmooth;
 
     /** DOCUMENT ME! */
     private float[] threshold;
