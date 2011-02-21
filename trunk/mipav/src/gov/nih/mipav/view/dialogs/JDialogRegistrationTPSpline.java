@@ -163,7 +163,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = matchImage.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = matchImage.getImageFrameVector();
 
                 for (i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -244,10 +244,9 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         Vector3f[] tmpptB = null;
         Vector3f[] ptA = null; // new Vector3f[nPtsA];
         Vector3f[] ptB = null; // new Vector3f[nPtsB];
-        int i, s;
-        int ptNum = 0;
-        Vector curvesB;
-        Vector curvesM;
+        int i;
+        Vector<VOIBase> curvesB;
+        Vector<VOIBase> curvesM;
 
         if ((baseImage.getNDims() == 3) && (matchImage.getNDims() == 3)) {
             curvesB = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
@@ -434,7 +433,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         // is displayed to "locked - " image name so as to indicate that the image
         // is now read/write locked!  The image frames are disabled and then
         // unregisted from the userinterface until the algorithm has completed.
-        Vector imageFrames = matchImage.getImageFrameVector();
+        Vector<ViewImageUpdateInterface> imageFrames = matchImage.getImageFrameVector();
         titles = new String[imageFrames.size()];
 
         for (i = 0; i < imageFrames.size(); i++) {
