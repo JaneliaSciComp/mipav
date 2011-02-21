@@ -37,19 +37,10 @@ public class JDialogNearlyCircleToCircle extends JDialogBase implements Algorith
     private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private int xDim;
 
     /** DOCUMENT ME! */
     private JTextField xText;
-
-    /** DOCUMENT ME! */
-    private int yDim;
-
-    /** DOCUMENT ME! */
-    private JTextField yText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -60,7 +51,6 @@ public class JDialogNearlyCircleToCircle extends JDialogBase implements Algorith
      */
     public JDialogNearlyCircleToCircle(ModelImage image) {
         super();
-        this.UI = ViewUserInterface.getReference();
         this.image = image;
         parentFrame = image.getParentFrame();
     }
@@ -159,7 +149,7 @@ public class JDialogNearlyCircleToCircle extends JDialogBase implements Algorith
      * @param  event  DOCUMENT ME!
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+        
     }
 
 
@@ -222,7 +212,6 @@ public class JDialogNearlyCircleToCircle extends JDialogBase implements Algorith
     private void init() {
         JLabel input1Label;
         JLabel xLabel;
-        JLabel yLabel;
         setForeground(Color.black);
         setTitle("Nearly Circle To Circle Conformal Mapping");
 
@@ -232,7 +221,7 @@ public class JDialogNearlyCircleToCircle extends JDialogBase implements Algorith
         GridBagConstraints gbc4 = new GridBagConstraints();
         gbc4.gridwidth = 1;
         gbc4.gridheight = 1;
-        gbc4.anchor = gbc4.WEST;
+        gbc4.anchor = GridBagConstraints.WEST;
         gbc4.weightx = 1;
         gbc4.insets = new Insets(3, 3, 3, 3);
         gbc4.fill = GridBagConstraints.HORIZONTAL;
@@ -252,7 +241,7 @@ public class JDialogNearlyCircleToCircle extends JDialogBase implements Algorith
 
         gbc6.gridwidth = 1;
         gbc6.gridheight = 1;
-        gbc6.anchor = gbc6.WEST;
+        gbc6.anchor = GridBagConstraints.WEST;
         gbc6.weightx = 1;
         gbc6.insets = new Insets(3, 3, 3, 3);
         gbc6.fill = GridBagConstraints.HORIZONTAL;
