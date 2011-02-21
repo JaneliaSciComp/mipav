@@ -58,23 +58,23 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
 			"Father's month of birth [1-12]"
 			};
 	
-	private static final int GUID_SSN = 0;
-	private static final int GUID_FN  = 1;
-	private static final int GUID_LN =  2;
-	private static final int GUID_MN =  3;
-	private static final int GUID_DOB = 4;
-	private static final int GUID_MOB = 5;
-	private static final int GUID_YOB = 6;
-	private static final int GUID_SEX = 7;
-	private static final int GUID_COB = 8;
-	private static final int GUID_MFN = 9;
-	private static final int GUID_MLN = 10;
-	private static final int GUID_FFN = 11;
-	private static final int GUID_FLN = 12;
-	private static final int GUID_MDOB = 13;
-	private static final int GUID_MMOB = 14;
-	private static final int GUID_FDOB = 15;
-	private static final int GUID_FMOB = 16;
+	//private static final int GUID_SSN = 0;
+	//private static final int GUID_FN  = 1;
+	//private static final int GUID_LN =  2;
+	//private static final int GUID_MN =  3;
+	//private static final int GUID_DOB = 4;
+	//private static final int GUID_MOB = 5;
+	//private static final int GUID_YOB = 6;
+	//private static final int GUID_SEX = 7;
+	//private static final int GUID_COB = 8;
+	//private static final int GUID_MFN = 9;
+	//private static final int GUID_MLN = 10;
+	//private static final int GUID_FFN = 11;
+	//private static final int GUID_FLN = 12;
+	//private static final int GUID_MDOB = 13;
+	//private static final int GUID_MMOB = 14;
+	//private static final int GUID_FDOB = 15;
+	//private static final int GUID_FMOB = 16;
 	
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -151,10 +151,10 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
     		}
     	}
     	
-    	String ssn = mainFields[GUID_SSN].getText();
-    	String fn = mainFields[GUID_FN].getText();
-    	String ln = mainFields[GUID_LN].getText();
-    	String mn = mainFields[GUID_MN].getText();
+    	//String ssn = mainFields[GUID_SSN].getText();
+    	//String fn = mainFields[GUID_FN].getText();
+    	//String ln = mainFields[GUID_LN].getText();
+    	//String mn = mainFields[GUID_MN].getText();
     	
     	return true;
     }
