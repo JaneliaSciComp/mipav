@@ -140,7 +140,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
                     // The image frames are enabled and then registed to the userinterface.
                     resultImage = mathAlgo.getResultImage();
 
-                    Vector imageFrames = image.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                     for (int i = 0; i < imageFrames.size(); i++) {
                         ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -264,8 +264,6 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
      * @param  event  DOCUMENT ME!
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-
         
     }
 
@@ -311,7 +309,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
                 // "locked - " image name so as to indicate that the image is now read/write locked!
                 // The image frames are disabled and then unregisted from the userinterface until the
                 // algorithm has completed.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
                 for (int i = 0; i < imageFrames.size(); i++) {
