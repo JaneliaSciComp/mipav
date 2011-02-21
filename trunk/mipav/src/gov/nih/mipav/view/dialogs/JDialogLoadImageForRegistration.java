@@ -268,7 +268,7 @@ public class JDialogLoadImageForRegistration extends JDialogBase {
         } else if (command.equalsIgnoreCase("ok")) {
 
             if (frameButton.isSelected()) {
-                Vector uiV = userInterface.getImageFrameVector();
+                Vector<Frame> uiV = userInterface.getImageFrameVector();
                 int elem = -1;
 
                 for (int i = uiV.size() - 1; i >= 0; i--) { // get the first image-index which has this title
