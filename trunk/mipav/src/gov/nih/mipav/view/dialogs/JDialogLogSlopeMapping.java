@@ -54,10 +54,10 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
     private JTable srcImagesTable;
     
     /** list of images to send to algorithm **/
-    private ArrayList srcImagesList;
+    private ArrayList<ModelImage> srcImagesList;
     
     /** list of x values to send to algorithm **/
-    private ArrayList xValuesList;
+    private ArrayList<Double> xValuesList;
     
     /** handle to algorithm **/
     private AlgorithmLogSlopeMapping alg;
@@ -207,7 +207,7 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
 	 				return;
 	         	}
 	         	} // else
-	         	Vector rowData = new Vector();
+	         	Vector<String> rowData = new Vector<String>();
                 rowData.add(addImage.getImageName());
                 srcTableModel.addRow(rowData);
 	         	srcImagesList.add(addImage);
@@ -226,7 +226,7 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
 	    		 MipavUtil.displayError("Number format exception on attempt to parse x value");
 	    		 return;
 	    	 }
-	         Vector rowData = new Vector();
+	         Vector<String> rowData = new Vector<String>();
 	         rowData.add(tmpStr);
 	         srcTableModel.addRow(rowData);
 	         xValuesList.add(Double.valueOf(xValue));
@@ -394,8 +394,8 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
         JScrollPane srcImagesScrollPane = new JScrollPane(srcImagesTable);
         srcPanel.add(srcImagesScrollPane);
         
-        srcImagesList = new ArrayList();
-        xValuesList = new ArrayList();
+        srcImagesList = new ArrayList<ModelImage>();
+        xValuesList = new ArrayList<Double>();
         
         additionalImagesLabel = new JLabel(" Add Images: ");
         additionalImagesLabel.setForeground(Color.black);
@@ -481,7 +481,7 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
 	 */
 	protected void setGUIFromParams() {
 		imageA = scriptParameters.retrieveInputImage(1);
-		srcImagesList = new ArrayList();
+		srcImagesList = new ArrayList<ModelImage>();
 		srcImagesList.add(imageA);
 		isColor = imageA.isColorImage();
 		int size = scriptParameters.getParams().getInt("size");
@@ -520,7 +520,7 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
 			}
 		}
 	
-		xValuesList = new ArrayList();
+		xValuesList = new ArrayList<Double>();
 		for (int i = 1; i <= size; i++) {
 			xValuesList.add(Double.valueOf(scriptParameters.getParams().getDouble("x_value" + i)));
 		}
@@ -560,8 +560,6 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
      * @param  event  DOCUMENT ME!
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-
         
     }
 
