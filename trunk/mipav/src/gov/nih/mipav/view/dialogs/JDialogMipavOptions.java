@@ -181,9 +181,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     private JCheckBox flipNIFTIReadCheckBox;
 
-    /** DOCUMENT ME! */
-    private JCheckBox saveXMLOnHDRSaveCheckBox;
-
     private JTextField fileTempDirField;
 
     private JButton fileTempDirBrowseButton;
@@ -200,9 +197,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** DOCUMENT ME! */
     private final JTabbedPane tabbedPane;
-
-    /** DOCUMENT ME! */
-    private JCheckBox useAWTBox;
 
     /** ui must be set to access the list of images to set image-specfic options (ie,. log mode) */
     private final ViewUserInterface userInterface;
@@ -592,7 +586,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 Preferences.setProperty(Preferences.PREF_QUICKLIST_NUMBER, String.valueOf(newNum));
                 userInterface.buildMenu();
 
-                final Vector imageFrames = userInterface.getImageFrameVector();
+                final Vector<Frame> imageFrames = userInterface.getImageFrameVector();
 
                 if (imageFrames.size() < 1) {
                     userInterface.setControls();
@@ -631,8 +625,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             // OKButton.setEnabled(false); // doesn't act correctly when open and then new image frame is added.
             if (userInterface != null) {
                 int i;
-                final Enumeration names = userInterface.getRegisteredImageNames();
-                final Vector imageframelist = userInterface.getImageFrameVector();
+                final Enumeration<String> names = userInterface.getRegisteredImageNames();
+                final Vector<Frame> imageframelist = userInterface.getImageFrameVector();
 
                 for (i = 0; i < imageframelist.size(); i++) { // for all viewJFrames listed in the the user interface
                     // list
@@ -814,7 +808,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * no information available.
      */
     public void fillChooser() {
-        final Vector uiV = userInterface.getImageFrameVector();
+        final Vector<Frame> uiV = userInterface.getImageFrameVector();
 
         if (uiV.size() > 0) {
 
@@ -1328,8 +1322,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      */
     protected void makeMouseClickOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
 
-        final GridBagConstraints gbc2 = new GridBagConstraints();
-
         boolean doLeft = true, doRight = true;
 
         if (Preferences.getProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK) != null) {
@@ -1532,7 +1524,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         txt.addKeyListener(new KeyAdapter() { // make the field
                     public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                        final JTextField t = (JTextField) evt.getComponent();
                         final char ch = evt.getKeyChar();
 
                         if ( ( (ch < '0') || (ch > '9'))
