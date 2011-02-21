@@ -517,7 +517,7 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
     private boolean setVariables() {
 
         if (loadType == LOAD_FROM_FRAME) {
-            Vector uiV = userInterface.getImageFrameVector();
+            Vector<Frame> uiV = userInterface.getImageFrameVector();
             int elem = -1;
 
             for (int i = uiV.size() - 1; i >= 0; i--) { // get the first image-index which has this title
