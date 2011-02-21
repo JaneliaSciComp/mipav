@@ -81,7 +81,6 @@ public class JDialogLoadLeica extends JDialogBase {
      */
     public void actionPerformed(final ActionEvent event) {
         final String command = event.getActionCommand();
-        final int i;
 
         if (command.equals("Open")) {
 
@@ -111,7 +110,7 @@ public class JDialogLoadLeica extends JDialogBase {
      * @return DOCUMENT ME!
      */
     private boolean buildList() {
-        final Vector vec = new Vector();
+        final Vector<LeicaSeries> vec = new Vector<LeicaSeries>();
         BufferedReader br = null;
 
         try {
@@ -435,7 +434,6 @@ public class JDialogLoadLeica extends JDialogBase {
      */
     private boolean seriesExists(final LeicaSeries leica) {
         int fileCounter = 0;
-        final String seriesName = leica.getName();
 
         final File directoryFile = headerFile.getParentFile();
 
@@ -455,11 +453,11 @@ public class JDialogLoadLeica extends JDialogBase {
             // create a Vector to store each file name in the series
             // which will be passed into the series object for actual
             // Tiff file reading
-            final Vector fileNames = new Vector(leica.getNumImages(), 0);
+            final Vector<String> fileNames = new Vector<String>(leica.getNumImages(), 0);
 
             // see if they contain the name + "_"
             for (final File element : allFiles) {
-
+           
                 if (element.getPath().indexOf(leica.getName() + "_") != -1) {
                     fileNames.add(fileCounter, element.getPath());
                     fileCounter++;
@@ -518,13 +516,10 @@ public class JDialogLoadLeica extends JDialogBase {
     /**
      * DOCUMENT ME!
      */
-    public class LeicaFileComparator implements Comparator {
+    public class LeicaFileComparator implements Comparator<Object> {
 
         /** DOCUMENT ME! */
         private final int[] channelOrder;
-
-        /** DOCUMENT ME! */
-        private final int grayIndex = -1;
 
         /** DOCUMENT ME! */
         private int[] grayIndices = null;
@@ -543,7 +538,7 @@ public class JDialogLoadLeica extends JDialogBase {
             this.seriesName = seriesName;
 
             // set the gray index if there is a gray (unused) channel
-            final Vector grayVector = new Vector();
+            final Vector<Integer> grayVector = new Vector<Integer>();
 
             for (int i = 0; i < channelOrder.length; i++) {
 
