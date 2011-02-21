@@ -14,6 +14,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.DialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewImageUpdateInterface;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
@@ -186,7 +187,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -281,7 +282,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 					}catch(IOException e){
 						
 					}
-					Vector imageFrames = image.getImageFrameVector();
+					Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
 					for (int i = 0; i < imageFrames.size(); i++) {
 						((Frame) (imageFrames.elementAt(i)))
@@ -478,7 +479,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 				// The image frames are disabled and then unregisted from the
 				// userinterface until the
 				// algorithm has completed.
-				Vector imageFrames = image.getImageFrameVector();
+				Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 				titles = new String[imageFrames.size()];
 
 				for (int i = 0; i < imageFrames.size(); i++) {
@@ -641,7 +642,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                     titles = new String[imageFrames.size()];
 
                     for (int i = 0; i < imageFrames.size(); i++) {
@@ -765,7 +766,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                     titles = new String[imageFrames.size()];
 
                     for (int i = 0; i < imageFrames.size(); i++) {
