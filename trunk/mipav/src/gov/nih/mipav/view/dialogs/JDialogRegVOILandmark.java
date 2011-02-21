@@ -54,9 +54,6 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
     private JLabel labelStep;
 
     /** DOCUMENT ME! */
-    private JRadioButton minDiff, maxSum;
-
-    /** DOCUMENT ME! */
     private VOIContour position = null;
 
     /** DOCUMENT ME! */
@@ -77,16 +74,10 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
     private JTextField textminTx, textmaxTx, textminTy, textmaxTy, textminRz, textmaxRz;
 
     /** DOCUMENT ME! */
-    private String[] titles;
-
-    /** DOCUMENT ME! */
     private float[] tmpIntensity = null;
 
     /** DOCUMENT ME! */
     private Vector3f[] tmpPosition = null;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -99,7 +90,6 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
     public JDialogRegVOILandmark(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -286,7 +276,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                     return;
                 }
 
-                Vector curves = VOIs.VOIAt(VOIindex).getCurves();
+                Vector<VOIBase> curves = VOIs.VOIAt(VOIindex).getCurves();
                 int nCurves = curves.size();
 
                 if (nCurves == 0) {
@@ -446,8 +436,8 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
      * @param  event  Event that caused method to fire.
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-/*
+    /*    Object source = event.getSource();
+
         if (source == comboBoxOpt) {
 
             if (comboBoxOpt.getSelectedIndex() == 0) {
