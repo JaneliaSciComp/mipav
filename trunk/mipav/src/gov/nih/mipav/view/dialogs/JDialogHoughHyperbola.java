@@ -204,7 +204,7 @@ public class JDialogHoughHyperbola extends JDialogBase implements AlgorithmInter
      * @param  event  DOCUMENT ME!
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+        
     }
 
 
@@ -294,7 +294,7 @@ public class JDialogHoughHyperbola extends JDialogBase implements AlgorithmInter
 
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
