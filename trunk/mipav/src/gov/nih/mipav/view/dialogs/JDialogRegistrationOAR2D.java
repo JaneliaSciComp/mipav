@@ -200,10 +200,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     /** DOCUMENT ME! */
     private JRadioButton weightRadio;
     
-    private AlgorithmCenterOfMass comAlgo;
-    
-    private float threshold[] = new float[2];
-    
     private JLabel outOfBoundsLabel;
     
     private JComboBox outOfBoundsComboBox;
@@ -1572,10 +1568,10 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
 
             if (!name.equals(image.getImageName())) {
                 ModelImage img = UI.getRegisteredImageByName(name);
