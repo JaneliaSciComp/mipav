@@ -168,7 +168,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = imageA.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = imageA.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -413,7 +413,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = imageA.getImageFrameVector();
+                    Vector<ViewImageUpdateInterface> imageFrames = imageA.getImageFrameVector();
                     titles = new String[imageFrames.size()];
 
                     for (i = 0; i < imageFrames.size(); i++) {
@@ -499,13 +499,13 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         // Add images from user interface that have the same exact dimensionality
         // Guaranteed to have at least one unique potential image B, because it's
         // tested for in ViewJFrameImage before this dialog is created.
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             sameDims = true;
 
             if (!imageA.getImageName().equals(name)) {
