@@ -129,8 +129,6 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
     public void algorithmPerformed(AlgorithmBase algorithm) {
         // ((ViewJFrameWizard)parentFrame).updateImages(true);
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmImageHessian) {
             image.clearMask();
 
@@ -147,7 +145,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
                 try {
 
                     // resultImage.setImageName("Median: "+image.getImageName());
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -563,7 +561,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
 
         double[] evals = new double[2];
         double[] magEvals = new double[2];
-        double[][] evecs = new double[2][2];
+        //double[][] evecs = new double[2][2];
 
         hess = hessianAlgo.hessian3D(locationX, locationY, locationZ);
 
@@ -620,7 +618,9 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
 
         int tmp;
 
-        double blobRatio, areaRatio, structureness, vesselness;
+        double blobRatio, areaRatio, structureness;
+        @SuppressWarnings("unused")
+        double vesselness;
         double expRa = 0, expRb = 0, expS = 0;
 
         double a = 0.5f;
