@@ -2220,7 +2220,6 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 maximumU.setEnabled(true);
             }
 
-            String midString = null;
             float mid = upSlider.getMaximum() / 200.0f;
             upperMid = new JLabel();
 
@@ -2540,7 +2539,6 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                     maximumUR.setEnabled(true);
                 }
 
-                String midStringR = null;
                 float midR = upSliderR.getMaximum() / 200.0f;
                 upperMidR = new JLabel();
 
@@ -2760,7 +2758,6 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                     maximumUG.setEnabled(true);
                 }
 
-                String midStringG = null;
                 float midG = upSliderG.getMaximum() / 200.0f;
                 upperMidG = new JLabel();
 
@@ -2980,7 +2977,6 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                     maximumUB.setEnabled(true);
                 }
 
-                String midStringB = null;
                 float midB = upSliderB.getMaximum() / 200.0f;
                 upperMidB = new JLabel();
 
