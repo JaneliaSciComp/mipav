@@ -101,7 +101,6 @@ public class JDialogHoughHyperbolaChoice extends JDialogBase {
      */
     public void actionPerformed(ActionEvent event) {
         int i;
-        String tmpStr;
 
         if (event.getSource() == OKButton) {
             for (i = 0; i < numHyperbolasFound; i++) {
@@ -125,7 +124,6 @@ public class JDialogHoughHyperbolaChoice extends JDialogBase {
      * @param  event  (combo box event)
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
         
     }
 
