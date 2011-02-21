@@ -1,7 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
-
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 
 import gov.nih.mipav.view.*;
 
@@ -74,7 +73,7 @@ public class JDialogGridOptions extends JDialogBase {
         super(theParentFrame, false);
         this.comp = comp;
 
-        unitsStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(comp.getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0));
+        unitsStr = (Unit.getUnitFromLegacyNum(comp.getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0))).getAbbrev();
         this.width = comp.getGridSpacingX();
         this.height = comp.getGridSpacingY();
         this.color = comp.getGridColor();
