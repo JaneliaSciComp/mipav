@@ -12,7 +12,6 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.lang.management.GarbageCollectorMXBean;
 import java.util.*;
 
 import javax.swing.*;
@@ -202,7 +201,7 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -436,7 +435,7 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                 // "locked - " image name so as to indicate that the image is now read/write locked!
                 // The image frames are disabled and then unregisted from the userinterface until the
                 // algorithm has completed.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
                 for (int i = 0; i < imageFrames.size(); i++) {
