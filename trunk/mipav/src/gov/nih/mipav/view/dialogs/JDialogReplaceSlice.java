@@ -89,7 +89,6 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -146,9 +145,9 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
 
         JPanel mainPanel = new JPanel();
 
-        Enumeration e = userInterface.getRegisteredImages();
+        Enumeration<ModelImage> e = userInterface.getRegisteredImages();
 
-        Vector sliceItems = new Vector();
+        Vector<String> sliceItems = new Vector<String>();
 
         int[] imageExtents = image.getExtents();
 
@@ -158,7 +157,7 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
 
 
         while (e.hasMoreElements()) {
-            currentImage = (ModelImage) e.nextElement();
+            currentImage = e.nextElement();
 
             currentExtents = currentImage.getExtents();
 
