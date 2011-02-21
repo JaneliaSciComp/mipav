@@ -213,7 +213,7 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -432,10 +432,10 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
         comboBoxImage.addItemListener(this);
         comboBoxImage.setEnabled(false);
 
-        Enumeration names = userInterface.getRegisteredImageNames();
+        Enumeration<String> names = userInterface.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             ModelImage namedImage = userInterface.getRegisteredImageByName(name);
 
             if ((!image.getImageName().equals(name)) && (userInterface.getFrameContainingImage(namedImage) != null) &&
