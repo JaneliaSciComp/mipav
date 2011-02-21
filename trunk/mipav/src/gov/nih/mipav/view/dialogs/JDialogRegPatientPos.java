@@ -9,7 +9,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
