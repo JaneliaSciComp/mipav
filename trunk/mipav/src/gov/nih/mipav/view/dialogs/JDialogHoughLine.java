@@ -152,7 +152,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
      * @param  event  DOCUMENT ME!
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+        
     }
 
 
@@ -225,7 +225,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
 
         gbc6.gridwidth = 1;
         gbc6.gridheight = 1;
-        gbc6.anchor = gbc6.WEST;
+        gbc6.anchor = GridBagConstraints.WEST;
         gbc6.weightx = 1;
         gbc6.insets = new Insets(3, 3, 3, 3);
         gbc6.fill = GridBagConstraints.HORIZONTAL;
