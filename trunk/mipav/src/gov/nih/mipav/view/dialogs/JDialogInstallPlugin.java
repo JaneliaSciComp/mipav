@@ -16,10 +16,8 @@ import java.awt.event.*;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 
 import java.util.*;
 import java.util.zip.*;
@@ -29,12 +27,9 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileSystemView;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-
-import sun.swing.DefaultLookup;
 
 
 /**
@@ -61,9 +56,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** The GUI browse button */
-    private JButton browseButton;
-
     /** The class, zip, jar etc files that were selected before they were unzipped */
     private Vector<File> files = new Vector<File>();
     
@@ -73,9 +65,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     /** The default storage location of plugins */
     private String pluginDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" +
                                File.separator;
-
-    /** The current directory */
-    private JTextField textName;
 
     /** The default user interface */
     private ViewUserInterface ui;
@@ -245,7 +234,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         }
         
         // updates menubar for each image
-        Vector imageFrames = ui.getImageFrameVector();
+        Vector<Frame> imageFrames = ui.getImageFrameVector();
 
         if (imageFrames.size() < 1) {
             ui.buildMenu();
@@ -466,8 +455,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	private JTextField initDir;
     	
     	private JList selected;
-
-		private JScrollPane scrollPane;
 
 		/** Currently used file*/
 		private File selectedFile = new File(System.getProperty("user.home"));
@@ -953,6 +940,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 		}
 
 		try {
+			@SuppressWarnings("unused")
 			Field[] f = c.getDeclaredFields();
 		} catch(NoClassDefFoundError e) {
 			e.printStackTrace();
@@ -970,6 +958,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
      * @see removeFiles(ArrayList<File>)
      * @return
      */
+    @SuppressWarnings("unused")
     private Vector<Color> buildColorTable(Vector<File> allFiles) {
     	Vector<Color> vectorColors = new Vector<Color>();
     	for(int i=0; i<allFiles.size(); i++) {
@@ -1180,8 +1169,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	boolean isRoot;
     	
     	private boolean displayAll = !(check == null || check.isSelected());
-
-    	private boolean javaContainer = false;
 
     	/**
     	 * Creates a new file tree node.
