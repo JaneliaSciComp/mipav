@@ -91,16 +91,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     private JToggleButton displayPaintButton;
 
     /** DOCUMENT ME! */
-    private JPanel displayPanel;
-
-    /** DOCUMENT ME! */
     private JCheckBox editBox;
 
     /** button VOI export. */
     private JButton exportVoiButton;
-
-    /** DOCUMENT ME! */
-    private JPanel filePanel;
 
     /** source image. */
     private ModelImage image;
@@ -148,12 +142,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
     /** dialog elements. */
     private JPanel mainPanel;
-
-    /** DOCUMENT ME! */
-    private JPanel maskPanel;
-
-    /** DOCUMENT ME! */
-    private JPanel miscPanel;
 
     /** DOCUMENT ME! */
     private BorderedButton[] multiButton;
@@ -215,7 +203,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
-    private JPanel voiPanel, leftPanel, rightPanel, leftRightPanel;
+    private JPanel leftPanel, rightPanel, leftRightPanel;
 
     /** The mask size in the x dimension. */
     private int xDim;
@@ -564,8 +552,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             if (reply == JOptionPane.YES_OPTION) {
 
                 // go through image b and find all mask values
-                ModelImage imageB = image.getParentFrame().getImageB();
-                TreeSet<Integer> vals = getMaskTreeSet(imageB);
 
                 image.getParentFrame().actionPerformed(
                         new ActionEvent(this, ActionEvent.ACTION_FIRST, "CollapseAllToSinglePaint"));
@@ -856,7 +842,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         }
 
         // since the image b is not blank, we need to figure out which button should be selected
-        boolean test = false;
 
         if (vals.size() > 0) {
             int n;
@@ -911,8 +896,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
                             }
 
-                            test = true;
-
                             break;
                         }
                     }
@@ -938,8 +921,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                             image.getTriImageFrame().setPaintColor(color[n]);
 
                         }
-
-                        test = true;
 
                         break;
                     }
@@ -1452,7 +1433,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      * @return DOCUMENT ME!
      */
     private TreeSet<Integer> getMaskTreeSet(ModelImage imgB) {
-        boolean blankImage = true;
         TreeSet<Integer> vals = new TreeSet<Integer>();
 
         xDim = imgB.getExtents()[0];
@@ -1474,7 +1454,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 if (imgB.getUByte(i) != 0) {
 
                     // there is at least some mask...so set blank image to flase
-                    blankImage = false;
 
                     int val = imgB.getUByte(i);
                     vals.add(new Integer(val));
@@ -1492,7 +1471,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 if ( (r != 0) || (g != 0) || (b != 0)) {
 
                     // there is at least some mask...so set blank image to flase
-                    blankImage = false;
 
                     for (k = 0; k < (lutB.getExtents()[1] * 4); k = k + 4) {
                         if ( (lutB.getUByte(k + 1) == r) && (lutB.getUByte(k + 2) == g) && (lutB.getUByte(k + 3) == b)) {
@@ -1938,7 +1916,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         for (int i = 1; i < preserveBox.length; i++) {
             if ( !preserveBox[i].isSelected()) {
                 preserveBox[i].setSelected(true);
-                int num = Integer.parseInt(listButton[i].getText());
                 addIntensityLock(Integer.parseInt(listButton[i].getText()));
             }
         }
@@ -1952,7 +1929,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         for (int i = 1; i < preserveBox.length; i++) {
             if (preserveBox[i].isSelected()) {
                 preserveBox[i].setSelected(false);
-                int num = Integer.parseInt(listButton[i].getText());
                 removeIntensityLock(Integer.parseInt(listButton[i].getText()));
             }
         }
@@ -2374,6 +2350,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      * @param Nbx number of labels in the x-direction
      * @param Nby number of labels in the y-direction
      */
+    @SuppressWarnings("unused")
     private void resetLabelList(int Nbx, int Nby) {
         String[] newlabel = new String[ (Nbx * Nby) + 1];
         JTextField[] newlabelField = new JTextField[ (Nbx * Nby) + 1];
