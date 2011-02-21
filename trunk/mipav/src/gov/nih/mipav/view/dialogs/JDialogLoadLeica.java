@@ -484,7 +484,7 @@ public class JDialogLoadLeica extends JDialogBase {
      */
     private boolean sortLeicaFiles(final LeicaSeries series) {
 
-        final Vector fileNames = series.getFileNames();
+        final Vector<String> fileNames = series.getFileNames();
 
         if (fileNames != null) {
             final LeicaFileComparator lComp = new LeicaFileComparator(series.getChannels(), series.getName());
@@ -516,7 +516,7 @@ public class JDialogLoadLeica extends JDialogBase {
     /**
      * DOCUMENT ME!
      */
-    public class LeicaFileComparator implements Comparator<Object> {
+    public class LeicaFileComparator implements Comparator<String> {
 
         /** DOCUMENT ME! */
         private final int[] channelOrder;
@@ -565,11 +565,11 @@ public class JDialogLoadLeica extends JDialogBase {
          * 
          * @return DOCUMENT ME!
          */
-        public int compare(final Object a, final Object b) {
+        public int compare(final String a, String b) {
 
             // Strip everything but the z and channel information from the file names;
-            String aEnd = (String) a;
-            String bEnd = (String) b;
+            String aEnd = a;
+            String bEnd = b;
             aEnd = aEnd.substring(aEnd.indexOf(seriesName + "_") + seriesName.length() + 1, aEnd.length() - 4);
             bEnd = bEnd.substring(bEnd.indexOf(seriesName + "_") + seriesName.length() + 1, bEnd.length() - 4);
 
@@ -670,7 +670,7 @@ public class JDialogLoadLeica extends JDialogBase {
         private int[] extents;
 
         /** DOCUMENT ME! */
-        private Vector fileNames = null;
+        private Vector<String> fileNames = null;
 
         /** DOCUMENT ME! */
         private int numImages;
@@ -721,7 +721,7 @@ public class JDialogLoadLeica extends JDialogBase {
          * 
          * @return DOCUMENT ME!
          */
-        public Vector getFileNames() {
+        public Vector<String> getFileNames() {
             return this.fileNames;
         }
 
@@ -793,7 +793,7 @@ public class JDialogLoadLeica extends JDialogBase {
          * 
          * @param names DOCUMENT ME!
          */
-        public void setFileNames(final Vector names) {
+        public void setFileNames(final Vector<String> names) {
             this.fileNames = names;
         }
 
