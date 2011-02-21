@@ -17,7 +17,7 @@ public class JDialogRunScriptModel extends Observable {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private Vector availableImageList;
+    private Vector<ScriptImage> availableImageList;
 
     /** DOCUMENT ME! */
     private int[] numberOfRequiredVOIsForScriptImages;
@@ -40,7 +40,7 @@ public class JDialogRunScriptModel extends Observable {
      * Creates a new JDialogRunScriptModel object.
      */
     public JDialogRunScriptModel() {
-        availableImageList = new Vector(0);
+        availableImageList = new Vector<ScriptImage>(0);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ public class JDialogRunScriptModel extends Observable {
      *
      * @return  DOCUMENT ME!
      */
-    public Vector getAvailableImageList() {
+    public Vector<ScriptImage> getAvailableImageList() {
         return availableImageList;
     }
 
@@ -128,7 +128,6 @@ public class JDialogRunScriptModel extends Observable {
     }
 
     public int getImageIndex(String name) {
-    	ScriptImage image = null;
         Object[] imageListArr = getAvailableImageList().toArray();
 
         for (int i = 0; i < imageListArr.length; i++) {
