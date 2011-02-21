@@ -55,7 +55,7 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
     private String rangeString;
 
     /** DOCUMENT ME! */
-    private Vector rangesVector = new Vector();
+    private Vector<Values> rangesVector = new Vector<Values>();
 
     /** DOCUMENT ME! */
     private JRadioButton replaceImage;
