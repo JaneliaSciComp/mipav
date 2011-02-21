@@ -98,7 +98,6 @@ public class JDialogHoughParabolaChoice extends JDialogBase {
      */
     public void actionPerformed(ActionEvent event) {
         int i;
-        String tmpStr;
 
         if (event.getSource() == OKButton) {
             for (i = 0; i < numParabolasFound; i++) {
@@ -122,7 +121,6 @@ public class JDialogHoughParabolaChoice extends JDialogBase {
      * @param  event  (combo box event)
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
         
     }
 
