@@ -126,7 +126,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     private JToggleButton t1Button, t2Button, pdButton, dtiButton, edtiButton, displayAnnotationsButton, hideAnnotationsButton;
     
     /** test button **/
-    private JButton testButton, testToggleButton;
+    private JButton testButton;
     
     /** ViewToolBarBuilder * */
     private ViewToolBarBuilder toolbarBuilder;
@@ -151,8 +151,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     /** atlas images **/
     private ModelImage[] t1AtlasImages, t2AtlasImages, pdAtlasImages;
     
-    /** atlas images to be disposed **/
-    private ModelImage[] t1AtlasImagesToDispose, t2AtlasImagesToDispose, pdAtlasImagesToDispose;
+
     
     /** active image **/
     private ModelImage activeImage;
@@ -257,7 +256,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     private Hashtable<Integer,JLabel> sliceLabelTable;
     
     /** icon width and height **/
-    private int iconHeight, iconWidth;
+    private int iconHeight;
     
     /** voi manager **/
     private VOIManagerInterface voiManager;
@@ -459,9 +458,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	        t1AtlasImages = new ModelImage[numAgeTicks];
 	        t2AtlasImages = new ModelImage[numAgeTicks];
 	        pdAtlasImages = new ModelImage[numAgeTicks];
-	        t1AtlasImagesToDispose = new ModelImage[numAgeTicks];
-	        t2AtlasImagesToDispose = new ModelImage[numAgeTicks];
-	        pdAtlasImagesToDispose = new ModelImage[numAgeTicks];
 	        t1ComponentImages = new ViewJComponentPedsAtlasImage[numAgeTicks];
 	        t2ComponentImages = new ViewJComponentPedsAtlasImage[numAgeTicks];
 	        pdComponentImages = new ViewJComponentPedsAtlasImage[numAgeTicks];
@@ -979,7 +975,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         sagittalIconComponentImage = new ViewJComponentPedsAtlasIconImage(this, sagittalIconImage, null, imageBufferS, pixBufferS, 1, sagittalIconImage.getExtents(), false, FileInfoBase.UNKNOWN_ORIENT, SAGITTAL);
         //axialG = axialIconComponentImage.getGraphics();
         iconHeight = axialIconComponentImage.getHeight();
-        iconWidth = axialIconComponentImage.getWidth();
+        //iconWidth = axialIconComponentImage.getWidth();
 
         coronalIconComponentImage.addMouseWheelListener(this);
         coronalIconComponentImage.setBuffers(imageBufferC, null, pixBufferC, null);

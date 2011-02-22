@@ -185,7 +185,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
     private String imageOrientationString;
     
     /** vol parameters **/
-    private HashMap volParameters;
+    private HashMap<String,String> volParameters; 
 
     
     /**Philips puts in one volume as the average of all the DWIs. This

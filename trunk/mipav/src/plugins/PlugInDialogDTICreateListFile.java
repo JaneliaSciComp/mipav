@@ -35,9 +35,7 @@ public class PlugInDialogDTICreateListFile extends JDialogBase implements Algori
     
     /** browse button for dwi file/folder **/
     private JButton dwiPathBrowseButton;
-    
-    /** checkbox for interleaved dataset **/
-    private JCheckBox interleavedCheckbox;
+
     
     /** button group for radio buttons **/
     private ButtonGroup optionsGroup;

@@ -22,7 +22,7 @@ public class FileInfoPARREC extends FileInfoBase {
 	
 
     /** vol parameters **/
-    private static HashMap VolParameters;
+    private static HashMap<String,String> VolParameters; 
 
     
     /** slice specific info **/
@@ -127,7 +127,7 @@ public class FileInfoPARREC extends FileInfoBase {
 		return VolParameters;
 	}
 
-	public void setVolParameters(HashMap volParameters) {
+	public void setVolParameters(HashMap<String,String> volParameters) {
 		VolParameters = volParameters;
 	}
 

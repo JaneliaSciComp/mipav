@@ -46,10 +46,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
  */
 public class PlugInDialogDTISortingProcess extends JDialogScriptableBase implements
 		AlgorithmInterface {
-	
-	
-	/** handle to ViewUserInterface **/
-    private ViewUserInterface UI;
+
     
     /** handle to the algorithm **/
     private PlugInAlgorithmDTISortingProcess alg;
@@ -130,7 +127,6 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 	 */
 	public PlugInDialogDTISortingProcess(boolean modal) {
 		super(modal);
-		UI = ViewUserInterface.getReference();
 		init();
 	}
 	

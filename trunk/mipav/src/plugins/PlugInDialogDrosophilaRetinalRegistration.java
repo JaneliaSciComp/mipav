@@ -43,8 +43,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
     private JPanel mainPanel, optionsPanel, processPanel, interpPanel, rescalePanel, averagingOptionsPanel, mirroredImgPanel;
 
     /** images * */
-    private ModelImage imageX, imageXRegistered, imageY, resultImage, redChannelsImage, greenChannelsImage,
-            imageXRegisteredTransformed, imageYTransformed;
+    private ModelImage imageX, imageXRegistered, imageY;
 
     /** transform files * */
     private File transform1File, transform2File, transform3File;

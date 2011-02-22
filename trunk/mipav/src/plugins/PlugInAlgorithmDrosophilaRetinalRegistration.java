@@ -45,7 +45,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
     private AlgorithmVOIProps algoVOIProps;
 
     /** min and maxes of vois * */
-    private float minR_X, minG_X, minB_X, minR_Y, minG_Y, minB_Y, maxR_X, maxG_X, maxB_X, maxR_Y, maxG_Y, maxB_Y;
+    private float minG_X, minG_Y, maxG_X, maxG_Y;
 
     /** vjf to draw vois on * */
     private final ViewJFrameImage vjfX, vjfY;
@@ -53,10 +53,10 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
     private final JTextArea outputTextArea;
 
     /** slope of transfer function * */
-    private float slopeR, slopeG, slopeB;
+    private float slopeG;
 
     /** b-intercept of transfer function * */
-    private float bR, bG, bB;
+    private float bG;
 
     /** transform matrices * */
     private final TransMatrix matrixGreen, matrixAffine;
@@ -189,14 +189,12 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             algoVOIProps = new AlgorithmVOIProps(imageX, AlgorithmVOIProps.PROCESS_PER_VOI,
                     ExclusionRangeType.NO_RANGE, getActiveVOIs(imageX));
             algoVOIProps.run();
-            minR_X = algoVOIProps.getMinIntensityRed();
-            maxR_X = algoVOIProps.getMaxIntensityRed();
+
 
             minG_X = algoVOIProps.getMinIntensityGreen();
             maxG_X = algoVOIProps.getMaxIntensityGreen();
 
-            minB_X = algoVOIProps.getMinIntensityBlue();
-            maxB_X = algoVOIProps.getMaxIntensityBlue();
+
 
             algoVOIProps.finalize();
             algoVOIProps = null;
@@ -205,14 +203,12 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             algoVOIProps = new AlgorithmVOIProps(imageY, AlgorithmVOIProps.PROCESS_PER_VOI,
                     ExclusionRangeType.NO_RANGE, getActiveVOIs(imageY));
             algoVOIProps.run();
-            minR_Y = algoVOIProps.getMinIntensityRed();
-            maxR_Y = algoVOIProps.getMaxIntensityRed();
+
 
             minG_Y = algoVOIProps.getMinIntensityGreen();
             maxG_Y = algoVOIProps.getMaxIntensityGreen();
 
-            minB_Y = algoVOIProps.getMinIntensityBlue();
-            maxB_Y = algoVOIProps.getMaxIntensityBlue();
+
 
             algoVOIProps.finalize();
             algoVOIProps = null;

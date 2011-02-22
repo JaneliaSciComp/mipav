@@ -41,9 +41,7 @@ public class PlugInDialogDTIOpenListFile extends JDialogBase implements Algorith
 	private PlugInAlgorithmDTIOpenListFile alg;
 	
 	private ModelImage resultImage;
-	
-	/** handle to ViewUserInterface **/
-    private ViewUserInterface UI;
+
 	
 	
 	
@@ -52,8 +50,7 @@ public class PlugInDialogDTIOpenListFile extends JDialogBase implements Algorith
 	 */
 	public PlugInDialogDTIOpenListFile(boolean modal) {
 		super(modal);
-		
-		UI = ViewUserInterface.getReference();
+
 
 		JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
         chooser.setDialogTitle("Choose list file");
