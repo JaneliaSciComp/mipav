@@ -293,10 +293,10 @@ public class JDialogShowCosts extends JDialogBase {
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
 
             if (!name.equals(image.getImageName())) {
                 nextImage = UI.getRegisteredImageByName(name);
