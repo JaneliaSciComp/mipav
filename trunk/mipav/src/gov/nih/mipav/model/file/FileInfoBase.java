@@ -890,11 +890,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
             if ((DataType.values()[i].toString()).regionMatches(true, 0, s, 0, s.length())) {
             
-                return i;
+                return DataType.values()[i].getLegacyNum();
             }
         }
 
-        return ModelStorageBase.SHORT;
+        return ModelStorageBase.SHORT; //default
     } // end getDataTypeFromStr()
 
     /**
