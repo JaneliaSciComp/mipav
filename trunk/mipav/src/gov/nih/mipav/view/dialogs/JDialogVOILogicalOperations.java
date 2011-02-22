@@ -3,17 +3,13 @@ package gov.nih.mipav.view.dialogs;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
-import java.io.File;
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -29,7 +25,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTree;
-import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
@@ -39,7 +34,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -47,7 +41,6 @@ import javax.swing.tree.TreePath;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmVOILogicalOperations;
-import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -61,8 +54,6 @@ import gov.nih.mipav.model.structures.event.VOIEvent;
 import gov.nih.mipav.model.structures.event.VOIListener;
 import gov.nih.mipav.model.structures.event.VOIVectorEvent;
 import gov.nih.mipav.model.structures.event.VOIVectorListener;
-import gov.nih.mipav.view.JPanelFileSelection;
-import gov.nih.mipav.view.JPanelListController;
 import gov.nih.mipav.view.JPanelTreeController;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -74,11 +65,6 @@ import gov.nih.mipav.view.VOIOrientationNode;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
-import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.JPanelAddRemoveVOI;
-import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.JPanelStatisticFileFormatOptions;
-import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.VOIHighlighter;
-
-
 
 
 /**
@@ -291,7 +277,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
      */
     public void addedVOI(final VOIVectorEvent voiEvent) {
         final VOIVector voiList = (VOIVector) voiEvent.getSource();
-        final Vector volumesVector = new Vector();
+        final Vector<VOI> volumesVector = new Vector<VOI>();
 
         for (int i = 0; i < voiList.size(); i++) {
 
@@ -313,7 +299,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
      */
     public void removedVOI(final VOIVectorEvent voiEvent) {
         final VOIVector voiList = (VOIVector) voiEvent.getSource();
-        final Vector volumesVector = new Vector();
+        final Vector<VOI> volumesVector = new Vector<VOI>();
 
         for (int i = 0; i < voiList.size(); i++) {
 
@@ -402,8 +388,6 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
             VOIGroupNode currentNode = null;
             Vector<VOIBase> curves = null;
 
-            int index = 0;
-
             Enumeration<VOIBase> voiEnum = null; 
             VOIBase voiBase = null;
 
@@ -417,7 +401,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 
             // iterate through all VOIs
             while (e.hasMoreElements()) {
-                tempVOI = (VOI) e.nextElement();
+                tempVOI = e.nextElement();
 
                 // create VOI group node (for VOI)
                 currentNode = new VOIGroupNode(tempVOI,image.getExtents());
@@ -436,7 +420,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
                     // are active
                     voiEnum = curves.elements();
                     while (voiEnum.hasMoreElements()) {
-                        voiBase = (VOIBase) voiEnum.nextElement();
+                        voiBase = voiEnum.nextElement();
 
                         // check to see if the VOIBase is active
                         if (voiBase.isActive())
@@ -455,7 +439,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
                                     // find the child that matches this selected contour
                                     while (voiNodeEnum.hasMoreElements()) {
                                         
-                                        VOIFrameNode currentFrameNode = (VOIFrameNode) voiNodeEnum.nextElement();
+                                        VOIFrameNode currentFrameNode = voiNodeEnum.nextElement();
                                         Enumeration<VOINode> voiFrameEnum2 = currentFrameNode.children();
                                         
                                         // find the child that matches this selected contour
@@ -486,7 +470,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
                 TreePath[] tPaths = new TreePath[treePaths.size()];
 
                 for (int i = 0; i < tPaths.length; i++) {
-                    tPaths[i] = (TreePath) treePaths.elementAt(i);
+                    tPaths[i] = treePaths.elementAt(i);
                 }
                 sourceVoiTree.setSelectionPaths(tPaths);
 
@@ -842,7 +826,6 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 				MipavUtil.displayError("You must select at least 1 VOI");
 				return;
 			}*/
-			 TreePath[] selectedValues = selectedVoiTree.getSelectionModel().getSelectionPaths();
 	           
 	           if(selectedVoiTree.getRowCount() == 1) {
 	        	   MipavUtil.displayError("You must select at least 1 VOI");
@@ -910,7 +893,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 
 	        if (leadPath != null) {
 	            Object[] leadObjects = leadPath.getPath();
-	            int curveIndex = 0;
+	            //int curveIndex = 0;
 
 	            if (leadObjects[leadObjects.length - 1] instanceof VOINode) {
 	                VOIBase leadBase = ((VOINode) leadObjects[leadObjects.length - 1]).getVOI();
@@ -926,7 +909,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	                //updateVOI(leadBase.getGroup(), image);
 
 	            } else if (leadObjects[leadObjects.length - 1] instanceof VOIFrameNode) {
-	                curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
+	                //curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
 
 	                if ((image.getNDims() > 2)) {
 	                    //voiHandler.setSlice(curveIndex);
@@ -1271,8 +1254,10 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 		            }
 		            
 		            VOIOrientationNode aOrientationNode,bOrientationNode;
-		        	VOIFrameNode aFrameNode,bFrameNode,bFrameNode2;
-		        	VOINode aNode,bNode,bNode2;
+		        	VOIFrameNode aFrameNode,bFrameNode;
+		        	//VOIFrameNode bFrameNode2;
+		        	VOINode aNode,bNode;
+		        	// VOINode bNode2;
 		        	aFrameNode = null;
 		        	bFrameNode = null;
 		        	aNode = null;
@@ -1294,13 +1279,8 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 			        	bNode = (VOINode)aNode.clone();
 		        	}
 		        	
-		        	
-		        	
-		
-		        	bFrameNode2 = null;
-		            
-		            
-	            	
+		        			
+		        	//bFrameNode2 = null;	
 	            	
 	            	int childCount1 = foundGroupNode.getChildCount();
 	            	for(int k=0;k<childCount1;k++) {
@@ -1545,7 +1525,6 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
            
 
            int pathCount = ((TreePath)selectedValues[0]).getPathCount();
-           Object root = selectedVOIModel.getRoot();
            
            if(pathCount == 2) {
         	   VOIGroupNode bGroupNode = (VOIGroupNode)(((TreePath)selectedValues[0]).getPathComponent(1));
