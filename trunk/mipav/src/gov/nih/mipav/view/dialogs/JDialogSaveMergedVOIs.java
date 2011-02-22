@@ -434,7 +434,7 @@ class InstanceVOI {
     MyXMLHandler handler;
 
     // chunk vector to hold all the points coordinates reading from VOI xml file.
-    Vector myContourVector = new Vector();
+    Vector<Vector3f> myContourVector = new Vector<Vector3f>();
 
     /** The W3C XML schema. */
     private static final String W3C_XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
@@ -549,7 +549,7 @@ class InstanceVOI {
 class MyXMLHandler extends DefaultHandler {
 
     /** The contours of the VOI we are building. */
-    private final Vector contourVector;
+    private final Vector<Vector3f> contourVector;
 
     /** The current XML tag we are parsing. */
     private String currentKey;
@@ -558,6 +558,7 @@ class MyXMLHandler extends DefaultHandler {
     private String elementBuffer = new String();
 
     /** The slice the VOI contour should be on. */
+    @SuppressWarnings("unused")
     private int sliceNumber = 0;
 
     /**
@@ -566,7 +567,7 @@ class MyXMLHandler extends DefaultHandler {
      * @param voi the VOI we should build from the XML file data
      */
     public MyXMLHandler() {
-        contourVector = new Vector();
+        contourVector = new Vector<Vector3f>();
     }
 
     /**
@@ -574,7 +575,7 @@ class MyXMLHandler extends DefaultHandler {
      * 
      * @return contour vector
      */
-    public Vector getContourVector() {
+    public Vector<Vector3f> getContourVector() {
         return contourVector;
     }
 
@@ -613,6 +614,7 @@ class MyXMLHandler extends DefaultHandler {
         } else if (currentKey.equals("Curve-type")) {
             Integer.parseInt(elementBuffer);
         } else if (currentKey.equals("Color")) {
+        	@SuppressWarnings("unused")
             int a = 0, r = 0, g = 0, b = 0;
             final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
