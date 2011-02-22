@@ -21,7 +21,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmTreT1;
 import gov.nih.mipav.model.algorithms.AlgorithmTreT2;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.scripting.ParserException;
@@ -30,7 +29,6 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 
 /**
@@ -129,7 +127,6 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
 
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("Cancel")) {
             cAlgo.interrupt();
