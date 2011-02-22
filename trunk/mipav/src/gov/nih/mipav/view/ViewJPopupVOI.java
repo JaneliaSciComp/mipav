@@ -1,12 +1,12 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.algorithms.utilities.*;
+
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
 
-import java.awt.Component;
+
 import java.awt.event.*;
 
 import java.util.*;
@@ -53,7 +53,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     private JMenuItem itemOutputDistance;
 
     /** DOCUMENT ME! */
-    private JMenuItem itemProps, showBoundingBox;
+    private JMenuItem itemProps;
 
     /** DOCUMENT ME! */
     private JMenu orderSubMenu;
@@ -340,7 +340,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     private void closeVOI() {        
         VOIVector VOIs = voiHandler.getActiveImage().getVOIs();
 
-        Vector curves = null;
+        Vector<VOIBase> curves = null;
         VOIBase tester = null;
 
         for (int i = 0; i < VOIs.size(); i++) {

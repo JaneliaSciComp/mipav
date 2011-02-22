@@ -1,14 +1,13 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.structures.*;
+
 
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.event.*;
 
-import java.util.*;
+
 
 import javax.swing.*;
 import javax.swing.event.*;
