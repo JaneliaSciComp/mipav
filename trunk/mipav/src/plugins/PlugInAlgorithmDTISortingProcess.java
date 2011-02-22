@@ -882,7 +882,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
             for (int i = 0; i < numSlicesPerVolume; i++) {
 
                 for (int k = 0; k < keyArray.length; k++) {
-                    Object[] fidArr = ((TreeSet) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
+                    Object[] fidArr = ((TreeSet<String[]>) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
                     int numVols = fidArr.length / numSlicesPerVolume;
                     String absPath = (String) ((String[]) fidArr[i])[2];
                     relPath = new String(".." + File.separator + studyName +
@@ -953,7 +953,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			Iterator<Integer> iter = ketSet.iterator();
 			ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 			while (iter.hasNext()) {
-				TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+				TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
 				Iterator<String[]> iter2 = seriesFITS.iterator();
 				// lets get the first element and remember its imageSlice
 				String imageSlice = ((String) (((String[]) seriesFITS.first())[7])).trim();
@@ -999,7 +999,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			String relPath;
 			for(int i=0;i<numSlicesPerVolume;i++) {
 				for(int k=0;k<keyArray.length;k++) {
-					Object[] fidArr = ((TreeSet) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
+					Object[] fidArr = ((TreeSet<String[]>) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
 					int numVols = fidArr.length / numSlicesPerVolume;
 					String absPath = (String)((String[]) fidArr[i])[2];
 					relPath = new String(".." + File.separator + studyName +absPath.substring(absPath.lastIndexOf(studyName) + studyName.length(), absPath.length()));
@@ -1163,7 +1163,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
         System.out.println(" - b-values :\n");
 
         while (iter.hasNext()) {
-            TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+            TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
             int seriesFITSSize = seriesFITS.size();
             int numVols = seriesFITSSize / numSlicesPerVolume;
             Object[] fidArr = seriesFITS.toArray();
@@ -1546,22 +1546,22 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
                     Integer seriesNumber = new Integer(seriesNumber_String);
                     if(isInterleaved) {
 	                    if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
-	                        seriesFileInfoTreeSet = new TreeSet(new InstanceNumberVolComparator());
+	                        seriesFileInfoTreeSet = new TreeSet<String[]>(new InstanceNumberVolComparator());
 	                        seriesFileInfoTreeSet.add(dicomInfo);
 	                        seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
 	                    } else {
-	                        seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
+	                        seriesFileInfoTreeSet = (TreeSet<String[]>) seriesFileInfoTreeMap.get(seriesNumber);
 	                        seriesFileInfoTreeSet.add(dicomInfo);
 	                        seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
 	                    }
                     }
                     else {
                     	if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
-    						seriesFileInfoTreeSet = new TreeSet(new InstanceNumberComparator());
+    						seriesFileInfoTreeSet = new TreeSet<String[]>(new InstanceNumberComparator());
     						seriesFileInfoTreeSet.add(dicomInfo);
     						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
     					} else {
-    						seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
+    						seriesFileInfoTreeSet = (TreeSet<String[]>) seriesFileInfoTreeMap.get(seriesNumber);
     						seriesFileInfoTreeSet.add(dicomInfo);
     						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
     					}
