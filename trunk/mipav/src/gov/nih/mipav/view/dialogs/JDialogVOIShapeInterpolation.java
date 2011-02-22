@@ -10,8 +10,6 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJFrameLightBox;
-import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewVOIVector;
 
 /**
