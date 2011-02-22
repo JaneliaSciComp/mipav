@@ -311,41 +311,26 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             // System.err.println("image hist pane size: " + image.getHistoryPane().getSize());
             if (setVariables()) {
-
-                if (tabbedPane.getSelectedIndex() == 0) {
-                    if ( !newImageName.equals(image.getImageName())) {
-                        image.updateFileName(newImageName);
-                    }
-
-                    if (image.getFileInfo(0).getEndianess() != endianess) {
-                        updateEndianess();
-                    }
-                    if (image.getFileInfo(0).getModality() != modality) {
-                        updateImageModality();
-                    }
+                if ( !newImageName.equals(image.getImageName())) {
+                    image.updateFileName(newImageName);
                 }
 
-                // only update the resolutions if the tab is selected
-                // otherwise might do an apply to all for specific slice/time resolutions
-                if (tabbedPane.getSelectedIndex() == 1) {
-                    updateResolInfo();
+                if (image.getFileInfo(0).getEndianess() != endianess) {
+                    updateEndianess();
                 }
-
-                // only update (save) talairach info if ON THE TALAIRACH TAB
-                if (tabbedPane.getSelectedIndex() == 5) {
-                    updateTalairachInfo();
+                if (image.getFileInfo(0).getModality() != modality) {
+                    updateImageModality();
                 }
-
-                if (tabbedPane.getSelectedIndex() == 2) {
-                    updateImageOrientation();
-                    updateOriginInfo();
-                }
-
-                if (tabbedPane.getSelectedIndex() == 3) {
-                    updateMatrixInfo();
-                }
-                // updateTransformInfo();
-
+                //updates resolution info for every slice/volume/time sequence
+                updateResolInfo();
+                
+                updateTalairachInfo();
+                
+                updateImageOrientation();
+                updateOriginInfo();
+                
+                updateMatrixInfo();
+                
                 if (linkedImageField != null) {
                     updateXMLLinkedFile();
                 }
