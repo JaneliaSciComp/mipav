@@ -5,14 +5,11 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.Parameter;
-import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
 import gov.nih.mipav.model.scripting.parameters.ParameterDouble;
 import gov.nih.mipav.model.scripting.parameters.ParameterString;
 import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.scripting.parameters.ParameterImage;
-import gov.nih.mipav.model.scripting.parameters.ParameterList;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
