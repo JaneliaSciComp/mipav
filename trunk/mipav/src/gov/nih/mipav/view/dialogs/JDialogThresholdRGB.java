@@ -93,12 +93,6 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
     private JTextField[] textThreshold2;
 
     /** DOCUMENT ME! */
-    private float thres1;
-
-    /** DOCUMENT ME! */
-    private float thres2;
-
-    /** DOCUMENT ME! */
     private AlgorithmThresholdDualRGB thresholdAlgoRGB;
 
     /** DOCUMENT ME! */
@@ -201,8 +195,6 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmThresholdDualRGB) {
             image.clearMask();
 
@@ -213,7 +205,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -222,7 +214,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -267,8 +259,8 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
      * @param  event  Event that triggers this function.
      */
     public void focusLost(FocusEvent event) {
-        int panelNum = -1;
-        Object source = event.getSource();
+    	
+        /*int panelNum = -1;
         JTextField field = (JTextField) event.getSource();
 
         if (field == textThreshold1[0]) {
@@ -279,7 +271,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
             panelNum = 2;
         } else {
             return;
-        }
+        }*/
         /*
          * String text = field.getText(); String tempStr;
          *
@@ -581,7 +573,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
                 // "locked - " image name so as to indicate that the image is now read/write locked!
                 // The image frames are disabled and then unregisted from the userinterface until the
                 // algorithm has completed.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
                 for (int i = 0; i < imageFrames.size(); i++) {
