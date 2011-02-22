@@ -2788,9 +2788,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     private void callTalAlgorithm() {
         int[] dims = null;
-        final int[] axisOrientation = null;
-        final int zAxisOrientation;
-        final int imageOrientation;
         FileInfoBase[] fileInfo;
         int i;
         final Vector3f currentOrigin = new Vector3f(image.getOrigin());
@@ -3035,6 +3032,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      * 
      * @return DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private int[] getAxisOrientation(final float[][] array) {
         final int[] axisOrientation = new int[3];
         double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
