@@ -70,7 +70,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     private JButton imageBrowseButton, pointsBrowseButton, surfaceBrowseButton;
     
     /** labels **/
-    private JLabel pointsLabel, imageLabel, surfaceLabel, surfaceSamplingLabel, invertIVFileCBLabel, rigidOnlyLabel;
+    private JLabel pointsLabel, imageLabel, surfaceLabel, surfaceSamplingLabel, invertIVFileCBLabel;
 
     /** current directory  **/
     private String currDir = null;

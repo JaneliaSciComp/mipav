@@ -165,8 +165,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	private float greenThresold;
 	
 	private String outputFilename, outputFilename_auto, outputFilename_regionGrow;
-	
-	private String outputFilename_rigidOnly, outputFilename_auto_rigidOnly, outputFilename_regionGrow_rigidOnly;
+
 	
 	/** coords of filament **/
     private ArrayList <ArrayList<float[]>> allFilamentCoords_swc = new ArrayList <ArrayList<float[]>>();
@@ -198,12 +197,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     private boolean doRigidOnly = false;
     
     
-    private ModelImage greenImage,cohResultImage, greenRegionGrowMaskImage;
-    
-    private AlgorithmMedian medianAlgo;
-    
-    private AlgorithmCoherenceEnhancingDiffusion coherenceAlg;
-    
+    private ModelImage greenImage, greenRegionGrowMaskImage;
+
     private BitSet paintBitmap;
     
     private boolean doSWC;
@@ -274,9 +269,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			this.outputFilename = outputFilename;
 			this.outputFilename_auto = outputFilename_auto;
 			this.outputFilename_regionGrow = outputFilename_regionGrow;
-			this.outputFilename_rigidOnly = outputFilename.substring(0,outputFilename.lastIndexOf(".")) + ".swc";
-			this.outputFilename_auto_rigidOnly = outputFilename_auto.substring(0,outputFilename_auto.lastIndexOf(".")) + ".swc";
-			this.outputFilename_regionGrow_rigidOnly = outputFilename_regionGrow.substring(0,outputFilename_regionGrow.lastIndexOf(".")) + ".swc";
+
 	    }
 		this.doRigidOnly = rigidOnly;
 		this.rvld = rvld;
