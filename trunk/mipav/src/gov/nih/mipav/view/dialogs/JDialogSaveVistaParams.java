@@ -6,7 +6,6 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -154,10 +153,10 @@ public class JDialogSaveVistaParams extends JDialogBase {
 		if(image.getFileInfo(0)instanceof  FileInfoVista) {
 			ArrayList<HashMap<String,String>> imagesInfo = ((FileInfoVista)(image.getFileInfo(0))).getImagesInfo();
 			 HashMap<String,String> info = imagesInfo.get(0);
-			 Set keys = info.keySet();
-			 Iterator iter = keys.iterator();
+			 Set<String> keys = info.keySet();
+			 Iterator<String> iter = keys.iterator();
 			 while(iter.hasNext()) {
-				 String key = (String)iter.next();
+				 String key = iter.next();
 				 if(textfieldKey.equals(key)) {
 					 String value = info.get(key);
 					 textfield.setText(value);
