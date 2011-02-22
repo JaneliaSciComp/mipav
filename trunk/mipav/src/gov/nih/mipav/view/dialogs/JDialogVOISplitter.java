@@ -42,12 +42,6 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     private int currentSlice = 0;
 
     /** DOCUMENT ME! */
-    private int dimX = 0;
-
-    /** DOCUMENT ME! */
-    private int dimY = 0;
-
-    /** DOCUMENT ME! */
     private ModelImage image;
 
     /** DOCUMENT ME! */
@@ -72,9 +66,6 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
 
         this.startPt = sPt;
         this.endPt = ePt;
-        
-        dimX = image.getExtents()[0];
-        dimY = image.getExtents()[1];
 
         if (image.getNDims() == 3) {
             currentSlice = ((ViewJFrameImage) parentFrame).getViewableSlice();
@@ -170,7 +161,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     		zDim = image.getExtents()[2];
     	}
     	
-    	Vector[] curves = null;
+    	Vector<VOIBase>[] curves = null;
     	VOIContour currentContour = null;
     	int size = 0;
     	int numPoints = 0;
@@ -437,7 +428,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
         mainPanel.setBorder(this.buildTitledBorder("Options"));
         
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
 
