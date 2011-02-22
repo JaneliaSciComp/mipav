@@ -175,8 +175,6 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        int i, j;
-        ViewJFrameImage imageFrame = null;
 
         if (algorithm instanceof AlgorithmTransformBSpline) {
             resultImage = algoTrans.getTransformedImage();
@@ -186,7 +184,7 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
