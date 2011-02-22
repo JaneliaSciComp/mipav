@@ -1,25 +1,13 @@
 package gov.nih.mipav.view.dialogs;
 
-
-
-import gov.nih.mipav.model.file.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.net.URL;
-import java.util.*;
 
 import javax.swing.*;
-import javax.xml.parsers.*;
 
-import org.apache.xerces.jaxp.SAXParserImpl;
-import org.xml.sax.*;
-import org.xml.sax.helpers.DefaultHandler;
-
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.view.renderer.WildMagic.BallPivoting.*;
 import gov.nih.mipav.view.renderer.WildMagic.Poisson.*;
 
@@ -128,7 +116,6 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
     	
     	boolean DeleteFaces = true; //  = par.getBool("DeleteFaces");
 		MeshModel m = new MeshModel();
-		File file = null;
 		
 		PlyReader reader = new PlyReader();
 	    
