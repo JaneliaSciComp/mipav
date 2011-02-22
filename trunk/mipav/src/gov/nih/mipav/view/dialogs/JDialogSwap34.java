@@ -87,7 +87,7 @@ public class JDialogSwap34 extends JDialogScriptableBase
      * @param  event  Event that triggers function
      */
     public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+        
     }
 
     // ************************************************************************
@@ -101,7 +101,6 @@ public class JDialogSwap34 extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
 
         if (algorithm instanceof AlgorithmSwap34) {
             resultImage = swap34Algo.getResultImage();
@@ -110,7 +109,7 @@ public class JDialogSwap34 extends JDialogScriptableBase
                 resultImage.setImageName(imageName);
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
