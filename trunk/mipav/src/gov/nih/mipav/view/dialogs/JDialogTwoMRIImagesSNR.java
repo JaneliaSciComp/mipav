@@ -296,10 +296,10 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration<String> names = UI.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
 
             if (!name.equals(image.getImageName())) {
                 nextImage = UI.getRegisteredImageByName(name);
@@ -555,7 +555,6 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         float hue;
         nBoundingVOIs = 0;
 
-        int zDim;
         boolean signalCurveFound;
 
         String selectedName = (String) imageComboBox.getSelectedItem();
@@ -654,12 +653,6 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
             MipavUtil.displayError("Must take both VOIs from the same image");
 
             return false;
-        }
-
-        zDim = 1;
-
-        if (image.getNDims() > 2) {
-            zDim = image.getExtents()[2];
         }
 
         signalCurveFound = false;
