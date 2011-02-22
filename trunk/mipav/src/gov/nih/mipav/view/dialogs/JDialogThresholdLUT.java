@@ -222,7 +222,7 @@ public class JDialogThresholdLUT extends JDialogBase {
                         // object      # of voxels    total intensity  avg. intensity  volume/area
                         resultImage.clearMask();
 
-                        ViewJFrameImage imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                        new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                     } catch (OutOfMemoryError x) {
                         MipavUtil.displayError("Dialog threshold: unable to allocate enough memory");
 
@@ -255,7 +255,7 @@ public class JDialogThresholdLUT extends JDialogBase {
                         algoQuantify.run();
                         resultImage.clearMask();
 
-                        ViewJFrameImage imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                        new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                     } catch (OutOfMemoryError x) {
                         MipavUtil.displayError("Dialog threshold: unable to allocate enough memory");
 
