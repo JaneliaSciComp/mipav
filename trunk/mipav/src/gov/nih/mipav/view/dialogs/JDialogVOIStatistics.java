@@ -2,7 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -219,7 +218,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      */
     public void addedVOI(final VOIVectorEvent voiEvent) {
         final VOIVector voiList = (VOIVector) voiEvent.getSource();
-        final Vector volumesVector = new Vector();
+        final Vector<VOI> volumesVector = new Vector<VOI>();
 
         for (int i = 0; i < voiList.size(); i++) {
 
@@ -261,7 +260,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     public void refreshVOIList(final VOIVector VOIlist) {
         selectedList.setListData(new Vector());
 
-        final Vector volumesVector = new Vector();
+        final Vector<VOI> volumesVector = new Vector<VOI>();
         highlighter = new VOIHighlighter();
 
         for (int i = 0; i < VOIlist.size(); i++) {
@@ -285,7 +284,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      */
     public void removedVOI(final VOIVectorEvent voiEvent) {
         final VOIVector voiList = (VOIVector) voiEvent.getSource();
-        final Vector volumesVector = new Vector();
+        final Vector<VOI> volumesVector = new Vector<VOI>();
 
         for (int i = 0; i < voiList.size(); i++) {
 
@@ -680,7 +679,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      */
     private JPanel buildSourceListingPanel(final VOIVector VOIlist) {
         final JPanel srctreep = new JPanel(new BorderLayout());
-        final Vector volumesVector = new Vector();
+        final Vector<VOI> volumesVector = new Vector<VOI>();
         highlighter = new VOIHighlighter();
 
         for (int i = 0; i < VOIlist.size(); i++) {
@@ -1205,17 +1204,17 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Perimeter") != -1)
                         && (xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits).trim();
+                    str = (Unit.getUnitFromLegacyNum(xUnits)).getAbbrev();
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if (VOIStatisticList.statisticDescription[i].indexOf("Principal Axis") != -1) {
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (degrees)");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Major axis length") != -1)
                         && (xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits).trim();
+                    str = (Unit.getUnitFromLegacyNum(xUnits)).getAbbrev();
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else if ( (VOIStatisticList.statisticDescription[i].indexOf("Minor axis length") != -1)
                         && (xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits).trim();
+                    str = (Unit.getUnitFromLegacyNum(xUnits)).getAbbrev();
                     logModelCol.add(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                 } else {
                     logModelCol.add(VOIStatisticList.statisticDescription[i]);
