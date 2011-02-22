@@ -223,7 +223,8 @@ public class JDialogSaveDicom extends JDialogBase {
     private Hashtable<String, String> tagsImportedFromNonDicomImage;
 
     /** The additional tags list is a list of tags the DTI group has requested. */
-    private Hashtable tagsList, additionalTagsList;
+    private Hashtable<String,JComponent> tagsList;
+    private Hashtable<String,String> additionalTagsList;
 
     /** DOCUMENT ME! */
     private final ViewUserInterface UI;
@@ -1336,6 +1337,7 @@ public class JDialogSaveDicom extends JDialogBase {
             if (value.length() > 0) {
 
                 try {
+                	@SuppressWarnings("unused")
                     final short s = Short.parseShort(value);
 
                     return true;
@@ -1389,6 +1391,7 @@ public class JDialogSaveDicom extends JDialogBase {
             if (value.length() > 0) {
 
                 try {
+                	@SuppressWarnings("unused")
                     final short s = Short.parseShort(value);
 
                     return true;
@@ -1422,9 +1425,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 try {
                     final String s1 = value.substring(0, value.indexOf("\\"));
-                    final String s2 = value.substring(value.indexOf("\\") + 1);
                     final char[] array1 = s1.toCharArray();
-                    final char[] array2 = s2.toCharArray();
 
                     for (final char element : array1) {
 
@@ -1511,7 +1512,7 @@ public class JDialogSaveDicom extends JDialogBase {
      */
     private void createHashtable() {
 
-        tagsList = new Hashtable();
+        tagsList = new Hashtable<String,JComponent>();
 
         tagsList.put("(0010,0010)", patientName);
         tagsList.put("(0010,0020)", patientID);
@@ -1730,7 +1731,7 @@ public class JDialogSaveDicom extends JDialogBase {
         File file;
         RandomAccessFile raFile;
         JFileChooser chooser;
-        additionalTagsList = new Hashtable();
+        additionalTagsList = new Hashtable<String,String>();
 
         // Open file dialog.
         chooser = new JFileChooser();
