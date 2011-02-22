@@ -275,10 +275,14 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             }
 
             tImageSlider = new ViewJSlider(ViewJSlider.TIME, 0, tDim-1);
+            tImageSlider.setMinimumSize(new Dimension(100, 55));
+            tImageSlider.setPreferredSize(new Dimension(100, 55));
             tImageSlider.setValue(0);
             tImageSlider.addChangeListener(this);
             
             zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
+            zImageSlider.setMinimumSize(new Dimension(100, 55));
+            zImageSlider.setPreferredSize(new Dimension(100, 55));
             zImageSlider.addChangeListener(this);
             
             panelImageSlider.add(zImageSlider);
@@ -302,6 +306,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             panelImageSlider.setBorder(borderImageSlider);
 
             zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
+            zImageSlider.setMinimumSize(new Dimension(100, 55));
+            zImageSlider.setPreferredSize(new Dimension(100, 55));
             zImageSlider.addChangeListener(this);
             
             panelImageSlider.add(zImageSlider);
@@ -410,12 +416,16 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
              }
 
              tImageSlider = new ViewJSlider(ViewJSlider.TIME, 0, tDim-1);
+             tImageSlider.setMinimumSize(new Dimension(100, 55));
+             tImageSlider.setPreferredSize(new Dimension(100, 55));
              tImageSlider.setValue(0);
              tImageSlider.addChangeListener(this);
 
              zDim = frame.getImageA().getExtents()[2];
 
              zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
+             zImageSlider.setMinimumSize(new Dimension(100, 55));
+             zImageSlider.setPreferredSize(new Dimension(100, 55));
              zImageSlider.addChangeListener(this);
              
              panelImageSlider.add(zImageSlider);
@@ -437,6 +447,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
              zDim = frame.getImageA().getExtents()[2];
 
              zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
+             zImageSlider.setMinimumSize(new Dimension(100, 55));
+             zImageSlider.setPreferredSize(new Dimension(100, 55));
              zImageSlider.addChangeListener(this);
              panelImageSlider.add(zImageSlider);
              generalPanel.add(panelToolbars, "North");

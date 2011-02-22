@@ -337,13 +337,9 @@ public class ViewJSlider extends JSlider {
         int majTickSpacing = 0,minTickSpacing = 0;
         buildMinimumTickSpacing();
         if(getOrientation() == ViewJSlider.HORIZONTAL) {
-        	this.setMinimumSize(new Dimension(100, 55));
-        	this.setPreferredSize(new Dimension(100, 55));
             maxMinorTicks = getSize().getWidth()/minAllowableMinorTickSpacing;
             maxMajorTicks = getSize().getWidth()/minAllowableMajorTickSpacing;
         } else {
-        	this.setMinimumSize(new Dimension(55, 100));
-        	this.setPreferredSize(new Dimension(55, 100));
             maxMinorTicks = getSize().getHeight()/minAllowableMinorTickSpacing;
             maxMajorTicks = getSize().getHeight()/minAllowableMajorTickSpacing;
         }
