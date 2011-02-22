@@ -2,8 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 import java.awt.BorderLayout;
 
-import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -22,19 +20,16 @@ import java.util.Enumeration;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
-import javax.swing.ListCellRenderer;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmTreT1;
@@ -234,7 +229,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         System.out.println("Pressed: "+command);
         
@@ -1241,10 +1235,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         performTreT1withPreCalculatedB1Map = scriptParameters.getParams().getBoolean("perform_treT1_with_PreCalculatedB1Map");
         performTreT1HIFI = scriptParameters.getParams().getBoolean("perform_treT1_HIFI");
         boolean doubleInversion = scriptParameters.getParams().getBoolean("double_Inversion");
+        @SuppressWarnings("unused")
         boolean singleInversion = scriptParameters.getParams().getBoolean("single_Inversion");
         boolean geScanner = scriptParameters.getParams().getBoolean("ge_Scanner");
+        @SuppressWarnings("unused")
         boolean siemensScanner = scriptParameters.getParams().getBoolean("siemens_Scanner");
         boolean threeTField = scriptParameters.getParams().getBoolean("three_T_Field");
+        @SuppressWarnings("unused")
         boolean onefiveTField = scriptParameters.getParams().getBoolean("one_five_TField");
         calculateT1 = scriptParameters.getParams().getBoolean("calculate_T1");
         showB1Map = scriptParameters.getParams().getBoolean("show_B1_Map");
@@ -1777,7 +1774,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 			            for (int i=0; i<Nti; i++) {
 			            	irspgrTI[i] = irspgrTI[i];
 			            }
-			            irspgrKy = irspgrKy;
 			        }
 			    }
 			    
@@ -2051,15 +2047,14 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
      */
     private class GuiBuilder implements ActionListener {
         
-        public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
+        @SuppressWarnings("unused")
+    	public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
 
         private ArrayList<ActionListener> listenerList;
         
         private boolean passedListeners;
 
         private ExitStatus exit;
-        
-        private JButton yes, no;
         
         private JDialog parent;
         
@@ -2069,10 +2064,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             this.exit = ExitStatus.INCOMPLETE;
         }
         
+        
+        @SuppressWarnings("unused")
         public ExitStatus getExitStatus() {
             return exit;
         }
         
+        @SuppressWarnings("unused")
         public ActionListener[] getListenerList() {
             ActionListener[] list = new ActionListener[listenerList.size()];
             for(int i=0; i<listenerList.size(); i++) {
@@ -2113,6 +2111,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             return text;
         }
         
+        @SuppressWarnings("unused")
         public JTextField buildIntegerField(final String labelText, int initNum) {
             final JTextField genericField = buildField(labelText, String.valueOf(initNum));
             ActionListener listener = new ActionListener() {
