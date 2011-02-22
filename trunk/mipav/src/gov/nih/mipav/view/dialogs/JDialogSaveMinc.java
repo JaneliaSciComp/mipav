@@ -140,6 +140,7 @@ public class JDialogSaveMinc extends JDialogBase {
             cancelFlag = false;
 
             try {
+            	@SuppressWarnings("unused")
                 float test = Float.valueOf(xStart.getText()).floatValue();
                 test = Float.valueOf(yStart.getText()).floatValue();
 
