@@ -123,7 +123,7 @@ public class FileInfoPARREC extends FileInfoBase {
 
 
 	/** getter for vol parameters **/
-	public HashMap getVolParameters() {
+	public HashMap<String,String> getVolParameters() {
 		return VolParameters;
 	}
 

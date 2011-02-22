@@ -74,7 +74,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
 	private String prFileDir;
     
     /** This is the full path to the gradient file.* */
-    private String gradientFilePath;
+    private String gradientFilePath; 
 	
     /** This is the full path to the b matrix file.* */
     private String bmtxtFilePath;
@@ -1013,22 +1013,22 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
                     Integer seriesNumber = new Integer(seriesNumber_String);
                     if(isInterleaved) {
 	                    if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
-	                        seriesFileInfoTreeSet = new TreeSet(new InstanceNumberVolComparator());
+	                        seriesFileInfoTreeSet = new TreeSet<String[]>(new InstanceNumberVolComparator());
 	                        seriesFileInfoTreeSet.add(dicomInfo);
 	                        seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
 	                    } else {
-	                        seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
+	                        seriesFileInfoTreeSet = (TreeSet<String[]>) seriesFileInfoTreeMap.get(seriesNumber);
 	                        seriesFileInfoTreeSet.add(dicomInfo);
 	                        seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
 	                    }
                     }
                     else {
                     	if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
-    						seriesFileInfoTreeSet = new TreeSet(new InstanceNumberComparator());
+    						seriesFileInfoTreeSet = new TreeSet<String[]>(new InstanceNumberComparator());
     						seriesFileInfoTreeSet.add(dicomInfo);
     						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
     					} else {
-    						seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
+    						seriesFileInfoTreeSet = (TreeSet<String[]>) seriesFileInfoTreeMap.get(seriesNumber);
     						seriesFileInfoTreeSet.add(dicomInfo);
     						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
     					}
@@ -1139,7 +1139,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
 			Iterator<Integer> iter = ketSet.iterator();
 			ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 			while (iter.hasNext()) {
-				TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+				TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
 				Iterator<String[]> iter2 = seriesFITS.iterator(); 
 				// lets get the first element and remember its imageSlice
 				String imageSlice = ((String) (((String[]) seriesFITS.first())[7])).trim();
@@ -1185,7 +1185,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
 			String relPath;
 			for(int i=0;i<numSlicesPerVolume;i++) {
 				for(int k=0;k<keyArray.length;k++) {
-					Object[] fidArr = ((TreeSet) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
+					Object[] fidArr = ((TreeSet<String[]>) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
 					int numVols = fidArr.length / numSlicesPerVolume;
 					String absPath = (String)((String[]) fidArr[i])[2];
 					relPath = new String(".." + File.separator + studyName +absPath.substring(absPath.lastIndexOf(studyName) + studyName.length(), absPath.length()));
@@ -1236,7 +1236,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
             ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 
             while (iter.hasNext()) {
-                TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+                TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
                 Iterator<String[]> iter2 = seriesFITS.iterator(); 
 
                 // lets get the first element and remember its slice location
@@ -1905,7 +1905,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
             
             FileOutputStream outputStream = new FileOutputStream(bMatrixFile);
             PrintStream printStream = new PrintStream(outputStream);
-            DecimalFormat decFormat = new DecimalFormat("%16f");
+
 
             // formula for bmtxt values is :
             // bxx 2bxy 2bxz byy 2byz bzz
