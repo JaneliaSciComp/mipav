@@ -214,7 +214,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -252,7 +252,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      */
     public void calcHistogram() {
         int[] dimExtents = new int[1];
-        int type = image.getType();
+        //int type = image.getType();
 
         dimExtents[0] = 256;
         
@@ -578,7 +578,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 // "locked - " image name so as to indicate that the image is now read/write locked!
                 // The image frames are disabled and then unregisted from the userinterface until the
                 // algorithm has completed.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
                 for (int i = 0; i < imageFrames.size(); i++) {
