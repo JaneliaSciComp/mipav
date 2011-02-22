@@ -129,8 +129,6 @@ public class JDialogSaveSlices extends JDialogBase {
     /** Whether to stamp DICOM files with the MIPAV secondary stamp */
     private boolean stampSecondary = true;
     
-    private boolean isDicom;
-    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -190,7 +188,6 @@ public class JDialogSaveSlices extends JDialogBase {
                               (options.getFileType() == FileUtility.MINC_HDF)); 
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
-        this.isDicom = isDicom;
         init();
        
     }
