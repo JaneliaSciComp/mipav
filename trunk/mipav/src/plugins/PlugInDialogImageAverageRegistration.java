@@ -159,7 +159,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
         String filename = "";
         String fullPath = "";
 
-        String userDir = "";
+
 
         if (command.equalsIgnoreCase("srcBrowse")) {
             JFileChooser srcFileChooser = new JFileChooser();
@@ -185,11 +185,10 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
                     try {
                         filename = srcFiles[k].getName();
 
-                        int fileType = FileUtility.getFileType(filename, directory, false, false);
                         fullPath = directory + filename;
 
                         // we will display the full path
-                        Vector rowData = new Vector();
+                        Vector<String> rowData = new Vector<String>();
                         rowData.add(fullPath);
                         srcTableModel.addRow(rowData);
 
@@ -247,7 +246,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
                         return;
                     }
 
-                    Vector rowData = new Vector();
+                    Vector<String> rowData = new Vector<String>();
                     rowData.add(fullPath);
 
                     if (targetTableModel.getRowCount() == 0) {

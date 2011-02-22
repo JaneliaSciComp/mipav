@@ -38,11 +38,7 @@ implements ListSelectionListener, ChangeListener {
      */
     private static final long serialVersionUID = 2778749302064237729L;
 
-    /** Box layout for control panel. */
-    private Box contentBox;
 
-    private JCheckBox reconstructTracts;
-    private JButton computeButton;
 
     /** The list box in the dialog for fiber bundle tracts. */
     private JList m_kTractList;
@@ -50,20 +46,14 @@ implements ListSelectionListener, ChangeListener {
     private JList m_kVOIList;
     /** Color button for changing the color of the fiber bundles. */
     private JButton m_kColorButton;
-    /** Color button detault color: */
-    private Color m_kColorButtonDefault;
+
     /** Checkbox for turning on/off volume color for the polylines. */
     private JCheckBox m_kUseVolumeColor;
     /** Checkbox for switching between polylines and ellipsoids. */
     private JCheckBox m_kUseEllipsoids;
     /** Checkbox for displaying all tensors as ellipsoids. */
     private JCheckBox m_kAllEllipsoids;
-    /** Checkbox for switching between polylines and ellipsoids and cylinders. */
-    private JCheckBox m_kUseCylinders;
-    /** Checkbox for switching between polylines and ellipsoids and cylinders, Tubes */
-    private JCheckBox m_kTubes;
-    /** Checkbox for displaying all tensors as ellipsoids. */
-    private JCheckBox m_kAllCylinders;
+
     /** User-control over the number of glyphs displayed in GPUVolumeRender */
     private JSlider m_kDisplaySlider;
     private JLabel m_kSliderLabel;
@@ -1270,7 +1260,7 @@ implements ListSelectionListener, ChangeListener {
 
         m_kColorButton = new JButton("   ");
         m_kColorButton.setToolTipText("Change fiber bundle color");
-        m_kColorButtonDefault = m_kColorButton.getBackground( );
+
         m_kColorButton.addActionListener(this);
         m_kColorButton.setActionCommand("ChangeColor");
 

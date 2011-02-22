@@ -1552,7 +1552,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             }
             
-            TreeSet sortedNamesSet = new TreeSet(new AlphabeticalComparator());
+            TreeSet<String> sortedNamesSet = new TreeSet<String>(new AlphabeticalComparator());
             for(int i=0;i<shortNameAL.size();i++) {
             	sortedNamesSet.add(shortNameAL.get(i));
             }
@@ -1564,7 +1564,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             final Object[] rowData = new Object[numColumns];
             
-            Iterator iter = sortedNamesSet.iterator();
+            Iterator<String> iter = sortedNamesSet.iterator();
             
             while (iter.hasNext()) {
 				String name = (String)iter.next();
@@ -2588,7 +2588,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                 infoList.set(infoList.size() - 1, infoMap);
                 // infoTable.put(k, infoMap);
-                final Vector rowData = new Vector();
+                final Vector<String> rowData = new Vector<String>();
                 rowData.add(name);
                 if (isComplete) {
                     rowData.add("Yes");
