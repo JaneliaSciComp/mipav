@@ -1408,6 +1408,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
             	
             	int childCount1 = foundGroupNode.getChildCount();
             	for(int k=0;k<childCount1;k++) {
+            		int childCount3 = 0;
             		bOrientationNode = (VOIOrientationNode)selectedVOIModel.getChild(foundGroupNode, k);
             		if(aOrientationNode.getName().equals(bOrientationNode.getName())) {
             			int childCount2 = bOrientationNode.getChildCount();
@@ -1417,11 +1418,12 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
             					bFrameNode2 = (VOIFrameNode)selectedVOIModel.getChild(bOrientationNode, m);
             					if(bFrameNode2.getName().equals(aFrameNode.getName())) {
             						found2 = true;
+            						childCount3 = bFrameNode2.getChildCount();
             						break;
             					}
             				}
             				if(found2) {
-            					int childCount3 = bFrameNode2.getChildCount();
+            					//int childCount3 = bFrameNode2.getChildCount();
             					boolean found3 = false;
             					for(int m=0;m<childCount3;m++) {
             						bNode2 = (VOINode)selectedVOIModel.getChild(bFrameNode2, m);
