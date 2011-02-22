@@ -67,9 +67,6 @@ public class JDialogVOIStats extends JDialogBase
     /** DOCUMENT ME! */
     private static Icon ICON_PROTRACTOR = MipavUtil.getIcon("protractor.gif");
 
-    /** DOCUMENT ME! */
-    private static Color background = new Color(100, 100, 100);
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Algorithm for computing VOI statistics */
@@ -235,7 +232,6 @@ public class JDialogVOIStats extends JDialogBase
             int[] temp;
             int j = 0, location = -1;
             String name = "";
-            boolean changedName = false;
 
             tmpStr = seedValueTF.getText();
 
@@ -255,15 +251,14 @@ public class JDialogVOIStats extends JDialogBase
 
             for (int i = 0; i < vectorVOI.size(); i++) {
 
-                if (((VOI) vectorVOI.elementAt(i)).getName().equals(VOIName.getText()) &&
-                        !((VOI) vectorVOI.elementAt(i)).equals(voi)) {
+                if ((vectorVOI.elementAt(i)).getName().equals(VOIName.getText()) &&
+                        !(vectorVOI.elementAt(i)).equals(voi)) {
                     newVOIVector.addElement(vectorVOI.elementAt(i));
                     temp[j++] = i;
                     name = VOIName.getText();
-                    changedName = true;
                 }
 
-                if (((VOI) vectorVOI.elementAt(i)).equals(voi)) {
+                if ((vectorVOI.elementAt(i)).equals(voi)) {
                     location = i;
                 }
             }
@@ -335,8 +330,8 @@ public class JDialogVOIStats extends JDialogBase
 
                 image.groupVOIs(newVOIVector, where, name);
 
-                Vector VOIs = image.getVOIs();
-                updateVOI((VOI) (VOIs.elementAt(VOIs.size() - 1)), image);
+                Vector<VOI> VOIs = image.getVOIs();
+                updateVOI((VOIs.elementAt(VOIs.size() - 1)), image);
             } else {
                 updateVOI(voi, image);
             }
@@ -711,7 +706,7 @@ public class JDialogVOIStats extends JDialogBase
 
         if (leadPath != null) {
             Object[] leadObjects = leadPath.getPath();
-            int curveIndex = 0;
+            //int curveIndex = 0;
 
             if (leadObjects[leadObjects.length - 1] instanceof VOINode) {
                 VOIBase leadBase = ((VOINode) leadObjects[leadObjects.length - 1]).getVOI();
@@ -727,7 +722,7 @@ public class JDialogVOIStats extends JDialogBase
                 updateVOI(leadBase.getGroup(), image);
 
             } else if (leadObjects[leadObjects.length - 1] instanceof VOIFrameNode) {
-                curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
+                //curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
 
                 if (frameFollowsSelection && (image.getNDims() > 2)) {
                     //voiHandler.setSlice(curveIndex);
@@ -761,14 +756,14 @@ public class JDialogVOIStats extends JDialogBase
         root = new DefaultMutableTreeNode(image.getImageName());
         voiModel = new DefaultTreeModel(root);
 
-        Enumeration e = VOIs.elements();
+        Enumeration<VOI> e = VOIs.elements();
 
         VOI currentVOI = null;
 
         int index = 0;
 
         while (e.hasMoreElements()) {
-            currentVOI = (VOI) e.nextElement();
+            currentVOI = e.nextElement();
             voiModel.insertNodeInto(new VOIGroupNode(currentVOI,image.getExtents()), root, index);
             //voiModel.insertNodeInto(new VOIGroupNode(currentVOI), root, index);
             index++;
@@ -1183,22 +1178,19 @@ public class JDialogVOIStats extends JDialogBase
             root.removeAllChildren();
 
             ViewVOIVector VOIs = image.getVOIs();
-            Enumeration e = VOIs.elements();
+            Enumeration<VOI> e = VOIs.elements();
 
             VOI tempVOI = null;
 
             VOIGroupNode currentNode = null;
-            Vector curves = null;
+            Vector<VOIBase> curves = null;
 
-            int index = 0;
-
-            Enumeration voiEnum = null;
+            Enumeration<VOIBase> voiEnum = null;
             VOIBase voiBase = null;
 
-            Enumeration voiNodeEnum = null;
+            Enumeration<VOIFrameNode> voiNodeEnum = null;
             VOINode currentVOINode = null;
-            VOIFrameNode currentVOIFrameNode = null;
-            Enumeration voiFrameEnum = null;
+            Enumeration<TreeNode> voiFrameEnum = null;
 
             Vector<TreePath> treePaths = new Vector<TreePath>();
 
@@ -1206,7 +1198,7 @@ public class JDialogVOIStats extends JDialogBase
 
             // iterate through all VOIs
             while (e.hasMoreElements()) {
-                tempVOI = (VOI) e.nextElement();
+                tempVOI = e.nextElement();
 
                 // create VOI group node (for VOI)
                 currentNode = new VOIGroupNode(tempVOI,image.getExtents());
@@ -1225,7 +1217,7 @@ public class JDialogVOIStats extends JDialogBase
                     // are active
                     voiEnum = curves.elements();
                     while (voiEnum.hasMoreElements()) {
-                        voiBase = (VOIBase) voiEnum.nextElement();
+                        voiBase = voiEnum.nextElement();
 
                         // check to see if the VOIBase is active
                         if (voiBase.isActive())
@@ -1235,7 +1227,7 @@ public class JDialogVOIStats extends JDialogBase
 
                             while (voiFrameEnum.hasMoreElements()) {
 
-                                tempNode = (TreeNode) voiFrameEnum.nextElement();
+                                tempNode = voiFrameEnum.nextElement();
 
                                 if (tempNode instanceof VOIOrientationNode) {
 
@@ -1244,12 +1236,12 @@ public class JDialogVOIStats extends JDialogBase
                                     // find the child that matches this selected contour
                                     while (voiNodeEnum.hasMoreElements()) {
                                         
-                                        VOIFrameNode currentFrameNode = (VOIFrameNode) voiNodeEnum.nextElement();
-                                        Enumeration voiFrameEnum2 = currentFrameNode.children();
+                                        VOIFrameNode currentFrameNode = voiNodeEnum.nextElement();
+                                        Enumeration<VOINode> voiFrameEnum2 = currentFrameNode.children();
                                         
                                         // find the child that matches this selected contour
                                         while (voiFrameEnum2.hasMoreElements()) {
-                                            currentVOINode = (VOINode) voiFrameEnum2.nextElement();
+                                            currentVOINode = voiFrameEnum2.nextElement();
 
                                             if (currentVOINode.getVOI().equals(voiBase)) {
                                                 treePaths.addElement(new TreePath(new Object[] {
@@ -1275,7 +1267,7 @@ public class JDialogVOIStats extends JDialogBase
                 TreePath[] tPaths = new TreePath[treePaths.size()];
 
                 for (int i = 0; i < tPaths.length; i++) {
-                    tPaths[i] = (TreePath) treePaths.elementAt(i);
+                    tPaths[i] = treePaths.elementAt(i);
                 }
                 voiTree.setSelectionPaths(tPaths);
 
@@ -1355,12 +1347,6 @@ public class JDialogVOIStats extends JDialogBase
         private JMenuItem itemClose;
 
         /** DOCUMENT ME! */
-        private JMenuItem itemShowGraph;
-
-        /** DOCUMENT ME! */
-        private JMenuItem itemShowPAAIDialog;
-
-        /** DOCUMENT ME! */
         private JCheckBoxMenuItem itemShowVOIName;
 
         /** DOCUMENT ME! */
@@ -1384,9 +1370,9 @@ public class JDialogVOIStats extends JDialogBase
                 contourOrderSubMenu = ViewMenuBuilder.buildMenu("Contour Order", 0, false);
                 editSubMenu = ViewMenuBuilder.buildMenu("Edit", 0, false);
                 propSubMenu = ViewMenuBuilder.buildMenu("Propagate", 0, false);
-                itemShowGraph = ViewMenuBuilder.buildMenuItem("Show VOI Graph", "ShowGraph", 0,
+                ViewMenuBuilder.buildMenuItem("Show VOI Graph", "ShowGraph", 0,
                         voiHandler, null, false);
-                itemShowPAAIDialog = ViewMenuBuilder.buildMenuItem("Point area average intensities", "ShowPAIIDialog",
+                ViewMenuBuilder.buildMenuItem("Point area average intensities", "ShowPAIIDialog",
                                                                    0, voiHandler, null, false);
                 itemShowVOIName = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName",
                         voiHandler,
