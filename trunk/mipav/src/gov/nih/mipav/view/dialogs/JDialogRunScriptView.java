@@ -59,7 +59,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
     private static final int VOI_DROP = 1;
 
     /** DOCUMENT ME! */
-    private static final int TREE_DROP = 2;
+    //private static final int TREE_DROP = 2;
 
     /** DOCUMENT ME! */
     private static final String VOI_EMPTY = "[Insert VOI]";
@@ -92,9 +92,6 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
 
     /** DOCUMENT ME! */
     private SpringLayout layout;
-
-    /** DOCUMENT ME! */
-    private MouseListener listener;
 
     /** Menu for setting raw info*/
     private JPopupMenu popup;
@@ -371,7 +368,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
      * @param  imageHolder  DOCUMENT ME!
      * @param  voiHolder    DOCUMENT ME!
      */
-    public void fillImagesVOIs(Vector imageHolder, Vector voiHolder) {
+    public void fillImagesVOIs(Vector<Vector<String>> imageHolder, Vector<Vector<String>> voiHolder) {
 
         boolean voiOnDisk = false;
         boolean imageOnDisk = false;
@@ -384,12 +381,12 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
 
         // find out how many "executers" we will have
         int numExecuters = ((ScriptTreeNode) scriptNode.getChildAt(0)).getChildCount();
-        Vector[] imageNames = new Vector[numExecuters];
-        Vector[] voiNames = new Vector[numExecuters];
+        Vector<String>[] imageNames = new Vector[numExecuters];
+        Vector<String>[] voiNames = new Vector[numExecuters];
 
         for (int i = 0; i < numExecuters; i++) {
-            imageNames[i] = new Vector();
-            voiNames[i] = new Vector();
+            imageNames[i] = new Vector<String>();
+            voiNames[i] = new Vector<String>();
         }
 
 
@@ -857,8 +854,8 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
 
         if (node.getChildCount() >= 0) {
 
-            for (Enumeration e = node.children(); e.hasMoreElements();) {
-                TreeNode n = (TreeNode) e.nextElement();
+            for (Enumeration<TreeNode> e = node.children(); e.hasMoreElements();) {
+                TreeNode n = e.nextElement();
                 TreePath path = parent.pathByAddingChild(n);
                 expandAll(tree, path, expand);
             }
@@ -883,15 +880,14 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
      */
     private ScriptTreeNode populateScriptTree(String[] imagePlaceHolders, String[] imageLabels, String[] imageActions,
                                               int[] numberofVOIs) {
-        ScriptTreeNode newNode = new ScriptTreeNode("Script Executer", this.SCRIPTNODE);
+        ScriptTreeNode newNode = new ScriptTreeNode("Script Executer", JDialogRunScriptView.SCRIPTNODE);
 
         ScriptTreeNode[] imagePlaceHolderNodes;
-        ScriptTreeNode voi = null;
         imagePlaceHolderNodes = new ScriptTreeNode[imagePlaceHolders.length];
 
         for (int i = 0; i < imagePlaceHolders.length; i++) {
             imagePlaceHolderNodes[i] = new ScriptTreeNode(imagePlaceHolders[i] + " (" + imageActions[i] + " -- " +
-                                                          imageLabels[i] + ")", this.IMAGEPLACEHOLDERNODE);
+                                                          imageLabels[i] + ")", JDialogRunScriptView.IMAGEPLACEHOLDERNODE);
             newNode.add(imagePlaceHolderNodes[i]);
         }
 
@@ -905,10 +901,11 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
      *
      * @return  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private ScriptTreeNode restoreSavedExecuter(Node executer) {
         System.out.println("executer: " + executer.getNodeName());
 
-        ScriptTreeNode newNode = new ScriptTreeNode("Script Executer", this.SCRIPTNODE);
+        ScriptTreeNode newNode = new ScriptTreeNode("Script Executer", JDialogRunScriptView.SCRIPTNODE);
         ScriptTreeNode[] imageNodes = new ScriptTreeNode[executer.getChildNodes().getLength()];
         ScriptTreeNode voi = null;
         System.out.println("imageNodes length: " + imageNodes.length);
@@ -918,7 +915,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
         for (int i = 1; i < executer.getChildNodes().getLength(); i += 2) {
             int ii = 0;
             imageNodes[ii] = new ScriptTreeNode(executer.getChildNodes().item(i).getAttributes().getNamedItem("name").getNodeValue(),
-                                                this.IMAGENODE);
+                                                JDialogRunScriptView.IMAGENODE);
 
             imageNodes[ii].setFilePath(executer.getChildNodes().item(i).getAttributes().getNamedItem("filePath").getNodeValue());
 
@@ -931,7 +928,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
             for (int j = 1; j < executer.getChildNodes().item(i).getChildNodes().getLength(); j += 2) {
                 voi = new ScriptTreeNode(executer.getChildNodes().item(i).getChildNodes().item(j).getNodeName().replaceAll("__",
                                                                                                                            " "),
-                                         this.VOINODE);
+                                         JDialogRunScriptView.VOINODE);
                 imageNodes[ii].add(voi);
             }
 
@@ -1053,15 +1050,6 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
         private static final long serialVersionUID = 1339840969054696153L;
 
         /** DOCUMENT ME! */
-        int addCount = 0; // Number of items added
-
-        /** DOCUMENT ME! */
-        int addIndex = -1; // Location where items were added
-
-        /** DOCUMENT ME! */
-        int[] indices = null;
-
-        /** DOCUMENT ME! */
         DataFlavor localArrayListFlavor, serialArrayListFlavor;
 
         /** DOCUMENT ME! */
@@ -1127,7 +1115,6 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
 
             if (c instanceof JList) {
                 source = (JList) c;
-                indices = source.getSelectedIndices();
 
                 Object[] values = source.getSelectedValues();
 
@@ -1135,7 +1122,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
                     return null;
                 }
 
-                ArrayList alist = new ArrayList(values.length);
+                ArrayList<String> alist = new ArrayList<String>(values.length);
 
                 for (int i = 0; i < values.length; i++) {
                     Object o = values[i];
@@ -1206,14 +1193,14 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
         public class ArrayListTransferable implements Transferable {
 
             /** DOCUMENT ME! */
-            ArrayList data;
+            ArrayList<String> data;
 
             /**
              * Creates a new ArrayListTransferable object.
              *
              * @param  alist  DOCUMENT ME!
              */
-            public ArrayListTransferable(ArrayList alist) {
+            public ArrayListTransferable(ArrayList<String> alist) {
                 data = alist;
             }
 
@@ -1413,10 +1400,10 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
             }
 
             String[] text = null;
-            ArrayList list = null;
+            ArrayList<String> list = null;
 
             try {
-                list = ((ArrayList) transferable.getTransferData(dataFlavor));
+                list = ((ArrayList<String>) transferable.getTransferData(dataFlavor));
                 text = new String[list.size()];
 
                 for (int i = 0; i < text.length; i++) {
@@ -1607,12 +1594,6 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
     private class TreeMouseAdapter extends MouseAdapter {
 
         /** DOCUMENT ME! */
-        ScriptTreeNode parentNode;
-
-        /** DOCUMENT ME! */
-        ScriptTreeNode resetNode;
-
-        /** DOCUMENT ME! */
         ScriptTreeNode selectedNode;
 
         /** DOCUMENT ME! */
@@ -1632,7 +1613,6 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
                     Point pt = e.getPoint();
                     TreePath pathTarget = tree.getPathForLocation(pt.x, pt.y);
                     selectedNode = (ScriptTreeNode) pathTarget.getLastPathComponent();
-                    parentNode = (ScriptTreeNode) selectedNode.getParent();
                     selectedNodeName = (String) selectedNode.getUserObject();
 
                     type = selectedNode.getNodeType();
