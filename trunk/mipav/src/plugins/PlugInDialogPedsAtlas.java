@@ -1,10 +1,10 @@
-import java.awt.AWTException;
-import java.awt.BorderLayout;
+
+
 import java.awt.Color;
 import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Graphics;
+
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -13,11 +13,11 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
+
+
 import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.MouseEvent;
+
+
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
@@ -33,19 +33,19 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Dictionary;
+
 import java.util.Hashtable;
-import java.util.concurrent.atomic.AtomicBoolean;
+
 import java.util.zip.GZIPInputStream;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JDialog;
+
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
+
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -79,18 +79,18 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ProgressChangeEvent;
 import gov.nih.mipav.view.ViewControlsImage;
-import gov.nih.mipav.view.ViewJComponentDTIImage;
+
 import gov.nih.mipav.view.ViewJComponentPedsAtlasIconImage;
 import gov.nih.mipav.view.ViewJFrameBase;
-import gov.nih.mipav.view.ViewJFrameImage;
+
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.JDialogBase;
+
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.view.ProgressChangeListener;
+
 /**
  * This plugin is an atlas type plugin for the pediatrics group that displays annotations also
  * @author pandyan
@@ -888,7 +888,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         imagePanel = new JPanel(new GridBagLayout());
         
         imageGBC.anchor = GridBagConstraints.CENTER;
-        TitledBorder titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+       
         imagePanel.setMinimumSize(new Dimension(initialImagePanelSize, initialImagePanelSize));
         imageScrollPanel = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         //imageScrollPanel.setPreferredSize(new Dimension(initialImagePanelSize, initialImagePanelSize));
@@ -1693,8 +1693,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
                 	return;
                 }
                 String fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                File file = new File(fileDir + fileName);
-                
+
                 writeImage(fileDir,fileName);
             } else {
                 return;
@@ -1713,7 +1712,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	public void writeImage(String fileDir, String filename) {
 		int[] extents = new int[2];
 		int[] pixels;
-        int bufferSize, xDim, yDim;
+        int bufferSize;
         short[] buffer = null;
         ModelImage screenCaptureImage = null;
         Image imagePix = null;
@@ -3723,7 +3722,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				t1AtlasImages[i].addImageDisplayListener(owner);
 				try {
 					fileVOI = new FileVOI(coronalAnnotationsFilename, annotationsFileDir,t1AtlasImages[i]);
-					VOI[] vois = fileVOI.readVOI(true);
+					fileVOI.readVOI(true);
 				}catch(IOException e) {
 					e.printStackTrace();
 				}

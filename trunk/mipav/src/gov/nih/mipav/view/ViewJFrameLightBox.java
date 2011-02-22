@@ -1,17 +1,14 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmVOIShapeInterpolation;
+
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.provenance.ProvenanceRecorder;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
-import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
+
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
+
 
 import java.awt.*;
 import java.awt.event.*;
