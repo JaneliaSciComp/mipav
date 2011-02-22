@@ -71,9 +71,6 @@ public class JDialogTalairach extends JDialogBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private Vector3f anotherPtDicom;
-
-    /** DOCUMENT ME! */
     private JRadioButton anteriorPt;
 
     /** DOCUMENT ME! */
@@ -87,9 +84,6 @@ public class JDialogTalairach extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JButton clearTalairachButton;
-
-    /** DOCUMENT ME! */
-    private Vector3f firstPtDicom;
 
 
     /** DOCUMENT ME! */
@@ -117,9 +111,6 @@ public class JDialogTalairach extends JDialogBase {
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private Vector3f inferiorEdgeDicom;
-
-    /** DOCUMENT ME! */
     private JRadioButton inferiorPt;
 
     /** DOCUMENT ME! */
@@ -130,9 +121,6 @@ public class JDialogTalairach extends JDialogBase {
 
     /** DOCUMENT ME! */
     private Vector3f leftPt3Df;
-
-    /** DOCUMENT ME! */
-    private Vector3f posteriorMarginDicom;
 
     /** DOCUMENT ME! */
     private JRadioButton posteriorPt;
@@ -150,16 +138,10 @@ public class JDialogTalairach extends JDialogBase {
     private JButton setTalairachButton;
 
     /** DOCUMENT ME! */
-    private Vector3f superiorEdgeDicom;
-
-    /** DOCUMENT ME! */
     private JRadioButton superiorPt;
 
     /** DOCUMENT ME! */
     private Vector3f superiorPt3Df;
-
-    /** DOCUMENT ME! */
-    private int tOffset;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -492,7 +474,7 @@ public class JDialogTalairach extends JDialogBase {
         int[] topX = new int[12];
         int[] topY = new int[12];
         int[] topZ = new int[12];
-        //double[][] Mat;
+        @SuppressWarnings("unused")
         float bot_A, bot_M, bot_P, bot_R, bot_L, bot_I, bot_S;
         float top_A, top_M, top_P, top_R, top_L, top_I, top_S;
 
