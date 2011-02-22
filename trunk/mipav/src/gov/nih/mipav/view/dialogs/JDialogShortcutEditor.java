@@ -182,12 +182,12 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
 
         String key;
         KeyStroke ks = null;
-        Enumeration e = Preferences.getUserShortcutTable().keys();
+        Enumeration<String> e = Preferences.getUserShortcutTable().keys();
         String trimmed;
 
-        Vector defaultVector = new Vector();
+        Vector<String> defaultVector = new Vector<String>();
 
-        Vector userDefinedVector = new Vector();
+        Vector<String> userDefinedVector = new Vector<String>();
 
         while (e.hasMoreElements()) {
             userDefinedVector.addElement(e.nextElement());
@@ -705,7 +705,7 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
     /**
      * DOCUMENT ME!
      */
-    private class StringVecComparator implements Comparator {
+    private class StringVecComparator implements Comparator<String> {
 
         /**
          * DOCUMENT ME!
@@ -715,15 +715,15 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
          *
          * @return  DOCUMENT ME!
          */
-        public int compare(Object o1, Object o2) {
-            int i = ((String) o1).compareTo((String) o2);
+        public int compare(String o1, String o2) {
+            int i = (o1).compareTo(o2);
 
             if (i == 0) {
-                i = ((String) o1).compareTo((String) o2);
+                i = (o1).compareTo(o2);
             }
 
             if (i == 0) {
-                i = ((String) o1).compareTo((String) o2);
+                i = (o1).compareTo(o2);
             }
 
             return i;
