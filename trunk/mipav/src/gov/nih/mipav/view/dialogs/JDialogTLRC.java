@@ -23,15 +23,6 @@ public class JDialogTLRC extends JDialogBase {
     
     private static final float MAX_ALLOWED_DEVIATION = 2.0f;
     private static final float MIN_ALLOWED_DEVIATION = 0.5f;
-    private static final int R = 0;
-    private static final int L = 1;
-    
-    private static final int A = 0;
-    private static final int M = 1;
-    private static final int P = 2;
-    
-    private static final int I = 0;
-    private static final int S = 1;
     
     private static final float ATLAS_FRONT_TO_AC = 70.0f;
     
@@ -59,12 +50,6 @@ public class JDialogTLRC extends JDialogBase {
 	private     JRadioButton             rightPt;
 	private     JButton                  setTalairachButton;
 	private     JButton                  clearTalairachButton;
-	private     int                      tOffset;
-	private     Vector3f                 superiorEdgeDicom;
-	private     Vector3f                 posteriorMarginDicom;
-	private     Vector3f                 inferiorEdgeDicom;
-	private     Vector3f                 firstPtDicom;
-	private     Vector3f                 anotherPtDicom;
 	private     Vector3f                 anteriorPt3Df;
 	private     Vector3f                 posteriorPt3Df;
 	private     Vector3f                 superiorPt3Df;
@@ -242,7 +227,7 @@ public class JDialogTLRC extends JDialogBase {
 		JPanel buttonPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         buttonPanel.add(setTalairachButton, gbc);
 		gbc.gridx = 1;
 		buttonPanel.add(clearTalairachButton, gbc);
