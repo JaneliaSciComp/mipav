@@ -91,10 +91,10 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
             TableSorter tableSorter = (TableSorter) rightTable.getModel();
             SortingTableModel tableModel = (SortingTableModel) tableSorter.getTableModel();
 
-            Vector configuredColumnsVector = new Vector();
+            Vector<String> configuredColumnsVector = new Vector<String>();
 
             for (int i = 0; i < tableModel.getRowCount(); i++) {
-                Vector row = tableModel.getRow(i);
+                Vector<String> row = tableModel.getRow(i);
 
                 configuredColumnsVector.addElement(row.elementAt(1)); // index 1 is the index of the column name in the
                                                                       // table
@@ -131,7 +131,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
      * @return  DOCUMENT ME!
      */
     protected JPanel buildMainPanel() {
-        Vector columnNames = parentFrame.getColumnNames();
+        Vector<String> columnNames = parentFrame.getColumnNames();
 
         SortingTableModel rightTableModel = new SortingTableModel();
 
@@ -147,7 +147,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
         rightTable.getColumn("Key").setMaxWidth(0);
 
         for (int i = 0; i < columnNames.size(); i++) {
-            Vector newRow = new Vector();
+            Vector<String> newRow = new Vector<String>();
 
             String keyStr = DicomDictionary.getKeyFromTagName((String) columnNames.elementAt(i));
 
@@ -173,13 +173,13 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
 
         /** X-position, Y-position, and Z-position are not DICOM tags. But there is a good
          *  chance the user will want to sort on them, so they are included ad-hoc */
-        Vector tagsVector = getNiceDICOMTags();
+        Vector<String> tagsVector = getNiceDICOMTags();
         tagsVector.addElement("X-position");
         tagsVector.addElement("Y-position");
         tagsVector.addElement("Z-position");
 
         /** There are no keys associated with these tags, so CUSTOM entries are added */
-        Vector keysVector = new Vector(DicomDictionary.getDicomTagTable().keySet());
+        Vector<String> keysVector = new Vector(DicomDictionary.getDicomTagTable().keySet());
         keysVector.addElement(CUSTOM);
         keysVector.addElement(CUSTOM);
         keysVector.addElement(CUSTOM);
@@ -245,7 +245,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
      * @return  DOCUMENT ME!
      */
     protected Vector getNiceDICOMTags() {
-        Hashtable tagsTable = DicomDictionary.getDicomTagTable();
+        Hashtable<FileDicomKey,FileDicomTagInfo> tagsTable = DicomDictionary.getDicomTagTable();
         Vector tagsVector = new Vector(tagsTable.values());
 
         for (int i = 0; i < tagsVector.size(); i++) {
