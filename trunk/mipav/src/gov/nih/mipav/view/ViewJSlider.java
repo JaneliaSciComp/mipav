@@ -377,7 +377,7 @@ public class ViewJSlider extends JSlider {
         }
         
         if(minTickSpacing == 1 || majTickSpacing == 1) {
-            setSnapToTicks(true); //when all minor ticks can be displayed, this is the only time a slider should snap to ticks
+            setSnapToTicks(true); //all tick marks refer to unique image slices, so snap to them
         }
 
         if(minTickSpacing > 0) {
