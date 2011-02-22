@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.BitSet;
 
@@ -262,11 +263,17 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     private VOIManagerInterface voiManager;
     
     /** initial image panel size **/
-    private int initialImagePanelSize = 600;
+    private int initialXImagePanelSize = 600;
+    
+    private int initialYImagePanelSize;
     
     private boolean displayAnnotations = true;
     
     private boolean finishedLoading = false;
+    
+    private float aspectRatio;
+    
+    private DecimalFormat df = new DecimalFormat("0.00");
     
     //private int testCounter = 0;
     
@@ -388,6 +395,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					sliceLabelTable.put(0, new JLabel("0"));
 					sliceLabelTable.put(numZSlices-1, new JLabel(numZSlicesString));
 					currentZSlice = (t1AtlasImages[0].getExtents()[2] - 1) / 2;
+					aspectRatio = (float)t1AtlasImages[0].getExtents()[0]/(float)t1AtlasImages[0].getExtents()[1];
+					
+					initialYImagePanelSize = (int)(initialXImagePanelSize/aspectRatio);
 					init();
 					test = true;
 					
@@ -760,7 +770,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle(title + "zoom:" + currentZoom);
+        
        
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
@@ -889,10 +899,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         
         imageGBC.anchor = GridBagConstraints.CENTER;
        
-        imagePanel.setMinimumSize(new Dimension(initialImagePanelSize, initialImagePanelSize));
+        imagePanel.setMinimumSize(new Dimension(initialXImagePanelSize, initialYImagePanelSize));
         imageScrollPanel = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        //imageScrollPanel.setPreferredSize(new Dimension(initialImagePanelSize, initialImagePanelSize));
-        imageScrollPanel.setMinimumSize(new Dimension(initialImagePanelSize+200, initialImagePanelSize+200));
+        imageScrollPanel.setPreferredSize(new Dimension(initialXImagePanelSize, initialYImagePanelSize));
+        imageScrollPanel.setMinimumSize(new Dimension(initialXImagePanelSize+200, initialYImagePanelSize+200));
         imageScrollPanel.addMouseWheelListener(this);
         imageScrollPanel.setViewportView(imagePanel);
         
@@ -900,6 +910,11 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         currentComponentImage = t1ComponentImages[0];
         this.setImageA(t1AtlasImages[0]);
         currentComponentImage.setSlice(currentZSlice);
+        
+        float newZoom = (float)(initialXImagePanelSize-20)/(float)currentComponentImage.getImageA().getExtents()[0];
+		currentZoom = newZoom;
+		setTitle(title + "zoom:" + df.format(currentZoom));
+        
         currentComponentImage.setZoom(currentZoom, currentZoom);
         currentComponentImage.show(0,currentZSlice,null,null,true);
         imagePanel.add(currentComponentImage,imageGBC);
@@ -2089,7 +2104,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         currentComponentImage.show(0,currentZSlice,null,null,true);
         
         
-        setTitle(title + "zoom:" + currentZoom);
+        setTitle(title + "zoom:" + df.format(currentZoom));
         
         imageScrollPanel.validate();
 		
@@ -2123,7 +2138,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
             validate();
             currentComponentImage.show(0,currentZSlice,null,null,true);
 
-            setTitle(title + "zoom:" + currentZoom);
+            setTitle(title + "zoom:" + df.format(currentZoom));
            
             if (currentZoom >= 32) {
                 magButton.setEnabled(false);
@@ -2143,7 +2158,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
             currentComponentImage.show(0,currentZSlice,null,null,true);
             
             
-            setTitle(title + "zoom:" + currentZoom);
+            setTitle(title + "zoom:" + df.format(currentZoom));
            
             if (currentZoom >= 32) {
                 magButton.setEnabled(false);
@@ -2178,7 +2193,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         currentComponentImage.show(0,currentZSlice,null,null,true);
         
         
-        setTitle(title + "zoom:" + currentZoom);
+        setTitle(title + "zoom:" + df.format(currentZoom));
        
         if (currentZoom >= 32) {
             magButton.setEnabled(false);
@@ -2214,7 +2229,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         currentComponentImage.show(0,currentZSlice,null,null,true);
         
         
-        setTitle(title + "zoom:" + currentZoom);
+        setTitle(title + "zoom:" + df.format(currentZoom));
         
         if (currentComponentImage.getZoomX() <= 0.125) {
             unMagButton.setEnabled(false);
