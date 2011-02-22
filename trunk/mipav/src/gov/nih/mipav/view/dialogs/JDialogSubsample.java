@@ -8,13 +8,10 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Set;
 
 import javax.swing.*;
 
