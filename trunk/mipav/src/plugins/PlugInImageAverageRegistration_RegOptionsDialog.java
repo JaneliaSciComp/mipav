@@ -121,8 +121,6 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
     /** radio button for z */
     private JRadioButton zRadio;
 
-    /** boolean for zSelected */
-    private boolean zSelected = false;
 	
 	
 	/**
@@ -598,7 +596,6 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
      * @return  <code>true</code> if the variables are properly set, <code>false</code> otherwise.
      */
     public boolean setVariables() {
-        int i;
 
         maxOfMinResol = minMaxCheckbox.isSelected();
         
@@ -973,7 +970,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
             rotatePanel.remove(rotateRangePanelZ);
             rotatePanel.remove(coarsePanelZ);
             rotatePanel.remove(finePanelZ);
-            zSelected = false;
+
         } // else if zSelected
 
         xSelected = true;
@@ -1020,7 +1017,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
             rotatePanel.remove(rotateRangePanelZ);
             rotatePanel.remove(coarsePanelZ);
             rotatePanel.remove(finePanelZ);
-            zSelected = false;
+
         } // else zSelected
 
         ySelected = true;
@@ -1071,7 +1068,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
             return;
         } // else zSelected
 
-        zSelected = true;
+
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
@@ -1122,7 +1119,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
                     rotatePanel.remove(rotateRangePanelZ);
                     rotatePanel.remove(coarsePanelZ);
                     rotatePanel.remove(finePanelZ);
-                    zSelected = false;
+
                 } // else if zSelected
 
                 xSelected = true;
@@ -1162,7 +1159,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
                     rotatePanel.remove(rotateRangePanelZ);
                     rotatePanel.remove(coarsePanelZ);
                     rotatePanel.remove(finePanelZ);
-                    zSelected = false;
+
                 } // else if zSelected
 
                 xSelected = true;
@@ -1196,7 +1193,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
                     rotatePanel.remove(rotateRangePanelZ);
                     rotatePanel.remove(coarsePanelZ);
                     rotatePanel.remove(finePanelZ);
-                    zSelected = false;
+
                 } // else zSelected
 
                 ySelected = true;
@@ -1234,7 +1231,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
                     return;
                 } // else zSelected
 
-                zSelected = true;
+
                 gbc.gridx = 0;
                 gbc.gridy = 2;
                 gbc.gridwidth = 1;
