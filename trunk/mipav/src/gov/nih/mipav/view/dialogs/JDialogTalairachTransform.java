@@ -166,7 +166,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         loadsavePanel.add(loadButton, gbc);
         gbc.gridx = 1;
         loadsavePanel.add(saveButton, gbc);
@@ -194,12 +194,12 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.anchor = gbc.EAST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         imgPanel.add(comboBoxImage, gbc);
         gbc.gridx = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
 		imgPanel.add(updateImage, gbc);
 
 		labelTransform = new JLabel("transformation: ");
@@ -254,56 +254,56 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		computeImage.setToolTipText("Transform the new image according to the chosen transformation");       
 
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
 		gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         talairachPanel.add(computeACPC, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         talairachPanel.add(computeTLRC, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         talairachPanel.add(loadsaveLabel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         talairachPanel.add(loadsavePanel, gbc);
 		
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 0;
-		gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+		gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
         newImagePanel.add(labelImage, gbc);
         gbc.gridy = 5;
         gbc.weightx = 1;
-        gbc.anchor = gbc.EAST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         newImagePanel.add(imgPanel, gbc);
         gbc.gridy = 6;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         newImagePanel.add(transPanel, gbc);
         gbc.gridy = 7;
         gbc.weightx = 1;
-        gbc.anchor = gbc.EAST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         newImagePanel.add(acpcResPanel, gbc);
         gbc.gridy = 8;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         newImagePanel.add(interpPanel, gbc);
         gbc.gridy = 9;
         gbc.weightx = 1;
-        gbc.anchor = gbc.CENTER;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         newImagePanel.add(computeImage, gbc);
 		         
 		botPanel = new JPanel();
@@ -321,17 +321,16 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 	} // end init()
 	
     private void buildComboBoxImage() {
-        int j;
         
         comboBoxImage = new JComboBox();
         comboBoxImage.setFont(serif12);
         comboBoxImage.setBackground(Color.white);
 
-        Enumeration names = userInterface.getRegisteredImageNames();
+        Enumeration<String> names = userInterface.getRegisteredImageNames();
 
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             ModelImage img = userInterface.getRegisteredImageByName(name);
 			if (userInterface.getFrameContainingImage(img) != null) {
 				if ( (image.getNDims() == img.getNDims()) && (!img.isColorImage()) ) {
@@ -342,15 +341,14 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
     }//buildComboBoxImage
     
     private void updateComboBoxImage() {
-        int j;
        
         comboBoxImage.removeAllItems();
         
-        Enumeration names = userInterface.getRegisteredImageNames();
+        Enumeration<String> names = userInterface.getRegisteredImageNames();
 
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
             ModelImage img = userInterface.getRegisteredImageByName(name);
 			if (userInterface.getFrameContainingImage(img) != null) {
 				if ( (image.getNDims() == img.getNDims()) && (!img.isColorImage()) ) {
