@@ -120,7 +120,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	private JLabel sliceLabel, ageLabel, infoLabel;
 
 	/** buttons * */
-    private JButton magButton,unMagButton,zoomOneButton,saveButton,winLevelButton, resetButton, lutButton, presetButton, sep1,sep2, sep3;
+    private JButton magButton,unMagButton,zoomToScreenButton, zoomOneButton,saveButton,winLevelButton, resetButton, lutButton, presetButton, sep1,sep2, sep3;
     
     /** modality buttons **/
     private JToggleButton t1Button, t2Button, pdButton, dtiButton, edtiButton, displayAnnotationsButton, hideAnnotationsButton;
@@ -729,6 +729,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		hideAnnotationsButton.setEnabled(true);
 		magButton.setEnabled(true);
 		unMagButton.setEnabled(true);
+		zoomToScreenButton.setEnabled(true);
 		zoomOneButton.setEnabled(true);
 		saveButton.setEnabled(true);
 		winLevelButton.setEnabled(true);
@@ -746,6 +747,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		hideAnnotationsButton.setEnabled(false);
 		magButton.setEnabled(false);
 		unMagButton.setEnabled(false);
+		zoomToScreenButton.setEnabled(false);
 		zoomOneButton.setEnabled(false);
 		saveButton.setEnabled(false);
 		winLevelButton.setEnabled(false);
@@ -775,6 +777,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         hideAnnotationsButton = toolbarBuilder.buildToggleButton("hideAnnotations", "Hide Annotations", "clearcurrent");
         magButton = toolbarBuilder.buildButton("MagImage", "Magnify Image", "zoomin2");
         unMagButton = toolbarBuilder.buildButton("UnMagImage", "Un-Mag Image", "zoomout2");
+        zoomToScreenButton = toolbarBuilder.buildButton("ZoomToScreen", "Fit To Window", "zoomToScreen");
         zoomOneButton = toolbarBuilder.buildButton("ZoomOne", "Magnify Image 1.0x", "zoom1");
         saveButton = toolbarBuilder.buildButton("Save", "Save screenshot of image", "camera");
         winLevelButton = toolbarBuilder.buildButton("WinLevel", "Window/Level", "winlevel");
@@ -823,16 +826,19 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         gbc.gridx = 5;
         gbc.gridy = 0;
         toolbarPanel.add(zoomOneButton, gbc);
+        gbc.gridx = 6;
+        gbc.gridy = 0;
+        toolbarPanel.add(zoomToScreenButton, gbc);
         
         sep2 = new JButton(MipavUtil.getIcon("separator.gif"));
         sep2.setMargin(new Insets(0, 0, 0, 0));
         sep2.setBorderPainted(false);
         sep2.setFocusPainted(false);
         
-        gbc.gridx = 6;
+        gbc.gridx = 7;
         gbc.gridy = 0;
         toolbarPanel.add(sep2,gbc);
-        gbc.gridx = 7;
+        gbc.gridx = 8;
         toolbarPanel.add(saveButton,gbc);
         
         sep3 = new JButton(MipavUtil.getIcon("separator.gif"));
@@ -840,21 +846,21 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         sep3.setBorderPainted(false);
         sep3.setFocusPainted(false);
         
-        gbc.gridx = 8;
-        toolbarPanel.add(sep3, gbc);
         gbc.gridx = 9;
-        gbc.gridy = 0;
-        toolbarPanel.add(winLevelButton, gbc);
+        toolbarPanel.add(sep3, gbc);
         gbc.gridx = 10;
         gbc.gridy = 0;
-        toolbarPanel.add(resetButton, gbc);
+        toolbarPanel.add(winLevelButton, gbc);
         gbc.gridx = 11;
         gbc.gridy = 0;
-        toolbarPanel.add(presetButton, gbc);
+        toolbarPanel.add(resetButton, gbc);
         gbc.gridx = 12;
         gbc.gridy = 0;
-        toolbarPanel.add(lutButton, gbc);
+        toolbarPanel.add(presetButton, gbc);
         gbc.gridx = 13;
+        gbc.gridy = 0;
+        toolbarPanel.add(lutButton, gbc);
+        gbc.gridx = 14;
         toolbarPanel.add(infoLabel,gbc);
         
         gbc.anchor = GridBagConstraints.CENTER;
@@ -1336,6 +1342,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			}
 		}else if(command.equals("ZoomOne")) {
 			zoomOne();
+			if(imageScrollPanel.getVerticalScrollBar().isVisible() || imageScrollPanel.getHorizontalScrollBar().isVisible()) {
+				saveButton.setEnabled(false);
+			}else {
+				saveButton.setEnabled(true);
+			}
+		}else if(command.equals("ZoomToScreen")) {
+			zoomToScreen();
 			if(imageScrollPanel.getVerticalScrollBar().isVisible() || imageScrollPanel.getHorizontalScrollBar().isVisible()) {
 				saveButton.setEnabled(false);
 			}else {
@@ -2065,6 +2078,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
      * sets image zoom to 1
      */
     public void zoomOne() {
+
         if ( !unMagButton.isEnabled()) {
             unMagButton.setEnabled(true);
         }
@@ -2086,6 +2100,66 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		
 		 this.repaint();
     }
+    
+    
+    
+    public void zoomToScreen() {
+    	if ( !unMagButton.isEnabled()) {
+            unMagButton.setEnabled(true);
+        }
+    	if(imageScrollPanel.getVerticalScrollBar().isVisible() || imageScrollPanel.getHorizontalScrollBar().isVisible()) {
+    		//need to do this in order to get proper fit to screen
+    		zoomOne();
+    	}
+    	
+    	int width = imageScrollPanel.getViewport().getWidth();
+    	int height = imageScrollPanel.getViewport().getHeight();
+    	int imageHeight = currentComponentImage.getImageA().getExtents()[1];
+    	int imageWidth = currentComponentImage.getImageA().getExtents()[0];
+    	float imageAspectRatio = (float)imageWidth/(float)imageHeight;
+    	float viewportAspectRatio = (float)width/(float)height;
+    	
+    	
+    	if(viewportAspectRatio <= imageAspectRatio) {
+    		float newZoom = (float)(width-20)/(float)imageWidth;
+    		currentZoom = newZoom;
+
+            currentComponentImage.setZoom(newZoom, newZoom);
+            validate();
+            currentComponentImage.show(0,currentZSlice,null,null,true);
+
+            setTitle(title + "zoom:" + currentZoom);
+           
+            if (currentZoom >= 32) {
+                magButton.setEnabled(false);
+            }
+            
+            imageScrollPanel.validate();
+    		
+    		 this.repaint();
+    		
+    		
+    	}else {
+    		float newZoom = (float)(height-20)/(float)imageHeight;
+    		currentZoom = newZoom;
+
+            currentComponentImage.setZoom(newZoom, newZoom);
+            validate();
+            currentComponentImage.show(0,currentZSlice,null,null,true);
+            
+            
+            setTitle(title + "zoom:" + currentZoom);
+           
+            if (currentZoom >= 32) {
+                magButton.setEnabled(false);
+            }
+            
+            imageScrollPanel.validate();
+    		
+    		 this.repaint();
+    	}
+    	
+    }
 	
 	
 	
@@ -2098,7 +2172,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
             unMagButton.setEnabled(true);
         }
         float newZoom;
-        
+        currentZoom = (float)Math.floor(currentZoom);
         newZoom = currentZoom + 1.0f;
         
        
@@ -2132,6 +2206,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
             magButton.setEnabled(true);
         }
         float newZoom;
+        if(currentZoom%1 != 0) {
+        	currentZoom = (float)Math.floor(currentZoom) + 1.0f;
+        }
+        
         newZoom = currentZoom - 1.0f;
         
         currentZoom = newZoom;
