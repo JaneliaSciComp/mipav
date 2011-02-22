@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -43,24 +42,15 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private Vector<File> files = new Vector<File>();
-
     /** The default location of MIPAV's plugin directory */
     private String pluginDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" +
                                File.separator;
-
-    /** File list for installing plugins */
-    private JTextField textName;
     
     /** The JTree that describes the plugin structure **/
     private JTree pluginTree;
 
     /** The main user interface */
     private ViewUserInterface ui;
-
-    /**Browse button for installing plugins**/
-	private JButton browseButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -110,8 +100,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     	   uninstallPlugins();
     	   
     	   updateMenuBar();
-    	   
-    	   Vector<Frame> imageFrames = ui.getImageFrameVector();
 
     	   pluginTree.setModel(new JTree(buildPluginsTree()).getModel());
     	   pluginTree.setRootVisible(false);
@@ -147,7 +135,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
 
 	private void updateMenuBar() {
     	// updates menubar for each image
-        Vector imageFrames = ui.getImageFrameVector();
+        Vector<Frame> imageFrames = ui.getImageFrameVector();
 
         if (imageFrames.size() < 1) {
             ui.buildMenu();
@@ -253,8 +241,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     		if(menu.getItem(i) instanceof JMenu) {
     			root.add(createBranch((JMenu) menu.getItem(i)));
     		} else if(menu.getItem(i) != null) {
-    			DefaultMutableTreeNode d = null;
-    			root.add(d = new DefaultMutableTreeNode(menu.getItem(i).getName()));
+    			root.add(new DefaultMutableTreeNode(menu.getItem(i).getName()));
     			
     		}
     	}
@@ -332,11 +319,10 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     			 }
     		 });
 
+    		 @SuppressWarnings("unused")
     		 String name, pluginName;
-    		 Field catField = null, scriptField = null;
+    		 @SuppressWarnings("unused")
     		 Class plugin;
-    		 final String catName = "CATEGORY";
-    		 final String scriptName = "SCRIPT_PREFIX";
 
 		     for (final File allFile : allFiles) {
 		         name = allFile.getName();
