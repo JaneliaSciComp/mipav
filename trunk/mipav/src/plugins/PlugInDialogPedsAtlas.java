@@ -1123,7 +1123,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         
         getContentPane().add(mainPanel);
         pack();
-        this.setMinimumSize(new Dimension(840,840));
+        this.setMinimumSize(this.getSize());
         //setResizable(false);
         setVisible(true);
         
