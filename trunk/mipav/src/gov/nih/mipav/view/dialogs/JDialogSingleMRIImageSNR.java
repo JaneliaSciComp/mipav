@@ -169,7 +169,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
      * @param  event  DOCUMENT ME!
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+        
     }
 
 
