@@ -56,7 +56,7 @@ public class JDialogFileInfoMinc extends JDialogText {
             // so we don't need to remember the dialog.
             // now that dialog has finished,
             // tell any other objects that care that there are new data (ie, a new name) & update
-            Vector imageFrames = ((ViewJFrameImage) parentFrame).getActiveImage().getImageFrameVector();
+            Vector<ViewImageUpdateInterface> imageFrames = ((ViewJFrameImage) parentFrame).getActiveImage().getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle();
