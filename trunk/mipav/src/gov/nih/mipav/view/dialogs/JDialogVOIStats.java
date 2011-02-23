@@ -1168,6 +1168,7 @@ public class JDialogVOIStats extends JDialogBase
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void updateTree() {
         if (treeSelectionChange) {
             treeSelectionChange = false;
@@ -1223,7 +1224,7 @@ public class JDialogVOIStats extends JDialogBase
                         if (voiBase.isActive())
                         {
 
-                            voiFrameEnum = currentNode.children();
+                        	voiFrameEnum = currentNode.children();
 
                             while (voiFrameEnum.hasMoreElements()) {
 
