@@ -321,10 +321,10 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
 
         userInterface = ViewUserInterface.getReference();
 
-        Enumeration names = userInterface.getRegisteredImageNames();
+        Enumeration<String> names = userInterface.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            String name = names.nextElement();
 
             if (!name.equals(image.getImageName())) {
                 nextImage = userInterface.getRegisteredImageByName(name);
