@@ -92,7 +92,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
     private ActiveTree activeTree;
 
     /** DOCUMENT ME! */
-    private Vector clickPoints = new Vector();
+    private Vector<Vector3f> clickPoints = new Vector<Vector3f>();
 
     /** DOCUMENT ME! */
     private VOIContour contour = new VOIContour(false);
@@ -111,9 +111,6 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
     /** DOCUMENT ME! */
     private float[] localCosts = null;
-
-    /** DOCUMENT ME! */
-    private int mod;
 
     /** DOCUMENT ME! */
     private float presetHue = -1.0f;
@@ -1388,7 +1385,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                 try {
                     contour = new VOIContour(false);
-                    clickPoints = new Vector();
+                    clickPoints = new Vector<Vector3f>();
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to form new livewire");
                     ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
@@ -1456,7 +1453,6 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                                     return;
                                 }
 
-                                int slice = ((ViewJComponentEditImage) (component)).getSlice();
                                 VOIs.VOIAt(i).getCurves().removeElement(contour);
                                 VOIs.VOIAt(i).getCurves().addElement((VOIContour)
                                                                                 smoothAlgo.getResultVOI().getCurves().lastElement());
@@ -1486,7 +1482,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                 try {
                     contour = new VOIContour(false);
-                    clickPoints = new Vector();
+                    clickPoints = new Vector<Vector3f>();
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to form new livewire");
                     ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
