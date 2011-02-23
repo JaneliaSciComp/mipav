@@ -61,9 +61,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     private float min, max;
 
     /** DOCUMENT ME! */
-    private JLabel levelLabel;
-
-    /** DOCUMENT ME! */
     public JSlider levelSlider, minSlider;
 
     /** Stores the maximum slider value. */
@@ -83,9 +80,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
     /** The size of the window. */
     private float window;
-
-    /** DOCUMENT ME! */
-    private JLabel windowLabel;
 
     /** DOCUMENT ME! */
     public JSlider windowSlider, maxSlider;
