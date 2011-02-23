@@ -3884,7 +3884,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float lastPositive1, lastPositive2;
         float firstNonPositive1, firstNonPositive2;
         float firstUndefined1, firstUndefined2;
-        Vector frameList;
+        Vector<ViewImageUpdateInterface> frameList;
         ViewJFrameBase controlFrame = null;
         float[] destRes;
         boolean transitionFound;
@@ -6112,7 +6112,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float lastPositive1, lastPositive2;
         float firstNonPositive1, firstNonPositive2;
         float firstUndefined1, firstUndefined2;
-        Vector frameList;
+        Vector<ViewImageUpdateInterface> frameList;
         ViewJFrameBase controlFrame = null;
         float[] destRes;
         boolean transitionFound;
@@ -8441,7 +8441,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float lastPositive1, lastPositive2;
         float firstNonPositive1, firstNonPositive2;
         float firstUndefined1, firstUndefined2;
-        Vector frameList;
+        Vector<ViewImageUpdateInterface> frameList;
         ViewJFrameBase controlFrame = null;
         float[] destRes;
         boolean transitionFound;
@@ -10910,7 +10910,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float lastPositive1, lastPositive2;
         float firstNonPositive1, firstNonPositive2;
         float firstUndefined1, firstUndefined2;
-        Vector frameList;
+        Vector<ViewImageUpdateInterface> frameList;
         ViewJFrameBase controlFrame = null;
         float[] destRes;
         boolean transitionFound;
