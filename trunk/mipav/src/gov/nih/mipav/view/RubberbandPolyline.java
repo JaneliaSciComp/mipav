@@ -28,9 +28,6 @@ public class RubberbandPolyline extends Rubberband {
     private VOIContour contour = new VOIContour(false);
 
     /** DOCUMENT ME! */
-    private Vector3f cpt = null;
-
-    /** DOCUMENT ME! */
     private boolean firstPoint = true;
 
     /** DOCUMENT ME! */
