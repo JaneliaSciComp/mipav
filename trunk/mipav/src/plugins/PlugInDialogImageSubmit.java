@@ -5,15 +5,15 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeListener;
+
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.file.DicomDictionary;
+
 import gov.nih.mipav.model.file.FileDicom;
-import gov.nih.mipav.model.file.FileDicomItem;
+
 import gov.nih.mipav.model.file.FileDicomKey;
-import gov.nih.mipav.model.file.FileDicomSQ;
+
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -22,14 +22,9 @@ import gov.nih.mipav.model.file.FileXML;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJFrameGraph;
-import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
+
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+
 import javax.swing.text.JTextComponent;
 
 import org.xml.sax.Attributes;
@@ -37,15 +32,13 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.File;
-import java.io.Serializable;
+
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
+
 import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.TreeMap;
+
+
+
 import java.util.Vector;
 
 /**

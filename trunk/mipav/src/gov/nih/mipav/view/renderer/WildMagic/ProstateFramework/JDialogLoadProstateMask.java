@@ -1,14 +1,14 @@
 package gov.nih.mipav.view.renderer.WildMagic.ProstateFramework;
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.FileIO;
+
+
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.ActionMaskToVOI;
-import gov.nih.mipav.model.scripting.parameters.*;
+
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.components.WidgetFactory;
+
 import gov.nih.mipav.view.dialogs.*;
 
 import gov.nih.mipav.view.*;

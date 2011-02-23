@@ -497,13 +497,13 @@ public class Lighting extends JavaApplication3D
     private MaterialState m_pkMaterial;
     private ColorRGB m_kDiffuseColor;
 
-    private float[] m_afRandX;
-    private float[] m_afRandY;
-    private float[] m_afRandZ;
+    //private float[] m_afRandX;
+    //private float[] m_afRandY;
+    //private float[] m_afRandZ;
 
-    private float[] m_afScaleX;
-    private float[] m_afScaleY;
-    private float[] m_afScaleZ;
+    //private float[] m_afScaleX;
+    //private float[] m_afScaleY;
+    //private float[] m_afScaleZ;
 
     Long lMemory;
     String kMemory = new String();

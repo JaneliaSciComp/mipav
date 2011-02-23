@@ -22,21 +22,19 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
-import java.io.BufferedReader;
 
-import java.io.File;
-import java.io.FileReader;
+
+
 import java.io.IOException;
-import java.util.ArrayList;
+
 import java.util.BitSet;
-import java.util.Random;
-import java.util.TreeMap;
+
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
+
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;

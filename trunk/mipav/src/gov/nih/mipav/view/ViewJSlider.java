@@ -1,6 +1,6 @@
 package gov.nih.mipav.view;
 
-import gov.nih.mipav.util.MipavMath;
+
 
 import java.awt.Color;
 import java.awt.Dimension;

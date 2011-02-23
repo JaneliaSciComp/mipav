@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Poisson.Octree;
 
-import java.util.*;
+
 
 public class VectorF{
 	

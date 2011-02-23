@@ -88,11 +88,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
+
 import java.util.BitSet;
 import java.util.Vector;
 
-import javax.media.opengl.GLAutoDrawable;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;

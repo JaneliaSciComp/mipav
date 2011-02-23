@@ -3,7 +3,7 @@ package gov.nih.mipav.view;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
+
 
 import java.awt.*;
 import java.awt.event.*;

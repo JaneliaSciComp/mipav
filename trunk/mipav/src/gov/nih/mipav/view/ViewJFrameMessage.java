@@ -6,11 +6,9 @@ import gov.nih.mipav.model.scripting.actions.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.font.*;
-import java.text.*;
+
 import java.util.Scanner;
-import java.util.Vector;
-import java.util.Enumeration;
+
 
 import java.io.*;
 import java.net.URL;

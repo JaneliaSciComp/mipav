@@ -1,13 +1,11 @@
-import gov.nih.mipav.model.structures.event.VOIEvent;
-import gov.nih.mipav.model.structures.event.VOIListener;
-import gov.nih.mipav.view.ColorIcon;
+
 
 import java.awt.Color;
-import java.awt.Dimension;
+
 import java.awt.event.ActionListener;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
+
 import javax.swing.JPanel;
 
 /**

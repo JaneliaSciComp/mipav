@@ -1,13 +1,12 @@
 
 
 import java.awt.Color;
-import java.awt.Cursor;
+
 import java.awt.Dimension;
-import java.awt.event.InputEvent;
+
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;

@@ -1,7 +1,7 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.*;
+
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -9,8 +9,7 @@ import gov.nih.mipav.view.dialogs.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+
 
 import javax.swing.*;
 

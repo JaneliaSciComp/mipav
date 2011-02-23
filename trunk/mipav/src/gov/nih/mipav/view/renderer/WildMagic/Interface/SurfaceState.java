@@ -4,8 +4,6 @@ import java.awt.Color;
 import java.io.IOException;
 import java.io.Serializable;
 
-import WildMagic.LibFoundation.Mathematics.ColorRGB;
-import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
