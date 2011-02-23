@@ -135,9 +135,6 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
     private boolean[] haveThreshold;
 
     /** DOCUMENT ME! */
-    private boolean haveThresholded = true;
-
-    /** DOCUMENT ME! */
     private float[] imageBufferDest = null;
 
     /** DOCUMENT ME! */
@@ -153,7 +150,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
     private int lineMin;
 
     /** DOCUMENT ME! */
-    private double lineMin1, lineMax1, lineMin2, lineMax2;
+    //private double lineMin1, lineMax1, lineMin2, lineMax2;
 
     /** DOCUMENT ME! */
     private double lineOffset;
@@ -373,10 +370,6 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
         this.max2 = max2;
         this.scale1 = scale1;
         this.scale2 = scale2;
-        this.lineMin1 = lineMin1;
-        this.lineMax1 = lineMax1;
-        this.lineMin2 = lineMin2;
-        this.lineMax2 = lineMax2;
         this.userInterface = userInterface;
         this.thresholdOn1 = thresholdOn1;
 
@@ -481,19 +474,15 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
     public boolean buildImageDestObject(ModelLUT _LUTdest, boolean forceShow) {
 
         float rangeA = 0;
-        float remapConstA = 1;
         float imageMinA = 0, imageMaxA = 0;
         int xDim, yDim;
         int bufferSize;
         int lutHeightA = 0;
         int index;
-        float[][] RGB_LUTa = null;
-        int[][] iRGB_LUTa = null;
         int Ra, Ga, Ba;
         int pix;
         float opacityPrime;
         int i;
-        int j;
 
         if (destImage == null) {
             return false;
@@ -538,7 +527,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
 
 
         if (((imageMaxA - imageMinA) < 256) && (LUTdest.getLUTType() == ModelLUT.STRIPED)) {
-            remapConstA = 1;
+           
         } else {
             rangeA = imageMaxA - imageMinA;
 
@@ -546,11 +535,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
                 rangeA = 1;
             }
 
-            if ((lutHeightA - 1) == 0) {
-                remapConstA = 1;
-            } else {
-                remapConstA = (lutHeightA - 1) / rangeA;
-            }
+            
         }
 
         if (frame.getControls() != null) {
@@ -835,8 +820,6 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
         String currentIntensity1;
         float colocIntensityPercent2;
         String currentIntensity2;
-        int t, z;
-        int zInitial;
         int ch1, ch2;
 
         x = mouseEvent.getX();
@@ -1707,10 +1690,6 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
         this.max2 = max2;
         this.scale1 = scale1;
         this.scale2 = scale2;
-        this.lineMin1 = lineMin1;
-        this.lineMax1 = lineMax1;
-        this.lineMin2 = lineMin2;
-        this.lineMax2 = lineMax2;
         this.linearCorrelation = linearCorrelation;
         this.thresholdOn1 = thresholdOn1;
 
