@@ -94,7 +94,7 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
      * 
      * @return The script action string (e.g., 'GaussianBlur' for 'gov.nih.mipav.view.dialogs.JDialogGaussianBlur').
      */
-    public static final String getDialogActionString(final Class dialogClass) {
+    public static final String getDialogActionString(final Class<? extends JDialogScriptableBase> dialogClass) {
         String classPrefix = "JDialog";
         final String name = dialogClass.getName();
         int index = name.lastIndexOf(classPrefix);
