@@ -258,7 +258,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      * @param VOIlist imageActive's current VOIVector
      */
     public void refreshVOIList(final VOIVector VOIlist) {
-        selectedList.setListData(new Vector());
+        selectedList.setListData(new Vector<Object>());
 
         final Vector<VOI> volumesVector = new Vector<VOI>();
         highlighter = new VOIHighlighter();
@@ -652,7 +652,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         // this list to hold things so that they may be selectable/removable
         // panel to hold list access.
-        selectedList.setListData(new Vector()); // = new JList();
+        selectedList.setListData(new Vector<Object>()); // = new JList();
         selp.add(new JScrollPane(selectedList), BorderLayout.CENTER);
 
         // build default arrowpanel
@@ -1026,6 +1026,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     /**
      * Method for updating the table after the algorithm has completed.  All relevant statistics are stored in the log model.
      */
+    @SuppressWarnings("unchecked")
     protected void updateStatLog() {
         // get output data out of the notifier
         // getStatisticsData((AlgorithmVOIProps)event);
@@ -1239,6 +1240,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      * 
      * @return
      */
+    @SuppressWarnings("unchecked")
     protected StringBuffer writeLogModelToString() {
         StringBuffer total = new StringBuffer();
         String newLine = System.getProperty("line.separator");
@@ -1253,7 +1255,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         Vector<?> row;
         String cellEntry;
         for(int i=0; i<column.size(); i++) {
-            row = (Vector<?>)column.get(i);
+            row = column.get(i);
             for(int j=0; j<row.size(); j++) {
                 if(row.get(j) == null || row.get(j).toString().length() == 0) {
                     cellEntry = " ";
