@@ -61,6 +61,7 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
      * 
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     private static void displayNodes(final DefaultMutableTreeNode rNode, final ViewTableModel model) throws Exception {
         long[] dataDims;
         final int children = rNode.getChildCount();
