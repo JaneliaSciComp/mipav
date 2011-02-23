@@ -2,8 +2,6 @@ package gov.nih.mipav.view;
 
 
 import java.awt.*;
-import java.awt.geom.*;
-import java.awt.image.*;
 
 import javax.swing.*;
 
@@ -24,12 +22,6 @@ public class LineMeter extends JPanel implements Runnable {
     private static final long serialVersionUID = -7794163419733734911L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private int amplitude = 0;
-
-    /** DOCUMENT ME! */
-    private int animationCycle;
 
     /** DOCUMENT ME! */
     private int animationFrame; // the current repaint.  normally zero, so system repaint does not affect scrolling
@@ -60,22 +52,10 @@ public class LineMeter extends JPanel implements Runnable {
     private Dimension dim;
 
     /** DOCUMENT ME! */
-    private int divisions = 1;
-
-    /** DOCUMENT ME! */
     private int drawingWidth, drawingHeight;
 
     /** DOCUMENT ME! */
     private Graphics2D g2d;
-
-    /** DOCUMENT ME! */
-    private Line2D graphLine;
-
-    /** DOCUMENT ME! */
-    private BufferedImage horizImg; // contains all the horizontal lines
-
-    /** DOCUMENT ME! */
-    private Line2D horizLine;
 
     /** DOCUMENT ME! */
     private Insets insets;
@@ -105,7 +85,7 @@ public class LineMeter extends JPanel implements Runnable {
     private Color penColor = Color.cyan; // Color.red;
 
     /** DOCUMENT ME! */
-    private int pixelsPerDivision;
+    //private int pixelsPerDivision;
 
     /** DOCUMENT ME! */
     private int pixelsWidePerSample = 5; // number of pixels between each sample added to the history buffer
@@ -119,12 +99,6 @@ public class LineMeter extends JPanel implements Runnable {
 
     /** DOCUMENT ME! */
     private int samplesPerUpdate = 1; // integer number of samples
-
-    /** DOCUMENT ME! */
-    private Line2D vertLine;
-
-    /** DOCUMENT ME! */
-    private int w = 0, h = 0; // width, height
 
     /** DOCUMENT ME! */
     private int whitespaceH = 10;
@@ -238,7 +212,7 @@ public class LineMeter extends JPanel implements Runnable {
             // draw the horizontal lines
             numberOfSamplesDisplayed = chartWidth / pixelsWidePerSample;
             numberOfSamplesPerDivision = numberOfSamplesDisplayed / numberOfDivisions;
-            pixelsPerDivision = pixelsWidePerSample * numberOfSamplesPerDivision;
+            //pixelsPerDivision = pixelsWidePerSample * numberOfSamplesPerDivision;
         }
 
         // draw horizontal lines
@@ -295,7 +269,7 @@ public class LineMeter extends JPanel implements Runnable {
         while (((animationThread == me) && !isShowing()) || (getSize().width == 0)) {
 
             try {
-                animationThread.sleep(500); // chk back every 1/2sec to see if showing
+                Thread.sleep(500); // chk back every 1/2sec to see if showing
             } catch (InterruptedException e) {
                 return;
             }
@@ -333,7 +307,7 @@ public class LineMeter extends JPanel implements Runnable {
             }
 
             try {
-                animationThread.sleep(aniSampleRate);
+                Thread.sleep(aniSampleRate);
             } catch (InterruptedException e) {
                 break;
             }
