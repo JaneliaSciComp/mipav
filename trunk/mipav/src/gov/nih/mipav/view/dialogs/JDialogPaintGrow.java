@@ -242,7 +242,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
     protected float minR;
 
     /** DOCUMENT ME! */
-    protected Vector paintGrowListeners;
+    protected Vector<PaintGrowListener> paintGrowListeners;
 
     /** DOCUMENT ME! */
     protected JTextField posTextF;
@@ -375,7 +375,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
      * @param  theParentFrame  Parent frame.
      * @param  paintListeners  DOCUMENT ME!
      */
-    public JDialogPaintGrow(Frame theParentFrame, Vector paintListeners) {
+    public JDialogPaintGrow(Frame theParentFrame, Vector<PaintGrowListener> paintListeners) {
         super(theParentFrame, false);
         paintGrowListeners = paintListeners;
         frame = theParentFrame;
@@ -389,7 +389,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
      * @param  paintListeners  DOCUMENT ME!
      * @param  isVisible       Dialog visible or not.
      */
-    public JDialogPaintGrow(Frame theParentFrame, Vector paintListeners, boolean isVisible) {
+    public JDialogPaintGrow(Frame theParentFrame, Vector<PaintGrowListener> paintListeners, boolean isVisible) {
         super(theParentFrame, false);
         paintGrowListeners = paintListeners;
         frame = theParentFrame;
@@ -403,7 +403,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
      * @param  attachedFrame   the frame this dialog should be attached to
      * @param  paintListeners  DOCUMENT ME!
      */
-    public JDialogPaintGrow(Frame theParentFrame, Frame attachedFrame, Vector paintListeners) {
+    public JDialogPaintGrow(Frame theParentFrame, Frame attachedFrame, Vector<PaintGrowListener> paintListeners) {
         super(attachedFrame, false);
         paintGrowListeners = paintListeners;
         frame = theParentFrame;
@@ -418,7 +418,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
      * @param  setRadioBoth    enabled the both button option on frame
      * @param  leadString      DOCUMENT ME!
      */
-    public JDialogPaintGrow(Frame theParentFrame, Vector paintListeners, boolean setRadioBoth, String leadString) {
+    public JDialogPaintGrow(Frame theParentFrame, Vector<PaintGrowListener> paintListeners, boolean setRadioBoth, String leadString) {
         super(theParentFrame, false);
         paintGrowListeners = paintListeners;
         frame = theParentFrame;
@@ -434,7 +434,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
      * @param  surfacePaint for Painting on a surface
      * @param  paintListeners  DOCUMENT ME!
      */
-    public JDialogPaintGrow(Frame theParentFrame, SurfacePaint surfacePaint, Vector paintListeners)
+    public JDialogPaintGrow(Frame theParentFrame, SurfacePaint surfacePaint, Vector<PaintGrowListener> paintListeners)
     {
         super(theParentFrame, false);
         paintGrowListeners = paintListeners;
@@ -449,7 +449,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
      * @param  surfacePaint for Painting on a surface
      * @param  paintListeners  DOCUMENT ME!
      */
-    public JDialogPaintGrow(Frame theParentFrame, SurfacePaint_WM surfacePaint, Vector paintListeners)
+    public JDialogPaintGrow(Frame theParentFrame, SurfacePaint_WM surfacePaint, Vector<PaintGrowListener> paintListeners)
     {
         super(theParentFrame, false);
         paintGrowListeners = paintListeners;
@@ -1476,7 +1476,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         PaintGrowListener temp, temp2;
 
         for (int i = 0; i < paintGrowListeners.size(); i++) {
-            temp = ((PaintGrowListener) paintGrowListeners.elementAt(i));
+            temp = (paintGrowListeners.elementAt(i));
 
             if (frame instanceof ViewJFrameImage) {
 
@@ -1520,7 +1520,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
     public void resetDialogs() {
 
         for (int i = 0; i < paintGrowListeners.size(); i++) {
-            ((PaintGrowListener) paintGrowListeners.elementAt(i)).setGrowDialog(null);
+            (paintGrowListeners.elementAt(i)).setGrowDialog(null);
         }
     }
 
