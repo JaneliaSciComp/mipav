@@ -1,23 +1,19 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
-import gov.nih.mipav.util.MipavInitGPU;
+
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
+
 
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
-import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
-import WildMagic.LibGraphics.Shaders.ImageCatalog;
-import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
-import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
+
 
 import com.sun.opengl.util.*;
 
-import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 

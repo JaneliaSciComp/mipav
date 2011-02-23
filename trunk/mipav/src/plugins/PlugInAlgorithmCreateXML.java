@@ -1,17 +1,15 @@
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
+
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
+
 import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;

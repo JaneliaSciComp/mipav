@@ -5,16 +5,13 @@ import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
-import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
+
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.provenance.ProvenanceRecorder;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
-import gov.nih.mipav.model.scripting.actions.ActionPaintToVOI;
+
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.Preferences.ComplexDisplay;
+
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.icons.PlaceHolder;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;

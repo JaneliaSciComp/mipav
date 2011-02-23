@@ -3,11 +3,11 @@ package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmMatchImages;
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.view.ViewJFrameImage;
+
 import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.SurfaceLightingEffect;

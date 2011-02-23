@@ -1,10 +1,8 @@
-import java.io.IOException;
+
 import java.text.DecimalFormat;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
@@ -13,7 +11,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJFrameMessage;
-import gov.nih.mipav.view.ViewJProgressBar;
+
 import gov.nih.mipav.view.ViewUserInterface;
 
 

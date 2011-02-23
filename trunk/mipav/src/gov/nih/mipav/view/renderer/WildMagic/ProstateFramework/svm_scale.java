@@ -1,8 +1,8 @@
 package gov.nih.mipav.view.renderer.WildMagic.ProstateFramework;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.libsvm.*;
+
 import java.io.*;
 import java.util.*;
-import java.text.DecimalFormat;
+
 
 class svm_scale
 {

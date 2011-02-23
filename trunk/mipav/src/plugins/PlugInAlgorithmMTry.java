@@ -22,24 +22,18 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
-import java.io.BufferedReader;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.TreeMap;
+
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
+
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
+
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
+
 
 /**
  * This class recalculates mo and dceFullTre to provide better estimates using the inverse Ernst equation
