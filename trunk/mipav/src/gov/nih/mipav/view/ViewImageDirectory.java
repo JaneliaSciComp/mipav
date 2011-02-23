@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
@@ -220,6 +221,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
      * 
      * @param event Event that triggered this function.
      */
+    @SuppressWarnings("unchecked")
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
@@ -330,8 +332,8 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
                 /**
                  * Create a Hashtable to store all selected images
                  */
-                Hashtable table = new Hashtable();
-                Vector matchingImageNames = new Vector();
+                Hashtable<String,ModelImage> table = new Hashtable<String,ModelImage>();
+                Vector<String> matchingImageNames = new Vector<String>();
                 String newDir;
                 io.setQuiet(true);
                 // io.setPBar(null);
@@ -373,12 +375,12 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
                  * image will be placed into a separate frame
                  */
                 if ( !table.isEmpty()) {
-                    Enumeration en = table.keys();
+                    Enumeration<String> en = table.keys();
 
                     int index = 0;
 
                     while (en.hasMoreElements()) {
-                        String nextElement = (String) en.nextElement();
+                        String nextElement = en.nextElement();
 
                         if (nextElement != null) {
                             imageNames[index] = nextElement;
@@ -386,11 +388,11 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
                         }
                     }
 
-                    Vector extractSubsetsVector = FilenameSorter.extractSubSets(imageNames);
-                    Vector secondarySortVector = FilenameSorter.secondarySort(extractSubsetsVector);
+                    Vector<Vector<String>> extractSubsetsVector = FilenameSorter.extractSubSets(imageNames);
+                    Vector<Vector<String>> secondarySortVector = FilenameSorter.secondarySort(extractSubsetsVector);
                     imageNames = FilenameSorter.subSetsToArray(secondarySortVector);
 
-                    newImage = (ModelImage) table.get(imageNames[0]);
+                    newImage = table.get(imageNames[0]);
 
                     if (newImage != null) {
 
@@ -400,7 +402,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
 
                         // go through the rest of the keys in the table
                         for (j = 1; (j < imageNames.length) && (imageNames[j] != null); j++) {
-                            secondImage = (ModelImage) table.get(imageNames[j]);
+                            secondImage = table.get(imageNames[j]);
 
                             if (secondImage != null) {
 
@@ -452,7 +454,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
                         {
 
                             for (i = 0; i < matchingImageNames.size(); i++) {
-                                ModelImage image = (ModelImage) table.remove(matchingImageNames.elementAt(i));
+                                ModelImage image = table.remove(matchingImageNames.elementAt(i));
                                 /*
                                  * if(image.getNDims() == 2) { if(subsampleDimension != null) { image =
                                  * FileIO.subsample(image, subsampleDimension); } if(forceUBYTE) {
@@ -496,7 +498,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
                             // image
                             for (i = 0; i < matchingImageNames.size(); i++) {
 
-                                newImage = (ModelImage) table.remove(matchingImageNames.elementAt(i));
+                                newImage = table.remove(matchingImageNames.elementAt(i));
                                 /*
                                  * if(newImage.getNDims() == 2) { if(subsampleDimension != null) { newImage =
                                  * FileIO.subsample(newImage, subsampleDimension); } if(forceUBYTE) {
@@ -749,7 +751,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
 
                 if (resolutions[i] > 0.0) {
                     info[0] = "Pixel resolution " + i;
-                    info[1] = Float.toString(resolutions[i]) + " " + FileInfoBase.getUnitsOfMeasureStr(measure[i]);
+                    info[1] = Float.toString(resolutions[i]) + " " + (Unit.getUnitFromLegacyNum(measure[i])).toString();
                     primaryModel.addRow(info);
                 } // end of if (resolutions[i] > 0.0)
             } // for (i=0; i < 5; i++)
@@ -1376,7 +1378,8 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
     /**
      * DOCUMENT ME!
      */
-    private class ImageNameComparator implements Comparator {
+    @SuppressWarnings("unused")
+    private class ImageNameComparator implements Comparator<String> {
 
         /**
          * DOCUMENT ME!
@@ -1386,7 +1389,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
          * 
          * @return DOCUMENT ME!
          */
-        public int compare(Object nameA, Object nameB) {
+        public int compare(String nameA, String nameB) {
 
             if ( (nameA == null) && (nameB == null)) {
                 return 0;
@@ -1396,8 +1399,8 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
                 return 0;
             }
 
-            String a = ((String) nameA).toLowerCase();
-            String b = ((String) nameB).toLowerCase();
+            String a = nameA.toLowerCase();
+            String b = nameB.toLowerCase();
 
             int a_int;
             int b_int;
