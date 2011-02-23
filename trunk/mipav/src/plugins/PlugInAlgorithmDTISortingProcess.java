@@ -16,7 +16,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Writer;
 
-import java.text.DecimalFormat;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -501,7 +500,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
             File bMatrixFile = new File(studyPath + "_proc" + File.separator + studyName + ".BMTXT");
             FileOutputStream outputStream = new FileOutputStream(bMatrixFile);
             PrintStream printStream = new PrintStream(outputStream);
-            DecimalFormat decFormat = new DecimalFormat("%16f");
+
 
             // formula for bmtxt values is :
             // bxx 2bxy 2bxz byy 2byz bzz
@@ -821,7 +820,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
             ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 
             while (iter.hasNext()) {
-                TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+                TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
                 Iterator<String[]> iter2 = seriesFITS.iterator();
 
                 // lets get the first element and remember its slice location

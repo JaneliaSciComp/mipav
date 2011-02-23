@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Writer;
-import java.text.DecimalFormat;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,7 +22,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoBase;
+
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoImageXML;
@@ -1297,7 +1297,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
             for (int i = 0; i < numSlicesPerVolume; i++) {
 
                 for (int k = 0; k < keyArray.length; k++) {
-                    Object[] fidArr = ((TreeSet) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
+                    Object[] fidArr = ((TreeSet<String[]>) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
                     int numVols = fidArr.length / numSlicesPerVolume;
                     String absPath = (String) ((String[]) fidArr[i])[2];
                     relPath = new String(".." + File.separator + studyName +
@@ -1677,7 +1677,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
         System.out.println(" - b-values :\n");
 
         while (iter.hasNext()) {
-            TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+            TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
             int seriesFITSSize = seriesFITS.size();
             int numVols = seriesFITSSize / numSlicesPerVolume;
             Object[] fidArr = seriesFITS.toArray();

@@ -1,8 +1,7 @@
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmCoherenceEnhancingDiffusion;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmMedian;
+
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegLeastSquares;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.*;
@@ -409,10 +408,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         
         final int zMiddle = zStart + r8Len;
         
-        
-        
-        
-        ModelImage test = new ModelImage(ModelImage.BOOLEAN, standardColumnImage.getExtents(), "b;ah" );
+
         
         
         //8.74*2 = 17.48
@@ -1059,7 +1055,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			float[] coords2;
 			float[] coordsMatch = new float[6];
 			al = filamentCoords.get(0);
-			int alSize = al.size();
+
 			for(int m=0;m<al.size();m++) {
 				coords = al.get(m);
 				if(m==0) {
@@ -1079,7 +1075,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				 coords = al.get(0);
 				 al2 = allFilamentCoords.get(i);
 				 coords2 = al2.get(0);
-				 boolean succ = false;
+
 				 int k;
 				 
 				 for(k=0;k<i;k++) {
@@ -1092,7 +1088,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 						 //set the connectivity of coords[4] to k+1
 						 coords[4] = k+1;
 						 al.set(0, coords);
-						 succ = true;
+
 						 break;
 					 }
 					 
@@ -1115,8 +1111,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		int newFilamentsSize = newFilamentCoords.size();
 		int alSize;
 		ArrayList<float[]> al,al2;
-		float[] coords,coords2;
-		float x,y,z,r,c,c2;
+		float[] coords;
+		float c;
 		int count = 1;
 		c=0;
 		for(int i=0;i<newFilamentsSize;i++) {
@@ -1297,7 +1293,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		//now create mask image
 		extents = finalImage.getExtents();
-		int length = finalImage.getExtents()[0] * finalImage.getExtents()[1] * finalImage.getExtents()[2];
+
 		greenRegionGrowMaskImage = new ModelImage(ModelStorageBase.UBYTE, extents, "greenImage");
 
         boolean on = false;
@@ -2062,8 +2058,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	        final File newSurfaceFile = new File(filamentFileParentDir + File.separator  + filename);
 	        final FileWriter fw = new FileWriter(newSurfaceFile);
 	        final BufferedWriter bw = new BufferedWriter(fw);
-	
-	            String line;
+
 			int newFilamentsSize = newFilamentCoords.size();
 			int alSize;
 			ArrayList<float[]> al;
@@ -2331,16 +2326,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         maskImageAuto.setFileInfo(fileInfoBases2);*/
         
 
-        float radius;
-        float resX = resols[0];
-		float resY = resols[1];
-		float resZ = resols[2];
-		float radiusSquared;
-		float increaseRadiusBy = resZ;
-		float xDist,yDist,zDist;
-		float distance;
-		int xStart,yStart,zStart;
-		int xEnd,yEnd,zEnd;
+
 		
         //may not need the following
         /*for(int i=0;i<newFilamentsSize;i++) {
@@ -2800,8 +2786,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 */
 	private void determineDistances_swc(ArrayList <ArrayList<float[]>> filamentCoords) {
 		 int allFilamentsSize = filamentCoords.size();
-		 float x1,y1,z1;
-		 float x2,y2,z2;
+
 		 int x1Pix=0,y1Pix=0,z1Pix=0;
 		 int x2Pix,y2Pix,z2Pix;
 		 float d;
@@ -2859,12 +2844,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         outputTextArea.append("Calling Non Linear Thin Plate Spline Registration" + "\n");
         int nPtsA = 0; // = standardColumnImage.getVOIs().size();
         int nPtsB = 0; // = resultImage1.getVOIs().size()
-        Vector3f[] tmpptA = null;
-        Vector3f[] tmpptB = null;
+
         Vector3f[] ptA = null; // new Vector3f[nPtsA];
         Vector3f[] ptB = null; // new Vector3f[nPtsB];
-        int i, s;
-        int ptNum = 0;
+        int i;
+
         Vector<VOIBase> curvesB;
         Vector<VOIBase> curvesM;
 
@@ -3005,11 +2989,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         outputTextArea.append("Calling Rigid Least Squared Registration" + "\n");
         int nPtsA = 0; // = standardColumnImage.getVOIs().size();
         int nPtsB = 0; // = neuronImage.getVOIs().size()
-        Vector3f[] tmpptA = null;
-        Vector3f[] tmpptB = null;
+
         Vector3f[] ptA = null; // new Vector3f[nPtsA];
         Vector3f[] ptB = null; // new Vector3f[nPtsB];
-        int i, s, ptNum;
+        int i;
         Vector<VOIBase> curves;
 
         curves = standardColumnImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
@@ -3063,8 +3046,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         LSMatch = new AlgorithmRegLeastSquares(ptAmm, ptBmm, DIM);
         LSMatch.run();
-        tmpptA = null;
-        tmpptB = null;
+
         ptA = null; // new Vector3f[nPtsA];
         ptB = null;
         ptAmm = null;
@@ -3112,7 +3094,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         Vector3f pt, tPt;
 
         String label = "";
-        final VOIPoint point;
+
         ArrayList<Integer> indexAL_std = new ArrayList<Integer>();
         ArrayList<Integer> sliceAL_std = new ArrayList<Integer>();
         ArrayList<String> labelAL_std = new ArrayList<String>();
@@ -3158,8 +3140,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         }
 
         // need to add curves to result image...treemap is ascending order...so should be straightforward
-        final Set keySet = addCurvesMap.keySet();
-        final Iterator iter = keySet.iterator();
+        final Set<Integer> keySet = addCurvesMap.keySet();
+        final Iterator<Integer> iter = keySet.iterator();
         Integer key;
         AddVals v;
         while (iter.hasNext()) {
@@ -3251,7 +3233,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         byte r, g, b;
 
-        long begTime = 0;
+
         final int[] extents2 = neuronImage.getExtents();
         final float[] finalImageRes = finalImage.getResolutions(0);
         final int[] finalImageExts = finalImage.getExtents();
@@ -3262,7 +3244,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         for (float z = 0; z < 512; z = z + samplingRate) {
             if ((float) Math.floor(z) == z) {
                 outputTextArea.append("z is " + z + "\n");
-                begTime = System.currentTimeMillis();
+
                 if (z % 5 == 0) {
                     System.gc();
                 }
@@ -3526,7 +3508,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * @return
      */
     private boolean writeNewPointsFile() {
-        final boolean success = true;
+
 
         final String parentDir = pointsFile.getParent();
         final String newName = pointsFile.getName().substring(0, pointsFile.getName().indexOf("."))
@@ -3710,25 +3692,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             return xPt;
         }
 
-        public void setXPt(final float[] pt) {
-            xPt = pt;
-        }
 
         public float[] getYPt() {
             return yPt;
         }
 
-        public void setYPt(final float[] pt) {
-            yPt = pt;
-        }
 
         public float[] getZPt() {
             return zPt;
         }
 
-        public void setZPt(final float[] pt) {
-            zPt = pt;
-        }
 
     }
 
