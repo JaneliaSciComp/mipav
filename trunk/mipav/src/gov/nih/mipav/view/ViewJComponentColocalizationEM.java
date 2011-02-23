@@ -74,9 +74,6 @@ public class ViewJComponentColocalizationEM extends ViewJComponentBase {
                                           // contrast filter has been invoked
 
     /** DOCUMENT ME! */
-    private boolean haveThresholded = true;
-
-    /** DOCUMENT ME! */
     private float[] imageBufferDest = null;
 
     /** DOCUMENT ME! */
@@ -139,9 +136,6 @@ public class ViewJComponentColocalizationEM extends ViewJComponentBase {
 
     /** DOCUMENT ME! */
     private boolean useRed;
-
-    /** Note that xDim and yDim refer to destImage, while zDim and tDim refer to imageA. */
-    private int xDim, yDim, zDim, tDim;
 
     /** DOCUMENT ME! */
     private float zoomX = 1; // magnification, here zoomX = zoomY
@@ -215,21 +209,6 @@ public class ViewJComponentColocalizationEM extends ViewJComponentBase {
         this.topPad = topPad;
         bin2 = destImage.getExtents()[1] - bottomPad - topPad;
 
-        xDim = destImage.getExtents()[0];
-        yDim = destImage.getExtents()[1];
-
-        if (imageA.getNDims() >= 3) {
-            zDim = imageA.getExtents()[2];
-        } else {
-            zDim = 1;
-        }
-
-        if (imageA.getNDims() >= 4) {
-            tDim = imageA.getExtents()[3];
-        } else {
-            tDim = 1;
-        }
-
         resX = 1.0f;
         resY = 1.0f;
         setSize(Math.round(imageDim.width * resX), Math.round(imageDim.height * resY));
@@ -263,19 +242,15 @@ public class ViewJComponentColocalizationEM extends ViewJComponentBase {
     public boolean buildImageDestObject(ModelLUT _LUTdest, boolean forceShow) {
 
         float rangeA = 0;
-        float remapConstA = 1;
         float imageMinA = 0, imageMaxA = 0;
         int xDim, yDim;
         int bufferSize;
         int lutHeightA = 0;
         int index;
-        float[][] RGB_LUTa = null;
-        int[][] iRGB_LUTa = null;
         int Ra, Ga, Ba;
         int pix;
         float opacityPrime;
         int i;
-        int j;
 
         if (destImage == null) {
             return false;
@@ -320,7 +295,7 @@ public class ViewJComponentColocalizationEM extends ViewJComponentBase {
 
 
         if (((imageMaxA - imageMinA) < 256) && (LUTdest.getLUTType() == ModelLUT.STRIPED)) {
-            remapConstA = 1;
+            
         } else {
             rangeA = imageMaxA - imageMinA;
 
@@ -328,11 +303,7 @@ public class ViewJComponentColocalizationEM extends ViewJComponentBase {
                 rangeA = 1;
             }
 
-            if ((lutHeightA - 1) == 0) {
-                remapConstA = 1;
-            } else {
-                remapConstA = (lutHeightA - 1) / rangeA;
-            }
+            
         }
 
         if (frame.getControls() != null) {
