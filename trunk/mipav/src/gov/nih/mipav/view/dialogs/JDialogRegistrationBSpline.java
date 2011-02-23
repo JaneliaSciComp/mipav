@@ -508,6 +508,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("unchecked")
     protected void setGUIFromParams() {
         m_kImageSrc = scriptParameters.retrieveInputImage();
         userSetRefImage(scriptParameters.retrieveImage("reference_image"));
@@ -1383,17 +1384,12 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         /** DOCUMENT ME! */
         public final JTextField kTextMaxIterations = new JTextField();
 
-        /** DOCUMENT ME! */
-        private final JDialogBase m_kDialog;
-
         /**
          * Constructor which creates the controls.
          * 
          * @param kDialog JDialogBase Dialog class from which the controls inherit certain properties (e.g., font).
          */
         public Controls(final JDialogBase kDialog) {
-
-            m_kDialog = kDialog;
 
             // combo box to select degree+1 for B-Spline
             kComboBoxBSplineDegree.setFont(MipavUtil.font12);
