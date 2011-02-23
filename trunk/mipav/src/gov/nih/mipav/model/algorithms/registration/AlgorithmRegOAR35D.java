@@ -2788,6 +2788,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
      *
      * @return  List of preoptimized and optimized points.
      */
+    @SuppressWarnings("unchecked")
     private Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
         AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 32, 1);
 
