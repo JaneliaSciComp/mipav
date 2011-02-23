@@ -9,7 +9,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * users deletes the image/voi.
  */
 public class ScriptTreeNode extends DefaultMutableTreeNode {
-    private String defaultName;
 
     private int nodeType;
 
