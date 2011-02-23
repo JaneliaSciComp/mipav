@@ -881,6 +881,7 @@ public class JDialogTLRC extends JDialogBase {
     *   @param progressBar  Progress bar.
     *   @param image        Image.
     */
+	@SuppressWarnings("unused")
     private void transformTalairachTrilinear(float imgBuffer[], double xfrm[][], float ires,
                                              int iXdim, int iYdim, int iZdim, 
                                              float oXres, float oYres, float oZres, int oXdim, int oYdim, int oZdim,
@@ -899,14 +900,13 @@ public class JDialogTLRC extends JDialogBase {
         float temp1, temp2, temp3, temp4, temp5, temp6, temp7;
         int roundX, roundY, roundZ;
         sliceSize   = iXdim * iYdim;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23, T30, T31, T32, T33;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         boolean doTransform;
         
         
         T00 = (float)xfrm[0][0]; T01 = (float)xfrm[0][1]; T02 = (float)xfrm[0][2]; T03 = (float)xfrm[0][3];
         T10 = (float)xfrm[1][0]; T11 = (float)xfrm[1][1]; T12 = (float)xfrm[1][2]; T13 = (float)xfrm[1][3];
         T20 = (float)xfrm[2][0]; T21 = (float)xfrm[2][1]; T22 = (float)xfrm[2][2]; T23 = (float)xfrm[2][3];
-        T30 = (float)xfrm[3][0]; T31 = (float)xfrm[3][1]; T32 = (float)xfrm[3][2]; T33 = (float)xfrm[3][3];
         
          
         for (i=oXlow; i <= oXhigh; i++) {
@@ -987,6 +987,7 @@ public class JDialogTLRC extends JDialogBase {
     /**
      *     Transforms and resamples volume using trilinear interpolation
      */
+	@SuppressWarnings("unused")
     private void computeTrilinearImage(float img[], float xi, float yi, float zi, int nix, int niy, int niz, 
 										float[] result, int xr, int yr, int zr, int nrx, int nry, int nrz) {
         int xa,ya,za,xb,yb,zb;
