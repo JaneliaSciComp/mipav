@@ -23,7 +23,7 @@ public class ImageRegistryMonitor implements Runnable, FocusListener {
     private EventListenerList listenerList;
 
     /** DOCUMENT ME! */
-    private Vector registeredNames = new Vector();
+    private Vector<String> registeredNames = new Vector<String>();
 
     /** DOCUMENT ME! */
     private long sleepAmount = 5000;
@@ -79,8 +79,8 @@ public class ImageRegistryMonitor implements Runnable, FocusListener {
      *
      * @return  Vector of image names
      */
-    public Vector getRegisteredNames() {
-        return (Vector) (registeredNames);
+    public Vector<String> getRegisteredNames() {
+        return (Vector<String>) (registeredNames);
     }
 
     /**
@@ -102,7 +102,7 @@ public class ImageRegistryMonitor implements Runnable, FocusListener {
         while (thread == me) {
             registeredNames.clear();
 
-            Enumeration e = ViewUserInterface.getReference().getRegisteredImageNames();
+            Enumeration<String> e = ViewUserInterface.getReference().getRegisteredImageNames();
 
             while (e.hasMoreElements()) {
                 registeredNames.addElement(e.nextElement());
