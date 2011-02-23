@@ -85,10 +85,10 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         if (source == OKButton) {
 
             if (nearest.isSelected()) {
-                componentImage.setInterpolationMode(componentImage.NEAREST);
+                componentImage.setInterpolationMode(ViewJComponentBase.NEAREST);
                 
             } else if (bilinear.isSelected()) {
-                componentImage.setInterpolationMode(componentImage.BILINEAR);
+                componentImage.setInterpolationMode(ViewJComponentBase.BILINEAR);
                 
 
             }
@@ -101,11 +101,11 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         }
         
         if(command.equals("nearest")) {
-        	componentImage.setInterpolationMode(componentImage.NEAREST);
-        	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, componentImage.NEAREST);
+        	componentImage.setInterpolationMode(ViewJComponentBase.NEAREST);
+        	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.NEAREST);
         }else if(command.equals("bilinear")) {
-        	componentImage.setInterpolationMode(componentImage.BILINEAR);
-        	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, componentImage.BILINEAR);
+        	componentImage.setInterpolationMode(ViewJComponentBase.BILINEAR);
+        	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.BILINEAR);
         }
     }
 
@@ -122,10 +122,10 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
             magSlider.setValue((int) ((magSlider.getValue() / (float) 100) + 0.5) * 100);
             
             if (nearest.isSelected()) {
-                componentImage.setInterpolationMode(componentImage.NEAREST);
+                componentImage.setInterpolationMode(ViewJComponentBase.NEAREST);
                 
             } else if (bilinear.isSelected()) {
-                componentImage.setInterpolationMode(componentImage.BILINEAR);
+                componentImage.setInterpolationMode(ViewJComponentBase.BILINEAR);
                 
 
             }
@@ -197,6 +197,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
      *
      * @return  maximum possible magnification without running out of memory
      */
+    @SuppressWarnings("unused")
     private int findMax() {
         Runtime rt = Runtime.getRuntime();
         long freeMemory = rt.freeMemory();
@@ -376,10 +377,10 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
             magSlider.setValue((int) ((magSlider.getValue() / (float) 100) + 0.5) * 100);
             
             if (nearest.isSelected()) {
-                componentImage.setInterpolationMode(componentImage.NEAREST);
+                componentImage.setInterpolationMode(ViewJComponentBase.NEAREST);
                 
             } else if (bilinear.isSelected()) {
-                componentImage.setInterpolationMode(componentImage.BILINEAR);
+                componentImage.setInterpolationMode(ViewJComponentBase.BILINEAR);
                 
 
             }
