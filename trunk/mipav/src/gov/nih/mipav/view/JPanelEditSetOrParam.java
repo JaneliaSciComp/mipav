@@ -34,7 +34,7 @@ public class JPanelEditSetOrParam extends JPanelEdit {
     private boolean isSet;
 
     /** DOCUMENT ME! */
-    private Hashtable table;
+    private Hashtable<String,?> table;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -140,7 +140,7 @@ public class JPanelEditSetOrParam extends JPanelEdit {
      * @param  table  DOCUMENT ME!
      * @param  isSet  DOCUMENT ME!
      */
-    public void setTable(Hashtable table, boolean isSet) {
+    public void setTable(Hashtable<String,?> table, boolean isSet) {
         this.table = table;
         this.isSet = isSet;
     }
