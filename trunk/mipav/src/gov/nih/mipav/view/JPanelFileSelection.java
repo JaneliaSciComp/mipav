@@ -58,9 +58,6 @@ public class JPanelFileSelection extends JPanelEdit implements ActionListener {
     /** DOCUMENT ME! */
     private JTextField fileTextField;
 
-    /** DOCUMENT ME! */
-    private boolean imageInfo = false;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
