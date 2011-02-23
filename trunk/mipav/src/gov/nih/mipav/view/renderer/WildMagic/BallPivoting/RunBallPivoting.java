@@ -1,7 +1,7 @@
 
 package gov.nih.mipav.view.renderer.WildMagic.BallPivoting;
 
-import java.io.File;
+
 
 public class RunBallPivoting {
 	/*

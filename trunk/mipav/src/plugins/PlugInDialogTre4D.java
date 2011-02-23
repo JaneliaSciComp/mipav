@@ -26,7 +26,7 @@ import gov.nih.mipav.model.algorithms.*;
 
 
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;

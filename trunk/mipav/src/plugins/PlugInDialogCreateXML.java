@@ -12,12 +12,12 @@ import gov.nih.mipav.model.file.FileXML;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
+
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
 import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
+
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 

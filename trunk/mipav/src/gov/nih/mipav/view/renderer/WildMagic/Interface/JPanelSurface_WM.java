@@ -9,7 +9,7 @@ import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.dialogs.JDialogSmoothMesh;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
-import gov.nih.mipav.view.renderer.WildMagic.Decimate.Mesh;
+
 import gov.nih.mipav.view.renderer.WildMagic.Decimate.TriangleMesh;
 
 import java.awt.BorderLayout;
@@ -44,7 +44,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.vecmath.Color3f;
+
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;

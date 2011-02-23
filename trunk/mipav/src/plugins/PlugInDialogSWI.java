@@ -23,9 +23,7 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileDicomKey;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoDicom;
+
 
 
 import gov.nih.mipav.model.scripting.*;
@@ -40,8 +38,7 @@ import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Enumeration;

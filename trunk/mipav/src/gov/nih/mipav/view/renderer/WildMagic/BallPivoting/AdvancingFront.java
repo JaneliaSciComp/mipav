@@ -1,7 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.BallPivoting;
 
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
+
 
 public abstract class AdvancingFront {
 	public LinkedList<FrontEdge> front = new LinkedList<FrontEdge>();
