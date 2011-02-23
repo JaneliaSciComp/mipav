@@ -258,6 +258,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * starts the algorithm.
      */
+    @SuppressWarnings("unchecked")
     public void runAlgorithm() {
         int i, j, z;
         int c = 0;
@@ -438,14 +439,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
             fileInfoImageXML = (FileInfoImageXML) srcImage.getFileInfo(0);
 
             /** go through the hashtable of parameter sets */
-            Enumeration setEnum = fileInfoImageXML.getPSetKeys();
+            Enumeration<String> setEnum = fileInfoImageXML.getPSetKeys();
 
             while (setEnum.hasMoreElements()) {
-                String temp = (String) setEnum.nextElement();
-                Enumeration paramEnum = fileInfoImageXML.getPSet(temp).getParameterKeys();
+                String temp = setEnum.nextElement();
+                Enumeration<String> paramEnum = fileInfoImageXML.getPSet(temp).getParameterKeys();
 
                 while (paramEnum.hasMoreElements()) {
-                    String paramName = (String) paramEnum.nextElement();
+                    String paramName = paramEnum.nextElement();
 
                     if ((paramName.length() > 11) && (paramName.substring(0, 10).equals("timeStamp["))) {
                         int endIndex = paramName.indexOf(']');
