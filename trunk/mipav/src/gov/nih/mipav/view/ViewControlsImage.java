@@ -642,7 +642,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
      * @see    JSlider
      */
     public void setTSlider(int tSlice) {
-        int newValue;
 
         if (tImageSlider == null) {
             return;
@@ -708,7 +707,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
      */
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
-        int newValue = 1;
 
         if (source == zImageSlider) {
 
@@ -775,7 +773,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         Font font12 = MipavUtil.font12;
 
         // Make labels to be used in display in the alpha blending slider
-        Hashtable dictionary = new Hashtable();
+        Hashtable<Integer,JLabel> dictionary = new Hashtable<Integer,JLabel>();
         JLabel label1 = new JLabel("Image A");
 
         label1.setForeground(Color.black);
