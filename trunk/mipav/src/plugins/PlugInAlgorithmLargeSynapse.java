@@ -1,4 +1,4 @@
-import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
 import gov.nih.mipav.plugins.*; // needed to load PlugInAlgorithm / PlugInView / PlugInFile interface
@@ -11,10 +11,10 @@ import java.io.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.BitSet;
+
 import java.util.Vector;
 
-import java.awt.*;
+
 
 
 /**

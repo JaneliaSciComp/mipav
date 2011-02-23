@@ -7,7 +7,7 @@ import gov.nih.mipav.model.structures.*;
 
 import java.util.*;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 
 /**

@@ -10,14 +10,14 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
-import WildMagic.LibGraphics.SceneGraph.Transformation;
+
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
-import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface.IntVector;
+
 
 import java.awt.*;
 import java.awt.event.*;
