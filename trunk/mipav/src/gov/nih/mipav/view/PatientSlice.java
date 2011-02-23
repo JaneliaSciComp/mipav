@@ -841,6 +841,7 @@ public class PatientSlice {
      *
      * @return  true when the slice is axis-aligned, false otherwise.
      */
+    @SuppressWarnings("unused")
     private boolean axisAligned() {
         Vector3f kPatientCorner = new Vector3f();
 
