@@ -504,6 +504,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     /**
      * Initializes GUI components and displays dialog.
      */
+    @SuppressWarnings("unchecked")
     private void init() {
         boolean haveRed = false;
         boolean haveGreen = false;
