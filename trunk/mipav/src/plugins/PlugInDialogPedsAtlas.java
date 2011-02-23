@@ -911,7 +911,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         this.setImageA(t1AtlasImages[0]);
         currentComponentImage.setSlice(currentZSlice);
         
-        float newZoom = (float)(initialXImagePanelSize-20)/(float)currentComponentImage.getImageA().getExtents()[0];
+        float newZoom = (float)(initialXImagePanelSize-15)/(float)currentComponentImage.getImageA().getExtents()[0];
 		currentZoom = newZoom;
 		setTitle(title + "zoom:" + df.format(currentZoom));
         
@@ -2131,7 +2131,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     	
     	
     	if(viewportAspectRatio <= imageAspectRatio) {
-    		float newZoom = (float)(width-20)/(float)imageWidth;
+    		float newZoom = (float)(width-15)/(float)imageWidth;
     		currentZoom = newZoom;
 
             currentComponentImage.setZoom(newZoom, newZoom);
@@ -2150,7 +2150,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     		
     		
     	}else {
-    		float newZoom = (float)(height-20)/(float)imageHeight;
+    		float newZoom = (float)(height-15)/(float)imageHeight;
     		currentZoom = newZoom;
 
             currentComponentImage.setZoom(newZoom, newZoom);
