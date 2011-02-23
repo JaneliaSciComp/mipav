@@ -6,7 +6,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.FileFilter;
+
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;

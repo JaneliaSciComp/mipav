@@ -1,12 +1,12 @@
 package gov.nih.mipav.view.renderer.WildMagic.Poisson;
 
-import java.io.File;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
 import gov.nih.mipav.view.renderer.WildMagic.Poisson.Geometry.*;
-import gov.nih.mipav.view.renderer.WildMagic.Poisson.MarchingCubes.*;
+
 import gov.nih.mipav.view.renderer.WildMagic.Poisson.Octree.*;
 import gov.nih.mipav.view.renderer.WildMagic.Poisson.CmdLine.*;
 

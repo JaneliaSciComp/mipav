@@ -3,9 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 import gov.nih.mipav.util.*;
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.provenance.ProvenanceRecorder;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
@@ -14,21 +12,17 @@ import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
-import gov.nih.mipav.view.ViewImageFileFilter;
+
 import gov.nih.mipav.view.ViewImageUpdateInterface;
-import gov.nih.mipav.view.ViewJColorChooser;
-import gov.nih.mipav.view.ViewJComponentBase;
-import gov.nih.mipav.view.ViewJComponentEditImage;
-import gov.nih.mipav.view.ViewJFrameBase;
-import gov.nih.mipav.view.ViewJFrameImage;
+
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.JDialogLivewire;
+
 import gov.nih.mipav.view.renderer.JPanelHistoLUT;
 import gov.nih.mipav.view.renderer.JPanelHistoRGB;
-import gov.nih.mipav.view.renderer.JPanelRendererBase;
+
 import gov.nih.mipav.view.renderer.JPanelVolOpacityRGB;
 import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
 import gov.nih.mipav.view.renderer.J3D.JPanelVolOpacity;
@@ -50,12 +44,12 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelVolume4D;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase.CancelListener;
+
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
+
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
@@ -68,8 +62,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Frame;
+
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;

@@ -6,7 +6,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
 import gov.nih.mipav.view.renderer.J3D.volumeview.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
+
 
 import java.awt.*;
 import java.awt.event.*;

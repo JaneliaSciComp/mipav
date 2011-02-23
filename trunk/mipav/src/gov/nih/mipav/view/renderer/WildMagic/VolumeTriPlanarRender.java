@@ -7,7 +7,7 @@ import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.view.ViewJFrameAnimateClip;
+
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
@@ -16,7 +16,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageCrop;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageExtract;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageNormalGM;
+
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageSurfaceMask;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
@@ -27,7 +27,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
-import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.*;
+
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 
 import java.awt.Cursor;

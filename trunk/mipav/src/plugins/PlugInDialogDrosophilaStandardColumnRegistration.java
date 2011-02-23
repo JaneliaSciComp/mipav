@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.TreeMap;
-import java.util.Vector;
+
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -34,7 +34,7 @@ import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ScrollCorrector;
-import gov.nih.mipav.view.ViewJFrameImage;
+
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 

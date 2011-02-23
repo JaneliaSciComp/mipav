@@ -22,7 +22,7 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.view.ViewUserInterface;
+
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 

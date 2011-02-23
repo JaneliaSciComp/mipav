@@ -22,9 +22,9 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
 
-import java.awt.Color;
+
+
 import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.Point;
@@ -49,13 +49,13 @@ import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Camera;
 import WildMagic.LibGraphics.Rendering.Renderer;
-import WildMagic.LibGraphics.Rendering.WireframeState;
+
 import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
-import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibGraphics.Shaders.Program;

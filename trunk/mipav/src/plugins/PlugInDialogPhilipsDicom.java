@@ -1,9 +1,7 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoBase;
+
 import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileWriteOptions;
+
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -13,9 +11,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Vector;
+
 
 import javax.swing.*;
 

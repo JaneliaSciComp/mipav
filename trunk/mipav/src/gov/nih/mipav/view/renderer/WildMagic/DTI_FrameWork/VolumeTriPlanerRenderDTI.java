@@ -3,7 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 import com.sun.opengl.util.*;
 
 import java.awt.event.*;
-import gov.nih.mipav.model.structures.*;
+
 
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;

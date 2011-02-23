@@ -11,13 +11,12 @@ import java.awt.Dimension;
 import java.io.Serializable;
 import java.util.Vector;
 
-import javax.vecmath.Matrix4f;
+
 
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Rendering.Light;
-import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
-import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
+
 
 public class VolumeRenderState implements Serializable
 {

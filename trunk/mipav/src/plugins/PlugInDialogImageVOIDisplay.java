@@ -4,7 +4,7 @@ import java.util.Vector;
 
 import javax.swing.*;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.VOI;
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
