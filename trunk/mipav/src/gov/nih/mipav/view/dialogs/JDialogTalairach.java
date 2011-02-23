@@ -476,6 +476,7 @@ public class JDialogTalairach extends JDialogBase {
         int[] topZ = new int[12];
         @SuppressWarnings("unused")
         float bot_A, bot_M, bot_P, bot_R, bot_L, bot_I, bot_S;
+        @SuppressWarnings("unused")
         float top_A, top_M, top_P, top_R, top_L, top_I, top_S;
 
         Vector3f bv_P = new Vector3f(0.0f, 0.0f, 0.0f);
@@ -1369,7 +1370,7 @@ public class JDialogTalairach extends JDialogBase {
         int roundX, roundY, roundZ;
         sliceSize = iXdim * iYdim;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23, T30, T31, T32, T33;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         boolean doTransform;
 
 
@@ -1385,10 +1386,6 @@ public class JDialogTalairach extends JDialogBase {
         T21 = xfrm.Get(2, 1);
         T22 = xfrm.Get(2, 2);
         T23 = xfrm.Get(2, 3);
-        T30 = xfrm.Get(3, 0);
-        T31 = xfrm.Get(3, 1);
-        T32 = xfrm.Get(3, 2);
-        T33 = xfrm.Get(3, 3);
 
 
         for (i = oXlow; i <= oXhigh; i++) {
