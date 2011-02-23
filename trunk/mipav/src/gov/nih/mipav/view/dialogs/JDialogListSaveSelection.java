@@ -138,12 +138,12 @@ public class JDialogListSaveSelection extends JDialogBase implements ActionListe
      *
      * @return  DOCUMENT ME!
      */
-    protected JPanel buildSourcePanel(Vector sourceList) {
+    protected JPanel buildSourcePanel() {
         JPanel srcp = new JPanel(new GridLayout(1, 2));
         srcp.setBorder(new TitledBorder(new EtchedBorder(), "Source List", TitledBorder.LEFT, TitledBorder.CENTER,
                                         MipavUtil.font12B, Color.black));
 
-        srcp.add(buildSourceListingPanel(sourceList), BorderLayout.CENTER); // list of VOIs in the image.
+        srcp.add(buildSourceListingPanel(), BorderLayout.CENTER); // list of VOIs in the image.
         srcp.add(buildSelectedListing(), BorderLayout.EAST); // list of selected items
 
         return srcp;
@@ -216,11 +216,11 @@ public class JDialogListSaveSelection extends JDialogBase implements ActionListe
             selector.buildDicomSortOptions();
         }
 
-        getSourceList().setListData(new Vector());
+        getSourceList().setListData(new Vector<Object>());
         selector.setLeftList(getSourceList());
 
         JList selectedList = new JList();
-        selectedList.setListData(new Vector());
+        selectedList.setListData(new Vector<Object>());
         selector.setRightList(getSelectedList());
 
         return JPanelListController.createListControllerDisplay(selector);
@@ -328,7 +328,7 @@ public class JDialogListSaveSelection extends JDialogBase implements ActionListe
 
         // this list to hold things so that they may be selectable/removable
         // panel to hold list access.
-        selectedList.setListData(new Vector()); // = new JList();
+        selectedList.setListData(new Vector<Object>()); // = new JList();
         selp.add(new JScrollPane(selectedList), BorderLayout.CENTER);
 
         // build default arrowpanel
@@ -354,9 +354,9 @@ public class JDialogListSaveSelection extends JDialogBase implements ActionListe
      *
      * @return  Panel.
      */
-    private JPanel buildSourceListingPanel(Vector sourceVector) {
+    private JPanel buildSourceListingPanel() {
         JPanel srctreep = new JPanel(new BorderLayout());
-        Vector volumesVector = new Vector();
+        Vector<Object> volumesVector = new Vector<Object>();
         sourceList.setListData(volumesVector);
         sourceList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
