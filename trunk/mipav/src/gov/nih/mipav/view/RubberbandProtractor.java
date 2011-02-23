@@ -164,7 +164,6 @@ public class RubberbandProtractor extends Rubberband {
 
                 if ((Math.abs(x[2] - x[0]) > 1) || (Math.abs(y[2] - y[0]) > 1)) {
                     newVOI.importCurve(x, y, z);
-                    newVOI.setXYDim(image.getExtents()[0], image.getExtents()[1]);
                     image.registerVOI(newVOI);
                 }
 
