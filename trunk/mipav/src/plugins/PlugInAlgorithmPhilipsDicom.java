@@ -38,7 +38,7 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
     private int tDim;
 
     /** Slice size for xDim*yDim */
-    private int sliceSize;
+    //private int sliceSize;
     
     /**
      * Constructor.
@@ -79,7 +79,7 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
     private void calcRescale() {
     	xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
-        sliceSize = xDim * yDim;
+        //sliceSize = xDim * yDim;
         
         if(srcImage.getNDims() > 2) {
             zDim = srcImage.getExtents()[2];

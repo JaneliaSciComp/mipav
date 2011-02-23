@@ -591,12 +591,14 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().ALPHA);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.ALPHA);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().ALPHA);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.ALPHA);
                 }
             }
         } else if (event.getActionCommand().equals("red")) {
@@ -604,12 +606,14 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().RED);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.RED);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().RED);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.RED);
                 }
             }
         } else if (event.getActionCommand().equals("green")) {
@@ -617,12 +621,14 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().GREEN);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.GREEN);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().GREEN);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.GREEN);
                 }
             }
         } else if (event.getActionCommand().equals("blue")) {
@@ -630,12 +636,14 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().BLUE);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.BLUE);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().BLUE);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.BLUE);
                 }
             }
         } else if (command.equals("SaveLUT")) {
