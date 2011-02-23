@@ -794,8 +794,6 @@ public class Preferences {
 
         int modifiers;
 
-        boolean success = true;
-
         try {
 
             if (str != null) {
@@ -853,12 +851,11 @@ public class Preferences {
                 // throw in the defaults just in case
 
             } else {
-                success = false;
+               
             }
         } catch (final Exception e) {
             e.printStackTrace();
             MipavUtil.displayWarning("Error reading shortcut preferences:  default shortcuts restored");
-            success = false;
         }
 
         // return table;
