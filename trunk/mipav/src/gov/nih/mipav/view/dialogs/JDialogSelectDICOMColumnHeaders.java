@@ -79,6 +79,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
      *
      * @param  event  DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
@@ -130,6 +131,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
      *
      * @return  DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     protected JPanel buildMainPanel() {
         Vector<String> columnNames = parentFrame.getColumnNames();
 
