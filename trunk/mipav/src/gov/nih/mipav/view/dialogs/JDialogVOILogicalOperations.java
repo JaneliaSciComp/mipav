@@ -370,7 +370,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
     
     
     
-    
+    @SuppressWarnings("unchecked")
     public void updateTree() {
         if (treeSelectionChange) {
             treeSelectionChange = false;
@@ -509,7 +509,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         int index = 0;
 
         while (e.hasMoreElements()) {
-            currentVOI = (VOI) e.nextElement();
+            currentVOI = e.nextElement();
             sourceVoiModel.insertNodeInto(new VOIGroupNode(currentVOI,image.getExtents()), sourceRoot, index);
             //voiModel.insertNodeInto(new VOIGroupNode(currentVOI), root, index);
             index++;
