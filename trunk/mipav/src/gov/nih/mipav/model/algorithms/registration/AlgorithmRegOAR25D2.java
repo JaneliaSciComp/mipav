@@ -2624,6 +2624,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      *
      * @return  List of preoptimized and optimized points.
      */
+    @SuppressWarnings("unchecked")
     private Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
 
         double factor;
