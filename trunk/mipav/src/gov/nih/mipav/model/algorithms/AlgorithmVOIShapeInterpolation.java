@@ -10,6 +10,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.ViewVOIVector;
 /**
@@ -240,7 +241,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
             ViewVOIVector VOIs = (ViewVOIVector) inBetweenBooleanShapes[0].getVOIs();
             VOI tempVOI = (VOI)(VOIs.VOIAt(0).clone());
         	tempVOI.setUID(tempVOI.hashCode());
-            Vector contours = tempVOI.getCurves();
+            Vector<VOIBase> contours = tempVOI.getCurves();
             finalContours[0] = (VOIContour)contours.elementAt(0);
             
             boolean isLineVertical = false;
@@ -356,7 +357,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
                 ViewVOIVector VOIs = inBetweenBooleanShapes[index].getVOIs();
                 VOI tempVOI = new VOI(VOIs.VOIAt(0));
             	tempVOI.setUID(tempVOI.hashCode());
-                Vector contours = tempVOI.getCurves();
+                Vector<VOIBase> contours = tempVOI.getCurves();
                 finalContours[index] = (VOIContour)contours.elementAt(0);
                 
                 boolean isLineVertical = false;
