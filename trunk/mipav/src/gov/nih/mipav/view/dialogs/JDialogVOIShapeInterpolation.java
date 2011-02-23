@@ -8,6 +8,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIShapeInterpolation;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewVOIVector;
@@ -80,14 +81,14 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
              if (VOIs.VOIAt(i).isActive() && (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)) {
              	VOI tempVOI = (VOI)(VOIs.VOIAt(i).clone());
              	tempVOI.setUID(tempVOI.hashCode());
-             	Vector contours = tempVOI.getCurves();
+             	Vector<VOIBase> contours = tempVOI.getCurves();
 
              	int nContours = contours.size();
              	for (int k = 0; k < nContours; k++) {
              	    if (((VOIContour) contours.elementAt(k)).isActive()) {
              	        nActiveContour = nActiveContour + 1;
              	        if(VOI1 == null) {
-             	            VOI1 = (VOIContour)(VOIContour)contours.elementAt(k);
+             	            VOI1 = (VOIContour)contours.elementAt(k);
              	            VOIHandle = (VOI)(VOIs.VOIAt(i));
              	        }else {
              	            if((VOI)(VOIs.VOIAt(i)) != VOIHandle) {
