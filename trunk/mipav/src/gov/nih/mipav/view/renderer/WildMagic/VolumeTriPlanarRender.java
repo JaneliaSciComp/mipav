@@ -39,7 +39,7 @@ import java.awt.event.MouseMotionListener;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLContext;
+
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
@@ -57,7 +57,7 @@ import WildMagic.LibGraphics.Rendering.FrameBuffer;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
-import WildMagic.LibGraphics.Rendering.Renderer;
+
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.Rendering.ZBufferState;
@@ -66,9 +66,9 @@ import WildMagic.LibGraphics.SceneGraph.Geometry;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
-import WildMagic.LibGraphics.SceneGraph.Transformation;
+
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
-import WildMagic.LibGraphics.Shaders.SamplerInformation;
+
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 

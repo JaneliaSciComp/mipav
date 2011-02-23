@@ -84,13 +84,13 @@ public class DICOM_Comms {
     protected int inBuffersLength;
 
     /** Vector of ByteBuffer's of incoming data. */
-    protected Vector incomingBuffers = new Vector();
+    protected Vector<ByteBuffer> incomingBuffers = new Vector<ByteBuffer>();
 
     /** Length of the total output data (Not buffer size but total length of data ). */
     protected int outBuffersLength;
 
     /** Vector of ByteBuffer's of outgoing data. */
-    protected Vector outgoingBuffers = new Vector();
+    protected Vector<ByteBuffer> outgoingBuffers = new Vector<ByteBuffer>();
 
     /** One byte array allocated once to speed process and reduced the need to reallocate memory. */
     private byte[] byteArray1 = new byte[1];

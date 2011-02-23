@@ -5,39 +5,33 @@ import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJColorChooser;
+
 import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.renderer.JPanelRendererBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
-import java.awt.BorderLayout;
+
 import java.awt.Color;
-import java.awt.Component;
+
 import java.awt.Dimension;
-import java.awt.Frame;
+
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.WindowEvent;
-import java.util.Hashtable;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
+
+
 import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
+
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
-import WildMagic.LibFoundation.Mathematics.ColorRGB;
+
+
+
+
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 

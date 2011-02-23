@@ -252,8 +252,8 @@ public class CoolTipProbe {
 
         // set pickable
         try {
-            pickCanvas.setCapabilities(coneTip.getShape(0), PickTool.INTERSECT_FULL);
-            pickCanvas.setCapabilities(cylinderTip.getShape(0), PickTool.INTERSECT_FULL);
+            PickCanvas.setCapabilities(coneTip.getShape(0), PickTool.INTERSECT_FULL);
+            PickCanvas.setCapabilities(cylinderTip.getShape(0), PickTool.INTERSECT_FULL);
         } catch (RestrictedAccessException error) { }
 
         // build the indicator probe geometry shape.

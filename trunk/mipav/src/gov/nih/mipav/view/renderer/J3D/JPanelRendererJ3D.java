@@ -2,11 +2,10 @@ package gov.nih.mipav.view.renderer.J3D;
 
 
 import gov.nih.mipav.view.*;
-import java.awt.*;
+
 import java.awt.event.*;
 
-import javax.swing.*;
-import javax.swing.border.*;
+
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.volumeview.*;
 

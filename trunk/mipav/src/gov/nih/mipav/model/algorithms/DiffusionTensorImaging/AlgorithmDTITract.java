@@ -223,7 +223,7 @@ public class AlgorithmDTITract extends AlgorithmBase
      * end of the tract (positive direction). When false the positions
      * are added to the beginning of the tract (negative direction).
      */
-    private void traceTract( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
+    /*private void traceTract( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
                              ModelImage dtiImage, boolean bDir )
     {
         int iDimX = dtiImage.getExtents()[0];
@@ -302,7 +302,7 @@ public class AlgorithmDTITract extends AlgorithmBase
             }
         }
         kNext = null;
-    }
+    }*/
 
     private void traceTract2( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
             ModelImage eigenImage, ModelImage eigenValueImage, ModelImage kFAImage, boolean bDir )

@@ -2,7 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 import gov.nih.mipav.model.file.FileSurfaceGiftiXML;
 import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileXML.XMLAttributes;
+
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -16,7 +16,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibGraphics.Rendering.MaterialState;
+
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;

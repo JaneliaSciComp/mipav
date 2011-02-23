@@ -4,16 +4,16 @@ package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.Vector;
-import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibGraphics.Collision.PickRecord;
-import WildMagic.LibGraphics.Effects.TextureEffect;
+
+
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
-import WildMagic.LibGraphics.SceneGraph.Spatial;
+
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
