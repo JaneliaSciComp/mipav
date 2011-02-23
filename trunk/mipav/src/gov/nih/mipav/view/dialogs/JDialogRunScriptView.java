@@ -79,7 +79,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
     private int dropSource = 0;
 
     /** DOCUMENT ME! */
-    private Vector emptyVector = new Vector();
+    private Vector<Object> emptyVector = new Vector<Object>();
 
     /** DOCUMENT ME! */
     private JFrame frame;
@@ -368,6 +368,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
      * @param  imageHolder  DOCUMENT ME!
      * @param  voiHolder    DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void fillImagesVOIs(Vector<Vector<String>> imageHolder, Vector<Vector<String>> voiHolder) {
 
         boolean voiOnDisk = false;
@@ -849,6 +850,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
      * @param  parent  DOCUMENT ME!
      * @param  expand  DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     private void expandAll(JTree tree, TreePath parent, boolean expand) {
         TreeNode node = (TreeNode) parent.getLastPathComponent();
 
@@ -1387,6 +1389,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
          *
          * @param  dtde  DOCUMENT ME!
          */
+        @SuppressWarnings("unchecked")
         public void drop(DropTargetDropEvent dtde) {
             Transferable transferable = dtde.getTransferable();
 
@@ -1407,7 +1410,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
                 text = new String[list.size()];
 
                 for (int i = 0; i < text.length; i++) {
-                    text[i] = (String) list.get(i);
+                    text[i] = list.get(i);
                 }
             } catch (java.io.IOException ioe) {
                 ioe.printStackTrace();
