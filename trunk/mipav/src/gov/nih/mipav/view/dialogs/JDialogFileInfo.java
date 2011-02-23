@@ -155,6 +155,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
      * 
      * @param e event that triggered this action
      */
+    @SuppressWarnings("unchecked")
     public void actionPerformed(final ActionEvent e) {
         JDialogEditor editor;
 
@@ -209,7 +210,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                         final int[] editors = new int[objs.size()];
 
                         for (int j = 0; j < objs.size(); j++) {
-                            editors[j] = ((Integer) (objs.elementAt(j))).intValue(); // what the user asked for
+                            editors[j] = ((objs.elementAt(j))).intValue(); // what the user asked for
                         }
 
                         editor = new JDialogEditor(this, named, values, editors);
@@ -286,7 +287,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                     if (obj != null) {
                         ((JDialogEditor) (obj)).toFront();
                     } else {
-                        objs = (Vector<Integer>) secondaryTypeHolder.get(named);
+                        objs = secondaryTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
                         // foresee
@@ -304,7 +305,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                         // int code
 
                         for (int j = 0; j < objs.size(); j++) {
-                            editors[j] = ((Integer) (objs.elementAt(j))).intValue(); // what the user asked for
+                            editors[j] = ((objs.elementAt(j))).intValue(); // what the user asked for
                         }
 
                         editor = new JDialogEditor(this, named, values, editors);
@@ -650,7 +651,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
         else if (model.containsKey(tagKey)) {
 
             try {
-                editor = (JDialogEditor) model.get(tagKey);
+                editor = model.get(tagKey);
                 editor.toFront();
 
                 return true;
