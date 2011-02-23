@@ -9,7 +9,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Writer;
-import java.text.DecimalFormat;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -29,7 +29,7 @@ import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoBase;
+
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoImageXML;
@@ -178,7 +178,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
     private String imageOrientationString;
     
     /** vol parameters **/
-    private HashMap volParameters;
+    private HashMap<String, String> volParameters; 
 
     
     /**Philips puts in one volume as the average of all the DWIs. This
@@ -351,7 +351,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		this.dwiPathTextField = dwiPathTextField;
 		registeredStudyName = studyName + "_registered";
 		fileIO = new FileIO();
-        seriesFileInfoTreeMap = new TreeMap();
+        seriesFileInfoTreeMap = new TreeMap<Integer,TreeSet<String[]>>();
         isDICOM = true;
     }
     
@@ -1626,7 +1626,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 			Iterator<Integer> iter = ketSet.iterator();
 			ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 			while (iter.hasNext()) {
-				TreeSet<String[]> seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+				TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
 				Iterator<String[]> iter2 = seriesFITS.iterator();
 				// lets get the first element and remember its imageSlice
 				String imageSlice = ((String) (((String[]) seriesFITS.first())[7])).trim();
@@ -1672,7 +1672,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 			String relPath;
 			for(int i=0;i<numSlicesPerVolume;i++) {
 				for(int k=0;k<keyArray.length;k++) {
-					Object[] fidArr = ((TreeSet) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
+					Object[] fidArr = ((TreeSet<String[]>) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
 					int numVols = fidArr.length / numSlicesPerVolume;
 					String absPath = (String)((String[]) fidArr[i])[2];
 					relPath = new String(".." + File.separator + studyName +absPath.substring(absPath.lastIndexOf(studyName) + studyName.length(), absPath.length()));
@@ -1718,13 +1718,13 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             File pathFile = new File(studyPath + "_proc" + File.separator + pathFileName);
             FileOutputStream outputStream = new FileOutputStream(pathFile);
             PrintStream printStream = new PrintStream(outputStream);
-            Set ketSet = seriesFileInfoTreeMap.keySet();
-            Iterator iter = ketSet.iterator();
+            Set<Integer> ketSet = seriesFileInfoTreeMap.keySet();
+            Iterator<Integer> iter = ketSet.iterator();
             ArrayList<Integer> numSlicesCheckList = new ArrayList<Integer>();
 
             while (iter.hasNext()) {
-                TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-                Iterator iter2 = seriesFITS.iterator();
+                TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
+                Iterator<String[]> iter2 = seriesFITS.iterator();
 
                 // lets get the first element and remember its slice location
                 String sliceLocation = ((String) (((String[]) seriesFITS.first())[1])).trim();
@@ -1785,7 +1785,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             for (int i = 0; i < numSlicesPerVolume; i++) {
 
                 for (int k = 0; k < keyArray.length; k++) {
-                    Object[] fidArr = ((TreeSet) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
+                    Object[] fidArr = ((TreeSet<String[]>) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
                     int numVols = fidArr.length / numSlicesPerVolume;
                     String absPath = (String) ((String[]) fidArr[i])[2];
                     relPath = new String(".." + File.separator + studyName +
@@ -2153,8 +2153,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
         // ep_b and before #   2. If GE, then extract b-value from private tag 0043,1039....the b-value is the first
         // number in the string
 
-        Set ketSet = seriesFileInfoTreeMap.keySet();
-        Iterator iter = ketSet.iterator();
+        Set<Integer> ketSet = seriesFileInfoTreeMap.keySet();
+        Iterator<Integer> iter = ketSet.iterator();
 
         Preferences.debug(" - b-values :\n", Preferences.DEBUG_ALGORITHM);
 
@@ -2165,7 +2165,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
         System.out.println(" - b-values :\n");
 
         while (iter.hasNext()) {
-            TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+            TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
             int seriesFITSSize = seriesFITS.size();
             int numVols = seriesFITSSize / numSlicesPerVolume;
             Object[] fidArr = seriesFITS.toArray();
@@ -2393,7 +2393,6 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             
             FileOutputStream outputStream = new FileOutputStream(bMatrixFile);
             PrintStream printStream = new PrintStream(outputStream);
-            DecimalFormat decFormat = new DecimalFormat("%16f");
 
             // formula for bmtxt values is :
             // bxx 2bxy 2bxz byy 2byz bzz

@@ -443,7 +443,7 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 			for(int i=0;i<zDim;i++) {
 				//vol counter
 				int volSlice=0;
-				int currSlice = i + 1;
+			
 				String currVolString = "";
 				int currVol = i + 1;
 				if(currVol < 10) {

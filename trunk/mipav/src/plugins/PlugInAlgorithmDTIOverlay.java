@@ -118,7 +118,7 @@ public class PlugInAlgorithmDTIOverlay extends AlgorithmBase {
 			short[] buffer = new short[bufferSize];
 			int index=0;
 			int k;
-			boolean match = false;
+
 			for(int z=0;z<zdim;z++) {
 				for(int y=0;y<ydim;y++) {
 					for(int x=0;x<xdim;x++) {

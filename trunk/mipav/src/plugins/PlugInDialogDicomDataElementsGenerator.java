@@ -18,9 +18,9 @@ import javax.swing.JTextField;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.file.FileDicomBase;
+
 import gov.nih.mipav.model.file.FileDicomTagInfo;
-import gov.nih.mipav.model.file.FileIO;
+
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 

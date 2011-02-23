@@ -159,8 +159,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         float[] buffer = new float[length];
 
         FileDicom fileDicom = null;
-        FileInfoDicom refFileInfo = null;
-        FileInfoBase fileInfo = null;
+        //FileInfoDicom refFileInfo = null;
+        //FileInfoBase fileInfo = null;
 
         final String kPath = m_aakDWIList[iSlice][iWeight];
         final String kDir = kPath.substring(0, kPath.lastIndexOf(File.separator)) + File.separator;
@@ -170,8 +170,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
             fileDicom = new FileDicom(kFileName, kDir);
             fileDicom.setQuiet(true);
             fileDicom.readHeader(true);
-            refFileInfo = (FileInfoDicom) fileDicom.getFileInfo();
-            fileInfo = fileDicom.getFileInfo();
+            //refFileInfo = (FileInfoDicom) fileDicom.getFileInfo();
+            //fileInfo = fileDicom.getFileInfo();
             fileDicom.readImage(buffer, ModelStorageBase.SHORT, 0);
         } catch (final IOException e) {
             buffer = null;
@@ -641,7 +641,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
                     }
                 }
             }
-            final int iValue = (int) (100 * (float) (i + 1) / m_iBOrig);
+            //final int iValue = (int) (100 * (float) (i + 1) / m_iBOrig);
             // kProgressBar.updateValueImmed( iValue );
         }
 

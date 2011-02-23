@@ -11,7 +11,7 @@ import javax.swing.JTextArea;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoBase;
+
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileInfoPARREC;
@@ -97,7 +97,7 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
     private String pathFileName;
     
     /** vol parameters **/
-    private HashMap volParameters;
+    private HashMap<String,String> volParameters;
 
 	
     /** slice gap String **/
