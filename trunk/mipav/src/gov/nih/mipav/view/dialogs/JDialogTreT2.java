@@ -943,7 +943,8 @@ public enum ExitStatus {
      */
     private class GuiBuilder implements ActionListener {
         
-        public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
+        @SuppressWarnings("unused")
+    	public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
 
         private ArrayList<ActionListener> listenerList;
         
@@ -951,7 +952,7 @@ public enum ExitStatus {
 
         private ExitStatus exit;
         
-        private JButton ok, cancel, yes, no;
+        private JButton ok, cancel;
         
         private JDialog parent;
         
@@ -965,6 +966,7 @@ public enum ExitStatus {
             return exit;
         }
         
+        @SuppressWarnings("unused")
         public ActionListener[] getListenerList() {
             ActionListener[] list = new ActionListener[listenerList.size()];
             for(int i=0; i<listenerList.size(); i++) {
@@ -1005,6 +1007,7 @@ public enum ExitStatus {
             return text;
         }
         
+        @SuppressWarnings("unused")
         public JTextField buildIntegerField(final String labelText, int initNum) {
             final JTextField genericField = buildField(labelText, String.valueOf(initNum));
             ActionListener listener = new ActionListener() {
