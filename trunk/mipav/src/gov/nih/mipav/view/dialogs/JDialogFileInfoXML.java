@@ -63,7 +63,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     private boolean isExpanded = false;
 
     /** hashtable to store editor dialogs associated with the table. */
-    private Hashtable editorDialogTable;
+    private Hashtable<?,JDialogEditor> editorDialogTable;
 
     /** file info xml to be displayed. */
     private FileInfoImageXML fileinfo;
@@ -223,7 +223,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
      * 
      * @param e event that triggered this action
      */
-    @SuppressWarnings("unchecked")
+    //@SuppressWarnings("unchecked")
     public void actionPerformed(final ActionEvent e) {
         JDialogEditor editor;
 
