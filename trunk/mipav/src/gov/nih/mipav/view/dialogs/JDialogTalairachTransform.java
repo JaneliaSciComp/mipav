@@ -825,8 +825,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
                 resultImage.clearMask();
 
 				try {
-					ViewJFrameImage imageFrame = new ViewJFrameImage(resultImage, null,
-									   new Dimension(610, 200));
+					new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
 				} catch (OutOfMemoryError error) {
 					System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -835,7 +834,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 				// These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ( (Frame) (imageFrames.elementAt(i))).setTitle(title);
                     ( (Frame) (imageFrames.elementAt(i))).setEnabled(true);
@@ -859,20 +858,5 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
        algorithm = null;
        updateComboBoxImage();
     }  // end AlgorithmPerformed()
-    
-  
-    /**
-    *	Use the GUI results to set up the variables needed to run the algorithm.
-    *	@return		<code>true</code> if parameters set successfully, <code>false</code> otherwise.
-    */
-    private boolean setVariables() {
-       			       		
-        return true;  	
-    }   // end setVariables()
-    
-    /**
-    *	Does nothing
-    */
-    private void callAlgorithm() {} // end callAlgorithm()
     
 }
