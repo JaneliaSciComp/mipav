@@ -735,11 +735,11 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
 	    	    	filename = filename.trim();
 	    	    	String filepreloc = fileLoc.substring(0, loc);
 	    	    	filepreloc = filepreloc.trim();
-	    	    	buildImage(filename,file.getParent()+file.separator+filepreloc+file.separator);
+	    	    	buildImage(filename,file.getParent()+File.separator+filepreloc+File.separator);
     	    	}else {
     	    		String filename = fileLoc;
     	    		filename = filename.trim();
-    	    		buildImage(filename,file.getParent()+file.separator);
+    	    		buildImage(filename,file.getParent()+File.separator);
     	    	}
     	    	
     	    }
