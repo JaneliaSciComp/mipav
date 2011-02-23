@@ -586,7 +586,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
      * DOCUMENT ME!
      */
     public void runIt() {
-        ModelImage cBlurImage = new ModelImage(inImage.getType(), inImage.getExtents(), null);
+        new ModelImage(inImage.getType(), inImage.getExtents(), null);
 
 
         // make an array containing the input data
