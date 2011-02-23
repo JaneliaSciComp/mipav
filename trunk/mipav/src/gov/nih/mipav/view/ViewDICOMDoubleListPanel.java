@@ -68,6 +68,7 @@ public class ViewDICOMDoubleListPanel extends ViewSelectableDoubleListPanel {
      *
      * @param  event  DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
@@ -75,7 +76,7 @@ public class ViewDICOMDoubleListPanel extends ViewSelectableDoubleListPanel {
             int[] selectedRows = leftTable.getSelectedRows();
 
             for (int i = 0; i < selectedRows.length; i++) {
-                Vector dicomRowVector = leftTableModel.getRow(leftTableSorter.modelIndex(selectedRows[i]));
+                Vector<Object> dicomRowVector = leftTableModel.getRow(leftTableSorter.modelIndex(selectedRows[i]));
 
                 Object object = dicomRowVector.elementAt(0);
 
@@ -96,7 +97,7 @@ public class ViewDICOMDoubleListPanel extends ViewSelectableDoubleListPanel {
 
             // todo: explain what happening here: why reverse counter loop?
             for (int i = selectedRows.length - 1; i >= 0; i--) {
-                Vector row = rightTableModel.getRow(rightTableSorter.modelIndex(selectedRows[i]));
+                Vector<Object> row = rightTableModel.getRow(rightTableSorter.modelIndex(selectedRows[i]));
 
                 String tagName = (String) row.elementAt(0);
 
@@ -117,7 +118,7 @@ public class ViewDICOMDoubleListPanel extends ViewSelectableDoubleListPanel {
              */
 
             // save current row order into vector
-            Vector currentRowOrder = getCurrentRowOrder(rightTableSorter);
+            Vector<Object> currentRowOrder = getCurrentRowOrder(rightTableSorter);
 
             int[] selectedRows = rightTable.getSelectedRows();
 
@@ -160,7 +161,7 @@ public class ViewDICOMDoubleListPanel extends ViewSelectableDoubleListPanel {
 
             // re-add the reordered rows
             for (int i = 0; i < currentRowOrder.size(); i++) {
-                rightTableModel.addRow((Vector) currentRowOrder.elementAt(i));
+                rightTableModel.addRow((Vector<Object>)currentRowOrder.elementAt(i));
             }
 
             // re-select previously selected rows
@@ -216,13 +217,14 @@ public class ViewDICOMDoubleListPanel extends ViewSelectableDoubleListPanel {
      *
      * @return  DOCUMENT ME!
      */
-    protected static Vector getCurrentRowOrder(TableSorter tableSorter) {
+    @SuppressWarnings("unchecked")
+    protected static Vector<Object> getCurrentRowOrder(TableSorter tableSorter) {
         SortingTableModel tableModel = (SortingTableModel) tableSorter.getTableModel();
 
-        Vector currentOrder = new Vector();
+        Vector<Object> currentOrder = new Vector<Object>();
 
         for (int i = 0; i < tableModel.getRowCount(); i++) {
-            Vector row = tableModel.getRow(tableSorter.modelIndex(i));
+            Vector<Object> row = tableModel.getRow(tableSorter.modelIndex(i));
 
             currentOrder.addElement(row);
         }
