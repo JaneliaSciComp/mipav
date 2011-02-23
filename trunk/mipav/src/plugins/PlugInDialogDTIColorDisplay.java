@@ -2296,7 +2296,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase implements Algor
      */
     private boolean captureImage() {
         int[] pixels;
-        int bufferSize, xDim, yDim;
+        int bufferSize;
         short[] buffer = null;
         int[] extents = new int[3];
         ModelImage screenCaptureImage = null;

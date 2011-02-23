@@ -11,7 +11,7 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
+
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 /**

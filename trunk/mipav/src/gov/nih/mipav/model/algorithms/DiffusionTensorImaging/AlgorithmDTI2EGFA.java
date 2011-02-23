@@ -4,10 +4,10 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.view.ViewJFrameImage;
+
 import gov.nih.mipav.view.ViewJProgressBar;
 
-import java.awt.Dimension;
+
 import java.io.IOException;
 
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
@@ -157,7 +157,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             return;
         }
         int iLen = m_kDTIImage.getExtents()[0] * m_kDTIImage.getExtents()[1] * m_kDTIImage.getExtents()[2];
-        int iZDim = m_kDTIImage.getExtents()[2];
+        //int iZDim = m_kDTIImage.getExtents()[2];
         int iSliceSize = m_kDTIImage.getExtents()[0] * m_kDTIImage.getExtents()[1];
         float[] afData = new float[iLen];
         float[] afTraceData = new float[iLen];

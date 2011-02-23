@@ -7,9 +7,9 @@ import gov.nih.ndar.ws.client.Startup;
 import info.clearthought.layout.*;
 
 import java.awt.Dimension;
-import java.awt.Frame;
+
 import java.awt.event.*;
-import java.io.FileNotFoundException;
+
 import java.util.*;
 
 import javax.swing.*;

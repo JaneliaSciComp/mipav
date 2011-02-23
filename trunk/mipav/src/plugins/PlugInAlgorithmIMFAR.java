@@ -716,10 +716,10 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 				affiliationNumber = Integer.valueOf(affiliationString);
 				String affiliationString2;
 				affiliationString2 = authsSplit[1].substring(authsSplit[1].length() - 2);
-				int affiliationNumber2;
+			
 				boolean doubleDigit = false;
 				try{
-					affiliationNumber2 = Integer.valueOf(affiliationString);
+					Integer.valueOf(affiliationString);
 					affiliationNumber = Integer.valueOf(affiliationString + affiliationString2);
 					doubleDigit = true;
 					
@@ -754,7 +754,7 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 	public ArrayList<String> parseAllAuthors(String authorsAndUnivs) {
 	ArrayList<String> authorsList = new ArrayList<String>();
 	String affiliationString;
-	int affiliationNumber, affiliationNumber2;
+
 	boolean doubleDigit;
 	String[] splits = authorsAndUnivs.split(",");
 	//remove * and spaces
@@ -825,20 +825,20 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 			}
 			
 			for(int i=0;i<index-1;i++) {
-				boolean hasAffiliation = true;
+		
 				//splits[i] = splits[i].replaceAll("[a-zA-Z]\\. ", "");
 				affiliationString = splits[i].substring(splits[i].length() - 1);
 				try{
-					affiliationNumber = Integer.valueOf(affiliationString);
+					Integer.valueOf(affiliationString);
 				}catch(NumberFormatException e) {
-					hasAffiliation = false;
+					
 				}
 				String affiliationString2;
 				affiliationString2 = splits[i].substring(splits[i].length() - 2);
 				doubleDigit = false;
 				try{
-					affiliationNumber2 = Integer.valueOf(affiliationString);
-					affiliationNumber = Integer.valueOf(affiliationString + affiliationString2);
+					Integer.valueOf(affiliationString);
+					Integer.valueOf(affiliationString + affiliationString2);
 					doubleDigit = true;
 					
 				}catch(NumberFormatException e) {
@@ -857,7 +857,7 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 			
 			boolean hasAffiliation = true;
 			try{
-				affiliationNumber = Integer.valueOf(affiliationString);
+				Integer.valueOf(affiliationString);
 			}catch(NumberFormatException e) {
 				hasAffiliation = false;
 			}
@@ -865,8 +865,8 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 			affiliationString2 = authsSplit[0].substring(authsSplit[0].length() - 2);
 			doubleDigit = false;
 			try{
-				affiliationNumber2 = Integer.valueOf(affiliationString);
-				affiliationNumber = Integer.valueOf(affiliationString + affiliationString2);
+				Integer.valueOf(affiliationString);
+				Integer.valueOf(affiliationString + affiliationString2);
 				doubleDigit = true;
 				
 			}catch(NumberFormatException e) {
@@ -883,12 +883,12 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 			
 			//authsSplit[1] = authsSplit[1].replaceAll("[a-zA-Z]\\. ", "");
 			affiliationString = authsSplit[1].substring(authsSplit[1].length() - 1);
-			affiliationNumber = Integer.valueOf(affiliationString);
+			Integer.valueOf(affiliationString);
 			affiliationString2 = authsSplit[1].substring(authsSplit[1].length() - 2);
 			doubleDigit = false;
 			try{
-				affiliationNumber2 = Integer.valueOf(affiliationString);
-				affiliationNumber = Integer.valueOf(affiliationString + affiliationString2);
+				Integer.valueOf(affiliationString);
+				Integer.valueOf(affiliationString + affiliationString2);
 				doubleDigit = true;
 				
 			}catch(NumberFormatException e) {
