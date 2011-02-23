@@ -535,8 +535,6 @@ public class JPanelTreeController extends JPanel implements ActionListener, Tree
      * @param  b  the destination tree.
      */
     protected void copySelected(JTree a, JTree b) {
-        int i;
-        JTree totalTree = new JTree();
 
         // ignore if there are no selections made.
         if (a.isSelectionEmpty()) {
@@ -627,6 +625,7 @@ public class JPanelTreeController extends JPanel implements ActionListener, Tree
      *
      * @param  noImage  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void createAllDownButton(boolean noImage) {
         createAllTreeBButton(noImage);
     }
@@ -716,6 +715,7 @@ public class JPanelTreeController extends JPanel implements ActionListener, Tree
      *
      * @param  noImage  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void createAllUpButton(boolean noImage) {
         createAllTreeAButton(noImage);
     }
@@ -745,6 +745,7 @@ public class JPanelTreeController extends JPanel implements ActionListener, Tree
      *
      * @param  noImage  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void createDownButton(boolean noImage) {
         createTreeBButton(noImage);
     }
@@ -834,6 +835,7 @@ public class JPanelTreeController extends JPanel implements ActionListener, Tree
      *
      * @param  noImage  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void createUpButton(boolean noImage) {
         createTreeAButton(noImage);
     }
