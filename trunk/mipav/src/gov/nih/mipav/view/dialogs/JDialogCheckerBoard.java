@@ -100,6 +100,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
      *
      * @param  event  Event that triggers function.
      */
+    @SuppressWarnings("unchecked")
     public void actionPerformed(ActionEvent event) {
         int rowNumber, columnNumber;
 
