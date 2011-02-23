@@ -79,7 +79,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * Vector list of AlgorithmInterface objects. When the algorithm has been stopped or completed, all listeners in
      * this list are notified.
      */
-    private Vector objectList = new Vector();
+    private Vector<AlgorithmInterface> objectList = new Vector<AlgorithmInterface>();
 
     /** Start time (in milliseconds) to be used to compute elapsed time. */
     private long startTime = 0;
