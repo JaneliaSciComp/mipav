@@ -2277,6 +2277,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
      *
      * @return  List of preoptimized and optimized points.
      */
+    @SuppressWarnings("unchecked")
     private Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
         AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 32, 1);
 
@@ -2601,7 +2602,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             fireProgressStateChanged(20 + ((count + 1) / minima.size() * 5));
-            tempInitial = ((MatrixListItem) en.nextElement()).initial;
+            tempInitial = (en.nextElement()).initial;
 
             if (testBounds3D(tempInitial, initialMessage)) {
                 item = new MatrixListItem(maxPossibleCost);
@@ -2675,14 +2676,14 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         MatrixListItem item = null;
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+            item = (en.nextElement());
             item.initial[3] *= level4FactorXY;
             item.initial[4] *= level4FactorXY;
             item.initial[5] *= level4FactorZ;
         }
 
         for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+            item = (en.nextElement());
             item.initial[3] *= level4FactorXY;
             item.initial[4] *= level4FactorXY;
             item.initial[5] *= level4FactorZ;
@@ -2696,7 +2697,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         powell.setLimits(limits);
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
-            item = ((MatrixListItem) en.nextElement());
+            item = (en.nextElement());
             powell.setInitialPoint(item.initial);
             powell.measureCost();
             item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
@@ -2707,7 +2708,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         }
 
         for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements() && !threadStopped;) {
-            item = ((MatrixListItem) en.nextElement());
+            item = (en.nextElement());
             powell.setInitialPoint(item.initial);
             powell.measureCost();
             item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
@@ -2739,7 +2740,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             fireProgressStateChanged(25 + ((i + 1) * 4 / total));
 
             // add i-th mimium to newMinima Vector
-            powell.setInitialPoint(((MatrixListItem) minima.elementAt(i)).initial);
+            powell.setInitialPoint((minima.elementAt(i)).initial);
             powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.run();
 
@@ -2757,7 +2758,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             }
 
             // add i-th optimized minimum to newMinima vector
-            powell.setInitialPoint(((MatrixListItem) optMinima.elementAt(i)).initial);
+            powell.setInitialPoint((optMinima.elementAt(i)).initial);
             powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.run();
 
@@ -2785,7 +2786,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         for (int i = 0; i < (2 * total); i++) {
             Preferences.debug("\n Minimum number " + (i + 1) + ": \n");
-            best4Now = (MatrixListItem) newMinima.elementAt(i);
+            best4Now = newMinima.elementAt(i);
             Preferences.debug(best4Now.toAbridgedString());
         }
 
@@ -2804,7 +2805,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         for (int i = (2 * total) - 1; i >= 1; i--) {
 
-            if (!checkMinimum((MatrixListItem) newMinima.elementAt(i))) {
+            if (!checkMinimum(newMinima.elementAt(i))) {
                 newMinima.removeElementAt(i);
                 remove++;
             }
@@ -2812,7 +2813,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         if (remove < ((2 * total) - 1)) {
 
-            if (!checkMinimum((MatrixListItem) newMinima.elementAt(0))) {
+            if (!checkMinimum(newMinima.elementAt(0))) {
                 newMinima.removeElementAt(0);
                 remove++;
             }
@@ -2842,7 +2843,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 fireProgressStateChanged(29 + ((((j * 2 * total) + i + 1) * 3) / (total * 12)));
 
                 // Current "initial" is element for this i.
-                initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
+                initial = (double[]) (newMinima.elementAt(i)).initial.clone();
 
                 // Output to debug window.
                 if (((i + 1) % 2) == 0) {
@@ -2914,7 +2915,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
                 for (int i = 0; (i < ((2 * total) - remove)) && !threadStopped; i++) {
                     fireProgressStateChanged(32 + ((((j * 2 * total) + i + 1) * 3) / (total * 8)));
-                    initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
+                    initial = (double[]) (newMinima.elementAt(i)).initial.clone();
 
                     if (j == 1) {
                         scaleDelta = 0.9f;
@@ -2948,7 +2949,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         // Print out best value from level4.
         // Preferences.debug("Top minimum from Level Four: \n");
-        best4Now = (MatrixListItem) perturbList.elementAt(0);
+        best4Now = perturbList.elementAt(0);
         Preferences.debug(best4Now.toString());
 
         fireProgressStateChanged(35);
@@ -3174,7 +3175,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         // Some problem here b/c initial point is starting off way out of bounds.
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+            item = (en.nextElement());
             item.initial[3] *= level2FactorXY;
             item.initial[4] *= level2FactorXY;
             item.initial[5] *= level2FactorZ;
@@ -3190,7 +3191,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         fireProgressStateChanged("Measuring costs of minima");
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
-            item = ((MatrixListItem) en.nextElement());
+            item = (en.nextElement());
 
             if (testBounds3D(item.initial, initialMessage)) {
                 item.cost = maxPossibleCost;
@@ -3213,7 +3214,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         linkProgressToAlgorithm(powell);
         powell.setProgressValues(generateProgressValues(35, 43));
 
-        powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
+        powell.setInitialPoint((minima.elementAt(0)).initial);
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.run();
 
