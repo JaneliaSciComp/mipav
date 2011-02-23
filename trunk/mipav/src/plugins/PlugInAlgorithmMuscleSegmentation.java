@@ -1366,15 +1366,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			/**Whether the current node is pointing to another muscle pane.*/
 			private boolean isPointing;
 			
-			public DependencyNode(Point p1, Point2D.Double p2) {
+			/*public DependencyNode(Point p1, Point2D.Double p2) {
 				super(p1,p2);
 				isPointing = false;
 				
-			}
+			}*/
 			
-			private boolean isPointing() {
+			/*private boolean isPointing() {
 				return isPointing;
-			}
+			}*/
 			
 			public void mouseDragged(MouseEvent e) {
 				//TODO:Convert e.getLocationOnScreen to 1.5 compatible call

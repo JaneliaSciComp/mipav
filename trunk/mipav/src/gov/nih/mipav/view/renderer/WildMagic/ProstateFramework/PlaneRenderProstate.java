@@ -161,9 +161,9 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
             super();
         }
 
-        public LocalVolumeVOIVector(final int initialsize) {
+        /*public LocalVolumeVOIVector(final int initialsize) {
             super(initialsize);
-        }
+        }*/
     }
 
     private class PolylineVector extends Vector<Polyline> {
@@ -174,9 +174,9 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
             super();
         }
 
-        public PolylineVector(final int initialsize) {
+       /* public PolylineVector(final int initialsize) {
             super(initialsize);
-        }
+        }*/
     }
 
     /** Use serialVersionUID for interoperability. */
