@@ -888,18 +888,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
 
         }
 
-        /**
-         * DOCUMENT ME!
-         *
-         * @param   es  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
-         */
-        public double cost(double[][] es) {
-            double value = 0;
-
-            return value;
-        }
+        
     }
 
     @Override
