@@ -214,7 +214,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
 
                         if ((image.getNDims() > 2) &&
                                 (((ViewJComponentEditImage) (component)).getCursorMode() ==
-                                     ((ViewJComponentEditImage) (component)).RECTANGLE3D)) {
+                                     ViewJComponentBase.RECTANGLE3D)) {
 
                             for (i = 0; i < image.getExtents()[2]; i++) {
                                 z[0] = z[1] = z[2] = z[3] = i;
@@ -287,7 +287,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
 
                                     if ((image.getNDims() > 2) &&
                                             (((ViewJComponentEditImage) (component)).getCursorMode() ==
-                                                 ((ViewJComponentEditImage) (component)).RECTANGLE3D)) {
+                                                 ViewJComponentBase.RECTANGLE3D)) {
 
                                         for (j = 0; j < image.getExtents()[2]; j++) {
                                             z[0] = z[1] = z[2] = z[3] = j;
