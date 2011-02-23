@@ -794,7 +794,7 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
         float maxGrad;
         float divisor;
         int z;
-        Vector[] curves;
+        Vector<VOIBase>[] curves;
         int extents2D[];
         int totalLength;
         int offset;
