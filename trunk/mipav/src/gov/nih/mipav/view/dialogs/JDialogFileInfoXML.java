@@ -223,7 +223,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
      * 
      * @param e event that triggered this action
      */
-    //@SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     public void actionPerformed(final ActionEvent e) {
         JDialogEditor editor;
 
