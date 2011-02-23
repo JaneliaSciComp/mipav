@@ -530,7 +530,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         int nBoundingVOIs;
         @SuppressWarnings("unused")
         ViewJFrameColocalizationEM frameColocalize;
-        Vector frameList;
+        Vector<ViewImageUpdateInterface> frameList;
         ViewJFrameBase controlFrame = null;
         float[] destRes;
         int voiSize = 0;
@@ -1001,7 +1001,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         int nBoundingVOIs;
         @SuppressWarnings("unused")
         ViewJFrameColocalizationEM frameColocalize;
-        Vector frameList;
+        Vector<ViewImageUpdateInterface> frameList;
         ViewJFrameBase controlFrame = null;
         float[] destRes;
         int voiSize = 0;
@@ -1513,7 +1513,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         int secondColor;
         @SuppressWarnings("unused")
         ViewJFrameColocalizationEM frameColocalize;
-        Vector frameList;
+        Vector<ViewImageUpdateInterface> frameList;
         ViewJFrameBase controlFrame = null;
         float[] destRes;
         int voiSize = 0;
@@ -2082,7 +2082,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         int secondColor;
         @SuppressWarnings("unused")
         ViewJFrameColocalizationEM frameColocalize;
-        Vector frameList;
+        Vector<ViewImageUpdateInterface> frameList;
         ViewJFrameBase controlFrame = null;
         float[] destRes;
         int voiSize = 0;
