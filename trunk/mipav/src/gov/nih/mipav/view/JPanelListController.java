@@ -530,7 +530,7 @@ public class JPanelListController extends JPanel implements ActionListener, List
      */
     protected void copySelected(JList a, JList b) {
         int i;
-        Vector totalList = new Vector();
+        Vector<Object> totalList = new Vector<Object>();
 
         // ignore if there are no selections made.
         if (a.isSelectionEmpty()) {
@@ -579,7 +579,7 @@ public class JPanelListController extends JPanel implements ActionListener, List
             // not selected.  Replace the old
             // list with the new list of
             // previously unselected items.
-            Vector unselected = new Vector();
+            Vector<Object> unselected = new Vector<Object>();
 
             for (int i = 0; i < list.getModel().getSize(); i++) {
 
@@ -617,7 +617,7 @@ public class JPanelListController extends JPanel implements ActionListener, List
      * @param  list  The list which is to have the duplicate items removed.
      */
     protected void removeRepeatedElements(JList list) {
-        Vector unrepeated = new Vector(); // holds the list of selected elements
+        Vector<Object> unrepeated = new Vector<Object>(); // holds the list of selected elements
         boolean repeatFound = false; // if routine found repeated element
 
         if ((list == null) || (list.getModel().getSize() == 0)) {
@@ -678,6 +678,7 @@ public class JPanelListController extends JPanel implements ActionListener, List
      *
      * @param  noImage  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void createAllDownButton(boolean noImage) {
         createAllListBButton(noImage);
     }
@@ -767,6 +768,7 @@ public class JPanelListController extends JPanel implements ActionListener, List
      *
      * @param  noImage  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void createAllUpButton(boolean noImage) {
         createAllListAButton(noImage);
     }
@@ -796,6 +798,7 @@ public class JPanelListController extends JPanel implements ActionListener, List
      *
      * @param  noImage  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void createDownButton(boolean noImage) {
         createListBButton(noImage);
     }
@@ -885,6 +888,7 @@ public class JPanelListController extends JPanel implements ActionListener, List
      *
      * @param  noImage  DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void createUpButton(boolean noImage) {
         createListAButton(noImage);
     }
