@@ -302,6 +302,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     /**
      * Used to store all paths for levelEigth, levelFour, levelTwo and levelOne.
      */
+    @SuppressWarnings("unchecked")
     private final Vector<Vector<Vector3f>>[] paths = new Vector[6];
 
     /**
@@ -1776,6 +1777,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         return -1;
     }
 
+    @SuppressWarnings("unchecked")
     public void print(final Vector data, final String message) {
         if (data == null || data.size() == 0) {
             return;
@@ -2316,6 +2318,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * 
      * @return List of preoptimized and optimized points.
      */
+    @SuppressWarnings("unchecked")
     public Vector<MatrixListItem>[] levelEight(final ModelSimpleImage ref, final ModelSimpleImage input) {
         double factor;
         final AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 32, 1);
