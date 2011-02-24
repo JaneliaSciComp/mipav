@@ -397,14 +397,16 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
                 if (getHistoLUTComponentA() != null) {
                     outputBox.setEnabled(false);
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().LINEAR);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.LINEAR);
                     histoPanelA.updateLUTRecorder();
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
                     outputBoxB.setEnabled(false);
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().LINEAR);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.LINEAR);
                     histoPanelB.updateLUTRecorder();
                 }
             }
@@ -663,7 +665,8 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
                 if ( (otsu > panelParent.getImageA().getMin()) && (otsu < panelParent.getImageA().getMax())) {
 
-                    if (getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV) {
+                    getHistoLUTComponentA();
+					if (getHistoLUTComponentA().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD_INV) {
                         threshLowerF.setText(Double.toString(otsu));
                         threshUpperF.setText(Double.toString(panelParent.getImageA().getMax()));
                         getHistoLUTComponentA().updateDualThreshold((float) otsu,
@@ -688,7 +691,8 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
                 if ( (otsu > panelParent.getImageB().getMin()) && (otsu < panelParent.getImageB().getMax())) {
 
-                    if (getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV) {
+                    getHistoLUTComponentB();
+					if (getHistoLUTComponentB().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD_INV) {
                         threshLowerBF.setText(Double.toString(otsu));
                         threshUpperBF.setText(Double.toString(panelParent.getImageB().getMax()));
                         getHistoLUTComponentB().updateDualThreshold((float) otsu,
@@ -724,7 +728,8 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
                 if ( (ent > panelParent.getImageA().getMin()) && (ent < panelParent.getImageA().getMax())) {
 
-                    if (getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV) {
+                    getHistoLUTComponentA();
+					if (getHistoLUTComponentA().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD_INV) {
                         threshLowerF.setText(Double.toString(ent));
                         threshUpperF.setText(Double.toString(panelParent.getImageA().getMax()));
                         getHistoLUTComponentA().updateDualThreshold((float) ent,
@@ -756,7 +761,8 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
                 if ( (ent > panelParent.getImageB().getMin()) && (ent < panelParent.getImageB().getMax())) {
 
-                    if (getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV) {
+                    getHistoLUTComponentB();
+					if (getHistoLUTComponentB().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD_INV) {
                         threshLowerBF.setText(Double.toString(ent));
                         threshUpperBF.setText(Double.toString(panelParent.getImageB().getMax()));
                         getHistoLUTComponentB().updateDualThreshold((float) ent,
@@ -774,12 +780,14 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().ALPHA);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.ALPHA);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().ALPHA);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.ALPHA);
                 }
             }
         } else if (event.getActionCommand().equals("red")) {
@@ -787,12 +795,14 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().RED);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.RED);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().RED);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.RED);
                 }
             }
         } else if (event.getActionCommand().equals("green")) {
@@ -800,12 +810,14 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().GREEN);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.GREEN);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().GREEN);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.GREEN);
                 }
             }
         } else if (event.getActionCommand().equals("blue")) {
@@ -813,12 +825,14 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().BLUE);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.BLUE);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().BLUE);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.BLUE);
                 }
             }
         } else if (event.getActionCommand().equals("Threshold")) {
@@ -1598,7 +1612,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         // Slider has changed lets update.
         if ( (source == tabbedPane) && isImageASelected()) {
-            panelParent.setDisplayMode(panelParent.IMAGE_A);
+            panelParent.setDisplayMode(ViewJFrameBase.IMAGE_A);
             panelParent.setLUTA(panelParent.getLUTa());
             panelParent.setTitle("Lookup Table: " + panelParent.getImageA().getImageName());
 
@@ -1606,7 +1620,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
                 calculateThreshold();
             }
         } else if ( (source == tabbedPane) && isImageBSelected() && (panelParent.getImageB() != null)) {
-            panelParent.setDisplayMode(panelParent.IMAGE_B);
+            panelParent.setDisplayMode(ViewJFrameBase.IMAGE_B);
             panelParent.setLUTB(panelParent.getLUTb());
             panelParent.setTitle("Lookup Table: " + panelParent.getImageB().getImageName());
 
@@ -1710,7 +1724,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
                 }
             }
 
-            calcHistogram(panelParent.IMAGE_A, entireFlag, progressFlag);
+            calcHistogram(ViewJFrameBase.IMAGE_A, entireFlag, progressFlag);
             setLUTa(panelParent.getLUTa());
             getHistoLUTComponentA().setHistogramInfo(panelParent.getImageA(), histogramA);
 
@@ -1734,7 +1748,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
             getLUTComponentB().show(panelParent.getLUTb());
 
-            calcHistogram(panelParent.IMAGE_B, entireFlag, progressFlag);
+            calcHistogram(ViewJFrameBase.IMAGE_B, entireFlag, progressFlag);
             setLUTb(panelParent.getLUTb());
             getHistoLUTComponentB().setHistogramInfo(panelParent.getImageB(), histogramB);
 
@@ -1805,7 +1819,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      * @param entireFlag Flag indicating if histogram should be made of entire image.
      */
     private void buildPanelA(ModelImage image, ModelLUT LUT, boolean entireFlag) {
-        calcHistogram(panelParent.IMAGE_A, entireFlag, true);
+        calcHistogram(ViewJFrameBase.IMAGE_A, entireFlag, true);
 
         JPanel controlPanel = new JPanel(new GridBagLayout());
 
@@ -2083,7 +2097,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     private void buildPanelB(ModelImage image, ModelLUT LUT, boolean entireFlag) {
 
         // go calc histo
-        calcHistogram(panelParent.IMAGE_B, entireFlag, true);
+        calcHistogram(ViewJFrameBase.IMAGE_B, entireFlag, true);
 
         JPanel controlPanelB = new JPanel(new GridBagLayout());
 
@@ -2364,7 +2378,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         int[] dimExtentsA = new int[1];
         int[] dimExtentsB = new int[1];
 
-        if ( (panelParent.getImageA() != null) && (imageAorB == panelParent.IMAGE_A)) {
+        if ( (panelParent.getImageA() != null) && (imageAorB == ViewJFrameBase.IMAGE_A)) {
 
             dimExtentsA[0] = 256;
             histogramA = new ModelHistogram(ModelStorageBase.INTEGER, dimExtentsA);
@@ -2376,7 +2390,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
             histoAlgoA.run();
         }
 
-        if ( (panelParent.getImageB() != null) && (imageAorB == panelParent.IMAGE_B)) {
+        if ( (panelParent.getImageB() != null) && (imageAorB == ViewJFrameBase.IMAGE_B)) {
             dimExtentsB[0] = 256;
             histogramB = new ModelHistogram(ModelStorageBase.INTEGER, dimExtentsB);
 
