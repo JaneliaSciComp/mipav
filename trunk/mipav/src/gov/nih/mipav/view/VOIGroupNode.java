@@ -103,7 +103,7 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
 	    		
 	    	}
     	}else {
-    		Vector curveList = ((VOI) getUserObject()).getCurves();
+    		Vector<VOIBase> curveList = ((VOI) getUserObject()).getCurves();
     		if (curveList.size() > 0) {
     			add(new VOIFrameNode(curveList, 0));
     		}
