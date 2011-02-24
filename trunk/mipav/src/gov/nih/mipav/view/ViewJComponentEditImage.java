@@ -8,6 +8,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -3171,7 +3172,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param g graphics
      */
     public void paintComponentForPrinter(final int tx, final int ty, final Graphics g) {
-        final ViewVOIVector VOIs = imageActive.getVOIs();
 
         if (g == null) {
             MipavUtil.displayError("ComponentEditImage.paintComponent: graphics = null");
@@ -5176,9 +5176,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
         int yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
-        final int x = mouseEvent.getX();
-        final int y = mouseEvent.getY();
-
         if ( (xS < 0) || (xS >= imageActive.getExtents()[0]) || (yS < 0) || (yS >= imageActive.getExtents()[1])) {
             return;
         }
@@ -5941,8 +5938,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     public void resetLUT(final ModelLUT LUT, final ModelImage image) {
         float min, max;
         final float[] x = new float[4];
-        final float[] y = new float[4];
-        final float[] z = new float[4];
+        final float[] y = new float[4];       
         final Dimension dim = new Dimension(256, 256);
 
         // Set LUT min max values;
@@ -5980,7 +5976,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     private void resetRGB(ModelRGB RGBT) {
         final float[] x = new float[4];
         final float[] y = new float[4];
-        final float[] z = new float[4];
         final Dimension dim = new Dimension(256, 256);
 
         // Set LUT min max values;
@@ -6634,22 +6629,22 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 return new String(resultStr
                         + inf.getResolutions()[0]
                                                + " "
-                                               + FileInfoBase.getUnitsOfMeasureAbbrevStr(inf
-                                                       .getUnitsOfMeasure()[0]));
+                                               + (Unit.getUnitFromLegacyNum(inf
+                                                       .getUnitsOfMeasure()[0])).getAbbrev());
             } else if (attribString.equals(atts[12])) {
                 return new String(resultStr
                         + inf.getResolutions()[1]
                                                + " "
-                                               + FileInfoBase.getUnitsOfMeasureAbbrevStr(inf
-                                                       .getUnitsOfMeasure()[1]));
+                                               + (Unit.getUnitFromLegacyNum(inf
+                                                       .getUnitsOfMeasure()[1])).getAbbrev());
             } else if (attribString.equals(atts[13])) {
 
                 if (inf.getExtents().length > 2) {
                     return new String(resultStr
                             + inf.getResolutions()[2]
                                                    + " "
-                                                   + FileInfoBase.getUnitsOfMeasureAbbrevStr(inf
-                                                           .getUnitsOfMeasure()[2]));
+                                                   + (Unit.getUnitFromLegacyNum(inf
+                                                           .getUnitsOfMeasure()[2])).getAbbrev());
                 }
             } else if (attribString.equals(atts[14])) {
 
@@ -6657,8 +6652,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     return new String(resultStr
                             + inf.getResolutions()[3]
                                                    + " "
-                                                   + FileInfoBase.getUnitsOfMeasureAbbrevStr(inf
-                                                           .getUnitsOfMeasure()[3]));
+                                                   + (Unit.getUnitFromLegacyNum(inf
+                                                           .getUnitsOfMeasure()[3])).getAbbrev());
                 }
             } else if (attribString.equals(atts[15])) {
                 return resultStr + Float.toString(inf.getSliceThickness());
@@ -6744,7 +6739,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         Vector3f patientPt = new Vector3f();
         super.ScreenToLocal( kScreen, patientPt );
         // axisFlip represents whether to invert the axes after they are reordered
-        final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(getActiveImage(), orientation);
+        //final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(getActiveImage(), orientation);
         //if ( axisFlip[0] ) patientPt.X -= 1;
         //if ( axisFlip[1] ) patientPt.Y -= 1;
         //if ( axisFlip[2] ) patientPt.Z -= 1;
