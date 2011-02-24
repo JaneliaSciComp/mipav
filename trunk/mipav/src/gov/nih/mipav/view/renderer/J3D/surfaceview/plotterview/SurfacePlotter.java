@@ -1069,7 +1069,7 @@ public class SurfacePlotter extends RenderViewBase implements MouseListener {
         }
 
 
-        Hashtable labelTableZ = new Hashtable();
+        Hashtable<Integer,JLabel> labelTableZ = new Hashtable<Integer,JLabel> ();
 
         labelTableZ.put(new Integer(1), label1);
         labelTableZ.put(new Integer(50 + 1), label50);
@@ -1118,7 +1118,7 @@ public class SurfacePlotter extends RenderViewBase implements MouseListener {
             labelLast.setFont(MipavUtil.font12);
             labelLast.setEnabled(true);
 
-            Hashtable labelTableFrame = new Hashtable();
+            Hashtable<Integer,JLabel>  labelTableFrame = new Hashtable<Integer,JLabel> ();
             labelTableFrame.put(new Integer(1), label_1);
             labelTableFrame.put(new Integer(middle), labelMiddle);
             labelTableFrame.put(new Integer(last), labelLast);
@@ -1488,7 +1488,7 @@ public class SurfacePlotter extends RenderViewBase implements MouseListener {
             progress = new ViewJProgressBar("Loading quad mesh", "Loading quad mesh", 0, 100, false, null, null);
 
             int type = file.readInt();
-            int count = file.readInt();
+            //int count = file.readInt();
 
             if (type != 2) {
                 MipavUtil.displayError("File " + directory + fileName + " is not a quad mesh.");
