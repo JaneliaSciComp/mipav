@@ -156,6 +156,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      *
      * @return  A new copy of the tag table.
      */
+    @SuppressWarnings("unchecked")
     public Object clone() {
         FileDicomTagTable newTable;
 
@@ -232,6 +233,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      *
      * @return  A new copy of all of the dicom tags.
      */
+    @SuppressWarnings("unchecked")
     public final Hashtable<FileDicomKey,FileDicomTag> getTagList() {
 	Hashtable<FileDicomKey,FileDicomTag> tagList;
 
