@@ -338,6 +338,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
         // does NOT NOT NOT NOT NOT handle ANALYZE_MULTIFILE files.
         boolean mgh = false;
+        @SuppressWarnings("unused")
         boolean nifti = false;
         boolean nrrd = false;
         boolean spm = false;
@@ -1077,9 +1078,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     public boolean loadImage(final Object obj, final ViewJComponentEditImage compImage, final boolean stackFlag,
             final boolean doOrigins, final boolean doOrients, final double defaultValue, final double defaultRed,
             final double defaultGreen, final double defaultBlue) {
-        final boolean resample = false;
-        final int[] axisA;
-        final int[] axisB;
+        //final boolean resample = false;
+        //final int[] axisA;
+       // final int[] axisB;
         boolean success = false;
 
         // get the model image for the image location
@@ -3990,6 +3991,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * 
      * @return true if the image is either 3D or 4D (but not if the 4th dim differs)
      */
+    @SuppressWarnings("unused")
     private boolean isImageResampleable(final ModelImage image) {
         final int minDims = Math.min(imageB.getNDims(), imageA.getNDims());
 
@@ -4025,6 +4027,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * 
      * @return true if a resampling of the image is required
      */
+    @SuppressWarnings("unused")
     private boolean isResampleNeeded(final ModelImage image) {
         final int minDims = Math.min(image.getNDims(), imageA.getNDims());
         Preferences.debug("minDims = " + minDims, Preferences.DEBUG_MINOR);
@@ -4075,6 +4078,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * 
      * @param image the image to resample and load as imageB
      */
+    @SuppressWarnings("unused")
     private void loadResampledImage(ModelImage image) {
 
         if ( (image.getNDims() == 3) || (image.getNDims() == 4)) {
@@ -4165,6 +4169,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * 
      * @return true if the reordering of the Afni file is successful, false otherwise
      */
+    @SuppressWarnings("unused")
     private boolean reorderAfni(ModelImage image, final int[] axisA, final int[] axisB) {
         int[] resUnit = null;
         int[] newResUnit = null;
@@ -4664,6 +4669,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * 
      * @return -1 if failure; 0 if no tranformation needed; and 1 if transformation and set successful.
      */
+    @SuppressWarnings("unused")
     private int setImageBAfni(final ModelImage imageA, ModelImage image) {
         final FileInfoAfni imageAInfo = (FileInfoAfni) imageA.getFileInfo(0);
         final FileInfoAfni imageBInfo = (FileInfoAfni) image.getFileInfo(0);
@@ -4786,13 +4792,11 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             image.exportData(0, bufferSize, imgBuffer);
         } catch (final IOException error) {
             MipavUtil.displayError("ViewJFrameBase: IOException error on exportData");
-            afniProgressBar.dispose();
 
             return -1;
         } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("ViewJFrameBase: Out of memory on new image buffer.");
-            afniProgressBar.dispose();
 
             return -1;
         }
@@ -4821,7 +4825,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         } catch (final OutOfMemoryError e) {
             System.gc();
             MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage");
-            afniProgressBar.dispose();
 
             return -1;
         }
@@ -5531,7 +5534,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         volSize = sliceSize * iZdim;
 
         int tOffset;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23, T30, T31, T32, T33;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         boolean interp;
         int xOffset, yOffset, zOffset;
 
@@ -5550,10 +5553,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         T21 = xfrm.Get(2, 1);
         T22 = xfrm.Get(2, 2);
         T23 = xfrm.Get(2, 3);
-        T30 = xfrm.Get(3, 0);
-        T31 = xfrm.Get(3, 1);
-        T32 = xfrm.Get(3, 2);
-        T33 = xfrm.Get(3, 3);
 
         tLast = Math.max(1, iTdim);
 
@@ -6373,7 +6372,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         volSize = sliceSize * iZdim;
 
         int tOffset;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23, T30, T31, T32, T33;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         boolean doTransform;
         boolean interp;
         int xOffset, yOffset, zOffset;
@@ -6393,10 +6392,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         T21 = xfrm.Get(2, 1);
         T22 = xfrm.Get(2, 2);
         T23 = xfrm.Get(2, 3);
-        T30 = xfrm.Get(3, 0);
-        T31 = xfrm.Get(3, 1);
-        T32 = xfrm.Get(3, 2);
-        T33 = xfrm.Get(3, 3);
 
         tLast = Math.max(1, iTdim);
 
