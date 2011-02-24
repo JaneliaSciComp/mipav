@@ -78,7 +78,7 @@ public class ViewTableModel extends DefaultTableModel implements Serializable {
      *
      * @return  Class of column.
      */
-    public Class getColumnClass(int col) {
+    public Class<? extends Object> getColumnClass(int col) {
 
         try {
             Vector v = (Vector) dataVector.elementAt(0);
