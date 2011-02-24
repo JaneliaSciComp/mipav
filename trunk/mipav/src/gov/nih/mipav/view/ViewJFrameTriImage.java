@@ -257,7 +257,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * A list of CoordinateChangeListeners who want to know about changes to the coordinate currently pointed to by the
      * tri-image frame's crosshairs.
      */
-    protected Vector coordinateListeners = new Vector();
+    protected Vector<CoordinateChangeListener> coordinateListeners = new Vector<CoordinateChangeListener>();
 
     /** Spinner component for the crosshair gap size. */
     protected JSpinner crosshairSpinner;
@@ -503,11 +503,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         } else if (command.equals("ScrollLink")) {
             linkedScrolling = !linkedScrolling;
 
-            final Enumeration names = userInterface.getRegisteredImageNames();
+            final Enumeration<String> names = userInterface.getRegisteredImageNames();
 
             boolean sameDims = false;
             while (names.hasMoreElements()) {
-                final String name = (String) names.nextElement();
+                final String name = names.nextElement();
                 sameDims = true;
 
                 if ( !imageA.getImageName().equals(name)) {
@@ -925,7 +925,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 return;
             }
 
-            final Vector listeners = new Vector();
+            final Vector<PaintGrowListener> listeners = new Vector<PaintGrowListener>();
 
             for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
@@ -1088,15 +1088,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 }
             }
         } else if (command.equals("createTransformation")) {
-            JDialogTriImageTransformation dialog;
-            final float originalZoom = triImage[ViewJFrameTriImage.AXIAL_A].getZoomX();
 
             if (getSelectedImage() == ViewJComponentBase.IMAGE_A) {
-                dialog = new JDialogTriImageTransformation(this, imageA);
+                new JDialogTriImageTransformation(this, imageA);
             } else if (getSelectedImage() == ViewJComponentBase.IMAGE_B) {
-                dialog = new JDialogTriImageTransformation(this, imageB);
+                new JDialogTriImageTransformation(this, imageB);
             } else if (getSelectedImage() == ViewJComponentBase.BOTH) {
-                dialog = new JDialogTriImageTransformation(this, imageA, imageB);
+                new JDialogTriImageTransformation(this, imageA, imageB);
             }
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT.getActionCommand())) {
             voiManager.actionPerformed(event);
@@ -2223,11 +2221,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         if (checkLinkedScroll && linkedScrolling) {
 
-            final Enumeration names = userInterface.getRegisteredImageNames();
+            final Enumeration<String> names = userInterface.getRegisteredImageNames();
 
             boolean sameDims = false;
             while (names.hasMoreElements()) {
-                final String name = (String) names.nextElement();
+                final String name = names.nextElement();
                 sameDims = true;
 
                 if ( !imageA.getImageName().equals(name)) {
@@ -2394,7 +2392,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         }
 
         // Get all frames
-        final Vector frameList = image.getImageFrameVector();
+        final Vector<ViewImageUpdateInterface> frameList = image.getImageFrameVector();
 
         if (frameList == null) {
             return;
@@ -2477,7 +2475,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         tpSplineButton.setEnabled(true);
 
         // Get all frames
-        final Vector frameList = imageB.getImageFrameVector();
+        final Vector<ViewImageUpdateInterface> frameList = imageB.getImageFrameVector();
 
         if (frameList == null) {
             return;
@@ -2812,11 +2810,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         if (checkedLinkedScroll && linkedScrolling && compImg != null) {
 
             final int[] center = compImg.getTriImageFrame().getCenter();
-            final Enumeration names = userInterface.getRegisteredImageNames();
+            final Enumeration<String> names = userInterface.getRegisteredImageNames();
 
             boolean sameDims = false;
             while (names.hasMoreElements()) {
-                final String name = (String) names.nextElement();
+                final String name = names.nextElement();
                 sameDims = true;
 
                 if ( !compImg.getImageName().equals(name)) {
@@ -3315,8 +3313,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * 
      * @return Slider labels hash.
      */
-    protected Hashtable buildTImageSliderLabels(final int min, final int max) {
-        final Hashtable tImageSliderDictionary = new Hashtable();
+    protected Hashtable<Integer,JLabel> buildTImageSliderLabels(final int min, final int max) {
+        final Hashtable<Integer,JLabel> tImageSliderDictionary = new Hashtable<Integer,JLabel>();
 
         final Font font12 = MipavUtil.font12;
         final float rangeF = (max) / 4.0f;
@@ -3825,7 +3823,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         cleanVolumePositionPanel();
         volumePositionPanel = new JPanel();
 
-        final GridBagLayout gbLayout = new GridBagLayout();
         GridBagConstraints gbConstraints = new GridBagConstraints();
         gbConstraints = new GridBagConstraints();
 
@@ -4223,8 +4220,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     protected void fireCoordinateChange(final int i, final int j, final int k) {
 
-        for (final Enumeration e = coordinateListeners.elements(); e.hasMoreElements();) {
-            ((CoordinateChangeListener) e.nextElement()).coordinateChanged(i, j, k);
+        for (final Enumeration<CoordinateChangeListener> e = coordinateListeners.elements(); e.hasMoreElements();) {
+            (e.nextElement()).coordinateChanged(i, j, k);
         }
     }
 
@@ -4268,7 +4265,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                             Vector3f[] voiPoints = imageAVOIs.VOIAt(i).exportAllPoints();
 
                             for (final Vector3f element : voiPoints) {
-                                pointVOIVector.add(voiPoints[i]);
+                                pointVOIVector.add(element);
                             }
                         }
                     }
@@ -4290,7 +4287,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                         if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                             Vector3f[] voiPoints = imageBVOIs.VOIAt(i).exportAllPoints();
                             for (final Vector3f element : voiPoints) {
-                                pointVOIVector.add(voiPoints[i]);
+                                pointVOIVector.add(element);
                             }
                         }
                     }
@@ -4449,7 +4446,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             if (imageAVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                 final Vector3f[] voiPoints = imageAVOIs.VOIAt(i).exportAllPoints();
                 for (final Vector3f element : voiPoints) {
-                    pointVOIVector.add(voiPoints[i]);
+                    pointVOIVector.add(element);
                 }
             }
         }
@@ -4469,7 +4466,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                 final Vector3f[] voiPoints = imageBVOIs.VOIAt(i).exportAllPoints();
                 for (final Vector3f element : voiPoints) {
-                    pointVOIVector.add(voiPoints[i]);
+                    pointVOIVector.add(element);
                 }
             }
         }
@@ -4598,7 +4595,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @return <code>true</code> if there are images to operate on.
      */
     protected boolean isMultipleSameSizeTriImages() {
-        final Enumeration registeredImageNames = userInterface.getRegisteredImageNames();
+        final Enumeration<String> registeredImageNames = userInterface.getRegisteredImageNames();
         boolean createDialog = false;
         String activeImageName;
         ModelImage activeImage;
@@ -4613,7 +4610,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         // Add images from user interface that have the same exact dimensionality
         while (registeredImageNames.hasMoreElements()) {
-            final String registeredImageName = (String) registeredImageNames.nextElement();
+            final String registeredImageName = registeredImageNames.nextElement();
 
             if ( !activeImageName.equals(registeredImageName)) {
 
