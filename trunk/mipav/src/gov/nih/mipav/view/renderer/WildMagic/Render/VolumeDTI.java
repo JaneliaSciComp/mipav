@@ -116,7 +116,7 @@ public class VolumeDTI extends VolumeObject
 	//private ShaderEffect m_kVertexColor3Shader;
 
 	/** Seeding point index */
-	//private int centerIndex;
+	private int centerIndex;
 
 	/** flag to indicate to use volume color or not */
 	private boolean isUsingVolumeColor = true;
@@ -621,9 +621,9 @@ public class VolumeDTI extends VolumeObject
 		}
 		kRenderer.SetAlphaState(aTemp);
 	}
-	/*public void setCenterIndex(int index) {
+	public void setCenterIndex(int index) {
 		centerIndex = index;
-	}*/
+	}
 	/** Turns on/off displaying all the glyphs.
 	 * @param bDisplay when true display all the glyphs in the volume.
 	 */
