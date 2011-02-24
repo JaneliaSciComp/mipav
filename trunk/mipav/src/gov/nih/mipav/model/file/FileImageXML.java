@@ -1326,6 +1326,7 @@ public class FileImageXML extends FileXML {
      * 
      * @throws IOException if a file I/O problem is encoutered while writing the header
      */
+    @SuppressWarnings("unchecked")
     public boolean writeHeader(ModelImage img, FileWriteOptions options, String headerName, String headerDir,
             boolean changeDims) throws IOException {
         boolean simple = false; // A simple write only writes absolutely neccessary information
@@ -2776,6 +2777,7 @@ public class FileImageXML extends FileXML {
      * @param bw The writer to which we will write the data.
      * @param setEnum An enumerated list of set data.
      */
+    @SuppressWarnings("unchecked")
     private void writeSet(BufferedWriter bw, Enumeration<XMLPSet> setEnum) {
 
         boolean openTagFalseFlag = false; // Flag to specify whether end tag is needed.
