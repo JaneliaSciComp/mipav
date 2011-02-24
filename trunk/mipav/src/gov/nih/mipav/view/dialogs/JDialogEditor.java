@@ -567,7 +567,7 @@ public class JDialogEditor extends JDialogBase {
      * @param  ht     DOCUMENT ME!
      * @param  isSet  DOCUMENT ME!
      */
-    public void setTable(Hashtable<String,?> ht, boolean isSet) {
+    public void setTable(Hashtable<?,?> ht, boolean isSet) {
 
         for (int i = 0; i < newValue.length; i++) {
 
