@@ -55,6 +55,7 @@ public class VOIOrientationNode extends DefaultMutableTreeNode {
      *
      * <p>Implementation of this is different from the Sun Books' code.</p>
      */
+    @SuppressWarnings("unchecked")
     public void explore() {
     	Vector<VOIBase>[] sortedCurves = (Vector<VOIBase>[])getUserObject();
     	
@@ -83,6 +84,7 @@ public class VOIOrientationNode extends DefaultMutableTreeNode {
      *
      * @see  gov.nih.mipav.structures.VOI
      */
+    @SuppressWarnings("unchecked")
     public Vector<VOIBase>[] getVOI() {
         return (Vector<VOIBase>[])super.getUserObject();
     }
