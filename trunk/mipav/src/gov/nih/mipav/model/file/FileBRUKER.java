@@ -661,6 +661,7 @@ public class FileBRUKER extends FileBase {
 
                         buffer[i] = byteBuffer[j] & 0xff;
                     }
+                    break;
 
                 case ModelStorageBase.SHORT:
                     nBytes = 2 * buffer.length;
