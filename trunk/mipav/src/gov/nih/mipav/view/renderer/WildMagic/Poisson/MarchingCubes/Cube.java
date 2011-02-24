@@ -167,6 +167,7 @@ public class Cube {
 					case 0:	return EdgeIndex(o[0],(i[0]+1)%2,j[0]);
 					case 2:	return EdgeIndex(o[0],i[0],(j[0]+1)%2);
 				};
+				break;
 			case 2:	return EdgeIndex(o[0],i[0],(j[0]+1)%2);
 		};
 		return -1;
