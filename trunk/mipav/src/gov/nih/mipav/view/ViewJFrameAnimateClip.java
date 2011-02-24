@@ -91,9 +91,6 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
     /** DOCUMENT ME! */
     private boolean bfRun = false; // whether back and forth
 
-    /** z slice. */
-    private Color borderCol; // color of border surrounding z slices with 4D
-
     // upon exiting ViewJFrameAnimate.  It will be true unless unscaled 3D images are passed.
 
     /** DOCUMENT ME! */
@@ -144,9 +141,6 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
     private Border etchedBorder = BorderFactory.createEtchedBorder();
 
     /** DOCUMENT ME! */
-    private JMenu fileMenu; // menu with save as and close commands
-
-    /** DOCUMENT ME! */
     private JToggleButton forwardButton;
 
     /** DOCUMENT ME! */
@@ -159,19 +153,10 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
     private boolean fRun = false; // whether forward is currently running
 
     /** DOCUMENT ME! */
-    private GridBagConstraints gbc; // content pane grid bag constraints
-
-    /** DOCUMENT ME! */
     private GridBagConstraints gbcTP;
 
     /** DOCUMENT ME! */
-    private GridBagLayout gbl; // content pane grid bag layout
-
-    /** DOCUMENT ME! */
     private JPanel innerPanel = null; // componentImage placed in innerPane
-
-    /** DOCUMENT ME! */
-    private JLabel labelActualPerSecond;
 
     /** DOCUMENT ME! */
     private JLabel labelAnimationFrame;
@@ -180,16 +165,13 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
     private JLabel labelFramesPerSecond;
 
     /** DOCUMENT ME! */
-    private Hashtable labelTable; // for z slice slider
+    private Hashtable<Integer,JLabel> labelTable; // for z slice slider
 
     /** newmsWait = msWait - msElapsed is passed to the sleep function. */
     private long localTime; // System time before call to updateImages(true)
 
     /** DOCUMENT ME! */
     private long localTime2; // System time after call to updateImages(true);
-
-    /** for each individual z Slice for 4D, 1 number for frame for 3D. */
-    private Vector menuItemVector = new Vector();
 
     /** DOCUMENT ME! */
     private ViewMenuBuilder menuObj;
@@ -224,9 +206,6 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
     /** DOCUMENT ME! */
     private JMenuBar openingMenuBar; // contains File and Options menus
 
-    /** for 4D originalXDim and originalYDim are xDim and yDim before 4D to 3D conversion. */
-    private int originalZDim; // equals zDim of original and present 3D
-
     /** DOCUMENT ME! */
     private boolean pause; // When pause is true, execute a while loop
 
@@ -250,9 +229,6 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
 
     /** DOCUMENT ME! */
     private int scrollPaneSize = 512;
-
-    /** DOCUMENT ME! */
-    private boolean showFrameBorder; // for 4D if true show border around each
 
     /** equals zDim of original 4D before 4D to 3D conversion. */
     private boolean showNumbers = true; // whether to show z slice numbers
@@ -293,9 +269,6 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
 
     /** and innerPanel placed in scrollPane. */
     private JPanel topPanel = null; // contains toolBar and controlPanel
-
-    /** DOCUMENT ME! */
-    private int xDim, yDim, originalXDim, originalYDim;
 
     /** DOCUMENT ME! */
     private int xScreen, yScreen; // screen width, screen height
@@ -430,6 +403,7 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
      *
      * @param  event  event that triggered function
      */
+    @SuppressWarnings("unchecked")
     public void actionPerformed(ActionEvent event) {
 
         String command;
@@ -485,12 +459,12 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
             slider.setEnabled(false);
             fpsSlider.setEnabled(false);
 
-            for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                ((JLabel) en.nextElement()).setEnabled(false);
+            for (Enumeration<JLabel> en = slider.getLabelTable().elements(); en.hasMoreElements();) {
+                (en.nextElement()).setEnabled(false);
             }
 
-            for (Enumeration en = fpsSlider.getLabelTable().elements(); en.hasMoreElements();) {
-                ((JLabel) en.nextElement()).setEnabled(false);
+            for (Enumeration<JLabel> en = fpsSlider.getLabelTable().elements(); en.hasMoreElements();) {
+                (en.nextElement()).setEnabled(false);
             }
 
             pause = false;
@@ -532,12 +506,12 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
             slider.setEnabled(false);
             fpsSlider.setEnabled(false);
 
-            for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                ((JLabel) en.nextElement()).setEnabled(false);
+            for (Enumeration<JLabel> en = slider.getLabelTable().elements(); en.hasMoreElements();) {
+                (en.nextElement()).setEnabled(false);
             }
 
-            for (Enumeration en = fpsSlider.getLabelTable().elements(); en.hasMoreElements();) {
-                ((JLabel) en.nextElement()).setEnabled(false);
+            for (Enumeration<JLabel> en = fpsSlider.getLabelTable().elements(); en.hasMoreElements();) {
+                (en.nextElement()).setEnabled(false);
             }
 
             pause = false;
@@ -562,12 +536,12 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
             slider.setEnabled(false);
             fpsSlider.setEnabled(false);
 
-            for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                ((JLabel) en.nextElement()).setEnabled(false);
+            for (Enumeration<JLabel> en = slider.getLabelTable().elements(); en.hasMoreElements();) {
+                (en.nextElement()).setEnabled(false);
             }
 
-            for (Enumeration en = fpsSlider.getLabelTable().elements(); en.hasMoreElements();) {
-                ((JLabel) en.nextElement()).setEnabled(false);
+            for (Enumeration<JLabel> en = fpsSlider.getLabelTable().elements(); en.hasMoreElements();) {
+                (en.nextElement()).setEnabled(false);
             }
 
             pause = false;
@@ -620,12 +594,12 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
             slider.setEnabled(true);
             fpsSlider.setEnabled(true);
 
-            for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                ((JLabel) en.nextElement()).setEnabled(true);
+            for (Enumeration<JLabel> en = slider.getLabelTable().elements(); en.hasMoreElements();) {
+                (en.nextElement()).setEnabled(true);
             }
 
-            for (Enumeration en = fpsSlider.getLabelTable().elements(); en.hasMoreElements();) {
-                ((JLabel) en.nextElement()).setEnabled(true);
+            for (Enumeration<JLabel> en = fpsSlider.getLabelTable().elements(); en.hasMoreElements();) {
+                (en.nextElement()).setEnabled(true);
             }
 
             stop = true;
@@ -751,11 +725,8 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
         innerPanel = null;
         cpGBL = null;
         cpGBC = null;
-        gbl = null;
-        gbc = null;
         toggleArray = null;
         buttonArray = null;
-        menuItemVector = null;
         cReverseButton = null;
         backForthButton = null;
         reverseButton = null;
@@ -769,7 +740,6 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
         textAnimationFrame = null;
         labelFramesPerSecond = null;
         textFramesPerSecond = null;
-        labelActualPerSecond = null;
         textActualPerSecond = null;
     }
 
@@ -810,7 +780,7 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
      */
     public void saveMovie() {
         MediaLocator oml;
-        Vector inputFiles = new Vector();
+        Vector<String> inputFiles = new Vector<String>();
         File outputFile = null;
         File[] inputFile = new File[nImage];
         String file;
@@ -1348,7 +1318,7 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
         slider.setPaintTicks(true);
         slider.addChangeListener(this);
         slider.setVisible(true);
-        labelTable = new Hashtable();
+        labelTable = new Hashtable<Integer,JLabel>();
         labelTable.put(new Integer(1), createLabel("1"));
         labelTable.put(new Integer(zSlice + 1), createLabel(String.valueOf(zSlice + 1)));
         labelTable.put(new Integer(nImage), createLabel(String.valueOf(nImage)));
@@ -1376,7 +1346,7 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
         fpsSlider.setPaintTicks(true);
         fpsSlider.addChangeListener(this);
         fpsSlider.setVisible(true);
-        labelTable = new Hashtable();
+        labelTable = new Hashtable<Integer,JLabel>();
 
         labelTable.put(new Integer(1), createLabel("1"));
         labelTable.put(new Integer(50), createLabel("50"));
