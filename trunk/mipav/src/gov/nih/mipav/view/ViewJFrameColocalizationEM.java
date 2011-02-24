@@ -7,8 +7,6 @@ import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.text.NumberFormat;
-import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -69,12 +67,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
     /** DOCUMENT ME! */
     private ViewControlsImage controls;
 
-    /** DOCUMENT ME! */
-    private GridBagConstraints cpGBC; // control panel grid bag constraints
-
-    /** DOCUMENT ME! */
-    private GridBagLayout cpGBL; // control panel grid bag layout
-
     /** The image containing the 2D histogram. */
     private ModelImage destImage;
 
@@ -84,23 +76,8 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
     /** DOCUMENT ME! */
     private int[] extents;
 
-    /** set to give 6 digits to the right of the decimal. */
-    private JMenu fileMenu; // menu with save as and close commands
-
-    /** DOCUMENT ME! */
-    private Font font12 = MipavUtil.font12;
-
-    /** DOCUMENT ME! */
-    private Font font12B = MipavUtil.font12B;
-
-    /** DOCUMENT ME! */
-    private GridBagConstraints gbc; // content pane grid bag constraints
-
     /** DOCUMENT ME! */
     private GridBagConstraints gbcTP;
-
-    /** DOCUMENT ME! */
-    private GridBagLayout gbl; // content pane grid bag layout
 
     /** DOCUMENT ME! */
     private double[] halfMajor;
@@ -113,12 +90,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
 
     /** DOCUMENT ME! */
     private ModelImage imageB;
-
-    /** DOCUMENT ME! */
-    private float[] imageBufferA;
-
-    /** DOCUMENT ME! */
-    private float[] imageBufferB;
 
     /** DOCUMENT ME! */
     private float[] imageBufferDest;
@@ -138,9 +109,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
     /** DOCUMENT ME! */
     private ModelLUT LUTa;
 
-    /** DOCUMENT ME! */
-    private ModelLUT LUTb;
-
     /** The LUT for the 2D histogram. */
     private ModelLUT LUTdest;
 
@@ -149,9 +117,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
      * cancelButton is pressed.
      */
     private double[][] mean;
-
-    /** DOCUMENT ME! */
-    private Vector menuItemVector = new Vector();
 
     /** DOCUMENT ME! */
     private ViewMenuBuilder menuObj;
@@ -164,9 +129,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
 
     /** DOCUMENT ME! */
     private int minimumToolBarWidth = 400; // minimum scroll pane width
-
-    /** DOCUMENT ME! */
-    private NumberFormat nf; // number formatting used in frames per second
 
     /** DOCUMENT ME! */
     private JMenuBar openingMenuBar; // contains File and Options menus
@@ -220,9 +182,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
     private JToolBar toolBar;
 
     /** DOCUMENT ME! */
-    private ViewToolBarBuilder toolBarObj;
-
-    /** DOCUMENT ME! */
     private int topPad;
 
     /** and innerPanel placed in scrollPane. */
@@ -239,9 +198,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** Note that xDim and yDim refer to destImage. */
-    private int xDim, yDim;
 
     /** DOCUMENT ME! */
     private int xScreen, yScreen; // screen width, screen height
@@ -297,8 +253,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
         LUTb = _LUTb;
         imageB = _imageB;
         this.destImage = destImage;
-        xDim = destImage.getExtents()[0];
-        yDim = destImage.getExtents()[1];
         this.useRed = useRed;
         this.useGreen = useGreen;
         this.useBlue = useBlue;
@@ -525,8 +479,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
         }
 
         componentImage = null;
-        imageBufferA = null;
-        imageBufferB = null;
         pixBufferDest = null;
         paintBufferDest = null;
         scrollPane = null;
@@ -535,11 +487,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
         toolBar = null;
         topPanel = null;
         innerPanel = null;
-        cpGBL = null;
-        cpGBC = null;
-        gbl = null;
-        gbc = null;
-        menuItemVector = null;
 
         if (mean != null) {
 
@@ -601,7 +548,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-        int state = event.getStateChange();
 
         if (source instanceof AbstractButton) {
 
@@ -756,7 +702,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
      * @param e Event that triggered this function
      */
     public void stateChanged(ChangeEvent e) {
-        Object source = e.getSource();
 
     }
 
@@ -1078,25 +1023,9 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
                 extents[1] = Math.round(imageA.getExtents()[1]);
             }
 
-            int bufferFactor = 1;
-
-            if (imageA.isColorImage()) {
-                bufferFactor = 4;
-            }
-
-            imageBufferA = new float[bufferFactor * imageA.getSliceSize()];
-
-            if (imageB != null) {
-                imageBufferB = new float[bufferFactor * imageA.getSliceSize()];
-            }
-
             imageBufferDest = new float[destImage.getSliceSize()];
             pixBufferDest = new int[destImage.getSliceSize()];
             paintBufferDest = new int[destImage.getSliceSize()];
-
-            if (imageB != null) {
-                imageBufferB = new float[bufferFactor * imageA.getSliceSize()];
-            }
 
             componentImage = new ViewJComponentColocalizationEM(controlFrame, imageA, imageB, destImage, LUTdest,
                     imageBufferDest, useRed, useGreen, useBlue, min1, max1, min2, max2, scale1, scale2, pixBufferDest,
@@ -1131,21 +1060,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
 
         setBackground(Color.black);
 
-    }
-
-    /**
-     * Helper method to create a label with the proper font and font color.
-     * 
-     * @param title Text of the label.
-     * 
-     * @return New label.
-     */
-    private JLabel createLabel(String title) {
-        JLabel label = new JLabel(title);
-        label.setFont(MipavUtil.font12);
-        label.setForeground(Color.black);
-
-        return label;
     }
 
     /**
