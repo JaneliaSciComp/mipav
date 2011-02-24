@@ -839,6 +839,7 @@ public class FileInfoNIFTI extends FileInfoBase {
 
             case FileInfoNIFTI.NIFTI_INTENT_DIMLESS:
                 dialog.append("Intent code = Dimless\n");
+                break;
 
             default:
                 dialog.append("Unrecognized intent code = " + Short.toString(intentCode) + "\n");
@@ -858,6 +859,7 @@ public class FileInfoNIFTI extends FileInfoBase {
 
             case NIFTI_XFORM_ALIGNED_ANAT:
                 coordString = "Aligned to another anatomy";
+                break;
 
             case NIFTI_XFORM_TALAIRACH:
                 coordString = "Talairach-Tournoux Atlas";
@@ -885,6 +887,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
                 case NIFTI_XFORM_ALIGNED_ANAT:
                     coordString2 = "Aligned to another anatomy";
+                    break;
     
                 case NIFTI_XFORM_TALAIRACH:
                     coordString2 = "Talairach-Tournoux Atlas";
