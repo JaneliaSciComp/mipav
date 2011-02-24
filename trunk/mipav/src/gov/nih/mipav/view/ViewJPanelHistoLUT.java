@@ -213,7 +213,7 @@ public class ViewJPanelHistoLUT extends JPanel implements HistoLUTParent, MouseL
             componentHistogram.setLocation(borderSize, borderSize);
             componentHistogram.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
             componentHistogram.setBackground(new Color(190, 208, 230));
-            componentHistogram.setMode(componentHistogram.RED);
+            componentHistogram.setMode(ViewJComponentHLUTBase.RED);
 
             prefSize = new Dimension(componentHistogram.getSize().width + (2 * borderSize),
                                      componentHistogram.getSize().height + (2 * borderSize));
