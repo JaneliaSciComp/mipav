@@ -4085,6 +4085,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return providedOutputDir;
     }
 
+    @SuppressWarnings("unchecked")
     public static Vector<Class<ActionDiscovery>> getDiscoverableActionList() {
         final Vector<Class<ActionDiscovery>> actionList = new Vector<Class<ActionDiscovery>>();
 
@@ -4182,6 +4183,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
          * 
          * @return The directory containg the file
          */
+        @SuppressWarnings("unused")
         public String getDirectory() {
             return directory;
         }
@@ -4191,6 +4193,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
          * 
          * @return The file name (no path).
          */
+        @SuppressWarnings("unused")
         public String getFileName() {
             return fileName;
         }
