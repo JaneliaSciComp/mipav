@@ -97,7 +97,7 @@ public class FileInfoImageXML extends FileInfoXML {
     private String scanTime;
 
     /** Hashtable for holding sets of parameters. */
-    private Hashtable setTable;
+    private Hashtable<String,XMLPSet> setTable;
 
     /** DOCUMENT ME! */
     private String sex;
@@ -109,10 +109,10 @@ public class FileInfoImageXML extends FileInfoXML {
     private String subjectName;
 
     /** List of files which describe surfaces attached to this image. */
-    private Hashtable surfaces;
+    private Hashtable<String,SurfaceLink> surfaces;
 
     /** List of files which describe VOIs attached to this image. */
-    private Hashtable VOIs;
+    private Hashtable<String,VOILink> VOIs;
 
     /** DOCUMENT ME! */
     private int weight = 0;
@@ -135,16 +135,16 @@ public class FileInfoImageXML extends FileInfoXML {
      */
     public FileInfoImageXML(String name, String directory, int format) {
         super(name, directory, format);
-        setTable = new Hashtable();
+        setTable = new Hashtable<String,XMLPSet>();
         investigators = new Investigator[3];
         invest = new boolean[3];
         invest[0] = false;
         invest[1] = false;
         invest[2] = false;
         currentPSetDesc = new String("");
-        VOIs = new Hashtable();
+        VOIs = new Hashtable<String,VOILink>();
         currentVOIPath = new String("");
-        surfaces = new Hashtable();
+        surfaces = new Hashtable<String,SurfaceLink>();
         currentSurfacePath = new String("");
     }
 
@@ -194,6 +194,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * @param dlog JDialogBase dialog box that is written to
      * @param matrix transformation matrix
      */
+    @SuppressWarnings("unchecked")
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         JDialogFileInfoXML dialog = (JDialogFileInfoXML) dlog;
         int[] extents;
@@ -442,15 +443,15 @@ public class FileInfoImageXML extends FileInfoXML {
 
         }
 
-        Enumeration e = getPSetKeys();
+        Enumeration<String> e = getPSetKeys();
 
         while (e.hasMoreElements()) {
-            XMLPSet temp = getPSet((String) e.nextElement());
+            XMLPSet temp = getPSet(e.nextElement());
             String desc = temp.getDescription();
-            Enumeration pe = temp.getParameterKeys();
+            Enumeration<String> pe = temp.getParameterKeys();
 
             while (pe.hasMoreElements()) {
-                XMLParameter tp = temp.getParameter((String) pe.nextElement());
+                XMLParameter tp = temp.getParameter(pe.nextElement());
                 editorChoice[0] = JDialogEditor.STRING;
                 int loc = tp.getDescription().indexOf('[')+1;
                 int value = Integer.parseInt(tp.getDescription().substring(loc, loc+1));
@@ -512,7 +513,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * @return PSet current parameter set
      */
     public XMLPSet getCurrentPSet() {
-        return (XMLPSet) setTable.get(currentPSetDesc);
+        return setTable.get(currentPSetDesc);
     }
 
     /**
@@ -521,7 +522,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * @return SurfaceLink surfacelink object
      */
     public SurfaceLink getCurrentSurface() {
-        return (SurfaceLink) surfaces.get(currentSurfacePath);
+        return surfaces.get(currentSurfacePath);
     }
 
     /**
@@ -530,7 +531,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * @return VOILink current voi link
      */
     public VOILink getCurrentVOI() {
-        return (VOILink) VOIs.get(currentVOIPath);
+        return VOIs.get(currentVOIPath);
     }
 
     /**
@@ -655,8 +656,8 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @return Hashtable parameter hashtable
      */
-    public Hashtable getParameterTable(String description) {
-        return ((XMLPSet) setTable.get(description)).getTable();
+    public Hashtable<?,?> getParameterTable(String description) {
+        return (setTable.get(description)).getTable();
     }
 
     /**
@@ -676,7 +677,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * @return DOCUMENT ME!
      */
     public XMLPSet getPSet(String description) {
-        return (XMLPSet) setTable.get(description);
+        return setTable.get(description);
     }
 
     /**
@@ -684,7 +685,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @return Hashtable set hashtable
      */
-    public Hashtable getPSetHashtable() {
+    public Hashtable<String,XMLPSet> getPSetHashtable() {
         return this.setTable;
     }
 
@@ -693,7 +694,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @return Enumeration keys for parameter set hashtable
      */
-    public Enumeration getPSetKeys() {
+    public Enumeration<String> getPSetKeys() {
         return setTable.keys();
     }
 
@@ -768,7 +769,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * @return SurfaceLink Surfacelink for the given path
      */
     public SurfaceLink getSurface(String path) {
-        return (SurfaceLink) surfaces.get(path);
+        return surfaces.get(path);
     }
 
     /**
@@ -776,7 +777,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @return Enumeration Enumeration of paths to surface files
      */
-    public Enumeration getSurfaceKeys() {
+    public Enumeration<String> getSurfaceKeys() {
         return surfaces.keys();
     }
 
@@ -785,7 +786,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @return Hashtable the surface hashtable
      */
-    public Hashtable getSurfaces() {
+    public Hashtable<String,SurfaceLink> getSurfaces() {
         return surfaces;
     }
 
@@ -797,7 +798,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * @return VOILink VOILink for the given path
      */
     public VOILink getVOI(String path) {
-        return (VOILink) VOIs.get(path);
+        return VOIs.get(path);
     }
 
     /**
@@ -805,7 +806,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @return Enumeration Enumeration of paths to VOI files
      */
-    public Enumeration getVOIKeys() {
+    public Enumeration<String> getVOIKeys() {
         return VOIs.keys();
     }
 
@@ -814,7 +815,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @return Hashtable VOI hashtable
      */
-    public Hashtable getVOIs() {
+    public Hashtable<String,VOILink> getVOIs() {
         return VOIs;
     }
 
@@ -845,13 +846,13 @@ public class FileInfoImageXML extends FileInfoXML {
      * @param pData Vector Vector of changed parameter data + set description
      */
     public void parameterChanged(Vector<String> pData) {
-        String setDesc = (String) pData.elementAt(0);
-        String name = (String) pData.elementAt(1);
-        String paramdesc = (String) pData.elementAt(2);
-        String vt = (String) pData.elementAt(3);
-        String val = (String) pData.elementAt(4);
-        String date = (String) pData.elementAt(5);
-        String time = (String) pData.elementAt(6);
+        String setDesc = pData.elementAt(0);
+        String name = pData.elementAt(1);
+        String paramdesc = pData.elementAt(2);
+        String vt = pData.elementAt(3);
+        String val = pData.elementAt(4);
+        String date = pData.elementAt(5);
+        String time = pData.elementAt(6);
 
         getPSet(setDesc).getParameter(name).setDescription(paramdesc);
         getPSet(setDesc).getParameter(name).setValueType(vt);
@@ -1028,7 +1029,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @param setTable Hashtable set hashtable
      */
-    public void setPSetHashtable(Hashtable setTable) {
+    public void setPSetHashtable(Hashtable<String,XMLPSet> setTable) {
         this.setTable = setTable;
     }
 
@@ -1116,7 +1117,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @param _surfaces Hashtable new surface hashtable
      */
-    public void setSurfaces(Hashtable _surfaces) {
+    public void setSurfaces(Hashtable<String,SurfaceLink> _surfaces) {
         surfaces = _surfaces;
     }
 
@@ -1135,7 +1136,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @param _VOIs Hashtable new VOI hashtable
      */
-    public void setVOIs(Hashtable _VOIs) {
+    public void setVOIs(Hashtable<String,VOILink> _VOIs) {
         VOIs = _VOIs;
     }
 
