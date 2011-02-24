@@ -252,10 +252,12 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             if (tabbedPane.getSelectedComponent() == panelA) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().RED);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHistoRGB.RED);
                     getHistoLUTComponentA().setHistogramInfo(imageA, histogramARed);
 
-                    if (getHistoLUTComponentA().getThresholdMode() != getHistoLUTComponentA().NO_THRESHOLD) {
+                    getHistoLUTComponentA();
+					if (getHistoLUTComponentA().getThresholdMode() != ViewJComponentHistoRGB.NO_THRESHOLD) {
                         getHistoLUTComponentA().dualThresholdMode(getHistoLUTComponentA().getThresholdMode());
                     }
 
@@ -264,10 +266,12 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().RED);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHistoRGB.RED);
                     getHistoLUTComponentB().setHistogramInfo(imageA, histogramBRed);
 
-                    if (getHistoLUTComponentB().getThresholdMode() != getHistoLUTComponentB().NO_THRESHOLD) {
+                    getHistoLUTComponentB();
+					if (getHistoLUTComponentB().getThresholdMode() != ViewJComponentHistoRGB.NO_THRESHOLD) {
                         getHistoLUTComponentB().dualThresholdMode(getHistoLUTComponentB().getThresholdMode());
                     }
 
@@ -283,10 +287,12 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             if (tabbedPane.getSelectedComponent() == panelA) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().GREEN);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHistoRGB.GREEN);
                     getHistoLUTComponentA().setHistogramInfo(imageA, histogramAGreen);
 
-                    if (getHistoLUTComponentA().getThresholdMode() != getHistoLUTComponentA().NO_THRESHOLD) {
+                    getHistoLUTComponentA();
+					if (getHistoLUTComponentA().getThresholdMode() != ViewJComponentHistoRGB.NO_THRESHOLD) {
                         getHistoLUTComponentA().dualThresholdMode(getHistoLUTComponentA().getThresholdMode());
                     }
 
@@ -295,10 +301,12 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().GREEN);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHistoRGB.GREEN);
                     getHistoLUTComponentB().setHistogramInfo(imageA, histogramBGreen);
 
-                    if (getHistoLUTComponentB().getThresholdMode() != getHistoLUTComponentB().NO_THRESHOLD) {
+                    getHistoLUTComponentB();
+					if (getHistoLUTComponentB().getThresholdMode() != ViewJComponentHistoRGB.NO_THRESHOLD) {
                         getHistoLUTComponentB().dualThresholdMode(getHistoLUTComponentB().getThresholdMode());
                     }
 
@@ -314,10 +322,12 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             if (tabbedPane.getSelectedComponent() == panelA) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().BLUE);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHistoRGB.BLUE);
                     getHistoLUTComponentA().setHistogramInfo(imageA, histogramABlue);
 
-                    if (getHistoLUTComponentA().getThresholdMode() != getHistoLUTComponentA().NO_THRESHOLD) {
+                    getHistoLUTComponentA();
+					if (getHistoLUTComponentA().getThresholdMode() != ViewJComponentHistoRGB.NO_THRESHOLD) {
                         getHistoLUTComponentA().dualThresholdMode(getHistoLUTComponentA().getThresholdMode());
                     }
 
@@ -326,10 +336,12 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().BLUE);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHistoRGB.BLUE);
                     getHistoLUTComponentB().setHistogramInfo(imageA, histogramBBlue);
 
-                    if (getHistoLUTComponentB().getThresholdMode() != getHistoLUTComponentB().NO_THRESHOLD) {
+                    getHistoLUTComponentB();
+					if (getHistoLUTComponentB().getThresholdMode() != ViewJComponentHistoRGB.NO_THRESHOLD) {
                         getHistoLUTComponentB().dualThresholdMode(getHistoLUTComponentB().getThresholdMode());
                     }
 
@@ -346,12 +358,14 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             if (tabbedPane.getSelectedComponent() == panelA) {
 
                 if (getHistoLUTComponentA() != null) {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().ALL);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().setMode(ViewJComponentHistoRGB.ALL);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().ALL);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().setMode(ViewJComponentHistoRGB.ALL);
                 }
             }
         } else if (command.equals("linearLUT")) {
@@ -431,7 +445,8 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                         threshFillF.setText(Double.toString(imageA.getMin()));
                     }
 
-                    getHistoLUTComponentA().dualThresholdMode(getHistoLUTComponentA().DUAL_THRESHOLD);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().dualThresholdMode(ViewJComponentHistoRGB.DUAL_THRESHOLD);
                 }
             } else {
 
@@ -446,7 +461,8 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                         threshFillBF.setText(Double.toString(imageB.getMin()));
                     }
 
-                    getHistoLUTComponentB().dualThresholdMode(getHistoLUTComponentB().DUAL_THRESHOLD);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().dualThresholdMode(ViewJComponentHistoRGB.DUAL_THRESHOLD);
                 }
             }
         } else if (command.equals("inverseThresholdLUT")) {
@@ -461,7 +477,8 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                     threshLowerF.setEnabled(true);
                     threshUpperF.setEnabled(true);
                     threshFillF.setEnabled(true);
-                    getHistoLUTComponentA().dualThresholdMode(getHistoLUTComponentA().DUAL_THRESHOLD_INV);
+                    getHistoLUTComponentA();
+					getHistoLUTComponentA().dualThresholdMode(ViewJComponentHistoRGB.DUAL_THRESHOLD_INV);
                 }
             } else {
 
@@ -471,7 +488,8 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                     threshLowerBF.setEnabled(true);
                     threshUpperBF.setEnabled(true);
                     threshFillBF.setEnabled(true);
-                    getHistoLUTComponentB().dualThresholdMode(getHistoLUTComponentB().DUAL_THRESHOLD_INV);
+                    getHistoLUTComponentB();
+					getHistoLUTComponentB().dualThresholdMode(ViewJComponentHistoRGB.DUAL_THRESHOLD_INV);
                 }
             }
         } else if (command.equals("runThreshold") || command.equals("runInverseThreshold")) {
@@ -912,17 +930,27 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                     int mode = getHistoLUTComponentA().getMode();
                     float value = new Float(threshFillF.getText()).floatValue();
 
-                    if (mode == getHistoLUTComponentA().RED) {
+                    getHistoLUTComponentA();
+					if (mode == ViewJComponentHistoRGB.RED) {
                         fillValuesA[0] = value;
-                    } else if (mode == getHistoLUTComponentA().GREEN) {
-                        fillValuesA[1] = value;
-                    } else if (mode == getHistoLUTComponentA().BLUE) {
-                        fillValuesA[2] = value;
-                    } else if (mode == getHistoLUTComponentA().ALL) {
-                        fillValuesA[0] = value;
-                        fillValuesA[1] = value;
-                        fillValuesA[2] = value;
-                    }
+                    } else {
+						getHistoLUTComponentA();
+						if (mode == ViewJComponentHistoRGB.GREEN) {
+						    fillValuesA[1] = value;
+						} else {
+							getHistoLUTComponentA();
+							if (mode == ViewJComponentHistoRGB.BLUE) {
+							    fillValuesA[2] = value;
+							} else {
+								getHistoLUTComponentA();
+								if (mode == ViewJComponentHistoRGB.ALL) {
+								    fillValuesA[0] = value;
+								    fillValuesA[1] = value;
+								    fillValuesA[2] = value;
+								}
+							}
+						}
+					}
                 } else {
                     threshFillF.requestFocus();
                     threshFillF.selectAll();
@@ -955,17 +983,27 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                     int mode = getHistoLUTComponentB().getMode();
                     float value = new Float(threshFillBF.getText()).floatValue();
 
-                    if (mode == getHistoLUTComponentB().RED) {
+                    getHistoLUTComponentB();
+					if (mode == ViewJComponentHistoRGB.RED) {
                         fillValuesB[0] = value;
-                    } else if (mode == getHistoLUTComponentB().GREEN) {
-                        fillValuesB[1] = value;
-                    } else if (mode == getHistoLUTComponentB().BLUE) {
-                        fillValuesB[2] = value;
-                    } else if (mode == getHistoLUTComponentB().ALL) {
-                        fillValuesB[0] = value;
-                        fillValuesB[1] = value;
-                        fillValuesB[2] = value;
-                    }
+                    } else {
+						getHistoLUTComponentB();
+						if (mode == ViewJComponentHistoRGB.GREEN) {
+						    fillValuesB[1] = value;
+						} else {
+							getHistoLUTComponentB();
+							if (mode == ViewJComponentHistoRGB.BLUE) {
+							    fillValuesB[2] = value;
+							} else {
+								getHistoLUTComponentB();
+								if (mode == ViewJComponentHistoRGB.ALL) {
+								    fillValuesB[0] = value;
+								    fillValuesB[1] = value;
+								    fillValuesB[2] = value;
+								}
+							}
+						}
+					}
 
                 } else {
                     threshFillBF.requestFocus();
@@ -1208,61 +1246,81 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             setTitle("Lookup Table: " + imageA.getImageName());
             modeA = getHistoLUTComponentA().getMode();
 
-            if (modeA == getHistoLUTComponentA().RED) {
+            getHistoLUTComponentA();
+			if (modeA == ViewJComponentHistoRGB.RED) {
                 redRGBButton.setBorderPainted(true);
                 redRGBButton.setSelected(true);
                 greenRGBButton.setBorderPainted(false);
                 blueRGBButton.setBorderPainted(false);
                 allRGBButton.setBorderPainted(false);
-            } else if (modeA == getHistoLUTComponentA().GREEN) {
-                redRGBButton.setBorderPainted(false);
-                greenRGBButton.setBorderPainted(true);
-                greenRGBButton.setSelected(true);
-                blueRGBButton.setBorderPainted(false);
-                allRGBButton.setBorderPainted(false);
-            } else if (modeA == getHistoLUTComponentA().BLUE) {
-                redRGBButton.setBorderPainted(false);
-                greenRGBButton.setBorderPainted(false);
-                blueRGBButton.setBorderPainted(true);
-                blueRGBButton.setSelected(true);
-                allRGBButton.setBorderPainted(false);
-            } else if (modeA == getHistoLUTComponentA().ALL) {
-                redRGBButton.setBorderPainted(false);
-                greenRGBButton.setBorderPainted(false);
-                blueRGBButton.setBorderPainted(false);
-                allRGBButton.setSelected(true);
-                allRGBButton.setBorderPainted(true);
-            }
+            } else {
+				getHistoLUTComponentA();
+				if (modeA == ViewJComponentHistoRGB.GREEN) {
+				    redRGBButton.setBorderPainted(false);
+				    greenRGBButton.setBorderPainted(true);
+				    greenRGBButton.setSelected(true);
+				    blueRGBButton.setBorderPainted(false);
+				    allRGBButton.setBorderPainted(false);
+				} else {
+					getHistoLUTComponentA();
+					if (modeA == ViewJComponentHistoRGB.BLUE) {
+					    redRGBButton.setBorderPainted(false);
+					    greenRGBButton.setBorderPainted(false);
+					    blueRGBButton.setBorderPainted(true);
+					    blueRGBButton.setSelected(true);
+					    allRGBButton.setBorderPainted(false);
+					} else {
+						getHistoLUTComponentA();
+						if (modeA == ViewJComponentHistoRGB.ALL) {
+						    redRGBButton.setBorderPainted(false);
+						    greenRGBButton.setBorderPainted(false);
+						    blueRGBButton.setBorderPainted(false);
+						    allRGBButton.setSelected(true);
+						    allRGBButton.setBorderPainted(true);
+						}
+					}
+				}
+			}
         } else if ((source == tabbedPane) && (tabbedPane.getSelectedComponent() == panelB) && (imageB != null)) {
             displayMode = IMAGE_B;
             setTitle("Lookup Table: " + imageB.getImageName());
             modeB = getHistoLUTComponentB().getMode();
 
-            if (modeB == getHistoLUTComponentB().RED) {
+            getHistoLUTComponentB();
+			if (modeB == ViewJComponentHistoRGB.RED) {
                 redRGBButton.setBorderPainted(true);
                 redRGBButton.setSelected(true);
                 greenRGBButton.setBorderPainted(false);
                 blueRGBButton.setBorderPainted(false);
                 allRGBButton.setBorderPainted(false);
-            } else if (modeB == getHistoLUTComponentB().GREEN) {
-                redRGBButton.setBorderPainted(false);
-                greenRGBButton.setBorderPainted(true);
-                greenRGBButton.setSelected(true);
-                blueRGBButton.setBorderPainted(false);
-                allRGBButton.setBorderPainted(false);
-            } else if (modeB == getHistoLUTComponentB().BLUE) {
-                redRGBButton.setBorderPainted(false);
-                greenRGBButton.setBorderPainted(false);
-                blueRGBButton.setBorderPainted(true);
-                blueRGBButton.setSelected(true);
-                allRGBButton.setBorderPainted(false);
-            } else if (modeB == getHistoLUTComponentB().ALL) {
-                redRGBButton.setBorderPainted(false);
-                greenRGBButton.setBorderPainted(false);
-                blueRGBButton.setBorderPainted(false);
-                allRGBButton.setSelected(true);
-                allRGBButton.setBorderPainted(true);
-            }
+            } else {
+				getHistoLUTComponentB();
+				if (modeB == ViewJComponentHistoRGB.GREEN) {
+				    redRGBButton.setBorderPainted(false);
+				    greenRGBButton.setBorderPainted(true);
+				    greenRGBButton.setSelected(true);
+				    blueRGBButton.setBorderPainted(false);
+				    allRGBButton.setBorderPainted(false);
+				} else {
+					getHistoLUTComponentB();
+					if (modeB == ViewJComponentHistoRGB.BLUE) {
+					    redRGBButton.setBorderPainted(false);
+					    greenRGBButton.setBorderPainted(false);
+					    blueRGBButton.setBorderPainted(true);
+					    blueRGBButton.setSelected(true);
+					    allRGBButton.setBorderPainted(false);
+					} else {
+						getHistoLUTComponentB();
+						if (modeB == ViewJComponentHistoRGB.ALL) {
+						    redRGBButton.setBorderPainted(false);
+						    greenRGBButton.setBorderPainted(false);
+						    blueRGBButton.setBorderPainted(false);
+						    allRGBButton.setSelected(true);
+						    allRGBButton.setBorderPainted(true);
+						}
+					}
+				}
+			}
         }
     }
 
@@ -1336,13 +1394,20 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             calcHistogram(IMAGE_A, entireFlag, progressFlag);
             modeA = getHistoLUTComponentA().getMode();
 
-            if (modeA == getHistoLUTComponentA().RED) {
+            getHistoLUTComponentA();
+			if (modeA == ViewJComponentHistoRGB.RED) {
                 getHistoLUTComponentA().setHistogramInfo(imageA, histogramARed);
-            } else if (modeA == getHistoLUTComponentA().GREEN) {
-                getHistoLUTComponentA().setHistogramInfo(imageA, histogramAGreen);
-            } else if (modeA == getHistoLUTComponentA().BLUE) {
-                getHistoLUTComponentA().setHistogramInfo(imageA, histogramABlue);
-            }
+            } else {
+				getHistoLUTComponentA();
+				if (modeA == ViewJComponentHistoRGB.GREEN) {
+				    getHistoLUTComponentA().setHistogramInfo(imageA, histogramAGreen);
+				} else {
+					getHistoLUTComponentA();
+					if (modeA == ViewJComponentHistoRGB.BLUE) {
+					    getHistoLUTComponentA().setHistogramInfo(imageA, histogramABlue);
+					}
+				}
+			}
 
             getHistoLUTComponentA().showHistogram();
         }
@@ -1355,13 +1420,20 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             calcHistogram(IMAGE_B, entireFlag, progressFlag);
             modeB = getHistoLUTComponentB().getMode();
 
-            if (modeB == getHistoLUTComponentB().RED) {
+            getHistoLUTComponentB();
+			if (modeB == ViewJComponentHistoRGB.RED) {
                 getHistoLUTComponentB().setHistogramInfo(imageB, histogramBRed);
-            } else if (modeB == getHistoLUTComponentB().GREEN) {
-                getHistoLUTComponentB().setHistogramInfo(imageB, histogramBGreen);
-            } else if (modeB == getHistoLUTComponentB().BLUE) {
-                getHistoLUTComponentB().setHistogramInfo(imageB, histogramBBlue);
-            }
+            } else {
+				getHistoLUTComponentB();
+				if (modeB == ViewJComponentHistoRGB.GREEN) {
+				    getHistoLUTComponentB().setHistogramInfo(imageB, histogramBGreen);
+				} else {
+					getHistoLUTComponentB();
+					if (modeB == ViewJComponentHistoRGB.BLUE) {
+					    getHistoLUTComponentB().setHistogramInfo(imageB, histogramBBlue);
+					}
+				}
+			}
 
             getHistoLUTComponentB().showHistogram();
         }
