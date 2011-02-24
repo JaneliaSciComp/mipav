@@ -227,7 +227,7 @@ public class ViewOpenImageSequence extends JFrame
 
                 Arrays.sort(fileListData);
 
-                Vector fileListVector = new Vector();
+                Vector<String> fileListVector = new Vector<String>();
 
                 for (int i = 0; i < fileListData.length; i++) {
 
@@ -238,10 +238,10 @@ public class ViewOpenImageSequence extends JFrame
                 }
 
                 // filter out files that don't have same file extension as selected file
-                fileListVector = filterFileExtension(fileListVector, selectedFile);
+                fileListVector = (Vector<String>)filterFileExtension(fileListVector, selectedFile);
 
                 for(int i=0;i<fileListVector.size();i++) {
-                	Vector newRow = new Vector();
+                	Vector<String> newRow = new Vector<String>();
                 	newRow.addElement(fileListVector.get(i));
                 	filenameTableModel.addRow(newRow);
                 }
@@ -493,7 +493,7 @@ public class ViewOpenImageSequence extends JFrame
      * @param  numTimePoints  int - the number of time points the data represents
      */
     protected void arrangeCTZ(int numSlices, int numChannels, int numTimePoints) {
-        Vector channelVector = new Vector();
+        Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
@@ -509,16 +509,16 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector timePointVector = new Vector();
+                Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector zSliceVector = new Vector();
+                    Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < numSlices; j++) {
                     	/* nish
                         zSliceVector.addElement(filenameList.getModel().getElementAt((j * numTimePoints * numChannels) +
                                                                                      (numChannels * i) + k)); */
-                    	zSliceVector.addElement(filenameTable.getValueAt((j * numTimePoints * numChannels) + (numChannels * i) + k, 0));
+                    	zSliceVector.addElement((String) filenameTable.getValueAt((j * numTimePoints * numChannels) + (numChannels * i) + k, 0));
                           
                     	
                     	
@@ -545,7 +545,7 @@ public class ViewOpenImageSequence extends JFrame
      * @param  numTimePoints  int - the number of time points the data represents
      */
     protected void arrangeCZT(int numSlices, int numChannels, int numTimePoints) {
-        Vector channelVector = new Vector();
+        Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
@@ -561,17 +561,17 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector timePointVector = new Vector();
+                Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector zSliceVector = new Vector();
+                    Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < (numSlices * numChannels); j += numChannels) {
                     	/* nish
                         zSliceVector.addElement(filenameList.getModel().getElementAt(j + k +
                                                                                      (numSlices * numChannels * i))); */
                     	
-                    	zSliceVector.addElement(filenameTable.getValueAt(j + k + (numSlices * numChannels * i), 0));
+                    	zSliceVector.addElement((String)filenameTable.getValueAt(j + k + (numSlices * numChannels * i), 0));
                     	
                     }
 
@@ -595,7 +595,7 @@ public class ViewOpenImageSequence extends JFrame
      * @param  numTimePoints  int - the number of time points the data represents
      */
     protected void arrangeTCZ(int numSlices, int numChannels, int numTimePoints) {
-        Vector channelVector = new Vector();
+        Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
@@ -611,10 +611,10 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector timePointVector = new Vector();
+                Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector zSliceVector = new Vector();
+                    Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < numSlices; j++) {
                     	/* nish
@@ -622,7 +622,7 @@ public class ViewOpenImageSequence extends JFrame
                                                                                      (k * numTimePoints) + i)); */
                     	
                     	
-                    	zSliceVector.addElement(filenameTable.getValueAt((j * numTimePoints * numChannels) + (k * numTimePoints) + i, 0));
+                    	zSliceVector.addElement((String)filenameTable.getValueAt((j * numTimePoints * numChannels) + (k * numTimePoints) + i, 0));
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -645,7 +645,7 @@ public class ViewOpenImageSequence extends JFrame
      * @param  numTimePoints  int - the number of time points the data represents
      */
     protected void arrangeTZC(int numSlices, int numChannels, int numTimePoints) {
-        Vector channelVector = new Vector();
+        Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
@@ -661,14 +661,14 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector timePointVector = new Vector();
+                Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < (numChannels * numSlices); k++) {
                 	/* nish
                     timePointVector.addElement(filenameList.getModel().getElementAt((k * numTimePoints) + i)); */
                 	
                 	
-                	timePointVector.addElement(filenameTable.getValueAt((k * numTimePoints) + i, 0));
+                	timePointVector.addElement((String)filenameTable.getValueAt((k * numTimePoints) + i, 0));
                 }
 
                 tableModel.addColumn("Time point " + (i + 1), timePointVector);
@@ -688,7 +688,7 @@ public class ViewOpenImageSequence extends JFrame
      * @param  numTimePoints  int - the number of time points the data represents
      */
     protected void arrangeZCT(int numSlices, int numChannels, int numTimePoints) {
-        Vector channelVector = new Vector();
+        Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
@@ -704,17 +704,17 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector timePointVector = new Vector();
+                Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector zSliceVector = new Vector();
+                    Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < numSlices; j++) {
                     	/* nish
                         zSliceVector.addElement(filenameList.getModel().getElementAt((j + (k * numSlices)) +
                                                                                      (i * numSlices * numChannels))); */
                     	
-                    	zSliceVector.addElement(filenameTable.getValueAt((j + (k * numSlices)) + (i * numSlices * numChannels), 0));
+                    	zSliceVector.addElement((String)filenameTable.getValueAt((j + (k * numSlices)) + (i * numSlices * numChannels), 0));
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -737,7 +737,7 @@ public class ViewOpenImageSequence extends JFrame
      * @param  numTimePoints  int - the number of time points the data represents
      */
     protected void arrangeZTC(int numSlices, int numChannels, int numTimePoints) {
-        Vector channelVector = new Vector();
+        Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
@@ -753,17 +753,17 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector timePointVector = new Vector();
+                Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector zSliceVector = new Vector();
+                    Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < numSlices; j++) {
                     	/* nish
                         zSliceVector.addElement(filenameList.getModel().getElementAt(j + (numSlices * i) +
                                                                                      (numTimePoints * numSlices * k))); */
                     	
-                    	zSliceVector.addElement(filenameTable.getValueAt(j + (numSlices * i) + (numTimePoints * numSlices * k), 0));
+                    	zSliceVector.addElement((String)filenameTable.getValueAt(j + (numSlices * i) + (numTimePoints * numSlices * k), 0));
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -1433,7 +1433,7 @@ public class ViewOpenImageSequence extends JFrame
      *
      * @return  Vector - a new Vector containing the filtered list of String objects representing filenames
      */
-    protected Vector filterFileExtension(Vector rawFileList, File selectedFile) {
+    protected Vector<String> filterFileExtension(Vector<String> rawFileList, File selectedFile) {
 
         if ((rawFileList == null) || (selectedFile == null)) {
             return rawFileList;
@@ -1449,7 +1449,7 @@ public class ViewOpenImageSequence extends JFrame
 
         String extension = filename.substring(lastIndex);
 
-        Vector filteredList = new Vector();
+        Vector<String> filteredList = new Vector<String>();
 
         for (int i = 0; i < rawFileList.size(); i++) {
             filename = (String) rawFileList.elementAt(i);
@@ -1470,6 +1470,7 @@ public class ViewOpenImageSequence extends JFrame
      *
      * @param  selectedSequence  int - the Z-T-C ordering as selected by the user
      */
+    @SuppressWarnings("unchecked")
     protected void formatTable(int selectedSequence) {
         tableModel.setColumnIdentifiers(new Vector()); // clear all columns
 
@@ -1523,12 +1524,12 @@ public class ViewOpenImageSequence extends JFrame
      * @return  DOCUMENT ME!
      */
     protected File[] getFileList() {
-        Vector imageList = new Vector();
+        Vector<String> imageList = new Vector<String>();
 
         for (int i = 1; i < tableModel.getColumnCount(); i++) {
 
             for (int j = 0; j < tableModel.getRowCount(); j++) {
-                imageList.addElement(tableModel.getValueAt(j, i));
+                imageList.addElement((String)tableModel.getValueAt(j, i));
             }
         }
 
@@ -1755,11 +1756,11 @@ public class ViewOpenImageSequence extends JFrame
     private void removeSelected() {
     	int[] selectedRows  = filenameTable.getSelectedRows();
     	if(selectedRows.length > 0) {
-    		Vector fileVect = new Vector();
+    		Vector<String> fileVect = new Vector<String>();
 	    	int rowCount = filenameTableModel.getRowCount();
 	    	for (int i=0;i<rowCount;i++) {
 	    		if(!filenameTable.isRowSelected(i)) {
-	    			fileVect.addElement(filenameTableModel.getValueAt(i, 0));
+	    			fileVect.addElement((String)filenameTableModel.getValueAt(i, 0));
 	    		}	
 	    	}
 	    	for(int i=rowCount-1;i >=0;i--)
@@ -1767,7 +1768,7 @@ public class ViewOpenImageSequence extends JFrame
 	    		filenameTableModel.removeRow(i); 
 	    	   }
 	    	for(int i=0;i<fileVect.size();i++) {
-            	Vector newRow = new Vector();
+            	Vector<String> newRow = new Vector<String>();
             	newRow.addElement(fileVect.get(i));
             	filenameTableModel.addRow(newRow);
             }
@@ -1784,11 +1785,11 @@ public class ViewOpenImageSequence extends JFrame
     private void keepSelected() {
     	int[] selectedRows  = filenameTable.getSelectedRows();
     	if(selectedRows.length > 0) {
-    		Vector fileVect = new Vector();
+    		Vector<String> fileVect = new Vector<String>();
 	    	int rowCount = filenameTableModel.getRowCount();
 	    	for (int i=0;i<rowCount;i++) {
 	    		if(filenameTable.isRowSelected(i)) {
-	    			fileVect.addElement(filenameTableModel.getValueAt(i, 0));
+	    			fileVect.addElement((String)filenameTableModel.getValueAt(i, 0));
 	    		}	
 	    	}
 	    	for(int i=rowCount-1;i >=0;i--)
@@ -1796,7 +1797,7 @@ public class ViewOpenImageSequence extends JFrame
 	    		filenameTableModel.removeRow(i); 
 	    	   }
 	    	for(int i=0;i<fileVect.size();i++) {
-            	Vector newRow = new Vector();
+            	Vector<String> newRow = new Vector<String>();
             	newRow.addElement(fileVect.get(i));
             	filenameTableModel.addRow(newRow);
             }
