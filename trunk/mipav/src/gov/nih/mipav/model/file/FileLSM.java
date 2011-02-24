@@ -853,8 +853,8 @@ public class FileLSM extends FileBase {
     /** DOCUMENT ME! */
     private int czSpectralScan;
 
-    /** DOCUMENT ME! */
-    private Vector[] dataOffsets = new Vector[4000];
+    @SuppressWarnings("unchecked")
+    private Vector<Index>[] dataOffsets = new Vector[4000];
 
     /** DOCUMENT ME! */
     private byte[] dateTime;
