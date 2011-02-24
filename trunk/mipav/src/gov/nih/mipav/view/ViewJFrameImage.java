@@ -150,9 +150,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     private boolean paintBrushLocked = false;
 
-    /** Holds the selected Paint brush index while painting in hold 0-9 key mode. */
-    private int previousPaintBrushIndex = 0;
-
     /** DOCUMENT ME! */
     private int quickPaintBrushIndex = -1;
 
@@ -302,12 +299,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	System.out.println("hello");
         	
         	
-        	final Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
+        	final Enumeration<ModelImage> regImages = ViewUserInterface.getReference().getRegisteredImages();
             // add only the framed ones to a new list...also..dont include the active image
         	int activeImageNumDims = getImageA().getNDims();
         	boolean hasMatch = false;
             while (regImages.hasMoreElements()) {
-                final ModelImage image = (ModelImage) regImages.nextElement();
+                final ModelImage image = regImages.nextElement();
                 // check if it is a framed image...and if its not the active image...also make sure its just imageA
                 if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(getImageA().getImageName()))
                         && ( ( (image.getParentFrame())).getImageA() == image)) {
@@ -640,7 +637,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (imageB != null) {
                 setActiveImage(ViewJFrameBase.IMAGE_A);
 
-                final Vector frameList = imageB.getImageFrameVector();
+                final Vector<ViewImageUpdateInterface> frameList = imageB.getImageFrameVector();
 
                 for (int i = 0; i < frameList.size(); i++) {
 
@@ -864,7 +861,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            final Vector listeners = new Vector();
+            final Vector<PaintGrowListener> listeners = new Vector<PaintGrowListener>();
 
             listeners.add(componentImage);
             componentImage.growDialog = new JDialogPaintGrow(this, listeners);
@@ -2324,7 +2321,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         // Get all imageA frames
-        final Vector frameListA = imageA.getImageFrameVector();
+        final Vector<ViewImageUpdateInterface> frameListA = imageA.getImageFrameVector();
 
         if (frameListA != null) {
 
@@ -2678,11 +2675,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         }
      // get all registered images
-        final Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
+        final Enumeration<ModelImage> regImages = ViewUserInterface.getReference().getRegisteredImages();
         // add only the framed ones to a new list...also..dont include the active image
 
         while (regImages.hasMoreElements()) {
-            final ModelImage image = (ModelImage) regImages.nextElement();
+            final ModelImage image = regImages.nextElement();
             // check if it is a framed image...and if its not the active image...also make sure its just imageA
             if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(getImageA().getImageName()))
                     && ( ( (image.getParentFrame())).getImageA() == image)) {
@@ -2947,7 +2944,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @return Vector
      */
-    public Vector getRegisteredFramedImages(final ModelImage activeImage) {
+    public Vector<ModelImage> getRegisteredFramedImages(final ModelImage activeImage) {
         final int activeImageNumDims = activeImage.getNDims();
         int activeImageNumSlices = 1, activeImageNumVolumes = 1, activeImageNumChannels = 1;
 
@@ -2966,17 +2963,17 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         }
 
-        final Vector registeredFramedImages = new Vector();
+        final Vector<ModelImage> registeredFramedImages = new Vector<ModelImage>();
 
         // check if there is more than 1 regsitered framed image
         if (ViewUserInterface.getReference().getRegisteredFramedImagesNum() > 1) {
 
             // get all registered images
-            final Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
+            final Enumeration<ModelImage> regImages = ViewUserInterface.getReference().getRegisteredImages();
             // add only the framed ones to a new list...also..dont include the active image
 
             while (regImages.hasMoreElements()) {
-                final ModelImage image = (ModelImage) regImages.nextElement();
+                final ModelImage image = regImages.nextElement();
 
                 // check if it is a framed image...and if its not the active image...also make sure its just imageA
                 if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(activeImage.getImageName()))
@@ -3040,13 +3037,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @return Vector
      */
-    public Vector getRegisteredFramedImages4D3D(final ModelImage activeImage) {
-    	final Vector registeredFramedImages = new Vector();
+    public Vector<ModelImage> getRegisteredFramedImages4D3D(final ModelImage activeImage) {
+    	final Vector<ModelImage> registeredFramedImages = new Vector<ModelImage>();
         final int activeImageNumDims = activeImage.getNDims();
         if(activeImageNumDims != 4) {
         	return registeredFramedImages;
         }
-        int activeImageNumSlices = 1, activeImageNumVolumes = 1, activeImageNumChannels = 1;
+        int activeImageNumSlices = 1;
 
         activeImageNumSlices = activeImage.getExtents()[2];
 
@@ -3055,11 +3052,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (ViewUserInterface.getReference().getRegisteredFramedImagesNum() > 1) {
 
             // get all registered images
-            final Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
+            final Enumeration<ModelImage> regImages = ViewUserInterface.getReference().getRegisteredImages();
             // add only the framed ones to a new list...also..dont include the active image
 
             while (regImages.hasMoreElements()) {
-                final ModelImage image = (ModelImage) regImages.nextElement();
+                final ModelImage image = regImages.nextElement();
 
                 // check if it is a framed image...and if its not the active image...also make sure its just imageA
                 if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(activeImage.getImageName()))
@@ -3398,7 +3395,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         paintBrushLocked = true;
                     } else {
                         quickPaintBrushIndex = index;
-                        previousPaintBrushIndex = getControls().getTools().getPaintBrush();
 
                         final String name = getControls().getTools().getPaintBrushName(index);
 
@@ -3831,7 +3827,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param _imageB image to set the frame to
      */
     public void setImageB(final ModelImage _imageB) {
-        final Vector frameList = imageA.getImageFrameVector();
+        final Vector<ViewImageUpdateInterface> frameList = imageA.getImageFrameVector();
         float min, max;
 
         if (frameList == null) {
@@ -4023,7 +4019,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // when we set the slice of the other images, make SURE they do not try to update linked images (infinite
             // loop)
             if (updateLinkedImages && linkedScrolling) {
-                final Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
+                //final Vector<ModelImage> registeredFramedImages = getRegisteredFramedImages(getImageA());
                 
                /* if(getImageA().is4DImage()) {
                 	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
@@ -4102,10 +4098,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 // when we set the slice of the other images, make SURE they do not try to update linked images
                 // (infinite loop)
                 if (checkScroll && linkedScrolling) {
-                    final Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
+                    final Vector<ModelImage> registeredFramedImages = getRegisteredFramedImages(getImageA());
 
                     for (int i = 0; i < registeredFramedImages.size(); i++) {
-                        final ModelImage img = (ModelImage) registeredFramedImages.get(i);
+                        final ModelImage img = registeredFramedImages.get(i);
                         final ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
                         framedImg.setTimeSlice(componentImage.getTimeSlice(), false);
                         framedImg.updateImages();
@@ -4137,10 +4133,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 if (checkScroll && linkedScrolling) {
-                    final Vector registeredFramedImages = getRegisteredFramedImages(getImageB());
+                    final Vector<ModelImage> registeredFramedImages = getRegisteredFramedImages(getImageB());
 
                     for (int i = 0; i < registeredFramedImages.size(); i++) {
-                        final ModelImage img = (ModelImage) registeredFramedImages.get(i);
+                        final ModelImage img = registeredFramedImages.get(i);
                         final ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
                         framedImg.setTimeSlice(componentImage.getTimeSlice(), false);
                         framedImg.updateImages();
@@ -4997,12 +4993,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @return <code>true</code> if there are images to operate on.
      */
     private boolean isMultipleImages() {
-        final Enumeration names = userInterface.getRegisteredImageNames();
+        final Enumeration<String> names = userInterface.getRegisteredImageNames();
         boolean createDialog = false;
 
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
-            final String name = (String) names.nextElement();
+            final String name = names.nextElement();
 
             if ( !imageA.getImageName().equals(name)) {
                 createDialog = true;
@@ -5025,13 +5021,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @return <code>true</code> if there are images to operate on.
      */
     private boolean isMultipleSameSizeImages(final boolean isForCalculator) {
-        final Enumeration names = userInterface.getRegisteredImageNames();
+        final Enumeration<String> names = userInterface.getRegisteredImageNames();
         boolean createDialog = false;
         boolean proceed = false;
 
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
-            final String name = (String) names.nextElement();
+            final String name = names.nextElement();
 
             if ( !getActiveImage().getImageName().equals(name)) {
 
