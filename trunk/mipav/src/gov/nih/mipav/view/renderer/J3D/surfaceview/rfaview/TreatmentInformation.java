@@ -14,7 +14,7 @@ public class TreatmentInformation {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** List of burn attributes. */
-    private Vector burns = new Vector();
+    private Vector<BurnAttributes> burns = new Vector<BurnAttributes>();
 
     /** The volume difference btw the tumor surface and the buring sphere packings. */
     private float diffVolume = -1;
@@ -73,7 +73,7 @@ public class TreatmentInformation {
      *
      * @return  an enumeration of the treatment's burns
      */
-    public Enumeration getBurnEnum() {
+    public Enumeration<BurnAttributes> getBurnEnum() {
         return burns.elements();
     }
 

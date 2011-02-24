@@ -41,7 +41,7 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererJ3D {
     private JButton diffuseButton;
 
     /** Flag indicating if box is on or off. */
-    private boolean flag = false;
+    //private boolean flag = false;
 
     /** DOCUMENT ME! */
     private ButtonGroup m_kRadioGroupMaxRenExtent;

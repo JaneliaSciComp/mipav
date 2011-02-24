@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.J3D.surfaceview.rfaview;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -147,7 +148,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
     private JLabel[] opacitySliderLabels;
 
     /** Burning point parameter dialog to change the burning attributes, such as diameter. */
-    private JDialogBurnParameter paramDialog;
+    //private JDialogBurnParameter paramDialog;
 
     /** Volume view frame work reference. */
     private ViewJFrameVolumeView parentFrame;
@@ -165,7 +166,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
     private JToggleButton probeTargetButton;
 
     /** Buring point sphere diameter. */
-    private Point3f radius;
+    //private Point3f radius;
 
     /** burning point diameter label. */
     private JLabel radiusLabel;
@@ -198,7 +199,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
     private JTextField semiZText;
 
     /** Showing the burning process or not. */
-    private boolean showBurning;
+    //private boolean showBurning;
 
     /** Flag indicates the show burning text label or not. */
     private boolean showBurnLabels = false;
@@ -258,7 +259,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
     private JToggleButton traverseButton;
 
     /** List of treatment sets. */
-    private Vector treatmentVector;
+    private Vector<TreatmentInformation> treatmentVector; 
 
     /** burning point diameter text. */
     // private JTextField diameterText;
@@ -316,7 +317,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         updateProbeList();
         updateTargetList();
         targetList.addListSelectionListener(this);
-        treatmentVector = new Vector();
+        treatmentVector = new Vector<TreatmentInformation>();
         noTargetTreatment = new TreatmentInformation();
         this.xBox = xBox;
         this.yBox = yBox;
@@ -336,7 +337,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
+        //Object source = event.getSource();
 
         if (command.equals("calcVolume")) {
 
@@ -344,7 +345,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
             burnBase.calcVolume(getCurSurface(), getCurTreatment());
 
             // / assumes that the units are the same in all dims
-            String unitStr = parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasureAbbrevStr(parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasure(0));
+            String unitStr = Unit.getUnitFromLegacyNum(parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasure(0)).getAbbrev();
 
             totalVolumeText.setText(" " + MipavUtil.makeFloatString(burnBase.getVolume(), 3) + " " + unitStr + "^3");
             diffVolumeText.setText(" " + MipavUtil.makeFloatString(burnBase.getDiffVolume(), 3) + " " + unitStr + "^3");
@@ -367,7 +368,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
             // callback to updateTargetList() updates treatmentVector
             ((SurfaceRender) renderBase).getSurfaceDialog().addSurface();
         } else if (command.equals("removeTarget")) {
-            int surIndex = targetList.getSelectedIndex();
+            //int surIndex = targetList.getSelectedIndex();
 
             // remove all burns attached to this target
             removeAllBurn();
@@ -637,7 +638,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
                 return;
             }
 
-            Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
+            Vector<SurfaceAttributes> surfaceVector = (Vector<SurfaceAttributes>) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
             for (int i = 0; i < surfaceVector.size(); i++) {
                 String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
@@ -835,7 +836,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
      */
     public SurfaceAttributes getCurSurface() {
         int index = targetList.getSelectedIndex();
-        Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
+        Vector<SurfaceAttributes> surfaceVector = (Vector<SurfaceAttributes>) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
         for (int i = 0; i < surfaceVector.size(); i++) {
             String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
@@ -924,7 +925,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
      * @return  the attributes of the current target surface
      */
     public SurfaceAttributes getTargetSurface() {
-        Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
+        Vector<SurfaceAttributes> surfaceVector = (Vector<SurfaceAttributes>) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
         for (int i = 0; i < surfaceVector.size(); i++) {
             String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
@@ -965,7 +966,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         ModelImage img;
         FileHistoLUT fileHistoLUT;
 
-        if (parentFrame.getDisplayMode() == parentFrame.IMAGE_A) {
+        if (parentFrame.getDisplayMode() == ViewJFrameBase.IMAGE_A) {
             img = parentFrame.getImageA();
             lut = parentFrame.getLUTa();
         } else {
@@ -1016,7 +1017,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
                 fileHistoLUT.readFunctions();
             }
 
-            if (parentFrame.getDisplayMode() == parentFrame.IMAGE_A) {
+            if (parentFrame.getDisplayMode() == ViewJFrameBase.IMAGE_A) {
                 parentFrame.setLUTa(lut);
             } else {
                 parentFrame.setLUTb(lut);
@@ -1066,7 +1067,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         ModelImage img;
         FileHistoLUT fileHistoLUT;
 
-        if (parentFrame.getDisplayMode() == parentFrame.IMAGE_A) {
+        if (parentFrame.getDisplayMode() == ViewJFrameBase.IMAGE_A) {
             img = parentFrame.getImageA();
             lut = parentFrame.getLUTa();
         } else {
@@ -1196,11 +1197,11 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
                                                  clipping, culling, burnBase.getMask(), getEntryPoint(), getBurnPoint(),
                                                  probe.getTransform());
 
-        Vector burnNames = new Vector();
+        Vector<String> burnNames = new Vector<String>();
 
         getCurTreatment().addBurn(burn);
 
-        for (Enumeration en = getCurTreatment().getBurnEnum(); en.hasMoreElements();) {
+        for (Enumeration<BurnAttributes> en = getCurTreatment().getBurnEnum(); en.hasMoreElements();) {
             burnNames.addElement(((BurnAttributes) en.nextElement()).name);
         }
 
@@ -1363,7 +1364,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
      * Update probe list.
      */
     public void updateProbeList() {
-        Vector probeNames = new Vector();
+        Vector<String> probeNames = new Vector<String>();
 
         probeNames.addElement("default probe");
         probeNames.addElement("thermal probe");
@@ -1391,14 +1392,14 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
      * Update target surface list from the JPanelSurface control dialog.
      */
     public void updateTargetList() {
-        Vector surfaceNames = new Vector();
-        Vector surfaceVector = ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector();
+        Vector<String> surfaceNames = new Vector<String>();
+        Vector<SurfaceAttributes> surfaceVector = ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector();
 
         if (treatmentVector != null) {
             treatmentVector.removeAllElements();
         }
 
-        for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
+        for (Enumeration<SurfaceAttributes> en = surfaceVector.elements(); en.hasMoreElements();) {
             String name = ((SurfaceAttributes) en.nextElement()).getName();
 
             if (!name.endsWith("_liver.sur") && !name.endsWith("_vasculature.sur")) {
@@ -1444,9 +1445,9 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         if (swapBurnList) {
             burnList.removeAll();
 
-            Vector burnNames = new Vector();
+            Vector<String> burnNames = new Vector<String>();
 
-            for (Enumeration e = getCurTreatment().getBurnEnum(); e.hasMoreElements();) {
+            for (Enumeration<BurnAttributes> e = getCurTreatment().getBurnEnum(); e.hasMoreElements();) {
                 burnNames.add(((BurnAttributes) e.nextElement()).name);
             }
 
@@ -1501,7 +1502,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
 
             // update burn volume
             // / assumes that the units are the same in all dims
-            String unitStr = parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasureAbbrevStr(parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasure(0));
+            String unitStr = Unit.getUnitFromLegacyNum(parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasure(0)).getAbbrev();
 
             volumeText.setText(" " + MipavUtil.makeFloatString(getCurTreatment().getBurnVolume(burnIndex), 3) + " " +
                                unitStr + "^3");
@@ -1585,7 +1586,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
             zTextEntry.setText(" " + MipavUtil.makeFloatString(entryPt.z * zRes, 3));
 
             // / assumes that the units are the same in all dims
-            String unitStr = parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasureAbbrevStr(parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasure(0));
+            String unitStr = Unit.getUnitFromLegacyNum(parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasure(0)).getAbbrev();
 
             volumeText.setText(" " + MipavUtil.makeFloatString(attributes.volume, 3) + " " + unitStr + "^3");
 
@@ -1599,7 +1600,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
             enableBurnTreatmentComponents(true);
         } else if ((kList == targetList) &&
                        (((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().size() > 0)) {
-            Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
+            Vector<SurfaceAttributes> surfaceVector = (Vector<SurfaceAttributes>) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
             for (int i = 0; i < surfaceVector.size(); i++) {
                 String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
@@ -1615,7 +1616,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
             }
 
             if (indices.length == 1) {
-                Vector surfaces = ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector();
+                Vector<SurfaceAttributes> surfaces = ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector();
 
                 for (int i = 0; i < surfaces.size(); i++) {
 
@@ -1626,7 +1627,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
                     }
                 }
             } else if (indices.length > 1) {
-                Vector surfaces = ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector();
+                Vector<SurfaceAttributes> surfaces = ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector();
 
                 for (int i = 0; i < surfaces.size(); i++) {
 
@@ -1781,7 +1782,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         opacitySliderLabels[1] = new JLabel("50");
         opacitySliderLabels[2] = new JLabel("100");
 
-        Hashtable labels = new Hashtable();
+        Hashtable<Integer,JLabel> labels = new Hashtable<Integer,JLabel>();
 
         labels.put(new Integer(0), opacitySliderLabels[0]);
         labels.put(new Integer(50), opacitySliderLabels[1]);
@@ -2019,7 +2020,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         degreeLabels[1] = createLabel("0");
         degreeLabels[2] = createLabel("180");
 
-        Hashtable labels = new Hashtable();
+        Hashtable<Integer,JLabel> labels = new Hashtable<Integer,JLabel>();
 
         labels.put(new Integer(-180), degreeLabels[0]);
         labels.put(new Integer(0), degreeLabels[1]);
@@ -2105,7 +2106,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         labelXEnd.setFont(MipavUtil.font12);
         labelXEnd.setEnabled(true);
 
-        Hashtable labelTableX = new Hashtable();
+        Hashtable<Integer,JLabel> labelTableX = new Hashtable<Integer,JLabel>();
 
         labelTableX.put(new Integer(0), labelX1);
         labelTableX.put(new Integer(100), labelXEnd);
@@ -2124,7 +2125,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         sliderLabelsS[2] = createLabel("1");
 
         // Labels for the x, y, and z sliders
-        Hashtable labels = new Hashtable();
+        Hashtable<Integer,JLabel> labels = new Hashtable<Integer,JLabel>();
 
         labels.put(new Integer(-100), sliderLabelsS[0]);
         labels.put(new Integer(0), sliderLabelsS[1]);
@@ -2847,10 +2848,10 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
 
         // This arrayLIst allows multiple selections but i am only accessing the zeroth element
         // to load the region map
-        ArrayList openImagesArrayList = openFile.open(false);
+        ArrayList<Vector<String>> openImagesArrayList = openFile.open(false);
 
         // if open failed, then imageNames will be null
-        Vector imageNames = (Vector) openImagesArrayList.get(0);
+        Vector<String> imageNames = (Vector<String>) openImagesArrayList.get(0);
 
         if (imageNames == null) {
             return null;
@@ -2897,7 +2898,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         getCurTreatment().removeAllBurns();
         burnBase.removeAllBurnCenters();
 
-        Vector burnNames = new Vector();
+        Vector<String> burnNames = new Vector<String>();
 
         burnList.setListData(burnNames);
         enableBurnVisComponents(false);
@@ -2926,7 +2927,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         // construct the lists of items to be removed
         int[] aiSelected = burnList.getSelectedIndices();
 
-        Vector removeBurns = new Vector();
+        Vector<BurnAttributes> removeBurns = new Vector<BurnAttributes>();
         int i;
 
         for (i = 0; i < aiSelected.length; i++) {
@@ -2950,9 +2951,9 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
             getCurTreatment().removeBurn(removeBurns.get(i));
         }
 
-        Vector burnNames = new Vector();
+        Vector<String> burnNames = new Vector<String>();
 
-        for (Enumeration en = getCurTreatment().getBurnEnum(); en.hasMoreElements();) {
+        for (Enumeration<BurnAttributes> en = getCurTreatment().getBurnEnum(); en.hasMoreElements();) {
             burnNames.addElement(((BurnAttributes) en.nextElement()).name);
         }
 
@@ -3236,7 +3237,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
      * Update the labels which show info about the current target surface.
      */
     private void updateTargetLabels() {
-        Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
+        Vector<SurfaceAttributes> surfaceVector = (Vector<SurfaceAttributes>) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
         for (int i = 0; i < surfaceVector.size(); i++) {
             String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
@@ -3250,7 +3251,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         SurfaceAttributes surface = null;
         String selection = (String) targetList.getSelectedValue();
 
-        for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
+        for (Enumeration<SurfaceAttributes> en = surfaceVector.elements(); en.hasMoreElements();) {
             SurfaceAttributes sur = (SurfaceAttributes) en.nextElement();
             String name = sur.getName();
 
@@ -3270,7 +3271,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
 
             // / assumes that the units are the same in all dims
             float mmVolume = surface.getVolume();
-            String unitStr = parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasureAbbrevStr(parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasure(0));
+            String unitStr = Unit.getUnitFromLegacyNum(parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasure(0)).getAbbrev();
 
             targetVolumeText.setText("" + mmVolume + " " + unitStr + "^3");
         } else {
