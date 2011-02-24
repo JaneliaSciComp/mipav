@@ -100,13 +100,13 @@ public class BurnBaseView {
     protected Point3f m_kCenter;
 
     /** DOCUMENT ME! */
-    protected HashMap m_kEMap; // map<Edge,int>
+    protected HashMap<Edge,Integer> m_kEMap; // map<Edge,int>
 
     /** DOCUMENT ME! */
     protected Matrix3f m_kRotate;
 
     /** Reference to Mask burning attribute. */
-    protected Vector maskBurnVector = null;
+    protected Vector<MaskBurnAttribute> maskBurnVector = null; 
 
     /** Initialized the number of burning point. */
     protected int numBurn = 100;
@@ -166,7 +166,7 @@ public class BurnBaseView {
     Color3f green = new Color3f(Color.green);
 
     /** vector stack to record the burning index. */
-    Vector indexVector = new Vector();
+    Vector<Integer> indexVector = new Vector<Integer>();
 
     /** DOCUMENT ME! */
     Color3f orange = new Color3f(new Color(225, 50, 0));
@@ -779,7 +779,7 @@ public class BurnBaseView {
         spheres.getShape().setCapability(Geometry.ALLOW_INTERSECT);
 
         try {
-            pickCanvas.setCapabilities(spheres.getShape(), PickTool.INTERSECT_FULL);
+            PickTool.setCapabilities(spheres.getShape(), PickTool.INTERSECT_FULL);
         } catch (RestrictedAccessException error) { }
 
         histogramAnalysis();
@@ -956,9 +956,9 @@ public class BurnBaseView {
 
         int i, iX, iY, iZ;
         int[] extents = surfaceRender.getImageA().getExtents();
-        int xDim = extents[0];
-        int yDim = extents[1];
-        int zDim = extents[2];
+        //int xDim = extents[0];
+        //int yDim = extents[1];
+        //int zDim = extents[2];
 
         for (int iT = 0; iT < m_iTQuantity; iT++) {
 
@@ -1152,7 +1152,7 @@ public class BurnBaseView {
             try {
 
                 // pickCanvas.setCapabilities( shape, PickTool.INTERSECT_FULL );
-                pickCanvas.setCapabilities(m_akSurfaceShape[i], PickCanvas.INTERSECT_FULL);
+                PickTool.setCapabilities(m_akSurfaceShape[i], PickCanvas.INTERSECT_FULL);
             } catch (RestrictedAccessException error) { }
 
             root.addChild(m_akSurfaceShape[i]);
@@ -1573,7 +1573,7 @@ public class BurnBaseView {
         m_aiConnect[22] = 0;
         m_aiConnect[23] = 3;
 
-        m_kEMap = new HashMap();
+        m_kEMap = new HashMap<Edge,Integer>();
 
         Integer kInvalid = new Integer(-1);
 
@@ -1915,7 +1915,7 @@ public class BurnBaseView {
         m_aiConnect[22] = 0;
         m_aiConnect[23] = 3;
 
-        m_kEMap = new HashMap();
+        m_kEMap = new HashMap<Edge,Integer>();
 
         Integer kInvalid = new Integer(-1);
 
@@ -2061,9 +2061,9 @@ public class BurnBaseView {
 
         int i, iX, iY, iZ;
         int[] extents = surfaceRender.getImageA().getExtents();
-        int xDim = extents[0];
-        int yDim = extents[1];
-        int zDim = extents[2];
+        //int xDim = extents[0];
+        //int yDim = extents[1];
+        //int zDim = extents[2];
 
         for (int iT = 0; iT < m_iTQuantity; iT++) {
 
@@ -2418,7 +2418,7 @@ public class BurnBaseView {
         shape.setCapability(Shape3D.ENABLE_PICK_REPORTING);
 
         try {
-            pickCanvas.setCapabilities(shape, PickTool.INTERSECT_FULL);
+            PickTool.setCapabilities(shape, PickTool.INTERSECT_FULL);
         } catch (RestrictedAccessException error) { }
 
         BranchGroup lineBG = new BranchGroup();
@@ -2660,7 +2660,7 @@ public class BurnBaseView {
         m_aiConnect[22] = 0;
         m_aiConnect[23] = 3;
 
-        m_kEMap = new HashMap();
+        m_kEMap = new HashMap<Edge,Integer>();
 
         Integer kInvalid = new Integer(-1);
 
@@ -2940,7 +2940,7 @@ public class BurnBaseView {
         m_aiConnect[22] = 0;
         m_aiConnect[23] = 3;
 
-        m_kEMap = new HashMap();
+        m_kEMap = new HashMap<Edge,Integer>();
 
         Integer kInvalid = new Integer(-1);
 
@@ -3067,7 +3067,7 @@ public class BurnBaseView {
      *
      * @param  _vector  MaskBurnVector reference.
      */
-    protected void setMaskBurnVector(Vector _vector) {
+    protected void setMaskBurnVector(Vector<MaskBurnAttribute> _vector) {
         maskBurnVector = _vector;
     }
 
