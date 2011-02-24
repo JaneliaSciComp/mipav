@@ -92,7 +92,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     protected JToggleButton regButton;
 
     /** DOCUMENT ME! */
-    protected Hashtable scriptTable = new Hashtable();
+    protected Hashtable<String,String> scriptTable = new Hashtable<String,String>();
 
     /**
      * The class which wants to listen to changes made to this components of the toolbars. May have to be a
@@ -1194,13 +1194,13 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
             String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
 
             if (imageVars.length == 0) {
-                ScriptRunner.getReference().runScript(scriptFile, new Vector(), new Vector());
+                ScriptRunner.getReference().runScript(scriptFile, new Vector<String>(), new Vector<String>());
             } else if ((imageVars.length == 1) &&
                            (Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, imageVars[0]) == 0)) {
-                Vector imageVector = new Vector();
+                Vector<String> imageVector = new Vector<String>();
                 String imageName = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage().getImageName();
                 imageVector.addElement(imageName);
-                ScriptRunner.getReference().runScript(scriptFile, imageVector, new Vector());
+                ScriptRunner.getReference().runScript(scriptFile, imageVector, new Vector<String>());
             } else {
                 new JDialogRunScriptController(scriptFile);
             }
@@ -1390,7 +1390,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     public void setToggleButtonSelected(String actionCommand) {
     	if (VOIGroup != null) {
 
-            Enumeration e = VOIGroup.getElements();
+            Enumeration<AbstractButton> e = VOIGroup.getElements();
             JToggleButton tButton;
 
             while (e.hasMoreElements()) {
@@ -1408,7 +1408,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     		ButtonGroup bg = null;
     		for (int i = 0; i < bgVector.size(); i++) {
     			bg = bgVector.elementAt(i);
-    			Enumeration e = bg.getElements();
+    			Enumeration<AbstractButton> e = bg.getElements();
                 JToggleButton tButton;
 
                 while (e.hasMoreElements()) {
