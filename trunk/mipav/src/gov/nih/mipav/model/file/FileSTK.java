@@ -169,8 +169,8 @@ public class FileSTK extends FileBase {
     /** DOCUMENT ME! */
     private boolean chunky = true;
 
-    /** DOCUMENT ME! */
-    private Vector[] dataOffsets = new Vector[5000];
+    @SuppressWarnings("unchecked")
+    private Vector<Index>[] dataOffsets = new Vector[5000];
 
     /** DOCUMENT ME! */
     private byte[] dateTime;
@@ -471,7 +471,7 @@ public class FileSTK extends FileBase {
 
                 for (i = 1; i < numberImages; i++) {
                     planeOffset = i * offsetConstant;
-                    dataOffsets[i] = new Vector();
+                    dataOffsets[i] = new Vector<Index>();
 
                     for (j = 0; j < nIndex; j++) {
                         dataOffsets[i].addElement(new Index(planeOffset +
@@ -1375,7 +1375,7 @@ public class FileSTK extends FileBase {
                         throw new IOException("STRIP_OFFSETS has illegal type = " + type + "\n");
                     }
 
-                    dataOffsets[imageSlice] = new Vector();
+                    dataOffsets[imageSlice] = new Vector<Index>();
                     if (count == 1) {
                         Preferences.debug("FileSTK.openIFD: Strip_offset = " + valueArray[0] + "\n");
                         dataOffsets[imageSlice].addElement(new Index((int) valueArray[0]));
