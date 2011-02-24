@@ -154,11 +154,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     /** Double precison machine variables found in routine dlartg. */
     private boolean first_dlartg = true;
 
-    /** Found in routine dchkqr */
-    private int infot;
-
-    private String srnamt;
-
     /** Found in routine dlatb4 */
     private boolean first_dlatb4 = true;
 
@@ -256,12 +251,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // Test the LAPACK routines
         final boolean tstchk = true;
 
-        // Test the driver routines
-        final boolean tstdrv = true;
-
-        // Test the error exits for the LAPACK routines and driver routines.
-        final boolean tsterr = true;
-
         // Code describing how to set the random number seed.
         // = 0: Set the seed to a default number before each run.
         // = 1: Initialize the seed to a default value only before the first
@@ -279,7 +268,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         final double[] work = new double[lwork];
         final double[] result = new double[500];
         final int[] info = new int[1];
-        final int need = 14;
         final boolean tstdif = false;
         final double thrshn = 10.0;
         double[][] A;
@@ -303,8 +291,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         double[][] evectl;
         double[][] evectr;
 
-        // Number of test matrix types
-        final int ntypes = 26;
         final int maxtyp = 26;
         int i;
         int k;
@@ -1377,7 +1363,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         if (tsterr) {
             derrqr();
         }
-        infot = 0;
+ 
         xlaenv(2, 2);
 
         lda = nmax;
@@ -1402,7 +1388,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                     // with dlatms.
                     dlatb4(path, imat, m, n, type, kl, ku, anorm, mode, cndnum, dist);
 
-                    srnamt = new String("DLATMS");
                     dlatms(m, n, dist[0], iseed, type[0], rwork, mode[0], cndnum[0], anorm[0], kl[0], ku[0], 'N', A,
                             lda, work, info);
 
@@ -1500,7 +1485,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                                     } // for (p = 1; p <= nrhs; p++)
                                     dgemm('N', 'N', m, nrhs, n, 1.0, A, lda, XACT, lda, 0.0, B, lda);
                                     dlacpy('F', m, nrhs, B, lda, X, lda);
-                                    srnamt = new String("DGEQRS");
                                     dgeqrs(m, n, nrhs, AF, lda, tau, X, lda, work, lwork, info);
 
                                     // Check error code from dgeqrs.
@@ -1610,10 +1594,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // dtest.in uses 50 rather than 16
         final int[] nval = new int[] {0, 1, 2, 3, 5, 10, 16};
 
-        // Number of values of nrhs
-        // dchkaa has nns = 1. dtest.in uses nns = 3.
-        final int nns = 1;
-
         // Values of nrhs (number of right hand sides)
         // dchkaa uses only 2. dtest.in uses 1, 2, 15.
         // Since dchkr only accepts nrhs = nsval[0] use only 2.
@@ -1629,21 +1609,9 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // There are nnb values of nx.
         final int nxval[] = new int[] {1, 0, 5, 9, 1};
 
-        // Number of values of rank
-        final int nrank = 3;
-
-        // Values of rank (as a % of n)
-        final int rankval[] = new int[] {30, 50, 90};
-
         // Threshold value of test ratio
         // dchkaa has 20.0, dtest.in has 30.0
         final double thresh = 20.0;
-
-        // Test the LAPACK routines
-        final boolean tstchk = true;
-
-        // Test the driver routines
-        final boolean tstdrv = true;
 
         // Test the error exits
         // Passed all 49 exits on test.
@@ -1653,12 +1621,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // The maximum allowable value for n
         final int nmax = 132;
 
-        // The number of different values that can be used for each of m, n, nrhs, nb, and nx
-        final int maxin = 12;
-
-        // The maximum number of right hand sides
-        final int maxrhs = 16;
-        final int nmats = 8;
         final int ntypes = 8;
         final int nrhs = nsval[0];
         final boolean dotype[] = new boolean[ntypes];
@@ -1728,9 +1690,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // Test the LAPACK routines
         final boolean tstchk = true;
 
-        // Test the driver routines
-        final boolean tstdrv = true;
-
         // Test the error exits for the LAPACK routines and driver routines.
         final boolean tsterr = true;
 
@@ -1752,7 +1711,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         final double[] work = new double[lwork];
         final double[] result = new double[500];
         final int[] info = new int[1];
-        final int need = 14;
         double[][] A;
         double[] AP;
         double[] SD;
@@ -1772,8 +1730,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         double[] TAU;
         double[][] Z;
 
-        // Number of test matrix types
-        final int ntypes = 21;
         final int maxtyp = 21;
         int i;
         int k;
@@ -1885,14 +1841,8 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // to threshold.
         final double thresh = 50.0;
 
-        // Test the LAPACK routines
-        final boolean tstchk = true;
-
         // Test the driver routines
         final boolean tstdrv = true;
-
-        // Test the error exits for the LAPACK routines and driver routines.
-        final boolean tsterr = true;
 
         // Code describing how to set the random number seed.
         // = 0: Set the seed to a default number before each run.
@@ -1926,8 +1876,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         double[] tau;
         double[][] Z;
 
-        // Number of test matrix types
-        final int ntypes = 21;
         final int maxtyp = 21;
         int i;
         int k;
@@ -2635,7 +2583,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         final int[] ihi = new int[1];
         int ijobvl;
         int ijobvr;
-        int ileft;
         final int[] ilo = new int[1];
         final int[] in = new int[1];
         int iright;
@@ -2810,7 +2757,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
 
         // Permute the matrices A, B to isolate eigenvalues if possible
         // (Workspace: need 6*n)
-        ileft = 1;
         iright = n + 1;
         iwrk = iright + n;
         dggbal('P', n, A, lda, B, ldb, ilo, ihi, work, work2, work3, ierr);
@@ -3250,27 +3196,14 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // all test data will be printed.
         final double thresh = 10.0;
 
-        // Test the error exits.
-        final boolean tsterr = true;
-
-        // Code describing how to set the random number seed.
-        // = 0: Set the seed to a default value before each run.
-        // = 1: Initialize the seed to a default value only before the first
-        // run.
-        // = 2: Like 1, but use the seed values on the next line
-        final int newsd = 0;
         final int maxt = 30;
         final boolean[] dotype = new boolean[maxt];
-        final int[] ioldsd = new int[] {0, 0, 0, 1};
         final int[] iseed = new int[] {0, 0, 0, 1};
         final int nmax = 132;
         final int lwork = (nmax * ( (5 * nmax) + 5)) + 1;
-        final int liwork = nmax * ( (5 * nmax) + 20);
-        final int[] iwork = new int[liwork];
         final double[] work = new double[lwork];
         final double[] result = new double[7];
         final int[] info = new int[1];
-        final int need = 14;
         double[][] A;
         double[][] B;
         double[][] S;
@@ -3285,11 +3218,8 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         double[] alphi1;
         double[] beta1;
 
-        // Number of test matrix types
-        final int ntypes = 26;
         final int maxtyp = 26;
         int i;
-        final int k;
         int maxnval;
         UI.setDataText("Tests of the Generalized Nonsymmetric Eigenvalue Problem Driver dggev\n");
 
@@ -3798,12 +3728,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // Test the LAPACK routines
         final boolean tstchk = true;
 
-        // Test the driver routines
-        final boolean tstdrv = true;
-
-        // Test the error exits for the LAPACK routines and driver routines.
-        final boolean tsterr = true;
-
         // Code describing how to set the random number seed.
         // = 0: Set the seed to a default number before each run.
         // = 1: Initialize the seed to a default value only before the first
@@ -3822,7 +3746,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         final double[] work = new double[lwork];
         final double[] result = new double[500];
         final int[] info = new int[1];
-        final int need = 14;
         double[][] A;
         double[][] B;
         double[] D;
@@ -3832,8 +3755,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         double[] AP;
         double[] BP;
 
-        // Number of test matrix types
-        final int ntypes = 21;
         final int maxtyp = 21;
         int i;
         int k;
@@ -5306,40 +5227,27 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
             final double[][] Z, final double[] work, final int lwork, final int[] iwork, final int liwork,
             final double[] result, final int[] info) {
         final int maxtyp = 21; // The number of types defined.
-        final boolean srange = false;
-        final boolean srel = false;
         boolean badnn;
         int i;
         final int[] iinfo = new int[1];
-        final int iL;
         int imode; // Values to be passed to the matrix generators
-        final int itemp;
         int itype;
-        final int iu;
         int j;
         int jc;
         int jr;
         int jsize;
         int jtype;
         int lgn;
-        int liwedc;
         int log2ui;
-        int lwedc;
-        final int m;
-        final int m2;
-        final int m3;
         int mtypes;
         int n;
-        int nap;
         int nblock; // Blocksize as returned by envir.
         int nerrs; // The number of tests which have exceeded thresh so far
         int nmats; // The number of matrices generated so far.
         int nmax; // Largest value in nn.
-        final int split;
         int ntest; // The number of tests performed, or which can be performed
         // so far, for the current matrix.
         int ntestt; // The total number of tests performed so far.
-        final double abstol;
         double aninv;
         double anorm; // Norm of A; passed to matrix generators.
         double cond; // Values to be passed to the matrix generators.
@@ -5353,8 +5261,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         double ulp; // Finest relative precision
         double ulpinv; // Inverse of finest relative precision
         final double[] unfl = new double[1]; // Underflow threshold
-        final double vL;
-        final double vu;
         final int[] idumma = new int[1];
         final int[] ioldsd = new int[4];
         final int[] iseed2 = new int[4];
@@ -5455,16 +5361,8 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                 if (Math.pow(2.0, lgn) < n) {
                     lgn = lgn + 1;
                 }
-
-                lwedc = 1 + (4 * n) + (2 * n * lgn) + (3 * n * n);
-                liwedc = 6 + (6 * n) + (5 * n * lgn);
             } // if (n > 0)
-            else { // n <= 0
-                lwedc = 8;
-                liwedc = 12;
-            } // else n <= 0
 
-            nap = (n * (n + 1)) / 2;
             aninv = 1.0 / (double) (Math.max(1, n));
 
             if (nsizes != 1) {
@@ -7348,7 +7246,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         final int[] iinfo = new int[1];
         int iL;
         int imode; // Value to be passed to the matrix generators
-        final int indx;
         int irow;
         int itemp;
         int itype;
@@ -7360,9 +7257,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         int jcol;
         int jsize;
         int jtype;
-        final int kd;
         int lgn;
-        int liwedc;
         int lwedc;
         final int m;
         final int m2;
@@ -7487,11 +7382,9 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                 }
 
                 lwedc = 1 + (4 * n) + (2 * n * lgn) + (4 * n * n);
-                liwedc = 3 + 5 * n;
             } // if (n > 0)
             else { // n == 0
                 lwedc = 9;
-                liwedc = 8;
             } // else n == 0
 
             aninv = 1.0 / (double) Math.max(1, n);
@@ -24878,7 +24771,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         dlacpy('F', m, n, A, lda, AF, lda);
 
         // Factorize the matrix A in the array AF.
-        srnamt = new String("DGEQRF");
         dgeqrf(m, n, AF, lda, tau, work, lwork, info);
 
         // Copy details of Q
@@ -24899,7 +24791,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         }
 
         // Generate the m-by-m matrix Q
-        srnamt = new String("DORGQR");
         dorgqr(m, m, minmn, Q, lda, tau, work, lwork, info);
 
         // Copy R
@@ -25009,7 +24900,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         }
 
         // Generate the first n column of the matrix Q
-        srnamt = new String("DORGQR");
         dorgqr(m, n, k, Q, lda, tau, work, lwork, info);
 
         // Copy R(1:n,1:k)
@@ -25130,7 +25020,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         }
 
         // Generate the m by m matrix Q
-        srnamt = new String("DORGQR");
         dorgqr(m, m, k, Q, lda, tau, work, lwork, info);
 
         for (iside = 1; iside <= 2; iside++) {
@@ -25168,7 +25057,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                 dlacpy('F', mc, nc, C, lda, CC, lda);
 
                 // Apply Q or Q' to C
-                srnamt = new String("DORMQR");
                 dormqr(side, trans, mc, nc, k, AF, lda, tau, CC, lda, work, lwork, info);
 
                 // Form explicit product and subtract
