@@ -1459,14 +1459,14 @@ public class FileMinc extends FileBase {
      * 
      * @return the size of the data which will be written to the header for the exported dicom tags
      */
-    private int getSizeOfExportedDicomTags(final Hashtable tagTable) {
+    private int getSizeOfExportedDicomTags(final Hashtable<String, Hashtable<String, String>> tagTable) {
 
         // figure out the amount to adjust START3D by due to dicom-exported tags
         int exportedTagsSize = 0;
-        final Enumeration groupEnum = tagTable.keys();
+        final Enumeration<String> groupEnum = tagTable.keys();
 
         while (groupEnum.hasMoreElements()) {
-            final String group = (String) groupEnum.nextElement();
+            final String group = groupEnum.nextElement();
 
             // writeName("dicom_0x" + group, 0, endianess);
             exportedTagsSize += getSizeOfWrittenName("dicom_0x" + group, 0);
@@ -1484,11 +1484,11 @@ public class FileMinc extends FileBase {
             exportedTagsSize += 4;
 
             // ...calc the size of the attributes elsewhere...
-            final Enumeration elemEnum = ((Hashtable) tagTable.get(group)).keys();
+            final Enumeration<String> elemEnum = tagTable.get(group).keys();
 
             while (elemEnum.hasMoreElements()) {
-                final String element = (String) elemEnum.nextElement();
-                final String value = (String) ((Hashtable) tagTable.get(group)).get(element);
+                final String element = elemEnum.nextElement();
+                final String value = (String) tagTable.get(group).get(element);
 
                 // writeName("el_0x" + element, 0, endianess);
                 exportedTagsSize += getSizeOfWrittenName("el_0x" + element, 0);
@@ -1682,12 +1682,12 @@ public class FileMinc extends FileBase {
      * 
      * @see #extractDicomTags(FileInfoBase)
      */
-    private void writeDicomTagsToHeader(final Hashtable tagTable, final int beginningOffset) throws IOException {
-        final Enumeration groupEnum = tagTable.keys();
+    private void writeDicomTagsToHeader(final Hashtable<String, Hashtable<String, String>> tagTable, final int beginningOffset) throws IOException {
+        final Enumeration<String> groupEnum = tagTable.keys();
         int i = 0;
 
         while (groupEnum.hasMoreElements()) {
-            final String group = (String) groupEnum.nextElement();
+            final String group = groupEnum.nextElement();
 
             writeName("dicom_0x" + group, 0, endianess);
 
@@ -1696,12 +1696,12 @@ public class FileMinc extends FileBase {
 
             writeInt(FileInfoMinc.NC_ATTRIBUTE, endianess);
 
-            final Enumeration elementEnum = ((Hashtable) tagTable.get(group)).keys();
-            writeInt( ((Hashtable) tagTable.get(group)).size(), endianess);
+            final Enumeration<String> elementEnum = tagTable.get(group).keys();
+            writeInt( tagTable.get(group).size(), endianess);
 
             while (elementEnum.hasMoreElements()) {
-                final String element = (String) elementEnum.nextElement();
-                final String elementValue = (String) ((Hashtable) tagTable.get(group)).get(element);
+                final String element = elementEnum.nextElement();
+                final String elementValue = (String) tagTable.get(group).get(element);
 
                 writeName("el_0x" + element, 0, endianess);
                 writeInt(FileInfoMinc.NC_CHAR, endianess);
