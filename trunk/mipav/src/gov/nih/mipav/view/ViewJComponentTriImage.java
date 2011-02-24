@@ -117,13 +117,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /** DOCUMENT ME! */
     private int[] horizontalTalGridPts;
 
-    /**
-     * In mousePressed, in mode == DEFAULT for a VOI point, the z value is saved as lastZOrg. In mouseDragged, in mode ==
-     * MOVE_VOIPOINT the points at the lastZOrg value can be removed and replaced with points at the new z value. The
-     * new z value is then saved in lastZOrg. The z values are all in image volume space.
-     */
-    private int lastZOrg;
-
     /** imageActive extents in the local (Patient) coordinate system:. */
     private int[] localImageExtents = new int[3];
 
@@ -814,9 +807,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
-        final int x = mouseEvent.getX();
-        final int y = mouseEvent.getY();
-
         final int xS = getScaledX(mouseEvent.getX());
         final int yS = getScaledY(mouseEvent.getY());
 
@@ -950,10 +940,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public void mouseReleased(final MouseEvent mouseEvent) {
         dragBBpt = -1;
-
-        int xOrg = 0;
-        int yOrg = 0;
-        int zOrg = 0;
 
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
@@ -1200,7 +1186,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     public boolean removeReference(final String label) {
         String label2;
         boolean found = false;
-        int i, j, k;
+        int i, j;
         final ViewVOIVector VOIs = imageActive.getVOIs();
         final int nVOI = VOIs.size();
 
@@ -2269,6 +2255,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * 
      * @param offscreenGraphics2d the graphics context to draw in
      */
+    @SuppressWarnings("unused")
     private void drawTriPlanarVOIs(final Graphics2D offscreenGraphics2d) {
         final ViewVOIVector VOIs = (ViewVOIVector) imageA.getVOIs().clone();
 
@@ -2282,7 +2269,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         if (VOIs != null) {
-            final int nVOI = VOIs.size();
+            //final int nVOI = VOIs.size();
 /*
             for (int i = nVOI - 1; i >= 0; i--) {
                 if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
