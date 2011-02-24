@@ -504,15 +504,19 @@ public class FileSiemensText extends FileBase {
         
     	case -1:
     		fileInfo.setModality(FileInfoBase.UNKNOWN_MODALITY);
+    		break;
     		
     	case 0:
     		fileInfo.setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY);
+    		break;
     		
     	case 1:
     		fileInfo.setModality(FileInfoBase.COMPUTED_TOMOGRAPHY);
+    		break;
     		
     	case 2:
     		fileInfo.setModality(FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY);
+    		break;
     		
     	default:
     		fileInfo.setModality(FileInfoBase.UNKNOWN_MODALITY);
