@@ -109,13 +109,7 @@ public class ViewJComponentRegistration
     private VOI newVOI = null;
 
     /** adjustable slice VOI. */
-    private int newX, newY;
-
-    /** number of rotation center and */
-    private int nMovingVOI = 0; 
-
-    /** DOCUMENT ME! */
-    private int nPts = 0;
+    private int newX, newY; 
 
     /** Used to set old or new mode of registration. */
     private boolean oldFrame = true;
@@ -131,15 +125,6 @@ public class ViewJComponentRegistration
 
     /** number of VOIs for rotation center */
     private int rotCenterMark = 0; 
-
-    /** DOCUMENT ME! */
-    private boolean showVOIs = true;
-
-    /** to use VOIs from both imageA and imageB */
-    private boolean useDualVOIs = false; 
-
-    /** DOCUMENT ME! */
-    private int[] x, y;
 
     /** values obtained when mouseReleased */
     private float xFinish, yFinish; 
@@ -362,7 +347,7 @@ public class ViewJComponentRegistration
      * @param  isReference  delete point if of this type
      */
     public void deletePoint(boolean isReference) {
-        int i, s, nVOI;
+        int i, nVOI;
 
         ViewVOIVector VOIs = imageActive.getVOIs();
 
@@ -1139,15 +1124,13 @@ public class ViewJComponentRegistration
      * @param  mouseEvent  event that triggered function
      */
     public void mouseReleased(MouseEvent mouseEvent) {
-        int xS, yS, xDim, yDim;
+        int xS, yS;
         if (modifyFlag == false) {
             return;
         }
 
         xS = Math.round((mouseEvent.getX() / (getZoomX() * resolutionX)) - 0.5f);
         yS = Math.round((mouseEvent.getY() / (getZoomY() * resolutionY)) - 0.5f);
-        xDim = imageActive.getExtents()[0];
-        yDim = imageActive.getExtents()[1];
 
         if ((xS < 0) || (xS >= imageActive.getExtents()[0]) || (yS < 0) || (yS >= imageActive.getExtents()[1])) {
             return;
@@ -1327,11 +1310,11 @@ public class ViewJComponentRegistration
      * @param  g  graphics
      */
     public void paintComponent(Graphics g) {
-        int i;
-        int nVOI;
-        int curRefMark;
-        int curAdjMark;
-        ViewVOIVector VOIs = null;
+        //int i;
+        //int nVOI;
+        //int curRefMark;
+        //int curAdjMark;
+        //ViewVOIVector VOIs = null;
 
         try {
 
@@ -1430,8 +1413,8 @@ public class ViewJComponentRegistration
      */
     public void paintWindowComponent(Graphics g, MouseEvent mouseEvent) {
 
-        int x = mouseEvent.getX();
-        int y = mouseEvent.getY();
+        //int x = mouseEvent.getX();
+        //int y = mouseEvent.getY();
 
         if (g == null) {
             MipavUtil.displayError("ComponentRegistration.paintMagComponent: graphics = null");
@@ -1633,24 +1616,6 @@ public class ViewJComponentRegistration
      */
     public void setRefMark(boolean doRef) {
         doRefMark = doRef;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  dual  DOCUMENT ME!
-     */
-    public void setUseDualVOIs(boolean dual) {
-        this.useDualVOIs = dual;
-    }
-
-    /**
-     * tells whether or not to draw VOIs when paintComponent() is called.
-     *
-     * @param  doShow  DOCUMENT ME!
-     */
-    public void showVOIs(boolean doShow) {
-        this.showVOIs = doShow;
     }
 
     /**
