@@ -173,7 +173,7 @@ public class FileWriteOptions {
 
     private NDARWriteData ndarData = null;
     
-    private HashMap pSetsHashMap = null;
+    private HashMap<?,?> pSetsHashMap = null;
     
     private boolean isGzip = false;
     
@@ -283,7 +283,7 @@ public class FileWriteOptions {
      * gets the psets hashmap
      * @return
      */
-    public HashMap getPSetsHashMap() {
+    public HashMap<?,?> getPSetsHashMap() {
 		return pSetsHashMap;
 	}
 
@@ -291,7 +291,7 @@ public class FileWriteOptions {
      * sets the pset hasmap
      * @param setsHashMap
      */
-	public void setPSetsHashMap(HashMap setsHashMap) {
+	public void setPSetsHashMap(HashMap<?,?> setsHashMap) {
 		pSetsHashMap = setsHashMap;
 	}
 
