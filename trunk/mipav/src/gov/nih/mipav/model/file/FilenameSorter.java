@@ -90,11 +90,11 @@ public class FilenameSorter {
      *
      * @return  Vector
      */
-    public static Vector extractSubSets(String[] filenames) {
+    public static Vector<Vector<String>> extractSubSets(String[] filenames) {
         Arrays.sort(filenames);
 
-        Vector allSetsVector = new Vector();
-        Vector<String> setVector = new Vector();
+        Vector<Vector<String>> allSetsVector = new Vector<Vector<String>>();
+        Vector<String> setVector = new Vector<String>();
 
         for (int i = 0; i < filenames.length; i++) {
             setVector.addElement(filenames[i]);
@@ -184,16 +184,16 @@ public class FilenameSorter {
      *
      * @return  Vector
      */
-    public static Vector secondarySort(Vector vector) {
+    public static Vector<Vector<String>> secondarySort(Vector<Vector<String>> vector) {
 
         for (int h = 0; h < vector.size(); h++) {
-            Vector setVector = (Vector) vector.elementAt(h);
+            Vector<String> setVector = (Vector<String>) vector.elementAt(h);
 
             for (int i = 0; i < setVector.size(); i++) {
 
                 for (int j = i + 1; j < setVector.size(); j++) {
-                    String str1 = (String) setVector.elementAt(i);
-                    String str2 = (String) setVector.elementAt(j);
+                    String str1 = setVector.elementAt(i);
+                    String str2 = setVector.elementAt(j);
 
                     int result = compareToLastNumericalSequence(str1, str2); // compare based on last numerical sequence
 
@@ -219,11 +219,11 @@ public class FilenameSorter {
      *
      * @return  String[]
      */
-    public static String[] subSetsToArray(Vector vector) {
+    public static String[] subSetsToArray(Vector<Vector<String>> vector) {
         int arraySize = 0;
 
         for (int i = 0; i < vector.size(); i++) {
-            Vector subSet = (Vector) vector.elementAt(i);
+            Vector<String> subSet = (Vector<String>) vector.elementAt(i);
 
             arraySize += subSet.size();
         }
@@ -232,7 +232,7 @@ public class FilenameSorter {
         int index = 0;
 
         for (int i = 0; i < vector.size(); i++) {
-            Vector subSet = (Vector) vector.elementAt(i);
+            Vector<String> subSet = (Vector<String>) vector.elementAt(i);
 
             for (int j = 0; j < subSet.size(); j++) {
                 arrayList[index] = (String) subSet.elementAt(j);
