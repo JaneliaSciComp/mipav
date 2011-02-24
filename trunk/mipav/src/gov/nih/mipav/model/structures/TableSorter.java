@@ -149,7 +149,7 @@ public class TableSorter extends AbstractTableModel {
             final String s2 = (String) o2;
             // this is the int value if there are numbers leading s2....initilaize to -1
             int b2 = -1;
-            ArrayList numChars = new ArrayList();
+            ArrayList<Character> numChars = new ArrayList<Character>();
             for (int i = 0; i < s1.length(); i++) {
                 final char c = s1.charAt(i);
                 if (Character.isDigit(c)) {
@@ -166,7 +166,7 @@ public class TableSorter extends AbstractTableModel {
                 final Integer int1 = new Integer(new String(data));
                 b1 = int1.intValue();
             }
-            numChars = new ArrayList();
+            numChars = new ArrayList<Character>();
             for (int i = 0; i < s2.length(); i++) {
                 final char c = s2.charAt(i);
                 if (Character.isDigit(c)) {
@@ -227,7 +227,7 @@ public class TableSorter extends AbstractTableModel {
     private final MouseListener mouseListener;
 
     /** DOCUMENT ME! */
-    private final List sortingColumns = new ArrayList();
+    private final List<Directive> sortingColumns = new ArrayList<Directive>();
 
     /** DOCUMENT ME! */
     private JTableHeader tableHeader;

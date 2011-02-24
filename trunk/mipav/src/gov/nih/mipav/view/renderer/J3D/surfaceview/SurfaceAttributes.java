@@ -28,7 +28,7 @@ public class SurfaceAttributes {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     /** Clod mesh. */
-    private ModelClodMesh mClodMesh;
+    //private ModelClodMesh mClodMesh;
 
     /**
      * <code>true</code> indicates that this surface is a clod mesh,
@@ -104,7 +104,7 @@ public class SurfaceAttributes {
                               String fullPath, String name )
     {
         this.mTriangleMesh = mesh;
-        this.mClodMesh = null;
+        //this.mClodMesh = null;
         this.mSurfaceBranchGroup = null;
         this.mFullPath = fullPath;
         this.mName = name;
