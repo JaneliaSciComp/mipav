@@ -23,7 +23,7 @@ public class FlyPathAnnotateList {
     protected Shape3D m_kDefaultShape = new Shape3D();
 
     /** DOCUMENT ME! */
-    protected ArrayList m_kList = new ArrayList();
+    protected ArrayList<Item> m_kList = new ArrayList<Item>();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
