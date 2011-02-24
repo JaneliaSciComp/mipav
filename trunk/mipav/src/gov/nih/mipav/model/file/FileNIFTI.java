@@ -1486,6 +1486,7 @@ public class FileNIFTI extends FileBase {
                     Preferences.debug("in the first data plane, location in the second\n");
                     Preferences.debug("data plane, and scale in the third data plane\n");
                 }
+                break;
 
             case FileInfoNIFTI.NIFTI_INTENT_PVAL:
                 Preferences.debug("Data is a p-value\n");
@@ -4598,6 +4599,7 @@ public class FileNIFTI extends FileBase {
 
             case ModelStorageBase.UINTEGER:
                 sourceType = FileInfoNIFTI.NIFTI_TYPE_UINT32;
+                break;
 
             case ModelStorageBase.LONG:
                 sourceType = FileInfoNIFTI.NIFTI_TYPE_INT64;
