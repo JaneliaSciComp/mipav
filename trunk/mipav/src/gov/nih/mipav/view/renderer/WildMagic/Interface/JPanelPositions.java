@@ -79,7 +79,7 @@ public class JPanelPositions extends JInterfaceBase {
     private JRadioButton radiologicalView;
     private JRadioButton neurologicalView;
     
-    private transient ModelImage imageA, imageB;
+    private transient ModelImage imageA;
     
     /**
      * 3D clipping dialog control.
@@ -88,7 +88,7 @@ public class JPanelPositions extends JInterfaceBase {
     public JPanelPositions(VolumeTriPlanarInterface kVolumeViewer) {
         super(kVolumeViewer);
         imageA = kVolumeViewer.getImageA();
-        imageB = kVolumeViewer.getImageB();        
+       
         init();
     }
 

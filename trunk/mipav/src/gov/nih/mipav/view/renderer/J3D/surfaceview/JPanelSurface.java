@@ -272,7 +272,7 @@ public class JPanelSurface extends JPanelRendererJ3D
     private JCheckBox surfaceTransparencyCB;
 
     /** A list of the surfaces. The elements are of type SurfaceAttributes. */
-    private Vector surfaceVector;
+    private Vector<SurfaceAttributes> surfaceVector;
 
     // Mesh statistics: Number of triangles, volume, surface area:
     /** The number of triangles label. */
@@ -1319,7 +1319,7 @@ public class JPanelSurface extends JPanelRendererJ3D
      *
      * @return  surfaceVector surface vector
      */
-    public Vector getSurfaceVector() {
+    public Vector<SurfaceAttributes> getSurfaceVector() { 
         return surfaceVector;
     }
 

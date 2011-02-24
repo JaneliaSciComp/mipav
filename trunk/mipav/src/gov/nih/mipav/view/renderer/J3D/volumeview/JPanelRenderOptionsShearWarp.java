@@ -53,7 +53,7 @@ public class JPanelRenderOptionsShearWarp extends JPanelRendererJ3D {
     private DrawingPanel scrollPanel;
 
     /** Text field of the ray trace space size. */
-    private JTextField spaceText;
+    //private JTextField spaceText;
 
     /** Text field of the ray trace step size. */
     private JTextField stepText;
