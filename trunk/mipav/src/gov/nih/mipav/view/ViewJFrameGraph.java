@@ -103,9 +103,6 @@ public class ViewJFrameGraph extends JFrame
     private JCheckBox autoShrinkRangeCheckbox;
 
     /** DOCUMENT ME! */
-    private JDialog axisDialog;
-
-    /** DOCUMENT ME! */
     private JPanel axisPanel;
 
     /** DOCUMENT ME! */
@@ -116,9 +113,6 @@ public class ViewJFrameGraph extends JFrame
 
     /** DOCUMENT ME! */
     private JPanel backgroundPanel;
-
-    /** DOCUMENT ME! */
-    private JComboBox colorBox;
 
     /** DOCUMENT ME! */
     private ViewJColorChooser colorChooser;
@@ -172,9 +166,6 @@ public class ViewJFrameGraph extends JFrame
     private ViewJComponentGraph graph;
 
     /** DOCUMENT ME! */
-    private JDialog gridDialog;
-
-    /** DOCUMENT ME! */
     private JCheckBox gridlinesCheckbox; // check-box for displaying grid lines
 
     /** DOCUMENT ME! */
@@ -182,9 +173,6 @@ public class ViewJFrameGraph extends JFrame
 
     /** DOCUMENT ME! */
     private JMenuItem itemClose;
-
-    /** DOCUMENT ME! */
-    private JCheckBox[] itemFittedCheckbox; // check-box for displaying fitted functions
 
     /** DOCUMENT ME! */
     private JMenuItem itemModifyGraph;
@@ -239,12 +227,6 @@ public class ViewJFrameGraph extends JFrame
     private JLabel maxRangeLabel;
 
     /** DOCUMENT ME! */
-    private JPanel menuPanel;
-
-    /** DOCUMENT ME! */
-    private ViewJFrameMessageGraph messageGraph;
-
-    /** DOCUMENT ME! */
     private JCheckBox minorTickMarksCheckbox; // check-box for showing minor tick marks
 
     /** DOCUMENT ME! */
@@ -260,9 +242,6 @@ public class ViewJFrameGraph extends JFrame
     private JPanel modifyGraphPanel;
 
     /** DOCUMENT ME! */
-    private JTabbedPane modifyTabbedPane;
-
-    /** DOCUMENT ME! */
     private JPanel functionPropPanel;
 
     /** DOCUMENT ME! */
@@ -276,9 +255,6 @@ public class ViewJFrameGraph extends JFrame
 
     /** Combo box for selecting the fitting function type*/
     private JComboBox fitType;
-
-    /** DOCUMENT ME! */
-    private JDialog rangeDialog;
 
     /** DOCUMENT ME! */
     private JPanel rangePanel;
@@ -305,10 +281,10 @@ public class ViewJFrameGraph extends JFrame
     private int updateRGBIndex = -1;
 
     /** DOCUMENT ME! */
-    private Vector vectorCopyFunct;
+    private Vector<JMenuItem> vectorCopyFunct;
 
     /** DOCUMENT ME! */
-    private Vector vectorDeleteFunct;
+    private Vector<JMenuItem> vectorDeleteFunct;
 
     /** DOCUMENT ME! */
     private JMenu viewMenu;
@@ -3373,8 +3349,8 @@ public class ViewJFrameGraph extends JFrame
             itemPrintGraph = new JMenuItem("Print Graph");
             itemTableOutput = new JMenuItem("Data to Output Window");
             itemClose = new JMenuItem("Close Graph");
-            vectorCopyFunct = new Vector(graph.getFuncts().length);
-            vectorDeleteFunct = new Vector(graph.getFuncts().length);
+            vectorCopyFunct = new Vector<JMenuItem>(graph.getFuncts().length);
+            vectorDeleteFunct = new Vector<JMenuItem>(graph.getFuncts().length);
             copyMenu = new JMenu("Copy Function");
             deleteMenu = new JMenu("Delete Function");
             itemModifyGraph = new JMenuItem("Modify Graph Features");
@@ -4069,6 +4045,7 @@ public class ViewJFrameGraph extends JFrame
     private boolean testParameter(String str, int minValue, int maxValue) {
 
         double tmp;
+        @SuppressWarnings("unused")
         Double stringConv;
 
         try {
