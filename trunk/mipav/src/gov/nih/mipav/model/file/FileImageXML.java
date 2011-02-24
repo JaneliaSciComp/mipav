@@ -1415,7 +1415,7 @@ public class FileImageXML extends FileXML {
             
             
             //add psets and parameters
-            HashMap<String,XMLPSet> pSetsHashMap = options.getPSetsHashMap();
+            HashMap<String,XMLPSet> pSetsHashMap = (HashMap<String, XMLPSet>) options.getPSetsHashMap();
             if(pSetsHashMap != null) {
             	Set<String> psetKeys = pSetsHashMap.keySet();
             	Iterator<String> psetIter = psetKeys.iterator();
