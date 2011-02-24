@@ -379,7 +379,7 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
         txt.addKeyListener(new KeyAdapter() { // make the field
                 public void keyTyped(KeyEvent evt) { // not accept letters
 
-                    JTextField t = (JTextField) evt.getComponent();
+                    //JTextField t = (JTextField) evt.getComponent();
                     char ch = evt.getKeyChar();
 
                     if (ch == KeyEvent.VK_ENTER) { // make sure the enter key acts as clicking OK
@@ -537,7 +537,7 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
                 fireMemoryChanged(); // too many and this thread is selfish
 
                 try {
-                    thread.sleep(sleepAmount);
+                    Thread.sleep(sleepAmount);
                 } catch (InterruptedException e) {
                     break;
                 }
