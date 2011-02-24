@@ -1465,19 +1465,6 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
 
         System.out.println("updateCursor: x = " + _mx + " y = " + _my);
 
-        float min, max;
-
-        if (image.getType() == ModelStorageBase.UBYTE) {
-            min = 0;
-            max = 255;
-        } else if (image.getType() == ModelStorageBase.BYTE) {
-            min = -128;
-            max = 127;
-        } else {
-            min = (float) image.getMin();
-            max = (float) image.getMax();
-        }
-
         index = _index;
 
         /*
@@ -1676,7 +1663,6 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
     public void updateCursorXPos(float _mx, float _my, int _index) {
         int nPts = 0;
         float mx = _mx;
-        float my = _my;
 
         float min, max;
 
