@@ -71,15 +71,13 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
     /** DOCUMENT ME! */
     private JLabel current, current2;
 
-    /** DOCUMENT ME! */
-    private boolean disregardSeries;
-
     /**
      * fileInfoVector represents images in image table but imageTableVector was needed also becasue this handles
      * multiple series in the same dir. fileInfoVector is all the images in the dir but imageTableVector represents all
      * the images that are in the image table at a particular instance or series
      */
-    private Vector fileInfoVector, imageTableVector;
+    private Vector<FileInfoDicom> fileInfoVector;
+    private Vector<FileInfoDicom> imageTableVector;
 
     /** DOCUMENT ME! */
     private JTable imageTable;
@@ -103,7 +101,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
     private JSplitPane rightPane;
 
     /** This is a hashmasp of series numbers and corresponding counter for the number of images in each series.* */
-    private HashMap seriesNumberCounters;
+    private HashMap<String,Integer> seriesNumberCounters;
 
     /** DOCUMENT ME! */
     private JCheckBoxMenuItem seriesOptionBox;
@@ -214,7 +212,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             if (node.isDirectory()) {
                 studyTableModel.setRowCount(0);
                 seriesTableModel.setRowCount(0);
-                fileInfoVector = new Vector();
+                fileInfoVector = new Vector<FileInfoDicom>();
 
                 // first we pares the directories and populate the fileInfoVecot list
                 parse(node.getFile());
@@ -288,7 +286,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             for (int i = 0; i < rows.length; i++) {
                 int modelRow = imageTableSorter.modelIndex(rows[i]);
 
-                fileInfoDICOM = (FileInfoDicom) imageTableVector.elementAt(modelRow);
+                fileInfoDICOM = imageTableVector.elementAt(modelRow);
 
                 fileNames[i] = fileInfoDICOM.getFileName();
             }
@@ -308,11 +306,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         } else if (command.equals("SeriesOption")) {
 
-            if (seriesOptionBox.isSelected()) {
-                disregardSeries = true;
-            } else {
-                disregardSeries = false;
-            }
+            
         } else if (command.equals("Exit")) {
             this.close();
         } else if (command.equals("Movie")) {
@@ -366,7 +360,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             for (int i = 0; i < fileNames.length; i++) {
                 int modelRow = imageTableSorter.modelIndex(selectedRows[i]);
 
-                fileInfoDICOM = (FileInfoDicom) imageTableVector.elementAt(modelRow);
+                fileInfoDICOM = imageTableVector.elementAt(modelRow);
 
                 fileNames[i] = fileInfoDICOM.getFileName();
             }
@@ -415,7 +409,6 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 if (applyWindowLevel) {
                     float[] x = new float[4];
                     float[] y = new float[4];
-                    float[] z = new float[4];
                     float level;
                     float window;
                     x[0] = min;
@@ -511,7 +504,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         if (fileInfoVector != null) {
 
             for (int i = 0; i < fileInfoVector.size(); i++) {
-                FileInfoDicom fileInfo = (FileInfoDicom) fileInfoVector.elementAt(i);
+                FileInfoDicom fileInfo = fileInfoVector.elementAt(i);
 
                 if (fileInfo != null) {
                     fileInfo.finalize();
@@ -561,8 +554,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
      * 
      * @return DOCUMENT ME!
      */
-    public Vector getColumnNames() {
-        Vector columnNames = new Vector();
+    public Vector<String> getColumnNames() {
+        Vector<String> columnNames = new Vector<String>();
 
         for (int i = 0; i < imageTableModel.getColumnCount(); i++) {
             columnNames.addElement(imageTable.getColumnName(i));
@@ -585,6 +578,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
      * @param seriesNumber DOCUMENT ME!
      * @param studyNo DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void reloadRows(String seriesNumber, String studyNo) {
         ViewFileTreeNode node = (ViewFileTreeNode) directoryTree.getLastSelectedPathComponent();
 
@@ -593,7 +587,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         {
 
             try {
-                Vector tableHeaderVector = imageTableModel.getColumnNames(); // Vector holding the names of the
+                Vector<String> tableHeaderVector = imageTableModel.getColumnNames(); // Vector holding the names of the
                 // columns
 
                 int mod = (fileInfoVector.size() / 100);
@@ -603,10 +597,10 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                     mod = 1;
                 }
 
-                imageTableVector = new Vector();
+                imageTableVector = new Vector<FileInfoDicom>();
 
                 for (int i = 0; i < fileInfoVector.size(); i++) {
-                    FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
+                    FileInfoDicom fileInfoDICOM = fileInfoVector.elementAt(i);
                     String sliceStudyNo = (String) fileInfoDICOM.getTagTable().getValue("0020,0010");
                     if(sliceStudyNo.length() > 0) {
 	                    char c = sliceStudyNo.charAt(sliceStudyNo.length() - 1);
@@ -622,13 +616,13 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                             fileInfoDICOM) == true))
                             && ( (studyNo.equals("")) || (sliceStudyNo.equals(studyNo)))) {
 
-                        Vector newRow = new Vector();
+                        Vector<Object> newRow = new Vector<Object>();
 
-                        imageTableVector.addElement((FileInfoDicom) fileInfoVector.elementAt(i));
+                        imageTableVector.addElement(fileInfoVector.elementAt(i));
 
                         // tableHeader.size() is the number of columns in the table
                         for (int j = 0; j < tableHeaderVector.size(); j++) {
-                            String columnName = (String) tableHeaderVector.elementAt(j); // get name of first column
+                            String columnName = tableHeaderVector.elementAt(j); // get name of first column
                             String key = (String) columnKeyTable.get(columnName); // get key associated with this
                             // column
 
@@ -666,17 +660,17 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                  * individually, we have to split up the x, y, z positions from patient orientation and
                                  * must manually populate these columns.
                                  */
-                                if ( ((String) tableHeaderVector.elementAt(j)).equals("X-position")) {
+                                if ( (tableHeaderVector.elementAt(j)).equals("X-position")) {
                                     Float floatObj = new Float(fileInfoDICOM.xLocation);
                                     imageTableModel.setColumnClass(floatObj.getClass(), j);
 
                                     newRow.addElement(floatObj);
-                                } else if ( ((String) tableHeaderVector.elementAt(j)).equals("Y-position")) {
+                                } else if ( (tableHeaderVector.elementAt(j)).equals("Y-position")) {
                                     Float floatObj = new Float(fileInfoDICOM.yLocation);
                                     imageTableModel.setColumnClass(floatObj.getClass(), j);
 
                                     newRow.addElement(floatObj);
-                                } else if ( ((String) tableHeaderVector.elementAt(j)).equals("Z-position")) {
+                                } else if ( (tableHeaderVector.elementAt(j)).equals("Z-position")) {
                                     Float floatObj = new Float(fileInfoDICOM.zLocation);
                                     imageTableModel.setColumnClass(floatObj.getClass(), j);
 
@@ -1019,7 +1013,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         // first lets populate the rows of the series table...but not the #images attribute
         outerLoop: for (int i = 0; i < fileInfoVector.size(); i++) {
-            FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
+            FileInfoDicom fileInfoDICOM = fileInfoVector.elementAt(i);
             String sliceStudyNo = (String) fileInfoDICOM.getTagTable().getValue("0020,0010");
             if(sliceStudyNo.length() > 0) {
                 char c = sliceStudyNo.charAt(sliceStudyNo.length() - 1);
@@ -1123,7 +1117,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         // we need to display the number of images in the series table
         // first init the counters to 0
         if (seriesNumberCounters == null) {
-            seriesNumberCounters = new HashMap();
+            seriesNumberCounters = new HashMap<String,Integer>();
         }
 
         for (int i = 0; i < seriesTableModel.getRowCount(); i++) {
@@ -1134,7 +1128,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         // go through the vector and increment the appropriate counter
         for (int i = 0; i < fileInfoVector.size(); i++) {
-            FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
+            FileInfoDicom fileInfoDICOM = fileInfoVector.elementAt(i);
             String ser = (String) fileInfoDICOM.getTagTable().getValue("0020,0011");
             if(ser != null && ser.length() > 0) {
                 char c = ser.charAt(ser.length() - 1);
@@ -1159,7 +1153,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             }
 
             if ( (seriesNumberCounters.get(ser) != null) && (sliceStudyNo.equals(studyNo))) {
-                Integer I = (Integer) seriesNumberCounters.get(ser);
+                Integer I = seriesNumberCounters.get(ser);
                 int k = I.intValue();
                 int j = ++k;
                 seriesNumberCounters.put(ser, new Integer(j));
@@ -1169,7 +1163,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         // now update the series table
         for (int i = 0; i < seriesTableModel.getRowCount(); i++) {
             String seriesNo = (String) (seriesTableModel.getValueAt(i, 0));
-            seriesTableModel.setValueAt((Integer) seriesNumberCounters.get(seriesNo), i, 2);
+            seriesTableModel.setValueAt(seriesNumberCounters.get(seriesNo), i, 2);
         }
 
     }
@@ -1623,7 +1617,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                     }
 
                     if (!imageFile.isDir()){ //finally check to make sure it isn't a DICOMDIR
-                    	fileInfoVector.addElement(imageFile.getFileInfo());
+                    	fileInfoVector.addElement((FileInfoDicom)imageFile.getFileInfo());
                     }
                     
                     if (success) {
@@ -1650,14 +1644,14 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
      * DOCUMENT ME!
      */
     private void restorePreferredColumnConfiguration() {
-        Vector imageNamesVector = Preferences.getDICOMBrowserTableConfiguration();
+        Vector<String> imageNamesVector = Preferences.getDICOMBrowserTableConfiguration();
 
         if (imageNamesVector == null) {
-            imageNamesVector = new Vector(Arrays.asList(DEFAULT_COLUMN_HEADERS_IMAGE_TABLE));
+            imageNamesVector = new Vector<String>(Arrays.asList(DEFAULT_COLUMN_HEADERS_IMAGE_TABLE));
         }
 
         for (int i = 0; i < imageNamesVector.size(); i++) {
-            imageTableModel.addColumn((String) imageNamesVector.elementAt(i));
+            imageTableModel.addColumn(imageNamesVector.elementAt(i));
         }
 
         imageTable.setDefaultRenderer(new String().getClass(), new MIPAVTableCellRenderer());
@@ -1762,7 +1756,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                         .getSelectedRow()), 0);
 
                 if (imageTableVector != null) {
-                    FileInfoDicom fileInfoDICOM = (FileInfoDicom) imageTableVector.elementAt(0);
+                    FileInfoDicom fileInfoDICOM = imageTableVector.elementAt(0);
 
                     if (fileInfoDICOM != null) {
                         String imageTableSeriesNumber = (String) fileInfoDICOM.getTagTable().getValue("0020,0011");
@@ -1794,7 +1788,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 int modelRow = imageTableSorter.modelIndex(imageTable.getSelectedRow());
 
-                FileInfoDicom fileInfoDICOM = (FileInfoDicom) imageTableVector.elementAt(modelRow);
+                FileInfoDicom fileInfoDICOM = imageTableVector.elementAt(modelRow);
                 System.out.println(fileInfoDICOM.getFileName());
                 buildImage(fileInfoDICOM.getFileName(), fileInfoDICOM.getFileDirectory() + File.separatorChar);
                 componentImageDicom = img;
@@ -1809,6 +1803,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
          * 
          * @param e DOCUMENT ME!
          */
+        @SuppressWarnings("unused")
         public void mouseDragged(MouseEvent e) {}
 
         /**
