@@ -75,7 +75,7 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
     protected byte[] callingAppTitle = new byte[16];
 
     /** A list of presentation context objects. */
-    protected Vector presContexts = new Vector();
+    protected Vector<DICOM_PresentationContext> presContexts = new Vector<DICOM_PresentationContext>();
 
     /** Protocol version identifier. */
     protected int protocolVersion = DICOM_Constants.PROTOCOLVERSION;
@@ -158,7 +158,7 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
      * @return the presentation context ID
      */
     public String getPresentationContextFromID(final int ID) {
-        final DICOM_PresentationContext pc = null;
+       // final DICOM_PresentationContext pc = null;
 
         for (int i = 0; i < presContexts.size(); i++) {
 
@@ -191,7 +191,7 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
             tpc = ((DICOM_PresentationContext) (presContexts.elementAt(i)));
             if (tpc.absSyntax.getUID().equals(absUID)) {
 
-                final Vector tferSyntaxVect = ((DICOM_PresentationContext) (presContexts.elementAt(i))).trnSyntax;
+                final Vector<DICOM_PresentationContext> tferSyntaxVect = ((DICOM_PresentationContext) (presContexts.elementAt(i))).trnSyntax;
                 if (tferSyntaxVect != null) {
                     final String tStr = ((DICOM_PDUItemType) (tferSyntaxVect.elementAt(0))).getUID();
                     if (tStr.trim().equals(transferSyntax.trim())) {
@@ -240,7 +240,7 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
      * 
      * @return the application context
      */
-    public Vector getPresentationContexts() {
+    public Vector<DICOM_PresentationContext> getPresentationContexts() {
         return presContexts;
     }
 

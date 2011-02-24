@@ -104,10 +104,10 @@ public class DICOM_PDUService extends DICOM_Comms {
     protected ByteBuffer compData = null;
 
     /** A list of Presentation contexts. */
-    Vector PresentationContexts = new Vector();
+    Vector<DICOM_PresentationContextAccept> PresentationContexts = new Vector<DICOM_PresentationContextAccept>();
 
     /** A hash table of proposed abstract syntaxes where: value = AbstractSyntaxes; key = UID. */
-    Hashtable proposedAbstractSyntaxs = new Hashtable();
+    Hashtable<String,DICOM_PDUItemType> proposedAbstractSyntaxs = new Hashtable<String,DICOM_PDUItemType>();
 
     /** Buffer used in sending DICOM image. */
     DICOM_FileIO ioBuffer = new DICOM_FileIO();
@@ -321,7 +321,7 @@ public class DICOM_PDUService extends DICOM_Comms {
         /** We did not pass in a transfer syntax so we are giving a list of ALL we support */
         if (transferSyntax == null) {
 
-            for (final Enumeration e = proposedAbstractSyntaxs.elements(); e.hasMoreElements();) {
+            for (final Enumeration<DICOM_PDUItemType> e = proposedAbstractSyntaxs.elements(); e.hasMoreElements();) {
                 final DICOM_PresentationContext presContext = new DICOM_PresentationContext();
                 final DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_TransferSyntax);
                 trnSyntax.setUID(DICOM_Constants.UID_TransferLITTLEENDIAN);
@@ -330,7 +330,7 @@ public class DICOM_PDUService extends DICOM_Comms {
                 associateRQ.addPresentationContext(presContext);
             }
 
-            for (final Enumeration e = proposedAbstractSyntaxs.elements(); e.hasMoreElements();) {
+            for (final Enumeration<DICOM_PDUItemType> e = proposedAbstractSyntaxs.elements(); e.hasMoreElements();) {
                 final DICOM_PresentationContext presContext = new DICOM_PresentationContext();
                 final DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_TransferSyntax);
                 trnSyntax.setUID(DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
