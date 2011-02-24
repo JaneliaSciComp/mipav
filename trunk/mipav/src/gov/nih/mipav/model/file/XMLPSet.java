@@ -39,7 +39,7 @@ public class XMLPSet implements Serializable {
     private String description;
 
     /** Parameter hashtable. */
-    private Hashtable parameterTable;
+    private Hashtable<String,XMLParameter> parameterTable;
 
     /**
      * Create a new parameter set with the given description.
@@ -48,7 +48,7 @@ public class XMLPSet implements Serializable {
      */
     public XMLPSet(String description) {
         this.description = description;
-        parameterTable = new Hashtable();
+        parameterTable = new Hashtable<String,XMLParameter>();
     }
 
     /**
@@ -102,7 +102,7 @@ public class XMLPSet implements Serializable {
      * @return Parameter parameter
      */
     public XMLParameter getParameter(String name) {
-        return (XMLParameter) parameterTable.get(name);
+        return parameterTable.get(name);
     }
 
     /**
@@ -110,7 +110,7 @@ public class XMLPSet implements Serializable {
      * 
      * @return Enumeration enumeration for parameter name list
      */
-    public Enumeration getParameterKeys() {
+    public Enumeration<String> getParameterKeys() {
         return parameterTable.keys();
     }
 
@@ -119,7 +119,7 @@ public class XMLPSet implements Serializable {
      * 
      * @return Hashtable parameter hashtable
      */
-    public Hashtable getTable() {
+    public Hashtable<String,XMLParameter> getTable() {
         return this.parameterTable;
     }
 
@@ -138,7 +138,7 @@ public class XMLPSet implements Serializable {
      * @return String string representation
      */
     public String toString() {
-        Enumeration e = getTable().elements();
+        Enumeration<XMLParameter> e = getTable().elements();
         StringBuffer set = new StringBuffer("<Sets>");
 
         set.append("<Set-description>");
@@ -148,7 +148,7 @@ public class XMLPSet implements Serializable {
         while (e.hasMoreElements()) {
 
             try {
-                XMLParameter p = (XMLParameter) e.nextElement();
+                XMLParameter p = e.nextElement();
 
                 // set.append("<Parameters>");
                 set.append(p.toString());
