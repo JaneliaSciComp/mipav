@@ -2478,6 +2478,7 @@ public class FileImageXML extends FileXML {
 
             case 4:
                 modelRGB.getBlueFunction().importArrays(x, y, functionVector.size());
+                break;
 
             default:
                 // System.err.println("Got function index of: " + functionIndex);
