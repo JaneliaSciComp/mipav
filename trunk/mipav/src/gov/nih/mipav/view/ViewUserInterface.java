@@ -794,7 +794,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public void invokeDTIframe() {
 
         final ModelImage imageA = createEmptyImage(null);
-        final VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI(imageA);
+        new VolumeTriPlanarInterfaceDTI(imageA);
+        //final VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI(imageA);
         // kWM.constructRenderers();
         imageA.disposeLocal();
 
@@ -1911,7 +1912,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void closeAllImages() {
 
-    	Enumeration e = ViewUserInterface.getReference().getRegisteredImageNames();
+    	Enumeration<String> e = ViewUserInterface.getReference().getRegisteredImageNames();
 
          while (e.hasMoreElements()) {
              deleteItem((String)e.nextElement(),true);
