@@ -679,7 +679,7 @@ public class ViewJFrameDICOMQuery extends JFrame implements ActionListener, List
                 ((ViewTableModel) messageTable.getModel()).removeRow(0);
             }
         } else if (command.equals("Browse")) {
-            String fileName, directory;
+            String directory;
             JFileChooser chooser;
 
             try {
@@ -702,7 +702,6 @@ public class ViewJFrameDICOMQuery extends JFrame implements ActionListener, List
                 final int returnValue = chooser.showOpenDialog(this);
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    fileName = chooser.getSelectedFile().getName();
                     directory = String.valueOf(chooser.getSelectedFile()); // +
                     // File.separatorChar;
                 } else {
@@ -850,7 +849,6 @@ public class ViewJFrameDICOMQuery extends JFrame implements ActionListener, List
             final String fileDir = sourceTextF.getText() + File.separatorChar;
             final String fileName = (String) sendTable.getValueAt(element, 0);
 
-            final String suffix = FileUtility.getExtension(fileName);
             final File current = new File(fileDir + fileName);
 
             if ( !current.isDirectory()) {
@@ -1927,7 +1925,6 @@ public class ViewJFrameDICOMQuery extends JFrame implements ActionListener, List
      */
     private JPanel buildListingPanel() {
 
-        Object[] rowData;
         GridBagConstraints gbc;
         JScrollPane scrollPane;
         final String[] columnNames = {"Listing"};
@@ -1943,7 +1940,6 @@ public class ViewJFrameDICOMQuery extends JFrame implements ActionListener, List
             basePanel = new JPanel();
             basePanel.setLayout(new GridBagLayout());
             gbc = new GridBagConstraints();
-            rowData = new Object[5];
             sendModel = new ViewTableModel();
             sendTable = new JTable(sendModel);
             sendDestCBox = new JComboBox();
