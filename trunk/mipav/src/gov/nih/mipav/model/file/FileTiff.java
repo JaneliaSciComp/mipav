@@ -457,8 +457,8 @@ public class FileTiff extends FileBase {
     /** DOCUMENT ME! */
     private boolean chunky = true;
 
-    /** DOCUMENT ME! */
-    private Vector[] dataOffsets = new Vector[4000];
+    @SuppressWarnings("unchecked")
+    private Vector<Index>[] dataOffsets = new Vector[4000];
 
     /** DOCUMENT ME! */
     private byte[] dateTime;
@@ -1175,7 +1175,7 @@ public class FileTiff extends FileBase {
 
                     if (multiFile == false) {
                         image.setFileInfo(fileInfo, i);
-                        dataOffsets[i] = new Vector();
+                        dataOffsets[i] = new Vector<Index>();
                         dataOffsets[i].addElement(new Index(768 + (i * xDim * yDim)));
                         ((Index) (dataOffsets[i].elementAt(0))).byteCount = xDim * yDim;
                     }
@@ -5474,7 +5474,7 @@ public class FileTiff extends FileBase {
             fileInfo.setDataType(ModelStorageBase.ARGB);
 
             ModelImage tempImage = null;
-            Vector fileNameVector = series.getFileNames();
+            Vector<String> fileNameVector = series.getFileNames();
             int numImages = fileNameVector.size();
             String tempPath, tempDir, tempName;
             FileTiff tempTiff;
@@ -5496,7 +5496,7 @@ public class FileTiff extends FileBase {
                 }
 
                 // get the file name and directory
-                tempPath = (String) fileNameVector.elementAt(i);
+                tempPath = fileNameVector.elementAt(i);
                 tempDir = tempPath.substring(0, tempPath.lastIndexOf(File.separator) + 1);
                 tempName = tempPath.substring(tempPath.lastIndexOf(File.separator) + 1, tempPath.length());
 
@@ -5524,7 +5524,7 @@ public class FileTiff extends FileBase {
             }
 
             ModelImage tempImage = null;
-            Vector fileNameVector = series.getFileNames();
+            Vector<String> fileNameVector = series.getFileNames();
             int numImages = fileNameVector.size();
             String tempPath, tempDir, tempName;
             FileTiff tempTiff;
@@ -5535,7 +5535,7 @@ public class FileTiff extends FileBase {
             for (int i = 0; i < numImages; i++) {
 
                 // get the file name and directory
-                tempPath = (String) fileNameVector.elementAt(i);
+                tempPath = fileNameVector.elementAt(i);
                 tempDir = tempPath.substring(0, tempPath.lastIndexOf(File.separator) + 1);
                 tempName = tempPath.substring(tempPath.lastIndexOf(File.separator) + 1, tempPath.length());
 
@@ -6512,7 +6512,7 @@ public class FileTiff extends FileBase {
                         throw new IOException("STRIP_OFFSETS has illegal type = " + type + "\n");
                     }
 
-                    dataOffsets[imageSlice] = new Vector();
+                    dataOffsets[imageSlice] = new Vector<Index>();
                     if (count == 1) {
 
                         if (debuggingFileIO) {
