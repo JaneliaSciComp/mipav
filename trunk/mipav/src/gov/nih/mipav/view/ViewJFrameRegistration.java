@@ -242,9 +242,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     private JButton leftButton;
 
     /** DOCUMENT ME! */
-    private String linkedXMLName;
-
-    /** DOCUMENT ME! */
     private boolean logMagDisplay;
 
     /** DOCUMENT ME! */
@@ -278,9 +275,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     private JMenuBar openingMenuBar;
 
     /** DOCUMENT ME! */
-    private int[] paintBuffer;
-
-    /** DOCUMENT ME! */
     private int[] pixBuffer;
 
     /** DOCUMENT ME! */
@@ -297,9 +291,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private double[][] pointSetB;
-
-    /** DOCUMENT ME! */
-    private Border pressedBorder = BorderFactory.createLoweredBevelBorder();
 
     /** DOCUMENT ME! */
     private int refMark;
@@ -329,16 +320,13 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     private JSlider slider, slider2;
 
     /** DOCUMENT ME! */
-    private int structureY; // all totals in Y direction not due to image
+    //private int structureY; // all totals in Y direction not due to image
 
     /** DOCUMENT ME! */
     private JTextField textReferenceSlice, textAdjustedSlice;
 
     /** DOCUMENT ME! */
     private JToolBar toolBar, toolBar2;
-
-    /** DOCUMENT ME! */
-    private ViewToolBarBuilder toolBarObj, toolBarObj2;
 
     /** DOCUMENT ME! */
     private JPanel topPanel = null;
@@ -989,7 +977,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         voi = null;
 
         pixBuffer = null;
-        paintBuffer = null;
         scrollPane = null;
         toolBar = null;
         controlPanel = null;
@@ -1268,15 +1255,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
      * @param  _imageB  Image to set the frame to
      */
     public void setImageB(ModelImage _imageB) { }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  fileName  DOCUMENT ME!
-     */
-    public void setLinkedXML(String fileName) {
-        this.linkedXMLName = fileName;
-    }
 
     /**
      * Sets the model LUT for the imageA.
@@ -2160,7 +2138,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
             pixBuffer = new int[extents[0] * extents[1]];
             pixBufferB = new int[extents[0] * extents[1]];
-            paintBuffer = new int[extents[0] * extents[1]];
 
             logMagDisplay = imageA.getLogMagDisplay();
             componentImage = new ViewJComponentRegistration(this, imageA, LUTa, imageBufferA, imageB, LUTb,
@@ -2583,9 +2560,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
          * Third is the alphablending slider.  Fourth is the toolbar. The tool bar can grow horizontally, but it cannot
          * grow vertically. The tool bar is given a minimum width of 450 - without thisminimum width the text fields for
          * pixel and degree increment become unusable. */
-        toolBarObj = new ViewToolBarBuilder(this);
         toolBar = buildRegistrationToolBar(this);
-        toolBarObj2 = new ViewToolBarBuilder(this);
         toolBar2 = buildToolBar2(this);
 
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2623,7 +2598,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         componentY = toolBar.getHeight() + toolBar2.getHeight() + controlPanel.getHeight() + openingMenuBar.getHeight();
 
         // structureY is the total of all nonimage components in the Y direction
-        structureY = getInsets().top + componentY + getInsets().bottom;
+        //structureY = getInsets().top + componentY + getInsets().bottom;
         pack();
 
         int tempX = toolBar2.getSize().width;
