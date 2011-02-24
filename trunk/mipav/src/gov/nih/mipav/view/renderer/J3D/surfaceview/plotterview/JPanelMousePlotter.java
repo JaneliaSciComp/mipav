@@ -84,7 +84,7 @@ public class JPanelMousePlotter extends JPanelRendererJ3D
     Transform3D currentTransform;
 
     /** Vector that holds mouse or change events. */
-    Vector events;
+    Vector<MouseEventVectorPlotter> events; 
 
     /** Global mouse event vector. */
     MouseEventVectorPlotter eventVector;
@@ -184,7 +184,7 @@ public class JPanelMousePlotter extends JPanelRendererJ3D
         super(parent);
 
         try {
-            events = new Vector();
+            events = new Vector<MouseEventVectorPlotter>(); 
             resetTransform = new Transform3D();
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory in mouse recorder.");
