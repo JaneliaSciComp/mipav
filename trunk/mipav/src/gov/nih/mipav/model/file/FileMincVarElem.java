@@ -61,7 +61,7 @@ public class FileMincVarElem extends ModelSerialCloneable {
     public String units;
 
     /** DOCUMENT ME! */
-    public Vector values;
+    public Vector<Object> values;
 
     /** DOCUMENT ME! */
     public FileMincAttElem[] vattArray;
@@ -186,6 +186,7 @@ public class FileMincVarElem extends ModelSerialCloneable {
      *
      * @return  An exact copy of this variable.
      */
+    @SuppressWarnings("unchecked")
     public Object clone() {
         FileMincVarElem elem = new FileMincVarElem(this.name, this.nelems, this.dimid);
         elem.vattArray = new FileMincAttElem[this.vattArray.length];
@@ -197,7 +198,7 @@ public class FileMincVarElem extends ModelSerialCloneable {
         elem.nc_type = this.nc_type;
         elem.vsize = this.vsize;
         elem.begin = this.begin;
-        elem.values = (Vector) this.values.clone();
+        elem.values = (Vector<Object>) this.values.clone();
         elem.step = this.step;
         elem.start = this.start;
         elem.trueStart = this.trueStart;
@@ -241,7 +242,7 @@ public class FileMincVarElem extends ModelSerialCloneable {
         this.nc_type = nc_type;
         this.vsize = vsize;
         this.begin = begin;
-        values = new Vector();
+        values = new Vector<Object>();
     }
 
     /**
