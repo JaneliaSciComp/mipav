@@ -74,7 +74,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
     protected ModelImage mipImage;
 
     /** Table which holds the z coordinate on the 3D volume for a point (x,y) on the 2D MIP image. */
-    protected Hashtable mipZTable;
+    protected Hashtable<Integer,Float> mipZTable;
 
     /** Dialog to facilitate vasculature painting. */
     protected JDialogPaintVasculature paintDialog;
@@ -130,7 +130,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
         this.LUTa = lut;
         this.logMagDisplay = img.getLogMagDisplay();
 
-        mipZTable = new Hashtable();
+        mipZTable = new Hashtable<Integer,Float>();
 
         int xDim = imageA.getExtents()[0];
         int yDim = imageA.getExtents()[1];
@@ -480,7 +480,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
             seedPoints.removeCurves();
         }
 
-        Vector points = new Vector();
+        Vector<Vector3f> points = new Vector<Vector3f>();
         int vascVal = val;
         int count = 0;
 
