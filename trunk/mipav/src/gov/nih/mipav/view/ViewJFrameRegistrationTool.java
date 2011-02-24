@@ -160,7 +160,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     private ViewJComponentSingleRegistration componentImageB; // adjusted image
 
     /** DOCUMENT ME! */
-    private int componentY;
+    //private int componentY;
 
     /** DOCUMENT ME! */
     private JPanel controlPanel; // panel to hold the tool bars
@@ -356,7 +356,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     private JCheckBoxMenuItem showVOIs; // option to show/hide vois in blended window
 
     /** DOCUMENT ME! */
-    private int structureY; // all totals in Y direction not due to image
+    //private int structureY; // all totals in Y direction not due to image
 
     /** DOCUMENT ME! */
     private JTabbedPane tabbedPane; // tabbed pane to hold the blended and dual panels
@@ -552,14 +552,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         String command;
         command = event.getActionCommand();
         if (command.equals("toggleVOIs")) {
-
-            if (showVOIs.isSelected()) {
-                componentImage.showVOIs(true);
-                updateImages(true);
-            } else {
-                componentImage.showVOIs(false);
-                updateImages(true);
-            }
+            updateImages(true);
         } else if (command.equals("copyRefAdj")) {
             VOI pointRef = new VOI( componentImageA.getPointVOI() );
             componentImageB.setPointVOI(pointRef);
@@ -2139,8 +2132,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
             componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
 
-            componentImage.setUseDualVOIs(true);
-
             // Create the componentImageA which will be the reference image in the dual window
             componentImageA = new ViewJComponentSingleRegistration(this, imageA, LUTa, imageBufferA, pixBufferCompA, 1,
                                                                    newExtents, logMagDisplay,
@@ -2580,10 +2571,10 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         /* componentY is added so that the previous software for ViewJFrameImage can be
          * reused.  There the image was resized without a toolbar, controlPanel, ormenubar contributing to the vertical
          * length. */
-        componentY = toolBar.getHeight() + toolBar2.getHeight() + controlPanel.getHeight() + openingMenuBar.getHeight();
+        //componentY = toolBar.getHeight() + toolBar2.getHeight() + controlPanel.getHeight() + openingMenuBar.getHeight();
 
         // structureY is the total of all nonimage components in the Y direction
-        structureY = getInsets().top + componentY + getInsets().bottom;
+        //structureY = getInsets().top + componentY + getInsets().bottom;
         //setSize((int) Math.round((scrollPaneSize * 2) + 3 + getInsets().left + getInsets().right),
                 //(int) Math.round(scrollPaneSize + 3 + structureY));
         
@@ -3166,8 +3157,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         // float imm,jmm;
         // float i1, i2;
         int index;
-        int nVOI;
-        int n;
+        //int nVOI;
+        //int n;
         float frm00, frm01, frm02, frm10, frm11, frm12;
 
         xfrmD.Inverse(xfrm);
