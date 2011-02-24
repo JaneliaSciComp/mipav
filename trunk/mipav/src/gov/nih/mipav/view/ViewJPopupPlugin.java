@@ -34,9 +34,6 @@ public class ViewJPopupPlugin extends JPanel implements ActionListener, PopupMen
 
     /** The stored popup menu */
     private JPopupMenu popup;
-
-    /** The uninstalling dialog */
-    private JDialogUninstallPlugin uninstallDialog;
     
     /**String text of the button representing the plugin to be uninstalled. */
     private String pluginName;
@@ -68,7 +65,7 @@ public class ViewJPopupPlugin extends JPanel implements ActionListener, PopupMen
      */
     public void actionPerformed(ActionEvent event) {
         if (event.getActionCommand().equals(UNINSTALL)) {
-            uninstallDialog = new JDialogUninstallPlugin(pluginName);
+            new JDialogUninstallPlugin(pluginName);
         } 
     }
 
