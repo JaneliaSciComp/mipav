@@ -2671,6 +2671,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         switch (getImageA().getNDims()) { // all extents above 3D need to be checked, since these must match for linking
             case 5:
                 activeImageNumChannels = getImageA().getExtents()[4];
+                activeImageNumVolumes = getImageA().getExtents()[3];
+                break;
             case 4:
                 activeImageNumVolumes = getImageA().getExtents()[3];
 
@@ -2690,17 +2692,31 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
 
-                    switch (image.getNDims()) {
+                    int currentSlice;
+                	switch (image.getNDims()) {
                     case 5:
                         if (image.getExtents()[4] != activeImageNumChannels) {
                             break;
                         }
+                        if (image.getExtents()[3] != activeImageNumVolumes) {
+                            break;
+                        }
+                        currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                        if(currentSlice+offset > -1 && currentSlice+offset < image.getExtents()[2]) {
+                            image.setSlice(currentSlice+offset);
+                        }
+                        break;
                     case 4:
                         if (image.getExtents()[3] != activeImageNumVolumes) {
                             break;
                         }
+                        currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                        if(currentSlice+offset > -1 && currentSlice+offset < image.getExtents()[2]) {
+                            image.setSlice(currentSlice+offset);
+                        }
+                        break;
                     case 3:
-                        int currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                        currentSlice = image.getParentFrame().getComponentImage().getSlice();
                         if(currentSlice+offset > -1 && currentSlice+offset < image.getExtents()[2]) {
                             image.setSlice(currentSlice+offset);
                         }
@@ -2938,8 +2954,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         switch (activeImage.getNDims()) { // all extents above 2D need to be checked
             case 5:
                 activeImageNumChannels = activeImage.getExtents()[4];
+                activeImageNumVolumes = activeImage.getExtents()[3];
+                activeImageNumSlices = activeImage.getExtents()[2];
+                break;
             case 4:
                 activeImageNumVolumes = activeImage.getExtents()[3];
+                activeImageNumSlices = activeImage.getExtents()[2];
+                break;
             case 3:
                 activeImageNumSlices = activeImage.getExtents()[2];
 
@@ -2971,16 +2992,32 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                 if (image.getExtents()[4] != activeImageNumChannels) {
                                     break;
                                 }
+                                if (image.getExtents()[3] != activeImageNumVolumes) {
+                                    break;
+                                }
+                                if (image.getExtents()[2] != activeImageNumSlices) {
+                                    break;
+                                }
+                                // if reached, each n dimension's extents for image and n-d active image are equal
+                                registeredFramedImages.add(image);
+                                break;
                             case 4:
                                 if (image.getExtents()[3] != activeImageNumVolumes) {
                                     break;
                                 }
+                                if (image.getExtents()[2] != activeImageNumSlices) {
+                                    break;
+                                }
+                               // if reached, each n dimension's extents for image and n-d active image are equal
+                                registeredFramedImages.add(image);
+                                break;
                             case 3:
                                 if (image.getExtents()[2] != activeImageNumSlices) {
                                     break;
                                 }
                                 // if reached, each n dimension's extents for image and n-d active image are equal
                                 registeredFramedImages.add(image);
+                                break;
                             default:
                                 Preferences.debug(image.getImageName() + " will not be linked to "
                                         + activeImage.getImageName(), Preferences.DEBUG_MINOR);
