@@ -40,7 +40,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      * magnification problems of very small images for which the arbitrary limits of lightbox image sizes of 25%-75% of
      * the full size of an image. in practice the default max will reference the side with greatest magnitude ...
      */
-    private static final int DEFAULT_IMAGE_SIZE = 128;
+    //private static final int DEFAULT_IMAGE_SIZE = 128;
 
     /** DOCUMENT ME! */
     private static final int DEFAULT_IMAGE_MAX = 256;
@@ -302,14 +302,14 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      * The selectedImages contains the *real* slice numbers -- not the index of a slice on a page. So the maximum number
      * in the vector will be numTotalSlices - 1.
      */
-    private Vector selectedImages = new Vector();
+    private Vector<String> selectedImages = new Vector<String>();
 
 
     /**
      * The selected Time Slices vector contains the real slice number and time slice number in the format (slice
      * #).(time slice #) the maximum number in the vector will be numTotalSlices * t.
      */
-    private Vector selectedTimeSlices = new Vector();
+    private Vector<String> selectedTimeSlices = new Vector<String>();
 
     /** DOCUMENT ME! */
     private JCheckBoxMenuItem selectIndividualTSlices;
@@ -640,7 +640,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
              */
         }else if (event.getActionCommand().equals("interpolateShapes")) {
         	//dialog that is not visible...calls the algorithm immediately
-        	JDialogVOIShapeInterpolation dialogVOIShapeInterp = new JDialogVOIShapeInterpolation(imageA);
+        	new JDialogVOIShapeInterpolation(imageA);
 
         } 
 
@@ -2853,7 +2853,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      * maximum.
      */
     protected void setMagMax() {
-        magMax = ((float) this.DEFAULT_IMAGE_MAX) / Math.max(imageA.getExtents()[0], imageA.getExtents()[1]) * 100;
+        magMax = ((float) ViewJFrameLightBox.DEFAULT_IMAGE_MAX) / Math.max(imageA.getExtents()[0], imageA.getExtents()[1]) * 100;
 
         if (magnification > magMax) {
             magnification = magMax;
@@ -2865,7 +2865,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      * minimum.
      */
     protected void setMagMin() {
-        magMin = ((float) this.DEFAULT_IMAGE_MIN) / Math.max(imageA.getExtents()[0], imageA.getExtents()[1]) * 100;
+        magMin = ((float) ViewJFrameLightBox.DEFAULT_IMAGE_MIN) / Math.max(imageA.getExtents()[0], imageA.getExtents()[1]) * 100;
 
         if (magnification < magMin) {
             magnification = magMin;
