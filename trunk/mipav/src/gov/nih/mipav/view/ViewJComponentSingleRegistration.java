@@ -38,9 +38,6 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
     /** Buffers used to save the Y coordinates for the points that make up a VOI. */
     private int[] yCoords;
 
-    /** Buffers used to save the Z coordinates for the points that make up a VOI. */
-    private int[] zCoords;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -184,7 +181,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             index = 1;
         }
 
-        Vector ptVector = VOIs.elementAt(index).getCurves();
+        Vector<VOIBase> ptVector = VOIs.elementAt(index).getCurves();
         VOIPoint pt = null;
 
         // System.err.println("Point vector size: " + ptVector.size());
@@ -226,7 +223,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             index = 1;
         }
 
-        Vector ptVector = VOIs.elementAt(index).getCurves();
+        Vector<VOIBase> ptVector = VOIs.elementAt(index).getCurves();
         VOIPoint pt = null;
 
         try {
