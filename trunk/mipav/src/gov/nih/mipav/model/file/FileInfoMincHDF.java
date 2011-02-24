@@ -250,6 +250,7 @@ public class FileInfoMincHDF extends FileInfoBase {
      * 
      * @param dInfo destination XML fileinfo
      */
+    @SuppressWarnings("unchecked")
     public void convertPatientInfo(final FileInfoImageXML dInfo) {
         if (informationNode == null) {
             return;
