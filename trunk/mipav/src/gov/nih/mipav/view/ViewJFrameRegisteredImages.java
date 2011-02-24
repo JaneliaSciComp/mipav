@@ -163,7 +163,8 @@ public class ViewJFrameRegisteredImages extends JFrame
 
 
         // get the current registered images
-        Vector names = new Vector();
+        @SuppressWarnings("unchecked")
+        Vector<?> names = new Vector();
 
         // put the list together
         imageList = new JList(names);
@@ -432,7 +433,7 @@ public class ViewJFrameRegisteredImages extends JFrame
         ImageRegistryMonitor mon = (ImageRegistryMonitor) source;
 
         // update the list in the window
-        Vector names = mon.getRegisteredNames();
+        Vector<String> names = mon.getRegisteredNames();
         
         int selected = -1;
         if(imageList.getModel().getSize() > 0) {
