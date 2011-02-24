@@ -64,7 +64,7 @@ public class DICOM_AAssociateAC extends DICOM_AAssociateRQ {
     // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private final Vector presContexts = new Vector();
+    private final Vector<DICOM_PresentationContextAccept> presContexts = new Vector<DICOM_PresentationContextAccept>();
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ public class DICOM_AAssociateAC extends DICOM_AAssociateRQ {
      * 
      * @return the list (vector) of accepted presentation contextes.
      */
-    public Vector getPresentationContextes() {
+    public Vector<DICOM_PresentationContextAccept> getPresentationContextes() {
         return presContexts;
     }
 
