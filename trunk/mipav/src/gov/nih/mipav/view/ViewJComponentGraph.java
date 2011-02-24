@@ -51,9 +51,6 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
     private Rectangle bounds;
 
     /** DOCUMENT ME! */
-    private JComboBox colorBox;
-
-    /** DOCUMENT ME! */
     private Cursor crosshairCursor;
 
     /** DOCUMENT ME! */
@@ -82,9 +79,6 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
 
     /** DOCUMENT ME! */
     private Font font12B;
-
-    /** DOCUMENT ME! */
-    private ImageIcon fun1PrintIcon = MipavUtil.getIcon("fun1print.gif");
 
     /** DOCUMENT ME! */
     private ImageIcon fun2Icon = MipavUtil.getIcon("fun2.gif");
@@ -241,7 +235,6 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
         float yMax = Float.MIN_VALUE;
         int len = -1;
         int i;
-        boolean functVisible = false;
 
         for (i = 0; i < functions.length; i++) {
 
@@ -260,7 +253,6 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             if (functions[k].getFunctionVisible()) {
 
                 for (i = 0; i < functions[k].getXs().length; i++) {
-                    functVisible = true;
 
                     if (functions[k].getYs()[i] < yMin) {
                         yMin = functions[k].getYs()[i];
@@ -1736,13 +1728,11 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
      */
     private String makeString(float number, int decPts) {
         String subStr = null;
-        String tmpStr = null;
         String str = null;
 
         try {
             subStr = new String();
-            tmpStr = new String();
-            str = new String(tmpStr.valueOf(number));
+            str = new String(String.valueOf(number));
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("FrameBase.makeString: out of memory");
 
