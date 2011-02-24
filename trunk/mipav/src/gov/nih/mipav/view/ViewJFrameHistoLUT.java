@@ -609,14 +609,18 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
 
         if (lutPanel.isImageASelected() && (getHistoLUTComponentA() != null)) {
 
-            if ((getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV) ||
-                    (getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD)) {
+            getHistoLUTComponentA();
+			getHistoLUTComponentA();
+			if ((getHistoLUTComponentA().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD_INV) ||
+                    (getHistoLUTComponentA().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD)) {
                 return true;
             }
         } else if (lutPanel.isImageBSelected() && (getHistoLUTComponentB() != null)) {
 
-            if ((getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV) ||
-                    (getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD)) {
+            getHistoLUTComponentB();
+			getHistoLUTComponentB();
+			if ((getHistoLUTComponentB().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD_INV) ||
+                    (getHistoLUTComponentB().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD)) {
                 return true;
             }
         }
@@ -736,12 +740,14 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
         if (lutPanel.isImageASelected()) {
 
             if (getHistoLUTComponentA() != null) {
-                getHistoLUTComponentA().setMode(getHistoLUTComponentA().LINEAR);
+                getHistoLUTComponentA();
+				getHistoLUTComponentA().setMode(ViewJComponentHLUTBase.LINEAR);
             }
         } else {
 
             if (getHistoLUTComponentB() != null) {
-                getHistoLUTComponentB().setMode(getHistoLUTComponentB().LINEAR);
+                getHistoLUTComponentB();
+				getHistoLUTComponentB().setMode(ViewJComponentHLUTBase.LINEAR);
             }
         }
     }
