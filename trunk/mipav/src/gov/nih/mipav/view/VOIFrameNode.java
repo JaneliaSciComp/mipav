@@ -36,6 +36,7 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
      * @param  node     File for tree leaf.
      * @param  fNumber  The slice number of this VOI component
      */
+    @SuppressWarnings("unchecked")
     public VOIFrameNode(Vector node, int fNumber) {
         setUserObject(node);
 
@@ -56,11 +57,12 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
      *
      * <p>Implementation of this is different from the Sun Books' code.</p>
      */
+    @SuppressWarnings("unchecked")
     public void explore() {
-        Vector curves = (Vector) getUserObject();
+        Vector<VOIBase> curves = (Vector<VOIBase>) getUserObject();
 
         for (int i = 0; i < curves.size(); i++) {
-            add(new VOINode((VOIBase) curves.elementAt(i)));
+            add(new VOINode(curves.elementAt(i)));
         }
     }
 
