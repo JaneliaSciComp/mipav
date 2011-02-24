@@ -9,7 +9,6 @@ import gov.nih.mipav.view.dialogs.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.NumberFormat;
-import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -119,31 +118,10 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
     private JToggleButton freeRangeButton;
 
     /** DOCUMENT ME! */
-    private float[] freeRangeColocIntensity1 = null;
-
-    /** DOCUMENT ME! */
-    private float[] freeRangeColocIntensity2 = null;
-
-    /** DOCUMENT ME! */
-    private float[] freeRangeColocSize = null;
-
-    /** DOCUMENT ME! */
     private boolean freeRangeMode = false;
-
-    /**
-     * The linear correlation coefficient for all pixels with values either below color1 for buffer or below color2 for
-     * secondBuffer.
-     */
-    private float[] freeRangeRThreshold = null;
-
-    /** DOCUMENT ME! */
-    private GridBagConstraints gbc; // content pane grid bag constraints
 
     /** DOCUMENT ME! */
     private GridBagConstraints gbcTP;
-
-    /** DOCUMENT ME! */
-    private GridBagLayout gbl; // content pane grid bag layout
 
     /** true for pixels with calculated freeRangeRThreshold values. */
     private boolean[] haveFreeRangeThreshold = null;
@@ -156,12 +134,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /** DOCUMENT ME! */
     private ModelImage imageB;
-
-    /** DOCUMENT ME! */
-    private float[] imageBufferA;
-
-    /** DOCUMENT ME! */
-    private float[] imageBufferB;
 
     /** DOCUMENT ME! */
     private float[] imageBufferDest;
@@ -210,9 +182,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /** The LUT for the 2D histogram. */
     private ModelLUT LUTdest;
-
-    /** DOCUMENT ME! */
-    private Vector menuItemVector = new Vector();
 
     /** DOCUMENT ME! */
     private ViewMenuBuilder menuObj;
@@ -346,9 +315,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
      */
     private ViewVOIVector VOIs;
 
-    /** Note that xDim and yDim refer to destImage. */
-    private int xDim, yDim;
-
     /** DOCUMENT ME! */
     private int xScreen, yScreen; // screen width, screen height
 
@@ -420,8 +386,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         LUTb = _LUTb;
         imageB = _imageB;
         this.destImage = destImage;
-        xDim = destImage.getExtents()[0];
-        yDim = destImage.getExtents()[1];
         this.useRed = useRed;
         this.useGreen = useGreen;
         this.useBlue = useBlue;
@@ -706,8 +670,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         haveFreeRangeThreshold = null;
 
         componentImage = null;
-        imageBufferA = null;
-        imageBufferB = null;
         imageBufferDest = null;
         pixBufferDest = null;
         paintBufferDest = null;
@@ -729,9 +691,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         innerPanel = null;
         cpGBL = null;
         cpGBC = null;
-        gbl = null;
-        gbc = null;
-        menuItemVector = null;
     }
 
     /**
@@ -783,7 +742,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-        int state = event.getStateChange();
 
         if (source instanceof AbstractButton) {
 
@@ -804,16 +762,12 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
      * @param freeRangeColocIntensity1 DOCUMENT ME!
      * @param freeRangeColocIntensity2 DOCUMENT ME!
      * 
-     * @paran freeRangeColocIntensity2
+     * @param freeRangeColocIntensity2
      */
     public void passFreeRangeArrays(boolean[] haveFreeRangeThreshold, float[] freeRangeRThreshold,
             float[] freeRangeColocSize, float[] freeRangeColocIntensity1, float[] freeRangeColocIntensity2) {
 
         this.haveFreeRangeThreshold = haveFreeRangeThreshold;
-        this.freeRangeRThreshold = freeRangeRThreshold;
-        this.freeRangeColocSize = freeRangeColocSize;
-        this.freeRangeColocIntensity1 = freeRangeColocIntensity1;
-        this.freeRangeColocIntensity2 = freeRangeColocIntensity2;
         componentImage.passFreeRangeArrays(haveFreeRangeThreshold, freeRangeRThreshold, freeRangeColocSize,
                 freeRangeColocIntensity1, freeRangeColocIntensity2);
     }
@@ -1046,7 +1000,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
      * @param e Event that triggered this function
      */
     public void stateChanged(ChangeEvent e) {
-        Object source = e.getSource();
 
     }
 
@@ -1514,25 +1467,9 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
                 extents[1] = Math.round(imageA.getExtents()[1]);
             }
 
-            int bufferFactor = 1;
-
-            if (imageA.isColorImage()) {
-                bufferFactor = 4;
-            }
-
-            imageBufferA = new float[bufferFactor * imageA.getSliceSize()];
-
-            if (imageB != null) {
-                imageBufferB = new float[bufferFactor * imageA.getSliceSize()];
-            }
-
             imageBufferDest = new float[destImage.getSliceSize()];
             pixBufferDest = new int[destImage.getSliceSize()];
             paintBufferDest = new int[destImage.getSliceSize()];
-
-            if (imageB != null) {
-                imageBufferB = new float[bufferFactor * imageA.getSliceSize()];
-            }
 
             componentImage = new ViewJComponentColocalizationRegression(alg, controlFrame, this, imageA, imageB,
                     destImage, LUTdest, imageBufferDest, useRed, useGreen, useBlue, slope, offset, haveThreshold,
@@ -1813,21 +1750,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
         nf = NumberFormat.getNumberInstance();
         nf.setMaximumFractionDigits(6);
-    }
-
-    /**
-     * Helper method to create a label with the proper font and font color.
-     * 
-     * @param title Text of the label.
-     * 
-     * @return New label.
-     */
-    private JLabel createLabel(String title) {
-        JLabel label = new JLabel(title);
-        label.setFont(MipavUtil.font12);
-        label.setForeground(Color.black);
-
-        return label;
     }
 
     /**
