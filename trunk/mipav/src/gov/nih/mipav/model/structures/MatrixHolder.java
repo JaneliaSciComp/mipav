@@ -254,7 +254,7 @@ public class MatrixHolder extends ModelSerialCloneable {
      *
      * @param  matrixVector  Vector of matrices to replace the current matrices in the map
      */
-    public void replaceMatrices(Vector matrixVector) {
+    public void replaceMatrices(Vector<TransMatrix> matrixVector) {
         // remove all first
         clearMatrices();
 
