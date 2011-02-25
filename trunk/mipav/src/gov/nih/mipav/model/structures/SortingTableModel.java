@@ -76,11 +76,11 @@ public class SortingTableModel extends DefaultTableModel {
      *
      * @return  DOCUMENT ME!
      */
-    public Vector<Object> getRow(int rowNumber) {
-        Vector<Object> row = new Vector<Object>();
+    public Vector<String> getRow(int rowNumber) {
+        Vector<String> row = new Vector<String>();
 
         for (int i = 0; i < getColumnCount(); i++) {
-            row.addElement(getValueAt(rowNumber, i));
+            row.addElement((String)getValueAt(rowNumber, i));
         }
 
         return row;
