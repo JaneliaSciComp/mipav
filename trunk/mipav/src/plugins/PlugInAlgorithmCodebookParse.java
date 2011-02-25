@@ -41,18 +41,18 @@ public class PlugInAlgorithmCodebookParse extends AlgorithmBase {
 
             read.close();
 
-            final Set set = holder.keySet();
+            final Set<String> set = holder.keySet();
             final String[] words = new String[set.size()];
             final int[] count = new int[set.size()];
             int i = 0;
             int j = set.size();
 
-            final Iterator runDown = set.iterator();
+            final Iterator<String> runDown = set.iterator();
             Preferences.data("Word Counts, alphabetical \n");
 
             // print out words alphabetically
             while (runDown.hasNext()) {
-                words[i] = (String) runDown.next();
+                words[i] = runDown.next();
                 count[i] = holder.get(words[i]);
                 Preferences.data(words[i] + ":\t\t " + count[i] + " \n");
                 i++;
