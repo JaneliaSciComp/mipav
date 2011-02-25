@@ -37,9 +37,6 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
     private boolean useBlue = false;
 
     /** DOCUMENT ME! */
-    private boolean useGreen = true;
-
-    /** DOCUMENT ME! */
     private boolean useRed = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -54,11 +51,10 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
      * @param  threshold1  DOCUMENT ME!
      * @param  threshold2  DOCUMENT ME!
      */
-    public PlugInAlgorithmObjectDistanceKruhlak(ModelImage srcImg, boolean useRed, boolean useGreen, boolean useBlue,
+    public PlugInAlgorithmObjectDistanceKruhlak(ModelImage srcImg, boolean useRed, boolean useBlue,
                                                 int threshold1, int threshold2) {
         super(null, srcImg);
         this.useRed = useRed;
-        this.useGreen = useGreen;
         this.useBlue = useBlue;
         this.threshold1 = threshold1;
         this.threshold2 = threshold2;
@@ -124,7 +120,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         String unitsString = null;
 
         if ((xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-            unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+            unitsString = (Unit.getUnitFromLegacyNum(xUnits)).toString();
         }
 
         try {
@@ -283,7 +279,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         String unitsString = null;
 
         if ((xUnits == yUnits) && (xUnits == zUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-            unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+            unitsString = (Unit.getUnitFromLegacyNum(xUnits)).toString();
         }
 
         try {
