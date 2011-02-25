@@ -241,6 +241,7 @@ public class PlugInDataInputTable extends JPanel{
         	actionAdd();
 	}
 
+	@SuppressWarnings("unchecked")
 	public List<String> getDataElements(String targetDataStruct){
 		System.out.println("In getElements");
 		OMElement e = null;
