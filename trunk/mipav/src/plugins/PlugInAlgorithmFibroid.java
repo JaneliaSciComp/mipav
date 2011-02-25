@@ -3,7 +3,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -83,11 +82,10 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("null")
     private void calc2D() {
 
         ViewUserInterface UI = ViewUserInterface.getReference();
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
         float xRes = srcImage.getResolutions(0)[0];
         float yRes = srcImage.getResolutions(0)[1];
         int xUnits = srcImage.getUnitsOfMeasure()[0];
@@ -121,7 +119,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         int nContours;
 
         if ((xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-            unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+            unitsString = (Unit.getUnitFromLegacyNum(xUnits)).toString();
         }
 
         fireProgressStateChanged("Measuring ellipsoid diameters ...");
@@ -331,6 +329,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings({ "null", "unchecked" })
     private void calc3D() {
 
         int i, j, k, m, n;
@@ -376,8 +375,6 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         boolean useRes3D;
         int usedSlices;
         double[][] tensor = new double[3][3];
-        Matrix tensorMat;
-        EigenvalueDecomposition eig;
         double[] eigenvalue = new double[3];
         double[][] eigenvector = new double[3][3];
         double temp;
@@ -397,7 +394,6 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         float invMax;
         Polygon gon;
         Vector3f kVoxel;
-        AlgorithmQuadraticFit kQFit;
         float[] ellipseLength = new float[3];
 
         if ((xUnits == yUnits) && (xUnits == zUnits)) {
@@ -407,11 +403,11 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         }
 
         if ((xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-            unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+            unitsString = (Unit.getUnitFromLegacyNum(xUnits)).toString();
         }
 
         if ((xUnits == yUnits) && (xUnits == zUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-            unitsString3D = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+            unitsString3D = (Unit.getUnitFromLegacyNum(xUnits)).toString();
         }
 
         fireProgressStateChanged("Measuring ellipsoid diameters ...");
@@ -788,10 +784,10 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                     }
                 } // for (z = 0; z < nSlices; z++)
 
-                Vector[] volPoints = new Vector[maxElement];
+                Vector<Vector3f>[] volPoints = new Vector[maxElement];
 
                 for (k = 0; k < maxElement; k++) {
-                    volPoints[k] = new Vector();
+                    volPoints[k] = new Vector<Vector3f>();
                 }
 
                 for (z = 0; z < nSlices; z++) {
