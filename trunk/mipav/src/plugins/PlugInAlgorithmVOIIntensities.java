@@ -39,11 +39,10 @@ public class PlugInAlgorithmVOIIntensities
     }
 
     private void writeIntensities() {
-    	int i, j, k;
-        int length;
+    	int j, k;
         int nContours;
 
-        Vector contours;
+        Vector<VOIBase> contours;
     
         try {
         
