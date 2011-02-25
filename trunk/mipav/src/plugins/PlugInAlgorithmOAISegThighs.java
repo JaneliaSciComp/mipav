@@ -75,9 +75,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** flag for bone/bonemarrow processing, to indicate whether or not bone is continuous. */
-    private boolean continuousBone = false;
-
     /** result image 'right thigh'. */
     private ModelImage destImageA = null;
 
