@@ -102,9 +102,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /** Image directory */
     private String imageDir;
     
-    /** the color assigned to the various VOI's */
-    private Color voiColor;
-    
     /** An array of lists of intensity profiles */
     private ArrayList<Short>[] intensityProfiles;
     
@@ -133,7 +130,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         super(resultImage, srcImg);
         
         this.imageDir = imageDir+File.separator;
-        this.voiColor = color;
 
         abdomenImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "AbdomenImage");
         abdomenVOI = null;
@@ -388,6 +384,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /**
      * Apply the snake algorithm to the subcutaneous VOI
      */
+    @SuppressWarnings("unused")
     private void snakeSubcutaneousVOI() {
         
         // set the subcutaneous VOI as active
@@ -630,6 +627,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
       * region grow using values to "undersegment" the image.  We then clean up the segmentation
       * using mathematical morphology
       */
+      @SuppressWarnings("unused")
       private void labelAbdomen3D01() {
          
          ViewUserInterface.getReference().getMessageFrame().append("labelAbdomen3D(): Start\n", ViewJFrameMessage.DEBUG);
@@ -1050,6 +1048,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /**
      * Method fills in the intensity profile array along radial lines
      */
+    @SuppressWarnings("unchecked")
     private void makeIntensityProfiles(int sliceNum) {
         
         // sanity check
@@ -1198,6 +1197,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /**
      * Method fills in the intensity profile array along radial lines
      */
+    @SuppressWarnings("unchecked")
     private void makeIntensityProfiles() {
 
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
@@ -1345,13 +1345,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      */
     private void makeSubcutaneousFatVOIfromIntensityProfiles(int sliceNum) {
         
-        double[] distances;
-        int dx, dy;
         int[] xLocsSubcutaneousVOI;
         int[] yLocsSubcutaneousVOI;
         int[] zVals;
         try {
-            distances = new double[360 / angularResolution];
             xLocsSubcutaneousVOI = new int [360 / angularResolution];
             yLocsSubcutaneousVOI = new int [360 / angularResolution];
             zVals = new int [360 / angularResolution];
@@ -1410,13 +1407,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      */
     private void makeSubcutaneousFatVOIfromIntensityProfiles() {
         
-        double[] distances;
-        int dx, dy;
         int[] xLocsSubcutaneousVOI;
         int[] yLocsSubcutaneousVOI;
         int[] zVals;
         try {
-            distances = new double[360 / angularResolution];
             xLocsSubcutaneousVOI = new int [360 / angularResolution];
             yLocsSubcutaneousVOI = new int [360 / angularResolution];
             zVals = new int [360 / angularResolution];
@@ -1530,7 +1524,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
             ViewUserInterface.getReference().getMessageFrame().append("    Smoothing Image with "+sliceVOI.getNumPoints()+"points: ", ViewJFrameMessage.DEBUG);
             time = System.currentTimeMillis();
-            AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(binImage, sliceVOI, sliceVOI.getNumPoints()/3, true);
+            new AlgorithmBSmooth(binImage, sliceVOI, sliceVOI.getNumPoints()/3, true);
             ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
             
             // close the binaryImage with a huge structuring element to fill in all the major gaps
@@ -1705,6 +1699,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /**
      * So I don't forget how to print the contents of a VOI
      */
+    @SuppressWarnings("unused")
     private void printVOI(VOI theVOI) {
         int numCurves;
         VOIContour curve;
@@ -1727,6 +1722,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * abdomen center-of-mass.  Use this profile to determine where the subcutaneous
      * fat ends
      */
+    @SuppressWarnings("unused")
     private void makeSubcutaneousFat2DVOI() {
 
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
@@ -1926,6 +1922,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * Method not based on having the abdomen VOI, but rather determining both the
      * abdominal and visceral VOI in this step using the segmented abdomenImage
      */
+    @SuppressWarnings("unused")
     private void JCATsegmentSubcutaneousFat2D() {
         
         // a buffer to store a slice from the source Image
@@ -1950,8 +1947,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
         findAbdomenCM();
-        int xcm = centerOfMass[0];
-        int ycm = centerOfMass[1];
 
         // Use the CM, the abdomenImage, and the srcImage to define points on the
         // abdomen and visceral VOI's
@@ -2016,6 +2011,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * area was likely used
      * 
      */
+    @SuppressWarnings("unused")
     private void findAbdomenVOI() {
         
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
@@ -2366,6 +2362,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /**
      * segment out the visceral fat from the image, version 01
      */
+    @SuppressWarnings("unused")
     private void JCATsegmentVisceralFat2D01() {
         
         // get the VOI for the external boundary of the abdomen
@@ -2440,6 +2437,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * @param center image center of mass
      * @return
      */
+    @SuppressWarnings("unused")
     private double[] getSeedPoint(double[] center) {
         double lowIntensity = -50;
         double highIntensity = 50;
@@ -2470,7 +2468,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
     }
     
-    
+    @SuppressWarnings("unused")
     private void regionGrowAbdomen(short sX, short sY, short sZ, BitSet muscleBits) {
        try {
            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(srcImage, 1.0f, 1.0f);
