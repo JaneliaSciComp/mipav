@@ -25,12 +25,6 @@ public class VOIProtractor extends VOIBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private boolean showLength = false;
-
-    /** First segment of PROTRACTOR snaps into horizontal or vertical on mouseRelease. */
-    private boolean snap = false;
-
     /** Set to true, displays this protractor object for any z-value. */
     private boolean allSlices = false;
     
@@ -141,25 +135,6 @@ public class VOIProtractor extends VOIBase {
     {
         allSlices = bValue;
     }
-
-    /**
-     * Used to set the flag to show length of one protractor arm.
-     *
-     * @param  flag  set true to show length of the protractor arm.
-     */
-    public void setShowLength(boolean flag) {
-        showLength = flag;
-    }
-    
-    /**
-     * If snap is true than snap the protractor to horizontal or vertical. Used in the triplanar view
-     *
-     * @param  snap  if true then snap to vertical or horizonal, whichever is closer
-     */
-    public void setSnap(boolean snap) {
-        this.snap = snap;
-    }
-  
 
 
     /**
