@@ -325,26 +325,6 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
 
        calc3D();
     } // end runAlgorithm()
-
-    /**
-     * DOCUMENT ME!
-     */
-    private void calc2D() {
-        long time;
-
-        time = System.currentTimeMillis();
-
-        if (threadStopped) {
-            finalize();
-
-            return;
-        }
-
-        fireProgressStateChanged(100);
-        time = System.currentTimeMillis() - time;
-        Preferences.debug("PlugInAlgorithmSynapseDetection elapsed time in seconds = " + (time/1000.0));
-        setCompleted(true);
-    }
     
     /**
      * DOCUMENT ME!
