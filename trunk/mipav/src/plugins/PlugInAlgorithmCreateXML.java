@@ -38,7 +38,7 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 	//	~ Constructors -----------------------------------------------------------------------------------------
 	public PlugInAlgorithmCreateXML(File[] inputFiles, HashMap<String, String> textFieldsMap, String imageCopyDir) {
 		this.selectedFiles = inputFiles;
-		this.xmlList = new ArrayList();
+		this.xmlList = new ArrayList<String>();
 		this.textFieldsMap = textFieldsMap;
 		this.imageCopyDir = imageCopyDir;
 	}
