@@ -16,7 +16,7 @@ public class TimeoutThread extends Thread {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    protected Hashtable subscribersHashtable;
+    protected Hashtable<Object,Method> subscribersHashtable;
 
     /** DOCUMENT ME! */
     private volatile boolean isRunning;
@@ -32,7 +32,7 @@ public class TimeoutThread extends Thread {
      * @param  sleeptime  DOCUMENT ME!
      */
     public TimeoutThread(long sleeptime) {
-        subscribersHashtable = new Hashtable();
+        subscribersHashtable = new Hashtable<Object,Method>();
         this.sleeptime = sleeptime;
         isRunning = false;
     }
@@ -68,7 +68,7 @@ public class TimeoutThread extends Thread {
             sleep(sleeptime);
 
             if (isRunning) {
-                Enumeration e = subscribersHashtable.keys();
+                Enumeration<Object> e = subscribersHashtable.keys();
 
                 while (e.hasMoreElements()) {
                     Object object = e.nextElement();
