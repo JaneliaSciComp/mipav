@@ -14,7 +14,7 @@ public class ReminderThread extends Thread {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    protected Hashtable subscribersHashtable;
+    protected Hashtable<Object,Method> subscribersHashtable;
 
     /** DOCUMENT ME! */
     private boolean isRunning;
@@ -30,7 +30,7 @@ public class ReminderThread extends Thread {
      * @param  sleeptime  DOCUMENT ME!
      */
     public ReminderThread(long sleeptime) {
-        subscribersHashtable = new Hashtable();
+        subscribersHashtable = new Hashtable<Object,Method>();
         this.sleeptime = sleeptime;
         isRunning = false;
     }
@@ -65,7 +65,7 @@ public class ReminderThread extends Thread {
         try {
 
             while (isRunning) {
-                Enumeration e = subscribersHashtable.keys();
+                Enumeration<Object> e = subscribersHashtable.keys();
 
                 while (e.hasMoreElements()) {
                     Object object = e.nextElement();
