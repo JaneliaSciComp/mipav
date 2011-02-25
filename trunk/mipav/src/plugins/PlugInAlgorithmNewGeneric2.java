@@ -36,15 +36,6 @@ import gov.nih.mipav.model.structures.ModelImage;
  */
 
 public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
-    
-	  	/** X dimension of the image */
-    private int xDim;
-
-	    /** Y dimension of the image */
-    private int yDim;
-
-    /** Slice size for xDim*yDim */
-    private int sliceSize;
 
 	    /** Whether to perform a gaussian blur */
 		private boolean doGaussian;
@@ -57,7 +48,6 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
      */
     public PlugInAlgorithmNewGeneric2(ModelImage resultImage, ModelImage srcImg) {
         super(resultImage, srcImg);
-            init();
         }
         
 //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -127,9 +117,5 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
             }
                     }
             
-		private void init() {
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        sliceSize = xDim * yDim;
-        }
+		
         }
