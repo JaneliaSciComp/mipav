@@ -28,7 +28,7 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** All cheshire overlay files to be processed */
-    private Vector cheshireFiles = new Vector();
+    private Vector<File> cheshireFiles = new Vector<File>();
     
     
     /** Text field for directory of chesire overlay files. */
@@ -36,9 +36,6 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
     
     /** Button to browse for directory of cheshire overlay files. */
     private JButton browseButton;
-    
-    /** handle to ViewUserInterface */
-    private ViewUserInterface UI;
     
     /** Whether the dialog exited successfully. */
     private boolean successfulExit = false;
@@ -66,7 +63,6 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
     public PlugInDialogCheshireVOI(boolean modal, PlugInCheshireVOI cheshirePlugin) {
         super(modal);
         this.cheshirePlugin = cheshirePlugin;
-        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -147,7 +143,7 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
      * Accessor that gets all cheshireFiles that have been extracted from the working directory as a Vector.
      */
     
-    public Vector getCheshireFiles() {
+    public Vector<File> getCheshireFiles() {
         return cheshireFiles;
     }
 
@@ -279,7 +275,7 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
         String fileNames = new String();
         if(fileDir.isDirectory()) {
             File[] fileArray = fileDir.listFiles();
-            for(int i=0, j=0; i<fileArray.length; i++) {
+            for(int i=0; i<fileArray.length; i++) {
                 if(oly.accept(fileArray[i]) && !fileArray[i].isDirectory()) {
                     cheshireFiles.add(fileArray[i]);
                 }
