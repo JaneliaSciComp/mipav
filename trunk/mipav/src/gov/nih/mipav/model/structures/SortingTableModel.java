@@ -22,7 +22,7 @@ public class SortingTableModel extends DefaultTableModel {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private Hashtable htColumnClass;
+    private Hashtable<Integer,Class<?>> htColumnClass;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ public class SortingTableModel extends DefaultTableModel {
     public SortingTableModel() {
         super();
 
-        htColumnClass = new Hashtable();
+        htColumnClass = new Hashtable<Integer,Class<?>>();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -44,8 +44,8 @@ public class SortingTableModel extends DefaultTableModel {
      *
      * @return  DOCUMENT ME!
      */
-    public Class getColumnClass(int columnIndex) {
-        Class classObj = (Class) htColumnClass.get(new Integer(columnIndex));
+    public Class<?> getColumnClass(int columnIndex) {
+        Class<?> classObj = (Class<?>) htColumnClass.get(new Integer(columnIndex));
 
         if (classObj == null) {
             return new String().getClass();
@@ -59,8 +59,8 @@ public class SortingTableModel extends DefaultTableModel {
      *
      * @return  DOCUMENT ME!
      */
-    public Vector getColumnNames() {
-        Vector columnNames = new Vector();
+    public Vector<String> getColumnNames() {
+        Vector<String> columnNames = new Vector<String>();
 
         for (int i = 0; i < getColumnCount(); i++) {
             columnNames.addElement(getColumnName(i));
@@ -76,8 +76,8 @@ public class SortingTableModel extends DefaultTableModel {
      *
      * @return  DOCUMENT ME!
      */
-    public Vector getRow(int rowNumber) {
-        Vector row = new Vector();
+    public Vector<Object> getRow(int rowNumber) {
+        Vector<Object> row = new Vector<Object>();
 
         for (int i = 0; i < getColumnCount(); i++) {
             row.addElement(getValueAt(rowNumber, i));
@@ -114,7 +114,7 @@ public class SortingTableModel extends DefaultTableModel {
      * @param  classType    DOCUMENT ME!
      * @param  columnIndex  DOCUMENT ME!
      */
-    public void setColumnClass(Class classType, int columnIndex) {
+    public void setColumnClass(Class<?> classType, int columnIndex) {
         htColumnClass.put(new Integer(columnIndex), classType);
     }
 }
