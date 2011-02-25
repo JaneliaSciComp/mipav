@@ -3746,7 +3746,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             if (smoothAlgo.isCompleted()) {
                                 // The algorithm has completed and produced a VOI
                                 resultVOI = smoothAlgo.getResultVOI();
-                                blueVOIs.VOIAt(0).removeCurves(z);
+                                Vector<VOIBase> removeCurves = blueVOIs.VOIAt(0).getSliceCurves(z);
+                        		for (j = 0; j < removeCurves.size(); j++ )
+                        		{
+                        			blueVOIs.VOIAt(0).getCurves().removeElement(removeCurves.elementAt(j));
+                        		}
                                 blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurves().elementAt(0));
                             } // if (smoothAlgo.isCompleted())
                             smoothAlgo.finalize();
