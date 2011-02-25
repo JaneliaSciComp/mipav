@@ -43,15 +43,6 @@ import gov.nih.mipav.view.ViewJFrameImage;
  */
 
 public class PlugInAlgorithmMTry extends AlgorithmBase {
-    
-	  	/** X dimension of the image */
-    private int xDim;
-
-	    /** Y dimension of the image */
-    private int yDim;
-
-    /** Slice size for xDim*yDim */
-    private int sliceSize;
 
     private ModelImage minImage;
 
@@ -93,8 +84,6 @@ public class PlugInAlgorithmMTry extends AlgorithmBase {
         this.invTimeMin = invTimeMin;
         this.invTimeMed = invTimeMed;
         this.invTimeMax = invTimeMax;
-        
-        init();
     }
         
 //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -211,7 +200,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     	//ModelImage maxImageComplex = new ModelImage(ModelImage.COMPLEX, new int[]{64,64,44,5}, "maxImageComplex");
     	//ModelImage negPhase = new ModelImage(ModelImage.COMPLEX, new int[]{64,64,44,5}, "negPhaseComplex");
     	
-    	ModelImage resultImage = new ModelImage(ModelImage.COMPLEX, new int[]{64,64,44,5}, "maxImageComplex");
+    	//ModelImage resultImage = new ModelImage(ModelImage.COMPLEX, new int[]{64,64,44,5}, "maxImageComplex");
     	
     	float[][] minImageComplexReal = new float[64*64*44][5], minImageComplexImag = new float[64*64*44][5], 
     	            medImageComplexReal = new float[64*64*44][5], medImageComplexImag = new float[64*64*44][5],
@@ -238,7 +227,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
             e.printStackTrace();
         }*/
     	
-        double num, pow, mag;
+        double pow, mag;
         for(int i=0; i<maxImageComplexReal.length; i++) {
             for(int j=0; j<maxImageComplexReal[i].length; j++) {
                 pow = Math.pow(maxImageComplexReal[i][j], 2.0) + Math.pow(maxImageComplexImag[i][j], 2.0);
@@ -254,7 +243,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         float[][] tempDenReal = new float[64*64*44][5];
         float[][] tempDenImag = new float[64*64*44][5];
         
-        float realFactor, imagFactor;
+        float realFactor;
         
         for(int i=0; i<t1Real.length; i++) {
             for(int j=0; j<tempNumReal[i].length; j++) {
@@ -275,7 +264,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
                 tempDenReal[i][j] = realFactor;
             }
         }
-        int k = 1;
+
         float[] avgNumReal = getMean(tempNumReal);
         float[] avgNumImag = getMean(tempNumImag);
         
@@ -350,6 +339,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         return replace;
     }
 
+    @SuppressWarnings("unused")
     private void searchForValues(float[][] minImageComplexReal,
             float[][] minImageComplexImag, float[][] medImageComplexReal,
             float[][] medImageComplexImag, float[][] maxImageComplexReal,
@@ -388,12 +378,6 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
                 index++;
             }
         }
-    }
-        
-	private void init() {
-    xDim = srcImage.getExtents()[0];
-    yDim = srcImage.getExtents()[1];
-    sliceSize = xDim * yDim;
     }
 	
 	private double t1Func(double x) {
