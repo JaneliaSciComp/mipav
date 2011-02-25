@@ -8,7 +8,6 @@ import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
 
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR2D;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcat;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.file.FileIO;
@@ -69,9 +68,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     private BitSet eyebitset = new BitSet();
     
     private BitSet trimzone = new BitSet();
-
-    /** Algorithm which converts to float **/
-    private AlgorithmChangeType algoType;
 
     /** File IO **/
     private FileIO fileIO = new FileIO();
@@ -274,7 +270,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         
             //file write options
 
-            opts.setFileDirectory(outputfolder2 + outputfolder2.separator);
+            opts.setFileDirectory(outputfolder2 + File.separator);
             ModelImage toBeReg, doneReg;
             outputbox.append("        ** Calculating Gradient Magnitude for Registration**\n");
             
@@ -370,7 +366,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                     doneReg=null;
                 }
             }
-            opts.setFileDirectory(outputfolder3 + outputfolder3.separator);
+            opts.setFileDirectory(outputfolder3 + File.separator);
         
         //reister blue images
             for(int j = 0; j<imgLoc2.size(); j++){
@@ -547,7 +543,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 }
                 
                 //save MPmap
-                opts.setFileDirectory(outputfolder + outputfolder.separator);
+                opts.setFileDirectory(outputfolder + File.separator);
                 //opts.setFileName("MPMap Yellow" + (i+1) + " to Blue" + (j+1));
                 String nameAndExtY = listOfYellow[i].getName();
                 String nameY = nameAndExtY.substring(0, nameAndExtY.lastIndexOf("."));
