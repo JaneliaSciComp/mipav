@@ -55,9 +55,6 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
     /** ints needed for algorithm. */
     private int cost, interp, interp2, DOF;
 
-    /** default directory.* */
-    private String directory;
-
     /** boolean indicating target color value. */
     private boolean doColor;
 
@@ -99,9 +96,6 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
 
     /** List of source filenames. */
     private ArrayList<String> srcFilenamesArrList;
-
-    /** handle to ViewUserInterface. */
-    private ViewUserInterface UI;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -164,9 +158,6 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
         this.saveIntermediateRegImages = saveIntermediateRegImages;
         this.doColor = doColor;
         this.isTargetDICOM = isTargetDICOM;
-
-        UI = ViewUserInterface.getReference();
-        directory = UI.getDefaultDirectory();
 
     }
 
