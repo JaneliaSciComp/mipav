@@ -257,7 +257,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         AlgorithmThresholdDual thresholdAlgo;
         float[] thresholds;
         float fillValue;
-        boolean binaryFlag;
         AlgorithmMorphology2D openAlgo;
         AlgorithmMorphology2D closeAlgo;
         AlgorithmMorphology2D erosionAlgo;
@@ -395,7 +394,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         int secondMaxCount;
         int thirdMaxNucleus;
         int thirdMaxCount;
-        int nRedVOIs = 0;
         int numRedVOIObjects;
         int numGreenVOIObjects;
         int edgeObjects;
@@ -533,7 +531,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         thresholds[0] = max;
         thresholds[1] = max;
         fillValue = 0.0f;
-        binaryFlag = true;
         thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE,
                                                    wholeImage, false);
         thresholdAlgo.run();
@@ -894,7 +891,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[0] = max;
                 thresholds[1] = max;
                 fillValue = 0.0f;
-                binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
                                                            AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
                 thresholdAlgo.run();
@@ -1183,7 +1179,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[0] = max;
                 thresholds[1] = max;
                 fillValue = 0.0f;
-                binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
                                                            AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
                 thresholdAlgo.run();
@@ -1561,7 +1556,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 algoVOIExtraction = null;
 
                 srcImage.setVOIs(grayImage.getVOIs());
-                nRedVOIs = srcImage.getVOIs().size();
             } // if (redNumber > 0)
 
             if (greenNumber > 0) {
@@ -2002,13 +1996,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-            UI.setDataText("X resolution = " + xRes + "  " + FileInfoBase.getUnitsOfMeasureStr(xUnits) + "\n");
+            UI.setDataText("X resolution = " + xRes + "  " + (Unit.getUnitFromLegacyNum(xUnits)).toString() + "\n");
         } else {
             UI.setDataText("X resolution = " + xRes + "\n");
         }
 
         if (yUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-            UI.setDataText("Y resolution = " + yRes + "  " + FileInfoBase.getUnitsOfMeasureStr(yUnits) + "\n\n");
+            UI.setDataText("Y resolution = " + yRes + "  " + (Unit.getUnitFromLegacyNum(yUnits)).toString() + "\n\n");
         } else {
             UI.setDataText("Y resolution = " + yRes + "\n\n");
         }
@@ -2270,6 +2264,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     private void calc3D() {
 
         int totLength, sliceLength;
@@ -2296,7 +2291,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         AlgorithmThresholdDual thresholdAlgo;
         float[] thresholds;
         float fillValue;
-        boolean binaryFlag;
         AlgorithmMorphology3D openAlgo;
         AlgorithmMorphology3D closeAlgo;
         AlgorithmMorphology3D erosionAlgo;
@@ -2456,7 +2450,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         int secondMaxCount;
         int thirdMaxNucleus;
         int thirdMaxCount;
-        int nRedVOIs = 0;
         int numRedVOIObjects;
         int numGreenVOIObjects;
         int edgeObjects;
@@ -2501,7 +2494,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float invMax;
         Vector3f kVoxel;
         AlgorithmEllipsoidFit kF;
-        Vector[] volPoints;
+        Vector<Vector3f>[] volPoints;
         double[] axes;
         float[][] sAxisPer;
         float tempf;
@@ -2632,7 +2625,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         thresholds[0] = max;
         thresholds[1] = max;
         fillValue = 0.0f;
-        binaryFlag = true;
 
          /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
          new Dimension(600, 300));
@@ -3130,7 +3122,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[0] = max;
                 thresholds[1] = max;
                 fillValue = 0.0f;
-                binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
                                                            AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
                 thresholdAlgo.run();
@@ -3431,7 +3422,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[0] = max;
                 thresholds[1] = max;
                 fillValue = 0.0f;
-                binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
                                                            AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
                 thresholdAlgo.run();
@@ -3880,7 +3870,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 System.gc();
 
                 srcImage.setVOIs(grayImage.getVOIs());
-                nRedVOIs = srcImage.getVOIs().size();
             } // if (redNumber > 0)
 
             if (greenNumber > 0) {
@@ -4394,7 +4383,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             xCenter[id - 1] = 0.0f;
             yCenter[id - 1] = 0.0f;
             zCenter[id - 1] = 0.0f;
-            volPoints[id - 1] = new Vector();
+            volPoints[id - 1] = new Vector<Vector3f>();
             lowestSqr = Float.MAX_VALUE;
             highestSqr = -Float.MAX_VALUE;
 
@@ -4530,19 +4519,19 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-            UI.setDataText("X resolution = " + xRes + "  " + FileInfoBase.getUnitsOfMeasureStr(xUnits) + "\n");
+            UI.setDataText("X resolution = " + xRes + "  " + (Unit.getUnitFromLegacyNum(xUnits)).toString() + "\n");
         } else {
             UI.setDataText("X resolution = " + xRes + "\n");
         }
 
         if (yUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-            UI.setDataText("Y resolution = " + yRes + "  " + FileInfoBase.getUnitsOfMeasureStr(yUnits) + "\n");
+            UI.setDataText("Y resolution = " + yRes + "  " + (Unit.getUnitFromLegacyNum(yUnits)).toString() + "\n");
         } else {
             UI.setDataText("Y resolution = " + yRes + "\n");
         }
 
         if (zUnits != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-            UI.setDataText("Z resolution = " + zRes + "  " + FileInfoBase.getUnitsOfMeasureStr(zUnits) + "\n\n");
+            UI.setDataText("Z resolution = " + zRes + "  " + (Unit.getUnitFromLegacyNum(zUnits)).toString() + "\n\n");
         } else {
             UI.setDataText("Z resolution = " + zRes + "\n\n");
         }
