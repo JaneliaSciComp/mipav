@@ -48,7 +48,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
     private static final int START = 2;
 
     /** DOCUMENT ME! */
-    private static final int ADMIN = 3;
+    //private static final int ADMIN = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -149,6 +149,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("null")
     private void calc2D() {
         ViewUserInterface UI = ViewUserInterface.getReference();
         int xDim = srcImage.getExtents()[0];
@@ -533,6 +534,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("null")
     private void calc3D() {
         int i;
         int x, y, z;
@@ -585,7 +587,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         double tau;
         ViewVOIVector VOIs = null;
         int nVOIs;
-        Vector[] contours;
+        Vector<VOIBase>[] contours;
         int nContours;
         BitSet mask;
         ViewUserInterface UI = ViewUserInterface.getReference();
