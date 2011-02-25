@@ -94,7 +94,7 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
         ModelImage image = fileIO.readImage(mpMapFile.getAbsolutePath());
         FileVOI voiIO;
         try {
-            voiIO = new FileVOI(voiFile.getName(), voiFile.getParent() + voiFile.separator, image);
+            voiIO = new FileVOI(voiFile.getName(), voiFile.getParent() + File.separator, image);
 
         outputbox.append("****Loading image w/ fovea VOI \n");
         VOI voi[] = voiIO.readVOI(false);
@@ -124,7 +124,7 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
         
         
         float[] buffer = new float[image.getExtents()[0] * image.getExtents()[1]];
-        int xDim = image.getExtents()[0], yDim = image.getExtents()[1], pos = 0;
+        int xDim = image.getExtents()[0], pos = 0;
         check = new BitSet(image.getExtents()[0] * image.getExtents()[1]);
         
         //get image data
@@ -135,7 +135,7 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
         
         
         float total = 0, denom = 0;
-        File data = new File(mpMapFile.getParent() + mpMapFile.separatorChar + "data.txt");
+        File data = new File(mpMapFile.getParent() + File.separatorChar + "data.txt");
         try {
             data.createNewFile();
             FileWriter out = new FileWriter(data);
