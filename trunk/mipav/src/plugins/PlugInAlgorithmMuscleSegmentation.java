@@ -12,7 +12,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -72,9 +71,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     /** denotes the symmetry of srcImage */
     private PlugInMuscleImageDisplay.Symmetry symmetry;
     
-    /** the parent frame. */
-    private Frame parentFrame;
-    
     /**Whether multiple slices are contained in srcImg */
     private boolean multipleSlices;
        
@@ -127,10 +123,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
      * @param  srcImg       Source image model.
      */
     public PlugInAlgorithmMuscleSegmentation(ModelImage srcImg, PlugInMuscleImageDisplay.ImageType imageType, 
-    											Frame parentFrame, boolean multipleSlices, String fileName) {
+    										 boolean multipleSlices, String fileName) {
         super(null, srcImg);
         this.imageType = imageType;
-        this.parentFrame = parentFrame;
         this.multipleSlices = multipleSlices;
         //is equal to blank string if image is not run-time defined
         this.fileName = fileName;
@@ -1136,7 +1131,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    //private ArrayList<DependencyNode> lineList;
 	    
 	    /**Selected dependency node*/
-	    private DependencyNode selected = null;
+	    //private DependencyNode selected = null;
 		
 		public MusclePane(ActionListener caller) {
 			super(new GridBagLayout());
@@ -1264,8 +1259,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		}
 
 		public void mousePressed(MouseEvent e) {
-			DependencyNode possiblySelected = null;
-			boolean newLine = false;
+			//DependencyNode possiblySelected = null;
+			//boolean newLine = false;
 			//TODO: This code relates to 1.6 graphics abilities
 			//for(int i=0; i<lineList.size(); i++) {
 			//	if(!lineList.get(i).isPointing()) {
@@ -1273,15 +1268,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			//		newLine = true;
 			//	}
 			//}
-			if(newLine && possiblySelected.contains(e.getPoint())) {
-				selected = possiblySelected;
-			}
+			//if(newLine && possiblySelected.contains(e.getPoint())) {
+				//selected = possiblySelected;
+			//}
 			
 		}
 
 		public void mouseReleased(MouseEvent e) {
-			//Place selected in correct location
-			selected = null;
+			
 		}
 
 		/**
@@ -1364,7 +1358,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		private class DependencyNode extends Line2D.Double implements Serializable, MouseMotionListener, ActionListener {
 
 			/**Whether the current node is pointing to another muscle pane.*/
-			private boolean isPointing;
+			//private boolean isPointing;
 			
 			/*public DependencyNode(Point p1, Point2D.Double p2) {
 				super(p1,p2);
