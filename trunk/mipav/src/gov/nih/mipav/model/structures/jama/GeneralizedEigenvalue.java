@@ -257,7 +257,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // run.
         // = 2: Like 1, but use the seed values in the 4 integer array
         // ioldsd
-        final int newsd = 1;
+        int newsd = 1;
         final int maxt = 30;
         final boolean[] dotype = new boolean[maxt];
         final int[] ioldsd = new int[] {0, 0, 0, 1};
@@ -1690,16 +1690,13 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // Test the LAPACK routines
         final boolean tstchk = true;
 
-        // Test the error exits for the LAPACK routines and driver routines.
-        final boolean tsterr = true;
-
         // Code describing how to set the random number seed.
         // = 0: Set the seed to a default number before each run.
         // = 1: Initialize the seed to a default value only before the first
         // run.
         // = 2: Like 1, but use the seed values in the 4 integer array
         // ioldsd
-        final int newsd = 1;
+        int newsd = 1;
         final int maxt = 30;
         final boolean[] dotype = new boolean[maxt];
         final int[] ioldsd = new int[] {0, 0, 0, 1};
@@ -1850,7 +1847,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // run.
         // = 2: Like 1, but use the seed values in the 4 integer array
         // ioldsd
-        final int newsd = 1;
+        int newsd = 1;
         final int maxt = 30;
         final boolean[] dotype = new boolean[maxt];
         final int[] ioldsd = new int[] {0, 0, 0, 1};
@@ -3734,7 +3731,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // run.
         // = 2: Like 1, but use the seed values in the 4 integer array
         // ioldsd
-        final int newsd = 1;
+        int newsd = 1;
         final int maxt = 30;
         final boolean[] dotype = new boolean[maxt];
         final int[] ioldsd = new int[] {0, 0, 0, 1};
@@ -7258,10 +7255,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         int jsize;
         int jtype;
         int lgn;
-        int lwedc;
-        final int m;
-        final int m2;
-        final int m3;
         int mtypes;
         int n;
         final int[] nerrs = new int[1]; // The number of tests which have exceeded thresh
@@ -7271,7 +7264,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         int ntest; // The number of tests performed, or which can
         // be performed so far, for the current matrix
         int ntestt; // The total number of tests performed so far.
-        double abstol;
         double aninv;
         double anorm; // Norm of A; passed to the matrix generators.
         double cond; // Value to be passed to the matrix generators.
@@ -7280,12 +7272,9 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         double rtunfl; // Square root of underflow threshold
         double temp1;
         double temp2;
-        final double temp3;
         double ulp; // Finest relative precision
         double ulpinv; // Inverse of finest relative precision
         final double[] unfl = new double[1]; // Underflow threshold
-        double vL;
-        double vu;
         final int[] idumma = new int[1];
         final int[] ioldsd = new int[4];
         final int[] iseed2 = new int[4];
@@ -7303,9 +7292,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         double[] work3;
         final double[] res = new double[2];
         String typeString;
-
-        vL = 0.0;
-        vu = 0.0;
 
         // Check for errors
         ntestt = 0;
@@ -7380,12 +7366,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                 if (Math.pow(2.0, lgn) < n) {
                     lgn = lgn + 1;
                 }
-
-                lwedc = 1 + (4 * n) + (2 * n * lgn) + (4 * n * n);
             } // if (n > 0)
-            else { // n == 0
-                lwedc = 9;
-            } // else n == 0
 
             aninv = 1.0 / (double) Math.max(1, n);
 
@@ -7505,8 +7486,6 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                     } // if (iinfo[0] != 0)
 
                 } // if (mtypes <= maxtyp)
-
-                abstol = unfl[0] + unfl[0];
 
                 if (n <= 1) {
                     iL = 1;
@@ -32722,6 +32701,9 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         nan5 = neginf * negzro;
 
         nan6 = nan5 * 0.0;
+        
+        // These 6 following if statements generate warnings, but they are used in the original
+        // IEEECK LAPACK routine.
 
         if (nan1 == nan1) {
             return 0;
