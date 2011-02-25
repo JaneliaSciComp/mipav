@@ -829,10 +829,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
                                 || strValue.trim().equals("1.2.840.10008.1.2.4.65")
                                 || strValue.trim().equals("1.2.840.10008.1.2.4.66")
                                 || strValue.trim().equals("1.2.840.10008.1.2.4.70")) {
-                            lossy = false;
-                        } else {
-                            lossy = true;
-                        }
+                        } 
                     } else {
                         Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue + " unknown!\n",
                                 Preferences.DEBUG_FILEIO);
@@ -1126,8 +1123,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
                 lut.makeIndexedLUT(null);
             }
 
-            hasHeaderBeenRead = true;
-
             if ( (loadTagBuffer == true) && (raFile != null)) {
                 raFile.close();
             }
@@ -1217,26 +1212,14 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
         /** First number (DICOM group) in ordered pair of numbers that uniquely identifies a data element. */
         protected int groupWord;
 
-        /** True if the DICOM image header has been read. */
-        protected boolean hasHeaderBeenRead = false;
-
         /** Location of 'DICM'. */
         protected final int ID_OFFSET = 128;
 
         /** Illegal element length. */
         private final int ILLEGAL_LENGTH = -1;
 
-        /** Reference to the image read into the application. */
-        private ModelImage image;
-
         /** True if in a sequence tag. */
         private boolean inSQ = false;
-
-        /** Buffer used when reading in encapsulated JPEG images. */
-        private int[] jpegData = null;
-
-        /** JPEG compression may be lossy or lossless. */
-        protected boolean lossy = false;
 
         /** Reference to the LUT (if one is stored with the image). */
         protected ModelLUT lut;
@@ -1329,6 +1312,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @throws IOException DOCUMENT ME!
          */
+        @SuppressWarnings("unused")
         public void close() throws IOException {
 
             // System.out.println("FileDICOM.close");
@@ -1347,7 +1331,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
             fileHeader = null;
 
             fileInfo = null;
-            image = null;
             vr = null;
 
             if (rawFile != null) {
@@ -1374,7 +1357,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 
             rawFile = null;
             nameSQ = null;
-            jpegData = null;
 
             try {
                 super.finalize();
@@ -1388,6 +1370,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @return Structure containing the file info.
          */
+        @SuppressWarnings("unused")
         public final FileInfoBase getFileInfo() {
             return fileInfo;
         }
@@ -1398,6 +1381,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @return DOCUMENT ME!
          */
+        @SuppressWarnings("unused")
         public final ModelLUT getLUT() {
             return lut;
         }
@@ -1409,6 +1393,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @return boolean true if the DICM tag was found in the image header.
          */
+        @SuppressWarnings("unused")
         public boolean isDICOM() throws IOException {
 
             if (raFile == null) {
@@ -1445,6 +1430,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * @return
          * @throws IOException
          */
+        @SuppressWarnings("unused")
         public boolean isDICOM_ver2() throws IOException {
             if (raFile == null) {
                 return false;
@@ -1565,6 +1551,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
             return quiet;
         }
 
+        @SuppressWarnings("unused")
         public boolean readHeader(final boolean loadTagBuffer) throws IOException {
             // Overwritten by ReadDicom
             return false;
@@ -2619,6 +2606,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @throws IOException if write fails
          */
+        @SuppressWarnings("unused")
         protected void writeSequence(final RandomAccessFile outputFile, final boolean vr_type, final FileDicomSQ sq,
                 final boolean endianess) throws IOException {
             FileDicomItem item;
@@ -2786,9 +2774,11 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
         public static final boolean BIG_ENDIAN = true;
 
         /** Read only access. */
+        @SuppressWarnings("unused")
         public static final int READ = 0;
 
         /** Read-write access. */
+        @SuppressWarnings("unused")
         public static final int READ_WRITE = 1;
 
         /** The size of the buffer that contains the tags of the DICOM image. Default = 400K. */
@@ -2813,6 +2803,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
         protected boolean pBarVisible = true;
 
         /** Progress bar to show when reading in image file. */
+        @SuppressWarnings("unused")
         protected ProgressBarInterface progressBar;
 
         /** Pointer to file to read or write from. */
@@ -2975,6 +2966,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @exception IOException if there is an error reading the file
          */
+        @SuppressWarnings("unused")
         public final long getLong(final boolean endianess) throws IOException {
             b1 = (tagBuffer[bPtr] & 0xff);
             b2 = (tagBuffer[bPtr + 1] & 0xff);
@@ -3010,6 +3002,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @exception IOException if there is an error reading the file
          */
+        @SuppressWarnings("unused")
         public final int getSignedShort(final boolean endianess) throws IOException {
             b3 = 0;
 
@@ -3085,6 +3078,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @exception IOException if there is an error reading the file
          */
+        @SuppressWarnings("unused")
         public final long getUInt(final boolean endianess) throws IOException {
 
             long val = 0;
@@ -3129,6 +3123,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
         /**
          * Setups the allocation of memory for the byte buffer to load the entire image.
          */
+        @SuppressWarnings("unused")
         public void initializeFullRead() {
 
             try {
@@ -3155,6 +3150,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @return <code>true</code> if progress bar is visible, <code>false</code> if not visible.
          */
+        @SuppressWarnings("unused")
         public boolean isProgressBarVisible() {
             return pBarVisible;
         }
@@ -3198,6 +3194,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * @param endianess <code>true</code> indicates big endian byte order, <code>false</code> indicates little
          *            endian.
          */
+        @SuppressWarnings("unused")
         public final void setBufferFloat(final byte[] buffer, final float data, final int i, final boolean endianess) {
             int tmpInt;
 
@@ -3238,6 +3235,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * @param endianess <code>true</code> indicates big endian byte order, <code>false</code> indicates little
          *            endian.
          */
+        @SuppressWarnings("unused")
         public final void setBufferLong(final byte[] buffer, final long data, final int i, final boolean endianess) {
 
             if (endianess == FileDicomBaseInner.BIG_ENDIAN) {
@@ -3270,6 +3268,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * @param endianess <code>true</code> indicates big endian byte order, <code>false</code> indicates little
          *            endian.
          */
+        @SuppressWarnings("unused")
         public final void setBufferShort(final byte[] buffer, final short data, final int i, final boolean endianess) {
 
             if (endianess == FileDicomBaseInner.BIG_ENDIAN) {
@@ -3288,6 +3287,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * @param str String containing integer data which is broken down in bytes and stored in the byte buffer.
          * @param i Index into byte buffer.
          */
+        @SuppressWarnings("unused")
         public final void setBufferString(final byte[] buffer, final String str, final int i) {
 
             byte[] tmpBuffer;
@@ -3304,6 +3304,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @param flag <code>true</code> if should be visible, <code>false</code> if not visible.
          */
+        @SuppressWarnings("unused")
         public void setProgressBarVisible(final boolean flag) {
             pBarVisible = flag;
         }
@@ -3313,6 +3314,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
          * 
          * @param buffer byte[]
          */
+        @SuppressWarnings("unused")
         public final void setTagBuffer(final byte[] buffer) {
             tagBuffer = buffer;
             fLength = buffer.length;
