@@ -1,5 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -68,7 +69,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
      */
     public PlugInAlgorithmCT_MD(ModelImage destImg, ModelImage srcImg) {
         super(destImg, srcImg);
-        resultUnit = FileInfoBase.getUnitsOfMeasureStr(srcImage.getUnitsOfMeasure()[0]);
+        resultUnit = (Unit.getUnitFromLegacyNum(srcImage.getUnitsOfMeasure()[0])).toString();
         doVolume = true;
         doArea = false;
     }
@@ -127,8 +128,8 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
             // image length is length in 2 dims
             length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
-            resultUnitLoc = FileInfoBase.getUnitsOfMeasureFromStr(resultUnit);
-            unitStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(resultUnitLoc);
+            resultUnitLoc = (Unit.getUnit(resultUnit)).getLegacyNum();
+            unitStr = (Unit.getUnitFromLegacyNum(resultUnitLoc)).getAbbrev();
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
         } catch (IOException error) {
@@ -232,7 +233,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         float[] buffer;
         
        //perform any necessary conversion
-        int resultUnitLoc = FileInfoBase.getUnitsOfMeasureFromStr(resultUnit);
+        int resultUnitLoc = (Unit.getUnit(resultUnit)).getLegacyNum();
         int res0Unit = srcImage.getUnitsOfMeasure(0);
         int res1Unit = srcImage.getUnitsOfMeasure(1);
         int res2Unit = srcImage.getUnitsOfMeasure(2);
@@ -245,7 +246,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
         float vol = xRes * yRes * zRes;
 
-        String unitStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(resultUnitLoc);
+        String unitStr = (Unit.getUnitFromLegacyNum(resultUnitLoc)).getAbbrev();
         
         try {
 
