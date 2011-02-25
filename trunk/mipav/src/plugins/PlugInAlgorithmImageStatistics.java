@@ -137,10 +137,10 @@ public class PlugInAlgorithmImageStatistics extends AlgorithmBase {
 /**/
 /**/
         // compute the amount of fat and muscle within the image
-        int totalCount = 0;
-        int totalSum = 0;
+        //int totalCount = 0;
+        //int totalSum = 0;
         int fatCount = 0;
-        int fatSum = 0;
+        //int fatSum = 0;
 
         // values with 1024 added to each pixel
 //        int fatMin = 834;
@@ -155,7 +155,7 @@ public class PlugInAlgorithmImageStatistics extends AlgorithmBase {
         int leanMax = 100;
         
         int leanCount = 0;
-        int leanSum = 0;
+        //int leanSum = 0;
         int val;
 /**/
 /*
@@ -491,8 +491,6 @@ public class PlugInAlgorithmImageStatistics extends AlgorithmBase {
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         sliceSize = xDim * yDim;
-
-        int zDim = srcImage.getExtents()[2];
     } // end calc3D()
     
     
