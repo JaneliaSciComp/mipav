@@ -1070,9 +1070,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
                 try {
 
-                	System.out.println(name);
-                	System.out.println(pluginName);
-                	
+
                     plugin = Class.forName(name);
 
                     // plugin.newInstance();
@@ -1139,7 +1137,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 	                    if (interName.length() == 0 && plugin.getSuperclass() != null) {
 	                        interName = getSuperInterfaces(plugin.getSuperclass());
 	                    }
-	                    System.out.println("**" + interName);
+	           
                     }else {
                     	interName = "PlugInImageJ";
                     }
