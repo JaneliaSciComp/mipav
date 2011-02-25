@@ -475,10 +475,6 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         BitSet countRight;
         int x, y;
         int index;
-        boolean upSet;
-        boolean downSet;
-        boolean leftSet;
-        boolean rightSet;
         float sliceMin;
         int offset;
         boolean sliceClear;
@@ -510,17 +506,13 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         double minorAxis;
         double areaEllipse;
         double normFactor;
-        float eccentricity;
+        //float eccentricity;
         double theta;
         double a;
         double b;
         double t;
         double xp;
         double yp;
-        Vector3f[] ptArray;
-        VOI VOIEllipse;
-        VOI spineVOI;
-        Vector3f spinePt;
         double xLKidCen;
         double xRKidCen;
         double yLKidCen;
@@ -544,7 +536,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         ViewVOIVector VOIs = null;
         int nVOIs;
         VOI contourVOI;
-        Vector[] curves;
+        Vector<VOIBase>[] curves;
         VOI contourVOIL;
         VOI contourVOIR;
         float xcen1;
@@ -570,10 +562,10 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         boolean[] keepObject;
         AlgorithmMorphology3D closeAlgo3D;
         AlgorithmVOIExtraction algoVOIExtraction;
-        Vector[] curves2;
+        Vector<VOIBase>[] curves2;
         int nCurves;
         VOI VOI1;
-        Vector[] curves3;
+        Vector<VOIBase>[] curves3;
         float[] threshold = new float[2];
         float imageMin = (float) srcImage.getMin();
         int zc;
@@ -1019,7 +1011,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         Preferences.debug("Major axis of ellipse = " + majorAxis + "\n");
         minorAxis = (float) (normFactor * minorAxis);
         Preferences.debug("Minor axis of ellipse = " + minorAxis + "\n");
-        eccentricity = (float) Math.sqrt(1.0 - ((minorAxis * minorAxis) / (majorAxis * majorAxis)));
+        //eccentricity = (float) Math.sqrt(1.0 - ((minorAxis * minorAxis) / (majorAxis * majorAxis)));
 
         // Jahne p. 507
         // Increased tilt with image rotation to verify negaitve sign in theta equation
@@ -1608,6 +1600,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void calc3D1() {
         int i;
         xDim = srcImage.getExtents()[0];
@@ -1763,6 +1756,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
     /**
      * replaced calc3d(not calc 3d1)
      */
+    @SuppressWarnings("unused")
     private void oldCalc3D() {
 
 
@@ -1811,8 +1805,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         boolean[] keepObject;
         AlgorithmMorphology3D closeAlgo3D;
         AlgorithmVOIExtraction algoVOIExtraction;
-        Vector[] curves;
-        Vector[] curves2;
+        Vector<VOIBase>[] curves;
+        Vector<VOIBase>[] curves2;
         int nCurves;
         float xcen;
         float xcen1;
@@ -1825,14 +1819,13 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         int[] extents2D;
         float[] sliceBuffer;
         Polygon poly;
-        Polygon[] gons;
         int vIters;
         VOI currentVOI;
         BitSet mask;
         boolean xor = false;
         boolean onlyActive = false;
         int offset;
-        Vector[] curves3;
+        Vector<VOIBase>[] curves3;
 
         nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
@@ -2366,7 +2359,6 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         AlgorithmMorphology2D closeAlgo2D;
         AlgorithmVOIExtraction algoVOIExtraction;
         int nCurves;
-        Polygon[] gons;
         int sliceIter = 0;
         int finalIter = 4;
         float incr = 0.05f;
@@ -2627,7 +2619,6 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         AlgorithmMorphology2D closeAlgo2D;
         AlgorithmVOIExtraction algoVOIExtraction;
         int nCurves;
-        Polygon[] gons;
         int sliceIter = 0;
         int finalIter = 4;
         float incr = 0.05f;
