@@ -346,8 +346,8 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
      * @param  buffer  float[]
      */
     private void calculateVOIMeans(float[] buffer) {
-        Vector includeMaskVector = new Vector();
-        Vector excludeMaskVector = new Vector();
+        Vector<BitSet> includeMaskVector = new Vector<BitSet>();
+        Vector<BitSet> excludeMaskVector = new Vector<BitSet>();
         ViewVOIVector VOIs = srcImage.getVOIs();
         VOIs.VOIAt(0).setAllActive(false);
         VOIs.VOIAt(1).setAllActive(false);
@@ -405,7 +405,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
          * add in the Red/green and blue average as well as hue saturation and brightness for that VOI (it is VOI
          * specific)
          */
-        for (int i = 0, id = 0; i < buffer.length; i += 4) {
+        for (int i = 0; i < buffer.length; i += 4) {
 
             for (int c = 0; c < numExclude; c++) {
                 currentMask = (BitSet) excludeMaskVector.elementAt(c);
