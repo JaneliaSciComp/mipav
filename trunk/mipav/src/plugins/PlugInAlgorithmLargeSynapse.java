@@ -186,7 +186,8 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
     
     private boolean endianess;
     
-    private Vector[] dataOffsets = new Vector[4000];
+    @SuppressWarnings("unchecked")
+    private Vector<Index>[] dataOffsets = new Vector[4000];
     
     private int xDim;
     private int yDim;
@@ -5320,7 +5321,7 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
                         throw new IOException("STRIP_OFFSETS has illegal type = " + type + "\n");
                     }
 
-                    dataOffsets[imageSlice] = new Vector();
+                    dataOffsets[imageSlice] = new Vector<Index>();
                     if (count == 1) {
 
                         if (debuggingFileIO) {
