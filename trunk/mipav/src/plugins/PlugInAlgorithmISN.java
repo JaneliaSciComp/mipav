@@ -119,9 +119,9 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
         double[] sliceMax = new double[z];
 
         double averageAVG = 0;
-        double standardevAVG = 0;
-        double CutoffBrightLow = 0;
-        double CutoffBrightHigh = 0;
+        //double standardevAVG = 0;
+        //double CutoffBrightLow = 0;
+        //double CutoffBrightHigh = 0;
         double startRange;
         double endRange;
         boolean processIndep = false;
@@ -171,11 +171,11 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
         }
 
         a /= z;
-        standardevAVG = Math.sqrt(a);
+        //standardevAVG = Math.sqrt(a);
 
         /* 4. cutoffs for acceptable range of averages */
-        CutoffBrightLow = averageAVG - standardevAVG;
-        CutoffBrightHigh = averageAVG + (1.0 * standardevAVG);
+        //CutoffBrightLow = averageAVG - standardevAVG;
+        //CutoffBrightHigh = averageAVG + (1.0 * standardevAVG);
 
         boolean twoDIM = true;
 
@@ -310,7 +310,7 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
      */
     public void runOrderRemapThenMatch() {
 
-        int i, j;
+        int i;
         int z = 1;
 
         imgBuffer = new float[srcImage.getExtents()[0] * srcImage.getExtents()[1]];
@@ -331,9 +331,9 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
         double[] sliceMax = new double[z];
 
         double averageAVG = 0;
-        double standardevAVG = 0;
-        double CutoffBrightLow = 0;
-        double CutoffBrightHigh = 0;
+        //double standardevAVG = 0;
+        //double CutoffBrightLow = 0;
+        //double CutoffBrightHigh = 0;
         double startRange;
         double endRange;
         boolean processIndep = false;
@@ -380,11 +380,11 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
         }
 
         a /= z;
-        standardevAVG = Math.sqrt(a);
+        //standardevAVG = Math.sqrt(a);
 
         /* 4. cutoffs for acceptable range of averages */
-        CutoffBrightLow = averageAVG - standardevAVG;
-        CutoffBrightHigh = averageAVG + (1.0 * standardevAVG);
+        //CutoffBrightLow = averageAVG - standardevAVG;
+        //CutoffBrightHigh = averageAVG + (1.0 * standardevAVG);
 
 
         boolean twoDIM = true;
