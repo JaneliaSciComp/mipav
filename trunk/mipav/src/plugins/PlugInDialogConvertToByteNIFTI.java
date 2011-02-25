@@ -37,9 +37,6 @@ public class PlugInDialogConvertToByteNIFTI extends JDialogScriptableBase implem
     /** current directory  **/
     private String currDir = null;
     
-    /** study name string **/
-    private String studyName = "";
-    
     private AlgorithmChangeType changeTypeAlgo;
     
     private File studyFile;
@@ -150,7 +147,6 @@ public class PlugInDialogConvertToByteNIFTI extends JDialogScriptableBase implem
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	studyPathTextField.setText(chooser.getSelectedFile().getAbsolutePath());
 	        	currDir = chooser.getSelectedFile().getAbsolutePath();
-	        	studyName = chooser.getSelectedFile().getName();
 	        	studyFile = new File(chooser.getSelectedFile().getAbsolutePath());
 	        }
 		}else if(command.equals("ok")){
