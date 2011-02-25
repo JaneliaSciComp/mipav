@@ -106,7 +106,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         AlgorithmThresholdDual thresholdAlgo;
         float[] thresholds;
         float fillValue;
-        boolean binaryFlag;
         AlgorithmMorphology2D openAlgo;
         AlgorithmMorphology2D closeAlgo;
         int kernel;
@@ -166,12 +165,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
          * Added by Prabhakar (Reddy) Gudla, NCI/SAIC-Frederick Date: 06/03/2005
          *
          */
-        ViewJFrameImage imageFrame;
-        ViewJFrameImage imageFrameG;
-        ViewJFrameImage imageFrameR;
         AlgorithmVOIProps algoVOIProps;
         AlgorithmVOIExtraction algoVOIExtraction;
-        AlgorithmMorphology2D polygonAlgo2D;
 
         float[] xPosVOIs;
         float[] yPosVOIs;
@@ -192,7 +187,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         // end addition
 
         if ((xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-            unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+            unitsString = (Unit.getUnitFromLegacyNum(xUnits)).toString();
         }
 
         try {
@@ -221,7 +216,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             return;
         }
 
-        int mod = length / 100; // mod is 1 percent of length
         fireProgressStateChanged("Processing image ...");
 
 
@@ -540,7 +534,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         thresholds[0] = max;
         thresholds[1] = max;
         fillValue = 0.0f;
-        binaryFlag = true;
         thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue,
                                                    AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
         thresholdAlgo.run();
@@ -1123,7 +1116,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         AlgorithmThresholdDual thresholdAlgo;
         float[] thresholds;
         float fillValue;
-        boolean binaryFlag;
         AlgorithmMorphology3D openAlgo;
         AlgorithmMorphology3D closeAlgo;
         int kernel;
@@ -1185,7 +1177,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         FileInfoBase fileInfo2;
 
         if ((xUnits == yUnits) && (xUnits == zUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
-            unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+            unitsString = (Unit.getUnitFromLegacyNum(xUnits)).toString();
         }
 
         fireProgressStateChanged(srcImage.getImageName(), "Processing image ...");
@@ -1281,7 +1273,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         thresholds[0] = max;
         thresholds[1] = max;
         fillValue = 0.0f;
-        binaryFlag = true;
 
         // ViewJFrameImage testFrame = new ViewJFrameImage(blueSegImage[0], null,
         // new Dimension(600, 300), srcImage.getUserInterface());
