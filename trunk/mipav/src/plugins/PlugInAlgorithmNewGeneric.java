@@ -15,15 +15,6 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase implements Algorith
 		System.out.println("Alhgorithm performed");
 		
 	}
-
-	/** X dimension of the CT image */
-    private int xDim;
-
-    /** Y dimension of the CT image */
-    private int yDim;
-
-    /** Slice size for xDim*yDim */
-    private int sliceSize;
     
     /**
      * Constructor.
@@ -74,6 +65,7 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase implements Algorith
         super.finalize();
     }
     
+    @SuppressWarnings("unused")
     private void calc2D() {
     	
     	AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(srcImage);
@@ -93,6 +85,7 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase implements Algorith
     	
     }
     
+    @SuppressWarnings("unused")
     private void calc3D() {
     	String voiDir = "C:\\Hello\\"+PlugInMuscleImageDisplay.VOI_DIR+"\\";
     	
@@ -102,12 +95,6 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase implements Algorith
         srcImage.unregisterAllVOIs();
         //Load VOIs, but first check done
         
-        
-        
-    	xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        sliceSize = xDim * yDim;
         System.out.println("Done");
-        int zDim = srcImage.getExtents()[2];
     }
 }
