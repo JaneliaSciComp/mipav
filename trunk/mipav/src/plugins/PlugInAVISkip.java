@@ -37,17 +37,6 @@ public class PlugInAVISkip implements PlugInGeneric {
     
     private FileAvi aviFile;
     
-    private int microSecPerFrame;
-    
-    private float secPerFrame;
-    
-    // rate/scale = samples/second
-    private int rate;
-    
-    private int scale;
-    
-    private float samplesPerSecond;
-    
     int framesToCapture;
     
     int framesToSkip;
