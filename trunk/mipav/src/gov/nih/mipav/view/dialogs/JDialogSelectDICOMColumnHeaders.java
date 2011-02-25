@@ -79,7 +79,6 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
      *
      * @param  event  DOCUMENT ME!
      */
-    @SuppressWarnings("unchecked")
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
