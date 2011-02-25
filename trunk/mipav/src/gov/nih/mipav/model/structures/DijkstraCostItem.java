@@ -6,7 +6,7 @@ package gov.nih.mipav.model.structures;
  * Comparable interface which is required of any node to be inserted in any SortedSet implementation which is required
  * for finding a minimum cost path.
  */
-public class DijkstraCostItem extends Object implements Comparable {
+public class DijkstraCostItem extends Object implements Comparable<Object> {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
