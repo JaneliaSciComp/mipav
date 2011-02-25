@@ -44,9 +44,6 @@ public class PlugInAlgorithmImageSubmit extends AlgorithmBase implements Algorit
     
     /**The location of the anonymization results. */
     private String anonLoc;
-
-    /** Whether or not the snonymized image files will be submitted. */
-	private boolean submitFiles;
 	
 	public PlugInAlgorithmImageSubmit(File[] selectedFiles,
 			HashMap<String, String> map, String submitImageLocation,
@@ -56,7 +53,6 @@ public class PlugInAlgorithmImageSubmit extends AlgorithmBase implements Algorit
 		this.tagArray = tagArray;
 		this.submitImageLocation = submitImageLocation.charAt(submitImageLocation.length()-1) == File.separatorChar ? 
 										submitImageLocation : submitImageLocation+File.separator;
-		this.submitFiles = submitFiles;
 		this.submitPatientLocation = selectedFiles[0].getParent()+File.separator+PATIENT_BASE_LOC;
 		
 		File f = new File(submitImageLocation);
