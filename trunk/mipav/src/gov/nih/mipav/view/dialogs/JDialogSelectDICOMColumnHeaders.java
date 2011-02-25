@@ -94,9 +94,9 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
             Vector<String> configuredColumnsVector = new Vector<String>();
 
             for (int i = 0; i < tableModel.getRowCount(); i++) {
-                Vector<String> row = tableModel.getRow(i);
+                Vector<Object> row = tableModel.getRow(i);
 
-                configuredColumnsVector.addElement(row.elementAt(1)); // index 1 is the index of the column name in the
+                configuredColumnsVector.addElement((String)row.elementAt(1)); // index 1 is the index of the column name in the
                                                                       // table
             }
 
