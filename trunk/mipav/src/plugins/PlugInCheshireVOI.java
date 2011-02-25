@@ -44,7 +44,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
     private PlugInDialogCheshireVOI cheshireDialog;
 
     /** Cheshire overlay files to process. */
-    private Vector cheshireFiles;
+    private Vector<File> cheshireFiles;
 
     /** JFrameImage for the collected VOIs. */
     private ViewJFrameImage imageFrame;
@@ -59,6 +59,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
      * @see  ModelImage
      * @see  ViewJFrameImage
      */
+    @SuppressWarnings("unchecked")
     public void run() {
         cheshireDialog = new PlugInDialogCheshireVOI(false, this);
         cheshireFiles = cheshireDialog.getCheshireFiles();
@@ -96,7 +97,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
             ModelImage tempImage = null; // = new ModelImage(ModelImage.BYTE, dimExtentsTemp, "Cheshire Pretend", UI);
 
             for (int i = 0; i < cheshireFiles.size(); i++) {
-                File tempFile = ((File) cheshireFiles.get(i));
+                File tempFile = cheshireFiles.get(i);
                 File tryFile = new File(tempFile.getAbsolutePath().substring(0,
                                               tempFile.getAbsolutePath().lastIndexOf(".")) +".imc");
                 File secondTry = new File(tempFile.getAbsolutePath().substring(0,
