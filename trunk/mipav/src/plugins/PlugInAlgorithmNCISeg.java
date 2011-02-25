@@ -1,5 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ViewUserInterface;
 
@@ -215,7 +216,7 @@ public class PlugInAlgorithmNCISeg extends AlgorithmBase {
 
         System.err.println("Number of pixels included: " + counter);
         System.err.println("Area: " + area + " " +
-                           FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getFileInfo(0).getUnitsOfMeasure(0)) +
+                           (Unit.getUnitFromLegacyNum(srcImage.getFileInfo(0).getUnitsOfMeasure(0))).getAbbrev() +
                            "^2");
 
         if (doBrown) {
@@ -229,7 +230,7 @@ public class PlugInAlgorithmNCISeg extends AlgorithmBase {
         ViewUserInterface.getReference().setDataText("Image name: " + srcImage.getImageName() + "\n");
         ViewUserInterface.getReference().setDataText("\tNumber of pixels included: " + counter + "\n");
         ViewUserInterface.getReference().setDataText("\tArea: " + area + " " +
-                                                FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getFileInfo(0).getUnitsOfMeasure(0)) +
+         (Unit.getUnitFromLegacyNum(srcImage.getFileInfo(0).getUnitsOfMeasure(0))).getAbbrev() +
                                                 "^2\n");
 
         if (doBrown) {
