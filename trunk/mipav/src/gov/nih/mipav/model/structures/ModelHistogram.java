@@ -23,7 +23,7 @@ public class ModelHistogram extends ModelStorageBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private Vector histogramFrameVector = new Vector();
+    private Vector<Frame> histogramFrameVector = new Vector<Frame>();
 
     /** DOCUMENT ME! */
     private int maxEntropyThreshold;
