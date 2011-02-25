@@ -112,7 +112,7 @@ public class DTIStudioReader {
 
     public double[] findIntersectPolygon(double[][] pts, double[][] faces, double marker) {
         Polygon p = new Polygon(pts,faces);
-        Vector v = new Vector();
+        Vector<Integer> v = new Vector<Integer>();
         for (int j=0;j<this.fibers.length;j++) {
             //fibers[j].intersects(p);
             IntersectResult r = fibers[j].reportiIntersect(p);
@@ -125,10 +125,10 @@ public class DTIStudioReader {
             }
         }
         double res[] = new double[v.size()];
-        Iterator it = v.iterator();
+        Iterator<Integer> it = v.iterator();
         int i=0;
         while(it.hasNext()) {
-            res[i] = ((Integer)it.next()).doubleValue();
+            res[i] = (it.next()).doubleValue();
             i++;
         }
         return res;
@@ -245,7 +245,7 @@ public class DTIStudioReader {
     }
 
     public class Fiber{
-        Map markers;
+        Map<Integer,Double> markers;
         BndBox bndBox;
         int length;
         byte status;
@@ -310,7 +310,7 @@ public class DTIStudioReader {
         }
         public void setMarkerPoint(double marker, int pt) {
             if(markers==null) {
-                markers = new HashMap();
+                markers = new HashMap<Integer,Double>();
             }
             markers.put(new Integer(pt),new Double(marker));
         }
