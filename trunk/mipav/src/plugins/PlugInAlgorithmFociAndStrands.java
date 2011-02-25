@@ -255,7 +255,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         boolean bxpym;
         boolean bxmyp;
         boolean bxmym;
-        Vector <Double> distanceVector = new Vector(100,100);
+        Vector <Double> distanceVector = new Vector<Double>(100,100);
         boolean noPushIndex[];
         
         long time;
@@ -1109,7 +1109,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         boolean loop[];
         boolean incomplete[];
         IntVector branchIndex = new IntVector(100,100);
-        Vector <Double> distanceVector = new Vector(100,100);
+        Vector <Double> distanceVector = new Vector<Double>(100,100);
         float resX = srcImage.getFileInfo()[0].getResolutions()[0];
         float resY = srcImage.getFileInfo()[0].getResolutions()[1];
         float resZ = srcImage.getFileInfo()[0].getResolutions()[2];
