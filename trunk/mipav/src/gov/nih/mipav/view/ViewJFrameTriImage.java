@@ -420,9 +420,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /** The button that indicates whether this triframe is linked with tri-frames of similar dimensionality. */
     private JCheckBox scrollButton;
 
-    /** Flag for snapping protractor to nearest multiple of 90 degrees. */
-    private boolean snapProtractor90 = false;
-
     /** Used to setup the paint spinner. */
     private double spinnerDefaultValue = 1, spinnerMin = 0, spinnerMax = 255, spinnerStep = 1;
 
@@ -577,18 +574,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         } else if (command.equals("FastPaint")) {
             Preferences.setProperty(Preferences.PREF_FAST_TRIPLANAR_REPAINT, (menuObj
                     .isMenuItemSelected("Fast rendering in paint mode") ? "true" : "false"));
-        } else if (command.equals("Snap90")) {
-            Preferences.setProperty(Preferences.PREF_TRIPLANAR_SNAP90, (menuObj
-                    .isMenuItemSelected("Snap protractor to 90 degrees multiple") ? "true" : "false"));
-
-            snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
-
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].setSnapProtractor90(snapProtractor90);
-                }
-            }
         } else if (command.equals("ShowTalairachGrid")) {
 
             // according to current logic, there is a possibility that the
@@ -754,8 +739,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             updateImages(true);
         } else if (command.equals(CustomUIBuilder.PARAM_IMAGE_ALIGN_VOI_PROTRACTOR.getActionCommand())) {
 
-            snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
-
             // if (triImage[AXIAL_A].isProtractorVisible()) {
             // btnInvisible[2].setSelected(true);
             // }
@@ -769,7 +752,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
                     if (triImage[i] != null) {
-                        triImage[i].setSnapProtractor90(snapProtractor90);
                         triImage[i].makeProtractor();
                         triImage[i].repaint();
                     }
