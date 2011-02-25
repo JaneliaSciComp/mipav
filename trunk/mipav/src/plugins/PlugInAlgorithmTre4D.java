@@ -41,15 +41,6 @@ import gov.nih.mipav.view.ViewUserInterface;
  */
 
 public class PlugInAlgorithmTre4D extends AlgorithmBase {
-    
-	/** X dimension of the image */
-    private int xDim;
-
-	/** Y dimension of the image */
-    private int yDim;
-
-    /** Slice size for xDim*yDim */
-    private int sliceSize;
 
     private ModelImage dceHigh;
 
@@ -83,8 +74,6 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
         this.fa = fa;
         this.trTime = trTime;
         this.centerTimesFile = new File(centerTimesFile);
-        
-        init();
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -282,9 +271,4 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
         }
     }
         
-	private void init() {
-    xDim = srcImage.getExtents()[0];
-    yDim = srcImage.getExtents()[1];
-    sliceSize = xDim * yDim;
-	}
 }
