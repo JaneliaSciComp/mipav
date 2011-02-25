@@ -1758,6 +1758,7 @@ public class VOI extends ModelSerialCloneable {
 	 * @param iDim the number of slice in the given orientation.
 	 * @return an array of contour lists, one per slice in the image.
 	 */
+	@SuppressWarnings("unchecked")
 	public Vector<VOIBase>[] getSortedCurves( int iPlane, int iDim ) {
 		Vector<VOIBase>[] kTemp = new Vector[iDim];
 		for ( int i = 0; i < iDim; i++ )
