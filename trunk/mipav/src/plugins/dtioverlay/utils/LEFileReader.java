@@ -43,7 +43,7 @@ public class LEFileReader {
      }
 
     public short readShort() throws IOException {
-       int byte1, byte2, byte3, byte4;
+       int byte1, byte2;
        synchronized (this) {
          byte1 = readByte();
          byte2 = readByte();
