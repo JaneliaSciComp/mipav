@@ -444,7 +444,7 @@ public class PlugInAlgorithmHistogram extends AlgorithmBase {
             mask.clear();
         }
 
-        Vector imageFrameVector = image.getImageFrameVector();
+        Vector<ViewImageUpdateInterface> imageFrameVector = image.getImageFrameVector();
 
         for (i = 0; i < imageFrameVector.size(); i++) {
             Object object = imageFrameVector.elementAt(i);
