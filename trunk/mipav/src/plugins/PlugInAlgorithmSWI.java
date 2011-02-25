@@ -49,14 +49,6 @@ import gov.nih.mipav.view.ViewJFrameImage;
 
 public class PlugInAlgorithmSWI extends AlgorithmBase {
     
-	  	/** X dimension of the image */
-    private int xDim;
-
-	    /** Y dimension of the image */
-    private int yDim;
-
-    /** Slice size for xDim*yDim */
-    private int sliceSize;
 
     private ModelImage magImage;
 
@@ -104,8 +96,6 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         this.roFilterSize = roFilterSize;
         this.peFilterSize = peFilterSize;
         this.multFactor = multFactor;
-        
-        init();
     }
         
 //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -192,11 +182,13 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         float[] ixRealFinal = new float[sizeRo*sizePe*sizeSs];
         float[] ixImagFinal = new float[sizeRo*sizePe*sizeSs];
         
-    	ModelImage iFinal = generateIFinal(iImage, iCenterImageRescale, brainMaskSet, ixRealFinal, ixImagFinal);
+    	@SuppressWarnings("unused")
+        ModelImage iFinal = generateIFinal(iImage, iCenterImageRescale, brainMaskSet, ixRealFinal, ixImagFinal);
         
     	float[] phaseMaskData = new float[sizeRo*sizePe*sizeSs];
+    	@SuppressWarnings("unused")
         ModelImage phaseMask = generatePhaseMask(brainMaskSet, ixRealFinal, ixImagFinal, phaseMaskData);
-
+    	@SuppressWarnings("unused")
         ModelImage magEnhanced = generateMagEnhanced(phaseMaskData, realData);
     }
     
@@ -309,6 +301,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         return iCenterDest;
     }
 
+    @SuppressWarnings("unused")
     private ModelImage padiImage(ModelImage iImage) {
         ModelImage iCenterImage = (ModelImage) iImage.clone(); //also needs to be 480x480
         iCenterImage.setImageName("iCenterImage");
@@ -348,8 +341,6 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
     private ModelImage createkImage(ModelImage iImage) {
         ModelImage kImage = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "kData");
-        
-        int a = 0;
         
         //kImage is now at 512x512
         AlgorithmFFT fft = new AlgorithmFFT(kImage, iImage, AlgorithmFFT.FORWARD, false, false, true);
@@ -415,12 +406,6 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             realData[i] = magImageTemp[i]*Math.sin(phaseImageTemp[i]);
             complexData[i] = magImageTemp[i]*Math.cos(phaseImageTemp[i]);
         }
-    }
-        
-	private void init() {
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        sliceSize = xDim * yDim;
     }
 	
 }
