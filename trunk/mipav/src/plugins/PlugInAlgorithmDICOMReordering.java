@@ -37,11 +37,8 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
 	/** boolean for test **/
 	private boolean success;
 	
-	/** this is an ordered collection per volume based on the sortingValue of pertinent image slice info **/
-	private TreeSet volumeTreeSet;
-	
 	/** this is a list of volumeTreeMap objects **/
-	private ArrayList volumes = new ArrayList();
+	private ArrayList<TreeSet<String[]>> volumes = new ArrayList<TreeSet<String[]>>();
 	
 	/** number of images in dir **/
 	private int numImages = 0;
@@ -74,7 +71,7 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
 	 *  run algorithm
 	 */
 	public void runAlgorithm() {
-		long begTime = System.currentTimeMillis();
+		//long begTime = System.currentTimeMillis();
 
 
         if (outputTextArea != null) {
@@ -246,14 +243,13 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
 	                    info[2] = sortingValue;
 	                    
 	                    
-	                    TreeSet treeSet;
-	                    String[] tInfo;
+	                    TreeSet<String[]> treeSet;
 	                    boolean found = false;
-	                    Iterator iter;
+	                    Iterator<String[]> iter;
 	                    String[] arr;
 
 	                    for(int k=0;k<volumes.size();k++) {
-	                    	treeSet = (TreeSet)volumes.get(k);
+	                    	treeSet = volumes.get(k);
 	                    	iter = treeSet.iterator();
 	                    	arr = (String[]) iter.next();
 	                    	if(arr[1].equals(newDir)) {
@@ -262,7 +258,7 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
 	                    	}
 	                    }
 	                    if(found == false) {
-	                    	treeSet = new TreeSet(new SortingValueComparator());
+	                    	treeSet = new TreeSet<String[]>(new SortingValueComparator());
 	                    	treeSet.add(info);
 	                    	volumes.add(treeSet);
 	                    }
@@ -285,8 +281,8 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
 	  * @return
 	  */
 	 public boolean copyFiles() {
-		 TreeSet treeSet;
-		 Iterator iter;
+		 TreeSet<String[]> treeSet;
+		 Iterator<String[]> iter;
 		 String[] arr;
 		 String currentAbsPath;
 		 String newDir;
@@ -296,7 +292,7 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
 		 int counter = 0;
 
 		 for(int k=0;k<volumes.size();k++) {
-			treeSet = (TreeSet)volumes.get(k);
+			treeSet = volumes.get(k);
          	iter = treeSet.iterator();
          	int imageSlice = 0;
 			 
