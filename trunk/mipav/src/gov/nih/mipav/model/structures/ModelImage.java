@@ -751,9 +751,6 @@ public class ModelImage extends ModelStorageBase {
      */
     public final ModelImage export(final int[] axisOrderOut, final boolean[] axisFlipOut, boolean bClone) {
 
-        final int orientationIn = getImageOrientation();
-        final int[] axisOrderIn = MipavCoordinateSystems.getAxisOrder(this, orientationIn);
-
         boolean bMatched = matched( axisOrderOut, axisFlipOut );
         if (bMatched) {
             if ( bClone )
@@ -1946,7 +1943,7 @@ public class ModelImage extends ModelStorageBase {
         int i, k;
         int nVOIs;
         int nContours;
-        Vector contours;
+        Vector<VOIBase> contours;
         VOI newVOI = null;
         VOI newPtVOI = null;
         VOI newPLineVOI = null;
@@ -1954,14 +1951,11 @@ public class ModelImage extends ModelStorageBase {
         VOI newProtractorVOI = null;
 
         String nameExt = null;
-        int slices;
 
         if (getNDims() > 2) {
             nameExt = new String("3D");
-            slices = getExtents()[2];
         } else {
             nameExt = new String("2D");
-            slices = 1;
         }
 
         VOIVector tempVOIs = new VOIVector(voiVector);
@@ -2141,14 +2135,11 @@ public class ModelImage extends ModelStorageBase {
         VOI newProtractorVOI = null;
 
         String nameExt = null;
-        int slices;
 
         if (getNDims() > 2) {
             nameExt = new String("3D");
-            slices = getExtents()[2];
         } else {
             nameExt = new String("2D");
-            slices = 1;
         }
 
         nVOIs = newVOIVector.size();
@@ -2429,6 +2420,8 @@ public class ModelImage extends ModelStorageBase {
 
                     if (this == imgS) {
                         frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
+                    } else if (this == imgL) {
+                    	frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
                 } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI)) {
                     frameList.elementAt(i).updateImages();
@@ -2510,13 +2503,12 @@ public class ModelImage extends ModelStorageBase {
             } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM)) {
                 final ModelImage imgS = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList
                         .elementAt(i)).getImageSeparate();
-                final ModelImage imgL = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList
-                        .elementAt(i)).getImageLink();
 
                 if (this == imgS) {
                     ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList.elementAt(i))
                             .setRGBTA(RGBT);
                 }
+                
             }
 
         }
@@ -4003,7 +3995,7 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < getNDims(); i++) {
             s += "\n\t Units:      \t"
-                    + FileInfoBase.getUnitsOfMeasureAbbrevStr(getFileInfo()[0].getUnitsOfMeasure()[0]); // possibly
+                    + (Unit.getUnitFromLegacyNum(getFileInfo()[0].getUnitsOfMeasure()[0])).getAbbrev(); // possibly
                                                                                                         // expand
             // to see all
             // measurements
@@ -4123,14 +4115,11 @@ public class ModelImage extends ModelStorageBase {
         }
 
         String nameExt = null;
-        int slices;
 
         if (getNDims() > 2) {
             nameExt = new String("3D");
-            slices = getExtents()[2];
         } else {
             nameExt = new String("2D");
-            slices = 1;
         }
 
         for (i = 0; i < numContours; i++, id++) {
@@ -4334,7 +4323,7 @@ public class ModelImage extends ModelStorageBase {
             float fSliceLocation = 0.f;
 
             FileInfoDicom oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
-            String[] tmp = oldDicomInfo.parseTagValue("0028,0030");
+            //String[] tmp = oldDicomInfo.parseTagValue("0028,0030");
 
             // pixel spacing, slice thickness, and spacing between slices changes for
             // X- or Y-axis rotation, but not for Z-axis rotation.  Also should not be set if
@@ -4948,7 +4937,7 @@ public class ModelImage extends ModelStorageBase {
             i = voiVector.size();
 
             for (j = i - 1; j >= 0; j--) {
-                VOI voi = (VOI) ( ((Vector) voiVector).remove(j));
+                VOI voi = (VOI) ( ((Vector<VOI>) voiVector).remove(j));
 
                 try {
                     voi.finalize();
