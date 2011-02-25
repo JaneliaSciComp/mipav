@@ -197,7 +197,6 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         if(completeVOI) {
 	        
 	     // save the VOI to a file(s)
-	        String directory = System.getProperty("user.dir");
 	        ViewUserInterface.getReference().getMessageFrame().append("directory: " +imageDir+"\n", ViewJFrameMessage.DEBUG);
 	        
 	        ViewJFrameImage frame = new ViewJFrameImage(srcImage);
@@ -783,6 +782,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
 		return rightThighVOI;
 	}
 	
+	@SuppressWarnings("unused")
 	private void oldCode() {
 		/*   this splits the largest curve on slice 0
         if (theVOI.getCurves()[0].size() == 3) {
