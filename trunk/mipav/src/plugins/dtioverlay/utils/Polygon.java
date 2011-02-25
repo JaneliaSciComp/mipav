@@ -23,7 +23,7 @@ public BndBox bndBox;
     }
 
     public boolean intersect(PT a, PT b) {
-        for(int i=0;i<faces.length;i++) {
+        for(int i=0;i<faces.length;) {
             try {
             IntersectResult ir = faces[i].findIntersect(a,b);
             if(ir.fractionalDistance>=0 && ir.fractionalDistance<=1)
