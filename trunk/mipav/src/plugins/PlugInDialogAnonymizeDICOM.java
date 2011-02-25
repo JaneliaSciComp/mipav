@@ -436,6 +436,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
     		}	
     	}	
     	
+    	@SuppressWarnings("unused")
     	public FileDicom getImageFile() {
     		return imageFile;
     	}
