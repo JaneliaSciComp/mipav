@@ -2316,7 +2316,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int maxGreenBelong;
         boolean allRemoved;
         int numRemoved;
-        Vector[] contours;
+        Vector<VOIBase>[] contours;
         int nPoints;
         int maxPoints;
         int maxElement;
