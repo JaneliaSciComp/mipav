@@ -41,8 +41,6 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     
     private PlugInMuscleImageDisplay.ImageType imageType;
     
-    private File[] imageFile;
-    
     private boolean multipleSlices = false;
     
     /** Result image. */
@@ -150,7 +148,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         try {
             //FileInfoBase[] info = image.getFileInfo();
             //info[0].displayAboutInfo(this); //expecting a 2D image
-            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation(image, imageType, parentFrame, multipleSlices, fileName);
+            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation(image, imageType, multipleSlices, fileName);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -204,7 +202,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     private void init() {
         
         String fileName = image.getFileInfo()[0].getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
-        ArrayList<String> validConfig = new ArrayList();
+        ArrayList<String> validConfig = new ArrayList<String>();
     	if(new File(fileName).exists()) {
         	String[] allFiles = new File(fileName).list(new NiaAcceptable());
         	if(allFiles != null) {
@@ -332,6 +330,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
      * @param fileAr
      * @return constructed image
      */
+    @SuppressWarnings("unused")
     private ModelImage createImage(File[] fileAr) {
     	FileIO fileIO = new FileIO();
     	fileIO.setQuiet(true);
@@ -372,8 +371,8 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 		boolean foundBoneLeft = false;
 		boolean foundBoneRight = false;
 		
-		ArrayList boneRowHigh = new ArrayList();
-		ArrayList bonePercent = new ArrayList();
+		ArrayList<Integer> boneRowHigh = new ArrayList<Integer>();
+		ArrayList<Double> bonePercent = new ArrayList<Double>();
 		
 		for(int y=0; y<yBound; y++) {
 			int boneNumber = 0;
@@ -390,10 +389,10 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 		}
 		
 		double test = 0.0;
-		Iterator itrBone = boneRowHigh.iterator();
-		Iterator itrPercent = bonePercent.iterator();
+		Iterator<Integer> itrBone = boneRowHigh.iterator();
+		Iterator<Double> itrPercent = bonePercent.iterator();
 		while(itrBone.hasNext()) {
-			int y = ((Integer)itrBone.next()).intValue();
+			int y = (itrBone.next()).intValue();
     		boneCountLeft = 0;
     		boneCountRight = 0;
     		airCountCenter = 0;
@@ -405,7 +404,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     		foundBoneLeft = false;
     		foundBoneRight = false;
     		
-    		double boneTest = ((Double)itrPercent.next()).doubleValue();
+    		double boneTest = (itrPercent.next()).doubleValue();
     		
     		for(int x=0; x<xBound; x++){
     			test = im.getDouble(x, y);
@@ -454,6 +453,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 		return PlugInMuscleImageDisplay.ImageType.Abdomen;
     }
     
+    @SuppressWarnings("unused")
     private File[] detectImageSequence(ModelImage im) {
     	try {
     		File dir = new File(im.getFileInfo()[0].getFileDirectory());
@@ -468,7 +468,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 	    		name = name.substring(0, im.getFileInfo()[0].getFileName().length()-2);
 	    	File[] contain = dir.listFiles();
 	    	int size = 0;
-	    	ArrayList<File> fileList = new ArrayList();
+	    	ArrayList<File> fileList = new ArrayList<File>();
 	    	for(int i=0; i<contain.length; i++) {
 	    		if(contain[i].getName().contains(name)) {
 	    			size++;
