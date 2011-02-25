@@ -689,6 +689,29 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } catch (final IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
+        } else if (command.startsWith("PlugInImageJ")) {
+        	 Class<?> thePlugInClass = null;
+        	 Object thePlugInInstance = null; 
+
+             final String plugInName = command.substring(12);
+             
+             try {
+                 thePlugInClass = Class.forName(plugInName);
+                 
+                 for(Class c : thePlugInClass.getInterfaces()) {
+             		if(c.equals(ij.plugin.PlugIn.class)) {
+             			thePlugInInstance = Class.forName(plugInName).newInstance();
+             			String args = "";
+             			((ij.plugin.PlugIn)thePlugInInstance).run(args);
+                 		break;
+                 	}
+             	}
+               
+                 
+             }catch(Exception e) {
+            	 e.printStackTrace();
+             }
+             
         } else if (command.equals("InstallPlugin")) {
             final JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(mainFrame);
             instPlugin.setVisible(true);
@@ -708,7 +731,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             openingMenuBar.add(pluginsMenu, index);
             getMainFrame().pack();
 
-        } else if (command.equals("About")) {
+        } else if(command.equals("testImagejPlugin")) {
+        	
+        
+        }else if (command.equals("About")) {
             about();
         } else if (command.equals("License")) {
             showLicense();
@@ -784,6 +810,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
+        } else {
+        	System.out.println(event.getActionCommand());
         }
 
     }
@@ -1027,16 +1055,24 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             for (final File allFile : allFiles) {
                 JMenu currentMenu = menu;
                 name = allFile.getName();
+           
 
                 try {
                     name = name.substring(0, name.indexOf(".class"));
-                    pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
+                    if(name.startsWith("PlugIn")) {
+                    	pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
+                    }else {
+                    	pluginName = name;
+                    }
 
                 } catch (final Exception e) {
                     pluginName = name;
                 }
                 try {
 
+                	System.out.println(name);
+                	System.out.println(pluginName);
+                	
                     plugin = Class.forName(name);
 
                     // plugin.newInstance();
@@ -1055,23 +1091,23 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             ScriptableActionLoader.addScriptActionLocation(scriptLoc);
                         }
                     }
-
-                    catField = plugin.getField(catName);
-                    final String[] hier = (String[]) catField.get(plugin);
-                    final Class<?>[] interList = plugin.getInterfaces();
-                    String interName = new String();
-
-                    // find the interface name that determines the type of plugin
-                    for (final Class<?> element : interList) {
-                        if (element.getName().contains("PlugIn") && !element.getName().contains("BundledPlugInInfo")) {
-                            interName = element.getName().substring(element.getName().indexOf("PlugIn"));
-                        }
+                    String[] hier = null;
+                    boolean isImageJPlugin = false;
+                    try {
+                    	catField = plugin.getField(catName);
+                    	 hier = (String[]) catField.get(plugin);
+                    }catch(NoSuchFieldException e1) {
+                    	for(Class c : plugin.getInterfaces()) {
+                    		if(c.equals(ij.plugin.PlugIn.class)) {
+                        		isImageJPlugin = true;
+                        		hier = new String[]{"ImageJ"};
+                        		break;
+                        	}
+                    	}
+                    	
                     }
-
-                    if (interName.length() == 0 && plugin.getSuperclass() != null) {
-                        interName = getSuperInterfaces(plugin.getSuperclass());
-                    }
-
+                   
+                    
                     for (final String element : hier) {
                         final Component[] subComp = currentMenu.getMenuComponents();
                         boolean subExists = false;
@@ -1088,16 +1124,37 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             currentMenu = newMenu;
                         }
                     }
-                    if ( ! (al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
-                        final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName
-                                + pluginName, 0, al, null, false);
-                        pluginMenuItem.setName(pluginName);
-                        pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
-                        currentMenu.add(pluginMenuItem);
+                    String interName  = "";
+                    if(!isImageJPlugin) {
+	                    final Class<?>[] interList = plugin.getInterfaces();
+	                
+	
+	                    // find the interface name that determines the type of plugin
+	                    for (final Class<?> element : interList) {
+	                        if (element.getName().contains("PlugIn") && !element.getName().contains("BundledPlugInInfo")) {
+	                            interName = element.getName().substring(element.getName().indexOf("PlugIn"));
+	                        }
+	                    }
+	
+	                    if (interName.length() == 0 && plugin.getSuperclass() != null) {
+	                        interName = getSuperInterfaces(plugin.getSuperclass());
+	                    }
+	                    System.out.println("**" + interName);
+                    }else {
+                    	interName = "PlugInImageJ";
                     }
+                    
+                    
+	                    if ( ! (al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
+	                        final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName
+	                                + pluginName, 0, al, null, false);
+	                        pluginMenuItem.setName(pluginName);
+	                        pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
+	                        currentMenu.add(pluginMenuItem);
+	                    }
+	                    System.out.println();
+                    
 
-                } catch (final NoSuchFieldException e) {
-                    // no category, so class is not a valid plugin, class should not be added to GUI
                 } catch (final ClassNotFoundException e) {
 
                     // e.printStackTrace();
@@ -1121,6 +1178,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         menu.add(menuBuilder.buildMenuItem("Install plugin", "InstallPlugin", 0, null, false));
 
         menu.add(menuBuilder.buildMenuItem("Uninstall plugin", "UninstallPlugin", 0, null, false));
+
 
         return menu;
     }
