@@ -124,14 +124,15 @@ public class TableSorter extends AbstractTableModel {
     private static Directive EMPTY_DIRECTIVE = new Directive( -1, TableSorter.NOT_SORTED);
 
     /** DOCUMENT ME! */
-    public static final Comparator COMPARABLE_COMPARATOR = new Comparator() {
+    @SuppressWarnings("unchecked")
+    public static final Comparator<Object> COMPARABLE_COMPARATOR = new Comparator<Object>() {
         public int compare(final Object o1, final Object o2) {
-            return ((Comparable) o1).compareTo(o2);
+            return ((Comparable<Object>) o1).compareTo(o2);
         }
     };
 
     /** DOCUMENT ME! */
-    public static final Comparator LEXICAL_COMPARATOR = new Comparator() {
+    public static final Comparator<Object> LEXICAL_COMPARATOR = new Comparator<Object>() {
         public int compare(final Object o1, final Object o2) {
             return o1.toString().compareTo(o2.toString());
         }
@@ -141,7 +142,7 @@ public class TableSorter extends AbstractTableModel {
      * This is comparator such that it also determines if the string has numbers leading the string....if it does have
      * numbers, it sorts using the numbers also
      * */
-    public static final Comparator LEXICAL_NUMS_COMPARATOR = new Comparator() {
+    public static final Comparator<Object> LEXICAL_NUMS_COMPARATOR = new Comparator<Object>() {
         public int compare(final Object o1, final Object o2) {
             final String s1 = (String) o1;
             // this is the int value if there are numbers leading s1....initilaize to -1
@@ -161,7 +162,7 @@ public class TableSorter extends AbstractTableModel {
             if (numChars.size() > 0) {
                 final char data[] = new char[numChars.size()];
                 for (int i = 0; i < numChars.size(); i++) {
-                    data[i] = ((Character) numChars.get(i)).charValue();
+                    data[i] = (numChars.get(i)).charValue();
                 }
                 final Integer int1 = new Integer(new String(data));
                 b1 = int1.intValue();
@@ -178,7 +179,7 @@ public class TableSorter extends AbstractTableModel {
             if (numChars.size() > 0) {
                 final char data[] = new char[numChars.size()];
                 for (int i = 0; i < numChars.size(); i++) {
-                    data[i] = ((Character) numChars.get(i)).charValue();
+                    data[i] = (numChars.get(i)).charValue();
                 }
                 final Integer int2 = new Integer(new String(data));
                 b2 = int2.intValue();
@@ -217,8 +218,8 @@ public class TableSorter extends AbstractTableModel {
     /** DOCUMENT ME! */
     protected TableModel tableModel;
 
-    /** DOCUMENT ME! */
-    private final Map columnComparators = new HashMap();
+    @SuppressWarnings("unchecked")
+    private final Map<Class,Comparator> columnComparators = new HashMap<Class,Comparator>();
 
     /** DOCUMENT ME! */
     private int[] modelToView;
@@ -281,6 +282,7 @@ public class TableSorter extends AbstractTableModel {
      * 
      * @return DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public Class getColumnClass(final int column) {
         return tableModel.getColumnClass(column);
     }
@@ -398,6 +400,7 @@ public class TableSorter extends AbstractTableModel {
      * @param type DOCUMENT ME!
      * @param comparator DOCUMENT ME!
      */
+    @SuppressWarnings("unchecked")
     public void setColumnComparator(final Class type, final Comparator comparator) {
 
         if (comparator == null) {
@@ -491,10 +494,11 @@ public class TableSorter extends AbstractTableModel {
      * 
      * @return A comparator for a given column
      */
-    protected Comparator getComparator(final int column) {
+    @SuppressWarnings("unchecked")
+    protected Comparator<Object> getComparator(final int column) {
         final Class columnType = tableModel.getColumnClass(column);
 
-        final Comparator comparator = (Comparator) columnComparators.get(columnType);
+        final Comparator<Object> comparator = columnComparators.get(columnType);
 
         if (comparator != null) {
             return comparator;
@@ -780,7 +784,7 @@ public class TableSorter extends AbstractTableModel {
     /**
      * Helper classes.
      */
-    private class Row implements Comparable {
+    private class Row implements Comparable<Object> {
 
         /** DOCUMENT ME! */
         private final int modelIndex;
@@ -805,8 +809,8 @@ public class TableSorter extends AbstractTableModel {
             final int row1 = modelIndex;
             final int row2 = ((Row) o).modelIndex;
 
-            for (final Iterator it = sortingColumns.iterator(); it.hasNext();) {
-                final Directive directive = (Directive) it.next();
+            for (final Iterator<Directive> it = sortingColumns.iterator(); it.hasNext();) {
+                final Directive directive = it.next();
                 final int column = directive.column;
                 final Object o1 = tableModel.getValueAt(row1, column);
                 final Object o2 = tableModel.getValueAt(row2, column);
