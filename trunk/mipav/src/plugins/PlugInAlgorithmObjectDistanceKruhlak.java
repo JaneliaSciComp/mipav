@@ -1,5 +1,4 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
@@ -51,7 +50,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
      * @param  threshold1  DOCUMENT ME!
      * @param  threshold2  DOCUMENT ME!
      */
-    public PlugInAlgorithmObjectDistanceKruhlak(ModelImage srcImg, boolean useRed, boolean useBlue,
+    public PlugInAlgorithmObjectDistanceKruhlak(ModelImage srcImg, boolean useRed, boolean useGreen, boolean useBlue,
                                                 int threshold1, int threshold2) {
         super(null, srcImg);
         this.useRed = useRed;
