@@ -105,9 +105,8 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         int itersE = 1;
         int i;
         boolean pointsEntered;
-        Vector curves;
+        Vector<VOIBase> curves;
         int nPts;
-        int s;
         Vector3f[] pt = null;
         Vector3f[] tmpPt = null;
         int pos;
@@ -125,9 +124,6 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         int greenZ[] = null;
         int c;
         int cPts;
-        int cX[];
-        int cY[];
-        int cZ[];
         JDialogSetPoints choice;
         float colorBuffer[];
         float sigmas[] = new float[3];
@@ -464,16 +460,10 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
             if (((c == 1) && (redPts >= 1)) || ((c == 2) && (greenPts >= 1))) {
                 if (c == 1) {
                     cPts = redPts;
-                    cX = redX;
-                    cY = redY;
-                    cZ = redZ;
                     colorBuffer = redBuffer;
                 }
                 else {
                     cPts = greenPts;
-                    cX = greenX;
-                    cY = greenY;
-                    cZ = greenZ;
                     colorBuffer = greenBuffer;
                 }
                 try {
@@ -665,6 +655,7 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
+    @SuppressWarnings("unused")
     private void calc2D() {
         long time;
         
