@@ -153,9 +153,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /** Whether to show the talairach gridmarkers on the component. */
     private boolean showTalairachGridmarkers = false;
 
-    /** Flag for snapping protractor to nearest multiple of 90 degrees. */
-    private boolean snapProtractor90 = false;
-
     /** DOCUMENT ME! */
     private final Color talairachMajorLineColor = new Color(253, 253, 253);
 
@@ -632,7 +629,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             
             voiProtractor.setActive(true);
             voiProtractor.setAllSlices(true);
-            voiProtractor.setSnap(snapProtractor90);
             if ( voiManager != null )
             {
                 voiProtractor.setPlane(voiManager.getPlane());
@@ -1395,15 +1391,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public void setShowBoundingRect(final boolean flag) {
         showBoundingRect = flag;
-    }
-
-    /**
-     * Accessor to set the snapProtractor90 variable.
-     * 
-     * @param snapProtractor90 DOCUMENT ME!
-     */
-    public void setSnapProtractor90(final boolean snapProtractor90) {
-        this.snapProtractor90 = snapProtractor90;
     }
 
     /**
