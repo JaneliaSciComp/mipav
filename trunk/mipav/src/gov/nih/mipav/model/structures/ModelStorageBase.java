@@ -338,13 +338,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private boolean m_bRadiologicalView = true;
 
     /** Surface color vector. - TO BE MOVED - redesigned */
-    private final Vector m_kColorVector = new Vector();
+    private final Vector<ColorRGBA> m_kColorVector = new Vector<ColorRGBA>();
 
     /** Surface mask color vector. - TO BE MOVED - redesigned */
-    private final Vector m_kMaskColorVector = new Vector();
+    private final Vector<ColorRGBA[]> m_kMaskColorVector = new Vector<ColorRGBA[]>();
 
     /** Surface mask vector.- TO BE MOVED - redesigned. */
-    private final Vector m_kMaskVector = new Vector();
+    private final Vector<BitSet> m_kMaskVector = new Vector<BitSet>();
 
     /** Minimum and maximum image intensity. */
     private double min, max;
