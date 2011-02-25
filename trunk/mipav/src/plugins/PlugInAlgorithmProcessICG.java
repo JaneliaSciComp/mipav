@@ -258,7 +258,7 @@ System.err.println("starting process icg");
                 distortedSlices[i] = true;
             }
         	
-        	Vector vec = new Vector();
+        	Vector<SliceCost> vec = new Vector<SliceCost>();
         	for (i = 0; i < costs.length; i++) {
         		vec.add(new SliceCost(i, costs[i]));
         	}
@@ -326,7 +326,7 @@ System.err.println("starting process icg");
         return distortedSlices;
     }
 
-    private class SliceCost implements Comparable {
+    private class SliceCost implements Comparable<Object> {
     	public int frame;
     	public double cost;
     	
