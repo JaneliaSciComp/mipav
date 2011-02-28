@@ -77,9 +77,6 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
     /** This is your algorithm */
     private PlugInAlgorithmMTry genericAlgo = null;
 
-    /** The check box for whether a blur should be performed. */
-	private JCheckBox check;
-
 	/** The variable representing whether the blur should be performed. */
 	private boolean doErnst;
 
@@ -499,15 +496,14 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
      */
     private class GuiBuilder implements ActionListener {
         
-        public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
+        @SuppressWarnings("unused")
+    	public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
 
         private ArrayList<ActionListener> listenerList;
         
         private boolean passedListeners;
 
         private ExitStatus exit;
-        
-        private JButton yes, no;
         
         private JDialogBase parent;
         
@@ -517,10 +513,12 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
             this.exit = ExitStatus.INCOMPLETE;
         }
         
+        @SuppressWarnings("unused")
         public ExitStatus getExitStatus() {
             return exit;
         }
         
+        @SuppressWarnings("unused")
         public ActionListener[] getListenerList() {
             ActionListener[] list = new ActionListener[listenerList.size()];
             for(int i=0; i<listenerList.size(); i++) {
@@ -529,6 +527,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
             return list;
         }
         
+        @SuppressWarnings("unused")
         public JRadioButton buildRadioButton(String label, boolean selected) {
             FlowLayout f = new FlowLayout();
             f.setAlignment(FlowLayout.LEFT);
@@ -539,6 +538,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
             return radioButton;
         }
         
+        @SuppressWarnings("unused")
         public JCheckBox buildCheckBox(String label, boolean selected) {
             FlowLayout f = new FlowLayout();
             f.setAlignment(FlowLayout.LEFT);
@@ -561,6 +561,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
             return text;
         }
         
+        @SuppressWarnings("unused")
         public JTextField buildIntegerField(final String labelText, int initNum) {
             final JTextField genericField = buildField(labelText, String.valueOf(initNum));
             ActionListener listener = new ActionListener() {
