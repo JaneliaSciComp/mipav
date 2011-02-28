@@ -59,7 +59,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
     private int cost, interp, interp2, DOF;
 
     /** cost function name */
-    private String costName = null;
+    //private String costName = null;
 
     /** boolean if target image is color or not */
     private boolean doColor;
@@ -603,7 +603,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
         	switch (comboBoxCostFunct.getSelectedIndex()) {
             	case 0:
                   cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_COLOR;
-                  costName = "LEAST_SQUARES_SMOOTHED_COLOR";
+                  //costName = "LEAST_SQUARES_SMOOTHED_COLOR";
                   break;
             }
         } 
@@ -611,13 +611,13 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
         	switch (comboBoxCostFunct.getSelectedIndex()) {
                     case 0:
                         cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
-                        costName = "CORRELATION_RATIO_SMOOTHED";
+                        //costName = "CORRELATION_RATIO_SMOOTHED";
                         break;
                         // case 0:  cost = AlgorithmCostFunctions.CORRELATION_RATIO;                     break;
 
                     case 1:
                         cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED;
-                        costName = "LEAST_SQUARES_SMOOTHED";
+                        //costName = "LEAST_SQUARES_SMOOTHED";
 
                         // cost = AlgorithmCostFunctions.LEAST_SQUARES;
                         // costName = "LEAST_SQUARES_SMOOTHED";
@@ -626,18 +626,18 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
 
                     case 2:
                         cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED;
-                        costName = "NORMALIZED_XCORRELATION_SMOOTHED";
+                        //costName = "NORMALIZED_XCORRELATION_SMOOTHED";
                         break;
                         // case 3:  cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION;         break;
 
                     case 3:
                         cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;
-                        costName = "NORMALIZED_MUTUAL_INFORMATION_SMOOTHED";
+                        //costName = "NORMALIZED_MUTUAL_INFORMATION_SMOOTHED";
                         break;
 
                     default:
                         cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
-                        costName = "CORRELATION_RATIO_SMOOTHED";
+                        //costName = "CORRELATION_RATIO_SMOOTHED";
                         break;
            }
         } // else black and white
