@@ -1774,6 +1774,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    Iterator<String> voiListItr = voiBuffer.keySet().iterator();
 	    boolean colorFound = false;
 	    String side1 = "", side2 = ""; 
+	    // These VOIs will have a symmetry variable, but don't at the moment.
 	    if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
 	    	side1 = "Left";
 	    	side2 = "Right";
