@@ -258,8 +258,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
         String sex;
         FileDicomSQ sq;
-        Vector display;
-        Enumeration f;
+        Vector<String> display;
+        Enumeration<String> f;
         StringTokenizer st;
         String name;
         boolean found;
