@@ -423,7 +423,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         }
         
         
-        Vector curves = VOIs.VOIAt(i).getCurves();
+        Vector<VOIBase> curves = VOIs.VOIAt(i).getCurves();
         boolean haveTwoCurves = (curves.size() == 2);
 
         if (!haveTwoCurves) {
