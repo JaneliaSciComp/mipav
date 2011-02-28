@@ -759,8 +759,6 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         }
         
         
-        
-         int key;
          int x1,y1,z1;
          
          ArrayList<int[]> zeroCoords = new ArrayList<int[]>();
