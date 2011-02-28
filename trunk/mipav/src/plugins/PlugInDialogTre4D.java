@@ -404,15 +404,14 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
      */
     private class GuiBuilder implements ActionListener {
         
-        public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
+        @SuppressWarnings("unused")
+    	public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
 
         private ArrayList<ActionListener> listenerList;
         
         private boolean passedListeners;
 
         private ExitStatus exit;
-        
-        private JButton yes, no;
         
         private JDialogBase parent;
         
@@ -422,10 +421,12 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
             this.exit = ExitStatus.INCOMPLETE;
         }
         
+        @SuppressWarnings("unused")
         public ExitStatus getExitStatus() {
             return exit;
         }
         
+        @SuppressWarnings("unused")
         public ActionListener[] getListenerList() {
             ActionListener[] list = new ActionListener[listenerList.size()];
             for(int i=0; i<listenerList.size(); i++) {
@@ -434,6 +435,7 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
             return list;
         }
         
+        @SuppressWarnings("unused")
         public JRadioButton buildRadioButton(String label, boolean selected) {
             FlowLayout f = new FlowLayout();
             f.setAlignment(FlowLayout.LEFT);
@@ -444,6 +446,7 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
             return radioButton;
         }
         
+        @SuppressWarnings("unused")
         public JCheckBox buildCheckBox(String label, boolean selected) {
             FlowLayout f = new FlowLayout();
             f.setAlignment(FlowLayout.LEFT);
