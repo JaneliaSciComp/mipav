@@ -20,8 +20,8 @@ public class TreBundle extends PlugInBundle {
     private static Vector<BundledPlugInInfo> trePlugIns; 
     
     //a way for storing PlugInBundles that will be accessed frequently
-    private static Class<BundledPlugInInfo> treT1;
-    private static Class<BundledPlugInInfo> treT2;
+    //private static Class<BundledPlugInInfo> treT1;
+    //private static Class<BundledPlugInInfo> treT2;
     
     static {
         
