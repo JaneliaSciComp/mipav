@@ -138,6 +138,7 @@ public class PlugInFileParser {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	public List<PlugInGenomicsEntry> parseXml(File file){
 		XMLStreamReader parser;
 		try {
@@ -145,21 +146,21 @@ public class PlugInFileParser {
 			StAXOMBuilder builder = new StAXOMBuilder(parser);
 			OMElement rootNode = builder.getDocumentElement();
 			List<String> dataStructNames = new ArrayList<String>();
-			List<PlugInGenomicsEntry> entries = new ArrayList<PlugInGenomicsEntry>();
-			Document document = loadDocument(file, false, false);
-			Iterator i = rootNode.getChildren();
+			//List<PlugInGenomicsEntry> entries = new ArrayList<PlugInGenomicsEntry>();
+			//Document document = loadDocument(file, false, false);
+			Iterator<OMElement> i = rootNode.getChildren();
 			while(i.hasNext()){
 				OMElement e = (OMElement) i.next();
 				OMAttribute type = e.getAttribute(new QName("type"));
 				System.out.println(type.getAttributeValue());
-				Iterator j = e.getChildren();
+				Iterator<OMElement> j = e.getChildren();
 				while(j.hasNext()){
 					OMElement folder = (OMElement) j.next();
-					Iterator k = folder.getChildren();
+					Iterator<OMElement> k = folder.getChildren();
 					while(k.hasNext()){
 						OMElement dataStruct = (OMElement) k.next();
 						dataStructNames.add(e.getAttribute(new QName("type")).getAttributeValue());
-						Iterator l = dataStruct.getChildren();
+						Iterator<OMElement> l = dataStruct.getChildren();
 						while(l.hasNext()){
 							OMElement dataElement = (OMElement) l.next();
 							String col = dataElement.getAttributeValue(new QName("name"));
@@ -183,13 +184,13 @@ public class PlugInFileParser {
 			e.printStackTrace();
 		} catch (FactoryConfigurationError e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (SAXException e) {
-			e.printStackTrace();
-		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
-		}
+		} //catch (IOException e) {
+			//e.printStackTrace();
+		//} catch (SAXException e) {
+			//e.printStackTrace();
+		//} catch (ParserConfigurationException e) {
+			//e.printStackTrace();
+		//}
 		return null;
 	}
 	
