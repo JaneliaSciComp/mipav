@@ -10,7 +10,6 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
 
 
 import javax.swing.*;
@@ -43,9 +42,6 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
     
     /** Name of file to load*/
     private JTextField textName;
-    
-    /**File directory where image is stored.*/
-    private File fileDir;
     
     /** The algorithm to perform */
     private PlugInAlgorithmPhilipsDicom philipsAlgo = null;
