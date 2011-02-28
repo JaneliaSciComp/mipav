@@ -60,9 +60,6 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
     /** DOCUMENT ME! */
     private JTextField thresholdFieldB = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -80,7 +77,6 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
         super(theParentFrame, true);
 
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -204,7 +200,6 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage();
 
-        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
 
         doBrown = scriptParameters.getParams().getBoolean("doBrown");
