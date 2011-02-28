@@ -32,9 +32,8 @@ public class PlugInGenericDataEntryContainer extends JDialogStandalonePlugin {
 		
 		add(PlugInGenericDataEntryContainer.pane, "0,0");
 		
-		Icon icon = null;
         try {
-        	icon = new ImageIcon(MipavUtil.getIconImage(PlugInDialogDataEntryTool.ICON_NAME));
+        	new ImageIcon(MipavUtil.getIconImage(PlugInDialogDataEntryTool.ICON_NAME));
             setIconImage(MipavUtil.getIconImage(PlugInDialogDataEntryTool.ICON_NAME));
         } catch (final Exception e) {
         }
