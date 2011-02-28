@@ -307,10 +307,6 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         imagePanel.add(magnitudeCombo.getParent(), gbc);
         gbc.gridy++;
         
-        int numDefault = 0;
-        if(index > 1) {
-            numDefault = 1;
-        }
         phaseCombo = guiBuilder.buildComboBox("Phase:", titles, phaseDefault);
         imagePanel.add(phaseCombo.getParent(), gbc);
         gbc.gridy++;
@@ -404,15 +400,14 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
      */
     private class GuiBuilder implements ActionListener {
         
-        public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
+        @SuppressWarnings("unused")
+    	public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
 
         private ArrayList<ActionListener> listenerList;
         
         private boolean passedListeners;
 
         private ExitStatus exit;
-        
-        private JButton yes, no;
         
         private JDialogBase parent;
         
@@ -422,10 +417,12 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
             this.exit = ExitStatus.INCOMPLETE;
         }
         
+        @SuppressWarnings("unused")
         public ExitStatus getExitStatus() {
             return exit;
         }
         
+        @SuppressWarnings("unused")
         public ActionListener[] getListenerList() {
             ActionListener[] list = new ActionListener[listenerList.size()];
             for(int i=0; i<listenerList.size(); i++) {
@@ -434,6 +431,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
             return list;
         }
         
+        @SuppressWarnings("unused")
         public JRadioButton buildRadioButton(String label, boolean selected) {
             FlowLayout f = new FlowLayout();
             f.setAlignment(FlowLayout.LEFT);
@@ -444,6 +442,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
             return radioButton;
         }
         
+        @SuppressWarnings("unused")
         public JCheckBox buildCheckBox(String label, boolean selected) {
             FlowLayout f = new FlowLayout();
             f.setAlignment(FlowLayout.LEFT);
