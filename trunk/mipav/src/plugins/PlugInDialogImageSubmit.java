@@ -494,7 +494,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     		}
     		
     		//map keys exact xml tag to particular text
-    		HashMap<String, String> map = new HashMap();
+    		HashMap<String, String> map = new HashMap<String,String>();
     		map.put("anatomical-area", anatField.getText());
     		map.put("source-name", sourceNameField.getText());
     		map.put("source-org", sourceOrgField.getText());
@@ -801,6 +801,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     		}	
     	}	
     	
+    	@SuppressWarnings("unused")
     	public FileDicom getImageFile() {
     		return imageFile;
     	}
