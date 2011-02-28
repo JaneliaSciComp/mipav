@@ -150,9 +150,8 @@ public class PlugInDialogOAISeg extends JDialogBase implements AlgorithmInterfac
                 updateFileInfo(imageA, resultImageB);
 
                 ViewJFrameImage f1 = new ViewJFrameImage(resultImageA);
-                ViewJFrameImage f2 = new ViewJFrameImage(resultImageB, null,
-                                                         new Dimension((int) f1.getLocation().getX() + 250,
-                                                                       (int) f1.getLocation().getY()));
+                new ViewJFrameImage(resultImageB, null, new Dimension((int) f1.getLocation().getX() + 250,
+                                                                      (int) f1.getLocation().getY()));
 
                 // go to stage 2
                 init();
