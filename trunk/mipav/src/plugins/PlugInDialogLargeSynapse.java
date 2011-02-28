@@ -122,9 +122,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
     /** Button to browse for the TIFF file */
     private JButton browseButton;
     
-    /** Whether the dialog exited successfully */
-    private boolean successfulExit = false;
-    
     private String inputFileName = null;
     
     private String directory = null;
@@ -245,7 +242,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         } catch (OutOfMemoryError x) {
             
             MipavUtil.displayError("PlugInDialogLargeSynapse: unable to allocate enough memory");
-            successfulExit = false;
         }
 
     } // end callAlgorithm()
