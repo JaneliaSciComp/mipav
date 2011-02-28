@@ -570,7 +570,6 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
      * @return
      */
     private boolean readNLTFile(final File nltFile) {
-        final String directory;
         RandomAccessFile in;
         String str = null;
         StringTokenizer stoken = null;
