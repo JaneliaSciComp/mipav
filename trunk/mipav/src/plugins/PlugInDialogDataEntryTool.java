@@ -155,7 +155,8 @@ public class PlugInDialogDataEntryTool extends JDialogStandalonePlugin implement
         setVisible(true);
     }
 
-    public void getDataStructures(final String type) {
+    @SuppressWarnings("unchecked")
+	public void getDataStructures(final String type) {
         OMElement e = null;
         try {
         	PlugInDialogDataEntryTool.testConnection();
