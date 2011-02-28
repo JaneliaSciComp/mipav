@@ -66,7 +66,7 @@ public class PlugInDicom2Conversion implements PlugInGeneric {
 
     private void saveImage(final ModelImage img) {
         final FileWriteOptions options = new FileWriteOptions(true);
-        final int filterType = -1;
+        int filterType = -1;
 
         String fileName = null;
         String extension = null;
