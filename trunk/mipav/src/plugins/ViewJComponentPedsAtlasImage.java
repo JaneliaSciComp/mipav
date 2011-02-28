@@ -131,7 +131,6 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
         float min, max;
         final float[] x = new float[4];
         final float[] y = new float[4];
-        final float[] z = new float[4];
         final Dimension dim = new Dimension(256, 256);
 
         // Set LUT min max values;
