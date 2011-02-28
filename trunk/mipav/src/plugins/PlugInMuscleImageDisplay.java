@@ -10,6 +10,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmSnake;
 
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
@@ -1423,9 +1424,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             contentStream.moveTextPositionByAmount(0, -15);
             contentStream.drawString("mA:");
             contentStream.moveTextPositionByAmount(0, -15);
-            contentStream.drawString("Pixel Size ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(0))+"):");
+            contentStream.drawString("Pixel Size ("+Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure(0)).getAbbrev()+"):");
             contentStream.moveTextPositionByAmount(0, -15);
-            contentStream.drawString("Slice Thickness ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(2))+"):");
+            contentStream.drawString("Slice Thickness ("+Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure(2)).getAbbrev()+"):");
             contentStream.moveTextPositionByAmount(0, -15);
             contentStream.drawString("Table Height (cm):");
             
@@ -1989,7 +1990,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * Propagate inverse of children relationship as dependents to keep calculations correct.
 	 */
 	private void setDependents() {
-		Iterator itr = voiBuffer.values().iterator();
+		Iterator<PlugInSelectableVOI> itr = voiBuffer.values().iterator();
 		
 		while(itr.hasNext()) {
 			PlugInSelectableVOI voi = (PlugInSelectableVOI)itr.next();
@@ -2065,6 +2066,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	
     	/**Action commands without associated buttons (usually for OK buton) */
     	public static final String CHECK_VOI = "Check VOI";
+    	@SuppressWarnings("unused")
     	public static final String DIALOG_COMPLETED = "Dialog Completed";
     	
     	/** Possible buttons for dialog prompts. */
@@ -2120,6 +2122,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	 * @param title
     	 * @param buttonString the list of buttons to replace buttonStringList
     	 */
+    	@SuppressWarnings("unused")
     	public DialogPrompt(PlugInMuscleImageDisplay theParentFrame, String title, String[] buttonString) {
     		this.muscleFrame = theParentFrame;
     		this.title = title;
@@ -2159,6 +2162,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
     	 * Returns the current title of this dialog prompt.
     	 */
+		@SuppressWarnings("unused")
     	public String getTitle() {
     		return title;
     	}
@@ -2483,6 +2487,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Prepares to leave voi dialog, clears the voiPromptBuffer.
 		 */
+		@SuppressWarnings("unused")
 		public void takeDownDialog() {
 			removeAll();
 			voiPromptBuffer.removeAllElements();
@@ -2665,6 +2670,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * Performs snaking operation on a pre-selected VOI of given tape propagation type
 		 * @param propagationType
 		 */
+		@SuppressWarnings("unused")
 		private void performSnake(int propagationType) {
 			VOI v = null;
 			if((v = getInterestingVOI()) == null) {
@@ -2724,8 +2730,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         
         //~ Static fields/initializers -------------------------------------------------------------------------------------
     
-        public static final int REMOVED_INTENSITY = -2048;
+        @SuppressWarnings("unused")
+    	public static final int REMOVED_INTENSITY = -2048;
         
+        @SuppressWarnings("unused")
         public static final String CHECK_BOX = "CHECK_BOX";
         
         private final String[] buttonStringList = {CALCULATE, HELP, EXIT};
@@ -2735,7 +2743,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         /** Denotes the anatomical part represented in the image. Implemented in case this class
          *  is moved to its own class at a later time.  
          */
-        private ImageType imageType;
+        //private ImageType imageType;
         
         /** Whether this image has mirror image muscles (eg VIEWS of thighs, abdomen. */
         private Symmetry symmetry;
@@ -2779,7 +2787,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             this.mirrorArr = mirrorArr;
             this.noMirrorArr = noMirrorArr;
             
-            this.imageType = imageType;
             this.symmetry = symmetry;
             
             this.index = index;
@@ -2808,6 +2815,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		}
 
 		/**The location of this dialog in the parentFrame's array*/
+		@SuppressWarnings("unused")
         public int getIndex() {
         	return index;
         }
@@ -2815,6 +2823,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         /**
 		 * Gets the symmetric buttons in this panel.
 		 */
+		@SuppressWarnings("unused")
 		public JButton[] getMirrorButton() {
 			if(mirrorButtonArr != null) {
 				return mirrorButtonArr;
@@ -2825,6 +2834,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Gets the non-symmetric buttons in this panel.
 		 */
+		@SuppressWarnings("unused")
 		public JButton[] getNoMirrorButton() {
 			if(noMirrorButtonArr != null) {
 				return noMirrorButtonArr;
@@ -3314,6 +3324,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Returns whether the output button should show all slice calculations of the selected VOI.
 		 */
+		@SuppressWarnings("unused")
 		public boolean showPerSliceCalc() {
 			return showPerSliceCalc.isSelected();
 		}
@@ -3542,10 +3553,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    
 		    int measure = imageA.getUnitsOfMeasure()[0];
 		    String measureText = "Centimeters"; //default output is in cm by user request
-	        int[] allSameMeasure = FileInfoBase.getAllSameDimUnits(measure);
+	        Unit origUnit = Unit.getUnitFromLegacyNum(measure);
+	        if(origUnit == null) {
+	            origUnit = Unit.UNKNOWN_MEASURE;
+	        }
+	        
+	        Unit[] allSame = UnitType.getUnitsOfType(origUnit.getType());
+	        int[] allSameMeasure = new int[allSame.length]; 
+	        for(int i=0; i<allSameMeasure.length; i++) {
+	            allSameMeasure[i] = allSame[i].getLegacyNum();
+	        }
 	        String[] unitArr = new String[allSameMeasure.length];
 	        for(int i=0; i<allSameMeasure.length; i++) {
-	        	unitArr[i] = FileInfoBase.getUnitsOfMeasureStr(allSameMeasure[i]);
+	        	unitArr[i] = Unit.getUnitFromLegacyNum(allSameMeasure[i]).toString();
 	        }
 	        
 	        outputUnits = new JComboBox(unitArr);
@@ -3800,9 +3820,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 			
 			PDPageContentStream[] contentStreamAr = null;
-			String unit = FileInfoBase.getUnitsOfMeasureAbbrevStr(
-					FileInfoBase.getUnitsOfMeasureFromStr(
-							((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput()));
+			String unit =
+					Unit.getUnit(
+							((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput()).getAbbrev();
 			String type = new String();
 			try {
 				//create page headers
@@ -4274,6 +4294,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			/**
 			 * Whether the output has finished.
 			 */
+			@SuppressWarnings("unused")
 			public boolean isFinished() {
 				return done;
 			}
@@ -4359,6 +4380,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			 * Assembles output for all slices of image.
 			 * @return array of slice data
 			 */
+			@SuppressWarnings("unchecked")
 			private String[] assembleOutput() {
 				String[] sliceStr;
 				if(getActiveImage().getExtents().length > 2) {
@@ -4442,6 +4464,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		
 		//~ Static fields/initializers -------------------------------------------------------------------------------------
 		
+		@SuppressWarnings("unused")
 		public static final int OFFSET = 1024;
 		public static final int FAT_LOWER_BOUND = -190;
 		public static final int FAT_UPPER_BOUND = -30;
@@ -4476,6 +4499,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Gets the VOI being calculated in this runnable.
 		 */
+		@SuppressWarnings("unused")
 		public VOI getCurrentVOI() {
 			return calculateVOI;
 		}
@@ -4483,6 +4507,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Whether the runnable has finished.
 		 */
+		@SuppressWarnings("unused")
 		public boolean isFinished() {
 			return done;
 		}
@@ -4500,7 +4525,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
 			
 			//allows for calculation unit conversion from the source images base units, NIA requests that cm are normally used, but most scanners return mm resolutions
-			int resultUnitLoc = FileInfoBase.getUnitsOfMeasureFromStr(((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput());
+			int resultUnitLoc = Unit.getUnit(((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput()).getLegacyNum();
 	        int res0Unit = getActiveImage().getUnitsOfMeasure(0);
 	        int res1Unit = getActiveImage().getUnitsOfMeasure(1);
 	        int res2Unit; //only used in 3D images
@@ -4793,6 +4818,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
      * @author senseneyj
      *
      */
+	@SuppressWarnings("unused")
 	private class BuildThighAxes implements AlgorithmInterface {
 		
 	    private int zSlice;
@@ -4951,6 +4977,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * @author senseneyj
 	 *
 	 */
+	@SuppressWarnings("unused")
 	private class CustomLivewire extends RubberbandLivewire {
 		
 		/**A set representing all VOIs that should be avoided */
