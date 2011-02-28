@@ -42,9 +42,6 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
     /** DOCUMENT ME! */
     private ModelImage resultImageRGB_AllRatios = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -68,7 +65,6 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
         }
 
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
         callAlgorithm();
     }
 
@@ -205,7 +201,6 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage();
 
-        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
     }
 
