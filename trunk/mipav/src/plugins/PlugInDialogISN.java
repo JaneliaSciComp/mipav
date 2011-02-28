@@ -32,9 +32,6 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
     /** DOCUMENT ME! */
     private ModelImage resultImage = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -46,7 +43,6 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
     public PlugInDialogISN(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, false);
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
         callAlgorithm();
     }
 
@@ -59,7 +55,6 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
      */
     public PlugInDialogISN(ViewUserInterface UI, ModelImage imA) {
         super();
-        userInterface = UI;
         imageA = imA;
         callAlgorithm();
     }
