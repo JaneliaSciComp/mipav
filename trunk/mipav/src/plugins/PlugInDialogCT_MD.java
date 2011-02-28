@@ -1,5 +1,7 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -35,9 +37,6 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
     private static final long serialVersionUID = -4785622467099872569L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private float correctionVal;
 
     /** DOCUMENT ME! */
     private PlugInAlgorithmCT_MD ctSegAlgo = null;
@@ -187,7 +186,7 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -225,15 +224,6 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
         return resultImage;
     }
 
-
-    /**
-     * Accessor that sets the correction value.
-     *
-     * @param  num  Value to set iterations to (should be between 1 and 20).
-     */
-    public void setCorrectionValue(float num) {
-        correctionVal = num;
-    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -419,11 +409,20 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
         unitsPanel.add(unitLabel, gbc);
 
         int measure = image.getUnitsOfMeasure()[0];
-        String measureText = FileInfoBase.getUnitsOfMeasureStr(measure);
-        int[] allSameMeasure = FileInfoBase.getAllSameDimUnits(measure);
+        String measureText = (Unit.getUnitFromLegacyNum(measure)).toString();
+        Unit origUnit = Unit.getUnitFromLegacyNum(measure);
+        if(origUnit == null) {
+            origUnit = Unit.UNKNOWN_MEASURE;
+        }
+        
+        Unit[] allSame = UnitType.getUnitsOfType(origUnit.getType());
+        int[] allSameMeasure = new int[allSame.length]; 
+        for(int i=0; i<allSameMeasure.length; i++) {
+            allSameMeasure[i] = allSame[i].getLegacyNum();
+        }
         String[] unitArr = new String[allSameMeasure.length];
         for(int i=0; i<allSameMeasure.length; i++) {
-        	unitArr[i] = FileInfoBase.getUnitsOfMeasureStr(allSameMeasure[i]);
+        	unitArr[i] = (Unit.getUnitFromLegacyNum(allSameMeasure[i])).toString();
         }
         outputUnits = new JComboBox(unitArr);
         outputUnits.setFont(serif12);
