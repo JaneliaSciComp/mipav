@@ -1,12 +1,4 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.provenance.ProvenanceRecorder;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.actions.ActionMaskToVOI;
-import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.dialogs.*;
 
 import gov.nih.mipav.view.*;
@@ -16,7 +8,6 @@ import java.awt.event.*;
 import java.io.*;
 
 import java.util.*;
-import java.util.regex.*;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -26,7 +17,9 @@ import javax.swing.border.TitledBorder;
 
 public class PlugInDialogBrainSubcortical extends JDialogBase implements AlgorithmInterface
 {
-
+	/** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -6812105487936807310L;
+    
     /** The main user interface. */
     private ViewUserInterface UI;
 
@@ -59,7 +52,7 @@ public class PlugInDialogBrainSubcortical extends JDialogBase implements Algorit
     private String caseCompareDir;
     
     /** registered section names. */
-    private Vector regSection;
+    private Vector<Integer> regSection;
     
     /** Algorithm to run brain subcotrical registration. */
     private PlugInAlgorithmBrainSubcortical subCorticalAlgo;
@@ -80,7 +73,7 @@ public class PlugInDialogBrainSubcortical extends JDialogBase implements Algorit
      * @param _outputDir   output result directory. 
      * @param _regSection  registered sections in vector. 
      */
-    public PlugInDialogBrainSubcortical(Frame theParentFrame, String _inputDir, String _outputDir, String _caseCompareDir, Vector _regSection) {
+    public PlugInDialogBrainSubcortical(Frame theParentFrame, String _inputDir, String _outputDir, String _caseCompareDir, Vector<Integer> _regSection) {
     	super(theParentFrame, false);
     	inputDir = _inputDir;
     	outputDir = _outputDir;
@@ -214,8 +207,6 @@ public class PlugInDialogBrainSubcortical extends JDialogBase implements Algorit
 
             if (file != null) {
                 chooser.setCurrentDirectory(file);
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             }
         } else {
             chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
@@ -229,9 +220,10 @@ public class PlugInDialogBrainSubcortical extends JDialogBase implements Algorit
             fileName = chooser.getSelectedFile().getName();
             inputDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar + fileName;
             textFieldImageDir.setText(inputDir);
+            /*
             File fileDir = new File(inputDir);
             System.err.println(inputDir);
-             /*
+             
             FilenameFilter fileNameFilter = new asegFilter();
             File[] fileNames = fileDir.listFiles(fileNameFilter);
             for ( int i = 0; i < fileNames.length; i++ ) {            
