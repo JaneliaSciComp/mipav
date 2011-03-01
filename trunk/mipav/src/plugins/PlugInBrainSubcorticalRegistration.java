@@ -3,8 +3,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.plugins.*; // needed to load PlugInAlgorithm / PlugInView / PlugInFile interface
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.BrainSubcortical.*;
 
 import java.awt.*;
 import java.util.*;
