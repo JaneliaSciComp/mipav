@@ -1,28 +1,17 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
-import gov.nih.mipav.model.*;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.structures.*;
 
-import java.awt.Color;
-import java.awt.Dimension;
 import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.*;
 
-import javax.swing.JFileChooser;
-import javax.swing.JTextField;
-
-import java.io.FileOutputStream;
 
 public class PlugInAlgorithmBrainSubcortical extends AlgorithmBase {
 
@@ -48,7 +37,7 @@ public class PlugInAlgorithmBrainSubcortical extends AlgorithmBase {
     private String caseCompareDir;
     
     /** vector to record which subsections to do registration. */
-    private Vector regSection;
+    private Vector<Integer> regSection;
     
     /** Reference to the brain subcortical plugin dialog. */
     private PlugInDialogBrainSubcortical parentDialog;
@@ -64,7 +53,7 @@ public class PlugInAlgorithmBrainSubcortical extends AlgorithmBase {
      * @param _parentDialog    reference to parent dialog, for file info saving. 
      * @param _regSection    vector to flag which subsection to do registration. 
      */
-    public PlugInAlgorithmBrainSubcortical(String _inputDir, String _outputDir, String _caseCompareDir, PlugInDialogBrainSubcortical _parentDialog, Vector _regSection ) {
+    public PlugInAlgorithmBrainSubcortical(String _inputDir, String _outputDir, String _caseCompareDir, PlugInDialogBrainSubcortical _parentDialog, Vector<Integer> _regSection ) {
     	inputDir = _inputDir;
     	outputDir = _outputDir;
     	caseCompareDir = _caseCompareDir;
@@ -333,15 +322,12 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	
 	/** Brain subcortical case number */
 	public int caseNumber;
-	
-	/** User interface reference. */ 
-	private ViewUserInterface UI;
-	
+
 	/** Brain subcortical image reference. */
 	private ModelImage myImage;
 	
 	/** Vector array to indicates which subsections to do registration. */
-	private Vector regSection;
+	private Vector<Integer> regSection;
 	
 	/** Vector to store the statistics data for current registered subsections. */
     public 	Vector<StatisticsData> myData= new Vector<StatisticsData>();
@@ -580,12 +566,11 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
     *  Each instance is the reference to one brain MRI images.  Each instance also 
     *  contains the reference of the 2nd brain MRI image dataset for comparison. 
     */  
-	 public BrainSubcorticalInstance(int _caseNumber, String _fileName, String _directory, Vector _regSection, PlugInDialogBrainSubcortical parent) {
+	 public BrainSubcorticalInstance(int _caseNumber, String _fileName, String _directory, Vector<Integer> _regSection, PlugInDialogBrainSubcortical parent) {
 		 	caseNumber = _caseNumber;
 		 	fileName = _fileName;
 	        directory = _directory;
 	        regSection = _regSection;
-	        UI = ViewUserInterface.getReference();
 	        parentDialog = parent;
 	 }
 
@@ -1949,12 +1934,6 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	    		// image threshold of color label
 	            if (algorThreshold_LeftHippocampus != null && (algorThreshold_LeftHippocampus.isCompleted() == true)) {
 	            	image_LeftHippocampus.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftHippocampus, image_LeftHippocampus);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftHippocampus, image_LeftHippocampus);
-	                }
 
 	                try {
 	                	image_LeftHippocampus.calcMinMax();
@@ -1968,13 +1947,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_RightHippocampus != null && (algorThreshold_RightHippocampus.isCompleted() == true)) {
 	            	image_RightHippocampus.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightHippocampus, image_RightHippocampus);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightHippocampus, image_RightHippocampus);
-	                }
-
+	             
 	                try {
 	                	image_RightHippocampus.calcMinMax();
 	                	image_RightHippocampus.notifyImageDisplayListeners(null, true);
@@ -1987,13 +1960,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_LeftAmygdala != null && (algorThreshold_LeftAmygdala.isCompleted() == true)) {
 	            	image_LeftAmygdala.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftAmygdala, image_LeftAmygdala);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftAmygdala, image_LeftAmygdala);
-	                }
-
+	               
 	                try {
 	                	image_LeftAmygdala.calcMinMax();
 	                	image_LeftAmygdala.notifyImageDisplayListeners(null, true);
@@ -2006,12 +1973,6 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_RightAmygdala != null && (algorThreshold_RightAmygdala.isCompleted() == true)) {
 	            	image_RightAmygdala.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightAmygdala, image_RightAmygdala);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightAmygdala, image_RightAmygdala);
-	                }
 
 	                try {
 	                	image_RightAmygdala.calcMinMax();
@@ -2026,13 +1987,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_LeftCaudate != null && (algorThreshold_LeftCaudate.isCompleted() == true)) {
 	            	image_LeftCaudate.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftCaudate, image_LeftCaudate);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftCaudate, image_LeftCaudate);
-	                }
-
+	              
 	                try {
 	                	image_LeftCaudate.calcMinMax();
 	                	image_LeftCaudate.notifyImageDisplayListeners(null, true);
@@ -2046,13 +2001,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_RightCaudate != null && (algorThreshold_RightCaudate.isCompleted() == true)) {
 	            	image_RightCaudate.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightCaudate, image_RightCaudate);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightCaudate, image_RightCaudate);
-	                }
-
+	               
 	                try {
 	                	image_RightCaudate.calcMinMax();
 	                	image_RightCaudate.notifyImageDisplayListeners(null, true);
@@ -2066,13 +2015,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_LeftPutamen != null && (algorThreshold_LeftPutamen.isCompleted() == true)) {
 	            	image_LeftPutamen.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftPutamen, image_LeftPutamen);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftPutamen, image_LeftPutamen);
-	                }
-
+	               
 	                try {
 	                	image_LeftPutamen.calcMinMax();
 	                	image_LeftPutamen.notifyImageDisplayListeners(null, true);
@@ -2086,13 +2029,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_RightPutamen != null && (algorThreshold_RightPutamen.isCompleted() == true)) {
 	            	image_RightPutamen.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightPutamen, image_RightPutamen);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightPutamen, image_RightPutamen);
-	                }
-
+	                
 	                try {
 	                	image_RightPutamen.calcMinMax();
 	                	image_RightPutamen.notifyImageDisplayListeners(null, true);
@@ -2105,13 +2042,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_LeftGlobusPallidus != null && (algorThreshold_LeftGlobusPallidus.isCompleted() == true)) {
 	            	image_LeftGlobusPallidus.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftGlobusPallidus, image_LeftGlobusPallidus);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftGlobusPallidus, image_LeftGlobusPallidus);
-	                }
-
+	                
 	                try {
 	                	image_LeftGlobusPallidus.calcMinMax();
 	                	image_LeftGlobusPallidus.notifyImageDisplayListeners(null, true);
@@ -2124,13 +2055,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_RightGlobusPallidus != null && (algorThreshold_RightGlobusPallidus.isCompleted() == true)) {
 	            	image_RightGlobusPallidus.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightGlobusPallidus, image_RightGlobusPallidus);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightGlobusPallidus, image_RightGlobusPallidus);
-	                }
-
+	               
 	                try {
 	                	image_RightGlobusPallidus.calcMinMax();
 	                	image_RightGlobusPallidus.notifyImageDisplayListeners(null, true);
@@ -2144,13 +2069,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_LeftThalamus != null && (algorThreshold_LeftThalamus.isCompleted() == true)) {
 	            	image_LeftThalamus.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftThalamus, image_LeftThalamus);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftThalamus, image_LeftThalamus);
-	                }
-
+	                
 	                try {
 	                	image_LeftThalamus.calcMinMax();
 	                	image_LeftThalamus.notifyImageDisplayListeners(null, true);
@@ -2164,13 +2083,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            }
 	            else if (algorThreshold_RightThalamus != null && (algorThreshold_RightThalamus.isCompleted() == true)) {
 	            	image_RightThalamus.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightThalamus, image_RightThalamus);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightThalamus, image_RightThalamus);
-	                }
-
+	                
 	                try {
 	                	image_RightThalamus.calcMinMax();
 	                	image_RightThalamus.notifyImageDisplayListeners(null, true);
@@ -2185,12 +2098,6 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            // binary threshold on origin and registered images. 
 	            if (algorThreshold_LeftHippocampus_binary != null && (algorThreshold_LeftHippocampus_binary.isCompleted() == true)) {
 	            	image_LeftHippocampus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftHippocampus_binary, image_LeftHippocampus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftHippocampus_binary, image_LeftHippocampus_binary);
-	                }
 
 	                try {
 	                	image_LeftHippocampus_binary.calcMinMax();
@@ -2204,14 +2111,8 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		   
 	            } else if (algorThreshold_RightHippocampus_binary != null && (algorThreshold_RightHippocampus_binary.isCompleted() == true)) {
 	            	image_RightHippocampus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightHippocampus_binary, image_RightHippocampus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightHippocampus_binary, image_RightHippocampus_binary);
-	                }
-
-	                try {
+	                
+	            	try {
 	                	image_RightHippocampus_binary.calcMinMax();
 	                	image_RightHippocampus_binary.notifyImageDisplayListeners(null, true);
 	                } catch (OutOfMemoryError error) {
@@ -2222,14 +2123,8 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            algorThreshold_RightHippocampus_binary = null;
 		        } else if (algorThreshold_LeftAmygdala_binary != null && (algorThreshold_LeftAmygdala_binary.isCompleted() == true)) {
 	            	image_LeftAmygdala_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftAmygdala_binary, image_LeftAmygdala_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftAmygdala_binary, image_LeftAmygdala_binary);
-	                }
-
-	                try {
+	                
+	            	try {
 	                	image_LeftAmygdala_binary.calcMinMax();
 	                	image_LeftAmygdala_binary.notifyImageDisplayListeners(null, true);
 	                } catch (OutOfMemoryError error) {
@@ -2240,14 +2135,8 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            algorThreshold_LeftAmygdala_binary = null;
 		        } else if (algorThreshold_RightAmygdala_binary != null && (algorThreshold_RightAmygdala_binary.isCompleted() == true)) {
 	            	image_RightAmygdala_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightAmygdala_binary, image_RightAmygdala_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightAmygdala_binary, image_RightAmygdala_binary);
-	                }
-
-	                try {
+	                
+	            	try {
 	                	image_RightAmygdala_binary.calcMinMax();
 	                	image_RightAmygdala_binary.notifyImageDisplayListeners(null, true);
 	                } catch (OutOfMemoryError error) {
@@ -2258,12 +2147,6 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            algorThreshold_RightAmygdala_binary = null;
 		        } else if (algorThreshold_LeftCaudate_binary != null && (algorThreshold_LeftCaudate_binary.isCompleted() == true)) {
 	            	image_LeftCaudate_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftCaudate_binary, image_LeftCaudate_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftCaudate_binary, image_LeftCaudate_binary);
-	                }
 
 	                try {
 	                	image_LeftCaudate_binary.calcMinMax();
@@ -2276,13 +2159,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            algorThreshold_LeftCaudate_binary = null;
 		        } else if (algorThreshold_RightCaudate_binary != null && (algorThreshold_RightCaudate_binary.isCompleted() == true)) {
 	            	image_RightCaudate_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightCaudate_binary, image_RightCaudate_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightCaudate_binary, image_RightCaudate_binary);
-	                }
-
+	               
 	                try {
 	                	image_RightCaudate_binary.calcMinMax();
 	                	image_RightCaudate_binary.notifyImageDisplayListeners(null, true);
@@ -2294,13 +2171,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            algorThreshold_RightCaudate_binary = null;
 		        } else if (algorThreshold_LeftPutamen_binary != null && (algorThreshold_LeftPutamen_binary.isCompleted() == true)) {
 	            	image_LeftPutamen_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftPutamen_binary, image_LeftPutamen_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftPutamen_binary, image_LeftPutamen_binary);
-	                }
-
+	                
 	                try {
 	                	image_LeftPutamen_binary.calcMinMax();
 	                	image_LeftPutamen_binary.notifyImageDisplayListeners(null, true);
@@ -2312,12 +2183,6 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            algorThreshold_LeftPutamen_binary = null;
 		        } else if (algorThreshold_RightPutamen_binary != null && (algorThreshold_RightPutamen_binary.isCompleted() == true)) {
 	            	image_RightPutamen_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightPutamen_binary, image_RightPutamen_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightPutamen_binary, image_RightPutamen_binary);
-	                }
 
 	                try {
 	                	image_RightPutamen_binary.calcMinMax();
@@ -2330,13 +2195,6 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            algorThreshold_RightPutamen_binary = null;
 		        } else if (algorThreshold_LeftGlobusPallidus_binary != null && (algorThreshold_LeftGlobusPallidus_binary.isCompleted() == true)) {
 	            	image_LeftGlobusPallidus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftGlobusPallidus_binary, image_LeftGlobusPallidus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftGlobusPallidus_binary, image_LeftGlobusPallidus_binary);
-	                }
-
 	                try {
 	                	image_LeftGlobusPallidus_binary.calcMinMax();
 	                	image_LeftGlobusPallidus_binary.notifyImageDisplayListeners(null, true);
@@ -2348,13 +2206,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            algorThreshold_LeftGlobusPallidus_binary = null;
 		        } else if (algorThreshold_RightGlobusPallidus_binary != null && (algorThreshold_RightGlobusPallidus_binary.isCompleted() == true)) {
 	            	image_RightGlobusPallidus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightGlobusPallidus_binary, image_RightGlobusPallidus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightGlobusPallidus_binary, image_RightGlobusPallidus_binary);
-	                }
-
+	               
 	                try {
 	                	image_RightGlobusPallidus_binary.calcMinMax();
 	                	image_RightGlobusPallidus_binary.notifyImageDisplayListeners(null, true);
@@ -2367,13 +2219,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            System.gc();
 	            } else if (algorThreshold_LeftThalamus_binary != null && (algorThreshold_LeftThalamus_binary.isCompleted() == true)) {
 	            	image_LeftThalamus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_LeftThalamus_binary, image_LeftThalamus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_LeftThalamus_binary, image_LeftThalamus_binary);
-	                }
-
+	               
 	                try {
 	                	image_LeftThalamus_binary.calcMinMax();
 	                	image_LeftThalamus_binary.notifyImageDisplayListeners(null, true);
@@ -2385,13 +2231,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		            algorThreshold_LeftThalamus_binary = null;
 		        } else if (algorThreshold_RightThalamus_binary != null && (algorThreshold_RightThalamus_binary.isCompleted() == true)) {
 	            	image_RightThalamus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(image_RightThalamus_binary, image_RightThalamus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(image_RightThalamus_binary, image_RightThalamus_binary);
-	                }
-
+	                
 	                try {
 	                	image_RightThalamus_binary.calcMinMax();
 	                	image_RightThalamus_binary.notifyImageDisplayListeners(null, true);
@@ -2406,13 +2246,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	            // registered image binary threshold
 	            if (algorThreshold_LeftHippocampus_reg_binary != null && (algorThreshold_LeftHippocampus_reg_binary.isCompleted() == true)) {
 	            	regImage_LeftHippocampus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_LeftHippocampus_binary, regImage_LeftHippocampus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_LeftHippocampus_binary, regImage_LeftHippocampus_binary);
-	                }
-
+	                
 	                try {
 	                	regImage_LeftHippocampus_binary.calcMinMax();
 	                	regImage_LeftHippocampus_binary.notifyImageDisplayListeners(null, true);
@@ -2424,13 +2258,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_LeftHippocampus_reg_binary = null;
 		        } else if (algorThreshold_RightHippocampus_reg_binary != null && (algorThreshold_RightHippocampus_reg_binary.isCompleted() == true)) {
 	            	regImage_RightHippocampus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_RightHippocampus_binary, regImage_RightHippocampus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_RightHippocampus_binary, regImage_RightHippocampus_binary);
-	                }
-
+	                
 	                try {
 	                	regImage_RightHippocampus_binary.calcMinMax();
 	                	regImage_RightHippocampus_binary.notifyImageDisplayListeners(null, true);
@@ -2442,13 +2270,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_RightHippocampus_reg_binary = null;
 		        } else if (algorThreshold_LeftAmygdala_reg_binary != null && (algorThreshold_LeftAmygdala_reg_binary.isCompleted() == true)) {
 	            	regImage_LeftAmygdala_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_LeftAmygdala_binary, regImage_LeftAmygdala_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_LeftAmygdala_binary, regImage_LeftAmygdala_binary);
-	                }
-
+	                
 	                try {
 	                	regImage_LeftAmygdala_binary.calcMinMax();
 	                	regImage_LeftAmygdala_binary.notifyImageDisplayListeners(null, true);
@@ -2460,13 +2282,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_LeftAmygdala_reg_binary = null;
 		        } else if (algorThreshold_RightAmygdala_reg_binary != null && (algorThreshold_RightAmygdala_reg_binary.isCompleted() == true)) {
 	            	regImage_RightAmygdala_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_RightAmygdala_binary, regImage_RightAmygdala_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_RightAmygdala_binary, regImage_RightAmygdala_binary);
-	                }
-
+	                
 	                try {
 	                	regImage_RightAmygdala_binary.calcMinMax();
 	                	regImage_RightAmygdala_binary.notifyImageDisplayListeners(null, true);
@@ -2478,13 +2294,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_RightAmygdala_reg_binary = null;
 		        } else if (algorThreshold_LeftCaudate_reg_binary != null && (algorThreshold_LeftCaudate_reg_binary.isCompleted() == true)) {
 	            	regImage_LeftCaudate_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_LeftCaudate_binary, regImage_LeftCaudate_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_LeftCaudate_binary, regImage_LeftCaudate_binary);
-	                }
-
+	                
 	                try {
 	                	regImage_LeftCaudate_binary.calcMinMax();
 	                	regImage_LeftCaudate_binary.notifyImageDisplayListeners(null, true);
@@ -2496,12 +2306,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_LeftCaudate_reg_binary = null;
 		        } else if (algorThreshold_RightCaudate_reg_binary != null && (algorThreshold_RightCaudate_reg_binary.isCompleted() == true)) {
 	            	regImage_RightCaudate_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_RightCaudate_binary, regImage_RightCaudate_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_RightCaudate_binary, regImage_RightCaudate_binary);
-	                }
+	                
 
 	                try {
 	                	regImage_RightCaudate_binary.calcMinMax();
@@ -2514,13 +2319,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_RightCaudate_reg_binary = null;
 		        }  else if (algorThreshold_LeftPutamen_reg_binary != null && (algorThreshold_LeftPutamen_reg_binary.isCompleted() == true)) {
 	            	regImage_LeftPutamen_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_LeftPutamen_binary, regImage_LeftPutamen_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_LeftPutamen_binary, regImage_LeftPutamen_binary);
-	                }
-
+	               
 	                try {
 	                	regImage_LeftPutamen_binary.calcMinMax();
 	                	regImage_LeftPutamen_binary.notifyImageDisplayListeners(null, true);
@@ -2532,12 +2331,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_LeftPutamen_reg_binary = null;
 		        } else if (algorThreshold_RightPutamen_reg_binary != null && (algorThreshold_RightPutamen_reg_binary.isCompleted() == true)) {
 	            	regImage_RightPutamen_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_RightPutamen_binary, regImage_RightPutamen_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_RightPutamen_binary, regImage_RightPutamen_binary);
-	                }
+	                
 
 	                try {
 	                	regImage_RightPutamen_binary.calcMinMax();
@@ -2550,13 +2344,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_RightPutamen_reg_binary = null;
 		        } else if (algorThreshold_LeftGlobusPallidus_reg_binary != null && (algorThreshold_LeftGlobusPallidus_reg_binary.isCompleted() == true)) {
 	            	regImage_LeftGlobusPallidus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_LeftGlobusPallidus_binary, regImage_LeftGlobusPallidus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_LeftGlobusPallidus_binary, regImage_LeftGlobusPallidus_binary);
-	                }
-
+	                
 	                try {
 	                	regImage_LeftGlobusPallidus_binary.calcMinMax();
 	                	regImage_LeftGlobusPallidus_binary.notifyImageDisplayListeners(null, true);
@@ -2568,13 +2356,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_LeftGlobusPallidus_reg_binary = null;
 		        } else if (algorThreshold_RightGlobusPallidus_reg_binary != null && (algorThreshold_RightGlobusPallidus_reg_binary.isCompleted() == true)) {
 	            	regImage_RightGlobusPallidus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_RightGlobusPallidus_binary, regImage_RightGlobusPallidus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_RightGlobusPallidus_binary, regImage_RightGlobusPallidus_binary);
-	                }
-
+	                
 	                try {
 	                	regImage_RightGlobusPallidus_binary.calcMinMax();
 	                	regImage_RightGlobusPallidus_binary.notifyImageDisplayListeners(null, true);
@@ -2586,13 +2368,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	                algorThreshold_RightGlobusPallidus_reg_binary = null;
 		        } else if (algorThreshold_LeftThalamus_reg_binary != null && (algorThreshold_LeftThalamus_reg_binary.isCompleted() == true)) {
 	            	regImage_LeftThalamus_binary.clearMask();
-	                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE)
-	                        || (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
-	                    parentDialog.updateFileInfoOtherModality(regImage_LeftThalamus_binary, regImage_LeftThalamus_binary);
-	                } else {
-	                	parentDialog.updateFileInfo(regImage_LeftThalamus_binary, regImage_LeftThalamus_binary);
-	                }
-
+	                
 	                try {
 	                	regImage_LeftThalamus_binary.calcMinMax();
 	                	regImage_LeftThalamus_binary.notifyImageDisplayListeners(null, true);
@@ -3242,7 +3018,6 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		int yDim = srcImage.getExtents()[1];
 		int zDim = srcImage.getExtents()[2];
 		
-		int sliceSize = xDim * yDim;
 		int volSize = xDim * yDim * zDim;
 		
 		int[] sourceBuffer = new int[volSize];
@@ -3413,7 +3188,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	    	String fileName = comparedImage.getImageFileName();
 	    	int fileType = comparedImage.getType();
 	    	
-	    	parentDialog.updateFileInfo(myImage, comparedImage);
+	    	// parentDialog.updateFileInfo(myImage, comparedImage);
 	    	
 	    	comparedImage.saveImage(fileDir, fileName, fileType, true);
 	  }
