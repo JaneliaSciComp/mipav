@@ -31,7 +31,7 @@ public class PlugInBrainSubcorticalRegistration implements PlugInGeneric, Comman
 	private String caseCompareDir;
 	
 	/** Vector indicates which subsections to do registration. */
-    private Vector regSection = new Vector();
+    private Vector<Integer> regSection = new Vector<Integer>();
     
     /** Flag to check that command line plugin is Brain subcortical */
     private boolean subcorticalFlag = false;
@@ -64,10 +64,7 @@ public class PlugInBrainSubcorticalRegistration implements PlugInGeneric, Comman
     public static int RG = 9; 
     public static int LT = 10; 
     public static int RT = 11;
-    
-    /** command line arguments. */
-    private String[] args;
-	
+   
     /**
      * Command line processing
      */
