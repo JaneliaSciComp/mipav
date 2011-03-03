@@ -22,6 +22,11 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.process.ImageProcessor;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -296,9 +301,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             voiManager.actionPerformed(event);
         }
         else if (command.equals("ScrollLink")) {
-        	System.out.println("hello");
-        	
-        	
         	final Enumeration<ModelImage> regImages = ViewUserInterface.getReference().getRegisteredImages();
             // add only the framed ones to a new list...also..dont include the active image
         	int activeImageNumDims = getImageA().getNDims();
@@ -1132,6 +1134,44 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogColorEdge(this, getActiveImage());
         } else if (command.equals("Grays -> RGB")) {
             new JDialogRGBConcat(this, getActiveImage());
+        } else if (command.equals("MIPAV -> ImageJ")) {
+        	ModelImage mi = getActiveImage();
+        	int type = mi.getType();
+        	if(!(type == ModelStorageBase.UBYTE || type == ModelStorageBase.FLOAT || type == ModelStorageBase.USHORT || type == ModelStorageBase.ARGB)) {
+    			MipavUtil.displayError("Image type must either be UBYTE, USHORT, FLOAT, or ARGB");
+        		return;
+    		}
+            if(mi.is2DImage()) {
+            	ImageProcessor ip = ModelImageToImageJConversion.convert2D(mi);
+            	new ImagePlus("ImageJ:" + mi.getImageName(), ip).show();
+            }else if(mi.is3DImage()) {
+            	ImageStack is = ModelImageToImageJConversion.convert3D(mi);
+            	new ImagePlus("ImageJ:" + mi.getImageName(), is).show();
+        
+            }
+        }  else if (command.equals("launchImageJ")) {
+        	
+        	new ij.ImageJ();
+        }
+        
+        else if (command.equals("ImageJ -> MIPAV")) {
+        	ImagePlus imp = WindowManager.getCurrentImage();
+        	if(imp != null) {
+        		ImageProcessor ip = imp.getProcessor();
+        		if(ip != null) {
+        			ModelImage mi = ImageJToModelImageConversion.convert2D(ip);
+        			new ViewJFrameImage(mi);
+        		}else {
+        			ImageStack is = imp.getImageStack();
+        			ModelImage mi = ImageJToModelImageConversion.convert3D(is);
+        			new ViewJFrameImage(mi);
+        		}
+        		
+        		
+        		
+        	}
+        	
+        	
         } else if (command.equals("HistoSummary")) {
             new JDialogHistogramSummary(this, getActiveImage());
         } else if (command.equals("Convert type")) {
@@ -2295,7 +2335,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogLogSlopeMapping();
         }  else if (command.equals("HyperGraph")) {
         	new JDialogHyperGraph(this);
-        } 
+        } else if(command.startsWith("PlugInImageJ")) {
+        	ViewUserInterface.getReference().actionPerformed(event);
+        }
     }
 
     /**

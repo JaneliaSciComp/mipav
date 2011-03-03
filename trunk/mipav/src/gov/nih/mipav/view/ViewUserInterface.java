@@ -17,6 +17,10 @@ import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterfaceDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ImageProcessor;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -694,15 +698,39 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         	 Object thePlugInInstance = null; 
 
              final String plugInName = command.substring(12);
-             
+
              try {
                  thePlugInClass = Class.forName(plugInName);
                  
                  for(Class c : thePlugInClass.getInterfaces()) {
-             		if(c.equals(ij.plugin.PlugIn.class)) {
+             		if((c.equals(ij.plugin.PlugIn.class)) || (thePlugInClass.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class))) {
              			thePlugInInstance = Class.forName(plugInName).newInstance();
              			String args = "";
              			((ij.plugin.PlugIn)thePlugInInstance).run(args);
+                 		break;
+                 	}else  if(c.equals(ij.plugin.filter.PlugInFilter.class)) {
+    
+                 		//first see if there is an active image
+                 		if (getActiveImageFrame() != null) {
+                 			ModelImage img = getActiveImageFrame().getImageA();
+                 			if(img.is2DImage()) {
+                 				
+                 				ImageProcessor ip = ModelImageToImageJConversion.convert2D(img);
+                 				thePlugInInstance = Class.forName(plugInName).newInstance();
+                 				((ij.plugin.filter.PlugInFilter)thePlugInInstance).run(ip);
+                 				
+                 			}else {
+                 				MipavUtil.displayError("This plugin only works on a 2D image");
+                 			}
+                 		}else {
+                 			MipavUtil.displayError("There must be an active image open to run this plugin");
+                 			return;
+                 		}
+                 		
+                 		/*ModelImage img = getActiveImageFrame().getImageA();
+                 		ImageStack is = ModelImageToImageJConversion.convert3D(img);
+                 		new ImagePlus("blah",is).show();*/
+                 	
                  		break;
                  	}
              	}
@@ -810,8 +838,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
-        } else {
-        	System.out.println(event.getActionCommand());
         }
 
     }
@@ -1096,12 +1122,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     	 hier = (String[]) catField.get(plugin);
                     }catch(NoSuchFieldException e1) {
                     	for(Class c : plugin.getInterfaces()) {
-                    		if(c.equals(ij.plugin.PlugIn.class)) {
+                    		if((c.equals(ij.plugin.PlugIn.class) || c.equals(ij.plugin.filter.PlugInFilter.class)) || (plugin.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class))) {
                         		isImageJPlugin = true;
                         		hier = new String[]{"ImageJ"};
                         		break;
                         	}
                     	}
+               
+                    
+                    	/*if( plugin.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class)) {
+                    		isImageJPlugin = true;
+                    		hier = new String[]{"ImageJ"};
+                    		break;
+                    	}*/
                     	
                     }
                    
@@ -1150,7 +1183,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 	                        pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
 	                        currentMenu.add(pluginMenuItem);
 	                    }
-	                    System.out.println();
+	                   
                     
 
                 } catch (final ClassNotFoundException e) {
@@ -1162,7 +1195,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     // e.printStackTrace();
                 } catch (final NoClassDefFoundError e) {
                     // components of some classes may no longer exist in the classpath.
-                    System.out.println("Here: " + name);
+                 
                 }
             }
         }
