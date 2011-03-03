@@ -227,7 +227,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		} else if(e.getActionCommand().equals(OPEN_TEMPLATE)) {
 			JFileChooser chooser = new JFileChooser();
 			chooser.setDialogTitle("Open a VOI template");
-			chooser.setCurrentDirectory(new File(imageDir));
+			chooser.setCurrentDirectory(new File(imageDir+PlugInMuscleImageDisplay.VOI_DIR+File.separator));
 			chooser.setMultiSelectionEnabled(false);
 		    chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".nia" }));
 		    
@@ -240,7 +240,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		    }
 		} else if(e.getActionCommand().equals(SAVE_TEMPLATE)) {
 			JFileChooser chooser = new JFileChooser();
-			chooser.setCurrentDirectory(new File(imageDir));
+			chooser.setCurrentDirectory(new File(imageDir+PlugInMuscleImageDisplay.VOI_DIR+File.separator));
 			chooser.setDialogTitle("Save the current VOI template");
             chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".nia"}));
 
@@ -722,9 +722,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 	    
 	    customPane.getComponentImage().useHighlight(false);
+	    
 	    scrollPane.setFocusable(true);
 	    scrollPane.setBackground(Color.black);
-	    scrollPane.addKeyListener(customPane);    
+	    //scrollPane.addKeyListener(customPane);    
 	  
 	    dialogTabs = new JTabbedPane();
 	    dialogTabs.setMinimumSize(new Dimension (370, 585));
@@ -812,13 +813,20 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	}
 
 	private void performDialog() {
+		ViewJFrameImage i = null;
+		    
 		if (ViewUserInterface.getReference().isAppFrameVisible()) {
-        	new PlugInMuscleImageDisplay(srcImage, titles, voiList,  
+        	i = new PlugInMuscleImageDisplay(srcImage, titles, voiList,  
         			imageType, symmetry, multipleSlices);
         } else {
-        	new PlugInMuscleImageDisplay(srcImage, titles, voiList, 
+        	i = new PlugInMuscleImageDisplay(srcImage, titles, voiList, 
         			imageType, symmetry, true, multipleSlices);
         }
+        
+        boolean b = i.requestFocusInWindow();
+        System.out.println("Has the focus: "+b);
+		System.out.println("Added as a key listener");
+		//i.addKeyListener(i);
 	}
 	
 	public enum Option {
