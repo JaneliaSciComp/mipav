@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.view.Preferences.ComplexDisplay;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -701,16 +702,16 @@ public class PatientSlice {
 
             float imageMinA = (float) Math.min(0, imageA.getMin());
             //set variables related to display of complex images
-            int imageAsf = imageA.isComplexImage() ? 2 : 1; //defines the mapping between image buffer locations and pixel buffer locations
+            int imageAsf = imageA.isComplexImage() && Preferences.getComplexDisplay() != ComplexDisplay.MAGNITUDE ? 2 : 1; //defines the mapping between image buffer locations and pixel buffer locations
             int imageBsf = 1;
             if(imageB != null) {
-                imageBsf = imageB.isComplexImage() ? 2 : 1;
+                imageBsf = imageB.isComplexImage() && Preferences.getComplexDisplay() != ComplexDisplay.MAGNITUDE ? 2 : 1;
             }
             boolean logMagDisplay = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
             boolean imageAComplex = false, imageBComplex = false;
-            imageAComplex  = imageA.isComplexImage();
+            imageAComplex  = imageA.isComplexImage() && Preferences.getComplexDisplay() != ComplexDisplay.MAGNITUDE;
             if(imageB != null) {
-                imageBComplex = imageB.isComplexImage();
+                imageBComplex = imageB.isComplexImage() && Preferences.getComplexDisplay() != ComplexDisplay.MAGNITUDE;
             }
             
             for (int j = 0; j < localImageExtents[1]; j++) {
@@ -793,7 +794,7 @@ public class PatientSlice {
      * Helper method for calculating complex values.  Performing isComplexBuffer and logMagDsplay checks elsewhere improves performance.
      */
     private float getBufferValue(boolean logMagDisplay, boolean isComplexBuffer, float[] imageBuffer, int ind4) {
-        if(isComplexBuffer) { //complex images in MIPAV are always stored in a+bi form           
+        if(isComplexBuffer) { //complex images in MIPAV are always stored in a+bi form, but may not always be shown that way           
             double mag = Math.sqrt(imageBuffer[ind4]*imageBuffer[ind4] + imageBuffer[ind4+1]*imageBuffer[ind4+1]);
             
             if(logMagDisplay) {
