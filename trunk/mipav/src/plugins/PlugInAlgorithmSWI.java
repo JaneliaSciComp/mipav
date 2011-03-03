@@ -159,17 +159,22 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	
     	ModelImage kImage = createkImage(iImage);
     	
-    	ModelImage kCenterImage = createKCenterImage(kImage);
-        
     	sizeRo = 512;
-    	sizePe = 512;
+        sizePe = 512;
     	
-    	ModelImage iCenterImage = runiFFTonKCenter(kCenterImage);
+        originRo = (sizeRo - roFilterSize)/2;
+        originPe = (sizePe - peFilterSize)/2;
         
+    	ModelImage kCenterImage = createKCenterImage(kImage);
+    	
     	sizeRo = 480;
         sizePe = 480;
         
-    	ModelImage iCenterImageRescale = rescaleICenter(iCenterImage);    	
+        originRo = (sizeRo - roFilterSize)/2;
+        originPe = (sizePe - peFilterSize)/2;
+    	ModelImage iCenterImage = runiFFTonKCenter(kCenterImage); //once again 480x480
+        
+    	//ModelImage iCenterImageRescale = rescaleICenter(iCenterImage);    	
     	
     	
     	BitSet brainMaskSet = new BitSet(sizeRo*sizePe*sizeSs);
@@ -181,14 +186,13 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	
         float[] ixRealFinal = new float[sizeRo*sizePe*sizeSs];
         float[] ixImagFinal = new float[sizeRo*sizePe*sizeSs];
-        
-    	@SuppressWarnings("unused")
-        ModelImage iFinal = generateIFinal(iImage, iCenterImageRescale, brainMaskSet, ixRealFinal, ixImagFinal);
+
+        ModelImage iFinal = generateIFinal(iImage, iCenterImage, brainMaskSet, ixRealFinal, ixImagFinal);
         
     	float[] phaseMaskData = new float[sizeRo*sizePe*sizeSs];
-    	@SuppressWarnings("unused")
+
         ModelImage phaseMask = generatePhaseMask(brainMaskSet, ixRealFinal, ixImagFinal, phaseMaskData);
-    	@SuppressWarnings("unused")
+
         ModelImage magEnhanced = generateMagEnhanced(phaseMaskData, realData);
     }
     
@@ -201,6 +205,9 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
         iCenterImageRescale = cropAlgo.getDestImage();
 
+        ViewJFrameImage iRescaleFrame = new ViewJFrameImage(iCenterImageRescale);
+        iRescaleFrame.setVisible(true);
+        
         return iCenterImageRescale;
         
     }
@@ -289,7 +296,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage runiFFTonKCenter(ModelImage kCenterImage) {
-        ModelImage iCenterDest = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "complexData");
+        ModelImage iCenterDest = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "ixcenter33");
         kCenterImage.setImage25D(true);
         iCenterDest.setImage25D(true);
         AlgorithmFFT fft2 = new AlgorithmFFT(iCenterDest, kCenterImage, AlgorithmFFT.INVERSE, false, false, true);
@@ -320,15 +327,32 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
     private ModelImage createKCenterImage(ModelImage kImage) {
         ModelImage kCenterImage = (ModelImage) kImage.clone();
+        int xDim = kCenterImage.getExtents()[0];
+        int yDim = kCenterImage.getExtents()[1];
         kCenterImage.setImageName("kCenterImage");
-        for(int i=0; i<sizeRo; i++) {
-            if(i < originRo+1 || i > originRo+roFilterSize) {
-                for(int j=0; j<sizePe; j++) {
-                    if(j < originPe+1 || j > originPe + peFilterSize) {
-                        for(int k=0; k<sizeSs; k++) {
-                                kCenterImage.set(i, j, k, 0);
-                        }
+        for(int i=0; i<xDim; i++) {
+            for(int j=0; j<yDim; j++) {
+                if(i < originRo+1 || i > originRo+roFilterSize) {
+                    //System.out.println("Coord: ("+i+", "+j+")");
+                    for(int k=0; k<sizeSs; k++) {
+                        kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i), 0);
+                        kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i)+1, 0);
                     }
+                } else {
+                    System.out.println("Skipped: ("+i+", "+j+")");
+                }
+            }
+        }
+        for(int i=0; i<xDim; i++) {
+            for(int j=0; j<yDim; j++) {
+                if(j < originPe+1 || j > originPe + peFilterSize) {
+                    //System.out.println("Coord: ("+i+", "+j+")");
+                    for(int k=0; k<sizeSs; k++) {
+                        kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i), 0);
+                        kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i)+1, 0);
+                    }
+                } else {
+                    System.out.println("Skipped: ("+i+", "+j+")");
                 }
             }
         }
