@@ -1156,17 +1156,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         
         else if (command.equals("ImageJ -> MIPAV")) {
         	ImagePlus imp = WindowManager.getCurrentImage();
+        	
         	if(imp != null) {
-        		ImageProcessor ip = imp.getProcessor();
-        		if(ip != null) {
+        
+        		ImageStack is = imp.getStack();
+        		if(is == null || imp.getStackSize() == 1) {
+        			ImageProcessor ip = imp.getProcessor();
         			ModelImage mi = ImageJToModelImageConversion.convert2D(ip);
         			new ViewJFrameImage(mi);
         		}else {
-        			ImageStack is = imp.getImageStack();
         			ModelImage mi = ImageJToModelImageConversion.convert3D(is);
         			new ViewJFrameImage(mi);
         		}
-        		
+
         		
         		
         	}

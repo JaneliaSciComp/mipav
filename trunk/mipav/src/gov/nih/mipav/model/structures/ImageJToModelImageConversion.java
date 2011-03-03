@@ -182,13 +182,14 @@ public class ImageJToModelImageConversion {
 		int[] extents = {xdim,ydim,zdim};
 		int sliceLength = xdim * ydim;
 		int start = 0;
-		for(int i=0;i<zdim;i++) {
+
+		for(int i=1;i<=zdim;i++) {
 			ip = is.getProcessor(i);
 			
 			if(ip instanceof ByteProcessor) {
 				byte[] ipPixels = (byte[])ip.getPixels();
 				
-				if(i==0) {
+				if(i==1) {
 					mi = new ModelImage(ModelStorageBase.UBYTE,extents,"");
 				}
 				
@@ -209,7 +210,7 @@ public class ImageJToModelImageConversion {
 				
 				short[] ipPixels = (short[])ip.getPixels();
 				
-				if(i==0) {
+				if(i==1) {
 					mi = new ModelImage(ModelStorageBase.USHORT,extents,"");
 				}
 				
@@ -230,7 +231,7 @@ public class ImageJToModelImageConversion {
 				
 				float[] ipPixels = (float[])ip.getPixels();
 				
-				if(i==0) {
+				if(i==1) {
 					mi = new ModelImage(ModelStorageBase.FLOAT,extents,"");
 				}
 				
@@ -253,7 +254,7 @@ public class ImageJToModelImageConversion {
 				byte[] miPixels = new byte[xdim*ydim*4];
 				
 				
-				if(i==0) {
+				if(i==1) {
 					mi = new ModelImage(ModelStorageBase.ARGB,extents,"");
 				}
 				
