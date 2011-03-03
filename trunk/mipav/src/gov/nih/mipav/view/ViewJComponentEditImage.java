@@ -13,6 +13,7 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 
+import gov.nih.mipav.view.Preferences.ComplexDisplay;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.icons.PlaceHolder;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
@@ -5848,7 +5849,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             }
         } else {
             final String intensity;
-            if(imageActive.isComplexImage()) {
+            if(imageActive.isComplexImage() && Preferences.getComplexDisplay() != ComplexDisplay.MAGNITUDE) {
                 int loc = ((yS * imageActive.getExtents()[0]) + xS)*2;
                 intensity = df.format(new Double(Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + 
                                                             imageBufferActive[loc+1]*imageBufferActive[loc+1])).doubleValue());
