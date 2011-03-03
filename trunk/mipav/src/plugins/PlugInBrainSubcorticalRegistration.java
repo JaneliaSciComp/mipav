@@ -11,13 +11,27 @@ import java.util.*;
 /**
 * Brain subcortical analysis is running from the command line.   User types command line such as,
 * >mipav -p PlugInBrainSubcorticalRegistration -inDir F:\BrainMRIData -outDir F:\BrainMRIData  
-* -vs compare.txt -Reg LH LA RP	
+* -vs F:\BrainMRIData\compare.txt -Reg LH LA RP	
 * 
-* -p indicates running as a plugin
-* -inDir specify the input brain MRI images repository directory. 
-* -outDir specify the output directory for registered images, color RGB comparison images, and statics report. 
-* -Reg flag indicates which subcortical sections to do registration. 
-*  
+* -p PlugInBrainSubcorticalRegistration	  the mandate flag to indicate running as a plugin
+* -inDir 	specify the input brain MRI images repository directory. 
+* -outDir 	specify the output directory for registered images, color RGB comparison images, and statistic report. 
+* -vs 		cases comparison text file
+* -Reg 		flag indicates which subcortical sections to do registration. 
+* -printHelp 	print help instruction. 
+*
+* Left Hippocampus  ---   LH
+* Right Hippocampus ---   RH
+* Left Amygdala     ---   LA
+* Right Amygdala    ---   RA
+* Left Candate      ---   LC
+* Right Candate     ---   RC
+* Left Putamen      ---   LP
+* Right Putaman     ---   RP
+* Left globus pallidess  --- LG
+* Right globus pallidees --- RG
+* Left Thalomus     ---   LT
+* Right Thalomus    ---   RT 
 */
 public class PlugInBrainSubcorticalRegistration implements PlugInGeneric, CommandLineParser {
 	
@@ -110,11 +124,51 @@ public class PlugInBrainSubcorticalRegistration implements PlugInGeneric, Comman
 					}
 				}
 				break;
+			} else if ( args[i].equalsIgnoreCase("-printHelp")) {
+				printHelpInfo();
+				System.exit(0);
+			} else {
+				printHelpInfo();
+				System.exit(0);
 			}
 		}
 		return args.length-1;
 	}
 	
+    /**
+     * Print the help information.
+     */
+    public void printHelpInfo() {
+    	System.out.println("Examples :");
+    	System.out.println("> mipav -p PlugInBrainSubcorticalRegistration -inDir F:\\BrainMRIData -outDir F:\\BrainMRIData");  
+    	System.out.println("-vs F:\\BrainMRIData\\compare.txt -Reg LH LA RP");	
+    	System.out.println(""); 
+    	System.out.println("[-p PlugInBrainSubcorticalRegistration]	 the mandate flag to indicate running as a plugin");
+    	System.out.println("[-inDir] 		specify the input brain MRI images repository directory."); 
+    	System.out.println("[-outDir] 		specify the output directory for registered images, color RGB comparison images, and statistic report."); 
+    	System.out.println("[-vs] 			cases comparison text file");
+    	System.out.println("[-Reg] 			flag indicates which subcortical sections to do registration."); 
+    	System.out.println("[-printHelp] 		print the help instruction");
+    	System.out.println("");
+    	System.out.println("Left Hippocampus  ---   LH");
+    	System.out.println("Right Hippocampus ---   RH");
+    	System.out.println("Left Amygdala     ---   LA");
+    	System.out.println("Right Amygdala    ---   RA");
+    	System.out.println("Left Candate      ---   LC");
+    	System.out.println("Right Candate     ---   RC");
+    	System.out.println("Left Putamen      ---   LP");
+    	System.out.println("Right Putaman     ---   RP");
+    	System.out.println("Left globus pallidess  --- LG");
+    	System.out.println("Right globus pallidees --- RG");
+    	System.out.println("Left Thalomus     ---   LT");
+    	System.out.println("Right Thalomus    ---   RT"); 
+        System.out.println("");
+    	System.out.println("compare.txt  contents:");
+    	System.out.println("03949 vs 03556");
+    	System.out.println("03555 vs 03556");
+    	System.out.println("03555 vs 03949");
+    }
+    
     /** 
 	 * Call the Brain subcortical dialog to run registration. 
 	 */
