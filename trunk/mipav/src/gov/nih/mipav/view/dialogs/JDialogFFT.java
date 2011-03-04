@@ -212,6 +212,10 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private JRadioButton windowFilter;
+    
+    private boolean complexInverse;
+    
+    private JCheckBox complexInverseCheckbox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -260,6 +264,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
                 logDisplayCheckbox.setEnabled(true);
                 unequalDimCheckbox.setEnabled(true);
+                complexInverseCheckbox.setEnabled(false);
 
                 if (windowFilter.isSelected()) {
                     imageCropCheckbox.setEnabled(true);
@@ -324,6 +329,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 image25DCheckbox.setEnabled(false);
                 logDisplayCheckbox.setEnabled(false);
                 unequalDimCheckbox.setEnabled(false);
+                complexInverseCheckbox.setEnabled(true);
                 imageCropCheckbox.setEnabled(false);
                 textKernelDiameter.setEnabled(false);
                 labelKernelDiameter.setEnabled(false);
@@ -607,6 +613,10 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     public void setUnequalDim(boolean unequalDim) {
         this.unequalDim = unequalDim;
     }
+    
+    public void setComplexInverse(boolean complexInverse) {
+    	this.complexInverse = complexInverse;
+    }
 
     /**
      * Once all the necessary variables are set, call the FFT algorithm based on what type of image this is and whether
@@ -625,7 +635,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 resultImage.resetVOIs();
 
                 // Make algorithm
-                FFTAlgo = new AlgorithmFFT(resultImage, image, transformDir, logMagDisplay, unequalDim, image25D);
+                FFTAlgo = new AlgorithmFFT(resultImage, image, transformDir, logMagDisplay, unequalDim, image25D,
+                		                   complexInverse);
                 FFTAlgo.setMultiThreadingEnabled(Preferences.isMultiThreadingEnabled());
                 FFTAlgo.setNumberOfThreads(Preferences.getNumberOfThreads());
                 // This is very important. Adding this object as a listener allows the algorithm to
@@ -662,7 +673,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                FFTAlgo = new AlgorithmFFT(image, transformDir, logMagDisplay, unequalDim, image25D);
+                FFTAlgo = new AlgorithmFFT(image, transformDir, logMagDisplay, unequalDim, image25D,
+                		                   complexInverse);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -732,6 +744,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         logMagDisplay = scriptParameters.getParams().getBoolean("do_log_mag_display");
         unequalDim = scriptParameters.getParams().getBoolean("do_allow_unequal_dims");
         image25D = scriptParameters.doProcess3DAs25D();
+        complexInverse = scriptParameters.getParams().getBoolean("complex_inverse");
         imageCrop = scriptParameters.getParams().getBoolean("do_image_crop");
         filterType = scriptParameters.getParams().getInt("filter_type");
         freq1 = scriptParameters.getParams().getFloat("freq1");
@@ -752,6 +765,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_log_mag_display", logMagDisplay));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_allow_unequal_dims", unequalDim));
         scriptParameters.storeProcess3DAs25D(image25D);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("complex_inverse", complexInverse));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_image_crop", imageCrop));
         scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", freq1));
@@ -767,7 +781,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     private void init() {
         setTitle("FFT");
 
-        JPanel optionsPanel = new JPanel(new GridLayout(3, 1));
+        JPanel optionsPanel = new JPanel(new GridLayout(4, 1));
         optionsPanel.setBorder(buildTitledBorder("Options"));
 
         image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
@@ -816,6 +830,18 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
         unequalDimCheckbox.addActionListener(this);
         optionsPanel.add(unequalDimCheckbox);
+        
+        complexInverseCheckbox = new JCheckBox("Make inverse complex");
+        complexInverseCheckbox.setFont(serif12);
+        complexInverseCheckbox.setForeground(Color.black);
+        if (!image.isComplexImage()) {
+        	complexInverseCheckbox.setEnabled(false);
+        }
+        else {
+        	complexInverseCheckbox.setEnabled(true);
+        }
+        complexInverseCheckbox.setSelected(false);
+        optionsPanel.add(complexInverseCheckbox);
 
         constructionPanel = new JPanel(new GridBagLayout());
         constructionPanel.setBorder(buildTitledBorder("Filter construction methods"));
@@ -1333,6 +1359,12 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             imageCrop = true;
         } else {
             imageCrop = false;
+        }
+        
+        if (complexInverseCheckbox.isSelected()) {
+        	complexInverse = true;
+        } else {
+        	complexInverse = false;
         }
 
         return true;
