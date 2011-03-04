@@ -132,7 +132,12 @@ public class AlgorithmAddMargins extends AlgorithmBase {
      * Adds image margins and stores result in destImage.
      */
     private void calcStoreInDest() {
-        int iColorFactor = destImage.isColorImage() ? 4 : 1;
+    	int iFactor = 1;
+    	if (destImage.isColorImage()) {
+    		iFactor = 4;
+    	} else if (destImage.isComplexImage()) {
+    	    iFactor = 2;	
+    	}
 
         int zDimSrc = ( srcImage.getNDims() > 2 ) ? srcImage.getExtents()[2] : 1;
         int yDimSrc = ( srcImage.getNDims() > 1 ) ? srcImage.getExtents()[1] : 1;
@@ -194,9 +199,13 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             int srcIndex = (t+tShiftSrc) * (zDimSrc * yDimSrc * xDimSrc) + 
                             (z+zShiftSrc) * (yDimSrc * xDimSrc) + 
                             (y+yShiftSrc) * xDimSrc + (x + xShiftSrc);
-                            if ( iColorFactor == 1 )
+                            if ( iFactor == 1 )
                             {
                                 destImage.set( destIndex, srcImage.get(srcIndex) );
+                            }
+                            else if (iFactor == 2) {
+                            	destImage.set(destIndex * 2, srcImage.get(srcIndex * 2));
+                            	destImage.set(destIndex * 2 + 1, srcImage.get(srcIndex * 2 + 1));
                             }
                             else
                             {
@@ -208,9 +217,13 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         }
                         else
                         {
-                            if ( iColorFactor == 1 )
+                            if ( iFactor == 1 )
                             {
                                 destImage.set( destIndex,  marginColor[0] );
+                            }
+                            else if (iFactor == 2) {
+                            	destImage.set(destIndex * 2, marginColor[0]);
+                            	destImage.set(destIndex * 2 + 1, marginColor[0]);
                             }
                             else
                             {
