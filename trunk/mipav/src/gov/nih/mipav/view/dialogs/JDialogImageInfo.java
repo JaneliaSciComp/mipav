@@ -3422,7 +3422,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             fileInfo[0].setUnitsOfMeasure(measure1, 1);
 
             if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
-                final String s = String.valueOf(resolutions[0]) + "\\" + String.valueOf(resolutions[1]);
+                final String s = String.valueOf(resolutions[1]) + "\\" + String.valueOf(resolutions[0]);
                 ((FileInfoDicom) (fileInfo[0])).getTagTable().setValue("0028,0030", s, s.length());
             }
         } else if (image.getNDims() == 3) {
@@ -3452,7 +3452,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                                 String.valueOf(sliceThickness), String.valueOf(sliceThickness).length());
                     }
 
-                    final String s = String.valueOf(resolutions[0]) + "\\" + String.valueOf(resolutions[1]);
+                    final String s = String.valueOf(resolutions[1]) + "\\" + String.valueOf(resolutions[0]);
                     ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0028,0030", s, s.length());
                 }
             }
