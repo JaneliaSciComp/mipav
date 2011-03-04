@@ -698,9 +698,10 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         boolean logMagDisplay = false;
         boolean unequalDim = true;
         boolean image25D = false;
+        boolean complexInverse = false;
 
         // take the FFT of the first input image:
-        AlgorithmFFT kFFT = new AlgorithmFFT(kImageFFT, kImage, iDir, logMagDisplay, unequalDim, image25D);
+        AlgorithmFFT kFFT = new AlgorithmFFT(kImageFFT, kImage, iDir, logMagDisplay, unequalDim, image25D, complexInverse);
 
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
