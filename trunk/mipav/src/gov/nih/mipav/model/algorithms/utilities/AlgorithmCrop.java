@@ -141,6 +141,13 @@ public class AlgorithmCrop extends AlgorithmBase {
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int[] dimExtents;
+        int factor = 1;
+        
+        if (RGBImage) {
+        	factor = 4;
+        } else if (srcImage.isComplexImage()) {
+        	factor = 2;
+        }
 
         if (((x != null) && (((x[0] - cushion) < 0) || ((x[1] + cushion) >= xDim))) ||
                 ((y != null) && (((y[0] - cushion) < 0) || ((y[1] + cushion) >= yDim)))) {
@@ -164,12 +171,8 @@ public class AlgorithmCrop extends AlgorithmBase {
             dimExtents = new int[2];
             dimExtents[0] = Math.abs(x[1] - x[0]) + 1 + (2 * cushion);
             dimExtents[1] = Math.abs(y[1] - y[0]) + 1 + (2 * cushion);
-
-            if (RGBImage) {
-                length = 4 * xDim * yDim;
-            } else {
-                length = xDim * yDim;
-            }
+            
+            length = factor * xDim * yDim;
 
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
@@ -185,56 +188,32 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             return;
         }
-
-        if (RGBImage) {
-            length = 4 * dimExtents[0] * dimExtents[1];
-        } else {
-            length = dimExtents[0] * dimExtents[1];
-        }
+        
+        length = factor * dimExtents[0] * dimExtents[1];
 
         int mod = length / 100; // mod is 1 percent of length
 
 
         int j = 0;
         int k;
+        
+        int offset = (factor * (((y[0] - cushion) * xDim) + x[0] - cushion));
 
-        if (RGBImage) {
-            int offset = (4 * (((y[0] - cushion) * xDim) + x[0] - cushion));
+        for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
-            for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
-
-                if (((i % mod) == 0)) {
-                    fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
-                }
-
-                if (((i % (4 * dimExtents[0])) == 0) && (i != 0)) {
-                    j++;
-                    k = 0;
-                    offset = (4 * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
-                }
-
-                destImage.set(i, buffer[offset + k]);
+            if (((i % mod) == 0)) {
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
-        } // end of if (RGBImage)
-        else { // not ARGB or ARGB_USHORT or ARGB_FLOAT
 
-            int offset = (((y[0] - cushion) * xDim) + x[0] - cushion);
-
-            for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
-
-                if (((i % mod) == 0)) {
-                    fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
-                }
-
-                if (((i % dimExtents[0]) == 0) && (i != 0)) {
-                    j++;
-                    k = 0;
-                    offset = (((y[0] + j - cushion) * xDim) + x[0] - cushion);
-                }
-
-                destImage.set(i, buffer[offset + k]);
+            if (((i % (factor * dimExtents[0])) == 0) && (i != 0)) {
+                j++;
+                k = 0;
+                offset = (factor * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
             }
-        } // not ARGB or ARGB_USHORT or ARGB_FLOAT
+
+            destImage.set(i, buffer[offset + k]);
+        }
+        
 
         if (threadStopped) {
             buffer = null;
@@ -263,6 +242,13 @@ public class AlgorithmCrop extends AlgorithmBase {
         int[] dimExtents;
         int j, k, offset;
         int count;
+        int factor = 1;
+        
+        if (RGBImage) {
+        	factor = 4;
+        } else if (srcImage.isComplexImage()) {
+        	factor = 2;
+        }
 
         if (((x != null) && (((x[0] - cushion) < 0) || ((x[1] + cushion) >= xDim))) ||
                 ((y != null) && (((y[0] - cushion) < 0) || ((y[1] + cushion) >= yDim)))) {
@@ -290,22 +276,14 @@ public class AlgorithmCrop extends AlgorithmBase {
         } else {
             dimExtents[2] = Math.abs(z[1] - z[0]) + 1; // + 2*cushion;
         }
-
-        if (RGBImage) {
-            croppedLength = 4 * dimExtents[0] * dimExtents[1];
-        } else {
-            croppedLength = dimExtents[0] * dimExtents[1];
-        }
+        
+        croppedLength = factor * dimExtents[0] * dimExtents[1];
 
         croppedVolume = croppedLength * dimExtents[2];
 
         int mod = croppedVolume / 100; // mod is 1 percent of length
-
-        if (RGBImage) {
-            length = 4 * xDim * yDim;
-        } else {
-            length = xDim * yDim;
-        }
+        
+        length = factor * xDim * yDim;
 
         try {
             buffer = new float[length];
@@ -333,42 +311,24 @@ public class AlgorithmCrop extends AlgorithmBase {
             j = 0;
             k = 0;
 
-            if (RGBImage) {
-                offset = (4 * (((y[0] - cushion) * xDim) + x[0] - cushion));
+            
+            offset = (factor * (((y[0] - cushion) * xDim) + x[0] - cushion));
 
-                for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
+            for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                    if (((i % mod) == 0)) {
-                        fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
-                    }
-
-                    if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
-                        j++;
-                        k = 0;
-                        offset = (4 * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
-                    }
-
-                    destImage.set(i, buffer[offset + k]);
+                if (((i % mod) == 0)) {
+                    fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                 }
-            } // if (RGBImage)
-            else { // not ARGB or ARGB_USHORT or ARGB_FLOAT
-                offset = (((y[0] - cushion) * xDim) + x[0] - cushion);
 
-                for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
-
-                    if (((i % mod) == 0)) {
-                        fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
-                    }
-
-                    if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
-                        j++;
-                        k = 0;
-                        offset = (((y[0] + j - cushion) * xDim) + x[0] - cushion);
-                    }
-
-                    destImage.set(i, buffer[offset + k]);
+                if (((i % (factor * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
+                    j++;
+                    k = 0;
+                    offset = (factor * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
                 }
-            } // not ARGB or ARGB_USHORT or ARGB_FLOAT
+
+                destImage.set(i, buffer[offset + k]);
+            }
+            
         } // for (slice = z[0], i = 0; slice <= z[1]; slice++)
 
         buffer = null;
@@ -404,6 +364,13 @@ public class AlgorithmCrop extends AlgorithmBase {
         int j, k, offset;
         int count;
         int t;
+        int factor = 1;
+        
+        if (RGBImage) {
+        	factor = 4;
+        } else if (srcImage.isComplexImage()) {
+        	factor = 2;
+        }
 
         if (((x != null) && (((x[0] - cushion) < 0) || ((x[1] + cushion) >= xDim))) ||
                 ((y != null) && (((y[0] - cushion) < 0) || ((y[1] + cushion) >= yDim)))) {
@@ -431,23 +398,15 @@ public class AlgorithmCrop extends AlgorithmBase {
         } else {
             dimExtents[2] = Math.abs(z[1] - z[0]) + 1; // + 2*cushion;
         }
-
-        if (RGBImage) {
-            croppedLength = 4 * dimExtents[0] * dimExtents[1];
-        } else {
-            croppedLength = dimExtents[0] * dimExtents[1];
-        }
+        
+        croppedLength = factor * dimExtents[0] * dimExtents[1];
 
         croppedVolume = croppedLength * dimExtents[2];
         croppedSeries = croppedVolume * tDim;
 
         int mod = croppedSeries / 100; // mod is 1 percent of length
-
-        if (RGBImage) {
-            length = 4 * xDim * yDim;
-        } else {
-            length = xDim * yDim;
-        }
+        
+        length = factor * xDim * yDim;
 
         volume = length * zDim;
 
@@ -479,42 +438,23 @@ public class AlgorithmCrop extends AlgorithmBase {
                 j = 0;
                 k = 0;
 
-                if (RGBImage) {
-                    offset = (4 * (((y[0] - cushion) * xDim) + x[0] - cushion));
+                offset = (factor * (((y[0] - cushion) * xDim) + x[0] - cushion));
 
-                    for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
+                for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                        if (((i % mod) == 0)) {
-                            fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
-                        }
-
-                        if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
-                            j++;
-                            k = 0;
-                            offset = (4 * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
-                        }
-
-                        destImage.set(i, buffer[offset + k]);
+                    if (((i % mod) == 0)) {
+                        fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                     }
-                } // if (RGBImage)
-                else { // not ARGB or ARGB_USHORT or ARGB_FLOAT
-                    offset = (((y[0] - cushion) * xDim) + x[0] - cushion);
 
-                    for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
-
-                        if (((i % mod) == 0)) {
-                            fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
-                        }
-
-                        if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
-                            j++;
-                            k = 0;
-                            offset = (((y[0] + j - cushion) * xDim) + x[0] - cushion);
-                        }
-
-                        destImage.set(i, buffer[offset + k]);
+                    if (((i % (factor * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
+                        j++;
+                        k = 0;
+                        offset = (factor * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
                     }
-                } // not ARGB or ARGB_USHORT or ARGB_FLOAT
+
+                    destImage.set(i, buffer[offset + k]);
+                }
+                
             } // for (slice = z[0], i = 0; slice <= z[1]; slice++)
         } // for (t = 0; t < tDim; t++)
 
@@ -553,6 +493,13 @@ public class AlgorithmCrop extends AlgorithmBase {
         float[] originImgOrd = new float[3];
         float[] newImgOriginLPS = new float[3];
         String value;
+        int factor = 1;
+        
+        if (RGBImage) {
+        	factor = 4;
+        } else if (srcImage.isComplexImage()) {
+        	factor = 2;
+        }
 
 
         if (((x != null) && (((x[0] - cushion) < 0) || ((x[1] + cushion) >= xDim))) ||
@@ -567,12 +514,8 @@ public class AlgorithmCrop extends AlgorithmBase {
             dimExtents = new int[2];
             dimExtents[0] = Math.abs(x[1] - x[0]) + 1 + (2 * cushion);
             dimExtents[1] = Math.abs(y[1] - y[0]) + 1 + (2 * cushion);
-
-            if (RGBImage) {
-                length = 4 * xDim * yDim;
-            } else {
-                length = xDim * yDim;
-            }
+            
+            length = factor * xDim * yDim;
 
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
@@ -623,13 +566,8 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         srcImage.disposeLocal();
         srcImage = null;
-
-
-        if (RGBImage) {
-            length = 4 * dimExtents[0] * dimExtents[1];
-        } else {
-            length = dimExtents[0] * dimExtents[1];
-        }
+        
+        length = factor * dimExtents[0] * dimExtents[1];
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -647,43 +585,23 @@ public class AlgorithmCrop extends AlgorithmBase {
         int j = 0;
         int k;
 
-        if (RGBImage) {
-            int offset = (4 * (((y[0] - cushion) * xDim) + x[0] - cushion));
+        int offset = (factor * (((y[0] - cushion) * xDim) + x[0] - cushion));
 
-            for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
+        for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
-                if (((i % mod) == 0)) {
-                    fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
-                }
-
-                if (((i % (4 * dimExtents[0])) == 0) && (i != 0)) {
-                    j++;
-                    k = 0;
-                    offset = (4 * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
-                }
-
-                destBuffer[i] = buffer[offset + k];
+            if (((i % mod) == 0)) {
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
-        } // end of if (RGBImage)
-        else { // not ARGB or ARGB_USHORT or ARGB_FLOAT
 
-            int offset = (((y[0] - cushion) * xDim) + x[0] - cushion);
-
-            for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
-
-                if (((i % mod) == 0)) {
-                    fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
-                }
-
-                if (((i % dimExtents[0]) == 0) && (i != 0)) {
-                    j++;
-                    k = 0;
-                    offset = (((y[0] + j - cushion) * xDim) + x[0] - cushion);
-                }
-
-                destBuffer[i] = buffer[offset + k];
+            if (((i % (factor * dimExtents[0])) == 0) && (i != 0)) {
+                j++;
+                k = 0;
+                offset = (factor * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
             }
-        } // not ARGB or ARGB_USHORT or ARGB_FLOAT
+
+            destBuffer[i] = buffer[offset + k];
+        }
+        
 
         if (threadStopped) {
             buffer = null;
@@ -766,6 +684,13 @@ public class AlgorithmCrop extends AlgorithmBase {
         String value;
         int slc;
         FileInfoDicom dicomInfoBuffer;
+        int factor = 1;
+        
+        if (RGBImage) {
+        	factor = 4;
+        } else if (srcImage.isComplexImage()) {
+        	factor = 2;
+        }
 
 
         if (((x != null) && (((x[0] - cushion) < 0) || ((x[1] + cushion) >= xDim))) ||
@@ -799,22 +724,14 @@ public class AlgorithmCrop extends AlgorithmBase {
         resols[0] = srcImage.getFileInfo(0).getResolutions()[0];
         resols[1] = srcImage.getFileInfo(0).getResolutions()[1];
         direct = new int[nDims];
-
-        if (RGBImage) {
-            croppedLength = 4 * dimExtents[0] * dimExtents[1];
-        } else {
-            croppedLength = dimExtents[0] * dimExtents[1];
-        }
+        
+        croppedLength = factor * dimExtents[0] * dimExtents[1];
 
         croppedVolume = croppedLength * dimExtents[2];
 
         int mod = croppedVolume / 100; // mod is 1 percent of length
-
-        if (RGBImage) {
-            length = 4 * xDim * yDim;
-        } else {
-            length = xDim * yDim;
-        }
+        
+        length = factor * xDim * yDim;
 
         try {
             buffer = new float[nImages][length];
@@ -940,42 +857,23 @@ public class AlgorithmCrop extends AlgorithmBase {
             j = 0;
             k = 0;
 
-            if (RGBImage) {
-                offset = (4 * (((y[0] - cushion) * xDim) + x[0] - cushion));
+            offset = (factor * (((y[0] - cushion) * xDim) + x[0] - cushion));
 
-                for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
+            for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                    if (((i % mod) == 0)) {
-                        fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
-                    }
-
-                    if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
-                        j++;
-                        k = 0;
-                        offset = (4 * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
-                    }
-
-                    destBuffer[i] = buffer[slice - z[0]][offset + k];
+                if (((i % mod) == 0)) {
+                    fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                 }
-            } // if (RGBImage)
-            else { // not ARGB or ARGB_USHORT or ARGB_FLOAT
-                offset = (((y[0] - cushion) * xDim) + x[0] - cushion);
 
-                for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
-
-                    if (((i % mod) == 0)) {
-                        fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
-                    }
-
-                    if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
-                        j++;
-                        k = 0;
-                        offset = (((y[0] + j - cushion) * xDim) + x[0] - cushion);
-                    }
-
-                    destBuffer[i] = buffer[slice - z[0]][offset + k];
+                if (((i % (factor * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
+                    j++;
+                    k = 0;
+                    offset = (factor * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
                 }
-            } // not ARGB or ARGB_USHORT or ARGB_FLOAT
+
+                destBuffer[i] = buffer[slice - z[0]][offset + k];
+            }
+            
         } // for (slice = z[0], i = 0; slice <= z[1]; slice++)
 
         for (i = 0; i < buffer.length; i++) {
@@ -1112,6 +1010,13 @@ public class AlgorithmCrop extends AlgorithmBase {
         String value;
         int slc;
         FileInfoDicom dicomInfoBuffer;
+        int factor = 1;
+        
+        if (RGBImage) {
+        	factor = 4;
+        } else if (srcImage.isComplexImage()) {
+        	factor = 2;
+        }
 
 
         if (((x != null) && (((x[0] - cushion) < 0) || ((x[1] + cushion) >= xDim))) ||
@@ -1149,24 +1054,15 @@ public class AlgorithmCrop extends AlgorithmBase {
         resols[0] = srcImage.getFileInfo(0).getResolutions()[0];
         resols[1] = srcImage.getFileInfo(0).getResolutions()[1];
         direct = new int[nDims];
-
-
-        if (RGBImage) {
-            croppedLength = 4 * dimExtents[0] * dimExtents[1];
-        } else {
-            croppedLength = dimExtents[0] * dimExtents[1];
-        }
+        
+        croppedLength = factor * dimExtents[0] * dimExtents[1];
 
         croppedVolume = croppedLength * dimExtents[2];
         croppedSeries = croppedVolume * tDim;
 
         int mod = croppedSeries / 100; // mod is 1 percent of length
-
-        if (RGBImage) {
-            length = 4 * xDim * yDim;
-        } else {
-            length = xDim * yDim;
-        }
+        
+        length = factor * xDim * yDim;
 
         volume = length * zDim;
 
@@ -1306,42 +1202,23 @@ public class AlgorithmCrop extends AlgorithmBase {
                 j = 0;
                 k = 0;
 
-                if (RGBImage) {
-                    offset = (4 * (((y[0] - cushion) * xDim) + x[0] - cushion));
+                offset = (factor * (((y[0] - cushion) * xDim) + x[0] - cushion));
 
-                    for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
+                for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                        if (((i % mod) == 0)) {
-                            fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
-                        }
-
-                        if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
-                            j++;
-                            k = 0;
-                            offset = (4 * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
-                        }
-
-                        destBuffer[i] = buffer[(t * nImages) + slice - z[0]][offset + k];
+                    if (((i % mod) == 0)) {
+                        fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                     }
-                } // if (RGBImage)
-                else { // not ARGB or ARGB_USHORT or ARGB_FLOAT
-                    offset = (((y[0] - cushion) * xDim) + x[0] - cushion);
 
-                    for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
-
-                        if (((i % mod) == 0)) {
-                            fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
-                        }
-
-                        if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
-                            j++;
-                            k = 0;
-                            offset = (((y[0] + j - cushion) * xDim) + x[0] - cushion);
-                        }
-
-                        destBuffer[i] = buffer[(t * nImages) + slice - z[0]][offset + k];
+                    if (((i % (factor * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
+                        j++;
+                        k = 0;
+                        offset = (factor * (((y[0] + j - cushion) * xDim) + x[0] - cushion));
                     }
-                } // not ARGB or ARGB_USHORT or ARGB_FLOAT
+
+                    destBuffer[i] = buffer[(t * nImages) + slice - z[0]][offset + k];
+                }
+                
             } // for (slice = z[0], i = 0; slice <= z[1]; slice++)
         } // for (t = 0; t < tDim; t++)
 
