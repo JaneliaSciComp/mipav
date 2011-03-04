@@ -1391,7 +1391,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
             // get pixel space in x direction
             String xyPixelSpacingString = ((String) (firstFileInfoDicom.getTagTable().getValue("0028,0030"))).trim();
             int index = xyPixelSpacingString.indexOf("\\");
-            String xPixelSpacingString = xyPixelSpacingString.substring(0, index);
+            String xPixelSpacingString = xyPixelSpacingString.substring(index+1, xyPixelSpacingString.length());
             float xPixelSpacing = new Float(xPixelSpacingString).floatValue();
             float fieldOfViewFloat = xPixelSpacing * originalColumns.shortValue();
             fieldOfView = String.valueOf(fieldOfViewFloat);
