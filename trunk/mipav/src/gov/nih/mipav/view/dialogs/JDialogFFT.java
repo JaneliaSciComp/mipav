@@ -886,7 +886,12 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             textKernelDiameter.setText("15");
         } else {
             kernelDiameter = image.getOriginalKernelDimension();
-            textKernelDiameter.setText(String.valueOf(kernelDiameter));
+            if (kernelDiameter != 0) {
+                textKernelDiameter.setText(String.valueOf(kernelDiameter));
+            }
+            else {
+            	textKernelDiameter.setText("15");
+            }
         }
 
         textKernelDiameter.setFont(serif12);
@@ -1053,7 +1058,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             inverseFFT.setEnabled(true);
             inverseFFT.setSelected(true);
             forwardFFT.setSelected(false);
-            forwardFFT.setEnabled(false);
+            forwardFFT.setEnabled(true);
         }
 
         filterPanel = new JPanel(new GridBagLayout());
