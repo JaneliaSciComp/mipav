@@ -955,8 +955,8 @@ public class JDialogSaveDicom extends JDialogBase {
                 dicomFileInfo.getTagTable().setValue("0028,0010", new Short((short) fileInfo.getExtents()[1]), 2);
 
                 // Pixel spacing
-                String s = String.valueOf(fileInfo.getResolutions()[0]) + "\\"
-                        + String.valueOf(fileInfo.getResolutions()[1]);
+                String s = String.valueOf(fileInfo.getResolutions()[1]) + "\\"
+                        + String.valueOf(fileInfo.getResolutions()[0]);
                 dicomFileInfo.getTagTable().setValue("0028,0030", s, s.length());
 
                 // Slice thickness and spacing
