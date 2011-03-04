@@ -1468,7 +1468,7 @@ public class FileInfoGESigna5X extends FileInfoBase {
                                         String.valueOf(i + 1).trim().length());
 
         // Pixel resolutions X, and Y.
-        String s = String.valueOf(pixelResX) + "\\" + String.valueOf(pixelResY);
+        String s = String.valueOf(pixelResY) + "\\" + String.valueOf(pixelResX);
         String mmStr;
         String ddStr;
         String hhStr;
