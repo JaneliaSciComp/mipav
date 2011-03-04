@@ -151,6 +151,8 @@ public class AlgorithmFFT extends AlgorithmBase {
 
     /** If true allow unequal FFT dimensions. */
     private boolean unequalDim;
+    
+    private boolean complexInverse;
 
     /** True if zero padding actually performed. */
     private boolean zeroPad;
@@ -161,12 +163,13 @@ public class AlgorithmFFT extends AlgorithmBase {
     // ---------------------------------------------------------------------------------------------------
 
     public AlgorithmFFT(final ModelImage srcImg, final int transformDir, final boolean logMagDisplay,
-            final boolean unequalDim, final boolean image25D) {
-        this(null, srcImg, transformDir, logMagDisplay, unequalDim, image25D);
+            final boolean unequalDim, final boolean image25D, final boolean complexInverse) {
+        this(null, srcImg, transformDir, logMagDisplay, unequalDim, image25D, complexInverse);
     }
 
     public AlgorithmFFT(final ModelImage destImg, final ModelImage srcImg, final int transformDir,
-            final boolean logMagDisplay, final boolean unequalDim, final boolean image25D) {
+            final boolean logMagDisplay, final boolean unequalDim, final boolean image25D,
+            final boolean complexInverse) {
 
         super(destImg, srcImg);
         this.transformDir = transformDir;
@@ -185,6 +188,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         } else if (transformDir == AlgorithmFFT.INVERSE) {
             this.unequalDim = srcImage.getUnequalDim();
             this.image25D = srcImage.getImage25D();
+            this.complexInverse = complexInverse;
         }
     }
 
@@ -245,6 +249,11 @@ public class AlgorithmFFT extends AlgorithmBase {
         int direction;
         int dimNumber;
         int newLength;
+        int i, j, k, m;
+        int originalSliceSize;
+        int newSliceSize;
+        int originalVolumeSize;
+        int newVolumeSize;
         if (transformDir == AlgorithmFFT.FORWARD) {
             direction = 1;
         } else {
@@ -282,7 +291,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         final CountDownLatch doneSignalX = new CountDownLatch(nthreads);
         AlgorithmFFT.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT.SLICE_YZ);
-        for (int i = 0; i < nthreads; i++) {
+        for (i = 0; i < nthreads; i++) {
             final int nslices = zdim / nthreads;
             final int sliceLen = xdim * ydim;
             final int start = i * nslices * sliceLen;
@@ -308,7 +317,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         final CountDownLatch doneSignalY = new CountDownLatch(nthreads);
         AlgorithmFFT.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT.SLICE_ZX);
-        for (int i = 0; i < nthreads; i++) {
+        for (i = 0; i < nthreads; i++) {
             final int nslices = ydim / nthreads;
             final int start = i * nslices;
             final int end = (i + 1) * nslices;
@@ -333,7 +342,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         if (dimNumber == 3) {
             final CountDownLatch doneSignalZ = new CountDownLatch(nthreads);
             AlgorithmFFT.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT.SLICE_XY);
-            for (int i = 0; i < nthreads; i++) {
+            for (i = 0; i < nthreads; i++) {
                 final int nslices = ydim / nthreads;
                 final int start = i * nslices * xdim;
                 final int end = (i + 1) * nslices * xdim;
@@ -362,33 +371,99 @@ public class AlgorithmFFT extends AlgorithmBase {
             center(realData, imagData);
         }
 
+        
         if (transformDir == AlgorithmFFT.INVERSE) {
-            imagData = null;
-            for (int i = 0; i < newLength; i++) {
-                realData[i] = realData[i] / newLength;
-                // imagData[i] = imagData[i] / newLength;
-            }
+        	if (complexInverse) {
+        		for (i = 0; i < newLength; i++) {
+	                realData[i] = realData[i] / newLength;
+	                imagData[i] = imagData[i] / newLength;
+	            }
+	
+	            originalDimLengths = srcImage.getOriginalExtents();
+	            finalData = new float[2 * AlgorithmBase.calculateImageSize(originalDimLengths)];
+	            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
+	                if (ndim == 1) {
+	                    for (i = 0; i < originalDimLengths[0]; i++) {
+	                    	finalData[2*i] = realData[i];
+	                    	finalData[2*i+1] = imagData[i];
+	                    }
+	                } else if (ndim == 2) {
+	                    for (i = 0; i < originalDimLengths[1]; i++) {
+	                    	for (j = 0; j < originalDimLengths[0]; j++) {
+	                    		finalData[2*(i*originalDimLengths[0] + j)] = realData[i*newDimLengths[0] + j];
+	                    		finalData[2*(i*originalDimLengths[0] + j)+1] = imagData[i*newDimLengths[0] + j];
+	                    	}
+	                    }
+	                } else if (ndim == 3) {
+	                    originalSliceSize = originalDimLengths[0]*originalDimLengths[1];
+	                    newSliceSize = newDimLengths[0]*newDimLengths[1];
+	                    for (i = 0; i < originalDimLengths[2]; i++) {
+	                        for (j = 0; j < originalDimLengths[1]; j++) {
+	                            for (k = 0; k < originalDimLengths[0]; k++) {
+	                            	finalData[2*(i*originalSliceSize + j*originalDimLengths[0] + k)] =
+	                                realData[i*newSliceSize + j*newDimLengths[0] + k];
+	                            	finalData[2*(i*originalSliceSize + j*originalDimLengths[0] + k)+1] =
+		                            imagData[i*newSliceSize + j*newDimLengths[0] + k];
+	                            }
+	                        }
+	                    }
+	                } else if (ndim == 4) {
+	                    originalSliceSize = originalDimLengths[0]*originalDimLengths[1];
+	                    newSliceSize = newDimLengths[0]*newDimLengths[1];
+	                    originalVolumeSize = originalSliceSize * originalDimLengths[2];
+	                    newVolumeSize = newSliceSize * newDimLengths[2];
+	                    for (i = 0; i < originalDimLengths[3]; i++) {
+	                    	for (j = 0; j < originalDimLengths[2]; j++) {
+	                    		for (k = 0; k < originalDimLengths[1]; k++) {
+	                    			for (m = 0; m < originalDimLengths[0]; m++) {
+	                    				finalData[2*(i*originalVolumeSize + j*originalSliceSize + 
+	                    						  k*originalDimLengths[0] + m)] =
+	                                    realData[i*newVolumeSize + j*newSliceSize + k*newDimLengths[0] + m];
+	                    				finalData[2*(i*originalVolumeSize + j*originalSliceSize + 
+	                    						  k*originalDimLengths[0] + m)+1] =
+	                                    imagData[i*newVolumeSize + j*newSliceSize + k*newDimLengths[0] + m];
+	                    			}
+	                    		}
+	                    	}
+	                    }
+	                }
+	            } else {
+	                System.arraycopy(realData, 0, finalData, 0, newLength);
+	                for (i = 0; i < newLength; i++) {
+	                	finalData[2*i] = realData[i];
+	                	finalData[2*i+1] = imagData[i];
+	                }
+		        }	
+        	} // if (complexInverse)
+        	else { // !complexInverse
+	            imagData = null;
+	            for (i = 0; i < newLength; i++) {
+	                realData[i] = realData[i] / newLength;
+	                // imagData[i] = imagData[i] / newLength;
+	            }
+	
+	            originalDimLengths = srcImage.getOriginalExtents();
+	            finalData = new float[AlgorithmBase.calculateImageSize(originalDimLengths)];
+	            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
+	                if (ndim == 1) {
+	                    System.arraycopy(realData, 0, finalData, 0, originalDimLengths[0]);
+	                } else if (ndim == 2) {
+	                    ArrayUtil.copy2D(realData, 0, newDimLengths[0], newDimLengths[1], finalData, 0,
+	                            originalDimLengths[0], originalDimLengths[1], false);
+	                } else if (ndim == 3) {
+	                    ArrayUtil.copy3D(realData, 0, newDimLengths[0], newDimLengths[1], newDimLengths[2], finalData, 0,
+	                            originalDimLengths[0], originalDimLengths[1], originalDimLengths[2], false);
+	                } else if (ndim == 4) {
+	                    ArrayUtil.copy4D(realData, newDimLengths[0], newDimLengths[1], newDimLengths[2], dimLengths[3],
+	                            finalData, originalDimLengths[0], originalDimLengths[1], originalDimLengths[2],
+	                            originalDimLengths[3], false);
+	                }
+	            } else {
+	                System.arraycopy(realData, 0, finalData, 0, newLength);
+		        }
+        	} // else !complexInverse
+        } // if (transformDir == AlgorithmFFT.INVERSE)
 
-            originalDimLengths = srcImage.getOriginalExtents();
-            finalData = new float[AlgorithmBase.calculateImageSize(originalDimLengths)];
-            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
-                if (ndim == 1) {
-                    System.arraycopy(realData, 0, finalData, 0, originalDimLengths[0]);
-                } else if (ndim == 2) {
-                    ArrayUtil.copy2D(realData, 0, newDimLengths[0], newDimLengths[1], finalData, 0,
-                            originalDimLengths[0], originalDimLengths[1], false);
-                } else if (ndim == 3) {
-                    ArrayUtil.copy3D(realData, 0, newDimLengths[0], newDimLengths[1], newDimLengths[2], finalData, 0,
-                            originalDimLengths[0], originalDimLengths[1], originalDimLengths[2], false);
-                } else if (ndim == 4) {
-                    ArrayUtil.copy4D(realData, newDimLengths[0], newDimLengths[1], newDimLengths[2], dimLengths[3],
-                            finalData, originalDimLengths[0], originalDimLengths[1], originalDimLengths[2],
-                            originalDimLengths[3], false);
-                }
-            } else {
-                System.arraycopy(realData, 0, finalData, 0, newLength);
-            }
-        }
 
     } // end of exec()
 
@@ -664,13 +739,17 @@ public class AlgorithmFFT extends AlgorithmBase {
         double wt1Imag, wt1Real;
         double angle, delta;
         float imag, real, fTemp, fReal, fImag;
-        int i, index1, index2, index3;
+        int i, j, k, m, index1, index2, index3;
         int j1, j2, j3;
         int k1, k1Double;
         int iSwap, i1Swap, i2Swap, index, dim;
         int direction;
         int dimNumber;
         int newLength;
+        int originalSliceSize;
+        int newSliceSize;
+        int originalVolumeSize;
+        int newVolumeSize;
 
         if (transformDir == AlgorithmFFT.FORWARD) {
             direction = 1;
@@ -773,32 +852,96 @@ public class AlgorithmFFT extends AlgorithmBase {
         }
 
         if (transformDir == AlgorithmFFT.INVERSE) {
-            imagData = null;
-            for (i = 0; i < newLength; i++) {
-                realData[i] = realData[i] / newLength;
-                // imagData[i] = imagData[i] / newLength;
-            }
-
-            originalDimLengths = srcImage.getOriginalExtents();
-            finalData = new float[AlgorithmBase.calculateImageSize(originalDimLengths)];
-            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
-                if (ndim == 1) {
-                    System.arraycopy(realData, 0, finalData, 0, originalDimLengths[0]);
-                } else if (ndim == 2) {
-                    ArrayUtil.copy2D(realData, 0, newDimLengths[0], newDimLengths[1], finalData, 0,
-                            originalDimLengths[0], originalDimLengths[1], false);
-                } else if (ndim == 3) {
-                    ArrayUtil.copy3D(realData, 0, newDimLengths[0], newDimLengths[1], newDimLengths[2], finalData, 0,
-                            originalDimLengths[0], originalDimLengths[1], originalDimLengths[2], false);
-                } else if (ndim == 4) {
-                    ArrayUtil.copy4D(realData, newDimLengths[0], newDimLengths[1], newDimLengths[2], dimLengths[3],
-                            finalData, originalDimLengths[0], originalDimLengths[1], originalDimLengths[2],
-                            originalDimLengths[3], false);
-                }
-            } else {
-                System.arraycopy(realData, 0, finalData, 0, newLength);
-            }
-        }
+        	if (complexInverse) {
+        		for (i = 0; i < newLength; i++) {
+	                realData[i] = realData[i] / newLength;
+	                imagData[i] = imagData[i] / newLength;
+	            }
+	
+	            originalDimLengths = srcImage.getOriginalExtents();
+	            finalData = new float[2 * AlgorithmBase.calculateImageSize(originalDimLengths)];
+	            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
+	                if (ndim == 1) {
+	                    for (i = 0; i < originalDimLengths[0]; i++) {
+	                    	finalData[2*i] = realData[i];
+	                    	finalData[2*i+1] = imagData[i];
+	                    }
+	                } else if (ndim == 2) {
+	                    for (i = 0; i < originalDimLengths[1]; i++) {
+	                    	for (j = 0; j < originalDimLengths[0]; j++) {
+	                    		finalData[2*(i*originalDimLengths[0] + j)] = realData[i*newDimLengths[0] + j];
+	                    		finalData[2*(i*originalDimLengths[0] + j)+1] = imagData[i*newDimLengths[0] + j];
+	                    	}
+	                    }
+	                } else if (ndim == 3) {
+	                    originalSliceSize = originalDimLengths[0]*originalDimLengths[1];
+	                    newSliceSize = newDimLengths[0]*newDimLengths[1];
+	                    for (i = 0; i < originalDimLengths[2]; i++) {
+	                        for (j = 0; j < originalDimLengths[1]; j++) {
+	                            for (k = 0; k < originalDimLengths[0]; k++) {
+	                            	finalData[2*(i*originalSliceSize + j*originalDimLengths[0] + k)] =
+	                                realData[i*newSliceSize + j*newDimLengths[0] + k];
+	                            	finalData[2*(i*originalSliceSize + j*originalDimLengths[0] + k)+1] =
+		                            imagData[i*newSliceSize + j*newDimLengths[0] + k];
+	                            }
+	                        }
+	                    }
+	                } else if (ndim == 4) {
+	                    originalSliceSize = originalDimLengths[0]*originalDimLengths[1];
+	                    newSliceSize = newDimLengths[0]*newDimLengths[1];
+	                    originalVolumeSize = originalSliceSize * originalDimLengths[2];
+	                    newVolumeSize = newSliceSize * newDimLengths[2];
+	                    for (i = 0; i < originalDimLengths[3]; i++) {
+	                    	for (j = 0; j < originalDimLengths[2]; j++) {
+	                    		for (k = 0; k < originalDimLengths[1]; k++) {
+	                    			for (m = 0; m < originalDimLengths[0]; m++) {
+	                    				finalData[2*(i*originalVolumeSize + j*originalSliceSize + 
+	                    						  k*originalDimLengths[0] + m)] =
+	                                    realData[i*newVolumeSize + j*newSliceSize + k*newDimLengths[0] + m];
+	                    				finalData[2*(i*originalVolumeSize + j*originalSliceSize + 
+	                    						  k*originalDimLengths[0] + m)+1] =
+	                                    imagData[i*newVolumeSize + j*newSliceSize + k*newDimLengths[0] + m];
+	                    			}
+	                    		}
+	                    	}
+	                    }
+	                }
+	            } else {
+	                System.arraycopy(realData, 0, finalData, 0, newLength);
+	                for (i = 0; i < newLength; i++) {
+	                	finalData[2*i] = realData[i];
+	                	finalData[2*i+1] = imagData[i];
+	                }
+		        }	
+        	} // if (complexInverse)
+        	else { // !complexInverse
+	            imagData = null;
+	            for (i = 0; i < newLength; i++) {
+	                realData[i] = realData[i] / newLength;
+	                // imagData[i] = imagData[i] / newLength;
+	            }
+	
+	            originalDimLengths = srcImage.getOriginalExtents();
+	            finalData = new float[AlgorithmBase.calculateImageSize(originalDimLengths)];
+	            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
+	                if (ndim == 1) {
+	                    System.arraycopy(realData, 0, finalData, 0, originalDimLengths[0]);
+	                } else if (ndim == 2) {
+	                    ArrayUtil.copy2D(realData, 0, newDimLengths[0], newDimLengths[1], finalData, 0,
+	                            originalDimLengths[0], originalDimLengths[1], false);
+	                } else if (ndim == 3) {
+	                    ArrayUtil.copy3D(realData, 0, newDimLengths[0], newDimLengths[1], newDimLengths[2], finalData, 0,
+	                            originalDimLengths[0], originalDimLengths[1], originalDimLengths[2], false);
+	                } else if (ndim == 4) {
+	                    ArrayUtil.copy4D(realData, newDimLengths[0], newDimLengths[1], newDimLengths[2], dimLengths[3],
+	                            finalData, originalDimLengths[0], originalDimLengths[1], originalDimLengths[2],
+	                            originalDimLengths[3], false);
+	                }
+	            } else {
+	                System.arraycopy(realData, 0, finalData, 0, newLength);
+		        }
+        	} // else !complexInverse
+        } // if (transformDir == AlgorithmFFT.INVERSE)
 
     }
 
@@ -867,9 +1010,19 @@ public class AlgorithmFFT extends AlgorithmBase {
             // back in the spatial domain so only realData is now present
             try {
                 if (destImage == null) {
-                    srcImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
+                	if (complexInverse) {
+                		srcImage.reallocate(ModelStorageBase.COMPLEX, originalDimLengths);
+                	}
+                	else {
+                        srcImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
+                	}
                 } else {
-                    destImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
+                	if (complexInverse) {
+                		destImage.reallocate(ModelStorageBase.COMPLEX, originalDimLengths);
+                	}
+                	else {
+                        destImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
+                	}
                 }
             } catch (final IOException error) {
                 displayError("AlgorithmFFT: IOException on srcImage.reallocate");
