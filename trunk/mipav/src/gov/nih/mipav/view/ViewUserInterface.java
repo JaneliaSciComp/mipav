@@ -694,6 +694,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
         } else if (command.startsWith("PlugInImageJ")) {
+        	System.out.println(command);
         	 Class<?> thePlugInClass = null;
         	 Object thePlugInInstance = null; 
 
@@ -759,8 +760,125 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             openingMenuBar.add(pluginsMenu, index);
             getMainFrame().pack();
 
-        } else if(command.equals("testImagejPlugin")) {
-        	
+        } else if(command.equals("CompileAndRun")) {
+        	 JFileChooser chooser = new JFileChooser();
+        	 
+        	 chooser.setDialogTitle("Select all files that are associated with this plugin");
+		     chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		     chooser.setMultiSelectionEnabled(true);
+		     int returnValue = chooser.showOpenDialog(this.getMainFrame());
+		     if (returnValue == JFileChooser.APPROVE_OPTION) {
+		    	 
+		    	 File[] files = chooser.getSelectedFiles();
+		    	 String[] filePaths = new String[files.length];
+		    	 for(int i=0;i<files.length;i++) {
+		    		 if(files[i].getName().endsWith(".java")) {
+		    			 filePaths[i] = files[i].getAbsolutePath();
+		    		 }
+		    	 }
+		    	 
+		    	 
+		    	 
+		    	
+		    	 		
+		    	 		String userPluginsDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+		                + "plugins" + File.separator;
+			        	com.sun.tools.javac.Main javac = new com.sun.tools.javac.Main();
+
+			        	
+			        	Vector<String> v = new Vector<String>();
+			        	v.add("-d");
+			        	v.add(userPluginsDir);
+			        
+			        	for(int i=0;i<filePaths.length;i++) {
+			        		v.add(filePaths[i]);
+			        	}
+			        	
+			        	
+			        	String[] args = new String[v.size()];
+			        	v.copyInto((String[])args);
+			        	ByteArrayOutputStream output = new ByteArrayOutputStream(4096);
+
+			     
+			        	boolean compiled = javac.compile(args, new PrintWriter(output)) == 0;
+			        	
+			        	if(compiled) {
+			        	    int index = openingMenuBar.getComponentIndex(pluginsMenu);
+			        		pluginsMenu = buildPlugInsMenu(this);
+			        		openingMenuBar.remove(index);
+			                openingMenuBar.add(pluginsMenu, index);
+			                getMainFrame().pack();
+			                getMainFrame().repaint();
+			                
+			                
+			                for(int i=0;i<filePaths.length;i++) {
+			                	String name = filePaths[i];
+			                	name = name.substring(name.lastIndexOf(File.separator)+1, name.lastIndexOf("."));
+			                	
+			                	Class<?>  plugin = null;
+				                try {
+				                	plugin = Class.forName(name);
+				                	
+				                	for(Class c : plugin.getInterfaces()) {
+			                    		if((c.equals(ij.plugin.PlugIn.class) || c.equals(ij.plugin.filter.PlugInFilter.class)) || (plugin.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class)) || c.equals(gov.nih.mipav.plugins.PlugInGeneric.class) || c.equals(gov.nih.mipav.plugins.PlugInAlgorithm.class)) {
+
+			                    			
+			                    			Component[] comps = pluginsMenu.getMenuComponents();
+			                    			for(int m=0;m<comps.length;m++) {
+			                    				Component comp = comps[m];
+			                    				if(comp instanceof JMenu) {
+			                    						Component[] subComps = ((JMenu)comp).getMenuComponents();
+			                    						for(int k=0;k<subComps.length;k++) {
+			                    							Component subComp = subComps[k];
+			                    							if(comp instanceof JMenuItem) {
+			                    								String menuItemName = ((JMenuItem)subComp).getName();
+			                    								if(menuItemName.equals(name)) {
+			                    									ActionEvent e = new ActionEvent(((JMenuItem)subComp), 0, ((JMenuItem)subComp).getActionCommand());
+			                    			                        this.actionPerformed(e);
+			                    									return;
+			                    								}else {
+			                    									//try extracting Plugin from the name
+			                    									if(name.startsWith("PlugIn")) {
+			                    										name = name.substring(6, name.length());
+				                    									if(menuItemName.equals(name)) {
+					                    									ActionEvent e = new ActionEvent(((JMenuItem)subComp), 0, ((JMenuItem)subComp).getActionCommand());
+					                    			                        this.actionPerformed(e);
+					                    									return;
+				                    									}
+			                    									}
+			                    									
+			                    								}
+			                    							}
+			                    							
+			                    						}
+			                    					
+			                    				}
+			                    				
+			                    			}
+			                    			
+			                    			
+			                        		
+			                        	}
+			                    	}
+				                }catch(Exception e) {
+				                	
+				                	e.printStackTrace();
+				                	
+				                }
+			                }  
+			        	}else {
+			        		MipavUtil.displayError("Plugin Files did not compile :  " +  output.toString());
+			        		
+			        		
+			        	}
+			        	
+			        	
+		    	 	
+		    	 	
+		        	
+		     }
+        	 
+        	 
         
         }else if (command.equals("About")) {
             about();
@@ -1210,7 +1328,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         menu.add(menuBuilder.buildMenuItem("Uninstall plugin", "UninstallPlugin", 0, null, false));
 
-
+        menu.add(menuBuilder.buildMenuItem("Compile and run...", "CompileAndRun", 0, null, false));
+        
+        
+        
         return menu;
     }
 
