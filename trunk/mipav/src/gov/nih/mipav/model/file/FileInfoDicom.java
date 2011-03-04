@@ -807,6 +807,7 @@ public class FileInfoDicom extends FileInfoBase {
             }
         } else if (tagKey.equals("0028,0030") &&
                        ((tagTable.get("0018,1164") == null) || (tagTable.get("0018,1164").getValue(false) == null))) { // type 2
+        	// y resolution followed by x resolution
 
             String valueStr = (String) tag.getValue(false);
             String firstHalf, secondHalf;
@@ -830,15 +831,15 @@ public class FileInfoDicom extends FileInfoBase {
                 try {
                     f1 = new Float(firstHalf);
                 } catch (NumberFormatException e) {
-                    setResolutions(1.0f, 0);
+                    setResolutions(1.0f, 1);
                     // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                 }
 
                 if (f1 != null) {
-                    setResolutions(f1.floatValue(), 0);
+                    setResolutions(f1.floatValue(), 1);
                 }
             } else {
-                setResolutions(1.0f, 0);
+                setResolutions(1.0f, 1);
             }
 
             if ((secondHalf != null) && (secondHalf.length() > 0)) {
@@ -846,15 +847,15 @@ public class FileInfoDicom extends FileInfoBase {
                 try {
                     f2 = new Float(secondHalf);
                 } catch (NumberFormatException e) {
-                    setResolutions(getResolution(0), 1);
+                    setResolutions(getResolution(1), 0);
                     // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                 }
 
                 if (f2 != null) {
-                    setResolutions(f2.floatValue(), 1);
+                    setResolutions(f2.floatValue(), 0);
                 }
             } else {
-                setResolutions(1.0f, 1);
+                setResolutions(1.0f, 0);
             }
         } else if (tagKey.equals("0018,1164")) { // type 2
 
