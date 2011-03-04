@@ -112,7 +112,7 @@ public class ActionChangeResolutions extends ActionImageProcessorBase {
         String dicomString = null;
 
         if (isDicom) {
-            dicomString = String.valueOf(resolutions[0]) + "\\" + String.valueOf(resolutions[1]);
+            dicomString = String.valueOf(resolutions[1]) + "\\" + String.valueOf(resolutions[0]);
         }
 
         int zDim = 1;
