@@ -709,14 +709,14 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                         final String xyPixelSpacingString = ((String) (fileInfoDicom.getTagTable()
                                 .getValue("0028,0030"))).trim();
                         final int index = xyPixelSpacingString.indexOf("\\");
-                        final String xPixelSpacingString = xyPixelSpacingString.substring(0, index);
-                        final float xPixelSpacing = new Float(xPixelSpacingString).floatValue();
-                        final float xFieldOfViewFloat = xPixelSpacing * xDim;
-
-                        final String yPixelSpacingString = xyPixelSpacingString.substring(index + 1,
-                                xyPixelSpacingString.length());
+                        final String yPixelSpacingString = xyPixelSpacingString.substring(0, index);
                         final float yPixelSpacing = new Float(yPixelSpacingString).floatValue();
                         final float yFieldOfViewFloat = yPixelSpacing * xDim;
+
+                        final String xPixelSpacingString = xyPixelSpacingString.substring(index + 1,
+                                xyPixelSpacingString.length());
+                        final float xPixelSpacing = new Float(xPixelSpacingString).floatValue();
+                        final float xFieldOfViewFloat = xPixelSpacing * xDim;
 
                         final String xFieldOfView = String.valueOf(xFieldOfViewFloat);
                         final String yFieldOfView = String.valueOf(yFieldOfViewFloat);
