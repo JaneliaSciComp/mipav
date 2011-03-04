@@ -326,7 +326,9 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         ModelImage iFFTDest = new ModelImage(ModelImage.COMPLEX, new int[]{512, 512, sizeSs}, "ifftDest");
         kCenterImage.setImage25D(true);
         iFFTDest.setImage25D(true);
-        AlgorithmFFT fft2 = new AlgorithmFFT(iFFTDest, kCenterImage, AlgorithmFFT.INVERSE, false, false, true);
+        boolean complexInverse = false;
+        AlgorithmFFT fft2 = new AlgorithmFFT(iFFTDest, kCenterImage, AlgorithmFFT.INVERSE, false, false, true,
+        		                             complexInverse);
         fft2.run();
         
         float[] realData = new float[512*512*40], imagData = new float[512*512*40];
@@ -421,7 +423,9 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         ModelImage kImage = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "kData");
         
         //kImage is now at 512x512
-        AlgorithmFFT fft = new AlgorithmFFT(kImage, iImage, AlgorithmFFT.FORWARD, false, false, true);
+        boolean complexInverse = false;
+        AlgorithmFFT fft = new AlgorithmFFT(kImage, iImage, AlgorithmFFT.FORWARD, false, false, true,
+        		                            complexInverse);
         iImage.setImage25D(true);
         kImage.setImage25D(true);
         fft.run();
