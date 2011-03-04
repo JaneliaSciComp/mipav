@@ -168,10 +168,11 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
         boolean logMagDisplay = true;
         boolean unequalDim = false;
         boolean image25D = false;
+        boolean complexInverse = false;
 
         // take the FFT of the inImage
         AlgorithmFFT blurredFFT = new AlgorithmFFT(blurredImageSpectrum, inImage, forwardTransformDir, logMagDisplay,
-                                                   unequalDim, image25D);
+                                                   unequalDim, image25D, complexInverse);
         blurredFFT.run();
 
         // fill the blurred arrays with values from the blurredImage
@@ -227,18 +228,20 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
 
         // take the FFT of the estimatedImage
         estimatedFFT = new AlgorithmFFT(estimatedImageSpectrum, estimatedImage, forwardTransformDir, logMagDisplay,
-                                        unequalDim, image25D);
+                                        unequalDim, image25D, complexInverse);
 
         estimatedIFFT = new AlgorithmFFT(estimatedImage, estimatedImageSpectrum, inverseTransformDir, logMagDisplay,
-                                         unequalDim, image25D);
+                                         unequalDim, image25D, complexInverse);
 
         psfImageSpectrum = new ModelImage(ModelStorageBase.COMPLEX, inImage.getExtents(), null);
         psfImageSpectrum.setOriginalExtents(inImage.getExtents());
 
 
-        psfIFFT = new AlgorithmFFT(psfImage, psfImageSpectrum, inverseTransformDir, logMagDisplay, unequalDim, image25D);
+        psfIFFT = new AlgorithmFFT(psfImage, psfImageSpectrum, inverseTransformDir, logMagDisplay, unequalDim,
+        		                   image25D, complexInverse);
 
-        psfFFT = new AlgorithmFFT(psfImageSpectrum, psfImage, forwardTransformDir, logMagDisplay, unequalDim, image25D);
+        psfFFT = new AlgorithmFFT(psfImageSpectrum, psfImage, forwardTransformDir, logMagDisplay, unequalDim,
+        		                  image25D, complexInverse);
         fireProgressStateChanged(.1f, null, null);
     }
 
