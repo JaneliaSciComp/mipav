@@ -787,7 +787,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
                                         String.valueOf(i + 1).trim().length());
 
         // Pixel resolutions X, and Y.
-        String s = String.valueOf(resols[0]) + "\\" + String.valueOf(resols[1]);
+        String s = String.valueOf(resols[1]) + "\\" + String.valueOf(resols[0]);
         String yearStr;
         String mmStr;
         String ddStr;
