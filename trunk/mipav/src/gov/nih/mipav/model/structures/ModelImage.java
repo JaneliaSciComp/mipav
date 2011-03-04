@@ -4330,8 +4330,8 @@ public class ModelImage extends ModelStorageBase {
             // it wasn't there in the first place.
             //if ((rotateAxis != Z_AXIS_180) && (rotateAxis != Z_AXIS_PLUS) && (rotateAxis != Z_AXIS_PLUS) &&
             //        (tmp != null)) {
-                newTagPixelSpc = new StringBuffer(Float.toString(newResolutions[0]) + "\\" +
-                                                  Float.toString(newResolutions[1]));
+                newTagPixelSpc = new StringBuffer(Float.toString(newResolutions[1]) + "\\" +
+                                                  Float.toString(newResolutions[0]));
                 newTagSliceSpc = new StringBuffer(Float.toString(newResolutions[2]));
             //}
 
