@@ -193,7 +193,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
         ModelImage phaseMask = generatePhaseMask(brainMaskSet, ixRealFinal, ixImagFinal, phaseMaskData);
 
-        ModelImage magEnhanced = generateMagEnhanced(phaseMaskData, realData);
+        destImage = generateMagEnhanced(phaseMaskData, magImage);
     }
     
     private ModelImage rescaleICenter(ModelImage iCenterImage) {
@@ -212,8 +212,16 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
     }
 
-    private ModelImage generateMagEnhanced(float[] phaseMaskData, double[] realData) {
+    private ModelImage generateMagEnhanced(float[] phaseMaskData, ModelImage magnitude) {
         ModelImage magEnhanced = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "magEnhanced");
+        double[] realData = new double[magnitude.getDataSize()];
+        try {
+            magnitude.exportData(0, magnitude.getDataSize(), realData);
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        
         for(int i=0; i<realData.length; i++) {
             realData[i] = realData[i]*(Math.pow(phaseMaskData[i], multFactor));
         }
@@ -239,8 +247,8 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
         
         for (int i = brainMaskSet.nextSetBit(0); i >= 0; i = brainMaskSet.nextSetBit(i+1)) {
-           if(Math.atan(ixRealFinal[i]/ixImagFinal[i]) < 0) {
-               phaseMaskData[i] = (float) ((Math.PI + Math.atan(ixRealFinal[i]/ixImagFinal[i])) / Math.PI);
+           if(Math.atan2(ixImagFinal[i], ixRealFinal[i]) < 0) {
+               phaseMaskData[i] = (float) ((Math.PI + Math.atan2(ixImagFinal[i], ixRealFinal[i])) / Math.PI);
            } 
         }
         
@@ -258,7 +266,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage generateIFinal(ModelImage iImage, ModelImage iCenterImage, BitSet brainMaskSet, float[] ixRealFinal, float[] ixImagFinal) {
-        ModelImage iFinal = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "complexData");
+        ModelImage iFinal = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iFinal");
         System.out.println("Here");
         double[] ixReal = new double[sizeRo*sizePe*sizeSs];
         double[] ixImag = new double[sizeRo*sizePe*sizeSs];
@@ -266,7 +274,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         double[] ixImagCenter = new double[sizeRo*sizePe*sizeSs];
         try {
             iImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixReal, ixImag);
-            iCenterImage.exportData(0, sizeRo*sizePe*sizeSs, ixRealCenter);
+            iCenterImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixRealCenter, ixImagCenter);
             
         } catch (IOException e1) {
             // TODO Auto-generated catch block
@@ -296,19 +304,46 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage runiFFTonKCenter(ModelImage kCenterImage) {
-        ModelImage iCenterDest = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "ixcenter33");
+        ModelImage iFFTDest = new ModelImage(ModelImage.COMPLEX, new int[]{512, 512, sizeSs}, "ifftDest");
         kCenterImage.setImage25D(true);
-        iCenterDest.setImage25D(true);
-        AlgorithmFFT fft2 = new AlgorithmFFT(iCenterDest, kCenterImage, AlgorithmFFT.INVERSE, false, false, true);
+        iFFTDest.setImage25D(true);
+        AlgorithmFFT fft2 = new AlgorithmFFT(iFFTDest, kCenterImage, AlgorithmFFT.INVERSE, false, false, true);
         fft2.run();
         
-        ViewJFrameImage iCenterFrame = new ViewJFrameImage(iCenterDest);
+        float[] realData = new float[512*512*40], imagData = new float[512*512*40];
+        try {
+            iFFTDest.exportComplexData(0, 512*512*40, realData, imagData);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        ViewJFrameImage iCenterFrame = new ViewJFrameImage(iFFTDest);
         iCenterFrame.setVisible(true);
         
-        return iCenterDest;
+        float[] newRealData = new float[480*480*40], newImagData = new float[480*480*40];
+        for(int i=0; i<480; i++) {
+            for(int j=0; j<480; j++) {
+                for(int k=0; k<40; k++) {
+                    newRealData[k*480*480+j*480+i] = realData[k*512*512+j*512+i];
+                    newImagData[k*480*480+j*480+i] = imagData[k*512*512+j*512+i];
+                }
+            }
+        }
+        
+        ModelImage iCenter = new ModelImage(ModelImage.COMPLEX, new int[]{480, 480, sizeSs}, "ixcenter");
+        try {
+            iCenter.importComplexData(0, newRealData, newImagData, true, false);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        ViewJFrameImage iNewCenterFrame = new ViewJFrameImage(iCenter);
+        iNewCenterFrame.setVisible(true);
+        
+        return iCenter;
     }
-
-    @SuppressWarnings("unused")
+    
     private ModelImage padiImage(ModelImage iImage) {
         ModelImage iCenterImage = (ModelImage) iImage.clone(); //also needs to be 480x480
         iCenterImage.setImageName("iCenterImage");
