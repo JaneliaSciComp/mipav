@@ -70,6 +70,9 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
     private int sizePe;
 
+    private int complexRo;
+    
+    private int complexPe;
     
     private int sizeSs;
 
@@ -159,16 +162,32 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	
     	ModelImage kImage = createkImage(iImage);
     	
-    	sizeRo = 512;
-        sizePe = 512;
+    	int upper = (int) Math.pow(2, 128);
+    	boolean foundRo = false, foundPe = false;
+    	for(int i=1; i<upper; i=i*2) {
+    	    if(i > sizeRo) {
+    	        sizeRo = i;
+    	        foundRo = true;
+    	    }
+    	    if(i > sizePe) {
+    	        sizePe = i;
+    	        foundPe = true;
+    	    }
+    	    if(foundRo && foundPe) {
+    	        break;
+    	    }
+    	}
+    	
+    	System.out.println("Complex Ro: "+sizeRo);
+    	System.out.println("Complex Pe: "+sizePe);
     	
         originRo = (sizeRo - roFilterSize)/2;
         originPe = (sizePe - peFilterSize)/2;
         
     	ModelImage kCenterImage = createKCenterImage(kImage);
     	
-    	sizeRo = 480;
-        sizePe = 480;
+    	sizeRo = magImage.getExtents()[0];
+        sizePe = magImage.getExtents()[1];
         
         originRo = (sizeRo - roFilterSize)/2;
         originPe = (sizePe - peFilterSize)/2;
