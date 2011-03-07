@@ -19,13 +19,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	
 	private int[] groupNum;
 	
-	private int[] xPos;
-	
-	private int[] yPos;
-	
-	private int[] zPos;
-	
-	private int[] tPos;
+	private int[][] pos;
 	
 	private int numClusters;
 	
@@ -36,15 +30,11 @@ public class AlgorithmKMeans extends AlgorithmBase {
     /**
      
      */
-    public AlgorithmKMeans(ModelImage image, int[] groupNum, int[] xPos,
-    		                        int[] yPos, int[] zPos, int[] tPos, int numClusters) {
+    public AlgorithmKMeans(ModelImage image, int[] groupNum, int[][] pos, int numClusters) {
 
         this.image = image;
         this.groupNum = groupNum;
-        this.xPos = xPos;
-        this.yPos = yPos;
-        this.zPos = zPos;
-        this.tPos = tPos;
+        this.pos = pos;
         this.numClusters = numClusters;
 
     }
