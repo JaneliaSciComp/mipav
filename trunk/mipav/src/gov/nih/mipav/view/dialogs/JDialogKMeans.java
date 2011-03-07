@@ -66,13 +66,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     private int groupNum[];
     
-    private int xPos[];
-    
-    private int yPos[];
-    
-    private int zPos[];
-    
-    private int tPos[];
+    // xDim, yDim, zDim, tDim
+    private int pos[][];
     
     private JTextField textImage;
     
@@ -181,16 +176,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	         }
              textImage.setText(image.getImageFileName());
 	         groupNum = new int[nPoints];
-             xPos = new int[nPoints];
-             if (nDims >= 2) {
-             	yPos = new int[nPoints];
-             	if (nDims >= 3) {
-             		zPos = new int[nPoints];
-             		if (nDims >= 4) {
-             			tPos = new int[nPoints];
-             		}
-             	}
-             } // if (nDims >= 2)
+             pos = new int[nDims][nPoints];
              if (nDims >= 4) {
             	 tDim = extents[3];
              }
@@ -219,13 +205,13 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	        			 for (x = 0; x < xDim; x++) {
 	        			     index = x + y*xDim + z*sliceSize + t*volume;
 	        			     if (buffer[index] > 0) {
-	        			         xPos[nval] = x;
+	        			         pos[0][nval] = x;
 	        			         if (nDims >= 2) {
-	        			        	 yPos[nval] = y;
+	        			        	 pos[1][nval] = y;
 	        			        	 if (nDims >= 3) {
-	        			        		 zPos[nval] = z;
+	        			        		 pos[2][nval] = z;
 	        			        		 if (nDims >= 4) {
-	        			        			 tPos[nval] = t;
+	        			        			 pos[3][nval] = t;
 	        			        		 }
 	        			        	 }
 	        			         }
@@ -371,16 +357,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                    }
 	                    nPoints = Integer.valueOf(line.substring(start, end)).intValue();
 	                    groupNum = new int[nPoints];
-	                    xPos = new int[nPoints];
-	                    if (nDims >= 2) {
-	                    	yPos = new int[nPoints];
-	                    	if (nDims >= 3) {
-	                    		zPos = new int[nPoints];
-	                    		if (nDims >= 4) {
-	                    			tPos = new int[nPoints];
-	                    		}
-	                    	}
-	                    } // if (nDims >= 2)
+	                    pos = new int[nDims][nPoints];
 	                    nval = 0;
 	                    dimPt = 0;
 	                    l2: while (true) {
@@ -407,18 +384,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		                        if (start == end) {
 		                            continue l2;
 		                        }
-		                        if (dimPt == 0) {
-		                            xPos[nval] = Integer.valueOf(line.substring(start, end)).intValue();
-		                        }
-		                        else if (dimPt == 1) {
-		                        	yPos[nval] = Integer.valueOf(line.substring(start, end)).intValue();	
-		                        }
-		                        else if (dimPt == 2) {
-		                        	zPos[nval] = Integer.valueOf(line.substring(start, end)).intValue();
-		                        }
-		                        else if (dimPt == 3) {
-		                        	tPos[nval] = Integer.valueOf(line.substring(start, end)).intValue();
-		                        }
+		                         pos[dimPt][nval] = Integer.valueOf(line.substring(start, end)).intValue();
 		                        if (dimPt == nDims-1) {
 		                        	nval++;
 		                        }
@@ -479,7 +445,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 		 try {
 		
-			 alg = new AlgorithmKMeans(image,groupNum,xPos,yPos,zPos,tPos,numberClusters);
+			 alg = new AlgorithmKMeans(image,groupNum,pos,numberClusters);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
