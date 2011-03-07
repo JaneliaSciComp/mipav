@@ -106,6 +106,8 @@ public class PlugInAlgorithmBrainSubcortical extends AlgorithmBase {
 		}
 
 		System.gc();
+		System.out.println("PlugIn Brain Subcortical Analysis Finish Running.  MIPAV Quits. ");
+		System.exit(0);
 	}
     
     /**
