@@ -19,6 +19,7 @@ import gov.nih.mipav.model.scripting.actions.ActionOpenAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionOpenVOI;
 import gov.nih.mipav.model.scripting.actions.ActionPaintToVOI;
 import gov.nih.mipav.model.scripting.actions.ActionSaveAllVOIs;
+import gov.nih.mipav.model.scripting.actions.ActionSelectAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionVOIToMask;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
@@ -1284,6 +1285,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SELECT_ALL.getActionCommand()) )
         {
             selectAllVOIs(true);
+            ScriptRecorder.getReference().addLine(new ActionSelectAllVOIs(getActiveImage()));
         }
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SELECT_NONE.getActionCommand())) {
             selectAllVOIs(false);
