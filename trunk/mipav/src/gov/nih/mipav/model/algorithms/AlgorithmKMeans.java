@@ -120,7 +120,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	changeOccurred = true;
     	iteration = 1;
     	while (changeOccurred) {
-    		Preferences.debug("iteration = " + iteration + "\n");
+    		fireProgressStateChanged("Iteration = " + iteration);
+    		Preferences.debug("Iteration = " + iteration + "\n");
     		iteration++;
     		changeOccurred = false;
     		for (i = 0; i < numberClusters; i++) {
