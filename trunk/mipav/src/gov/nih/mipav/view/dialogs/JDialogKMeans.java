@@ -54,6 +54,11 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     private int extents[];
     
+    // Take resolutions from the image
+    // Use 1.0 in every dimension if not scaled.
+    // Subscript goes from 0 to nDims - 1
+    private double scale[];
+    
     private String directoryPoints;
     
     private String fileNamePoints;
@@ -64,10 +69,19 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     private int nPoints;
     
+    // subscript goes from 0 to nPoints-1 for each point
+    // Value is the cluster number from 0 to numberClusters-1.
     private int groupNum[];
     
-    // xDim, yDim, zDim, tDim
+    // First subscript x = 0, y = 1, z = 2, t = 3
+    // Second subscript 0 to nPoints-1 for each point
+    // Value is the point position
     private int pos[][];
+    
+    // First subscript x = 0, y = 1, z = 2, t = 3
+    // Second subscript 0 to numberClusters-1 for each cluster
+    // Value is the cluster position
+    private double centroidPos[][];
     
     private JTextField textImage;
     
@@ -80,6 +94,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private JTextField textClusters;
     
     private int numberClusters;
+    
+    private boolean havePoints = false;
 	
 	
 	public JDialogKMeans() {
@@ -95,7 +111,6 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	public void actionPerformed(ActionEvent event) {
 		int dimPt;
 		float buffer[];
-		boolean havePoints = false;
 		int length;
 		int i;
 		int x, y, z, t;
@@ -106,7 +121,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		int nval;
 		String command = event.getActionCommand();
 		 if (command.equals("OK")) {
-			 if (havePoints) {
+			 if (setVariables()) {
 			     callAlgorithm();
 			 }
 	     } 
@@ -147,6 +162,10 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
          		}
 	         } 
 	         nDims = image.getNDims();
+	         scale = new double[nDims];
+	         for (i = 0; i < nDims; i++) {
+	        	 scale[i] = image.getFileInfo()[0].getResolutions()[i];
+	         }
 	         extents = image.getExtents();
 	         length = extents[0];
 	         for (i = 1; i < nDims; i++) {
@@ -342,7 +361,51 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                        return;
 	                    }
 	                    if (nval < nDims) {
-	                    	MipavUtil.displayError("Only " + nval + " of " + nDims + " required dimensions found");
+	                    	MipavUtil.displayError("Only " + nval + " of " + nDims + " required dimension lengths found");
+	                    	return;
+	                    }
+	                    start = 0;
+	                    end = 0;
+	                    nval = 0;
+	                   l2: while (true) {
+	                    	try {
+	                            // Contains the contents of the line not including line termination characters
+	                            line = br.readLine();  
+	                        }
+	                        catch(IOException e) {
+	                            MipavUtil.displayError("IOException on br.readLine");
+	                            br.close();
+	                            return;
+	                        }
+	                        // have reached end of stream
+	                        if (line == null) {
+	                            MipavUtil.displayError("Have reached end of stream on br.readLine");
+	                            break;
+	                        }
+	                    	start = 0;
+	                    	end = 0;
+	                    	while (start < line.length()) {
+		                    	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
+		                        end = start;
+		                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))) || (line.charAt(end) == '.') || 
+		                                       (line.charAt(end) == 'e') || (line.charAt(end) == 'E') ||
+		                                       (line.charAt(end) == '+') || (line.charAt(end) == '-'))); end++);
+		                        if (start == end) {
+		                            continue l2;
+		                        }
+		                        scale[nval++] = Double.valueOf(line.substring(start, end)).doubleValue();
+		                        if (nval ==  nDims) {
+		                            break l2;
+		                        }
+		                        start = end;
+	                    	} // while (start < line.length())
+	                    } // while (true)
+	                    if (nval < 1) {
+	                        MipavUtil.displayError("No scale values found in " + fileNamePoints);
+	                        return;
+	                    }
+	                    if (nval < nDims) {
+	                    	MipavUtil.displayError("Only " + nval + " of " + nDims + " required scale values found");
 	                    	return;
 	                    }
 	                    start = 0;
@@ -360,7 +423,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                    pos = new int[nDims][nPoints];
 	                    nval = 0;
 	                    dimPt = 0;
-	                    l2: while (true) {
+	                    l3: while (true) {
 	                    	try {
 	                            // Contains the contents of the line not including line termination characters
 	                            line = br.readLine();  
@@ -382,7 +445,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		                        end = start;
 		                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))))); end++);
 		                        if (start == end) {
-		                            continue l2;
+		                            continue l3;
 		                        }
 		                         pos[dimPt][nval] = Integer.valueOf(line.substring(start, end)).intValue();
 		                        if (dimPt == nDims-1) {
@@ -395,7 +458,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		                        	dimPt = 0;
 		                        }
 		                        if (nval ==  nPoints) {
-		                            break l2;
+		                            break l3;
 		                        }
 		                        start = end;
 	                    	} // while (start < line.length())
@@ -430,10 +493,22 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	 *  call algorithm
 	 */
 	protected void callAlgorithm() {
+		int i, j;
+		int length;
 
-		if ((nDims >= 1) && (nDims <= 4)  && (image == null)) {
+		if ((nDims >= 2) && (nDims <= 4)  && (image == null)) {
 		    image = new ModelImage(ModelStorageBase.BYTE, extents, 
 		    		                     makeImageName(fileNamePoints, "_kmeans"));
+		    length = extents[0];
+		    for (i = 1; i < nDims; i++) {
+		    	length = length * extents[i];
+		    }
+		    for (i = 0; i < length; i++) {
+		    	for (j = 0; j < nDims; j++) {
+		    		image.getFileInfo()[i].setResolutions((float)scale[j],j);
+		    	}
+		    }
+		
 		    try {
                 new ViewJFrameImage(image, null, new Dimension(610, 240));
             } catch (OutOfMemoryError error) {
@@ -441,11 +516,12 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
                 MipavUtil.displayError("Out of memory: unable to open new frame");
             }
 		}
+		centroidPos = new double[nDims][numberClusters];
 		
 		
 		 try {
 		
-			 alg = new AlgorithmKMeans(image,groupNum,pos,numberClusters);
+			 alg = new AlgorithmKMeans(image,pos,scale,groupNum,centroidPos);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -587,6 +663,26 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         pack();
         setVisible(true);
         
+    }
+    
+    private boolean setVariables() {
+    	String tmpStr;
+    	if (!havePoints) {
+    	    MipavUtil.displayError("Must obtain points from a text file or an image");
+    	    return false;
+    	}
+    	
+    	tmpStr = textClusters.getText();
+    	numberClusters = Integer.parseInt(tmpStr);
+    	if (numberClusters < 2) {
+    		MipavUtil.displayError("Must have at least 2 clusters");
+    		return false;
+    	}
+    	if (numberClusters > nPoints) {
+    		MipavUtil.displayError("The number of clusters must not exceed the number of points");
+    		return false;
+    	}
+    	return true;
     }
     
     
