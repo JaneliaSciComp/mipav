@@ -495,10 +495,20 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	protected void callAlgorithm() {
 		int i, j;
 		int length;
+		String fileNameBase = null;
+		
+		
 
 		if ((nDims >= 2) && (nDims <= 4)  && (image == null)) {
+			i = fileNamePoints.indexOf(".");
+			if (i > 0) {
+				fileNameBase = fileNamePoints.substring(0,i);
+			}
+			else {
+				fileNameBase = new String(fileNamePoints);
+			}
 		    image = new ModelImage(ModelStorageBase.BYTE, extents, 
-		    		                     makeImageName(fileNamePoints, "_kmeans"));
+		    		                     makeImageName(fileNameBase, "_kmeans"));
 		    length = extents[0];
 		    for (i = 1; i < nDims; i++) {
 		    	length = length * extents[i];
@@ -528,6 +538,13 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
              // notify this object when it has completed of failed. See algorithm performed event.
              // This is made possible by implementing AlgorithmedPerformed interface
              alg.addListener(this);
+             
+             if (image != null) {
+                 createProgressBar(image.getImageName(), alg);
+             }
+             else {
+            	 createProgressBar(fileNameBase + "_kmeans", alg);
+             }
 
 
              // Hide dialog
