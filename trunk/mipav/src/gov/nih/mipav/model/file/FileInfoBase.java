@@ -214,7 +214,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                 }
             }
             
-            return null;
+            return Unit.UNKNOWN_MEASURE;
         }
         
         public static Unit getUnitFromAbbrev(String abbrev) {
@@ -224,7 +224,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                 }
             }
             
-            return null;
+            return Unit.UNKNOWN_MEASURE;
         }
         
         public static Unit getUnitFromLegacyNum(int legacyNum) {
@@ -234,7 +234,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                 }
             }
             
-            return null;
+            return Unit.UNKNOWN_MEASURE;
         }
 
         
