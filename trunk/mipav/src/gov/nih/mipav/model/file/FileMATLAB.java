@@ -462,22 +462,33 @@ public class FileMATLAB extends FileBase {
                 	buffer = new byte[elementBytes];
                 	raFile.read(buffer);
                 	zlibDecompresser = new Inflater();
-                	zlibDecompresser.setInput(buffer, 0, elementBytes);
+                	zlibDecompresser.setInput(buffer);
+                	
+                	// Create an expandable byte array to hand the decompressed data
+                	ByteArrayOutputStream bos = new ByteArrayOutputStream(buffer.length);
+                	
+                	// Decompress the data
+                	byte[] buf = new byte[65536];
                 	try {
-                		decompSize = 1000L * elementBytes;
-                		if (decompSize < Integer.MAX_VALUE) {
-                			decomp =  new byte[1000 * elementBytes];
+                		while (true) {
+                			int count = zlibDecompresser.inflate(buf);
+                			if (count > 0) {
+                				bos.write(buf, 0 , count);
+                			}
+                			else if (count == 0 && zlibDecompresser.finished()) {
+                	            break;
+                			} else  {
+                				throw new RuntimeException("bad zip data, size:" + buffer.length);
+                			} 
                 		}
-                		else {
-                			decomp = new byte[Integer.MAX_VALUE];
-                		}
-                        resultLength = zlibDecompresser.inflate(decomp);
-                        Preferences.debug("Decompressed length = " + resultLength + "\n");
-                    }
-                    catch (DataFormatException e){
-                        MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
-                    }
-                    zlibDecompresser.reset();
+                	} catch (Throwable t) {
+                		throw new RuntimeException(t);
+                	} finally {
+                		zlibDecompresser.end();
+                	}
+                	// Get the decompressed data
+                    decomp = bos.toByteArray();
+                    resultLength = decomp.length;
                     uncompressedName = fileDir + fileName.substring(0, st) + "uncompressed.mat";
                     ufile = new File(uncompressedName);
                     raFile = new RandomAccessFile(ufile, "rw");
