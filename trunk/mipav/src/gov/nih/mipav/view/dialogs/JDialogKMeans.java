@@ -96,6 +96,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private int numberClusters;
     
     private boolean havePoints = false;
+    
+    private String resultsFileName = null;
 	
 	
 	public JDialogKMeans() {
@@ -119,6 +121,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		int volume;
 		int index;
 		int nval;
+		String fileNameBase = null;
 		String command = event.getActionCommand();
 		 if (command.equals("OK")) {
 			 if (setVariables()) {
@@ -147,7 +150,16 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	         if (returnValue == JFileChooser.APPROVE_OPTION) { 	
 	         	FileIO fileIO = new FileIO();
 	         	isMultifile = fileChooser.isMulti();
-	         	image = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator, isMultifile, null);
+	         	image = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator,
+	         			                 isMultifile, null);
+	         	i = chooser.getSelectedFile().getName().indexOf(".");
+				if (i > 0) {
+					fileNameBase = chooser.getSelectedFile().getName().substring(0,i);
+				}
+				else {
+					fileNameBase = new String(chooser.getSelectedFile().getName());
+				}
+	         	resultsFileName = chooser.getCurrentDirectory() + File.separator + fileNameBase + "_kmeans.txt";
          		if (image.isColorImage()) {
          		    MipavUtil.displayError("Image cannot be a color image");
          		    image.disposeLocal();
@@ -281,6 +293,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 
 	                if (fileNamePoints != null) {
 	                	filePoints = new File(directoryPoints + fileNamePoints);
+	                	resultsFileName = directoryPoints + fileNamePoints + "_kmeans.txt";
 	                    
 	                    try {
 	                        br = new BufferedReader(new InputStreamReader(new FileInputStream(filePoints)));
@@ -531,7 +544,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 		 try {
 		
-			 alg = new AlgorithmKMeans(image,pos,scale,groupNum,centroidPos);
+			 alg = new AlgorithmKMeans(image,pos,scale,groupNum,centroidPos,resultsFileName);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
