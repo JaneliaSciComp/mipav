@@ -267,7 +267,6 @@ public class FileMATLAB extends FileBase {
         int imageLength = 1;
         int x;
         int y;
-        long decompSize;
         String uncompressedName = null;
         int imagesFound = 0;
         int structureDimensions[];
