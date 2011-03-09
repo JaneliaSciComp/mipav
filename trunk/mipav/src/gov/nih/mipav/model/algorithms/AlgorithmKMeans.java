@@ -6,6 +6,10 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 
 /**
@@ -35,19 +39,23 @@ public class AlgorithmKMeans extends AlgorithmBase {
     // Second subscript 0 to numberClusters-1 for each cluster
     // Value is the cluster position
 	private double[][] centroidPos;
+	
+	private String resultsFileName;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      
      */
-    public AlgorithmKMeans(ModelImage image, int[][] pos, double[] scale, int groupNum[], double[][] centroidPos) {
+    public AlgorithmKMeans(ModelImage image, int[][] pos, double[] scale, int groupNum[], double[][] centroidPos,
+    		               String resultsFileName) {
 
         this.image = image;
         this.pos = pos;
         this.scale = scale;
         this.groupNum = groupNum;
         this.centroidPos = centroidPos;
+        this.resultsFileName = resultsFileName;
 
     }
 
@@ -68,7 +76,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     /**
      * Starts the algorithm.
      */
-    public void runAlgorithm() {
+    @SuppressWarnings("null")
+	public void runAlgorithm() {
     	int nDims;
     	int nPoints;
     	int numberClusters;
@@ -90,6 +99,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         float xArr[] = new float[1];
         float yArr[] = new float[1];
         float zArr[] = new float[1];
+        File file;
+        RandomAccessFile raFile;
+        String dataString = null;
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
@@ -157,7 +169,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		}
 	    	}
 	    	for (i = 0; i < numberClusters; i++) {
-	    		Preferences.debug("Cluster " + (i+1) + ":\n");
+	    		Preferences.debug("Cluster centroid " + (i+1) + ":\n");
 	    		for (j = 0; j < nDims; j++) {
 	    			centroidPos[j][i] = centroidPos[j][i]/pointsInCluster[i];
 	    			Preferences.debug("Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n");
@@ -222,6 +234,57 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	            image.registerVOI(newPtVOI);	
 	    	}
     	} // if ((image != null) && (nDims >= 2) && (nDims <= 3) && (numberClusters <= 9)
+    	
+    	file = new File(resultsFileName);
+    	try {
+    	raFile = new RandomAccessFile( file, "rw" );
+    	}
+    	catch(FileNotFoundException e) {
+    		MipavUtil.displayError("new RandomAccessFile gave FileNotFoundException " + e);
+    		setCompleted(false);
+    		return;
+    	}
+    	// Necessary so that if this is an overwritten file there isn't any junk at the end
+    	try {
+    	    raFile.setLength( 0 );
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("raFile.setLength(0) gave IOException " + e);
+    		setCompleted(false);
+    		return;	
+    	}
+    	for (i = 0; i < numberClusters; i++) {
+    		dataString += "Cluster centroid " + (i+1) + ":\n";
+    		for (j = 0; j < nDims; j++) {
+    			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
+    		}
+    		dataString += "\n";
+    	}
+    	
+    	for (i = 0; i < nPoints; i++) {
+    		dataString += "Point number " + String.valueOf(i+1) + "  Location  ";
+    		for (j = 0; j < nDims; j++) {
+    		    dataString += String.valueOf(pos[j][i]) + "  ";	
+    		}
+    		dataString += "Cluster  " + String.valueOf(groupNum[i]+1) + "\n";
+    	}
+    	try {
+    	    raFile.write(dataString.getBytes());
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("raFile.write gave IOException " + e);
+    		setCompleted(false);
+    		return;		
+    	}
+    	try {
+    	    raFile.close();
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("raFile.close gave IOException " + e);
+    		setCompleted(false);
+    		return;		
+    	}
+    	
         setCompleted(true);
         return;
     }
