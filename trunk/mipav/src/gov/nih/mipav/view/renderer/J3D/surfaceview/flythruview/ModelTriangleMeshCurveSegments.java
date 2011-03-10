@@ -538,7 +538,7 @@ public class ModelTriangleMeshCurveSegments {
         int iPrevIndex = 0;
         float fHalf = 0;
         float fPreviousTime = 0;
-        float fTotalCurveLength = 0;
+        //float fTotalCurveLength = 0;
         float fCurveSegmentPathLength = 0;
 
         /* Temporary variables for calculating the relative path lengths for
@@ -616,7 +616,7 @@ public class ModelTriangleMeshCurveSegments {
             /* Initialize th number of segment points
              */
             m_aiNumBreakPoints[iCurve] = 0;
-            fTotalCurveLength = m_akCurvePosition[iCurve].GetTotalLength();
+            //fTotalCurveLength = m_akCurvePosition[iCurve].GetTotalLength();
 
 
             /* Loop over the sample points and determine where to segment the
