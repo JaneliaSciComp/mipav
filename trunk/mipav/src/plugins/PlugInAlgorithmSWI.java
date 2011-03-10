@@ -205,7 +205,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
         ModelImage iFinal = generateIFinal(iImage, iCenterImage, brainMaskSet, ixRealFinal, ixImagFinal);
         
-    	float[] phaseMaskData = new float[sizeRo*sizePe*sizeSs];
+    	double[] phaseMaskData = new double[sizeRo*sizePe*sizeSs];
 
         ModelImage phaseMask = generatePhaseMask(brainMaskSet, ixRealFinal, ixImagFinal, phaseMaskData);
 
@@ -228,8 +228,8 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
     }
 
-    private ModelImage generateMagEnhanced(float[] phaseMaskData, ModelImage magnitude) {
-        ModelImage magEnhanced = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "magEnhanced");
+    private ModelImage generateMagEnhanced(double[] phaseMaskData, ModelImage magnitude) {
+        ModelImage magEnhanced = new ModelImage(ModelImage.DOUBLE, new int[]{sizeRo,sizePe,sizeSs}, "magEnhanced");
         double[] realData = new double[magnitude.getDataSize()];
         try {
             magnitude.exportData(0, magnitude.getDataSize(), realData);
@@ -248,14 +248,16 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             e.printStackTrace();
         }
         
-        ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhanced);
+        ModelImage magEnhancedAlg = (ModelImage) magEnhanced.clone();
+        magEnhancedAlg.setImageName("magEnhancedAlg");
+        ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhancedAlg);
         magEnhancedFrame.setVisible(true);
         
         return magEnhanced;
     }
 
-    private ModelImage generatePhaseMask(BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal, float[] phaseMaskData) {
-        ModelImage phaseMask = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "phaseMask");
+    private ModelImage generatePhaseMask(BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal, double[] phaseMaskData) {
+        ModelImage phaseMask = new ModelImage(ModelImage.DOUBLE, new int[]{sizeRo,sizePe,sizeSs}, "phaseMask");
 
         for(int i=0; i<sizeRo*sizePe*sizeSs; i++) {
             phaseMaskData[i] = 1;
