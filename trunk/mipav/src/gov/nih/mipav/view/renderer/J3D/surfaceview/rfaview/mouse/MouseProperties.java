@@ -27,7 +27,7 @@ public class MouseProperties extends MouseBehavior {
     double y_factor = .03;
 
     /** DOCUMENT ME! */
-    private MouseBehaviorCallback callback = null;
+    //private MouseBehaviorCallback callback = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -122,7 +122,7 @@ public class MouseProperties extends MouseBehavior {
         WakeupCriterion wakeup;
         AWTEvent[] event;
         int id;
-        int dx, dy;
+       // int dx, dy;
 
         while (criteria.hasMoreElements()) {
             wakeup = (WakeupCriterion) criteria.nextElement();
@@ -187,9 +187,9 @@ public class MouseProperties extends MouseBehavior {
      *
      * @param  callback  DOCUMENT ME!
      */
-    public void setupCallback(MouseBehaviorCallback callback) {
+   /* public void setupCallback(MouseBehaviorCallback callback) {
         this.callback = callback;
-    }
+    }*/
 
     /**
      * Users can overload this method which is called every time the Behavior updates the transform. Default
