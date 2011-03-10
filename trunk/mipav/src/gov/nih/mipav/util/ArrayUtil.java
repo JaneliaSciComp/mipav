@@ -53,6 +53,55 @@ public class ArrayUtil {
             }
         }
     }
+    
+    public static void copy2D(final double[] srcData, final int srcFrom, final int srcXDim, final int srcYDim,
+            final double[] destData, final int destFrom, final int destXDim, final int destYDim, final boolean source) {
+        if (source) {
+            for (int i = 0; i < srcYDim; i++) {
+                System.arraycopy(srcData, srcFrom + i * srcXDim, destData, destFrom + i * destXDim, srcXDim);
+            }
+        } else {
+            for (int i = 0; i < destYDim; i++) {
+                System.arraycopy(srcData, srcFrom + i * srcXDim, destData, destFrom + i * destXDim, destXDim);
+            }
+        }
+    }
+
+    public static void copy3D(final double[] srcData, final int srcFrom, final int srcXDim, final int srcYDim,
+            final int srcZDim, final double[] destData, final int destFrom, final int destXDim, final int destYDim,
+            final int destZDim, final boolean source) {
+        final int srcSliceSize = srcXDim * srcYDim;
+        final int destSliceSize = destXDim * destYDim;
+        if (source) {
+            for (int i = 0; i < srcZDim; i++) {
+                ArrayUtil.copy2D(srcData, srcFrom + i * srcSliceSize, srcXDim, srcYDim, destData, destFrom + i
+                        * destSliceSize, destXDim, destYDim, source);
+            }
+        } else {
+            for (int i = 0; i < destZDim; i++) {
+                ArrayUtil.copy2D(srcData, srcFrom + i * srcSliceSize, srcXDim, srcYDim, destData, destFrom + i
+                        * destSliceSize, destXDim, destYDim, source);
+            }
+        }
+    }
+
+    public static void copy4D(final double[] srcData, final int srcXDim, final int srcYDim, final int srcZDim,
+            final int srcTDim, final double[] destData, final int destXDim, final int destYDim, final int destZDim,
+            final int destTDim, final boolean source) {
+        final int srcVolumeSize = srcXDim * srcYDim;
+        final int destVolumeSize = destXDim * destYDim;
+        if (source) {
+            for (int i = 0; i < srcTDim; i++) {
+                ArrayUtil.copy3D(srcData, i * srcVolumeSize, srcXDim, srcYDim, srcZDim, destData, i * destVolumeSize,
+                        destXDim, destYDim, destZDim, source);
+            }
+        } else {
+            for (int i = 0; i < destTDim; i++) {
+                ArrayUtil.copy3D(srcData, i * srcVolumeSize, srcXDim, srcYDim, srcZDim, destData, i * destVolumeSize,
+                        destXDim, destYDim, destZDim, source);
+            }
+        }
+    }
 
     /**
      * Copy a row in x, y or z direction to an array.
