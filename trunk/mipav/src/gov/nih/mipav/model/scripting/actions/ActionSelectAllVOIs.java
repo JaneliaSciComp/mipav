@@ -3,7 +3,7 @@ package gov.nih.mipav.model.scripting.actions;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
