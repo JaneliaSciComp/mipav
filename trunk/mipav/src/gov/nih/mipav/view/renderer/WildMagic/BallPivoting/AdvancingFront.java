@@ -17,10 +17,10 @@ public abstract class AdvancingFront {
 	public AdvancingFront(TriMesh _mesh) { 
 		   mesh = _mesh;
 		    
-		   UpdateFlags u = new UpdateFlags();
+		  // UpdateFlags u = new UpdateFlags();
 		   
-		   u.faceBorderFromNone(mesh);   
-		   u.vertexBorderFromFace(mesh);     
+		   UpdateFlags.faceBorderFromNone(mesh);   
+		   UpdateFlags.vertexBorderFromFace(mesh);     
 
 		    nb.clear();
 		    // nb.resize(mesh.vert.size(), 0);
@@ -39,7 +39,7 @@ public abstract class AdvancingFront {
 		
 		final int 	interval = 512*16;
 	
-		int nthreads = 4;
+		//int nthreads = 4;
 		
 		/*
 		final CountDownLatch doneSignal = new CountDownLatch(nthreads);
@@ -70,7 +70,7 @@ public abstract class AdvancingFront {
 		}	
 	    */
 		
-		int count = 0;
+		//int count = 0;
 		seedFace();
 		for(int i = 0; i < interval; i++) {
 	         //  System.err.println( "BuildMesh " + i);
@@ -133,7 +133,7 @@ public abstract class AdvancingFront {
 	  
 	    Iterator<FrontEdge> s = front.iterator();
 	    while ( s.hasNext() ) {
-	        FrontEdge elem = s.next();
+	        //FrontEdge elem = s.next();
 	    	// elem.previous = null;
 	    	// elem.next = null;
 	    }
