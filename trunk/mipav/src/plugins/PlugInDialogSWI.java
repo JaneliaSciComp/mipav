@@ -161,7 +161,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
        if (algorithm instanceof PlugInAlgorithmSWI) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
-            
+            resultImage = algorithm.getDestImage();
             if ((genericAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.

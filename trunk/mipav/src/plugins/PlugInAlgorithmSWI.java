@@ -102,12 +102,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         this.multFactor = multFactor;
     }
         
-//  ~ Methods --------------------------------------------------------------------------------------------------------
-
-    
-    
-  
-    
+    //  ~ Methods --------------------------------------------------------------------------------------------------------
     
     /**
      * Prepares this class for destruction.
@@ -205,8 +200,8 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             e.printStackTrace();
         }
     	
-        float[] ixRealFinal = new float[sizeRo*sizePe*sizeSs];
-        float[] ixImagFinal = new float[sizeRo*sizePe*sizeSs];
+        double[] ixRealFinal = new double[sizeRo*sizePe*sizeSs];
+        double[] ixImagFinal = new double[sizeRo*sizePe*sizeSs];
 
         ModelImage iFinal = generateIFinal(iImage, iCenterImage, brainMaskSet, ixRealFinal, ixImagFinal);
         
@@ -259,7 +254,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         return magEnhanced;
     }
 
-    private ModelImage generatePhaseMask(BitSet brainMaskSet, float[] ixRealFinal, float[] ixImagFinal, float[] phaseMaskData) {
+    private ModelImage generatePhaseMask(BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal, float[] phaseMaskData) {
         ModelImage phaseMask = new ModelImage(ModelImage.FLOAT, new int[]{sizeRo,sizePe,sizeSs}, "phaseMask");
 
         for(int i=0; i<sizeRo*sizePe*sizeSs; i++) {
@@ -286,7 +281,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         return phaseMask;
     }
 
-    private ModelImage generateIFinal(ModelImage iImage, ModelImage iCenterImage, BitSet brainMaskSet, float[] ixRealFinal, float[] ixImagFinal) {
+    private ModelImage generateIFinal(ModelImage iImage, ModelImage iCenterImage, BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal) {
         ModelImage iFinal = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iFinal");
         System.out.println("Here");
         double[] ixReal = new double[sizeRo*sizePe*sizeSs];
@@ -307,12 +302,12 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         //bit of the brainMask
         for (int i = brainMaskSet.nextSetBit(0); i >= 0; i = brainMaskSet.nextSetBit(i+1)) {
             mag = Math.pow(ixReal[i], 2) + Math.pow(ixImag[i], 2);
-            ixRealFinal[i] = (float) ((ixRealCenter[i]*ixReal[i] + ixImagCenter[i]*ixImag[i])/mag); 
-            ixImagFinal[i] = (float) ((ixImagCenter[i]*ixReal[i] - ixRealCenter[i]*ixImag[i])/mag);
+            ixRealFinal[i] = (ixRealCenter[i]*ixReal[i] + ixImagCenter[i]*ixImag[i])/mag; 
+            ixImagFinal[i] = (ixImagCenter[i]*ixReal[i] - ixRealCenter[i]*ixImag[i])/mag;
         }
         
         try {
-            iFinal.importComplexData(0, ixRealFinal, ixImagFinal, true, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
+            iFinal.importDComplexData(0, ixRealFinal, ixImagFinal, true, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
