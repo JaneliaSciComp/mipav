@@ -83,6 +83,9 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     private double originPe;
 
     private AlgorithmAddMargins imageMarginsAlgo;
+
+    /** Whether intermediate images should be displayed during pipeline processing */
+    private boolean showInterImages;
     
     /**
      * Constructor.
@@ -91,7 +94,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
      * @param  srcImg       Source image model.
      */
     public PlugInAlgorithmSWI(ModelImage resultImage, ModelImage magImage, ModelImage phaseImage, 
-            double maskThreshold, int roFilterSize, int peFilterSize, int multFactor) {
+            double maskThreshold, int roFilterSize, int peFilterSize, int multFactor, boolean showInterImages) {
         super(resultImage, magImage);
         this.magImage = magImage;
         this.phaseImage = phaseImage;
@@ -99,6 +102,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         this.roFilterSize = roFilterSize;
         this.peFilterSize = peFilterSize;
         this.multFactor = multFactor;
+        this.showInterImages = showInterImages;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -153,9 +157,10 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
         rescaleToComplex(magImage, phaseImage, realData, imagData);
     	
+        fireProgressStateChanged(10, "SWI", "Creating complex image...");
     	ModelImage iImage = createiImage(realData, imagData);
     	
-    	
+    	fireProgressStateChanged(15, "SWI", "Performing FFT...");
     	ModelImage kImage = createkImage(iImage);
     	
     	int upper = (int) Math.pow(2, 128);
@@ -180,6 +185,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         originRo = (sizeRo - roFilterSize)/2;
         originPe = (sizePe - peFilterSize)/2;
         
+        fireProgressStateChanged(25, "SWI", "Creating frequency window...");
     	ModelImage kCenterImage = createKCenterImage(kImage);
     	
     	sizeRo = magImage.getExtents()[0];
@@ -187,6 +193,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
         originRo = (sizeRo - roFilterSize)/2;
         originPe = (sizePe - peFilterSize)/2;
+        fireProgressStateChanged(45, "SWI", "Running inverse FFT...");
     	ModelImage iCenterImage = runiFFTonKCenter(kCenterImage); //once again 480x480
         
     	//ModelImage iCenterImageRescale = rescaleICenter(iCenterImage);    	
@@ -202,12 +209,15 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         double[] ixRealFinal = new double[sizeRo*sizePe*sizeSs];
         double[] ixImagFinal = new double[sizeRo*sizePe*sizeSs];
 
+        fireProgressStateChanged(55, "SWI", "Dividing by complex image...");
         ModelImage iFinal = generateIFinal(iImage, iCenterImage, brainMaskSet, ixRealFinal, ixImagFinal);
         
     	double[] phaseMaskData = new double[sizeRo*sizePe*sizeSs];
 
+    	fireProgressStateChanged(75, "SWI", "Creating phase mask...");
         ModelImage phaseMask = generatePhaseMask(brainMaskSet, ixRealFinal, ixImagFinal, phaseMaskData);
 
+        fireProgressStateChanged(95, "SWI", "Multiplying by phase mask...");
         destImage = generateMagEnhanced(phaseMaskData, magImage);
     }
     
@@ -220,8 +230,10 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         
         iCenterImageRescale = cropAlgo.getDestImage();
 
-        ViewJFrameImage iRescaleFrame = new ViewJFrameImage(iCenterImageRescale);
-        iRescaleFrame.setVisible(true);
+        if(showInterImages) {
+            ViewJFrameImage iRescaleFrame = new ViewJFrameImage(iCenterImageRescale);
+            iRescaleFrame.setVisible(true);
+        }
         
         return iCenterImageRescale;
         
@@ -247,10 +259,12 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             e.printStackTrace();
         }
         
-        ModelImage magEnhancedAlg = (ModelImage) magEnhanced.clone();
-        magEnhancedAlg.setImageName("magEnhancedAlg");
-        ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhancedAlg);
-        magEnhancedFrame.setVisible(true);
+        if(showInterImages) {
+            ModelImage magEnhancedAlg = (ModelImage) magEnhanced.clone();
+            magEnhancedAlg.setImageName("magEnhancedAlg");
+            ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhancedAlg);
+            magEnhancedFrame.setVisible(true);
+        }
         
         return magEnhanced;
     }
@@ -276,8 +290,10 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             e.printStackTrace();
         }
         
-        ViewJFrameImage phaseMaskFrame = new ViewJFrameImage(phaseMask);
-        phaseMaskFrame.setVisible(true);
+        if(showInterImages) {
+            ViewJFrameImage phaseMaskFrame = new ViewJFrameImage(phaseMask);
+            phaseMaskFrame.setVisible(true);
+        }
         
         return phaseMask;
     }
@@ -314,8 +330,10 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             e.printStackTrace();
         }
         
-        ViewJFrameImage iFinalFrame = new ViewJFrameImage(iFinal);
-        iFinalFrame.setVisible(true);
+        if(showInterImages) {
+            ViewJFrameImage iFinalFrame = new ViewJFrameImage(iFinal);
+            iFinalFrame.setVisible(true);
+        }
         
         return iFinal;
     }
@@ -336,18 +354,10 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             e.printStackTrace();
         }
         
-        ViewJFrameImage iCenterFrame = new ViewJFrameImage(iFFTDest);
-        iCenterFrame.setVisible(true);
-        
-       /* float[] newRealData = new float[480*480*40], newImagData = new float[480*480*40];
-        for(int i=0; i<480; i++) {
-            for(int j=0; j<480; j++) {
-                for(int k=0; k<40; k++) {
-                    newRealData[k*480*480+j*480+i] = realData[k*512*512+j*512+i];
-                    newImagData[k*480*480+j*480+i] = imagData[k*512*512+j*512+i];
-                }
-            }
-        }*/
+        if(showInterImages) {
+            ViewJFrameImage iCenterFrame = new ViewJFrameImage(iFFTDest);
+            iCenterFrame.setVisible(true);
+        }
         
         ModelImage iCenter = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "ixcenter");
         try {
@@ -357,27 +367,13 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             e.printStackTrace();
         }
         
-        ViewJFrameImage iNewCenterFrame = new ViewJFrameImage(iCenter);  //ixcenter should now be same as ifftDest
-        iNewCenterFrame.setVisible(true);
+        if(showInterImages) {
+            ViewJFrameImage iNewCenterFrame = new ViewJFrameImage(iCenter);  //ixcenter should now be same as ifftDest
+            iNewCenterFrame.setVisible(true);
+        }
         
         return iCenter;
     }
-    
-    /*private ModelImage padiImage(ModelImage iImage) {
-        ModelImage iCenterImage = (ModelImage) iImage.clone(); //also needs to be 480x480
-        iCenterImage.setImageName("iCenterImage");
-        imageMarginsAlgo = new AlgorithmAddMargins(iCenterImage, 
-                new int[]{16,16}, new int[]{16,16}, new int[]{0, 0});
-        imageMarginsAlgo.setPadValue(new float[]{0});
-        
-        imageMarginsAlgo.runAlgorithm();
-        iCenterImage = imageMarginsAlgo.getSrcImage();
-        
-        ViewJFrameImage iCenterFrameBeforeFFT = new ViewJFrameImage(iCenterImage);
-        iCenterFrameBeforeFFT.setVisible(true);
-        
-        return iCenterImage;
-    }*/
 
     private ModelImage createKCenterImage(ModelImage kImage) {
         ModelImage kCenterImage = (ModelImage) kImage.clone();
@@ -411,8 +407,10 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             }
         }
         
-        ViewJFrameImage kCenterFrame = new ViewJFrameImage(kCenterImage);
-        kCenterFrame.setVisible(true);
+        if(showInterImages) {
+            ViewJFrameImage kCenterFrame = new ViewJFrameImage(kCenterImage);
+            kCenterFrame.setVisible(true);
+        }
         
         return kCenterImage;
     }
@@ -428,8 +426,11 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         kImage.setImage25D(true);
         fft.run();
         fft.finalize();
-        ViewJFrameImage kFrame = new ViewJFrameImage(kImage);
-        kFrame.setVisible(true);
+        
+        if(showInterImages) {
+            ViewJFrameImage kFrame = new ViewJFrameImage(kImage);
+            kFrame.setVisible(true);
+        }
         
         return kImage;
     }
@@ -445,8 +446,10 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
             e2.printStackTrace();
         }
         
-        ViewJFrameImage iFrame = new ViewJFrameImage(iImage);
-        iFrame.setVisible(true);
+        if(showInterImages) {
+            ViewJFrameImage iFrame = new ViewJFrameImage(iImage);
+            iFrame.setVisible(true);
+        }
         
         return iImage;
     }
@@ -465,8 +468,10 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         }
         brainMask.calcMinMax();
         
-        ViewJFrameImage brainFrame = new ViewJFrameImage(brainMask);
-        brainFrame.setVisible(true);
+        if(showInterImages) {
+            ViewJFrameImage brainFrame = new ViewJFrameImage(brainMask);
+            brainFrame.setVisible(true);
+        }
         
         return brainMask;
     }

@@ -97,6 +97,8 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
     private JComboBox magnitudeCombo;
 
     private JComboBox phaseCombo;
+    
+    private JCheckBox showInterImagesBox;
 
     private JTextField multFactorField;
 
@@ -105,6 +107,8 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
     private ModelImage magImage;
 
     private ModelImage phaseImage;
+
+    private boolean showInterImages;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -212,7 +216,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         
             
             genericAlgo = new PlugInAlgorithmSWI(resultImage, magImage, phaseImage, 
-                                                    maskThreshold, roFilterSize, peFilterSize, multFactor);
+                                                    maskThreshold, roFilterSize, peFilterSize, multFactor, showInterImages);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -327,6 +331,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         roFilterSizeField = guiBuilder.buildIntegerField("Ro filter size", 64);
         peFilterSizeField = guiBuilder.buildIntegerField("Pe filter size", 64);
         multFactorField = guiBuilder.buildIntegerField("Multiplication factor", 4);
+        showInterImagesBox = guiBuilder.buildCheckBox("Show intermediate images", true);
         
         paramPanel.add(maskThresholdField.getParent(), gbc);
         gbc.gridy++;
@@ -335,6 +340,8 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
         paramPanel.add(peFilterSizeField.getParent(), gbc);
         gbc.gridy++;
         paramPanel.add(multFactorField.getParent(), gbc);
+        gbc.gridy++;
+        paramPanel.add(showInterImagesBox.getParent(), gbc);
         gbc.gridy++;
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
@@ -378,6 +385,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
 	    roFilterSize = Integer.valueOf(roFilterSizeField.getText()).intValue();
 	    peFilterSize = Integer.valueOf(peFilterSizeField.getText()).intValue();
 	    multFactor = Integer.valueOf(multFactorField.getText()).intValue();
+	    showInterImages = showInterImagesBox.isSelected();
 	    
 	    try {
 	        magImage = ViewUserInterface.getReference().getRegisteredImageByName(magnitudeCombo.getSelectedItem().toString());
