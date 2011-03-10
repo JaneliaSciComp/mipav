@@ -284,7 +284,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage generateIFinal(ModelImage iImage, ModelImage iCenterImage, BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal) {
-        ModelImage iFinal = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iFinal");
+        ModelImage iFinal = new ModelImage(ModelImage.DCOMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iFinal");
         System.out.println("Here");
         double[] ixReal = new double[sizeRo*sizePe*sizeSs];
         double[] ixImag = new double[sizeRo*sizePe*sizeSs];
