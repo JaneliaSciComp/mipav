@@ -376,7 +376,7 @@ public class BumpMaps extends JavaApplication3D
         System.err.println( ucKey );
         super.keyPressed(e);
 
-        AlphaState pkAState;
+        //AlphaState pkAState;
         switch (ucKey)
         {
         case 'b':
