@@ -369,7 +369,7 @@ public class BillboardNodes extends JavaApplication3D
         
         super.keyPressed(e);
 
-        AlphaState pkAState;
+       // AlphaState pkAState;
 
         if (ucKey == 'w' || ucKey == 'W')
         {
