@@ -3074,7 +3074,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             m_akPlaneRender[i].updateDisplay();
         }
         menuObj.getMenuItem("Show crosshairs").setSelected(kState.ShowCrossHairs);
-        final boolean showXHairs = menuObj.isMenuItemSelected("Show crosshairs");
+        //final boolean showXHairs = menuObj.isMenuItemSelected("Show crosshairs");
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].showXHairs(kState.ShowCrossHairs);
             m_akPlaneRender[i].updateDisplay();
