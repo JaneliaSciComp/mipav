@@ -145,7 +145,7 @@ public class ModelClodMesh {
             long c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0, c8 = 0;
             long tmpLong;
             int j;
-            double[][] inverseDicomArray;
+            //double[][] inverseDicomArray;
             TransMatrix inverseDicomMatrix = new TransMatrix(4);
             float[] tCoord = new float[3];
             float[] coord = new float[3];
