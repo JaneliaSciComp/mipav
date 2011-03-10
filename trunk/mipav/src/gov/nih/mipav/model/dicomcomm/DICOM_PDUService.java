@@ -148,7 +148,7 @@ public class DICOM_PDUService extends DICOM_Comms {
                     + ((ByteBuffer) (vrBuffer.incomingBuffers.elementAt(0))).endIndex + "\n");
         }
 
-        final int start = 0;
+        //final int start = 0;
 
         try {
 
