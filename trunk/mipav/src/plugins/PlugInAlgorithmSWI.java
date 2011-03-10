@@ -32,6 +32,7 @@ import java.util.BitSet;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT2;
 
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 
@@ -159,6 +160,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         rescaleToComplex(magImage, phaseImage, realData, imagData);
     	
     	ModelImage iImage = createiImage(realData, imagData);
+    	
     	
     	ModelImage kImage = createkImage(iImage);
     	
@@ -323,17 +325,17 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage runiFFTonKCenter(ModelImage kCenterImage) {
-        ModelImage iFFTDest = new ModelImage(ModelImage.COMPLEX, new int[]{512, 512, sizeSs}, "ifftDest");
+        ModelImage iFFTDest = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "ifftDest");
         kCenterImage.setImage25D(true);
         iFFTDest.setImage25D(true);
-        boolean complexInverse = false;
+        boolean complexInverse = true;
         AlgorithmFFT fft2 = new AlgorithmFFT(iFFTDest, kCenterImage, AlgorithmFFT.INVERSE, false, false, true,
         		                             complexInverse);
         fft2.run();
-        
-        float[] realData = new float[512*512*40], imagData = new float[512*512*40];
+        fft2.finalize();
+        float[] realData = new float[sizeRo*sizePe*sizeSs], imagData = new float[sizeRo*sizePe*sizeSs];
         try {
-            iFFTDest.exportComplexData(0, 512*512*40, realData, imagData);
+            iFFTDest.exportComplexData(0, sizeRo*sizePe*sizeSs, realData, imagData);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -341,7 +343,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         ViewJFrameImage iCenterFrame = new ViewJFrameImage(iFFTDest);
         iCenterFrame.setVisible(true);
         
-        float[] newRealData = new float[480*480*40], newImagData = new float[480*480*40];
+       /* float[] newRealData = new float[480*480*40], newImagData = new float[480*480*40];
         for(int i=0; i<480; i++) {
             for(int j=0; j<480; j++) {
                 for(int k=0; k<40; k++) {
@@ -349,23 +351,23 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
                     newImagData[k*480*480+j*480+i] = imagData[k*512*512+j*512+i];
                 }
             }
-        }
+        }*/
         
-        ModelImage iCenter = new ModelImage(ModelImage.COMPLEX, new int[]{480, 480, sizeSs}, "ixcenter");
+        ModelImage iCenter = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "ixcenter");
         try {
-            iCenter.importComplexData(0, newRealData, newImagData, true, false);
+            iCenter.importComplexData(0, realData, imagData, true, false);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
-        ViewJFrameImage iNewCenterFrame = new ViewJFrameImage(iCenter);
+        ViewJFrameImage iNewCenterFrame = new ViewJFrameImage(iCenter);  //ixcenter should now be same as ifftDest
         iNewCenterFrame.setVisible(true);
         
         return iCenter;
     }
     
-    private ModelImage padiImage(ModelImage iImage) {
+    /*private ModelImage padiImage(ModelImage iImage) {
         ModelImage iCenterImage = (ModelImage) iImage.clone(); //also needs to be 480x480
         iCenterImage.setImageName("iCenterImage");
         imageMarginsAlgo = new AlgorithmAddMargins(iCenterImage, 
@@ -379,7 +381,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         iCenterFrameBeforeFFT.setVisible(true);
         
         return iCenterImage;
-    }
+    }*/
 
     private ModelImage createKCenterImage(ModelImage kImage) {
         ModelImage kCenterImage = (ModelImage) kImage.clone();
@@ -429,7 +431,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         iImage.setImage25D(true);
         kImage.setImage25D(true);
         fft.run();
-        
+        fft.finalize();
         ViewJFrameImage kFrame = new ViewJFrameImage(kImage);
         kFrame.setVisible(true);
         
@@ -473,20 +475,20 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         return brainMask;
     }
 
-    private void rescaleToComplex(ModelImage magImage, ModelImage phaseImage, double[] realData, double[] complexData) {
+    private void rescaleToComplex(ModelImage magImage, ModelImage phaseImage, double[] realData, double[] imagData) {
         double[] magImageTemp = new double[realData.length];
-        double[] phaseImageTemp = new double[realData.length];
+        double[] phaseImageTemp = new double[imagData.length];
                 
         try {
             magImage.exportData(0, realData.length, magImageTemp);
-            phaseImage.exportData(0, realData.length, phaseImageTemp);            
+            phaseImage.exportData(0, imagData.length, phaseImageTemp);            
         } catch(IOException e) {
             e.printStackTrace();
         }
 
         for(int i=0; i<realData.length; i++) {
-            realData[i] = magImageTemp[i]*Math.sin(phaseImageTemp[i]);
-            complexData[i] = magImageTemp[i]*Math.cos(phaseImageTemp[i]);
+            realData[i] = magImageTemp[i]*Math.cos(phaseImageTemp[i]);
+            imagData[i] = magImageTemp[i]*Math.sin(phaseImageTemp[i]);
         }
     }
 	
