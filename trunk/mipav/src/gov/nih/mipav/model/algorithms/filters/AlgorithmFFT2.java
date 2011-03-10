@@ -643,7 +643,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
 
         try {
 
-            if (srcImage.getType() != ModelStorageBase.COMPLEX) {
+            if (!srcImage.isComplexImage()) {
                 srcImage.exportData(0, arrayLength, realData); // locks and releases and lock
 
                 // If the data is all real, then create an equal size imagData array and
@@ -977,9 +977,9 @@ public class AlgorithmFFT2 extends AlgorithmBase {
             // In the frequency domain so complex data is needed
             try {
                 if (destImage == null) {
-                    srcImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
+                    srcImage.reallocate(ModelStorageBase.DCOMPLEX, newDimLengths);
                 } else {
-                    destImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
+                    destImage.reallocate(ModelStorageBase.DCOMPLEX, newDimLengths);
                 }
             } catch (final IOException error) {
                 displayError("AlgorithmFFT: IOException on srcImage.reallocate");
