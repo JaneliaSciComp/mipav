@@ -104,6 +104,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private AlgorithmFFT FFTAlgo = null;
+    
+    private AlgorithmFFT2 FFTAlgo2 = null;
 
     /** DOCUMENT ME! */
     private JPanel filterPanel;
@@ -216,6 +218,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     private boolean complexInverse;
     
     private JCheckBox complexInverseCheckbox;
+    
+    private boolean testDouble = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -250,7 +254,12 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         if (source == OKButton) {
 
             if (setVariables()) {
-                callAlgorithm();
+            	if (testDouble) {
+            		callAlgorithm2();
+            	}
+            	else {
+                    callAlgorithm();
+            	}
             }
         } else if ((source == forwardFFT) || (source == frequencyFilter) || (source == inverseFFT)) {
 
@@ -479,14 +488,102 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             	insertScriptLine();
             }
         }
+        
+        if (algorithm instanceof AlgorithmFFT2) {
+
+            if ((FFTAlgo2.isCompleted() == true) && (resultImage != null)) {
+
+                if ((transformDir == FORWARD) || (transformDir == FILTER)) {
+
+                    // resultImage is the same or bigger than image
+                    updateFFTFileInfo(image, resultImage, ModelStorageBase.DCOMPLEX);
+                } else if (transformDir == INVERSE) {
+                    updateFileTypeInfo(image, resultImage, ModelStorageBase.DOUBLE);
+                    // resultImage is the same or smaller than image.
+                }
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    if (transformDir == FORWARD) {
+                        resultImage.setImageName(image.getImageName() + "_FFT");
+                    } else if (transformDir == FILTER) {
+                        resultImage.setImageName("_FilteredFFT");
+                    } else if (transformDir == INVERSE) {
+                        resultImage.setImageName("_InverseFFT");
+                    }
+
+                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200), logMagDisplay);
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                if (transformDir == FORWARD) {
+                    updateFileTypeInfo(image, ModelStorageBase.DCOMPLEX);
+                } else if (transformDir == INVERSE) {
+                    updateFileTypeInfo(image, ModelStorageBase.DOUBLE);
+                }
+
+                Dimension parentLocation;
+
+                if (parentFrame != null) {
+                    parentLocation = new Dimension(parentFrame.getLocationOnScreen().x,
+                                                   parentFrame.getLocationOnScreen().y);
+                } else {
+                    parentLocation = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2,
+                                                   Toolkit.getDefaultToolkit().getScreenSize().height / 2);
+                }
+
+
+                // The framelist of image2 is null
+                // Because the image dimensions can change in the FFT and inverse FFT
+                // close all the old frames
+                ModelImage image2 = (ModelImage) image.clone();
+                String imageName = image.getImageName();
+
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).close();
+                }
+
+                image2.setImageName(imageName);
+
+                try {
+                    imageFrame = new ViewJFrameImage(image2, null, parentLocation);
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+
+                ((ViewJFrameImage) imageFrame).getComponentImage().setLogMagDisplay(true);
+
+                image2.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+
+            if (algorithm.isCompleted()) {
+            	insertScriptLine();
+            }
+        }
 
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
      // save the completion status for later
         setComplete(algorithm.isCompleted());
-        FFTAlgo.finalize();
-        FFTAlgo = null;
+        if (FFTAlgo != null) {
+            FFTAlgo.finalize();
+            FFTAlgo = null;
+        }
+        if (FFTAlgo2 != null) {
+        	FFTAlgo2.finalize();
+        	FFTAlgo2 = null;
+        }
         dispose();
     }
 
@@ -708,6 +805,105 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 	                }
                 } else {
                 	FFTAlgo.run();
+                } 
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
+
+                return;
+            }
+        }
+    }
+    
+    /**
+     * Once all the necessary variables are set, call the FFT algorithm based on what type of image this is and whether
+     * or not there is a separate destination image.
+     */
+    protected void callAlgorithm2() {
+        image.setOriginalCropCheckbox(imageCrop);
+
+        String name = makeImageName(image.getImageName(), "_FFT");
+
+        if (displayLoc == NEW) {
+
+            try {
+                resultImage = (ModelImage) image.clone();
+                resultImage.setImageName(name);
+                resultImage.resetVOIs();
+
+                // Make algorithm
+                FFTAlgo2 = new AlgorithmFFT2(resultImage, image, transformDir, logMagDisplay, unequalDim, image25D,
+                		                   complexInverse);
+                FFTAlgo2.setMultiThreadingEnabled(Preferences.isMultiThreadingEnabled());
+                FFTAlgo2.setNumberOfThreads(Preferences.getNumberOfThreads());
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                FFTAlgo2.addListener(this);
+
+                createProgressBar(image.getImageName(), FFTAlgo2);
+
+                // Hide dialog since the algorithm is about to run
+                setVisible(false);
+                
+                if (isRunInSeparateThread()) {
+	                // Start the thread as a low priority because we wish to still have user interface work fast.
+	                if (FFTAlgo2.startMethod(Thread.MIN_PRIORITY) == false) {
+	                    MipavUtil.displayError("A thread is already running on this object");
+	                }
+                } else {
+                	FFTAlgo2.run();
+                } 
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                return;
+            }
+        } else {
+
+            try {
+
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+                FFTAlgo2 = new AlgorithmFFT2(image, transformDir, logMagDisplay, unequalDim, image25D,
+                		                   complexInverse);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                FFTAlgo2.addListener(this);
+
+                createProgressBar(image.getImageName(), FFTAlgo2);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                    ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                                                                                      (imageFrames.elementAt(i)));
+                }
+
+                if (isRunInSeparateThread()) {
+	                // Start the thread as a low priority because we wish to still have user interface work fast.
+	                if (FFTAlgo2.startMethod(Thread.MIN_PRIORITY) == false) {
+	                    MipavUtil.displayError("A thread is already running on this object");
+	                }
+                } else {
+                	FFTAlgo2.run();
                 } 
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
