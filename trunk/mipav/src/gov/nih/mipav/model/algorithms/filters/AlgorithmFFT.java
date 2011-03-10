@@ -643,7 +643,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         try {
 
-            if (srcImage.getType() != ModelStorageBase.COMPLEX) {
+            if (!srcImage.isComplexImage()) {
                 srcImage.exportData(0, arrayLength, realData); // locks and releases and lock
 
                 // If the data is all real, then create an equal size imagData array and
