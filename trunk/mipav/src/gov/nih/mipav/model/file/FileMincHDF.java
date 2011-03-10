@@ -2169,10 +2169,10 @@ public class FileMincHDF extends FileBase {
         final DefaultMutableTreeNode imageMinNode = new DefaultMutableTreeNode(imageMinObj);
         model.insertNodeInto(imageMinNode, imageNumNode, imageNumNode.getChildCount());
 
-       double[] imageMax = new double[numSlices];
-       double[] imageMin = new double[numSlices];
+       //double[] imageMax = new double[numSlices];
+       //double[] imageMin = new double[numSlices];
 
-        final double[] imageSliceBuffer = new double[image.getSliceSize()];
+        //final double[] imageSliceBuffer = new double[image.getSliceSize()];
         sliceCounter = 0;
         volCounter = 0;
         counter = 0;
