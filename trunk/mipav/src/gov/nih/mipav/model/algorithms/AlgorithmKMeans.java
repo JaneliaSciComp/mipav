@@ -101,7 +101,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         float zArr[] = new float[1];
         File file;
         RandomAccessFile raFile;
-        String dataString = null;
+        String dataString = "";
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
