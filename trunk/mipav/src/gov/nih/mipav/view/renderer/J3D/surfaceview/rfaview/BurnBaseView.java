@@ -955,7 +955,7 @@ public class BurnBaseView {
         m_aiMask.clear();
 
         int i, iX, iY, iZ;
-        int[] extents = surfaceRender.getImageA().getExtents();
+        //int[] extents = surfaceRender.getImageA().getExtents();
         //int xDim = extents[0];
         //int yDim = extents[1];
         //int zDim = extents[2];
@@ -2060,7 +2060,7 @@ public class BurnBaseView {
         m_aiMask = new BitSet(m_iQuantity);
 
         int i, iX, iY, iZ;
-        int[] extents = surfaceRender.getImageA().getExtents();
+        //int[] extents = surfaceRender.getImageA().getExtents();
         //int xDim = extents[0];
         //int yDim = extents[1];
         //int zDim = extents[2];
