@@ -2335,6 +2335,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogTreT2(this, getActiveImage());
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
+        } else if (command.equals("KMeans")) {
+        	new JDialogKMeans();
         }  else if (command.equals("HyperGraph")) {
         	new JDialogHyperGraph(this);
         } else if(command.startsWith("PlugInImageJ")) {
