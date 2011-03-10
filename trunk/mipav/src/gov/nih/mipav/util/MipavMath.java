@@ -340,6 +340,22 @@ public class MipavMath {
         }
         return max;
     }
+    
+    /**
+     * Returns the maximum value found in a double array.
+     * 
+     * @param data the data array
+     * @return minimum value in the array.
+     */
+    public static double max(final double[] data) {
+        double max = Double.MIN_VALUE;
+        for (final double element : data) {
+            if (max < element) {
+                max = element;
+            }
+        }
+        return max;
+    }
 
     /**
      * Returns the maximum value found in a short array.
@@ -366,6 +382,22 @@ public class MipavMath {
     public static float min(final float[] data) {
         float min = Float.MAX_VALUE;
         for (final float element : data) {
+            if (min > element) {
+                min = element;
+            }
+        }
+        return min;
+    }
+    
+    /**
+     * Returns the minimum value found in a double array.
+     * 
+     * @param data the data array
+     * @return minimum value in the array.
+     */
+    public static double min(final double[] data) {
+        double min = Double.MAX_VALUE;
+        for (final double element : data) {
             if (min > element) {
                 min = element;
             }
