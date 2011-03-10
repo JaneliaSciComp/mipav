@@ -1312,7 +1312,7 @@ public class JPanelMousePlotter extends JPanelRendererJ3D
         private JButton cancelButton;
 
         /** DOCUMENT ME! */
-        private JDialog changeDialog;
+        //private JDialog changeDialog;
 
         /** DOCUMENT ME! */
         private JLabel message;
