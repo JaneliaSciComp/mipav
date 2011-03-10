@@ -81,7 +81,7 @@ public class TextureSculptor extends Sculptor {
          * width of the canvas is used to set the field of view for the
          * displayed image. */
         int iCanvasWidth = m_kCanvas3D.getWidth();
-        int iCanvasHeight = m_kCanvas3D.getHeight();
+        //int iCanvasHeight = m_kCanvas3D.getHeight();
 
         /*
          * 1. Access the volume data and calculate the bounds of the data,   center, and spacing parameters:
@@ -98,7 +98,7 @@ public class TextureSculptor extends Sculptor {
         int iYBound = kImageAref.getExtents()[1];
         int iZBound = kImageAref.getExtents()[2];
         int iSliceSize = iXBound * iYBound;
-        int iImageSize = iZBound * iYBound * iXBound;
+        //int iImageSize = iZBound * iYBound * iXBound;
 
         /* Get the minimum and maximum intensity and color ARGB values: */
         calculateMinMaxValues(kImageAref, kImageBref);
@@ -467,7 +467,7 @@ public class TextureSculptor extends Sculptor {
             // and the directory --- get new fileName and directory
             // from options
             String fName = options.getFileName(); // if you use the name from img, then DICOM has funny names
-            String dirName = img.getFileInfo(0).getFileDirectory();
+            //String dirName = img.getFileInfo(0).getFileDirectory();
             String filebase;
             int ind = fName.lastIndexOf(".");
 
@@ -496,7 +496,7 @@ public class TextureSculptor extends Sculptor {
             }
 
             // save any luts
-            String lutName = new String(filebase + ".lut");
+            //String lutName = new String(filebase + ".lut");
         }
 
         // set the new fileName and directory in the fileInfo for the img -- so that it's
