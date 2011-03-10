@@ -277,7 +277,7 @@ public class JPanelSculptor extends JPanelRendererJ3D {
         viewToolBar.setLayout(new GridBagLayout());
         viewToolBar.setFloatable(false);
 
-        ButtonGroup group;
+        //ButtonGroup group;
 
         mainPanel = new JPanel(new BorderLayout());
 
@@ -328,7 +328,7 @@ public class JPanelSculptor extends JPanelRendererJ3D {
         m_kSaveSculptButton.setEnabled(false);
         viewToolBar.add(m_kSaveSculptButton);
 
-        viewToolBar.add(toolbarBuilder.makeSeparator());
+        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         JLabel shapeLabel = new JLabel("Shape: ");
         shapeLabel.setFont(serif12B);
