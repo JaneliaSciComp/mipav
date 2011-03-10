@@ -251,7 +251,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         int newLength;
         int i, j, k, m;
         int originalSliceSize;
-        int newSliceSize;
+        int newSliceSize = 1;
         int originalVolumeSize;
         int newVolumeSize;
         if (transformDir == AlgorithmFFT.FORWARD) {
@@ -373,10 +373,19 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         
         if (transformDir == AlgorithmFFT.INVERSE) {
+        	if (ndim >= 2) {
+        		newSliceSize = newDimLengths[0]*newDimLengths[1];
+        	}
         	if (complexInverse) {
         		for (i = 0; i < newLength; i++) {
-	                realData[i] = realData[i] / newLength;
-	                imagData[i] = imagData[i] / newLength;
+        			if (image25D) {
+        				realData[i] = realData[i] / newSliceSize;
+        				imagData[i] = imagData[i] / newSliceSize;
+        			}
+        			else {
+	                    realData[i] = realData[i] / newLength;
+	                    imagData[i] = imagData[i] / newLength;
+        			}
 	            }
 	
 	            originalDimLengths = srcImage.getOriginalExtents();
@@ -396,7 +405,6 @@ public class AlgorithmFFT extends AlgorithmBase {
 	                    }
 	                } else if (ndim == 3) {
 	                    originalSliceSize = originalDimLengths[0]*originalDimLengths[1];
-	                    newSliceSize = newDimLengths[0]*newDimLengths[1];
 	                    for (i = 0; i < originalDimLengths[2]; i++) {
 	                        for (j = 0; j < originalDimLengths[1]; j++) {
 	                            for (k = 0; k < originalDimLengths[0]; k++) {
@@ -409,7 +417,6 @@ public class AlgorithmFFT extends AlgorithmBase {
 	                    }
 	                } else if (ndim == 4) {
 	                    originalSliceSize = originalDimLengths[0]*originalDimLengths[1];
-	                    newSliceSize = newDimLengths[0]*newDimLengths[1];
 	                    originalVolumeSize = originalSliceSize * originalDimLengths[2];
 	                    newVolumeSize = newSliceSize * newDimLengths[2];
 	                    for (i = 0; i < originalDimLengths[3]; i++) {
@@ -438,8 +445,13 @@ public class AlgorithmFFT extends AlgorithmBase {
         	else { // !complexInverse
 	            imagData = null;
 	            for (i = 0; i < newLength; i++) {
-	                realData[i] = realData[i] / newLength;
-	                // imagData[i] = imagData[i] / newLength;
+	            	if (image25D) {
+	            		realData[i] = realData[i] / newSliceSize;
+	            	}
+	            	else {
+	                    realData[i] = realData[i] / newLength;
+	                 // imagData[i] = imagData[i] / newLength;
+	            	}
 	            }
 	
 	            originalDimLengths = srcImage.getOriginalExtents();
@@ -747,7 +759,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         int dimNumber;
         int newLength;
         int originalSliceSize;
-        int newSliceSize;
+        int newSliceSize = 1;
         int originalVolumeSize;
         int newVolumeSize;
 
@@ -852,10 +864,19 @@ public class AlgorithmFFT extends AlgorithmBase {
         }
 
         if (transformDir == AlgorithmFFT.INVERSE) {
+        	if (ndim >= 2) {
+        		newSliceSize = newDimLengths[0]*newDimLengths[1];
+        	}
         	if (complexInverse) {
         		for (i = 0; i < newLength; i++) {
-	                realData[i] = realData[i] / newLength;
-	                imagData[i] = imagData[i] / newLength;
+        			if (image25D) {
+        				realData[i] = realData[i] / newSliceSize;
+        				imagData[i] = imagData[i] / newSliceSize;
+        			}
+        			else {
+	                    realData[i] = realData[i] / newLength;
+	                    imagData[i] = imagData[i] / newLength;
+        			}
 	            }
 	
 	            originalDimLengths = srcImage.getOriginalExtents();
@@ -875,7 +896,6 @@ public class AlgorithmFFT extends AlgorithmBase {
 	                    }
 	                } else if (ndim == 3) {
 	                    originalSliceSize = originalDimLengths[0]*originalDimLengths[1];
-	                    newSliceSize = newDimLengths[0]*newDimLengths[1];
 	                    for (i = 0; i < originalDimLengths[2]; i++) {
 	                        for (j = 0; j < originalDimLengths[1]; j++) {
 	                            for (k = 0; k < originalDimLengths[0]; k++) {
@@ -888,7 +908,6 @@ public class AlgorithmFFT extends AlgorithmBase {
 	                    }
 	                } else if (ndim == 4) {
 	                    originalSliceSize = originalDimLengths[0]*originalDimLengths[1];
-	                    newSliceSize = newDimLengths[0]*newDimLengths[1];
 	                    originalVolumeSize = originalSliceSize * originalDimLengths[2];
 	                    newVolumeSize = newSliceSize * newDimLengths[2];
 	                    for (i = 0; i < originalDimLengths[3]; i++) {
@@ -917,8 +936,13 @@ public class AlgorithmFFT extends AlgorithmBase {
         	else { // !complexInverse
 	            imagData = null;
 	            for (i = 0; i < newLength; i++) {
-	                realData[i] = realData[i] / newLength;
-	                // imagData[i] = imagData[i] / newLength;
+	            	if (image25D) {
+	            	    realData[i] = realData[i] / newSliceSize;	
+	            	}
+	            	else {
+	                    realData[i] = realData[i] / newLength;
+	                    // imagData[i] = imagData[i] / newLength;
+	            	}
 	            }
 	
 	            originalDimLengths = srcImage.getOriginalExtents();
