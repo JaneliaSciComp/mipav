@@ -35,7 +35,7 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
     private float[] srcBuffer;
     private float[] refBufferXDer;
     private float[] refBufferYDer;
-    private float[] refBufferZDer;
+    //private float[] refBufferZDer;
     private float[] testBuffer;
     private GaussianKernelFactory gkf;
     protected void setUp(){
