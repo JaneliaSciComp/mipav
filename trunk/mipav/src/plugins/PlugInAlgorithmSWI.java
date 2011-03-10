@@ -31,7 +31,6 @@ import java.util.BitSet;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT2;
 
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
@@ -322,11 +321,11 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage runiFFTonKCenter(ModelImage kCenterImage) {
-        ModelImage iFFTDest = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "ifftDest");
+        ModelImage iFFTDest = new ModelImage(ModelImage.DCOMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "ifftDest");
         kCenterImage.setImage25D(true);
         iFFTDest.setImage25D(true);
         boolean complexInverse = true;
-        AlgorithmFFT fft2 = new AlgorithmFFT(iFFTDest, kCenterImage, AlgorithmFFT.INVERSE, false, false, true,
+        AlgorithmFFT2 fft2 = new AlgorithmFFT2(iFFTDest, kCenterImage, AlgorithmFFT2.INVERSE, false, false, true,
         		                             complexInverse);
         fft2.run();
         fft2.finalize();
@@ -419,11 +418,11 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage createkImage(ModelImage iImage) {
-        ModelImage kImage = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "kData");
+        ModelImage kImage = new ModelImage(ModelImage.DCOMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "kData");
         
         //kImage is now at 512x512
         boolean complexInverse = false;
-        AlgorithmFFT fft = new AlgorithmFFT(kImage, iImage, AlgorithmFFT.FORWARD, false, false, true,
+        AlgorithmFFT2 fft = new AlgorithmFFT2(kImage, iImage, AlgorithmFFT2.FORWARD, false, false, true,
         		                            complexInverse);
         iImage.setImage25D(true);
         kImage.setImage25D(true);
@@ -436,7 +435,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage createiImage(double[] realData, double[] imagData) {
-        ModelImage iImage  = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iData");
+        ModelImage iImage  = new ModelImage(ModelImage.DCOMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iData");
 
         try {
             iImage.importDComplexData(0, realData, imagData, true, false);
