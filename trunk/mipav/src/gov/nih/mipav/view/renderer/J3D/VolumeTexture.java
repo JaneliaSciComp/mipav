@@ -434,7 +434,7 @@ public class VolumeTexture {
 
         // bufArray = new BufferedImage[image.getExtents()[2]];
 
-        int bufferSize = image.getSliceSize();
+        //int bufferSize = image.getSliceSize();
 
         for (int iSliceZ = 0; iSliceZ < iNumSlices; ++iSliceZ) {
             m_akImage[iSliceZ] = new BufferedImage(m_iTextureSizeX, m_iTextureSizeY, BufferedImage.TYPE_INT_ARGB);
