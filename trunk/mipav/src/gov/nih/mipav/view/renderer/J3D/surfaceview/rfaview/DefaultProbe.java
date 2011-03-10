@@ -248,8 +248,8 @@ public class DefaultProbe {
 
         // set pickable
         try {
-            pickCanvas.setCapabilities(cylinderDefault.getShape(0), PickTool.INTERSECT_FULL);
-            pickCanvas.setCapabilities(coneDefault.getShape(0), PickTool.INTERSECT_FULL);
+            PickCanvas.setCapabilities(cylinderDefault.getShape(0), PickTool.INTERSECT_FULL);
+            PickCanvas.setCapabilities(coneDefault.getShape(0), PickTool.INTERSECT_FULL);
         } catch (RestrictedAccessException error) { }
 
         // following builds the green indicator probe geometry. */
