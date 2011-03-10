@@ -133,13 +133,13 @@ implements ChangeListener {
     	
     	//imageA = _m_kDTIColorImage;
     	
-        boolean bDirExists = true;
+        //boolean bDirExists = true;
         m_kParentDir = _m_kDTIColorImage.getFileInfo()[0].getFileDirectory();
         String kRenderFilesDir = m_kParentDir + File.separator + "RenderFiles" + File.separator;
         File kDir = new File( kRenderFilesDir );
         if ( !kDir.exists() )
         {
-            bDirExists = false;
+            //bDirExists = false;
             try {
                 kDir.mkdir();
             } catch (SecurityException e) {}
