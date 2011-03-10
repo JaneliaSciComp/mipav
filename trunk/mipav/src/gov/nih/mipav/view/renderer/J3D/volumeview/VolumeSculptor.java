@@ -583,7 +583,7 @@ public class VolumeSculptor extends Sculptor {
             // and the directory --- get new fileName and directory
             // from options
             String fName = options.getFileName(); // if you use the name from img, then DICOM has funny names
-            String dirName = img.getFileInfo(0).getFileDirectory();
+            //String dirName = img.getFileInfo(0).getFileDirectory();
             String filebase;
             int ind = fName.lastIndexOf(".");
 
@@ -680,14 +680,14 @@ public class VolumeSculptor extends Sculptor {
     public void undoSculpt() {
 
         /* The RendererImage component from the VolumeRenderer */
-        ViewJComponentRenderImage kRenderImageXY = null;
+        //ViewJComponentRenderImage kRenderImageXY = null;
 
         /* The original ModelImages */
         ModelImage kImageAref = null;
         ModelImage kImageBref = null;
 
         if (m_kVolumeRenderer != null) {
-            kRenderImageXY = (ViewJComponentRenderImage) (m_kVolumeRenderer.getComponentImageXY());
+            //kRenderImageXY = (ViewJComponentRenderImage) (m_kVolumeRenderer.getComponentImageXY());
             kImageAref = m_kVolumeRenderer.getImageA();
             kImageBref = m_kVolumeRenderer.getImageB();
         }
