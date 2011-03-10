@@ -111,7 +111,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	// Randomly choose one point as the starting centroid of each cluster
     	startingPointIndex = new int[numberClusters];
     	randomGen = new RandomNumberGen();
+    	Preferences.debug("\n");
     	for (i = 0; i < numberClusters; i++) {
+    		Preferences.debug("Starting centroid " + (i+1) + "\n");
     		do {
     			alreadyUsed = false;
     		    possibleStart = randomGen.genUniformRandomNum(0, nPoints - 1);
@@ -124,13 +126,15 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		startingPointIndex[i] = possibleStart;
     		groupNum[possibleStart] = i;
     		for (j = 0; j < nDims; j++) {
-    		    centroidPos[j][i] = pos[j][possibleStart];	
+    		    centroidPos[j][i] = (double)pos[j][possibleStart];
+    		    Preferences.debug("Dimension " + (j+1) + "  " + centroidPos[j][i] + "\n");
     		}
     	} // for (i = 0; i < numberClusters; i++)
     	startingPointIndex = null;
     	
     	changeOccurred = true;
     	iteration = 1;
+    	Preferences.debug("\n");
     	while (changeOccurred) {
     		fireProgressStateChanged("Iteration = " + iteration);
     		Preferences.debug("Iteration = " + iteration + "\n");
@@ -140,10 +144,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
     			pointsInCluster[i] = 0;
     		}
 	    	for (i = 0; i < nPoints; i++) {
-	    	    distSquared = 0.0;
 	    	    minDistSquared = Double.MAX_VALUE;
 	    	    originalGroupNum = groupNum[i];
 	    	    for (j = 0; j < numberClusters; j++) {
+	    	    	distSquared = 0.0;
 	    	    	for (k = 0; k < nDims; k++) {
 	    	    		diff = pos[k][i] - centroidPos[k][j];
 	    	    	    distSquared = distSquared + scale[k]*scale[k]*diff*diff;
@@ -203,7 +207,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     			}
     		}
 	    	for (i = 0; i < nPoints; i++) {
-	    		newPtVOI = new VOI((short) (i), "point" + i + ".voi", VOI.POINT, -1.0f);
+	    		newPtVOI = new VOI((short) (i), "", VOI.POINT, -1.0f);
 	    		newPtVOI.setColor(color[groupNum[i]]);
 	    		xArr[0] = pos[0][i];
 	    		yArr[0] = pos[1][i];
@@ -218,8 +222,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	            image.registerVOI(newPtVOI);
 	    	}
 	    	for (i = 0; i < numberClusters; i++) {
-	    		newPtVOI = new VOI((short) (i), "cluster" + i + ".voi", VOI.POINT, -1.0f);
-	    		newPtVOI.setColor(Color.black);
+	    		newPtVOI = new VOI((short) (i), "cluster" + (i+1) + ".voi", VOI.POINT, -1.0f);
+	    		newPtVOI.setColor(Color.white);
 	    		xArr[0] = (float)centroidPos[0][i];
 	    		yArr[0] = (float)centroidPos[1][i];
 	    		if (nDims == 2) {
@@ -233,6 +237,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	            ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel("C" + (i + 1));
 	            image.registerVOI(newPtVOI);	
 	    	}
+	    	new ViewJFrameImage(image);
     	} // if ((image != null) && (nDims >= 2) && (nDims <= 3) && (numberClusters <= 9)
     	
     	file = new File(resultsFileName);
