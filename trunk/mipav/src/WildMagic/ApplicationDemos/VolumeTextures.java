@@ -371,7 +371,7 @@ public class VolumeTextures extends JavaApplication3D
 
     private Node m_spkScene;
     private WireframeState m_spkWireframe;
-    private TriMesh m_spkMesh;
+    //private TriMesh m_spkMesh;
     private GraphicsImage m_spkVolume;
     private ShaderEffect m_spkVolumeTexture;
     private float[] m_afCommonAlpha = new float[4];  // channel 0 has the alpha value
