@@ -115,7 +115,7 @@ public class ClosestIterator {
 	{
 	    int[] tempIndex = new int[1];
 		int	ix,iy,iz;
-		int i;
+		//int i;
 		for( iz = (int)to_explore.min.z;iz <=	(int)to_explore.max.z; ++iz)
 			for(iy =(int)to_explore.min.y; iy	<= (int)to_explore.max.y; ++iy)
 				for(ix = (int)to_explore.min.x; ix	<= (int)to_explore.max.x;++ix)
