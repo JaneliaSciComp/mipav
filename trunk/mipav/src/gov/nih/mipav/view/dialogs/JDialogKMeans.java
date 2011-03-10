@@ -218,7 +218,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	        	 zDim = extents[2];
 	         }
 	         else {
-	        	 zDim = 2;
+	        	 zDim = 1;
 	         }
 	         if (nDims >= 2) {
 	        	 yDim = extents[1];
