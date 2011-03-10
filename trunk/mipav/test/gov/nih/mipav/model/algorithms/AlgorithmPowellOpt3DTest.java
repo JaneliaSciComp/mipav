@@ -53,7 +53,7 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
     private int dof;
     private int maxIter = 4;
     private int bracketBound = 10;
-    private int interpolation = 0;
+    //private int interpolation = 0;
     private Vector3f cog;
     
     private TransMatrix toOrigin;
