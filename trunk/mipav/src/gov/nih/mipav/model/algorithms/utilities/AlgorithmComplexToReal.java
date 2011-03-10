@@ -174,13 +174,11 @@ public class AlgorithmComplexToReal extends AlgorithmBase {
         float remapFactor = 1.0f;
         boolean doFloat;
         int numVoxels = 0;
-        float redSum = 0.0f;
-        float greenSum = 0.0f;
-        float blueSum = 0.0f;
+        float realSum = 0.0f;
+        float imagSum = 0.0f;
 
-        float averageR = 0.0f;
-        float averageG = 0.0f;
-        float averageB = 0.0f;
+        float averageReal = 0.0f;
+        float averageImag = 0.0f;
 
         if (srcImage.getType() == ModelImage.ARGB_FLOAT) {
             doFloat = true;
@@ -266,21 +264,19 @@ public class AlgorithmComplexToReal extends AlgorithmBase {
                             return;
                         }
 
-                        for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 4, id++) {
+                        for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 3, id++) {
 
                             numVoxels++;
-                            redSum += buffer[i + 1];
-                            greenSum += buffer[i + 2];
-                            blueSum += buffer[i + 3];
-                        } // end z
+                            realSum += buffer[i + 1];
+                            imagSum += buffer[i + 2];
+                        } // end zyy
                     } // end j
                 } // end t
             } // end f
 
             // Calculate Voxel Intensity Averages
-            averageR = redSum / numVoxels;
-            averageG = greenSum / numVoxels;
-            averageB = blueSum / numVoxels;
+            averageReal = realSum / numVoxels;
+            averageImag = imagSum / numVoxels;
 
             // MipavUtil.displayError("AverageR = " + averageR + ", AverageG = " +
             // averageG + ", AverageB = " + averageB);
@@ -306,7 +302,7 @@ public class AlgorithmComplexToReal extends AlgorithmBase {
                         return;
                     }
 
-                    for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 4, id++) {
+                    for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 3, id++) {
 
                         if (((i % mod) == 0)) {
                             fireProgressStateChanged(Math.round((float) (i + offsetIn) / (totalLength - 1) * 100));
@@ -349,19 +345,14 @@ public class AlgorithmComplexToReal extends AlgorithmBase {
                             p = 0;
                             sum = 0.0f;
 
-                            if (averageR > 2.0f) {
+                            if (averageReal > 2.0f) {
                                 p++;
                                 sum = buffer[i + 1] * remapFactor;
                             }
 
-                            if (averageG > 2.0f) {
+                            if (averageImag > 2.0f) {
                                 p++;
                                 sum += buffer[i + 2] * remapFactor;
-                            }
-
-                            if (averageB > 2.0f) {
-                                p++;
-                                sum += buffer[i + 3] * remapFactor;
                             }
 
                             if (p == 0) {
