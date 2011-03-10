@@ -2141,18 +2141,18 @@ public class FileMincHDF extends FileBase {
         maxdims = new long[1];
         }
         
-        int numSlices = 1;
+        //int numSlices = 1;
         dims[0] = 1;
         if (image.getExtents().length == 3) {
             dims[0] = image.getExtents()[2];
             maxdims[0] = dims[0];
-            numSlices = image.getExtents()[2];
+            //numSlices = image.getExtents()[2];
         }else if(image.getExtents().length == 4) {
         	dims[0] = image.getExtents()[3];
         	dims[1] = image.getExtents()[2];
         	maxdims[0] = dims[0];
         	maxdims[1] = dims[1];
-        	numSlices = image.getExtents()[2] * image.getExtents()[3];
+        	//numSlices = image.getExtents()[2] * image.getExtents()[3];
         }
 
         if(!hasImageMinMaxDimOrder) {
