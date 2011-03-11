@@ -1618,13 +1618,13 @@ public class ViewOpenImageSequence extends JFrame
 
         if (numChannels == 1) {
             resultImage = fileIO.readOrderedGrayscale(fileList, true, subsampleDimension,
-                                                      chkForceUBYTE.isSelected() && enableCheckbox.isSelected());
+                                                      chkForceUBYTE.isSelected() && enableCheckbox.isSelected(),numSlices,numTimePoints);
         } else {
             resultImage = fileIO.readOrderedARGB(fileList, numChannels, channelMap, true, subsampleDimension,
                                                  chkForceUBYTE.isSelected() && enableCheckbox.isSelected());
         }
-
-        if (numTimePoints > 1) {
+System.out.println("yyy");
+        /*if (numTimePoints > 1) {
             AlgorithmConvert3Dto4D algConvert = new AlgorithmConvert3Dto4D(resultImage, numSlices,
                                                                            resultImage.getFileInfo(0).getResolutions()[2],
                                                                            1.0f,
@@ -1634,15 +1634,16 @@ public class ViewOpenImageSequence extends JFrame
             algConvert.runAlgorithm();
             resultImage.disposeLocal();
             resultImage = algConvert.getResultImage();
-        }
-
+        }*/
+System.out.println("zzz");
         if (resultImage != null) {
-            ViewJFrameImage jFrameImage = new ViewJFrameImage(resultImage);
+            new ViewJFrameImage(resultImage);
 
-            MipavUtil.centerOnScreen(jFrameImage);
+            //MipavUtil.centerOnScreen(jFrameImage);
         } else {
             MipavUtil.displayError("Unable to open image.");
         }
+        System.out.println("done");
     }
 
     /**

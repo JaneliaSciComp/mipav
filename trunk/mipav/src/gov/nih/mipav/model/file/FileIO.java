@@ -2499,6 +2499,163 @@ public class FileIO {
             oneSliceBuffer = null;
         }
     }
+    
+    
+    
+    
+    
+    
+    /**
+     * This method will load a group of files in the order of <i>fileList<i>. The result will be a grayscale
+     * ModelImage. </i></i>
+     * 
+     * @param fileList File[] - list of File objects, preordered
+     * @param showLocalProgressBar boolean - This parameter is used to control whether the local progress bar is shown.
+     *            Note this is different than FileIO's global progress bar. The reason for the difference is because
+     *            this method uses FileIO's readOneImage() method. That method uses the global progress bar. Its useless
+     *            to have two progress bars, and FileIO isn't set up in a way that allows this method to directly
+     *            control the global progress bar, hence the need for its own local one.
+     * @param subsampleDimension - the dimensions of the result image if subsampling is desired. To skip subsampling,
+     *            this parameter should be null
+     * @param forceUBYTE boolean - force the image to be constructed with an unsigned byte data type
+     * 
+     * @return ModelImage
+     */
+    public ModelImage readOrderedGrayscale(final File[] fileList, final boolean showLocalProgressBar,
+            final Dimension subsampleDimension, final boolean forceUBYTE, int numSlices, int numTimePoints) {
+        ModelImage modelImageTemp = null;
+        ModelImage modelImageResult = null;
+        float[] oneSliceBuffer;
+
+        createProgressBar(null, "files", FileIO.FILE_READ);
+
+        try {
+
+            // read one image so we can get extents
+            modelImageTemp = readOneImage(fileList[0].getName(), fileList[0].getParentFile().getAbsolutePath()
+                    + File.separator);
+
+            if (subsampleDimension != null) // subsample the image if we have subsampling dimensions
+            {
+                modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
+            }
+
+            // create a buffer to hold exchange image data between temp and result images
+            oneSliceBuffer = new float[modelImageTemp.getExtents()[0] * modelImageTemp.getExtents()[1]];
+
+            // the first slice has already been read. instead of re-reading it in the loop, export to buffer and save
+            // an iteration
+            modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
+
+            // the result image's dimensions (possibly subsampled dimensions)
+            int[] extents = null;
+            if(numTimePoints > 1) {
+            	extents = new int[4];
+            	extents[0] = modelImageTemp.getExtents()[0];
+            	extents[1] = modelImageTemp.getExtents()[1];
+            	extents[2] = numSlices;
+            	extents[3] = numTimePoints;
+            }else {
+            	extents = new int[3];
+            	extents[0] = modelImageTemp.getExtents()[0];
+            	extents[1] = modelImageTemp.getExtents()[1];
+            	extents[2] = fileList.length;
+            	
+            	
+                
+                
+            	
+            }
+            
+
+            modelImageResult = new ModelImage(modelImageTemp.getType(), extents, modelImageTemp.getImageName());
+            if(numTimePoints > 1) {
+            	float[] resolutions = new float[4];
+                resolutions[0] = modelImageTemp.getFileInfo(0).getResolution(0);
+                resolutions[1] = modelImageTemp.getFileInfo(0).getResolution(1);
+                resolutions[2] = 1.0f;
+                resolutions[3] = 1.0f;
+                modelImageResult.getFileInfo(0).setResolutions(resolutions);
+            }else {
+            	float[] resolutions = new float[3];
+                resolutions[0] = modelImageTemp.getFileInfo(0).getResolution(0);
+                resolutions[1] = modelImageTemp.getFileInfo(0).getResolution(1);
+                resolutions[2] = 1.0f;
+
+                modelImageResult.getFileInfo(0).setResolutions(resolutions);
+            }
+            //FileIO.copyResolutions(modelImageTemp, modelImageResult, 0); // save the resolutions from the file info
+            // structure
+
+            extents = null;
+            modelImageTemp.disposeLocal(false);
+
+            // import first slice to result image from modelImageTemp
+            modelImageResult.importData(0, oneSliceBuffer, false);
+
+            progressBar.updateValue((int) ( (1.0f / fileList.length) * 100), false);
+
+            for (int i = 1; i < fileList.length; i++) {
+System.out.println(i);
+                if (fileList[i].exists()) {
+System.out.println(fileList[i].getName());
+                    try {
+
+                        // read images one slice at a time
+                        modelImageTemp = readOneImage(fileList[i].getName(), fileList[i].getParentFile()
+                                .getAbsolutePath()
+                                + File.separator);
+
+                        if (subsampleDimension != null) // subsample if we have subsampling dimensions
+                        {
+                            modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
+                        }
+
+                        modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
+                        FileIO.copyResolutions(modelImageTemp, modelImageResult, i);
+
+                        modelImageResult.importData(i * oneSliceBuffer.length, oneSliceBuffer, false);
+                    } catch (final IOException ioe) {
+                        ioe.printStackTrace();
+
+                        break;
+                    } finally {
+                        modelImageTemp.disposeLocal(false);
+                    }
+                } else {
+                    Preferences.debug("File does not exist: " + fileList[i].getName() + "\n", Preferences.DEBUG_FILEIO);
+                }
+
+                progressBar.updateValue((int) ( ((float) (i + 1) / (float) fileList.length) * 100), false);
+            }
+
+            modelImageResult.calcMinMax();
+
+            if ( (forceUBYTE == true) && (modelImageResult.getType() != ModelStorageBase.UBYTE)) {
+                oneSliceBuffer = null;
+
+                return FileIO.convertToUBYTE(modelImageResult);
+            }
+
+            return modelImageResult;
+        } catch (final Exception ioe) {
+            ioe.printStackTrace();
+
+            return null;
+        } finally {
+
+            if (progressBar != null) {
+                progressBar.dispose();
+            }
+
+            modelImageTemp.disposeLocal();
+            modelImageTemp = null;
+            oneSliceBuffer = null;
+        }
+    }
+    
+    
+    
 
     /**
      * Reads a thumbnail image from an XML file. if thumbnail is empty, will returned FileImageXML will be null.
