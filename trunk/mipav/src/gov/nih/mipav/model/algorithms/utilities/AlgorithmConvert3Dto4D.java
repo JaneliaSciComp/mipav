@@ -5,8 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import java.io.*;
-
 
 /**
  * Converts a 3D dataset that is really a 4D dataset into a 4D dataset.
