@@ -111,7 +111,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             extents[2] = zDim;
             extents[3] = tDim;
             
-            destImage = ((ModelImage)srcImage.clone());
+            destImage = ((ModelImage)srcImage.clone(srcImage.getImageName()));
             destImage.changeExtents(extents);
 
             
@@ -142,8 +142,6 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
             return;
         }
-
-        destImage.calcMinMax();
         
         destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
@@ -195,12 +193,6 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
             for (z = 0; z < zDim; z++) {
                 sliceNumSrcImg = (t * zDim) + z;
-                if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
-                    destImage.setFileInfo(destFileInfo[sliceNumSrcImg], sliceNumSrcImg);
-                }
-                else {
-                    destImage.setFileInfo((FileInfoBase)fileInfo[sliceNumSrcImg].clone(), sliceNumSrcImg);
-                }
 
                 // Fix these because they are now 4D
 
