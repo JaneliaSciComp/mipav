@@ -93,9 +93,6 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
      */
     private void convert3Dto4D() {
         int t, z;
-        int colorFactor;
-        int length;
-        float[] buffer;
         int[] extents;
 
         int xDim = srcImage.getExtents()[0];
@@ -104,12 +101,8 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
         int tDim = srcImage.getExtents()[2] / volumeLength;
 
         FileInfoBase[] fileInfo;
-
-        if (srcImage.isColorImage()) {
-            colorFactor = 4;
-        } else {
-            colorFactor = 1;
-        }
+        
+        fireProgressStateChanged(srcImage.getImageName(), "Converting from 3D to 4D ...");
 
         try {
             extents = new int[4];
@@ -117,13 +110,12 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             extents[1] = yDim;
             extents[2] = zDim;
             extents[3] = tDim;
+            
+            destImage = ((ModelImage)srcImage.clone());
+            destImage.changeExtents(extents);
 
-            destImage = new ModelImage(srcImage.getType(), extents, srcImage.getImageName());
-            length = colorFactor * xDim * yDim * zDim;
-            buffer = new float[length];
-            fireProgressStateChanged(srcImage.getImageName(), "Converting from 3D to 4D ...");
+            
         } catch (OutOfMemoryError e) {
-            buffer = null;
 
             if (destImage != null) {
                 destImage.disposeLocal();
@@ -137,47 +129,9 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
             return;
         }
-
-
-        for (t = 0; (t < tDim) && !threadStopped; t++) {
-            fireProgressStateChanged(Math.round((float) t / (tDim - 1) * 100));
-
-            try {
-                srcImage.exportData(t * length, length, buffer);
-            } catch (IOException error) {
-                displayError("AlgorithmConvert3Dto4D: Image locked");
-
-                if (destImage != null) {
-                    destImage.disposeLocal();
-                }
-
-                destImage = null;
-                buffer = null;
-                setCompleted(false);
-
-
-                return;
-            }
-
-            try {
-                destImage.importData(t * length, buffer, false);
-            } catch (IOException error) {
-                displayError("AlgorithmConvert3Dto4D: Image(s) locked");
-
-                if (destImage != null) {
-                    destImage.disposeLocal();
-                }
-
-                destImage = null;
-                setCompleted(false);
-
-
-                return;
-            }
-        }
+        
 
         if (threadStopped) {
-            buffer = null;
 
             if (destImage != null) {
                 destImage.disposeLocal();
