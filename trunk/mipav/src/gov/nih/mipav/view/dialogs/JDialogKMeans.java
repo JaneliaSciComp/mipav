@@ -30,13 +30,19 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInterface {
+	
+	private static final int RANDOM_INIT = 0;
+	
+	private static final int BRADLEY_FAYYAD_INIT = 1;
 	
 	/** source image. **/
     private ModelImage image;
@@ -98,6 +104,14 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private boolean havePoints = false;
     
     private String resultsFileName = null;
+    
+    private ButtonGroup initGroup;
+    
+    private JRadioButton randomInit;
+    
+    private JRadioButton BradleyInit;
+    
+    private int initSelection = RANDOM_INIT;
 	
 	
 	public JDialogKMeans() {
@@ -544,7 +558,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 		 try {
 		
-			 alg = new AlgorithmKMeans(image,pos,scale,groupNum,centroidPos,resultsFileName);
+			 alg = new AlgorithmKMeans(image,pos,scale,groupNum,centroidPos,resultsFileName,
+					                   initSelection);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -686,6 +701,33 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         textClusters.setFont(serif12);
         gbc.gridx = 1;
         mainPanel.add(textClusters, gbc);
+        
+        JLabel initLabel = new JLabel("Choose an initialization method:");
+        initLabel.setForeground(Color.black);
+        initLabel.setFont(serif12);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        mainPanel.add(initLabel, gbc);
+        
+        initGroup = new ButtonGroup();
+        randomInit = new JRadioButton("Random selection", true);
+        randomInit.setFont(serif12);
+        randomInit.setForeground(Color.black);
+        initGroup.add(randomInit);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        mainPanel.add(randomInit, gbc);
+        
+        BradleyInit = new JRadioButton("Bradley-Fayyad Refinement", false);
+        BradleyInit.setFont(serif12);
+        BradleyInit.setForeground(Color.black);
+        initGroup.add(BradleyInit);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        mainPanel.add(BradleyInit, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -712,6 +754,15 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     		MipavUtil.displayError("The number of clusters must not exceed the number of points");
     		return false;
     	}
+    	
+    	if (randomInit.isSelected()) {
+    		initSelection = RANDOM_INIT;
+    	}
+    	else if (BradleyInit.isSelected()) {
+    		initSelection = BRADLEY_FAYYAD_INIT;
+    	}
+    	
+    	
     	return true;
     }
     
