@@ -16,6 +16,10 @@ import java.io.RandomAccessFile;
  
  */
 public class AlgorithmKMeans extends AlgorithmBase {
+	
+	private static final int RANDOM_INIT = 0;
+	
+	private static final int BRADLEY_FAYYAD_INIT = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 	
@@ -41,6 +45,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	private double[][] centroidPos;
 	
 	private String resultsFileName;
+	
+	private int initSelection;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -48,7 +54,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
      
      */
     public AlgorithmKMeans(ModelImage image, int[][] pos, double[] scale, int groupNum[], double[][] centroidPos,
-    		               String resultsFileName) {
+    		               String resultsFileName, int initSelection) {
 
         this.image = image;
         this.pos = pos;
@@ -56,7 +62,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         this.groupNum = groupNum;
         this.centroidPos = centroidPos;
         this.resultsFileName = resultsFileName;
-
+        this.initSelection = initSelection;
     }
 
     
@@ -102,35 +108,97 @@ public class AlgorithmKMeans extends AlgorithmBase {
         File file;
         RandomAccessFile raFile;
         String dataString = "";
+        int subsampleNumber;
+        int subsampleSize;
+        int subsampleIndex[];
+        int possibleSample;
+        double subsamplePos[][];
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
     	numberClusters = centroidPos[0].length;
     	pointsInCluster = new int[numberClusters];
     	
-    	// Randomly choose one point as the starting centroid of each cluster
-    	startingPointIndex = new int[numberClusters];
-    	randomGen = new RandomNumberGen();
-    	Preferences.debug("\n");
-    	for (i = 0; i < numberClusters; i++) {
-    		Preferences.debug("Starting centroid " + (i+1) + "\n");
-    		do {
-    			alreadyUsed = false;
-    		    possibleStart = randomGen.genUniformRandomNum(0, nPoints - 1);
-    		    for (j = 0; j < i; j++) {
-    		    	if (startingPointIndex[j] == possibleStart) {
-    		    		alreadyUsed = true;
-    		    	}
-    		    } // for (j = 0; j < i; j++)
-    		} while (alreadyUsed);
-    		startingPointIndex[i] = possibleStart;
-    		groupNum[possibleStart] = i;
-    		for (j = 0; j < nDims; j++) {
-    		    centroidPos[j][i] = (double)pos[j][possibleStart];
-    		    Preferences.debug("Dimension " + (j+1) + "  " + centroidPos[j][i] + "\n");
-    		}
-    	} // for (i = 0; i < numberClusters; i++)
-    	startingPointIndex = null;
+    	switch(initSelection) {
+    	case RANDOM_INIT:
+	    	// Randomly choose one point as the starting centroid of each cluster
+	    	startingPointIndex = new int[numberClusters];
+	    	for (i = 0; i < numberClusters; i++) {
+	    		startingPointIndex[i] = -1;
+	    	}
+	    	randomGen = new RandomNumberGen();
+	    	Preferences.debug("\n");
+	    	for (i = 0; i < numberClusters; i++) {
+	    		Preferences.debug("Starting centroid " + (i+1) + "\n");
+	    		do {
+	    			alreadyUsed = false;
+	    		    possibleStart = randomGen.genUniformRandomNum(0, nPoints - 1);
+	    		    for (j = 0; j < i; j++) {
+	    		    	if (startingPointIndex[j] == possibleStart) {
+	    		    		alreadyUsed = true;
+	    		    	}
+	    		    } // for (j = 0; j < i; j++)
+	    		} while (alreadyUsed);
+	    		startingPointIndex[i] = possibleStart;
+	    		groupNum[possibleStart] = i;
+	    		for (j = 0; j < nDims; j++) {
+	    		    centroidPos[j][i] = (double)pos[j][possibleStart];
+	    		    Preferences.debug("Dimension " + (j+1) + "  " + centroidPos[j][i] + "\n");
+	    		}
+	    	} // for (i = 0; i < numberClusters; i++)
+	    	startingPointIndex = null;
+	    	break;
+    	case BRADLEY_FAYYAD_INIT:
+    		subsampleNumber = 10;
+    		subsampleSize = nPoints/10;
+    		subsampleIndex = new int[subsampleSize];
+    		startingPointIndex = new int[numberClusters];
+    		subsamplePos = new double[nDims][subsampleSize];
+    		randomGen = new RandomNumberGen();
+    		for (i = 1; i <= subsampleNumber; i++) {
+    			// Randomly select subsampleSize of the data points
+    			for (j = 0; j < subsampleSize; j++) {
+    				subsampleIndex[j] = -1;
+    			}
+                for (j = 0; j < subsampleSize; j++) {
+                	do {
+                		alreadyUsed = false;
+                		possibleSample = randomGen.genUniformRandomNum(0, nPoints - 1);
+                		for (k = 0; k < j; k++) {
+                			if (subsampleIndex[k] == possibleSample) {
+                				alreadyUsed = true;
+                			}
+                		} // for (k = 0; k < j; k++)
+                	} while (alreadyUsed);
+                	subsampleIndex[j] = possibleSample;
+                	for (k = 0; k < nDims; k++) {
+                		subsamplePos[k][j] = (double)pos[k][possibleSample];
+                	}
+                } // for (j = 0; j < subsampleSize; j++)
+                for (j = 0; j < numberClusters; j++) {
+                	startingPointIndex[j] = -1;
+                }
+                for (j = 0; j < numberClusters; j++) {
+                    do {
+                        alreadyUsed = false;
+                        possibleStart = randomGen.genUniformRandomNum(0, subsampleSize - 1);
+                        for (k = 0; k < j; k++) {
+                            if (startingPointIndex[k] == possibleStart) {
+                            	alreadyUsed = true;
+                            }
+                        } // for (k = 0; k < j; k++)
+                    } while(alreadyUsed);
+                    startingPointIndex[j] = possibleStart;
+                    groupNum[possibleStart] = j;
+                    for (k = 0; k < nDims; k++) {
+                    	centroidPos[k][j] = subsamplePos[k][possibleStart];
+                    }
+                } // for (j = 0; j < numberClusters; j++)
+                changeOccurred = true;
+    		} // for (i = 1; i <= subsampleNumber; i++)
+    		startingPointIndex = null;
+    		break;
+    	} // switch(initSelection)
     	
     	changeOccurred = true;
     	iteration = 1;
