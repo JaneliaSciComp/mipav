@@ -1623,27 +1623,15 @@ public class ViewOpenImageSequence extends JFrame
             resultImage = fileIO.readOrderedARGB(fileList, numChannels, channelMap, true, subsampleDimension,
                                                  chkForceUBYTE.isSelected() && enableCheckbox.isSelected());
         }
-System.out.println("yyy");
-        /*if (numTimePoints > 1) {
-            AlgorithmConvert3Dto4D algConvert = new AlgorithmConvert3Dto4D(resultImage, numSlices,
-                                                                           resultImage.getFileInfo(0).getResolutions()[2],
-                                                                           1.0f,
-                                                                           resultImage.getFileInfo(0).getUnitsOfMeasure()[2],
-                                                                           resultImage.getFileInfo(0).getUnitsOfMeasure()[2]);
-            algConvert.setRunningInSeparateThread(false);
-            algConvert.runAlgorithm();
-            resultImage.disposeLocal();
-            resultImage = algConvert.getResultImage();
-        }*/
-System.out.println("zzz");
+
+
         if (resultImage != null) {
             new ViewJFrameImage(resultImage);
 
-            //MipavUtil.centerOnScreen(jFrameImage);
         } else {
             MipavUtil.displayError("Unable to open image.");
         }
-        System.out.println("done");
+
     }
 
     /**
