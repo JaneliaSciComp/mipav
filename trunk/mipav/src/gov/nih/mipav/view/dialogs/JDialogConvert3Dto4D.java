@@ -380,9 +380,9 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
         comboBoxUnitOfMeasure4 = new JComboBox();
         comboBoxUnitOfMeasure4.setAlignmentX(Component.LEFT_ALIGNMENT);
         setComboBox(comboBoxUnitOfMeasure4);
-        if(image.getNDims() >= 4) {
-            String unitStr = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(3)).toString();
-            comboBoxUnitOfMeasure3.setSelectedItem(unitStr);
+        if(image.getNDims() >= 3) {
+            String unitStr = Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(2)).toString();
+            comboBoxUnitOfMeasure4.setSelectedItem(unitStr);
             comboBoxUnitOfMeasure4.setEnabled(true);
         } else {
             comboBoxUnitOfMeasure4.setEnabled(false);
