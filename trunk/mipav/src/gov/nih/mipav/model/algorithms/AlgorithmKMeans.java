@@ -386,7 +386,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 	haveCMPoint = false;
                 	for (m = 0; m < numberCMPoints && (!haveCMPoint); m++) {
                 		haveCMPoint = true;
-                		for (n = 0; n < nDims; m++) {
+                		for (n = 0; n < nDims; n++) {
                 			if (unionCM[n][m] != centroidPos[n][j]) {
                 				haveCMPoint = false;
                 			}
