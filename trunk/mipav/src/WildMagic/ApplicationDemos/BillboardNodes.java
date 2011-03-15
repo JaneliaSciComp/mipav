@@ -19,9 +19,9 @@
 package WildMagic.ApplicationDemos;
 
 import javax.media.opengl.*;
-import javax.media.opengl.GLCanvas;
+import javax.media.opengl.awt.GLCanvas;
 
-import com.sun.opengl.util.*;
+import com.jogamp.opengl.util.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -47,6 +47,7 @@ public class BillboardNodes extends JavaApplication3D
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                           m_eBuffering, m_eMultisampling,
                                            m_iWidth, m_iHeight );
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
@@ -64,37 +65,29 @@ public class BillboardNodes extends JavaApplication3D
      * @param args
      */
     public static void main(String[] args) {
-        Vector3f testVec = new Vector3f(2.0f, 3.0f, 4.0f);
-        System.out.println(testVec.X + " " + testVec.Y + " " +testVec.Z + " done.");
-        //System.out.println("Hello world!");
-
-        BillboardNodes kWorld = new BillboardNodes();
-        Frame frame = new Frame(kWorld.GetWindowTitle());
-        //GLCanvas canvas = new GLCanvas();
-          frame.add( kWorld.GetCanvas() );
-        frame.setSize(kWorld.GetWidth(), kWorld.GetHeight());
-        /* Animator serves the purpose of the idle function, calls display: */
-        final Animator animator = new Animator( kWorld.GetCanvas() );
-        frame.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
-                    // Run this on another thread than the AWT event queue to
-                    // avoid deadlocks on shutdown on some platforms
-                    new Thread(new Runnable() {
-                            public void run() {
-                                animator.stop();
-                                System.exit(0);
-                            }
-                        }).start();
-                }
-            });
+    	BillboardNodes kWorld = new BillboardNodes();
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		public void windowClosing(WindowEvent e) {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				public void run() {
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
         frame.setVisible(true);
         animator.start();
-        // and all the rest happens in the display function...
-
     }
 
     public void display(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         m_pkRenderer.SetCamera( m_spkCamera );
         if (MoveCamera())
@@ -163,14 +156,9 @@ public class BillboardNodes extends JavaApplication3D
         m_pkRenderer.ClearBuffers();
         m_pkRenderer.Draw( m_pkPlane );        
         m_pkRenderer.DisplayBackBuffer();
-
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
-        // TODO Auto-generated method stub
-        
-    }
+    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) { }
 
     public void init(GLAutoDrawable arg0) {
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -191,7 +179,7 @@ public class BillboardNodes extends JavaApplication3D
         m_pkScreenCamera.Perspective = false;
         m_pkScreenCamera.SetFrustum(-1,1,-1,1,1f,10.0f);
 
-        CreateScene(arg0);
+        CreateScene();
 
         // initial update of objects
         m_spkScene.UpdateGS();
@@ -203,43 +191,20 @@ public class BillboardNodes extends JavaApplication3D
 
         InitializeCameraMotion(0.001f,0.001f);
         InitializeObjectMotion(m_spkScene);
-
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
     
 
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        /*
-        if (iWidth > 0 && iHeight > 0)
-        {
-            if (m_pkRenderer != null)
-            {
-                m_pkRenderer.Resize(iWidth,iHeight);
-            }
-            
-            m_iWidth = iWidth;
-            m_iHeight = iHeight;
-        }
-        */
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
-    }
+    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) { }
 
-    /*
-    public GLCanvas GetCanvas()
-    {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-    }
-    */
     public GLCanvas GetCanvas()
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
 
 
-    private void CreateScene (GLAutoDrawable arg0)
+    private void CreateScene ()
     {
-        CreateRenderTarget(arg0, m_iWidth, m_iHeight);
+        CreateRenderTarget(m_iWidth, m_iHeight);
         
         m_spkScene = new Node();
         m_spkWireframe = new WireframeState();
@@ -418,10 +383,10 @@ public class BillboardNodes extends JavaApplication3D
 
     
 
-    private void CreateRenderTarget( GLAutoDrawable arg0, int iWidth, int iHeight )
+    private void CreateRenderTarget( int iWidth, int iHeight )
     {        
         m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                m_eBuffering,m_eMultisampling,m_pkRenderer, arg0);
+                m_eBuffering,m_eMultisampling,m_pkRenderer, null);
         
         Texture[] akSceneTarget = new Texture[3];
         GraphicsImage pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(byte[])null,
