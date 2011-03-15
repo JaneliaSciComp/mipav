@@ -82,13 +82,12 @@ public class AlgorithmKMeans extends AlgorithmBase {
     /**
      * Starts the algorithm.
      */
-    @SuppressWarnings("null")
 	public void runAlgorithm() {
     	int nDims;
     	int nPoints;
     	int numberClusters;
     	int startingPointIndex[];
-    	int i, j, k;
+    	int i, j, k, m, n, s;
     	/** Reference to the random number generator. */
         RandomNumberGen randomGen;
         int possibleStart;
@@ -113,6 +112,19 @@ public class AlgorithmKMeans extends AlgorithmBase {
         int subsampleIndex[];
         int possibleSample;
         double subsamplePos[][];
+        int clustersWithoutPoints = 0;
+        double maxDistSquared;
+        int maxDistPoint = 0;
+        int clusterWithMaxDistPoint = 0;
+        double localCM[][][];
+        int numberCMPoints = 0;
+        double unionCM[][];
+        boolean haveCMPoint;
+        int CMPointsAdded = 0;
+        double localFM[][][];
+        double totalDistSquared[];
+        double minTotalDistSquared;
+        int bestFMIndex = 0;
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
@@ -125,6 +137,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    	startingPointIndex = new int[numberClusters];
 	    	for (i = 0; i < numberClusters; i++) {
 	    		startingPointIndex[i] = -1;
+	    	}
+	    	for (i = 0; i < nPoints; i++) {
+	    		groupNum[i] = -1;
 	    	}
 	    	randomGen = new RandomNumberGen();
 	    	Preferences.debug("\n");
@@ -154,11 +169,16 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		subsampleIndex = new int[subsampleSize];
     		startingPointIndex = new int[numberClusters];
     		subsamplePos = new double[nDims][subsampleSize];
+    		localCM = new double[nDims][numberClusters][subsampleNumber];
+    		unionCM = new double[nDims][numberClusters*subsampleNumber];
     		randomGen = new RandomNumberGen();
-    		for (i = 1; i <= subsampleNumber; i++) {
+    		for (i = 0; i < subsampleNumber; i++) {
     			// Randomly select subsampleSize of the data points
     			for (j = 0; j < subsampleSize; j++) {
     				subsampleIndex[j] = -1;
+    			}
+    			for (j = 0; j < subsampleSize; j++) {
+    				groupNum[j] = -1;
     			}
                 for (j = 0; j < subsampleSize; j++) {
                 	do {
@@ -175,6 +195,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 		subsamplePos[k][j] = (double)pos[k][possibleSample];
                 	}
                 } // for (j = 0; j < subsampleSize; j++)
+                // Randomly select starting points in the subsample
                 for (j = 0; j < numberClusters; j++) {
                 	startingPointIndex[j] = -1;
                 }
@@ -195,8 +216,299 @@ public class AlgorithmKMeans extends AlgorithmBase {
                     }
                 } // for (j = 0; j < numberClusters; j++)
                 changeOccurred = true;
+                iteration = 1;
+                while (changeOccurred){
+                	fireProgressStateChanged("Iteration = " + iteration + " on part 1 subsample number " + (i+1));
+                	Preferences.debug("Iteration = " + iteration + " on part 1 subsample number " + (i+1));
+                	iteration++;
+                	changeOccurred = false;
+                	for (j = 0; j < numberClusters; j++) {
+            			pointsInCluster[j] = 0;
+            		}
+        	    	for (j = 0; j < subsampleSize; j++) {
+        	    	    minDistSquared = Double.MAX_VALUE;
+        	    	    originalGroupNum = groupNum[j];
+        	    	    for (k = 0; k < numberClusters; k++) {
+        	    	    	distSquared = 0.0;
+        	    	    	for (m = 0; m < nDims; m++) {
+        	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+        	    	    	    distSquared = distSquared + scale[m]*scale[m]*diff*diff;
+        	    	    	}
+        	    	    	if (distSquared < minDistSquared) {
+        	    	    		minDistSquared = distSquared;
+        	    	    		groupNum[j] = k;
+        	    	    	}
+        	    	    } // for (k = 0; k < numberClusters; k++)
+        	    	    pointsInCluster[groupNum[j]]++;
+        	    	    if (originalGroupNum != groupNum[j]) {
+        	    	    	changeOccurred = true;
+        	    	    }
+        	    	} // for (j = 0; j < subsampleSize; j++)
+        	    	for (j = 0; j < numberClusters; j++) {
+        	    		for (k = 0; k < nDims; k++) {
+        	    			centroidPos[k][j] = 0.0;
+        	    		}
+        	    	}
+        	    	for (j = 0; j < subsampleSize; j++) {
+        	    		for (k = 0; k < nDims; k++) {
+        	    			centroidPos[k][groupNum[j]] += subsamplePos[k][j];
+        	    		}
+        	    	}
+        	    	clustersWithoutPoints = 0;
+        	    	for (j = 0; j < numberClusters; j++) {
+        	    		if (pointsInCluster[j] == 0) {
+        	    			Preferences.debug("Cluster centroid " + (j+1) + " has no points\n");
+        	    			clustersWithoutPoints++;
+        	    		}
+        	    		else {
+	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n");
+	        	    		for (k = 0; k < nDims; k++) {
+	        	    			centroidPos[k][j] = centroidPos[k][j]/pointsInCluster[j];
+	        	    			Preferences.debug("Dimension " + (k+1) + " = " + centroidPos[k][j] + "\n");
+	        	    		}
+        	    		} // else 
+        	    	}
+                } // while (changeOccurred)
+                Preferences.debug("There are " + clustersWithoutPoints +
+                		          " clusters without points on subsample number " + (i+1) + "\n");
+                s = -1;
+                for (j = 0; j < clustersWithoutPoints; j++) {
+                	s++;
+                	while (pointsInCluster[s] > 0) {
+                	    s++;	
+                	}
+                	maxDistSquared = 0.0;
+                    for (k = 0; k < numberClusters; k++) {
+                    	if (pointsInCluster[k] > 1) {
+                    	    for (m = 0; m < subsampleSize; m++) {
+                    	    	if (groupNum[m] == k) {
+                    	    	    distSquared = 0.0;
+                    	    	    for (n = 0; n < nDims; n++) {
+                    	    	        diff = subsamplePos[n][m] - centroidPos[n][k];
+                    	    	        distSquared = distSquared + scale[n]*scale[n]*diff*diff;
+                    	    	    } // for (n = 0; n < nDims; n++)'
+                    	    	    if (distSquared > maxDistSquared) {
+                    	    	    	maxDistSquared = distSquared;
+                    	    	    	maxDistPoint = m;
+                    	    	    	clusterWithMaxDistPoint = k;
+                    	    	    }
+                    	    	} // if (groupNum[m] == k)
+                    	    } // for (m = 0; m < subsampleSize; m++)
+                    	} // if (pointsInCluster[k] > 1)
+                    } // for (k = 0; k < numberClusters; k++)
+                    groupNum[maxDistPoint] = s;
+                    pointsInCluster[clusterWithMaxDistPoint]--;
+                    for (k = 0; k < nDims; k++) {
+                    	centroidPos[k][s] = subsamplePos[k][maxDistPoint];
+                    }
+                    pointsInCluster[s] = 1;
+                    for (k = 0; k < nDims; k++) {
+                    	centroidPos[k][clusterWithMaxDistPoint] = 0.0;
+                    }
+                    for (k = 0; k < subsampleSize; k++) {
+                    	if (groupNum[k] == clusterWithMaxDistPoint) {
+	        	    		for (m = 0; m < nDims; m++) {
+	        	    			centroidPos[m][clusterWithMaxDistPoint] += subsamplePos[m][k];
+	        	    		}
+                    	}
+        	    	}
+                    for (k = 0; k < nDims; k++) {
+                    	centroidPos[k][clusterWithMaxDistPoint] = 
+                    		centroidPos[k][clusterWithMaxDistPoint]/pointsInCluster[clusterWithMaxDistPoint];
+                    }
+                } // for (j = 0; j < clustersWithoutPoints; j++)
+                if (clustersWithoutPoints > 0) {
+                    	Preferences.debug("Redoing k means on subsample number " + (i+1) + "\n");
+                    	changeOccurred = true;
+                        iteration = 1;
+                        while (changeOccurred){
+                        	fireProgressStateChanged("Iteration = " + iteration + " on subsample number " + (i+1));
+                        	Preferences.debug("Iteration = " + iteration + " on subsample number " + (i+1));
+                        	iteration++;
+                        	changeOccurred = false;
+                        	for (j = 0; j < numberClusters; j++) {
+                    			pointsInCluster[j] = 0;
+                    		}
+                	    	for (j = 0; j < subsampleSize; j++) {
+                	    	    minDistSquared = Double.MAX_VALUE;
+                	    	    originalGroupNum = groupNum[j];
+                	    	    for (k = 0; k < numberClusters; k++) {
+                	    	    	distSquared = 0.0;
+                	    	    	for (m = 0; m < nDims; m++) {
+                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+                	    	    	    distSquared = distSquared + scale[m]*scale[m]*diff*diff;
+                	    	    	}
+                	    	    	if (distSquared < minDistSquared) {
+                	    	    		minDistSquared = distSquared;
+                	    	    		groupNum[j] = k;
+                	    	    	}
+                	    	    } // for (k = 0; k < numberClusters; k++)
+                	    	    pointsInCluster[groupNum[j]]++;
+                	    	    if (originalGroupNum != groupNum[j]) {
+                	    	    	changeOccurred = true;
+                	    	    }
+                	    	} // for (j = 0; j < subsampleSize; j++)
+                	    	for (j = 0; j < numberClusters; j++) {
+                	    		for (k = 0; k < nDims; k++) {
+                	    			centroidPos[k][j] = 0.0;
+                	    		}
+                	    	}
+                	    	for (j = 0; j < subsampleSize; j++) {
+                	    		for (k = 0; k < nDims; k++) {
+                	    			centroidPos[k][groupNum[j]] += subsamplePos[k][j];
+                	    		}
+                	    	}
+                	    	clustersWithoutPoints = 0;
+                	    	for (j = 0; j < numberClusters; j++) {
+                	    		if (pointsInCluster[j] == 0) {
+                	    			Preferences.debug("Cluster centroid " + (j+1) + " has no points\n");
+                	    			clustersWithoutPoints++;
+                	    		}
+                	    		else {
+        	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n");
+        	        	    		for (k = 0; k < nDims; k++) {
+        	        	    			centroidPos[k][j] = centroidPos[k][j]/pointsInCluster[j];
+        	        	    			Preferences.debug("Dimension " + (k+1) + " = " + centroidPos[k][j] + "\n");
+        	        	    		}
+                	    		} // else 
+                	    	}
+                        } // while (changeOccurred)
+                        Preferences.debug("There are " + clustersWithoutPoints +
+                        		          " clusters without points on subsample number " + (i+1) + "\n");
+                } // if (clustersWithoutPoints > 0)
+                for (j = 0; j < numberClusters; j++) {
+                	for (k = 0; k < nDims; k++) {
+                	    localCM[k][j][i] = centroidPos[k][j];
+                	}
+                }
+                CMPointsAdded = 0;
+                for (j = 0; j < numberClusters; j++) {
+                	haveCMPoint = false;
+                	for (m = 0; m < numberCMPoints && (!haveCMPoint); m++) {
+                		haveCMPoint = true;
+                		for (n = 0; n < nDims; m++) {
+                			if (unionCM[n][m] != centroidPos[n][j]) {
+                				haveCMPoint = false;
+                			}
+                		} // for (n = 0; n < nDims; n++)
+                	} // for (m = 0; m < numberCMPoints && (!haveCMPoint); m++)
+                	if (!haveCMPoint) {
+                		CMPointsAdded++;
+                		for (m = 0; m < nDims; m++) {
+                			unionCM[m][numberCMPoints + CMPointsAdded - 1] = centroidPos[m][j];
+                		} // for (m = 0; m < nDims; m++)
+                	} // if (!haveCMPoint)
+                } // for (j = 0; j < numberClusters; j++)
+                numberCMPoints = numberCMPoints + CMPointsAdded;
     		} // for (i = 1; i <= subsampleNumber; i++)
-    		startingPointIndex = null;
+    		subsampleSize = numberCMPoints;
+    		localFM = new double[nDims][numberClusters][subsampleNumber];
+    		
+            for (i = 0; i < subsampleNumber; i++) {
+            	for (j = 0; j < subsampleSize; j++) {
+            		groupNum[j] = -1;
+            	}
+            	for (j = 0; j < numberClusters; j++) {
+            		for (k = 0; k < nDims; k++) {
+            			centroidPos[k][j] = localCM[k][j][i];
+            		}
+            	}
+            	changeOccurred = true;
+                iteration = 1;
+                while (changeOccurred){
+                	fireProgressStateChanged("Iteration = " + iteration + " on part 2 subsample number " + (i+1));
+                	Preferences.debug("Iteration = " + iteration + " on part 2 subsample number " + (i+1));
+                	iteration++;
+                	changeOccurred = false;
+                	for (j = 0; j < numberClusters; j++) {
+            			pointsInCluster[j] = 0;
+            		}
+        	    	for (j = 0; j < subsampleSize; j++) {
+        	    	    minDistSquared = Double.MAX_VALUE;
+        	    	    originalGroupNum = groupNum[j];
+        	    	    for (k = 0; k < numberClusters; k++) {
+        	    	    	distSquared = 0.0;
+        	    	    	for (m = 0; m < nDims; m++) {
+        	    	    		diff = unionCM[m][j] - centroidPos[m][k];
+        	    	    	    distSquared = distSquared + scale[m]*scale[m]*diff*diff;
+        	    	    	}
+        	    	    	if (distSquared < minDistSquared) {
+        	    	    		minDistSquared = distSquared;
+        	    	    		groupNum[j] = k;
+        	    	    	}
+        	    	    } // for (k = 0; k < numberClusters; k++)
+        	    	    pointsInCluster[groupNum[j]]++;
+        	    	    if (originalGroupNum != groupNum[j]) {
+        	    	    	changeOccurred = true;
+        	    	    }
+        	    	} // for (j = 0; j < subsampleSIze; j++)
+        	    	for (j = 0; j < numberClusters; j++) {
+        	    		for (k = 0; k < nDims; k++) {
+        	    			centroidPos[k][j] = 0.0;
+        	    		}
+        	    	}
+        	    	for (j = 0; j < subsampleSize; j++) {
+        	    		for (k = 0; k < nDims; k++) {
+        	    			centroidPos[k][groupNum[j]] += unionCM[k][j];
+        	    		}
+        	    	}
+        	    	clustersWithoutPoints = 0;
+        	    	for (j = 0; j < numberClusters; j++) {
+        	    		if (pointsInCluster[j] == 0) {
+        	    			Preferences.debug("Cluster centroid " + (j+1) + " has no points\n");
+        	    			clustersWithoutPoints++;
+        	    		}
+        	    		else {
+	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n");
+	        	    		for (k = 0; k < nDims; k++) {
+	        	    			centroidPos[k][j] = centroidPos[k][j]/pointsInCluster[j];
+	        	    			Preferences.debug("Dimension " + (k+1) + " = " + centroidPos[k][j] + "\n");
+	        	    		}
+        	    		} // else 
+        	    	}
+                } // while (changeOccurred)
+                Preferences.debug("There are " + clustersWithoutPoints +
+                		          " clusters without points on subsample number " + (i+1) + "\n");	
+                for (j = 0; j < numberClusters; j++) {
+                	for (k = 0; k < nDims; k++) {
+                	    localFM[k][j][i] = centroidPos[k][j];
+                	}
+                }
+            } // for (i = 0; i < subsampleNumber; i++)
+                
+            // The refined initial point is chosen as the localFM[][][i] having minimal distortion over unionCM
+            totalDistSquared = new double[subsampleNumber];
+            minTotalDistSquared = Double.MAX_VALUE;
+            for (i = 0; i < subsampleNumber; i++) {
+                for (j = 0; j < subsampleSize; j++) {
+                    minDistSquared = Double.MAX_VALUE;
+                    for (k = 0; k < numberClusters; k++) {
+                        distSquared = 0.0;
+                        for (m = 0; m < nDims; m++) {
+                        	diff = unionCM[m][j] - localFM[m][k][i];
+                        	distSquared = distSquared + scale[m]*scale[m]*diff*diff;
+                        }
+                        if (distSquared < minDistSquared) {
+                        	minDistSquared = distSquared;
+                        }
+                    } // for (k = 0; k < numberClusters; k++)
+                    totalDistSquared[i] = totalDistSquared[i] + minDistSquared;
+                } // for (j = 0; j < subsampleSize; j++)
+                if (totalDistSquared[i] < minTotalDistSquared) {
+                	minTotalDistSquared = totalDistSquared[i];
+                	bestFMIndex = i;
+                }
+            } // for (i = 0; i < subsampleNumber; i++)
+            Preferences.debug("Refinement algorithm returns inital centroids at:\n");
+            
+            for (i = 0; i < numberClusters; i++) {
+            	Preferences.debug("Initial centroid " + (i+1) + "\n");
+            	for (j = 0; j < nDims; j++) {
+            		centroidPos[j][i] = localFM[j][i][bestFMIndex];
+            		Preferences.debug("Dimension " + (j+1) + "  " + centroidPos[j][i] + "\n");
+            	}
+            }
+               
     		break;
     	} // switch(initSelection)
     	
@@ -240,14 +552,22 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    			centroidPos[j][groupNum[i]] += pos[j][i];
 	    		}
 	    	}
+	    	clustersWithoutPoints = 0;
 	    	for (i = 0; i < numberClusters; i++) {
-	    		Preferences.debug("Cluster centroid " + (i+1) + ":\n");
-	    		for (j = 0; j < nDims; j++) {
-	    			centroidPos[j][i] = centroidPos[j][i]/pointsInCluster[i];
-	    			Preferences.debug("Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n");
+	    		if (pointsInCluster[i] == 0) {
+	    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+	    			clustersWithoutPoints++;
 	    		}
+	    		else {
+		    		Preferences.debug("Cluster centroid " + (i+1) + ":\n");
+		    		for (j = 0; j < nDims; j++) {
+		    			centroidPos[j][i] = centroidPos[j][i]/pointsInCluster[i];
+		    			Preferences.debug("Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n");
+		    		}
+	    		} // else
 	    	}
     	} // while (changeOccurred)
+    	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n");
     	
     	if ((image != null) && (nDims >= 2) && (nDims <= 3) && (numberClusters <= 9)) {
     		color = new Color[numberClusters];
