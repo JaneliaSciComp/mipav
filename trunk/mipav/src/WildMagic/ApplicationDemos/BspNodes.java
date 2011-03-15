@@ -20,8 +20,8 @@ package WildMagic.ApplicationDemos;
 
 import javax.media.opengl.*;
 
-import com.sun.opengl.util.*;
-import javax.media.opengl.GLCanvas;
+import com.jogamp.opengl.util.*;
+import javax.media.opengl.awt.GLCanvas;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -44,6 +44,7 @@ public class BspNodes extends JavaApplication3D
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                           m_eBuffering, m_eMultisampling,
                                            m_iWidth, m_iHeight );
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
@@ -61,41 +62,29 @@ public class BspNodes extends JavaApplication3D
      * @param args
      */
     public static void main(String[] args) {
-        Vector3f testVec = new Vector3f(2.0f, 3.0f, 4.0f);
-        System.out.println(testVec.X + " " + testVec.Y + " " +testVec.Z + " done.");
-        //System.out.println("Hello world!");
-
-        BspNodes kWorld = new BspNodes();
-        Frame frame = new Frame(kWorld.GetWindowTitle());
-        //GLCanvas canvas = new GLCanvas();
-  
-
-
-        frame.add( kWorld.GetCanvas() );
-        frame.setSize(kWorld.GetWidth(), kWorld.GetHeight());
-        /* Animator serves the purpose of the idle function, calls display: */
-        final Animator animator = new Animator( kWorld.GetCanvas() );
-        frame.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
-                    // Run this on another thread than the AWT event queue to
-                    // avoid deadlocks on shutdown on some platforms
-                    new Thread(new Runnable() {
-                            public void run() {
-                                animator.stop();
-                                System.exit(0);
-                            }
-                        }).start();
-                }
-            });
+    	BspNodes kWorld = new BspNodes();
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		public void windowClosing(WindowEvent e) {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				public void run() {
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
         frame.setVisible(true);
         animator.start();
-        // and all the rest happens in the display function...
-
     }
 
     public void display(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-
         MeasureTime();
         
         if (MoveCamera())
@@ -118,14 +107,9 @@ public class BspNodes extends JavaApplication3D
         }
         m_pkRenderer.DisplayBackBuffer();
         UpdateFrameCount();
-
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
-        // TODO Auto-generated method stub
-        
-    }
+    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
 
     public void init(GLAutoDrawable arg0) {
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -153,12 +137,9 @@ public class BspNodes extends JavaApplication3D
 
         InitializeCameraMotion(0.001f,0.001f);
         InitializeObjectMotion(m_spkScene);
-
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -169,15 +150,8 @@ public class BspNodes extends JavaApplication3D
             m_iWidth = iWidth;
             m_iHeight = iHeight;
         }
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
-    /*
-    public GLCanvas GetCanvas()
-    {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-    }
-    */
     public GLCanvas GetCanvas()
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
