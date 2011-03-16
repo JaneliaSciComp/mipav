@@ -26,7 +26,7 @@ import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     implements GLEventListener, KeyListener
@@ -105,10 +105,6 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         {
             return;
         }      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         if ( m_bUpdateLev )
         {
             m_bUpdateLev = false;
@@ -299,10 +295,6 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
     {      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         m_iWidth = 256;
         m_iHeight = 256;
         m_spkCamera.Perspective = false;

@@ -5,7 +5,7 @@ import gov.nih.mipav.util.MipavInitGPU;
 import java.awt.event.KeyListener;
 
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCanvas;
+import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
@@ -77,10 +77,6 @@ implements GLEventListener, KeyListener
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
     public void display(GLAutoDrawable arg0) {      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
@@ -147,10 +143,6 @@ implements GLEventListener, KeyListener
      * @see javax.media.opengl.GLEventListener#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
      */
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)

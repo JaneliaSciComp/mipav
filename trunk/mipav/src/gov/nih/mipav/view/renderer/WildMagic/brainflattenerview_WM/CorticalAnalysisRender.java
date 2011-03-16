@@ -31,7 +31,7 @@ import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 
 /**
@@ -220,10 +220,6 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      */
     public void display(GLAutoDrawable arg0)
     {      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         if ( !m_bInit )
         {
             init(arg0);

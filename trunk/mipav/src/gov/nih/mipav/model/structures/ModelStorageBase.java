@@ -3948,7 +3948,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @return array of ints indicating the original extents in each dimension
      */
     public final int[] getOriginalExtents() {
-        return dimOriginalExtents;
+    	if ( dimOriginalExtents != null )
+    		return dimOriginalExtents;
+    	return dimExtents;
     }
 
     /**

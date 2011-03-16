@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
-import com.sun.opengl.util.*;
+import com.jogamp.opengl.util.*;
 
 import java.awt.event.*;
 

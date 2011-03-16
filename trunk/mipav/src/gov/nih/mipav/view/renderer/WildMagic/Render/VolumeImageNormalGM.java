@@ -14,7 +14,7 @@ import javax.media.opengl.GLEventListener;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageNormalGM extends VolumeImageViewer
     implements GLEventListener, KeyListener
