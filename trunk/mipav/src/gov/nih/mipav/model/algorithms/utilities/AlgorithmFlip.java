@@ -249,7 +249,7 @@ public class AlgorithmFlip extends AlgorithmBase {
             }
 
             /* Update FileInfo for mapping into DICOM space: */
-            if (changeOrientationOrigin) {
+            if (changeOrientationOrigin && srcImage.getNDims() > 2) {
                 
                 float origin[] = new float[3];
                 Vector3f position;
@@ -393,7 +393,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                 	    }
                 	}
                 }
-            } // if (changeOrientationOrigin)
+            } // if (changeOrientationOrigin && srcImage.getNDims() > 2)
 
             if (flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
                 VOIVector vec = srcImage.getVOIs();
