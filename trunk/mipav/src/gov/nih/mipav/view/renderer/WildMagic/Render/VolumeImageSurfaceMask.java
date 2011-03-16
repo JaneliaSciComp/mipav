@@ -17,7 +17,7 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageSurfaceMask extends VolumeImageViewer
     implements GLEventListener, KeyListener
@@ -60,10 +60,6 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         {
             return;
         }      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         boolean bSurfaceAdded = true;
         boolean bDrawSurface = false;
         while ( bSurfaceAdded )

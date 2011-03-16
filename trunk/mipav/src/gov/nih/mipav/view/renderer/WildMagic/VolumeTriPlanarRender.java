@@ -72,7 +72,7 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeTriPlanarRender extends GPURenderBase
 implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
@@ -169,7 +169,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
         super();
-        m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
+        //m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
@@ -474,10 +474,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kVolumeImageA == null ) {
         	return;
         }      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
+        //if ( m_pkRenderer != null )
+        //{
+        //    ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //}
         
         if ( !m_bInit )
         {

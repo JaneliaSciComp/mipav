@@ -14,7 +14,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCanvas;
+import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
@@ -28,7 +28,7 @@ import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageViewer extends JavaApplication3D
     implements GLEventListener, KeyListener
@@ -103,10 +103,6 @@ public class VolumeImageViewer extends JavaApplication3D
         {
             return;
         }      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         m_pkPlane.DetachAllEffects();
         m_pkPlane.AttachEffect(m_spkEffect);
         m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -125,10 +121,6 @@ public class VolumeImageViewer extends JavaApplication3D
 
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) 
     {       
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         m_bDisplay = true;
     }
     
@@ -261,10 +253,6 @@ public class VolumeImageViewer extends JavaApplication3D
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
     {      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         if (iWidth > 0 && iHeight > 0)
         {
             m_iWidth = iWidth;
@@ -273,7 +261,7 @@ public class VolumeImageViewer extends JavaApplication3D
             m_spkCamera.SetFrustum(-1,1,-1,1,1f,10.0f);
             m_pkRenderer.OnFrustumChange();
             m_pkRenderer.Resize(iWidth,iHeight);
-            arg0.setSize(iWidth,iHeight);
+            //arg0.setSize(iWidth,iHeight);
             m_bDisplay = true;
         }
     }

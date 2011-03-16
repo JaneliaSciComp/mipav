@@ -25,7 +25,8 @@ import java.util.Vector;
 import javax.imageio.ImageIO;
 import javax.media.MediaLocator;
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCanvas;
+import javax.media.opengl.awt.GLCanvas;
+
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
@@ -41,7 +42,7 @@ import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 
 public abstract class GPURenderBase extends JavaApplication3D
@@ -360,10 +361,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param iHeight the new height
      */
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
+        //if ( m_pkRenderer != null )
+        //{
+        //    ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //}
     	if ( m_kVolumeImageA == null ) {
         	return;
         }

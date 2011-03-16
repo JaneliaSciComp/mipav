@@ -36,7 +36,7 @@ import java.io.FileNotFoundException;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCanvas;
+import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -61,7 +61,7 @@ import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibGraphics.Shaders.Program;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 
 
@@ -276,10 +276,10 @@ public class PlaneRender_WM extends GPURenderBase
         if ( m_kVolumeImageA == null ) {
         	return;
         }
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
+        //if ( m_pkRenderer != null )
+        //{
+        //    ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //}
         if ( !m_bInit )
         {
             init(arg0);
@@ -345,10 +345,10 @@ public class PlaneRender_WM extends GPURenderBase
      */
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2)
     {      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
+        //if ( m_pkRenderer != null )
+        //{
+        //    ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //}
         m_bModified = true;
     }
 
@@ -635,10 +635,10 @@ public class PlaneRender_WM extends GPURenderBase
     	if ( m_kVolumeImageA == null ) {
         	return;
         }      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
+        //if ( m_pkRenderer != null )
+        //{
+        //    ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //}
     	
         if (iWidth > 0 && iHeight > 0)
         {            

@@ -26,7 +26,7 @@ import javax.swing.event.ChangeListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements ChangeListener {
 

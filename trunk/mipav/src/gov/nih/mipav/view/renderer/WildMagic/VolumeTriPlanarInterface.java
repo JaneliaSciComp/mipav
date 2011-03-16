@@ -97,7 +97,7 @@ import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeTriPlanarInterface extends JFrame
 implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentListener, ChangeListener, VOIManagerInterfaceListener

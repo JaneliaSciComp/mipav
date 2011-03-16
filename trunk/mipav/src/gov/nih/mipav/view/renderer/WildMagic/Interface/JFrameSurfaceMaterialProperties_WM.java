@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
-import com.sun.opengl.util.*;
+import com.jogamp.opengl.util.*;
 import java.awt.*;
 import java.awt.event.*;
 

@@ -12,7 +12,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 
 
-import com.sun.opengl.util.*;
+import com.jogamp.opengl.util.*;
 
 import java.awt.event.*;
 import java.io.File;

@@ -18,7 +18,7 @@ import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageExtract extends VolumeImageViewer
     implements GLEventListener, KeyListener
@@ -72,10 +72,6 @@ public class VolumeImageExtract extends VolumeImageViewer
         {
             return;
         }      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         while ( m_bDisplayFirst )
         {
             float fZ = ((float)m_iSlice)/(m_aiNewExtents[2] -1);

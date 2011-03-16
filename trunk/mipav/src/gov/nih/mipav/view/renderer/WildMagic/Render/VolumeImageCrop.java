@@ -10,7 +10,7 @@ import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageCrop extends VolumeImageViewer
     implements GLEventListener, KeyListener
@@ -52,10 +52,6 @@ public class VolumeImageCrop extends VolumeImageViewer
         {
             return;
         }      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
         boolean bCrop = true;
         while ( bCrop )
         {
