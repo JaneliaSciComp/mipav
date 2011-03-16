@@ -2329,6 +2329,22 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             MipavUtil.displayError("Could not load paint brush image: " + paintName);
             return;
         }
+        
+        int tempImageWidth = tempImage.getWidth();
+        int tempImageHeight = tempImage.getHeight();
+        int tempImageType = tempImage.getType();
+        float res0 = imageA.getFileInfo()[0].getResolutions()[0];
+        float res1 = imageA.getFileInfo()[0].getResolutions()[1];
+        if ((res0 > res1) && (res0/res1 <= 10.0f)) {
+        	tempImageWidth = (int)Math.round(tempImageWidth * res0/res1);
+        	tempImage = null;
+        	tempImage = new BufferedImage(tempImageWidth, tempImageHeight, tempImageType);
+        }
+        if ((res1 > res0) && (res1/res0 <= 10.0f)) {
+        	tempImageHeight = (int)Math.round(tempImageHeight * res1/res0);
+        	tempImage = null;
+        	tempImage = new BufferedImage(tempImageWidth, tempImageHeight, tempImageType);
+        }
 
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(tempImage.getWidth(), tempImage.getHeight());
@@ -5265,8 +5281,16 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         if (paintBrush != null) {
 
-            final int brushXDim = paintBrushDim.width;
-            final int brushYDim = paintBrushDim.height;
+            int brushXDim = paintBrushDim.width;
+            int brushYDim = paintBrushDim.height;
+            float res0 = imageA.getFileInfo()[0].getResolutions()[0];
+            float res1 = imageA.getFileInfo()[0].getResolutions()[1];
+            if ((res0 > res1) && (res0/res1 <= 10.0f)) {
+            	brushXDim = (int)Math.round(brushXDim * res1 / res0);
+            }
+            if ((res1 > res0) && (res1/res0 <= 10.0f)) {
+            	brushYDim = (int)Math.round(brushYDim * res0 / res1);
+            }
 
             int counter = 0;
             final int offset = imageActive.getSliceSize() * slice;
