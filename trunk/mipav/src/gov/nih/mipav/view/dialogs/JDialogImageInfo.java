@@ -3500,6 +3500,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 fileInfo[resIndex].setResolutions(resolutions);
             }
         }
+        image.getParentFrame().getComponentImage(). loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
 
         if (fileInfo[0] instanceof FileInfoNIFTI) {
             MatrixHolder matHolder = null;
