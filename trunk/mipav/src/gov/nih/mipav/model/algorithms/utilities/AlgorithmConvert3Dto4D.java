@@ -197,7 +197,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                 for (i = 0; i < 2; i++) {
                     resols[i] = destImage.getFileInfo(0).getResolutions()[i];
                     units[i] = destImage.getFileInfo(0).getUnitsOfMeasure()[i];
-                    startLocs[i] = destImage.getFileInfo(0).getOrigin(i);
+                    startLocs[i] = srcImage.getFileInfo(0).getOrigin(i);
                 }
 
                 resols[2] = resol3;
@@ -239,7 +239,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                 // Why should extents be fileInfoBase ?
                 destImage.getFileInfo((t * zDim) + z).setExtents(destImage.getExtents());
                 destImage.getFileInfo((t * zDim) + z).setOrigin(startLocs);
-
+                destImage.getFileInfo((t * zDim) + z).setAxisOrientation(srcImage.getFileInfo(0).getAxisOrientation());
                 if (destImage.getFileInfo((t * zDim) + z) instanceof FileInfoXML) {
                     ((FileInfoImageXML) (destImage.getFileInfo((t * zDim) + z))).setMatrix(srcImage.getMatrix());
                 }
@@ -247,7 +247,9 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             }
 
         }
-
+        destImage.calcMinMax();
+        destImage.setImageOrientation(srcImage.getImageOrientation());
+        
         setCompleted(true);
     }
 
