@@ -1339,7 +1339,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /**
      * Method that goes to the absolute voxel coordinate that is entered
      */
-    private void absoluteGoTo() {
+    public void absoluteGoTo() {
         final String xString = super.absoluteXTextField.getText().trim();
         final String yString = super.absoluteYTextField.getText().trim();
         final String zString = super.absoluteZTextField.getText().trim();
@@ -1357,16 +1357,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             return;
         }
         final int[] exts = imageA.getExtents();
-        if (x < 0 || x >= exts[0]) {
+        if (x < 0 || x > exts[0]) {
             MipavUtil.displayError("X value is out of range");
             return;
         }
-        if (y < 0 || y >= exts[1]) {
+        if (y < 0 || y > exts[1]) {
             MipavUtil.displayError("Y value is out of range");
             return;
         }
 
-        if (z < 0 || z >= exts[2]) {
+        if (z < 0 || z > exts[2]) {
             MipavUtil.displayError("Z value is out of range");
             return;
         }
