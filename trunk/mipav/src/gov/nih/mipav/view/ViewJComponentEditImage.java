@@ -2684,7 +2684,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         // shows intsnsity label upon mouse press
         if (cursorMode == ViewJComponentBase.DEFAULT || cursorMode == ViewJComponentBase.VOI_3D) {
-            setPixelInformationAtLocation(xS, yS);
+            setPixelInformationAtLocation(xS, yS, mouseEvent.isControlDown());
 
             if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
                 intensityLabel = Preferences.is(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK);
@@ -2769,7 +2769,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             return;
         }
 
-        setPixelInformationAtLocation(xS, yS);
+        setPixelInformationAtLocation(xS, yS, false);
         
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
@@ -4503,7 +4503,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param xS mouse x location
      * @param yS mouse y location
      */
-    public void setPixelInformationAtLocation(final int xS, final int yS) {
+    public void setPixelInformationAtLocation(final int xS, final int yS, boolean isControlDown) {
 
         try {
             StringBuilder str = new StringBuilder();
@@ -4565,6 +4565,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             } 
             
             frame.setMessageText(str.toString());
+            if(isControlDown) {
+            	Preferences.data(str.toString() + "\n");
+            }
         } catch (final ArrayIndexOutOfBoundsException error) {
             frame.setMessageText("  X: " + String.valueOf( (xS)) + " Y: " + String.valueOf( (yS)));
         }
@@ -5427,7 +5430,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     paintComponent(getGraphics());
                 }
 
-                setPixelInformationAtLocation(xS, yS);
+                setPixelInformationAtLocation(xS, yS, mouseEvent.isControlDown());
             } // if (mode == DEFAULT))
 
         } catch (final ArrayIndexOutOfBoundsException error) {
