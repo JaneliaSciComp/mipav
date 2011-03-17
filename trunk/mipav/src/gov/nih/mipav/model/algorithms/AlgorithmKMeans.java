@@ -13,7 +13,17 @@ import java.io.RandomAccessFile;
 
 
 /**
- 
+ * With a small number of records, it is feasible use RANDOM_INIT to perform multiple restarts efficiently.
+ * With a small sample size, the subsampling for initialization is not effective in the Bradley-Fayyad
+ * initialization.  The Bradley-Fayyad initialization is useful when applied to smaller data sets, but
+ * it is best suited for large-scale data.  By initializing a general clustering algorithm near the nodes,
+ * not only are the true clusters found more often, but it follows that the clustering algorithm will 
+ * iterate fewer times prior to convergence.
+ References:
+ 1.) "A systematic evaluation of different methods for initializing the K-means clustering algorithm"
+     by Anna D. Peterson, Arka. P. Ghosh, and Ranjan Maitra, IEEE Transactions on Knowledge and
+     Data Engineering
+ 2.) "Refining Initial Points for K-Means Clustering" by P.S. Bradley and Usama M. Fayyad.
  */
 public class AlgorithmKMeans extends AlgorithmBase {
 	
@@ -125,6 +135,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double totalDistSquared[];
         double minTotalDistSquared;
         int bestFMIndex = 0;
+        double centroidStartPos[][];
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
@@ -158,7 +169,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		groupNum[possibleStart] = i;
 	    		for (j = 0; j < nDims; j++) {
 	    		    centroidPos[j][i] = (double)pos[j][possibleStart];
-	    		    Preferences.debug("Dimension " + (j+1) + "  " + centroidPos[j][i] + "\n");
+	    		    Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
 	    		}
 	    	} // for (i = 0; i < numberClusters; i++)
 	    	startingPointIndex = null;
@@ -171,7 +182,31 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		subsamplePos = new double[nDims][subsampleSize];
     		localCM = new double[nDims][numberClusters][subsampleNumber];
     		unionCM = new double[nDims][numberClusters*subsampleNumber];
+    		centroidStartPos = new double[nDims][numberClusters];
     		randomGen = new RandomNumberGen();
+    	    // 1.) Randomly choose one point as the starting centroid of each cluster
+	    	for (i = 0; i < numberClusters; i++) {
+	    		startingPointIndex[i] = -1;
+	    	}
+	    	randomGen = new RandomNumberGen();
+	    	Preferences.debug("\n");
+	    	for (i = 0; i < numberClusters; i++) {
+	    		Preferences.debug("Starting centroid " + (i+1) + "\n");
+	    		do {
+	    			alreadyUsed = false;
+	    		    possibleStart = randomGen.genUniformRandomNum(0, nPoints - 1);
+	    		    for (j = 0; j < i; j++) {
+	    		    	if (startingPointIndex[j] == possibleStart) {
+	    		    		alreadyUsed = true;
+	    		    	}
+	    		    } // for (j = 0; j < i; j++)
+	    		} while (alreadyUsed);
+	    		startingPointIndex[i] = possibleStart;
+	    		for (j = 0; j < nDims; j++) {
+	    		    centroidStartPos[j][i] = (double)pos[j][possibleStart];
+	    		    Preferences.debug("Dimension " + (j+1) + " at " + centroidStartPos[j][i] + "\n");
+	    		}
+	    	} // for (i = 0; i < numberClusters; i++)
     		for (i = 0; i < subsampleNumber; i++) {
     			// Randomly select subsampleSize of the data points
     			for (j = 0; j < subsampleSize; j++) {
@@ -195,25 +230,11 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 		subsamplePos[k][j] = (double)pos[k][possibleSample];
                 	}
                 } // for (j = 0; j < subsampleSize; j++)
-                // Randomly select starting points in the subsample
+                // Reinitialize centroidPos with centroidStartPos
                 for (j = 0; j < numberClusters; j++) {
-                	startingPointIndex[j] = -1;
-                }
-                for (j = 0; j < numberClusters; j++) {
-                    do {
-                        alreadyUsed = false;
-                        possibleStart = randomGen.genUniformRandomNum(0, subsampleSize - 1);
-                        for (k = 0; k < j; k++) {
-                            if (startingPointIndex[k] == possibleStart) {
-                            	alreadyUsed = true;
-                            }
-                        } // for (k = 0; k < j; k++)
-                    } while(alreadyUsed);
-                    startingPointIndex[j] = possibleStart;
-                    groupNum[possibleStart] = j;
-                    for (k = 0; k < nDims; k++) {
-                    	centroidPos[k][j] = subsamplePos[k][possibleStart];
-                    }
+                	for (k = 0; k < nDims; k++) {
+                		centroidPos[k][j] = centroidStartPos[k][j];
+                	}
                 } // for (j = 0; j < numberClusters; j++)
                 changeOccurred = true;
                 iteration = 1;
@@ -264,7 +285,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n");
 	        	    		for (k = 0; k < nDims; k++) {
 	        	    			centroidPos[k][j] = centroidPos[k][j]/pointsInCluster[j];
-	        	    			Preferences.debug("Dimension " + (k+1) + " = " + centroidPos[k][j] + "\n");
+	        	    			Preferences.debug("Dimension " + (k+1) + " at " + centroidPos[k][j] + "\n");
 	        	    		}
         	    		} // else 
         	    	}
@@ -322,8 +343,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
                     	changeOccurred = true;
                         iteration = 1;
                         while (changeOccurred){
-                        	fireProgressStateChanged("Iteration = " + iteration + " on subsample number " + (i+1));
-                        	Preferences.debug("Iteration = " + iteration + " on subsample number " + (i+1));
+                        	fireProgressStateChanged("Iteration = " + iteration + " on part 1 subsample number " + (i+1));
+                        	Preferences.debug("Iteration = " + iteration + " on part 1 subsample number " + (i+1));
                         	iteration++;
                         	changeOccurred = false;
                         	for (j = 0; j < numberClusters; j++) {
@@ -368,7 +389,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n");
         	        	    		for (k = 0; k < nDims; k++) {
         	        	    			centroidPos[k][j] = centroidPos[k][j]/pointsInCluster[j];
-        	        	    			Preferences.debug("Dimension " + (k+1) + " = " + centroidPos[k][j] + "\n");
+        	        	    			Preferences.debug("Dimension " + (k+1) + " at " + centroidPos[k][j] + "\n");
         	        	    		}
                 	    		} // else 
                 	    	}
@@ -462,7 +483,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n");
 	        	    		for (k = 0; k < nDims; k++) {
 	        	    			centroidPos[k][j] = centroidPos[k][j]/pointsInCluster[j];
-	        	    			Preferences.debug("Dimension " + (k+1) + " = " + centroidPos[k][j] + "\n");
+	        	    			Preferences.debug("Dimension " + (k+1) + " at " + centroidPos[k][j] + "\n");
 	        	    		}
         	    		} // else 
         	    	}
@@ -505,7 +526,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
             	Preferences.debug("Initial centroid " + (i+1) + "\n");
             	for (j = 0; j < nDims; j++) {
             		centroidPos[j][i] = localFM[j][i][bestFMIndex];
-            		Preferences.debug("Dimension " + (j+1) + "  " + centroidPos[j][i] + "\n");
+            		Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
             	}
             }
                
@@ -562,7 +583,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    		Preferences.debug("Cluster centroid " + (i+1) + ":\n");
 		    		for (j = 0; j < nDims; j++) {
 		    			centroidPos[j][i] = centroidPos[j][i]/pointsInCluster[i];
-		    			Preferences.debug("Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n");
+		    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
 		    		}
 	    		} // else
 	    	}
