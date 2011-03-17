@@ -576,7 +576,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public void keyPressed(final KeyEvent e) {
         final int keyCode = e.getKeyCode();
-
+        Vector3f currentCenterLocal = null;
+        Vector3f newScreenPoint = null;
+        Vector3f newLocalPoint  = null;
+        String xString;
+	    String yString;
+	    String zString;
+	    int x;
+        int y;
+        int z;
+        int newY, newZ, newX;
+        int[] exts = imageA.getExtents();
         switch (keyCode) {
 
             case KeyEvent.VK_PAGE_DOWN:
@@ -585,6 +595,124 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             case KeyEvent.VK_PAGE_UP:
                 updateSlice(slice + 1);
+                break;
+                
+                
+                
+            case KeyEvent.VK_UP:
+            	if (orientation == FileInfoBase.CORONAL) {
+            	     yString = triImageFrame.absoluteYTextField.getText().trim();
+                     y = Integer.parseInt(yString);
+                     if(y > 0) {
+                    	newY = y - 1;
+                 		triImageFrame.absoluteYTextField.setText(String.valueOf(newY));
+                 		triImageFrame.absoluteGoTo();
+                     }   
+            	}else if(orientation == FileInfoBase.SAGITTAL) {
+            	     yString = triImageFrame.absoluteYTextField.getText().trim();
+                     y = Integer.parseInt(yString);
+                     if(y > 0) {
+                    	newY = y - 1;
+                 		triImageFrame.absoluteYTextField.setText(String.valueOf(newY));
+                 		triImageFrame.absoluteGoTo();
+                     }   
+            	}else if(orientation == FileInfoBase.AXIAL) {
+            	     zString = triImageFrame.absoluteZTextField.getText().trim();
+                     z = Integer.parseInt(zString);
+                     if(z < exts[2]) {
+                    	newZ = z + 1;
+                 		triImageFrame.absoluteZTextField.setText(String.valueOf(newZ));
+                 		triImageFrame.absoluteGoTo();
+                     }   
+            	}
+                break;
+
+                
+            case KeyEvent.VK_DOWN:
+            	if (orientation == FileInfoBase.CORONAL) {
+            		yString = triImageFrame.absoluteYTextField.getText().trim();
+                    y = Integer.parseInt(yString);
+                    if(y < exts[1]) {
+                    	newY = y + 1;
+                		triImageFrame.absoluteYTextField.setText(String.valueOf(newY));
+                		triImageFrame.absoluteGoTo();
+                    }   
+	           	}else if(orientation == FileInfoBase.SAGITTAL) {
+	           	     	yString = triImageFrame.absoluteYTextField.getText().trim();
+	                    y = Integer.parseInt(yString);
+	                    if(y < exts[1]) {
+	                    	newY = y + 1;
+	                		triImageFrame.absoluteYTextField.setText(String.valueOf(newY));
+	                		triImageFrame.absoluteGoTo();
+	                    }   
+	           	}else if(orientation == FileInfoBase.AXIAL) {
+	           	     	zString = triImageFrame.absoluteZTextField.getText().trim();
+	                    z = Integer.parseInt(zString);
+	                    if(z > 0) {
+	                    	newZ = z - 1;
+	                		triImageFrame.absoluteZTextField.setText(String.valueOf(newZ));
+	                		triImageFrame.absoluteGoTo();
+	                    }   
+	           	}
+	            break;      
+                
+                
+            case KeyEvent.VK_RIGHT:
+            	if (orientation == FileInfoBase.CORONAL) {
+           		 	xString = triImageFrame.absoluteXTextField.getText().trim();
+           		 	x = Integer.parseInt(xString);
+                    if(x > 0) {
+                    	newX = x - 1;
+                		triImageFrame.absoluteXTextField.setText(String.valueOf(newX));
+                		triImageFrame.absoluteGoTo();
+                    }   
+	           	}else if(orientation == FileInfoBase.SAGITTAL) {
+	           	     	zString = triImageFrame.absoluteZTextField.getText().trim();
+	                    z = Integer.parseInt(zString);
+	                    if(z > 0) {
+	                    	newZ = z - 1;
+	                		triImageFrame.absoluteZTextField.setText(String.valueOf(newZ));
+	                		triImageFrame.absoluteGoTo();
+	                    }   
+	           	}else if(orientation == FileInfoBase.AXIAL) {
+	           		 	xString = triImageFrame.absoluteXTextField.getText().trim();
+	           		 	x = Integer.parseInt(xString);
+	                    if(x > 0) {
+	                    	newX = x - 1;
+	                		triImageFrame.absoluteXTextField.setText(String.valueOf(newX));
+	                		triImageFrame.absoluteGoTo();
+	                    }   
+	           	}
+	            break;
+                 
+              
+                
+            case KeyEvent.VK_LEFT:
+            	if (orientation == FileInfoBase.CORONAL) {
+              		 	xString = triImageFrame.absoluteXTextField.getText().trim();
+              		 	x = Integer.parseInt(xString);
+              		 	if(x < exts[0]) {
+              		 		newX = x + 1;
+              		 		triImageFrame.absoluteXTextField.setText(String.valueOf(newX));
+              		 		triImageFrame.absoluteGoTo();
+                        }   
+              	}else if(orientation == FileInfoBase.SAGITTAL) {
+              	     	zString = triImageFrame.absoluteZTextField.getText().trim();
+              	     	z = Integer.parseInt(zString);
+              	     	if(z < exts[2]) {
+              	     		newZ = z + 1;
+              	     		triImageFrame.absoluteZTextField.setText(String.valueOf(newZ));
+              	     		triImageFrame.absoluteGoTo();
+                       }   
+              	}else if(orientation == FileInfoBase.AXIAL) {
+              		 xString = triImageFrame.absoluteXTextField.getText().trim();
+              	     x = Integer.parseInt(xString);
+              	     if(x < exts[0]) {
+                	    newX = x + 1;
+               			triImageFrame.absoluteXTextField.setText(String.valueOf(newX));
+               			triImageFrame.absoluteGoTo();
+                    }   
+              	}
                 break;
         }
     }
