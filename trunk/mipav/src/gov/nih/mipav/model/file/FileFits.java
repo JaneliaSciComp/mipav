@@ -1795,7 +1795,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 49; // 1
         cardImage[8] = 61; // =
 
-        resString = Double.toString(image_TM.Get(0, 0));
+        resString = Float.toString(image.getFileInfo()[0].getResolutions()[0]);
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1858,7 +1858,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 50; // 2
         cardImage[8] = 61; // =
 
-        resString = Double.toString(image_TM.Get(1, 1));
+        resString = Float.toString(image.getFileInfo()[0].getResolutions()[1]);
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1925,7 +1925,7 @@ public class FileFits extends FileBase {
             if (image.getType() == ModelStorageBase.ARGB) {
                 resString = "1.0";
             } else {
-                resString = Double.toString(image_TM.Get(2, 2));
+                resString = Float.toString(image.getFileInfo()[0].getResolutions()[2]);
             }
             resBytes = resString.getBytes();
 
