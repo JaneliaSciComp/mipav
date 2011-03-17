@@ -27,12 +27,22 @@ import gov.nih.mipav.model.algorithms.*;
 
 
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterDouble;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.ActionDiscovery;
+import gov.nih.mipav.view.dialogs.ActionMetadata;
+import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
+import gov.nih.mipav.view.dialogs.MipavActionMetadata;
 import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 
 import java.awt.*;
@@ -57,7 +67,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -73,7 +83,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
     private ModelImage image; // 
     
     /** This is the SWIs algorithm */
-    private PlugInAlgorithmSWI genericAlgo = null;
+    private PlugInAlgorithmSWI swiAlgo = null;
 
 	/** The variable representing whether the blur should be performed. */
 	private boolean doErnst;
@@ -166,7 +176,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             resultImage = algorithm.getDestImage();
-            if ((genericAlgo.isCompleted() == true) && (resultImage != null)) {
+            if ((swiAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
                 updateFileInfo(image, resultImage);
@@ -215,14 +225,14 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
             
         
             
-            genericAlgo = new PlugInAlgorithmSWI(resultImage, magImage, phaseImage, 
+            swiAlgo = new PlugInAlgorithmSWI(isScriptRunning(), resultImage, magImage, phaseImage, 
                                                     maskThreshold, roFilterSize, peFilterSize, multFactor, showInterImages);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            genericAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", genericAlgo);
+            swiAlgo.addListener(this);
+            createProgressBar(image.getImageName(), " ...", swiAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -230,11 +240,11 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
-                if (genericAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (swiAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                genericAlgo.run();
+                swiAlgo.run();
             }
         } catch (OutOfMemoryError x) {
             if (resultImage != null) {
@@ -250,21 +260,41 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
     } // end callAlgorithm()
 
     /**
-     * Used in turning your plugin into a script
+     * Used in turning the plugin into a script
      */
     protected void setGUIFromParams() {
-    	image = scriptParameters.retrieveInputImage();
-
-    	doErnst = scriptParameters.getParams().getBoolean("do_gaussian");
+    	roFilterSize = scriptParameters.getParams().getInt("roFilterSize");
+    	peFilterSize = scriptParameters.getParams().getInt("peFilterSize");
+    	multFactor = scriptParameters.getParams().getInt("multFactor");
+    	showInterImages = scriptParameters.getParams().getBoolean("showInterImages");
+    	maskThreshold = scriptParameters.getParams().getDouble("maskThreshold");
+    	
+    	magImage = scriptParameters.retrieveImage("magnitudeImage");
+    	phaseImage = scriptParameters.retrieveImage("phaseImage");
     } //end setGUIFromParams()
 
     /**
-     * Used in turning your plugin into a script
+     * Used in turning the plugin into a script
      */
     protected void storeParamsFromGUI() throws ParserException {
-    	scriptParameters.storeInputImage(image);
-   
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doErnst));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("roFilterSize", roFilterSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("peFilterSize", peFilterSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("multFactor", multFactor));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("showInterImages", showInterImages));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("maskThreshold", maskThreshold));
+        
+        if(swiAlgo != null && showInterImages) {
+            scriptParameters.storeOutputImageParams(swiAlgo.getkImage(), true);
+            scriptParameters.storeOutputImageParams(swiAlgo.getiImage(), true);
+            scriptParameters.storeOutputImageParams(swiAlgo.getBrainMask(), true);
+            scriptParameters.storeOutputImageParams(swiAlgo.getkCenterImage(), true);
+            scriptParameters.storeOutputImageParams(swiAlgo.getiFinal(), true);
+            scriptParameters.storeOutputImageParams(swiAlgo.getPhaseMask(), true);
+            scriptParameters.storeOutputImageParams(swiAlgo.getiCenter(), true);
+        }
+        scriptParameters.storeOutputImageParams(swiAlgo.getDestImage(), true);  //magEnhanced image
+        
+        //algorithm shows inter images, but referencing them here allows JIST to see them for possible post-processing
     } //end storeParamsFromGUI()
    
     private void init() {
@@ -611,5 +641,115 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
             }
         }
         
+    }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.SWI");
+            }
+
+            public String getDescription() {
+                return new String("Creates suscptibility weighted image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Models magnetic susceptibility of anatomy in MRI.");
+            }
+
+            public String getShortLabel() {
+                return new String("SWI");
+            }
+
+            public String getLabel() {
+                return new String("SWI");
+            }
+
+            public String getName() {
+                return new String("SWI");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+            table.put(new ParameterInt("roFilterSize", roFilterSize));
+            table.put(new ParameterInt("peFilterSize", peFilterSize));
+            table.put(new ParameterInt("multFactor", multFactor));
+            table.put(new ParameterBoolean("showInterImages", showInterImages));
+            table.put(new ParameterDouble("maskThreshold", maskThreshold));
+            
+            magImage = scriptParameters.retrieveImage("magnitudeImage");
+            phaseImage = scriptParameters.retrieveImage("phaseImage");
+            
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            
+            table.put(new ParameterExternalImage("magnitudeImage"));
+            table.put(new ParameterExternalImage("phaseImage"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+        
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage("kImage"));
+            table.put(new ParameterImage("iImage"));
+            table.put(new ParameterImage("brainMask"));
+            table.put(new ParameterImage("kCenterImage"));
+            table.put(new ParameterImage("iFinal"));
+            table.put(new ParameterImage("phaseMask"));
+            table.put(new ParameterImage("iCenter"));
+            table.put(new ParameterImage("magEnhancedFINAL"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(String imageParamName) {
+        return "magEnhanced";
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }
