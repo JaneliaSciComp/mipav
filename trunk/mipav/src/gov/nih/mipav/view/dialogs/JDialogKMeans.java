@@ -46,6 +46,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	
 	private static final int HIERARCHICAL_GROUPING_INIT = 2;
 	
+	private static final int MAXMIN_INIT = 3;
+	
 	/** source image. **/
     private ModelImage image;
     
@@ -114,6 +116,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private JRadioButton BradleyInit;
     
     private JRadioButton hierarchicalInit;
+    
+    private JRadioButton maxMinInit;
     
     private int initSelection = RANDOM_INIT;
 	
@@ -741,6 +745,15 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 7;
         mainPanel.add(hierarchicalInit, gbc);
+        
+        maxMinInit = new JRadioButton("MaxMin", false);
+        maxMinInit.setFont(serif12);
+        maxMinInit.setForeground(Color.black);
+        initGroup.add(maxMinInit);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        mainPanel.add(maxMinInit, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -777,7 +790,9 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	else if (hierarchicalInit.isSelected()) {
     		initSelection = HIERARCHICAL_GROUPING_INIT;
     	}
-    	
+    	else if (maxMinInit.isSelected()) {
+    		initSelection = MAXMIN_INIT;
+    	}	
     	
     	return true;
     }
