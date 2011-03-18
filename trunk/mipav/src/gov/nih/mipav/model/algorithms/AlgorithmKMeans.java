@@ -24,12 +24,16 @@ import java.io.RandomAccessFile;
      by Anna D. Peterson, Arka. P. Ghosh, and Ranjan Maitra, IEEE Transactions on Knowledge and
      Data Engineering
  2.) "Refining Initial Points for K-Means Clustering" by P.S. Bradley and Usama M. Fayyad.
+ 3.) "Hierarchical Grouping to Optimize an Objective Function" by Joe H. Ward, Jr.,
+     Journal of the American Statistical Association, Volume 58, Issue 301, March, 1963, pp. 236-244.
  */
 public class AlgorithmKMeans extends AlgorithmBase {
 	
 	private static final int RANDOM_INIT = 0;
 	
 	private static final int BRADLEY_FAYYAD_INIT = 1;
+	
+	private static final int HIERARCHICAL_GROUPING_INIT = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 	
@@ -136,6 +140,23 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double minTotalDistSquared;
         int bestFMIndex = 0;
         double centroidStartPos[][];
+        int groupsPresent;
+        int pointsInGroup[];
+        int highestGroupPresent;
+        int hierGroup[][];
+        double essGroup[];
+        int bestFirstIndex = 0;
+        int bestSecondIndex = 0;
+        double essIncrease;
+        double minessIncrease;
+        double sum;
+        double sumSq;
+        double newess;
+        double bestnewess = 0.0;
+        int newPointsInGroup;
+        int bestNewPointsInGroup = 0;
+        boolean found;
+        int groupIndex;
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
@@ -530,6 +551,90 @@ public class AlgorithmKMeans extends AlgorithmBase {
             	}
             }
                
+    		break;
+    	case HIERARCHICAL_GROUPING_INIT:
+    		pointsInGroup = new int[nPoints];
+    		for (i = 0; i < nPoints; i++) {
+    			pointsInGroup[i] = 1;
+    		}
+    		highestGroupPresent = nPoints - 1;
+    		hierGroup = new int[nPoints][];
+    		for (i = 0; i < nPoints; i++) {
+    			hierGroup[i] = new int[nPoints-i];
+    			hierGroup[i][0] = i;
+    		}
+    		essGroup = new double[nPoints];
+    		for (i = 0; i < nPoints; i++) {
+    			essGroup[i] = 0.0;
+    		}
+    		for (groupsPresent = nPoints; groupsPresent > numberClusters; groupsPresent--) {
+    			minessIncrease = Double.MAX_VALUE;
+	    		for (i = 0; i < highestGroupPresent; i++) {
+	    			if (pointsInGroup[i] > 0) {
+	    				for (j = i+1; j <= highestGroupPresent; j++) {
+	    					if (pointsInGroup[j] > 0) {
+	    					    newPointsInGroup = pointsInGroup[i] + pointsInGroup[j];
+	    					    newess = 0.0;
+	    					    for (m = 0; m < nDims; m++) {
+	    					        sum = 0.0;
+	    					        sumSq = 0.0;
+	    					        for (n = 0; n < pointsInGroup[i]; n++) {
+	    					        	sum += pos[m][hierGroup[i][n]];
+	    					        	sumSq += pos[m][hierGroup[i][n]]*pos[m][hierGroup[i][n]];
+	    					        }
+	    					        for (n = 0; n < pointsInGroup[j]; n++) {
+	    					        	sum += pos[m][hierGroup[j][n]];
+	    					        	sumSq += pos[m][hierGroup[j][n]]*pos[m][hierGroup[j][n]];
+	    					        }
+	    					        newess += scale[m]*scale[m]*(sumSq - sum*sum/newPointsInGroup);
+	    					    } // for (m = 0; m < nDims; m++)
+	    					    essIncrease = newess - (essGroup[i] + essGroup[j]);
+	    					    if (essIncrease < minessIncrease) {
+	    					    	minessIncrease = essIncrease;
+	    					    	bestFirstIndex = i;
+	    					    	bestSecondIndex = j;
+	    					    	bestnewess = newess;
+	    					    	bestNewPointsInGroup = newPointsInGroup;
+	    					    } // if (essIncrease < minessIncrease)
+	    					} // if (pointsInGroup[j] > 0)
+	    				} // for (j = i+1; j <= highestGroupPresent; j++)
+	    			} // if (pointsInGroup[i] > 0)
+	    		} // for (i = 0; i < highestGroupPresent; i++)
+	    		for (i = pointsInGroup[bestFirstIndex];
+	    		     i < pointsInGroup[bestFirstIndex] + pointsInGroup[bestSecondIndex]; i++) {
+	    	        hierGroup[bestFirstIndex][i] = hierGroup[bestSecondIndex][i-pointsInGroup[bestFirstIndex]];
+	    		}
+	    		pointsInGroup[bestFirstIndex] = bestNewPointsInGroup;
+	    		pointsInGroup[bestSecondIndex] = 0;
+	    		essGroup[bestFirstIndex] = bestnewess;
+	    		found = false;
+	    		for (i = highestGroupPresent; (i >= 0) && (!found); i--) {
+	    			if (pointsInGroup[i] > 0) {
+	    			    highestGroupPresent = i;
+	    			    found = true;
+	    			}
+	    		}
+    		} // for (groupsPresent = nPoints; groupsPresent > numberClusters; groupsPresent--)
+    		groupIndex = -1;
+    		for (i = 0; i < numberClusters; i++) {
+    			for (j = 0; j < nDims; j++) {
+    				centroidPos[j][i] = 0.0;
+    			}
+    		}
+    		for (i = 0; (i < highestGroupPresent) && (groupIndex < numberClusters-1); i++) {
+    			if (pointsInGroup[i] > 0) {
+    			    groupIndex++;
+    			    for (j = 0; j < pointsInGroup[i]; j++) {
+    			    	groupNum[hierGroup[i][j]] = groupIndex;
+    			    	for (k = 0; k < nDims; k++) {
+    			    	    centroidPos[k][groupIndex] += pos[k][hierGroup[i][j]];	
+    			    	}
+    			    } // for (j = 0; j < pointsInGroup[i]; j++)
+    			    for (j = 0; j < nDims; j++) {
+    			    	centroidPos[j][groupIndex] = centroidPos[j][groupIndex]/pointsInGroup[i];
+    			    }
+    			} // if (pointsInGroun[i] > 0)
+    		}
     		break;
     	} // switch(initSelection)
     	
