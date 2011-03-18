@@ -34,6 +34,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	private static final int BRADLEY_FAYYAD_INIT = 1;
 	
 	private static final int HIERARCHICAL_GROUPING_INIT = 2;
+	
+	private static final int MAXMIN_INIT = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 	
@@ -157,6 +159,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
         int bestNewPointsInGroup = 0;
         boolean found;
         int groupIndex;
+        int currentClusters;
+        double minDistSquaredSet[] = null;
+        int minIndexSet[] = null;
+        int newIndex = 0;
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
@@ -600,8 +606,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    				} // for (j = i+1; j <= highestGroupPresent; j++)
 	    			} // if (pointsInGroup[i] > 0)
 	    		} // for (i = 0; i < highestGroupPresent; i++)
-	    		for (i = pointsInGroup[bestFirstIndex];
-	    		     i < pointsInGroup[bestFirstIndex] + pointsInGroup[bestSecondIndex]; i++) {
+	    		for (i = pointsInGroup[bestFirstIndex]; i < bestNewPointsInGroup; i++) {
 	    	        hierGroup[bestFirstIndex][i] = hierGroup[bestSecondIndex][i-pointsInGroup[bestFirstIndex]];
 	    		}
 	    		pointsInGroup[bestFirstIndex] = bestNewPointsInGroup;
@@ -635,6 +640,68 @@ public class AlgorithmKMeans extends AlgorithmBase {
     			    }
     			} // if (pointsInGroun[i] > 0)
     		}
+    		break;
+    	case MAXMIN_INIT:
+    		for (i = 0; i < nPoints; i++) {
+    			groupNum[i] = -1;
+    		}
+    		// Obtain the 2 point furtherest apart as seeds
+    		maxDistSquared = 0.0;
+    		for (i = 0; i < nPoints-1; i++) {
+    			for (j = i+1; j <= nPoints-1; j++) {
+    			    distSquared = 0.0;
+    			    for (k = 0; k < nDims; k++) {
+    			    	diff = pos[k][i] - pos[k][j];
+    			    	distSquared += scale[k]*scale[k]*diff*diff;
+    			    } // for (k = 0; k < nDims; k++)
+    			    if (distSquared > maxDistSquared) {
+    			    	maxDistSquared = distSquared;
+    			    	bestFirstIndex = i;
+    			    	bestSecondIndex = j;
+    			    }
+    			} // for (j = i+1; j <= nPoints-1; j++)
+    		} // for (i = 0; i < nPoints-1; i++)
+    		for (i = 0; i < nDims; i++) {
+    			centroidPos[i][0] = pos[i][bestFirstIndex];
+    			centroidPos[i][1] = pos[i][bestSecondIndex];
+    		}
+    		groupNum[bestFirstIndex] = 0;
+    		groupNum[bestSecondIndex] = 1;
+    		if (numberClusters > 2) {
+    		    minDistSquaredSet = new double[numberClusters - 1];
+    		    minIndexSet = new int[numberClusters - 1];
+    		}
+    		for (currentClusters = 2; currentClusters < numberClusters; currentClusters++) {
+    			for (i = 0; i < nPoints; i++) {
+    			    if (groupNum[i] == -1) {
+    			    	for (j = 0; j < currentClusters; j++) {
+    			    		minDistSquaredSet[j] = Double.MAX_VALUE;
+    			    	}
+    			    	for (j = 0; j < currentClusters; j++) {
+    			    	    distSquared = 0.0;
+    			    	    for (k = 0; k < nDims; k++) {
+    			    	    	diff = pos[k][i] - centroidPos[k][j];
+    			    	    	distSquared += scale[k]*scale[k]*diff*diff;
+    			    	    } // for (k = 0; k < nDims; k++)
+    			    	    if (distSquared < minDistSquaredSet[j]) {
+    			    	    	minDistSquaredSet[j] = distSquared;
+    			    	    	minIndexSet[j] = i;
+    			    	    }
+    			    	} // for (j = 0; j < currentClusters; j++)
+    			    } // if (groupNum[i] == -1)
+    			} // for (i = 0; i < nPoints; i++)
+    			maxDistSquared = 0.0;
+    			for (i = 0; i < currentClusters; i++) {
+    			    if (minDistSquaredSet[i] > maxDistSquared) {
+    			    	maxDistSquared = minDistSquaredSet[i];
+    			    	newIndex = minIndexSet[i];
+    			    }
+    			} // for (i = 0; i < currentClusters; i++)
+    			for (i = 0; i < nDims; i++) {
+    				centroidPos[i][currentClusters] = pos[i][newIndex];
+    			}
+    			groupNum[newIndex] = currentClusters;
+    		} // for (currentClusters = 2; currentClusters < numberClusters; currentClusters++)
     		break;
     	} // switch(initSelection)
     	
