@@ -44,6 +44,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	
 	private static final int BRADLEY_FAYYAD_INIT = 1;
 	
+	private static final int HIERARCHICAL_GROUPING_INIT = 2;
+	
 	/** source image. **/
     private ModelImage image;
     
@@ -110,6 +112,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private JRadioButton randomInit;
     
     private JRadioButton BradleyInit;
+    
+    private JRadioButton hierarchicalInit;
     
     private int initSelection = RANDOM_INIT;
 	
@@ -728,6 +732,15 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 6;
         mainPanel.add(BradleyInit, gbc);
+        
+        hierarchicalInit = new JRadioButton("Hierarchical grouping", false);
+        hierarchicalInit.setFont(serif12);
+        hierarchicalInit.setForeground(Color.black);
+        initGroup.add(hierarchicalInit);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        mainPanel.add(hierarchicalInit, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -760,6 +773,9 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	}
     	else if (BradleyInit.isSelected()) {
     		initSelection = BRADLEY_FAYYAD_INIT;
+    	}
+    	else if (hierarchicalInit.isSelected()) {
+    		initSelection = HIERARCHICAL_GROUPING_INIT;
     	}
     	
     	
