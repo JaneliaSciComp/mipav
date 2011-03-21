@@ -252,8 +252,10 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         if(showInterImages) {
             ModelImage magEnhancedAlg = (ModelImage) magEnhanced.clone();
             magEnhancedAlg.setImageName("magEnhancedAlg");
-            ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhancedAlg);
-            magEnhancedFrame.setVisible(true);
+            if(!inScript) {
+                ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhancedAlg);
+                magEnhancedFrame.setVisible(true);
+            }
         }
         
         return magEnhanced;
@@ -293,7 +295,6 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
     private ModelImage generateIFinal(ModelImage iImage, ModelImage iCenterImage, BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal) {
         ModelImage iFinal = new ModelImage(ModelImage.DCOMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iFinal");
-        System.out.println("Here");
         double[] ixReal = new double[sizeRo*sizePe*sizeSs];
         double[] ixImag = new double[sizeRo*sizePe*sizeSs];
         double[] ixRealCenter = new double[sizeRo*sizePe*sizeSs];

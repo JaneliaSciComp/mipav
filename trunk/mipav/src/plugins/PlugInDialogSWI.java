@@ -269,14 +269,18 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
     	showInterImages = scriptParameters.getParams().getBoolean("showInterImages");
     	maskThreshold = scriptParameters.getParams().getDouble("maskThreshold");
     	
-    	magImage = scriptParameters.retrieveImage("magnitudeImage");
-    	phaseImage = scriptParameters.retrieveImage("phaseImage");
+    	magImage = scriptParameters.retrieveImage("MagnitudeImage");
+    	image = magImage;
+    	phaseImage = scriptParameters.retrieveImage("PhaseImage");
     } //end setGUIFromParams()
 
     /**
      * Used in turning the plugin into a script
      */
     protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeImage(magImage, "MagnitudeImage");
+        scriptParameters.storeImage(phaseImage, "PhaseImage");
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("roFilterSize", roFilterSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("peFilterSize", peFilterSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("multFactor", multFactor));
