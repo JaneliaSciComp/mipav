@@ -63,6 +63,12 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	private String resultsFileName;
 	
 	private int initSelection;
+	
+	private float redBuffer[] = null;
+	
+	private float greenBuffer[] = null;
+	
+	private float blueBuffer[] = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -70,7 +76,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
      
      */
     public AlgorithmKMeans(ModelImage image, int[][] pos, double[] scale, int groupNum[], double[][] centroidPos,
-    		               String resultsFileName, int initSelection) {
+    		               String resultsFileName, int initSelection, float[] redBuffer, float[] greenBuffer,
+    		               float[] blueBuffer) {
 
         this.image = image;
         this.pos = pos;
@@ -79,6 +86,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         this.centroidPos = centroidPos;
         this.resultsFileName = resultsFileName;
         this.initSelection = initSelection;
+        this.redBuffer = redBuffer;
+        this.greenBuffer = greenBuffer;
+        this.blueBuffer = blueBuffer;
     }
 
     
