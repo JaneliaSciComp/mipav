@@ -20,8 +20,9 @@ package WildMagic.ApplicationDemos;
 
 import javax.media.opengl.*;
 
-import com.jogamp.opengl.util.*;
-import javax.media.opengl.awt.GLCanvas;
+import com.sun.opengl.util.Animator;
+//import com.jogamp.opengl.util.*;
+import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 import java.awt.*;
 import java.awt.event.*;

@@ -25,7 +25,7 @@ import java.util.Vector;
 import javax.imageio.ImageIO;
 import javax.media.MediaLocator;
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 import javax.media.opengl.GLEventListener;
 
@@ -42,7 +42,7 @@ import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.jogamp.opengl.util.Animator;
+import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 
 public abstract class GPURenderBase extends JavaApplication3D

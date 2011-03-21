@@ -5,7 +5,8 @@ import gov.nih.mipav.util.MipavInitGPU;
 import java.awt.event.KeyListener;
 
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.awt.GLCanvas;
+
+import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;

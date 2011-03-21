@@ -26,7 +26,7 @@ import java.awt.event.MouseEvent;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
-import com.jogamp.opengl.util.Animator;
+import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibFoundation.Curves.Curve3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;

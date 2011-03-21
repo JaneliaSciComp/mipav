@@ -6,7 +6,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.jogamp.opengl.util.Animator;
+import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 
 

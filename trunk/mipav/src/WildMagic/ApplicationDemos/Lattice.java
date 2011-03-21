@@ -24,7 +24,9 @@ import java.awt.Frame;
 import java.awt.event.*;
 
 import javax.media.opengl.*;
-import javax.media.opengl.awt.GLCanvas;
+
+import com.sun.opengl.util.Animator;
+//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.*;
 import WildMagic.LibFoundation.Mathematics.*;
@@ -34,7 +36,7 @@ import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibGraphics.Shaders.*;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.jogamp.opengl.util.Animator;
+//import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 
 public class Lattice extends JavaApplication3D implements GLEventListener, KeyListener {

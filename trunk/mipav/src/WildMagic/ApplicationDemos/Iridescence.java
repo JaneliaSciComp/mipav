@@ -28,7 +28,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
@@ -55,7 +55,7 @@ import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
 import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.jogamp.opengl.util.Animator;
+import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 
 public class Iridescence extends JavaApplication3D implements GLEventListener, KeyListener {
