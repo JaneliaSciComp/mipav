@@ -120,6 +120,10 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private JRadioButton maxMinInit;
     
     private int initSelection = RANDOM_INIT;
+    
+    private float redBuffer[] = null;
+	private float greenBuffer[] = null;
+	private float blueBuffer[] = null;
 	
 	
 	public JDialogKMeans() {
@@ -143,6 +147,12 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		int volume;
 		int index;
 		int nval;
+		double redMin;
+		double redMax;
+		double greenMin;
+		double greenMax;
+		double blueMin;
+		double blueMax;
 		String fileNameBase = null;
 		String command = event.getActionCommand();
 		 if (command.equals("OK")) {
@@ -182,13 +192,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 					fileNameBase = new String(chooser.getSelectedFile().getName());
 				}
 	         	resultsFileName = chooser.getCurrentDirectory() + File.separator + fileNameBase + "_kmeans.txt";
-         		if (image.isColorImage()) {
-         		    MipavUtil.displayError("Image cannot be a color image");
-         		    image.disposeLocal();
-         		    image = null;
-         		    return;
-         		}
-         		else if (image.isComplexImage()) {
+         		if (image.isComplexImage()) {
          			MipavUtil.displayError("Image cannot be a complex image");
          		    image.disposeLocal();
          		    image = null;
@@ -205,76 +209,122 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	         for (i = 1; i < nDims; i++) {
 	        	 length = length * extents[i];
 	         }
-	         buffer = new float[length];
-	         try {
-	        	 image.exportData(0, length, buffer);
-	         }
-	         catch (IOException e) {
-	        	 MipavUtil.displayError("IOException " + e + " on image.exportData(0, length, buffer)");
-	        	 image.disposeLocal();
-      		     image = null;
-      		     return;	
-	         }
-	         nPoints = 0;
-	         for (i = 0; i < length; i++) {
-	        	 if (buffer[i] > 0) {
-	        		 nPoints++;
-	        	 }
-	         }
-	         if (nPoints == 0) {
-	        	 MipavUtil.displayError("No set of point values found in " + image.getImageFileName());
-	        	 image.disposeLocal();
-	        	 image = null;
-                 return;	 
-	         }
-             textImage.setText(image.getImageFileName());
-	         groupNum = new int[nPoints];
-             pos = new int[nDims][nPoints];
-             if (nDims >= 4) {
-            	 tDim = extents[3];
-             }
-             else {
-            	 tDim = 1;
-             }
-	         if (nDims >= 3) {
-	        	 zDim = extents[2];
-	         }
-	         else {
-	        	 zDim = 1;
-	         }
-	         if (nDims >= 2) {
-	        	 yDim = extents[1];
-	         }
-	         else {
-	        	 yDim = 1;
-	         }
-	         xDim = extents[0];
-	         sliceSize = xDim * yDim;
-	         volume = sliceSize * zDim;
-	         nval = 0;
-	         for (t = 0; t < tDim; t++) {
-	        	 for (z = 0; z < zDim; z++) {
-	        		 for (y = 0; y < yDim; y++) {
-	        			 for (x = 0; x < xDim; x++) {
-	        			     index = x + y*xDim + z*sliceSize + t*volume;
-	        			     if (buffer[index] > 0) {
-	        			         pos[0][nval] = x;
-	        			         if (nDims >= 2) {
-	        			        	 pos[1][nval] = y;
-	        			        	 if (nDims >= 3) {
-	        			        		 pos[2][nval] = z;
-	        			        		 if (nDims >= 4) {
-	        			        			 pos[3][nval] = t;
-	        			        		 }
-	        			        	 }
-	        			         }
-	        			         nval++;
-	        			     } // if (buffer[index] > 0)
-	        			 }
-	        		 }
-	        	 }
-	         } // for (t = 0; t < tDim; t++)
-	         buffer = null;
+	         if (image.isColorImage()) {
+	        	 redMin = image.getMinR();
+	        	 redMax = image.getMaxR();
+	        	 if (redMin != redMax) {
+		        	 redBuffer = new float[length];
+		        	 try {
+		             image.exportRGBData(1, 0, length, redBuffer); 
+		        	 }
+		        	 catch (IOException e) {
+			        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(1, 0, length, redBuffer)");
+			        	 image.disposeLocal();
+		      		     image = null;
+		      		     return;	
+			         }
+	        	 } // if (redMin != redMax)
+	        	 greenMin = image.getMinG();
+	        	 greenMax = image.getMaxG();
+	        	 if (greenMin != greenMax) {
+		        	 greenBuffer = new float[length];
+		        	 try {
+		             image.exportRGBData(2, 0, length, greenBuffer); 
+		        	 }
+		        	 catch (IOException e) {
+			        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(2, 0, length, greenBuffer)");
+			        	 image.disposeLocal();
+		      		     image = null;
+		      		     return;	
+			         }
+	        	 } // if (greenMin != greenMax)
+	        	 blueMin = image.getMinB();
+	        	 blueMax = image.getMaxB();
+	        	 if (blueMin != blueMax) {
+		        	 blueBuffer = new float[length];
+		        	 try {
+		             image.exportRGBData(3, 0, length, blueBuffer); 
+		        	 }
+		        	 catch (IOException e) {
+			        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(3, 0, length, blueBuffer)");
+			        	 image.disposeLocal();
+		      		     image = null;
+		      		     return;	
+			         }
+	        	 } // if (blueMin != blueMax)
+	         } // if (image.isColorImage())
+	         else { // black and white point image
+		         buffer = new float[length];
+		         try {
+		        	 image.exportData(0, length, buffer);
+		         }
+		         catch (IOException e) {
+		        	 MipavUtil.displayError("IOException " + e + " on image.exportData(0, length, buffer)");
+		        	 image.disposeLocal();
+	      		     image = null;
+	      		     return;	
+		         }
+		         nPoints = 0;
+		         for (i = 0; i < length; i++) {
+		        	 if (buffer[i] > 0) {
+		        		 nPoints++;
+		        	 }
+		         }
+		         if (nPoints == 0) {
+		        	 MipavUtil.displayError("No set of point values found in " + image.getImageFileName());
+		        	 image.disposeLocal();
+		        	 image = null;
+	                 return;	 
+		         }
+	             textImage.setText(image.getImageFileName());
+		         groupNum = new int[nPoints];
+	             pos = new int[nDims][nPoints];
+	             if (nDims >= 4) {
+	            	 tDim = extents[3];
+	             }
+	             else {
+	            	 tDim = 1;
+	             }
+		         if (nDims >= 3) {
+		        	 zDim = extents[2];
+		         }
+		         else {
+		        	 zDim = 1;
+		         }
+		         if (nDims >= 2) {
+		        	 yDim = extents[1];
+		         }
+		         else {
+		        	 yDim = 1;
+		         }
+		         xDim = extents[0];
+		         sliceSize = xDim * yDim;
+		         volume = sliceSize * zDim;
+		         nval = 0;
+		         for (t = 0; t < tDim; t++) {
+		        	 for (z = 0; z < zDim; z++) {
+		        		 for (y = 0; y < yDim; y++) {
+		        			 for (x = 0; x < xDim; x++) {
+		        			     index = x + y*xDim + z*sliceSize + t*volume;
+		        			     if (buffer[index] > 0) {
+		        			         pos[0][nval] = x;
+		        			         if (nDims >= 2) {
+		        			        	 pos[1][nval] = y;
+		        			        	 if (nDims >= 3) {
+		        			        		 pos[2][nval] = z;
+		        			        		 if (nDims >= 4) {
+		        			        			 pos[3][nval] = t;
+		        			        		 }
+		        			        	 }
+		        			         }
+		        			         nval++;
+		        			     } // if (buffer[index] > 0)
+		        			 }
+		        		 }
+		        	 }
+		         } // for (t = 0; t < tDim; t++)
+		         buffer = null;
+	         } // else black and white point image
 	         havePoints = true;
 	     } else if (command.equals("PointFile")) {
 
@@ -534,7 +584,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 		
 
-		if ((nDims >= 2) && (nDims <= 4)  && (image == null)) {
+		if (((nDims >= 2) && (nDims <= 4)  && (image == null)) || (image.isColorImage())) {
 			i = fileNamePoints.indexOf(".");
 			if (i > 0) {
 				fileNameBase = fileNamePoints.substring(0,i);
@@ -567,7 +617,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		 try {
 		
 			 alg = new AlgorithmKMeans(image,pos,scale,groupNum,centroidPos,resultsFileName,
-					                   initSelection);
+					                   initSelection,redBuffer, greenBuffer, blueBuffer);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -661,7 +711,19 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         choiceLabel.setFont(serif12);
         mainPanel.add(choiceLabel, gbc);
         
-        buttonImage = new JButton("Choose an image with points");
+        JLabel choiceLabel2 = new JLabel("A black and white image with only points generates centroids");
+        choiceLabel2.setForeground(Color.black);
+        choiceLabel2.setFont(serif12);
+        gbc.gridy = 1;
+        mainPanel.add(choiceLabel2, gbc);
+        
+        JLabel choiceLabel3 = new JLabel("A color or multispectral image is segmented");
+        choiceLabel3.setForeground(Color.black);
+        choiceLabel3.setFont(serif12);
+        gbc.gridy = 2;
+        mainPanel.add(choiceLabel3, gbc);
+        
+        buttonImage = new JButton("Choose an image");
         buttonImage.setForeground(Color.black);
         buttonImage.setFont(serif12B);
         buttonImage.addActionListener(this);
@@ -669,7 +731,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         buttonImage.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         mainPanel.add(buttonImage, gbc);
 
         textImage = new JTextField();
@@ -686,7 +748,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         buttonPointsFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 4;
         mainPanel.add(buttonPointsFile, gbc);
         
         textPointsFile = new JTextField();
@@ -700,7 +762,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         clustersLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         mainPanel.add(clustersLabel, gbc);
         
         textClusters = new JTextField(10);
@@ -715,7 +777,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         mainPanel.add(initLabel, gbc);
         
         initGroup = new ButtonGroup();
@@ -725,7 +787,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(randomInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 7;
         mainPanel.add(randomInit, gbc);
         
         BradleyInit = new JRadioButton("Bradley-Fayyad Refinement", false);
@@ -734,7 +796,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(BradleyInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 8;
         mainPanel.add(BradleyInit, gbc);
         
         hierarchicalInit = new JRadioButton("Hierarchical grouping", false);
@@ -743,7 +805,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(hierarchicalInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 9;
         mainPanel.add(hierarchicalInit, gbc);
         
         maxMinInit = new JRadioButton("MaxMin", false);
@@ -752,7 +814,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(maxMinInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 10;
         mainPanel.add(maxMinInit, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
