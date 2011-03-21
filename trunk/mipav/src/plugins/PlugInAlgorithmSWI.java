@@ -383,9 +383,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
                         kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i), 0);
                         kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i)+1, 0);
                     }
-                } else {
-                    System.out.println("Skipped: ("+i+", "+j+")");
-                }
+                } 
             }
         }
         for(int i=0; i<xDim; i++) {
@@ -396,9 +394,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
                         kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i), 0);
                         kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i)+1, 0);
                     }
-                } else {
-                    System.out.println("Skipped: ("+i+", "+j+")");
-                }
+                } 
             }
         }
         
