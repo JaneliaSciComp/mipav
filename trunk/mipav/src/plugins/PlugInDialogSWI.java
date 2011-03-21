@@ -655,7 +655,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
             public String getCategory() {
-                return new String("Algorithms.SWI");
+                return new String("Algorithms.MRI");
             }
 
             public String getDescription() {
