@@ -24,8 +24,8 @@ import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.jogamp.opengl.util.Animator;
-import javax.media.opengl.awt.GLCanvas;
+import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 
 /**

@@ -18,10 +18,10 @@
 
 package WildMagic.ApplicationDemos;
 
+import com.sun.opengl.util.Animator;
 import javax.media.opengl.*;
-import javax.media.opengl.awt.GLCanvas;
-
-import com.jogamp.opengl.util.*;
+//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+//import com.jogamp.opengl.util.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -89,6 +89,7 @@ public class BillboardNodes extends JavaApplication3D
 
     public void display(GLAutoDrawable arg0) {
 
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         m_pkRenderer.SetCamera( m_spkCamera );
         if (MoveCamera())
         {
@@ -179,7 +180,7 @@ public class BillboardNodes extends JavaApplication3D
         m_pkScreenCamera.Perspective = false;
         m_pkScreenCamera.SetFrustum(-1,1,-1,1,1f,10.0f);
 
-        CreateScene();
+        CreateScene(arg0);
 
         // initial update of objects
         m_spkScene.UpdateGS();
@@ -194,7 +195,9 @@ public class BillboardNodes extends JavaApplication3D
     }
     
 
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) { }
+    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) { 
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+    }
 
     public GLCanvas GetCanvas()
     {
@@ -202,9 +205,9 @@ public class BillboardNodes extends JavaApplication3D
     }
 
 
-    private void CreateScene ()
+    private void CreateScene (GLAutoDrawable kDrawable)
     {
-        CreateRenderTarget(m_iWidth, m_iHeight);
+        CreateRenderTarget(m_iWidth, m_iHeight, kDrawable);
         
         m_spkScene = new Node();
         m_spkWireframe = new WireframeState();
@@ -383,10 +386,10 @@ public class BillboardNodes extends JavaApplication3D
 
     
 
-    private void CreateRenderTarget( int iWidth, int iHeight )
+    private void CreateRenderTarget( int iWidth, int iHeight, GLAutoDrawable kDrawable )
     {        
         m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                m_eBuffering,m_eMultisampling,m_pkRenderer, null);
+                m_eBuffering,m_eMultisampling,m_pkRenderer, kDrawable);
         
         Texture[] akSceneTarget = new Texture[3];
         GraphicsImage pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(byte[])null,

@@ -10,7 +10,7 @@ import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.jogamp.opengl.util.Animator;
+import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 public class VolumeImageCrop extends VolumeImageViewer
     implements GLEventListener, KeyListener
