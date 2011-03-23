@@ -31,6 +31,8 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 
+import mtry.PlugInDialogMTry;
+
 /**
  * 
  * This is the main driver for a plug-in.  As a PlugInAlgorithm, it requires an image 

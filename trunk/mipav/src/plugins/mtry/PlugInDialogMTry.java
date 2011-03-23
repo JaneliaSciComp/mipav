@@ -1,3 +1,4 @@
+package mtry;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -29,12 +30,22 @@ import gov.nih.mipav.model.file.FileInfoDicom;
 
 
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterDouble;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.ActionDiscovery;
+import gov.nih.mipav.view.dialogs.ActionMetadata;
+import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
+import gov.nih.mipav.view.dialogs.MipavActionMetadata;
 import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 
 import java.awt.*;
@@ -59,7 +70,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogMTry extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogMTry extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -76,9 +87,6 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
     
     /** This is your algorithm */
     private PlugInAlgorithmMTry genericAlgo = null;
-
-	/** The variable representing whether the blur should be performed. */
-	private boolean doErnst;
 
     private String[] titles;
 
@@ -248,18 +256,32 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
      * Used in turning your plugin into a script
      */
     protected void setGUIFromParams() {
-    	image = scriptParameters.retrieveInputImage();
-
-    	doErnst = scriptParameters.getParams().getBoolean("do_gaussian");
+        invTimeMin = scriptParameters.getParams().getDouble("invTimeMin");
+        invTimeMed = scriptParameters.getParams().getDouble("invTimeMed");
+        invTimeMax = scriptParameters.getParams().getDouble("invTimeMax");
+        precision = scriptParameters.getParams().getDouble("precision");
+        t1Min = scriptParameters.getParams().getDouble("t1Min");
+        t1Max = scriptParameters.getParams().getDouble("t1Max");
+        
+        minImage = scriptParameters.retrieveImage("minImage");
+        medImage = scriptParameters.retrieveImage("medImage");
+        maxImage = scriptParameters.retrieveImage("maxImage");
     } //end setGUIFromParams()
 
     /**
      * Used in turning your plugin into a script
      */
     protected void storeParamsFromGUI() throws ParserException {
-    	scriptParameters.storeInputImage(image);
-   
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doErnst));
+        scriptParameters.storeImage(minImage, "minImage");
+        scriptParameters.storeImage(medImage, "medImage");
+        scriptParameters.storeImage(maxImage, "maxImage");
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("invTimeMin", invTimeMin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("invTimeMed", invTimeMed));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("invTimeMax", invTimeMax));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("precision", precision));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("t1Min", t1Min));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("t1Max", t1Max));
     } //end storeParamsFromGUI()
    
     private void init() {
@@ -700,5 +722,114 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
             }
         }
         
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.MRI");
+            }
+
+            public String getDescription() {
+                return new String("Reconstructs complex images into T1 map.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Uses scanner data from three inversion times to model T1 map.");
+            }
+
+            public String getShortLabel() {
+                return new String("MTry");
+            }
+
+            public String getLabel() {
+                return new String("MTry");
+            }
+
+            public String getName() {
+                return new String("MTry");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+            
+            table.put(new ParameterDouble("invTimeMin", invTimeMin));
+            table.put(new ParameterDouble("invTimeMed", invTimeMed));
+            table.put(new ParameterDouble("invTimeMax", invTimeMax));
+            table.put(new ParameterDouble("precision", precision));
+            table.put(new ParameterDouble("t1Min", t1Min));
+            table.put(new ParameterDouble("t1Max", t1Max));
+            
+            if(scriptParameters != null) {
+                minImage = scriptParameters.retrieveImage("minImage");
+                medImage = scriptParameters.retrieveImage("medImage");
+                maxImage = scriptParameters.retrieveImage("maxImage");
+            }
+            
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            
+            table.put(new ParameterExternalImage("minImage"));
+            table.put(new ParameterExternalImage("medImage"));
+            table.put(new ParameterExternalImage("maxImage"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+        
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage("MTryImage"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(String imageParamName) {
+        return "MTryImage";
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

@@ -1,3 +1,4 @@
+package swi;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -696,8 +697,10 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
             table.put(new ParameterBoolean("showInterImages", showInterImages));
             table.put(new ParameterDouble("maskThreshold", maskThreshold));
             
-            magImage = scriptParameters.retrieveImage("magnitudeImage");
-            phaseImage = scriptParameters.retrieveImage("phaseImage");
+            if(scriptParameters != null) {
+                magImage = scriptParameters.retrieveImage("magnitudeImage");
+                phaseImage = scriptParameters.retrieveImage("phaseImage");
+            }
             
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             
