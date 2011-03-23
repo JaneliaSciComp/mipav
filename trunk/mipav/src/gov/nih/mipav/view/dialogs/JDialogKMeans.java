@@ -388,7 +388,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                    do {
 	                        try {
 	                            // Contains the contents of the line not including line termination characters
-	                            line = br.readLine();  
+	                            line = br.readLine(); 
 	                        }
 	                        catch(IOException e) {
 	                            MipavUtil.displayError("IOException on br.readLine");
@@ -416,6 +416,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                    }
 	                    nDims = Integer.valueOf(line.substring(start, end)).intValue();
 	                    extents = new int[nDims];
+	                    scale = new double[nDims];
 	                    nval = 0;
 	                   l1: while (true) {
 	                    	try {
@@ -500,6 +501,27 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                    	MipavUtil.displayError("Only " + nval + " of " + nDims + " required scale values found");
 	                    	return;
 	                    }
+	                    // Read lines until first character is not blank and not #
+	                    ii = 0;
+	                    line = null;
+	                    do {
+	                        try {
+	                            // Contains the contents of the line not including line termination characters
+	                            line = br.readLine(); 
+	                        }
+	                        catch(IOException e) {
+	                            MipavUtil.displayError("IOException on br.readLine");
+	                            br.close();
+	                            return;
+	                        }
+	                        // have reached end of stream
+	                        if (line == null) {
+	                            MipavUtil.displayError("Have reached end of stream on br.readLine");
+	                            br.close();
+	                            return;
+	                        }
+	                        for (ii = 0; ((ii < line.length()) && (Character.isSpaceChar(line.charAt(ii)))); ii++);
+	                    } while ((ii == line.length()) || (line.charAt(ii) == '#'));
 	                    start = 0;
 	                    end = 0;
 	                    for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
@@ -535,11 +557,13 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                    	while (start < line.length()) {
 		                    	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
 		                        end = start;
-		                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))))); end++);
+		                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))) || (line.charAt(end) == '.') || 
+	                                       (line.charAt(end) == 'e') || (line.charAt(end) == 'E') ||
+	                                       (line.charAt(end) == '+') || (line.charAt(end) == '-'))); end++);
 		                        if (start == end) {
 		                            continue l3;
 		                        }
-		                         pos[dimPt][nval] = Integer.valueOf(line.substring(start, end)).intValue();
+		                         pos[dimPt][nval] = Double.valueOf(line.substring(start, end)).doubleValue();
 		                        if (dimPt == nDims-1) {
 		                        	nval++;
 		                        }
@@ -592,7 +616,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 
 		if (((nDims >= 2) && (nDims <= 4)  && (image == null)) || (image.isColorImage())) {
-			if (image.isColorImage()) {
+			if ((image != null) && (image.isColorImage())) {
 				scaleMax = Math.max(scaleMax, image.getMax());
 				image = new ModelImage(ModelStorageBase.BYTE, extents, 
 	                     makeImageName(image.getImageFileName(), "_kmeans"));
@@ -767,7 +791,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         buttonPointsFile.setForeground(Color.black);
         buttonPointsFile.setFont(serif12B);
         buttonPointsFile.addActionListener(this);
-        buttonPointsFile.setActionCommand("PointsFile");
+        buttonPointsFile.setActionCommand("PointFile");
         buttonPointsFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
