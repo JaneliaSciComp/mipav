@@ -10,6 +10,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Vector;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -49,7 +52,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     // First subscript x = 0, y = 1, z = 2, t = 3
     // Second subscript 0 to nPoints-1 for each point
     // Value is the point position
-	private int[][] pos;
+	private double[][] pos;
 	
 	// subscript goes from 0 to nPoints-1 for each point
     // Value is the cluster number from 0 to numberClusters-1.
@@ -69,15 +72,18 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	private float greenBuffer[] = null;
 	
 	private float blueBuffer[] = null;
+	
+	// Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
+    private double scaleMax = 255.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      
      */
-    public AlgorithmKMeans(ModelImage image, int[][] pos, double[] scale, int groupNum[], double[][] centroidPos,
+    public AlgorithmKMeans(ModelImage image, double[][] pos, double[] scale, int groupNum[], double[][] centroidPos,
     		               String resultsFileName, int initSelection, float[] redBuffer, float[] greenBuffer,
-    		               float[] blueBuffer) {
+    		               float[] blueBuffer, double scaleMax) {
 
         this.image = image;
         this.pos = pos;
@@ -89,6 +95,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         this.redBuffer = redBuffer;
         this.greenBuffer = greenBuffer;
         this.blueBuffer = blueBuffer;
+        this.scaleMax = scaleMax;
     }
 
     
@@ -173,6 +180,167 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double minDistSquaredSet[] = null;
         int minIndexSet[] = null;
         int newIndex = 0;
+        int length = 0;
+		Vector<Vector3f> colors;
+		int[] indexTable = null;
+		int colorsFound;
+		Vector3f colorVector;
+		double varR, varG, varB;
+		// Observer = 2 degrees, Illuminant = D65
+        double XN = 95.047;
+        double YN = 100.000;
+        double ZN = 108.883;
+        double X, Y, Z;
+        double varX, varY, varZ;
+        float a, b;
+        byte buffer[];
+        
+        
+        if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
+        	// Separate on a and b chrominance components in CIELAB space
+        	// No matter what the dimensionality of the original image,
+        	// the kmeans color segmentation becomes a 2 dimensional problem.
+        	nDims = 2;
+        	if (redBuffer != null) {
+        	    length = redBuffer.length;
+        	}
+        	else {
+        		length = greenBuffer.length;
+        	}
+		    colors = new Vector<Vector3f>();
+		    indexTable = new int[length];
+		    for (i = 0; i < length; i++) {
+		    	indexTable[i] = -1;
+		    }
+		    colorsFound = 0;
+		    fireProgressStateChanged("Finding the colors present");
+		    if ((redBuffer != null) && (greenBuffer != null) && (blueBuffer != null)) {
+			    for (i = 0; i < length; i++) {
+			    	if (indexTable[i] == -1) {
+				    	colors.addElement(new Vector3f(redBuffer[i], greenBuffer[i], blueBuffer[i]));
+				    	indexTable[i] = colorsFound;
+				    	for (j = i+1; j < length; j++) {
+				    		if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i]) &&
+				    			(blueBuffer[j] == blueBuffer[i])) {
+				    		    indexTable[j] = colorsFound;
+				    		} // if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i])
+				    	} // for (j = i+1; j < length; j++)
+				    	colorsFound++;
+			    	} // if (indexTable[i] == -1)
+			    } // for (i = 0; i < length; i++)
+		    } // if ((redBuffer != null) && (greenBuffer != null) && (blueBuffer != null))
+		    else if ((redBuffer != null) && (greenBuffer != null)) {
+		    	for (i = 0; i < length; i++) {
+			    	if (indexTable[i] == -1) {
+				    	colors.addElement(new Vector3f(redBuffer[i], greenBuffer[i], 0.0f));
+				    	indexTable[i] = colorsFound;
+				    	for (j = i+1; j < length; j++) {
+				    		if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i])) {
+				    		    indexTable[j] = colorsFound;
+				    		} // if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i]))
+				    	} // for (j = i+1; j < length; j++)
+				    	colorsFound++;
+			    	} // if (indexTable[i] == -1)
+			    } // for (i = 0; i < length; i++)	
+		    } // else if ((redBuffer != null) && (greenBuffer != null))
+		    else if ((redBuffer != null) && (blueBuffer != null)) {
+		    	for (i = 0; i < length; i++) {
+			    	if (indexTable[i] == -1) {
+				    	colors.addElement(new Vector3f(redBuffer[i], 0.0f, blueBuffer[i]));
+				    	indexTable[i] = colorsFound;
+				    	for (j = i+1; j < length; j++) {
+				    		if ((redBuffer[j] == redBuffer[i]) && (blueBuffer[j] == blueBuffer[i])) {
+				    		    indexTable[j] = colorsFound;
+				    		} // if ((redBuffer[j] == redBuffer[i]) && (blueBuffer[j] == blueBuffer[i])
+				    	} // for (j = i+1; j < length; j++)
+				    	colorsFound++;
+			    	} // if (indexTable[i] == -1)
+			    } // for (i = 0; i < length; i++)	
+		    } // else if ((redBuffer != null) && (blueBuffer != null))
+		    else if ((greenBuffer != null) && (blueBuffer != null)) {
+		    	for (i = 0; i < length; i++) {
+			    	if (indexTable[i] == -1) {
+				    	colors.addElement(new Vector3f(0.0f, greenBuffer[i], blueBuffer[i]));
+				    	indexTable[i] = colorsFound;
+				    	for (j = i+1; j < length; j++) {
+				    		if ((greenBuffer[j] == greenBuffer[i]) && (blueBuffer[j] == blueBuffer[i])) {
+				    		    indexTable[j] = colorsFound;
+				    		} // if ((greenBuffer[j] == greenBuffer[i]) && (blueBuffer[j] == blueBuffer[i]))
+				    	} // for (j = i+1; j < length; j++)
+				    	colorsFound++;
+			    	} // if (indexTable[i] == -1)
+			    } // for (i = 0; i < length; i++)	
+	        } // else if ((greenBuffer != null) && (blueBuffer != null))
+		    Preferences.debug("Colors found = " + colorsFound + "\n");
+		    pos = new double[2][colorsFound];
+		    groupNum = new int[colorsFound];
+		    
+		    fireProgressStateChanged("Converting RGB to CIELAB");
+		    for (i = 0; i < colorsFound; i++) {
+		        colorVector = colors.get(i);
+		        varR = colorVector.X/scaleMax;
+                varG = colorVector.Y/scaleMax;
+                varB = colorVector.Z/scaleMax;
+                
+                if (varR <= 0.04045) {
+                    varR = varR/12.92;
+                }
+                else {
+                    varR = Math.pow((varR + 0.055)/1.055, 2.4);
+                }
+                if (varG <= 0.04045) {
+                    varG = varG/12.92;
+                }
+                else {
+                    varG = Math.pow((varG + 0.055)/1.055, 2.4);
+                }
+                if (varB <= 0.04045) {
+                    varB = varB/12.92;
+                }
+                else {
+                    varB = Math.pow((varB + 0.055)/1.055, 2.4);
+                }
+                
+                varR = 100.0 * varR;
+                varG = 100.0 * varG;
+                varB = 100.0 * varB;
+                
+                // Observer = 2 degrees, Illuminant = D65
+                X = 0.4124*varR + 0.3576*varG + 0.1805*varB;
+                Y = 0.2126*varR + 0.7152*varG + 0.0722*varB;
+                Z = 0.0193*varR + 0.1192*varG + 0.9505*varB;
+                
+                varX = X/ XN;
+                varY = Y/ YN;
+                varZ = Z/ ZN;
+                
+                if (varX > 0.008856) {
+                    varX = Math.pow(varX, 1.0/3.0);
+                }
+                else {
+                    varX = (7.787 * varX) + (16.0/116.0);
+                }
+                if (varY > 0.008856) {
+                    varY = Math.pow(varY, 1.0/3.0);
+                }
+                else {
+                    varY = (7.787 * varY) + (16.0/116.0);
+                }
+                if (varZ > 0.008856) {
+                    varZ = Math.pow(varZ, 1.0/3.0);
+                }
+                else {
+                    varZ = (7.787 * varZ) + (16.0/116.0);
+                }
+                
+                //L = (float)((116.0 * varY) - 16.0);
+                a = (float)(500.0 * (varX - varY));
+                b = (float)(200.0 * (varY - varZ));
+                
+                pos[0][i] = a;
+                pos[1][i] = b;
+		    } // for (i = 0; i < colorsFound; i++)	
+        } // if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null))
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
@@ -772,6 +940,69 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	} // while (changeOccurred)
     	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n");
     	
+    	if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
+    		buffer = new byte[length];
+    		for(i = 0; i < length; i++) {
+    		    buffer[i] = (byte)groupNum[indexTable[i]];	
+    		}
+    		try {
+    			image.importData(0, buffer, true);
+    		}
+    		catch (IOException e) {
+    			MipavUtil.displayError("IOException on image.importData(0, buffer, true)");
+    			setCompleted(false);
+    			return;
+    		}
+    	    new ViewJFrameImage(image);
+    	    
+    	    file = new File(resultsFileName);
+        	try {
+        	raFile = new RandomAccessFile( file, "rw" );
+        	}
+        	catch(FileNotFoundException e) {
+        		MipavUtil.displayError("new RandomAccessFile gave FileNotFoundException " + e);
+        		setCompleted(false);
+        		return;
+        	}
+    	    
+    	    // Necessary so that if this is an overwritten file there isn't any junk at the end
+        	try {
+        	    raFile.setLength( 0 );
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("raFile.setLength(0) gave IOException " + e);
+        		setCompleted(false);
+        		return;	
+        	}
+        	for (i = 0; i < numberClusters; i++) {
+        		dataString += "Cluster centroid " + (i+1) + ":\n";
+        		for (j = 0; j < nDims; j++) {
+        			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
+        		}
+        		dataString += "\n";
+        	}
+        	
+        	try {
+        	    raFile.write(dataString.getBytes());
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("raFile.write gave IOException " + e);
+        		setCompleted(false);
+        		return;		
+        	}
+        	try {
+        	    raFile.close();
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("raFile.close gave IOException " + e);
+        		setCompleted(false);
+        		return;		
+        	}
+        	
+    	    setCompleted(true);
+    	    return;
+    	} // if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null))
+ 
     	if ((image != null) && (nDims >= 2) && (nDims <= 3) && (numberClusters <= 9)) {
     		color = new Color[numberClusters];
     		color[0] = Color.red;
@@ -800,13 +1031,13 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    	for (i = 0; i < nPoints; i++) {
 	    		newPtVOI = new VOI((short) (i), "", VOI.POINT, -1.0f);
 	    		newPtVOI.setColor(color[groupNum[i]]);
-	    		xArr[0] = pos[0][i];
-	    		yArr[0] = pos[1][i];
+	    		xArr[0] = (float)pos[0][i];
+	    		yArr[0] = (float)pos[1][i];
 	    		if (nDims == 2) {
 	    			zArr[0] = 0.0f;
 	    		}
 	    		else {
-	    			zArr[0] = pos[2][i];
+	    			zArr[0] = (float)pos[2][i];
 	    		}
 	    		newPtVOI.importCurve(xArr, yArr, zArr);
 	            ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
@@ -830,6 +1061,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    	}
 	    	new ViewJFrameImage(image);
     	} // if ((image != null) && (nDims >= 2) && (nDims <= 3) && (numberClusters <= 9)
+ 
     	
     	file = new File(resultsFileName);
     	try {
@@ -884,7 +1116,5 @@ public class AlgorithmKMeans extends AlgorithmBase {
         setCompleted(true);
         return;
     }
-
-
-    
+	
 }
