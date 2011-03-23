@@ -86,7 +86,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     // First subscript x = 0, y = 1, z = 2, t = 3
     // Second subscript 0 to nPoints-1 for each point
     // Value is the point position
-    private int pos[][];
+    private double pos[][];
     
     // First subscript x = 0, y = 1, z = 2, t = 3
     // Second subscript 0 to numberClusters-1 for each cluster
@@ -124,6 +124,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private float redBuffer[] = null;
 	private float greenBuffer[] = null;
 	private float blueBuffer[] = null;
+	// Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
+    double scaleMax = 255.0;
 	
 	
 	public JDialogKMeans() {
@@ -200,16 +202,15 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
          		}
 	         } 
 	         nDims = image.getNDims();
-	         scale = new double[nDims];
-	         for (i = 0; i < nDims; i++) {
-	        	 scale[i] = image.getFileInfo()[0].getResolutions()[i];
-	         }
 	         extents = image.getExtents();
 	         length = extents[0];
 	         for (i = 1; i < nDims; i++) {
 	        	 length = length * extents[i];
 	         }
 	         if (image.isColorImage()) {
+	        	 scale = new double[2];
+	        	 scale[0] = 1.0;
+	        	 scale[1] = 1.0;
 	        	 redMin = image.getMinR();
 	        	 redMax = image.getMaxR();
 	        	 if (redMin != redMax) {
@@ -252,8 +253,14 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		      		     return;	
 			         }
 	        	 } // if (blueMin != blueMax)
+	        	 textImage.setText(image.getImageFileName());
+	        	 nPoints = length;
 	         } // if (image.isColorImage())
 	         else { // black and white point image
+	        	 scale = new double[nDims];
+		         for (i = 0; i < nDims; i++) {
+		        	 scale[i] = image.getFileInfo()[0].getResolutions()[i];
+		         }
 		         buffer = new float[length];
 		         try {
 		        	 image.exportData(0, length, buffer);
@@ -278,7 +285,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		         }
 	             textImage.setText(image.getImageFileName());
 		         groupNum = new int[nPoints];
-	             pos = new int[nDims][nPoints];
+	             pos = new double[nDims][nPoints];
 	             if (nDims >= 4) {
 	            	 tDim = extents[3];
 	             }
@@ -505,7 +512,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                    }
 	                    nPoints = Integer.valueOf(line.substring(start, end)).intValue();
 	                    groupNum = new int[nPoints];
-	                    pos = new int[nDims][nPoints];
+	                    pos = new double[nDims][nPoints];
 	                    nval = 0;
 	                    dimPt = 0;
 	                    l3: while (true) {
@@ -585,39 +592,55 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 
 		if (((nDims >= 2) && (nDims <= 4)  && (image == null)) || (image.isColorImage())) {
-			i = fileNamePoints.indexOf(".");
-			if (i > 0) {
-				fileNameBase = fileNamePoints.substring(0,i);
+			if (image.isColorImage()) {
+				scaleMax = Math.max(scaleMax, image.getMax());
+				image = new ModelImage(ModelStorageBase.BYTE, extents, 
+	                     makeImageName(image.getImageFileName(), "_kmeans"));
+				
+				length = 1;
+			    for (i = 2; i < nDims; i++) {
+			    	length = length * extents[i];
+			    }
+			    for (i = 0; i < length; i++) {
+			        image.getFileInfo()[i].setResolutions(image.getFileInfo()[0].getResolutions());
+			    }
+			    
+			    centroidPos = new double[2][numberClusters];
 			}
 			else {
-				fileNameBase = new String(fileNamePoints);
-			}
-		    image = new ModelImage(ModelStorageBase.BYTE, extents, 
-		    		                     makeImageName(fileNameBase, "_kmeans"));
-		    length = extents[0];
-		    for (i = 1; i < nDims; i++) {
-		    	length = length * extents[i];
-		    }
-		    for (i = 0; i < length; i++) {
-		    	for (j = 0; j < nDims; j++) {
-		    		image.getFileInfo()[i].setResolutions((float)scale[j],j);
-		    	}
-		    }
-		
-		    try {
-                new ViewJFrameImage(image, null, new Dimension(610, 240));
-            } catch (OutOfMemoryError error) {
-                System.gc();
-                MipavUtil.displayError("Out of memory: unable to open new frame");
-            }
+				i = fileNamePoints.indexOf(".");
+				if (i > 0) {
+					fileNameBase = fileNamePoints.substring(0,i);
+				}
+				else {
+					fileNameBase = new String(fileNamePoints);
+				}
+			    image = new ModelImage(ModelStorageBase.BYTE, extents, 
+			    		                     makeImageName(fileNameBase, "_kmeans"));
+			    
+			    length = 1;
+			    for (i = 2; i < nDims; i++) {
+			    	length = length * extents[i];
+			    }
+			    for (i = 0; i < length; i++) {
+			    	for (j = 0; j < nDims; j++) {
+			    		image.getFileInfo()[i].setResolutions((float)scale[j],j);
+			    	}
+			    }
+	            
+	            centroidPos = new double[nDims][numberClusters];
+			} // else 
+		    
+		} // if (((nDims >= 2) && (nDims <= 4)  && (image == null)) || (image.isColorImage()))
+		else {
+			centroidPos = new double[nDims][numberClusters];
 		}
-		centroidPos = new double[nDims][numberClusters];
 		
 		
 		 try {
 		
 			 alg = new AlgorithmKMeans(image,pos,scale,groupNum,centroidPos,resultsFileName,
-					                   initSelection,redBuffer, greenBuffer, blueBuffer);
+					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
