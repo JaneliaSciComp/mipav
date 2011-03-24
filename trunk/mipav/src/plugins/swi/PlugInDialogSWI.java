@@ -698,14 +698,14 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
             table.put(new ParameterDouble("maskThreshold", maskThreshold));
             
             if(scriptParameters != null) {
-                magImage = scriptParameters.retrieveImage("magnitudeImage");
-                phaseImage = scriptParameters.retrieveImage("phaseImage");
+                magImage = scriptParameters.retrieveImage("MagnitudeImage");
+                phaseImage = scriptParameters.retrieveImage("PhaseImage");
             }
             
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             
-            table.put(new ParameterExternalImage("magnitudeImage"));
-            table.put(new ParameterExternalImage("phaseImage"));
+            table.put(new ParameterExternalImage("MagnitudeImage"));
+            table.put(new ParameterExternalImage("PhaseImage"));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
