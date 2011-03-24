@@ -86,7 +86,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmMTry genericAlgo = null;
+    private PlugInAlgorithmMTry mTryAlgo = null;
 
     private String[] titles;
 
@@ -174,13 +174,13 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
     public void algorithmPerformed(AlgorithmBase algorithm) {
        if (algorithm instanceof PlugInAlgorithmMTry) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
-            image.clearMask();
             
-            if ((genericAlgo.isCompleted() == true) && (resultImage != null)) {
+            if (algorithm.isCompleted() == true) {
 
                 // The algorithm has completed and produced a new image to be displayed.
-                updateFileInfo(image, resultImage);
-
+                resultImage = mTryAlgo.getDestImage();
+                ViewJFrameImage resultFrame = new ViewJFrameImage(resultImage);
+                resultFrame.setVisible(true);
                 
             } else if (resultImage != null) {
 
@@ -212,20 +212,17 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
     protected void callAlgorithm() {
 
         try {
-            String name = makeImageName(image.getImageName(), "_T1Map");
-            resultImage = (ModelImage) image.clone();
-            resultImage.setImageName(name);
             
-        
+            resultImage = new ModelImage(ModelImage.FLOAT, new int[]{64,64,44}, "T1Map");
             
-            genericAlgo = new PlugInAlgorithmMTry(resultImage, minImage, medImage, maxImage, 
+            mTryAlgo = new PlugInAlgorithmMTry(resultImage, minImage, medImage, maxImage, 
                                                     t1Min, t1Max, precision, invTimeMin, invTimeMed, invTimeMax);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            genericAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", genericAlgo);
+            mTryAlgo.addListener(this);
+            createProgressBar("Reconstructing image", " ...", mTryAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -233,11 +230,11 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
-                if (genericAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (mTryAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                genericAlgo.run();
+                mTryAlgo.run();
             }
         } catch (OutOfMemoryError x) {
             if (resultImage != null) {
@@ -262,19 +259,19 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
         precision = scriptParameters.getParams().getDouble("precision");
         t1Min = scriptParameters.getParams().getDouble("t1Min");
         t1Max = scriptParameters.getParams().getDouble("t1Max");
-        
-        minImage = scriptParameters.retrieveImage("minImage");
-        medImage = scriptParameters.retrieveImage("medImage");
-        maxImage = scriptParameters.retrieveImage("maxImage");
+
+        minImage = scriptParameters.retrieveImage("minImageInvTime"+Double.valueOf(invTimeMin).intValue());
+        medImage = scriptParameters.retrieveImage("medImageInvTime"+Double.valueOf(invTimeMed).intValue());
+        maxImage = scriptParameters.retrieveImage("maxImageInvTime"+Double.valueOf(invTimeMax).intValue());
     } //end setGUIFromParams()
 
     /**
      * Used in turning your plugin into a script
      */
     protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeImage(minImage, "minImage");
-        scriptParameters.storeImage(medImage, "medImage");
-        scriptParameters.storeImage(maxImage, "maxImage");
+        scriptParameters.storeImage(minImage, "minImageInvTime"+Double.valueOf(invTimeMin).intValue());
+        scriptParameters.storeImage(medImage, "medImageInvTime"+Double.valueOf(invTimeMed).intValue());
+        scriptParameters.storeImage(maxImage, "maxImageInvTime"+Double.valueOf(invTimeMax).intValue());
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("invTimeMin", invTimeMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("invTimeMed", invTimeMed));
@@ -423,7 +420,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * This method could ensure everything in your dialog box has been set correctly
+     * This method initializes internal dialog variables based on inputs to the GUI.
      * 
      * @return
      */
