@@ -10,9 +10,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Vector;
-
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -185,10 +182,11 @@ public class AlgorithmKMeans extends AlgorithmBase {
         int minIndexSet[] = null;
         int newIndex = 0;
         int length = 0;
-		Vector<Vector3f> colors;
+        int colors[] = null;
+		//Vector<Vector3f> colors;
 		int[] indexTable = null;
 		int colorsFound;
-		Vector3f colorVector;
+		//Vector3f colorVector;
 		double varR, varG, varB;
 		// Observer = 2 degrees, Illuminant = D65
         double XN = 95.047;
@@ -198,16 +196,29 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double varX, varY, varZ;
         float a, b;
         byte buffer[];
-        Vector<Integer> instances = null;
+        int instances[] = null;
         int numTimes;
         double weight[] = null;
         double totalWeight[] = null;
+        double scale2[] = new double[scale.length];
+        boolean equalScale;
+        
+        for (i = 0; i < scale.length; i++) {
+        	scale2[i] = scale[i]*scale[i];
+        }
+        equalScale = true;
+        for (i = 1; i < scale.length; i++) {
+        	if (scale[i] != scale[0]) {
+        		equalScale = false;
+        	}
+        }
          
         numberClusters = centroidPos[0].length;
     	pointsInCluster = new int[numberClusters];
         
         if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
         	// Separate on a and b chrominance components in CIELAB space
+        	// Ignore the L luminance component
         	// No matter what the dimensionality of the original image,
         	// the kmeans color segmentation becomes a 2 dimensional problem.
         	nDims = 2;
@@ -217,9 +228,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         	else {
         		length = greenBuffer.length;
         	}
-		    colors = new Vector<Vector3f>();
+		    colors = new int[length];
 		    if (useColorHistogram) {
-		    	instances = new Vector<Integer>();
+		    	instances = new int[length];
 		    }
 		    indexTable = new int[length];
 		    for (i = 0; i < length; i++) {
@@ -230,7 +241,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    if ((redBuffer != null) && (greenBuffer != null) && (blueBuffer != null)) {
 			    for (i = 0; i < length; i++) {
 			    	if (indexTable[i] == -1) {
-				    	colors.addElement(new Vector3f(redBuffer[i], greenBuffer[i], blueBuffer[i]));
+				    	colors[colorsFound] = i;
 				    	indexTable[i] = colorsFound;
 				    	numTimes = 1;
 				    	for (j = i+1; j < length; j++) {
@@ -240,17 +251,17 @@ public class AlgorithmKMeans extends AlgorithmBase {
 				    		    numTimes++;
 				    		} // if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i])
 				    	} // for (j = i+1; j < length; j++)
-				    	colorsFound++;
 				    	if (useColorHistogram) {
-				    		instances.addElement(new Integer(numTimes));
+				    		instances[colorsFound] = numTimes;
 				    	}
+				    	colorsFound++;
 			    	} // if (indexTable[i] == -1)
 			    } // for (i = 0; i < length; i++)
 		    } // if ((redBuffer != null) && (greenBuffer != null) && (blueBuffer != null))
 		    else if ((redBuffer != null) && (greenBuffer != null)) {
 		    	for (i = 0; i < length; i++) {
 			    	if (indexTable[i] == -1) {
-				    	colors.addElement(new Vector3f(redBuffer[i], greenBuffer[i], 0.0f));
+				    	colors[colorsFound] = i;
 				    	indexTable[i] = colorsFound;
 				    	numTimes = 1;
 				    	for (j = i+1; j < length; j++) {
@@ -259,17 +270,17 @@ public class AlgorithmKMeans extends AlgorithmBase {
 				    		    numTimes++;
 				    		} // if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i]))
 				    	} // for (j = i+1; j < length; j++)
-				    	colorsFound++;
 				    	if (useColorHistogram) {
-				    		instances.addElement(new Integer(numTimes));
+				    		instances[colorsFound] = numTimes;
 				    	}
+				    	colorsFound++;
 			    	} // if (indexTable[i] == -1)
 			    } // for (i = 0; i < length; i++)	
 		    } // else if ((redBuffer != null) && (greenBuffer != null))
 		    else if ((redBuffer != null) && (blueBuffer != null)) {
 		    	for (i = 0; i < length; i++) {
 			    	if (indexTable[i] == -1) {
-				    	colors.addElement(new Vector3f(redBuffer[i], 0.0f, blueBuffer[i]));
+				    	colors[colorsFound] = i;
 				    	indexTable[i] = colorsFound;
 				    	numTimes = 1;
 				    	for (j = i+1; j < length; j++) {
@@ -278,17 +289,17 @@ public class AlgorithmKMeans extends AlgorithmBase {
 				    		    numTimes++;
 				    		} // if ((redBuffer[j] == redBuffer[i]) && (blueBuffer[j] == blueBuffer[i])
 				    	} // for (j = i+1; j < length; j++)
-				    	colorsFound++;
 				    	if (useColorHistogram) {
-				    		instances.addElement(new Integer(numTimes));
+				    		instances[colorsFound] = numTimes;
 				    	}
+				    	colorsFound++;
 			    	} // if (indexTable[i] == -1)
 			    } // for (i = 0; i < length; i++)	
 		    } // else if ((redBuffer != null) && (blueBuffer != null))
 		    else if ((greenBuffer != null) && (blueBuffer != null)) {
 		    	for (i = 0; i < length; i++) {
 			    	if (indexTable[i] == -1) {
-				    	colors.addElement(new Vector3f(0.0f, greenBuffer[i], blueBuffer[i]));
+				    	colors[colorsFound] = i;
 				    	indexTable[i] = colorsFound;
 				    	numTimes = 1;
 				    	for (j = i+1; j < length; j++) {
@@ -297,10 +308,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
 				    		    numTimes++;
 				    		} // if ((greenBuffer[j] == greenBuffer[i]) && (blueBuffer[j] == blueBuffer[i]))
 				    	} // for (j = i+1; j < length; j++)
-				    	colorsFound++;
 				    	if (useColorHistogram) {
-				    		instances.addElement(new Integer(numTimes));
+				    		instances[colorsFound] = numTimes;
 				    	}
+				    	colorsFound++;
 			    	} // if (indexTable[i] == -1)
 			    } // for (i = 0; i < length; i++)	
 	        } // else if ((greenBuffer != null) && (blueBuffer != null))
@@ -311,16 +322,31 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    	weight = new double[colorsFound];
 		    	totalWeight = new double[numberClusters];
 		    	for (i = 0; i < colorsFound; i++) {
-		    		weight[i] = instances.get(i)/length;
+		    		weight[i] = ((double)instances[i])/((double)length);
 		    	}
+		    	instances = null;
 		    } // if (useColorHistogram)
 		    
 		    fireProgressStateChanged("Converting RGB to CIELAB");
 		    for (i = 0; i < colorsFound; i++) {
-		        colorVector = colors.get(i);
-		        varR = colorVector.X/scaleMax;
-                varG = colorVector.Y/scaleMax;
-                varB = colorVector.Z/scaleMax;
+		        if (redBuffer != null) {
+		            varR = redBuffer[colors[i]]/scaleMax;
+		        }
+		        else {
+		        	varR = 0.0;
+		        }
+		        if (greenBuffer != null) {
+                    varG = greenBuffer[colors[i]]/scaleMax;
+		        }
+		        else {
+		        	varG = 0.0;
+		        }
+		        if (blueBuffer != null) {
+                    varB = blueBuffer[colors[i]]/scaleMax;
+		        }
+		        else {
+		        	varB = 0.0;
+		        }
                 
                 if (varR <= 0.04045) {
                     varR = varR/12.92;
@@ -380,6 +406,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 pos[0][i] = a;
                 pos[1][i] = b;
 		    } // for (i = 0; i < colorsFound; i++)	
+		    colors = null;
         } // if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null))
     	
     	nDims = pos.length;
@@ -489,25 +516,48 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 	for (j = 0; j < numberClusters; j++) {
             			pointsInCluster[j] = 0;
             		}
-        	    	for (j = 0; j < subsampleSize; j++) {
-        	    	    minDistSquared = Double.MAX_VALUE;
-        	    	    originalGroupNum = groupNum[j];
-        	    	    for (k = 0; k < numberClusters; k++) {
-        	    	    	distSquared = 0.0;
-        	    	    	for (m = 0; m < nDims; m++) {
-        	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
-        	    	    	    distSquared = distSquared + scale[m]*scale[m]*diff*diff;
-        	    	    	}
-        	    	    	if (distSquared < minDistSquared) {
-        	    	    		minDistSquared = distSquared;
-        	    	    		groupNum[j] = k;
-        	    	    	}
-        	    	    } // for (k = 0; k < numberClusters; k++)
-        	    	    pointsInCluster[groupNum[j]]++;
-        	    	    if (originalGroupNum != groupNum[j]) {
-        	    	    	changeOccurred = true;
-        	    	    }
-        	    	} // for (j = 0; j < subsampleSize; j++)
+                	if (equalScale) {
+                		for (j = 0; j < subsampleSize; j++) {
+	        	    	    minDistSquared = Double.MAX_VALUE;
+	        	    	    originalGroupNum = groupNum[j];
+	        	    	    for (k = 0; k < numberClusters; k++) {
+	        	    	    	distSquared = 0.0;
+	        	    	    	for (m = 0; m < nDims; m++) {
+	        	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+	        	    	    	    distSquared = distSquared + diff*diff;
+	        	    	    	}
+	        	    	    	if (distSquared < minDistSquared) {
+	        	    	    		minDistSquared = distSquared;
+	        	    	    		groupNum[j] = k;
+	        	    	    	}
+	        	    	    } // for (k = 0; k < numberClusters; k++)
+	        	    	    pointsInCluster[groupNum[j]]++;
+	        	    	    if (originalGroupNum != groupNum[j]) {
+	        	    	    	changeOccurred = true;
+	        	    	    }
+	        	    	} // for (j = 0; j < subsampleSize; j++)	
+                	} // if (equalScale)
+                	else { // not equal scale
+	        	    	for (j = 0; j < subsampleSize; j++) {
+	        	    	    minDistSquared = Double.MAX_VALUE;
+	        	    	    originalGroupNum = groupNum[j];
+	        	    	    for (k = 0; k < numberClusters; k++) {
+	        	    	    	distSquared = 0.0;
+	        	    	    	for (m = 0; m < nDims; m++) {
+	        	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+	        	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
+	        	    	    	}
+	        	    	    	if (distSquared < minDistSquared) {
+	        	    	    		minDistSquared = distSquared;
+	        	    	    		groupNum[j] = k;
+	        	    	    	}
+	        	    	    } // for (k = 0; k < numberClusters; k++)
+	        	    	    pointsInCluster[groupNum[j]]++;
+	        	    	    if (originalGroupNum != groupNum[j]) {
+	        	    	    	changeOccurred = true;
+	        	    	    }
+	        	    	} // for (j = 0; j < subsampleSize; j++)
+                	} // else not equal scale
         	    	for (j = 0; j < numberClusters; j++) {
         	    		for (k = 0; k < nDims; k++) {
         	    			centroidPos[k][j] = 0.0;
@@ -542,24 +592,46 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 	    s++;	
                 	}
                 	maxDistSquared = 0.0;
-                    for (k = 0; k < numberClusters; k++) {
-                    	if (pointsInCluster[k] > 1) {
-                    	    for (m = 0; m < subsampleSize; m++) {
-                    	    	if (groupNum[m] == k) {
-                    	    	    distSquared = 0.0;
-                    	    	    for (n = 0; n < nDims; n++) {
-                    	    	        diff = subsamplePos[n][m] - centroidPos[n][k];
-                    	    	        distSquared = distSquared + scale[n]*scale[n]*diff*diff;
-                    	    	    } // for (n = 0; n < nDims; n++)'
-                    	    	    if (distSquared > maxDistSquared) {
-                    	    	    	maxDistSquared = distSquared;
-                    	    	    	maxDistPoint = m;
-                    	    	    	clusterWithMaxDistPoint = k;
-                    	    	    }
-                    	    	} // if (groupNum[m] == k)
-                    	    } // for (m = 0; m < subsampleSize; m++)
-                    	} // if (pointsInCluster[k] > 1)
-                    } // for (k = 0; k < numberClusters; k++)
+                	if (equalScale) {
+                		for (k = 0; k < numberClusters; k++) {
+	                    	if (pointsInCluster[k] > 1) {
+	                    	    for (m = 0; m < subsampleSize; m++) {
+	                    	    	if (groupNum[m] == k) {
+	                    	    	    distSquared = 0.0;
+	                    	    	    for (n = 0; n < nDims; n++) {
+	                    	    	        diff = subsamplePos[n][m] - centroidPos[n][k];
+	                    	    	        distSquared = distSquared + diff*diff;
+	                    	    	    } // for (n = 0; n < nDims; n++)'
+	                    	    	    if (distSquared > maxDistSquared) {
+	                    	    	    	maxDistSquared = distSquared;
+	                    	    	    	maxDistPoint = m;
+	                    	    	    	clusterWithMaxDistPoint = k;
+	                    	    	    }
+	                    	    	} // if (groupNum[m] == k)
+	                    	    } // for (m = 0; m < subsampleSize; m++)
+	                    	} // if (pointsInCluster[k] > 1)
+	                    } // for (k = 0; k < numberClusters; k++)	
+                	} // if (equalScale)
+                	else { // not equalScale
+	                    for (k = 0; k < numberClusters; k++) {
+	                    	if (pointsInCluster[k] > 1) {
+	                    	    for (m = 0; m < subsampleSize; m++) {
+	                    	    	if (groupNum[m] == k) {
+	                    	    	    distSquared = 0.0;
+	                    	    	    for (n = 0; n < nDims; n++) {
+	                    	    	        diff = subsamplePos[n][m] - centroidPos[n][k];
+	                    	    	        distSquared = distSquared + scale2[n]*diff*diff;
+	                    	    	    } // for (n = 0; n < nDims; n++)'
+	                    	    	    if (distSquared > maxDistSquared) {
+	                    	    	    	maxDistSquared = distSquared;
+	                    	    	    	maxDistPoint = m;
+	                    	    	    	clusterWithMaxDistPoint = k;
+	                    	    	    }
+	                    	    	} // if (groupNum[m] == k)
+	                    	    } // for (m = 0; m < subsampleSize; m++)
+	                    	} // if (pointsInCluster[k] > 1)
+	                    } // for (k = 0; k < numberClusters; k++)
+                	} // else not equalScale
                     groupNum[maxDistPoint] = s;
                     pointsInCluster[clusterWithMaxDistPoint]--;
                     for (k = 0; k < nDims; k++) {
@@ -593,25 +665,48 @@ public class AlgorithmKMeans extends AlgorithmBase {
                         	for (j = 0; j < numberClusters; j++) {
                     			pointsInCluster[j] = 0;
                     		}
-                	    	for (j = 0; j < subsampleSize; j++) {
-                	    	    minDistSquared = Double.MAX_VALUE;
-                	    	    originalGroupNum = groupNum[j];
-                	    	    for (k = 0; k < numberClusters; k++) {
-                	    	    	distSquared = 0.0;
-                	    	    	for (m = 0; m < nDims; m++) {
-                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
-                	    	    	    distSquared = distSquared + scale[m]*scale[m]*diff*diff;
-                	    	    	}
-                	    	    	if (distSquared < minDistSquared) {
-                	    	    		minDistSquared = distSquared;
-                	    	    		groupNum[j] = k;
-                	    	    	}
-                	    	    } // for (k = 0; k < numberClusters; k++)
-                	    	    pointsInCluster[groupNum[j]]++;
-                	    	    if (originalGroupNum != groupNum[j]) {
-                	    	    	changeOccurred = true;
-                	    	    }
-                	    	} // for (j = 0; j < subsampleSize; j++)
+                        	if (equalScale) {
+                        		for (j = 0; j < subsampleSize; j++) {
+	                	    	    minDistSquared = Double.MAX_VALUE;
+	                	    	    originalGroupNum = groupNum[j];
+	                	    	    for (k = 0; k < numberClusters; k++) {
+	                	    	    	distSquared = 0.0;
+	                	    	    	for (m = 0; m < nDims; m++) {
+	                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+	                	    	    	    distSquared = distSquared + diff*diff;
+	                	    	    	}
+	                	    	    	if (distSquared < minDistSquared) {
+	                	    	    		minDistSquared = distSquared;
+	                	    	    		groupNum[j] = k;
+	                	    	    	}
+	                	    	    } // for (k = 0; k < numberClusters; k++)
+	                	    	    pointsInCluster[groupNum[j]]++;
+	                	    	    if (originalGroupNum != groupNum[j]) {
+	                	    	    	changeOccurred = true;
+	                	    	    }
+	                	    	} // for (j = 0; j < subsampleSize; j++)	
+                        	} // if (equalScale)
+                        	else { // not equalScale
+	                	    	for (j = 0; j < subsampleSize; j++) {
+	                	    	    minDistSquared = Double.MAX_VALUE;
+	                	    	    originalGroupNum = groupNum[j];
+	                	    	    for (k = 0; k < numberClusters; k++) {
+	                	    	    	distSquared = 0.0;
+	                	    	    	for (m = 0; m < nDims; m++) {
+	                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+	                	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
+	                	    	    	}
+	                	    	    	if (distSquared < minDistSquared) {
+	                	    	    		minDistSquared = distSquared;
+	                	    	    		groupNum[j] = k;
+	                	    	    	}
+	                	    	    } // for (k = 0; k < numberClusters; k++)
+	                	    	    pointsInCluster[groupNum[j]]++;
+	                	    	    if (originalGroupNum != groupNum[j]) {
+	                	    	    	changeOccurred = true;
+	                	    	    }
+	                	    	} // for (j = 0; j < subsampleSize; j++)
+                        	} // else not equalScale
                 	    	for (j = 0; j < numberClusters; j++) {
                 	    		for (k = 0; k < nDims; k++) {
                 	    			centroidPos[k][j] = 0.0;
@@ -687,25 +782,48 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 	for (j = 0; j < numberClusters; j++) {
             			pointsInCluster[j] = 0;
             		}
-        	    	for (j = 0; j < subsampleSize; j++) {
-        	    	    minDistSquared = Double.MAX_VALUE;
-        	    	    originalGroupNum = groupNum[j];
-        	    	    for (k = 0; k < numberClusters; k++) {
-        	    	    	distSquared = 0.0;
-        	    	    	for (m = 0; m < nDims; m++) {
-        	    	    		diff = unionCM[m][j] - centroidPos[m][k];
-        	    	    	    distSquared = distSquared + scale[m]*scale[m]*diff*diff;
-        	    	    	}
-        	    	    	if (distSquared < minDistSquared) {
-        	    	    		minDistSquared = distSquared;
-        	    	    		groupNum[j] = k;
-        	    	    	}
-        	    	    } // for (k = 0; k < numberClusters; k++)
-        	    	    pointsInCluster[groupNum[j]]++;
-        	    	    if (originalGroupNum != groupNum[j]) {
-        	    	    	changeOccurred = true;
-        	    	    }
-        	    	} // for (j = 0; j < subsampleSIze; j++)
+                	if (equalScale) {
+                		for (j = 0; j < subsampleSize; j++) {
+	        	    	    minDistSquared = Double.MAX_VALUE;
+	        	    	    originalGroupNum = groupNum[j];
+	        	    	    for (k = 0; k < numberClusters; k++) {
+	        	    	    	distSquared = 0.0;
+	        	    	    	for (m = 0; m < nDims; m++) {
+	        	    	    		diff = unionCM[m][j] - centroidPos[m][k];
+	        	    	    	    distSquared = distSquared + diff*diff;
+	        	    	    	}
+	        	    	    	if (distSquared < minDistSquared) {
+	        	    	    		minDistSquared = distSquared;
+	        	    	    		groupNum[j] = k;
+	        	    	    	}
+	        	    	    } // for (k = 0; k < numberClusters; k++)
+	        	    	    pointsInCluster[groupNum[j]]++;
+	        	    	    if (originalGroupNum != groupNum[j]) {
+	        	    	    	changeOccurred = true;
+	        	    	    }
+	        	    	} // for (j = 0; j < subsampleSize; j++)	
+                	} // if (equalScale)
+                	else { // not equalScale
+	        	    	for (j = 0; j < subsampleSize; j++) {
+	        	    	    minDistSquared = Double.MAX_VALUE;
+	        	    	    originalGroupNum = groupNum[j];
+	        	    	    for (k = 0; k < numberClusters; k++) {
+	        	    	    	distSquared = 0.0;
+	        	    	    	for (m = 0; m < nDims; m++) {
+	        	    	    		diff = unionCM[m][j] - centroidPos[m][k];
+	        	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
+	        	    	    	}
+	        	    	    	if (distSquared < minDistSquared) {
+	        	    	    		minDistSquared = distSquared;
+	        	    	    		groupNum[j] = k;
+	        	    	    	}
+	        	    	    } // for (k = 0; k < numberClusters; k++)
+	        	    	    pointsInCluster[groupNum[j]]++;
+	        	    	    if (originalGroupNum != groupNum[j]) {
+	        	    	    	changeOccurred = true;
+	        	    	    }
+	        	    	} // for (j = 0; j < subsampleSize; j++)
+                	} // else not equalScale
         	    	for (j = 0; j < numberClusters; j++) {
         	    		for (k = 0; k < nDims; k++) {
         	    			centroidPos[k][j] = 0.0;
@@ -743,26 +861,50 @@ public class AlgorithmKMeans extends AlgorithmBase {
             // The refined initial point is chosen as the localFM[][][i] having minimal distortion over unionCM
             totalDistSquared = new double[subsampleNumber];
             minTotalDistSquared = Double.MAX_VALUE;
-            for (i = 0; i < subsampleNumber; i++) {
-                for (j = 0; j < subsampleSize; j++) {
-                    minDistSquared = Double.MAX_VALUE;
-                    for (k = 0; k < numberClusters; k++) {
-                        distSquared = 0.0;
-                        for (m = 0; m < nDims; m++) {
-                        	diff = unionCM[m][j] - localFM[m][k][i];
-                        	distSquared = distSquared + scale[m]*scale[m]*diff*diff;
-                        }
-                        if (distSquared < minDistSquared) {
-                        	minDistSquared = distSquared;
-                        }
-                    } // for (k = 0; k < numberClusters; k++)
-                    totalDistSquared[i] = totalDistSquared[i] + minDistSquared;
-                } // for (j = 0; j < subsampleSize; j++)
-                if (totalDistSquared[i] < minTotalDistSquared) {
-                	minTotalDistSquared = totalDistSquared[i];
-                	bestFMIndex = i;
-                }
-            } // for (i = 0; i < subsampleNumber; i++)
+            if (equalScale) {
+            	for (i = 0; i < subsampleNumber; i++) {
+	                for (j = 0; j < subsampleSize; j++) {
+	                    minDistSquared = Double.MAX_VALUE;
+	                    for (k = 0; k < numberClusters; k++) {
+	                        distSquared = 0.0;
+	                        for (m = 0; m < nDims; m++) {
+	                        	diff = unionCM[m][j] - localFM[m][k][i];
+	                        	distSquared = distSquared + diff*diff;
+	                        }
+	                        if (distSquared < minDistSquared) {
+	                        	minDistSquared = distSquared;
+	                        }
+	                    } // for (k = 0; k < numberClusters; k++)
+	                    totalDistSquared[i] = totalDistSquared[i] + minDistSquared;
+	                } // for (j = 0; j < subsampleSize; j++)
+	                if (totalDistSquared[i] < minTotalDistSquared) {
+	                	minTotalDistSquared = totalDistSquared[i];
+	                	bestFMIndex = i;
+	                }
+	            } // for (i = 0; i < subsampleNumber; i++)	
+            } // if (equalScale)
+            else { // not equalScale
+	            for (i = 0; i < subsampleNumber; i++) {
+	                for (j = 0; j < subsampleSize; j++) {
+	                    minDistSquared = Double.MAX_VALUE;
+	                    for (k = 0; k < numberClusters; k++) {
+	                        distSquared = 0.0;
+	                        for (m = 0; m < nDims; m++) {
+	                        	diff = unionCM[m][j] - localFM[m][k][i];
+	                        	distSquared = distSquared + scale2[m]*diff*diff;
+	                        }
+	                        if (distSquared < minDistSquared) {
+	                        	minDistSquared = distSquared;
+	                        }
+	                    } // for (k = 0; k < numberClusters; k++)
+	                    totalDistSquared[i] = totalDistSquared[i] + minDistSquared;
+	                } // for (j = 0; j < subsampleSize; j++)
+	                if (totalDistSquared[i] < minTotalDistSquared) {
+	                	minTotalDistSquared = totalDistSquared[i];
+	                	bestFMIndex = i;
+	                }
+	            } // for (i = 0; i < subsampleNumber; i++)
+            } // else not equalScale
             Preferences.debug("Refinement algorithm returns inital centroids at:\n");
             
             for (i = 0; i < numberClusters; i++) {
@@ -789,53 +931,104 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		for (i = 0; i < nPoints; i++) {
     			essGroup[i] = 0.0;
     		}
-    		for (groupsPresent = nPoints; groupsPresent > numberClusters; groupsPresent--) {
-    			minessIncrease = Double.MAX_VALUE;
-	    		for (i = 0; i < highestGroupPresent; i++) {
-	    			if (pointsInGroup[i] > 0) {
-	    				for (j = i+1; j <= highestGroupPresent; j++) {
-	    					if (pointsInGroup[j] > 0) {
-	    					    newPointsInGroup = pointsInGroup[i] + pointsInGroup[j];
-	    					    newess = 0.0;
-	    					    for (m = 0; m < nDims; m++) {
-	    					        sum = 0.0;
-	    					        sumSq = 0.0;
-	    					        for (n = 0; n < pointsInGroup[i]; n++) {
-	    					        	sum += pos[m][hierGroup[i][n]];
-	    					        	sumSq += pos[m][hierGroup[i][n]]*pos[m][hierGroup[i][n]];
-	    					        }
-	    					        for (n = 0; n < pointsInGroup[j]; n++) {
-	    					        	sum += pos[m][hierGroup[j][n]];
-	    					        	sumSq += pos[m][hierGroup[j][n]]*pos[m][hierGroup[j][n]];
-	    					        }
-	    					        newess += scale[m]*scale[m]*(sumSq - sum*sum/newPointsInGroup);
-	    					    } // for (m = 0; m < nDims; m++)
-	    					    essIncrease = newess - (essGroup[i] + essGroup[j]);
-	    					    if (essIncrease < minessIncrease) {
-	    					    	minessIncrease = essIncrease;
-	    					    	bestFirstIndex = i;
-	    					    	bestSecondIndex = j;
-	    					    	bestnewess = newess;
-	    					    	bestNewPointsInGroup = newPointsInGroup;
-	    					    } // if (essIncrease < minessIncrease)
-	    					} // if (pointsInGroup[j] > 0)
-	    				} // for (j = i+1; j <= highestGroupPresent; j++)
-	    			} // if (pointsInGroup[i] > 0)
-	    		} // for (i = 0; i < highestGroupPresent; i++)
-	    		for (i = pointsInGroup[bestFirstIndex]; i < bestNewPointsInGroup; i++) {
-	    	        hierGroup[bestFirstIndex][i] = hierGroup[bestSecondIndex][i-pointsInGroup[bestFirstIndex]];
-	    		}
-	    		pointsInGroup[bestFirstIndex] = bestNewPointsInGroup;
-	    		pointsInGroup[bestSecondIndex] = 0;
-	    		essGroup[bestFirstIndex] = bestnewess;
-	    		found = false;
-	    		for (i = highestGroupPresent; (i >= 0) && (!found); i--) {
-	    			if (pointsInGroup[i] > 0) {
-	    			    highestGroupPresent = i;
-	    			    found = true;
-	    			}
-	    		}
-    		} // for (groupsPresent = nPoints; groupsPresent > numberClusters; groupsPresent--)
+    		if (equalScale) {
+    			for (groupsPresent = nPoints; groupsPresent > numberClusters; groupsPresent--) {
+	    			minessIncrease = Double.MAX_VALUE;
+		    		for (i = 0; i < highestGroupPresent; i++) {
+		    			if (pointsInGroup[i] > 0) {
+		    				for (j = i+1; j <= highestGroupPresent; j++) {
+		    					if (pointsInGroup[j] > 0) {
+		    					    newPointsInGroup = pointsInGroup[i] + pointsInGroup[j];
+		    					    newess = 0.0;
+		    					    for (m = 0; m < nDims; m++) {
+		    					        sum = 0.0;
+		    					        sumSq = 0.0;
+		    					        for (n = 0; n < pointsInGroup[i]; n++) {
+		    					        	sum += pos[m][hierGroup[i][n]];
+		    					        	sumSq += pos[m][hierGroup[i][n]]*pos[m][hierGroup[i][n]];
+		    					        }
+		    					        for (n = 0; n < pointsInGroup[j]; n++) {
+		    					        	sum += pos[m][hierGroup[j][n]];
+		    					        	sumSq += pos[m][hierGroup[j][n]]*pos[m][hierGroup[j][n]];
+		    					        }
+		    					        newess += (sumSq - sum*sum/newPointsInGroup);
+		    					    } // for (m = 0; m < nDims; m++)
+		    					    essIncrease = newess - (essGroup[i] + essGroup[j]);
+		    					    if (essIncrease < minessIncrease) {
+		    					    	minessIncrease = essIncrease;
+		    					    	bestFirstIndex = i;
+		    					    	bestSecondIndex = j;
+		    					    	bestnewess = newess;
+		    					    	bestNewPointsInGroup = newPointsInGroup;
+		    					    } // if (essIncrease < minessIncrease)
+		    					} // if (pointsInGroup[j] > 0)
+		    				} // for (j = i+1; j <= highestGroupPresent; j++)
+		    			} // if (pointsInGroup[i] > 0)
+		    		} // for (i = 0; i < highestGroupPresent; i++)
+		    		for (i = pointsInGroup[bestFirstIndex]; i < bestNewPointsInGroup; i++) {
+		    	        hierGroup[bestFirstIndex][i] = hierGroup[bestSecondIndex][i-pointsInGroup[bestFirstIndex]];
+		    		}
+		    		pointsInGroup[bestFirstIndex] = bestNewPointsInGroup;
+		    		pointsInGroup[bestSecondIndex] = 0;
+		    		essGroup[bestFirstIndex] = bestnewess;
+		    		found = false;
+		    		for (i = highestGroupPresent; (i >= 0) && (!found); i--) {
+		    			if (pointsInGroup[i] > 0) {
+		    			    highestGroupPresent = i;
+		    			    found = true;
+		    			}
+		    		}
+	    		} // for (groupsPresent = nPoints; groupsPresent > numberClusters; groupsPresent--)	
+    		} // if (equalScale)
+    		else { // not equalScale
+	    		for (groupsPresent = nPoints; groupsPresent > numberClusters; groupsPresent--) {
+	    			minessIncrease = Double.MAX_VALUE;
+		    		for (i = 0; i < highestGroupPresent; i++) {
+		    			if (pointsInGroup[i] > 0) {
+		    				for (j = i+1; j <= highestGroupPresent; j++) {
+		    					if (pointsInGroup[j] > 0) {
+		    					    newPointsInGroup = pointsInGroup[i] + pointsInGroup[j];
+		    					    newess = 0.0;
+		    					    for (m = 0; m < nDims; m++) {
+		    					        sum = 0.0;
+		    					        sumSq = 0.0;
+		    					        for (n = 0; n < pointsInGroup[i]; n++) {
+		    					        	sum += pos[m][hierGroup[i][n]];
+		    					        	sumSq += pos[m][hierGroup[i][n]]*pos[m][hierGroup[i][n]];
+		    					        }
+		    					        for (n = 0; n < pointsInGroup[j]; n++) {
+		    					        	sum += pos[m][hierGroup[j][n]];
+		    					        	sumSq += pos[m][hierGroup[j][n]]*pos[m][hierGroup[j][n]];
+		    					        }
+		    					        newess += scale2[m]*(sumSq - sum*sum/newPointsInGroup);
+		    					    } // for (m = 0; m < nDims; m++)
+		    					    essIncrease = newess - (essGroup[i] + essGroup[j]);
+		    					    if (essIncrease < minessIncrease) {
+		    					    	minessIncrease = essIncrease;
+		    					    	bestFirstIndex = i;
+		    					    	bestSecondIndex = j;
+		    					    	bestnewess = newess;
+		    					    	bestNewPointsInGroup = newPointsInGroup;
+		    					    } // if (essIncrease < minessIncrease)
+		    					} // if (pointsInGroup[j] > 0)
+		    				} // for (j = i+1; j <= highestGroupPresent; j++)
+		    			} // if (pointsInGroup[i] > 0)
+		    		} // for (i = 0; i < highestGroupPresent; i++)
+		    		for (i = pointsInGroup[bestFirstIndex]; i < bestNewPointsInGroup; i++) {
+		    	        hierGroup[bestFirstIndex][i] = hierGroup[bestSecondIndex][i-pointsInGroup[bestFirstIndex]];
+		    		}
+		    		pointsInGroup[bestFirstIndex] = bestNewPointsInGroup;
+		    		pointsInGroup[bestSecondIndex] = 0;
+		    		essGroup[bestFirstIndex] = bestnewess;
+		    		found = false;
+		    		for (i = highestGroupPresent; (i >= 0) && (!found); i--) {
+		    			if (pointsInGroup[i] > 0) {
+		    			    highestGroupPresent = i;
+		    			    found = true;
+		    			}
+		    		}
+	    		} // for (groupsPresent = nPoints; groupsPresent > numberClusters; groupsPresent--)
+    		} // else not equalScale
     		groupIndex = -1;
     		for (i = 0; i < numberClusters; i++) {
     			for (j = 0; j < nDims; j++) {
@@ -863,20 +1056,38 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		}
     		// Obtain the 2 point furtherest apart as seeds
     		maxDistSquared = 0.0;
-    		for (i = 0; i < nPoints-1; i++) {
-    			for (j = i+1; j <= nPoints-1; j++) {
-    			    distSquared = 0.0;
-    			    for (k = 0; k < nDims; k++) {
-    			    	diff = pos[k][i] - pos[k][j];
-    			    	distSquared += scale[k]*scale[k]*diff*diff;
-    			    } // for (k = 0; k < nDims; k++)
-    			    if (distSquared > maxDistSquared) {
-    			    	maxDistSquared = distSquared;
-    			    	bestFirstIndex = i;
-    			    	bestSecondIndex = j;
-    			    }
-    			} // for (j = i+1; j <= nPoints-1; j++)
-    		} // for (i = 0; i < nPoints-1; i++)
+    		if (equalScale) {
+    			for (i = 0; i < nPoints-1; i++) {
+	    			for (j = i+1; j <= nPoints-1; j++) {
+	    			    distSquared = 0.0;
+	    			    for (k = 0; k < nDims; k++) {
+	    			    	diff = pos[k][i] - pos[k][j];
+	    			    	distSquared += diff*diff;
+	    			    } // for (k = 0; k < nDims; k++)
+	    			    if (distSquared > maxDistSquared) {
+	    			    	maxDistSquared = distSquared;
+	    			    	bestFirstIndex = i;
+	    			    	bestSecondIndex = j;
+	    			    }
+	    			} // for (j = i+1; j <= nPoints-1; j++)
+	    		} // for (i = 0; i < nPoints-1; i++)	
+    		} // if (equalScale)
+    		else { // not equalScale
+	    		for (i = 0; i < nPoints-1; i++) {
+	    			for (j = i+1; j <= nPoints-1; j++) {
+	    			    distSquared = 0.0;
+	    			    for (k = 0; k < nDims; k++) {
+	    			    	diff = pos[k][i] - pos[k][j];
+	    			    	distSquared += scale2[k]*diff*diff;
+	    			    } // for (k = 0; k < nDims; k++)
+	    			    if (distSquared > maxDistSquared) {
+	    			    	maxDistSquared = distSquared;
+	    			    	bestFirstIndex = i;
+	    			    	bestSecondIndex = j;
+	    			    }
+	    			} // for (j = i+1; j <= nPoints-1; j++)
+	    		} // for (i = 0; i < nPoints-1; i++)
+    		} // else not equalScale
     		for (i = 0; i < nDims; i++) {
     			centroidPos[i][0] = pos[i][bestFirstIndex];
     			centroidPos[i][1] = pos[i][bestSecondIndex];
@@ -887,37 +1098,72 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		    minDistSquaredSet = new double[numberClusters - 1];
     		    minIndexSet = new int[numberClusters - 1];
     		}
-    		for (currentClusters = 2; currentClusters < numberClusters; currentClusters++) {
-    			for (i = 0; i < nPoints; i++) {
-    			    if (groupNum[i] == -1) {
-    			    	for (j = 0; j < currentClusters; j++) {
-    			    		minDistSquaredSet[j] = Double.MAX_VALUE;
-    			    	}
-    			    	for (j = 0; j < currentClusters; j++) {
-    			    	    distSquared = 0.0;
-    			    	    for (k = 0; k < nDims; k++) {
-    			    	    	diff = pos[k][i] - centroidPos[k][j];
-    			    	    	distSquared += scale[k]*scale[k]*diff*diff;
-    			    	    } // for (k = 0; k < nDims; k++)
-    			    	    if (distSquared < minDistSquaredSet[j]) {
-    			    	    	minDistSquaredSet[j] = distSquared;
-    			    	    	minIndexSet[j] = i;
-    			    	    }
-    			    	} // for (j = 0; j < currentClusters; j++)
-    			    } // if (groupNum[i] == -1)
-    			} // for (i = 0; i < nPoints; i++)
-    			maxDistSquared = 0.0;
-    			for (i = 0; i < currentClusters; i++) {
-    			    if (minDistSquaredSet[i] > maxDistSquared) {
-    			    	maxDistSquared = minDistSquaredSet[i];
-    			    	newIndex = minIndexSet[i];
-    			    }
-    			} // for (i = 0; i < currentClusters; i++)
-    			for (i = 0; i < nDims; i++) {
-    				centroidPos[i][currentClusters] = pos[i][newIndex];
-    			}
-    			groupNum[newIndex] = currentClusters;
-    		} // for (currentClusters = 2; currentClusters < numberClusters; currentClusters++)
+    		if (equalScale) {
+    			for (currentClusters = 2; currentClusters < numberClusters; currentClusters++) {
+	    			for (i = 0; i < nPoints; i++) {
+	    			    if (groupNum[i] == -1) {
+	    			    	for (j = 0; j < currentClusters; j++) {
+	    			    		minDistSquaredSet[j] = Double.MAX_VALUE;
+	    			    	}
+	    			    	for (j = 0; j < currentClusters; j++) {
+	    			    	    distSquared = 0.0;
+	    			    	    for (k = 0; k < nDims; k++) {
+	    			    	    	diff = pos[k][i] - centroidPos[k][j];
+	    			    	    	distSquared += diff*diff;
+	    			    	    } // for (k = 0; k < nDims; k++)
+	    			    	    if (distSquared < minDistSquaredSet[j]) {
+	    			    	    	minDistSquaredSet[j] = distSquared;
+	    			    	    	minIndexSet[j] = i;
+	    			    	    }
+	    			    	} // for (j = 0; j < currentClusters; j++)
+	    			    } // if (groupNum[i] == -1)
+	    			} // for (i = 0; i < nPoints; i++)
+	    			maxDistSquared = 0.0;
+	    			for (i = 0; i < currentClusters; i++) {
+	    			    if (minDistSquaredSet[i] > maxDistSquared) {
+	    			    	maxDistSquared = minDistSquaredSet[i];
+	    			    	newIndex = minIndexSet[i];
+	    			    }
+	    			} // for (i = 0; i < currentClusters; i++)
+	    			for (i = 0; i < nDims; i++) {
+	    				centroidPos[i][currentClusters] = pos[i][newIndex];
+	    			}
+	    			groupNum[newIndex] = currentClusters;
+	    		} // for (currentClusters = 2; currentClusters < numberClusters; currentClusters++)	
+    		} // if (equalScale)
+    		else { // not equalScale
+	    		for (currentClusters = 2; currentClusters < numberClusters; currentClusters++) {
+	    			for (i = 0; i < nPoints; i++) {
+	    			    if (groupNum[i] == -1) {
+	    			    	for (j = 0; j < currentClusters; j++) {
+	    			    		minDistSquaredSet[j] = Double.MAX_VALUE;
+	    			    	}
+	    			    	for (j = 0; j < currentClusters; j++) {
+	    			    	    distSquared = 0.0;
+	    			    	    for (k = 0; k < nDims; k++) {
+	    			    	    	diff = pos[k][i] - centroidPos[k][j];
+	    			    	    	distSquared += scale2[k]*diff*diff;
+	    			    	    } // for (k = 0; k < nDims; k++)
+	    			    	    if (distSquared < minDistSquaredSet[j]) {
+	    			    	    	minDistSquaredSet[j] = distSquared;
+	    			    	    	minIndexSet[j] = i;
+	    			    	    }
+	    			    	} // for (j = 0; j < currentClusters; j++)
+	    			    } // if (groupNum[i] == -1)
+	    			} // for (i = 0; i < nPoints; i++)
+	    			maxDistSquared = 0.0;
+	    			for (i = 0; i < currentClusters; i++) {
+	    			    if (minDistSquaredSet[i] > maxDistSquared) {
+	    			    	maxDistSquared = minDistSquaredSet[i];
+	    			    	newIndex = minIndexSet[i];
+	    			    }
+	    			} // for (i = 0; i < currentClusters; i++)
+	    			for (i = 0; i < nDims; i++) {
+	    				centroidPos[i][currentClusters] = pos[i][newIndex];
+	    			}
+	    			groupNum[newIndex] = currentClusters;
+	    		} // for (currentClusters = 2; currentClusters < numberClusters; currentClusters++)
+    		} // else not equalScale
     		break;
     	} // switch(initSelection)
     	
@@ -932,25 +1178,48 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		for (i = 0; i < numberClusters; i++) {
     			pointsInCluster[i] = 0;
     		}
-	    	for (i = 0; i < nPoints; i++) {
-	    	    minDistSquared = Double.MAX_VALUE;
-	    	    originalGroupNum = groupNum[i];
-	    	    for (j = 0; j < numberClusters; j++) {
-	    	    	distSquared = 0.0;
-	    	    	for (k = 0; k < nDims; k++) {
-	    	    		diff = pos[k][i] - centroidPos[k][j];
-	    	    	    distSquared = distSquared + scale[k]*scale[k]*diff*diff;
-	    	    	}
-	    	    	if (distSquared < minDistSquared) {
-	    	    		minDistSquared = distSquared;
-	    	    		groupNum[i] = j;
-	    	    	}
-	    	    } // for (j = 0; j < numberClusters; j++)
-	    	    pointsInCluster[groupNum[i]]++;
-	    	    if (originalGroupNum != groupNum[i]) {
-	    	    	changeOccurred = true;
-	    	    }
-	    	} // for (i = 0; i < nPoints; i++)
+    		if (equalScale) {
+    			for (i = 0; i < nPoints; i++) {
+		    	    minDistSquared = Double.MAX_VALUE;
+		    	    originalGroupNum = groupNum[i];
+		    	    for (j = 0; j < numberClusters; j++) {
+		    	    	distSquared = 0.0;
+		    	    	for (k = 0; k < nDims; k++) {
+		    	    		diff = pos[k][i] - centroidPos[k][j];
+		    	    	    distSquared = distSquared + diff*diff;
+		    	    	}
+		    	    	if (distSquared < minDistSquared) {
+		    	    		minDistSquared = distSquared;
+		    	    		groupNum[i] = j;
+		    	    	}
+		    	    } // for (j = 0; j < numberClusters; j++)
+		    	    pointsInCluster[groupNum[i]]++;
+		    	    if (originalGroupNum != groupNum[i]) {
+		    	    	changeOccurred = true;
+		    	    }
+		    	} // for (i = 0; i < nPoints; i++)	
+    		} // if (equalScale)
+    		else { // not equalScale
+		    	for (i = 0; i < nPoints; i++) {
+		    	    minDistSquared = Double.MAX_VALUE;
+		    	    originalGroupNum = groupNum[i];
+		    	    for (j = 0; j < numberClusters; j++) {
+		    	    	distSquared = 0.0;
+		    	    	for (k = 0; k < nDims; k++) {
+		    	    		diff = pos[k][i] - centroidPos[k][j];
+		    	    	    distSquared = distSquared + scale2[k]*diff*diff;
+		    	    	}
+		    	    	if (distSquared < minDistSquared) {
+		    	    		minDistSquared = distSquared;
+		    	    		groupNum[i] = j;
+		    	    	}
+		    	    } // for (j = 0; j < numberClusters; j++)
+		    	    pointsInCluster[groupNum[i]]++;
+		    	    if (originalGroupNum != groupNum[i]) {
+		    	    	changeOccurred = true;
+		    	    }
+		    	} // for (i = 0; i < nPoints; i++)
+    		} // else not equalScale
 	    	for (i = 0; i < numberClusters; i++) {
 	    		for (j = 0; j < nDims; j++) {
 	    			centroidPos[j][i] = 0.0;
