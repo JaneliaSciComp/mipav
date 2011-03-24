@@ -279,7 +279,14 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	
 	  protected void writeGridOverlay() {
 
+		  numVertical = (xDim * resX) / Float.parseFloat(widthField.getText());
+	        numHorizontal = (yDim * resY) / Float.parseFloat(heightField.getText());
+	        
 
+	        verticalSpacing = (int)((xDim / numVertical) * componentImage.getZoomX());
+	        horizontalSpacing = (int)((yDim / numHorizontal) * componentImage.getZoomY());
+	        
+	        
 	        image = (ModelImage)componentImage.getActiveImage().clone();
 	        String name = ((ModelImage)componentImage.getActiveImage()).getImageName();
 	        image.setImageName(name + "_grid");
@@ -349,6 +356,11 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 
         numVertical = (xDim * resX) / width;
         numHorizontal = (yDim * resY) / height;
+        
+        
+        
+        System.out.println(numHorizontal);
+        System.out.println(numVertical);
         
 
         verticalSpacing = (int)(xDim / numVertical);
