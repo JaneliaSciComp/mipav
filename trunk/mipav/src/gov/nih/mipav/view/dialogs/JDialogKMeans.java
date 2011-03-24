@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -125,7 +126,11 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	private float greenBuffer[] = null;
 	private float blueBuffer[] = null;
 	// Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
-    double scaleMax = 255.0;
+    private double scaleMax = 255.0;
+    
+    private JCheckBox colorHistogramBox;
+    
+    private boolean useColorHistogram = false;
 	
 	
 	public JDialogKMeans() {
@@ -664,7 +669,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		 try {
 		
 			 alg = new AlgorithmKMeans(image,pos,scale,groupNum,centroidPos,resultsFileName,
-					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax);
+					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
+					                   useColorHistogram);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -787,6 +793,15 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 1;
         mainPanel.add(textImage, gbc);
         
+        colorHistogramBox = new JCheckBox("Use histogram weighing in color images");
+        colorHistogramBox.setSelected(false);
+        colorHistogramBox.setFont(serif12);
+        colorHistogramBox.setForeground(Color.black);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        mainPanel.add(colorHistogramBox, gbc);
+        
         buttonPointsFile = new JButton("Open a file of point locations");
         buttonPointsFile.setForeground(Color.black);
         buttonPointsFile.setFont(serif12B);
@@ -795,7 +810,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         buttonPointsFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         mainPanel.add(buttonPointsFile, gbc);
         
         textPointsFile = new JTextField();
@@ -809,7 +824,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         clustersLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         mainPanel.add(clustersLabel, gbc);
         
         textClusters = new JTextField(10);
@@ -824,7 +839,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         mainPanel.add(initLabel, gbc);
         
         initGroup = new ButtonGroup();
@@ -834,7 +849,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(randomInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         mainPanel.add(randomInit, gbc);
         
         BradleyInit = new JRadioButton("Bradley-Fayyad Refinement", false);
@@ -843,7 +858,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(BradleyInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         mainPanel.add(BradleyInit, gbc);
         
         hierarchicalInit = new JRadioButton("Hierarchical grouping", false);
@@ -852,7 +867,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(hierarchicalInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         mainPanel.add(hierarchicalInit, gbc);
         
         maxMinInit = new JRadioButton("MaxMin", false);
@@ -861,7 +876,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(maxMinInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         mainPanel.add(maxMinInit, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -878,6 +893,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	    MipavUtil.displayError("Must obtain points from a text file or an image");
     	    return false;
     	}
+    	
+    	useColorHistogram = colorHistogramBox.isSelected();
     	
     	tmpStr = textClusters.getText();
     	numberClusters = Integer.parseInt(tmpStr);
