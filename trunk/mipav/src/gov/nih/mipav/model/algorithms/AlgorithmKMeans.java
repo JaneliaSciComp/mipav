@@ -75,6 +75,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	
 	// Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
     private double scaleMax = 255.0;
+    
+    // If true, each color is weighed proportional to its frequency
+    private boolean useColorHistogram = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -83,7 +86,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
      */
     public AlgorithmKMeans(ModelImage image, double[][] pos, double[] scale, int groupNum[], double[][] centroidPos,
     		               String resultsFileName, int initSelection, float[] redBuffer, float[] greenBuffer,
-    		               float[] blueBuffer, double scaleMax) {
+    		               float[] blueBuffer, double scaleMax, boolean useColorHistogram) {
 
         this.image = image;
         this.pos = pos;
@@ -96,6 +99,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         this.greenBuffer = greenBuffer;
         this.blueBuffer = blueBuffer;
         this.scaleMax = scaleMax;
+        this.useColorHistogram = useColorHistogram;
     }
 
     
@@ -194,7 +198,13 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double varX, varY, varZ;
         float a, b;
         byte buffer[];
-        
+        Vector<Integer> instances = null;
+        int numTimes;
+        double weight[] = null;
+        double totalWeight[] = null;
+         
+        numberClusters = centroidPos[0].length;
+    	pointsInCluster = new int[numberClusters];
         
         if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
         	// Separate on a and b chrominance components in CIELAB space
@@ -208,6 +218,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         		length = greenBuffer.length;
         	}
 		    colors = new Vector<Vector3f>();
+		    if (useColorHistogram) {
+		    	instances = new Vector<Integer>();
+		    }
 		    indexTable = new int[length];
 		    for (i = 0; i < length; i++) {
 		    	indexTable[i] = -1;
@@ -219,13 +232,18 @@ public class AlgorithmKMeans extends AlgorithmBase {
 			    	if (indexTable[i] == -1) {
 				    	colors.addElement(new Vector3f(redBuffer[i], greenBuffer[i], blueBuffer[i]));
 				    	indexTable[i] = colorsFound;
+				    	numTimes = 1;
 				    	for (j = i+1; j < length; j++) {
 				    		if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i]) &&
 				    			(blueBuffer[j] == blueBuffer[i])) {
 				    		    indexTable[j] = colorsFound;
+				    		    numTimes++;
 				    		} // if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i])
 				    	} // for (j = i+1; j < length; j++)
 				    	colorsFound++;
+				    	if (useColorHistogram) {
+				    		instances.addElement(new Integer(numTimes));
+				    	}
 			    	} // if (indexTable[i] == -1)
 			    } // for (i = 0; i < length; i++)
 		    } // if ((redBuffer != null) && (greenBuffer != null) && (blueBuffer != null))
@@ -234,12 +252,17 @@ public class AlgorithmKMeans extends AlgorithmBase {
 			    	if (indexTable[i] == -1) {
 				    	colors.addElement(new Vector3f(redBuffer[i], greenBuffer[i], 0.0f));
 				    	indexTable[i] = colorsFound;
+				    	numTimes = 1;
 				    	for (j = i+1; j < length; j++) {
 				    		if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i])) {
 				    		    indexTable[j] = colorsFound;
+				    		    numTimes++;
 				    		} // if ((redBuffer[j] == redBuffer[i]) && (greenBuffer[j] == greenBuffer[i]))
 				    	} // for (j = i+1; j < length; j++)
 				    	colorsFound++;
+				    	if (useColorHistogram) {
+				    		instances.addElement(new Integer(numTimes));
+				    	}
 			    	} // if (indexTable[i] == -1)
 			    } // for (i = 0; i < length; i++)	
 		    } // else if ((redBuffer != null) && (greenBuffer != null))
@@ -248,12 +271,17 @@ public class AlgorithmKMeans extends AlgorithmBase {
 			    	if (indexTable[i] == -1) {
 				    	colors.addElement(new Vector3f(redBuffer[i], 0.0f, blueBuffer[i]));
 				    	indexTable[i] = colorsFound;
+				    	numTimes = 1;
 				    	for (j = i+1; j < length; j++) {
 				    		if ((redBuffer[j] == redBuffer[i]) && (blueBuffer[j] == blueBuffer[i])) {
 				    		    indexTable[j] = colorsFound;
+				    		    numTimes++;
 				    		} // if ((redBuffer[j] == redBuffer[i]) && (blueBuffer[j] == blueBuffer[i])
 				    	} // for (j = i+1; j < length; j++)
 				    	colorsFound++;
+				    	if (useColorHistogram) {
+				    		instances.addElement(new Integer(numTimes));
+				    	}
 			    	} // if (indexTable[i] == -1)
 			    } // for (i = 0; i < length; i++)	
 		    } // else if ((redBuffer != null) && (blueBuffer != null))
@@ -262,18 +290,30 @@ public class AlgorithmKMeans extends AlgorithmBase {
 			    	if (indexTable[i] == -1) {
 				    	colors.addElement(new Vector3f(0.0f, greenBuffer[i], blueBuffer[i]));
 				    	indexTable[i] = colorsFound;
+				    	numTimes = 1;
 				    	for (j = i+1; j < length; j++) {
 				    		if ((greenBuffer[j] == greenBuffer[i]) && (blueBuffer[j] == blueBuffer[i])) {
 				    		    indexTable[j] = colorsFound;
+				    		    numTimes++;
 				    		} // if ((greenBuffer[j] == greenBuffer[i]) && (blueBuffer[j] == blueBuffer[i]))
 				    	} // for (j = i+1; j < length; j++)
 				    	colorsFound++;
+				    	if (useColorHistogram) {
+				    		instances.addElement(new Integer(numTimes));
+				    	}
 			    	} // if (indexTable[i] == -1)
 			    } // for (i = 0; i < length; i++)	
 	        } // else if ((greenBuffer != null) && (blueBuffer != null))
 		    Preferences.debug("Colors found = " + colorsFound + "\n");
 		    pos = new double[2][colorsFound];
 		    groupNum = new int[colorsFound];
+		    if (useColorHistogram) {
+		    	weight = new double[colorsFound];
+		    	totalWeight = new double[numberClusters];
+		    	for (i = 0; i < colorsFound; i++) {
+		    		weight[i] = instances.get(i)/length;
+		    	}
+		    } // if (useColorHistogram)
 		    
 		    fireProgressStateChanged("Converting RGB to CIELAB");
 		    for (i = 0; i < colorsFound; i++) {
@@ -344,8 +384,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
-    	numberClusters = centroidPos[0].length;
-    	pointsInCluster = new int[numberClusters];
     	
     	switch(initSelection) {
     	case RANDOM_INIT:
@@ -918,25 +956,52 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    			centroidPos[j][i] = 0.0;
 	    		}
 	    	}
-	    	for (i = 0; i < nPoints; i++) {
-	    		for (j = 0; j < nDims; j++) {
-	    			centroidPos[j][groupNum[i]] += pos[j][i];
-	    		}
-	    	}
-	    	clustersWithoutPoints = 0;
-	    	for (i = 0; i < numberClusters; i++) {
-	    		if (pointsInCluster[i] == 0) {
-	    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
-	    			clustersWithoutPoints++;
-	    		}
-	    		else {
-		    		Preferences.debug("Cluster centroid " + (i+1) + ":\n");
+	    	if (useColorHistogram) {
+	    	    for (i = 0; i < numberClusters; i++) {
+	    	    	totalWeight[i] = 0.0;
+	    	    }
+	    		for (i = 0; i < nPoints; i++) {
+	    			totalWeight[groupNum[i]] += weight[i];
 		    		for (j = 0; j < nDims; j++) {
-		    			centroidPos[j][i] = centroidPos[j][i]/pointsInCluster[i];
-		    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
+		    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
 		    		}
-	    		} // else
-	    	}
+		    	}
+		    	clustersWithoutPoints = 0;
+		    	for (i = 0; i < numberClusters; i++) {
+		    		if (pointsInCluster[i] == 0) {
+		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+		    			clustersWithoutPoints++;
+		    		}
+		    		else {
+			    		Preferences.debug("Cluster centroid " + (i+1) + ":\n");
+			    		for (j = 0; j < nDims; j++) {
+			    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
+			    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
+			    		}
+		    		} // else
+		    	}	
+	    	} // if (useColorHistogram)
+	    	else { // no color histogram
+		    	for (i = 0; i < nPoints; i++) {
+		    		for (j = 0; j < nDims; j++) {
+		    			centroidPos[j][groupNum[i]] += pos[j][i];
+		    		}
+		    	}
+		    	clustersWithoutPoints = 0;
+		    	for (i = 0; i < numberClusters; i++) {
+		    		if (pointsInCluster[i] == 0) {
+		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+		    			clustersWithoutPoints++;
+		    		}
+		    		else {
+			    		Preferences.debug("Cluster centroid " + (i+1) + ":\n");
+			    		for (j = 0; j < nDims; j++) {
+			    			centroidPos[j][i] = centroidPos[j][i]/pointsInCluster[i];
+			    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
+			    		}
+		    		} // else
+		    	}
+	    	} // else no colorHistogram
     	} // while (changeOccurred)
     	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n");
     	
