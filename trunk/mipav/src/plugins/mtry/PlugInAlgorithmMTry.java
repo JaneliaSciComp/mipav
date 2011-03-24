@@ -281,9 +281,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
             tempImag[i] = (float) ((avgNumImag[i]*avgDenReal[i] - avgNumReal[i]*avgDenImag[i])/pow);
             t1Real[i] = (float) Math.sqrt(Math.pow(tempReal[i], 2) + Math.pow(tempImag[i], 2));
         }   	
-            
-    	
-    	destImage = new ModelImage(ModelImage.FLOAT, new int[]{64,64,44}, "T1 Result");
+        
     	int replace = doMaxMinReplace(t1Real);
     	
     	
@@ -312,13 +310,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         
         for(int i=0; i<destImage.getFileInfo().length; i++) {
             destImage.getFileInfo(i).setSliceThickness(minImage.getFileInfo(i).getSliceThickness());
-        }
-        
-    	ViewJFrameImage frame = new ViewJFrameImage(destImage);
-    	frame.setVisible(true);
-    	fireProgressStateChanged("Message 3D: "+srcImage.getImageName());
-	    	
-	    	
+        }	
     }
     
     private int doMaxMinReplace(float[] t1Real) {
