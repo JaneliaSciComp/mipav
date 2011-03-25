@@ -391,13 +391,13 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
      * Sets up GUI dialog.
      */
     private void init() {
+    	GridBagConstraints gbc = new GridBagConstraints();
+    	
         setForeground(Color.black);
         addNotify();
         setTitle("Install Plugin");
         
-        JPanel mainPanel = new JPanel();
-        mainPanel.setForeground(Color.black);
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        JPanel mainPanel = new JPanel(new GridBagLayout());
 
         JLabel intro = new JLabel("<html><center>This interface allows for batch installation of plugins into MIPAV.  <br>"+
         		"You may select Java class files or container files.  "+
@@ -406,14 +406,33 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         		/*"Detected plugins that will likely install correctly are displayed in <font color=\"blue\">blue</font>.<br>"+
         		"Plugins and any problem components listed are displayed in <font color=\"red\">red</font>.</center></html>  ");*/
         intro.setBorder(new EmptyBorder(10, 75, 0, 75));
-        //intro.setMinimumSize(new Dimension(700, 50));
-        //intro.setPreferredSize(new Dimension(700, 50));
-        mainDialogPanel.add(intro, BorderLayout.NORTH);
+
+        
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        mainPanel.add(intro,gbc);
+        
+        
+        
+        
         
         
         selectorPanel = new ClassSelectorPanel();
         selectorPanel.setVisible(true);
-        mainPanel.add(selectorPanel);
+        
+        gbc.gridy = 1;
+        gbc.weighty = 1;
+        
+        mainPanel.add(selectorPanel,gbc);
+        
+        
+        
+        
+        
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -424,16 +443,16 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         buttonPanel.add(cancelButton);
         cancelButton.setText("Close");
 
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        panel.add(mainPanel);
+        gbc.gridy = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weighty = 0;
+        mainPanel.add(buttonPanel,gbc);
 
-        mainDialogPanel.add(panel, BorderLayout.CENTER);
-        mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        getContentPane().add(mainDialogPanel);
+        getContentPane().add(mainPanel);
 
         pack();
+        
+        setMinimumSize(this.getSize());
     }
     
     private class ClassSelectorPanel extends JPanel implements ActionListener {
@@ -468,11 +487,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					selectedFile = new File(initTreeLoc);
 				}
 			}
-			
-			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+			GridBagConstraints gbc = new GridBagConstraints();
+			setLayout(new GridBagLayout());
 			
 			JPanel dirSelectPanel = new JPanel();
-			dirSelectPanel.setLayout(new BoxLayout(dirSelectPanel, BoxLayout.X_AXIS));
+
 			dirSelectPanel.setBorder(MipavUtil.buildTitledBorder("Select a plugin directory"));
 			
 			JButton browseButton = new JButton(BROWSE);
@@ -485,23 +504,54 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			dirSelectPanel.add(dirLabel);
 			
 			initDir = new JTextField(initTreeLoc);
+			initDir.setColumns(45);
 			initDir.setFont(MipavUtil.font12);
 			dirSelectPanel.add(initDir);
-			add(dirSelectPanel);
 			
-			JPanel mainSelectorPanel = new JPanel();
-			mainSelectorPanel.setLayout(new BoxLayout(mainSelectorPanel, BoxLayout.X_AXIS));
+			 gbc.fill = GridBagConstraints.BOTH;
+		     gbc.weighty = 0;
+		     gbc.anchor = GridBagConstraints.CENTER;
+		     gbc.gridx = 0;
+		     gbc.gridy = 0;
+		     gbc.weightx = 1;
+		        
+		        
+			add(dirSelectPanel,gbc);
 			
+			
+			
+			GridBagConstraints gbc2 = new GridBagConstraints();
+			JPanel mainSelectorPanel = new JPanel(new GridBagLayout());
+
 			subFilePanel = new JFileTreePanel();
 			subFilePanel.setBorder(MipavUtil.buildTitledBorder("Select class files"));
 			subFilePanel.setFont(MipavUtil.font12);
 			fileTree = subFilePanel.getFileTree();
-			mainSelectorPanel.add(subFilePanel);
+			
+			
+			gbc2.fill = GridBagConstraints.BOTH;
+			gbc2.gridheight = 1;
+			gbc2.gridwidth = 1;
+		     gbc2.weighty = 1;
+		     gbc2.anchor = GridBagConstraints.CENTER;
+		     gbc2.gridx = 0;
+		     gbc2.gridy = 0;
+		     gbc2.weightx = .5;
+			
+			mainSelectorPanel.add(subFilePanel,gbc2);
 			
 			JPanel selectOptionsPanel = buildSelectOptionsPanel();
-			mainSelectorPanel.add(selectOptionsPanel);
 			
-			JPanel fileListPanel = new JPanel();
+			gbc2.weighty = 1;
+		     gbc2.anchor = GridBagConstraints.SOUTH;
+		     gbc2.gridx = 1;
+		     gbc2.gridy = 0;
+		     gbc2.weightx = 0;
+		     
+		     
+			mainSelectorPanel.add(selectOptionsPanel,gbc2);
+			
+			JPanel fileListPanel = new JPanel(new BorderLayout());
 			fileListPanel.setBorder(MipavUtil.buildTitledBorder("Selected class files"));
 			selected = new JList();
 			selected.setModel(new DefaultListModel());
@@ -513,10 +563,26 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 			fileListPanel.setPreferredSize(new Dimension(300, 350));
-			fileListPanel.add(scrollPane);
+			fileListPanel.add(scrollPane,BorderLayout.CENTER);
 			fileListPanel.setFont(MipavUtil.font12);
-			mainSelectorPanel.add(fileListPanel);
-			add(mainSelectorPanel);
+			
+			gbc2.weighty = 1;
+		     gbc2.anchor = GridBagConstraints.CENTER;
+		     gbc2.gridx = 2;
+		     gbc2.gridy = 0;
+		     gbc2.weightx = .5;
+		     
+			mainSelectorPanel.add(fileListPanel,gbc2);
+			
+			
+			gbc.fill = GridBagConstraints.BOTH;
+		     gbc.weighty = .9;
+		     gbc.anchor = GridBagConstraints.CENTER;
+		     gbc.gridx = 0;
+		     gbc.gridy = 1;
+		     gbc.weightx = 1;
+			
+			add(mainSelectorPanel,gbc);
 			
 			JPanel checkPanel = new JPanel();
 			checkPanel.setLayout(new BorderLayout());
@@ -526,7 +592,17 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			check.setActionCommand(CHECK);
 			check.setBorder(new EmptyBorder(3, 10, 0, 10));
 			checkPanel.add(check, BorderLayout.WEST);
-			add(checkPanel);
+			
+			gbc.fill = GridBagConstraints.BOTH;
+		     gbc.weighty = 0;
+		     gbc.anchor = GridBagConstraints.CENTER;
+		     gbc.gridx = 0;
+		     gbc.gridy = 2;
+		     gbc.weightx = 1;
+			
+		     
+		     
+			add(checkPanel,gbc);
 			
 			validate();
 			pack();
@@ -543,20 +619,31 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 		}
 		
 		private JPanel buildSelectOptionsPanel() {
-			JPanel selectOptionsPanel = new JPanel();
-			selectOptionsPanel.setLayout(new BoxLayout(selectOptionsPanel, BoxLayout.Y_AXIS));
-			
+			JPanel selectOptionsPanel = new JPanel(new GridBagLayout());
+			GridBagConstraints gbc = new GridBagConstraints();
+
 			JButton moveRight = new JButton();
 			moveRight.addActionListener(this);
 			moveRight.setActionCommand(MOVE_RIGHT);
 			moveRight.setIcon(MipavUtil.getIcon("rightarrow.gif"));
-			selectOptionsPanel.add(moveRight);
+			
+			
+		     gbc.anchor = GridBagConstraints.CENTER;
+		     gbc.gridx = 0;
+		     gbc.gridy = 0;
+
+		     
+		     
+		     
+			selectOptionsPanel.add(moveRight,gbc);
 			
 			JButton delete = new JButton();
 			delete.addActionListener(this);
 			delete.setActionCommand(DELETE);
 			delete.setIcon(MipavUtil.getIcon("delete.gif"));
-			selectOptionsPanel.add(delete);
+			
+			gbc.gridy = 1;
+			selectOptionsPanel.add(delete,gbc);
 			
 			return selectOptionsPanel;
 		}
