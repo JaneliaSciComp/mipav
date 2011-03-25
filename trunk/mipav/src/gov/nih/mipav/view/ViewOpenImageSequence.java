@@ -21,6 +21,8 @@ import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.mentorgen.tools.profile.runtime.Profile;
+
 
 /**
  * The purpose of this class is to present the user with a window enabling him/her to open a sequence of TIFF files
@@ -1616,6 +1618,12 @@ public class ViewOpenImageSequence extends JFrame
 
         ModelImage resultImage = null;
 
+        //Profile.clear();
+        //Profile.start();
+        
+        
+        //long time = System.currentTimeMillis();
+        
         if (numChannels == 1) {
             resultImage = fileIO.readOrderedGrayscale(fileList, true, subsampleDimension,
                                                       chkForceUBYTE.isSelected() && enableCheckbox.isSelected(),numSlices,numTimePoints);
@@ -1631,6 +1639,16 @@ public class ViewOpenImageSequence extends JFrame
         } else {
             MipavUtil.displayError("Unable to open image.");
         }
+        
+        
+        
+        //System.out.println(" ... " + (System.currentTimeMillis() - time));
+        //Profile.stop();
+        //Profile.setFileName( "profile_viewOpenImageSequence_openImage" );
+        //Profile.shutdown();
+        
+        //-javaagent:C:\projects\mipav\src\lib\profile.jar -Dprofile.properties=C:\projects\mipav\src\lib\profile.properties
+ 
 
     }
 
