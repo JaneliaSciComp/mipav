@@ -9903,7 +9903,7 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
-            error.printStackTrace();
+            //error.printStackTrace();
             progressBar.dispose();
             return null;
         } catch (final OutOfMemoryError error) {

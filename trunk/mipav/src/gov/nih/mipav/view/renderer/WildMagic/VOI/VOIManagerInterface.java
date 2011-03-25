@@ -334,6 +334,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void actionPerformed(ActionEvent event) {
 
         String command = event.getActionCommand();
+
         //System.err.println( command );
         if ( command.equals(CustomUIBuilder.PARAM_VOI_COLOR.getActionCommand()) ) {
             showColorDialog();
@@ -392,11 +393,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             setDefaultCursor();
         } 
         else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI.getActionCommand())) {
-            final boolean success = openVOI(false, false);
+
+            boolean success = openVOI(false, false);
 
             if (success) {
                 ScriptRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
                 ProvenanceRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
+            }else {
+            	MipavUtil.displayError("VOI failed to open for this image");
             }
         } 
         else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_ALL.getActionCommand())) {
@@ -3602,6 +3606,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         try {
             openVOI = new ViewOpenVOIUI();
             VOI[] newVOIs = openVOI.open(m_kParent.getActiveImage(), doLabels);
+            System.out.println(newVOIs.length);
             if ( newVOIs == null) {
                 return false;
             }
