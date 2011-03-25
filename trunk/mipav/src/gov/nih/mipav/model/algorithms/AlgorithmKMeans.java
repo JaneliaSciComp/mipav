@@ -19,6 +19,11 @@ import java.io.RandomAccessFile;
  * it is best suited for large-scale data.  By initializing a general clustering algorithm near the nodes,
  * not only are the true clusters found more often, but it follows that the clustering algorithm will 
  * iterate fewer times prior to convergence.
+ * 
+ * From the Celebi reference:
+ * Consider a point xi, two cluster centers ca and cb and a distance metric d.  Using the triangle 
+ * inequality, we have d(ca,cb) <= d(xi,ca) + d(xi,cb).  Therfore, if we know that 2d(xi,ca) <= d(ca,cb),
+ * we can conclude that d(xi,ca) <= d(xi,cb) without having to calculate d(xi,cb).
  References:
  1.) "A systematic evaluation of different methods for initializing the K-means clustering algorithm"
      by Anna D. Peterson, Arka. P. Ghosh, and Ranjan Maitra, IEEE Transactions on Knowledge and
@@ -26,6 +31,8 @@ import java.io.RandomAccessFile;
  2.) "Refining Initial Points for K-Means Clustering" by P.S. Bradley and Usama M. Fayyad.
  3.) "Hierarchical Grouping to Optimize an Objective Function" by Joe H. Ward, Jr.,
      Journal of the American Statistical Association, Volume 58, Issue 301, March, 1963, pp. 236-244.
+ 4.) "Improving the Performance of K-Means for Color Quantization" by M. Emre Celebi, 
+     Image and Vision Computing, Volume 29, No. 4, 2011, pp. 260-271.
  */
 public class AlgorithmKMeans extends AlgorithmBase {
 	
@@ -202,6 +209,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double totalWeight[] = null;
         double scale2[] = new double[scale.length];
         boolean equalScale;
+        // Actually square of distances divided by 4
+        double centroidDistances[][] = null;
         
         for (i = 0; i < scale.length; i++) {
         	scale2[i] = scale[i]*scale[i];
@@ -215,6 +224,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
          
         numberClusters = centroidPos[0].length;
     	pointsInCluster = new int[numberClusters];
+    	
+    	centroidDistances = new double[numberClusters][numberClusters];
         
         if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
         	// Separate on a and b chrominance components in CIELAB space
@@ -515,22 +526,42 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 	changeOccurred = false;
                 	for (j = 0; j < numberClusters; j++) {
             			pointsInCluster[j] = 0;
+            			for (k = 0; k < numberClusters; k++) {
+            				centroidDistances[j][k] = 0.0;
+            			}
             		}
                 	if (equalScale) {
+                		for (j = 0; j < numberClusters; j++) {
+            				for (k = j+1; k < numberClusters; k++) {
+            					for (m = 0; m < nDims; m++) {
+            						diff = centroidPos[m][j] - centroidPos[m][k];
+            						centroidDistances[j][k] += diff*diff;
+            					} // for (m = 0; m < nDims; m++)
+            					centroidDistances[j][k] /= 4.0;
+            				} // for (k = j+1; k < numberClusters; k++)
+            			} // for (j = 0; j < numberClusters; j++)
                 		for (j = 0; j < subsampleSize; j++) {
-	        	    	    minDistSquared = Double.MAX_VALUE;
+	        	    	    minDistSquared = 0.0;
 	        	    	    originalGroupNum = groupNum[j];
-	        	    	    for (k = 0; k < numberClusters; k++) {
-	        	    	    	distSquared = 0.0;
-	        	    	    	for (m = 0; m < nDims; m++) {
-	        	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
-	        	    	    	    distSquared = distSquared + diff*diff;
-	        	    	    	}
-	        	    	    	if (distSquared < minDistSquared) {
-	        	    	    		minDistSquared = distSquared;
-	        	    	    		groupNum[j] = k;
-	        	    	    	}
-	        	    	    } // for (k = 0; k < numberClusters; k++)
+	        	    	    for (m = 0; m < nDims; m++) {
+        	    	    		diff = subsamplePos[m][j] - centroidPos[m][0];
+        	    	    	    minDistSquared = minDistSquared + diff*diff;
+        	    	    	}
+	        	    	    groupNum[j] = 0;
+	        	    	    for (k = 1; k < numberClusters; k++) {
+	        	    	    	// Use triangle inequality to avoid unnecessary calculations
+	    		    	    	if (minDistSquared > centroidDistances[groupNum[j]][k]) {
+		        	    	    	distSquared = 0.0;
+		        	    	    	for (m = 0; m < nDims; m++) {
+		        	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+		        	    	    	    distSquared = distSquared + diff*diff;
+		        	    	    	}
+		        	    	    	if (distSquared < minDistSquared) {
+		        	    	    		minDistSquared = distSquared;
+		        	    	    		groupNum[j] = k;
+		        	    	    	}
+	    		    	    	} // if (minDistSquared > centroidDistances[groupNum[j]][k]) {
+	        	    	    } // for (k = 1; k < numberClusters; k++)
 	        	    	    pointsInCluster[groupNum[j]]++;
 	        	    	    if (originalGroupNum != groupNum[j]) {
 	        	    	    	changeOccurred = true;
@@ -538,20 +569,37 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	        	    	} // for (j = 0; j < subsampleSize; j++)	
                 	} // if (equalScale)
                 	else { // not equal scale
+                		for (j = 0; j < numberClusters; j++) {
+            				for (k = j+1; k < numberClusters; k++) {
+            					for (m = 0; m < nDims; m++) {
+            						diff = centroidPos[m][j] - centroidPos[m][k];
+            						centroidDistances[j][k] += scale2[m]*diff*diff;
+            					} // for (m = 0; m < nDims; m++)
+            					centroidDistances[j][k] /= 4.0;
+            				} // for (k = j+1; k < numberClusters; k++)
+            			} // for (j = 0; j < numberClusters; j++)
 	        	    	for (j = 0; j < subsampleSize; j++) {
-	        	    	    minDistSquared = Double.MAX_VALUE;
+	        	    	    minDistSquared = 0.0;
 	        	    	    originalGroupNum = groupNum[j];
-	        	    	    for (k = 0; k < numberClusters; k++) {
-	        	    	    	distSquared = 0.0;
-	        	    	    	for (m = 0; m < nDims; m++) {
-	        	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
-	        	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
-	        	    	    	}
-	        	    	    	if (distSquared < minDistSquared) {
-	        	    	    		minDistSquared = distSquared;
-	        	    	    		groupNum[j] = k;
-	        	    	    	}
-	        	    	    } // for (k = 0; k < numberClusters; k++)
+	        	    	    for (m = 0; m < nDims; m++) {
+        	    	    		diff = subsamplePos[m][j] - centroidPos[m][0];
+        	    	    	    minDistSquared = minDistSquared + scale2[m]*diff*diff;
+        	    	    	}
+	        	    	    groupNum[j] = 0;
+	        	    	    for (k = 1; k < numberClusters; k++) {
+	        	    	    	// Use triangle inequality to avoid unnecessary calculations
+	    		    	    	if (minDistSquared > centroidDistances[groupNum[j]][k]) {
+		        	    	    	distSquared = 0.0;
+		        	    	    	for (m = 0; m < nDims; m++) {
+		        	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+		        	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
+		        	    	    	}
+		        	    	    	if (distSquared < minDistSquared) {
+		        	    	    		minDistSquared = distSquared;
+		        	    	    		groupNum[j] = k;
+		        	    	    	}
+	    		    	    	} // if (minDistSquared > centroidDistances[groupNum[j]][k]) {
+	        	    	    } // for (k = 1; k < numberClusters; k++)
 	        	    	    pointsInCluster[groupNum[j]]++;
 	        	    	    if (originalGroupNum != groupNum[j]) {
 	        	    	    	changeOccurred = true;
@@ -664,22 +712,42 @@ public class AlgorithmKMeans extends AlgorithmBase {
                         	changeOccurred = false;
                         	for (j = 0; j < numberClusters; j++) {
                     			pointsInCluster[j] = 0;
+                    			for (k = 0; k < numberClusters; k++) {
+                    				centroidDistances[j][k] = 0.0;
+                    			}
                     		}
                         	if (equalScale) {
+                        		for (j = 0; j < numberClusters; j++) {
+                    				for (k = j+1; k < numberClusters; k++) {
+                    					for (m = 0; m < nDims; m++) {
+                    						diff = centroidPos[m][j] - centroidPos[m][k];
+                    						centroidDistances[j][k] += diff*diff;
+                    					} // for (m = 0; m < nDims; m++)
+                    					centroidDistances[j][k] /= 4.0;
+                    				} // for (k = j+1; k < numberClusters; k++)
+                    			} // for (j = 0; j < numberClusters; j++)
                         		for (j = 0; j < subsampleSize; j++) {
-	                	    	    minDistSquared = Double.MAX_VALUE;
+	                	    	    minDistSquared = 0.0;
 	                	    	    originalGroupNum = groupNum[j];
-	                	    	    for (k = 0; k < numberClusters; k++) {
-	                	    	    	distSquared = 0.0;
-	                	    	    	for (m = 0; m < nDims; m++) {
-	                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
-	                	    	    	    distSquared = distSquared + diff*diff;
-	                	    	    	}
-	                	    	    	if (distSquared < minDistSquared) {
-	                	    	    		minDistSquared = distSquared;
-	                	    	    		groupNum[j] = k;
-	                	    	    	}
-	                	    	    } // for (k = 0; k < numberClusters; k++)
+	                	    	    for (m = 0; m < nDims; m++) {
+                	    	    		diff = subsamplePos[m][j] - centroidPos[m][0];
+                	    	    	    minDistSquared = minDistSquared + diff*diff;
+                	    	    	}
+	                	    	    groupNum[j] = 0;
+	                	    	    for (k = 1; k < numberClusters; k++) {
+	                	    	    	// Use triangle inequality to avoid unnecessary calculations
+	    	    		    	    	if (minDistSquared > centroidDistances[groupNum[j]][k]) {
+		                	    	    	distSquared = 0.0;
+		                	    	    	for (m = 0; m < nDims; m++) {
+		                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+		                	    	    	    distSquared = distSquared + diff*diff;
+		                	    	    	}
+		                	    	    	if (distSquared < minDistSquared) {
+		                	    	    		minDistSquared = distSquared;
+		                	    	    		groupNum[j] = k;
+		                	    	    	}
+	    	    		    	    	} // if (minDistSquared > centroidDistances[groupNum[j]][k])
+	                	    	    } // for (k = 1; k < numberClusters; k++)
 	                	    	    pointsInCluster[groupNum[j]]++;
 	                	    	    if (originalGroupNum != groupNum[j]) {
 	                	    	    	changeOccurred = true;
@@ -687,20 +755,37 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                	    	} // for (j = 0; j < subsampleSize; j++)	
                         	} // if (equalScale)
                         	else { // not equalScale
+                        		for (j = 0; j < numberClusters; j++) {
+                    				for (k = j+1; k < numberClusters; k++) {
+                    					for (m = 0; m < nDims; m++) {
+                    						diff = centroidPos[m][j] - centroidPos[m][k];
+                    						centroidDistances[j][k] += scale2[m]*diff*diff;
+                    					} // for (m = 0; m < nDims; m++)
+                    					centroidDistances[j][k] /= 4.0;
+                    				} // for (k = j+1; k < numberClusters; k++)
+                    			} // for (j = 0; j < numberClusters; j++)
 	                	    	for (j = 0; j < subsampleSize; j++) {
-	                	    	    minDistSquared = Double.MAX_VALUE;
+	                	    	    minDistSquared = 0.0;
 	                	    	    originalGroupNum = groupNum[j];
-	                	    	    for (k = 0; k < numberClusters; k++) {
-	                	    	    	distSquared = 0.0;
-	                	    	    	for (m = 0; m < nDims; m++) {
-	                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
-	                	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
-	                	    	    	}
-	                	    	    	if (distSquared < minDistSquared) {
-	                	    	    		minDistSquared = distSquared;
-	                	    	    		groupNum[j] = k;
-	                	    	    	}
-	                	    	    } // for (k = 0; k < numberClusters; k++)
+	                	    	    for (m = 0; m < nDims; m++) {
+                	    	    		diff = subsamplePos[m][j] - centroidPos[m][0];
+                	    	    	    minDistSquared = minDistSquared + scale2[m]*diff*diff;
+                	    	    	}
+	                	    	    groupNum[j] = 0;
+	                	    	    for (k = 1; k < numberClusters; k++) {
+	                	    	    	// Use triangle inequality to avoid unnecessary calculations
+	    	    		    	    	if (minDistSquared > centroidDistances[groupNum[j]][k]) {
+		                	    	    	distSquared = 0.0;
+		                	    	    	for (m = 0; m < nDims; m++) {
+		                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+		                	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
+		                	    	    	}
+		                	    	    	if (distSquared < minDistSquared) {
+		                	    	    		minDistSquared = distSquared;
+		                	    	    		groupNum[j] = k;
+		                	    	    	}
+	    	    		    	    	} // if (minDistSquared > centroidDistances[groupNum[j]][k])
+	                	    	    } // for (k = 1; k < numberClusters; k++)
 	                	    	    pointsInCluster[groupNum[j]]++;
 	                	    	    if (originalGroupNum != groupNum[j]) {
 	                	    	    	changeOccurred = true;
@@ -1177,22 +1262,42 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		changeOccurred = false;
     		for (i = 0; i < numberClusters; i++) {
     			pointsInCluster[i] = 0;
+    			for (j = 0; j < numberClusters; j++) {
+    				centroidDistances[i][j] = 0.0;
+    			}
     		}
     		if (equalScale) {
+    			for (i = 0; i < numberClusters; i++) {
+    				for (j = i+1; j < numberClusters; j++) {
+    					for (k = 0; k < nDims; k++) {
+    						diff = centroidPos[k][i] - centroidPos[k][j];
+    						centroidDistances[i][j] += diff*diff;
+    					} // for (k = 0; k < nDims; k++)
+    					centroidDistances[i][j] /= 4.0;
+    				} // for (j = i+1; j < numberClusters; j++)
+    			} // for (i = 0; i < numberClusters; i++)
     			for (i = 0; i < nPoints; i++) {
-		    	    minDistSquared = Double.MAX_VALUE;
+		    	    minDistSquared = 0.0;
 		    	    originalGroupNum = groupNum[i];
-		    	    for (j = 0; j < numberClusters; j++) {
-		    	    	distSquared = 0.0;
-		    	    	for (k = 0; k < nDims; k++) {
-		    	    		diff = pos[k][i] - centroidPos[k][j];
-		    	    	    distSquared = distSquared + diff*diff;
-		    	    	}
-		    	    	if (distSquared < minDistSquared) {
-		    	    		minDistSquared = distSquared;
-		    	    		groupNum[i] = j;
-		    	    	}
-		    	    } // for (j = 0; j < numberClusters; j++)
+	    	    	for (k = 0; k < nDims; k++) {
+	    	    		diff = pos[k][i] - centroidPos[k][0];
+	    	    	    minDistSquared = minDistSquared + diff*diff;
+	    	    	}
+	    	    	groupNum[i] = 0;
+		    	    for (j = 1; j < numberClusters; j++) {
+		    	    	// Use triangle inequality to avoid unnecessary calculations
+		    	    	if (minDistSquared > centroidDistances[groupNum[i]][j]) {
+			    	    	distSquared = 0.0;
+			    	    	for (k = 0; k < nDims; k++) {
+			    	    		diff = pos[k][i] - centroidPos[k][j];
+			    	    	    distSquared = distSquared + diff*diff;
+			    	    	}
+			    	    	if (distSquared < minDistSquared) {
+			    	    		minDistSquared = distSquared;
+			    	    		groupNum[i] = j;
+			    	    	}
+		    	    	} // if (minDistSquared > centroidDistances[groupNum[i]][j]))
+		    	    } // for (j = 1; j < numberClusters; j++)
 		    	    pointsInCluster[groupNum[i]]++;
 		    	    if (originalGroupNum != groupNum[i]) {
 		    	    	changeOccurred = true;
@@ -1200,20 +1305,37 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    	} // for (i = 0; i < nPoints; i++)	
     		} // if (equalScale)
     		else { // not equalScale
+    			for (i = 0; i < numberClusters; i++) {
+    				for (j = i+1; j < numberClusters; j++) {
+    					for (k = 0; k < nDims; k++) {
+    						diff = centroidPos[k][i] - centroidPos[k][j];
+    						centroidDistances[i][j] += scale2[k]*diff*diff;
+    					} // for (k = 0; k < nDims; k++)
+    					centroidDistances[i][j] /= 4.0;
+    				} // for (j = i+1; j < numberClusters; j++)
+    			} // for (i = 0; i < numberClusters; i++)
 		    	for (i = 0; i < nPoints; i++) {
-		    	    minDistSquared = Double.MAX_VALUE;
+		    		minDistSquared = 0.0;
 		    	    originalGroupNum = groupNum[i];
-		    	    for (j = 0; j < numberClusters; j++) {
-		    	    	distSquared = 0.0;
-		    	    	for (k = 0; k < nDims; k++) {
-		    	    		diff = pos[k][i] - centroidPos[k][j];
-		    	    	    distSquared = distSquared + scale2[k]*diff*diff;
-		    	    	}
-		    	    	if (distSquared < minDistSquared) {
-		    	    		minDistSquared = distSquared;
-		    	    		groupNum[i] = j;
-		    	    	}
-		    	    } // for (j = 0; j < numberClusters; j++)
+	    	    	for (k = 0; k < nDims; k++) {
+	    	    		diff = pos[k][i] - centroidPos[k][0];
+	    	    	    minDistSquared = minDistSquared + scale2[k]*diff*diff;
+	    	    	}
+	    	    	groupNum[i] = 0;
+		    	    for (j = 1; j < numberClusters; j++) {
+		    	    	// Use triangle inequality to avoid unnecessary calculations
+		    	    	if (minDistSquared > centroidDistances[groupNum[i]][j]) {
+			    	    	distSquared = 0.0;
+			    	    	for (k = 0; k < nDims; k++) {
+			    	    		diff = pos[k][i] - centroidPos[k][j];
+			    	    	    distSquared = distSquared + scale2[k]*diff*diff;
+			    	    	}
+			    	    	if (distSquared < minDistSquared) {
+			    	    		minDistSquared = distSquared;
+			    	    		groupNum[i] = j;
+			    	    	}
+		    	    	} // if (minDistSquared > centroidDistances[groupNum[i]][j]))
+		    	    } // for (j = 1; j < numberClusters; j++)
 		    	    pointsInCluster[groupNum[i]]++;
 		    	    if (originalGroupNum != groupNum[i]) {
 		    	    	changeOccurred = true;
