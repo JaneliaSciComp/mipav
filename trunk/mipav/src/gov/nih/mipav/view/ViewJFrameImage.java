@@ -1184,7 +1184,38 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // JDialogConvert4Dto3D convert4Dto3D =
             new JDialogConvert4Dto3D(this, getActiveImage()).callAlgorithm();
-        } else if (command.equals("Convert4DtoRGB")) {
+        } else if (command.equals("Convert4DtoMultiple3D")) {
+
+            int[] destExtents = new int[3];
+
+            destExtents[0] = getActiveImage().getExtents()[0];
+            destExtents[1] = getActiveImage().getExtents()[1];
+            destExtents[2] = getActiveImage().getExtents()[2];
+            
+            //ModelImage[] resultImages = new ModelImage[getActiveImage().getExtents()[3]];
+            AlgorithmSubset subsetAlgo;
+            int tLength = getActiveImage().getExtents()[3];
+            for(int i=0;i<tLength;i++) {
+            	String resultString = getActiveImage().getImageName() + "_T" + i;
+            	ModelImage resultImage = new ModelImage(getActiveImage().getType(), destExtents, resultString);
+            	
+            	subsetAlgo = new AlgorithmSubset(getActiveImage(), resultImage, AlgorithmSubset.REMOVE_T, i);
+            	
+            	subsetAlgo.run();
+            	
+            	new ViewJFrameImage(resultImage);
+            	
+
+            }
+            
+            
+            
+            
+            
+            
+            
+            
+        }else if (command.equals("Convert4DtoRGB")) {
             new JDialogConvert4DtoRGB(this, getActiveImage());
         } else if (command.equals("Convert3Dto4D")) {
             new JDialogConvert3Dto4D(this, getActiveImage());
