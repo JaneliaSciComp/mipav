@@ -31,7 +31,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 
-import mtry.PlugInDialogMTry;
+import mtry.PlugInDialogMTry521a;
 
 /**
  * 
@@ -45,7 +45,7 @@ import mtry.PlugInDialogMTry;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInMTry implements PlugInAlgorithm {
+public class PlugInMTry521a implements PlugInAlgorithm {
 
 	//public static final String[] CATEGORY = {"Test", "A", "B"};
 
@@ -63,7 +63,7 @@ public class PlugInMTry implements PlugInAlgorithm {
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogMTry(parentFrame, image);
+            new PlugInDialogMTry521a(parentFrame, image);
         } else {
             MipavUtil.displayError("PlugInMTry only runs on an image frame.");
         }
