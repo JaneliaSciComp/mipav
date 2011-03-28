@@ -88,8 +88,9 @@ public class JDialogTextGE extends JDialogText {
             dispose();
             ((ViewJFrameBase) parentFrame).about(slice, 0);
         } else if (event.getActionCommand().equals("Anonymize")) {
-            new JDialogAnonymizeImage(this, ((ViewJFrameImage) parentFrame).getActiveImage()); // changes the image
+            //new JDialogAnonymizeImage(this, ((ViewJFrameImage) parentFrame).getActiveImage()); // changes the image
                                                                                                // internally,
+        	((ViewJFrameImage)parentFrame).getActiveImage().anonymize(null, false);
 
             // so we don't need to remember the dialog.
             // now that dialog has finished,
