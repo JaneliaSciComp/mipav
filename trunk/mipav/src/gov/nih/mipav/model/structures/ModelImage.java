@@ -338,6 +338,16 @@ public class ModelImage extends ModelStorageBase {
                     this.setFileInfo(fileInfo[i], i);
                 }
             }
+        } else if (this.isGE_GenesisImage()) {
+        	if (getNDims() == 2) {
+        		((FileInfoGESigna5X)fileInfo[0]).anonymize();
+        	}
+        	else {
+        		for (i = 0; i < getExtents()[2]; i++) {
+        			((FileInfoGESigna5X)fileInfo[i]).anonymize();
+        			this.setFileInfo(fileInfo[i],i);
+        		}
+        	}
         }
 
         if (doRename) {
