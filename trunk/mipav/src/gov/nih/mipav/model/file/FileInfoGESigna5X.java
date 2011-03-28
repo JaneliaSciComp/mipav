@@ -1344,6 +1344,8 @@ public class FileInfoGESigna5X extends FileInfoBase {
 
     /** 50 Cell number at theta. */
     public float zeroCell;
+    
+    public int startAdjust;
 
     /** DOCUMENT ME! */
     private long currentSeconds;
