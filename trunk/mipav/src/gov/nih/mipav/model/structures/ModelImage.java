@@ -2310,6 +2310,20 @@ public class ModelImage extends ModelStorageBase {
             return false;
         }
     }
+    
+    /**
+     * Accessor that returns whether or not the image is a GE_GENESIS image.
+     * 
+     * @return <code>true</code> if GE_GENESIS, <code>false</code> if not GE_GENESIS.
+     */
+    public boolean isGE_GenesisImage() {
+    	if (fileInfo[0].getFileFormat() == FileUtility.GE_GENESIS){
+    		return true;
+    	}
+    	else {
+    		return false;
+    	}
+    }
 
     /**
      * Used to notify all frames that display this image model need to be updated.
