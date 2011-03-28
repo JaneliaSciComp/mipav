@@ -641,7 +641,8 @@ public class ViewMenuBar {
         return menuBuilder.makeMenu("Utilities", 'U', false, new JMenuItem[] {
                 menuBuilder.makeMenu("4D tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Convert 3D to 4D", "Convert3Dto4D", 0, null, false),
-                        menuBuilder.buildMenuItem("Convert 4D to 3D", "Convert4Dto3D", 0, null, false),
+                        menuBuilder.buildMenuItem("Convert 4D to Single 3D", "Convert4Dto3D", 0, null, false),
+                        menuBuilder.buildMenuItem("Convert 4D to Multiple 3D", "Convert4DtoMultiple3D", 0, null, false),
                         menuBuilder.buildMenuItem("Convert 4D to RGB", "Convert4DtoRGB", 0, null, false),
                         menuBuilder.buildMenuItem("Extract 3D subset from 4D", "Subset", 0, null, false),
                         menuBuilder.buildMenuItem("Remove time volumes", null, 0, null, false),
@@ -995,7 +996,8 @@ public class ViewMenuBar {
             }
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
-            menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
+            menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
+            menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             menuBuilder.setMenuItemEnabled("Denoising BLS GSM", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
@@ -1019,7 +1021,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Animate", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
             menuBuilder.setMenuItemEnabled("Cine (movie)", false);
-            menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
+            menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
+            menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("Extract slices", false);
@@ -1209,7 +1212,8 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Nearly circle to circle", true);
         menuBuilder.setMenuItemEnabled("Hough transform", true);
         menuBuilder.setMenuItemEnabled("Convert 4D to RGB", true);
-        menuBuilder.setMenuItemEnabled("Convert 4D to 3D", true);
+        menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", true);
+        menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", true);
         menuBuilder.setMenuItemEnabled("Denoising BLS GSM", true);
         menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", true);
         // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
