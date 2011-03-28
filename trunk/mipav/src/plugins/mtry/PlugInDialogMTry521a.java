@@ -70,7 +70,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogMTry extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
+public class PlugInDialogMTry521a extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmMTry mTryAlgo = null;
+    private PlugInAlgorithmMTry521a mTryAlgo = null;
 
     private String[] titles;
 
@@ -125,7 +125,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogMTry() { }
+    public PlugInDialogMTry521a() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -133,7 +133,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogMTry(Frame theParentFrame, ModelImage im) {
+    public PlugInDialogMTry521a(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
 
         image = im;
@@ -172,7 +172,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmMTry) {
+       if (algorithm instanceof PlugInAlgorithmMTry521a) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if (algorithm.isCompleted() == true) {
@@ -215,7 +215,7 @@ public class PlugInDialogMTry extends JDialogScriptableBase implements Algorithm
             
             resultImage = new ModelImage(ModelImage.FLOAT, new int[]{64,64,44}, "T1Map");
             
-            mTryAlgo = new PlugInAlgorithmMTry(resultImage, minImage, medImage, maxImage, 
+            mTryAlgo = new PlugInAlgorithmMTry521a(resultImage, minImage, medImage, maxImage, 
                                                     t1Min, t1Max, precision, invTimeMin, invTimeMed, invTimeMax);
 
             // This is very important. Adding this object as a listener allows the algorithm to
