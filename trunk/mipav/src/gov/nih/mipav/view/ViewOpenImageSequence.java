@@ -1,28 +1,24 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.dialogs.JDialogSelectChannelSequence;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
-import java.text.*;
-
+import java.text.NumberFormat;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.mentorgen.tools.profile.runtime.Profile;
 
+// import com.mentorgen.tools.profile.runtime.Profile;
 
 /**
  * The purpose of this class is to present the user with a window enabling him/her to open a sequence of TIFF files
@@ -30,11 +26,11 @@ import com.mentorgen.tools.profile.runtime.Profile;
  * of the files on disk may not necessarily be the correct sequence from the machine. Also shows a preview of each
  * image.
  */
-public class ViewOpenImageSequence extends JFrame
-        implements ActionListener, PreviewImageContainer, MouseListener, KeyListener,
-                   ChangeListener {
+public class ViewOpenImageSequence extends JFrame implements ActionListener, PreviewImageContainer, MouseListener,
+        KeyListener, ChangeListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5007701357886039L;
@@ -63,7 +59,8 @@ public class ViewOpenImageSequence extends JFrame
     /** DOCUMENT ME! */
     protected static final String ENABLE = "Enable";
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     protected JSlider brightnessSlider;
@@ -90,8 +87,7 @@ public class ViewOpenImageSequence extends JFrame
     protected File[] fileListData;
 
     /** DOCUMENT ME! */
-    //protected JList filenameList;
-
+    // protected JList filenameList;
     /** DOCUMENT ME! */
     protected JLabel lblOrigDim;
 
@@ -143,16 +139,16 @@ public class ViewOpenImageSequence extends JFrame
     /** DOCUMENT ME! */
     protected JTextField txtWidth;
 
-    /** Int denoting CZT sequence*/
-	protected final int CZT = 3;
+    /** Int denoting CZT sequence */
+    protected final int CZT = 3;
 
-	/** Int denoting TCZ sequence*/
-	protected final int TCZ = 5;
+    /** Int denoting TCZ sequence */
+    protected final int TCZ = 5;
 
-	/** Int denoting CTZ sequence*/
-	protected final int CTZ = 2;
+    /** Int denoting CTZ sequence */
+    protected final int CTZ = 2;
 
-	/** Int denoting TZC sequence */
+    /** Int denoting TZC sequence */
     protected final int TZC = 4;
 
     /** Int denoting ZCT sequence */
@@ -163,19 +159,18 @@ public class ViewOpenImageSequence extends JFrame
 
     /** DOCUMENT ME! */
     int[] channelMap;
-    
+
     /** DOCUMENT ME! */
     private SortingTableModel filenameTableModel;
-    
+
     /** DOCUMENT ME! */
     private TableSorter filenameTableSorter;
-    
+
     /** DOCUMENT ME! */
     private JTable filenameTable;
-    
-    
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new ViewOpenImageSequence object.
@@ -187,7 +182,7 @@ public class ViewOpenImageSequence extends JFrame
 
         setTitle("Open image sequence");
 
-        channelMap = new int[] { 1, 2, 3, 0 };
+        channelMap = new int[] {1, 2, 3, 0};
 
         buildUserInterface();
 
@@ -196,23 +191,23 @@ public class ViewOpenImageSequence extends JFrame
         setVisible(true);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
-        if (command.equals(BROWSE)) {
-            JFileChooser fileChooser = new JFileChooser(getLastOpenSequencePath());
+        if (command.equals(ViewOpenImageSequence.BROWSE)) {
+            final JFileChooser fileChooser = new JFileChooser(getLastOpenSequencePath());
             fileChooser.setMultiSelectionEnabled(false);
 
             if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
+                final File selectedFile = fileChooser.getSelectedFile();
 
                 txtDirectory.setText(selectedFile.getAbsolutePath());
 
@@ -231,35 +226,34 @@ public class ViewOpenImageSequence extends JFrame
 
                 Vector<String> fileListVector = new Vector<String>();
 
-                for (int i = 0; i < fileListData.length; i++) {
+                for (final File element : fileListData) {
 
-                    if (fileListData[i].isFile()) // only add files to the file list
+                    if (element.isFile()) // only add files to the file list
                     {
-                        fileListVector.addElement(fileListData[i].getName());
+                        fileListVector.addElement(element.getName());
                     }
                 }
 
                 // filter out files that don't have same file extension as selected file
-                fileListVector = (Vector<String>)filterFileExtension(fileListVector, selectedFile);
+                fileListVector = filterFileExtension(fileListVector, selectedFile);
 
-                for(int i=0;i<fileListVector.size();i++) {
-                	Vector<String> newRow = new Vector<String>();
-                	newRow.addElement(fileListVector.get(i));
-                	filenameTableModel.addRow(newRow);
+                for (int i = 0; i < fileListVector.size(); i++) {
+                    final Vector<String> newRow = new Vector<String>();
+                    newRow.addElement(fileListVector.get(i));
+                    filenameTableModel.addRow(newRow);
                 }
-                
 
                 while (table.getModel().getRowCount() > 0) // reset table
                 {
                     ((DefaultTableModel) table.getModel()).removeRow(0);
                 }
 
-                if(filenameTableModel.getRowCount() > 0) { //auto-select first entry
-                	filenameTable.setRowSelectionInterval(0, 0);
-                	makePreview(currentPath.getAbsolutePath() + File.separator, (String) filenameTable.getValueAt(0, 0));
+                if (filenameTableModel.getRowCount() > 0) { // auto-select first entry
+                    filenameTable.setRowSelectionInterval(0, 0);
+                    makePreview(currentPath.getAbsolutePath() + File.separator, (String) filenameTable.getValueAt(0, 0));
                 }
             }
-        } else if (command.equals(APPLY)) {
+        } else if (command.equals(ViewOpenImageSequence.APPLY)) {
 
             if (dimensionsSanityCheck() == false) {
                 MipavUtil.displayError("One or more 'Dimensions' values invalid.");
@@ -267,58 +261,58 @@ public class ViewOpenImageSequence extends JFrame
                 return;
             }
 
-            if(filenameTable.getRowCount() == 0) {
-            	return;
+            if (filenameTable.getRowCount() == 0) {
+                return;
             }
             // save dimensions parameters for next time
             Preferences.setLastOpenSequenceParams(txtSlices.getText(), txtChannels.getText(), txtTimePoints.getText(),
-                                                  String.valueOf(getSelectedSequence()));
+                    String.valueOf(getSelectedSequence()));
 
             // format the table according to the dimensions parameters
             formatTable(getSelectedSequence());
-        } else if (command.equals(FILTER)) {
+        } else if (command.equals(ViewOpenImageSequence.FILTER)) {
 
             // constrain list data to selected items
-        	keepSelected();
-        } else if (command.equals(REMOVE)) {
+            keepSelected();
+        } else if (command.equals(ViewOpenImageSequence.REMOVE)) {
 
             // crop list data from selected items
             removeSelected();
-        } else if (command.equals(CANCEL)) {
+        } else if (command.equals(ViewOpenImageSequence.CANCEL)) {
             dispose();
-        } else if (command.equals(OK)) {
+        } else if (command.equals(ViewOpenImageSequence.OK)) {
             Dimension subsampleDimension = null;
 
             if (dimensionsSanityCheck() == false) {
-            	String dimFormat = "";
-            	switch (getSelectedSequence()) {
-            	
-	                case ZCT:
-	                    dimFormat = radZCT.getText();
-	                    break;
-	
-	                case ZTC:
-	                    dimFormat = radZTC.getText();
-	                    break;
-	
-	                case TZC:
-	                    dimFormat = radTZC.getText();
-	                    break;
-	
-	                case TCZ:
-	                    dimFormat = radTCZ.getText();
-	                    break;
-	
-	                case CTZ:
-	                    dimFormat = radCTZ.getText();
-	                    break;
-	
-	                case CZT:
-	                    dimFormat = radCZT.getText();
-	                    break;
+                String dimFormat = "";
+                switch (getSelectedSequence()) {
+
+                    case ZCT:
+                        dimFormat = radZCT.getText();
+                        break;
+
+                    case ZTC:
+                        dimFormat = radZTC.getText();
+                        break;
+
+                    case TZC:
+                        dimFormat = radTZC.getText();
+                        break;
+
+                    case TCZ:
+                        dimFormat = radTCZ.getText();
+                        break;
+
+                    case CTZ:
+                        dimFormat = radCTZ.getText();
+                        break;
+
+                    case CZT:
+                        dimFormat = radCZT.getText();
+                        break;
                 }
-            	
-                MipavUtil.displayError("One or more "+dimFormat+" dimensions values invalid.");
+
+                MipavUtil.displayError("One or more " + dimFormat + " dimensions values invalid.");
                 return;
             }
 
@@ -329,18 +323,18 @@ public class ViewOpenImageSequence extends JFrame
             }
 
             if (enableCheckbox.isSelected()) {
-                subsampleDimension = new Dimension(Integer.parseInt(txtWidth.getText()),
-                                                   Integer.parseInt(txtHeight.getText()));
+                subsampleDimension = new Dimension(Integer.parseInt(txtWidth.getText()), Integer.parseInt(txtHeight
+                        .getText()));
             }
 
-            int numChannels = Integer.parseInt(txtChannels.getText());
-            int numSlices = Integer.parseInt(txtSlices.getText());
-            int numTimePoints = Integer.parseInt(txtTimePoints.getText());
+            final int numChannels = Integer.parseInt(txtChannels.getText());
+            final int numSlices = Integer.parseInt(txtSlices.getText());
+            final int numTimePoints = Integer.parseInt(txtTimePoints.getText());
 
             openImage(numChannels, numSlices, numTimePoints, subsampleDimension); // based on dimensions parameters
-        } else if (command.equals(CONFIGURE_CHANNELS)) {
+        } else if (command.equals(ViewOpenImageSequence.CONFIGURE_CHANNELS)) {
             new JDialogSelectChannelSequence(this, channelMap); // to change order of color channels
-        } else if (command.equals(ENABLE)) {
+        } else if (command.equals(ViewOpenImageSequence.ENABLE)) {
             txtHeight.setEnabled(enableCheckbox.isSelected());
             txtWidth.setEnabled(enableCheckbox.isSelected());
             chkForceUBYTE.setEnabled(enableCheckbox.isSelected());
@@ -349,8 +343,8 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Method is required by PreviewImageContainer interface to draw a preview image.
-     *
-     * @return  Dimension - indicating the size of the preview image area.
+     * 
+     * @return Dimension - indicating the size of the preview image area.
      */
     public Dimension getPanelSize() {
         return previewPanel.getSize();
@@ -358,101 +352,99 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void keyPressed(KeyEvent event) { 
-    	
-    	
+    public void keyPressed(final KeyEvent event) {
+
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void keyReleased(KeyEvent event) {
+    public void keyReleased(final KeyEvent event) {
 
         if (event.getSource() == table) {
             if (table.getSelectedColumn() != 0) {
-                String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
-                String filename = (String) table.getModel().getValueAt(table.getSelectedRow(),
-                                                                       table.getSelectedColumn());
+                final String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
+                final String filename = (String) table.getModel().getValueAt(table.getSelectedRow(),
+                        table.getSelectedColumn());
 
                 makePreview(currentPath, filename);
             }
         }
-        
+
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void keyTyped(KeyEvent event) { }
+    public void keyTyped(final KeyEvent event) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mouseClicked(MouseEvent event) { }
+    public void mouseClicked(final MouseEvent event) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mouseEntered(MouseEvent event) { }
+    public void mouseEntered(final MouseEvent event) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mouseExited(MouseEvent event) { }
+    public void mouseExited(final MouseEvent event) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mousePressed(MouseEvent event) {
+    public void mousePressed(final MouseEvent event) {
 
         if (event.getButton() == MouseEvent.BUTTON1) {
-        	if(event.getSource() == table) {
-	            if (table.getSelectedColumn() != 0) {
-	                String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
-	                String filename = (String) table.getModel().getValueAt(table.getSelectedRow(),
-	                                                                       table.getSelectedColumn());
-	
-	                makePreview(currentPath, filename);
-	            }
-        	}
-        	if(event.getSource() == filenameTable) {
-            	int selectedIndex = filenameTable.getSelectedRow();
-            	makePreview(currentPath.getAbsolutePath() + File.separator, (String) filenameTable.getValueAt(selectedIndex, 0));
-        	}
-        	
-            
-            
+            if (event.getSource() == table) {
+                if (table.getSelectedColumn() != 0) {
+                    final String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
+                    final String filename = (String) table.getModel().getValueAt(table.getSelectedRow(),
+                            table.getSelectedColumn());
+
+                    makePreview(currentPath, filename);
+                }
+            }
+            if (event.getSource() == filenameTable) {
+                final int selectedIndex = filenameTable.getSelectedRow();
+                makePreview(currentPath.getAbsolutePath() + File.separator, (String) filenameTable.getValueAt(
+                        selectedIndex, 0));
+            }
+
         }
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void mouseReleased(MouseEvent event) {
+    public void mouseReleased(final MouseEvent event) {
 
         if (event.getButton() == MouseEvent.BUTTON3) {
-            JPopupMenu popupMenu = new JPopupMenu();
+            final JPopupMenu popupMenu = new JPopupMenu();
 
-            JMenuItem menuItem = new JMenuItem(CONFIGURE_CHANNELS);
+            final JMenuItem menuItem = new JMenuItem(ViewOpenImageSequence.CONFIGURE_CHANNELS);
             menuItem.addActionListener(this);
-            menuItem.setActionCommand(CONFIGURE_CHANNELS);
+            menuItem.setActionCommand(ViewOpenImageSequence.CONFIGURE_CHANNELS);
             popupMenu.add(menuItem);
 
             popupMenu.show((Component) event.getSource(), event.getX(), event.getY());
@@ -461,46 +453,45 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  channelMap  DOCUMENT ME!
+     * 
+     * @param channelMap DOCUMENT ME!
      */
-    public void newChannelMap(int[] channelMap) {
+    public void newChannelMap(final int[] channelMap) {
         this.channelMap = channelMap;
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void stateChanged(ChangeEvent event) {
-        Component[] components = previewPanel.getComponents();
+    public void stateChanged(final ChangeEvent event) {
+        final Component[] components = previewPanel.getComponents();
 
-        for (int i = 0; i < components.length; i++) {
+        for (final Component element : components) {
 
-            if (components[i] instanceof ViewJComponentPreviewImage) {
-                float contrast = (float) Math.pow(10.0, contrastSlider.getValue() / 200.0);
+            if (element instanceof ViewJComponentPreviewImage) {
+                final float contrast = (float) Math.pow(10.0, contrastSlider.getValue() / 200.0);
 
-                ((ViewJComponentPreviewImage) components[i]).setSliceBrightness(brightnessSlider.getValue(), contrast);
+                ((ViewJComponentPreviewImage) element).setSliceBrightness(brightnessSlider.getValue(), contrast);
             }
         }
     }
 
-
     /**
      * Arrange the table in CTZ order.
-     *
-     * @param  numSlices      int - the number of slices the data represents
-     * @param  numChannels    int - the number of channels the data represents
-     * @param  numTimePoints  int - the number of time points the data represents
+     * 
+     * @param numSlices int - the number of slices the data represents
+     * @param numChannels int - the number of channels the data represents
+     * @param numTimePoints int - the number of time points the data represents
      */
-    protected void arrangeCTZ(int numSlices, int numChannels, int numTimePoints) {
-        Vector<String> channelVector = new Vector<String>();
+    protected void arrangeCTZ(final int numSlices, final int numChannels, final int numTimePoints) {
+        final Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
-            if ((i % numSlices) == 0) {
-                channelVector.addElement("" + ((i / numSlices) + 1));
+            if ( (i % numSlices) == 0) {
+                channelVector.addElement("" + ( (i / numSlices) + 1));
             } else {
                 channelVector.addElement("");
             }
@@ -511,20 +502,19 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector<String> timePointVector = new Vector<String>();
+                final Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector<String> zSliceVector = new Vector<String>();
+                    final Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < numSlices; j++) {
-                    	/* nish
-                        zSliceVector.addElement(filenameList.getModel().getElementAt((j * numTimePoints * numChannels) +
-                                                                                     (numChannels * i) + k)); */
-                    	zSliceVector.addElement((String) filenameTable.getValueAt((j * numTimePoints * numChannels) + (numChannels * i) + k, 0));
-                          
-                    	
-                    	
-                    	
+                        /*
+                         * nish zSliceVector.addElement(filenameList.getModel().getElementAt((j * numTimePoints *
+                         * numChannels) + (numChannels * i) + k));
+                         */
+                        zSliceVector.addElement((String) filenameTable.getValueAt( (j * numTimePoints * numChannels)
+                                + (numChannels * i) + k, 0));
+
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -532,8 +522,9 @@ public class ViewOpenImageSequence extends JFrame
 
                 tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        } catch (ArrayIndexOutOfBoundsException aioobe) {
-            MipavUtil.displayError("Index out of bounds in arrangeCTZ - parameters indicate a dimension larger than available range of data.");
+        } catch (final ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil
+                    .displayError("Index out of bounds in arrangeCTZ - parameters indicate a dimension larger than available range of data.");
 
             return;
         }
@@ -541,18 +532,18 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Arrange the table in CZT order.
-     *
-     * @param  numSlices      int - the number of slices the data represents
-     * @param  numChannels    int - the number of channels the data represents
-     * @param  numTimePoints  int - the number of time points the data represents
+     * 
+     * @param numSlices int - the number of slices the data represents
+     * @param numChannels int - the number of channels the data represents
+     * @param numTimePoints int - the number of time points the data represents
      */
-    protected void arrangeCZT(int numSlices, int numChannels, int numTimePoints) {
-        Vector<String> channelVector = new Vector<String>();
+    protected void arrangeCZT(final int numSlices, final int numChannels, final int numTimePoints) {
+        final Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
-            if ((i % numSlices) == 0) {
-                channelVector.addElement("" + ((i / numSlices) + 1));
+            if ( (i % numSlices) == 0) {
+                channelVector.addElement("" + ( (i / numSlices) + 1));
             } else {
                 channelVector.addElement("");
             }
@@ -563,18 +554,20 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector<String> timePointVector = new Vector<String>();
+                final Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector<String> zSliceVector = new Vector<String>();
+                    final Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < (numSlices * numChannels); j += numChannels) {
-                    	/* nish
-                        zSliceVector.addElement(filenameList.getModel().getElementAt(j + k +
-                                                                                     (numSlices * numChannels * i))); */
-                    	
-                    	zSliceVector.addElement((String)filenameTable.getValueAt(j + k + (numSlices * numChannels * i), 0));
-                    	
+                        /*
+                         * nish zSliceVector.addElement(filenameList.getModel().getElementAt(j + k + (numSlices *
+                         * numChannels * i)));
+                         */
+
+                        zSliceVector.addElement((String) filenameTable.getValueAt(
+                                j + k + (numSlices * numChannels * i), 0));
+
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -582,8 +575,9 @@ public class ViewOpenImageSequence extends JFrame
 
                 tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        } catch (ArrayIndexOutOfBoundsException aioobe) {
-            MipavUtil.displayError("Index out of bounds in arrangeCZT - parameters indicate a dimension larger than available range of data.");
+        } catch (final ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil
+                    .displayError("Index out of bounds in arrangeCZT - parameters indicate a dimension larger than available range of data.");
 
             return;
         }
@@ -591,18 +585,18 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Arrange the table in TCZ order.
-     *
-     * @param  numSlices      int - the number of slices the data represents
-     * @param  numChannels    int - the number of channels the data represents
-     * @param  numTimePoints  int - the number of time points the data represents
+     * 
+     * @param numSlices int - the number of slices the data represents
+     * @param numChannels int - the number of channels the data represents
+     * @param numTimePoints int - the number of time points the data represents
      */
-    protected void arrangeTCZ(int numSlices, int numChannels, int numTimePoints) {
-        Vector<String> channelVector = new Vector<String>();
+    protected void arrangeTCZ(final int numSlices, final int numChannels, final int numTimePoints) {
+        final Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
-            if ((i % numSlices) == 0) {
-                channelVector.addElement("" + ((i / numSlices) + 1));
+            if ( (i % numSlices) == 0) {
+                channelVector.addElement("" + ( (i / numSlices) + 1));
             } else {
                 channelVector.addElement("");
             }
@@ -613,18 +607,19 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector<String> timePointVector = new Vector<String>();
+                final Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector<String> zSliceVector = new Vector<String>();
+                    final Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < numSlices; j++) {
-                    	/* nish
-                        zSliceVector.addElement(filenameList.getModel().getElementAt((j * numTimePoints * numChannels) +
-                                                                                     (k * numTimePoints) + i)); */
-                    	
-                    	
-                    	zSliceVector.addElement((String)filenameTable.getValueAt((j * numTimePoints * numChannels) + (k * numTimePoints) + i, 0));
+                        /*
+                         * nish zSliceVector.addElement(filenameList.getModel().getElementAt((j * numTimePoints *
+                         * numChannels) + (k * numTimePoints) + i));
+                         */
+
+                        zSliceVector.addElement((String) filenameTable.getValueAt( (j * numTimePoints * numChannels)
+                                + (k * numTimePoints) + i, 0));
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -632,8 +627,9 @@ public class ViewOpenImageSequence extends JFrame
 
                 tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        } catch (ArrayIndexOutOfBoundsException aioobe) {
-            MipavUtil.displayError("Index out of bounds in arrangeTCZ - parameters indicate a dimension larger than available range of data.");
+        } catch (final ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil
+                    .displayError("Index out of bounds in arrangeTCZ - parameters indicate a dimension larger than available range of data.");
 
             return;
         }
@@ -641,18 +637,18 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Arrange the table in TZC order.
-     *
-     * @param  numSlices      int - the number of slices the data represents
-     * @param  numChannels    int - the number of channels the data represents
-     * @param  numTimePoints  int - the number of time points the data represents
+     * 
+     * @param numSlices int - the number of slices the data represents
+     * @param numChannels int - the number of channels the data represents
+     * @param numTimePoints int - the number of time points the data represents
      */
-    protected void arrangeTZC(int numSlices, int numChannels, int numTimePoints) {
-        Vector<String> channelVector = new Vector<String>();
+    protected void arrangeTZC(final int numSlices, final int numChannels, final int numTimePoints) {
+        final Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
-            if ((i % numSlices) == 0) {
-                channelVector.addElement("" + ((i / numSlices) + 1));
+            if ( (i % numSlices) == 0) {
+                channelVector.addElement("" + ( (i / numSlices) + 1));
             } else {
                 channelVector.addElement("");
             }
@@ -663,20 +659,21 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector<String> timePointVector = new Vector<String>();
+                final Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < (numChannels * numSlices); k++) {
-                	/* nish
-                    timePointVector.addElement(filenameList.getModel().getElementAt((k * numTimePoints) + i)); */
-                	
-                	
-                	timePointVector.addElement((String)filenameTable.getValueAt((k * numTimePoints) + i, 0));
+                    /*
+                     * nish timePointVector.addElement(filenameList.getModel().getElementAt((k * numTimePoints) + i));
+                     */
+
+                    timePointVector.addElement((String) filenameTable.getValueAt( (k * numTimePoints) + i, 0));
                 }
 
                 tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        } catch (ArrayIndexOutOfBoundsException aioobe) {
-            MipavUtil.displayError("Index out of bounds in arrangeTCZ - parameters indicate a dimension larger than available range of data.");
+        } catch (final ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil
+                    .displayError("Index out of bounds in arrangeTCZ - parameters indicate a dimension larger than available range of data.");
 
             return;
         }
@@ -684,18 +681,18 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Arrange the table in ZCT order.
-     *
-     * @param  numSlices      int - the number of slices the data represents
-     * @param  numChannels    int - the number of channels the data represents
-     * @param  numTimePoints  int - the number of time points the data represents
+     * 
+     * @param numSlices int - the number of slices the data represents
+     * @param numChannels int - the number of channels the data represents
+     * @param numTimePoints int - the number of time points the data represents
      */
-    protected void arrangeZCT(int numSlices, int numChannels, int numTimePoints) {
-        Vector<String> channelVector = new Vector<String>();
+    protected void arrangeZCT(final int numSlices, final int numChannels, final int numTimePoints) {
+        final Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
-            if ((i % numSlices) == 0) {
-                channelVector.addElement("" + ((i / numSlices) + 1));
+            if ( (i % numSlices) == 0) {
+                channelVector.addElement("" + ( (i / numSlices) + 1));
             } else {
                 channelVector.addElement("");
             }
@@ -706,17 +703,19 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector<String> timePointVector = new Vector<String>();
+                final Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector<String> zSliceVector = new Vector<String>();
+                    final Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < numSlices; j++) {
-                    	/* nish
-                        zSliceVector.addElement(filenameList.getModel().getElementAt((j + (k * numSlices)) +
-                                                                                     (i * numSlices * numChannels))); */
-                    	
-                    	zSliceVector.addElement((String)filenameTable.getValueAt((j + (k * numSlices)) + (i * numSlices * numChannels), 0));
+                        /*
+                         * nish zSliceVector.addElement(filenameList.getModel().getElementAt((j + (k * numSlices)) + (i *
+                         * numSlices * numChannels)));
+                         */
+
+                        zSliceVector.addElement((String) filenameTable.getValueAt( (j + (k * numSlices))
+                                + (i * numSlices * numChannels), 0));
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -724,8 +723,9 @@ public class ViewOpenImageSequence extends JFrame
 
                 tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        } catch (ArrayIndexOutOfBoundsException aioobe) {
-            MipavUtil.displayError("Index out of bounds in arrangeZCT - parameters indicate a dimension larger than available range of data.");
+        } catch (final ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil
+                    .displayError("Index out of bounds in arrangeZCT - parameters indicate a dimension larger than available range of data.");
 
             return;
         }
@@ -733,18 +733,18 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Arrange the table in ZTC order.
-     *
-     * @param  numSlices      int - the number of slices the data represents
-     * @param  numChannels    int - the number of channels the data represents
-     * @param  numTimePoints  int - the number of time points the data represents
+     * 
+     * @param numSlices int - the number of slices the data represents
+     * @param numChannels int - the number of channels the data represents
+     * @param numTimePoints int - the number of time points the data represents
      */
-    protected void arrangeZTC(int numSlices, int numChannels, int numTimePoints) {
-        Vector<String> channelVector = new Vector<String>();
+    protected void arrangeZTC(final int numSlices, final int numChannels, final int numTimePoints) {
+        final Vector<String> channelVector = new Vector<String>();
 
         for (int i = 0; i < (numSlices * numChannels); i++) {
 
-            if ((i % numSlices) == 0) {
-                channelVector.addElement("" + ((i / numSlices) + 1));
+            if ( (i % numSlices) == 0) {
+                channelVector.addElement("" + ( (i / numSlices) + 1));
             } else {
                 channelVector.addElement("");
             }
@@ -755,17 +755,19 @@ public class ViewOpenImageSequence extends JFrame
         try {
 
             for (int i = 0; i < numTimePoints; i++) {
-                Vector<String> timePointVector = new Vector<String>();
+                final Vector<String> timePointVector = new Vector<String>();
 
                 for (int k = 0; k < numChannels; k++) {
-                    Vector<String> zSliceVector = new Vector<String>();
+                    final Vector<String> zSliceVector = new Vector<String>();
 
                     for (int j = 0; j < numSlices; j++) {
-                    	/* nish
-                        zSliceVector.addElement(filenameList.getModel().getElementAt(j + (numSlices * i) +
-                                                                                     (numTimePoints * numSlices * k))); */
-                    	
-                    	zSliceVector.addElement((String)filenameTable.getValueAt(j + (numSlices * i) + (numTimePoints * numSlices * k), 0));
+                        /*
+                         * nish zSliceVector.addElement(filenameList.getModel().getElementAt(j + (numSlices * i) +
+                         * (numTimePoints * numSlices * k)));
+                         */
+
+                        zSliceVector.addElement((String) filenameTable.getValueAt(j + (numSlices * i)
+                                + (numTimePoints * numSlices * k), 0));
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -773,8 +775,9 @@ public class ViewOpenImageSequence extends JFrame
 
                 tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        } catch (ArrayIndexOutOfBoundsException aioobe) {
-            MipavUtil.displayError("Index out of bounds in arrangeZTC - parameters indicate a dimension larger than available range of data.");
+        } catch (final ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil
+                    .displayError("Index out of bounds in arrangeZTC - parameters indicate a dimension larger than available range of data.");
 
             return;
         }
@@ -782,34 +785,34 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanel buildBrightnessContrastPanel() {
-        int origBrightness = 0;
-        brightnessSlider = new JSlider(JSlider.HORIZONTAL, -255, 255, origBrightness);
+        final int origBrightness = 0;
+        brightnessSlider = new JSlider(SwingConstants.HORIZONTAL, -255, 255, origBrightness);
 
         brightnessSlider.setMajorTickSpacing(102);
         brightnessSlider.setPaintTicks(true);
         brightnessSlider.setEnabled(true);
         brightnessSlider.addChangeListener(this);
 
-        JLabel maximum = new JLabel(String.valueOf(255));
+        final JLabel maximum = new JLabel(String.valueOf(255));
 
         maximum.setForeground(Color.black);
         maximum.setFont(MipavUtil.font12);
 
-        JLabel current = new JLabel(String.valueOf(origBrightness));
+        final JLabel current = new JLabel(String.valueOf(origBrightness));
         current.setForeground(Color.black);
         current.setFont(MipavUtil.font12B);
 
-        JLabel minimum = new JLabel(String.valueOf(-255));
+        final JLabel minimum = new JLabel(String.valueOf( -255));
 
         minimum.setForeground(Color.black);
         minimum.setFont(MipavUtil.font12);
 
-        JPanel sliderPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
+        final JPanel sliderPanel = new JPanel(new GridBagLayout());
+        final GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -843,33 +846,33 @@ public class ViewOpenImageSequence extends JFrame
         sliderPanel.add(maximum, gbc);
         sliderPanel.setBorder(BorderFactory.createTitledBorder("Level"));
 
-        int origContrast = 1;
-        contrastSlider = new JSlider(JSlider.HORIZONTAL, -200, 200,
-                                     (int) (Math.round(86.85889638 * Math.log(origContrast))));
+        final int origContrast = 1;
+        contrastSlider = new JSlider(SwingConstants.HORIZONTAL, -200, 200, (int) (Math.round(86.85889638 * Math
+                .log(origContrast))));
 
         contrastSlider.setMajorTickSpacing(80);
         contrastSlider.setPaintTicks(true);
         contrastSlider.setEnabled(true);
         contrastSlider.addChangeListener(this);
 
-        JLabel maximum2 = new JLabel(String.valueOf(10));
+        final JLabel maximum2 = new JLabel(String.valueOf(10));
 
         maximum2.setForeground(Color.black);
         maximum2.setFont(MipavUtil.font12);
 
-        NumberFormat nfc = NumberFormat.getNumberInstance();
+        final NumberFormat nfc = NumberFormat.getNumberInstance();
         nfc.setMaximumFractionDigits(3);
 
-        JLabel current2 = new JLabel(String.valueOf(nfc.format(origContrast)));
+        final JLabel current2 = new JLabel(String.valueOf(nfc.format(origContrast)));
         current2.setForeground(Color.black);
         current2.setFont(MipavUtil.font12B);
 
-        JLabel minimum2 = new JLabel(String.valueOf(0.100));
+        final JLabel minimum2 = new JLabel(String.valueOf(0.100));
 
         minimum2.setForeground(Color.black);
         minimum2.setFont(MipavUtil.font12);
 
-        JPanel sliderPanel2 = new JPanel(new GridBagLayout());
+        final JPanel sliderPanel2 = new JPanel(new GridBagLayout());
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -903,10 +906,10 @@ public class ViewOpenImageSequence extends JFrame
         sliderPanel2.add(maximum2, gbc);
         sliderPanel2.setBorder(BorderFactory.createTitledBorder("Window"));
 
-        JPanel centerPanel = new JPanel(new GridBagLayout());
+        final JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setBackground(Color.yellow);
 
-        GridBagConstraints gbc2 = new GridBagConstraints();
+        final GridBagConstraints gbc2 = new GridBagConstraints();
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
@@ -922,7 +925,7 @@ public class ViewOpenImageSequence extends JFrame
         gbc2.gridheight = 1;
         gbc2.gridy = 4;
 
-        JPanel brightnessContrastPanel = new JPanel(new BorderLayout());
+        final JPanel brightnessContrastPanel = new JPanel(new BorderLayout());
         brightnessContrastPanel.add(centerPanel, BorderLayout.NORTH);
         brightnessContrastPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -931,17 +934,17 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanel buildCenterPanel() {
-        GridBagConstraints gbConstraints = new GridBagConstraints();
-        GridBagLayout gbLayout = new GridBagLayout();
+        final GridBagConstraints gbConstraints = new GridBagConstraints();
+        final GridBagLayout gbLayout = new GridBagLayout();
 
-        JPanel centerPanel = new JPanel(gbLayout);
+        final JPanel centerPanel = new JPanel(gbLayout);
 
-        /** adding the 'Dimensions' panel **/
-        JPanel dimensionsSubPanel = buildDimensionsPanel();
+        /** adding the 'Dimensions' panel * */
+        final JPanel dimensionsSubPanel = buildDimensionsPanel();
         gbConstraints.gridx = 0;
         gbConstraints.gridy = 0;
         gbConstraints.weightx = 1;
@@ -954,10 +957,10 @@ public class ViewOpenImageSequence extends JFrame
         gbLayout.setConstraints(dimensionsSubPanel, gbConstraints);
         centerPanel.add(dimensionsSubPanel);
 
-        /** done adding 'Dimensions' panel **/
+        /** done adding 'Dimensions' panel * */
 
-        /** adding the 'Sequences' panel **/
-        JPanel sequenceSubPanel = buildSequencesPanel();
+        /** adding the 'Sequences' panel * */
+        final JPanel sequenceSubPanel = buildSequencesPanel();
         gbConstraints.gridx = 0;
         gbConstraints.gridy = 3;
         gbConstraints.insets = new Insets(1, 0, 1, 4);
@@ -966,10 +969,10 @@ public class ViewOpenImageSequence extends JFrame
         gbLayout.setConstraints(sequenceSubPanel, gbConstraints);
         centerPanel.add(sequenceSubPanel);
 
-        /** done adding the 'Sequences' panel **/
+        /** done adding the 'Sequences' panel * */
 
-        /** adding the 'Subsample' panel **/
-        JPanel subsamplePanel = buildSubsamplePanel();
+        /** adding the 'Subsample' panel * */
+        final JPanel subsamplePanel = buildSubsamplePanel();
         gbConstraints.gridx = 0;
         gbConstraints.gridy = 5;
         gbConstraints.insets = new Insets(1, 0, 1, 4);
@@ -978,7 +981,7 @@ public class ViewOpenImageSequence extends JFrame
         gbLayout.setConstraints(subsamplePanel, gbConstraints);
         centerPanel.add(subsamplePanel);
 
-        /** done adding the 'Subsample' panel **/
+        /** done adding the 'Subsample' panel * */
 
         // this section has been moved to buildSubsamplePanel()
         // gbConstraints.gridy = 7;
@@ -987,10 +990,9 @@ public class ViewOpenImageSequence extends JFrame
         // chkForceUBYTE.setToolTipText("Force result grayscale images into unsigned byte, color images into ARGB");
         // gbLayout.setConstraints(chkForceUBYTE, gbConstraints);
         // centerPanel.add(chkForceUBYTE);
-
         // adding the 'Apply' button
-        JButton btnApply = new JButton("Apply >>");
-        btnApply.setActionCommand(APPLY);
+        final JButton btnApply = new JButton("Apply >>");
+        btnApply.setActionCommand(ViewOpenImageSequence.APPLY);
         btnApply.addActionListener(this);
         gbConstraints.gridx = 0;
         gbConstraints.gridy = 8;
@@ -1017,7 +1019,7 @@ public class ViewOpenImageSequence extends JFrame
         centerPanel.add(previewPanel);
         // done adding the image preview panel
 
-        JPanel infoPanel = new JPanel();
+        final JPanel infoPanel = new JPanel();
         lblOrigDim = new JLabel();
         lblOrigDim.setFont(MipavUtil.font10);
         infoPanel.add(lblOrigDim);
@@ -1031,7 +1033,7 @@ public class ViewOpenImageSequence extends JFrame
         centerPanel.add(infoPanel);
 
         // add the brightness/contrast panel
-        JPanel bcPanel = buildBrightnessContrastPanel();
+        final JPanel bcPanel = buildBrightnessContrastPanel();
         gbConstraints.gridy = 20;
         gbConstraints.gridheight = 1;
         gbConstraints.weighty = 1;
@@ -1044,28 +1046,27 @@ public class ViewOpenImageSequence extends JFrame
         return centerPanel;
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanel buildDimensionsPanel() {
-        GridBagLayout centerPanelGBLayout = new GridBagLayout();
-        GridBagConstraints centerPanelGBConstraints = new GridBagConstraints();
+        final GridBagLayout centerPanelGBLayout = new GridBagLayout();
+        final GridBagConstraints centerPanelGBConstraints = new GridBagConstraints();
 
-        JPanel centerSubPanel = new JPanel(centerPanelGBLayout);
+        final JPanel centerSubPanel = new JPanel(centerPanelGBLayout);
         centerSubPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Dimensions"));
 
         txtSlices = new JTextField();
         txtChannels = new JTextField();
         txtTimePoints = new JTextField();
 
-        JLabel lblSlices = new JLabel(" Slices (Z)");
-        JLabel lblChannels = new JLabel(" Channels (C)");
-        JLabel lblTimePoints = new JLabel(" Time points (T)");
+        final JLabel lblSlices = new JLabel(" Slices (Z)");
+        final JLabel lblChannels = new JLabel(" Channels (C)");
+        final JLabel lblTimePoints = new JLabel(" Time points (T)");
 
-        /** adding the 'Slices' textfield **/
+        /** adding the 'Slices' textfield * */
         centerPanelGBConstraints.gridwidth = 1;
         centerPanelGBConstraints.weightx = 1;
         centerPanelGBConstraints.anchor = GridBagConstraints.WEST;
@@ -1073,14 +1074,14 @@ public class ViewOpenImageSequence extends JFrame
         centerPanelGBLayout.setConstraints(txtSlices, centerPanelGBConstraints);
         centerSubPanel.add(txtSlices);
 
-        /** adding the 'Slices' label **/
+        /** adding the 'Slices' label * */
         centerPanelGBConstraints.gridx = 1;
         centerPanelGBConstraints.gridwidth = 2;
         centerPanelGBConstraints.fill = GridBagConstraints.NONE;
         centerPanelGBLayout.setConstraints(lblSlices, centerPanelGBConstraints);
         centerSubPanel.add(lblSlices);
 
-        /** adding the 'Channels' textfield **/
+        /** adding the 'Channels' textfield * */
         centerPanelGBConstraints.gridx = 0;
         centerPanelGBConstraints.gridy = 1;
         centerPanelGBConstraints.weightx = 1;
@@ -1089,14 +1090,14 @@ public class ViewOpenImageSequence extends JFrame
         centerPanelGBLayout.setConstraints(txtChannels, centerPanelGBConstraints);
         centerSubPanel.add(txtChannels);
 
-        /** adding the 'Channels' label **/
+        /** adding the 'Channels' label * */
         centerPanelGBConstraints.gridx = 1;
         centerPanelGBConstraints.gridwidth = 2;
         centerPanelGBConstraints.fill = GridBagConstraints.NONE;
         centerPanelGBLayout.setConstraints(lblChannels, centerPanelGBConstraints);
         centerSubPanel.add(lblChannels);
 
-        /** adding the 'Time points' textfield **/
+        /** adding the 'Time points' textfield * */
         centerPanelGBConstraints.gridx = 0;
         centerPanelGBConstraints.gridy = 2;
         centerPanelGBConstraints.gridwidth = 1;
@@ -1105,7 +1106,7 @@ public class ViewOpenImageSequence extends JFrame
         centerPanelGBLayout.setConstraints(txtTimePoints, centerPanelGBConstraints);
         centerSubPanel.add(txtTimePoints);
 
-        /** adding the 'Time points' label **/
+        /** adding the 'Time points' label * */
         centerPanelGBConstraints.gridx = 1;
         centerPanelGBConstraints.gridwidth = 2;
         centerPanelGBConstraints.fill = GridBagConstraints.NONE;
@@ -1117,86 +1118,79 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanel buildLeftSubPanel() {
-        JPanel leftSubPanel = new JPanel(new BorderLayout());
+        final JPanel leftSubPanel = new JPanel(new BorderLayout());
         leftSubPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "File list"));
-        
-        
+
         filenameTableModel = new SortingTableModel();
         filenameTableSorter = new TableSorter(filenameTableModel);
         filenameTable = new JTable(filenameTableSorter);
         filenameTable.addKeyListener(this);
-        
 
         filenameTableSorter.setColumnComparator(new String().getClass(), TableSorter.LEXICAL_NUMS_COMPARATOR);
         filenameTableSorter.setTableHeader(filenameTable.getTableHeader());
         filenameTable.addMouseListener(this);
         filenameTableModel.addColumn("File Name");
         filenameTable.setDefaultRenderer(new String().getClass(), new MIPAVTableCellRenderer());
-        
-        
-        
-        
-        /** adding the filename scroll pane **/
-        //filenameList = new JList();
 
-        //JScrollPane scrollPane = new JScrollPane(filenameList);
-        //filenameList.addListSelectionListener(this);
-        //filenameList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        
-        JScrollPane scrollPane = new JScrollPane(filenameTable);
+        /** adding the filename scroll pane * */
+        // filenameList = new JList();
+        // JScrollPane scrollPane = new JScrollPane(filenameList);
+        // filenameList.addListSelectionListener(this);
+        // filenameList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        final JScrollPane scrollPane = new JScrollPane(filenameTable);
         leftSubPanel.add(scrollPane, BorderLayout.CENTER);
 
-        /** end adding the filename scroll pane **/
+        /** end adding the filename scroll pane * */
 
-        JPanel southPanel = new JPanel();
+        final JPanel southPanel = new JPanel();
 
-        /** adding the filter button **/
-        JButton btnFilter = new JButton(FILTER);
+        /** adding the filter button * */
+        final JButton btnFilter = new JButton(ViewOpenImageSequence.FILTER);
         btnFilter.addActionListener(this);
-        btnFilter.setActionCommand(FILTER);
+        btnFilter.setActionCommand(ViewOpenImageSequence.FILTER);
         btnFilter.setToolTipText("Constrain list to selected files");
         southPanel.add(btnFilter);
 
-        JButton btnRemove = new JButton(REMOVE);
+        final JButton btnRemove = new JButton(ViewOpenImageSequence.REMOVE);
         btnRemove.addActionListener(this);
-        btnRemove.setActionCommand(REMOVE);
+        btnRemove.setActionCommand(ViewOpenImageSequence.REMOVE);
         btnRemove.setToolTipText("Remove selected files from list");
         southPanel.add(btnRemove);
 
         leftSubPanel.add(southPanel, BorderLayout.SOUTH);
 
-        /** end adding the filter button **/
+        /** end adding the filter button * */
 
         return leftSubPanel;
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanel buildOKCancelPanel() {
-        GridBagLayout gbLayout = new GridBagLayout();
-        GridBagConstraints gbConstraints = new GridBagConstraints();
+        final GridBagLayout gbLayout = new GridBagLayout();
+        final GridBagConstraints gbConstraints = new GridBagConstraints();
 
-        JPanel subPanel = new JPanel(gbLayout);
+        final JPanel subPanel = new JPanel(gbLayout);
 
-        JButton btnOK = new JButton(OK);
+        final JButton btnOK = new JButton(ViewOpenImageSequence.OK);
         btnOK.addActionListener(this);
-        btnOK.setActionCommand(OK);
+        btnOK.setActionCommand(ViewOpenImageSequence.OK);
         gbConstraints.anchor = GridBagConstraints.EAST;
         gbConstraints.weightx = 1;
         gbConstraints.insets = new Insets(0, 0, 0, 2);
         gbLayout.setConstraints(btnOK, gbConstraints);
         subPanel.add(btnOK);
 
-        JButton btnCancel = new JButton(CANCEL);
+        final JButton btnCancel = new JButton(ViewOpenImageSequence.CANCEL);
         btnCancel.addActionListener(this);
-        btnCancel.setActionCommand(CANCEL);
+        btnCancel.setActionCommand(ViewOpenImageSequence.CANCEL);
         gbConstraints.weightx = 0;
         gbConstraints.gridx = 1;
         gbLayout.setConstraints(btnCancel, gbConstraints);
@@ -1207,14 +1201,14 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanel buildSequencesPanel() {
-        JPanel sequenceSubPanel = new JPanel(new GridLayout(3, 2));
+        final JPanel sequenceSubPanel = new JPanel(new GridLayout(3, 2));
         sequenceSubPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Sequences"));
 
-        ButtonGroup buttonGroup = new ButtonGroup();
+        final ButtonGroup buttonGroup = new ButtonGroup();
 
         radZCT.setSelected(true);
 
@@ -1237,21 +1231,21 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanel buildSubsamplePanel() {
-        GridBagLayout gbLayout = new GridBagLayout();
-        GridBagConstraints gbConstraints = new GridBagConstraints();
+        final GridBagLayout gbLayout = new GridBagLayout();
+        final GridBagConstraints gbConstraints = new GridBagConstraints();
 
-        JPanel subsamplePanel = new JPanel(gbLayout);
+        final JPanel subsamplePanel = new JPanel(gbLayout);
         subsamplePanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Subsampling"));
 
         gbConstraints.gridx = 1;
         gbConstraints.anchor = GridBagConstraints.WEST;
-        enableCheckbox = new JCheckBox(ENABLE);
+        enableCheckbox = new JCheckBox(ViewOpenImageSequence.ENABLE);
         enableCheckbox.addActionListener(this);
-        enableCheckbox.setActionCommand(ENABLE);
+        enableCheckbox.setActionCommand(ViewOpenImageSequence.ENABLE);
         gbLayout.setConstraints(enableCheckbox, gbConstraints);
         subsamplePanel.add(enableCheckbox);
 
@@ -1259,7 +1253,7 @@ public class ViewOpenImageSequence extends JFrame
         gbConstraints.gridy = 1;
         gbConstraints.anchor = GridBagConstraints.EAST;
 
-        JLabel lblWidth = new JLabel("Width: ");
+        final JLabel lblWidth = new JLabel("Width: ");
         gbLayout.setConstraints(lblWidth, gbConstraints);
         subsamplePanel.add(lblWidth);
 
@@ -1274,7 +1268,7 @@ public class ViewOpenImageSequence extends JFrame
         gbConstraints.gridy = 2;
         gbConstraints.anchor = GridBagConstraints.EAST;
 
-        JLabel lblHeight = new JLabel("Height: ");
+        final JLabel lblHeight = new JLabel("Height: ");
         gbLayout.setConstraints(lblHeight, gbConstraints);
         subsamplePanel.add(lblHeight);
 
@@ -1302,18 +1296,18 @@ public class ViewOpenImageSequence extends JFrame
 
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
+        } catch (final FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
         }
 
-        GridBagLayout gbLayout = new GridBagLayout();
-        GridBagConstraints gbConstraints = new GridBagConstraints();
+        final GridBagLayout gbLayout = new GridBagLayout();
+        final GridBagConstraints gbConstraints = new GridBagConstraints();
 
         getContentPane().setLayout(gbLayout);
 
-        /** adding the 'Browse' button **/
-        JButton btnBrowse = new JButton("Browse");
+        /** adding the 'Browse' button * */
+        final JButton btnBrowse = new JButton("Browse");
         btnBrowse.setActionCommand("Browse");
         btnBrowse.addActionListener(this);
         gbConstraints.anchor = GridBagConstraints.NORTHWEST;
@@ -1322,13 +1316,13 @@ public class ViewOpenImageSequence extends JFrame
         gbLayout.setConstraints(btnBrowse, gbConstraints);
         getContentPane().add(btnBrowse);
 
-        /** end adding 'Browse' button **/
+        /** end adding 'Browse' button * */
 
         // adding the 'directory' textfield
         txtDirectory = new JTextField();
         txtDirectory.setEditable(false);
         txtDirectory.setPreferredSize(new Dimension(txtDirectory.getPreferredSize().width,
-                                                    btnBrowse.getPreferredSize().height));
+                btnBrowse.getPreferredSize().height));
 
         gbConstraints.insets = new Insets(4, 4, 4, 4);
         gbConstraints.gridx = 1;
@@ -1359,15 +1353,16 @@ public class ViewOpenImageSequence extends JFrame
         table.setShowHorizontalLines(false);
         table.getTableHeader().setReorderingAllowed(false);
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        final JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         // end table instantiation
 
-        JSplitPane splitPanelChild = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildCenterPanel(), scrollPane);
+        final JSplitPane splitPanelChild = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildCenterPanel(), scrollPane);
         splitPanelChild.setDividerLocation(150);
 
-        JSplitPane splitPanelParent = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildLeftSubPanel(), splitPanelChild);
+        final JSplitPane splitPanelParent = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildLeftSubPanel(),
+                splitPanelChild);
         splitPanelParent.setDividerLocation(200);
         gbConstraints.gridx = 0;
         gbConstraints.gridy = 1;
@@ -1379,7 +1374,7 @@ public class ViewOpenImageSequence extends JFrame
         gbLayout.setConstraints(splitPanelParent, gbConstraints);
         getContentPane().add(splitPanelParent);
 
-        JPanel okCancelPanel = buildOKCancelPanel();
+        final JPanel okCancelPanel = buildOKCancelPanel();
         gbConstraints.gridy = 8;
         gbConstraints.gridheight = 1;
         gbConstraints.weighty = 0;
@@ -1392,69 +1387,68 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Method checks the dimensions parameters entered by the user. Returns true if valid, false otherwise.
-     *
-     * @return  boolean - if the dimension parameters are valid
+     * 
+     * @return boolean - if the dimension parameters are valid
      */
     protected boolean dimensionsSanityCheck() {
-        String slices = txtSlices.getText();
-        String channels = txtChannels.getText();
-        String timePoints = txtTimePoints.getText();
+        final String slices = txtSlices.getText();
+        final String channels = txtChannels.getText();
+        final String timePoints = txtTimePoints.getText();
 
         try {
-            int numSlices = Integer.parseInt(slices);
+            final int numSlices = Integer.parseInt(slices);
 
             if (numSlices < 1) {
                 return false;
             }
 
-            int numChannels = Integer.parseInt(channels);
+            final int numChannels = Integer.parseInt(channels);
 
             if (numChannels < 1) {
                 return false;
             }
 
-            int numTimePoints = Integer.parseInt(timePoints);
+            final int numTimePoints = Integer.parseInt(timePoints);
 
             if (numTimePoints < 1) {
                 return false;
             }
 
             return true;
-        } catch (NumberFormatException nfe) {
+        } catch (final NumberFormatException nfe) {
             return false;
         }
     }
 
-
     /**
      * Method filters out the rawFileList based of the file extension of the parameter selectedFile. This ensures that
      * the resulting Vector contains files only of the same extensions as selectedFile.
-     *
-     * @param   rawFileList   Vector - a Vector of File objects
-     * @param   selectedFile  File - the file whose extension will be used as a filter for rawFileList
-     *
-     * @return  Vector - a new Vector containing the filtered list of String objects representing filenames
+     * 
+     * @param rawFileList Vector - a Vector of File objects
+     * @param selectedFile File - the file whose extension will be used as a filter for rawFileList
+     * 
+     * @return Vector - a new Vector containing the filtered list of String objects representing filenames
      */
     protected Vector<String> filterFileExtension(Vector<String> rawFileList, File selectedFile) {
 
-        if ((rawFileList == null) || (selectedFile == null)) {
+        if ( (rawFileList == null) || (selectedFile == null)) {
             return rawFileList;
         }
 
         String filename = selectedFile.getName();
 
-        int lastIndex = filename.lastIndexOf('.');
+        final int lastIndex = filename.lastIndexOf('.');
 
         if (lastIndex == -1) {
             return rawFileList;
         }
 
-        String extension = filename.substring(lastIndex);
+        final String extension = filename.substring(lastIndex);
 
-        Vector<String> filteredList = new Vector<String>();
+        final Vector<String> filteredList = new Vector<String>();
 
         for (int i = 0; i < rawFileList.size(); i++) {
-            filename = (String) rawFileList.elementAt(i);
+            filename = rawFileList.elementAt(i);
 
             if (filename.endsWith(extension)) {
                 filteredList.addElement(filename);
@@ -1469,18 +1463,18 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Ensures the table is drawn in the way specified by the dimensions parameters and the selected sequence.
-     *
-     * @param  selectedSequence  int - the Z-T-C ordering as selected by the user
+     * 
+     * @param selectedSequence int - the Z-T-C ordering as selected by the user
      */
     @SuppressWarnings("unchecked")
-    protected void formatTable(int selectedSequence) {
+    protected void formatTable(final int selectedSequence) {
         tableModel.setColumnIdentifiers(new Vector()); // clear all columns
 
         tableModel.setRowCount(0); // clear all rows
 
-        int numSlices = Integer.parseInt(txtSlices.getText());
-        int numChannels = Integer.parseInt(txtChannels.getText());
-        int numTimePoints = Integer.parseInt(txtTimePoints.getText());
+        final int numSlices = Integer.parseInt(txtSlices.getText());
+        final int numChannels = Integer.parseInt(txtChannels.getText());
+        final int numTimePoints = Integer.parseInt(txtTimePoints.getText());
 
         cellRenderer.setAlternateRowCount(numSlices); // displays every other set of row in a different color
 
@@ -1517,29 +1511,28 @@ public class ViewOpenImageSequence extends JFrame
         tableModel.fireTableDataChanged();
 
         setColumnWidths(); // cosmetic method to set the widths of the columns according to the width of the text they
-                           // contain
+        // contain
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected File[] getFileList() {
-        Vector<String> imageList = new Vector<String>();
+        final Vector<String> imageList = new Vector<String>();
 
         for (int i = 1; i < tableModel.getColumnCount(); i++) {
 
             for (int j = 0; j < tableModel.getRowCount(); j++) {
-                imageList.addElement((String)tableModel.getValueAt(j, i));
+                imageList.addElement((String) tableModel.getValueAt(j, i));
             }
         }
 
-        File[] fileList = new File[imageList.size()];
+        final File[] fileList = new File[imageList.size()];
 
         for (int i = 0; i < imageList.size(); i++) {
-            fileList[i] = new File(currentPath.getAbsolutePath() + File.separatorChar +
-                                   (String) imageList.elementAt(i));
+            fileList[i] = new File(currentPath.getAbsolutePath() + File.separatorChar + imageList.elementAt(i));
         }
 
         return fileList;
@@ -1547,25 +1540,25 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Reads the preferences file to determine the path that was last used in opening a file sequence.
-     *
-     * @return  File - the File object representing the directory last used in opening a file sequence.
+     * 
+     * @return File - the File object representing the directory last used in opening a file sequence.
      */
     protected File getLastOpenSequencePath() {
-        String srsPathName = Preferences.getLastOpenSequencePath();
+        final String srsPathName = Preferences.getLastOpenSequencePath();
         File srsPath;
 
         if (srsPathName != null) {
             srsPath = new File(srsPathName);
 
-            if ((srsPath.exists() == false) || (srsPath.canRead() == false)) {
-                String home = System.getProperty("user.home");
+            if ( (srsPath.exists() == false) || (srsPath.canRead() == false)) {
+                final String home = System.getProperty("user.home");
                 System.out.println("home: " + home);
                 srsPath = new File(home);
             }
         } else {
             srsPath = new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR));
 
-            if ((srsPath.exists() == false) || (srsPath.canRead() == false)) {
+            if ( (srsPath.exists() == false) || (srsPath.canRead() == false)) {
                 srsPath = new File(System.getProperty("user.home"));
             }
         }
@@ -1575,8 +1568,8 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected int getSelectedSequence() {
 
@@ -1597,20 +1590,21 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * Will read a series of images and put them into a frame.
-     *
-     * @param  numChannels         int - valid values are 1, 2, 3, and 4, which indicates the number of channels the
-     *                             image will have. "1" means a grayscale image
-     * @param  numSlices           DOCUMENT ME!
-     * @param  numTimePoints       DOCUMENT ME!
-     * @param  subsampleDimension  DOCUMENT ME!
+     * 
+     * @param numChannels int - valid values are 1, 2, 3, and 4, which indicates the number of channels the image will
+     *            have. "1" means a grayscale image
+     * @param numSlices DOCUMENT ME!
+     * @param numTimePoints DOCUMENT ME!
+     * @param subsampleDimension DOCUMENT ME!
      */
-    protected void openImage(int numChannels, int numSlices, int numTimePoints, Dimension subsampleDimension) {
-        FileIO fileIO = new FileIO();
+    protected void openImage(final int numChannels, final int numSlices, final int numTimePoints,
+            final Dimension subsampleDimension) {
+        final FileIO fileIO = new FileIO();
         fileIO.setQuiet(true);
 
-        File[] fileList = getFileList();
+        final File[] fileList = getFileList();
 
-        if ((fileList == null) || (fileList.length < 1)) {
+        if ( (fileList == null) || (fileList.length < 1)) {
             MipavUtil.displayError("Cannot open images because no images are selected.");
 
             return;
@@ -1618,20 +1612,18 @@ public class ViewOpenImageSequence extends JFrame
 
         ModelImage resultImage = null;
 
-        //Profile.clear();
-        //Profile.start();
-        
-        
-        //long time = System.currentTimeMillis();
-        
+        // Profile.clear();
+        // Profile.start();
+
+        // long time = System.currentTimeMillis();
+
         if (numChannels == 1) {
-            resultImage = fileIO.readOrderedGrayscale(fileList, true, subsampleDimension,
-                                                      chkForceUBYTE.isSelected() && enableCheckbox.isSelected(),numSlices,numTimePoints);
+            resultImage = fileIO.readOrderedGrayscale(fileList, true, subsampleDimension, chkForceUBYTE.isSelected()
+                    && enableCheckbox.isSelected(), numSlices, numTimePoints);
         } else {
             resultImage = fileIO.readOrderedARGB(fileList, numChannels, channelMap, true, subsampleDimension,
-                                                 chkForceUBYTE.isSelected() && enableCheckbox.isSelected());
+                    chkForceUBYTE.isSelected() && enableCheckbox.isSelected());
         }
-
 
         if (resultImage != null) {
             new ViewJFrameImage(resultImage);
@@ -1639,16 +1631,14 @@ public class ViewOpenImageSequence extends JFrame
         } else {
             MipavUtil.displayError("Unable to open image.");
         }
-        
-        
-        
-        //System.out.println(" ... " + (System.currentTimeMillis() - time));
-        //Profile.stop();
-        //Profile.setFileName( "profile_viewOpenImageSequence_openImage" );
-        //Profile.shutdown();
-        
-        //-javaagent:C:\projects\mipav\src\lib\profile.jar -Dprofile.properties=C:\projects\mipav\src\lib\profile.properties
- 
+
+        // System.out.println(" ... " + (System.currentTimeMillis() - time));
+        // Profile.stop();
+        // Profile.setFileName( "profile_viewOpenImageSequence_openImage" );
+        // Profile.shutdown();
+
+        // -javaagent:C:\projects\mipav\src\lib\profile.jar
+        // -Dprofile.properties=C:\projects\mipav\src\lib\profile.properties
 
     }
 
@@ -1660,20 +1650,20 @@ public class ViewOpenImageSequence extends JFrame
     protected void setColumnWidths() {
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-        TableColumnModel columnModel = table.getColumnModel();
-        JTableHeader tableHeader = table.getTableHeader();
+        final TableColumnModel columnModel = table.getColumnModel();
+        final JTableHeader tableHeader = table.getTableHeader();
 
         // get FontMetrics object for the table header and the table rows
-        FontMetrics tableHeaderFontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
-        FontMetrics rowValueFontMetrics = table.getFontMetrics(table.getFont());
+        final FontMetrics tableHeaderFontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
+        final FontMetrics rowValueFontMetrics = table.getFontMetrics(table.getFont());
 
         for (int i = 0; i < columnModel.getColumnCount(); i++) {
-            TableColumn column = columnModel.getColumn(i);
+            final TableColumn column = columnModel.getColumn(i);
             int headerWidth = tableHeaderFontMetrics.stringWidth((String) column.getHeaderValue());
 
             for (int j = 0; j < tableModel.getRowCount(); j++) {
-                String rowValue = (String) tableModel.getValueAt(j, i);
-                int rowValueWidth = rowValueFontMetrics.stringWidth(rowValue);
+                final String rowValue = (String) tableModel.getValueAt(j, i);
+                final int rowValueWidth = rowValueFontMetrics.stringWidth(rowValue);
 
                 // the column width is the greater of the header width and the row data width
                 headerWidth = Math.max(headerWidth, rowValueWidth);
@@ -1685,33 +1675,33 @@ public class ViewOpenImageSequence extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected boolean subsamplingSanityCheck() {
 
         try {
-            int height = Integer.parseInt(txtHeight.getText());
-            int width = Integer.parseInt(txtWidth.getText());
+            final int height = Integer.parseInt(txtHeight.getText());
+            final int width = Integer.parseInt(txtWidth.getText());
 
-            if ((height < 1) || (width < 1)) {
+            if ( (height < 1) || (width < 1)) {
                 return false;
             }
 
             return true;
-        } catch (NumberFormatException nfe) {
+        } catch (final NumberFormatException nfe) {
             return false;
         }
     }
 
     /**
      * Makes an image preview of the image currentPath/selectedFilename and draws it in the image preview area.
-     *
-     * @param  currentPath       String
-     * @param  selectedFilename  String
+     * 
+     * @param currentPath String
+     * @param selectedFilename String
      */
-    private void makePreview(String currentPath, String selectedFilename) {
-        if ((selectedFilename == null) || (currentPath == null) || selectedFilename.equals(previewFilename)) {
+    private void makePreview(final String currentPath, final String selectedFilename) {
+        if ( (selectedFilename == null) || (currentPath == null) || selectedFilename.equals(previewFilename)) {
             return; // prevent multiple image loads/redraws
         } else {
             previewFilename = selectedFilename;
@@ -1719,9 +1709,9 @@ public class ViewOpenImageSequence extends JFrame
 
         previewPanel.removeAll();
 
-        FileIO fileIO = new FileIO();
+        final FileIO fileIO = new FileIO();
         fileIO.setQuiet(true);
-        ModelImage modelImage = fileIO.readOneImage(selectedFilename, currentPath);
+        final ModelImage modelImage = fileIO.readOneImage(selectedFilename, currentPath);
 
         if (modelImage == null) {
             Preferences.debug("Preview image loading failed (modelImage object is null).");
@@ -1730,10 +1720,10 @@ public class ViewOpenImageSequence extends JFrame
         }
 
         try {
-            ViewJComponentPreviewImage previewImage = new ViewJComponentPreviewImage(modelImage,
-                                                                                     modelImage.getExtents(), this);
+            final ViewJComponentPreviewImage previewImage = new ViewJComponentPreviewImage(modelImage, modelImage
+                    .getExtents(), this);
 
-            int[] imageData = new int[modelImage.getExtents()[0] * modelImage.getExtents()[1]];
+            final int[] imageData = new int[modelImage.getExtents()[0] * modelImage.getExtents()[1]];
             modelImage.exportData(0, imageData.length, imageData);
 
             previewImage.importImage(imageData);
@@ -1749,8 +1739,8 @@ public class ViewOpenImageSequence extends JFrame
                 txtWidth.setText(String.valueOf(modelImage.getExtents()[0] / 2));
                 txtHeight.setText(String.valueOf(modelImage.getExtents()[1] / 2));
             }
-        } catch (Exception e) {
-        	System.out.println("errr");
+        } catch (final Exception e) {
+            System.out.println("errr");
             Preferences.debug(e.getMessage());
         } finally {
             modelImage.disposeLocal();
@@ -1761,54 +1751,48 @@ public class ViewOpenImageSequence extends JFrame
      * Method removed selected items from the file list.
      */
     private void removeSelected() {
-    	int[] selectedRows  = filenameTable.getSelectedRows();
-    	if(selectedRows.length > 0) {
-    		Vector<String> fileVect = new Vector<String>();
-	    	int rowCount = filenameTableModel.getRowCount();
-	    	for (int i=0;i<rowCount;i++) {
-	    		if(!filenameTable.isRowSelected(i)) {
-	    			fileVect.addElement((String)filenameTableModel.getValueAt(i, 0));
-	    		}	
-	    	}
-	    	for(int i=rowCount-1;i >=0;i--)
-	    	   {
-	    		filenameTableModel.removeRow(i); 
-	    	   }
-	    	for(int i=0;i<fileVect.size();i++) {
-            	Vector<String> newRow = new Vector<String>();
-            	newRow.addElement(fileVect.get(i));
-            	filenameTableModel.addRow(newRow);
+        final int[] selectedRows = filenameTable.getSelectedRows();
+        if (selectedRows.length > 0) {
+            final Vector<String> fileVect = new Vector<String>();
+            final int rowCount = filenameTableModel.getRowCount();
+            for (int i = 0; i < rowCount; i++) {
+                if ( !filenameTable.isRowSelected(i)) {
+                    fileVect.addElement((String) filenameTableModel.getValueAt(i, 0));
+                }
             }
-    	}
+            for (int i = rowCount - 1; i >= 0; i--) {
+                filenameTableModel.removeRow(i);
+            }
+            for (int i = 0; i < fileVect.size(); i++) {
+                final Vector<String> newRow = new Vector<String>();
+                newRow.addElement(fileVect.get(i));
+                filenameTableModel.addRow(newRow);
+            }
+        }
     }
-    
-    
-    
-    
-    
+
     /**
      * Method keep selected items from the file list.
      */
     private void keepSelected() {
-    	int[] selectedRows  = filenameTable.getSelectedRows();
-    	if(selectedRows.length > 0) {
-    		Vector<String> fileVect = new Vector<String>();
-	    	int rowCount = filenameTableModel.getRowCount();
-	    	for (int i=0;i<rowCount;i++) {
-	    		if(filenameTable.isRowSelected(i)) {
-	    			fileVect.addElement((String)filenameTableModel.getValueAt(i, 0));
-	    		}	
-	    	}
-	    	for(int i=rowCount-1;i >=0;i--)
-	    	   {
-	    		filenameTableModel.removeRow(i); 
-	    	   }
-	    	for(int i=0;i<fileVect.size();i++) {
-            	Vector<String> newRow = new Vector<String>();
-            	newRow.addElement(fileVect.get(i));
-            	filenameTableModel.addRow(newRow);
+        final int[] selectedRows = filenameTable.getSelectedRows();
+        if (selectedRows.length > 0) {
+            final Vector<String> fileVect = new Vector<String>();
+            final int rowCount = filenameTableModel.getRowCount();
+            for (int i = 0; i < rowCount; i++) {
+                if (filenameTable.isRowSelected(i)) {
+                    fileVect.addElement((String) filenameTableModel.getValueAt(i, 0));
+                }
             }
-    	}
+            for (int i = rowCount - 1; i >= 0; i--) {
+                filenameTableModel.removeRow(i);
+            }
+            for (int i = 0; i < fileVect.size(); i++) {
+                final Vector<String> newRow = new Vector<String>();
+                newRow.addElement(fileVect.get(i));
+                filenameTableModel.addRow(newRow);
+            }
+        }
     }
 
     /**
@@ -1819,10 +1803,10 @@ public class ViewOpenImageSequence extends JFrame
         txtChannels.setText(Preferences.getLastOpenSequenceChannels());
         txtTimePoints.setText(Preferences.getLastOpenSequenceTimePoints());
 
-        String ordering = Preferences.getLastOpenSequenceOrdering();
+        final String ordering = Preferences.getLastOpenSequenceOrdering();
 
         try {
-            int selectedSequence = Integer.parseInt(ordering);
+            final int selectedSequence = Integer.parseInt(ordering);
 
             switch (selectedSequence) {
 
@@ -1850,9 +1834,7 @@ public class ViewOpenImageSequence extends JFrame
                     radTCZ.setSelected(true);
                     break;
             }
-        } catch (NumberFormatException nfe) { }
+        } catch (final NumberFormatException nfe) {}
     }
 
-
 }
-
