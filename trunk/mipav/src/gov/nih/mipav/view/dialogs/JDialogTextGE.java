@@ -102,6 +102,7 @@ public class JDialogTextGE extends JDialogText {
             }
 
             setTitle(((ViewJFrameImage) parentFrame).getActiveImage().getImageName());
+            MipavUtil.displayInfo("Anonymization complete");
 
             dispose();
         }
