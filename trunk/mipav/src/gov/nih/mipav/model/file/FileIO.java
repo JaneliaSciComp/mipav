@@ -3203,7 +3203,7 @@ public class FileIO {
                 success = writeMATLAB(image, options);
                 break;
             case FileUtility.GE_GENESIS:
-            	success = writeGESigna5X(image, options);
+            	success = writeGEGenesis5X(image, options);
             	break;
             case FileUtility.SPM:
                 success = writeSPM(image, options);
@@ -11777,7 +11777,7 @@ public class FileIO {
      * 
      * @return Flag indicating that this was a successful write.
      */
-    private boolean writeGESigna5X(final ModelImage image, final FileWriteOptions options) {
+    private boolean writeGEGenesis5X(final ModelImage image, final FileWriteOptions options) {
         FileGESigna5X geFile;
 
         try { // Construct a new file object
