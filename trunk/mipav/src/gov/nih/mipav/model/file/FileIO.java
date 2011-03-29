@@ -3202,6 +3202,9 @@ public class FileIO {
             case FileUtility.MATLAB:
                 success = writeMATLAB(image, options);
                 break;
+            case FileUtility.GE_GENESIS:
+            	success = writeGESigna5X(image, options);
+            	break;
             case FileUtility.SPM:
                 success = writeSPM(image, options);
                 break;
@@ -8611,10 +8614,10 @@ public class FileIO {
             width = imageFile.getWidth();
             height = imageFile.getHeight();
             buffer = new float[width * height];
-
+  
             extents = new int[2];
             extents[0] = width;
-            extents[1] = height;
+            extents[1] = height;          
 
             image = new ModelImage(ModelStorageBase.USHORT, extents, "GE");
             imageFile.readImage(buffer);
@@ -11743,6 +11746,46 @@ public class FileIO {
             fitsFile.writeImage(image, options);
             fitsFile.finalize();
             fitsFile = null;
+        } catch (final IOException error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        }
+
+        return true;
+    }
+    
+    /**
+     * Writes a GESigna5X file to store the image.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
+     */
+    private boolean writeGESigna5X(final ModelImage image, final FileWriteOptions options) {
+        FileGESigna5X geFile;
+
+        try { // Construct a new file object
+            geFile = new FileGESigna5X(options.getFileName(), options.getFileDirectory());
+            createProgressBar(geFile, options.getFileName(), FileIO.FILE_WRITE);
+            geFile.writeImage(image, options);
+            geFile.finalize();
+            geFile = null;
         } catch (final IOException error) {
 
             if ( !quiet) {
