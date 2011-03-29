@@ -1079,13 +1079,54 @@ public class FileGESigna5X extends FileBase {
         int sliceSize;
         long location;
         long bytesSkipped;
+        int sBegin;
+        int sEnd;
+        int tBegin;
+        int tEnd;
+        int t;
+        int z;
+        int fileIndex;
+        int imageIndex;
+        int zDim;
+        String indexStr;
+        int lastPeriod;
+        String fileBase;
         
         magicNumber[0] = 73; // I
         magicNumber[1] = 77; // M
         magicNumber[2] = 71; // G
         magicNumber[3] = 70; // F
+        
+        if (image.getNDims() >= 3) {
+            sBegin = options.getBeginSlice();
+            sEnd = options.getEndSlice();
+            zDim = image.getExtents()[2];
+        } else {
+            sBegin = 0;
+            sEnd = 0;
+            zDim = 1;
+        }
 
-        file = new File(fileDir + fileName);
+        if (image.getNDims() == 4) {
+            tBegin = options.getBeginTime();
+            tEnd = options.getEndTime();
+        } else {
+            tBegin = 0;
+            tEnd = 0;
+        }
+        lastPeriod = fileName.lastIndexOf(".");
+        fileBase = fileName.substring(0,lastPeriod+1);
+        
+        for (t = tBegin; t <= tEnd; t++) {
+        for (z = sBegin; z <= sEnd; z++) {
+        imageIndex = z + t*zDim;
+        fileIndex = (z - sBegin + 1) + (t - tBegin)*(sEnd - sBegin + 1);
+        indexStr = Integer.toString(fileIndex);
+        while (indexStr.length() < 3) {
+        	indexStr = "0" + indexStr;
+        }
+        
+        file = new File(fileDir + fileBase + indexStr);
         raFile = new RandomAccessFile(file, "rw");
         // Necessary so that if this is an overwritten file there isn't any
         // junk at the end
@@ -1148,7 +1189,7 @@ public class FileGESigna5X extends FileBase {
             shortBuffer = new short[sliceSize];
             byteBuffer = new byte[2 * sliceSize];
             
-            image.exportData(0, sliceSize, shortBuffer);
+            image.exportSliceXY(imageIndex, shortBuffer);
 
             for (j = 0; j < sliceSize; j++) {
                 byteBuffer[2 * j] = (byte) (shortBuffer[j] >>> 8);
@@ -1156,7 +1197,7 @@ public class FileGESigna5X extends FileBase {
             }
 
             raFile.write(byteBuffer);
-                
+            raFile.close();   
 
             return;
         }
@@ -1780,7 +1821,7 @@ public class FileGESigna5X extends FileBase {
         shortBuffer = new short[sliceSize];
         byteBuffer = new byte[2 * sliceSize];
         
-        image.exportData(0, sliceSize, shortBuffer);
+        image.exportSliceXY(imageIndex, shortBuffer);
 
         for (j = 0; j < sliceSize; j++) {
             byteBuffer[2 * j] = (byte) (shortBuffer[j] >>> 8);
@@ -1788,6 +1829,9 @@ public class FileGESigna5X extends FileBase {
         }
 
         raFile.write(byteBuffer);
+        raFile.close();
+        } // for (z = sBegin; z <= sEnd; z++)
+        } // for (t = tBegin; t <= tEnd; t++)
         
         return;
         
