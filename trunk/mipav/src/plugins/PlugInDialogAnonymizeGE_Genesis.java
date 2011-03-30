@@ -1,10 +1,7 @@
 
 
-
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -1572,7 +1569,7 @@ public class PlugInDialogAnonymizeGE_Genesis extends JDialogBase {
             }
 
             try {
-                String suffix = FileUtility.getExtension(imageFile.getName());
+                //String suffix = FileUtility.getExtension(imageFile.getName());
                 //if (!suffix.equalsIgnoreCase(".sig")) {
                     if (FileUtility.isGESigna5X(imageFile.getName(), imageFile.getParent() + File.separator, true) != FileUtility.GE_GENESIS) {
                         writeToLog(imageFile.getAbsolutePath(), false);
@@ -1582,8 +1579,7 @@ public class PlugInDialogAnonymizeGE_Genesis extends JDialogBase {
                 //}
                 
                 io.setFileDir(imageFile.getParent() + File.separator);
-                //mi = io.readDicom(imageFile.getName(), new String[] { imageFile.getName() }, false);
-                mi = io.readGEGenesis5XMulti(imageFile.getName(),imageFile.getParent() + File.separator);
+                mi = io.readGEGenesis5X(imageFile.getName(), imageFile.getParent() + File.separator);
                 writeToLog(imageFile.getAbsolutePath(), false);
 
                 if (mi != null) {
@@ -1624,17 +1620,6 @@ public class PlugInDialogAnonymizeGE_Genesis extends JDialogBase {
                     writeOpts.doPutInQuicklist(false);
                     writeOpts.setSaveInSubdirectory(false); // should be false by default.  we want to preserve current
                                                             // writeOpt structure
-                    //((FileInfoDicom) mi.getFileInfo(0)).getTagTable().setValue("0010,0010", anonymousName);
-
-                    //if (((FileInfoGESigna5X) (mi.getFileInfo()[0])).isMultiFrame()) {
-                        //writeOpts.setBeginSlice(0);
-                        //writeOpts.setEndSlice(mi.getFileInfo().length - 1);
-                        // System.err.println("Setting multi frame for: " + mi.getImageFileName());
-                    //}
-                    if (mi.getFileInfo().length > 1) {
-                    	writeOpts.setBeginSlice(0);
-                    	writeOpts.setEndSlice(mi.getFileInfo().length - 1);
-                    }
 
                     io.writeImage(mi, writeOpts);
                     // log change.
