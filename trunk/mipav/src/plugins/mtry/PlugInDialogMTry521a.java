@@ -119,6 +119,10 @@ public class PlugInDialogMTry521a extends JDialogScriptableBase implements Algor
     private double invTimeMed;
 
     private double invTimeMax;
+
+    private boolean doReconstruct;
+
+    private JCheckBox doReconstructCheck;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -216,7 +220,7 @@ public class PlugInDialogMTry521a extends JDialogScriptableBase implements Algor
             resultImage = new ModelImage(ModelImage.FLOAT, new int[]{64,64,44}, "T1Map");
             
             mTryAlgo = new PlugInAlgorithmMTry521a(resultImage, minImage, medImage, maxImage, 
-                                                    t1Min, t1Max, precision, invTimeMin, invTimeMed, invTimeMax);
+                                                    t1Min, t1Max, precision, invTimeMin, invTimeMed, invTimeMax, doReconstruct);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -259,6 +263,7 @@ public class PlugInDialogMTry521a extends JDialogScriptableBase implements Algor
         precision = scriptParameters.getParams().getDouble("precision");
         t1Min = scriptParameters.getParams().getDouble("t1Min");
         t1Max = scriptParameters.getParams().getDouble("t1Max");
+        doReconstruct = scriptParameters.getParams().getBoolean("doReconstruct");
 
         minImage = scriptParameters.retrieveImage("minImageInvTime"+Double.valueOf(invTimeMin).intValue());
         medImage = scriptParameters.retrieveImage("medImageInvTime"+Double.valueOf(invTimeMed).intValue());
@@ -279,6 +284,7 @@ public class PlugInDialogMTry521a extends JDialogScriptableBase implements Algor
         scriptParameters.getParams().put(ParameterFactory.newParameter("precision", precision));
         scriptParameters.getParams().put(ParameterFactory.newParameter("t1Min", t1Min));
         scriptParameters.getParams().put(ParameterFactory.newParameter("t1Max", t1Max));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doReconstruct", doReconstruct));
     } //end storeParamsFromGUI()
    
     private void init() {
@@ -361,12 +367,27 @@ public class PlugInDialogMTry521a extends JDialogScriptableBase implements Algor
         t1MinField = guiBuilder.buildDecimalField("Minimum T1", 500);
         t1MaxField = guiBuilder.buildDecimalField("Maximum T1", 2500);
         precisionField = guiBuilder.buildDecimalField("Precision", 0.5);
-        
+        doReconstructCheck = guiBuilder.buildCheckBox("Do image reconstruction", true);
+                
         paramPanel.add(t1MinField.getParent(), gbc);
         gbc.gridy++;
         paramPanel.add(t1MaxField.getParent(), gbc);
         gbc.gridy++;
         paramPanel.add(precisionField.getParent(), gbc);
+        gbc.gridy++;
+        
+        JPanel debugPanel = new JPanel(new GridBagLayout());
+        debugPanel.setBorder(MipavUtil.buildTitledBorder("Debug Parameters"));
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        debugPanel.add(doReconstructCheck.getParent(), gbc);
         gbc.gridy++;
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
@@ -384,6 +405,9 @@ public class PlugInDialogMTry521a extends JDialogScriptableBase implements Algor
         mainPanel.add(imagePanel, gbc);
         gbc.gridy++;
         mainPanel.add(paramPanel, gbc);
+        gbc.gridy++;
+        mainPanel.add(debugPanel, gbc);
+        gbc.gridy++;
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -435,6 +459,8 @@ public class PlugInDialogMTry521a extends JDialogScriptableBase implements Algor
 	    
 	    try {
 	        
+	    doReconstruct = doReconstructCheck.isSelected();
+	    
 	    t1Min = Double.valueOf(t1MinField.getText()).doubleValue();
 	    t1Max = Double.valueOf(t1MaxField.getText()).doubleValue();
 	    precision = Double.valueOf(precisionField.getText()).doubleValue();
@@ -771,6 +797,7 @@ public class PlugInDialogMTry521a extends JDialogScriptableBase implements Algor
             table.put(new ParameterDouble("precision", precision));
             table.put(new ParameterDouble("t1Min", t1Min));
             table.put(new ParameterDouble("t1Max", t1Max));
+            table.put(new ParameterBoolean("doReconstruct", doReconstruct));
             
             if(scriptParameters != null) {
                 minImage = scriptParameters.retrieveImage("minImage");
