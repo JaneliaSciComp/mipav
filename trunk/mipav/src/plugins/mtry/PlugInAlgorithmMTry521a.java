@@ -31,6 +31,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -66,6 +67,8 @@ public class PlugInAlgorithmMTry521a extends AlgorithmBase {
     private double funcMin;
 
     private double funcMax;
+
+    private boolean doReconstruct;
     
     /**
      * Constructor.
@@ -74,7 +77,7 @@ public class PlugInAlgorithmMTry521a extends AlgorithmBase {
      * @param  srcImg       Source image model.
      */
     public PlugInAlgorithmMTry521a(ModelImage resultImage, ModelImage minImage, ModelImage medImage, ModelImage maxImage, 
-            double t1Min, double t1Max, double precision, double invTimeMin, double invTimeMed, double invTimeMax) {
+            double t1Min, double t1Max, double precision, double invTimeMin, double invTimeMed, double invTimeMax, boolean doReconstruct) {
         super(resultImage, minImage);
         this.minImage = minImage;
         this.medImage = medImage;
@@ -85,6 +88,7 @@ public class PlugInAlgorithmMTry521a extends AlgorithmBase {
         this.invTimeMin = invTimeMin;
         this.invTimeMed = invTimeMed;
         this.invTimeMax = invTimeMax;
+        this.doReconstruct = doReconstruct;
     }
         
 //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -215,7 +219,20 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     	
     	//searchForValues(minImageComplexReal, minImageComplexImag, medImageComplexReal, medImageComplexImag, maxImageComplexReal, maxImageComplexImag);
     	
-    	
+    	if(doReconstruct) {
+        	ModelImage minImageRecon = reconstruct(minImageComplexReal, minImageComplexImag, "minImageRecon"+invTimeMin);
+        	ModelImage medImageRecon = reconstruct(medImageComplexReal, medImageComplexImag, "medImageRecon"+invTimeMed);
+        	ModelImage maxImageRecon = reconstruct(maxImageComplexReal, maxImageComplexImag, "maxImageRecon"+invTimeMax);
+        	
+        	ViewJFrameImage minRecon = new ViewJFrameImage(minImageRecon);
+        	minRecon.setVisible(true);
+        	
+        	ViewJFrameImage medRecon = new ViewJFrameImage(medImageRecon);
+        	medRecon.setVisible(true);
+            
+            ViewJFrameImage maxRecon = new ViewJFrameImage(maxImageRecon);
+            maxRecon.setVisible(true);
+    	}
     	
     	/*double[] maxImageComplexReal = new double[maxImageComplex.getSize()];
     	double[] maxImageComplexImag = new double[maxImageComplex.getSize()];
@@ -313,6 +330,55 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         }	
     }
     
+    /**
+     * Reconstructs each inversion time image.
+     * 
+     * @param each imageReal/imageImage are [64x64x44][5] size
+     * @return
+     */
+    private ModelImage reconstruct(double[][] imageReal,
+            double[][] imageImag, String name) {
+        ModelImage reconImage = new ModelImage(DataType.DOUBLE, new int[]{64,64,44}, name);
+        double[][] squareRealResult = new double[imageReal.length][];
+        double[][] squareImagResult = new double[imageImag.length][];
+        for(int i=0; i<imageReal.length; i++) {
+            squareRealResult[i] = new double[imageReal[i].length];
+            squareImagResult[i] = new double[imageImag[i].length];
+            for(int j=0; j<imageReal[i].length; j++) {
+                squareRealResult[i][j] = imageReal[i][j]*imageReal[i][j] - imageImag[i][j]*imageImag[i][j];
+                squareImagResult[i][j] = 2*imageReal[i][j]*imageImag[i][j];
+            }
+        }
+        
+        double[] sumReal = new double[squareRealResult.length];
+        double[] sumImag = new double[squareImagResult.length];
+        for(int i=0; i<squareRealResult.length; i++) {
+            sumReal[i] = 0.0;
+            sumImag[i] = 0.0;
+            for(int j=0; j<squareRealResult[i].length; j++) {
+                sumReal[i] += squareRealResult[i][j];
+                sumImag[i] += squareImagResult[i][j];
+            }
+        }
+        
+        double[] mag = new double[sumReal.length];
+        for(int i=0; i<sumReal.length; i++) {
+            //get magnitude
+            mag[i] = Math.sqrt(sumReal[i]*sumReal[i] + sumImag[i]*sumImag[i]);
+            //now get square root
+            mag[i] = Math.sqrt(mag[i]);
+        }
+        try {
+            reconImage.importData(0, mag, true);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+        return reconImage;
+    }
+
     private int doMaxMinReplace(double[] t1Real) {
         int replace = 0;
         for(int i=0; i<t1Real.length; i++) {
