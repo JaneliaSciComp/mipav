@@ -1185,36 +1185,58 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // JDialogConvert4Dto3D convert4Dto3D =
             new JDialogConvert4Dto3D(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("Convert4DtoMultiple3D")) {
+            
+        	
+        	//
+        	new JDialogConvert4DtoMultiple3D(this, getActiveImage()).callAlgorithm();
+        	
+        }else if(command.equals("ConvertMultiple3Dto4D")) {
+        	
+        	if(getActiveImage().getNDims() == 3) {
+        		
+        		Enumeration<String> names = userInterface.getRegisteredImageNames();
+        		ArrayList<ModelImage> imagesToConcat = new ArrayList<ModelImage>();
+        		imagesToConcat.add(getActiveImage());
 
-            int[] destExtents = new int[3];
+                // Add images from user interface that have the same exact dimensionality
+                while (names.hasMoreElements()) {
+                    final String name = names.nextElement();
 
-            destExtents[0] = getActiveImage().getExtents()[0];
-            destExtents[1] = getActiveImage().getExtents()[1];
-            destExtents[2] = getActiveImage().getExtents()[2];
-            
-            //ModelImage[] resultImages = new ModelImage[getActiveImage().getExtents()[3]];
-            AlgorithmSubset subsetAlgo;
-            int tLength = getActiveImage().getExtents()[3];
-            for(int i=0;i<tLength;i++) {
-            	String resultString = getActiveImage().getImageName() + "_T" + i;
-            	ModelImage resultImage = new ModelImage(getActiveImage().getType(), destExtents, resultString);
-            	
-            	subsetAlgo = new AlgorithmSubset(getActiveImage(), resultImage, AlgorithmSubset.REMOVE_T, i);
-            	
-            	subsetAlgo.run();
-            	
-            	new ViewJFrameImage(resultImage);
-            	
+                    if ( !getActiveImage().getImageName().equals(name)) {
 
-            }
-            
-            
-            
-            
-            
-            
-            
-            
+                        
+                           ModelImage img = userInterface.getRegisteredImageByName(name);
+                           
+                           if (getActiveImage().getNDims() == img.getNDims()) {
+                        	   if(getActiveImage().getExtents()[0] == img.getExtents()[0] &&
+                        			   getActiveImage().getExtents()[1] == img.getExtents()[1] &&
+                        			   getActiveImage().getExtents()[2] == img.getExtents()[2]) {
+                        		   if(img.getDataType() == getActiveImage().getDataType()) {
+                        			   imagesToConcat.add(img);
+                        		   }
+                        	   }
+                        	   
+                        	   
+                           }
+                        
+                    }
+                }
+                if(imagesToConcat.size() <= 1) {
+                	MipavUtil.displayError("There are no other images of like dimension to concatenate with");
+                	return;
+                }
+
+        		
+                new JDialogConcatMult3Dto4D(this, imagesToConcat);
+                
+                
+                
+        		
+        		
+        	}
+        	
+       
+        	
         }else if (command.equals("Convert4DtoRGB")) {
             new JDialogConvert4DtoRGB(this, getActiveImage());
         } else if (command.equals("Convert3Dto4D")) {
@@ -5087,7 +5109,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         return createDialog;
-    }
+    } 
 
     /**
      * Helper method to establish if there are images of the same dimensionality so that a dialog can be created. Used
