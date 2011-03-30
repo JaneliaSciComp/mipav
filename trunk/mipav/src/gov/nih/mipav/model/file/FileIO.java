@@ -8570,7 +8570,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readGEGenesis5X(final String fileName, final String fileDir) {
+    public ModelImage readGEGenesis5X(final String fileName, final String fileDir) {
         ModelImage image = null;
         FileGESigna5X imageFile;
         FileInfoBase myFileInfo;
