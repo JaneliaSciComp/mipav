@@ -1135,7 +1135,7 @@ public class FileGESigna5X extends FileBase {
        // The data types are Sun, hence the byte order is big-endian.
         endianess = BIG_ENDIAN;
         try {
-            fileInfo = (FileInfoGESigna5X)image.getFileInfo()[0];
+            fileInfo = (FileInfoGESigna5X)image.getFileInfo()[imageIndex];
         }
         catch (ClassCastException e) {
         	MipavUtil.displayError("Can only write GESigna5X files to disk");
