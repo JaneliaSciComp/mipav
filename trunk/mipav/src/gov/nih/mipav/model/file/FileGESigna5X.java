@@ -1126,7 +1126,12 @@ public class FileGESigna5X extends FileBase {
         	indexStr = "0" + indexStr;
         }
         
-        file = new File(fileDir + fileBase + indexStr);
+        if (image.getNDims() == 2) {
+        	file = new File(fileDir + fileName);
+        }
+        else {
+            file = new File(fileDir + fileBase + indexStr);
+        }
         raFile = new RandomAccessFile(file, "rw");
         // Necessary so that if this is an overwritten file there isn't any
         // junk at the end
