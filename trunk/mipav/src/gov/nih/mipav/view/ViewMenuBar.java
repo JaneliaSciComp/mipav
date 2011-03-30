@@ -640,7 +640,8 @@ public class ViewMenuBar {
     public JMenu makeUtilitiesMenu() {
         return menuBuilder.makeMenu("Utilities", 'U', false, new JMenuItem[] {
                 menuBuilder.makeMenu("4D tools", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Convert 3D to 4D", "Convert3Dto4D", 0, null, false),
+                        menuBuilder.buildMenuItem("Convert Single 3D to 4D", "Convert3Dto4D", 0, null, false),
+                        menuBuilder.buildMenuItem("Concat Multiple 3D to 4D", "ConvertMultiple3Dto4D", 0, null, false),
                         menuBuilder.buildMenuItem("Convert 4D to Single 3D", "Convert4Dto3D", 0, null, false),
                         menuBuilder.buildMenuItem("Convert 4D to Multiple 3D", "Convert4DtoMultiple3D", 0, null, false),
                         menuBuilder.buildMenuItem("Convert 4D to RGB", "Convert4DtoRGB", 0, null, false),
@@ -976,7 +977,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Histogram summary", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
-            menuBuilder.setMenuItemEnabled("Convert 3D to 4D", false);
+            menuBuilder.setMenuItemEnabled("Convert Single 3D to 4D", false);
+            menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 4D", false);
             menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
@@ -1054,7 +1056,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Randomize slice order", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
-            menuBuilder.setMenuItemEnabled("Convert 3D to 4D", false);
+            menuBuilder.setMenuItemEnabled("Convert Single 3D to 4D", false);
+            menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 4D", false);
             menuBuilder.setMenuItemEnabled("Reslice - isotropic voxels", false);
             menuBuilder.setMenuItemEnabled("Slice averaging", false);
             menuBuilder.setMenuItemEnabled("Link to another image", false);
@@ -1198,7 +1201,8 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("RGB -> HSB", true);
         menuBuilder.setMenuItemEnabled("Surface plotter", true);
         menuBuilder.setMenuItemEnabled("Evolve boundary 2D", true);
-        menuBuilder.setMenuItemEnabled("Convert 3D to 4D", true);
+        menuBuilder.setMenuItemEnabled("Convert Single 3D to 4D", true);
+        menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 4D", true);
         menuBuilder.setMenuItemEnabled("Capture image slices to new frame", true);
         menuBuilder.setMenuItemEnabled("Haralick texture", true);
         menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", true);
