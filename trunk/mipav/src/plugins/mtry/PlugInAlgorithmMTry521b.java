@@ -44,7 +44,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmMTry521a extends AlgorithmBase {
+public class PlugInAlgorithmMTry521b extends AlgorithmBase {
 
     private ModelImage minImage;
 
@@ -76,7 +76,7 @@ public class PlugInAlgorithmMTry521a extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmMTry521a(ModelImage resultImage, ModelImage minImage, ModelImage medImage, ModelImage maxImage, 
+    public PlugInAlgorithmMTry521b(ModelImage resultImage, ModelImage minImage, ModelImage medImage, ModelImage maxImage, 
             double t1Min, double t1Max, double precision, double invTimeMin, double invTimeMed, double invTimeMax, boolean doReconstruct) {
         super(resultImage, minImage);
         this.minImage = minImage;
