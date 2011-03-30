@@ -2455,7 +2455,7 @@ public class FileInfoGESigna5X extends FileInfoBase {
     }
     
     public void anonymize() {
-    	patientID = new String("XX-XX-XX-X");
-    	patientName = new String("XXXXX, XXXXX");
+    	patientID = new String("XX-XX-XX-X   "); // length 13
+    	patientName = new String("XXXXX, XXXXX             "); // length 25
     }
 }
