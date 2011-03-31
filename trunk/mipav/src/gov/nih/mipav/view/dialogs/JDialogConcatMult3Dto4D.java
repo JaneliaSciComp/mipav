@@ -408,6 +408,14 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 		             }
 	             }
 	             srcTableModel.removeRow(selectedRow);
+	             
+	             int newCount = srcImagesTable.getRowCount();
+	             if(selectedRow == newCount) {
+	            	 int lastIndex = srcImagesTable.getRowCount() - 1;
+	            	 srcImagesTable.setRowSelectionInterval(lastIndex, lastIndex);
+	             }else {
+	            	 srcImagesTable.setRowSelectionInterval(selectedRow, selectedRow);
+	             }
 	    	 
 	    	
 	     }else if(command.equals("moveDown")) {
