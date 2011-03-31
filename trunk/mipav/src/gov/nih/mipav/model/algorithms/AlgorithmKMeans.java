@@ -22,7 +22,7 @@ import java.io.RandomAccessFile;
  * 
  * From the Celebi reference:
  * Consider a point xi, two cluster centers ca and cb and a distance metric d.  Using the triangle 
- * inequality, we have d(ca,cb) <= d(xi,ca) + d(xi,cb).  Therfore, if we know that 2d(xi,ca) <= d(ca,cb),
+ * inequality, we have d(ca,cb) <= d(xi,ca) + d(xi,cb).  Therefore, if we know that 2d(xi,ca) <= d(ca,cb),
  * we can conclude that d(xi,ca) <= d(xi,cb) without having to calculate d(xi,cb).
  References:
  1.) "A systematic evaluation of different methods for initializing the K-means clustering algorithm"
@@ -43,10 +43,19 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	private static final int HIERARCHICAL_GROUPING_INIT = 2;
 	
 	private static final int MAXMIN_INIT = 3;
+	
+    private static final int K_MEANS = 0;
+	
+	private static final int GLOBAL_K_MEANS = 1;
+	
+	private static final int FAST_GLOBAL_K_MEANS = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 	
 	private ModelImage image;
+	
+	// K-means, global k-means, or fast global k-means
+	private int algoSelection;
 	
 	// Take resolutions from the image
     // Use 1.0 in every dimension if not scaled.
@@ -88,11 +97,12 @@ public class AlgorithmKMeans extends AlgorithmBase {
     /**
      
      */
-    public AlgorithmKMeans(ModelImage image, double[][] pos, double[] scale, int groupNum[], double[][] centroidPos,
-    		               String resultsFileName, int initSelection, float[] redBuffer, float[] greenBuffer,
-    		               float[] blueBuffer, double scaleMax, boolean useColorHistogram) {
+    public AlgorithmKMeans(ModelImage image, int algoSelection, double[][] pos, double[] scale, int groupNum[],
+    		               double[][] centroidPos, String resultsFileName, int initSelection, float[] redBuffer,
+    		               float[] greenBuffer, float[] blueBuffer, double scaleMax, boolean useColorHistogram) {
 
         this.image = image;
+        this.algoSelection = algoSelection;
         this.pos = pos;
         this.scale = scale;
         this.groupNum = groupNum;
@@ -211,6 +221,11 @@ public class AlgorithmKMeans extends AlgorithmBase {
         boolean equalScale;
         // Actually square of distances divided by 4
         double centroidDistances[][] = null;
+        int presentClusters;
+        int initialClusterLocation;
+        double totalMinDistSquared = 0.0;
+        double bestTotalMinDistSquared;
+        double centroidPosStart[][];
         
         for (i = 0; i < scale.length; i++) {
         	scale2[i] = scale[i]*scale[i];
@@ -422,6 +437,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
+    	switch(algoSelection) {
+    	case K_MEANS:
+    
     	
     	switch(initSelection) {
     	case RANDOM_INIT:
@@ -1395,6 +1413,208 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    	} // else no colorHistogram
     	} // while (changeOccurred)
     	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n");
+    	break;
+    	case GLOBAL_K_MEANS:
+    		Preferences.debug("Finding centroid for 1 cluster\n");
+    		for (i = 0; i < nPoints; i++) {
+	    		groupNum[i] = 0;
+	    	}
+    		centroidPosStart = new double[nDims][numberClusters];
+    		pointsInCluster[0] = nPoints;
+    		for (j = 0; j < nDims; j++) {
+    			centroidPosStart[j][0] = 0.0;
+    		}
+	    	if (useColorHistogram) {
+	    		totalWeight[0] = 0.0;
+	    		for (i = 0; i < nPoints; i++) {
+	    			totalWeight[0] += weight[i];
+		    		for (j = 0; j < nDims; j++) {
+		    			centroidPosStart[j][0] += pos[j][i]*weight[i];
+		    		}
+		    	}
+	    		for (j = 0; j < nDims; j++) {
+	    			centroidPosStart[j][0] = centroidPosStart[j][0]/totalWeight[0];
+	    		}
+	    	} // if (useColorHistogram)
+	    	else { // no color histogram
+		    	for (i = 0; i < nPoints; i++) {
+		    		for (j = 0; j < nDims; j++) {
+		    			centroidPosStart[j][0] += pos[j][i];
+		    		}
+		    	}
+	    		for (j = 0; j < nDims; j++) {
+	    			centroidPosStart[j][0] = centroidPosStart[j][0]/pointsInCluster[0];
+	    		}
+	    	} // else no colorHistogram
+	    	for (presentClusters = 2; presentClusters <= numberClusters; presentClusters++) {
+	    		Preferences.debug("Present cluster number = " + presentClusters + "\n");
+	    		fireProgressStateChanged("Present cluster number = " + presentClusters);
+	    		bestTotalMinDistSquared = Double.MAX_VALUE;
+	    	    for (initialClusterLocation = 0; initialClusterLocation < nPoints; initialClusterLocation++) {
+	    	    	changeOccurred = true;
+	    	    	iteration = 1;
+	    	    	for (i = 0; i < nDims; i++) {
+	    	    		for (j = 0; j < presentClusters-1; j++) {
+	    	    			centroidPos[i][j] = centroidPosStart[i][j];
+	    	    		}
+	    	    		centroidPos[i][presentClusters-1] = pos[i][initialClusterLocation];
+	    	    	}
+	    	    	while (changeOccurred) {
+	    	    		iteration++;
+	    	    		changeOccurred = false;
+	    	    		totalMinDistSquared = 0.0;
+	    	    		for (i = 0; i < presentClusters; i++) {
+	    	    			pointsInCluster[i] = 0;
+	    	    			for (j = 0; j < presentClusters; j++) {
+	    	    				centroidDistances[i][j] = 0.0;
+	    	    			}
+	    	    		}
+	    	    		if (equalScale) {
+	    	    			for (i = 0; i < presentClusters; i++) {
+	    	    				for (j = i+1; j < presentClusters; j++) {
+	    	    					for (k = 0; k < nDims; k++) {
+	    	    						diff = centroidPos[k][i] - centroidPos[k][j];
+	    	    						centroidDistances[i][j] += diff*diff;
+	    	    					} // for (k = 0; k < nDims; k++)
+	    	    					centroidDistances[i][j] /= 4.0;
+	    	    				} // for (j = i+1; j < presentClusters; j++)
+	    	    			} // for (i = 0; i < presentClusters; i++)
+	    	    			for (i = 0; i < nPoints; i++) {
+	    			    	    minDistSquared = 0.0;
+	    			    	    originalGroupNum = groupNum[i];
+	    		    	    	for (k = 0; k < nDims; k++) {
+	    		    	    		diff = pos[k][i] - centroidPos[k][0];
+	    		    	    	    minDistSquared = minDistSquared + diff*diff;
+	    		    	    	}
+	    		    	    	groupNum[i] = 0;
+	    			    	    for (j = 1; j < presentClusters; j++) {
+	    			    	    	// Use triangle inequality to avoid unnecessary calculations
+	    			    	    	if (minDistSquared > centroidDistances[groupNum[i]][j]) {
+	    				    	    	distSquared = 0.0;
+	    				    	    	for (k = 0; k < nDims; k++) {
+	    				    	    		diff = pos[k][i] - centroidPos[k][j];
+	    				    	    	    distSquared = distSquared + diff*diff;
+	    				    	    	}
+	    				    	    	if (distSquared < minDistSquared) {
+	    				    	    		minDistSquared = distSquared;
+	    				    	    		groupNum[i] = j;
+	    				    	    	}
+	    			    	    	} // if (minDistSquared > centroidDistances[groupNum[i]][j]))
+	    			    	    } // for (j = 1; j < presentClusters; j++)
+	    			    	    pointsInCluster[groupNum[i]]++;
+	    			    	    if (originalGroupNum != groupNum[i]) {
+	    			    	    	changeOccurred = true;
+	    			    	    }
+	    			    	    totalMinDistSquared += minDistSquared;
+	    			    	} // for (i = 0; i < nPoints; i++)	
+	    	    		} // if (equalScale)
+	    	    		else { // not equalScale
+	    	    			for (i = 0; i < presentClusters; i++) {
+	    	    				for (j = i+1; j < presentClusters; j++) {
+	    	    					for (k = 0; k < nDims; k++) {
+	    	    						diff = centroidPos[k][i] - centroidPos[k][j];
+	    	    						centroidDistances[i][j] += scale2[k]*diff*diff;
+	    	    					} // for (k = 0; k < nDims; k++)
+	    	    					centroidDistances[i][j] /= 4.0;
+	    	    				} // for (j = i+1; j < presentClusters; j++)
+	    	    			} // for (i = 0; i < presentClusters; i++)
+	    			    	for (i = 0; i < nPoints; i++) {
+	    			    		minDistSquared = 0.0;
+	    			    	    originalGroupNum = groupNum[i];
+	    		    	    	for (k = 0; k < nDims; k++) {
+	    		    	    		diff = pos[k][i] - centroidPos[k][0];
+	    		    	    	    minDistSquared = minDistSquared + scale2[k]*diff*diff;
+	    		    	    	}
+	    		    	    	groupNum[i] = 0;
+	    			    	    for (j = 1; j < presentClusters; j++) {
+	    			    	    	// Use triangle inequality to avoid unnecessary calculations
+	    			    	    	if (minDistSquared > centroidDistances[groupNum[i]][j]) {
+	    				    	    	distSquared = 0.0;
+	    				    	    	for (k = 0; k < nDims; k++) {
+	    				    	    		diff = pos[k][i] - centroidPos[k][j];
+	    				    	    	    distSquared = distSquared + scale2[k]*diff*diff;
+	    				    	    	}
+	    				    	    	if (distSquared < minDistSquared) {
+	    				    	    		minDistSquared = distSquared;
+	    				    	    		groupNum[i] = j;
+	    				    	    	}
+	    			    	    	} // if (minDistSquared > centroidDistances[groupNum[i]][j]))
+	    			    	    } // for (j = 1; j < presentClusters; j++)
+	    			    	    pointsInCluster[groupNum[i]]++;
+	    			    	    if (originalGroupNum != groupNum[i]) {
+	    			    	    	changeOccurred = true;
+	    			    	    }
+	    			    	    totalMinDistSquared += minDistSquared;
+	    			    	} // for (i = 0; i < nPoints; i++)
+	    	    		} // else not equalScale
+	    		    	for (i = 0; i < presentClusters; i++) {
+	    		    		for (j = 0; j < nDims; j++) {
+	    		    			centroidPos[j][i] = 0.0;
+	    		    		}
+	    		    	}
+	    		    	if (useColorHistogram) {
+	    		    	    for (i = 0; i < presentClusters; i++) {
+	    		    	    	totalWeight[i] = 0.0;
+	    		    	    }
+	    		    		for (i = 0; i < nPoints; i++) {
+	    		    			totalWeight[groupNum[i]] += weight[i];
+	    			    		for (j = 0; j < nDims; j++) {
+	    			    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
+	    			    		}
+	    			    	}
+	    			    	clustersWithoutPoints = 0;
+	    			    	for (i = 0; i < presentClusters; i++) {
+	    			    		if (pointsInCluster[i] == 0) {
+	    			    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+	    			    			clustersWithoutPoints++;
+	    			    		}
+	    			    		else {
+	    				    		for (j = 0; j < nDims; j++) {
+	    				    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
+	    				    		}
+	    			    		} // else
+	    			    	}	
+	    		    	} // if (useColorHistogram)
+	    		    	else { // no color histogram
+	    			    	for (i = 0; i < nPoints; i++) {
+	    			    		for (j = 0; j < nDims; j++) {
+	    			    			centroidPos[j][groupNum[i]] += pos[j][i];
+	    			    		}
+	    			    	}
+	    			    	clustersWithoutPoints = 0;
+	    			    	for (i = 0; i < presentClusters; i++) {
+	    			    		if (pointsInCluster[i] == 0) {
+	    			    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+	    			    			clustersWithoutPoints++;
+	    			    		}
+	    			    		else {
+	    				    		for (j = 0; j < nDims; j++) {
+	    				    			centroidPos[j][i] = centroidPos[j][i]/pointsInCluster[i];
+	    				    		}
+	    			    		} // else
+	    			    	}
+	    		    	} // else no colorHistogram
+	    	    	} // while (changeOccurred)
+	    	    	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n");	
+	    	    	if (totalMinDistSquared < bestTotalMinDistSquared) {
+	    	    	    bestTotalMinDistSquared = totalMinDistSquared;
+	    	    	    for (i = 0; i < nDims; i++) {
+	    	    	    	for (j = 0; j < presentClusters; j++) {
+	    	    	    		centroidPosStart[i][j] = centroidPos[i][j];
+	    	    	    	}
+	    	    	    }
+	    	    	}
+	    	    } // for (initialClusterLocation = 0; initialClusterLocation < nPoints; initialClusterLocation++)
+	    	} // for (presentClusters = 2; presentClusters <= numberClusters; presentClusters++)
+	    	for (i = 0; i < nDims; i++) {
+    	    	for (j = 0; j < numberClusters; j++) {
+    	    		centroidPos[i][j] = centroidPosStart[i][j];
+    	    	}
+    	    }
+    	break;
+    	case FAST_GLOBAL_K_MEANS:
+    	break;
+    	} // switch(algoSelection)
     	
     	if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
     		buffer = new byte[length];
