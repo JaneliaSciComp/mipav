@@ -5,13 +5,11 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewFileChooserBase;
 import gov.nih.mipav.view.ViewImageFileFilter;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.BorderLayout;
@@ -48,6 +46,12 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	private static final int HIERARCHICAL_GROUPING_INIT = 2;
 	
 	private static final int MAXMIN_INIT = 3;
+	
+	private static final int K_MEANS = 0;
+	
+	private static final int GLOBAL_K_MEANS = 1;
+	
+	private static final int FAST_GLOBAL_K_MEANS = 2;
 	
 	/** source image. **/
     private ModelImage image;
@@ -110,6 +114,16 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     private String resultsFileName = null;
     
+    private ButtonGroup algorithmGroup;
+    
+    private JRadioButton kMeansAlgo;
+    
+    private JRadioButton globalAlgo;
+    
+    private JRadioButton fastGlobalAlgo;
+    
+    private int algoSelection = K_MEANS;
+    
     private ButtonGroup initGroup;
     
     private JRadioButton randomInit;
@@ -131,6 +145,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private JCheckBox colorHistogramBox;
     
     private boolean useColorHistogram = false;
+    
+    private JLabel initLabel;
 	
 	
 	public JDialogKMeans() {
@@ -161,6 +177,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		double blueMin;
 		double blueMax;
 		String fileNameBase = null;
+		Object source = event.getSource();
 		String command = event.getActionCommand();
 		 if (command.equals("OK")) {
 			 if (setVariables()) {
@@ -175,6 +192,21 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	         dispose();
 	     } else if (command.equals("Help")) {
 	            MipavUtil.showHelp("");
+	     } else if ((source == kMeansAlgo) || (source == globalAlgo) || (source == fastGlobalAlgo)) {
+	    	 if (kMeansAlgo.isSelected()) {
+	    		 initLabel.setEnabled(true);
+	    	     randomInit.setEnabled(true);
+	    	     BradleyInit.setEnabled(true);
+	    	     hierarchicalInit.setEnabled(true);
+	    	     maxMinInit.setEnabled(true);
+	    	 } // if (kMeansAlgo.isSelected())
+	    	 else {
+	    		 initLabel.setEnabled(false);
+	    		 randomInit.setEnabled(false);
+	    	     BradleyInit.setEnabled(false);
+	    	     hierarchicalInit.setEnabled(false);
+	    	     maxMinInit.setEnabled(false);	 
+	    	 } // else
 	     } else if (command.equals("AddImageBrowse")) {
 	    	 ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
 	         JFileChooser chooser = fileChooser.getFileChooser();
@@ -668,7 +700,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 		 try {
 		
-			 alg = new AlgorithmKMeans(image,pos,scale,groupNum,centroidPos,resultsFileName,
+			 alg = new AlgorithmKMeans(image,algoSelection,pos,scale,groupNum,centroidPos,resultsFileName,
 					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
 					                   useColorHistogram);
 			 
@@ -819,12 +851,51 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 1;
         mainPanel.add(textPointsFile, gbc);
         
+        JLabel algorithmLabel = new JLabel("Choose an algorithm");
+        algorithmLabel.setForeground(Color.black);
+        algorithmLabel.setFont(serif12);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        mainPanel.add(algorithmLabel, gbc);
+        
+        algorithmGroup = new ButtonGroup();
+        kMeansAlgo = new JRadioButton("K-means", true);
+        kMeansAlgo.setFont(serif12);
+        kMeansAlgo.setForeground(Color.black);
+        kMeansAlgo.addActionListener(this);
+        algorithmGroup.add(kMeansAlgo);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        mainPanel.add(kMeansAlgo, gbc);
+        
+        globalAlgo = new JRadioButton("Global k-means", false);
+        globalAlgo.setFont(serif12);
+        globalAlgo.setForeground(Color.black);
+        globalAlgo.addActionListener(this);
+        algorithmGroup.add(globalAlgo);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        mainPanel.add(globalAlgo, gbc);
+        
+        fastGlobalAlgo = new JRadioButton("Fast global k-means", false);
+        fastGlobalAlgo.setFont(serif12);
+        fastGlobalAlgo.setForeground(Color.black);
+        fastGlobalAlgo.addActionListener(this);
+        algorithmGroup.add(fastGlobalAlgo);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        mainPanel.add(fastGlobalAlgo, gbc);
+        
         JLabel clustersLabel = new JLabel("Choose the number of clusters");
         clustersLabel.setForeground(Color.black);
         clustersLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 10;
         mainPanel.add(clustersLabel, gbc);
         
         textClusters = new JTextField(10);
@@ -834,12 +905,12 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 1;
         mainPanel.add(textClusters, gbc);
         
-        JLabel initLabel = new JLabel("Choose an initialization method:");
+        initLabel = new JLabel("Choose an initialization method:");
         initLabel.setForeground(Color.black);
         initLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 11;
         mainPanel.add(initLabel, gbc);
         
         initGroup = new ButtonGroup();
@@ -849,7 +920,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(randomInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 12;
         mainPanel.add(randomInit, gbc);
         
         BradleyInit = new JRadioButton("Bradley-Fayyad Refinement", false);
@@ -858,7 +929,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(BradleyInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 13;
         mainPanel.add(BradleyInit, gbc);
         
         hierarchicalInit = new JRadioButton("Hierarchical grouping", false);
@@ -867,7 +938,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(hierarchicalInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 14;
         mainPanel.add(hierarchicalInit, gbc);
         
         maxMinInit = new JRadioButton("MaxMin", false);
@@ -876,7 +947,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(maxMinInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 15;
         mainPanel.add(maxMinInit, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -892,6 +963,16 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	if (!havePoints) {
     	    MipavUtil.displayError("Must obtain points from a text file or an image");
     	    return false;
+    	}
+    	
+    	if (kMeansAlgo.isSelected()) {
+    		algoSelection = K_MEANS;
+    	}
+    	else if (globalAlgo.isSelected()) {
+    		algoSelection = GLOBAL_K_MEANS;
+    	}
+    	else if (fastGlobalAlgo.isSelected()) {
+    		algoSelection = FAST_GLOBAL_K_MEANS;
     	}
     	
     	useColorHistogram = colorHistogramBox.isSelected();
