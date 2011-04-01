@@ -37,7 +37,7 @@ public class ViewMenuBar {
 
     /** The menu listing voi commands. */
     protected JMenu voiMenu;
-    
+
     /** The menu listing image and overlay commands */
     protected JMenu imageMenu;
 
@@ -124,11 +124,12 @@ public class ViewMenuBar {
      * Returns the menu that contains all image and overlay commands
      */
     public JMenu getImageMenu() {
-    	return this.imageMenu;
+        return this.imageMenu;
     }
-    
+
     /**
      * Return the menu containing the list VOI commands.
+     * 
      * @return the VOI menu
      */
     public JMenu getVOIMenu() {
@@ -189,13 +190,10 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Nonmaximum suppression", "nmsuppression", 0, null, false),
                         menuBuilder.buildMenuItem("Regularized isotropic diffusion", "RegIsoDiff", 0, null, false),
                         menuBuilder.buildMenuItem("Slice averaging", "sliceAveraging", 0, null, false),
-                        menuBuilder.buildMenuItem("Trilateral filter", null, 0, null, false),
                         menuBuilder.buildMenuItem("Unsharp mask", null, 0, null, false),}),
                 menuBuilder.makeMenu("Filters (wavelet)", false, new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
-                                // null, null, null),
-
-                                menuBuilder.buildMenuItem("Denoising BLS GSM", "blsGSM", 0, null, false),
-                                menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),}),
+                        // null, null, null),
+                        menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),}),
                 menuBuilder.makeMenu("Histogram tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("2D histogram", "histTwoDim", 0, null, false),
                         menuBuilder.buildMenuItem("Cumulative histogram", "cumHistogram", 0, null, false),
@@ -225,9 +223,7 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("FRET efficiency", "doFRETEfficiency", 0, null, false),
                                 menuBuilder.buildMenuItem("Subtract VOI background", "SubVOI", 0, null, false),
                                 menuBuilder.makeMenu("Restoration", false, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("XCOSM_EM", "xcosmEM", 0, null, false),
-
-                                        //
+                                //
                                         // menuBuilder.buildMenuItem("Iterative
                                         // blind deconvolution",
                                         // null,
@@ -294,7 +290,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
                         menuBuilder.buildMenuItem("Registration validation", "RegValidation", 0, null, false),
                         menuBuilder.buildMenuItem("VOI landmark", "VOILandmark", 0, null, false),
-                        //menuBuilder.buildMenuItem("REGTEST", "REGTEST", 0, null, false),
+                // menuBuilder.buildMenuItem("REGTEST", "REGTEST", 0, null, false),
                         }),
                 menuBuilder.makeMenu("Segmentation", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Evaluate VOI segmentation", "evalSeg", 0, null, false),
@@ -312,13 +308,14 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Theshold using standard deviation", "threshStdDev", 0, null,
                                         false),}),
                         menuBuilder.buildMenuItem("Watershed", null, 0, null, false),
-                        menuBuilder.makeMenu("ITK", false, new JMenuItem[] {
-                        		menuBuilder.buildMenuItem("Levelset Diffusion", "DiffusionLevelsetITK", 0, null,
-                        				false),
-                                menuBuilder.buildMenuItem("Levelset Geodesic Active Contour", "GeodesicActiveContourLevelsetITK", 0, null,
-                                        false),
-                                menuBuilder.buildMenuItem("Levelset Threshold", "ThresholdLevelsetITK", 0, null,
-                                         false),}),}),
+                        menuBuilder.makeMenu("ITK", false,
+                                new JMenuItem[] {
+                                        menuBuilder.buildMenuItem("Levelset Diffusion", "DiffusionLevelsetITK", 0,
+                                                null, false),
+                                        menuBuilder.buildMenuItem("Levelset Geodesic Active Contour",
+                                                "GeodesicActiveContourLevelsetITK", 0, null, false),
+                                        menuBuilder.buildMenuItem("Levelset Threshold", "ThresholdLevelsetITK", 0,
+                                                null, false),}),}),
 
                 // menuBuilder.buildMenuItem("Non-parametric", "nonparametric", 0, null,
                 // false)}),
@@ -333,8 +330,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Two MRI images", "DMRISNR", 0, null, false),}),
                 menuBuilder.makeMenu("Spatial statistics", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Circle pattern generation", "CircleGen", 0, null, false),
-                        menuBuilder.buildMenuItem("Sphere pattern generation", "SphereGen", 0, null, false),
-                        }),
+                        menuBuilder.buildMenuItem("Sphere pattern generation", "SphereGen", 0, null, false),}),
                 menuBuilder.makeMenu("Transformation tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Barrel distortion correction", "Barrel", 0, null, false),
                         menuBuilder.buildMenuItem("Circle to rectangle", "CircleToRec", 0, null, false),
@@ -463,10 +459,10 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Image sequence", "openImgSeq", 0, "open.gif", true),
                         menuBuilder.buildMenuItem("Create blank image", "CreateBlankImage", 0, "open.gif", true),
                         menuBuilder.buildMenuItem("Image browser", "BrowseImages", 0, null, true),}),
-                menuBuilder.buildMenuItem("Close all images", "closeAllImages", 0, null, true),       
-                ViewMenuBar.separator, loadMenu, extractImageBItem, closeImageBItem, ViewMenuBar.separator,
-                saveImageItem, saveImageAsItem, captureMenu, ViewMenuBar.separator, dicomMenu, ViewMenuBar.separator,
-                menuBuilder.buildQuickList(), ViewMenuBar.separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)});
+                menuBuilder.buildMenuItem("Close all images", "closeAllImages", 0, null, true), ViewMenuBar.separator,
+                loadMenu, extractImageBItem, closeImageBItem, ViewMenuBar.separator, saveImageItem, saveImageAsItem,
+                captureMenu, ViewMenuBar.separator, dicomMenu, ViewMenuBar.separator, menuBuilder.buildQuickList(),
+                ViewMenuBar.separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)});
     }
 
     /**
@@ -498,10 +494,10 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("K-means", "KMeans", 0, null, false),
                 menuBuilder.buildMenuItem("Log slope mapping", "LogSlope", 0, null, false),
                 menuBuilder.makeMenu("Quantitative MRI", false, new JMenuItem[] {
-                        menuBuilder.makeMenu("T1", false, new JMenuItem[] {menuBuilder.buildMenuItem("TreT1",
-                                "treT1", 0, null, false)}),
-                        menuBuilder.makeMenu("T2", false, new JMenuItem[] {menuBuilder.buildMenuItem("TreT2",
-                                "treT2", 0, null, false)}),
+                        menuBuilder.makeMenu("T1", false, new JMenuItem[] {menuBuilder.buildMenuItem("TreT1", "treT1",
+                                0, null, false)}),
+                        menuBuilder.makeMenu("T2", false, new JMenuItem[] {menuBuilder.buildMenuItem("TreT2", "treT2",
+                                0, null, false)}),
                         menuBuilder.makeMenu("DCE", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("S2M2", "s2m2", 0, null, false),
                                 menuBuilder.buildMenuItem("SM2", "sm2", 0, null, false)})})});
@@ -639,22 +635,25 @@ public class ViewMenuBar {
      */
     public JMenu makeUtilitiesMenu() {
         return menuBuilder.makeMenu("Utilities", 'U', false, new JMenuItem[] {
-                menuBuilder.makeMenu("4D tools", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Convert Single 3D to 4D", "Convert3Dto4D", 0, null, false),
-                        menuBuilder.buildMenuItem("Concat Multiple 3D to 4D", "ConvertMultiple3Dto4D", 0, null, false),
-                        menuBuilder.buildMenuItem("Convert 4D to Single 3D", "Convert4Dto3D", 0, null, false),
-                        menuBuilder.buildMenuItem("Convert 4D to Multiple 3D", "Convert4DtoMultiple3D", 0, null, false),
-                        menuBuilder.buildMenuItem("Convert 4D to RGB", "Convert4DtoRGB", 0, null, false),
-                        menuBuilder.buildMenuItem("Extract 3D subset from 4D", "Subset", 0, null, false),
-                        menuBuilder.buildMenuItem("Remove time volumes", null, 0, null, false),
-                        menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34", 0, null, false),
-                        menuBuilder.buildMenuItem("Swap dims 1<->4", "Swap14", 0, null, false),}),
+                menuBuilder.makeMenu("4D tools", false,
+                        new JMenuItem[] {
+                                menuBuilder.buildMenuItem("Convert Single 3D to 4D", "Convert3Dto4D", 0, null, false),
+                                menuBuilder.buildMenuItem("Concat Multiple 3D to 4D", "ConvertMultiple3Dto4D", 0, null,
+                                        false),
+                                menuBuilder.buildMenuItem("Convert 4D to Single 3D", "Convert4Dto3D", 0, null, false),
+                                menuBuilder.buildMenuItem("Convert 4D to Multiple 3D", "Convert4DtoMultiple3D", 0,
+                                        null, false),
+                                menuBuilder.buildMenuItem("Convert 4D to RGB", "Convert4DtoRGB", 0, null, false),
+                                menuBuilder.buildMenuItem("Extract 3D subset from 4D", "Subset", 0, null, false),
+                                menuBuilder.buildMenuItem("Remove time volumes", null, 0, null, false),
+                                menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34", 0, null, false),
+                                menuBuilder.buildMenuItem("Swap dims 1<->4", "Swap14", 0, null, false),}),
                 menuBuilder.buildMenuItem("Center of mass", "COM", 0, null, false),
                 menuBuilder.buildMenuItem("Clone (copy)", "Clone", 0, null, false),
                 menuBuilder.makeMenu("Conversion tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Convert type", null, 0, null, false),
                         menuBuilder.buildMenuItem("Grays -> RGB", null, 0, null, false),
-                        
+
                         menuBuilder.buildMenuItem("RGB -> Gray", null, 0, null, false),
                         menuBuilder.buildMenuItem("RGB -> Grays", null, 0, null, false),
                         menuBuilder.buildMenuItem("RGB -> HSB", null, 0, null, false),}),
@@ -675,12 +674,11 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Image calculator - Bulk Images", "BulkCalculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image math", null, 0, null, false),
                 menuBuilder.makeMenu("ImageJ", false, new JMenuItem[] {
-                		menuBuilder.buildMenuItem("MIPAV -> ImageJ", null, 0, null, false),
+                        menuBuilder.buildMenuItem("MIPAV -> ImageJ", null, 0, null, false),
                         menuBuilder.buildMenuItem("ImageJ -> MIPAV", null, 0, null, false),
                         menuBuilder.buildMenuItem("Launch ImageJ", "launchImageJ", 0, null, false)}),
 
-                menuBuilder.buildMenuItem("Intensity Projection", "maximumIntensityProjection", 0, null,
-                        false),
+                menuBuilder.buildMenuItem("Intensity Projection", "maximumIntensityProjection", 0, null, false),
                 menuBuilder.buildMenuItem("Invert", null, 0, null, false),
                 menuBuilder.buildMenuItem("Match images", "matchImages", 0, null, false),
                 menuBuilder.buildMenuItem("Mosaic to 3D volume", "MosaicTo3D", 0, null, false),
@@ -714,9 +712,9 @@ public class ViewMenuBar {
                         menuBuilder
                                 .buildMenuItem("Replace blanks with averages", "ReplaceBlankWithAvg", 0, null, false),
                         menuBuilder.buildMenuItem("Replace slice", null, 0, null, false),}),
-                        
+
                 menuBuilder.buildMenuItem("Subtract VOI background", "SubVOI", 0, null, false),});
-        
+
     }
 
     /**
@@ -726,10 +724,7 @@ public class ViewMenuBar {
      */
     public JMenu makeVOIMenu() {
         return menuBuilder
-                .makeMenu(
-                        "VOI",
-                        'V',
-                        false,
+                .makeMenu("VOI", 'V', false,
                         new JComponent[] {
 
                                 menuBuilder.makeMenu("New VOI", true, new JMenuItem[] {
@@ -749,7 +744,8 @@ public class ViewMenuBar {
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Save VOI", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS, true),
-                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS_AS, true),
+                                        menuBuilder
+                                                .buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS_AS, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_AS, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_VOI, true),
@@ -758,15 +754,13 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_LABEL, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_LABEL, true)}),
                                 ViewMenuBar.separator,
-                                menuBuilder
-                                        .makeMenu("Edit VOI", true,
-                                                new JMenuItem[] {
-                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_UNDO, true),
-                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_REDO, true),
-                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_DELETE, true),
-                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CUT, true),
-                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_COPY, true),
-                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PASTE, true),}),
+                                menuBuilder.makeMenu("Edit VOI", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_UNDO, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_REDO, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_DELETE, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CUT, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_COPY, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PASTE, true),}),
                                 menuBuilder.makeMenu("Select VOI", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, false),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_NONE, false),}),
@@ -808,14 +802,14 @@ public class ViewMenuBar {
                                                 null, false),
                                         menuBuilder.buildMenuItem("Paint -> Short mask", "PaintToShortMask", 0, null,
                                                 false),}),
-                                //menuBuilder.buildCheckBoxMenuItem("Allow VOI holes (XOR)", "XOR", Preferences
-                                        //.is(Preferences.PREF_USE_VOI_XOR)),
-                                //menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS, false),
-                                menuBuilder.buildMenuItem("VOI Logical Operations", "VOILogicalOperations", 0, null, true),
+                                // menuBuilder.buildCheckBoxMenuItem("Allow VOI holes (XOR)", "XOR", Preferences
+                                // .is(Preferences.PREF_USE_VOI_XOR)),
+                                // menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS, false),
+                                menuBuilder.buildMenuItem("VOI Logical Operations", "VOILogicalOperations", 0, null,
+                                        true),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Propagate", true, new JMenuItem[] {
-                                        menuBuilder
-                                                .buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL, true)}),
                                 menuBuilder.makeMenu("Evolve boundary 2D", true, new JMenuItem[] {
@@ -856,51 +850,48 @@ public class ViewMenuBar {
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN, true),
-                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY, false),
-                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY, false),
-                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY, false),
-                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY_THRESHOLD , false),
-                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD, false)}),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY,
+                                                false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY,
+                                                false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY,
+                                                false),
+                                        menuBuilder.buildMenuItem(
+                                                CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY_THRESHOLD, false),
+                                        menuBuilder.buildMenuItem(
+                                                CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD, false)}),
                                 ViewMenuBar.separator,
-                                //menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, false),
-                                //menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_STATISTICS, false),
+                                // menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, false),
+                                // menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_STATISTICS, false),
                                 menuBuilder.buildMenuItem("View VOI Properties", "VOIProperties", 'P', null, true),
                                 menuBuilder.buildMenuItem("Statistics generator", "VOIStistics", 'G', null, true),
-                                
-                        		});
+
+                        });
     }
 
-
-    public static boolean isMenuCommand( JMenu menu, String command )
-    {
-        if ( menu == null || command == null )
-        {
+    public static boolean isMenuCommand(final JMenu menu, final String command) {
+        if (menu == null || command == null) {
             return false;
         }
-        return isMenuCommand( menu.getMenuComponents(), command );
+        return ViewMenuBar.isMenuCommand(menu.getMenuComponents(), command);
     }
-    
-    public static boolean isMenuCommand( Component[] menuComponents, String command )
-    {
-        if ( menuComponents == null || command == null )
-        {
+
+    public static boolean isMenuCommand(final Component[] menuComponents, final String command) {
+        if (menuComponents == null || command == null) {
             return false;
         }
         boolean bReturn = false;
-        for ( int i = 0; i < menuComponents.length; i++ )
-        {
-            if ( menuComponents[i] instanceof JMenuItem )
-            {
-                bReturn |= command.equals( ((JMenuItem)menuComponents[i]).getActionCommand() );
+        for (final Component element : menuComponents) {
+            if (element instanceof JMenuItem) {
+                bReturn |= command.equals( ((JMenuItem) element).getActionCommand());
             }
-            if ( menuComponents[i] instanceof JMenu )
-            {
-                bReturn |= isMenuCommand( ((JMenu)menuComponents[i]).getMenuComponents(), command );
+            if (element instanceof JMenu) {
+                bReturn |= ViewMenuBar.isMenuCommand( ((JMenu) element).getMenuComponents(), command);
             }
         }
         return bReturn;
     }
-    
+
     /**
      * Enable or disable items in a menubar based on the image dimensionality and storage type.
      * 
@@ -936,7 +927,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Unsharp mask", false);
             menuBuilder.setMenuItemEnabled("Fill image", false);
             menuBuilder.setMenuItemEnabled("Filters (frequency)", false);
-            menuBuilder.setMenuItemEnabled("Trilateral filter", false);
             menuBuilder.setMenuItemEnabled("FRAP", false);
             menuBuilder.setMenuItemEnabled("FRET", false);
             menuBuilder.setMenuItemEnabled("FRET bleed thru", false);
@@ -1001,7 +991,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
-            menuBuilder.setMenuItemEnabled("Denoising BLS GSM", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
             menuBuilder.setMenuItemEnabled("Mosaic to 3D volume", false);
@@ -1016,7 +1005,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
-            menuBuilder.setMenuItemEnabled("Trilateral filter", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
@@ -1218,7 +1206,6 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Convert 4D to RGB", true);
         menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", true);
         menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", true);
-        menuBuilder.setMenuItemEnabled("Denoising BLS GSM", true);
         menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", true);
         // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
         menuBuilder.setMenuItemEnabled("Remove time volumes", true);
