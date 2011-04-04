@@ -635,19 +635,20 @@ public class ViewMenuBar {
      */
     public JMenu makeUtilitiesMenu() {
         return menuBuilder.makeMenu("Utilities", 'U', false, new JMenuItem[] {
-                menuBuilder.makeMenu("4D tools", false,
-                        new JMenuItem[] {
-                                menuBuilder.buildMenuItem("Convert Single 3D to 4D", "Convert3Dto4D", 0, null, false),
-                                menuBuilder.buildMenuItem("Concat Multiple 3D to 4D", "ConvertMultiple3Dto4D", 0, null,
-                                        false),
-                                menuBuilder.buildMenuItem("Convert 4D to Single 3D", "Convert4Dto3D", 0, null, false),
-                                menuBuilder.buildMenuItem("Convert 4D to Multiple 3D", "Convert4DtoMultiple3D", 0,
-                                        null, false),
-                                menuBuilder.buildMenuItem("Convert 4D to RGB", "Convert4DtoRGB", 0, null, false),
-                                menuBuilder.buildMenuItem("Extract 3D subset from 4D", "Subset", 0, null, false),
-                                menuBuilder.buildMenuItem("Remove time volumes", null, 0, null, false),
-                                menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34", 0, null, false),
-                                menuBuilder.buildMenuItem("Swap dims 1<->4", "Swap14", 0, null, false),}),
+
+                menuBuilder.makeMenu("4D tools", false, new JMenuItem[] {
+                        menuBuilder.buildMenuItem("Convert Single 3D to 4D", "Convert3Dto4D", 0, null, false),
+                        menuBuilder.buildMenuItem("Concat Multiple 3D to 4D", "ConvertMultiple3Dto4D", 0, null, false),
+                        menuBuilder.buildMenuItem("Convert 4D to Single 3D", "Convert4Dto3D", 0, null, false),
+                        menuBuilder.buildMenuItem("Convert 4D to Multiple 3D", "Convert4DtoMultiple3D", 0, null, false), 
+                        menuBuilder.buildMenuItem("Convert 4D to RGB", "Convert4DtoRGB", 0, null, false),
+                        menuBuilder.buildMenuItem("Extract 3D subset from 4D", "Subset", 0, null, false),
+                        menuBuilder.buildMenuItem("Remove time volumes", null, 0, null, false),
+                        menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34", 0, null, false),
+                        menuBuilder.buildMenuItem("Swap dims 1<->4", "Swap14", 0, null, false),
+                        menuBuilder.buildMenuItem("4D Image Calculator", "4DImageCalculator", 0, null, false),}),
+
+
                 menuBuilder.buildMenuItem("Center of mass", "COM", 0, null, false),
                 menuBuilder.buildMenuItem("Clone (copy)", "Clone", 0, null, false),
                 menuBuilder.makeMenu("Conversion tools", false, new JMenuItem[] {
@@ -990,6 +991,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
+            menuBuilder.setMenuItemEnabled("4D Image Calculator", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
@@ -1013,6 +1015,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Cine (movie)", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
+            menuBuilder.setMenuItemEnabled("4D Image Calculator", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("Extract slices", false);
@@ -1206,6 +1209,10 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Convert 4D to RGB", true);
         menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", true);
         menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", true);
+
+        menuBuilder.setMenuItemEnabled("4D Image Calculator", true);
+        menuBuilder.setMenuItemEnabled("Denoising BLS GSM", true);
+
         menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", true);
         // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
         menuBuilder.setMenuItemEnabled("Remove time volumes", true);
