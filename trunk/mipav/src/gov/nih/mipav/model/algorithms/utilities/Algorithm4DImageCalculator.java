@@ -25,6 +25,9 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	 /** maximum **/
 	 public static final int MAXIMUM = 3;
 	 
+	 /** std dev **/
+	 public static final int STDDEV = 4;
+	 
 	 /** images **/
 	 private ModelImage image, destImage;
 	 
@@ -58,7 +61,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		this.destImage = resultImage;
 		this.operationType = operationType;
 		this.doClip = doClip;
-		if(operationType == MAXIMUM || operationType == MINIMUM || operationType == AVERAGE) {
+		if(operationType == MAXIMUM || operationType == MINIMUM || operationType == AVERAGE || operationType == STDDEV) {
 			doClip = true;
 		}
 	}
@@ -146,6 +149,8 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 							byteSliceBuff = doByteMax(byteBuffXYT);
 						}else if(operationType == MINIMUM) {
 							byteSliceBuff = doByteMin(byteBuffXYT);
+						}else if(operationType == STDDEV) {
+							byteSliceBuff = doByteStdDev(byteBuffXYT);
 						}
 						destImage.importData(i*sliceLength, byteSliceBuff, false);
 					}else {
@@ -166,6 +171,8 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 							shortSliceBuff = doShortMax(shortBuffXYT);
 						}else if(operationType == MINIMUM) {
 							shortSliceBuff = doShortMin(shortBuffXYT);
+						}else if(operationType == STDDEV) {
+							shortSliceBuff = doShortStdDev(shortBuffXYT);
 						}
 						destImage.importData(i*sliceLength, shortSliceBuff, false);
 					}else {
@@ -186,6 +193,8 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 							intSliceBuff = doIntMax(intBuffXYT);
 						}else if(operationType == MINIMUM) {
 							intSliceBuff = doIntMin(intBuffXYT);
+						}else if(operationType == STDDEV) {
+							intSliceBuff = doIntStdDev(intBuffXYT);
 						}
 						destImage.importData(i*sliceLength, intSliceBuff, false);
 					}else {
@@ -206,6 +215,8 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 							floatSliceBuff = doFloatMax(floatBuffXYT);
 						}else if(operationType == MINIMUM) {
 							floatSliceBuff = doFloatMin(floatBuffXYT);
+						}else if(operationType == STDDEV) {
+							floatSliceBuff = doFloatStdDev(floatBuffXYT);
 						}
 						destImage.importData(i*sliceLength, floatSliceBuff, false);
 					}else {
@@ -345,6 +356,53 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		
 
 		return sliceBuff;
+	}
+	
+	
+	
+	
+	private byte[] doByteStdDev(byte[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		byte[] sliceBuff = new byte[xDim * yDim];
+		int counter = 0;
+		//first do averaging
+		for(int i=0;i<sliceLength;i++) {
+			int sum = 0;
+			for(int t=0;t<tDim;t++) {
+				byte pix = xytBuff[i + (sliceLength * t)];
+				sum = (sum + pix);
+			}
+
+			byte average = (byte)(sum/tDim);
+			sliceBuff[counter] = average;
+			counter++;
+		}
+		
+		
+		//now calculate std dev
+		counter = 0;
+		byte[] sliceStdDevBuff = new byte[xDim * yDim];
+		for(int i=0;i<sliceLength;i++) {
+			int sum = 0;
+			byte average = sliceBuff[i];
+			for(int t=0;t<tDim;t++) {
+				byte pix = xytBuff[i + (sliceLength * t)];
+				int calc = (pix-average) * (pix-average);
+				sum = sum + calc;
+			}
+
+			byte stddev = (byte)(Math.sqrt(sum/tDim));
+			sliceStdDevBuff[counter] = stddev;
+			counter++;
+			
+		}
+		
+
+		return sliceStdDevBuff;
 	}
 	
 	
@@ -512,6 +570,61 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 
 		return sliceBuff;
 	}
+	
+	
+	
+	
+	
+	
+	private short[] doShortStdDev(short[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		short[] sliceBuff = new short[xDim * yDim];
+		int counter = 0;
+		//first do averaging
+		for(int i=0;i<sliceLength;i++) {
+			int sum = 0;
+			for(int t=0;t<tDim;t++) {
+				short pix = xytBuff[i + (sliceLength * t)];
+				sum = (sum + pix);
+			}
+
+			short average = (short)(sum/tDim);
+			sliceBuff[counter] = average;
+			counter++;
+		}
+		
+		
+		//now calculate std dev
+		counter = 0;
+		short[] sliceStdDevBuff = new short[xDim * yDim];
+		for(int i=0;i<sliceLength;i++) {
+			int sum = 0;
+			short average = sliceBuff[i];
+			for(int t=0;t<tDim;t++) {
+				short pix = xytBuff[i + (sliceLength * t)];
+				int calc = (pix-average) * (pix-average);
+				sum = sum + calc;
+			}
+
+			short stddev = (short)(Math.sqrt(sum/tDim));
+			sliceStdDevBuff[counter] = stddev;
+			counter++;
+			
+		}
+		
+
+		return sliceStdDevBuff;
+	}
+	
+	
+	
+	
+	
+	
 	
 	
 	private short[] doShortAddClip(short[] xytBuff) {
@@ -693,6 +806,56 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 
 		return sliceBuff;
 	}
+	
+	
+	
+	
+	
+	private int[] doIntStdDev(int[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		int[] sliceBuff = new int[xDim * yDim];
+		int counter = 0;
+		//first do averaging
+		for(int i=0;i<sliceLength;i++) {
+			int sum = 0;
+			for(int t=0;t<tDim;t++) {
+				int pix = xytBuff[i + (sliceLength * t)];
+				sum = (sum + pix);
+			}
+
+			int average = (int)(sum/tDim);
+			sliceBuff[counter] = average;
+			counter++;
+		}
+		
+		
+		//now calculate std dev
+		counter = 0;
+		int[] sliceStdDevBuff = new int[xDim * yDim];
+		for(int i=0;i<sliceLength;i++) {
+			int sum = 0;
+			int average = sliceBuff[i];
+			for(int t=0;t<tDim;t++) {
+				int pix = xytBuff[i + (sliceLength * t)];
+				int calc = (pix-average) * (pix-average);
+				sum = sum + calc;
+			}
+
+			int stddev = (int)(Math.sqrt(sum/tDim));
+			sliceStdDevBuff[counter] = stddev;
+			counter++;
+			
+		}
+		
+
+		return sliceStdDevBuff;
+	}
+	
+	
 	
 	
 	private int[] doIntAddClip(int[] xytBuff) {
@@ -880,6 +1043,57 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		
 
 		return sliceBuff;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	private float[] doFloatStdDev(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		float[] sliceBuff = new float[xDim * yDim];
+		int counter = 0;
+		//first do averaging
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				float pix = xytBuff[i + (sliceLength * t)];
+				sum = (sum + pix);
+			}
+
+			float average = (float)(sum/tDim);
+			sliceBuff[counter] = average;
+			counter++;
+		}
+		
+		
+		//now calculate std dev
+		counter = 0;
+		float[] sliceStdDevBuff = new float[xDim * yDim];
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			float average = sliceBuff[i];
+			for(int t=0;t<tDim;t++) {
+				float pix = xytBuff[i + (sliceLength * t)];
+				double calc = (pix-average) * (pix-average);
+				sum = sum + calc;
+			}
+
+			float stddev = (float)(Math.sqrt(sum/tDim));
+			sliceStdDevBuff[counter] = stddev;
+			counter++;
+			
+		}
+		
+
+		return sliceStdDevBuff;
 	}
 	
 	

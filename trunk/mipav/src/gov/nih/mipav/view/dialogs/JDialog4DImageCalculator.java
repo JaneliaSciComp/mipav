@@ -77,7 +77,7 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
      */
 	private void init() {
 		setForeground(Color.black);
-        setTitle("4D Image Calculator");
+        setTitle("4D Image math");
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
@@ -95,7 +95,7 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
         comboBoxOperator.addItem("Average");
         comboBoxOperator.addItem("Minimum");
         comboBoxOperator.addItem("Maximum");
-
+        comboBoxOperator.addItem("Standard Deviation");
 
         comboBoxOperator.addItemListener(this);
         comboBoxOperator.addActionListener(this);
@@ -194,6 +194,8 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
 			operationType = Algorithm4DImageCalculator.MINIMUM;
 		}else if(operation.equals("Maximum")) {
 			operationType = Algorithm4DImageCalculator.MAXIMUM;
+		}else if(operation.equals("Standard Deviation")) {
+			operationType = Algorithm4DImageCalculator.STDDEV;
 		}
 		
 		boolean doClip = radioClip.isSelected();
