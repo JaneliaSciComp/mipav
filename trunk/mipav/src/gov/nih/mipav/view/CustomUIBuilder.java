@@ -235,7 +235,7 @@ public class CustomUIBuilder {
 	
     
     public static final UIParams PARAM_IMAGE_SYNC = new UIParams("SyncImages", 
-            "Sync images to same slice number during linked scrolling", "syncImages");
+            "Sync other images to same slice number as active image", "syncImages");
     
     /** Image Magnifying related buttons */
     public static final UIParams PARAM_IMAGE_MAG = new UIParams("MagImage",
