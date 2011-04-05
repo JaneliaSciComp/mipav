@@ -2074,6 +2074,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setACenter(float aCenter) {
         this.aCenter = aCenter;
     }
+    
+    public float getACenter() {
+    	return aCenter;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2082,6 +2086,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setActualReceiveFrequency(int actualReceiveFrequency) {
         this.actualReceiveFrequency = actualReceiveFrequency;
+    }
+    
+    public int getActualReceiveFrequency() {
+    	return actualReceiveFrequency;
     }
 
     /**
@@ -2092,6 +2100,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setActualTransmitFrequency(int actualTransmitFrequency) {
         this.actualTransmitFrequency = actualTransmitFrequency;
     }
+    
+    public int getActualTransmitFrequency() {
+    	return actualTransmitFrequency;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2100,6 +2112,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setANormal(float aNormal) {
         this.aNormal = aNormal;
+    }
+    
+    public float getANormal() {
+    	return aNormal;
     }
 
     /**
@@ -2110,6 +2126,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setAPCenter(float apCenter) {
         this.apCenter = apCenter;
     }
+    
+    public float getAPCenter() {
+    	return apCenter;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2118,6 +2138,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setArrythmiaRejectionRatio(short arrythmiaRejectionRatio) {
         this.arrythmiaRejectionRatio = arrythmiaRejectionRatio;
+    }
+    
+    public short getArrythmiaRejectionRatio() {
+    	return arrythmiaRejectionRatio;
     }
 
     /**
@@ -2128,6 +2152,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setAutoCenterFrequency(String autoCenterFrequency) {
         this.autoCenterFrequency = autoCenterFrequency;
     }
+    
+    public String getAutoCenterFrequency() {
+    	return autoCenterFrequency;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2136,6 +2164,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setAutoManualPrescan(String autoManualPrescan) {
         this.autoManualPrescan = autoManualPrescan;
+    }
+    
+    public String getAutoManualPrescan() {
+    	return autoManualPrescan;
     }
 
     /**
@@ -2146,6 +2178,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setAverageSAR(float averageSAR) {
         this.averageSAR = averageSAR;
     }
+    
+    public float getAverageSAR() {
+    	return averageSAR;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2154,6 +2190,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setAveragesNumber(short averagesNumber) {
         this.averagesNumber = averagesNumber;
+    }
+    
+    public short getAveragesNumber() {
+    	return averagesNumber;
     }
 
     /**
@@ -2164,6 +2204,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setBitsPerPixel(short bitsPerPixel) {
         this.bitsPerPixel = bitsPerPixel;
     }
+    
+    public short getBitsPerPixel() {
+    	return bitsPerPixel;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2173,7 +2217,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setCardiacHeartRate(short cardiacHeartRate) {
         this.cardiacHeartRate = cardiacHeartRate;
     }
-
+    
+    public short getCardiacHeartRate(){
+    	return cardiacHeartRate;
+    }
     /**
      * DOCUMENT ME!
      *
@@ -2181,6 +2228,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setCardiacPhaseNumber(short cardiacPhaseNumber) {
         this.cardiacPhaseNumber = cardiacPhaseNumber;
+    }
+    
+    public short getCardiacPhaseNumber() {
+    	return cardiacPhaseNumber;
     }
 
     /**
@@ -2191,6 +2242,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setCardiacRepTime(String cardiacRepTime) {
         this.cardiacRepTime = cardiacRepTime;
     }
+    
+    public String getCardiacRepTime() {
+        return cardiacRepTime;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2199,6 +2254,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setChangedValues(String changedValues) {
         this.changedValues = changedValues;
+    }
+    
+    public String getChangedValues() {
+        return changedValues;
     }
 
     /**
@@ -2209,6 +2268,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setCoilName(String coilName) {
         this.coilName = coilName;
     }
+    
+    public String getCoilName() {
+        return coilName;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2217,6 +2280,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setCoilType(String coilType) {
         this.coilType = coilType;
+    }
+    
+    public String getCoilType() {
+        return coilType;
     }
 
     /**
@@ -2227,6 +2294,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setCollapseImage(String collapseImage) {
         this.collapseImage = collapseImage;
     }
+    
+    public String getCollapseImage() {
+        return collapseImage;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2235,6 +2306,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setConcatenatedSATSelection(String concatenatedSATSelection) {
         this.concatenatedSATSelection = concatenatedSATSelection;
+    }
+    
+    public String getConcatenatedSATSelection() {
+        return concatenatedSATSelection;
     }
 
     /**
@@ -2245,6 +2320,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setContiguousSlices(String contiguousSlices) {
         this.contiguousSlices = contiguousSlices;
     }
+    
+    public String getContiguousSlices() {
+        return contiguousSlices;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2253,6 +2332,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setContrastAgent(String contrastAgent) {
         this.contrastAgent = contrastAgent;
+    }
+    
+    public String getContrastAgent() {
+        return contrastAgent;
     }
 
     /**
@@ -2263,6 +2346,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setContrastAmount(float contrastAmount) {
         this.contrastAmount = contrastAmount;
     }
+    
+    public float getContrastAmount() {
+        return contrastAmount;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2271,6 +2358,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setContrastDescription(String contrastDescription) {
         this.contrastDescription = contrastDescription;
+    }
+    
+    public String getContrastDescription() {
+        return contrastDescription;
     }
 
     /**
@@ -2281,6 +2372,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setContrastUsed(String contrastUsed) {
         this.contrastUsed = contrastUsed;
     }
+    
+    public String getContrastUsed() {
+        return contrastUsed;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2289,6 +2384,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setCPhase(short cPhase) {
         this.cPhase = cPhase;
+    }
+    
+    public short geetCPhase() {
+        return cPhase;
     }
 
     /**
@@ -2299,6 +2398,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setDefaultLevel(short defaultLevel) {
         this.defaultLevel = defaultLevel;
     }
+    
+    public short getDefaultLevel() {
+        return defaultLevel;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2307,6 +2410,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setDefaultWindow(short defaultWindow) {
         this.defaultWindow = defaultWindow;
+    }
+    
+    public short getDefaultWindow() {
+        return defaultWindow;
     }
 
     /**
@@ -2317,6 +2424,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setDiognostician(String diognostician) {
         this.diognostician = diognostician;
     }
+    
+    public String getDiognostician() {
+        return diognostician;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2325,6 +2436,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setEchoNumber(short echoNumber) {
         this.echoNumber = echoNumber;
+    }
+    
+    public short getEchoNumber() {
+        return echoNumber;
     }
 
     /**
@@ -2335,6 +2450,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setEchoTrainLength(int echoTrainLength) {
         this.echoTrainLength = echoTrainLength;
     }
+    
+    public int getEchoTrainLength() {
+        return echoTrainLength;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2343,6 +2462,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setEndX(float endX) {
         this.endX = endX;
+    }
+    
+    public float getEndX() {
+        return endX;
     }
 
     /**
@@ -2353,6 +2476,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setEndY(float endY) {
         this.endY = endY;
     }
+    
+    public float getEndY() {
+        return endY;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2361,6 +2488,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setEndZ(float endZ) {
         this.endZ = endZ;
+    }
+    
+    public float getEndZ() {
+        return endZ;
     }
 
     /**
@@ -2371,6 +2502,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setExcitationsNumber(float excitationsNumber) {
         this.excitationsNumber = excitationsNumber;
     }
+    
+    public float getExcitationsNumber() {
+        return excitationsNumber;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2379,6 +2514,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setExtremityCoil(String extremityCoil) {
         this.extremityCoil = extremityCoil;
+    }
+    
+    public String getExtremityCoil() {
+        return extremityCoil;
     }
 
     /**
@@ -2389,6 +2528,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setFieldOfView(float fieldOfView) {
         this.fieldOfView = fieldOfView;
     }
+    
+    public float getFieldOfView() {
+        return fieldOfView;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2397,6 +2540,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setFieldStrength(short fieldStrength) {
         this.fieldStrength = fieldStrength;
+    }
+    
+    public short getFieldStrength() {
+        return fieldStrength;
     }
 
     /**
@@ -2407,6 +2554,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setFileBlocks(short fileBlocks) {
         this.fileBlocks = fileBlocks;
     }
+    
+    public short getFileBlocks() {
+        return fileBlocks;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2415,6 +2566,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setFileFormat(String fileFormat) {
         this.fileFormat = fileFormat;
+    }
+    
+    public String getSignaFileFormat() {
+        return fileFormat;
     }
 
     /**
@@ -2425,6 +2580,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setFlipAngle(short flipAngle) {
         this.flipAngle = flipAngle;
     }
+    
+    public short getFlipAngle() {
+        return flipAngle;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2433,6 +2592,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setFractionalEffectiveEcho(String fractionalEffectiveEcho) {
         this.fractionalEffectiveEcho = fractionalEffectiveEcho;
+    }
+    
+    public String getFractionalEffectiveEcho() {
+        return fractionalEffectiveEcho;
     }
 
     /**
@@ -2443,6 +2606,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setGatingType(String gatingType) {
         this.gatingType = gatingType;
     }
+    
+    public String getGatingType() {
+        return gatingType;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2451,6 +2618,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setGatingType2(String gatingType2) {
         this.gatingType2 = gatingType2;
+    }
+    
+    public String getGatingType2() {
+        return gatingType2;
     }
 
     /**
@@ -2461,6 +2632,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setGraphicallyPrescribed(String graphicallyPrescribed) {
         this.graphicallyPrescribed = graphicallyPrescribed;
     }
+    
+    public String getGraphicallyPrescribed() {
+        return graphicallyPrescribed;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2469,6 +2644,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setHistogramPresent(String histogramPresent) {
         this.histogramPresent = histogramPresent;
+    }
+    
+    public String getHistogramPresent() {
+        return histogramPresent;
     }
 
     /**
@@ -2479,6 +2658,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setHistory(String history) {
         this.history = history;
     }
+    
+    public String getHistory() {
+        return history;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2487,6 +2670,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setHorizontalLandmark(float horizontalLandmark) {
         this.horizontalLandmark = horizontalLandmark;
+    }
+    
+    public float getHorizontalLandmark() {
+        return horizontalLandmark;
     }
 
     /**
@@ -2497,6 +2684,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setHospitalName(String hospitalName) {
         this.hospitalName = hospitalName;
     }
+    
+    public String getHospitalName() {
+        return hospitalName;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2505,6 +2696,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageCreationDate(String imageCreationDate) {
         this.imageCreationDate = imageCreationDate;
+    }
+    
+    public String getImageCreationDate() {
+        return imageCreationDate;
     }
 
     /**
@@ -2515,6 +2710,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImageCreationTime(String imageCreationTime) {
         this.imageCreationTime = imageCreationTime;
     }
+    
+    public String getImageCreationTime() {
+        return imageCreationTime;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2523,6 +2722,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageFieldStrength(int imageFieldStrength) {
         this.imageFieldStrength = imageFieldStrength;
+    }
+    
+    public int getImageFieldStrength() {
+        return imageFieldStrength;
     }
 
     /**
@@ -2533,6 +2736,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImageHeaderBlocks(short imageHeaderBlocks) {
         this.imageHeaderBlocks = imageHeaderBlocks;
     }
+    
+    public short getImageHeaderBlocks() {
+        return imageHeaderBlocks;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2541,6 +2748,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageHeaderCreatorProcess(String imageHeaderCreatorProcess) {
         this.imageHeaderCreatorProcess = imageHeaderCreatorProcess;
+    }
+    
+    public String getImageHeaderCreatorProcess() {
+        return imageHeaderCreatorProcess;
     }
 
     /**
@@ -2551,6 +2762,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImageHeaderCreatorTask(short imageHeaderCreatorTask) {
         this.imageHeaderCreatorTask = imageHeaderCreatorTask;
     }
+    
+    public short getImageHeaderCreatorTask() {
+        return imageHeaderCreatorTask;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2559,6 +2774,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageHeaderDisclaimer(short imageHeaderDisclaimer) {
         this.imageHeaderDisclaimer = imageHeaderDisclaimer;
+    }
+    
+    public short getImageHeaderDisclaimer() {
+        return imageHeaderDisclaimer;
     }
 
     /**
@@ -2569,6 +2788,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImageHeaderID(String imageHeaderID) {
         this.imageHeaderID = imageHeaderID;
     }
+    
+    public String getImageHeaderID() {
+        return imageHeaderID;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2577,6 +2800,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageHeaderRevisionNumber(String imageHeaderRevisionNumber) {
         this.imageHeaderRevisionNumber = imageHeaderRevisionNumber;
+    }
+    
+    public String getImageHeaderRevisionNumber() {
+        return imageHeaderRevisionNumber;
     }
 
     /**
@@ -2587,6 +2814,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImageLocation(float imageLocation) {
         this.imageLocation = imageLocation;
     }
+    
+    public float getImageLocation() {
+        return imageLocation;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2595,6 +2826,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageMatrix(short imageMatrix) {
         this.imageMatrix = imageMatrix;
+    }
+    
+    public short getImageMatrix() {
+        return imageMatrix;
     }
 
     /**
@@ -2605,6 +2840,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImageMode(String imageMode) {
         this.imageMode = imageMode;
     }
+    
+    public String getImageMode() {
+        return imageMode;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2613,6 +2852,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageNumber(String imageNumber) {
         this.imageNumber = imageNumber;
+    }
+    
+    public String getImageNumber() {
+        return imageNumber;
     }
 
     /**
@@ -2623,6 +2866,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImageOffset(short imageOffset) {
         this.imageOffset = imageOffset;
     }
+    
+    public short getImageOffset() {
+        return imageOffset;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2631,6 +2878,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageRawDataSystemID(String imageRawDataSystemID) {
         this.imageRawDataSystemID = imageRawDataSystemID;
+    }
+    
+    public String getImageRawDataSystemID() {
+        return imageRawDataSystemID;
     }
 
     /**
@@ -2641,6 +2892,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImagesAllocated(short imagesAllocated) {
         this.imagesAllocated = imagesAllocated;
     }
+    
+    public short getImagesAllocated() {
+        return imagesAllocated;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2649,6 +2904,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageShape(String imageShape) {
         this.imageShape = imageShape;
+    }
+    
+    public String getImageShape() {
+        return imageShape;
     }
 
     /**
@@ -2659,6 +2918,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImageSpacing(float imageSpacing) {
         this.imageSpacing = imageSpacing;
     }
+    
+    public float getImageSpacing() {
+        return imageSpacing;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2667,6 +2930,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImagesPerCardiacCycle(short imagesPerCardiacCycle) {
         this.imagesPerCardiacCycle = imagesPerCardiacCycle;
+    }
+    
+    public short getImagesPerCardiacCycle() {
+        return imagesPerCardiacCycle;
     }
 
     /**
@@ -2677,6 +2944,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImageSystemGenerationID(String imageSystemGenerationID) {
         this.imageSystemGenerationID = imageSystemGenerationID;
     }
+    
+    public String getImageSystemGenerationID() {
+        return imageSystemGenerationID;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2685,6 +2956,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImageType(String imageType) {
         this.imageType = imageType;
+    }
+    
+    public String getImageType() {
+        return imageType;
     }
 
     /**
@@ -2695,6 +2970,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImgBLHC_A(float imgBLHC_A) {
         this.imgBLHC_A = imgBLHC_A;
     }
+    
+    public float getImgBLHC_A() {
+        return imgBLHC_A;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2703,6 +2982,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImgBLHC_R(float imgBLHC_R) {
         this.imgBLHC_R = imgBLHC_R;
+    }
+    
+    public float getImgBLHC_R() {
+        return imgBLHC_R;
     }
 
     /**
@@ -2713,6 +2996,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImgBLHC_S(float imgBLHC_S) {
         this.imgBLHC_S = imgBLHC_S;
     }
+    
+    public float getImgBLHC_S() {
+        return imgBLHC_S;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2721,6 +3008,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImgTLHC_A(float imgTLHC_A) {
         this.imgTLHC_A = imgTLHC_A;
+    }
+    
+    public float getImgTLHC_A() {
+        return imgTLHC_A;
     }
 
     /**
@@ -2731,6 +3022,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImgTLHC_R(float imgTLHC_R) {
         this.imgTLHC_R = imgTLHC_R;
     }
+    
+    public float getImgTLHC_R() {
+        return imgTLHC_R;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2739,6 +3034,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImgTLHC_S(float imgTLHC_S) {
         this.imgTLHC_S = imgTLHC_S;
+    }
+    
+    public float getImgTLHC_S() {
+        return imgTLHC_S;
     }
 
     /**
@@ -2749,6 +3048,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImgTRHC_A(float imgTRHC_A) {
         this.imgTRHC_A = imgTRHC_A;
     }
+    
+    public float getImgTRHC_A() {
+        return imgTRHC_A;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2757,6 +3060,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImgTRHC_R(float imgTRHC_R) {
         this.imgTRHC_R = imgTRHC_R;
+    }
+    
+    public float getImgTRHC_R() {
+        return imgTRHC_R;
     }
 
     /**
@@ -2767,6 +3074,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setImgTRHC_S(float imgTRHC_S) {
         this.imgTRHC_S = imgTRHC_S;
     }
+    
+    public float getImgTRHC_S() {
+        return imgTRHC_S;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2775,6 +3086,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setInterImageDelay(float interImageDelay) {
         this.interImageDelay = interImageDelay;
+    }
+    
+    public float getInterImageDelay() {
+        return interImageDelay;
     }
 
     /**
@@ -2785,6 +3100,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setLandmarkCounter(int landmarkCounter) {
         this.landmarkCounter = landmarkCounter;
     }
+    
+    public int getLandmarkCounter() {
+        return landmarkCounter;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2793,6 +3112,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setLongitudinalAnatomicalReference(String longitudinalAnatomicalReference) {
         this.longitudinalAnatomicalReference = longitudinalAnatomicalReference;
+    }
+    
+    public String getLongitudinalAnatomicalReference() {
+        return longitudinalAnatomicalReference;
     }
 
     /**
@@ -2803,6 +3126,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setMinimumDelay(short minimumDelay) {
         this.minimumDelay = minimumDelay;
     }
+    
+    public short getMinimumDelay() {
+        return minimumDelay;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2811,6 +3138,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setMRIProcessName(String MRIProcessName) {
         this.MRIProcessName = MRIProcessName;
+    }
+    
+    public String getMRIProcessName() {
+        return MRIProcessName;
     }
 
     /**
@@ -2821,6 +3152,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setNumberOfEchos(short numberOfEchos) {
         this.numberOfEchos = numberOfEchos;
     }
+    
+    public short getNumberOfEchos() {
+        return numberOfEchos;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2829,6 +3164,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setObliquePlane(String obliquePlane) {
         this.obliquePlane = obliquePlane;
+    }
+    
+    public String getObliquePlane() {
+        return obliquePlane;
     }
 
     /**
@@ -2839,6 +3178,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setOperator(String operator) {
         this.operator = operator;
     }
+    
+    public String getOperator() {
+        return operator;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2847,6 +3190,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setOrientation(String orientation) {
         this.orientation = orientation;
+    }
+    
+    public String getOrientation() {
+        return orientation;
     }
 
     /**
@@ -2857,6 +3204,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setOriginalSeriesNumber(String originalSeriesNumber) {
         this.originalSeriesNumber = originalSeriesNumber;
     }
+    
+    public String getOriginalSeriesNumber() {
+        return originalSeriesNumber;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2865,6 +3216,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPatientAge(String patientAge) {
         this.patientAge = patientAge;
+    }
+    
+    public String getPatientAge() {
+        return patientAge;
     }
 
     /**
@@ -2875,6 +3230,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPatientID(String patientID) {
         this.patientID = patientID;
     }
+    
+    public String getPatientID() {
+        return patientID;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2883,6 +3242,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPatientName(String patientName) {
         this.patientName = patientName;
+    }
+    
+    public String getPatientName() {
+        return patientName;
     }
 
     /**
@@ -2893,6 +3256,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPatientSex(String patientSex) {
         this.patientSex = patientSex;
     }
+    
+    public String getPatientSex() {
+        return patientSex;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2901,6 +3268,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPatientStatus(String patientStatus) {
         this.patientStatus = patientStatus;
+    }
+    
+    public String getPatientStatus() {
+        return patientStatus;
     }
 
     /**
@@ -2911,6 +3282,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPatientWeight(int patientWeight) {
         this.patientWeight = patientWeight;
     }
+    
+    public int getPatientWeight() {
+        return patientWeight;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2919,6 +3294,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPauseInterval(short pauseInterval) {
         this.pauseInterval = pauseInterval;
+    }
+    
+    public short getPauseInterval() {
+        return pauseInterval;
     }
 
     /**
@@ -2929,6 +3308,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPauseTime(float pauseTime) {
         this.pauseTime = pauseTime;
     }
+    
+    public float getPauseTime() {
+        return pauseTime;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2937,6 +3320,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPCVelocityEncoding(short PCVelocityEncoding) {
         this.PCVelocityEncoding = PCVelocityEncoding;
+    }
+    
+    public short getPCVelocityEncoding() {
+        return PCVelocityEncoding;
     }
 
     /**
@@ -2947,6 +3334,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPeakSAR(float peakSAR) {
         this.peakSAR = peakSAR;
     }
+    
+    public float getPeakSAR() {
+        return peakSAR;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2955,6 +3346,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPFSwapped(String pfSwapped) {
         this.pfSwapped = pfSwapped;
+    }
+    
+    public String getPfSwapped() {
+        return pfSwapped;
     }
 
     /**
@@ -2965,6 +3360,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPhaseContrastFlowAxis(String phaseContrastFlowAxis) {
         this.phaseContrastFlowAxis = phaseContrastFlowAxis;
     }
+    
+    public String getPhaseContrastFlowAxis() {
+        return phaseContrastFlowAxis;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2973,6 +3372,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPImage2(String pImage2) {
         this.pImage2 = pImage2;
+    }
+    
+    public String getPImage2() {
+        return pImage2;
     }
 
     /**
@@ -2983,6 +3386,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPixelSize(float pixelSize) {
         this.pixelSize = pixelSize;
     }
+    
+    public float getPixelSize() {
+        return pixelSize;
+    }
 
     /**
      * DOCUMENT ME!
@@ -2991,6 +3398,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPlaneName(String planeName) {
         this.planeName = planeName;
+    }
+    
+    public String getPlaneName() {
+        return planeName;
     }
 
     /**
@@ -3001,6 +3412,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPlaneType(String planeType) {
         this.planeType = planeType;
     }
+    
+    public String getPlaneType() {
+        return planeType;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3009,6 +3424,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPosition(String position) {
         this.position = position;
+    }
+    
+    public String getPosition() {
+        return position;
     }
 
     /**
@@ -3019,6 +3438,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPrescanReceiveAttenuation1(short prescanReceiveAttenuation1) {
         this.prescanReceiveAttenuation1 = prescanReceiveAttenuation1;
     }
+    
+    public short getPrescanReceiveAttenuation1() {
+        return prescanReceiveAttenuation1;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3027,6 +3450,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPrescanReceiveAttenuation2(short prescanReceiveAttenuation2) {
         this.prescanReceiveAttenuation2 = prescanReceiveAttenuation2;
+    }
+    
+    public short getPrescanReceiveAttenuation2() {
+        return prescanReceiveAttenuation2;
     }
 
     /**
@@ -3037,6 +3464,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPrescribedImageNumbers(String prescribedImageNumbers) {
         this.prescribedImageNumbers = prescribedImageNumbers;
     }
+    
+    public String getPrescribedImageNumbers() {
+        return prescribedImageNumbers;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3045,6 +3476,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPrescribedSeriesNumbers(String prescribedSeriesNumbers) {
         this.prescribedSeriesNumbers = prescribedSeriesNumbers;
+    }
+    
+    public String getPrescribedSeriesNumbers() {
+        return prescribedSeriesNumbers;
     }
 
     /**
@@ -3055,6 +3490,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setProjectionAngle(float projectionAngle) {
         this.projectionAngle = projectionAngle;
     }
+    
+    public float getProjectionAngle() {
+        return projectionAngle;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3063,6 +3502,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPSDDay(short psdDay) {
         this.psdDay = psdDay;
+    }
+    
+    public short getPSDDay() {
+        return psdDay;
     }
 
     /**
@@ -3073,6 +3516,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPSDFileName(String psdFileName) {
         this.psdFileName = psdFileName;
     }
+    
+    public String getPSDFileName() {
+        return psdFileName;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3081,6 +3528,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPSDHour(short psdHour) {
         this.psdHour = psdHour;
+    }
+    
+    public short getPSDHour() {
+        return psdHour;
     }
 
     /**
@@ -3091,6 +3542,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPSDMinute(short psdMinute) {
         this.psdMinute = psdMinute;
     }
+    
+    public short getPSDMinute() {
+        return psdMinute;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3099,6 +3554,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPSDMonth(short psdMonth) {
         this.psdMonth = psdMonth;
+    }
+    
+    public short getPSDMonth() {
+        return psdMonth;
     }
 
     /**
@@ -3109,6 +3568,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPSDName(String psdName) {
         this.psdName = psdName;
     }
+    
+    public String getPSDName() {
+        return psdName;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3117,6 +3580,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPSDSeconds(short psdSeconds) {
         this.psdSeconds = psdSeconds;
+    }
+    
+    public short getPSDSeconds() {
+        return psdSeconds;
     }
 
     /**
@@ -3127,6 +3594,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPSDYear(short psdYear) {
         this.psdYear = psdYear;
     }
+    
+    public short getPSDYear() {
+        return psdYear;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3135,6 +3606,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPSeries2(String pSeries2) {
         this.pSeries2 = pSeries2;
+    }
+    
+    public String getPSeries2() {
+        return pSeries2;
     }
 
     /**
@@ -3145,6 +3620,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPulseSequence(String pulseSequence) {
         this.pulseSequence = pulseSequence;
     }
+    
+    public String getPulseSequence() {
+        return pulseSequence;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3153,6 +3632,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPulseSequenceMode(String pulseSequenceMode) {
         this.pulseSequenceMode = pulseSequenceMode;
+    }
+    
+    public String getPulseSequenceMode() {
+        return pulseSequenceMode;
     }
 
     /**
@@ -3163,6 +3646,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setPulseSequenceSubtype(String pulseSequenceSubtype) {
         this.pulseSequenceSubtype = pulseSequenceSubtype;
     }
+    
+    public String getPulseSequenceSubtype() {
+        return pulseSequenceSubtype;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3171,6 +3658,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setR1(short R1) {
         this.R1 = R1;
+    }
+    
+    public short getR1() {
+        return R1;
     }
 
     /**
@@ -3181,6 +3672,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setR2(short R2) {
         this.R2 = R2;
     }
+    
+    public short getR2() {
+        return R2;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3189,6 +3684,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setRawDataStudyNumber(String rawDataStudyNumber) {
         this.rawDataStudyNumber = rawDataStudyNumber;
+    }
+    
+    public String getRawDataStudyNumber() {
+        return rawDataStudyNumber;
     }
 
     /**
@@ -3199,6 +3698,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setRawDataSystemID(String rawDataSystemID) {
         this.rawDataSystemID = rawDataSystemID;
     }
+    
+    public String getRawDataSystemID() {
+        return rawDataSystemID;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3207,6 +3710,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setRCenter(float rCenter) {
         this.rCenter = rCenter;
+    }
+    
+    public float getRCenter() {
+        return rCenter;
     }
 
     /**
@@ -3217,6 +3724,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setReceiveAttenuatorSetting(short receiveAttenuatorSetting) {
         this.receiveAttenuatorSetting = receiveAttenuatorSetting;
     }
+    
+    public short getReceiveAttenuatorSetting() {
+        return receiveAttenuatorSetting;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3225,6 +3736,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setRecommendedReceiveAttenuation(int recommendedReceiveAttenuation) {
         this.recommendedReceiveAttenuation = recommendedReceiveAttenuation;
+    }
+    
+    public int getRecommendedReceiveAttenuation() {
+        return recommendedReceiveAttenuation;
     }
 
     /**
@@ -3235,6 +3750,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setRecommendedReceiveFrequency(int recommendedReceiveFrequency) {
         this.recommendedReceiveFrequency = recommendedReceiveFrequency;
     }
+    
+    public int getRecommendedReceiveFrequency() {
+        return recommendedReceiveFrequency;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3243,6 +3762,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setRecommendedTransmitAttenuation(int recommendedTransmitAttenuation) {
         this.recommendedTransmitAttenuation = recommendedTransmitAttenuation;
+    }
+    
+    public int getRecommendedTransmitAttenuation() {
+        return recommendedTransmitAttenuation;
     }
 
     /**
@@ -3253,6 +3776,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setRecommendedTransmitFrequency(int recommendedTransmitFrequency) {
         this.recommendedTransmitFrequency = recommendedTransmitFrequency;
     }
+    
+    public int getRecommendedTransmitFrequency() {
+        return recommendedTransmitFrequency;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3261,6 +3788,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setReferringPhysician(String referringPhysician) {
         this.referringPhysician = referringPhysician;
+    }
+    
+    public String getReferringPhysician() {
+        return referringPhysician;
     }
 
     /**
@@ -3271,14 +3802,22 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setRequestedNumber(String requestedNumber) {
         this.requestedNumber = requestedNumber;
     }
+    
+    public String getRequestedNumber() {
+        return requestedNumber;
+    }
+    
+    public void setResearchMode(String researchMode) {
+    	this.researchMode = researchMode;
+    }
 
     /**
      * DOCUMENT ME!
      *
      * @param  researchMode  DOCUMENT ME!
      */
-    public void setResearchMode(String researchMode) {
-        this.researchMode = researchMode;
+    public String getResearchMode() {
+        return researchMode;
     }
 
     /**
@@ -3289,6 +3828,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setRLCenter(float rlCenter) {
         this.rlCenter = rlCenter;
     }
+    
+    public float getRLCenter() {
+        return rlCenter;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3297,6 +3840,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setRNormal(float rNormal) {
         this.rNormal = rNormal;
+    }
+    
+    public float getRNormal() {
+        return rNormal;
     }
 
     /**
@@ -3307,6 +3854,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setRound(String round) {
         this.round = round;
     }
+    
+    public String getRound() {
+        return round;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3315,6 +3866,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSARMonitored(String SARMonitored) {
         this.SARMonitored = SARMonitored;
+    }
+    
+    public String getSARMonitored() {
+        return SARMonitored;
     }
 
     /**
@@ -3325,6 +3880,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSATSelections(String satSelections) {
         this.satSelections = satSelections;
     }
+    
+    public String getSATSelections() {
+        return satSelections;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3333,6 +3892,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSATXLoc1(short satXLoc1) {
         this.satXLoc1 = satXLoc1;
+    }
+    
+    public short getSATXLoc1() {
+        return satXLoc1;
     }
 
     /**
@@ -3343,6 +3906,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSATXLoc2(short satXLoc2) {
         this.satXLoc2 = satXLoc2;
     }
+    
+    public short getSATXLoc2() {
+        return satXLoc2;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3351,6 +3918,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSATXThick(short satXThick) {
         this.satXThick = satXThick;
+    }
+    
+    public short getSATXThick() {
+        return satXThick;
     }
 
     /**
@@ -3361,6 +3932,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSATYLoc1(short satYLoc1) {
         this.satYLoc1 = satYLoc1;
     }
+    
+    public short getSATYLoc1() {
+        return satYLoc1;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3369,6 +3944,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSATYLoc2(short satYLoc2) {
         this.satYLoc2 = satYLoc2;
+    }
+    
+    public short getSATYLoc2() {
+        return satYLoc2;
     }
 
     /**
@@ -3379,6 +3958,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSATYThick(short satYThick) {
         this.satYThick = satYThick;
     }
+    
+    public short getSATYThick() {
+        return satYThick;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3387,6 +3970,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSATZLoc1(short satZLoc1) {
         this.satZLoc1 = satZLoc1;
+    }
+    
+    public short getSATZLoc1() {
+        return satZLoc1;
     }
 
     /**
@@ -3397,6 +3984,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSATZLoc2(short satZLoc2) {
         this.satZLoc2 = satZLoc2;
     }
+    
+    public short getSATZLoc2() {
+        return satZLoc2;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3405,6 +3996,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSATZThick(short satZThick) {
         this.satZThick = satZThick;
+    }
+    
+    public short getSATZThick() {
+        return satZThick;
     }
 
     /**
@@ -3415,6 +4010,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setScanAcquisitionNumber(short scanAcquisitionNumber) {
         this.scanAcquisitionNumber = scanAcquisitionNumber;
     }
+    
+    public short getScanAcquisitionNumber() {
+        return scanAcquisitionNumber;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3423,6 +4022,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setScanARRs(int scanARRs) {
         this.scanARRs = scanARRs;
+    }
+    
+    public int getScanARRs() {
+        return scanARRs;
     }
 
     /**
@@ -3433,6 +4036,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setScanMatrixX(short scanMatrixX) {
         this.scanMatrixX = scanMatrixX;
     }
+    
+    public short getScanMatrixX() {
+        return scanMatrixX;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3441,6 +4048,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setScanMatrixY(short scanMatrixY) {
         this.scanMatrixY = scanMatrixY;
+    }
+    
+    public short getScanMatrixY() {
+        return scanMatrixY;
     }
 
     /**
@@ -3451,6 +4062,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setScanProtocolName(String scanProtocolName) {
         this.scanProtocolName = scanProtocolName;
     }
+    
+    public String getScanProtocolName() {
+        return scanProtocolName;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3459,6 +4074,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSCenter(float sCenter) {
         this.sCenter = sCenter;
+    }
+    
+    public float getSCenter() {
+        return sCenter;
     }
 
     /**
@@ -3469,6 +4088,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setScIma(String scIma) {
         this.scIma = scIma;
     }
+    
+    public String getScIma() {
+        return scIma;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3477,6 +4100,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setScSer(String scSer) {
         this.scSer = scSer;
+    }
+    
+    public String getScSer() {
+        return scSer;
     }
 
     /**
@@ -3487,6 +4114,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSeries(String series) {
         this.series = series;
     }
+    
+    public String getSeries() {
+        return series;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3495,6 +4126,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSeriesDate(String seriesDate) {
         this.seriesDate = seriesDate;
+    }
+    
+    public String getSeriesDate() {
+        return seriesDate;
     }
 
     /**
@@ -3505,6 +4140,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSeriesDescription(String seriesDescription) {
         this.seriesDescription = seriesDescription;
     }
+    
+    public String getSeriesDescription() {
+        return seriesDescription;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3513,6 +4152,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSeriesHeaderBlocks(short seriesHeaderBlocks) {
         this.seriesHeaderBlocks = seriesHeaderBlocks;
+    }
+    
+    public short getSeriesHeaderBlocks() {
+        return seriesHeaderBlocks;
     }
 
     /**
@@ -3523,6 +4166,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSeriesHeaderID(String seriesHeaderID) {
         this.seriesHeaderID = seriesHeaderID;
     }
+    
+    public String getSeriesHeaderID() {
+        return seriesHeaderID;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3531,6 +4178,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSeriesHeaderRevisionNumber(String seriesHeaderRevisionNumber) {
         this.seriesHeaderRevisionNumber = seriesHeaderRevisionNumber;
+    }
+    
+    public String getSeriesHeaderRevisionNumber() {
+        return seriesHeaderRevisionNumber;
     }
 
     /**
@@ -3541,6 +4192,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSeriesNumber(String seriesNumber) {
         this.seriesNumber = seriesNumber;
     }
+    
+    public String getSeriesNumber() {
+        return seriesNumber;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3549,6 +4204,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSeriesProcessName(String seriesProcessName) {
         this.seriesProcessName = seriesProcessName;
+    }
+    
+    public String getSeriesProcessName() {
+        return seriesProcessName;
     }
 
     /**
@@ -3559,6 +4218,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSeriesPSDName(String seriesPSDName) {
         this.seriesPSDName = seriesPSDName;
     }
+    
+    public String getSeriesPSDName() {
+        return seriesPSDName;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3567,6 +4230,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSeriesRawDataSystemID(String seriesRawDataSystemID) {
         this.seriesRawDataSystemID = seriesRawDataSystemID;
+    }
+    
+    public String getSeriesRawDataSystemID() {
+        return seriesRawDataSystemID;
     }
 
     /**
@@ -3577,6 +4244,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSeriesSystemGenerationID(String seriesSystemGenerationID) {
         this.seriesSystemGenerationID = seriesSystemGenerationID;
     }
+    
+    public String getSeriesSystemGenerationID() {
+        return seriesSystemGenerationID;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3585,6 +4256,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSeriesTaskID(short seriesTaskID) {
         this.seriesTaskID = seriesTaskID;
+    }
+    
+    public short getSeriesTaskID() {
+        return seriesTaskID;
     }
 
     /**
@@ -3595,6 +4270,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSeriesTime(String seriesTime) {
         this.seriesTime = seriesTime;
     }
+    
+    public String getSeriesTime() {
+        return seriesTime;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3603,6 +4282,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSeriesType(String seriesType) {
         this.seriesType = seriesType;
+    }
+    
+    public String getSeriesType() {
+        return seriesType;
     }
 
     /**
@@ -3613,6 +4296,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSICenter(float siCenter) {
         this.siCenter = siCenter;
     }
+    
+    public float getSICenter() {
+        return siCenter;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3621,6 +4308,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSliceMultiplier(short sliceMultiplier) {
         this.sliceMultiplier = sliceMultiplier;
+    }
+    
+    public short getSliceMultiplier() {
+        return sliceMultiplier;
     }
 
     /**
@@ -3631,6 +4322,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSliceQuantity(short sliceQuantity) {
         this.sliceQuantity = sliceQuantity;
     }
+    
+    public short getSliceQuantity() {
+        return sliceQuantity;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3639,6 +4334,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSliceThicknessDisclaimer(String sliceThicknessDisclaimer) {
         this.sliceThicknessDisclaimer = sliceThicknessDisclaimer;
+    }
+    
+    public String getSliceThicknessDisclaimer() {
+        return sliceThicknessDisclaimer;
     }
 
     /**
@@ -3649,6 +4348,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSNormal(float sNormal) {
         this.sNormal = sNormal;
     }
+    
+    public float getSNormal() {
+        return sNormal;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3657,6 +4360,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setStartX(float startX) {
         this.startX = startX;
+    }
+    
+    public float getStartX() {
+        return startX;
     }
 
     /**
@@ -3667,6 +4374,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setStartY(float startY) {
         this.startY = startY;
     }
+    
+    public float getStartY() {
+        return startY;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3675,6 +4386,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setStartZ(float startZ) {
         this.startZ = startZ;
+    }
+    
+    public float getStartZ() {
+        return startZ;
     }
 
     /**
@@ -3685,6 +4400,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setStudyDate(String studyDate) {
         this.studyDate = studyDate;
     }
+    
+    public String getStudyDate() {
+        return studyDate;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3693,6 +4412,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setStudyDescription(String studyDescription) {
         this.studyDescription = studyDescription;
+    }
+    
+    public String getStudyDescription() {
+        return studyDescription;
     }
 
     /**
@@ -3703,6 +4426,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setStudyHeaderBlocks(short studyHeaderBlocks) {
         this.studyHeaderBlocks = studyHeaderBlocks;
     }
+    
+    public short getStudyHeaderBlocks() {
+        return studyHeaderBlocks;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3711,6 +4438,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setStudyHeaderID(String studyHeaderID) {
         this.studyHeaderID = studyHeaderID;
+    }
+    
+    public String getStudyHeaderID() {
+        return studyHeaderID;
     }
 
     /**
@@ -3721,6 +4452,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setStudyHeaderRevisionNumber(String studyHeaderRevisionNumber) {
         this.studyHeaderRevisionNumber = studyHeaderRevisionNumber;
     }
+    
+    public String getStudyHeaderRevisionNumber() {
+        return studyHeaderRevisionNumber;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3729,6 +4464,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setStudyNumber(String studyNumber) {
         this.studyNumber = studyNumber;
+    }
+    
+    public String getStudyNumber() {
+        return studyNumber;
     }
 
     /**
@@ -3739,6 +4478,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setStudyTaskID(short studyTaskID) {
         this.studyTaskID = studyTaskID;
     }
+    
+    public short getStudyTaskID() {
+        return studyTaskID;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3747,6 +4490,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setStudyTime(String studyTime) {
         this.studyTime = studyTime;
+    }
+    
+    public String getStudyTime() {
+        return studyTime;
     }
 
     /**
@@ -3757,6 +4504,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSuppressionTechnique(String suppressionTechnique) {
         this.suppressionTechnique = suppressionTechnique;
     }
+    
+    public String getSuppressionTechnique() {
+        return suppressionTechnique;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3765,6 +4516,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSurfaceCoilIntensityCorrection(String surfaceCoilIntensityCorrection) {
         this.surfaceCoilIntensityCorrection = surfaceCoilIntensityCorrection;
+    }
+    
+    public String getSurfaceCoilIntensityCorrection() {
+        return surfaceCoilIntensityCorrection;
     }
 
     /**
@@ -3775,6 +4530,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSurfaceCoilsCorrectionType(String surfaceCoilsCorrectionType) {
         this.surfaceCoilsCorrectionType = surfaceCoilsCorrectionType;
     }
+    
+    public String getSurfaceCoilsCorrectionType() {
+        return surfaceCoilsCorrectionType;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3783,6 +4542,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSurfaceCoilType(String surfaceCoilType) {
         this.surfaceCoilType = surfaceCoilType;
+    }
+    
+    public String getSurfaceCoilType() {
+        return surfaceCoilType;
     }
 
     /**
@@ -3793,6 +4556,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSwapPF(String swapPF) {
         this.swapPF = swapPF;
     }
+    
+    public String getSwapPF() {
+        return swapPF;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3801,6 +4568,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSystemConfigHospitalName(String systemConfigHospitalName) {
         this.systemConfigHospitalName = systemConfigHospitalName;
+    }
+    
+    public String getSystemConfigHospitalName() {
+        return systemConfigHospitalName;
     }
 
     /**
@@ -3811,6 +4582,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setSystemGenerationID(String systemGenerationID) {
         this.systemGenerationID = systemGenerationID;
     }
+    
+    public String getSystemGenerationID() {
+        return systemGenerationID;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3819,6 +4594,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setSystemID(String systemID) {
         this.systemID = systemID;
+    }
+    
+    public String getSystemID() {
+        return systemID;
     }
 
     /**
@@ -3829,6 +4608,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setTableLocation(float tableLocation) {
         this.tableLocation = tableLocation;
     }
+    
+    public float getTableLocation() {
+        return tableLocation;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3837,6 +4620,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setTablePosition(float tablePosition) {
         this.tablePosition = tablePosition;
+    }
+    
+    public float getTablePosition() {
+        return tablePosition;
     }
 
     /**
@@ -3847,6 +4634,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setTE(float te) {
         this.te = te;
     }
+    
+    public float getTE() {
+        return te;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3855,6 +4646,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setTE2(float TE2) {
         this.TE2 = TE2;
+    }
+    
+    public float getTE2() {
+        return TE2;
     }
 
     /**
@@ -3865,6 +4660,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setThickness(float thickness) {
         this.thickness = thickness;
     }
+    
+    public float getThickness() {
+        return thickness;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3873,6 +4672,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setTI(float ti) {
         this.ti = ti;
+    }
+    
+    public float getTI() {
+        return ti;
     }
 
     /**
@@ -3883,6 +4686,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setTotalPostTriggerDelayTime(float totalPostTriggerDelayTime) {
         this.totalPostTriggerDelayTime = totalPostTriggerDelayTime;
     }
+    
+    public float getTotalPostTriggerDelayTime() {
+        return totalPostTriggerDelayTime;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3891,6 +4698,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setTR(float tr) {
         this.tr = tr;
+    }
+    
+    public float getTR() {
+        return tr;
     }
 
     /**
@@ -3901,6 +4712,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setTransmitAttenuatorSetting(short transmitAttenuatorSetting) {
         this.transmitAttenuatorSetting = transmitAttenuatorSetting;
     }
+    
+    public short getTransmitAttenuatorSetting() {
+        return transmitAttenuatorSetting;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3909,6 +4724,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setTS(float ts) {
         this.ts = ts;
+    }
+    
+    public float getTS() {
+        return ts;
     }
 
     /**
@@ -3919,14 +4738,22 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setUser0(float user0) {
         this.user0 = user0;
     }
+    
+    public float getUser0() {
+        return user0;
+    }
+    
+    public void setUser1(float user1) {
+    	this.user1 = user1;
+    }
 
     /**
      * DOCUMENT ME!
      *
      * @param  user1  DOCUMENT ME!
      */
-    public void setUser1(float user1) {
-        this.user1 = user1;
+    public float getUser1() {
+        return user1;
     }
 
     /**
@@ -3937,6 +4764,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setUser2(float user2) {
         this.user2 = user2;
     }
+    
+    public float getUser2() {
+        return user2;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3945,6 +4776,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setUser3(float user3) {
         this.user3 = user3;
+    }
+    
+    public float getUser3() {
+        return user3;
     }
 
     /**
@@ -3955,6 +4790,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setUser4(float user4) {
         this.user4 = user4;
     }
+    
+    public float getUser4() {
+        return user4;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3963,6 +4802,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setUser5(float user5) {
         this.user5 = user5;
+    }
+    
+    public float getUser5() {
+        return user5;
     }
 
     /**
@@ -3973,6 +4816,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setUser6(float user6) {
         this.user6 = user6;
     }
+    
+    public float getUser6() {
+        return user6;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3981,6 +4828,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setUser7(float user7) {
         this.user7 = user7;
+    }
+    
+    public float getUser7() {
+        return user7;
     }
 
     /**
@@ -3991,6 +4842,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setUser8(float user8) {
         this.user8 = user8;
     }
+    
+    public float getUser8() {
+        return user8;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3999,6 +4854,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setUser9(float user9) {
         this.user9 = user9;
+    }
+    
+    public float getUser9() {
+        return user9;
     }
 
     /**
@@ -4009,6 +4868,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setVariableBandwidth(String variableBandwidth) {
         this.variableBandwidth = variableBandwidth;
     }
+    
+    public String getVariableBandwidth() {
+        return variableBandwidth;
+    }
 
     /**
      * DOCUMENT ME!
@@ -4017,6 +4880,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setVascularImagingFlags(String vascularImagingFlags) {
         this.vascularImagingFlags = vascularImagingFlags;
+    }
+    
+    public String getVascularImagingFlags() {
+        return vascularImagingFlags;
     }
 
     /**
@@ -4027,6 +4894,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setVasMode(String vasMode) {
         this.vasMode = vasMode;
     }
+    
+    public String getVasMode() {
+        return vasMode;
+    }
 
     /**
      * DOCUMENT ME!
@@ -4035,6 +4906,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setVencScalingFactor(float vencScalingFactor) {
         this.vencScalingFactor = vencScalingFactor;
+    }
+    
+    public float getVencScalingFactor() {
+        return vencScalingFactor;
     }
 
     /**
@@ -4045,6 +4920,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void setVerticalAnatomicalReference(String verticalAnatomicalReference) {
         this.verticalAnatomicalReference = verticalAnatomicalReference;
     }
+    
+    public String getVerticalAnatomicalReference() {
+        return verticalAnatomicalReference;
+    }
 
     /**
      * DOCUMENT ME!
@@ -4053,5 +4932,14 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setVerticalLandmark(float verticalLandmark) {
         this.verticalLandmark = verticalLandmark;
+    }
+    
+    public float getVerticalLandmark() {
+        return verticalLandmark;
+    }
+    
+    public void anonymize() {
+    	patientID = new String("XXXXXX      "); // length 12
+    	patientName = new String("XXXXX, XXXXX                    "); // length 32
     }
 }
