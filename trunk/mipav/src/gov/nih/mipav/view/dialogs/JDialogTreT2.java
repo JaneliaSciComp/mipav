@@ -595,7 +595,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         BorderLayout b = new BorderLayout();
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
+        GuiBuilder guiHelp = new GuiBuilder(this);
         dialog.setTitle("TRE-T2: General Information");
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
@@ -688,7 +688,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         BorderLayout b = new BorderLayout();
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
+        GuiBuilder guiHelp = new GuiBuilder(this);
         dialog.setTitle("TRE-T2-AMFM: Image Information");
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
@@ -787,7 +787,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         BorderLayout b = new BorderLayout();
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
+        GuiBuilder guiHelp = new GuiBuilder(this);
         dialog.setTitle("TRE-T2: Image Information");
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
@@ -863,7 +863,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         BorderLayout b = new BorderLayout();
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
+        GuiBuilder guiHelp = new GuiBuilder(this);
         dialog.setTitle("TRE-T2: Other Specifics");
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
@@ -909,195 +909,4 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         
         return true;
     }
-    
-public enum ExitStatus {
-        
-        /**Ok button pressed and listener conditions passed*/
-        OK_SUCCESS,
-        
-        /**Ok button pressed and listener conditions failed*/
-        OK_FAIL,
-        
-        /**Ok button pressed*/
-        OK,
-        
-        /**Cancel button pressed*/
-        CANCEL,
-        
-        /**Yes button pressed*/
-        YES,
-        
-        /**No button pressed*/
-        NO,
-        
-        /**Gui has yet to exit*/
-        INCOMPLETE
-    }
-    
-    /**
-     * Provides methods for quickly building panel components. I can think of many other (better)
-     * ways to do this, but for the ImageJ port this works well for now.
-     * 
-     * @author senseneyj
-     *
-     */
-    private class GuiBuilder implements ActionListener {
-        
-        @SuppressWarnings("unused")
-    	public static final int GUI_BUILDER_OK_ID = ActionEvent.RESERVED_ID_MAX + 20;
-
-        private ArrayList<ActionListener> listenerList;
-        
-        private boolean passedListeners;
-
-        private ExitStatus exit;
-        
-        private JButton ok, cancel;
-        
-        private JDialog parent;
-        
-        public GuiBuilder(JDialog parent) {
-            this.parent = parent;
-            this.listenerList = new ArrayList<ActionListener>();
-            this.exit = ExitStatus.INCOMPLETE;
-        }
-        
-        public ExitStatus getExitStatus() {
-            return exit;
-        }
-        
-        @SuppressWarnings("unused")
-        public ActionListener[] getListenerList() {
-            ActionListener[] list = new ActionListener[listenerList.size()];
-            for(int i=0; i<listenerList.size(); i++) {
-                list[i] = listenerList.get(i);
-            }
-            return list;
-        }
-        
-        public JRadioButton buildRadioButton(String label, boolean selected) {
-            FlowLayout f = new FlowLayout();
-            f.setAlignment(FlowLayout.LEFT);
-            JPanel radioPanel = new JPanel(f);
-            JRadioButton radioButton = new JRadioButton(label);
-            radioButton.setSelected(selected);
-            radioPanel.add(radioButton);
-            return radioButton;
-        }
-        
-        public JCheckBox buildCheckBox(String label, boolean selected) {
-            FlowLayout f = new FlowLayout();
-            f.setAlignment(FlowLayout.LEFT);
-            JPanel checkPanel = new JPanel(f);
-            JCheckBox checkBox = new JCheckBox(label);
-            checkBox.setSelected(selected);
-            checkPanel.add(checkBox);
-            return checkBox;
-        }
-        
-        public JTextField buildField(String labelText, String initText) {
-            FlowLayout f = new FlowLayout();
-            f.setAlignment(FlowLayout.LEFT);
-            JPanel panel = new JPanel(f);
-            JLabel label = new JLabel(labelText);
-            JTextField text = new JTextField(initText);
-            text.setColumns(8);
-            panel.add(label);
-            panel.add(text);
-            return text;
-        }
-        
-        @SuppressWarnings("unused")
-        public JTextField buildIntegerField(final String labelText, int initNum) {
-            final JTextField genericField = buildField(labelText, String.valueOf(initNum));
-            ActionListener listener = new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    if(e.getSource().equals(ok)) {
-                        try {
-                            Integer.valueOf(genericField.getText());
-                        } catch(NumberFormatException e1) {
-                            MipavUtil.displayInfo(labelText+" must be an integer.");
-                            passedListeners = false;
-                        }
-                    }
-                }
-            };
-            genericField.addActionListener(listener);
-            listenerList.add(listener);
-            return genericField;
-        }
-        
-        public JTextField buildDecimalField(final String labelText, double initNum) {
-            final JTextField genericField = buildField(labelText, String.valueOf(initNum));
-            ActionListener listener = new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    if(e.getSource().equals(ok)) {
-                        try {
-                            Double.valueOf(genericField.getText());
-                        } catch(NumberFormatException e1) {
-                            MipavUtil.displayInfo(labelText+" must be a number.");
-                            passedListeners = false;
-                        }
-                    }
-                }
-            };
-            genericField.addActionListener(listener);
-            listenerList.add(listener);
-            return genericField;
-        }
-        
-        public JComboBox buildComboBox(String labelText, Object[] options) {
-            FlowLayout f = new FlowLayout();
-            f.setAlignment(FlowLayout.LEFT);
-            JPanel panel = new JPanel(f);
-            JLabel label = new JLabel(labelText);
-            JComboBox comboBox = new JComboBox(options);
-            panel.add(label);
-            panel.add(comboBox);
-            return comboBox;
-        }
-        
-        public JComboBox buildComboBox(String labelText, Object[] options, int numDefault) {
-            JComboBox comboBox = buildComboBox(labelText, options); //call default
-            comboBox.setSelectedIndex(numDefault);
-            return comboBox;
-        }
-        
-        public JPanel buildOKCancelPanel() {
-            JPanel panel = new JPanel();
-            ok = new JButton("OK");
-            cancel = new JButton("Cancel");
-            cancel.addActionListener(this);
-            panel.add(ok);
-            ok.addActionListener(this);
-            panel.add(cancel);
-            return panel;
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            passedListeners = true;
-            if(e.getSource().equals(ok)) {
-                for(int i=0; i<listenerList.size(); i++) {
-                    if(passedListeners) {
-                        listenerList.get(i).actionPerformed(e);
-                    } else {
-                        exit = ExitStatus.OK_FAIL;
-                        return;
-                    }
-                }
-                if(passedListeners) {
-                    exit = ExitStatus.OK_SUCCESS;
-                    parent.dispose();
-                } else {    
-                    exit = ExitStatus.OK_FAIL;
-                    return;
-                }
-            } else if(e.getSource().equals(cancel)) {
-                exit = ExitStatus.CANCEL;
-                parent.dispose();
-            }
-        }
-        
-    }
-
 }

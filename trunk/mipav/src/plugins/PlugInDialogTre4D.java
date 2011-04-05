@@ -33,7 +33,6 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
-import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
