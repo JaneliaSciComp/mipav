@@ -324,7 +324,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 linkedScrolling = !linkedScrolling;
             }
 
-        } else if (command.equals("QuantifyMasks")) {
+        } else if(command.equals("syncImagesCheckBox")){
+        	if(getControls().getTools().syncImagesCheckBox.isSelected()) {
+        		getControls().getTools().syncImagesIcon.setEnabled(true);
+        		syncImages = true;
+        	}else {
+        		getControls().getTools().syncImagesIcon.setEnabled(false);
+        		syncImages= false;
+        	}
+        }else if (command.equals("QuantifyMasks")) {
             new JDialogQuantifyMask(this, this.getActiveImage());
         } else if (command.equals("PaintBrushEditor")) {
             new ViewJFrameCreatePaint();
@@ -2753,6 +2761,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
 
                     int currentSlice;
+                    int activeImageCurrentSlice;
                     switch (image.getNDims()) {
                         case 5:
                             if (image.getExtents()[4] != activeImageNumChannels) {
@@ -2761,25 +2770,73 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                             if (image.getExtents()[3] != activeImageNumVolumes) {
                                 break;
                             }
-                            currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                            /*currentSlice = image.getParentFrame().getComponentImage().getSlice();
                             if (currentSlice + offset > -1 && currentSlice + offset < image.getExtents()[2]) {
                                 image.setSlice(currentSlice + offset);
-                            }
+                            }*/
+                            if(syncImages) {
+                        		activeImageCurrentSlice = getImageA().getParentFrame().getComponentImage().getSlice();
+                        		if (activeImageCurrentSlice > -1 && activeImageCurrentSlice < image.getExtents()[2]) {
+                                    image.setSlice(activeImageCurrentSlice);
+                                }else {
+                                	currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                                    if (currentSlice + offset > -1 && currentSlice + offset < image.getExtents()[2]) {
+                                        image.setSlice(currentSlice + offset);
+                                    }
+                                }
+                        		
+                        	}else {
+                        		currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                                if (currentSlice + offset > -1 && currentSlice + offset < image.getExtents()[2]) {
+                                    image.setSlice(currentSlice + offset);
+                                }
+                        	}
                             break;
                         case 4:
                             if (image.getExtents()[3] != activeImageNumVolumes) {
                                 break;
                             }
-                            currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                            /*currentSlice = image.getParentFrame().getComponentImage().getSlice();
                             if (currentSlice + offset > -1 && currentSlice + offset < image.getExtents()[2]) {
                                 image.setSlice(currentSlice + offset);
-                            }
+                            }*/
+                            if(syncImages) {
+                        		activeImageCurrentSlice = getImageA().getParentFrame().getComponentImage().getSlice();
+                        		if (activeImageCurrentSlice > -1 && activeImageCurrentSlice < image.getExtents()[2]) {
+                                    image.setSlice(activeImageCurrentSlice);
+                                }else {
+                                	currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                                    if (currentSlice + offset > -1 && currentSlice + offset < image.getExtents()[2]) {
+                                        image.setSlice(currentSlice + offset);
+                                    }
+                                }
+                        		
+                        	}else {
+                        		currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                                if (currentSlice + offset > -1 && currentSlice + offset < image.getExtents()[2]) {
+                                    image.setSlice(currentSlice + offset);
+                                }
+                        	}
                             break;
                         case 3:
-                            currentSlice = image.getParentFrame().getComponentImage().getSlice();
-                            if (currentSlice + offset > -1 && currentSlice + offset < image.getExtents()[2]) {
-                                image.setSlice(currentSlice + offset);
-                            }
+                        	if(syncImages) {
+                        		activeImageCurrentSlice = getImageA().getParentFrame().getComponentImage().getSlice();
+                        		if (activeImageCurrentSlice > -1 && activeImageCurrentSlice < image.getExtents()[2]) {
+                                    image.setSlice(activeImageCurrentSlice);
+                                }else {
+                                	currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                                    if (currentSlice + offset > -1 && currentSlice + offset < image.getExtents()[2]) {
+                                        image.setSlice(currentSlice + offset);
+                                    }
+                                }
+                        		
+                        	}else {
+                        		currentSlice = image.getParentFrame().getComponentImage().getSlice();
+                                if (currentSlice + offset > -1 && currentSlice + offset < image.getExtents()[2]) {
+                                    image.setSlice(currentSlice + offset);
+                                }
+                        	}
+                            
                     }
                 }
             }
