@@ -233,6 +233,10 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_IMAGE_LINK = new UIParams("ScrollLink", 
                                                                  "Link images of like-dimensions for scrolling. (or hold <SHIFT> while scrolling) ", "link_broken.gif");
 	
+    
+    public static final UIParams PARAM_IMAGE_SYNC = new UIParams("SyncImages", 
+            "Sync images to same slice number during linked scrolling", "syncImages");
+    
     /** Image Magnifying related buttons */
     public static final UIParams PARAM_IMAGE_MAG = new UIParams("MagImage",
                                                                 "<html>" + "Magnify image 2.0x" + "<br>" + "Hold SHIFT for multiple zooming" +

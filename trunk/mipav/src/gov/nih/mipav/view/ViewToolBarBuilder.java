@@ -56,7 +56,13 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     protected JButton ctButton;
     
     public JCheckBox scrollButton;
+    
+    public JCheckBox syncImagesCheckBox;
 
+    
+    public JButton syncImagesIcon;
+    
+    
     /**
      * The combo box containing the possible choices for the current script in the script toolbar. Filled with entries
      * from the currently selected &quot;Scripting directory&quot;.
@@ -337,6 +343,18 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
         //scrollButton.se
         
         tBar.add(scrollButton);
+        
+        syncImagesCheckBox = new JCheckBox();
+        syncImagesCheckBox.setActionCommand("syncImagesCheckBox");
+        syncImagesCheckBox.addActionListener((ActionListener) UI);
+        syncImagesCheckBox.setToolTipText("Sync images to same slice number during linked scrolling");
+        tBar.add(syncImagesCheckBox);
+        
+        
+        syncImagesIcon = buildButton(CustomUIBuilder.PARAM_IMAGE_SYNC);
+        syncImagesIcon.setEnabled(false);
+        tBar.add(syncImagesIcon);
+        
         
         tBar.add(makeSeparator());
 
