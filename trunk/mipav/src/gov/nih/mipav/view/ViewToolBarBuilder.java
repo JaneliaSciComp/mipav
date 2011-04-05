@@ -57,9 +57,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     
     public JCheckBox scrollButton;
     
-    public JCheckBox syncImagesCheckBox;
 
-    
     public JButton syncImagesIcon;
     
     
@@ -344,15 +342,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
         
         tBar.add(scrollButton);
         
-        syncImagesCheckBox = new JCheckBox();
-        syncImagesCheckBox.setActionCommand("syncImagesCheckBox");
-        syncImagesCheckBox.addActionListener((ActionListener) UI);
-        syncImagesCheckBox.setToolTipText("Sync images to same slice number during linked scrolling");
-        tBar.add(syncImagesCheckBox);
+
         
         
         syncImagesIcon = buildButton(CustomUIBuilder.PARAM_IMAGE_SYNC);
-        syncImagesIcon.setEnabled(false);
         tBar.add(syncImagesIcon);
         
         

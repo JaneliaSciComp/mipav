@@ -141,8 +141,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** Variable indicating if images of like dimensions should be scrolled simult. */
     protected boolean linkedScrolling = false;
-    
-    protected boolean syncImages = false;
 
     /** voxel absolute goto components* */
     protected JLabel absoluteXLabel, absoluteYLabel, absoluteZLabel;
