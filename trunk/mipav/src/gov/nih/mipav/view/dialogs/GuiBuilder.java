@@ -2,7 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.dialogs.JDialogTreT1.ExitStatus;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -19,6 +18,39 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+
+/**
+ * These enumerations are used by the GuiBuilder to indicate the pre-processing results of user
+ * entry fields for the user interface.  When a user has entered numerical input when required,
+ * left no required fields blank, and provided a valid choice for buttons, OK_SUCCESS will generally
+ * be returned.
+ * 
+ * @author senseneyj
+ *
+ */
+enum ExitStatus {
+    
+    /**Ok button pressed and listener conditions passed*/
+    OK_SUCCESS,
+    
+    /**Ok button pressed and listener conditions failed*/
+    OK_FAIL,
+    
+    /**Ok button pressed*/
+    OK,
+    
+    /**Cancel button pressed*/
+    CANCEL,
+    
+    /**Yes button pressed*/
+    YES,
+    
+    /**No button pressed*/
+    NO,
+    
+    /**Gui has yet to exit*/
+    INCOMPLETE
+}
 
 /**
  * Provides methods for quickly building panel components. I can think of many other (better)
