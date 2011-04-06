@@ -95,6 +95,7 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
         comboBoxOperator.addItem("Average");
         comboBoxOperator.addItem("Minimum");
         comboBoxOperator.addItem("Maximum");
+        comboBoxOperator.addItem("Norm");
         comboBoxOperator.addItem("Standard Deviation");
 
         comboBoxOperator.addItemListener(this);
@@ -196,13 +197,15 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
 			operationType = Algorithm4DImageCalculator.MAXIMUM;
 		}else if(operation.equals("Standard Deviation")) {
 			operationType = Algorithm4DImageCalculator.STDDEV;
+		}else if(operation.equals("Norm")) {
+			operationType = Algorithm4DImageCalculator.NORM;
 		}
 		
 		boolean doClip = radioClip.isSelected();
 		
 		int type = image.getType();
 		
-		if(operationType == Algorithm4DImageCalculator.ADD && !doClip) {
+		if((operationType == Algorithm4DImageCalculator.ADD && !doClip) || (operationType == Algorithm4DImageCalculator.NORM && !doClip)) {
 			//this means promote
 			if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
 				type = ModelStorageBase.SHORT;
@@ -274,12 +277,12 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
 	        Object source = event.getSource();
 	        if (source == comboBoxOperator) {
 	            int index = comboBoxOperator.getSelectedIndex();
-	            if(index != 0) {
-	            	radioClip.setEnabled(false);
-	            	radioPromote.setEnabled(false);
-	            }else {
+	            if(index == 0 || index == 4) {
 	            	radioClip.setEnabled(true);
 	            	radioPromote.setEnabled(true);
+	            }else {
+	            	radioClip.setEnabled(false);
+	            	radioPromote.setEnabled(false);
 	            }
 	            
 	        }
