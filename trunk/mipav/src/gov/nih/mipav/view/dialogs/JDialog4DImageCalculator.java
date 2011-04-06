@@ -95,7 +95,7 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
         comboBoxOperator.addItem("Average");
         comboBoxOperator.addItem("Minimum");
         comboBoxOperator.addItem("Maximum");
-        comboBoxOperator.addItem("Norm");
+        comboBoxOperator.addItem("L2 Norm");
         comboBoxOperator.addItem("Standard Deviation");
 
         comboBoxOperator.addItemListener(this);
@@ -197,7 +197,7 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
 			operationType = Algorithm4DImageCalculator.MAXIMUM;
 		}else if(operation.equals("Standard Deviation")) {
 			operationType = Algorithm4DImageCalculator.STDDEV;
-		}else if(operation.equals("Norm")) {
+		}else if(operation.equals("L2 Norm")) {
 			operationType = Algorithm4DImageCalculator.NORM;
 		}
 		
