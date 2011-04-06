@@ -9,6 +9,10 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 /**
  * @author pandyan
  * algorithm for 4D Image calculation
+ * 
+ * 
+ * The way this algorithm works is by taking 1 slice at a time from each time point and building an xyt volume.
+ * It then does the math on this volume...and in this way builds the result image
  *
  */
 public class Algorithm4DImageCalculator extends AlgorithmBase {
@@ -27,6 +31,9 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	 
 	 /** std dev **/
 	 public static final int STDDEV = 4;
+	 
+	 /** norm **/
+	 public static final int NORM = 5;
 	 
 	 /** images **/
 	 private ModelImage image, destImage;
@@ -151,12 +158,16 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 							byteSliceBuff = doByteMin(byteBuffXYT);
 						}else if(operationType == STDDEV) {
 							byteSliceBuff = doByteStdDev(byteBuffXYT);
+						}else if(operationType == NORM) {
+							byteSliceBuff = doByteNormClip(byteBuffXYT);
 						}
 						destImage.importData(i*sliceLength, byteSliceBuff, false);
 					}else {
 						short[] shortSliceBuff = null;
 						if(operationType == ADD) {
 							shortSliceBuff = doByteAddPromote(byteBuffXYT);
+						}else if(operationType == NORM) {
+							shortSliceBuff = doByteNormPromote(byteBuffXYT);
 						}
 						destImage.importData(i*sliceLength, shortSliceBuff, false);
 					}
@@ -173,12 +184,16 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 							shortSliceBuff = doShortMin(shortBuffXYT);
 						}else if(operationType == STDDEV) {
 							shortSliceBuff = doShortStdDev(shortBuffXYT);
+						}else if(operationType == NORM) {
+							shortSliceBuff = doShortNormClip(shortBuffXYT);
 						}
 						destImage.importData(i*sliceLength, shortSliceBuff, false);
 					}else {
 						int[] intSliceBuff = null;
 						if(operationType == ADD) {
 							intSliceBuff = doShortAddPromote(shortBuffXYT);
+						}else if(operationType == NORM) {
+							intSliceBuff = doShortNormPromote(shortBuffXYT);
 						}
 						destImage.importData(i*sliceLength, intSliceBuff, false);
 					}
@@ -195,12 +210,16 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 							intSliceBuff = doIntMin(intBuffXYT);
 						}else if(operationType == STDDEV) {
 							intSliceBuff = doIntStdDev(intBuffXYT);
+						}else if(operationType == NORM) {
+							intSliceBuff = doIntNormClip(intBuffXYT);
 						}
 						destImage.importData(i*sliceLength, intSliceBuff, false);
 					}else {
 						long[] longSliceBuff = null;
 						if(operationType == ADD) {
 							longSliceBuff = doIntAddPromote(intBuffXYT);
+						}else if(operationType == NORM) {
+							longSliceBuff = doIntNormPromote(intBuffXYT);
 						}
 						destImage.importData(i*sliceLength, longSliceBuff, false);
 					}
@@ -217,12 +236,16 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 							floatSliceBuff = doFloatMin(floatBuffXYT);
 						}else if(operationType == STDDEV) {
 							floatSliceBuff = doFloatStdDev(floatBuffXYT);
+						}else if(operationType == NORM) {
+							floatSliceBuff = doFloatNormClip(floatBuffXYT);
 						}
 						destImage.importData(i*sliceLength, floatSliceBuff, false);
 					}else {
 						double[] doubleSliceBuff = null;
 						if(operationType == ADD) {
 							doubleSliceBuff = doFloatAddPromote(floatBuffXYT);
+						}else if(operationType == NORM) {
+							doubleSliceBuff = doFloatNormPromote(floatBuffXYT);
 						}
 						destImage.importData(i*sliceLength, doubleSliceBuff, false);
 					}
@@ -357,6 +380,82 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 
 		return sliceBuff;
 	}
+	
+	
+	
+	private byte[] doByteNormClip(byte[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		byte[] sliceBuff = new byte[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				byte pix = xytBuff[i + (sliceLength * t)];
+				int pixSquared = pix * pix;
+
+				sum = (sum + pixSquared);
+				
+				
+			}
+
+			
+	
+			double n = Math.sqrt(sum);
+			if(n > Byte.MAX_VALUE) {
+				n = Byte.MAX_VALUE;
+			}
+
+			byte norm = (byte)n;
+			sliceBuff[counter] = norm;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	
+	
+	
+	private short[] doByteNormPromote(byte[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		short[] sliceBuff = new short[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				byte pix = xytBuff[i + (sliceLength * t)];
+				int pixSquared = pix * pix;
+
+				sum = (sum + pixSquared);
+				
+				
+			}
+
+			
+	
+			double n = Math.sqrt(sum);
+
+
+			short norm = (short)n;
+			sliceBuff[counter] = norm;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
 	
 	
 	
@@ -572,6 +671,80 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
+	
+	private short[] doShortNormClip(short[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		short[] sliceBuff = new short[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				short pix = xytBuff[i + (sliceLength * t)];
+				int pixSquared = pix * pix;
+
+				sum = (sum + pixSquared);
+				
+				
+			}
+
+			
+	
+			double d = Math.sqrt(sum);
+			
+			
+			if(d > Short.MAX_VALUE) {
+				d = Short.MAX_VALUE;
+			}
+			short norm = (short)d;
+			sliceBuff[counter] = norm;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	
+	
+	private int[] doShortNormPromote(short[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		int[] sliceBuff = new int[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				short pix = xytBuff[i + (sliceLength * t)];
+				int pixSquared = pix * pix;
+
+				sum = (sum + pixSquared);
+				
+				
+			}
+
+			
+	
+			double d = Math.sqrt(sum);
+			
+			
+
+			int norm = (int)d;
+			sliceBuff[counter] = norm;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
 	
 	
 	
@@ -799,6 +972,80 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 			
 			int average = (int)(sum/tDim);
 			sliceBuff[counter] = average;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	
+	
+	private int[] doIntNormClip(int[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		int[] sliceBuff = new int[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				int pix = xytBuff[i + (sliceLength * t)];
+				long pixSquared = pix * pix;
+
+				sum = (sum + pixSquared);
+				
+				
+			}
+
+			
+			double d = Math.sqrt(sum);
+			
+			if(d > Integer.MAX_VALUE) {
+				d = Integer.MAX_VALUE;
+			}
+			
+			int norm = (int)d;
+			sliceBuff[counter] = norm;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	
+	
+	private long[] doIntNormPromote(int[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		long[] sliceBuff = new long[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				int pix = xytBuff[i + (sliceLength * t)];
+				long pixSquared = pix * pix;
+
+				sum = (sum + pixSquared);
+				
+				
+			}
+
+			
+			double d = Math.sqrt(sum);
+			
+
+			
+			long norm = (long)d;
+			sliceBuff[counter] = norm;
 			counter++;
 			
 		}
@@ -1048,7 +1295,76 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
+	private float[] doFloatNormClip(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		float[] sliceBuff = new float[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				float pix = xytBuff[i + (sliceLength * t)];
+				double pixSquared = pix * pix;
+
+				sum = (sum + pixSquared);
+				
+				
+			}
+
+			
+			double d = Math.sqrt(sum);
+			
+			if(d > Float.MAX_VALUE) {
+				d = Float.MAX_VALUE;
+			}
 	
+			
+			float norm = (float)d;
+			sliceBuff[counter] = norm;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	
+	
+	private double[] doFloatNormPromote(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int zDim = image.getExtents()[2];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		double[] sliceBuff = new double[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				float pix = xytBuff[i + (sliceLength * t)];
+				double pixSquared = pix * pix;
+
+				sum = (sum + pixSquared);
+				
+				
+			}
+
+			
+			double d = Math.sqrt(sum);
+			
+
+			sliceBuff[counter] = d;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
 	
 	
 	
