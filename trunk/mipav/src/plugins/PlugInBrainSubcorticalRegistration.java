@@ -47,9 +47,6 @@ public class PlugInBrainSubcorticalRegistration implements PlugInGeneric, Comman
 	/** Vector indicates which subsections to do registration. */
     private Vector<Integer> regSection = new Vector<Integer>();
     
-    /** Flag to check that command line plugin is Brain subcortical */
-    private boolean subcorticalFlag = false;
-    
     /** Constants for each subsections. */
     /**
 	 *
@@ -169,13 +166,9 @@ public class PlugInBrainSubcorticalRegistration implements PlugInGeneric, Comman
 	 * Call the Brain subcortical dialog to run registration. 
 	 */
 	public void run() {
-		
-		if (subcorticalFlag) {
-			ViewUserInterface.getReference().setAppFrameVisible(false);
-			new PlugInDialogBrainSubcortical(ViewUserInterface.getReference()
-					.getMainFrame(), inputDir, outputDir, caseCompareDir, regSection);
-		}
-		
+		ViewUserInterface.getReference().setAppFrameVisible(false);
+		new PlugInDialogBrainSubcortical(ViewUserInterface.getReference()
+				.getMainFrame(), inputDir, outputDir, caseCompareDir, regSection);
 	}
 	
 	public void run(Frame parentFrame, ModelImage image) { 
