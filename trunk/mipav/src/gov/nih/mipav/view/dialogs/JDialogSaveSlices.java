@@ -37,6 +37,8 @@ public class JDialogSaveSlices extends JDialogBase {
     private boolean corEnabled;
     
     private boolean geGenesisEnabled;
+    
+    private boolean geSigna4XEnabled;
 
     /** DOCUMENT ME! */
     private boolean enablePackBitWrite;
@@ -152,6 +154,7 @@ public class JDialogSaveSlices extends JDialogBase {
         tiffEnabled = (options.getFileType() == FileUtility.TIFF);
         corEnabled = (options.getFileType() == FileUtility.COR);
         afniEnabled = (options.getFileType() == FileUtility.AFNI);
+        geSigna4XEnabled = (options.getFileType() == FileUtility.GE_SIGNA4X);
         geGenesisEnabled = (options.getFileType() == FileUtility.GE_GENESIS);
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
@@ -280,7 +283,8 @@ public class JDialogSaveSlices extends JDialogBase {
                 }
             }
 
-            if (corEnabled || geGenesisEnabled || (multiFileCheckbox.isEnabled() && multiFileCheckbox.isSelected())) {
+            if (corEnabled || geSigna4XEnabled || geGenesisEnabled || (multiFileCheckbox.isEnabled() &&
+            	multiFileCheckbox.isSelected())) {
                 options.setMultiFile(true);
                 tmpStr = textStartNumber.getText();
                 options.setStartNumber(Integer.parseInt(tmpStr));
@@ -541,7 +545,7 @@ public class JDialogSaveSlices extends JDialogBase {
         multiFileCheckbox = new JCheckBox("Save image slices to separate files");
         multiFileCheckbox.setFont(serif12);
 
-        if (corEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
             multiFileCheckbox.setSelected(true);
             multiFileCheckbox.setEnabled(false);
         } else {
@@ -562,7 +566,7 @@ public class JDialogSaveSlices extends JDialogBase {
         labelStartNumber = new JLabel("First File Starting Number");
         labelStartNumber.setFont(serif12);
 
-        if (corEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
             labelStartNumber.setEnabled(true);
         } else {
             labelStartNumber.setEnabled(false);
@@ -576,7 +580,7 @@ public class JDialogSaveSlices extends JDialogBase {
         textStartNumber.setText(String.valueOf(1));
         textStartNumber.setFont(serif12);
 
-        if (corEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
             textStartNumber.setEnabled(true);
         } else {
             textStartNumber.setEnabled(false);
@@ -589,7 +593,7 @@ public class JDialogSaveSlices extends JDialogBase {
         labelDigitNumber = new JLabel("File Name Number of Digits");
         labelDigitNumber.setFont(serif12);
 
-        if (corEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
             labelDigitNumber.setEnabled(true);
         } else {
             labelDigitNumber.setEnabled(false);
@@ -603,7 +607,7 @@ public class JDialogSaveSlices extends JDialogBase {
         textDigitNumber.setText(String.valueOf(3));
         textDigitNumber.setFont(serif12);
 
-        if (corEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
             textDigitNumber.setEnabled(true);
         } else {
             textDigitNumber.setEnabled(false);
