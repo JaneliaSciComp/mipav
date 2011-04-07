@@ -211,11 +211,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * class is allowed to be instantiated in a single VM.
      */
     protected ViewUserInterface() {
-        mainFrame = new JFrame();
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
-        initialize();
-
+        if(!GraphicsEnvironment.isHeadless()) {
+            mainFrame = new JFrame();
+            initialize();
+        }
+        
         // listen to the script recorder so that we can pass along changes in the script recorder status to the script
         // toolbars of individual images
         ScriptRecorder.getReference().addScriptRecordingListener(this);
@@ -233,10 +235,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected ViewUserInterface(final boolean forceQuiet) {
         System.out.println("MIPAV STARTED with forceQuite set as " + forceQuiet);
         MipavUtil.setForceQuiet(forceQuiet);
-        mainFrame = new JFrame();
+        
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
-        initialize();
+        
+        if(!GraphicsEnvironment.isHeadless()) {
+            mainFrame = new JFrame();
+            initialize();
+        }
 
         // listen to the script recorder so that we can pass along changes in the script recorder status to the script
         // toolbars of individual images
@@ -2925,8 +2931,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * Sets the menu for the main frame.
      */
     public void setControls() {
-        mainFrame.setJMenuBar(openingMenuBar);
-        mainFrame.pack();
+        if(mainFrame != null) {
+            mainFrame.setJMenuBar(openingMenuBar);
+            mainFrame.pack();
+        }
     }
 
     /**
@@ -3145,9 +3153,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param visible whether the message and main frames should be shown on the screen
      */
     public void setVisible(final boolean visible) {
-        mainFrame.setVisible(visible);
-        messageFrame.setVisible(visible && Preferences.is(Preferences.PREF_SHOW_OUTPUT));
-        mainFrame.setVisible(visible);
+        if(mainFrame != null && messageFrame != null) {
+            mainFrame.setVisible(visible);
+            messageFrame.setVisible(visible && Preferences.is(Preferences.PREF_SHOW_OUTPUT));
+            mainFrame.setVisible(visible);
+        }
     }
 
     /**

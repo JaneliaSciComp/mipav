@@ -83,7 +83,7 @@ public class FileIO {
      * suffix doesn't match one of the known types, build and display the unknown file dialog so the user can try to
      * identify the image type so the correct reader can be used
      */
-    private final JDialogUnknownIO unknownIODialog;
+    private JDialogUnknownIO unknownIODialog = null;
 
     // here for now....11/13/2008
     private boolean saveAsEncapJP2 = false;
@@ -105,7 +105,9 @@ public class FileIO {
     public FileIO() {
         UI = ViewUserInterface.getReference();
 
-        unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
+        if(!GraphicsEnvironment.isHeadless()) {
+            unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
+        }
         UI.setLoad(false); // default to "opening "
     }
 
@@ -121,7 +123,9 @@ public class FileIO {
         UI = ViewUserInterface.getReference();
         LUT = _LUT;
 
-        unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
+        if(!GraphicsEnvironment.isHeadless()) {
+            unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
+        }
     }
 
     // ~ Methods
@@ -4984,10 +4988,12 @@ public class FileIO {
         // progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
 
         // the quiet flag is needed to determine if progress bar is visible or not
-        progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true, null, null, !quiet);
-        progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
+        if(!GraphicsEnvironment.isHeadless()) {
+            progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true, null, null, !quiet);
+            progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
+        }
 
-        if (fBase != null) {
+        if (fBase != null && progressBar != null) {
             fBase.addProgressChangeListener(progressBar);
         }
     }
