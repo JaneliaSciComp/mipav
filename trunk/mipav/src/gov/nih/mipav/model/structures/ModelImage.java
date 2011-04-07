@@ -338,6 +338,16 @@ public class ModelImage extends ModelStorageBase {
                     this.setFileInfo(fileInfo[i], i);
                 }
             }
+        } else if (this.isGE_Signa4XImage()) {
+        	if (getNDims() == 2) {
+        		((FileInfoGESigna4X)fileInfo[0]).anonymize();
+        	}
+        	else {
+        		for (i = 0; i < getExtents()[2]; i++) {
+        			((FileInfoGESigna4X)fileInfo[i]).anonymize();
+        			this.setFileInfo(fileInfo[i],i);
+        		}
+        	}
         } else if (this.isGE_GenesisImage()) {
         	if (getNDims() == 2) {
         		((FileInfoGESigna5X)fileInfo[0]).anonymize();
@@ -2319,6 +2329,20 @@ public class ModelImage extends ModelStorageBase {
         } else {
             return false;
         }
+    }
+    
+    /**
+     * Accessor that returns whether or not the image is a GE_SIGNA4X image.
+     * 
+     * @return <code>true</code> if GE_SIGNA4X, <code>false</code> if not GE_SIGNA4X.
+     */
+    public boolean isGE_Signa4XImage() {
+    	if (fileInfo[0].getFileFormat() == FileUtility.GE_SIGNA4X){
+    		return true;
+    	}
+    	else {
+    		return false;
+    	}
     }
     
     /**
