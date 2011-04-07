@@ -84,7 +84,7 @@ public class PlugInBrainSubcorticalRegistration implements PlugInGeneric, Comman
      */
     public int parseArguments(final String[] args, final int initArg) {
 		int i;
-		for ( i = 0; i < args.length; i++ ) {
+		for ( i = initArg; i < args.length; i++ ) {
 			if ( args[i].equalsIgnoreCase("-p")) {
 				if ( args[++i].equalsIgnoreCase("PlugInBrainSubcorticalRegistration") ) {
 					subcorticalFlag = true;
