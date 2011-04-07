@@ -2386,7 +2386,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
         this.cPhase = cPhase;
     }
     
-    public short geetCPhase() {
+    public short getCPhase() {
         return cPhase;
     }
 
