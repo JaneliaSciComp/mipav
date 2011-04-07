@@ -5,9 +5,11 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.WidgetFactory;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Vector;
 
 import javax.swing.*;
 
@@ -52,6 +54,7 @@ public class JDialogTextGE4X extends JDialogText {
      */
     public JDialogTextGE4X(Frame parent, String title, ModelImage _image, int loc) {
         super(parent, title);
+        addAnonymizeButton();
         addConvert();
         pack();
         image = _image;
@@ -85,6 +88,25 @@ public class JDialogTextGE4X extends JDialogText {
             dispose();
             ((ViewJFrameBase) parentFrame).about(slice, 0);
         }
+        else if (event.getActionCommand().equals("Anonymize")) {
+            //new JDialogAnonymizeImage(this, ((ViewJFrameImage) parentFrame).getActiveImage()); // changes the image
+                                                                                               // internally,
+        	((ViewJFrameImage)parentFrame).getActiveImage().anonymize(null, false);
+
+            // so we don't need to remember the dialog.
+            // now that dialog has finished,
+            // tell any other objects that care that there are new data (ie, a new name) & update
+            Vector<ViewImageUpdateInterface> imageFrames = ((ViewJFrameImage) parentFrame).getActiveImage().getImageFrameVector();
+
+            for (int i = 0; i < imageFrames.size(); i++) {
+                ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle();
+            }
+
+            setTitle(((ViewJFrameImage) parentFrame).getActiveImage().getImageName());
+            MipavUtil.displayInfo("Anonymization complete");
+
+            dispose();
+        }
     }
 
     /**
@@ -96,5 +118,14 @@ public class JDialogTextGE4X extends JDialogText {
         convertButton.setFont(serif12B);
         convertButton.setPreferredSize(new Dimension(140, 30));
         getButtonPanel().add(convertButton);
+    }
+    
+    /**
+     * Creates the anonymization button and adds it to the button panel.
+     */
+    private void addAnonymizeButton() {
+        JButton anonButton = WidgetFactory.buildTextButton("Anonymize", "Anonymize image info", "Anonymize", this);
+        anonButton.setPreferredSize(new Dimension(WidgetFactory.getDefaultButtonSize().width, 30));
+        getButtonPanel().add(anonButton);
     }
 }
