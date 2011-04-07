@@ -61,7 +61,7 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
     	
     	
     	
-    	return show(tSlice, zSlice, null, null, forceShow, interpMode);
+    	return show(tSlice, zSlice, _LUTa, _LUTb, forceShow, interpMode);
     }
 	
 	 /**
@@ -91,8 +91,8 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
             cleanImageBufferB = new int[imageExtents[0] * imageExtents[1]];
         }
 
-        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, 0,
-                false)) {
+        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, true, 0.5f,
+                true)) {
 
             slice = zSlice;
             setSliceString(String.valueOf(slice));

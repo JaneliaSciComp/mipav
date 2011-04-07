@@ -1077,7 +1077,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      */
     public boolean loadImage(final Object obj, final ViewJComponentEditImage compImage, final boolean stackFlag,
             final boolean doOrigins, final boolean doOrients, final double defaultValue, final double defaultRed,
-            final double defaultGreen, final double defaultBlue) {
+            final double defaultGreen, final double defaultBlue, boolean isQuiet) {
         //final boolean resample = false;
         //final int[] axisA;
        // final int[] axisB;
@@ -1098,6 +1098,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 final File file = (File) obj;
                 userInterface.setDefaultDirectory(file.getParent());
                 userInterface.setLoad(true);
+                fileIO.setQuiet(isQuiet);
                 imageB = fileIO.readImage(file.getName(), file.getParent() + File.separator, stackFlag, null, true); // read
                 // image!
             } else if (obj instanceof ModelImage) {
@@ -1212,7 +1213,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             newFrame.enableImageB(true);
             enableCloseImageB = true;
         } else {
-
             // imgA is not new, so keep the same ViewJFrameImage, which is imgA's frame
             // because image A was not changed, we will just set either the untouched
             // or transformed image B and return
