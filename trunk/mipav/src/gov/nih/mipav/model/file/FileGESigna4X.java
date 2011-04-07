@@ -2654,8 +2654,6 @@ public class FileGESigna4X extends FileBase {
         short shortBuffer[] = null;
         byte byteBuffer[] = null;
         int sliceSize;
-        long location;
-        long bytesSkipped;
         int sBegin;
         int sEnd;
         int tBegin;
@@ -2687,6 +2685,8 @@ public class FileGESigna4X extends FileBase {
             tBegin = 0;
             tEnd = 0;
         }
+        
+        sliceSize = image.getExtents()[0] * image.getExtents()[1];
         lastPeriod = fileName.lastIndexOf(".");
         fileBase = fileName.substring(0,lastPeriod+1);
         
@@ -2829,23 +2829,28 @@ public class FileGESigna4X extends FileBase {
         
         // 6*512 + 2*239
         String patientString = fileInfo.getPatientStatus();
-        if (patientString.equals("in-patient")) {
-        	writeShort((short) 0, endianess);
-        }
-        else if (patientString.equals("out-patient")) {
-        	writeShort((short)1, endianess);
-        }
-        else if (patientString.equals("emergency")) {
-        	writeShort((short)2, endianess);
-        }
-        else if (patientString.equals("referral")) {
-        	writeShort((short)3, endianess);
-        }
-        else if (patientString.equals("blank")) {
-        	writeShort((short)4, endianess);
+        if (patientString != null) {
+	        if (patientString.equals("in-patient")) {
+	        	writeShort((short) 0, endianess);
+	        }
+	        else if (patientString.equals("out-patient")) {
+	        	writeShort((short)1, endianess);
+	        }
+	        else if (patientString.equals("emergency")) {
+	        	writeShort((short)2, endianess);
+	        }
+	        else if (patientString.equals("referral")) {
+	        	writeShort((short)3, endianess);
+	        }
+	        else if (patientString.equals("blank")) {
+	        	writeShort((short)4, endianess);
+	        }
+	        else {
+	        	writeShort((short)4, endianess);
+	        }
         }
         else {
-        	writeShort((short)4, endianess);
+        	writeShort((short)4,endianess);
         }
         
         // 6*512 + 2*240
@@ -2911,14 +2916,19 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*112
         String seriesString = fileInfo.getSeriesType();
-        if (seriesString.equals("normal")) {
-        	writeShort((short)0, endianess);
-        }
-        else if (seriesString.equals("screensave")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (seriesString.equals("composite")) {
-        	writeShort((short)2,endianess);
+        if (seriesString != null) {
+	        if (seriesString.equals("normal")) {
+	        	writeShort((short)0, endianess);
+	        }
+	        else if (seriesString.equals("screensave")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (seriesString.equals("composite")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -2926,14 +2936,19 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*113
         String coilString = fileInfo.getCoilType();
-        if (coilString.equals("head")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (coilString.equals("body")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (coilString.equals("surface")) {
-        	writeShort((short)2, endianess);
+        if (coilString != null) {
+	        if (coilString.equals("head")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (coilString.equals("body")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (coilString.equals("surface")) {
+	        	writeShort((short)2, endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -2947,20 +2962,25 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*138
         String planeString = fileInfo.getPlaneType();
-        if (planeString.equals("axial")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (planeString.equals("sagittal")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (planeString.equals("coronal")) {
-        	writeShort((short)2,endianess);
-        }
-        else if (planeString.equals("oblique")) {
-        	writeShort((short)3,endianess);
-        }
-        else if (planeString.equals("screen save")) {
-        	writeShort((short)4, endianess);
+        if (planeString != null) {
+	        if (planeString.equals("axial")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (planeString.equals("sagittal")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (planeString.equals("coronal")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (planeString.equals("oblique")) {
+	        	writeShort((short)3,endianess);
+	        }
+	        else if (planeString.equals("screen save")) {
+	        	writeShort((short)4, endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -2971,20 +2991,25 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*147
         String imageString = fileInfo.getImageMode();
-        if (imageString.equals("2D single")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (imageString.equals("2D multiple")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (imageString.equals("3D volume")) {
-        	writeShort((short)2,endianess);
-        }
-        else if (imageString.equals("cine")) {
-        	writeShort((short)3,endianess);
-        }
-        else if (imageString.equals("spectroscopy")) {
-        	writeShort((short)4,endianess);
+        if (imageString != null) {
+	        if (imageString.equals("2D single")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (imageString.equals("2D multiple")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (imageString.equals("3D volume")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (imageString.equals("cine")) {
+	        	writeShort((short)3,endianess);
+	        }
+	        else if (imageString.equals("spectroscopy")) {
+	        	writeShort((short)4,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -2995,83 +3020,88 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*149
         String pulseString = fileInfo.getPulseSequence();
-        if (pulseString.equals("memp")) {
-        	writeShort((short)0, endianess);
-        }
-        else if (pulseString.equals("ir")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (pulseString.equals("ps")) {
-        	writeShort((short)2,endianess);
-        }
-        else if (pulseString.equals("rm")) {
-        	writeShort((short)3,endianess);
-        }
-        else if (pulseString.equals("rmge")) {
-        	writeShort((short)4,endianess);
-        }
-        else if (pulseString.equals("gre")) {
-        	writeShort((short)5,endianess);
-        }
-        else if (pulseString.equals("vemp")) {
-        	writeShort((short)6,endianess);
-        }
-        else if (pulseString.equals("mpgr")) {
-        	writeShort((short)7,endianess);
-        }
-        else if (pulseString.equals("mpgrv")) {
-        	writeShort((short)8,endianess);
-        }
-        else if (pulseString.equals("mpirs")) {
-        	writeShort((short)9,endianess);
-        }
-        else if (pulseString.equals("mpiri")) {
-        	writeShort((short)10,endianess);
-        }
-        else if (pulseString.equals("3d/gre")) {
-        	writeShort((short)11,endianess);
-        }
-        else if (pulseString.equals("cine/gre")) {
-        	writeShort((short)12,endianess);
-        }
-        else if (pulseString.equals("spgr")) {
-        	writeShort((short)13,endianess);
-        }
-        else if (pulseString.equals("sspf")) {
-        	writeShort((short)14,endianess);
-        }
-        else if (pulseString.equals("cin/spgr")) {
-        	writeShort((short)15,endianess);
-        }
-        else if (pulseString.equals("3d/spgr")) {
-        	writeShort((short)16,endianess);
-        }
-        else if (pulseString.equals("fse")) {
-        	writeShort((short)17,endianess);
-        }
-        else if (pulseString.equals("fve")) {
-        	writeShort((short)18,endianess);
-        }
-        else if (pulseString.equals("fspgr")) {
-        	writeShort((short)19,endianess);
-        }
-        else if (pulseString.equals("fgr")) {
-        	writeShort((short)20,endianess);
-        }
-        else if (pulseString.equals("fmpspgr")) {
-        	writeShort((short)21,endianess);
-        }
-        else if (pulseString.equals("fmpgr")) {
-        	writeShort((short)22,endianess);
-        }
-        else if (pulseString.equals("fmpir")) {
-        	writeShort((short)23,endianess);
-        }
-        else if (pulseString.equals("probe.s")) {
-        	writeShort((short)24,endianess);
-        }
-        else if (pulseString.equals("probe.p")) {
-        	writeShort((short)25,endianess);
+        if (pulseString != null) {
+	        if (pulseString.equals("memp")) {
+	        	writeShort((short)0, endianess);
+	        }
+	        else if (pulseString.equals("ir")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (pulseString.equals("ps")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (pulseString.equals("rm")) {
+	        	writeShort((short)3,endianess);
+	        }
+	        else if (pulseString.equals("rmge")) {
+	        	writeShort((short)4,endianess);
+	        }
+	        else if (pulseString.equals("gre")) {
+	        	writeShort((short)5,endianess);
+	        }
+	        else if (pulseString.equals("vemp")) {
+	        	writeShort((short)6,endianess);
+	        }
+	        else if (pulseString.equals("mpgr")) {
+	        	writeShort((short)7,endianess);
+	        }
+	        else if (pulseString.equals("mpgrv")) {
+	        	writeShort((short)8,endianess);
+	        }
+	        else if (pulseString.equals("mpirs")) {
+	        	writeShort((short)9,endianess);
+	        }
+	        else if (pulseString.equals("mpiri")) {
+	        	writeShort((short)10,endianess);
+	        }
+	        else if (pulseString.equals("3d/gre")) {
+	        	writeShort((short)11,endianess);
+	        }
+	        else if (pulseString.equals("cine/gre")) {
+	        	writeShort((short)12,endianess);
+	        }
+	        else if (pulseString.equals("spgr")) {
+	        	writeShort((short)13,endianess);
+	        }
+	        else if (pulseString.equals("sspf")) {
+	        	writeShort((short)14,endianess);
+	        }
+	        else if (pulseString.equals("cin/spgr")) {
+	        	writeShort((short)15,endianess);
+	        }
+	        else if (pulseString.equals("3d/spgr")) {
+	        	writeShort((short)16,endianess);
+	        }
+	        else if (pulseString.equals("fse")) {
+	        	writeShort((short)17,endianess);
+	        }
+	        else if (pulseString.equals("fve")) {
+	        	writeShort((short)18,endianess);
+	        }
+	        else if (pulseString.equals("fspgr")) {
+	        	writeShort((short)19,endianess);
+	        }
+	        else if (pulseString.equals("fgr")) {
+	        	writeShort((short)20,endianess);
+	        }
+	        else if (pulseString.equals("fmpspgr")) {
+	        	writeShort((short)21,endianess);
+	        }
+	        else if (pulseString.equals("fmpgr")) {
+	        	writeShort((short)22,endianess);
+	        }
+	        else if (pulseString.equals("fmpir")) {
+	        	writeShort((short)23,endianess);
+	        }
+	        else if (pulseString.equals("probe.s")) {
+	        	writeShort((short)24,endianess);
+	        }
+	        else if (pulseString.equals("probe.p")) {
+	        	writeShort((short)25,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3079,8 +3109,13 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*150
         String pString = fileInfo.getPulseSequenceSubtype();
-        if (pString.equals("chopper")) {
-        	writeShort((short)0,endianess);
+        if (pString != null) {
+	        if (pString.equals("chopper")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3102,17 +3137,22 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*159
         String orString = fileInfo.getOrientation();
-        if (orString.equals("supine")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (orString.equals("prone")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (orString.equals("decubitus left")) {
-        	writeShort((short)2,endianess);
-        }
-        else if (orString.equals("decubitus right")) {
-        	writeShort((short)3,endianess);
+        if (orString != null) {
+	        if (orString.equals("supine")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (orString.equals("prone")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (orString.equals("decubitus left")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (orString.equals("decubitus right")) {
+	        	writeShort((short)3,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3120,11 +3160,16 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*160
         String posString = fileInfo.getPosition();
-        if (posString.equals("head first")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (posString.equals("feet first")) {
-        	writeShort((short)1,endianess);
+        if (posString != null) {
+	        if (posString.equals("head first")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (posString.equals("feet first")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3169,60 +3214,67 @@ public class FileGESigna4X extends FileBase {
         // 8*512 + 2*203
         gatingTypeString = fileInfo.getGatingType();
         short gating = (short)0;
-        if (gatingTypeString.indexOf("ECG") >= 0) {
-        	gating = (short)(gating | 0x0001);
-        }
-        if (gatingTypeString.indexOf("RESP") >= 0) {
-        	gating = (short)(gating | 0x0002);
-        }
-        if (gatingTypeString.indexOf("RCOMP") >= 0) {
-        	gating = (short)(gating | 0x0004);
-        }
-        if (gatingTypeString.indexOf("FC") >= 0) {
-        	gating = (short)(gating | 0x0008);
-        }
-        if (gatingTypeString.indexOf("CI") >= 0) {
-        	gating = (short)(gating | 0x0010);
-        }
-        if (gatingTypeString.indexOf("St") >= 0) {
-        	gating = (short)(gating | 0x0020);
-        }
-        if (gatingTypeString.indexOf("PG") >= 0) {
-        	gating = (short)(gating | 0x0040);
-        }
-        if (gatingTypeString.indexOf("NP") >= 0) {
-            gating = (short)(gating | 0x0080);	
-        }
-        if (gatingTypeString.indexOf("RF") >= 0) {
-        	gating = (short)(gating | 0x0100);
-        }
-        if (gatingTypeString.indexOf("Rt") >= 0) {
-        	gating = (short)(gating | 0x0200);
-        }
-        if (gatingTypeString.indexOf("VB") >= 0) {
-        	gating = (short)(gating | 0x0400);
-        }
-        if (gatingTypeString.indexOf("ED") >= 0) {
-        	gating = (short)(gating | 0x0800);
-        }
-        if (gatingTypeString.indexOf("PM") >= 0) {
-        	gating = (short)(gating | 0x1000);
-        }
-        if (gatingTypeString.indexOf("MP") >= 0) {
-        	gating = (short)(gating | 0x8000);
-        }
+        if (gatingTypeString != null) {
+	        if (gatingTypeString.indexOf("ECG") >= 0) {
+	        	gating = (short)(gating | 0x0001);
+	        }
+	        if (gatingTypeString.indexOf("RESP") >= 0) {
+	        	gating = (short)(gating | 0x0002);
+	        }
+	        if (gatingTypeString.indexOf("RCOMP") >= 0) {
+	        	gating = (short)(gating | 0x0004);
+	        }
+	        if (gatingTypeString.indexOf("FC") >= 0) {
+	        	gating = (short)(gating | 0x0008);
+	        }
+	        if (gatingTypeString.indexOf("CI") >= 0) {
+	        	gating = (short)(gating | 0x0010);
+	        }
+	        if (gatingTypeString.indexOf("St") >= 0) {
+	        	gating = (short)(gating | 0x0020);
+	        }
+	        if (gatingTypeString.indexOf("PG") >= 0) {
+	        	gating = (short)(gating | 0x0040);
+	        }
+	        if (gatingTypeString.indexOf("NP") >= 0) {
+	            gating = (short)(gating | 0x0080);	
+	        }
+	        if (gatingTypeString.indexOf("RF") >= 0) {
+	        	gating = (short)(gating | 0x0100);
+	        }
+	        if (gatingTypeString.indexOf("Rt") >= 0) {
+	        	gating = (short)(gating | 0x0200);
+	        }
+	        if (gatingTypeString.indexOf("VB") >= 0) {
+	        	gating = (short)(gating | 0x0400);
+	        }
+	        if (gatingTypeString.indexOf("ED") >= 0) {
+	        	gating = (short)(gating | 0x0800);
+	        }
+	        if (gatingTypeString.indexOf("PM") >= 0) {
+	        	gating = (short)(gating | 0x1000);
+	        }
+	        if (gatingTypeString.indexOf("MP") >= 0) {
+	        	gating = (short)(gating | 0x8000);
+	        }
+        } 
         writeShort(gating,endianess);
         
         // 8*512 + 2*204
         String pSeq = fileInfo.getPulseSequenceMode();
-        if (pSeq.equals("PRD")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (pSeq.equals("RM")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (pSeq.equals("RMGE")) {
-        	writeShort((short)2,endianess);
+        if (pSeq != null) {
+	        if (pSeq.equals("PRD")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (pSeq.equals("RM")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (pSeq.equals("RMGE")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3239,11 +3291,16 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*223
         String sCoil = fileInfo.getSurfaceCoilType();
-        if (sCoil.equals("receive")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (sCoil.equals("transmit/receive")) {
-        	writeShort((short)1,endianess);
+        if (sCoil != null) {
+	        if (sCoil.equals("receive")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (sCoil.equals("transmit/receive")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3252,14 +3309,19 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*224
         String supp = fileInfo.getSuppressionTechnique();
-        if (supp.equals("none")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (supp.equals("fat")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (supp.equals("water")) {
-        	writeShort((short)2,endianess);
+        if (supp != null) {
+	        if (supp.equals("none")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (supp.equals("fat")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (supp.equals("water")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3268,51 +3330,58 @@ public class FileGESigna4X extends FileBase {
         // 8*512 + 2*225
         satSelectionsString = fileInfo.getSATSelections();
         satSelections = 0;
-        if (satSelectionsString.indexOf("S") >= 0) {
-            satSelections = (short)(satSelections | 0x0001);	
-        }
-        if (satSelectionsString.indexOf("I") >= 0) {
-        	satSelections = (short)(satSelections | 0x0002);
-        }
-        if (satSelectionsString.indexOf("R") >= 0) {
-        	satSelections = (short)(satSelections | 0x0004);
-        }
-        if (satSelectionsString.indexOf("L") >= 0) {
-        	satSelections = (short)(satSelections | 0x0008);
-        }
-        if (satSelectionsString.indexOf("A") >= 0) {
-        	satSelections = (short)(satSelections | 0x0010);
-        }
-        if (satSelectionsString.indexOf("P") >= 0) {
-            satSelections = (short)(satSelections | 0x0020);	
-        }
-        if (satSelectionsString.indexOf("s") >= 0) {
-            satSelections = (short)(satSelections | 0x0040);	
-        }
-        if (satSelectionsString.indexOf("i") >= 0) {
-        	satSelections = (short)(satSelections | 0x0080);
-        }
-        if (satSelectionsString.indexOf("r") >= 0) {
-        	satSelections = (short)(satSelections | 0x0100);
-        }
-        if (satSelectionsString.indexOf("l") >= 0) {
-        	satSelections = (short)(satSelections | 0x0200);
-        }
-        if (satSelectionsString.indexOf("a") >= 0) {
-        	satSelections = (short)(satSelections | 0x0400);
-        }
-        if (satSelectionsString.indexOf("p") >= 0) {
-            satSelections = (short)(satSelections | 0x0800);	
+        if (satSelectionsString != null) {
+	        if (satSelectionsString.indexOf("S") >= 0) {
+	            satSelections = (short)(satSelections | 0x0001);	
+	        }
+	        if (satSelectionsString.indexOf("I") >= 0) {
+	        	satSelections = (short)(satSelections | 0x0002);
+	        }
+	        if (satSelectionsString.indexOf("R") >= 0) {
+	        	satSelections = (short)(satSelections | 0x0004);
+	        }
+	        if (satSelectionsString.indexOf("L") >= 0) {
+	        	satSelections = (short)(satSelections | 0x0008);
+	        }
+	        if (satSelectionsString.indexOf("A") >= 0) {
+	        	satSelections = (short)(satSelections | 0x0010);
+	        }
+	        if (satSelectionsString.indexOf("P") >= 0) {
+	            satSelections = (short)(satSelections | 0x0020);	
+	        }
+	        if (satSelectionsString.indexOf("s") >= 0) {
+	            satSelections = (short)(satSelections | 0x0040);	
+	        }
+	        if (satSelectionsString.indexOf("i") >= 0) {
+	        	satSelections = (short)(satSelections | 0x0080);
+	        }
+	        if (satSelectionsString.indexOf("r") >= 0) {
+	        	satSelections = (short)(satSelections | 0x0100);
+	        }
+	        if (satSelectionsString.indexOf("l") >= 0) {
+	        	satSelections = (short)(satSelections | 0x0200);
+	        }
+	        if (satSelectionsString.indexOf("a") >= 0) {
+	        	satSelections = (short)(satSelections | 0x0400);
+	        }
+	        if (satSelectionsString.indexOf("p") >= 0) {
+	            satSelections = (short)(satSelections | 0x0800);	
+	        }
         }
         writeShort(satSelections,endianess);
         
         // 8*512 + 2*226
         String sCor = fileInfo.getSurfaceCoilIntensityCorrection();
-        if (sCor.equals("off")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (sCor.equals("on")) {
-        	writeShort((short)1,endianess);
+        if (sCor != null) {
+	        if (sCor.equals("off")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (sCor.equals("on")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3357,14 +3426,19 @@ public class FileGESigna4X extends FileBase {
         // 8*512 + 2*236
         // TOF/PC image
         String vStr = fileInfo.getVasMode();
-        if (vStr.equals("none")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (vStr.equals("TOF")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (vStr.equals("PC")) {
-        	writeShort((short)2,endianess);
+        if (vStr != null) {
+	        if (vStr.equals("none")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (vStr.equals("TOF")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (vStr.equals("PC")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3372,23 +3446,28 @@ public class FileGESigna4X extends FileBase {
         
         // 8*512 + 2*237
         String phaseString = fileInfo.getPhaseContrastFlowAxis();
-        if (phaseString.equals("none")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (phaseString.equals("S/I")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (phaseString.equals("R/L")) {
-        	writeShort((short)2,endianess);
-        }
-        else if (phaseString.equals("A/P")) {
-        	writeShort((short)4,endianess);
-        }
-        else if (phaseString.equals("all")) {
-        	writeShort((short)7,endianess);
-        }
-        else if (phaseString.equals("slice")) {
-        	writeShort((short)8,endianess);
+        if (phaseString != null) {
+	        if (phaseString.equals("none")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (phaseString.equals("S/I")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (phaseString.equals("R/L")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (phaseString.equals("A/P")) {
+	        	writeShort((short)4,endianess);
+	        }
+	        else if (phaseString.equals("all")) {
+	        	writeShort((short)7,endianess);
+	        }
+	        else if (phaseString.equals("slice")) {
+	        	writeShort((short)8,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3399,17 +3478,22 @@ public class FileGESigna4X extends FileBase {
         if (seriesRevisionSubnumber >= 7) {
             //8*512 + 2*239
         	String gat = fileInfo.getGatingType2();
-        	if (gat.equals("None")) {
-        	    writeShort((short)0,endianess);
-        	}
-        	else if (gat.equals("IR")) {
-        		writeShort((short)1,endianess);
-        	}
-        	else if (gat.equals("DE")) {
-        		writeShort((short)2,endianess);
-        	}
-        	else if (gat.equals("IR_DE")) {
-        		writeShort((short)3,endianess);
+        	if (gat != null) {
+	        	if (gat.equals("None")) {
+	        	    writeShort((short)0,endianess);
+	        	}
+	        	else if (gat.equals("IR")) {
+	        		writeShort((short)1,endianess);
+	        	}
+	        	else if (gat.equals("DE")) {
+	        		writeShort((short)2,endianess);
+	        	}
+	        	else if (gat.equals("IR_DE")) {
+	        		writeShort((short)3,endianess);
+	        	}
+	        	else {
+	        		writeShort((short)0,endianess);
+	        	}
         	}
         	else {
         		writeShort((short)0,endianess);
@@ -3521,11 +3605,16 @@ public class FileGESigna4X extends FileBase {
         
         // 10*512 + 2*81
         String rStr = fileInfo.getRound();
-        if (rStr.equals("Round to nearest slice")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (rStr.equals("Round to zero")) {
-        	writeShort((short)0,endianess);   	
+        if (rStr != null) {
+	        if (rStr.equals("Round to nearest slice")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (rStr.equals("Round to zero")) {
+	        	writeShort((short)0,endianess);   	
+	        }
+	        else {
+	        	writeShort((short)1,endianess);
+	        }
         }
         else {
         	writeShort((short)1,endianess);
@@ -3562,11 +3651,16 @@ public class FileGESigna4X extends FileBase {
        
         // 10*512 + 2*102
         String research = fileInfo.getResearchMode();
-        if (research.equals("Research mode used")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (research.equals("Research mode not used")) {
-        	writeShort((short)0,endianess);
+        if (research != null) {
+	        if (research.equals("Research mode used")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (research.equals("Research mode not used")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3596,17 +3690,22 @@ public class FileGESigna4X extends FileBase {
         
         // 10*512 + 2*125
         String graph = fileInfo.getGraphicallyPrescribed();
-        if (graph.equals("Graphically prescribed")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (graph.equals("Not graphically prescribed")) {
-        	writeShort((short)0,endianess);
+        if (graph != null) {
+	        if (graph.equals("Graphically prescribed")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (graph.equals("Not graphically prescribed")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
         }
         
-        if (graph.equals("Graphically prescribed")) {
+        if ((graph != null) && (graph.equals("Graphically prescribed"))) {
         	// 10*512 + 2*126
         	raFile.write((fileInfo.getPrescribedSeriesNumbers()).getBytes()); // length 9
         	byteBuffer = new byte[1];
@@ -3623,11 +3722,16 @@ public class FileGESigna4X extends FileBase {
         
         // 10*512 + 2*136
         String iShape = fileInfo.getImageShape();
-        if (iShape.equals("box")) {
-        	writeShort((short)0,endianess);
-        }
-        else if (iShape.equals("ellipse")) {
-        	writeShort((short)1,endianess);
+        if (iShape != null) {
+	        if (iShape.equals("box")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (iShape.equals("ellipse")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3662,11 +3766,16 @@ public class FileGESigna4X extends FileBase {
         
         // 10*512 + 2*152
         String SAR = fileInfo.getSARMonitored();
-        if (SAR.equals("SAR monitored")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (SAR.equals("SAR not monitored")) {
-        	writeShort((short)0,endianess);
+        if (SAR != null) {
+	        if (SAR.equals("SAR monitored")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (SAR.equals("SAR not monitored")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3674,11 +3783,16 @@ public class FileGESigna4X extends FileBase {
         
         // 10*512 + 2*153
         String contig = fileInfo.getContiguousSlices();
-        if (contig.equals("Slices are selected")) {
-        	writeShort((short)1,endianess);
-        }
-        else if (contig.equals("Slices are not selected")) {
-        	writeShort((short)0,endianess);
+        if (contig != null) {
+	        if (contig.equals("Slices are selected")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (contig.equals("Slices are not selected")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
         	writeShort((short)0,endianess);
@@ -3702,14 +3816,19 @@ public class FileGESigna4X extends FileBase {
         // Frequency of data acquisition with respect to cardiac rate.
         // 1 - Pulse every beat, 2 - Pulse every other beat, etc.
         String cardiac = fileInfo.getCardiacRepTime();
-        if (cardiac.equals("Frequency of data acquisition with respect to cardiac rate is every beat")) {
-        	writeShort((short)1,endianess);
-        }
-        else if ((cardiac.indexOf("every ") > 0) && (cardiac.indexOf(" beats") > 0)) {
-        	i = cardiac.indexOf("every ");
-        	j = cardiac.indexOf(" beats");
-        	String beat = cardiac.substring(i+6,j);
-        	writeShort(Short.valueOf(beat).shortValue(),endianess);
+        if (cardiac != null) {
+	        if (cardiac.equals("Frequency of data acquisition with respect to cardiac rate is every beat")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if ((cardiac.indexOf("every ") > 0) && (cardiac.indexOf(" beats") > 0)) {
+	        	i = cardiac.indexOf("every ");
+	        	j = cardiac.indexOf(" beats");
+	        	String beat = cardiac.substring(i+6,j);
+	        	writeShort(Short.valueOf(beat).shortValue(),endianess);
+	        }
+	        else {
+	        	writeShort((short)1,endianess);
+	        }
         }
         else {
         	writeShort((short)1,endianess);
@@ -3742,643 +3861,674 @@ public class FileGESigna4X extends FileBase {
         
         // 10*512 + 2*167
         // Time in milliseconds between excitiation pulses within the R-R interval
-        interImageDelay = getFloat(endianess);
-        fileInfo.setInterImageDelay(interImageDelay);
+        writeFloat(fileInfo.getInterImageDelay(),endianess);
         
         // 10*512 + 2*169
-        psdName = getString(12);
-        fileInfo.setPSDName(psdName);
+        raFile.write((fileInfo.getPSDName()).getBytes()); // length 12
         
         // 10*512 + 2*175
         // Flip angle for GRASS in degrees
-        flipAngle = (short)getSignedShort(endianess);
-        fileInfo.setFlipAngle(flipAngle);
+        writeShort(fileInfo.getFlipAngle(),endianess);
         
         // 10*512 + 2*176
-        surfaceCoilsCorrectionType = getString(4);
-        fileInfo.setSurfaceCoilsCorrectionType(surfaceCoilsCorrectionType);
+        raFile.write((fileInfo.getSurfaceCoilsCorrectionType()).getBytes()); // length 4
         
         // 10*512 + 2*178
         // Series number of corrected/uncorrected image
-        scSer = getString(3);
-        fileInfo.setScSer(scSer);
+        raFile.write((fileInfo.getScSer()).getBytes()); // length 3
+        byteBuffer = new byte[1];
+        raFile.write(byteBuffer);
         
-        raFile.seek(10*512 + 2*180);
+        // 10*512 + 2*180
         // Image number of corrected/uncorrected image
-        scIma = getString(3);
-        fileInfo.setScIma(scIma);
+        raFile.write((fileInfo.getScIma()).getBytes()); // length 3
+        raFile.write(byteBuffer);
         
-        raFile.seek(10*512 + 2*182);
-        extremityCoil = (short)getSignedShort(endianess);
-        if (extremityCoil != 0) {
-            fileInfo.setExtremityCoil("Extremity coil present");
+        // 10*512 + 2*182
+        String eCoil = fileInfo.getExtremityCoil();
+        if (eCoil != null) {
+	        if (eCoil.equals("Extremity coil present")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (eCoil.equals("Extremity coil not present")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
-            fileInfo.setExtremityCoil("Extremity coil not present");
+        	writeShort((short)0,endianess);
         }
+        byteBuffer = new byte[20];
+        raFile.write(byteBuffer);
         
-        raFile.seek(10*512 + 2*193);
+        // 10*512 + 2*193
         // Series number of second localizer for double oblique GRx.
-        pSeries2 = getString(3);
-        fileInfo.setPSeries2(pSeries2);
+        raFile.write((fileInfo.getPSeries2()).getBytes()); // length 3
+        byteBuffer = new byte[1];
+        raFile.write(byteBuffer);
         
-        raFile.seek(10*512 + 2*195);
+        // 10*512 + 2*195
         // Image number of second localizer for double oblique GRx.
-        pImage2 = getString(3);
-        fileInfo.setPImage2(pImage2);
+        raFile.write((fileInfo.getPImage2()).getBytes());
+        raFile.write(byteBuffer);
         
-        raFile.seek(10*512 + 2*197);
+        // 10*512 + 2*197
         // R center coordinate on plane image in millimeters
-        rCenter = getFloat(endianess);
-        fileInfo.setRCenter(rCenter);
+        writeFloat(fileInfo.getRCenter(),endianess);
         
         // 10*512 + 2*199
         // A center coordinate on plane image in millimeters
-        aCenter = getFloat(endianess);
-        fileInfo.setACenter(aCenter);
+        writeFloat(fileInfo.getACenter(),endianess);
         
         // 10*512 + 2*201
         // S center coordinate on plane image in millimeters
-        sCenter = getFloat(endianess);
-        fileInfo.setSCenter(sCenter);
+        writeFloat(fileInfo.getSCenter(),endianess);
         
         // 10*512 + 2*203
         // Unit vector used in Graphic Rx and Display
-        rNormal = getFloat(endianess);
-        fileInfo.setRNormal(rNormal);
+        writeFloat(fileInfo.getRNormal(),endianess);
         
         // 10*512 + 2*205
         // Unit vector used in Graphic Rx and Display
-        aNormal = getFloat(endianess);
-        fileInfo.setANormal(aNormal);
+        writeFloat(fileInfo.getANormal(),endianess);
         
         // 10*512 + 2*207
         // Unit vector used in Graphic Rx and Display
-        sNormal = getFloat(endianess);
-        fileInfo.setSNormal(sNormal);
+        writeFloat(fileInfo.getSNormal(),endianess);
         
         // The next 9 fields define the 3 corners of the image.  
         // Used in display features.  In millimeters.
         
         // 10*512 + 2*209
-        imgTLHC_R = getFloat(endianess);
-        fileInfo.setImgTLHC_R(imgTLHC_R);
+        writeFloat(fileInfo.getImgTLHC_R(),endianess);
         
         // 10*512 + 2*211
-        imgTLHC_A = getFloat(endianess);
-        fileInfo.setImgTLHC_A(imgTLHC_A);
+        writeFloat(fileInfo.getImgTLHC_A(),endianess);
         
         // 10*512 + 2*213
-        imgTLHC_S = getFloat(endianess);
-        fileInfo.setImgTLHC_S(imgTLHC_S);
+        writeFloat(fileInfo.getImgTLHC_S(),endianess);
         
         // 10*512 + 2*215
-        imgTRHC_R = getFloat(endianess);
-        fileInfo.setImgTRHC_R(imgTRHC_R);
+        writeFloat(fileInfo.getImgTRHC_R(),endianess);
         
         // 10*512 + 2*217
-        imgTRHC_A = getFloat(endianess);
-        fileInfo.setImgTRHC_A(imgTRHC_A);
+        writeFloat(fileInfo.getImgTRHC_A(),endianess);
         
         // 10*512 + 2*219
-        imgTRHC_S = getFloat(endianess);
-        fileInfo.setImgTRHC_S(imgTRHC_S);
+        writeFloat(fileInfo.getImgTRHC_S(),endianess);
         
         // 10*512 + 2*221
-        imgBLHC_R = getFloat(endianess);
-        fileInfo.setImgBLHC_R(imgBLHC_R);
+        writeFloat(fileInfo.getImgBLHC_R(),endianess);
         
         // 10*512 + 2*223
-        imgBLHC_A = getFloat(endianess);
-        fileInfo.setImgBLHC_A(imgBLHC_A);
+        writeFloat(fileInfo.getImgBLHC_A(),endianess);
         
         // 10*512 + 2*225
-        imgBLHC_S = getFloat(endianess);
-        fileInfo.setImgBLHC_S(imgBLHC_S);
-        
-        if (fileInfo.imageOrientation == FileInfoBase.CORONAL) {
-            start[0] = -imgTLHC_R;
-            start[1] = imgTLHC_S;
-            start[2] = -imgTLHC_A;
-
-            if (imgTLHC_R > imgTRHC_R) {
-                orient[0] = FileInfoBase.ORI_R2L_TYPE;
-            } else {
-                orient[0] = FileInfoBase.ORI_L2R_TYPE;
-            }
-
-            if (imgTLHC_S > imgBLHC_S) {
-                orient[1] = FileInfoBase.ORI_S2I_TYPE;
-            } else {
-                orient[1] = FileInfoBase.ORI_I2S_TYPE;
-            }
-            resX = Math.abs(imgTLHC_R - imgTRHC_R)/(width-1);
-            resY = Math.abs(imgTLHC_S = imgBLHC_S)/(height-1);
-        } else if (fileInfo.imageOrientation == FileInfoBase.SAGITTAL) {
-            start[0] = -imgTLHC_A;
-            start[1] = imgTLHC_S;
-            start[2] = -imgTLHC_R;
-
-            if (imgTLHC_A > imgTRHC_A) {
-                orient[0] = FileInfoBase.ORI_A2P_TYPE;
-            } else {
-                orient[0] = FileInfoBase.ORI_P2A_TYPE;
-            }
-
-            if (imgTLHC_S > imgBLHC_S) {
-                orient[1] = FileInfoBase.ORI_S2I_TYPE;
-            } else {
-                orient[1] = FileInfoBase.ORI_I2S_TYPE;
-            }
-            resX = Math.abs(imgTLHC_A - imgTRHC_A)/(width-1);
-            resY = Math.abs(imgTLHC_S - imgBLHC_S)/(height-1);
-        } else { // AXIAL
-            start[0] = -imgTLHC_R;
-            start[1] = -imgTLHC_A;
-            start[2] = imgTLHC_S;
-
-            if (imgTLHC_R > imgTRHC_R) {
-                orient[0] = FileInfoBase.ORI_R2L_TYPE;
-            } else {
-                orient[0] = FileInfoBase.ORI_L2R_TYPE;
-            }
-
-            if (imgTLHC_A > imgBLHC_A) {
-                orient[1] = FileInfoBase.ORI_A2P_TYPE;
-            } else {
-                orient[1] = FileInfoBase.ORI_P2A_TYPE;
-            }
-            resX = Math.abs(imgTLHC_R - imgTRHC_R)/(width-1);
-            resY = Math.abs(imgTLHC_A - imgBLHC_A)/(height-1);
-        }
-
-        // orient[2] is calculated in FileIo.java by comparing position values
-        // of the top left hand corner between slice 0 and slice 1.
-        // Must multiply resX and resY by kludge factors of 2 for the right answers.
-        fileInfo.setAxisOrientation(orient);
-        fileInfo.setOrigin(start);
+        writeFloat(fileInfo.getImgBLHC_S(),endianess);
         
         // 10*512 + 2*227
-        imageHeaderDisclaimer = (short)getSignedShort(endianess);
-        fileInfo.setImageHeaderDisclaimer(imageHeaderDisclaimer);
+        writeShort(fileInfo.getImageHeaderDisclaimer(),endianess);
         
         // 10*512 + 2*228
         // Minimum delay after cardiac trigger in milliseconds
-        minimumDelay = (short)getSignedShort(endianess);
-        fileInfo.setMinimumDelay(minimumDelay);
+        writeShort(fileInfo.getMinimumDelay(),endianess);
         
         // 10*512 + 2*229
         // User type-in.  Number of cardiac phases to reconstruct [1...32]
-        cPhase = (short)getSignedShort(endianess);
-        fileInfo.setCPhase(cPhase);
+        writeShort(fileInfo.getCPhase(),endianess);
         
         // 10*512 + 2*230
         // TE2 (VEMP) in milliseconds
-        TE2 = getFloat(endianess);
-        fileInfo.setTE2(TE2);
+        writeFloat(fileInfo.getTE2(),endianess);
         
         // 10*512 + 2*232
-        swapPF = (short)getSignedShort(endianess);
-        if (swapPF == 0) {
-            fileInfo.setSwapPF("Phase and frequency swap not selected");
-        }
-        else if (swapPF == 1) {
-            fileInfo.setSwapPF("Operator selects to swap phase and frequency");
+        String swapString = fileInfo.getSwapPF();
+        if (swapString != null) {
+	        if (swapString.equals("Phase and frequency swap not selected")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (swapString.equals("Operator selects to swap phase and frequency")){
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
-            Preferences.debug("swapPF = " + swapPF + "\n");
+        	writeShort((short)0,endianess);
         }
         
         // 10*512 + 2*233
         // milliseconds
-        pauseInterval = (short)getSignedShort(endianess);
-        fileInfo.setPauseInterval(pauseInterval);
+        writeShort(fileInfo.getPauseInterval(),endianess);
         
         // 10*512 + 2*234
         // milliseconds
-        pauseTime = getFloat(endianess);
-        fileInfo.setPauseTime(pauseTime);
+        writeFloat(fileInfo.getPauseTime(),endianess);
         
         // 10*512 + 2*236
         // Bitmap defining user CV's.  Bit mask, tells how many scan fields come up
-        userBitmap = (short)getSignedShort(endianess);
-        // User defined variables that are PSD dependent
-        if ((userBitmap & 1) != 0) {
-            // 10*512 + 2*237
-            user0 = getFloat(endianess);
-            fileInfo.setUser0(user0);
+        userBitmap = (short)0;
+        user0 = fileInfo.getUser0();
+        if (!Float.isNaN(user0)) {
+        	userBitmap = (short)(userBitmap | 0x0001);
         }
-        if ((userBitmap & 2) != 0) {
-            raFile.seek(10*512 + 2*239);
-            user1 = getFloat(endianess);
-            fileInfo.setUser1(user1);
+        user1 = fileInfo.getUser1();
+        if (!Float.isNaN(user1)) {
+        	userBitmap = (short)(userBitmap | 0x0002);
         }
-        if ((userBitmap & 4) != 0) {
-            raFile.seek(10*512 + 2*241);
-            user2 = getFloat(endianess);
-            fileInfo.setUser2(user2);
+        user2 = fileInfo.getUser2();
+        if (!Float.isNaN(user2)) {
+        	userBitmap = (short)(userBitmap | 0x0004);
         }
-        if ((userBitmap & 8) != 0) {
-            raFile.seek(10*512 + 2*243);
-            user3 = getFloat(endianess);
-            fileInfo.setUser3(user3);
+        user3 = fileInfo.getUser3();
+        if (!Float.isNaN(user3)) {
+        	userBitmap = (short)(userBitmap | 0x0008);
         }
-        if ((userBitmap & 16) != 0) {
-            raFile.seek(10*512 + 2*245);
-            user4 = getFloat(endianess);
-            fileInfo.setUser4(user4);
+        user4 = fileInfo.getUser4();
+        if (!Float.isNaN(user4)) {
+        	userBitmap = (short)(userBitmap | 0x0010);
         }
-        if ((userBitmap & 32) != 0) {
-            raFile.seek(10*512 + 2*247);
-            user5 = getFloat(endianess);
-            fileInfo.setUser5(user5);
+        user5 = fileInfo.getUser5();
+        if (!Float.isNaN(user5)) {
+        	userBitmap = (short)(userBitmap | 0x0020);
         }
-        if ((userBitmap & 64) != 0) {
-            raFile.seek(10*512 + 2*249);
-            user6 = getFloat(endianess);
-            fileInfo.setUser6(user6);
+        user6 = fileInfo.getUser6();
+        if (!Float.isNaN(user6)) {
+        	userBitmap = (short)(userBitmap | 0x0040);
         }
-        if ((userBitmap & 128) != 0) {
-            raFile.seek(10*512 + 2*251);
-            user7 = getFloat(endianess);
-            fileInfo.setUser7(user7);
+        user7 = fileInfo.getUser7();
+        if (!Float.isNaN(user7)) {
+        	userBitmap = (short)(userBitmap | 0x0080);
         }
-        if ((userBitmap & 256) != 0) {
-            raFile.seek(10*512 + 2*253);
-            user8 = getFloat(endianess);
-            fileInfo.setUser8(user8);
+        user8 = fileInfo.getUser8();
+        if (!Float.isNaN(user8)) {
+        	userBitmap = (short)(userBitmap | 0x0100);
         }
-        if ((userBitmap & 512) != 0) {
-            raFile.seek(10*512 + 2*255);
-            user9 = getFloat(endianess);
-            fileInfo.setUser9(user9);
+        user9 = fileInfo.getUser9();
+        if (!Float.isNaN(user9)) {
+        	userBitmap = (short)(userBitmap | 0x0200);
         }
+        writeShort(userBitmap,endianess);
         
-        raFile.seek(10*512 + 2*257);
+        // User defined variables that are PSD dependent
+        // 10*512 + 2*237
+        writeFloat(user0,endianess);
+        
+        // 10*512 + 2*239
+        writeFloat(user1,endianess);
+       
+        // 10*512 + 2*241
+        writeFloat(user2,endianess);
+          
+        // 10*512 + 2*243
+        writeFloat(user3,endianess);
+        
+        // 10*512 + 2*245
+        writeFloat(user4,endianess);
+       
+        // 10*512 + 2*247
+        writeFloat(user5,endianess);
+       
+        // 10*512 + 2*249
+        writeFloat(user6,endianess);
+          
+        // 10*512 + 2*251
+        writeFloat(user7,endianess);
+          
+        // 10*512 + 2*253
+        writeFloat(user8,endianess);
+       
+        // 10*512 + 2*255
+        writeFloat(user9,endianess);
+        
+        // 10*512 + 2*257
         // Most like normal plane
-        obliquePlane = (short)getSignedShort(endianess);
-        if (obliquePlane == 0) {
-            fileInfo.setObliquePlane("Axial");
-        }
-        else if (obliquePlane == 1) {
-            fileInfo.setObliquePlane("Sagittal");
-        }
-        else if (obliquePlane == 2) {
-            fileInfo.setObliquePlane("Coronal");
-        }
-        else if (obliquePlane == 5) {
-            fileInfo.setObliquePlane("Oax");
-        }
-        else if (obliquePlane == 6) {
-            fileInfo.setObliquePlane("Osag");
-        }
-        else if (obliquePlane == 7) {
-            fileInfo.setObliquePlane("Ocor");
+        String oPlane = fileInfo.getObliquePlane();
+        if (oPlane != null) {
+	        if (oPlane.equals("Axial")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (oPlane.equals("Sagittal")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (oPlane.equals("Coronal")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (oPlane.equals("Oax")) {
+	        	writeShort((short)5,endianess);
+	        }
+	        else if (oPlane.equals("Osag")) {
+	        	writeShort((short)6,endianess);
+	        }
+	        else if (oPlane.equals("Ocor")) {
+	        	writeShort((short)7,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
-            Preferences.debug("obliquePlane = " + obliquePlane + "\n");
+        	writeShort((short)0,endianess);
         }
         
         // 10*512 + 2*258
-        contrastUsed = (short)getSignedShort(endianess);
-        if (contrastUsed != 0) {
-            fileInfo.setContrastUsed("Contrast used");
+        String contrast = fileInfo.getContrastUsed();
+        if (contrast != null) {
+	        if (contrast.equals("Contrast used")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (contrast.equals("Contrast not used")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
-            fileInfo.setContrastUsed("Contrast not used");
+        	writeShort((short)0,endianess);
         }
         
-        if (contrastUsed != 0) {
-            // 10*512 + 2*259
+        if ((contrast != null) && (contrast.equals("Contrast used"))) {
+        	// 10*512 + 2*259
             // Operator type in.
-            contrastAgent = getString(10);
-            fileInfo.setContrastAgent(contrastAgent);
-            
-            // 10*512 + 2*264
+        	raFile.write((fileInfo.getContrastAgent()).getBytes()); // length 10
+        	
+        	// 10*512 + 2*264
             // Operator type in.
-            contrastAmount = getFloat(endianess);
-            fileInfo.setContrastAmount(contrastAmount);
-        } // if (contrastUsed != 0)
-        
-        raFile.seek(10*512 + 2*266);
-        fileFormat = (short)getSignedShort(endianess);
-        if (fileFormat == 0) {
-            fileInfo.setFileFormat("Pre 3.0");
-        }
-        else if (fileFormat == 1) {
-            fileInfo.setFileFormat("Post 3.0");
+        	writeFloat(fileInfo.getContrastAmount(),endianess);
         }
         else {
-            Preferences.debug("fileFormat = " + fileFormat + "\n");
+        	byteBuffer = new byte[14];
+        	raFile.write(byteBuffer);
+        }
+        
+        // 10*512 + 2*266
+        String fStr = fileInfo.getSignaFileFormat();
+        if (fStr != null) {
+	        if (fStr.equals("Pre 3.0")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (fStr.equals("Post 3.0")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
+        }
+        else {
+        	writeShort((short)0,endianess);
         }
         
         // 10*512 + 2*267
-        autoCenterFrequency = (short)getSignedShort(endianess);
-        if (autoCenterFrequency == 0) {
-            fileInfo.setAutoCenterFrequency("current");
-        }
-        else if (autoCenterFrequency == 1) {
-            fileInfo.setAutoCenterFrequency("Midpoint");
-        }
-        else if (autoCenterFrequency == 2) {
-            fileInfo.setAutoCenterFrequency("Water");
-        }
-        else if (autoCenterFrequency == 3) {
-            fileInfo.setAutoCenterFrequency("Fat");
-        }
-        else if (autoCenterFrequency == 4) {
-            fileInfo.setAutoCenterFrequency("Peak");
-        }
-        else if (autoCenterFrequency == 5) {
-            fileInfo.setAutoCenterFrequency("Centroid");
+        String aFreq = fileInfo.getAutoCenterFrequency();
+        if (aFreq != null) {
+	        if (aFreq.equals("current")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (aFreq.equals("Midpoint")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (aFreq.equals("Water")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (aFreq.equals("Fat")) {
+	        	writeShort((short)3,endianess);
+	        }
+	        else if (aFreq.equals("Peak")) {
+	        	writeShort((short)4,endianess);
+	        }
+	        else if (aFreq.equals("Centroid")) {
+	        	writeShort((short)5,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
-            Preferences.debug("autoCenterFrequency = " + autoCenterFrequency + "\n");
+        	writeShort((short)0,endianess);
         }
         
         // 10*512 + 2*268
         // Actual transmit frequency used on scan [310,000,000...640,000,000] (310-640 Mhz)
-        actualTransmitFrequency = getInt(endianess);
-        fileInfo.setActualTransmitFrequency(actualTransmitFrequency);
+        writeInt(fileInfo.getActualTransmitFrequency(),endianess);
         
         // 10*512 + 2*270
         // Actual receive frequency used on scan [310,000,000...640,000,000] (310-640 Mhz)
-        actualReceiveFrequency = getInt(endianess);
-        fileInfo.setActualReceiveFrequency(actualReceiveFrequency);
+        writeInt(fileInfo.getActualReceiveFrequency(),endianess);
         
         // 10*512 + 2*272
         // Recommended automated transmit frequency [310,000,000...640,000,000] (310-640 Mhz)
-        recommendedTransmitFrequency = getInt(endianess);
-        fileInfo.setRecommendedTransmitFrequency(recommendedTransmitFrequency);
+        writeInt(fileInfo.getRecommendedTransmitFrequency(),endianess);
         
         // 10*512 + 2*274
         // Recommended automated receive frequency [310,000,000...640,000,000] (310-640 Mhz)
-        recommendedReceiveFrequency = getInt(endianess);
-        fileInfo.setRecommendedReceiveFrequency(recommendedReceiveFrequency);
+        writeInt(fileInfo.getRecommendedReceiveFrequency(),endianess);
         
         // 10*512 + 2*276
         // Recommended automated transmit attenuation 1/10 db [0...319]
-        recommendedTransmitAttenuation = getInt(endianess);
-        fileInfo.setRecommendedTransmitAttenuation(recommendedTransmitAttenuation);
+        writeInt(fileInfo.getRecommendedTransmitAttenuation(),endianess);
         
         // 10*512 + 2*278
         // Recommended automated receive attenuation 1/10 db [0...629]
-        recommendedReceiveAttenuation = getInt(endianess);
-        fileInfo.setRecommendedReceiveAttenuation(recommendedReceiveAttenuation);
+        writeInt(fileInfo.getRecommendedReceiveAttenuation(),endianess);
         
         // 10*512 + 2*280
-        histogramPresent = (short)getSignedShort(endianess);
-        if (histogramPresent == 0) {
-            fileInfo.setHistogramPresent("Histogram not present in raw header");
+        String histogram = fileInfo.getHistogramPresent();
+        if (histogram != null) {
+	        if (histogram.equals("Histogram not present in raw header")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (histogram.equals("Histogram present in raw header")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
-            fileInfo.setHistogramPresent("Histogram present in raw header");
+        	writeShort((short)0,endianess);
         }
         
         // 10*512 + 2*281
         // See swapPF at 10*512 + 2*232
-        pfSwapped = (short)getSignedShort(endianess);
-        if (pfSwapped == 0) {
-            fileInfo.setPFSwapped("Phase and frequency not swapped");
+        String pfString = fileInfo.getPFSwapped();
+        if (pfString != null) {
+	        if (pfString.equals("Phase and frequency not swapped")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (pfString.equals("Geometries swap phase and frequency either by rules or by user selection")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
-            fileInfo.setPFSwapped("Geometries swap phase and frequency either by rules or by user selection");
+        	writeShort((short)0,endianess);
         }
         
         // 10*512 + 2*282
         // For prescan [1...7]
-        R1 = (short)getSignedShort(endianess);
-        fileInfo.setR1(R1);
+        writeShort(fileInfo.getR1(),endianess);
         
         // 10*512 + 2*283
         // For prescan [1...30]
-        R2 = (short)getSignedShort(endianess);
-        fileInfo.setR2(R2);
+        writeShort(fileInfo.getR2(),endianess);
         
         // 10*512 + 2*284
-        variableBandwidth = (short)getSignedShort(endianess);
-        if (variableBandwidth == 0) {
-            fileInfo.setVariableBandwidth("Off");
+        String varString = fileInfo.getVariableBandwidth();
+        if (varString != null) {
+	        if (varString.equals("Off")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (varString.equals("On")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
-            fileInfo.setVariableBandwidth("On");
+        	writeShort((short)0,endianess);
         }
         
         // 10*512 + 2*285
         // [1...7]
-        prescanReceiveAttenuation1 = (short)getSignedShort(endianess);
-        fileInfo.setPrescanReceiveAttenuation1(prescanReceiveAttenuation1);
+        writeShort(fileInfo.getPrescanReceiveAttenuation1(),endianess);
         
         // 10*512 + 2*286
         // [1...30]
-        prescanReceiveAttenuation2 = (short)getSignedShort(endianess);
-        fileInfo.setPrescanReceiveAttenuation2(prescanReceiveAttenuation2);
+        writeShort(fileInfo.getPrescanReceiveAttenuation2(),endianess);
         
         // 10*512 + 2*287
-        autoManualPrescan = (short)getSignedShort(endianess);
-        if (autoManualPrescan == 0) {
-            fileInfo.setAutoManualPrescan("No auto or manual prescan");
-        }
-        else if (autoManualPrescan == 1) {
-            fileInfo.setAutoManualPrescan("Auto prescan failed.");
-        }
-        else if (autoManualPrescan == 2) {
-            fileInfo.setAutoManualPrescan("Auto prescan succeeded.");
-        }
-        else if (autoManualPrescan == 3) {
-            fileInfo.setAutoManualPrescan("Manual prescan");
-        }
-        else if (autoManualPrescan == 4) {
-            fileInfo.setAutoManualPrescan("Auto prescan failed.  Manual prescan done.");
-        }
-        else if (autoManualPrescan == 5) {
-            fileInfo.setAutoManualPrescan("Auto prescan succeeded.  Manual prescan done.");
+        String auto = fileInfo.getAutoManualPrescan();
+        if (auto != null) {
+	        if (auto.equals("No auto or manual prescan")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (auto.equals("Auto prescan failed.")){
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (auto.equals("Auto prescan succeeded.")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (auto.equals("Manual prescan")) {
+	        	writeShort((short)3,endianess);
+	        }
+	        else if (auto.equals("Auto prescan failed.  Manual prescan done.")) {
+	        	writeShort((short)4,endianess);
+	        }
+	        else if (auto.equals("Auto prescan succeeded.  Manual prescan done.")) {
+	        	writeShort((short)5,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
         else {
-            Preferences.debug("autoManualPrescan = " + autoManualPrescan + "\n");
+        	writeShort((short)0,endianess);
         }
         
         // 10*512 + 2*288
-        changedValuesBitmap = (short)getSignedShort(endianess);
-        changedValuesString = "none";
-        if ((changedValuesBitmap & 1) != 0) {
-            changedValuesString = changedValuesString.concat("_CF");
+        changedValuesString = fileInfo.getChangedValues();
+        changedValuesBitmap = (short)0;
+        if (changedValuesString != null) {
+	        if (changedValuesString.indexOf("CF") >= 0) {
+	            changedValuesBitmap = (short)(changedValuesBitmap | 0x0001);	
+	        }
+	        if (changedValuesString.indexOf("TA") >= 0) {
+	            changedValuesBitmap = (short)(changedValuesBitmap | 0x0002);	
+	        }
+	        if (changedValuesString.indexOf("R1") >= 0) {
+	            changedValuesBitmap = (short)(changedValuesBitmap | 0x0004);	
+	        }
+	        if (changedValuesString.indexOf("R2") >= 0) {
+	            changedValuesBitmap = (short)(changedValuesBitmap | 0x0008);	
+	        }
         }
-        if ((changedValuesBitmap & 2) != 0) {
-            changedValuesString = changedValuesString.concat("_TA");
-        }
-        if ((changedValuesBitmap & 4) != 0) {
-            changedValuesString = changedValuesString.concat("_R1");
-        }
-        if ((changedValuesBitmap & 8) != 0) {
-            changedValuesString = changedValuesString.concat("_R2");
-        }
-        
-        if (changedValuesBitmap != 0) {
-            i = changedValuesString.indexOf("_");
-            changedValuesString = changedValuesString.substring(i+1);
-        }
-        fileInfo.setChangedValues(changedValuesString);
+        writeShort(changedValuesBitmap,endianess);
         
         // 10*512 + 2*289
-        imageType = (short)getSignedShort(endianess);
-        if (imageType == 0) {
-            fileInfo.setImageType("Magnitude");
+        String iType = fileInfo.getImageType();
+	    if (iType != null) {
+	        if (iType.equals("Magnitude")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (iType.equals("Phase")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (iType.equals("Real")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (iType.equals("Imaginary")) {
+	        	writeShort((short)3,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
         }
-        else if (imageType == 1) {
-            fileInfo.setImageType("Phase");
-        }
-        else if (imageType == 2) {
-            fileInfo.setImageType("Real");
-        }
-        else if (imageType == 3) {
-            fileInfo.setImageType("Imaginary");
-        }
-        else {
-            Preferences.debug("imageType = " + imageType + "\n");
-        }
+	    else {
+	    	writeShort((short)0,endianess);
+	    }
+        
         
         // 10*512 + 2*290
-        collapseImage = (short)getSignedShort(endianess);
-        if (collapseImage == 0) {
-            fileInfo.setCollapseImage("Off");
-        }
-        else if (collapseImage == 1) {
-            fileInfo.setCollapseImage("Col");
-        }
-        else if (collapseImage == 2) {
-            fileInfo.setCollapseImage("Mag");
-        }
-        else if (collapseImage == 3) {
-            fileInfo.setCollapseImage("R/L");
-        }
-        else if (collapseImage == 4) {
-            fileInfo.setCollapseImage("A/P");
-        }
-        else if (collapseImage == 5) {
-            fileInfo.setCollapseImage("S/I");
-        }
-        else if (collapseImage == 6) {
-            fileInfo.setCollapseImage("PJN");
-        }
-        else if (collapseImage == 7) {
-            fileInfo.setCollapseImage("ALL");
-        }
-        else if (collapseImage == 8) {
-            fileInfo.setCollapseImage("Omag");
-        }
-        else if (collapseImage == 9) {
-            fileInfo.setCollapseImage("OR/L");
-        }
-        else if (collapseImage == 10) {
-            fileInfo.setCollapseImage("OA/P");
-        }
-        else if (collapseImage == 11) {
-            fileInfo.setCollapseImage("OS/I");
-        }
-        else if (collapseImage == 12) {
-            fileInfo.setCollapseImage("OALL");
-        }
-        else if (collapseImage == 13) {
-            fileInfo.setCollapseImage("OCOL");
-        }
-        else {
-            Preferences.debug("collapseImage = " + collapseImage + "\n");
-        }
+	    String collapse = fileInfo.getCollapseImage();
+	    if (collapse != null) {
+	        if (collapse.equals("Off")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (collapse.equals("Col")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else if (collapse.equals("Mag")) {
+	        	writeShort((short)2,endianess);
+	        }
+	        else if (collapse.equals("R/L")) {
+	        	writeShort((short)3,endianess);
+	        }
+	        else if (collapse.equals("A/P")) {
+	        	writeShort((short)4,endianess);
+	        }
+	        else if (collapse.equals("S/I")) {
+	        	writeShort((short)5,endianess);
+	        }
+	        else if (collapse.equals("PJN")) {
+	        	writeShort((short)6,endianess);
+	        }
+	        else if (collapse.equals("ALL")) {
+	        	writeShort((short)7,endianess);
+	        }
+	        else if (collapse.equals("Omag")) {
+	        	writeShort((short)8,endianess);
+	        }
+	        else if (collapse.equals("OR/L")) {
+	        	writeShort((short)9,endianess);
+	        }
+	        else if (collapse.equals("OA/P")) {
+	        	writeShort((short)10,endianess);
+	        }
+	        else if (collapse.equals("OS/I")) {
+	        	writeShort((short)11,endianess);
+	        }
+	        else if (collapse.equals("OALL")) {
+	        	writeShort((short)12,endianess);
+	        }
+	        else if (collapse.equals("OCOL")) {
+	        	writeShort((short)13,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
+	    }
+	    else {
+	    	writeShort((short)0,endianess);
+	    }
         
         // 10*512 + 2*291
-        sliceThicknessDisclaimer = (short)getSignedShort(endianess);
-        if (sliceThicknessDisclaimer == 0) {
-            fileInfo.setSliceThicknessDisclaimer("No");
-        }
-        else {
-            fileInfo.setSliceThicknessDisclaimer("Yes");
-        }
+	    String sThick = fileInfo.getSliceThicknessDisclaimer();
+	    if (sThick != null) {
+	        if (sThick.equals("No")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (sThick.equals("Yes")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
+	    }
+	    else {
+	    	writeShort((short)0,endianess);
+	    }
         
         // 10*512 + 2*292
         // Operator type in.  In units of mm/sec.
-        PCVelocityEncoding = (short)getSignedShort(endianess);
-        fileInfo.setPCVelocityEncoding(PCVelocityEncoding);
+	    writeShort(fileInfo.getPCVelocityEncoding(),endianess);
         
         // 10*512 + 2*293
         // Tardis projection angle in degrees.
-        projectionAngle = getFloat(endianess);
-        fileInfo.setProjectionAngle(projectionAngle);
+	    writeFloat(fileInfo.getProjectionAngle(),endianess);
         
         // 10*512 + 2*295
-        concatenatedSATSelection = (short)getSignedShort(endianess);
-        if (concatenatedSATSelection == 0) {
-            fileInfo.setConcatenatedSATSelection("Off");
-        }
-        else {
-            fileInfo.setConcatenatedSATSelection("On");
-        }
+	    String concat = fileInfo.getConcatenatedSATSelection();
+	    if (concat != null) {
+	        if (concat.equals("Off")) {
+	        	writeShort((short)0,endianess);
+	        }
+	        else if (concat.equals("On")) {
+	        	writeShort((short)1,endianess);
+	        }
+	        else {
+	        	writeShort((short)0,endianess);
+	        }
+	    }
+	    else {
+	    	writeShort((short)0,endianess);
+	    }
         
         if (imageRevisionSubnumber >= 7) {
             // 10*512 + 2*296
-            fractionalEffectiveEcho = (short)getSignedShort(endianess);
-            if (fractionalEffectiveEcho == 0) {
-                fileInfo.setFractionalEffectiveEcho("Fractional/Effective Echo Off");
-            }
-            else if (fractionalEffectiveEcho == 1) {
-                fileInfo.setFractionalEffectiveEcho("Fractional Echo");
-            }
-            else if (fractionalEffectiveEcho == 2) {
-                fileInfo.setFractionalEffectiveEcho("Effective Echo");
-            }
-            else if (fractionalEffectiveEcho == 3) {
-                fileInfo.setFractionalEffectiveEcho("Fractional/Effective Echo");
-            }
-            else {
-                Preferences.debug("fractionalEffectiveEcho = " + fractionalEffectiveEcho + "\n");
-            }
+        	String fractional = fileInfo.getFractionalEffectiveEcho();
+        	if (fractional != null) {
+        	    if (fractional.equals("Fractional/Effective Echo Off"))	{
+        	    	writeShort((short)0,endianess);
+        	    }
+        	    else if (fractional.equals("Fractional Echo")) {
+        	    	writeShort((short)1,endianess);
+        	    }
+        	    else if (fractional.equals("Effective Echo")) {
+        	    	writeShort((short)2,endianess);
+        	    }
+        	    else if (fractional.equals("Fractional/Effective Echo")) {
+        	    	writeShort((short)3,endianess);
+        	    }
+        	    else {
+        	    	writeShort((short)0,endianess);
+        	    }
+        	}
+        	else {
+        		writeShort((short)0,endianess);
+        	}
             
             // 10*512 + 2*297
             // Echo train length [4...16]
-            echoTrainLength = getInt(endianess);
-            fileInfo.setEchoTrainLength(echoTrainLength);
+        	writeInt(fileInfo.getEchoTrainLength(),endianess);
             
             // 10*512 + 2*299
             // Slice multiplier to obtain phases for FAST
             // For multiphase scans(MP option).  Number of phases per location
-            sliceMultiplier = (short)getSignedShort(endianess);
-            fileInfo.setSliceMultiplier(sliceMultiplier);
+        	writeShort(fileInfo.getSliceMultiplier(),endianess);
         } // if (imageRevisionSubnumber >= 7)
+        else {
+        	byteBuffer = new byte[8];
+        	raFile.write(byteBuffer);
+        }
         
         if (imageRevisionSubnumber >= 8) {
             // 10*512 + 2*300
             // Cardiac phase number that the current image represents
-            cardiacPhaseNumber = (short)getSignedShort(endianess);
-            fileInfo.setCardiacPhaseNumber(cardiacPhaseNumber);
+        	writeShort(fileInfo.getCardiacPhaseNumber(),endianess);
             
             // 10*512 + 2*301
             // Number of acquisitions in scan [1...60]
-            scanAcquisitionNumber = (short)getSignedShort(endianess);
-            fileInfo.setScanAcquisitionNumber(scanAcquisitionNumber);
+        	writeShort(fileInfo.getScanAcquisitionNumber(),endianess);
             
             // 10*512 + 2*302
-            vascularImagingFlags = (short)getSignedShort(endianess);
-            if ((vascularImagingFlags & 1) != 0) {
-                fileInfo.setVascularImagingFlags("No Flags");
-            }
-            else if ((vascularImagingFlags & 2) != 0) {
-                fileInfo.setVascularImagingFlags("Magweight");
-            }
-            else {
-                Preferences.debug("vascularImagingFlags = " + vascularImagingFlags + "\n");
-            }
+        	String vascular = fileInfo.getVascularImagingFlags();
+        	if (vascular != null) {
+        	    if (vascular.equals("No Flags")) {
+        	    	writeShort((short)1,endianess);
+        	    }
+        	    else if (vascular.equals("Magweight")) {
+        	    	writeShort((short)2,endianess);
+        	    }
+        	    else {
+        	    	writeShort((short)1,endianess);
+        	    }
+        	}
+        	else {
+        		writeShort((short)1,endianess);
+        	}
             
             // 10*512 + 2*303
             // Scaling factor for venc. from Recon.
-            vencScalingFactor = getFloat(endianess);
-            fileInfo.setVencScalingFactor(vencScalingFactor);
+        	writeFloat(fileInfo.getVencScalingFactor(),endianess);
         } // if (imageRevisionSubnumber >= 8)
-         
-        raFile.seek(14336);
-        //readBuffer(buffer);
+        else {
+        	byteBuffer = new byte[10];
+        	raFile.write(byteBuffer);
+        }
         
-     // store as 16 bit signed short
-        /*shortBuffer = new short[sliceSize];
+        byteBuffer = new byte[8606];
+        raFile.write(byteBuffer);
+         
+        // 14336
+        // store as 16 bit signed short
+        shortBuffer = new short[sliceSize];
         byteBuffer = new byte[2 * sliceSize];
         
         image.exportSliceXY(imageIndex, shortBuffer);
@@ -4388,7 +4538,7 @@ public class FileGESigna4X extends FileBase {
             byteBuffer[ (2 * j) + 1] = (byte) (shortBuffer[j]);
         }
 
-        raFile.write(byteBuffer);*/
+        raFile.write(byteBuffer);
         raFile.close();
         } // for (z = sBegin; z <= sEnd; z++)
         } // for (t = tBegin; t <= tEnd; t++)
