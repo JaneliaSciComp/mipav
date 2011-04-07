@@ -8669,7 +8669,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readGESigna4X(final String fileName, final String fileDir) {
+    public ModelImage readGESigna4X(final String fileName, final String fileDir) {
         ModelImage image = null;
         FileGESigna4X imageFile;
         FileInfoBase myFileInfo;
