@@ -15,7 +15,7 @@ import javax.swing.border.TitledBorder;
 
 
 
-public class PlugInDialogBrainSubcortical extends JDialogBase implements AlgorithmInterface
+public class PlugInDialogBrainSubcortical implements AlgorithmInterface
 {
 	/** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -6812105487936807310L;
@@ -63,7 +63,7 @@ public class PlugInDialogBrainSubcortical extends JDialogBase implements Algorit
      */
     public PlugInDialogBrainSubcortical(Frame theParentFrame) {
         UI = ViewUserInterface.getReference();
-        init();
+        //init();
     }
 
     /**
@@ -74,7 +74,6 @@ public class PlugInDialogBrainSubcortical extends JDialogBase implements Algorit
      * @param _regSection  registered sections in vector. 
      */
     public PlugInDialogBrainSubcortical(Frame theParentFrame, String _inputDir, String _outputDir, String _caseCompareDir, Vector<Integer> _regSection) {
-    	super(theParentFrame, false);
     	inputDir = _inputDir;
     	outputDir = _outputDir;
     	caseCompareDir = _caseCompareDir;
@@ -99,7 +98,7 @@ public class PlugInDialogBrainSubcortical extends JDialogBase implements Algorit
                callAlgorithm();
         } 
         else if (command.equals("Cancel")) {
-            dispose();
+            //dispose();
         }
         else if (command.equals("Help")) {
             // MipavUtil.showHelp("19074");
@@ -118,7 +117,7 @@ public class PlugInDialogBrainSubcortical extends JDialogBase implements Algorit
     /**
      * Construct the GUI interface for Brain subcotical analysis. 
      */
-    public void init() {
+    /*public void init() {
         setTitle("Brain Sub-Cortical Structures Analysis");
         
         final JPanel mainPanel = new JPanel();
@@ -179,7 +178,7 @@ public class PlugInDialogBrainSubcortical extends JDialogBase implements Algorit
         pack();
         setVisible(true);
 
-    }
+    }*/
 
     /**
      * Builds a titled border with the given title, an etched border, and the proper font and color.
