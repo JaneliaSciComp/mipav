@@ -1,22 +1,24 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 
 
 /**
- * This is a port of niltqd.m, a fast numerical inverse Laplace transform based on FFT and quotient-difference algorithm by
- * Lubomir Brancik, 2001, Brno University of Technology.
- * In doing fits be sure to exclude the t = 0.0 point values as the error associated with this
- * point is far greater than the error associated with the other points. Increasing p above 3 did not have any
- * appreciable effect on the rms error. For the exp(t) example the effect of tol was: tol = 1.0E-8 rms error = 6.29E-5
- * tol = 1.0E-9 rms error = 7.26E-6 tol = 1.0E-10 rms error = 4.40E-6 tol = 1.0E-11 rms error = 1.13E-5 tol = 1.0E-12
- * rms error = 3.27E-5
+ * This is a port of niltqd.m, a fast numerical inverse Laplace transform based on FFT and quotient-difference algorithm
+ * by Lubomir Brancik, 2001, Brno University of Technology.
+ * 
+ * <hr>
+ * 
+ * In doing fits be sure to exclude the t = 0.0 point values as the error associated with this point is far greater than
+ * the error associated with the other points. Increasing p above 3 did not have any appreciable effect on the rms
+ * error. For the exp(t) example the effect of tol was: tol = 1.0E-8 rms error = 6.29E-5 tol = 1.0E-9 rms error =
+ * 7.26E-6 tol = 1.0E-10 rms error = 4.40E-6 tol = 1.0E-11 rms error = 1.13E-5 tol = 1.0E-12 rms error = 3.27E-5
  */
-
 public abstract class InverseLaplaceqd {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     double endTime;
@@ -34,43 +36,42 @@ public abstract class InverseLaplaceqd {
 
     // An example of exp(at) with the Laplace 1/(s - a) is given below.
 
-    /*private void runLapTestqd() {
-     *   // This routine tests the numerical inverse laplace transform of a  // function in InverseLaplace with an
-     * analytically known inverse.  The  // function to be transformed is exp(a*t)  // parameter a in exp(a*t)  double a
-     * = 1.0;  // An estimate for the maximum of the real parts of the singularities  // of F. If unknown, set
-     * largestPole = 0.0  double largestPole = 1.0;  // numerical tolerance of approaching pole (default = 1.0e-9)
-     * double tol = 1.0e-9;  // number of times to invert for  int n = 103;  int matrixSizeParameter = 3;  // vector of
-     * times to invert for  double[] t = new double[n];  // true value of the function exp(a*t)  double[] ftrue = new
-     * double[n];  int i;  FitExpModelqd lmod;  double sse = 0;  double diff;  double rms;
-     *
+    /*
+     * private void runLapTestqd() { // This routine tests the numerical inverse laplace transform of a // function in
+     * InverseLaplace with an analytically known inverse. The // function to be transformed is exp(a*t) // parameter a
+     * in exp(a*t) double a = 1.0; // An estimate for the maximum of the real parts of the singularities // of F. If
+     * unknown, set largestPole = 0.0 double largestPole = 1.0; // numerical tolerance of approaching pole (default =
+     * 1.0e-9) double tol = 1.0e-9; // number of times to invert for int n = 103; int matrixSizeParameter = 3; // vector
+     * of times to invert for double[] t = new double[n]; // true value of the function exp(a*t) double[] ftrue = new
+     * double[n]; int i; FitExpModelqd lmod; double sse = 0; double diff; double rms;
+     * 
      * double[] timeFunction = null;
-     *
-     *
-     * for (i = 0; i < n; i++) {    t[i] = i*0.1;    ftrue[i] = Math.exp(a*t[i]);  }
-     *
-     * Preferences.debug("matrixSizeParameter = " + matrixSizeParameter + "\n");  Preferences.debug("tol = " + tol +
-     * "\n");  lmod = new FitExpModelqd( n, t[n-1],largestPole, tol,                          matrixSizeParameter );
-     * lmod.driver();  timeFunction = lmod.getTimeFunction();  for ( i = 0; i < n; i++ ) {      Preferences.debug(
-     *        "time = " + t[i] + " routineFunction = " + timeFunction[i] + " trueFunction = " + ftrue[i] + "\n" );  }
-     *
-     * sse = 0.0;  for (i = 1; i < n; i++) {    diff = timeFunction[i] - ftrue[i];    sse = sse + diff*diff;  }  rms =
-     * Math.sqrt(sse/(n-1));  Preferences.debug("rms error = " + rms + "\n");
-     *
-     * }*/
+     * 
+     * 
+     * for (i = 0; i < n; i++) { t[i] = i*0.1; ftrue[i] = Math.exp(a*t[i]); }
+     * 
+     * Preferences.debug("matrixSizeParameter = " + matrixSizeParameter + "\n"); Preferences.debug("tol = " + tol +
+     * "\n"); lmod = new FitExpModelqd( n, t[n-1],largestPole, tol, matrixSizeParameter ); lmod.driver(); timeFunction =
+     * lmod.getTimeFunction(); for ( i = 0; i < n; i++ ) { Preferences.debug( "time = " + t[i] + " routineFunction = " +
+     * timeFunction[i] + " trueFunction = " + ftrue[i] + "\n" ); }
+     * 
+     * sse = 0.0; for (i = 1; i < n; i++) { diff = timeFunction[i] - ftrue[i]; sse = sse + diff*diff; } rms =
+     * Math.sqrt(sse/(n-1)); Preferences.debug("rms error = " + rms + "\n");
+     *  }
+     */
 
-    /*class FitExpModelqd extends InverseLaplaceqd {
-     *
-     * public FitExpModelqd( int timePoints, double endTime,                     double largestPole, double tol,
-     *            int matrixSizeParameter ) {      super( timePoints, endTime, largestPole, tol,
-     * matrixSizeParameter );  }
-     *
-     * public double[][] fitToLaplace( double realS, double[] imagS ) {      // The Laplace transform of exp(at) =
-     * 1/(p-a)      double[][] ans = new double[imagS.length][2];      double a = 1.0;      int i;      double denom;
-     *   double realDenom;      realDenom = ( realS - a ) * ( realS - a );      for ( i = 0; i < imagS.length; i++ ) {
-     *        denom = realDenom + imagS[i] * imagS[i];          // real part          ans[i][0] = ( realS - a ) / denom;
-     *          ans[i][1] = -imagS[i] / denom;      }      return ans;  }
-     *
-     * }*/
+    /*
+     * class FitExpModelqd extends InverseLaplaceqd {
+     * 
+     * public FitExpModelqd( int timePoints, double endTime, double largestPole, double tol, int matrixSizeParameter ) {
+     * super( timePoints, endTime, largestPole, tol, matrixSizeParameter ); }
+     * 
+     * public double[][] fitToLaplace( double realS, double[] imagS ) { // The Laplace transform of exp(at) = 1/(p-a)
+     * double[][] ans = new double[imagS.length][2]; double a = 1.0; int i; double denom; double realDenom; realDenom = (
+     * realS - a ) * ( realS - a ); for ( i = 0; i < imagS.length; i++ ) { denom = realDenom + imagS[i] * imagS[i]; //
+     * real part ans[i][0] = ( realS - a ) / denom; ans[i][1] = -imagS[i] / denom; } return ans; }
+     *  }
+     */
 
     /** resulting vector of times. */
     private double[] time = null;
@@ -82,32 +83,33 @@ public abstract class InverseLaplaceqd {
     private double tol = 1.0e-9;
 
     /** DOCUMENT ME! */
-    private int tPts;
+    private final int tPts;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor for InverseLaplaceqd.
-     *
-     * @param  timePoints  int
-     * @param  endTime     double
+     * 
+     * @param timePoints int
+     * @param endTime double
      */
-    public InverseLaplaceqd(int timePoints, double endTime) {
+    public InverseLaplaceqd(final int timePoints, final double endTime) {
         this.tPts = timePoints;
         this.endTime = endTime;
     }
 
-
     /**
      * Constructor for InverseLaplaceqd.
-     *
-     * @param  timePoints           int
-     * @param  endTime              double
-     * @param  largestPole          double
-     * @param  tol                  double
-     * @param  matrixSizeParameter  int
+     * 
+     * @param timePoints int
+     * @param endTime double
+     * @param largestPole double
+     * @param tol double
+     * @param matrixSizeParameter int
      */
-    public InverseLaplaceqd(int timePoints, double endTime, double largestPole, double tol, int matrixSizeParameter) {
+    public InverseLaplaceqd(final int timePoints, final double endTime, final double largestPole, final double tol,
+            final int matrixSizeParameter) {
         this.tPts = timePoints;
         this.endTime = endTime;
         this.largestPole = largestPole;
@@ -115,15 +117,16 @@ public abstract class InverseLaplaceqd {
         this.p = matrixSizeParameter;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * The second index is 0 for the real part and 1 for the imaginary part.
-     *
-     * @param   realS  DOCUMENT ME!
-     * @param   imagS  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param realS DOCUMENT ME!
+     * @param imagS DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public abstract double[][] fitToLaplace(double realS, double[] imagS);
 
@@ -137,26 +140,26 @@ public abstract class InverseLaplaceqd {
         time = new double[tPts];
         timeFunction = new double[tPts];
 
-        int N = 2 * tPts;
-        int qd = (2 * p) + 1;
+        final int N = 2 * tPts;
+        final int qd = (2 * p) + 1;
         int i, n;
         double NT;
         double omega;
         double realS;
-        double[] imagS = new double[N + qd];
+        final double[] imagS = new double[N + qd];
         double[][] Fsc = new double[N + qd][2];
-        double[] fftR = new double[N];
-        double[] fftI = new double[N];
-        double[][] d = new double[qd][2];
-        double[][] e = new double[qd][2];
-        double[][] q = new double[qd - 1][2];
-        double[][] A2 = new double[tPts][2];
-        double[][] B2 = new double[tPts][2];
-        double[][] A1 = new double[tPts][2];
-        double[][] B1 = new double[tPts][2];
-        double[][] z = new double[tPts][2];
-        double[][] A = new double[tPts][2];
-        double[][] B = new double[tPts][2];
+        final double[] fftR = new double[N];
+        final double[] fftI = new double[N];
+        final double[][] d = new double[qd][2];
+        final double[][] e = new double[qd][2];
+        final double[][] q = new double[qd - 1][2];
+        final double[][] A2 = new double[tPts][2];
+        final double[][] B2 = new double[tPts][2];
+        final double[][] A1 = new double[tPts][2];
+        final double[][] B1 = new double[tPts][2];
+        final double[][] z = new double[tPts][2];
+        final double[][] A = new double[tPts][2];
+        final double[][] B = new double[tPts][2];
         double denom;
         int r;
         int w;
@@ -190,8 +193,8 @@ public abstract class InverseLaplaceqd {
 
         for (i = 0; i < (qd - 1); i++) {
             denom = (Fsc[N + i][0] * Fsc[N + i][0]) + (Fsc[N + i][1] * Fsc[N + i][1]);
-            q[i][0] = ((Fsc[N + 1 + i][0] * Fsc[N + i][0]) + (Fsc[N + 1 + i][1] * Fsc[N + i][1])) / denom;
-            q[i][1] = ((Fsc[N + 1 + i][1] * Fsc[N + i][0]) - (Fsc[N + 1 + i][0] * Fsc[N + i][1])) / denom;
+            q[i][0] = ( (Fsc[N + 1 + i][0] * Fsc[N + i][0]) + (Fsc[N + 1 + i][1] * Fsc[N + i][1])) / denom;
+            q[i][1] = ( (Fsc[N + 1 + i][1] * Fsc[N + i][0]) - (Fsc[N + 1 + i][0] * Fsc[N + i][1])) / denom;
         }
 
         d[0][0] = Fsc[N][0];
@@ -216,8 +219,8 @@ public abstract class InverseLaplaceqd {
                     realProd = (q[i + 1][0] * e[i + 1][0]) - (q[i + 1][1] * e[i + 1][1]);
                     imagProd = (q[i + 1][0] * e[i + 1][1]) + (q[i + 1][1] * e[i + 1][0]);
                     denom = (e[i][0] * e[i][0]) + (e[i][1] * e[i][1]);
-                    q[i][0] = ((realProd * e[i][0]) + (imagProd * e[i][1])) / denom;
-                    q[i][1] = ((imagProd * e[i][0]) - (realProd * e[i][1])) / denom;
+                    q[i][0] = ( (realProd * e[i][0]) + (imagProd * e[i][1])) / denom;
+                    q[i][1] = ( (imagProd * e[i][0]) - (realProd * e[i][1])) / denom;
                 } // for (i = 0; i < w-1; i++)
 
                 d[r - 1][0] = -q[0][0];
@@ -256,7 +259,7 @@ public abstract class InverseLaplaceqd {
 
         for (i = 0; i < tPts; i++) {
             denom = (B[i][0] * B[i][0]) + (B[i][1] * B[i][1]);
-            timeFunction[i] = fftR[i] + (((A[i][0] * B[i][0]) + (A[i][1] * B[i][1])) / denom);
+            timeFunction[i] = fftR[i] + ( ( (A[i][0] * B[i][0]) + (A[i][1] * B[i][1])) / denom);
             timeFunction[i] = (2 * timeFunction[i]) - Fsc[0][0];
             timeFunction[i] = Math.exp(realS * time[i]) / NT * timeFunction[i];
         } // for (i = 0; i < tPts; i++)
@@ -266,22 +269,20 @@ public abstract class InverseLaplaceqd {
 
     /**
      * getTime.
-     *
-     * @return  time
+     * 
+     * @return time
      */
     public double[] getTime() {
         return time;
     }
 
-
     /**
      * getTimeFunction.
-     *
-     * @return  timeFunction
+     * 
+     * @return timeFunction
      */
     public double[] getTimeFunction() {
         return timeFunction;
     }
-
 
 }
