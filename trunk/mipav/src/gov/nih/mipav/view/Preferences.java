@@ -869,7 +869,7 @@ public class Preferences {
     public static final void debug(final String string) {
 
         if (Preferences.messageFrame == null) {
-            System.err.println("Message frame is null");
+            System.err.println("DEBUG: "+string);
         } else {
             final boolean[] levels = Preferences.getDebugLevels();
 
@@ -887,7 +887,7 @@ public class Preferences {
     public static final void data(final String string) {
 
         if (Preferences.messageFrame == null) {
-            System.err.println("Message frame is null");
+            System.err.println("DATA: "+string);
         } else {
             Preferences.messageFrame.append(string, ViewJFrameMessage.DATA);
         }
@@ -903,8 +903,7 @@ public class Preferences {
         final boolean[] debugLevels = Preferences.getDebugLevels();
 
         if (Preferences.messageFrame == null) {
-            System.err.println("Warning: Message frame is null");
-            System.out.println(string);
+            System.err.println("DEBUG level "+level+": "+string);
         } else {
 
             try {
