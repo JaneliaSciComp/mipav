@@ -2768,8 +2768,6 @@ public class FileGESigna4X extends FileBase {
         // 6*512 + 2*35
         // Three digit raw data ID from original study number
         raFile.write((fileInfo.getRawDataSystemID()).getBytes()); // length 3
-        rawDataSystemID = getString(3);
-        fileInfo.setRawDataSystemID(rawDataSystemID);
         raFile.write(byteBuffer);
         
         // 6*512 + 2*37
@@ -3305,7 +3303,6 @@ public class FileGESigna4X extends FileBase {
         else {
         	writeShort((short)0,endianess);
         }
-        surfaceCoilType = (short)getSignedShort(endianess);
         
         // 8*512 + 2*224
         String supp = fileInfo.getSuppressionTechnique();
@@ -3736,12 +3733,23 @@ public class FileGESigna4X extends FileBase {
         else {
         	writeShort((short)0,endianess);
         }
-        byteBuffer = new byte[4];
-        raFile.write(byteBuffer);
+        
+        // 10*512 + 2*137
+        writeShort((short)image.getExtents()[0],endianess);
+        
+        // 10*512 + 2*138
+        writeShort((short)image.getExtents()[1],endianess);
         
         // 10*512 + 2*139
         writeFloat(fileInfo.getPixelSize(),endianess); // In practice 5*res[2] // millimeters
-        raFile.write(byteBuffer);
+        
+        // 10*512 + 2*141
+        // 0 for uncompressed
+        writeShort((short)0,endianess);
+        
+        // 10*512 + 2*142
+        // 16 bits per pixel used to represent the image
+        writeShort((short)16,endianess);
         
         // 10*512 + 2*143
         writeShort(fileInfo.getDefaultWindow(),endianess);
