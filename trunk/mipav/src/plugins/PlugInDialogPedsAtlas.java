@@ -2376,6 +2376,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 				pdAtlasImages[i] = null;
 			}
 		}
+		
+		for(int i=0;i<numAgeTicks;i++) {
+			if(maskImages[i] != null) {
+				maskImages[i].disposeLocal(false);
+				maskImages[i] = null;
+			}
+		}
 		for(int i=0;i<numAgeTicks;i++) {
 				t1ComponentImages[i] = null;
 		}
