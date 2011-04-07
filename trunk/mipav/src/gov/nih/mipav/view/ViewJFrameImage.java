@@ -506,7 +506,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            if (loadImage(fil, componentImage, userInterface.getLastStackFlag(), doOrigins, doOrients, 0, 0, 0, 0)) {
+            if (loadImage(fil, componentImage, userInterface.getLastStackFlag(), doOrigins, doOrients, 0, 0, 0, 0, false)) {
 
                 if ( (imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
                     removeControls();
@@ -3834,7 +3834,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             final double defaultValue, final double defaultRed, final double defaultGreen, final double defaultBlue) {
 
         if (loadImage(image2load, componentImage, false, doOrigins, doOrients, defaultValue, defaultRed, defaultGreen,
-                defaultBlue)) {
+                defaultBlue, false)) {
 
             if ( (imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
                 removeControls();
