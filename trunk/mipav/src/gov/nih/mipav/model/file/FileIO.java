@@ -3202,6 +3202,9 @@ public class FileIO {
             case FileUtility.MATLAB:
                 success = writeMATLAB(image, options);
                 break;
+            case FileUtility.GE_SIGNA4X:
+            	success = writeGESigna4X(image, options);
+            	break;
             case FileUtility.GE_GENESIS:
             	success = writeGEGenesis5X(image, options);
             	break;
@@ -11746,6 +11749,46 @@ public class FileIO {
             fitsFile.writeImage(image, options);
             fitsFile.finalize();
             fitsFile = null;
+        } catch (final IOException error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        }
+
+        return true;
+    }
+    
+    /**
+     * Writes a GESigna4X file to store the image.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
+     */
+    private boolean writeGESigna4X(final ModelImage image, final FileWriteOptions options) {
+        FileGESigna4X geFile;
+
+        try { // Construct a new file object
+            geFile = new FileGESigna4X(options.getFileName(), options.getFileDirectory());
+            createProgressBar(geFile, options.getFileName(), FileIO.FILE_WRITE);
+            geFile.writeImage(image, options);
+            geFile.finalize();
+            geFile = null;
         } catch (final IOException error) {
 
             if ( !quiet) {
