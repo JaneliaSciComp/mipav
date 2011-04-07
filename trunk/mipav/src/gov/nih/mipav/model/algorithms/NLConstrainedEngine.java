@@ -7,10 +7,11 @@ import gov.nih.mipav.view.*;
  * This is a port of the program ELSUNC for solving least squares problems where the unknowns are restricted by lower
  * and upper bounds. Reference: Gauss-Newton Based Algorithms For Constrained Nonlinear Least Squares Problems by Per
  * Lindstrom and Per-Ake Wedin, Institute of Information Processing, University of Umea, S-901 87 Umea, Sweden This can
- * be downleaded from http://www.cs.umu.se/~perl/reports/alg.ps.gz
+ * be downloaded from http://www.cs.umu.se/~perl/reports/alg.ps.gz
  * 
  * The original code could incorrectly set the number of active constraints 1 greater than the number of parameters in 
  * gnavuc.  The code for setting constraintAct was improved in 2 places to prevent this problem.  First, in evreuc:
+ * <code>
  * Before the loop for (i = 0; i < param; i++) put constraintAct = 0; and in the loop change
  *  if (aset[i] != 0) {
  *      continue;
@@ -22,6 +23,7 @@ import gov.nih.mipav.view.*;
  *  if ((aset[imax] == 0) && (ival != 0)) {
  *      constraintAct++;
  *  }
+ *  </code>
  *  
  *  For the self tests:
  *  All self tests except DRAPER24D and HOCK25 are passed by the original ELSUNC in Table 1 of 
