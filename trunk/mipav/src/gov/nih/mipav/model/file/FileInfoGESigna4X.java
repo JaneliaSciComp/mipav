@@ -3348,7 +3348,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
         this.pfSwapped = pfSwapped;
     }
     
-    public String getPfSwapped() {
+    public String getPFSwapped() {
         return pfSwapped;
     }
 
