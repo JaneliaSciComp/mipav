@@ -462,7 +462,7 @@ public class FileVOI extends FileXML {
             textPtScanner = new Vector3f();
             boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
             boolean is2D = (image.getNDims() == 2);
-            
+            System.out.println("here");
             if(saveAsLPS) {
             	closedTag("CoordinateSystem", "LPS-scanner");
             }else {
@@ -1851,7 +1851,7 @@ public class FileVOI extends FileXML {
         @SuppressWarnings("unused")
         private int zDim = 1;
         
-        private boolean lps = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
+        private boolean lps = true;
         
         private String name;
 
