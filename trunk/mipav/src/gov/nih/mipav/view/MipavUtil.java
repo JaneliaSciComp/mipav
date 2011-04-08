@@ -456,7 +456,7 @@ public class MipavUtil extends JComponent {
      * @param info the information string
      */
     public static void displayInfo(final String info) {
-        if ( !MipavUtil.forceQuiet) {
+        if ( !MipavUtil.forceQuiet  && !GraphicsEnvironment.isHeadless()) {
             if ( (ViewUserInterface.getReference() != null)
                     && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
                             .isPlugInFrameVisible())) {
@@ -507,7 +507,7 @@ public class MipavUtil extends JComponent {
      * @param warning the message text of the warning.
      */
     public static void displayWarning(final String warning) {
-        if ( !MipavUtil.forceQuiet) {
+        if ( !MipavUtil.forceQuiet  && !GraphicsEnvironment.isHeadless()) {
             if ( (ViewUserInterface.getReference() != null)
                     && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
                             .isPlugInFrameVisible())) {
