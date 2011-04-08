@@ -3252,7 +3252,7 @@ public class FileGESigna4X extends FileBase {
 	        if (gatingTypeString.indexOf("PM") >= 0) {
 	        	gating = (short)(gating | 0x1000);
 	        }
-	        if (gatingTypeString.indexOf("MP") >= 0) {
+	        if (gatingTypeString.indexOf("_MP") >= 0) {
 	        	gating = (short)(gating | 0x8000);
 	        }
         } 
