@@ -213,6 +213,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected ViewUserInterface() {
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
+        initPrefsFile();
         if(!GraphicsEnvironment.isHeadless()) {
             mainFrame = new JFrame();
             initialize();
@@ -238,7 +239,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
-        
+        initPrefsFile();
         if(!GraphicsEnvironment.isHeadless()) {
             mainFrame = new JFrame();
             initialize();
@@ -1945,7 +1946,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @see #initSetTitles(String, String)
      */
     public void initialize() {
-        initPrefsFile();
         MipavUtil.buildDefaultFonts();
         MipavUtil.buildCursors();
         initSetMainFrameDefaults(new BorderLayout(), true);
