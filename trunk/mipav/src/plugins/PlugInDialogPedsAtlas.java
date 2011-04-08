@@ -113,13 +113,13 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	private GridBagConstraints gbc;
 	
 	/** main panel **/
-	private JPanel mainPanel,toolbarPanel,atlasPanel,imagePanel,modalitiesPanel,radioPanel,axialIconPanel,coronalIconPanel,sagittalIconPanel;
+	private JPanel mainPanel,toolbarPanel,atlasPanel,imagePanel,modalitiesPanel,togglePanel,axialIconPanel,coronalIconPanel,sagittalIconPanel;
 	
 	/** scroll panel for image **/
 	private JScrollPane imageScrollPanel;
 	
 	/** labels **/
-	private JLabel sliceLabel, ageLabel, infoLabel;
+	private JLabel sliceLabel, ageLabel, infoLabel, opacityLabel;
 
 	/** buttons * */
     private JButton magButton,unMagButton,zoomToScreenButton, zoomOneButton,saveButton,winLevelButton, resetButton, lutButton, presetButton, sep1,sep2, sep3;
@@ -134,7 +134,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     private ViewToolBarBuilder toolbarBuilder;
     
     /** sliders **/
-    private JSlider sliceSlider,ageSlider;
+    private JSlider sliceSlider,ageSlider, opacitySlider;
     
     /** radio buttons **/
     private JRadioButton axialRadio, coronalRadio, sagittalRadio;
@@ -261,6 +261,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     /** labels for slice slider **/
     private Hashtable<Integer,JLabel> sliceLabelTable;
     
+    /** labels for slice slider **/
+    private Hashtable<Integer,JLabel> opacityLabelTable;
+    
     /** icon width and height **/
     private int iconHeight;
     
@@ -325,6 +328,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
     
     private ModelLUT lutb;
     
+    private int currentOpacity;
+    
    
     
     
@@ -340,6 +345,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		infoLabel = new JLabel("");
 		ageLabelTable = new Hashtable<Integer,JLabel>();
 		sliceLabelTable = new Hashtable<Integer,JLabel>();
+		opacityLabelTable = new Hashtable<Integer,JLabel>();
 		
 		m_afXWin[0] = 0;
 	    m_afXWin[3] = 255;
@@ -406,6 +412,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					String numZSlicesString = String.valueOf(numZSlices - 1);
 					sliceLabelTable.put(0, new JLabel("0"));
 					sliceLabelTable.put(numZSlices-1, new JLabel(numZSlicesString));
+					opacityLabelTable.put(0, new JLabel("0"));
+					opacityLabelTable.put(100, new JLabel("1"));
 					currentZSlice = (t1AtlasImages[0].getExtents()[2] - 1) / 2;
 					aspectRatio = (float)t1AtlasImages[0].getExtents()[0]/(float)t1AtlasImages[0].getExtents()[1];
 					
@@ -952,7 +960,20 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         ageSlider.setLabelTable(ageLabelTable);
         ageSlider.setPaintLabels(true);
         ageSlider.setSnapToTicks(true);
+        
+        opacitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+        opacitySlider.setMajorTickSpacing(10);
+        opacitySlider.setPaintTicks(true);
+        opacitySlider.addChangeListener(this);
+        opacitySlider.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+        currentOpacity = 50;
+        opacityLabelTable.put(50, new JLabel(String.valueOf(currentOpacity/100f))); 
+        opacitySlider.setLabelTable(opacityLabelTable);
+        opacitySlider.setPaintLabels(true);
+        
+        
         ageLabel = new JLabel("Age (months)");
+        opacityLabel = new JLabel("Opacity");
         imagePanel = new JPanel(new GridBagLayout());
         
         imageGBC.anchor = GridBagConstraints.CENTER;
@@ -993,6 +1014,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         //displayMode = ViewJFrameBase.IMAGE_B;
         //currentComponentImage.useHighlight(true);
         setImageB(maskImages[0]);
+        currentComponentImage.setAlpha(currentOpacity/100f);
         currentComponentImage.show(0,currentZSlice,null,lutb,true);
 
 
@@ -1003,6 +1025,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         t1Button = new JToggleButton("T1",true);
         t1Button.addActionListener(this);
         t1Button.setActionCommand("t1");
+        
         group.add(t1Button);
         t2Button = new JToggleButton("T2");
         t2Button.addActionListener(this);
@@ -1111,25 +1134,42 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         
         
         
-        radioPanel = new JPanel(new GridBagLayout());
+        togglePanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.gridx = 0;
-        gbc2.gridy = 0;
+        
+
         gbc2.anchor = GridBagConstraints.WEST;
         //gbc2.insets = new Insets(0,10,0,10);
-        radioPanel.add(axialRadio,gbc2);
-        gbc2.gridy = 1;
-        radioPanel.add(coronalRadio,gbc2);
-        gbc2.gridy = 2;
-        radioPanel.add(sagittalRadio,gbc2);
+        
+        
         gbc2.gridx = 1;
         gbc2.gridy = 0;
-        radioPanel.add(axialIconPanel,gbc2);
+        gbc2.fill = GridBagConstraints.BOTH;
+        gbc2.weightx = 1;
+        gbc2.insets = new Insets(10,0,10,0);
+        togglePanel.add(t1Button,gbc2);
         gbc2.gridy = 1;
-        radioPanel.add(coronalIconPanel,gbc2);
+        togglePanel.add(t2Button,gbc2);
         gbc2.gridy = 2;
-        radioPanel.add(sagittalIconPanel,gbc2);
-        radioPanel.setMinimumSize(new Dimension(125,300));
+        gbc2.insets = new Insets(10,0,80,0);
+        togglePanel.add(pdButton,gbc2);
+        
+        gbc2.insets = new Insets(0,0,0,0);
+        gbc2.gridx = 0;
+        gbc2.gridy = 3;
+        togglePanel.add(axialRadio,gbc2);
+        gbc2.gridy = 4;
+        togglePanel.add(coronalRadio,gbc2);
+        gbc2.gridy = 5;
+        togglePanel.add(sagittalRadio,gbc2);
+        gbc2.gridx = 1;
+        gbc2.gridy = 3;
+        togglePanel.add(axialIconPanel,gbc2);
+        gbc2.gridy = 4;
+        togglePanel.add(coronalIconPanel,gbc2);
+        gbc2.gridy = 5;
+        togglePanel.add(sagittalIconPanel,gbc2);
+        togglePanel.setMinimumSize(new Dimension(125,300));
         
         
         
@@ -1137,8 +1177,12 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridx = 2;
         gbc.gridy = 0;
-        
         atlasPanel.add(ageLabel,gbc);
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridy = 4;
+        gbc.insets = new Insets(10,0,10,0);
+        atlasPanel.add(opacityLabel, gbc);
+        
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridy = 1;
         gbc.weightx = 1;
@@ -1162,13 +1206,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         gbc.gridx = 3;
         gbc.weightx = 0;
         gbc.insets = new Insets(0,0,0,15);
-        atlasPanel.add(radioPanel,gbc);
+        atlasPanel.add(togglePanel,gbc);
         gbc.gridx = 2;
         gbc.gridy = 3;
         gbc.weightx = 1;
         gbc.weighty = 0;
         gbc.insets = new Insets(10,0,10,0);
-        atlasPanel.add(modalitiesPanel,gbc);
+        atlasPanel.add(opacitySlider,gbc);
+         
+        
 
         
         gbc = new GridBagConstraints();
@@ -1228,6 +1274,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			 sliceSlider.repaint();
 			 currentComponentImage.setSlice(currentZSlice);
 			 //setImageB(maskImages[currentAge]);
+			 currentComponentImage.setAlpha(currentOpacity/100f);
 			 currentComponentImage.show(0,currentZSlice,null,lutb,true);
 			  int linePosition;
 			  int invZSlice = 0;;
@@ -1248,6 +1295,21 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 		        sagittalIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 		        axialIconComponentImage.show(0,0,null,null,true,linePosition,currentOrientation);
 		        
+		 }else if(source == opacitySlider) {
+			 if(currentOpacity != 0 && currentOpacity != 100) {
+				 opacityLabelTable.remove(currentOpacity);
+			 }
+			 
+			 
+			 currentOpacity = opacitySlider.getValue();
+			 opacityLabelTable.put(currentOpacity, new JLabel(String.valueOf(currentOpacity/100f)));
+			 opacitySlider.setLabelTable(opacityLabelTable);
+			 opacitySlider.repaint();
+
+			 currentComponentImage.setAlpha(currentOpacity/100f);
+		     currentComponentImage.show(0,currentZSlice,null,lutb,true);
+			 
+			 
 		 }else if(source == ageSlider) {
 			 
 			 
@@ -1291,6 +1353,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
 						     setImageB(maskImages[currentAge]);
 
+						     currentComponentImage.setAlpha(currentOpacity/100f);
 						     currentComponentImage.show(0,currentZSlice,null,lutb,true);
 						     
 						     imagePanel.add(currentComponentImage,imageGBC);
@@ -1336,7 +1399,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        
 					        setImageB(maskImages[currentAge]);
-					        
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 					        
@@ -1375,7 +1438,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        
 					        setImageB(maskImages[currentAge]);
-					        
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 					      
@@ -1410,7 +1473,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        
 					        setImageB(maskImages[currentAge]);
-					        
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -1926,6 +1989,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        this.setImageA(t1AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 					        
@@ -1941,6 +2005,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setSlice(currentZSlice);
 					        this.setImageA(t2AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
@@ -1959,6 +2024,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        this.setImageA(pdAtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -1978,6 +2044,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        this.setImageA(t1AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -1995,6 +2062,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        this.setImageA(t2AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2012,6 +2080,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        this.setImageA(pdAtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2031,6 +2100,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        this.setImageA(t1AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2048,6 +2118,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        this.setImageA(t2AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2065,6 +2136,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
 					        this.setImageA(pdAtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
+					        currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2214,6 +2286,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         currentComponentImage.setZoom(newZoom, newZoom);
         validate();
         validate();
+        currentComponentImage.setAlpha(currentOpacity/100f);
         currentComponentImage.show(0,currentZSlice,null,null,true);
         
         
@@ -2249,6 +2322,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
             currentComponentImage.setZoom(newZoom, newZoom);
             validate();
+            currentComponentImage.setAlpha(currentOpacity/100f);
             currentComponentImage.show(0,currentZSlice,null,null,true);
 
             setTitle(title + "zoom:" + df.format(currentZoom));
@@ -2268,6 +2342,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
             currentComponentImage.setZoom(newZoom, newZoom);
             validate();
+            currentComponentImage.setAlpha(currentOpacity/100f);
             currentComponentImage.show(0,currentZSlice,null,null,true);
             
             
@@ -2303,6 +2378,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
         currentComponentImage.setZoom(newZoom, newZoom);
         validate();
+        currentComponentImage.setAlpha(currentOpacity/100f);
         currentComponentImage.show(0,currentZSlice,null,null,true);
         
         
@@ -2339,6 +2415,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
         currentComponentImage.setZoom(newZoom, newZoom);
         validate();
+        currentComponentImage.setAlpha(currentOpacity/100f);
         currentComponentImage.show(0,currentZSlice,null,null,true);
         
         
@@ -2728,7 +2805,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
         // redraw the paintBrushCursor (quick)
         currentComponentImage.updatePaintBrushCursor();
-
+        currentComponentImage.setAlpha(currentOpacity/100f);
         if(currentComponentImage.show(0,currentZSlice,LUTa,LUTb,true) == false) {
         	return false;
         }

@@ -22,8 +22,12 @@ import gov.nih.mipav.view.ViewJFrameBase;
 
 public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
 	
-	String modality;
-	int orient;
+	private String modality;
+	
+
+	private int orient;
+	
+	private float alpha = .5f;
 
 	public ViewJComponentPedsAtlasImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
             int[] pixelBuffer, float zoom, int[] extents, boolean logMagDisplay, int _orientation, String modality) {
@@ -90,8 +94,8 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
         if (cleanImageBufferB == null) {
             cleanImageBufferB = new int[imageExtents[0] * imageExtents[1]];
         }
-
-        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, true, 0.5f,
+        alpha = 1 - alpha;
+        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, true, alpha,
                 true)) {
 
             slice = zSlice;
@@ -104,6 +108,13 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
         }
     } // end of show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow)
 	
+    
+    
+    public synchronized void setAlpha(float alpha) {
+		this.alpha = alpha;
+	}
+    
+    
 	
 	/**
      * mouse clicked
