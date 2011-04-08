@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.structures.TokenizerException;
 
+
 import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
 import gov.nih.mipav.view.icons.PlaceHolder;
 
@@ -395,7 +396,7 @@ public class MipavUtil extends JComponent {
      * @see JOptionPane#showMessageDialog(java.awt.Component, java.lang.Object, java.lang.String, int, javax.swing.Icon)
      */
     public static void displayError(final String error) {
-        if ( !MipavUtil.forceQuiet) {
+        if ( !MipavUtil.forceQuiet && !GraphicsEnvironment.isHeadless()) {
             if ( (ViewUserInterface.getReference() != null)
                     && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
                             .isPlugInFrameVisible())) {
