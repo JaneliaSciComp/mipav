@@ -758,7 +758,6 @@ public class JPanelHistoLUT
                 updateFrames(false);
             }
         }*/ else if (event.getSource() == lutAdjustCheckboxB) {
-
             if (LUTb != null) {
 
                 if (lutAdjustCheckboxB.isSelected()) {

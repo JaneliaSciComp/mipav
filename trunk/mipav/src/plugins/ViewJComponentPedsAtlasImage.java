@@ -27,8 +27,6 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
 
 	private int orient;
 	
-	private float alpha = .5f;
-
 	public ViewJComponentPedsAtlasImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
             int[] pixelBuffer, float zoom, int[] extents, boolean logMagDisplay, int _orientation, String modality) {
 
@@ -87,16 +85,21 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
             setInterpolationMode(interpMode);
         }
 
-        m_kPatientSlice.setLUTa(_LUTa);
-        m_kPatientSlice.setLUTb(_LUTb);
+        if(_LUTa != null) {
+        	m_kPatientSlice.setLUTa(_LUTa);
+        }
+        if(_LUTb != null) {
+        	m_kPatientSlice.setLUTb(_LUTb);
+        }
         m_kPatientSlice.updateSlice(zSlice);
+        
+        
 
         if (cleanImageBufferB == null) {
             cleanImageBufferB = new int[imageExtents[0] * imageExtents[1]];
         }
-        alpha = 1 - alpha;
-        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, true, alpha,
-                true)) {
+
+        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, .5f, false)) {
 
             slice = zSlice;
             setSliceString(String.valueOf(slice));
@@ -110,11 +113,7 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
 	
     
     
-    public synchronized void setAlpha(float alpha) {
-		this.alpha = alpha;
-	}
-    
-    
+
 	
 	/**
      * mouse clicked

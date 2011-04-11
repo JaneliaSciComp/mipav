@@ -5449,7 +5449,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * that those pixels are completely transparent so that no blending takes place for those pixels.
      */
     private void adjustOpacityFor000Color() {
-
         if (pixBufferB != null) { // no need to execute if there is no image B
 
             final ViewJFrameBase vjfb = frame;
@@ -5457,7 +5456,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             ModelLUT modelLUT = vjfb.getLUTa();
 
             if (modelLUT != null) {
-                Color zeroIndexColor = modelLUT.getColor(0); // get the color at index 0 of LUT a
+                Color zeroIndexColor; // get the color at index 0 of LUT a
 
                 // test to see if the color is R == 0, G == 0, B == 0
                 boolean zeroIndexColorIs000;
