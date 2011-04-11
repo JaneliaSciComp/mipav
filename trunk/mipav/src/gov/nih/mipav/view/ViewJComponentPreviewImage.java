@@ -100,7 +100,7 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
         m_kPatientSlice.updateSlice( slice );
         if ( m_kPatientSlice.showUsingOrientation( 0, paintBuffer,
                                                    null, true,
-                                                   false, 0, false ) )
+                                                   false ) )
         {
             importImage(paintBuffer);
         }
