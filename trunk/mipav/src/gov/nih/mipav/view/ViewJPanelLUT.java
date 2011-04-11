@@ -1294,7 +1294,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
          * 
          * updateFrames(false); }
          */else if (source == oneBasedLUTCheckBoxImageB) {
-
+System.out.println("hey");
             // get the color of the LUT index 0
             Color zeroIndexColor = getLUTb().getColor(0);
 
