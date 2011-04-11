@@ -2516,7 +2516,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         m_kPatientSlice.setLUTa(_LUTa);
         m_kPatientSlice.setLUTb(_LUTb);
-        m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, 0, false);
+        m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false);
 
         if (_interpMode > -1) {
             setInterpolationMode(_interpMode);

@@ -4764,8 +4764,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             cleanImageBufferB = new int[imageExtents[0] * imageExtents[1]];
         }
 
-        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, 0,
-                false)) {
+        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false)) {
             cleanImageB = null;
             cleanBuffer(ViewJComponentBase.IMAGE_A);
             cleanBuffer(ViewJComponentBase.IMAGE_B);
@@ -5254,7 +5253,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     public boolean createImg(final int slice) {
         m_kPatientSlice.updateSlice(slice);
 
-        if (m_kPatientSlice.showUsingOrientation(0, paintBuffer, null, true, false, 0, false)) {
+        if (m_kPatientSlice.showUsingOrientation(0, paintBuffer, null, true, false)) {
             importImage(paintBuffer);
         }
         return true;

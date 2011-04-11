@@ -171,8 +171,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
             cleanImageBufferB = new int[imageExtents[0] * imageExtents[1]];
         }
 
-        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, 0,
-                false)) {
+        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false)) {
 
             if ( (pixBuffer == null) || (pixBuffer.length != cleanImageBufferA.length)) {
                 pixBuffer = new int[cleanImageBufferA.length];

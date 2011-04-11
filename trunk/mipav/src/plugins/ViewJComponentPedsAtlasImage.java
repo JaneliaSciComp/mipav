@@ -99,7 +99,7 @@ public class ViewJComponentPedsAtlasImage extends ViewJComponentEditImage {
             cleanImageBufferB = new int[imageExtents[0] * imageExtents[1]];
         }
 
-        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, .5f, false)) {
+        if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false)) {
 
             slice = zSlice;
             setSliceString(String.valueOf(slice));

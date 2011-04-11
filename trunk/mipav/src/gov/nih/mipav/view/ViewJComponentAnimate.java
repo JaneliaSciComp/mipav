@@ -222,7 +222,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
         slice = zSlice;
         if ( !ignoreSlice[slice] )
         {
-            if ( m_kPatientSlice.showUsingOrientation( tSlice, paintBuffer, null, forceShow, true, alphaBlend, false ) )
+            if ( m_kPatientSlice.showUsingOrientation( tSlice, paintBuffer, null, forceShow, false ) )
             {
                 importImage(paintBuffer);
             }
