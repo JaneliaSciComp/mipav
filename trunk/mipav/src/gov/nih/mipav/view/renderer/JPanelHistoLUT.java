@@ -753,7 +753,7 @@ public class JPanelHistoLUT
                     LUTa.zeroToOneLUTAdjust();
                 } else {
                     LUTa.oneToZeroLUTAdjust();
-                }
+                }R
 
                 updateFrames(false);
             }
