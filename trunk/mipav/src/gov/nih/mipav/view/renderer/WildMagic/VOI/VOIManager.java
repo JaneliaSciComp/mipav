@@ -989,7 +989,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
 		String command = Preferences.getShortcutCommand(ks);
 		if (command != null) {
-			m_kParent.doVOI( command );
+			//m_kParent.doVOI( command );
+			m_kParent.actionPerformed(new ActionEvent(ks, 0, command));
 		}
 	}
 
