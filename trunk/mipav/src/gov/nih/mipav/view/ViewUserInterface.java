@@ -214,9 +214,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
         initPrefsFile();
+        
+        // Read preference file
+        initUsingPreferences();
         if(!GraphicsEnvironment.isHeadless()) {
             mainFrame = new JFrame();
-            initialize();
+            initializeGui();
         }
         
         // listen to the script recorder so that we can pass along changes in the script recorder status to the script
@@ -240,9 +243,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
         initPrefsFile();
+        
+        // Read preference file
+        initUsingPreferences();
         if(!GraphicsEnvironment.isHeadless()) {
             mainFrame = new JFrame();
-            initialize();
+            initializeGui();
         }
 
         // listen to the script recorder so that we can pass along changes in the script recorder status to the script
@@ -1945,15 +1951,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @see #initCreateMessageField(String)
      * @see #initSetTitles(String, String)
      */
-    public void initialize() {
+    public void initializeGui() {
         MipavUtil.buildDefaultFonts();
         MipavUtil.buildCursors();
         initSetMainFrameDefaults(new BorderLayout(), true);
         buildMessageFrame();
         Preferences.setMessageFrame(messageFrame);
-
-        // Read preference file
-        initUsingPreferences();
 
         // set the last stack flag
         lastStackFlag = Preferences.is(Preferences.PREF_LAST_STACK_FLAG);
