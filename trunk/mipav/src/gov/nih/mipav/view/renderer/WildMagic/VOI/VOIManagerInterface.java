@@ -334,6 +334,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void actionPerformed(ActionEvent event) {
 
         String command = event.getActionCommand();
+        if ( (command != null) && ViewUserInterface.getReference().isShorcutRecording()) {
+        	ViewUserInterface.getReference().setShortcutRecording(false);
+            Preferences.addShortcut(command);
+            ViewUserInterface.getReference().showShortcutEditor(true);
+
+            return;
+        }
 
         //System.err.println( command );
         if ( command.equals(CustomUIBuilder.PARAM_VOI_COLOR.getActionCommand()) ) {
@@ -3606,7 +3613,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         try {
             openVOI = new ViewOpenVOIUI();
             VOI[] newVOIs = openVOI.open(m_kParent.getActiveImage(), doLabels);
-            System.out.println(newVOIs.length);
             if ( newVOIs == null) {
                 return false;
             }

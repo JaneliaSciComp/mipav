@@ -869,7 +869,14 @@ public class ViewMenuBar {
 
                         });
     }
-
+    
+    
+    /**
+     * determines if there is a matching action command
+     * @param menu
+     * @param command
+     * @return
+     */
     public static boolean isMenuCommand(final JMenu menu, final String command) {
         if (menu == null || command == null) {
             return false;
@@ -877,6 +884,12 @@ public class ViewMenuBar {
         return ViewMenuBar.isMenuCommand(menu.getMenuComponents(), command);
     }
 
+    /**
+     * determines if there is a matching action command
+     * @param menuComponents
+     * @param command
+     * @return
+     */
     public static boolean isMenuCommand(final Component[] menuComponents, final String command) {
         if (menuComponents == null || command == null) {
             return false;
