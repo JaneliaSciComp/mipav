@@ -2749,8 +2749,22 @@ public class Preferences {
     public static final void setPreferencesFileName(final String fileName) {
         Preferences.preferencesFileName = fileName;
         Preferences.preferencesFile = Preferences.preferencesDir + File.separator + Preferences.preferencesFileName;
+        
+        Preferences.debug("New preferences location: "+Preferences.preferencesFile);   
     }
-
+    
+    /**
+     * Change the file directory of the preferences file.
+     * 
+     * @param fileDir the file directory, defaults to $HOME/mipav/
+     */
+    public static final void setPreferencesFileDirectory(final String fileDir) {
+        Preferences.preferencesDir = fileDir;
+        Preferences.preferencesFile = Preferences.preferencesDir + File.separator + Preferences.preferencesFileName;
+        
+        Preferences.debug("New preferences location: "+Preferences.preferencesFile); 
+    }
+    
     /**
      * Sets the property key in the MIPAV property list and saves it to a file.
      * 
