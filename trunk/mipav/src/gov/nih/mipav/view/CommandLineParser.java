@@ -111,7 +111,7 @@ public interface CommandLineParser {
                 }
             }
             
-            Preferences.debug("No matching instance command found for "+cmd);
+            Preferences.debug("No matching instance command found for "+str);
             return null;
         }
         
@@ -176,7 +176,7 @@ public interface CommandLineParser {
                 }
             }
             
-            Preferences.debug("No matching instance command found for "+cmd);
+            Preferences.debug("No matching static command found for "+str);
             return null;
         }
     }
