@@ -4335,6 +4335,14 @@ public class ModelImage extends ModelStorageBase {
             if (srcImage.getNDims() >= 3) {
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
             }
+            newDimExtents = new int[destImage.getNDims()];
+            newAxisOrients = new int[destImage.getNDims()];
+            for (int i = 0; i < destImage.getNDims(); i++) {
+            	newDimExtents[i] = destImage.getExtents()[i];
+            	if (i < 3) {
+                    newAxisOrients[i] = destImage.getAxisOrientation()[i];
+                }
+            }
         } else { // If file is DICOM...
 
             
@@ -4597,17 +4605,16 @@ public class ModelImage extends ModelStorageBase {
     	            for (j = 0; j < 3; j++) {
                 		if ((newAxisOrients[j] == FileInfoBase.ORI_R2L_TYPE) ||
                 			(newAxisOrients[j] == FileInfoBase.ORI_L2R_TYPE)) {
-                	        newDicomInfo[i].setOrigin(origin[0],j);
+                			destImage.getFileInfo()[i].setOrigin(origin[0],j);
                 		}
                 		else if ((newAxisOrients[j] == FileInfoBase.ORI_A2P_TYPE) ||
                 		        (newAxisOrients[j] == FileInfoBase.ORI_P2A_TYPE)) {
-                		    newDicomInfo[i].setOrigin(origin[1], j);
+                			destImage.getFileInfo()[i].setOrigin(origin[1],j);
                 		}
-                		else {
-                		    newDicomInfo[i].setOrigin(origin[2], j);        	
+                		else { 
+                			destImage.getFileInfo()[i].setOrigin(origin[2],j);
                 	    }
                 	}
-    	            destImage.setFileInfo(newDicomInfo[i], i);
                 }
             } // if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
             
