@@ -27,8 +27,11 @@ public class MipavMain implements CommandLineParser {
     public static void main(String[] args) {
         System.setProperty("sun.awt.noerasebackground", "true");
 
+        MipavMain mipav = new MipavMain();
+        int initArg = mipav.parseArguments(args, 0); //process static command line arguments
+        
         ViewUserInterface ui = ViewUserInterface.create();
-        ui.parseArguments(args, 0); //begin processing command line arguments
+        ui.parseArguments(args, initArg); //process command line arguments that require mipav objects
 
 
         if (ui.isAppFrameVisible() && Preferences.is(Preferences.PREF_SHOW_SPLASH)) {
