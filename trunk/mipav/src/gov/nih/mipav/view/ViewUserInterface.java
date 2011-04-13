@@ -2522,13 +2522,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         boolean isMulti;
         File checkFile;
 
-        while (i < args.length) {
+parse:  while (i < args.length) {
             arg = args[i];
 
             if (arg.startsWith("-")) {
 
                 //parse commands which require an initialized mipav
-                switch(InstanceCommand.valueOf(arg)) {
+                InstanceCommand c = InstanceCommand.getCommand(arg);
+                if(c == null) {
+                    i++;
+                    continue parse;
+                }
+                
+                switch(c) {
                 
                 case Image:
                 case MultiImage:
@@ -2708,20 +2714,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
                     break;
                     
-                    
                 }
-            } else {
-                printUsageAndExit();
-            }
+            } 
             i++;
-        }
-
-        if (i > args.length) {
-            Preferences.debug("Command line parsing error", Preferences.DEBUG_MINOR);
-            System.out.println("Command line parsing error");
-            printUsageAndExit();
-        } else {
-            Preferences.debug("Command line parsing success!", Preferences.DEBUG_MINOR);
         }
 
         // scriptFile may be null if we don't have a script to run (e.g., if we just want to open images/vois specified

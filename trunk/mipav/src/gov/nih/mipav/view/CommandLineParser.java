@@ -35,9 +35,6 @@ public interface CommandLineParser {
         
         /** Returns command in lower-case form. */
         public String getCommand();
-        
-        /**Identifies command that will be used. */
-        public Command getCommand(String str);
     }
     
     public enum InstanceCommand implements Command {
@@ -94,26 +91,28 @@ public interface CommandLineParser {
             return command;
         }
 
-        public Command getCommand(String str) {
+        public static InstanceCommand getCommand(String str) {
             InstanceCommand cmd = null;
             str = str.toLowerCase();
             if(str.length() > 0 && str.charAt(0) == '-') {
                 str = str.substring(1);
             }
-            if((cmd = InstanceCommand.valueOf(str)) != null) {
-                return cmd;
-            } else {
-                for(InstanceCommand c : InstanceCommand.values()) {
-                    for(int i=0; i<c.altCommand.length; i++) {
-                        if(str.equals(altCommand[i])) {
-                            return c;
-                        }
+            for(InstanceCommand c : InstanceCommand.values()) {
+                if(str.equals(c.command)) {
+                    return c;
+                }
+            }
+            
+            for(InstanceCommand c : InstanceCommand.values()) {
+                for(int i=0; i<c.altCommand.length; i++) {
+                    if(str.equals(c.altCommand[i])) {
+                        return c;
                     }
                 }
-                
-                Preferences.debug("No matching instance command found for "+cmd);
-                return null;
             }
+            
+            Preferences.debug("No matching instance command found for "+cmd);
+            return null;
         }
         
         
@@ -157,26 +156,28 @@ public interface CommandLineParser {
             return command;
         }
 
-        public Command getCommand(String str) {
+        public static StaticCommand getCommand(String str) {
             StaticCommand cmd = null;
             str = str.toLowerCase();
             if(str.length() > 0 && str.charAt(0) == '-') {
                 str = str.substring(1);
             }
-            if((cmd = StaticCommand.valueOf(str)) != null) {
-                return cmd;
-            } else {
-                for(StaticCommand c : StaticCommand.values()) {
-                    for(int i=0; i<c.altCommand.length; i++) {
-                        if(str.equals(altCommand[i])) {
-                            return c;
-                        }
+            for(StaticCommand c : StaticCommand.values()) {
+                if(str.equals(c.command)) {
+                    return c;
+                }
+            }
+            
+            for(StaticCommand c : StaticCommand.values()) {
+                for(int i=0; i<c.altCommand.length; i++) {
+                    if(str.equals(c.altCommand[i])) {
+                        return c;
                     }
                 }
-                
-                Preferences.debug("No matching instance command found for "+cmd);
-                return null;
             }
+            
+            Preferences.debug("No matching instance command found for "+cmd);
+            return null;
         }
     }
     

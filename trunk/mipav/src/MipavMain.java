@@ -65,13 +65,19 @@ public class MipavMain implements CommandLineParser {
         System.err.println("Command line argument list:");
         Preferences.debug("Command line argument list:\n");
         
-        while (i < args.length) {
+parse:  while (i < args.length) {
             arg = args[i];
 
             if (arg.startsWith("-")) {
                 
               //parse commands which do not require an initialized mipav
-                switch(StaticCommand.valueOf(arg)) {
+                StaticCommand c = StaticCommand.getCommand(arg);
+                if(c == null) {
+                    i++;
+                    continue parse;
+                }
+                
+                switch(c) {
                 
                 case Help:
                     ViewUserInterface.printUsageAndExit();
