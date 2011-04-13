@@ -145,7 +145,7 @@ parse:  while (i < args.length) {
                     if(f.exists() && f.isDirectory() && f.canRead() && f.canWrite()) {
                         Preferences.setPreferencesFileDirectory(prefDir);
                     } else {
-                        Preferences.debug("preferencesdir must be a writable directory.", Preferences.DEBUG_MINOR);
+                        Preferences.debug("preferencesdir must be a writable existing directory.", Preferences.DEBUG_MINOR);
                     }
                     break;
                     
