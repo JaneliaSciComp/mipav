@@ -54,7 +54,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @see #getReference()
      */
     protected static ViewUserInterface userInterfaceReference;
-
+    
     /** String to use as the progress bar opening prefix. */
     private static final String OPENING_STR = "Opening ";
 
@@ -63,6 +63,21 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Key shortcut editor dialog. */
     private static JDialogShortcutEditor shortcutEd = null;
+    
+    /** This boolean tells if the user has provided an inputDir parameter as a command line argument when running a script */
+    private static boolean providedUserDefaultDir = false;
+
+    /** This is the inputDir path that the user entered as a command line argument when running a script * */
+    private static String userDefaultDir = "";
+
+    /** This boolean tells if the user has provided an ouputDir parameter as a command line argument when running a script */
+    private static boolean providedOutputDir = false;
+
+    /** This is the outputDir path that the user entered as a command line argument when running a script * */
+    private static String outputDir = "";
+    
+    /** Mipav's optional secondary directory for plugins */
+    private static File secondaryPluginsDir;
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -188,18 +203,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** error handling for cmd line, if set to false will not exit on MipavUtil.displayError() */
     private boolean exitCmdLineOnError = true;
-
-    /**
-     * This boolean tells if the user has provided an ouputDir parameter as a command line argument when running a
-     * script *
-     */
-    private boolean providedOutputDir = false;
-
-    /** This is the outputDir path that the user entered as a command line argument when running a script * */
-    private String outputDir = "";
-    
-    
-    private File secondaryPluginsDir;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1988,13 +1991,39 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Tells the application to show the MIPAV UI or suppress it (progress bars, image frames, etc).
+     * Whether or not the VOI is a 2D (true = 2d, false = 3d+).
      * 
-     * @param isVisible Set to false to hide the MIPAV UI.
-     */
-    public void setAppFrameVisible(final boolean isVisible) {
-        isAppFrameVisible = isVisible;
+     * @return DOCUMENT ME!
+    public boolean isClippedVOI2D() {
+        return this.isClippedVOI2D;
     }
+     */
+    
+    /**
+     * Indicates if the image hashtable is empty.
+     * 
+     * @return A boolean showing state of hashtable.
+     * 
+     * @see CustomHashtable
+     */
+    public boolean isImageHashtableEmpty() {
+        return imageHashtable.isEmpty();
+    
+    } // end isImageHashtableEmpty()
+
+    /**
+     * Indicates if the image name is found in the hashtable.
+     * 
+     * @param imageName the image name (key).
+     * 
+     * @return A boolean indicating that image name.
+     * 
+     * @see CustomHashtable
+     */
+    public boolean isImageRegistered(final String imageName) {
+        return imageHashtable.containsKey(imageName);
+    
+    } // end isImageRegistered()
 
     /**
      * Accessor to see if a stand-alone plugin frame is visible (not app frame)
@@ -2003,6 +2032,24 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public boolean isPlugInFrameVisible() {
         return isPlugInFrameVisible;
+    }
+
+    /**
+     * Determines if the UserInterface is currently recording an action command as a shortcut.
+     * 
+     * @return boolean is it recording
+     */
+    public boolean isShorcutRecording() {
+        return shortcutRecording;
+    }
+
+    /**
+     * Tells the application to show the MIPAV UI or suppress it (progress bars, image frames, etc).
+     * 
+     * @param isVisible Set to false to hide the MIPAV UI.
+     */
+    public void setAppFrameVisible(final boolean isVisible) {
+        isAppFrameVisible = isVisible;
     }
 
     /**
@@ -2022,41 +2069,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return this.isClippedVOI2D;
     }
      */
-
-    /**
-     * Indicates if the image hashtable is empty.
-     * 
-     * @return A boolean showing state of hashtable.
-     * 
-     * @see CustomHashtable
-     */
-    public boolean isImageHashtableEmpty() {
-        return imageHashtable.isEmpty();
-
-    } // end isImageHashtableEmpty()
-
-    /**
-     * Indicates if the image name is found in the hashtable.
-     * 
-     * @param imageName the image name (key).
-     * 
-     * @return A boolean indicating that image name.
-     * 
-     * @see CustomHashtable
-     */
-    public boolean isImageRegistered(final String imageName) {
-        return imageHashtable.containsKey(imageName);
-
-    } // end isImageRegistered()
-
-    /**
-     * Determines if the UserInterface is currently recording an action command as a shortcut.
-     * 
-     * @return boolean is it recording
-     */
-    public boolean isShorcutRecording() {
-        return shortcutRecording;
-    }
 
     /**
      * Pass the key event to the selected image frame (if one exists). If not, check the shortcut table and attempt to
@@ -2410,8 +2422,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Required by the CommandLineParser interface. Processes MIPAV command line arguments.
-     * Returns the next argument to be processed (finished if returns args.length)
+     * Required by the CommandLineParser interface. Processes MIPAV command line arguments that require
+     * MIPAV to have already been initialized. Returns the next argument to be processed (finished if returns args.length)
      */
     public int parseArguments(final String[] args, final int initArg) {
         int i = 0, j, idx, index;
@@ -2420,12 +2432,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         boolean voiFollowImage = false;
         int[] voiCount;
         int imgCount = 0;
-        boolean providedUserDefaultDir = false;
-
-        String userDefaultDir = "";
 
         String scriptFile = null;
-        String secPluginsDir;
         final Vector<OpenFileInfo> imageList = new Vector<OpenFileInfo>();
         final Vector<Vector<String>> voiList = new Vector<Vector<String>>();
 
@@ -2444,17 +2452,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             Preferences.debug("argument[" + i + "]= " + args[i] + "\n");
 
         }
-
-        // print the help and exit if the help options are found anywhere
-        for (i = 0; i < args.length; i++) {
-
-            if (args[i].equalsIgnoreCase("-h") || args[i].equalsIgnoreCase("-help")
-                    || args[i].equalsIgnoreCase("--help") || args[i].equalsIgnoreCase("-usage")
-                    || args[i].equalsIgnoreCase("--usage")) {
-                printUsageAndExit();
-            }
-        }
-
+        
         // special case: if there is only one argument, treat it as an image file name (unless it starts with a -)
         if (args.length == 1) {
 
@@ -2516,56 +2514,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         }
 
-        // determine if -inputDir or -outputDir flag was provided (user defined default image directory / output image
-        // dir)
-        for (i = 0; i < args.length; i++) {
-            if (args[i].equalsIgnoreCase("-inputDir")) {
-                providedUserDefaultDir = true;
-                userDefaultDir = args[ ++i];
-                break;
-            } else if (args[i].equalsIgnoreCase("-outputDir")) {
-                providedOutputDir = true;
-                outputDir = args[ ++i];
-                break;
-            }
-
-        }
-
-        // if -inputDir was given, verify that path provided is a proper path
-        if (providedUserDefaultDir) {
-            if (userDefaultDir == null || userDefaultDir.trim().equals("")) {
-                printUsageAndExit();
-            } else {
-                // check that there is a trailng slash at the end of the defaultDir...if not, add one
-                if ( ! (userDefaultDir.charAt(userDefaultDir.length() - 1) == File.separatorChar)) {
-                    userDefaultDir = userDefaultDir + File.separator;
-                }
-                // now check if this is a valid path
-                final File checkDefaultDir = new File(userDefaultDir);
-                if ( !checkDefaultDir.exists()) {
-                    printUsageAndExit();
-                }
-            }
-        }
-
-        // if -outputDir was given, verify that path provided is a proper path
-        if (providedOutputDir) {
-            if (outputDir == null || outputDir.trim().equals("")) {
-                providedOutputDir = false;
-                printUsageAndExit();
-            } else {
-                // check that there is a trailng slash at the end of the defaultDir...if not, add one
-                if ( ! (outputDir.charAt(outputDir.length() - 1) == File.separatorChar)) {
-                    outputDir = outputDir + File.separator;
-                }
-                // now check if this is a valid path
-                final File checkOutputDir = new File(outputDir);
-                if ( !checkOutputDir.exists()) {
-                    providedOutputDir = false;
-                    printUsageAndExit();
-                }
-            }
-        }
+        
 
         i = 0;
 
@@ -2578,8 +2527,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             if (arg.startsWith("-")) {
 
-                // use this type of check for "Image" arguments
-                if (arg.equalsIgnoreCase("-i") || arg.equalsIgnoreCase("-m")) {
+                //parse commands which require an initialized mipav
+                switch(InstanceCommand.valueOf(arg)) {
+                
+                case Image:
+                case MultiImage:
                     isMulti = arg.equalsIgnoreCase("-m");
 
                     // System.out.println("imageName = " + args[i+1]);
@@ -2594,7 +2546,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         // if the user provided defaultDir, first check to see if the file is there
                         // otherwise try to find the image under user.dir property
                         // if still not there, print usage and exit...since file was not found
-                        if (providedUserDefaultDir) {
+                        if (isProvidedUserDefaultDir()) {
                             checkFile = new File(userDefaultDir + File.separator + imgName);
                             if (checkFile.exists()) {
                                 setDefaultDirectory(userDefaultDir);
@@ -2633,7 +2585,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                 printUsageAndExit();
                             }
                         } else {
-                            if (providedUserDefaultDir) {
+                            if (isProvidedUserDefaultDir()) {
                                 checkFile = new File(userDefaultDir + File.separator + imgName);
                                 if (checkFile.exists()) {
                                     setDefaultDirectory(userDefaultDir);
@@ -2664,22 +2616,26 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                     }
                     // imageFileNames.add(args[++i]);
-
-                } else if (arg.equalsIgnoreCase("-r")) {
-
+                    break;
+                    
+                case RawImage:
                     // this is for specifying raw image parameters
                     final String rawString = args[ ++i];
 
                     // set the openfileinfo's rawInfo variable (for raw instructions)
                     imageList.lastElement().setRawImageInfo(new RawImageInfo(rawString));
-
-                } else if (arg.equalsIgnoreCase("-hide")) {
+                    break;
+                    
+                case Hide:
                     isAppFrameVisible = false;
-                } else if (arg.equalsIgnoreCase("-s")) {
-
+                    break;
+                    
+                case Script:
                     // System.out.println("script name = " + args[i+1]);
                     scriptFile = args[ ++i];
-                } else if (arg.equalsIgnoreCase("-v")) {
+                    break;
+                    
+                case Voi:
                     String voiName = args[ ++i];
                     index = voiName.lastIndexOf(File.separatorChar);
 
@@ -2699,18 +2655,24 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             voiPerImages = new Vector<String>();
                         }
                     }
-                } else if (arg.equalsIgnoreCase("-o")) {
-                    final String varValue = args[ ++i];
+                    break;
+                    
+                case SavedImageName:
+                    String varValue = args[ ++i];
                     Preferences.debug("cmd var:\tDefining parameter variable value from -o arg "
                             + ActionSaveBase.SAVE_FILE_NAME + " -> " + varValue + "\n", Preferences.DEBUG_SCRIPTING);
                     VariableTable.getReference().storeVariable(ActionSaveBase.SAVE_FILE_NAME, varValue);
-                } else if (arg.equalsIgnoreCase("-d")) {
+                    break;
+                    
+                case ScriptVariable:
                     final String varName = args[ ++i];
-                    final String varValue = args[ ++i];
+                    varValue = args[ ++i];
                     Preferences.debug("cmd var:\tDefining parameter variable value " + varName + " -> " + varValue
                             + "\n", Preferences.DEBUG_SCRIPTING);
                     VariableTable.getReference().storeVariable(varName, varValue);
-                } else if (arg.equalsIgnoreCase("-p")) {
+                    break;
+                    
+                case Plugin:
                     Object thePlugIn = null;
 
                     // grab the plugin name
@@ -2734,7 +2696,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                             ((PlugInGeneric) thePlugIn).run();
                         } else {
-                        	MipavUtil.displayError("Plugin " + plugInName
+                            MipavUtil.displayError("Plugin " + plugInName
                                     + " must implement the PlugInGeneric interface in order to be run from the command line.");
                         }  
                     } catch (final ClassNotFoundException e) {
@@ -2744,36 +2706,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     } catch (final IllegalAccessException e) {
                         MipavUtil.displayError("Unable to load plugin (acc)");
                     }
-
-                } else if (arg.equalsIgnoreCase("-inputDir")) {
-                    ++i;
-                } else if (arg.equalsIgnoreCase("-outputDir")) {
-                    ++i;
-                } else if(arg.equalsIgnoreCase("-plugindir")) {
-                	secPluginsDir = args[ ++i];
-                	File f = new File(secPluginsDir);
-                	if(f.exists() && f.isDirectory() && f.canRead()) {
-                		secondaryPluginsDir = f;
-                		int ind = openingMenuBar.getComponentIndex(pluginsMenu);
-                        openingMenuBar.remove(pluginsMenu);
-                		if (getRegisteredFramedImagesNum() > 0) {
-                            this.pluginsMenu = buildPlugInsMenu(getActiveImageFrame());
-                        } else {
-                            this.pluginsMenu = buildPlugInsMenu(this);
-                        }
-                        openingMenuBar.add(pluginsMenu, ind);
-                	}else {
-                		Preferences.debug("plugindir is not a valid readable directory", Preferences.DEBUG_MINOR);
-                        System.out.println("plugindir is not a valid readable directory");
-                		printUsageAndExit();
-                	}
-                }else {
-                    printUsageAndExit();
+                    break;
+                    
+                    
                 }
             } else {
                 printUsageAndExit();
             }
-
             i++;
         }
 
@@ -4099,7 +4038,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
 
             // script is over...set the providedOutputDir back to false
-            providedOutputDir = false;
+            setProvidedOutputDir(false);
 
         }
     }
@@ -4155,102 +4094,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
     }
 
-    /**
-     * Displays command line help information on usage to standard out and then into an informational dialog box then
-     * exits the MIPAV application. Help display just shows the different options, display help, load image, load
-     * script, load VOI, and hide menu bar, as well as examples of use.
-     */
-    private void printUsageAndExit() {
-        final String helpInfo = "Usage: mipav "
-                + "[-h][-H][--help]  Display this help"
-                + "\n"
-                + "[-hide][-HIDE]    Hide application frame"
-                + "\n"
-                + "[-i][-I]          Image file name"
-                + "\n"
-                + "[-m][-M]          Image multifile name"
-                + "\n"
-                + "[-r][-R]          Raw Image Info (example: -r datatype;extents;resols;units;endian;offset)"
-                + "\n"
-                + "                  Supported raw image file data types:"
-                + "\n"
-                + "                      0 => Boolean"
-                + "\n"
-                + "                      1 => Byte"
-                + "\n"
-                + "                      2 => Unsigned Byte"
-                + "\n"
-                + "                      3 => Short"
-                + "\n"
-                + "                      4 => Unsigned Short"
-                + "\n"
-                + "                      5 => Integer"
-                + "\n"
-                + "                      6 => Long"
-                + "\n"
-                + "                      7 => Float"
-                + "\n"
-                + "                      8 => Double"
-                + "\n"
-                + "                      9 => ARGB"
-                + "\n"
-                + "                      10 => ARGB Unsigned Short"
-                + "\n"
-                + "                      11 => ARGB Float"
-                + "\n"
-                + "                      12 => Complex"
-                + "\n"
-                + "                      13 => Complex Double"
-                + "\n"
-                + "                      14 => Unsigned Integer"
-                + "\n"
-                + "                  The extents, resolutions and units for each image dimension should be separated by commas."
-                + "\n"
-                + "                  For endianess, true => big endian and false => little endian."
-                + "\n"
-                + "[-s][-S]          Script file name"
-                + "\n"
-                + "[-v][-V]          VOI file name"
-                + "\n"
-                + "[-o][-O]          Saved image file name (sets "
-                + ActionSaveBase.SAVE_FILE_NAME
-                + " parameter)"
-                + "\n"
-                + "[-p][-P]          Plugin Name"
-                + "\n"
-                + "[-d][-D]          Set the value of a variable used in a script"
-                + "\n"
-                + "[-inputDir][-INPUTDIR]      Default image directory path"
-                + "\n"
-                + "[-outputDir][-OUTPUTDIR]      Output image directory path"
-                + "\n"
-                + "[-pluginDir][-PLUGINDIR]      Secondary plugins directory"
-                + "\n"
-                + "Examples:"
-                + "\n"
-                + "> mipav"
-                + "\n"
-                + "> mipav imageFileName"
-                + "\n"
-                + "> mipav -i imageFileName -s scriptFileName -hide"
-                + "\n"
-                + "> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3 -inputDir defaultImageDirectoryPath -outputDir outputImageDirectoryPath";
-
-        // print this usage help to the console
-        System.out.println(helpInfo);
-
-        // print the usage help to a dialog.
-        // maybe later we can make this an option...
-        if (isAppFrameVisible) {
-            final JTextArea helpArea = new JTextArea(helpInfo);
-            helpArea.setFont(MipavUtil.courier12);
-            helpArea.setEditable(false);
-            JOptionPane.showMessageDialog(null, helpArea, "Command line help", JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        System.exit(0);
-    }
-
     private class DicomQueryListener implements ActionListener {
 
         private JCheckBox checkBox;
@@ -4301,19 +4144,64 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
+     * Displays command line help information on usage to standard out and then into an informational dialog box then
+     * exits the MIPAV application. Help display just shows the different options, display help, load image, load
+     * script, load VOI, and hide menu bar, as well as examples of use.
+     */
+     public static void printUsageAndExit() {
+         final String helpInfo = generateCmdUsageInfo();
+         
+         // print this usage help to the console
+         System.out.println(helpInfo);
+         
+         // print the usage help to a dialog.
+         // maybe later we can make this an option...
+         if (!GraphicsEnvironment.isHeadless()) {
+             final JTextArea helpArea = new JTextArea(helpInfo);
+             helpArea.setFont(MipavUtil.courier12);
+             helpArea.setEditable(false);
+             JOptionPane.showMessageDialog(null, helpArea, "Command line help", JOptionPane.INFORMATION_MESSAGE);
+         }
+         
+         System.exit(0);
+     }
+
+    /**
+      * Generates automatic list of available commands.
+      */
+     public static String generateCmdUsageInfo() {
+         StringBuilder b = new StringBuilder();
+         for(StaticCommand c : StaticCommand.values()) {
+             b.append("-"+c.getCommand()).append("\t").append(c.getHelp()).append("\n");
+         }
+         for(InstanceCommand c : InstanceCommand.values()) {
+             b.append("-"+c.getCommand()).append("\t").append(c.getHelp()).append("\n");
+         }
+         b.append("Examples:").append("\n");
+         b.append("> mipav imageFileName").append("\n").append("> mipav -i imageFileName -s scriptFileName -hide").append("\n");
+         b.append("> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3 -inputDir defaultImageDirectoryPath -outputDir outputImageDirectoryPath");
+         b.append("\n");
+         return b.toString();
+     }
+
+    /**
      * This is the getter for providedOutputDir providedOutputDir: This boolean tells if the user has provided an
      * ouputDir parameter as a command line argument when running a script
      * 
      * @return
      */
-    public boolean isProvidedOutputDir() {
+    public static boolean isProvidedOutputDir() {
         return providedOutputDir;
+    }
+
+    public static boolean isProvidedUserDefaultDir() {
+        return providedUserDefaultDir;
     }
 
     @SuppressWarnings("unchecked")
     public static Vector<Class<ActionDiscovery>> getDiscoverableActionList() {
         final Vector<Class<ActionDiscovery>> actionList = new Vector<Class<ActionDiscovery>>();
-
+    
         final Vector<String> actionLocations = ScriptableActionLoader.getScriptActionLocations();
         final Vector<String> actionPackages = new Vector<String>();
         final Vector<String> actionDirs = new Vector<String>();
@@ -4323,16 +4211,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             actionPackages.add(p);
             actionDirs.add(p.replaceAll("\\.", Matcher.quoteReplacement(File.separator)));
         }
-
+    
         String classFileName;
         Class action;
         for (int i = 0; i < actionDirs.size(); i++) {
             final String curDir = actionDirs.elementAt(i);
             final String curPackage = actionPackages.elementAt(i);
-
+    
             final File locationDir = new File(curDir);
             if (locationDir.isDirectory()) {
-
+    
                 final File[] allFiles = locationDir.listFiles(new FileFilter() {
                     public boolean accept(final File f) {
                         if (f.getPath().endsWith(".class")) {
@@ -4341,19 +4229,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         return false;
                     }
                 });
-
+    
                 for (final File file : allFiles) {
                     classFileName = file.getName();
-
+    
                     classFileName = classFileName.substring(0, classFileName.indexOf(".class"));
-
+    
                     action = null;
                     try {
                         action = Class.forName(curPackage + classFileName);
                     } catch (final ClassNotFoundException e) {
                         Preferences.debug("Class not found: " + e.getMessage() + "\n", Preferences.DEBUG_SCRIPTING);
                     }
-
+    
                     if (action != null) {
                         final Class<?>[] interfaces = action.getInterfaces();
                         for (final Class<?> interf : interfaces) {
@@ -4366,12 +4254,41 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
             }
         }
-
+    
         return actionList;
     }
 
-    // ~ Inner Classes
-    // --------------------------------------------------------------------------------------------------
+    public static String getOutputDir() {
+        return outputDir;
+    }
+
+    public static File getSecondaryPluginsDir() {
+        return secondaryPluginsDir;
+    }
+
+    public static String getUserDefaultDir() {
+        return userDefaultDir;
+    }
+
+    public static void setProvidedOutputDir(boolean providedOutputDir) {
+        ViewUserInterface.providedOutputDir = providedOutputDir;
+    }
+
+    public static void setProvidedUserDefaultDir(boolean providedUserDefaultDir) {
+        ViewUserInterface.providedUserDefaultDir = providedUserDefaultDir;
+    }
+
+    public static void setOutputDir(String outputDir) {
+        ViewUserInterface.outputDir = outputDir;
+    }
+
+    public static void setSecondaryPluginsDir(File secondaryPluginsDir) {
+        ViewUserInterface.secondaryPluginsDir = secondaryPluginsDir;
+    }
+
+    public static void setUserDefaultDir(String userDefaultDir) {
+        ViewUserInterface.userDefaultDir = userDefaultDir;
+    }
 
     /**
      * Stores file name and switch for multifile.
