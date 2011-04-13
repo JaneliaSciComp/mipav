@@ -4842,6 +4842,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 // first create all of the new file infos (reference and children) and fill them with tags from the old
                 // file info. some of these tag values will be overridden in the next loop
+                System.out.println(resultImage.getExtents()[2]);
                 for (int i = 0; i < resultImage.getExtents()[2]; i++) {
 
                     if (i == 0) {
@@ -4913,7 +4914,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         matrix.transform(coord[0], coord[1], coord[2], firstPos);
                 } // if (orientation != null)
-                orientation = (String) ((FileInfoDicom) fileInfo[image.getExtents()[2]-1]).getTagTable().getValue("0020,0032");
+                System.out.println(fileInfo.length);
+                orientation = (String) ((FileInfoDicom) fileInfo[resultImage.getExtents()[2]-1]).getTagTable().getValue("0020,0032");
                 
                 if (orientation != null) {
             		
