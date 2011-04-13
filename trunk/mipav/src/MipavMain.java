@@ -155,7 +155,7 @@ parse:  while (i < args.length) {
                     }
                     String prefName = args[++i];
                     f = new File(prefName);
-                    if(f.canRead() && f.canWrite()) {
+                    if(!f.exists() || (f.canRead() && f.canWrite())) {
                         Preferences.setPreferencesFileName(prefName);
                     } else {
                         Preferences.debug("The preferences file name must be in a readable and writable location.", Preferences.DEBUG_MINOR);
