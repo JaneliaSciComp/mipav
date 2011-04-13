@@ -119,7 +119,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     private boolean doTalairach = false;
 
     /** DOCUMENT ME! */
-    private boolean doVOI, doClip, doPad, setPix, doUpdateOrigin, doInvMat;
+    private boolean doVOI, doClip, doPad, preserveFOV, doUpdateOrigin, doInvMat;
 
     /**
      * Stores the matrix read in from a file it then can be converted to the corrected axis orientation (i.e. world
@@ -219,7 +219,19 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     private TransMatrix xfrm;
 
     /** DOCUMENT ME! */
-    private JCheckBox xyAspectRatio, xyzAspectRatio, fieldOfView, setPixels;
+    private JCheckBox xyAspectRatio, xyzAspectRatio;
+    
+    private JRadioButton preserveFOVButton;
+    
+    private JRadioButton preserveOutputDimsButton;
+    
+    private ButtonGroup outputDimsGroup;
+    
+    private JRadioButton preserveFOV2Button;
+    
+    private JRadioButton separateDimResButton;
+    
+    private ButtonGroup resDimGroup;
 
     /** checkbox telling the algorithm to use the scanner coordinate center rather than the image center */
     private JCheckBox useSACenterBox;
@@ -434,7 +446,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             factor = (userValue - constantFOV) / (cXdim - constantFOV);
             dims[0] = userValue;
 
-            if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
+            if (preserveFOV2Button.isSelected()) { // update resolution (user set dimensions and FOV is selected)
                 fov = (cXdim - constantFOV) * cXres;
                 resols[0] = fov / (dims[0] - constantFOV);
             }
@@ -442,7 +454,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             factor = (userValue - constantFOV) / (cYdim - constantFOV);
             dims[1] = userValue;
 
-            if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
+            if (preserveFOV2Button.isSelected()) { // update resolution (user set dimensions and FOV is selected)
                 fov = (cYdim - constantFOV) * cYres;
                 resols[1] = fov / (dims[1] - constantFOV);
             }
@@ -450,7 +462,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             factor = (userValue - constantFOV) / (cZdim - constantFOV);
             dims[2] = userValue;
 
-            if (fieldOfView.isSelected()) { // update resolution in z
+            if (preserveFOV2Button.isSelected()) { // update resolution in z
                 fov = (cZdim - constantFOV) * cZres;
                 resols[2] = fov / (dims[2] - constantFOV);
             }
@@ -459,7 +471,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             factor = cXres / userValue;
             resols[0] = userValue;
 
-            if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
+            if (preserveFOV2Button.isSelected()) { // update resolution (user set dimensions and FOV is selected)
                 fov = (cXdim - constantFOV) * cXres;
                 dims[0] = fov / resols[0] + constantFOV;
             }
@@ -467,7 +479,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             factor = cYres / userValue;
             resols[1] = userValue;
 
-            if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
+            if (preserveFOV2Button.isSelected()) { // update resolution (user set dimensions and FOV is selected)
                 fov = (cYdim - constantFOV) * cYres;
                 dims[1] = fov / resols[1] + constantFOV;
             }
@@ -475,7 +487,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             factor = cZres / userValue;
             resols[2] = userValue;
 
-            if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
+            if (preserveFOV2Button.isSelected()) { // update resolution (user set dimensions and FOV is selected)
                 fov = (cZdim - constantFOV) * cZres;
                 dims[2] = fov / resols[2] + constantFOV;
                 // System.err.println(" cZres = " + cZres + " cZdim = " + cZdim);
@@ -485,42 +497,42 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         if ( (source == textResX) || (source == textDimX)) {
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update y values
-                if ( (source == textDimX) || (fieldOfView.isSelected())) {
+                if ( (source == textDimX) || (preserveFOV2Button.isSelected())) {
                     dims[1] = (dims[1] - constantFOV) * factor + constantFOV;
                 }
 
-                if (fieldOfView.isSelected()) {
+                if (preserveFOV2Button.isSelected()) {
                     resols[1] = resols[1] / factor;
                 }
             }
 
             if (xyzAspectRatio.isSelected()) { // update z values
-                if ( (source == textDimX) || (fieldOfView.isSelected())) {
+                if ( (source == textDimX) || (preserveFOV2Button.isSelected())) {
                     dims[2] = (dims[2] - constantFOV) * factor + constantFOV;
                 }
 
-                if (fieldOfView.isSelected()) {
+                if (preserveFOV2Button.isSelected()) {
                     resols[2] = resols[2] / factor;
                 }
             }
         } else if ( (source == textResY) || (source == textDimY)) {
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update x
-                if ( (source == textDimY) || (fieldOfView.isSelected())) {
+                if ( (source == textDimY) || (preserveFOV2Button.isSelected())) {
                     dims[0] = (dims[0] - constantFOV) * factor + constantFOV;
                 }
 
-                if (fieldOfView.isSelected()) {
+                if (preserveFOV2Button.isSelected()) {
                     resols[0] = resols[0] / factor;
                 }
             }
 
             if (xyzAspectRatio.isSelected()) { // update z
-                if ( (source == textDimY) || (fieldOfView.isSelected())) {
+                if ( (source == textDimY) || (preserveFOV2Button.isSelected())) {
                     dims[2] = (dims[2] - constantFOV) * factor + constantFOV;
                 }
 
-                if (fieldOfView.isSelected()) {
+                if (preserveFOV2Button.isSelected()) {
                     resols[2] = resols[2] / factor;
                 }
             }
@@ -529,12 +541,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if (xyAspectRatio.isSelected()) {} // do nothing, x and y not affected by z
 
             if (xyzAspectRatio.isSelected()) { // update x and y accordingly
-                if ( (source == textDimZ) || (fieldOfView.isSelected())) {
+                if ( (source == textDimZ) || (preserveFOV2Button.isSelected())) {
                     dims[0] = (dims[0] - constantFOV) * factor + constantFOV;
                     dims[1] = (dims[1] - constantFOV) * factor + constantFOV;
                 }
 
-                if (fieldOfView.isSelected()) {
+                if (preserveFOV2Button.isSelected()) {
                     resols[0] = resols[0] / factor;
                     resols[1] = resols[1] / factor;
                 }
@@ -650,8 +662,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 endMatchFOVradio.setEnabled(false);
                 constantFOVradio.setSelected(true);
                 endMatchFOVradio.setSelected(false);
-                setPixels.setText("Set pixels to preserve FOV.");
-                fieldOfView.setText("Preserve FOV.");
+                preserveFOVButton.setText("Set output dim to preserve input dim*resolution");
+                preserveFOV2Button.setText("Set both dim and resolution at the same time to preserve dim*resolution");
             }
 
             if (userDefinedMatrix.isSelected()) {
@@ -716,7 +728,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 xyAspectRatio.setEnabled(false);
                 xyzAspectRatio.setEnabled(false);
-                fieldOfView.setEnabled(false);
+                preserveFOV2Button.setEnabled(false);
+                separateDimResButton.setEnabled(false);
                 enableDims(false);
                 enableResols(false);
                 maximum.setEnabled(false);
@@ -724,7 +737,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 current.setEnabled(false);
                 magSlider.setEnabled(false);
                 comboBoxImage.setEnabled(false);
-                setPixels.setEnabled(false);
+                preserveFOVButton.setEnabled(false);
+                preserveOutputDimsButton.setEnabled(false);
 
                 cropRadio.setEnabled(false);
                 padRadio.setEnabled(false);
@@ -867,19 +881,19 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (constantFOVradio.isSelected()) {
                 constantFOV = 0;
-                if (setPixels != null) {
-                    setPixels.setText("Set pixels to preserve FOV.");
+                if (preserveFOVButton != null) {
+                    preserveFOVButton.setText("Set output dim to preserve input dim*resolution");
                 }
-                if (fieldOfView != null) {
-                    fieldOfView.setText("Preserve FOV.");
+                if (preserveFOV2Button != null) {
+                    preserveFOV2Button.setText("Set both dim and resolution at the same time to preserve dim*resolution");
                 }
             } else {
                 constantFOV = 1;
-                if (setPixels != null) {
-                    setPixels.setText("Set pixels to preserve unrepeated begin & end matching.");
+                if (preserveFOVButton != null) {
+                    preserveFOVButton.setText("Set output dim to preserve input (dim-1)*resolution");
                 }
-                if (fieldOfView != null) {
-                    fieldOfView.setText("Preserve unrepeated begin & end matching.");
+                if (preserveFOV2Button != null) {
+                    preserveFOV2Button.setText("Set both dim and resolution at the same time to preserve (dim-1)*resolution");
                 }
             }
         } else if (source == resampletoUser) {
@@ -889,10 +903,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 if ( (image.getNDims() > 2) && ( !image25DCheckbox.isSelected())) {
                     xyzAspectRatio.setEnabled(true);
                 }
-                fieldOfView.setEnabled(true);
+                preserveFOV2Button.setEnabled(true);
+                separateDimResButton.setEnabled(true);
                 enableDims(true);
                 enableResols(true);
-                setPixels.setEnabled(false);
+                preserveFOVButton.setEnabled(false);
+                preserveOutputDimsButton.setEnabled(false);
                 magSlider.setEnabled(false);
                 maximum.setEnabled(false);
                 minimum.setEnabled(false);
@@ -901,7 +917,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             } else {
                 xyAspectRatio.setEnabled(false);
                 xyzAspectRatio.setEnabled(false);
-                fieldOfView.setEnabled(false);
+                preserveFOV2Button.setEnabled(false);
+                separateDimResButton.setEnabled(false);
                 enableDims(false);
                 enableResols(false);
             }
@@ -926,22 +943,24 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if (resampletoImage.isSelected()) {
                 xyAspectRatio.setEnabled(false);
                 xyzAspectRatio.setEnabled(false);
-                fieldOfView.setEnabled(false);
+                preserveFOV2Button.setEnabled(false);
+                separateDimResButton.setEnabled(false);
                 maximum.setEnabled(false);
                 minimum.setEnabled(false);
                 current.setEnabled(false);
                 magSlider.setEnabled(false);
                 comboBoxImage.setEnabled(true);
-                setPixels.setEnabled(true);
+                preserveFOVButton.setEnabled(true);
+                preserveOutputDimsButton.setEnabled(true);
             } else {
                 comboBoxImage.setEnabled(false);
             }
-        } else if (source == setPixels) {
+        } else if ((source == preserveFOVButton) || (source == preserveOutputDimsButton)){
 
-            if (setPixels.isSelected()) {
-                setPix = true;
+            if (preserveFOVButton.isSelected()) {
+                preserveFOV = true;
             } else {
-                setPix = false;
+                preserveFOV = false;
             }
         } else if (source == resampleSlider) {
 
@@ -950,7 +969,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 maximum.setEnabled(true);
                 minimum.setEnabled(true);
                 current.setEnabled(true);
-                setPixels.setEnabled(false);
+                preserveFOVButton.setEnabled(false);
+                preserveOutputDimsButton.setEnabled(false);
             } else {
                 magSlider.setEnabled(false);
                 maximum.setEnabled(false);
@@ -1094,13 +1114,14 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     }
 
     /**
-     * Accessor that sets value for the setPixels checkbox.
+     * Accessor that sets value for the preserveFOV boolean
      * 
-     * @param flag <code>true</code> indicates that the number of pixels should be set so as to preserve the field of
-     *            view. This could either increase or decrease the number of pixels.
+     * @param flag <code>true</code> indicates that output dim should be set from input dim*res or
+     * input (dim-1)*res.  flag <code>false</code> indicates that the output dim should be set
+     * from the selected image output dim.
      */
-    public void setsetPix(final boolean flag) {
-        setPix = flag;
+    public void setPreserveFOV(final boolean flag) {
+        preserveFOV = flag;
     }
 
     /**
@@ -1558,7 +1579,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                      * System.err.println("setting units: " + units[0]);
                      */
 
-                    setPix = scriptParameters.getParams().getBoolean("set_pixels");
+                    preserveFOV = scriptParameters.getParams().getBoolean("preserve_fov");
 
                     final float iXres = image.getFileInfo(0).getResolutions()[0];
                     final float iYres = image.getFileInfo(0).getResolutions()[1];
@@ -1572,7 +1593,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                         iZres = image.getFileInfo(0).getResolutions()[2];
                     }
 
-                    if (setPix) {
+                    if (preserveFOV) {
                         final float fovX = iXres * (iXdim - constantFOV);
                         final float fovY = iYres * (iYdim - constantFOV);
                         oXdim = Math.round(fovX / oXres) + constantFOV;
@@ -1585,7 +1606,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     if ( (image.getNDims() >= 3) && ( !do25D)) {
                         oZres = selectedImg.getFileInfo(0).getResolutions()[2];
                         // units[2] = selectedImg.getUnitsOfMeasure(2);
-                        if (setPix) {
+                        if (preserveFOV) {
                             final float fovZ = iZres * (iZdim - constantFOV);
                             oZdim = Math.round(fovZ / oZres) + constantFOV;
 
@@ -1786,7 +1807,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                     scriptParameters.storeInputImage(selectedImg);
 
-                    scriptParameters.getParams().put(ParameterFactory.newParameter("set_pixels", setPix));
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("preserve_fov", preserveFOV));
 
                 } else if (resampletoUser.isSelected()) {
                     resampleType = "to_user";
@@ -2507,17 +2528,35 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         xyzAspectRatio.addItemListener(this);
         xyzAspectRatio.setEnabled(false);
 
-        fieldOfView = new JCheckBox("Preserve unrepeated begin and end matching.", false);
-        fieldOfView.setForeground(Color.black);
-        fieldOfView.setFont(serif12);
-        fieldOfView.addItemListener(this);
-        fieldOfView.setEnabled(false);
+        resDimGroup = new ButtonGroup();
+        separateDimResButton = new JRadioButton("Set dim and resolution independently", true);
+        separateDimResButton.setFont(serif12);
+        separateDimResButton.setEnabled(false);
+        resDimGroup.add(separateDimResButton);
+        separateDimResButton.addItemListener(this);
+        separateDimResButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        preserveFOV2Button = new JRadioButton("Set both dim and resolution at the same time to preserve (dim-1)*resolution", false);
+        preserveFOV2Button.setFont(serif12);
+        preserveFOV2Button.setEnabled(false);
+        resDimGroup.add(preserveFOV2Button);
+        preserveFOV2Button.addItemListener(this);
+        preserveFOV2Button.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        setPixels = new JCheckBox("Set pixels to preserve unrepeated begin and end matching.", false);
-        setPixels.setForeground(Color.black);
-        setPixels.setFont(serif12);
-        setPixels.addItemListener(this);
-        setPixels.setEnabled(true);
+        outputDimsGroup = new ButtonGroup();
+        preserveOutputDimsButton = new JRadioButton("Set output dim from selected image dim", true);
+        preserveOutputDimsButton.setFont(serif12);
+        preserveOutputDimsButton.setEnabled(true);
+        outputDimsGroup.add(preserveOutputDimsButton);
+        preserveOutputDimsButton.addItemListener(this);
+        preserveOutputDimsButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        preserveFOVButton = new JRadioButton("Set output dim to preserve input (dim-1)*resolution",false);
+        preserveFOVButton.setFont(serif12);
+        preserveFOVButton.setEnabled(true);
+        outputDimsGroup.add(preserveFOVButton);
+        preserveFOVButton.addItemListener(this);
+        preserveFOVButton.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         labelResX = new JLabel("ResX");
         labelResX.setForeground(Color.black);
@@ -2666,8 +2705,11 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         gbc.gridy++;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        resamplePanel.add(setPixels, gbc);
+        gbc.anchor = GridBagConstraints.WEST;
+        resamplePanel.add(preserveOutputDimsButton, gbc);
+        gbc.gridx = 1;
+        gbc.gridy++;
+        resamplePanel.add(preserveFOVButton, gbc);
 
         gbc.gridy++;
         resamplePanel.add(Box.createVerticalStrut(5), gbc);
@@ -2681,8 +2723,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         /* Before x values, in center: option to constrain field-of-view ratio */
         gbc.gridx = 1;
         gbc.gridy++;
-        gbc.anchor = GridBagConstraints.CENTER;
-        resamplePanel.add(fieldOfView, gbc);
+        gbc.anchor = GridBagConstraints.WEST;
+        resamplePanel.add(separateDimResButton, gbc);
+        gbc.gridy++;
+        resamplePanel.add(preserveFOV2Button, gbc);
 
         /* First row: x dimensions (first row of resolution info corresponds to gridy=4) */
         gbc.gridx = 0;
@@ -3513,7 +3557,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     private void setDefaultResampleToUser() {
         xyAspectRatio.setSelected(true);
         enableYSettings(false);
-        fieldOfView.setSelected(true);
+        preserveFOV2Button.setSelected(true);
+        separateDimResButton.setSelected(false);
     }
 
     /**
@@ -3668,7 +3713,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             System.err.println("units of original image: " + image.getUnitsOfMeasure(0));
             System.err.println("setting units: " + units[0]);
 
-            if (setPix) {
+            if (preserveFOV) {
                 fovX = iXres * (iXdim - constantFOV);
                 fovY = iYres * (iYdim - constantFOV);
                 oXdim = Math.round(fovX / oXres) + constantFOV;
@@ -3681,7 +3726,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if ( (image.getNDims() >= 3) && ( !do25D) && (selectedImg.getNDims() >= 3)) {
                 oZres = selectedImg.getFileInfo(0).getResolutions()[2];
                 units[2] = selectedImg.getUnitsOfMeasure(2);
-                if (setPix) {
+                if (preserveFOV) {
                     fovZ = iZres * (iZdim - constantFOV);
                     oZdim = Math.round(fovZ / oZres) + constantFOV;
                 } else {
