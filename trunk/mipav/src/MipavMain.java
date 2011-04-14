@@ -60,18 +60,13 @@ public class MipavMain implements CommandLineParser {
             return args.length;
         }
         
-        // show the arguments
-        // TODO: make this an debugging option?
-        System.err.println("Command line argument list:");
-        Preferences.debug("Command line argument list:\n");
-        
 parse:  while (i < args.length) {
             arg = args[i];
 
             if (arg.startsWith("-")) {
                 
               //parse commands which do not require an initialized mipav
-                StaticCommand c = StaticCommand.getCommand(arg);
+                StaticArgument c = StaticArgument.getArgument(arg);
                 if(c == null) {
                     i++;
                     continue parse;
@@ -88,7 +83,8 @@ parse:  while (i < args.length) {
                     ViewUserInterface.setUserDefaultDir(args[ ++i]);
                     
                     if (ViewUserInterface.getUserDefaultDir() == null || ViewUserInterface.getUserDefaultDir().trim().equals("")) {
-                        ViewUserInterface.printUsageAndExit();
+                        Preferences.debug("In argument -"+c+", "+"directory is null");
+                        ViewUserInterface.printUsageAndExit(c);
                     } else {
                         // check that there is a trailng slash at the end of the defaultDir...if not, add one
                         if ( ! (ViewUserInterface.getUserDefaultDir().charAt(ViewUserInterface.getUserDefaultDir().length() - 1) == File.separatorChar)) {
@@ -97,7 +93,8 @@ parse:  while (i < args.length) {
                         // now check if this is a valid path
                         final File checkDefaultDir = new File(ViewUserInterface.getUserDefaultDir());
                         if ( !checkDefaultDir.exists()) {
-                            ViewUserInterface.printUsageAndExit();
+                            Preferences.debug("In argument -"+c+", "+ViewUserInterface.getUserDefaultDir()+" does not exist");
+                            ViewUserInterface.printUsageAndExit(c);
                         }
                     }
                     break;
@@ -108,7 +105,7 @@ parse:  while (i < args.length) {
                     
                     if (ViewUserInterface.getOutputDir() == null || ViewUserInterface.getOutputDir().trim().equals("")) {
                         ViewUserInterface.setProvidedOutputDir(false);
-                        ViewUserInterface.printUsageAndExit();
+                        ViewUserInterface.printUsageAndExit(c);
                     } else {
                         // check that there is a trailng slash at the end of the defaultDir...if not, add one
                         if ( ! (ViewUserInterface.getOutputDir().charAt(ViewUserInterface.getOutputDir().length() - 1) == File.separatorChar)) {
@@ -118,6 +115,7 @@ parse:  while (i < args.length) {
                         final File checkOutputDir = new File(ViewUserInterface.getOutputDir());
                         if ( !checkOutputDir.exists()) {
                             ViewUserInterface.setProvidedOutputDir(false);
+                            Preferences.debug("In argument -"+c+", "+ViewUserInterface.getOutputDir()+" does not exist");
                             ViewUserInterface.printUsageAndExit();
                         }
                     }
@@ -130,13 +128,13 @@ parse:  while (i < args.length) {
                     if(f.exists() && f.isDirectory() && f.canRead()) {
                         ViewUserInterface.setSecondaryPluginsDir(f);
                     }else {
-                        Preferences.debug("plugindir is not a valid readable directory", Preferences.DEBUG_MINOR);
-                        ViewUserInterface.printUsageAndExit();
+                        Preferences.debug("In argument -"+c+", "+secPluginsDir+" is not a valid readable directory", Preferences.DEBUG_MINOR);
+                        ViewUserInterface.printUsageAndExit(c);
                     }
                     break;
                 
                 case HomeDir:
-                    //not currently usable, is only System.getProperty("user.home");
+                    Preferences.debug("HomeDir command is not currently usable, is only System.getProperty(\"user.home\")");
                     break;
                 
                 case PreferencesDir:
@@ -146,7 +144,8 @@ parse:  while (i < args.length) {
                     if(f.exists() && f.isDirectory() && f.canRead() && f.canWrite()) {
                         Preferences.setPreferencesFileDirectory(prefDir);
                     } else {
-                        Preferences.debug("preferencesdir must be a writable existing directory.", Preferences.DEBUG_MINOR);
+                        Preferences.debug("In argument -"+c+", "+prefDir+" is not a writable existing directory.", Preferences.DEBUG_MINOR);
+                        ViewUserInterface.printUsageAndExit(c);
                     }
                     break;
                     
@@ -159,7 +158,8 @@ parse:  while (i < args.length) {
                     if(!f.exists() || (f.canRead() && f.canWrite())) {
                         Preferences.setPreferencesFileName(prefName);
                     } else {
-                        Preferences.debug("The preferences file name must be in a readable and writable location.", Preferences.DEBUG_MINOR);
+                        Preferences.debug("In argument -"+c+", "+prefName+" is not in a readable and/or writable location.", Preferences.DEBUG_MINOR);
+                        ViewUserInterface.printUsageAndExit(c);
                     }
                     break;
                 }
@@ -175,7 +175,7 @@ parse:  while (i < args.length) {
      */
     private void checkPrefDirCommand(String[] args, int initArg) {
         for(int i=0; i<args.length; i++) {
-            if(StaticCommand.valueOf(args[i]) == StaticCommand.PreferencesDir) {
+            if(StaticArgument.getArgument(args[i], true) == StaticArgument.PreferencesDir) {
                 String[] argSub = new String[]{args[i], args[i+1]};
                 parseArguments(argSub, 0);
             }
