@@ -275,6 +275,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     private double imageMax;
 
     private int dataType;
+    
+    private JPanel resamplePanel;
 
     /**
      * Tells how to select fill value for out of bounds data 0 for image minimum 1 for NaN for float, zero otherwise. 2
@@ -2499,7 +2501,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     private JPanel buildResamplePanel() {
 
-        final JPanel resamplePanel = new JPanel(new GridBagLayout());
+        resamplePanel = new JPanel(new GridBagLayout());
         resamplePanel.setBorder(buildTitledBorder("Resample"));
 
         resampleGroup = new ButtonGroup();
@@ -4053,14 +4055,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
         Preferences.debug(xfrm + "\n");
 
-        // if (!userDefinedMatrix.isSelected()) {
-        // doRotateCenter = false;
-        // }
-        // else {
-        // doRotateCenter is checked if it is selected everytime,
-        // does not depend on userDefinedMatrix is selected or not. Changed 11/16 by Mayur
-        doRotateCenter = rotCenter.isSelected();
-        // }
+         if (tabbedPane.getSelectedComponent() == resamplePanel) {
+             doRotateCenter = false;
+         }
+         else {
+             doRotateCenter = rotCenter.isSelected();
+         }
         if (doRotateCenter) {
             useSACenter = useSACenterBox.isSelected();
         }
