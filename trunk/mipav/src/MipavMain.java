@@ -81,6 +81,7 @@ parse:  while (i < args.length) {
                 
                 case Help:
                     ViewUserInterface.printUsageAndExit();
+                    break;
                 
                 case InputDir:
                     ViewUserInterface.setProvidedUserDefaultDir(true);
