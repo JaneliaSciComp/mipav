@@ -1294,6 +1294,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 			 currentComponentImage.setSlice(currentZSlice);
 			 //setImageB(maskImages[currentAge]);
 			 //currentComponentImage.setAlpha(currentOpacity/100f);
+			 setAlphaBlend(currentOpacity);
 			 currentComponentImage.show(0,currentZSlice,null,null,true);
 			  int linePosition;
 			  int invZSlice = 0;;
@@ -1374,6 +1375,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 						     setImageB(maskImages[currentAge]);
 
 						     //currentComponentImage.setAlpha(currentOpacity/100f);
+						     setAlphaBlend(currentOpacity);
 						     currentComponentImage.show(0,currentZSlice,null,lutb,true);
 						     
 						     imagePanel.add(currentComponentImage,imageGBC);
@@ -1420,6 +1422,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 					        
@@ -1459,6 +1462,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 					      
@@ -1494,6 +1498,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2010,6 +2015,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        this.setImageA(t1AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 					        
@@ -2027,6 +2033,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
 					        currentComponentImage.setZoom(currentZoom, currentZoom);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2045,6 +2052,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        this.setImageA(pdAtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2065,6 +2073,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        this.setImageA(t1AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2083,6 +2092,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        this.setImageA(t2AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2101,6 +2111,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        this.setImageA(pdAtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2121,6 +2132,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        this.setImageA(t1AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2139,6 +2151,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        this.setImageA(t2AtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2157,6 +2170,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 					        this.setImageA(pdAtlasImages[currentAge]);
 					        setImageB(maskImages[currentAge]);
 					        //currentComponentImage.setAlpha(currentOpacity/100f);
+					        setAlphaBlend(currentOpacity);
 					        currentComponentImage.show(0,currentZSlice,null,lutb,true);
 					        imagePanel.add(currentComponentImage,imageGBC);
 
@@ -2307,6 +2321,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         validate();
         validate();
         //currentComponentImage.setAlpha(currentOpacity/100f);
+        setAlphaBlend(currentOpacity);
         currentComponentImage.show(0,currentZSlice,null,null,true);
         
         
@@ -2343,6 +2358,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
             currentComponentImage.setZoom(newZoom, newZoom);
             validate();
             //currentComponentImage.setAlpha(currentOpacity/100f);
+            setAlphaBlend(currentOpacity);
             currentComponentImage.show(0,currentZSlice,null,null,true);
 
             setTitle(title + "zoom:" + df.format(currentZoom));
@@ -2363,6 +2379,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
             currentComponentImage.setZoom(newZoom, newZoom);
             validate();
             //currentComponentImage.setAlpha(currentOpacity/100f);
+            setAlphaBlend(currentOpacity);
             currentComponentImage.show(0,currentZSlice,null,null,true);
             
             
@@ -2399,6 +2416,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         currentComponentImage.setZoom(newZoom, newZoom);
         validate();
         //currentComponentImage.setAlpha(currentOpacity/100f);
+        setAlphaBlend(currentOpacity);
         currentComponentImage.show(0,currentZSlice,null,null,true);
         
         
@@ -2436,6 +2454,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         currentComponentImage.setZoom(newZoom, newZoom);
         validate();
         //currentComponentImage.setAlpha(currentOpacity/100f);
+        setAlphaBlend(currentOpacity);
         currentComponentImage.show(0,currentZSlice,null,null,true);
         
         
@@ -2826,6 +2845,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         // redraw the paintBrushCursor (quick)
         currentComponentImage.updatePaintBrushCursor();
         //currentComponentImage.setAlpha(currentOpacity/100f);
+        setAlphaBlend(currentOpacity);
         if(currentComponentImage.show(0,currentZSlice,LUTa,LUTb,true) == false) {
         	return false;
         }
