@@ -2440,9 +2440,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (args.length == 0) {
             return args.length;
         }
+        
 
         // show the arguments
-        // TODO: make this an debugging option?
         System.err.println("Command line argument list:");
         Preferences.debug("Command line argument list:\n");
 
@@ -2528,7 +2528,7 @@ parse:  while (i < args.length) {
             if (arg.startsWith("-")) {
 
                 //parse commands which require an initialized mipav
-                InstanceCommand c = InstanceCommand.getCommand(arg);
+                InstanceArgument c = InstanceArgument.getCommand(arg);
                 if(c == null) {
                     i++;
                     continue parse;
@@ -2563,7 +2563,7 @@ parse:  while (i < args.length) {
                                 } else {
                                     Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
                                     System.out.println("Can not find " + imgName);
-                                    printUsageAndExit();
+                                    printUsageAndExit(c);
                                 }
                             }
                         } else {
@@ -2573,7 +2573,7 @@ parse:  while (i < args.length) {
                             } else {
                                 Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
                                 System.out.println("Can not find " + imgName);
-                                printUsageAndExit();
+                                printUsageAndExit(c);
                             }
                         }
                         imageList.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
@@ -2588,7 +2588,7 @@ parse:  while (i < args.length) {
                             } else {
                                 Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
                                 System.out.println("Can not find " + imgName);
-                                printUsageAndExit();
+                                printUsageAndExit(c);
                             }
                         } else {
                             if (isProvidedUserDefaultDir()) {
@@ -2604,7 +2604,7 @@ parse:  while (i < args.length) {
                                     } else {
                                         Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
                                         System.out.println("Can not find " + imgName);
-                                        printUsageAndExit();
+                                        printUsageAndExit(c);
                                     }
                                 }
                             } else {
@@ -2614,7 +2614,7 @@ parse:  while (i < args.length) {
                                 } else {
                                     Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
                                     System.out.println("Can not find " + imgName);
-                                    printUsageAndExit();
+                                    printUsageAndExit(c);
                                 }
                             }
 
@@ -2711,9 +2711,10 @@ parse:  while (i < args.length) {
                         MipavUtil.displayError("Unable to load plugin (ins)");
                     } catch (final IllegalAccessException e) {
                         MipavUtil.displayError("Unable to load plugin (acc)");
+                    } finally {
+                        printUsageAndExit(c);
                     }
                     break;
-                    
                 }
             } 
             i++;
@@ -4139,12 +4140,24 @@ parse:  while (i < args.length) {
     }
 
     /**
-     * Displays command line help information on usage to standard out and then into an informational dialog box then
-     * exits the MIPAV application. Help display just shows the different options, display help, load image, load
-     * script, load VOI, and hide menu bar, as well as examples of use.
+     * Displays command line help information on usage of all commands and then exits.
      */
      public static void printUsageAndExit() {
-         final String helpInfo = generateCmdUsageInfo();
+         printUsageAndExit(null);
+     }
+     
+     /**
+      * Displays command line help information on usage to standard out and then into an informational dialog box then
+      * exits the MIPAV application. Help display just shows the different options, display help, load image, load
+      * script, load VOI, and hide menu bar, as well as examples of use.
+      */
+     public static void printUsageAndExit(Argument c) {
+         final String helpInfo;
+         if(c != null) {
+             helpInfo = c.generateCmdUsageInfo();
+         } else {
+             helpInfo = generateCmdUsageInfo();
+         }
          
          // print this usage help to the console
          System.out.println(helpInfo);
@@ -4166,11 +4179,12 @@ parse:  while (i < args.length) {
       */
      public static String generateCmdUsageInfo() {
          StringBuilder b = new StringBuilder();
-         for(StaticCommand c : StaticCommand.values()) {
-             b.append("-"+c.getCommand()).append("\t").append(c.getHelp()).append("\n");
+         b.append("Here are MIPAV command line arguments that you can use:\n");
+         for(StaticArgument c : StaticArgument.values()) {
+             b.append("-"+c.getArgument()).append("\t").append(c.getHelp()).append("\n");
          }
-         for(InstanceCommand c : InstanceCommand.values()) {
-             b.append("-"+c.getCommand()).append("\t").append(c.getHelp()).append("\n");
+         for(InstanceArgument c : InstanceArgument.values()) {
+             b.append("-"+c.getArgument()).append("\t").append(c.getHelp()).append("\n");
          }
          b.append("Examples:").append("\n");
          b.append("> mipav imageFileName").append("\n").append("> mipav -i imageFileName -s scriptFileName -hide").append("\n");
