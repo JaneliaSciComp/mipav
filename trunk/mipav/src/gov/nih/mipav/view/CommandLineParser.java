@@ -29,15 +29,18 @@ public interface CommandLineParser {
      */
     public int parseArguments(final String[] args, final int initArg);
     
-    public interface Command {
+    public interface Argument {
         /**Returns help for using command. */
         public String getHelp();
         
         /** Returns command in lower-case form. */
-        public String getCommand();
+        public String getArgument();
+        
+        /** Prints usage info for specific command*/
+        public String generateCmdUsageInfo();
     }
     
-    public enum InstanceCommand implements Command {
+    public enum InstanceArgument implements Argument {
         Image("i", "Image file name"),
         MultiImage("m", "Image multifile name"),
         RawImage("r", "Raw Image Info (example: -r datatype;extents;resols;units;endian;offset)\n"
@@ -73,7 +76,7 @@ public interface CommandLineParser {
         /** Alternate commands for a given action */
         private String[] altCommand;
         
-        InstanceCommand(String command, String help, String... altCommand) {
+        InstanceArgument(String command, String help, String... altCommand) {
             this.command = command;
             this.help = help;
             this.altCommand = altCommand;
@@ -83,27 +86,45 @@ public interface CommandLineParser {
             return help;
         }
 
-        public String getCommand() {
+        public String getArgument() {
             return command;
         }
         
         public String toString() {
             return command;
         }
+        
+        public String generateCmdUsageInfo() {
+            StringBuilder b = new StringBuilder();
+            b.append("Invalid use of argument ").append(getArgument()).append("\n");
+            b.append("-"+getArgument()).append("\t").append(getHelp()).append("\n");
+            if(altCommand != null && altCommand.length > 0) {
+                b.append("Alternate command forms:\n");
+                for(int i=0; i<altCommand.length; i++) {
+                    b.append("-").append(altCommand[i]).append("\n");
+                }
+            }
+            b.append("Example:\n");
+            b.append("> mipav -").append(getArgument()).append(" argument");
+            return b.toString();
+        }
 
-        public static InstanceCommand getCommand(String str) {
-            InstanceCommand cmd = null;
+        public static InstanceArgument getCommand(String str) {
+            return getArgument(str, false);
+        }
+        
+        public static InstanceArgument getArgument(String str, boolean quiet) {
             str = str.toLowerCase();
             if(str.length() > 0 && str.charAt(0) == '-') {
                 str = str.substring(1);
             }
-            for(InstanceCommand c : InstanceCommand.values()) {
+            for(InstanceArgument c : InstanceArgument.values()) {
                 if(str.equals(c.command)) {
                     return c;
                 }
             }
             
-            for(InstanceCommand c : InstanceCommand.values()) {
+            for(InstanceArgument c : InstanceArgument.values()) {
                 for(int i=0; i<c.altCommand.length; i++) {
                     if(str.equals(c.altCommand[i])) {
                         return c;
@@ -111,16 +132,19 @@ public interface CommandLineParser {
                 }
             }
             
-            Preferences.debug("No matching instance command found for "+str);
+            if(!quiet) {
+                if(StaticArgument.getArgument(str, true) == null) {
+                    System.err.println("\nDEBUG: No matching instance command found for "+str);
+                    Preferences.debug("No matching instance command found for "+str);
+                }
+            }
             return null;
         }
-        
-        
     }
     
-    public enum StaticCommand implements Command {
+    public enum StaticArgument implements Argument {
         HomeDir("homedir", "Set the mipav home directory"),
-        PreferencesDir("prefdir", "Mipav preferences directory (defaults to home directory"),
+        PreferencesDir("prefdir", "Mipav preferences directory (defaults to home directory)"),
         PreferencesName("prefname", "Name of the mipav preferences file"),
         InputDir("inputdir", "Image input directory"),
         OutputDir("outputdir", "Image output directory"),
@@ -134,41 +158,55 @@ public interface CommandLineParser {
         /** Alternate commands for a given action */
         private String[] altCommand;
         
-        StaticCommand(String s, String help, String... altCommand) {
+        StaticArgument(String s, String help, String... altCommand) {
             this.command = s;
             this.help = help;
             this.altCommand = altCommand;
-        }
-        
-        StaticCommand(String[] s, String help) {
-            
         }
 
         public String getHelp() {
             return help;
         }
 
-        public String getCommand() {
+        public String getArgument() {
             return command;
         }
         
         public String toString() {
             return command;
         }
+        
+        public String generateCmdUsageInfo() {
+            StringBuilder b = new StringBuilder();
+            b.append("Invalid use of argument ").append(getArgument()).append("\n");
+            b.append("-"+getArgument()).append("\t").append(getHelp()).append("\n");
+            if(altCommand != null && altCommand.length > 0) {
+                b.append("Alternate command forms:\n");
+                for(int i=0; i<altCommand.length; i++) {
+                    b.append("-").append(altCommand[i]).append("\n");
+                }
+            }
+            b.append("Example:\n");
+            b.append("> mipav -").append(getArgument()).append(" argument");
+            return b.toString();
+        }
 
-        public static StaticCommand getCommand(String str) {
-            StaticCommand cmd = null;
+        public static StaticArgument getArgument(String str) {
+            return getArgument(str, false);
+        }
+        
+        public static StaticArgument getArgument(String str, boolean quiet) {
             str = str.toLowerCase();
             if(str.length() > 0 && str.charAt(0) == '-') {
                 str = str.substring(1);
             }
-            for(StaticCommand c : StaticCommand.values()) {
+            for(StaticArgument c : StaticArgument.values()) {
                 if(str.equals(c.command)) {
                     return c;
                 }
             }
             
-            for(StaticCommand c : StaticCommand.values()) {
+            for(StaticArgument c : StaticArgument.values()) {
                 for(int i=0; i<c.altCommand.length; i++) {
                     if(str.equals(c.altCommand[i])) {
                         return c;
@@ -176,10 +214,12 @@ public interface CommandLineParser {
                 }
             }
             
-            Preferences.debug("No matching static command found for "+str);
+            if(!quiet) {
+                if(InstanceArgument.getArgument(str, true) == null) {
+                    Preferences.debug("No matching static command found for "+str);
+                }
+            }
             return null;
         }
     }
-    
-    
 }
