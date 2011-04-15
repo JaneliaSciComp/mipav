@@ -837,8 +837,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
             resultImage[0].setImageNameArray(imageNameArray);
         }
         
-        System.out.println("This is " + numOperators);
-        System.out.println("That is " + numDirections);
+        //System.out.println("This is " + numOperators);
+        //System.out.println("That is " + numDirections);
 
             if (image.isColorImage()) {
                 textureAlgo = new AlgorithmHaralickTexture(resultImage, image, RGBOffset, windowSize, offsetDistance,
@@ -1648,7 +1648,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
      * @return The image name of the requested output image parameter label.
      */
     public String getOutputImageName(final String imageParamName) {
-    		System.out.println(resultImage.length);
+    		//System.out.println(resultImage.length);
                 return resultImage[0].getImageName();
         }
 

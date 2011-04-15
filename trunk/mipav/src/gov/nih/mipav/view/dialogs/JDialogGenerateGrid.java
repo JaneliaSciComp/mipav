@@ -359,8 +359,8 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
         
         
         
-        System.out.println(numHorizontal);
-        System.out.println(numVertical);
+        //System.out.println(numHorizontal);
+       // System.out.println(numVertical);
         
 
         verticalSpacing = (int)(xDim / numVertical);

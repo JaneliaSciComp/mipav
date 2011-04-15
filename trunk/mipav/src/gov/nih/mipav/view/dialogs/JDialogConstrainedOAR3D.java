@@ -1202,8 +1202,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
      * Calls the algorithm with the set-up parameters.
      */
     protected void callAlgorithm() {
-        System.out.println("Reference image name is " + refImage.getImageName());
-        System.out.println("Moving image name is " + matchImage.getImageName());
+        //System.out.println("Reference image name is " + refImage.getImageName());
+        //System.out.println("Moving image name is " + matchImage.getImageName());
 
         if (voisOnly) {
             float[] refRes = new float[] {
@@ -1259,8 +1259,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                                                  transLimits, maxOfMinResol, doSubsample, fastMode, calcCOG,
                                                  bracketBound, maxIterations, numMinima);
         } else {
-            System.out.println("Reference image name is " + refImage.getImageName());
-            System.out.println("Moving image name is " + matchImage.getImageName());
+           // System.out.println("Reference image name is " + refImage.getImageName());
+            //System.out.println("Moving image name is " + matchImage.getImageName());
 
             reg3 = new AlgorithmConstrainedOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateRangeX,
                                                  rotateBeginY, rotateRangeY, rotateBeginZ, rotateRangeZ, numCoarseX,
