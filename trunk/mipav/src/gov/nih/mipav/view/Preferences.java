@@ -741,7 +741,7 @@ public class Preferences {
 
         if ( (command != null) && (shortcut != null)) {
 
-            System.out.println("shortcut: " + command + ": " + shortcut.toString());
+            //System.out.println("shortcut: " + command + ": " + shortcut.toString());
             if (Preferences.isDefaultCommand(command)) {
                 MipavUtil.displayWarning("This is a default function: shortcut can not be remapped");
 

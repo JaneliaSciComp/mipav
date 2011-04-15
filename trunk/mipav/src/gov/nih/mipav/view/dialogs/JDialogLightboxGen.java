@@ -101,7 +101,7 @@ public class JDialogLightboxGen extends JDialogScriptableBase implements Algorit
             }
 
             if (lightGen.getImage() != null) {
-                System.out.println("Lightbox Image completed.");
+                //System.out.println("Lightbox Image completed.");
                 
 
 

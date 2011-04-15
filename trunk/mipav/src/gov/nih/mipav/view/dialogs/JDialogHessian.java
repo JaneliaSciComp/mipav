@@ -528,13 +528,13 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
             evecs[1][1] = tmp;
         }
 
-        System.out.print("lambda 1: " + fltFmt.format(evals[0]) + "   ");
-        System.out.print("evec 1: " + fltFmt.format(evecs[0][0]) + "   " + fltFmt.format(evecs[1][0]));
-        System.out.println("");
+        //System.out.print("lambda 1: " + fltFmt.format(evals[0]) + "   ");
+        //System.out.print("evec 1: " + fltFmt.format(evecs[0][0]) + "   " + fltFmt.format(evecs[1][0]));
+        //System.out.println("");
 
-        System.out.print("lambda 2: " + fltFmt.format(evals[1]) + "   ");
-        System.out.print("evec 2: " + fltFmt.format(evecs[0][1]) + "   " + fltFmt.format(evecs[1][1]));
-        System.out.println("");
+        //System.out.print("lambda 2: " + fltFmt.format(evals[1]) + "   ");
+        //System.out.print("evec 2: " + fltFmt.format(evecs[0][1]) + "   " + fltFmt.format(evecs[1][1]));
+        //System.out.println("");
 
     } // end ptHessian2D()
 
@@ -647,10 +647,10 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
             lut[2] = tmp;
         }
 
-        System.out.println("Sorted Eigenvalues");
-        System.out.print("lambda 1: " + fltFmt.format(evals[lut[0]]) + "  ");
-        System.out.print("lambda 2: " + fltFmt.format(evals[lut[1]]) + "  ");
-        System.out.println("lambda 3: " + fltFmt.format(evals[lut[2]]));
+        //System.out.println("Sorted Eigenvalues");
+        //System.out.print("lambda 1: " + fltFmt.format(evals[lut[0]]) + "  ");
+        //System.out.print("lambda 2: " + fltFmt.format(evals[lut[1]]) + "  ");
+        //System.out.println("lambda 3: " + fltFmt.format(evals[lut[2]]));
 
         blobRatio = magEvals[lut[0]] / (Math.sqrt(magEvals[lut[1]] * magEvals[lut[2]]));
         areaRatio = magEvals[lut[1]] / magEvals[lut[2]];

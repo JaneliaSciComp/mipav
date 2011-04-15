@@ -200,7 +200,7 @@ public class JPanelFileSelection extends JPanelEdit implements ActionListener {
                 }
             }
         } else if (action.getSource() instanceof JTextField) {
-            System.out.println("JTEXTFIELD");
+           // System.out.println("JTEXTFIELD");
         }
     }
 

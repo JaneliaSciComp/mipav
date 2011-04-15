@@ -132,7 +132,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
             }
 
             if (matchAlgo.isCompleted() == true) {
-                System.out.println("AlgorithmMatchImages completed.");
+               // System.out.println("AlgorithmMatchImages completed.");
 
                 // Display new images
                 try {

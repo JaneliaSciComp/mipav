@@ -600,7 +600,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 					"General error while reading file " + url + ". \n" +
 					"Exception : " + e + ". \n" +
 					"Start applet with default graph", "General error", JOptionPane.ERROR_MESSAGE);
-			System.out.println(url);
+			//System.out.println(url);
 			System.out.println("Exception : " + e);
 			e.printStackTrace(System.out);
 		}

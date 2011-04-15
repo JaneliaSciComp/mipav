@@ -59,7 +59,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
      * only the <code>name</code> plugin had been selected, but confirmation has not occurred.
      */
     public JDialogUninstallPlugin(String name) {
-    	System.out.println("Reached "+name);
+    	//System.out.println("Reached "+name);
     	ui = ViewUserInterface.getReference();
     }
 

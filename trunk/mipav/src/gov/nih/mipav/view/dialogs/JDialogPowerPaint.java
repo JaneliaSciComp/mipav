@@ -519,7 +519,7 @@ public class JDialogPowerPaint extends JDialogBase
      */
     public void keyTyped(KeyEvent e) {
         String key = Character.toString(e.getKeyChar());
-        System.out.println("key: " + key);
+        //System.out.println("key: " + key);
 
         if (key.equals("d")) {
             actionPerformed(new ActionEvent(this, 0, "Dilate"));
@@ -2636,7 +2636,7 @@ public class JDialogPowerPaint extends JDialogBase
 
         // find main object
         if ((backgroundDim == 2) && (sliceDir == XY)) {
-            System.out.println("XY");
+            //System.out.println("XY");
 
             int[][] label;
 
@@ -2668,7 +2668,7 @@ public class JDialogPowerPaint extends JDialogBase
                 }
             }
         } else if ((backgroundDim == 2) && (sliceDir == XZ)) {
-            System.out.println("XZ");
+            //System.out.println("XZ");
 
             int[][] label;
 
@@ -2700,7 +2700,7 @@ public class JDialogPowerPaint extends JDialogBase
                 }
             }
         } else if ((backgroundDim == 2) && (sliceDir == ZY)) {
-            System.out.println("ZY");
+            //System.out.println("ZY");
 
             int[][] label;
 
@@ -4141,7 +4141,7 @@ class PaintAutoSave extends TimerTask {
     public void run() {
 
         // transfer the paint to a ModelImage
-        System.out.println("saving the paint");
+        //System.out.println("saving the paint");
 
         ModelImage tmp = new ModelImage(ModelImage.BOOLEAN, image.getExtents(), "paint_autosave");
 

@@ -645,7 +645,6 @@ public class JDialogSaveSlices extends JDialogBase {
         OKButton.requestFocus();
         setVisible(true);
         // if(options.getFileType() == FileUtility.DICOM) {
-        // System.out.println("hhhhhadhhhahhhhahahh");
         // actionPerformed(new ActionEvent(this,1,"OK"));
         // }
 

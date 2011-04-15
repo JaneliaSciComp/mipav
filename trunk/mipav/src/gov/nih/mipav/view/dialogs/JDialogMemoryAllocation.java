@@ -997,8 +997,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
             throw new IOException("Unable to open " + startupFile.getAbsolutePath() + " for writing.");
         }
 
-        System.out.println(startupFile.toURI());
-        System.out.println(startupFile.getParentFile().toURI());
+        //System.out.println(startupFile.toURI());
+        //System.out.println(startupFile.getParentFile().toURI());
 
         if ( !startupFile.canWrite()) {
             MipavUtil.displayError("Not allowed to alter the java runtime start up file.\n"

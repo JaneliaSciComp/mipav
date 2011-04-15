@@ -2108,7 +2108,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
             if (node != null) {
                 inOrder(node.left, level + 1);
-                System.out.println("Node " + node + " at level " + level);
+                //System.out.println("Node " + node + " at level " + level);
                 inOrder(node.right, level + 1);
             }
         }

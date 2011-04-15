@@ -137,7 +137,7 @@ public class JPanelAnonymizeImage extends JPanelChecklist {
                                              // the checkbox be visible.
                 }
             } catch (NullPointerException npe) {
-                ;
+                
                 System.out.println("Tag not found; tag in question is: " + FileInfoDicom.anonymizeTagIDs[i]);
             }
         }

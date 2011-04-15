@@ -905,13 +905,13 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
      */
     @SuppressWarnings("unused")
     private ScriptTreeNode restoreSavedExecuter(Node executer) {
-        System.out.println("executer: " + executer.getNodeName());
+        //System.out.println("executer: " + executer.getNodeName());
 
         ScriptTreeNode newNode = new ScriptTreeNode("Script Executer", JDialogRunScriptView.SCRIPTNODE);
         ScriptTreeNode[] imageNodes = new ScriptTreeNode[executer.getChildNodes().getLength()];
         ScriptTreeNode voi = null;
-        System.out.println("imageNodes length: " + imageNodes.length);
-        System.out.println("first Child: " + executer.getFirstChild().getNodeName());
+        //System.out.println("imageNodes length: " + imageNodes.length);
+        //System.out.println("first Child: " + executer.getFirstChild().getNodeName());
 
         // loop over images
         for (int i = 1; i < executer.getChildNodes().getLength(); i += 2) {
@@ -925,7 +925,7 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
             // ScriptTreeNode(executer.getChildNodes().item(i).getNodeName().replace("__",
             // " "), this.IMAGENODE);
             newNode.add(imageNodes[ii]);
-            System.out.println("newNode = " + imageNodes[ii]);
+            //System.out.println("newNode = " + imageNodes[ii]);
 
             for (int j = 1; j < executer.getChildNodes().item(i).getChildNodes().getLength(); j += 2) {
                 voi = new ScriptTreeNode(executer.getChildNodes().item(i).getChildNodes().item(j).getNodeName().replaceAll("__",

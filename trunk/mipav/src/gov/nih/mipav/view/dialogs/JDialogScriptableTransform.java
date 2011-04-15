@@ -1358,7 +1358,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         if (spline != null) {
-            System.out.println("in here");
             spline.run();
             resultImage = spline.getResultImage();
 

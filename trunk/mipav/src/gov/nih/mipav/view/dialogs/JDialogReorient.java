@@ -475,7 +475,7 @@ public class JDialogReorient extends JDialogScriptableBase
         if (defaultsString != null) {
 
             try {
-                System.out.println(defaultsString);
+                //System.out.println(defaultsString);
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
 				newOr[0] = new Integer(st.nextToken()).intValue();
                 newOr[1] = new Integer(st.nextToken()).intValue();
@@ -485,7 +485,7 @@ public class JDialogReorient extends JDialogScriptableBase
 			}
             catch (Exception ex) {
                 // since there was a problem parsing the defaults string, start over with the original defaults
-                System.out.println( "Resetting defaults for dialog: " + getDialogName() );
+                //System.out.println( "Resetting defaults for dialog: " + getDialogName() );
                 Preferences.removeProperty( getDialogName() );
             }
         } else {
@@ -499,7 +499,7 @@ public class JDialogReorient extends JDialogScriptableBase
 	
     public void saveDefaults() {
         String defaultsString = new String( getParameterString(",") );
-        System.out.println(defaultsString);
+        //System.out.println(defaultsString);
         Preferences.saveDialogDefaults(getDialogName(),defaultsString);
     }
 	 
@@ -829,7 +829,7 @@ public class JDialogReorient extends JDialogScriptableBase
 		String name = (String)comboTemplate.getSelectedItem();
 		template = ViewUserInterface.getReference().getRegisteredImageByName(name);
 		
-		System.out.println(getParameterString("|"));
+		//System.out.println(getParameterString("|"));
         
     	return true;  	
     }   // end setVariables()
@@ -1133,7 +1133,7 @@ public class JDialogReorient extends JDialogScriptableBase
 		TransMatrix transform = new TransMatrix(4);
         transform.setMatrix(0, 2, 0, 3, X);
 		
-		System.out.println(transform.toString());
+		//System.out.println(transform.toString());
 		
 		int interp = AlgorithmTransform.TRILINEAR;
 		if (interpType.equals("Nearest Neighbor")) {

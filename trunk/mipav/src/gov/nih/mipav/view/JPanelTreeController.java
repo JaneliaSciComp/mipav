@@ -255,7 +255,6 @@ public class JPanelTreeController extends JPanel implements ActionListener, Tree
 
         // specific command to transfer the entire tree from A to B
         if (command.equals(ALLTREEB)) {
-        	System.out.println("ZZZ");
             treeB.setModel(treeA.getModel());
         }
 
@@ -503,7 +502,7 @@ public class JPanelTreeController extends JPanel implements ActionListener, Tree
         try {
             tree = (JTree) (lse.getSource());
         } catch (ClassCastException cce) {
-            System.out.println("not a JTree.");
+            //System.out.println("not a JTree.");
 
             return;
         }
