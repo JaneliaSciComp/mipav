@@ -95,10 +95,12 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         super(theParentFrame, false);
         File f = new File(pluginDir);
         if(!f.exists()) {
-        	f.mkdirs();
+            f.mkdirs();
+            MipavUtil.displayError("The MIPAV plugin folder was just created, please restart MIPAV before installing plugins.");
+        } else {
+            ui = ViewUserInterface.getReference();
+            init();
         }
-        ui = ViewUserInterface.getReference();
-        init();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -229,6 +231,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					}
 				}
 			} catch (ClassNotFoundException e) {
+			    System.out.println(name+" plugin file was not found.");
 				//name could not likely be resolved given the current classpath
 			}
         }
