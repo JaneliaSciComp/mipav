@@ -230,7 +230,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
-        System.out.println("Pressed: "+command);
+        //System.out.println("Pressed: "+command);
         
         if(command.equals("OK")) {
         	
@@ -647,7 +647,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 					Nsa = Double.valueOf(spgrNumFA.getText()).intValue();
 				}
 			} catch (NumberFormatException ex1) {
-				System.out.println(spgrNumFA.getText());
+				//System.out.println(spgrNumFA.getText());
 				MipavUtil.displayError("The number of flip angles in panel 1 is not a valid value.");
 			}
 			
@@ -656,7 +656,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 					Nti = Double.valueOf(irspgrNum.getText()).intValue();
 				}
 			} catch (NumberFormatException ex1) {
-				System.out.println(irspgrNum.getText());
+				//System.out.println(irspgrNum.getText());
 				MipavUtil.displayError("The number of irspgr images in panel 1 is not a valid value.");
 			}
 		}
@@ -795,7 +795,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	}
 
 	protected JPanel buildThresholdPanel() {
-		System.out.println("The selected state: "+thresholdMethod);
+		//System.out.println("The selected state: "+thresholdMethod);
 		
 		JPanel panel = new JPanel();
 		panel.setName("Threshold total");
@@ -1145,7 +1145,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		if(longestLength > 15) {
 			dialogWidthAdd += ((longestLength-15)*4.5);
 		}
-		System.out.println(dialogWidthAdd);
+		//System.out.println(dialogWidthAdd);
 	}
 
 	/**
@@ -1692,7 +1692,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 			    ViewUserInterface.getReference().getMessageFrame().append("TreTR: "+treTR+"\n", ViewJFrameMessage.DEBUG);
 	    	} catch(Exception e) {
 	    		if(process && (performStraightTreT1 || performTreT1withPreCalculatedB1Map)) {
-	    			System.out.println("In conventional");
+	    			//System.out.println("In conventional");
 	    			return "Conventional TRE variables not correctly entered.";
 	    		}
 	    	}
@@ -1747,7 +1747,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    //pre-processing
 	    if(process && performTreT1HIFI) {
-	    	System.out.println("In hifi");
+	    	//System.out.println("In hifi");
 	    	try {
 			    if (mriStrength.equals(FieldStrength.mri3T)) {
 			        if (inversionType.equals(InversionType.DOUBLE)) {
@@ -1914,7 +1914,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 		public void actionPerformed(ActionEvent e) {
 			varSet();
-			System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
+			//System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
 		}
     }
     
@@ -1954,7 +1954,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 		public void actionPerformed(ActionEvent e) {
 			varSet();
-			System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
+			//System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
 		}
     }
     
@@ -2001,7 +2001,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     	
     	public void actionPerformed(ActionEvent e) {
 			varSet();
-			System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
+			//System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
 		}
     }
 
@@ -2204,7 +2204,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
             public String getCategory() {
-                System.out.println("Here3");
                 return new String("Algorithms.MRI");
             }
 

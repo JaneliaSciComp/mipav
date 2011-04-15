@@ -421,7 +421,7 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                     resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_invert"));
 
                     // Make algorithm
-                    System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
+                    //System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
                                                              outTempMax, false);
 
@@ -457,7 +457,7 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                 try {
 
                     // Make algorithm
-                    System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
+                    //System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
                     changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
                                                              outTempMax, false);
 

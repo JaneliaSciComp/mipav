@@ -1446,7 +1446,7 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
         scrollPane.setVisible(true);
         scrollPane.validate();
 
-        System.out.println("nImage = " + nImage);
+        //System.out.println("nImage = " + nImage);
 
         for (int i = 0; i < nImage; i++) {
             progressBar.updateValueImmed((int) ((float) (i + 1) / (float) nImage * 100));

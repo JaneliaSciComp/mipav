@@ -295,7 +295,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        System.out.println(command);
+        //System.out.println(command);
 
         if (command.equals("AdvancedPaint:Close")) {
 
@@ -2788,7 +2788,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
     private final void autosaveMask() {
         // transfer the paint to a ModelImage
-        System.out.println("saving the mask");
+        //System.out.println("saving the mask");
 
         try {
             ModelImage tmp = image.getParentFrame().getImageB();
@@ -2847,7 +2847,7 @@ class MultiPaintAutoSave extends TimerTask {
     public void run() {
 
         // transfer the paint to a ModelImage
-        System.out.println("saving the paint");
+        //System.out.println("saving the paint");
 
         ModelImage tmp = new ModelImage(ModelImage.BOOLEAN, image.getExtents(), "active_mask_autosave");
 

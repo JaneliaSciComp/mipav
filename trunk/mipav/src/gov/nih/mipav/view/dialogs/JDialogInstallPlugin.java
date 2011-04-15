@@ -186,7 +186,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         	//TODO: Install plugins
         	JList selected = selectorPanel.getSelectedFiles();
         	for(int i=0; i<selected.getModel().getSize(); i++) {
-        		System.out.println(selected.getModel().getElementAt(i));
+        		//System.out.println(selected.getModel().getElementAt(i));
         	}
         	installPlugins();
         } else if (source == cancelButton) {

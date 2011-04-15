@@ -491,7 +491,7 @@ public class JPanelListController extends JPanel implements ActionListener, List
         try {
             list = (JList) (lse.getSource());
         } catch (ClassCastException cce) {
-            System.out.println("not a JList.");
+            //System.out.println("not a JList.");
 
             return;
         }

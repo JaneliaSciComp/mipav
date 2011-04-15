@@ -277,14 +277,14 @@ public class JDialogListSaveSelection extends JDialogBase implements ActionListe
      * Here to allow subclasses to select the action to occur when a property change occurs in the select A panel.
      */
     protected void propertyChangeInSelectA() {
-        System.out.println("SELECT FILE A");
+        //System.out.println("SELECT FILE A");
     }
 
     /**
      * Here to allow subclasses to select the action to occur when a property change occurs in the select B panel.
      */
     protected void propertyChangeInSelectB() {
-        System.out.println("SELECT FILE B");
+        //System.out.println("SELECT FILE B");
     }
 
     /**

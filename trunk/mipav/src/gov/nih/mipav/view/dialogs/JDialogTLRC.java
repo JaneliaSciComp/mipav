@@ -260,8 +260,8 @@ public class JDialogTLRC extends JDialogBase {
      
       if (command.equals("setTalairach")) {
             pt = new Vector3f(frame.getSagittalComponentSlice(), frame.getCoronalComponentSlice(), frame.getAxialComponentSlice());
-            System.out.println("pt: " + (int)pt.X + "," + (int)pt.Y + "," + (int)pt.Z);
-			System.out.println("corrected pt: " + (int)toOriginal(pt).X + "," + (int)toOriginal(pt).Y + "," + (int)toOriginal(pt).Z);
+            //System.out.println("pt: " + (int)pt.X + "," + (int)pt.Y + "," + (int)pt.Z);
+			//System.out.println("corrected pt: " + (int)toOriginal(pt).X + "," + (int)toOriginal(pt).Y + "," + (int)toOriginal(pt).Z);
 			if (anteriorPt.isSelected()) {
                 pointType = ViewJComponentTriImage.ANTERIOR_PT;
                 ((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("A");

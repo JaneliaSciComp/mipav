@@ -277,7 +277,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
             if(selected != null) {
                 comboBoxImage.setSelectedItem(selected);
             }
-            System.out.println(comboBoxImage.getModel().getSize());
+            //System.out.println(comboBoxImage.getModel().getSize());
         }
     }
 

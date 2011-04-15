@@ -279,7 +279,7 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             x[1] = -1024;
             y[1] = yVal;
             z[1] = 0;
-            System.out.println("yVal = " + yVal);
+            //System.out.println("yVal = " + yVal);
         } else {
             x[1] = preset1;
             y[1] = dim.height - 1;
@@ -1463,7 +1463,7 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
         float mx = _mx;
         float my = _my;
 
-        System.out.println("updateCursor: x = " + _mx + " y = " + _my);
+        //System.out.println("updateCursor: x = " + _mx + " y = " + _my);
 
         index = _index;
 

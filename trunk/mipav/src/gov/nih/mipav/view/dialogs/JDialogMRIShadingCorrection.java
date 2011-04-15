@@ -289,7 +289,7 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
-                System.out.println("Resetting defaults for dialog: " + getDialogName());
+                //System.out.println("Resetting defaults for dialog: " + getDialogName());
                 Preferences.removeProperty(getDialogName());
             }
         }

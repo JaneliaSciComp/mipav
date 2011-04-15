@@ -1507,7 +1507,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         final ParameterTable table = new ParameterTable();
 
         try {
-        	System.out.println("beginning input params");
+        	//System.out.println("beginning input params");
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));
             table.put(new ParameterDouble("min_constr0", 1.0E-5));
@@ -1526,7 +1526,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             table.put(new ParameterString("directory_voi"));
             table.put(new ParameterString("file_name_voi2"));
             table.put(new ParameterString("directory_voi2"));
-            System.out.println("ending input params");
+            //System.out.println("ending input params");
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
