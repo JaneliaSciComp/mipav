@@ -18,6 +18,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 
 
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
@@ -28,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -88,6 +91,7 @@ import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 
+import gov.nih.mipav.view.dialogs.JDialogText;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
@@ -98,7 +102,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
  * @author pandyan
  *
  */
-public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmInterface,ChangeListener, MouseWheelListener, VOIManagerInterfaceListener {
+public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmInterface,ChangeListener, MouseWheelListener, VOIManagerInterfaceListener, MouseListener {
 	
 
 	
@@ -119,7 +123,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 	private JScrollPane imageScrollPanel;
 	
 	/** labels **/
-	private JLabel sliceLabel, ageLabel, infoLabel, opacityLabel;
+	private JLabel sliceLabel, ageLabel, infoLabel, opacityLabel, helpLabel;
 
 	/** buttons * */
     private JButton magButton,unMagButton,zoomToScreenButton, zoomOneButton,saveButton,winLevelButton, resetButton, lutButton, presetButton, sep1,sep2, sep3;
@@ -875,6 +879,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         lutButton = toolbarBuilder.buildButton("copyLUT", "Copy LUT of current image to all images in current modailty", "histolutCopy");
         //resetButton.setEnabled(false);
         //presetButton.setEnabled(false);
+        helpLabel = new JLabel("<html><a href=\" \">help</a></html>");
+        helpLabel.addMouseListener(this);
         
         annotationsButtonGroup = new ButtonGroup();
         annotationsButtonGroup.add(displayAnnotationsButton);
@@ -949,8 +955,8 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         gbc.gridx = 13;
         gbc.gridy = 0;
         toolbarPanel.add(lutButton, gbc);
-        gbc.gridx = 14;
-        toolbarPanel.add(infoLabel,gbc);
+        //gbc.gridx = 14;
+       // toolbarPanel.add(infoLabel,gbc);
         
         gbc.anchor = GridBagConstraints.CENTER;
 
@@ -1251,6 +1257,9 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
         gbc.gridx = 1;
         
         mainPanel.add(infoLabel,gbc);
+        gbc.gridx = 2;
+        gbc.insets = new Insets(10,10,10,5);
+        mainPanel.add(helpLabel,gbc);
         gbc.weightx = 1;
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridx = 0;
@@ -5052,6 +5061,117 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
 	@Override
 	public void updateData(boolean bCopyToCPU) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		Object source = e.getSource();
+
+
+
+        if (source == helpLabel) {
+            if (e.getButton() == MouseEvent.BUTTON1) {
+            	
+            	 openURL(pedsHome + File.separator + "config" + File.separator + "PedsAltasHelp.html");
+                
+
+            	
+            }
+        }
+		
+	}
+
+
+
+	 /**
+     * Launches browser...code obtained from: Bare Bones Browser Launch by Dem Pilafian Web Page Copyright (c) 2007
+     * Center Key Software Source Code and Javadoc are Public Domain http://www.centerkey.com/java/browser
+     * 
+     * @param url
+     */
+    public void openURL(String url) {
+
+        String osName = System.getProperty("os.name");
+        try {
+            if (osName.startsWith("Mac OS")) {
+                Class fileMgr = Class.forName("com.apple.eio.FileManager");
+                Method openURL = fileMgr.getDeclaredMethod("openURL", new Class[] {String.class});
+                openURL.invoke(null, new Object[] {url});
+            } else if (osName.startsWith("Windows")) {
+                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
+            } else { // assume Unix or Linux
+                String[] browsers = {"firefox", "opera", "konqueror", "epiphany", "mozilla", "netscape"};
+                String browser = null;
+                for (int count = 0; count < browsers.length && browser == null; count++) {
+                    if (Runtime.getRuntime().exec(new String[] {"which", browsers[count]}).waitFor() == 0) {
+                        browser = browsers[count];
+                    }
+                }
+                if (browser == null) {
+                    System.out.println("Can not find web browser");
+                } else {
+                    Runtime.getRuntime().exec(new String[] {browser, url});
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Can not find web browser");
+        }
+    }
+
+
+
+	/**
+     * mouse entered
+     */
+    public void mouseEntered(MouseEvent event) {
+        Object source = event.getSource();
+
+        if (source == helpLabel) {
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
+
+    }
+
+    /**
+     * mouse exited
+     */
+    public void mouseExited(MouseEvent event) {
+        Object source = event.getSource();
+
+        if (source == helpLabel) {
+            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        }
+
+    }
+
+
+
+
+
+
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
+
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
 		// TODO Auto-generated method stub
 		
 	}
