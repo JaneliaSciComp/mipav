@@ -710,7 +710,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
         } else if (command.startsWith("PlugInImageJ")) {
-        	System.out.println(command);
+        	//System.out.println(command);
         	 Class<?> thePlugInClass = null;
         	 Object thePlugInInstance = null; 
 

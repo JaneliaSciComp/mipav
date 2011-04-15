@@ -1789,7 +1789,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 int modelRow = imageTableSorter.modelIndex(imageTable.getSelectedRow());
 
                 FileInfoDicom fileInfoDICOM = imageTableVector.elementAt(modelRow);
-                System.out.println(fileInfoDICOM.getFileName());
+                //System.out.println(fileInfoDICOM.getFileName());
                 buildImage(fileInfoDICOM.getFileName(), fileInfoDICOM.getFileDirectory() + File.separatorChar);
                 componentImageDicom = img;
                 componentImageDicom.setSliceBrightness(brightness, contrast);
