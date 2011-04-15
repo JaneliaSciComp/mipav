@@ -1552,7 +1552,7 @@ public class ViewOpenImageSequence extends JFrame implements ActionListener, Pre
 
             if ( (srsPath.exists() == false) || (srsPath.canRead() == false)) {
                 final String home = System.getProperty("user.home");
-                System.out.println("home: " + home);
+                //System.out.println("home: " + home);
                 srsPath = new File(home);
             }
         } else {
@@ -1740,7 +1740,7 @@ public class ViewOpenImageSequence extends JFrame implements ActionListener, Pre
                 txtHeight.setText(String.valueOf(modelImage.getExtents()[1] / 2));
             }
         } catch (final Exception e) {
-            System.out.println("errr");
+            //System.out.println("errr");
             Preferences.debug(e.getMessage());
         } finally {
             modelImage.disposeLocal();
