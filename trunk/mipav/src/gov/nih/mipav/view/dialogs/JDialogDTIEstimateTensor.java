@@ -530,9 +530,9 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                 	 }
                  } else {
                 	 currDir = children[0].getParent();
-                	 if(fileIO == null) {
-                		 System.out.println("null");
-                	 }
+                	 //if(fileIO == null) {
+                		 //System.out.println("null");
+                	 //}
                 	 srcImage = fileIO.readImage(children[0].getName(), currDir
                              + File.separator, true, null);
 

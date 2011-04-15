@@ -339,7 +339,7 @@ public class JDialogAnimate extends JDialogBase {
             // Set the transformation matrix scale factors, here Sx = Sy.
             xfrm.setZoom(Sx, Sy);
 
-            System.out.println(xfrm);
+           // System.out.println(xfrm);
 
             boxIndex = comboBoxInterp.getSelectedIndex();
 

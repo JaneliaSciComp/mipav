@@ -414,7 +414,7 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outMin = 0;
                 outMax = 255;
             } else if (radioARGB_USHORT.isSelected()) {
-            	System.out.println("selected");
+            	//System.out.println("selected");
                 outStart.setText("Starting range (0 to 65535).");
                 outEnd.setText("Ending range (0 to 65535).");
                 //textOutStart.setText("0");

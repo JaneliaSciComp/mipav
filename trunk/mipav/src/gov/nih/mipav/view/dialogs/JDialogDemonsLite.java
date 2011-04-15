@@ -353,7 +353,7 @@ public class JDialogDemonsLite extends JDialogScriptableBase
         if (defaultsString != null) {
 
             try {
-                System.out.println(defaultsString);
+                //System.out.println(defaultsString);
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
 				levels = MipavUtil.getInt(st);
 				iter = MipavUtil.getInt(st);
@@ -378,7 +378,7 @@ public class JDialogDemonsLite extends JDialogScriptableBase
 	
     public void saveDefaults() {
         String defaultsString = new String( getParameterString(",") );
-        System.out.println(defaultsString);
+        //System.out.println(defaultsString);
         Preferences.saveDialogDefaults(getDialogName(),defaultsString);
     }
 	 
@@ -424,10 +424,10 @@ public class JDialogDemonsLite extends JDialogScriptableBase
             image.clearMask();
 			resultImage = ((AlgorithmDemonsLite)algorithm).getResultImages();
 			
-			System.out.println("got output");
+			//System.out.println("got output");
 			
 			if (algorithm.isCompleted() == true && resultImage != null) {
-                System.out.println("send it out");
+                //System.out.println("send it out");
 				//The algorithm has completed and produced a new image to be displayed.
 				
 				ViewJFrameImage imageFrame[] = new ViewJFrameImage[resultImage.length];
