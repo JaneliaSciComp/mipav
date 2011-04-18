@@ -226,7 +226,7 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
         }
 
         setCompleted(true);
-        System.out.println("Time consumed GB: " + (System.nanoTime()-startTime));
+        //System.out.println("Time consumed GB: " + (System.nanoTime()-startTime));
     }
     
     /**
