@@ -427,7 +427,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             outputTextArea.append("** Beginning Algorithm \n");
         }
 
-        System.out.println("** Beginning Algorithm \n");
+        //System.out.println("** Beginning Algorithm \n");
         
         
 		if(isDICOM) {
@@ -458,7 +458,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
         }
 
-        System.out.println("** Algorithm took " + seconds + " seconds \n");
+        //System.out.println("** Algorithm took " + seconds + " seconds \n");
         
         if(refImage != null) {
         	refImage.disposeLocal();
@@ -487,7 +487,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             outputTextArea.append("** Registering DWI dataset...\n");
         }
 
-        System.out.println("** Registering DWI dataset...\n");
+        //System.out.println("** Registering DWI dataset...\n");
         
 		fileParRec = new FilePARREC(prFileName, prFileDir + File.separator);
 		//read in 4d par/rec data
@@ -584,7 +584,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	    	outputTextArea.append(" - Registration complete \n");
 	    }
 
-	    System.out.println(" - Registration complete \n");
+	    //System.out.println(" - Registration complete \n");
 		
 		return true;
 	}
@@ -820,7 +820,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	            outputTextArea.append("* The study path is " + studyPath + " \n");
 	        }
 
-	        System.out.println("* The study path is " + studyPath + " \n");
+	        //System.out.println("* The study path is " + studyPath + " \n");
 	        
 	        
 	        
@@ -831,7 +831,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	                outputTextArea.append("* Interleaved dataset \n");
 	            }
 
-	            System.out.println("* Interleaved dataset \n");
+	            //System.out.println("* Interleaved dataset \n");
 	        }
 	        
 	        
@@ -843,7 +843,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	                outputTextArea.append("* For interleaved datasets, b-matrix file is required \n");
 	            }
 
-	            System.out.println("* For interleaved datasets, b-matrix file is required \n");
+	            //System.out.println("* For interleaved datasets, b-matrix file is required \n");
 	            success = false;
 	            finalize();
 	            setCompleted(true);
@@ -871,8 +871,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	        	if (outputTextArea != null) {
 	                outputTextArea.append("! ERROR: out of memory....exiting algorithm \n");
 	            }
-	            System.out.println("! ERROR: " + e.getCause().toString() + "\n");
-	            System.out.println("! ERROR: out of memory....exiting algorithm \n");
+	            //System.out.println("! ERROR: " + e.getCause().toString() + "\n");
+	            //System.out.println("! ERROR: out of memory....exiting algorithm \n");
 	            success = false;
 	            finalize();
 	            setCompleted(true);
@@ -881,8 +881,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	        	if (outputTextArea != null) {
 	                outputTextArea.append("! ERROR: IOException....exiting algorithm \n");
 	            }
-	            System.out.println("! ERROR: " + e.toString() + "\n");
-	            System.out.println("! ERROR: IOException....exiting algorithm \n");
+	            //System.out.println("! ERROR: " + e.toString() + "\n");
+	            //System.out.println("! ERROR: IOException....exiting algorithm \n");
 	            success = false;
 	            finalize();
 	            setCompleted(true);
@@ -904,7 +904,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	            outputTextArea.append("\n* Number of image slices in study dir is " + totalImageSlices + " \n");
 	        }
 
-	        System.out.println("\n\n* Number of image slices in study dir is " + totalImageSlices + " \n");
+	        //System.out.println("\n\n* Number of image slices in study dir is " + totalImageSlices + " \n");
 
 
 	        if (totalImageSlices == 0) {
@@ -932,7 +932,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	            outputTextArea.append("* Creating proc dir \n");
 	        }
 
-	        System.out.println("* Creating proc dir \n");
+	        //System.out.println("* Creating proc dir \n");
 	        success = createProcDirDICOM();
 
 	        if (success == false) {
@@ -949,7 +949,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	            outputTextArea.append("* Creating path file \n");
 	        }
 
-	        System.out.println("* Creating path file \n");
+	        //System.out.println("* Creating path file \n");
 	        if(isInterleaved) {
 	        	success = createPathFileForInterleavedDICOM();
 	        }else {
@@ -970,7 +970,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	            outputTextArea.append("* Creating list file \n");
 	        }
 
-	        System.out.println("* Creating list file \n");
+	        //System.out.println("* Creating list file \n");
 	        success = createListFileDICOM();
 
 	        if (success == false) {
@@ -990,7 +990,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	                outputTextArea.append("* Reading gradient file \n");
 	            }
 
-	            System.out.println("* Reading gradient file \n");
+	            //System.out.println("* Reading gradient file \n");
 	            success = readGradientFileDICOM();
 
 	            if (success == false) {
@@ -1006,7 +1006,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	                outputTextArea.append("* Obtaining b-values \n");
 	            }
 
-	            System.out.println("* Obtaining b-values \n");
+	            //System.out.println("* Obtaining b-values \n");
 	            success = obtainBValuesDICOM();
 
 	            if (success == false) {
@@ -1022,7 +1022,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	                outputTextArea.append("* Creating b-matrix file \n");
 	            }
 
-	            System.out.println("\n* Creating b-matrix file \n");
+	            //System.out.println("\n* Creating b-matrix file \n");
 	            success = createBMatrixFileDICOM();
 
 	            if (success == false) {
@@ -1040,7 +1040,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	                outputTextArea.append("* b-matrix file provided \n");
 	            }
 
-	            System.out.println("* b-matrix file provided \n");
+	            //System.out.println("* b-matrix file provided \n");
 	            success = copyBMatrixFile();
 
 	            if (success == false) {
@@ -1056,7 +1056,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	            outputTextArea.append("** Ending Algorithm \n");
 	        }
 
-	        System.out.println("** Ending Algorithm \n");
+	        //System.out.println("** Ending Algorithm \n");
 
 	        finalize();
 
@@ -1215,7 +1215,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                     outputTextArea.append("* eDTI data set \n");
                 }
 
-                System.out.println("* eDTI data set \n");
+                //System.out.println("* eDTI data set \n");
             } else {
                 Preferences.debug("* DTI data set \n", Preferences.DEBUG_ALGORITHM);
 
@@ -1223,7 +1223,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                     outputTextArea.append("* DTI data set \n");
                 }
 
-                System.out.println("* DTI data set \n");
+                //System.out.println("* DTI data set \n");
             }
         } catch (NullPointerException e) {
             publicTag0008103E = (String) firstFileInfoDicom.getTagTable().getValue("0008,103E");
@@ -1236,7 +1236,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                     outputTextArea.append("* eDTI data set \n");
                 }
 
-                System.out.println("* eDTI data set \n");
+                //System.out.println("* eDTI data set \n");
             } else {
                 Preferences.debug("* DTI data set \n", Preferences.DEBUG_ALGORITHM);
 
@@ -1244,7 +1244,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                     outputTextArea.append("* DTI data set \n");
                 }
 
-                System.out.println("* DTI data set \n");
+                //System.out.println("* DTI data set \n");
             }
         }
 
@@ -1261,7 +1261,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                 outputTextArea.append("* Manufacturer : GE \n");
             }
 
-            System.out.println("* Manufacturer : GE \n");
+            //System.out.println("* Manufacturer : GE \n");
 
             // getting software version for GE if regular DTI and not eDTI
             if (!isEDTI) {
@@ -1275,7 +1275,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                         outputTextArea.append("* Software Version : " + geSoftwareVersion + " \n");
                     }
 
-                    System.out.println("* Software Version : " + geSoftwareVersion + " \n");
+                    //System.out.println("* Software Version : " + geSoftwareVersion + " \n");
                 } catch (NumberFormatException e) {
                 	//software version might be in a format like "12, blah, kdfhasdukfblah"....extract the first number (12)
                 	StringBuffer versionSB = new StringBuffer();
@@ -1296,7 +1296,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                             outputTextArea.append("* Software Version : " + geSoftwareVersion + " \n");
                         }
 
-                        System.out.println("* Software Version : " + geSoftwareVersion + " \n");
+                        //System.out.println("* Software Version : " + geSoftwareVersion + " \n");
             		}
             		else {
             			Preferences.debug("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n",
@@ -1306,7 +1306,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             					outputTextArea.append("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
             			}
 
-            			System.out.println("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
+            			//System.out.println("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
 
             			return false;
             		}
@@ -1321,7 +1321,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                 outputTextArea.append("* Manufacturer : SIEMENS \n");
             }
 
-            System.out.println("* Manufacturer : SIEMENS \n");
+            //System.out.println("* Manufacturer : SIEMENS \n");
         }
 
         return true;
@@ -1410,7 +1410,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                             outputTextArea.append("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
                         }
 
-                        System.out.println("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
+                        //System.out.println("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
 
                         return false;
                     }
@@ -1439,7 +1439,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                             outputTextArea.append("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
                         }
 
-                        System.out.println("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
+                        //System.out.println("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
 
                         return false;
                     }
@@ -1575,7 +1575,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                     outputTextArea.append("! ERROR: Creation of proc directory failed....exiting algorithm \n");
                 }
 
-                System.out.println("! ERROR: Creation of proc directory failed....exiting algorithm \n");
+                //System.out.println("! ERROR: Creation of proc directory failed....exiting algorithm \n");
 
                 return false;
             }
@@ -1603,7 +1603,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             outputTextArea.append(" - proc dir created : " + studyPath + "_proc \n");
         }
 
-        System.out.println(" - proc dir created : " + studyPath + "_proc \n");
+        //System.out.println(" - proc dir created : " + studyPath + "_proc \n");
         isProcDirCreated = true;
 
         return true;
@@ -1772,7 +1772,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                         outputTextArea.append("! ERROR: There are not equal number of image slices in all volumes of this study....exiting algorithm \n");
                     }
 
-                    System.out.println("! ERROR: There are not equal number of image slices in all volumes of this study....exiting algorithm \n");
+                    //System.out.println("! ERROR: There are not equal number of image slices in all volumes of this study....exiting algorithm \n");
 
                     return false;
                 }
@@ -1813,8 +1813,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                       ".path" + " \n");
             }
 
-            System.out.println(" - path file created : " + studyPath + "_proc" + File.separator + studyName + ".path" +
-                               " \n");
+            //System.out.println(" - path file created : " + studyPath + "_proc" + File.separator + studyName + ".path" +
+                               //" \n");
 
             return true;
         } catch (Exception e) {
@@ -1827,8 +1827,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                 outputTextArea.append("! ERROR: Creation of path file failed....exiting algorithm \n");
             }
 
-            System.out.println("! ERROR: " + e.toString() + "\n");
-            System.out.println("! ERROR: Creation of path file failed....exiting algorithm \n");
+            //System.out.println("! ERROR: " + e.toString() + "\n");
+            //System.out.println("! ERROR: Creation of path file failed....exiting algorithm \n");
             e.printStackTrace();
 
             return false;
@@ -1959,8 +1959,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                 outputTextArea.append("! ERROR: Creation of list file failed....exiting algorithm \n");
             }
 
-            System.out.println("! ERROR: " + e.toString() + "\n");
-            System.out.println("! ERROR: Creation of list file failed....exiting algorithm \n");
+            //System.out.println("! ERROR: " + e.toString() + "\n");
+            //System.out.println("! ERROR: Creation of list file failed....exiting algorithm \n");
 
             return false;
         }
@@ -1973,8 +1973,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                   ".list" + " \n");
         }
 
-        System.out.println(" - list file created : " + studyPath + "_proc" + File.separator + studyName + ".list" +
-                           " \n");
+        //System.out.println(" - list file created : " + studyPath + "_proc" + File.separator + studyName + ".list" +
+                           //" \n");
 
         return true;
     }
@@ -2099,7 +2099,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                         outputTextArea.append("! ERROR: Number of line entries in gradient file do not match up with number of volumes in dataset...exiting algorithm \n");
                     }
 
-                    System.out.println("! ERROR: Number of line entries in gradient file do not match up with number of volumes in dataset...exiting algorithm \n");
+                    //System.out.println("! ERROR: Number of line entries in gradient file do not match up with number of volumes in dataset...exiting algorithm \n");
 
                     return false;
                 	
@@ -2117,8 +2117,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                 outputTextArea.append("! ERROR: reading of gradient file failed....exiting algorithm \n");
             }
 
-            System.out.println("! ERROR: " + e.toString() + "\n");
-            System.out.println("! ERROR: reading of gradient file failed....exiting algorithm \n");
+            //System.out.println("! ERROR: " + e.toString() + "\n");
+            //System.out.println("! ERROR: reading of gradient file failed....exiting algorithm \n");
 
             return false;
         }
@@ -2129,7 +2129,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             outputTextArea.append(" - gradient file read \n");
         }
 
-        System.out.println(" - gradient file read \n");
+        //System.out.println(" - gradient file read \n");
 
         return true;
     }
@@ -2162,7 +2162,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             outputTextArea.append(" - b-values :\n");
         }
 
-        System.out.println(" - b-values :\n");
+        //System.out.println(" - b-values :\n");
 
         while (iter.hasNext()) {
             TreeSet<String[]> seriesFITS = (TreeSet<String[]>) seriesFileInfoTreeMap.get(iter.next());
@@ -2209,7 +2209,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                     outputTextArea.append("! ERROR: No b-value found in private tag 0018,0024....exiting algorithm \n");
                                 }
 
-                                System.out.println("! ERROR: No b-value found in private tag 0018,0024....exiting algorithm \n");
+                                //System.out.println("! ERROR: No b-value found in private tag 0018,0024....exiting algorithm \n");
 
                                 return false;
                             }
@@ -2226,7 +2226,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                 outputTextArea.append("! ERROR: No b-value found in private tag 0018,0024....if dataset is interleaved, b-matrix file must be provided....exiting algorithm \n");
                             }
 
-                            System.out.println("! ERROR: No b-value found in private tag 0018,0024....if dataset is interleaved, b-matrix file must be provided....exiting algorithm \n");
+                            //System.out.println("! ERROR: No b-value found in private tag 0018,0024....if dataset is interleaved, b-matrix file must be provided....exiting algorithm \n");
 
                             return false;
                         }
@@ -2249,7 +2249,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                     outputTextArea.append("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
                                 }
 
-                                System.out.println("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
+                                //System.out.println("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
 
                                 return false;
                             }
@@ -2266,7 +2266,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                 outputTextArea.append("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
                             }
 
-                            System.out.println("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
+                            //System.out.println("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
 
                             return false;
                         }
@@ -2282,7 +2282,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                 outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
                             }
 
-                            System.out.println("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
+                            //System.out.println("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
 
                             return false;
                         }
@@ -2305,7 +2305,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                     outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
                                 }
 
-                                System.out.println("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
+                                //System.out.println("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
 
                                 return false;
                             }
@@ -2317,7 +2317,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                 outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
                             }
 
-                            System.out.println("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
+                            //System.out.println("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
 
                             return false;
                         }
@@ -2366,9 +2366,9 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                       ", are not the same....exiting algorithm \n");
             }
 
-            System.out.println("! ERROR: the num of b values obtained, " + bValuesArrayList.size() +
-                               ", and the number of vols in the gradient file, " + direction.length +
-                               ", are not the same....exiting algorithm \n");
+            //System.out.println("! ERROR: the num of b values obtained, " + bValuesArrayList.size() +
+                               //", and the number of vols in the gradient file, " + direction.length +
+                               //", are not the same....exiting algorithm \n");
 
             return false;
         }
@@ -2534,8 +2534,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                 outputTextArea.append("! ERROR: Creation of b-matrix file failed....exiting algorithm \n");
             }
 
-            System.out.println("! ERROR: " + e.toString() + "\n");
-            System.out.println("! ERROR: Creation of b-matrix file failed....exiting algorithm \n");
+            //System.out.println("! ERROR: " + e.toString() + "\n");
+            //System.out.println("! ERROR: Creation of b-matrix file failed....exiting algorithm \n");
 
             return false;
         }
@@ -2548,8 +2548,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                   ".BMTXT" + " \n");
         }
 
-        System.out.println(" - b-matrix file created : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" +
-                           " \n");
+        //System.out.println(" - b-matrix file created : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" +
+                           //" \n");
 
         return true;
     }
@@ -2647,7 +2647,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		                outputTextArea.append("* b-matrix file provided \n");
 		            }
 
-		            System.out.println("* b-matrix file provided \n");
+		            //System.out.println("* b-matrix file provided \n");
 		            success = copyBMatrixFile();
 
 		            if (success == false) {
@@ -3377,8 +3377,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                 outputTextArea.append("! ERROR: copying of b-matrix to proc dir failed....exiting algorithm \n");
             }
 
-            System.out.println("! ERROR: " + e.toString() + "\n");
-            System.out.println("! ERROR: copying of b-matrix to proc dir failed....exiting algorithm \n");
+            //System.out.println("! ERROR: " + e.toString() + "\n");
+            //System.out.println("! ERROR: copying of b-matrix to proc dir failed....exiting algorithm \n");
 
             return false;
         } finally {
@@ -3408,8 +3408,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                                   studyName + ".BMTXT" + " \n");
         }
 
-        System.out.println(" - b-matrix file copied and renamed to  : " + pathString + "_proc" + File.separator +
-                           studyName + ".BMTXT" + " \n");
+       //System.out.println(" - b-matrix file copied and renamed to  : " + pathString + "_proc" + File.separator +
+                           //studyName + ".BMTXT" + " \n");
 
         return true;
     }
