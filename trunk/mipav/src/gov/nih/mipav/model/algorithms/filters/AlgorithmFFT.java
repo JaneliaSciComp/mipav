@@ -235,7 +235,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         beforeExecute();
         execute();
         afterExecute();
-        System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
+        //System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
     }
 
     /**
@@ -276,7 +276,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         fireProgressStateChanged( -1, null, "Running FFT algorithm ...");
 
-        System.out.println("Number of Threads: " + nthreads);
+        //System.out.println("Number of Threads: " + nthreads);
         if (threadStopped) {
             return;
         }
