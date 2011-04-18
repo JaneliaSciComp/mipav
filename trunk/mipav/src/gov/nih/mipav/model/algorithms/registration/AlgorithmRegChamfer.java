@@ -244,13 +244,13 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
                     search(tMatrixMatchtoBase[matchSlice]);
                     Preferences.debug("***********************************************\n");
                     Preferences.debug("Transform for slice " + matchSlice + " =\n");
-                    System.out.println(tMatrixMatchtoBase[matchSlice]);
+                    //System.out.println(tMatrixMatchtoBase[matchSlice]);
 
                     if (matchSlice > 1) {
                         Preferences.debug("Transform for slice " + matchSlice + " after concatenation =\n");
 
                         tMatrixMatchtoBase[matchSlice].Mult(tMatrixMatchtoBase[matchSlice - 1]);
-                        System.out.println(tMatrixMatchtoBase[matchSlice]);
+                        //System.out.println(tMatrixMatchtoBase[matchSlice]);
                     }
 
                     Preferences.debug("***********************************************\n");
