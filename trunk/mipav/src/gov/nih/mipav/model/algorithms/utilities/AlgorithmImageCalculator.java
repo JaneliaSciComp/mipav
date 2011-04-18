@@ -1500,7 +1500,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      *
      */
     private void performBulkAveraging(boolean findSD) {
-        System.out.println(findSD);
+        //System.out.println(findSD);
     	int i, j, k, m;
         int z, t, f;
         int offset;
@@ -1627,7 +1627,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         }
         
         if (findSD){
-            System.out.println("enter");
+            //System.out.println("enter");
             double mean[] = new double[length], current[]= new double[length], total[]= new double[length];
             try {
                 destImage.exportData(0, length, mean);
