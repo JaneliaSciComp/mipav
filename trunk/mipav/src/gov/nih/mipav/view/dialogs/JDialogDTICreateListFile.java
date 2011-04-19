@@ -577,7 +577,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		if(outputTextArea != null) {
 			outputTextArea.append("*** Beginning DTI Sorting Process *** \n");
 		}
-		System.out.println("*** Beginning DTI Sorting Process *** \n");
+		//System.out.println("*** Beginning DTI Sorting Process *** \n");
 		if(isDICOM) {
 			if(performRegistration) {
 				int cost = regOptions.getCost();
@@ -676,7 +676,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 			
 			//insertScriptLine();
 			Preferences.debug("*** End DTI Sorting Process *** \n",Preferences.DEBUG_ALGORITHM);
-			System.out.println("*** End DTI Sorting Process *** \n");
+			//System.out.println("*** End DTI Sorting Process *** \n");
 		}
 	}
 	

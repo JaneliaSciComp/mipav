@@ -596,7 +596,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 		public void componentShown(ComponentEvent e) {
 			setFAValues();
-			System.out.println("Entered");
+			//System.out.println("Entered");
 			if(e.getSource().equals(convSpec) && doSpec()) {
 				convSpec.removeAll();
 				convSpec.add(buildTreT1SpecificsPanelInner());
