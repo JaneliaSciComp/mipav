@@ -578,7 +578,6 @@ public class PatientSlice {
     }
 
     /**
-     * @deprecated should now use the showUsingOrientation without bBlend and fAlpha
      * For generating the display of one or two ModelImages (imageA and imageB). Images may be oriented or non-oriented,
      * axis-aligned or diagonal cut plans through the ModelImage volume.
      *
