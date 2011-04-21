@@ -2,14 +2,19 @@ package gov.nih.mipav.view.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.EventObject;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -19,6 +24,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.event.CellEditorListener;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
@@ -46,14 +55,17 @@ import gov.nih.mipav.view.ViewUserInterface;
  */
 public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements AlgorithmInterface {
 	
-	/** images to concat...the ones that are open in mipav **/
+	/** available images to concat...the ones that are open in mipav **/
+	private ArrayList<ModelImage> availableImagesToConcat;
+	
+	/** images to concat **/
 	private ArrayList<ModelImage> imagesToConcat;
 	
 	/** table model **/
-	private ViewTableModel srcTableModel;
+	private ViewTableModel srcTableModel, destTableModel;
 	
 	/** table **/
-	private JTable srcImagesTable;
+	private JTable srcImagesTable, destImagesTable;
 	
 	/** additional images to concat...the ones you add later on**/
 	private ArrayList<ModelImage> additionalImagesToConcat;
@@ -83,8 +95,9 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	 */
 	public JDialogConcatMult3Dto4D(Frame theParentFrame, ArrayList<ModelImage> imagesToConcat) {
 		 super(theParentFrame, false);
-		 this.imagesToConcat = imagesToConcat;
+		 this.availableImagesToConcat = imagesToConcat;
 		 additionalImagesToConcat = new ArrayList<ModelImage>();
+		 imagesToConcat = new ArrayList<ModelImage>();
 	     init();
 	        
             
@@ -103,20 +116,79 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
         JPanel mainPanel = new JPanel(new GridBagLayout());
 
         srcTableModel = new ViewTableModel();
-        srcTableModel.addColumn("Images");
+        srcTableModel.addColumn("Available Images");
+        srcTableModel.addColumn("");
         srcImagesTable = new JTable(srcTableModel);
-        srcImagesTable.setPreferredScrollableViewportSize(new Dimension(300, 400));
+        srcImagesTable.setPreferredScrollableViewportSize(new Dimension(400, 500));
         srcImagesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
         JScrollPane srcImagesScrollPane = new JScrollPane(srcImagesTable);
+        
+        destTableModel = new ViewTableModel();
+        destTableModel.addColumn("Images to concatenate");
+        destImagesTable = new JTable(destTableModel);
+        destImagesTable.setPreferredScrollableViewportSize(new Dimension(400, 500));
+        destImagesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        JScrollPane destImagesScrollPane = new JScrollPane(destImagesTable);
+        
 
-		for(int i=0;i<imagesToConcat.size();i++) {
+		for(int i=0;i<availableImagesToConcat.size();i++) {
 			
-			Vector<String> rowData = new Vector<String>();
-            rowData.add(imagesToConcat.get(i).getImageName());
+			Vector<Object> rowData = new Vector<Object>();
+            rowData.add(availableImagesToConcat.get(i).getImageName());
+
             srcTableModel.addRow(rowData); 
             
 		}
 		srcImagesTable.setRowSelectionInterval(0, 0);
+		
+		srcImagesTable.getColumn("").setCellRenderer(new JButtonCellRenderer());
+		srcImagesTable.getColumn("").setMaxWidth(60);
+		//srcImagesTable.getColumn("").setCellEditor(new JButtonCellEditor());
+		srcImagesTable.addMouseListener( new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				if(e.getClickCount() == 1) {
+					JTable source = (JTable)e.getSource();
+					int row = source.rowAtPoint(e.getPoint());
+					int column = source.columnAtPoint(e.getPoint());
+					if(column == 1) {
+
+						String imgName = (String)(srcImagesTable.getValueAt(row, 0));
+						String rightImgName = "";
+			            int rightTableRowCount = destImagesTable.getRowCount();
+			            boolean found = false;
+			            for(int i=0;i<rightTableRowCount;i++) {
+			            	rightImgName = (String)(destImagesTable.getValueAt(i, 0));
+			            	if(imgName.equals(rightImgName)) {
+			            		found = true;
+			            		destTableModel.removeRow(i);
+			            		break;
+			            	}
+			            }
+						if(!found) {
+							//put it on the list on the right
+							Vector<Object> rowData = new Vector<Object>();
+				            rowData.add(imgName);
+				            destTableModel.addRow(rowData); 
+				            int destRowCount = destImagesTable.getRowCount();
+				            destImagesTable.setRowSelectionInterval(destRowCount-1, destRowCount-1);
+						}
+
+						srcImagesTable.repaint();
+						destImagesTable.repaint();
+
+					}
+					
+				}
+				
+				
+			}
+		
+		
+		});
+		
+		
 
 		JButton moveUpButton = new JButton("Move Up");
 		moveUpButton.addActionListener(this);
@@ -144,6 +216,14 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
         gbc2.anchor = GridBagConstraints.CENTER;
         gbc2.insets = new Insets(5, 5, 5, 5);
         movePanel.add(moveDownButton, gbc2);
+        
+        
+        
+        
+        
+        
+        
+        
 		
 		JLabel additionalImagesLabel = new JLabel(" Add Additional Images: ");
         additionalImagesLabel.setForeground(Color.black);
@@ -151,13 +231,36 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
         JButton addImageBrowseButton = new JButton("Browse");
         addImageBrowseButton.addActionListener(this);
         addImageBrowseButton.setActionCommand("addImageBrowse");
+        
+        
+        JPanel additionalImagesPanel = new JPanel(new GridBagLayout());
+		GridBagConstraints gbc3 = new GridBagConstraints();
+		gbc3.gridx = 0;
+		gbc3.gridy = 0;
+		gbc3.gridheight = 1;
+		gbc3.fill = GridBagConstraints.BOTH;
+		gbc3.anchor = GridBagConstraints.CENTER;
+		gbc3.insets = new Insets(5, 5, 5, 5);
+		additionalImagesPanel.add(additionalImagesLabel, gbc3);
+		
+		gbc3.gridx = 1;
+		gbc3.gridy = 0;
+		gbc3.gridheight = 1;
+		gbc3.fill = GridBagConstraints.BOTH;
+		gbc3.anchor = GridBagConstraints.CENTER;
+		gbc3.insets = new Insets(5, 5, 5, 5);
+		additionalImagesPanel.add(addImageBrowseButton, gbc3);
+        
+        
+        
+        
 
-        JLabel removeSelectedImagesLabel = new JLabel(" Remove Selected Images: ");
+        /*JLabel removeSelectedImagesLabel = new JLabel(" Remove Selected Images: ");
         removeSelectedImagesLabel.setForeground(Color.black);
         removeSelectedImagesLabel.setFont(serif12);
         JButton removeSelectedButton = new JButton("Remove");
         removeSelectedButton.addActionListener(this);
-        removeSelectedButton.setActionCommand("removeSelected");
+        removeSelectedButton.setActionCommand("removeSelected");*/
 
 		JPanel OKCancelPanel = new JPanel();
         buildOKButton();
@@ -173,19 +276,41 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.CENTER;
-        gbc.gridwidth = 2;
         gbc.insets = new Insets(5, 5, 5, 5);
         mainPanel.add(srcImagesScrollPane, gbc);
-
+        
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        mainPanel.add(destImagesScrollPane, gbc);
+        
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 2;
+        //gbc.gridwidth = 2;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        mainPanel.add(movePanel, gbc);
+        gbc.insets = new Insets(5, 5, 15, 5);
+        mainPanel.add(additionalImagesPanel, gbc);
+        
+        
 
-        gbc.gridx = 0;
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        //gbc.gridwidth = 2;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.insets = new Insets(5, 5, 15, 5);
+        mainPanel.add(movePanel, gbc);
+        
+        
+        
+
+        /*gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
@@ -199,9 +324,9 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
         gbc.weightx = 0;
         gbc.weighty = 0;
         gbc.insets = new Insets(5, 5, 5, 5);
-        mainPanel.add(addImageBrowseButton, gbc);
+        mainPanel.add(addImageBrowseButton, gbc);*/
 
-        gbc.gridx = 0;
+       /* gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
@@ -215,7 +340,7 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
         gbc.weightx = 0;
         gbc.weighty = 0;
         gbc.insets = new Insets(5, 5, 5, 5);
-        mainPanel.add(removeSelectedButton, gbc);
+        mainPanel.add(removeSelectedButton, gbc);*/
 
         getContentPane().add(mainPanel);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
@@ -235,17 +360,17 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	 */
 	protected void callAlgorithm() {
 		
-		ModelImage[] images = new ModelImage[srcTableModel.getRowCount()];
+		ModelImage[] images = new ModelImage[destTableModel.getRowCount()];
 		
-		for(int i=0;i<srcTableModel.getRowCount();i++) {
+		for(int i=0;i<destTableModel.getRowCount();i++) {
 			
 			
-			String imageName = (String)srcTableModel.getValueAt(i, 0);
+			String imageName = (String)destTableModel.getValueAt(i, 0);
 			boolean found = false;
-			for(int k=0;k<imagesToConcat.size();k++) {
-				if(imageName.equals(imagesToConcat.get(k).getImageName())) {
+			for(int k=0;k<availableImagesToConcat.size();k++) {
+				if(imageName.equals(availableImagesToConcat.get(k).getImageName())) {
 					found = true;
-					images[i] = imagesToConcat.get(k);
+					images[i] = availableImagesToConcat.get(k);
 					break;
 				}
 			}
@@ -349,31 +474,38 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
 	         chooser.setDialogTitle("Choose image");
 	         int returnValue = chooser.showOpenDialog(this);
+	         
+	         
+	         if (returnValue == JFileChooser.APPROVE_OPTION) {
 
-	         FileIO fileIO = new FileIO();
-	         boolean isMultifile = fileChooser.isMulti();
-	         ModelImage img = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator, isMultifile, null);
-	         	
-	         ModelImage activeImage = imagesToConcat.get(0);
-	         	
-	         if (activeImage.getNDims() == img.getNDims() && activeImage.getExtents()[0] == img.getExtents()[0] &&
-          			 activeImage.getExtents()[1] == img.getExtents()[1] &&
-          			 activeImage.getExtents()[2] == img.getExtents()[2] && 
-          			 img.getDataType() == activeImage.getDataType()) {
-
-	        	     additionalImagesToConcat.add(img);
-          			 Vector<String> rowData = new Vector<String>();
-                     rowData.add(img.getImageName());
-                     srcTableModel.addRow(rowData); 
-
-             }else {
-            	 MipavUtil.displayError("Image is not of same dimensions, extents or data type");
-            	 if(img != null) {
-            		 img.disposeLocal();
-            		 img = null;
-            	 }
-             }
-		}else if(command.equals("removeSelected")) {
+		         FileIO fileIO = new FileIO();
+		         boolean isMultifile = fileChooser.isMulti();
+		         ModelImage img = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator, isMultifile, null);
+		         	
+		         ModelImage activeImage = availableImagesToConcat.get(0);
+		         	
+		         if (activeImage.getNDims() == img.getNDims() && activeImage.getExtents()[0] == img.getExtents()[0] &&
+	          			 activeImage.getExtents()[1] == img.getExtents()[1] &&
+	          			 activeImage.getExtents()[2] == img.getExtents()[2] && 
+	          			 img.getDataType() == activeImage.getDataType()) {
+	
+		        	     additionalImagesToConcat.add(img);
+	          			 Vector<String> rowData = new Vector<String>();
+	                     rowData.add(img.getImageName());
+	                     srcTableModel.addRow(rowData); 
+	                     
+	                     int srcRowCount = srcImagesTable.getRowCount();
+				         srcImagesTable.setRowSelectionInterval(srcRowCount-1, srcRowCount-1);
+	
+	             }else {
+	            	 MipavUtil.displayError("Image is not of same dimensions, extents or data type");
+	            	 if(img != null) {
+	            		 img.disposeLocal();
+	            		 img = null;
+	            	 }
+	             }
+	         }
+		}/*else if(command.equals("removeSelected")) {
 
 	    	 selectedRow = srcImagesTable.getSelectedRow();
 	    	 //need at least 2 images for algorithm to work
@@ -396,11 +528,11 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	            	 
 	             }
 	             if(!found) {
-	            	 for(int k=0;k<imagesToConcat.size();k++) {
-		            	 String name = imagesToConcat.get(k).getImageName();
+	            	 for(int k=0;k<availableImagesToConcat.size();k++) {
+		            	 String name = availableImagesToConcat.get(k).getImageName();
 		            	 
 		            	 if(name.equals(srcTableModel.getValueAt(selectedRow, 0))) {
-		            		 imagesToConcat.remove(k);
+		            		 availableImagesToConcat.remove(k);
 		            		 found = true;
 		            		 break;
 		            	 }
@@ -418,24 +550,28 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	             }
 	    	 
 	    	
-	     }else if(command.equals("moveDown")) {
-	    	 selectedRow = srcImagesTable.getSelectedRow();
-	    	 if(selectedRow != srcImagesTable.getRowCount()-1) {
-	    		 srcTableModel.moveRow(selectedRow, selectedRow, selectedRow + 1);
-	    		 srcImagesTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
+	     }*/else if(command.equals("moveDown")) {
+	    	 if(destImagesTable.getRowCount() >= 2 && destImagesTable.getSelectedRow() != -1) {
+		    	 selectedRow = destImagesTable.getSelectedRow();
+		    	 if(selectedRow != destImagesTable.getRowCount()-1) {
+		    		 destTableModel.moveRow(selectedRow, selectedRow, selectedRow + 1);
+		    		 destImagesTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
+		    	 }
 	    	 }
 	    	 
 	    	 
 	     }else if(command.equals("moveUp")) {
-	    	 selectedRow = srcImagesTable.getSelectedRow();
-	    	 selectedRow = srcImagesTable.getSelectedRow();
-	    	 if(selectedRow != 0) {
-	    		 srcTableModel.moveRow(selectedRow, selectedRow, selectedRow - 1);
-	    		 srcImagesTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
+	    	 if(destImagesTable.getRowCount() >= 2 && destImagesTable.getSelectedRow() != -1) {
+		    	 selectedRow = destImagesTable.getSelectedRow();
+		    	 selectedRow = destImagesTable.getSelectedRow();
+		    	 if(selectedRow != 0) {
+		    		 destTableModel.moveRow(selectedRow, selectedRow, selectedRow - 1);
+		    		 destImagesTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
+		    	 }
 	    	 }
 	     }else if(command.equals("OK")) {
-	    	 if((srcImagesTable.getRowCount()) < 2) {
-	    		 MipavUtil.displayError("At least 2 images need to be present for algorithm to operate");
+	    	 if((destImagesTable.getRowCount()) < 2) {
+	    		 MipavUtil.displayError("At least 2 images need to be present in the \" Images to concatenate \" table for algorithm to operate");
 	    		 return; 
 	    	 }
 	    	 callAlgorithm();
@@ -446,5 +582,46 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	
 	
 	
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	private class JButtonCellRenderer extends DefaultTableCellRenderer {
+		 public Component getTableCellRendererComponent(final JTable table, final Object value,
+	                final boolean isSelected, final boolean hasFocus, final int row, final int column) {
+			 
+			 
+	            JButton comp;
+	            
+	            String imgName = (String)(srcImagesTable.getValueAt(row, 0));
+	            
+	            int rightTableRowCount = destImagesTable.getRowCount();
+	            boolean found = false;
+	            for(int i=0;i<rightTableRowCount;i++) {
+	            	String rightImgName = (String)(destImagesTable.getValueAt(i, 0));
+	            	if(imgName.equals(rightImgName)) {
+	            		found = true;
+	            		break;
+	            	}
+	            	
+	            }
+	            
+	            if(found) {
+	            	
+	            	comp = new JButton("<<<");
+	            	
+	            	 comp.setForeground(Color.red);
+	            	
+	            
+	            }else {
+	            	comp = new JButton(">>>");
+	            }
+	            setHorizontalAlignment(SwingConstants.CENTER);
+
+	
+
+	            return comp;
+	        }
+	}
+	
+
 
 }
