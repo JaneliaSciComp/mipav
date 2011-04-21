@@ -338,10 +338,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 	                 // check if it is a framed image...and if its not the active image...also make sure its just imageA
 	                 if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(getImageA().getImageName())) && ( ( (image.getParentFrame())).getImageA() == image)) {
 	
-	                	 final int regFramedNumDims = image.getNDims();
+	                	 //final int regFramedNumDims = image.getNDims();
 	
 	                	 
-	                     if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
+	                     //if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
 	                    	 
 	                    	 
 	                    
@@ -350,7 +350,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 	                    		}
 	                    	
 	                    
-	                     }
+	                    // }
 	                	 
 	                	 
 	                	 
