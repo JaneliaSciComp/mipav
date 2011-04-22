@@ -354,6 +354,8 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         comboBoxOperator.addItem("Add");
         comboBoxOperator.addItem("Average");
         comboBoxOperator.addItem("Average w/ Std Dev");
+        comboBoxOperator.addItem("Minimum");
+        comboBoxOperator.addItem("Maximum");
         
         JPanel srcPanel = new JPanel();
         srcTableModel = new ViewTableModel();
@@ -612,6 +614,10 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
                 opType = AlgorithmImageCalculator.AVERAGE;
             }else if (comboBoxOperator.getSelectedIndex() == 2) {
                 opType = AlgorithmImageCalculator.AVGERAGE_WITH_STDEV;
+            }else if (comboBoxOperator.getSelectedIndex() == 3) {
+                opType = AlgorithmImageCalculator.MINIMUM;
+            }else if (comboBoxOperator.getSelectedIndex() == 4) {
+                opType = AlgorithmImageCalculator.MAXIMUM;
             }
             
             

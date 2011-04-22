@@ -525,6 +525,10 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             }   
             else if(opType == AlgorithmImageCalculator.AVGERAGE_WITH_STDEV) {
                 performBulkAveraging(true);
+            }else if(opType == AlgorithmImageCalculator.MINIMUM) {
+                performBulkMin();
+            }else if(opType == AlgorithmImageCalculator.MAXIMUM) {
+                performBulkMax();
             }   
     		
     	}
@@ -1494,6 +1498,43 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 			calcStoreInDest();	
 		}
     }
+    
+    
+    
+    
+    /**
+     * perform bulk adidng
+     *
+     */
+    private void performBulkMin() {
+    	srcImageA = srcImages[0];
+		srcImageB = srcImages[1];
+		calcStoreInDest();
+		for(int i=2;i<srcImages.length;i++) {
+			srcImageA = destImage;
+			srcImageB = srcImages[i];
+			calcStoreInDest();	
+		}
+    }
+    
+    
+    /**
+     * perform bulk adidng
+     *
+     */
+    private void performBulkMax() {
+    	srcImageA = srcImages[0];
+		srcImageB = srcImages[1];
+		calcStoreInDest();
+		for(int i=2;i<srcImages.length;i++) {
+			srcImageA = destImage;
+			srcImageB = srcImages[i];
+			calcStoreInDest();	
+		}
+    }
+    
+    
+    
     
     /**
      * perform bulk averaging
