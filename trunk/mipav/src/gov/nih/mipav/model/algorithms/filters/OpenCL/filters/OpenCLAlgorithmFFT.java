@@ -129,6 +129,29 @@ public class OpenCLAlgorithmFFT extends AlgorithmBase {
 	public float[] getRealData() {
 		return realData;
 	}
+	
+	private static boolean isOCLAvailable = false;
+	public static boolean isOCLAvailable()
+	{
+		if ( isOCLAvailable )
+		{
+			return true;
+		}
+		CLDevice testGPU = null;
+		try {
+		CLPlatform[] platforms = CLPlatform.listCLPlatforms();
+		for (CLPlatform platform : platforms) {
+			testGPU = platform.getMaxFlopsDevice(CLDevice.Type.GPU);
+			if(testGPU != null) {
+				isOCLAvailable = true;
+				break;
+			}
+		}
+		} catch ( com.jogamp.opencl.CLException e ) {}
+		return (testGPU != null);
+	}
+	
+	
 	/**
 	 * Starts the program.
 	 */
