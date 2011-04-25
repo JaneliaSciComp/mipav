@@ -49,9 +49,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 
     /** Shared volume data and textures. */
     private VolumeImage m_kVolumeImageB;
-
-    /** PixelShader program and data for initializing mipav textures: */
-    private PixelShader m_kPShaderInit = null;
   
     /** PixelShader program and data for Composite mode: */
     private PixelShader m_kPShaderCMP = null;
@@ -100,7 +97,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     public void Blend(float fBlend)
     {       
         Program pkCProgram = GetCProgram(0);
-        if ( pkCProgram.GetUC("Blend") != null )
+        if ( pkCProgram != null && pkCProgram.GetUC("Blend") != null )
         {
             pkCProgram.GetUC("Blend").GetData()[0] = fBlend;
         }
@@ -299,9 +296,11 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     public void OnLoadPrograms (int iPass, Program pkVProgram,
                                 Program pkPProgram, Program pkCProgram)
     {
+    	Blend(1f);
         SetColorImage(pkCProgram);
         setABBlend(1.0f);
         setRGBTA(null);
+        setVolumeSamples( (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f );
         if ( m_kVolumeImageB.GetImage() != null )
         {
             setABBlend(0.5f);
@@ -744,67 +743,15 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_kPShaderCMP = new PixelShader("VolumeShaderABMultiPass");
         }
         initTexturesVol(m_kPShaderCMP);
-         
-        //m_kPShaderInit = new PixelShader("LoadMIPAVTextures");
-        //initTextures(m_kPShaderInit);
-        
+                 
         for ( int i = 0; i < m_iPasses; i++ )
         {
             SetVShader(i,m_pkVShader);
-            //SetPShader(i,m_kPShaderInit);
             SetPShader(i,m_kPShaderCMP);
         }
     }
 
-    
-    private void initTextures( PixelShader kPShader )
-    {        
-        int iTex = 0;
-        kPShader.SetTextureQuantity(16);
-        kPShader.SetImageName(iTex, m_kSceneTarget.GetName());
-        kPShader.SetTexture(iTex++, m_kSceneTarget);
-
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetLaplaceMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetLaplaceMapTarget());
-        
-
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget());
-        
-        
-        if ( m_kVolumeImageB.GetImage() != null )
-        {
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName() );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetColorMapTarget().GetName() );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapTarget().GetName() );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetGradientMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName() );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetLaplaceMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetLaplaceMapTarget());
-        }
-    }
-    
-
-    
+       
     private void initTexturesVol( PixelShader kPShader )
     {        
         int iTex = 0;

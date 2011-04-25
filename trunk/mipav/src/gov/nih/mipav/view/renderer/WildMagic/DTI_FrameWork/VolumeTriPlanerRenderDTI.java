@@ -1,8 +1,5 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
-import com.sun.opengl.util.Animator;
-//import com.jogamp.opengl.util.*;
-
 import java.awt.event.*;
 
 
@@ -13,6 +10,20 @@ import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Collision.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibRenderers.OpenGLRenderer.*;
+
+
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
 {
@@ -43,6 +54,33 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
+
+        m_kAnimator = kAnimator;
+        m_kVolumeImageA = kVolumeImageA;
+        m_kVolumeImageB = kVolumeImageB;
+        m_kParent = kParent;        
+        m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+    }
+        
+    /**
+     * Construct the Volume/Surface/Tri-Planar renderer.
+     * @param kParent parent user-interface and frame.
+     * @param kAnimator animator used to display the canvas.
+     * @param kVolumeImageA volume data and textures for ModelImage A.
+     * @param kVolumeImageB volume data and textures for ModelImage B.
+     */
+    public VolumeTriPlanerRenderDTI( GLCanvas kCanvas, VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
+            VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
+    {
+        super();
+        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
+                m_eBuffering, m_eMultisampling,
+                m_iWidth, m_iHeight, kCanvas );
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       

@@ -8,13 +8,22 @@ import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageNormalGM extends VolumeImageViewer
     implements GLEventListener, KeyListener

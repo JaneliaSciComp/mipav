@@ -1,13 +1,11 @@
 package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
 
-import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
-
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.TransMatrix;
-
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.SurfaceLightingEffect;
@@ -25,8 +23,6 @@ import java.awt.event.MouseEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
-
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibFoundation.Curves.Curve3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -47,11 +43,9 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-
+import com.jogamp.opengl.util.Animator;
 
 public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderInterface, FlyPathBehavior_WM.Callback, GLEventListener {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     public static class SetupOptions {
 
@@ -177,14 +171,16 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#autoRun()
      */
-    public void autoRun() {
+    @Override
+	public void autoRun() {
         m_kFlyPathBehavior.autoRun();        
     }
 
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
-    public void display(GLAutoDrawable arg0)
+    @Override
+	public void display(GLAutoDrawable arg0)
     {      
         if ( !m_bInit )
         {
@@ -336,7 +332,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getBranchState()
      */
-    public Object getBranchState() {
+    @Override
+	public Object getBranchState() {
         return m_kFlyPathBehavior.getBranchState();
     }
 
@@ -361,14 +358,16 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getCanvas()
      */
-    public Canvas getCanvas() {
+    @Override
+	public Canvas getCanvas() {
         return GetCanvas();
     }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getHeight()
      */
-    public int getHeight() {
+    @Override
+	public int getHeight() {
         return m_pkRenderer.GetHeight();
     }
 
@@ -434,7 +433,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getWidth()
      */
-    public int getWidth() {
+    @Override
+	public int getWidth() {
         return m_pkRenderer.GetWidth();
     }
 
@@ -442,7 +442,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
      */
-    public void init(GLAutoDrawable arg0) {      
+    @Override
+	public void init(GLAutoDrawable arg0) {      
         if ( m_pkRenderer != null )
         {
             ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -481,7 +482,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#keyPressed(java.awt.event.KeyEvent)
      */
-    public void keyPressed(KeyEvent e) {
+    @Override
+	public void keyPressed(KeyEvent e) {
         int iKeyCode = e.getKeyCode();
         if ( (iKeyCode != KeyEvent.VK_UP) && (iKeyCode != KeyEvent.VK_DOWN) )
         {
@@ -493,7 +495,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#makeMove(java.lang.String)
      */
-    public void makeMove(String cmd) {
+    @Override
+	public void makeMove(String cmd) {
         m_kFlyPathBehavior.move(cmd);
     }
 
@@ -501,7 +504,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
-    public void mouseDragged(MouseEvent e)
+    @Override
+	public void mouseDragged(MouseEvent e)
     {
         super.mouseDragged(e);
         updateCamera();
@@ -510,7 +514,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
      */
-    public void mousePressed(MouseEvent e) {
+    @Override
+	public void mousePressed(MouseEvent e) {
         super.mousePressed(e);
 
         /* Only capture mouse events when enabled, and only when the control key is down and the left mouse
@@ -536,7 +541,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#setCurrentState(java.lang.Object)
      */
-    public void setCurrentState(Object _state) {
+    @Override
+	public void setCurrentState(Object _state) {
         m_kFlyPathBehavior.setBranch(_state);
     }
 
@@ -666,7 +672,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#updateLighting(WildMagic.LibGraphics.Rendering.Light[])
      */
-    public void updateLighting(Light[] akGLights )
+    @Override
+	public void updateLighting(Light[] akGLights )
     {
         if ( m_bInit )
         {
@@ -689,7 +696,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.flythroughview.FlyPathBehavior_WM.Callback#viewChanged(gov.nih.mipav.view.renderer.WildMagic.flythroughview.FlyPathBehavior_WM, int)
      */
-    public void viewChanged(FlyPathBehavior_WM behavior, int iEvent)
+    @Override
+	public void viewChanged(FlyPathBehavior_WM behavior, int iEvent)
     {
         if ( m_kFlyPathBehavior != behavior )
         {
@@ -740,221 +748,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             GetCanvas().display();
         }
 
-    }
-
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#Move()
-     */
-    protected void Move()
-    {
-        if (MoveCamera())
-        {
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-        }        
-        if (MoveObject())
-        {
-            m_spkScene.UpdateGS();
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-        }
-    }
-
-    /**
-     * Picking support for adding Annotation points to the scene.
-     */
-    protected void Pick()
-    {
-        Vector3f kPos = new Vector3f(0,0,10);
-        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
-
-        if (m_bPickPending)
-        {
-            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
-                                       GetHeight(),kPos,kDir))
-            {
-                m_bPickPending = false;
-                m_kPicker.Execute(m_spkScene,kPos,kDir,0.0f,
-                                  Float.MAX_VALUE);
-                if (m_kPicker.Records.size() > 0)
-                {
-                    PickRecord kRecord = m_kPicker.GetClosestToZero();
-                    // Get the normal vector for the picked point.
-                    Vector3f kN0 = m_kSurface.VBuffer.GetNormal3( kRecord.iV0 );
-                    kN0.Scale(kRecord.B0);
-                    Vector3f kN1 = m_kSurface.VBuffer.GetNormal3( kRecord.iV1 );
-                    kN1.Scale( kRecord.B1);
-                    Vector3f kN2 = m_kSurface.VBuffer.GetNormal3( kRecord.iV2 );
-                    kN2.Scale( kRecord.B2 );
-                    Vector3f kNormal = new Vector3f();
-                    kNormal.Add( kN0, kN1 );
-                    kNormal.Add( kN2 );
-                    kNormal.Normalize();
-
-                    // Get picked point.
-                    Vector3f kP0 = m_kSurface.VBuffer.GetPosition3( kRecord.iV0 );
-                    kP0.Scale(kRecord.B0);
-                    Vector3f kP1 = m_kSurface.VBuffer.GetPosition3( kRecord.iV1 );
-                    kP1.Scale( kRecord.B1);
-                    Vector3f kP2 = m_kSurface.VBuffer.GetPosition3( kRecord.iV2 );
-                    kP2.Scale( kRecord.B2 );
-                    Vector3f kPoint = new Vector3f();
-                    kPoint.Add( kP0, kP1 );
-                    kPoint.Add( kP2 );
-
-                    createAnnotatePoint(kPoint);
-
-                    // Get vector from current path position to the picked
-                    // point.  This vector and the normal vector must be
-                    // pointing in opposite directions.  If not, then the
-                    // normal vector needs to be negated since the vertex
-                    // ordering for the triangle mesh is not guaranteed.
-                    Vector3f kV = new Vector3f();
-                    kV.Sub(kPoint, m_spkCamera.GetLocation());
-
-                    if (kV.Dot(kNormal) > 0.0f) {
-                        kNormal.Neg();
-                    }
-
-                    // Add the point to the annotation list.
-                    m_kAnnotateList.addItem(m_kFlyPathBehavior.getBranchIndex(),
-                                            m_kFlyPathBehavior.getNormalizedPathDistance(),
-                                            m_kFlyPathBehavior.isPathMoveForward(), kPoint, kNormal,
-                                            getPositionUnScaled(m_spkCamera.GetLocation()), m_spkCamera.GetDVector(), 
-                                            m_spkCamera.GetUVector(), m_spkCamera.GetRVector() );
-                }
-            }
-        }
-    }
-
-    /**
-     * Called any time a change has been made to a new branch so that the connection between the branch and its parent
-     * can be rendered.
-     */
-    protected void resetRenderBranchConnect() {
-
-        // Access the GeometryStripArray-derived instance for the rendering
-        // of the specified branch path.
-        int iBranch = m_kFlyPathBehavior.getBranchIndex();
-        Polyline kLine = (Polyline)m_spkScene.GetChild(iBranch*2+1+1);
-
-        // Mark the color as being visited.
-        kLine.VBuffer.SetColor3(0, 0, m_kNormalColorPathVisited);
-        kLine.VBuffer.SetColor3(0, 1, m_kNormalColorPathVisited);
-
-        // Are we at a branch point and is there a currently selected branch,
-        // or a previous one?
-        int iSelectedBranch = m_kFlyPathBehavior.getSelectedBranchIndex();
-
-        if ((-1 != iSelectedBranch) || (-1 != m_iLastSelectedBranchIndex)) {
-
-            // If a branch was selected and it is different from
-            // the one currently selected, then reset all of its colors
-            // to normal.
-            if ((-1 != m_iLastSelectedBranchIndex) && (m_iLastSelectedBranchIndex != iSelectedBranch)) {
-                iBranch = m_iLastSelectedBranchIndex;
-                kLine = (Polyline)m_spkScene.GetChild(iBranch*2+1);
-
-                // How many points are in the array?
-                int iNumPoints = kLine.VBuffer.GetVertexQuantity();
-                int iIndex = 0;
-
-                while (iIndex < m_aiBranchIndexUnvisitedMin[iBranch]) {
-                    kLine.VBuffer.SetColor3(0, iIndex++, m_kNormalColorPathVisited);
-                }
-
-                while (iIndex <= m_aiBranchIndexUnvisitedMax[iBranch]) {
-                    kLine.VBuffer.SetColor3(0, iIndex++, m_kNormalColorPathUnvisited);
-                }
-
-                while (iIndex < iNumPoints) {
-                    kLine.VBuffer.SetColor3(0, iIndex++, m_kNormalColorPathVisited);
-                }
-            }
-
-            // If this branch is selected, then reset the colors
-            // for the entire path as being selected.  Redraw entire
-            // branch just in case one of the unvisited limits changed.
-            if (-1 != iSelectedBranch) {
-
-                // Access the GeometryStripArray-derived instance for the rendering
-                // of the specified branch path.
-                iBranch = m_kFlyPathBehavior.getBranchIndex();
-                kLine = (Polyline)m_spkScene.GetChild(iBranch*2+1);
-                int iNumPoints = kLine.VBuffer.GetVertexQuantity();
-
-                // Convert the current branch point position to curve
-                // sample index for rendering.
-                int iBranchPoint = (int) (iNumPoints * m_kFlyPathBehavior.getNormalizedPathDistance());
-
-                // What is the range of samples to be colored as unvisited.
-                int iUnvisitedMin = m_aiBranchIndexUnvisitedMin[iBranch];
-                int iUnvisitedMax = m_aiBranchIndexUnvisitedMax[iBranch];
-
-                // Heading start-to-end?
-                if (m_kFlyPathBehavior.isPathMoveForward()) {
-
-                    for (int i = iBranchPoint; i < iNumPoints; i++) {
-
-                        if ((iUnvisitedMin <= i) && (i <= iUnvisitedMax)) {
-                            kLine.VBuffer.SetColor3(0, i, m_kSelectColorPathUnvisited);
-
-                        } else {
-                            kLine.VBuffer.SetColor3(0, i, m_kSelectColorPathVisited);
-                        }
-                    }
-                } // Heading end-to-start?
-                else {
-
-                    for (int i = iBranchPoint; i >= 0; i--) {
-
-                        if ((iUnvisitedMin <= i) && (i <= iUnvisitedMax)) {
-                            kLine.VBuffer.SetColor3(0, i, m_kSelectColorPathUnvisited);
-
-                        } else {
-                            kLine.VBuffer.SetColor3(0, i, m_kSelectColorPathVisited);
-                        }
-                    }
-                }
-            }
-        }
-
-        m_iLastSelectedBranchIndex = iSelectedBranch;
-    }
-
-    /**
-     * Called any time the position along the current curve changes and the color of the curve needs to change to show
-     * what has been visited.
-     */
-    protected void resetRenderBranchPath() {
-
-        // Access the GeometryStripArray-derived instance for the rendering
-        // of the specified branch path.
-        int iBranch = m_kFlyPathBehavior.getBranchIndex();
-        Polyline kLine = (Polyline)m_spkScene.GetChild(iBranch*2+1);
-
-        // How many points are in the array?
-        int iNumPoints = kLine.VBuffer.GetVertexQuantity();
-
-        // What is the range of samples to be colored as unvisited.
-        int iUnvisitedMin = (int) (m_kFlyPathBehavior.getBranchDistUnvisitedMin() * (iNumPoints - 1));
-        int iUnvisitedMax = (int) (m_kFlyPathBehavior.getBranchDistUnvisitedMax() * (iNumPoints - 1));
-
-        // Initially, all paths were marked as being unvisited, and since
-        // you cannot "unvisit" a point along a path, we just need to go
-        // through and mark each node as visited or not.  Update any newly
-        // visited points.
-        for (int iIndex = m_aiBranchIndexUnvisitedMin[iBranch]; iIndex < iUnvisitedMin; iIndex++) {
-            kLine.VBuffer.SetColor3(0, iIndex, m_kNormalColorPathVisited);
-        }
-
-        for (int iIndex = m_aiBranchIndexUnvisitedMax[iBranch]; iIndex > iUnvisitedMax; iIndex--) {
-            kLine.VBuffer.SetColor3(0, iIndex, m_kNormalColorPathVisited);
-        }
-
-        // Save the new range of unvisited range of the path.
-        m_aiBranchIndexUnvisitedMin[iBranch] = iUnvisitedMin;
-        m_aiBranchIndexUnvisitedMax[iBranch] = iUnvisitedMax;
-
-        kLine.VBuffer.Release();
     }
 
     /**
@@ -1144,6 +937,36 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
     }
 
+    private ModelImage resizeImage( ModelImage kInput )
+    {        
+        int[] aiNewExtents = kInput.getExtents();
+        int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+        if ( (aiNewExtents[0] == aiExtents[0]) && 
+                (aiNewExtents[1] == aiExtents[1]) && (aiNewExtents[2] == aiExtents[2]) )
+        {
+            return kInput;
+        }
+        float[] afRes = m_kVolumeImageA.GetImage().getResolutions(0);
+        AlgorithmTransform transformFunct = 
+            new AlgorithmTransform(kInput, new TransMatrix(4), AlgorithmTransform.TRILINEAR, 
+                    afRes[0], afRes[1], afRes[2], 
+                    aiExtents[0], aiExtents[1], aiExtents[2], false,
+                true, false);
+
+
+        transformFunct.setRunningInSeparateThread(false);
+        transformFunct.run();
+        ModelImage kResult = null;
+        if (transformFunct.isCompleted() == true) 
+        {
+            kResult = transformFunct.getTransformedImage();
+            kResult.calcMinMax();
+        }
+        transformFunct.finalize();
+        transformFunct = null;
+        return kResult;
+    }
+
     /**
      * Update the camera location and view direction. Called from mouse dragged. Implements "inside looking out" object rotation.
      */
@@ -1175,36 +998,222 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         }
     }
 
-
-
-    private ModelImage resizeImage( ModelImage kInput )
-    {        
-        int[] aiNewExtents = kInput.getExtents();
-        int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
-        if ( (aiNewExtents[0] == aiExtents[0]) && 
-                (aiNewExtents[1] == aiExtents[1]) && (aiNewExtents[2] == aiExtents[2]) )
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#Move()
+     */
+    @Override
+	protected void Move()
+    {
+        if (MoveCamera())
         {
-            return kInput;
-        }
-        float[] afRes = m_kVolumeImageA.GetImage().getResolutions(0);
-        AlgorithmTransform transformFunct = 
-            new AlgorithmTransform(kInput, new TransMatrix(4), AlgorithmTransform.TRILINEAR, 
-                    afRes[0], afRes[1], afRes[2], 
-                    aiExtents[0], aiExtents[1], aiExtents[2], false,
-                true, false);
-
-
-        transformFunct.setRunningInSeparateThread(false);
-        transformFunct.run();
-        ModelImage kResult = null;
-        if (transformFunct.isCompleted() == true) 
+            m_kCuller.ComputeVisibleSet(m_spkScene);
+        }        
+        if (MoveObject())
         {
-            kResult = transformFunct.getTransformedImage();
-            kResult.calcMinMax();
+            m_spkScene.UpdateGS();
+            m_kCuller.ComputeVisibleSet(m_spkScene);
         }
-        transformFunct.finalize();
-        transformFunct = null;
-        return kResult;
+    }
+
+    /**
+     * Picking support for adding Annotation points to the scene.
+     */
+    protected void Pick()
+    {
+        Vector3f kPos = new Vector3f(0,0,10);
+        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
+
+        if (m_bPickPending)
+        {
+            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
+                                       GetHeight(),kPos,kDir))
+            {
+                m_bPickPending = false;
+                m_kPicker.Execute(m_spkScene,kPos,kDir,0.0f,
+                                  Float.MAX_VALUE);
+                if (m_kPicker.Records.size() > 0)
+                {
+                    PickRecord kRecord = m_kPicker.GetClosestToZero();
+                    // Get the normal vector for the picked point.
+                    Vector3f kN0 = m_kSurface.VBuffer.GetNormal3( kRecord.iV0 );
+                    kN0.Scale(kRecord.B0);
+                    Vector3f kN1 = m_kSurface.VBuffer.GetNormal3( kRecord.iV1 );
+                    kN1.Scale( kRecord.B1);
+                    Vector3f kN2 = m_kSurface.VBuffer.GetNormal3( kRecord.iV2 );
+                    kN2.Scale( kRecord.B2 );
+                    Vector3f kNormal = new Vector3f();
+                    kNormal.Add( kN0, kN1 );
+                    kNormal.Add( kN2 );
+                    kNormal.Normalize();
+
+                    // Get picked point.
+                    Vector3f kP0 = m_kSurface.VBuffer.GetPosition3( kRecord.iV0 );
+                    kP0.Scale(kRecord.B0);
+                    Vector3f kP1 = m_kSurface.VBuffer.GetPosition3( kRecord.iV1 );
+                    kP1.Scale( kRecord.B1);
+                    Vector3f kP2 = m_kSurface.VBuffer.GetPosition3( kRecord.iV2 );
+                    kP2.Scale( kRecord.B2 );
+                    Vector3f kPoint = new Vector3f();
+                    kPoint.Add( kP0, kP1 );
+                    kPoint.Add( kP2 );
+
+                    createAnnotatePoint(kPoint);
+
+                    // Get vector from current path position to the picked
+                    // point.  This vector and the normal vector must be
+                    // pointing in opposite directions.  If not, then the
+                    // normal vector needs to be negated since the vertex
+                    // ordering for the triangle mesh is not guaranteed.
+                    Vector3f kV = new Vector3f();
+                    kV.Sub(kPoint, m_spkCamera.GetLocation());
+
+                    if (kV.Dot(kNormal) > 0.0f) {
+                        kNormal.Neg();
+                    }
+
+                    // Add the point to the annotation list.
+                    m_kAnnotateList.addItem(m_kFlyPathBehavior.getBranchIndex(),
+                                            m_kFlyPathBehavior.getNormalizedPathDistance(),
+                                            m_kFlyPathBehavior.isPathMoveForward(), kPoint, kNormal,
+                                            getPositionUnScaled(m_spkCamera.GetLocation()), m_spkCamera.GetDVector(), 
+                                            m_spkCamera.GetUVector(), m_spkCamera.GetRVector() );
+                }
+            }
+        }
+    }
+
+    /**
+     * Called any time a change has been made to a new branch so that the connection between the branch and its parent
+     * can be rendered.
+     */
+    protected void resetRenderBranchConnect() {
+
+        // Access the GeometryStripArray-derived instance for the rendering
+        // of the specified branch path.
+        int iBranch = m_kFlyPathBehavior.getBranchIndex();
+        Polyline kLine = (Polyline)m_spkScene.GetChild(iBranch*2+1+1);
+
+        // Mark the color as being visited.
+        kLine.VBuffer.SetColor3(0, 0, m_kNormalColorPathVisited);
+        kLine.VBuffer.SetColor3(0, 1, m_kNormalColorPathVisited);
+
+        // Are we at a branch point and is there a currently selected branch,
+        // or a previous one?
+        int iSelectedBranch = m_kFlyPathBehavior.getSelectedBranchIndex();
+
+        if ((-1 != iSelectedBranch) || (-1 != m_iLastSelectedBranchIndex)) {
+
+            // If a branch was selected and it is different from
+            // the one currently selected, then reset all of its colors
+            // to normal.
+            if ((-1 != m_iLastSelectedBranchIndex) && (m_iLastSelectedBranchIndex != iSelectedBranch)) {
+                iBranch = m_iLastSelectedBranchIndex;
+                kLine = (Polyline)m_spkScene.GetChild(iBranch*2+1);
+
+                // How many points are in the array?
+                int iNumPoints = kLine.VBuffer.GetVertexQuantity();
+                int iIndex = 0;
+
+                while (iIndex < m_aiBranchIndexUnvisitedMin[iBranch]) {
+                    kLine.VBuffer.SetColor3(0, iIndex++, m_kNormalColorPathVisited);
+                }
+
+                while (iIndex <= m_aiBranchIndexUnvisitedMax[iBranch]) {
+                    kLine.VBuffer.SetColor3(0, iIndex++, m_kNormalColorPathUnvisited);
+                }
+
+                while (iIndex < iNumPoints) {
+                    kLine.VBuffer.SetColor3(0, iIndex++, m_kNormalColorPathVisited);
+                }
+            }
+
+            // If this branch is selected, then reset the colors
+            // for the entire path as being selected.  Redraw entire
+            // branch just in case one of the unvisited limits changed.
+            if (-1 != iSelectedBranch) {
+
+                // Access the GeometryStripArray-derived instance for the rendering
+                // of the specified branch path.
+                iBranch = m_kFlyPathBehavior.getBranchIndex();
+                kLine = (Polyline)m_spkScene.GetChild(iBranch*2+1);
+                int iNumPoints = kLine.VBuffer.GetVertexQuantity();
+
+                // Convert the current branch point position to curve
+                // sample index for rendering.
+                int iBranchPoint = (int) (iNumPoints * m_kFlyPathBehavior.getNormalizedPathDistance());
+
+                // What is the range of samples to be colored as unvisited.
+                int iUnvisitedMin = m_aiBranchIndexUnvisitedMin[iBranch];
+                int iUnvisitedMax = m_aiBranchIndexUnvisitedMax[iBranch];
+
+                // Heading start-to-end?
+                if (m_kFlyPathBehavior.isPathMoveForward()) {
+
+                    for (int i = iBranchPoint; i < iNumPoints; i++) {
+
+                        if ((iUnvisitedMin <= i) && (i <= iUnvisitedMax)) {
+                            kLine.VBuffer.SetColor3(0, i, m_kSelectColorPathUnvisited);
+
+                        } else {
+                            kLine.VBuffer.SetColor3(0, i, m_kSelectColorPathVisited);
+                        }
+                    }
+                } // Heading end-to-start?
+                else {
+
+                    for (int i = iBranchPoint; i >= 0; i--) {
+
+                        if ((iUnvisitedMin <= i) && (i <= iUnvisitedMax)) {
+                            kLine.VBuffer.SetColor3(0, i, m_kSelectColorPathUnvisited);
+
+                        } else {
+                            kLine.VBuffer.SetColor3(0, i, m_kSelectColorPathVisited);
+                        }
+                    }
+                }
+            }
+        }
+
+        m_iLastSelectedBranchIndex = iSelectedBranch;
+    }
+
+
+
+    /**
+     * Called any time the position along the current curve changes and the color of the curve needs to change to show
+     * what has been visited.
+     */
+    protected void resetRenderBranchPath() {
+
+        // Access the GeometryStripArray-derived instance for the rendering
+        // of the specified branch path.
+        int iBranch = m_kFlyPathBehavior.getBranchIndex();
+        Polyline kLine = (Polyline)m_spkScene.GetChild(iBranch*2+1);
+
+        // How many points are in the array?
+        int iNumPoints = kLine.VBuffer.GetVertexQuantity();
+
+        // What is the range of samples to be colored as unvisited.
+        int iUnvisitedMin = (int) (m_kFlyPathBehavior.getBranchDistUnvisitedMin() * (iNumPoints - 1));
+        int iUnvisitedMax = (int) (m_kFlyPathBehavior.getBranchDistUnvisitedMax() * (iNumPoints - 1));
+
+        // Initially, all paths were marked as being unvisited, and since
+        // you cannot "unvisit" a point along a path, we just need to go
+        // through and mark each node as visited or not.  Update any newly
+        // visited points.
+        for (int iIndex = m_aiBranchIndexUnvisitedMin[iBranch]; iIndex < iUnvisitedMin; iIndex++) {
+            kLine.VBuffer.SetColor3(0, iIndex, m_kNormalColorPathVisited);
+        }
+
+        for (int iIndex = m_aiBranchIndexUnvisitedMax[iBranch]; iIndex > iUnvisitedMax; iIndex--) {
+            kLine.VBuffer.SetColor3(0, iIndex, m_kNormalColorPathVisited);
+        }
+
+        // Save the new range of unvisited range of the path.
+        m_aiBranchIndexUnvisitedMin[iBranch] = iUnvisitedMin;
+        m_aiBranchIndexUnvisitedMax[iBranch] = iUnvisitedMax;
+
+        kLine.VBuffer.Release();
     }
 
 }

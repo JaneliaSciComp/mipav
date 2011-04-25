@@ -25,9 +25,8 @@ import java.util.Vector;
 import javax.imageio.ImageIO;
 import javax.media.MediaLocator;
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
-
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -42,13 +41,14 @@ import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 
 public abstract class GPURenderBase extends JavaApplication3D
 implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 {
-    /** Parent user-interface and display frame. */
+	private static final long serialVersionUID = 9069227710441839806L;
+	/** Parent user-interface and display frame. */
     protected VolumeTriPlanarInterface m_kParent = null;
     /** VolumeImage for ModelImageA, contains data and textures. */
     protected VolumeImage m_kVolumeImageA;
@@ -103,6 +103,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** Set to true when recording. */
     protected boolean m_bSnapshot = false;
     protected int m_iCaptureFPS;
+    
+    protected boolean m_bShared = false;
     /**
      * Default GPURenderBase constructor.
      */
@@ -138,21 +140,32 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
     
-    /* (non-Javadoc)
-     * @see javax.media.opengl.GLEventListener#displayChanged(javax.media.opengl.GLAutoDrawable, boolean, boolean)
+    /**
+     * Add a new scene-graph node to the display list.
+     * @param kNode
      */
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
+    public VolumeObject AddNode(Node kNode)
+    {
+        VolumeNode kVNode = new VolumeNode( m_kVolumeImageA,
+                m_kTranslate,
+                m_fX, m_fY, m_fZ, kNode);
+        m_kDisplayList.add( 1, kVNode );
+        UpdateSceneRotation();
+        return kVNode;
+    }
+
 
     /**
      * memory cleanup.
      */
-    public void dispose()
+    @Override
+	public void dispose()
     {
         m_kParent = null;
         m_kVolumeImageA = null;
         m_kVolumeImageB = null;
         if ( m_kAnimator != null ) {
-        	m_kAnimator.remove(GetCanvas());
+        	//m_kAnimator.remove(GetCanvas());
         	m_kAnimator = null;
         }
         if ( m_spkScene != null )
@@ -202,20 +215,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         super.dispose();
     }
 
-
-    /**
-     * Add a new scene-graph node to the display list.
-     * @param kNode
-     */
-    public VolumeObject AddNode(Node kNode)
-    {
-        VolumeNode kVNode = new VolumeNode( m_kVolumeImageA,
-                m_kTranslate,
-                m_fX, m_fY, m_fZ, kNode);
-        m_kDisplayList.add( 1, kVNode );
-        UpdateSceneRotation();
-        return kVNode;
-    }
+    @Override
+	public void dispose(GLAutoDrawable a) {}
 
     /**
      * Returns the GLCanvas in the m_pkRenderer object.
@@ -241,6 +242,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return m_kVolumeImageA.GetImage();
     }
 
+
     /**
      * @return the current light configuration.
      */
@@ -248,8 +250,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         return m_akLights;
     }
-
-
+    
     /**
      * Sets blending between imageA and imageB.
      * @param fValue the blend value (0-1)
@@ -272,7 +273,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         return null;
     }
-    
+
     /**
      * @return translation vector center of the volume rendered scene.
      */
@@ -280,27 +281,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     	return m_kTranslate;
     }
 
-    public VolumeObject RemoveNode( String kNodeName )
-    {
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            if ( m_kDisplayList.get(i).GetName() != null )
-            {
-                if ( m_kDisplayList.get(i).GetName().equals(kNodeName))
-                {
-                    VolumeObject kObj = m_kDisplayList.remove(i);
-                    return kObj;
-                }
-            }
-        }
-        return null;
-    }
-
     /**
      * Part of the KeyListener interface. 
      * @param e the key event.
      */
-    public void keyPressed(KeyEvent e) {
+    @Override
+	public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
         super.keyPressed(e);
         switch (ucKey)
@@ -323,6 +309,38 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return;
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#record(boolean)
+     */
+    public void record(boolean bOn)
+    {
+        m_bSnapshot = bOn;
+        if ( m_bSnapshot )
+        {
+            m_iCaptureFPS = (int)m_dFrameRate;
+        }
+        if ( !m_bSnapshot )
+        {
+            saveAVIMovie();
+        }
+    }
+
+    public VolumeObject RemoveNode( String kNodeName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kNodeName))
+                {
+                    VolumeObject kObj = m_kDisplayList.remove(i);
+                    return kObj;
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * Reset the z-axis. 
      */
@@ -342,6 +360,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         UpdateSceneRotation();
     }
 
+
     /**
      * Reset y-axis.
      */
@@ -360,7 +379,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param iWidth the new width
      * @param iHeight the new height
      */
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+    @Override
+	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
         //if ( m_pkRenderer != null )
         //{
         //    ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -389,8 +409,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-
-
+    
     /**
      * Save quick time movie.
      */
@@ -449,7 +468,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         oml = null;
 
     }
-    
+
     /** 
      * Changes the projection to Orthographic Projection.
      */
@@ -459,7 +478,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
         m_pkRenderer.OnFrustumChange();
     }
-
+  
+    
     /** 
      * Changes the projection to Perspective Projection.
      */
@@ -469,7 +489,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         m_pkRenderer.OnFrustumChange();
     }
-
+    
     /**
      * Sets the currently visible flag. Used when the GLCanvas is removed from
      * the display panel or frame.
@@ -479,7 +499,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         m_bVisible = bVisible;
     }
-    
     
     /**
      * Build a image with the current rotational transformation matrix. Step.1
@@ -560,6 +579,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
            
         }
     }
+  
     
     /**
      * Called from JPanelLight. Updates the lighting parameters.
@@ -620,23 +640,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#record(boolean)
-     */
-    public void record(boolean bOn)
-    {
-        m_bSnapshot = bOn;
-        if ( m_bSnapshot )
-        {
-            m_iCaptureFPS = (int)m_dFrameRate;
-        }
-        if ( !m_bSnapshot )
-        {
-            saveAVIMovie();
-        }
-    }
-  
-    
+
     /**
      * Writes a the frame buffer as a .jpg image to disk. The file name is captureImage + the image number.
      * @return true on successful write.
@@ -654,6 +658,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return true;
     }
     
+    protected Matrix3f GetSceneRotation()
+    {
+        return m_spkScene.Local.GetRotate();
+    }
+
 
     /**
      * Updates the camera and displayed objects for rendering.
@@ -696,8 +705,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             DrawFrameRate(8,16,ColorRGBA.WHITE);
         }
     }
-
-
+    
+    protected void SetSceneRotation(Matrix3f kRotation)
+    {
+        m_spkScene.Local.SetRotate(kRotation);
+        UpdateSceneRotation();
+    }
+    
     /**
      * Updates the displayed objects based on any user mouse rotation.
      */
@@ -712,17 +726,4 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDisplayList.get(i).GetScene().UpdateGS();
         }
     }
-    
-    protected Matrix3f GetSceneRotation()
-    {
-        return m_spkScene.Local.GetRotate();
-    }
-    
-    protected void SetSceneRotation(Matrix3f kRotation)
-    {
-        m_spkScene.Local.SetRotate(kRotation);
-        UpdateSceneRotation();
-    }
-    
-    public void dispose(GLAutoDrawable a) {}
 }

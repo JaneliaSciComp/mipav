@@ -10,7 +10,6 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
-import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.Camera;
@@ -80,28 +79,7 @@ public class VolumeRayCast extends VolumeObject
 
     /** Volume proxy-geometry (cube) */
     private TriMesh m_kMesh;
-
-    /** Screen camera for displaying the screen polygon: */
-    private Camera m_spkScreenCamera;
-    
-    
-    /** Scene polygon displaying the first-pass rendering of the proxy-geometry: */
-    private TriMesh m_spkScenePolygon;
-
-    /** GraphicsImage with the first-pass rendering of the proxy-geometry: */
-    private GraphicsImage m_spkSceneImage;
-
-    /** Texture for the first-pass rendering of the proxy-geometry: */
-    private Texture[] m_apkSceneTarget = new Texture[1];
-
-    /** Off-screen buffer the first-pass rendering is drawn into: */
-    private OpenGLFrameBuffer m_pkPBuffer;
-
-    /** For debugging, setting this to false causes only the proxy-geometry to be displayed. */
-    private boolean m_bDisplaySecond = true;
-
-    /** Store size between pre-render and post-pre-render. */
-    private int m_iWidthSave, m_iHeightSave;
+   
 
     /**
      * Creates a new VolumeRayCast object.
@@ -134,21 +112,8 @@ public class VolumeRayCast extends VolumeObject
      * @param arg0 the GLCanvas
      * @param kRenderer the OpenGLRenderer.
      */
-    public void CreateScene ( FrameBuffer.FormatType eFormat,
-            FrameBuffer.DepthType eDepth, FrameBuffer.StencilType eStencil,
-            FrameBuffer.BufferingType eBuffering,
-            FrameBuffer.MultisamplingType eMultisampling,
-            int iWidth, int iHeight,
-            GLAutoDrawable kDrawable, Renderer kRenderer)
-    {        
-        // The screen camera is designed to map (x,y,z) in [0,1]^3 to (x',y,'z')
-        // in [-1,1]^2 x [0,1].
-        m_spkScreenCamera = new Camera();
-        m_spkScreenCamera.Perspective = false;
-        m_spkScreenCamera.SetFrustum(0.0f,1.0f,0.0f,1.0f,0.0f,1.0f);
-        m_spkScreenCamera.SetFrame(Vector3f.ZERO,Vector3f.UNIT_Z,
-                Vector3f.UNIT_Y,Vector3f.UNIT_X);
-
+    public void CreateScene ( )
+    {            	
         // Create a scene graph with the face model as the leaf node.
         m_kScene = new Node();
         CreateBox();
@@ -158,105 +123,17 @@ public class VolumeRayCast extends VolumeObject
 
         m_kAlpha = new AlphaState();
         m_kAlpha.BlendEnabled = true;
-        //m_kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
-        //m_kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
         m_kScene.AttachGlobalState(m_kAlpha);
-
-        // Create a screen polygon to use as the RGBA render target.
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetTChannels(0,2);
-        VertexBuffer pkVBuffer = new VertexBuffer(kAttr,4);
-        pkVBuffer.SetPosition3(0,0.0f,0.0f,0.0f);
-        pkVBuffer.SetPosition3(1,0.2f,0.0f,0.0f);
-        pkVBuffer.SetPosition3(2,0.2f,0.2f,0.0f);
-        pkVBuffer.SetPosition3(3,0.0f,0.2f,0.0f);
-        pkVBuffer.SetTCoord2(0,0,0.0f,0.0f);
-        pkVBuffer.SetTCoord2(0,1,1.0f,0.0f);
-        pkVBuffer.SetTCoord2(0,2,1.0f,1.0f);
-        pkVBuffer.SetTCoord2(0,3,0.0f,1.0f);
-        IndexBuffer pkIBuffer = new IndexBuffer(6);
-        int[] aiIndex = pkIBuffer.GetData();
-        aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
-        aiIndex[3] = 0;  aiIndex[4] = 2;  aiIndex[5] = 3;
-        m_spkScenePolygon = new TriMesh(pkVBuffer,pkIBuffer);
-
-        // Create a red image for the purposes of debugging.  The image itself
-        // should not show up because the frame-buffer object writes to the
-        // texture memory.  But if this fails, the red image should appear.
-        byte[] aucData = new byte[4*iWidth*iHeight];
-        for (int i = 0; i < iWidth*iHeight; i++)
-        {
-            aucData[i++] = (byte)0xFF;
-            aucData[i++] = 0x00;
-            aucData[i++] = 0x00;
-            aucData[i++] = (byte)0xFF;
-        }
-        m_spkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,iWidth,iHeight,aucData,
-        "SceneImage");
-
-        // Create the texture effect for the scene polygon.  The resources are
-        // loaded so that the scene target texture has everything needed for
-        // FrameBuffer::Create to succeed.
-        TextureEffect pkEffect = new TextureEffect("SceneImage");
-        m_apkSceneTarget[0] = pkEffect.GetTexture(0,0);
-        m_apkSceneTarget[0].SetFilterType(Texture.FilterType.NEAREST);
-        m_apkSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
-        m_apkSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
-
-        //m_pkSceneTarget.SetOffscreenTexture(true);
-        //m_pkSceneTarget.SetDepthCompare (DepthCompare.DC_LESS);
-
         
-        
-        m_spkScenePolygon.AttachEffect(pkEffect);
-        m_spkScenePolygon.UpdateGS();
-        m_spkScenePolygon.UpdateRS();
-        kRenderer.LoadResources(m_spkScenePolygon);
-
-
-        // Create the RGBA frame-buffer object to be bound to the scene polygon.
-        m_pkPBuffer = new OpenGLFrameBuffer(eFormat,eDepth,eStencil,
-                eBuffering,eMultisampling,kRenderer,m_apkSceneTarget,kDrawable);
-        assert(m_pkPBuffer != null);
-
         m_kScene.UpdateGS();
         m_kTranslate = new Vector3f( m_kScene.WorldBound.GetCenter() );
         m_kTranslate.Neg();
         m_kScene.GetChild(0).Local.SetTranslate( m_kTranslate );
-
-        
-        m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
-                m_apkSceneTarget[0]);
-        kRenderer.LoadResources(m_kVolumeShaderEffect);
-        m_kScene.UpdateGS();
-        m_kScene.UpdateRS();
     }
 
     /** delete local memory. */
     public void dispose()
     {
-        if ( m_spkScenePolygon != null )
-        {
-            m_spkScenePolygon.dispose();
-            m_spkScenePolygon = null;
-        }
-
-        if ( m_spkSceneImage != null )
-        {
-            m_spkSceneImage.dispose();
-            m_spkSceneImage = null;
-        }
-        if ( m_apkSceneTarget[0] != null )
-        {
-            m_apkSceneTarget[0].dispose();
-            m_apkSceneTarget[0] = null;
-        }
-        if ( m_pkPBuffer != null )
-        {
-            m_pkPBuffer.dispose();
-            m_pkPBuffer = null;
-        }
         if ( m_kMaterial != null )
         {
             m_kMaterial.dispose();
@@ -271,11 +148,6 @@ public class VolumeRayCast extends VolumeObject
         {
             m_kVolumeShaderEffect.dispose();
             m_kVolumeShaderEffect = null;
-        }
-        if ( m_spkScreenCamera != null )
-        {
-            m_spkScreenCamera.dispose();
-            m_spkScreenCamera = null;
         }
         if ( m_spkVertexColor3Shader != null )
         {
@@ -351,31 +223,7 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.MULTIHISTOMode(bOn);
     }
-    
-
-    /** Turns off rendering to the PBuffer. Called after all objects displayed
-     * with the ray-cast volume have been pre-rendered. */
-    public void PostPreRender( Renderer kRenderer )
-    {
-        //kRenderer.Resize(m_iWidthSave,m_iHeightSave);
-        // Disable the PBuffer
-        m_pkPBuffer.Disable();
-    }
-
-    public void PostPreRenderB( Renderer kRenderer )
-    {
-        //kRenderer.Resize(m_iWidthSave,m_iHeightSave);
-        m_pkPBuffer.Disable();
-    }
-
-
-    public void PreRenderB( Renderer kRenderer )
-    {
-        //kRenderer.Resize( m_spkSceneImage.GetBound(0), m_spkSceneImage.GetBound(1));
-        m_pkPBuffer.Enable();
-    }
-    
-    
+           
 
     /** Reloads the VolumeShaderEffect current shader program.
      * @param kRenderer the OpenGLRenderer object.
@@ -413,10 +261,101 @@ public class VolumeRayCast extends VolumeObject
         }
     }
 
-    public void reshape( int iWidth, int iHeight )
+    public void releaseShaderEffect( Renderer kRenderer )
     {
-        //m_spkSceneImage.SetData(new byte[iWidth*iHeight*4], iWidth, iHeight);
-        //m_apkSceneTarget[0].Release();
+    	if ( m_kVolumeShaderEffect != null )
+    	{
+            m_kMesh.DetachAllEffects();
+    		kRenderer.ReleaseResources( m_kMesh );
+    		kRenderer.ReleaseResources( m_kVolumeShaderEffect );
+    	}
+    }
+
+    public void recreateShaderEffect( Renderer kRenderer, Texture targetTexture )
+    {
+    	
+        m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
+                targetTexture);
+        kRenderer.LoadResources(m_kVolumeShaderEffect);
+        kRenderer.LoadResources(m_kMesh);
+        m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
+    	
+    	/*
+    	if ( m_pkPBuffer != null )
+    	{
+    		System.err.println( "Terminating Buffer" );
+    		m_pkPBuffer.SetDrawable(kDrawable);
+    		m_pkPBuffer.TerminateBuffer();
+    		m_pkPBuffer = null;
+
+    		kRenderer.ReleaseResources( m_spkScenePolygon );
+    	}
+
+
+
+        // Create the RGBA frame-buffer object to be bound to the scene polygon.
+        m_pkPBuffer = new OpenGLFrameBuffer(eFormat,eDepth,eStencil,
+                eBuffering,eMultisampling,kRenderer,kDrawable);
+    	
+    	// Create a screen polygon to use as the RGBA render target.
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetTChannels(0,2);
+        VertexBuffer pkVBuffer = new VertexBuffer(kAttr,4);
+		pkVBuffer.SetPosition3(0,0.0f,0.0f,1.0f);
+		pkVBuffer.SetPosition3(1,1.0f,0.0f,1.0f);
+		pkVBuffer.SetPosition3(2,1.0f,1.0f,1.0f);
+		pkVBuffer.SetPosition3(3,0.0f,1.0f,1.0f);
+        //pkVBuffer.SetPosition3(0,0.0f,0.0f,0.0f);
+        //pkVBuffer.SetPosition3(1,0.2f,0.0f,0.0f);
+        //pkVBuffer.SetPosition3(2,0.2f,0.2f,0.0f);
+        //pkVBuffer.SetPosition3(3,0.0f,0.2f,0.0f);
+        pkVBuffer.SetTCoord2(0,0,0.0f,0.0f);
+        pkVBuffer.SetTCoord2(0,1,1.0f,0.0f);
+        pkVBuffer.SetTCoord2(0,2,1.0f,1.0f);
+        pkVBuffer.SetTCoord2(0,3,0.0f,1.0f);
+        IndexBuffer pkIBuffer = new IndexBuffer(6);
+        int[] aiIndex = pkIBuffer.GetData();
+        aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
+        aiIndex[3] = 0;  aiIndex[4] = 2;  aiIndex[5] = 3;
+        m_spkScenePolygon = new TriMesh(pkVBuffer,pkIBuffer);
+
+        // Create a red image for the purposes of debugging.  The image itself
+        // should not show up because the frame-buffer object writes to the
+        // texture memory.  But if this fails, the red image should appear.
+        byte[] aucData = new byte[4*iWidth*iHeight];
+        for (int i = 0; i < iWidth*iHeight; i++)
+        {
+            aucData[i++] = (byte)0xFF;
+            aucData[i++] = 0x00;
+            aucData[i++] = 0x00;
+            aucData[i++] = (byte)0xFF;
+        }
+        m_spkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,iWidth,iHeight,aucData,
+        "SceneImage");
+
+        // Create the texture effect for the scene polygon.  The resources are
+        // loaded so that the scene target texture has everything needed for
+        // FrameBuffer::Create to succeed.
+        TextureEffect pkEffect = new TextureEffect("SceneImage");
+        m_apkSceneTarget[0] = pkEffect.GetTexture(0,0);
+        m_apkSceneTarget[0].SetFilterType(Texture.FilterType.NEAREST);
+        m_apkSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_apkSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+
+        //m_pkSceneTarget.SetOffscreenTexture(true);
+        //m_pkSceneTarget.SetDepthCompare (DepthCompare.DC_LESS);
+
+        
+        
+        m_spkScenePolygon.AttachEffect(pkEffect);
+        m_spkScenePolygon.UpdateGS();
+        m_spkScenePolygon.UpdateRS();
+        kRenderer.LoadResources(m_spkScenePolygon);
+
+        m_pkPBuffer.InitializeBuffer( m_apkSceneTarget );
+        */
     }
     
     /**
@@ -485,16 +424,6 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
     }
 
-    /** Sets displaying the second pass. For debugging. Rendering the first
-     * pass obly displays the proxy-geometry bounding box.
-     * @param bDisplay when true display both passes (the default). When
-     * false display only the proxy-geometry.
-     */
-    public void SetDisplaySecond( boolean bDisplay )
-    {
-        m_bDisplaySecond = bDisplay;
-    }
-    
     /**
      * Enables/Disables Gradient Magnitude filter.
      * @param bShow gradient magnitude filter on/off
@@ -761,8 +690,6 @@ public class VolumeRayCast extends VolumeObject
         {
             return;
         }
-        m_iWidthSave = kRenderer.GetWidth();
-        m_iHeightSave = kRenderer.GetHeight();
         m_kScene.UpdateGS();
         
         // First rendering pass:
@@ -771,8 +698,6 @@ public class VolumeRayCast extends VolumeObject
         m_kMesh.DetachAllEffects();
         m_kMesh.AttachEffect( m_spkVertexColor3Shader );
         kCuller.ComputeVisibleSet(m_kScene);
-        // Enable rendering to the PBuffer:
-        //m_pkPBuffer.Enable();
         kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
         kRenderer.ClearBuffers();
 

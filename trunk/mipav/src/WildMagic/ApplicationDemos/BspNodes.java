@@ -18,62 +18,64 @@
 
 package WildMagic.ApplicationDemos;
 
-import javax.media.opengl.*;
-import com.sun.opengl.util.Animator;
-//import com.jogamp.opengl.util.*;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
-import java.awt.*;
-import java.awt.event.*;
 
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibGraphics.Sorting.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
+import java.awt.Frame;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-public class BspNodes extends JavaApplication3D
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Mathf;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Plane3f;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.Rendering.ZBufferState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.Sorting.BspNode;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+
+import com.jogamp.opengl.util.Animator;
+
+public class BspNodes extends DemoBase
     implements GLEventListener, KeyListener
 {
-    public BspNodes()
-    {
-        super("BspNodes",0,0,640,480, new ColorRGBA(0.9f,0.9f,0.9f,1.0f));
-        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-                                          m_eBuffering, m_eMultisampling,
-                                           m_iWidth, m_iHeight );
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
 
-        String kExternalDirs = getExternalDirs();        
-        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-    }
+	private static final long serialVersionUID = -3814811425729875898L;
 
-
-    /**
+	/**
      * @param args
      */
     public static void main(String[] args) {
     	BspNodes kWorld = new BspNodes();
+		/* Animator serves the purpose of the idle function, calls display: */
     	Frame frame = new Frame(kWorld.GetWindowTitle());
     	frame.add( kWorld.GetCanvas() );
     	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
     	/* Animator serves the purpose of the idle function, calls display: */
     	final Animator animator = new Animator( kWorld.GetCanvas() );
     	frame.addWindowListener(new WindowAdapter() {
-    		public void windowClosing(WindowEvent e) {
+    		@Override
+			public void windowClosing(WindowEvent e) {
     			// Run this on another thread than the AWT event queue to
     			// avoid deadlocks on shutdown on some platforms
     			new Thread(new Runnable() {
-    				public void run() {
+    				@Override
+					public void run() {
     					animator.stop();
     					System.exit(0);
     				}
@@ -84,7 +86,23 @@ public class BspNodes extends JavaApplication3D
         animator.start();
     }
 
-    public void display(GLAutoDrawable arg0) {
+
+    private BspNode m_spkBsp;
+
+    private WireframeState m_spkWireframe;
+
+    // for rectangles used to visualize the binary separating planes
+    private CullState m_spkRCull;
+
+    private WireframeState m_spkRWireframe;
+
+    public BspNodes()
+    {
+        super("BspNodes");
+    }
+
+    @Override
+	public void display(GLAutoDrawable arg0) {
         MeasureTime();
         
         if (MoveCamera())
@@ -109,16 +127,22 @@ public class BspNodes extends JavaApplication3D
         UpdateFrameCount();
     }
 
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
-
-    public void init(GLAutoDrawable arg0) {
+    @Override
+	public void dispose(GLAutoDrawable arg0)
+    {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        m_pkRenderer.ReleaseAllResources(m_spkBsp);
+    }
+    
+    @Override
+	public void init(GLAutoDrawable arg0) {
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         m_pkRenderer.InitializeState();
         super.OnInitialize();
 
         // set up camera
         m_spkCamera.SetFrustum(-0.055f,0.055f,-0.04125f,0.04125f,0.1f,100.0f);
-        Vector3f kCLoc = new Vector3f(0.0f,-1.0f,0.25f);
+        Vector3f kCLoc = new Vector3f(0.0f,-3.0f,0.25f);
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCRight = new Vector3f();
@@ -139,7 +163,26 @@ public class BspNodes extends JavaApplication3D
         InitializeObjectMotion(m_spkScene);
     }
 
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+    @Override
+	public void keyTyped(KeyEvent e) {
+        char ucKey = e.getKeyChar();
+        
+        System.err.println( ucKey );
+        super.keyPressed(e);
+
+        if (ucKey == 'w' || ucKey == 'W')
+        {
+            m_spkWireframe.Enabled = !m_spkWireframe.Enabled;
+            return;
+        }
+        else if (ucKey == 's' || ucKey == 'S')
+        {
+            TestStreaming(m_spkScene,"BspNodes.wmof");
+            return;
+        }
+    }
+    @Override
+	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -152,12 +195,47 @@ public class BspNodes extends JavaApplication3D
         }
     }
 
-    public GLCanvas GetCanvas()
-    {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-    }
 
-    private void CreateScene ()
+	private BspNode CreateNode (final Vector2f rkV0, final Vector2f rkV1,
+                                final ColorRGB rkColor)
+    {
+        Vector2f kDir = new Vector2f();
+        kDir.Sub( rkV1, rkV0 );
+        Vector3f kNormal = new Vector3f(kDir.Y,-kDir.X,0.0f);
+        kNormal.Normalize();
+        float fConstant = kNormal.Dot( new Vector3f(rkV0.X,rkV0.Y,0.0f));
+        float fXExtent = 0.5f*kDir.Length();
+        float fYExtent = 0.125f;
+        Vector3f kTrn = new Vector3f(0.5f*(rkV0.X+rkV1.X),0.5f*(rkV0.Y+rkV1.Y),
+                                     fYExtent+1e-03f);
+        Matrix3f kRot = new Matrix3f(Vector3f.UNIT_Z, (float)Math.atan2(kDir.Y,kDir.X));
+        kRot.Mult( new Matrix3f(Vector3f.UNIT_X,Mathf.HALF_PI) );
+
+        BspNode pkBsp = new BspNode(new Plane3f(kNormal,fConstant));
+
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetCChannels(0,3);
+        StandardMesh kSM = new StandardMesh(kAttr);
+        TriMesh pkRect = kSM.Rectangle(2,2,fXExtent,fYExtent);
+        pkRect.Local.SetTranslate(kTrn);
+        pkRect.Local.SetRotate(kRot);
+        for (int i = 0; i < 4; i++)
+        {
+            pkRect.VBuffer.SetColor3(0,i, rkColor);
+        }
+
+        pkRect.AttachEffect(new VertexColor3Effect());
+
+        pkRect.AttachGlobalState(m_spkRCull);
+        pkRect.AttachGlobalState(m_spkRWireframe);
+
+        pkBsp.AttachCoplanarChild(pkRect);
+
+        return pkBsp;
+    }
+    
+	private void CreateScene ()
     {
         m_spkScene = new Node();
         m_spkWireframe = new WireframeState();
@@ -170,28 +248,16 @@ public class BspNodes extends JavaApplication3D
         m_spkScene.AttachGlobalState(pkZS);
 
         // Create the ground.  It covers a square with vertices (1,1,0), (1,-1,0),
-        // (-1,1,0), and (-1,-1,0).  Multiply the texture coordinates by a factor
-        // to enhance the wrap-around.
-        Attributes kAttr = new Attributes();;
+        // (-1,1,0), and (-1,-1,0).
+        Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
         kAttr.SetTChannels(0,2);
         StandardMesh kSM = new StandardMesh(kAttr);
         TriMesh pkGround = kSM.Rectangle(2,2,16.0f,16.0f);
-        for (int i = 0; i < pkGround.VBuffer.GetVertexQuantity(); i++)
-        {
-            pkGround.VBuffer.SetTCoord2(0,i,
-                    pkGround.VBuffer.GetTCoord2fX(0,i) * 128.0f,
-                    pkGround.VBuffer.GetTCoord2fY(0,i) * 128.0f);
-
-        }
 
         ShaderEffect pkEffect = new TextureEffect("Horizontal");
-        Texture pkTexture = pkEffect.GetTexture(0,0);
-        pkTexture.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
-        pkTexture.SetWrapType(0,Texture.WrapType.REPEAT);
-        pkTexture.SetWrapType(1,Texture.WrapType.REPEAT);
         pkGround.AttachEffect(pkEffect);
-        pkGround.AttachEffect(pkEffect);
+        pkGround.UpdateRS();
         m_spkScene.AttachChild(pkGround);
 
         // Partition the region above the ground into 5 convex pieces.  Each
@@ -301,90 +367,4 @@ public class BspNodes extends JavaApplication3D
 
         m_spkScene.AttachChild(m_spkBsp);
     }
-
-    private BspNode CreateNode (final Vector2f rkV0, final Vector2f rkV1,
-                                final ColorRGB rkColor)
-    {
-        Vector2f kDir = new Vector2f();
-        kDir.Sub( rkV1, rkV0 );
-        Vector3f kNormal = new Vector3f(kDir.Y,-kDir.X,0.0f);
-        kNormal.Normalize();
-        float fConstant = kNormal.Dot( new Vector3f(rkV0.X,rkV0.Y,0.0f));
-        float fXExtent = 0.5f*kDir.Length();
-        float fYExtent = 0.125f;
-        Vector3f kTrn = new Vector3f(0.5f*(rkV0.X+rkV1.X),0.5f*(rkV0.Y+rkV1.Y),
-                                     fYExtent+1e-03f);
-        Matrix3f kRot = new Matrix3f(Vector3f.UNIT_Z, (float)Math.atan2(kDir.Y,kDir.X));
-        kRot.Mult( new Matrix3f(Vector3f.UNIT_X,Mathf.HALF_PI) );
-
-        BspNode pkBsp = new BspNode(new Plane3f(kNormal,fConstant));
-
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetCChannels(0,3);
-        StandardMesh kSM = new StandardMesh(kAttr);
-        TriMesh pkRect = kSM.Rectangle(2,2,fXExtent,fYExtent);
-        pkRect.Local.SetTranslate(kTrn);
-        pkRect.Local.SetRotate(kRot);
-        for (int i = 0; i < 4; i++)
-        {
-            pkRect.VBuffer.SetColor3(0,i, rkColor);
-        }
-
-        pkRect.AttachEffect(new VertexColor3Effect());
-
-        pkRect.AttachGlobalState(m_spkRCull);
-        pkRect.AttachGlobalState(m_spkRWireframe);
-
-        pkBsp.AttachCoplanarChild(pkRect);
-
-        return pkBsp;
-    }
-
-    private Node m_spkScene;
-    private BspNode m_spkBsp;
-    private WireframeState m_spkWireframe;
-
-    // for rectangles used to visualize the binary separating planes
-    private CullState m_spkRCull;
-    private WireframeState m_spkRWireframe;
-
-    private Culler m_kCuller = new Culler(0,0,null);
-
-    public void keyPressed(KeyEvent e) {
-        char ucKey = e.getKeyChar();
-        
-        System.err.println( ucKey );
-        super.keyPressed(e);
-
-        if (ucKey == 'w' || ucKey == 'W')
-        {
-            m_spkWireframe.Enabled = !m_spkWireframe.Enabled;
-            return;
-        }
-        else if (ucKey == 's' || ucKey == 'S')
-        {
-            TestStreaming(m_spkScene,"BspNodes.wmof");
-            return;
-        }
-    }
-    
-    private String getExternalDirs()
-    {
-        String jar_filename = "";
-        String class_path_key = "java.class.path";
-        String class_path = System.getProperty(class_path_key);
-        for (String fn : class_path.split(";") ) {
-            if (fn.endsWith("WildMagic.jar")) {
-                jar_filename = fn;   
-                String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-                externalDirs = externalDirs.concat("WildMagic");
-                return externalDirs;
-            }
-        }
-        return System.getProperties().getProperty("user.dir");
-    }
-
-
-	public void dispose(GLAutoDrawable arg0) {	}
 }

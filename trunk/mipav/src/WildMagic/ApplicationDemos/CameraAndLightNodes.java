@@ -18,74 +18,92 @@
 
 package WildMagic.ApplicationDemos;
 
-import javax.media.opengl.*;
 
-import com.sun.opengl.util.Animator;
-//import com.jogamp.opengl.util.*;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import java.awt.Frame;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import java.awt.*;
-import java.awt.event.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
 
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Mathf;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.Camera;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.CameraNode;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.LightNode;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-public class CameraAndLightNodes extends JavaApplication3D
+import com.jogamp.opengl.util.Animator;
+
+public class CameraAndLightNodes extends DemoBase
 implements GLEventListener, KeyListener
 {
-	public CameraAndLightNodes()
-	{
-		super("CameraAndLightNodes",0,0,640,480, new ColorRGBA(0.5f,0.5f,1.0f,1.0f));
-		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-				m_eBuffering, m_eMultisampling,
-				m_iWidth, m_iHeight );
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
 
-		String kExternalDirs = getExternalDirs();        
-		ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-		VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-		PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-		CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-	}
-
+	private static final long serialVersionUID = -1413078577908421874L;
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		CameraAndLightNodes kWorld = new CameraAndLightNodes();        
-		Frame frame = new Frame(kWorld.GetWindowTitle());
-		frame.add( kWorld.GetCanvas() );
-		frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+		CameraAndLightNodes kWorld = new CameraAndLightNodes();  
 		/* Animator serves the purpose of the idle function, calls display: */
-		final Animator animator = new Animator( kWorld.GetCanvas() );
-		frame.addWindowListener(new WindowAdapter() {
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		@Override
 			public void windowClosing(WindowEvent e) {
-				// Run this on another thread than the AWT event queue to
-				// avoid deadlocks on shutdown on some platforms
-				new Thread(new Runnable() {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				@Override
 					public void run() {
-						animator.stop();
-						System.exit(0);
-					}
-				}).start();
-			}
-		});
-		frame.setVisible(true);
-		animator.start();
-		// and all the rest happens in the display function...
-
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
+        frame.setVisible(true);
+        animator.start();
 	}
 
+
+	private WireframeState m_spkWireframeState;
+
+	private CameraNode m_spkCNode;
+
+	private Camera m_spkScreenCamera;
+
+	private TriMesh m_spkSky;
+
+	private Light m_spkAdjustableLight0, m_spkAdjustableLight1;
+
+	public CameraAndLightNodes()
+	{
+		super("CameraAndLightNodes",640,480);
+	}
+
+	@Override
 	public void display(GLAutoDrawable arg0) {
 		MeasureTime();
 
@@ -110,8 +128,14 @@ implements GLEventListener, KeyListener
 		UpdateFrameCount();
 	}
 
-	public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
+	@Override
+	public void dispose(GLAutoDrawable arg0) 
+	{
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        m_pkRenderer.ReleaseAllResources( m_spkScene );
+	}
 
+	@Override
 	public void init(GLAutoDrawable arg0) {
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		m_pkRenderer.InitializeState();
@@ -149,6 +173,48 @@ implements GLEventListener, KeyListener
 		InitializeCameraMotion(0.01f,0.001f);
 	}
 
+	@Override
+	public void keyTyped(KeyEvent e) {
+		char ucKey = e.getKeyChar();
+
+		super.keyPressed(e);
+
+		switch (ucKey)
+		{
+		case 'w':
+		case 'W':
+			m_spkWireframeState.Enabled = true;
+			m_spkWireframeState.Fill = ( m_spkWireframeState.Fill == WireframeState.FillMode.FM_FILL ) ? 
+					WireframeState.FillMode.FM_LINE : ( m_spkWireframeState.Fill == WireframeState.FillMode.FM_LINE ) ?
+							WireframeState.FillMode.FM_POINT : 	WireframeState.FillMode.FM_FILL;
+			m_spkScene.UpdateGS();
+			return;
+
+		case '+':  // increase light intensity
+		case '=':
+			m_spkAdjustableLight0.Intensity += 0.1f;
+			m_spkAdjustableLight1.Intensity += 0.1f;
+			return;
+
+		case '-':  // decrease light intensity
+		case '_':
+			if (m_spkAdjustableLight0.Intensity >= 0.1f)
+			{
+				m_spkAdjustableLight0.Intensity -= 0.1f;
+			}
+			if (m_spkAdjustableLight1.Intensity >= 0.1f)
+			{
+				m_spkAdjustableLight1.Intensity -= 0.1f;
+			}
+			return;
+		case 's':
+		case 'S':
+			TestStreaming(m_spkScene,"CameraAndLightNodes.wmof");
+			return;
+		}
+	}
+
+	@Override
 	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
 		if (iWidth > 0 && iHeight > 0)
 		{
@@ -160,35 +226,6 @@ implements GLEventListener, KeyListener
 			m_iWidth = iWidth;
 			m_iHeight = iHeight;
 		}
-	}
-
-	public GLCanvas GetCanvas()
-	{
-		return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-	}
-
-	private void CreateScene ()
-	{
-		CreateScreenPolygon();
-
-		m_spkScene = new Node();
-		m_spkWireframeState = new WireframeState();
-		m_spkScene.AttachGlobalState(m_spkWireframeState);
-
-		TriMesh pkGround = CreateGround();
-		m_spkScene.AttachChild(pkGround);
-		m_spkCNode = new CameraNode(m_spkCamera);
-		m_spkScene.AttachChild(m_spkCNode);
-
-		Node pkLFixture0 = CreateLightFixture(0);
-		pkLFixture0.Local.SetTranslate(new Vector3f(25.0f,-5.75f,6.0f));
-		pkLFixture0.Local.SetRotate( new Matrix3f(Vector3f.UNIT_X,-Mathf.HALF_PI));
-		m_spkCNode.AttachChild(pkLFixture0);
-
-		Node pkLFixture1 = CreateLightFixture(1);
-		pkLFixture1.Local.SetTranslate(new Vector3f(25.0f,-5.75f,-6.0f));
-		pkLFixture1.Local.SetRotate( new Matrix3f(Vector3f.UNIT_X,-Mathf.HALF_PI));
-		m_spkCNode.AttachChild(pkLFixture1);
 	}
 
 	private TriMesh CreateGround ()
@@ -238,6 +275,33 @@ implements GLEventListener, KeyListener
 		return pkMesh;
 	}
 
+	private Node CreateLightFixture (int iWhich)
+	{
+		Node pkLFixture = new Node();
+
+		// point light illuminates the target
+		Light pkPLight = new Light(Light.LightType.LT_POINT);
+		pkPLight.Ambient = new ColorRGB(1.0f,1.0f,0.5f);
+		pkPLight.Diffuse = new ColorRGB(1.0f,1.0f,0.5f);
+		pkPLight.Specular = new ColorRGB(1.0f,1.0f,0.5f);
+		if ( iWhich == 0 )
+			m_spkAdjustableLight0 = pkPLight;
+		else
+			m_spkAdjustableLight1 = pkPLight;
+
+		// the target itself
+		TriMesh pkLTarget = CreateLightTarget(pkPLight);
+
+		// Encapsulate the light in a light node.  Rotate the light node so the
+		// light points down.
+		LightNode pkLNode = new LightNode(pkPLight);
+
+		pkLFixture.AttachChild(pkLNode);
+		pkLFixture.AttachChild(pkLTarget);
+
+		return pkLFixture;
+	}
+
 	private TriMesh CreateLightTarget (Light pkLight)
 	{
 		// Create a parabolic rectangle patch that is illuminated by the light.
@@ -277,31 +341,28 @@ implements GLEventListener, KeyListener
 		return pkMesh;
 	}
 
-	private Node CreateLightFixture (int iWhich)
+	private void CreateScene ()
 	{
-		Node pkLFixture = new Node();
+		CreateScreenPolygon();
 
-		// point light illuminates the target
-		Light pkPLight = new Light(Light.LightType.LT_POINT);
-		pkPLight.Ambient = new ColorRGB(1.0f,1.0f,0.5f);
-		pkPLight.Diffuse = new ColorRGB(1.0f,1.0f,0.5f);
-		pkPLight.Specular = new ColorRGB(1.0f,1.0f,0.5f);
-		if ( iWhich == 0 )
-			m_spkAdjustableLight0 = pkPLight;
-		else
-			m_spkAdjustableLight1 = pkPLight;
+		m_spkScene = new Node();
+		m_spkWireframeState = new WireframeState();
+		m_spkScene.AttachGlobalState(m_spkWireframeState);
 
-		// the target itself
-		TriMesh pkLTarget = CreateLightTarget(pkPLight);
+		TriMesh pkGround = CreateGround();
+		m_spkScene.AttachChild(pkGround);
+		m_spkCNode = new CameraNode(m_spkCamera);
+		m_spkScene.AttachChild(m_spkCNode);
 
-		// Encapsulate the light in a light node.  Rotate the light node so the
-		// light points down.
-		LightNode pkLNode = new LightNode(pkPLight);
+		Node pkLFixture0 = CreateLightFixture(0);
+		pkLFixture0.Local.SetTranslate(new Vector3f(25.0f,-5.75f,6.0f));
+		pkLFixture0.Local.SetRotate( new Matrix3f(Vector3f.UNIT_X,-Mathf.HALF_PI));
+		m_spkCNode.AttachChild(pkLFixture0);
 
-		pkLFixture.AttachChild(pkLNode);
-		pkLFixture.AttachChild(pkLTarget);
-
-		return pkLFixture;
+		Node pkLFixture1 = CreateLightFixture(1);
+		pkLFixture1.Local.SetTranslate(new Vector3f(25.0f,-5.75f,-6.0f));
+		pkLFixture1.Local.SetRotate( new Matrix3f(Vector3f.UNIT_X,-Mathf.HALF_PI));
+		m_spkCNode.AttachChild(pkLFixture1);
 	}
 
 	private void CreateScreenPolygon ()
@@ -335,19 +396,19 @@ implements GLEventListener, KeyListener
 		m_spkSky.AttachEffect(new TextureEffect("RedSky"));
 	}
 
-	protected void MoveForward ()
+	@Override
+	protected void LookDown ()
 	{
-		Vector3f kLocation = m_spkCNode.Local.GetTranslate();
-		Vector3f kDirection = new Vector3f();
-		m_spkCNode.Local.GetRotate().GetColumn(0, kDirection);
-		kDirection.Scale(m_fTrnSpeed);
-		kLocation.Add( kDirection );
-		m_spkCNode.Local.SetTranslate(kLocation);
-		m_spkCNode.UpdateGS();
-		m_kCuller.ComputeVisibleSet(m_spkScene);
-		kDirection = null;
+		// disabled
 	}
 
+	@Override
+	protected void LookUp ()
+	{
+		// disabled
+	}
+
+	@Override
 	protected void MoveBackward ()
 	{
 		Vector3f kLocation = m_spkCNode.Local.GetTranslate();
@@ -360,7 +421,30 @@ implements GLEventListener, KeyListener
 		m_kCuller.ComputeVisibleSet(m_spkScene);
 		kDirection = null;
 	}
-
+	@Override
+	protected void MoveDown ()
+	{
+		// disabled
+	}
+	@Override
+	protected void MoveForward ()
+	{
+		Vector3f kLocation = m_spkCNode.Local.GetTranslate();
+		Vector3f kDirection = new Vector3f();
+		m_spkCNode.Local.GetRotate().GetColumn(0, kDirection);
+		kDirection.Scale(m_fTrnSpeed);
+		kLocation.Add( kDirection );
+		m_spkCNode.Local.SetTranslate(kLocation);
+		m_spkCNode.UpdateGS();
+		m_kCuller.ComputeVisibleSet(m_spkScene);
+		kDirection = null;
+	}
+	@Override
+	protected void MoveUp ()
+	{
+		// disabled
+	}
+	@Override
 	protected void TurnLeft ()
 	{
 		Vector3f kUp = new Vector3f();
@@ -373,6 +457,7 @@ implements GLEventListener, KeyListener
 		kUp = null;
 	}
 
+	@Override
 	protected void TurnRight ()
 	{
 		Vector3f kUp = new Vector3f();
@@ -384,89 +469,5 @@ implements GLEventListener, KeyListener
 		m_kCuller.ComputeVisibleSet(m_spkScene);
 		kUp = null;
 	}
-
-	protected void MoveUp ()
-	{
-		// disabled
-	}
-
-	protected void MoveDown ()
-	{
-		// disabled
-	}
-
-	protected void LookUp ()
-	{
-		// disabled
-	}
-
-	protected void LookDown ()
-	{
-		// disabled
-	}
-
-	public void keyPressed(KeyEvent e) {
-		char ucKey = e.getKeyChar();
-
-		System.err.println( ucKey );
-		super.keyPressed(e);
-
-		switch (ucKey)
-		{
-		case 'w':
-		case 'W':
-			m_spkWireframeState.Enabled = !m_spkWireframeState.Enabled;
-			return;
-
-		case '+':  // increase light intensity
-		case '=':
-			m_spkAdjustableLight0.Intensity += 0.1f;
-			m_spkAdjustableLight1.Intensity += 0.1f;
-			return;
-
-		case '-':  // decrease light intensity
-		case '_':
-			if (m_spkAdjustableLight0.Intensity >= 0.1f)
-			{
-				m_spkAdjustableLight0.Intensity -= 0.1f;
-			}
-			if (m_spkAdjustableLight1.Intensity >= 0.1f)
-			{
-				m_spkAdjustableLight1.Intensity -= 0.1f;
-			}
-			return;
-		case 's':
-		case 'S':
-			TestStreaming(m_spkScene,"CameraAndLightNodes.wmof");
-			return;
-		}
-	}
-
-	private Node m_spkScene;
-	private WireframeState m_spkWireframeState;
-	private CameraNode m_spkCNode;
-	private Camera m_spkScreenCamera;
-	private TriMesh m_spkSky;
-	private Light m_spkAdjustableLight0, m_spkAdjustableLight1;
-	private Culler m_kCuller = new Culler(0,0,null);
-
-	private String getExternalDirs()
-	{
-		String jar_filename = "";
-		String class_path_key = "java.class.path";
-		String class_path = System.getProperty(class_path_key);
-		for (String fn : class_path.split(";") ) {
-			if (fn.endsWith("WildMagic.jar")) {
-				jar_filename = fn;   
-				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-				externalDirs = externalDirs.concat("WildMagic");
-				return externalDirs;
-			}
-		}
-		return System.getProperties().getProperty("user.dir");
-	}
-
-
-	public void dispose(GLAutoDrawable arg0) {}
 
 }

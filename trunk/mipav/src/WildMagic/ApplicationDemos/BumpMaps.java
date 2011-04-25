@@ -18,75 +18,102 @@
 
 package WildMagic.ApplicationDemos;
 
-import javax.media.opengl.*;
+import java.awt.Frame;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import com.sun.opengl.util.Animator;
-//import com.jogamp.opengl.util.*;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
 
-import java.awt.*;
-import java.awt.event.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.SimpleBumpMapEffect;
+import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.Transformation;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
+import com.jogamp.opengl.util.Animator;
 
-public class BumpMaps extends JavaApplication3D
+public class BumpMaps extends DemoBase
 implements GLEventListener, KeyListener
 {
-	public BumpMaps()
-	{
-		super("BumpMaps",0,0,640,480, new ColorRGBA(1.0f,1.0f,1.0f,1.0f));
-		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-				m_eBuffering, m_eMultisampling,
-				m_iWidth, m_iHeight );
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-
-		String kExternalDirs = getExternalDirs();        
-		ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-		VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-		PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-		CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-	}
-
+	private static final long serialVersionUID = -7105537604714708379L;
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		BumpMaps kWorld = new BumpMaps();        
-		Frame frame = new Frame(kWorld.GetWindowTitle());
-		frame.add( kWorld.GetCanvas() );
-		frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+		BumpMaps kWorld = new BumpMaps();      
 		/* Animator serves the purpose of the idle function, calls display: */
-		final Animator animator = new Animator( kWorld.GetCanvas() );
-		frame.addWindowListener(new WindowAdapter() {
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		@Override
 			public void windowClosing(WindowEvent e) {
-				// Run this on another thread than the AWT event queue to
-				// avoid deadlocks on shutdown on some platforms
-				new Thread(new Runnable() {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				@Override
 					public void run() {
-						animator.stop();
-						System.exit(0);
-					}
-				}).start();
-			}
-		});
-		frame.setVisible(true);
-		animator.start();
-		// and all the rest happens in the display function...
-
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
+        frame.setVisible(true);
+        animator.start();
 	}
 
+
+	private boolean m_bUseTorus = true;
+
+	private boolean m_bUseBumpMap = true;
+
+	private boolean m_bUpdateBumpMap = false;
+
+	public BumpMaps()
+	{
+		super("BumpMaps");
+	}
+
+	@Override
 	public void display(GLAutoDrawable arg0) {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+		if ( m_bUpdateBumpMap )
+		{
+			m_bUpdateBumpMap = false;
+			TriMesh pkMesh = (TriMesh)(m_spkScene.GetChild(0));
+			if (m_bUseTorus)
+			{
+				Transformation kLocal = pkMesh.Local;
+				pkMesh = CreateTorus();
+				pkMesh.Local = kLocal;
+			}
+			else
+			{
+				pkMesh = CreateSquare();
+			}
+			m_spkScene.SetChild(0,pkMesh);
+			m_spkScene.UpdateGS();
+			m_spkScene.UpdateRS();
+			UpdateBumpMap();
+			m_kCuller.ComputeVisibleSet(m_spkScene);
+		}
+		
 		MeasureTime();
 
 		if (MoveCamera())
@@ -112,8 +139,14 @@ implements GLEventListener, KeyListener
 		UpdateFrameCount();
 	}
 
-	public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
+	@Override
+	public void dispose(GLAutoDrawable arg0) 
+	{
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        m_pkRenderer.ReleaseAllResources( m_spkScene );
+	}
 
+	@Override
 	public void init(GLAutoDrawable arg0) {
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		m_pkRenderer.InitializeState();
@@ -153,7 +186,29 @@ implements GLEventListener, KeyListener
 		InitializeObjectMotion(m_spkScene);
 	}
 
+	@Override
+	public void keyTyped(KeyEvent e) {
+		char ucKey = e.getKeyChar();
+
+		super.keyPressed(e);
+
+		switch (ucKey)
+		{
+		case 'b':
+		case 'B':
+			m_bUseBumpMap = !m_bUseBumpMap;
+			m_bUpdateBumpMap = true;
+			return;
+		case 's':
+		case 'S':
+			TestStreaming(m_spkScene,"BumpMaps.wmof");
+			return;
+		}
+	}
+	
+	@Override
 	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		if (iWidth > 0 && iHeight > 0)
 		{
 			if (m_pkRenderer != null)
@@ -165,13 +220,6 @@ implements GLEventListener, KeyListener
 			m_iHeight = iHeight;
 		}
 	}
-
-	public GLCanvas GetCanvas()
-	{
-		return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-	}
-
-
 	private void CreateScene ()
 	{
 		m_spkScene = new Node();
@@ -187,74 +235,6 @@ implements GLEventListener, KeyListener
 		}
 		m_spkScene.AttachChild(pkMesh);
 	}
-
-	private TriMesh CreateTorus ()
-	{
-		Attributes kAttr = new Attributes();
-		kAttr.SetPChannels(3);
-		if (m_bUseBumpMap)
-		{
-			kAttr.SetNChannels(3);
-			kAttr.SetCChannels(0,3);
-			kAttr.SetTChannels(0,2);
-			kAttr.SetTChannels(1,2);
-		}
-		else
-		{
-			kAttr.SetTChannels(0,2);
-		}
-
-		StandardMesh kSM = new StandardMesh(kAttr);
-		TriMesh pkMesh = kSM.Torus(32,32,1.0f,0.4f);
-
-		VertexBuffer pkVB = pkMesh.VBuffer;
-		int iVQuantity = pkVB.GetVertexQuantity();
-		for (int i = 0; i < iVQuantity; i++)
-		{
-			pkVB.SetTCoord2(0,i,
-					pkVB.GetTCoord2fX(0,i) * 4.0f,
-					pkVB.GetTCoord2fY(0,i) * 4.0f);
-			if (m_bUseBumpMap)
-			{
-				pkVB.SetTCoord2(1,i,
-						pkVB.GetTCoord2fX(1,i) * 4.0f,
-						pkVB.GetTCoord2fY(1,i) * 4.0f);
-			}
-		}
-
-		if (m_bUseBumpMap)
-		{
-			SimpleBumpMapEffect pkEffect = new SimpleBumpMapEffect("Bricks",
-					"BricksNormal",Vector3f.UNIT_Z);
-			pkEffect.ComputeLightVectors(pkMesh);
-
-			Texture pkBricks = pkEffect.GetTexture(0,0);
-			pkBricks.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
-			pkBricks.SetWrapType(0,Texture.WrapType.REPEAT);
-			pkBricks.SetWrapType(1,Texture.WrapType.REPEAT);
-
-			Texture pkNormals = pkEffect.GetTexture(0,1);
-			pkNormals.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
-			pkNormals.SetWrapType(0,Texture.WrapType.REPEAT);
-			pkNormals.SetWrapType(1,Texture.WrapType.REPEAT);
-
-			pkMesh.AttachEffect(pkEffect);
-		}
-		else
-		{
-			TextureEffect pkEffect = new TextureEffect("Bricks");
-
-			Texture pkBricks = pkEffect.GetTexture(0,0);
-			pkBricks.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
-			pkBricks.SetWrapType(0,Texture.WrapType.REPEAT);
-			pkBricks.SetWrapType(1,Texture.WrapType.REPEAT);
-
-			pkMesh.AttachEffect(pkEffect);
-		}
-
-		return pkMesh;
-	}
-
 	private TriMesh CreateSquare ()
 	{
 		Attributes kAttr = new Attributes();
@@ -328,6 +308,61 @@ implements GLEventListener, KeyListener
 		return pkMesh;
 	}
 
+	private TriMesh CreateTorus ()
+	{
+		Attributes kAttr = new Attributes();
+		kAttr.SetPChannels(3);
+		if (m_bUseBumpMap)
+		{
+			kAttr.SetNChannels(3);
+			kAttr.SetCChannels(0,3);
+			kAttr.SetTChannels(0,2);
+			kAttr.SetTChannels(1,2);
+		}
+		else
+		{
+			kAttr.SetTChannels(0,2);
+		}
+
+		StandardMesh kSM = new StandardMesh(kAttr);
+		TriMesh pkMesh = kSM.Torus(32,32,1.0f,0.4f);
+
+
+		if (m_bUseBumpMap)
+		{
+			SimpleBumpMapEffect pkEffect = new SimpleBumpMapEffect("Bricks",
+					"BricksNormal",Vector3f.UNIT_Z);
+			pkEffect.ComputeLightVectors(pkMesh);
+			pkMesh.AttachEffect(pkEffect);
+	        m_pkRenderer.LoadResources( pkMesh );
+
+			Texture pkBricks = pkEffect.GetTexture(0,0);
+			pkBricks.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
+			pkBricks.SetWrapType(0,Texture.WrapType.REPEAT);
+			pkBricks.SetWrapType(1,Texture.WrapType.REPEAT);
+
+			Texture pkNormals = pkEffect.GetTexture(0,1);
+			pkNormals.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
+			pkNormals.SetWrapType(0,Texture.WrapType.REPEAT);
+			pkNormals.SetWrapType(1,Texture.WrapType.REPEAT);
+
+		}
+		else
+		{
+			TextureEffect pkEffect = new TextureEffect("Bricks");
+			pkMesh.AttachEffect(pkEffect);
+	        m_pkRenderer.LoadResources( pkMesh );
+
+			Texture pkBricks = pkEffect.GetTexture(0,0);
+			pkBricks.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
+			pkBricks.SetWrapType(0,Texture.WrapType.REPEAT);
+			pkBricks.SetWrapType(1,Texture.WrapType.REPEAT);
+
+		}
+		pkMesh.UpdateRS();
+		return pkMesh;
+	}
+
 	private void UpdateBumpMap ()
 	{
 		if (m_bUseBumpMap)
@@ -341,64 +376,5 @@ implements GLEventListener, KeyListener
 			pkMesh.VBuffer.Release();
 		}
 	}
-
-	private Node m_spkScene;
-	private Culler m_kCuller = new Culler(0,0,null);
-	private boolean m_bUseTorus = true;
-	private boolean m_bUseBumpMap = true;
-
-	public void keyPressed(KeyEvent e) {
-		char ucKey = e.getKeyChar();
-
-		System.err.println( ucKey );
-		super.keyPressed(e);
-
-		//AlphaState pkAState;
-		switch (ucKey)
-		{
-		case 'b':
-		case 'B':
-			m_bUseBumpMap = !m_bUseBumpMap;
-			TriMesh pkMesh = (TriMesh)(m_spkScene.GetChild(0));
-			if (m_bUseTorus)
-			{
-				Transformation kLocal = pkMesh.Local;
-				pkMesh = CreateTorus();
-				pkMesh.Local = kLocal;
-			}
-			else
-			{
-				pkMesh = CreateSquare();
-			}
-			m_spkScene.SetChild(0,pkMesh);
-			m_spkScene.UpdateGS();
-			m_spkScene.UpdateRS();
-			UpdateBumpMap();
-			m_kCuller.ComputeVisibleSet(m_spkScene);
-			return;
-		case 's':
-		case 'S':
-			TestStreaming(m_spkScene,"BumpMaps.wmof");
-			return;
-		}
-	}
-
-	private String getExternalDirs()
-	{
-		String jar_filename = "";
-		String class_path_key = "java.class.path";
-		String class_path = System.getProperty(class_path_key);
-		for (String fn : class_path.split(";") ) {
-			if (fn.endsWith("WildMagic.jar")) {
-				jar_filename = fn;   
-				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-				externalDirs = externalDirs.concat("WildMagic");
-				return externalDirs;
-			}
-		}
-		return System.getProperties().getProperty("user.dir");
-	}
-
-	public void dispose(GLAutoDrawable arg0) {}
 
 }

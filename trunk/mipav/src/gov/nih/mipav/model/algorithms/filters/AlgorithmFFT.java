@@ -1,9 +1,12 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
+import static java.lang.System.nanoTime;
 import gov.nih.mipav.util.*;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
+//import gov.nih.mipav.model.algorithms.OpenCL.filters.OpenCLAlgorithmFFT;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.IOException;
@@ -226,16 +229,27 @@ public class AlgorithmFFT extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        final long startTime = System.currentTimeMillis();
+        //final long startTime = System.currentTimeMillis();
 
         if (srcImage == null) {
             displayError("Source Image is null");
             return;
         }
+/*
+        long time = nanoTime();
+        OpenCLAlgorithmFFT oclFFT = new OpenCLAlgorithmFFT( destImage, srcImage, transformDir, logMagDisplay, unequalDim, image25D );
+        oclFFT.run();
+        setCompleted(false);
+        time = nanoTime() - time;
+        System.out.println("build : " + (time/1000000)+"ms");
+		time = nanoTime();
+        */
+
+        final long startTime = System.currentTimeMillis();
         beforeExecute();
         execute();
         afterExecute();
-        //System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
+        System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
     }
 
     /**

@@ -16,7 +16,6 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 
-import javax.media.opengl.*;
 
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
@@ -24,9 +23,19 @@ import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 /**
  * Class PlaneRenderWM: renders a single dimension of the ModelImage data as a texture-mapped polygon. The PlaneRenderWM

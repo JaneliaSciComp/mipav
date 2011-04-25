@@ -18,80 +18,82 @@
 
 package WildMagic.ApplicationDemos;
 
-import javax.media.opengl.*;
 
-import com.sun.opengl.util.Animator;
-//import com.jogamp.opengl.util.*;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import java.awt.Frame;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import java.awt.*;
-import java.awt.event.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
 
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Plane3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-//import gov.nih.mipav.view.renderer.J3D.volumeview.*;
+import com.jogamp.opengl.util.Animator;
 
 
-public class Multieffects extends JavaApplication3D
+public class Multieffects extends DemoBase
 implements GLEventListener, KeyListener
 {
-	public Multieffects()
-	{
-		super( "Multi Effects", 0, 0, 512, 512,
-				new ColorRGBA( 0.0f,0.25f,0.75f,1.0f ) );
-		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-				m_eBuffering, m_eMultisampling,
-				m_iWidth, m_iHeight );
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
 
-		String kExternalDirs = getExternalDirs();        
-		ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-		VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-		PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-		CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-	}
-
+	private static final long serialVersionUID = -5094705738989521135L;
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		Multieffects kWorld = new Multieffects();
-		Frame frame = new Frame(kWorld.GetWindowTitle());
-		//GLCanvas canvas = new GLCanvas();
-
-		frame.add( kWorld.GetCanvas() );
-		frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
 		/* Animator serves the purpose of the idle function, calls display: */
-		final Animator animator = new Animator( kWorld.GetCanvas() );
-		frame.addWindowListener(new WindowAdapter() {
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		@Override
 			public void windowClosing(WindowEvent e) {
-				// Run this on another thread than the AWT event queue to
-				// avoid deadlocks on shutdown on some platforms
-				new Thread(new Runnable() {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				@Override
 					public void run() {
-						animator.stop();
-						System.exit(0);
-					}
-				}).start();
-			}
-		});
-		frame.setVisible(true);
-		animator.start();
-		// and all the rest happens in the display function...
-
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
+        frame.setVisible(true);
+        animator.start();
 	}
 
+
+	private WireframeState m_spkWireframe;
+
+	private TextureEffect m_spkEffect;
+
+	private int m_iActive;
+
+	private Plane3f m_kPlane = new Plane3f( new Vector3f( .5f, -1, -1 ), new Vector3f( .5f, 1, 1), new Vector3f( .5f, -1, 1) );
+
+	public Multieffects()
+	{
+		super( "Multieffects" );
+	}
+	
+	@Override
 	public void display(GLAutoDrawable arg0) {
 		MeasureTime();
 
@@ -119,8 +121,14 @@ implements GLEventListener, KeyListener
 
 	}
 
-	public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) { }
-
+	@Override
+	public void dispose(GLAutoDrawable arg0)
+	{
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        m_pkRenderer.ReleaseAllResources( m_spkScene );
+	}
+	
+	@Override
 	public void init(GLAutoDrawable arg0) {
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		m_pkRenderer.InitializeState();
@@ -148,69 +156,10 @@ implements GLEventListener, KeyListener
 		InitializeObjectMotion(m_spkScene);
 	}
 
-	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-		if (iWidth > 0 && iHeight > 0)
-		{
-			if (m_pkRenderer != null)
-			{
-				m_pkRenderer.Resize(iWidth,iHeight);
-			}
-
-			m_iWidth = iWidth;
-			m_iHeight = iHeight;
-		}
-	}
-
-	public GLCanvas GetCanvas()
-	{
-		return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-	}
-
-	private void CreateScene ()
-	{
-		m_spkScene = new Node();
-		m_spkWireframe = new WireframeState();
-		m_spkScene.AttachGlobalState(m_spkWireframe);
-		m_spkScene.AttachGlobalState(new CullState());
-
-		Attributes kAttr = new Attributes();
-		kAttr.SetPChannels(3);
-		kAttr.SetTChannels(0,2);
-		kAttr.SetTChannels(1,2);
-		StandardMesh kSM = new StandardMesh(kAttr);
-		TriMesh pkPlane = kSM.Rectangle(2,2,1.0f,1.0f);
-
-		// The primary texture is the first effect to be drawn.
-		pkPlane.AttachEffect(new TextureEffect("Horizontal"));
-
-		// The secondary texture is drawn as a second effect.
-		m_spkEffect = new TextureEffect("Magician");
-		pkPlane.AttachEffect(m_spkEffect);
-
-		// Set the blending mode (multiplicative) for the secondary effect when
-		// it is applied to the primary effect.
-		AlphaState pkAState = m_spkEffect.GetBlending(0);
-		pkAState.SrcBlend = AlphaState.SrcBlendMode.SBF_DST_COLOR;
-		pkAState.DstBlend = AlphaState.DstBlendMode.DBF_ZERO;
-		m_spkScene.AttachChild(pkPlane);
-
-		m_iActive = 0;
-		m_pkRenderer.EnableUserClipPlane(0, m_kPlane);
-
-	}
-
-	private Node m_spkScene;
-	private WireframeState m_spkWireframe;
-	private Culler m_kCuller = new Culler(0,0,null);
-	private TextureEffect m_spkEffect;
-	private int m_iActive;
-
-	private Plane3f m_kPlane = new Plane3f( new Vector3f( .5f, -1, -1 ), new Vector3f( .5f, 1, 1), new Vector3f( .5f, -1, 1) );
-
-	public void keyPressed(KeyEvent e) {
+	@Override
+	public void keyTyped(KeyEvent e) {
 		char ucKey = e.getKeyChar();
 
-		System.err.println( ucKey );
 		super.keyPressed(e);
 
 		AlphaState pkAState;
@@ -258,24 +207,49 @@ implements GLEventListener, KeyListener
 		return;
 	}
 
-	private String getExternalDirs()
-	{
-		String jar_filename = "";
-		String class_path_key = "java.class.path";
-		String class_path = System.getProperty(class_path_key);
-		for (String fn : class_path.split(";") ) {
-			if (fn.endsWith("WildMagic.jar")) {
-				jar_filename = fn;   
-				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-				externalDirs = externalDirs.concat("WildMagic");
-				return externalDirs;
+	@Override
+	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+		if (iWidth > 0 && iHeight > 0)
+		{
+			if (m_pkRenderer != null)
+			{
+				m_pkRenderer.Resize(iWidth,iHeight);
 			}
+
+			m_iWidth = iWidth;
+			m_iHeight = iHeight;
 		}
-		return System.getProperties().getProperty("user.dir");
 	}
 
+	private void CreateScene ()
+	{
+		m_spkScene = new Node();
+		m_spkWireframe = new WireframeState();
+		m_spkScene.AttachGlobalState(m_spkWireframe);
+		m_spkScene.AttachGlobalState(new CullState());
 
-	public void dispose(GLAutoDrawable arg0) {}
+		Attributes kAttr = new Attributes();
+		kAttr.SetPChannels(3);
+		kAttr.SetTChannels(0,2);
+		kAttr.SetTChannels(1,2);
+		StandardMesh kSM = new StandardMesh(kAttr);
+		TriMesh pkPlane = kSM.Rectangle(2,2,1.0f,1.0f);
 
+		// The primary texture is the first effect to be drawn.
+		pkPlane.AttachEffect(new TextureEffect("Horizontal"));
 
+		// The secondary texture is drawn as a second effect.
+		m_spkEffect = new TextureEffect("Magician");
+		pkPlane.AttachEffect(m_spkEffect);
+
+		// Set the blending mode (multiplicative) for the secondary effect when
+		// it is applied to the primary effect.
+		AlphaState pkAState = m_spkEffect.GetBlending(0);
+		pkAState.SrcBlend = AlphaState.SrcBlendMode.SBF_DST_COLOR;
+		pkAState.DstBlend = AlphaState.DstBlendMode.DBF_ZERO;
+		m_spkScene.AttachChild(pkPlane);
+
+		m_iActive = 0;
+		m_pkRenderer.EnableUserClipPlane(0, m_kPlane);
+	}
 }

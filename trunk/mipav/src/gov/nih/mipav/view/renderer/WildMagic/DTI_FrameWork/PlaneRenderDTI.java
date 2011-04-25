@@ -6,9 +6,19 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
+import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 public class PlaneRenderDTI extends PlaneRender_WM
 {

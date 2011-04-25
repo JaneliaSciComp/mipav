@@ -25,12 +25,7 @@ import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
-/**
- * DOCUMENT ME!
- */
 public class MjCorticalMesh_WM {
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
@@ -45,6 +40,39 @@ public class MjCorticalMesh_WM {
 
         /** Array of sphere points. */
         VertexBuffer kSVertex;
+    }
+
+    /**
+     * support for point-in-triangle tests; The akVertex array must have length 3.
+     *
+     * @param   akVertex  DOCUMENT ME!
+     * @param   kP        DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private static boolean contains(Vector2f[] akVertex, Vector2f kP) {
+        /* assert:  <V0,V1,V2> is clockwise ordered */
+
+        final float fEpsilon = 1e-05f;
+        Vector2f kV1mV0 = new Vector2f();
+        Vector2f kInnerNormal = new Vector2f();
+        Vector2f kDiff = new Vector2f();
+
+        for (int i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
+        	kV1mV0.Sub( akVertex[i1], akVertex[i0] );
+            kInnerNormal.Perp(kV1mV0);
+            kDiff.Sub( kP, akVertex[i0] );
+            kInnerNormal.Normalize();
+            kDiff.Normalize();
+
+            float fCos = kInnerNormal.Dot(kDiff);
+
+            if (fCos < -fEpsilon) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** DOCUMENT ME! */
@@ -100,20 +128,20 @@ public class MjCorticalMesh_WM {
 
     /** The index of the puncture triangle for computing the conformal mapping:. */
     private int m_iPunctureTri = 0;
-
     /** vertex-vertex distances measured along edge paths. */
     private HashMap<EdgeKey, Float> m_kDistance = new HashMap<EdgeKey, Float>(); /* map MjEdgeKey to Float */
+    
     /** surface inflation. */
     private HashMap<EdgeKey, Float> m_kInitDistance = new HashMap<EdgeKey, Float>(); /* map MjEdgeKey to Float */
-    
     private TriMesh m_kMesh;
     private BasicMesh m_kBasicMesh;
-    private Vector3f[] m_akPoint;
     
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    private TriMesh m_kSphereMesh = null;
+    private Vector3f[] m_akPoint;
     
+    private TriMesh m_kSphereMesh = null;
+
     private TriMesh m_kCylinderMesh = null;
 
     /**
@@ -146,39 +174,6 @@ public class MjCorticalMesh_WM {
         m_fMinAvrConvexity = 0.0f;
         m_fMaxAvrConvexity = 0.0f;
         m_afAvrConvexity = null;
-    }
-
-    /**
-     * support for point-in-triangle tests; The akVertex array must have length 3.
-     *
-     * @param   akVertex  DOCUMENT ME!
-     * @param   kP        DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private static boolean contains(Vector2f[] akVertex, Vector2f kP) {
-        /* assert:  <V0,V1,V2> is clockwise ordered */
-
-        final float fEpsilon = 1e-05f;
-        Vector2f kV1mV0 = new Vector2f();
-        Vector2f kInnerNormal = new Vector2f();
-        Vector2f kDiff = new Vector2f();
-
-        for (int i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
-        	kV1mV0.Sub( akVertex[i1], akVertex[i0] );
-            kInnerNormal.Perp(kV1mV0);
-            kDiff.Sub( kP, akVertex[i0] );
-            kInnerNormal.Normalize();
-            kDiff.Normalize();
-
-            float fCos = kInnerNormal.Dot(kDiff);
-
-            if (fCos < -fEpsilon) {
-                return false;
-            }
-        }
-
-        return true;
     }
     /*
     public boolean CheckManifold()
@@ -999,15 +994,6 @@ public class MjCorticalMesh_WM {
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @throws  Throwable  DOCUMENT ME!
-     */
-    protected void finalize() throws Throwable {
-        disposeLocal();
-    }
-
-    /**
      * compute distances within specified neighborhood size (size >= 1).
      *
      * @param  iSize       DOCUMENT ME!
@@ -1413,5 +1399,15 @@ public class MjCorticalMesh_WM {
      */
     private float getStereographicRadius() {
         return m_fRho;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @throws  Throwable  DOCUMENT ME!
+     */
+    @Override
+	protected void finalize() throws Throwable {
+        disposeLocal();
     }
 }

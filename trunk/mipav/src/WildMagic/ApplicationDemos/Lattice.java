@@ -21,25 +21,81 @@ package WildMagic.ApplicationDemos;
 
 
 import java.awt.Frame;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 
-import com.sun.opengl.util.Animator;
-//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
-
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
+import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.LatticeEffect;
+import WildMagic.LibGraphics.Effects.LightingEffect;
+import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-//import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
+public class Lattice extends DemoBase implements GLEventListener, KeyListener {
+	
+	private static final long serialVersionUID = -9076947736708702300L;
 
-public class Lattice extends JavaApplication3D implements GLEventListener, KeyListener {
+	/**
+	 * Lattice.main creates the Lattice object and window frame to contain the GLCanvas. An Animator object is created
+	 * with the GLCanvas as an argument. The Animator provides the same function as the glutMainLoop() function call
+	 * commonly used in OpenGL applications.
+	 */
+	public static void main(String[] args) {
+		Lattice kWorld = new Lattice();
+		/* Animator serves the purpose of the idle function, calls display: */
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		@Override
+			public void windowClosing(WindowEvent e) {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				@Override
+					public void run() {
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
+        frame.setVisible(true);
+        animator.start();
+	}
+	private LatticeEffect m_spkEffect;
+
+	private TriMesh m_pkMesh;
+
+	private Light[] m_aspkDLight = new Light[2];
+
+	private MaterialState m_pkMaterial;
+
+	private ColorRGB m_kDiffuseColor;
+
+	/** Window with the shader parameter interface: */
+	private ApplicationGUI m_kShaderParamsWindow = null;
+	
+	// toggle stereo on/off with the 's' or 'S' key:
+	private boolean m_bStereo = false;
+
 	/**
 	 * The constructor initializes the OpenGLRender, and sets up the GLEvent, KeyEvent, and Mouse listeners. The last
 	 * three statements initialize the ImageCatalog, VertexProgramCatalog, and PixelProgramCatalog. The three catalogs
@@ -49,50 +105,14 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 	 * 
 	 */
 	public Lattice() {
-		super("Lattice", 0, 0, 640, 480, new ColorRGBA(0.5f, 0.0f, 1.0f, 1.0f));
-		//m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
-		m_pkRenderer = new OpenGLRenderer(m_eFormat, m_eDepth, m_eStencil, m_eBuffering, m_eMultisampling, m_iWidth,
-				m_iHeight);
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
-		((OpenGLRenderer) m_pkRenderer).GetCanvas().addGLEventListener(this);
-		((OpenGLRenderer) m_pkRenderer).GetCanvas().addKeyListener(this);
-		((OpenGLRenderer) m_pkRenderer).GetCanvas().addMouseListener(this);
-		((OpenGLRenderer) m_pkRenderer).GetCanvas().addMouseMotionListener(this);
-
-		String kExternalDirs = getExternalDirs();
-		ImageCatalog.SetActive(new ImageCatalog("Main", kExternalDirs));
-		VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));
-		PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-		CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+		super("Lattice");
 	}
 
-	/**
-	 * Lattice.main creates the Lattice object and window frame to contain the GLCanvas. An Animator object is created
-	 * with the GLCanvas as an argument. The Animator provides the same function as the glutMainLoop() function call
-	 * commonly used in OpenGL applications.
-	 */
-	public static void main(String[] args) {
-		Lattice kWorld = new Lattice();
-		Frame frame = new Frame(kWorld.GetWindowTitle());
-		frame.add(kWorld.GetCanvas());
-		frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
-		/* Animator serves the purpose of the idle function, calls display: */
-		final Animator animator = new Animator(kWorld.GetCanvas());
-		frame.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				// Run this on another thread than the AWT event queue to
-				// avoid deadlocks on shutdown on some platforms
-				new Thread(new Runnable() {
-					public void run() {
-						animator.stop();
-						System.exit(0);
-					}
-				}).start();
-			}
-		});
-		frame.setVisible(true);
-		animator.start();
-		// and all the rest happens in the display function...
+	public Lattice(GLCanvas kWindow, Node scene, boolean bShared) {
+		super("Lattice", kWindow);
+
+		m_spkScene = scene;
+		m_bShared = bShared;
 	}
 
 	/**
@@ -101,6 +121,7 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 	 * applied and the culling system updated. Renderer.ClearBuffers() is called, the scene and framerate are drawn, and
 	 * the back-buffer displayed with Renderer.DisplayBackBuffer().
 	 */
+	@Override
 	public void display(GLAutoDrawable arg0) {
 		MeasureTime();
 		if (MoveCamera()) {
@@ -140,7 +161,7 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 		m_pkRenderer.DrawDefault();
 		m_pkRenderer.DisplayBackBuffer();
 
-		if (m_kShaderParamsWindow == null) {
+		if (m_kShaderParamsWindow == null && !m_bShared) {
 			m_kShaderParamsWindow = new ApplicationGUI();
 			m_kShaderParamsWindow.setParent(this);
 			m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetCProgram(0));
@@ -149,12 +170,18 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 		}
 	}
 
-	public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
+	@Override
+	public void dispose(GLAutoDrawable arg0)
+	{
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        m_pkRenderer.ReleaseAllResources( m_spkScene );
+	}
 
 	/**
 	 * Lattice.init is called only once when the GLCanvas is initialized. It initializes the renderer object, sets up
 	 * the camera model, creates the scene, and initializes the culling object with the camera and scene objects.
 	 */
+	@Override
 	public void init(GLAutoDrawable arg0) {
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		m_pkRenderer.InitializeState();
@@ -168,22 +195,57 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 		kCRight.Cross(kCDir, kCUp);
 		m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
 
-		CreateScene();
-
-		// initial update of objects
-		m_spkScene.UpdateGS();
-		m_spkScene.UpdateRS();
-
+		if ( !m_bShared )
+		{
+			CreateScene();
+			// initial update of objects
+			m_spkScene.UpdateGS();
+			m_spkScene.UpdateRS();
+		}
+		
 		// initial culling of scene
 		m_kCuller.SetCamera(m_spkCamera);
 		m_kCuller.ComputeVisibleSet(m_spkScene);
 
 		InitializeCameraMotion(0.01f, 0.001f);
 		InitializeObjectMotion(m_spkScene);
-
-		// ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 	}
 
+	/**
+	 * Lattice.keyPressed() processes key-input from the user. The iridescence factor shader parameter can be increased
+	 * and decreased by pressing the + and - keys. A shader-editor GUI can be launched by pressing 'l'. The scene-graph
+	 * is streamed to disk by pressing the 's' key.
+	 */
+	@Override
+	public void keyTyped(KeyEvent e) {
+		char ucKey = e.getKeyChar();
+		super.keyPressed(e);
+		switch (ucKey) {
+		case 'l':
+		case 'L':
+			if ( m_spkEffect != null )
+			{
+				ApplicationGUI kShaderParamsWindow = new ApplicationGUI();
+				kShaderParamsWindow.setParent(this);
+				kShaderParamsWindow.AddUserVariables(m_spkEffect.GetCProgram(0));
+				kShaderParamsWindow.Display();
+			}
+			return;
+		case 's':
+		case 'S':
+			m_bStereo = !m_bStereo;
+			return;
+		case 'i':
+			m_fTrnSpeed += .05;      
+			return;
+		case 'o':
+			m_fTrnSpeed -= .05;        
+			return;
+		}
+		return;
+	}
+
+	@Override
 	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
 		if (iWidth > 0 && iHeight > 0) {
 			if (m_pkRenderer != null) {
@@ -194,14 +256,7 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 			m_iHeight = iHeight;
 		}
 	}
-	public GLCanvas GetCanvas() {
-		return ((OpenGLRenderer) m_pkRenderer).GetCanvas();
-	} 
-	/*
-    public GLJPanel GetCanvas() {
-        return ((OpenGLRenderer) m_pkRenderer).GetCanvas();
-    }
-	 */
+	
 	/**
 	 * Lattice.CreateScene() creates the scene graph. The root node is m_spkScene. It contains a single TriMesh object,
 	 * the torus. The TriMesh object is created with a set of rendering Attributes with three channels for point data
@@ -215,12 +270,7 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 		kAttr.SetNChannels(3);
 		kAttr.SetTChannels(0, 2);
 		StandardMesh kSM = new StandardMesh(kAttr);
-		// TriMesh pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
 		m_pkMesh = kSM.Torus(220, 220, 2.0f, 1.0f);
-
-		// pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f),
-		// new Vector3f(0.707f, 0.707f, 0f),
-		// new Vector3f(-0.707f, 0.707f, 0f),false));
 
 		m_kDiffuseColor = new ColorRGB(0.34615f, 0.3143f, 0.0903f);
 
@@ -234,7 +284,6 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 		m_pkMesh.AttachGlobalState(m_pkMaterial);
 
 		m_spkEffect = new LatticeEffect("Leaf", "Gradient");
-		// m_spkEffect.SetInterpolateFactor(0.5f);
 		final int iPassQuantity = m_spkEffect.GetPassQuantity();
 		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
 			m_spkEffect.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
@@ -280,73 +329,4 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 
 		m_spkScene.AttachChild(m_pkMesh);
 	}
-
-	/**
-	 * Lattice.keyPressed() processes key-input from the user. The iridescence factor shader parameter can be increased
-	 * and decreased by pressing the + and - keys. A shader-editor GUI can be launched by pressing 'l'. The scene-graph
-	 * is streamed to disk by pressing the 's' key.
-	 */
-	public void keyPressed(KeyEvent e) {
-		char ucKey = e.getKeyChar();
-		super.keyPressed(e);
-		switch (ucKey) {
-		case 'l':
-		case 'L':
-			ApplicationGUI kShaderParamsWindow = new ApplicationGUI();
-			kShaderParamsWindow.setParent(this);
-			kShaderParamsWindow.AddUserVariables(m_spkEffect.GetCProgram(0));
-			kShaderParamsWindow.Display();
-			return;
-		case 's':
-		case 'S':
-			m_bStereo = !m_bStereo;
-			//TestStreaming(m_spkScene, "Lattice.wmof");
-			return;
-		case 'i':
-			m_fTrnSpeed += .05;      
-			return;
-		case 'o':
-			m_fTrnSpeed -= .05;        
-			return;
-		}
-		return;
-	}
-
-	private Node m_spkScene;
-
-	private LatticeEffect m_spkEffect;
-
-	private Culler m_kCuller = new Culler(0, 0, null);
-
-	private TriMesh m_pkMesh;
-
-	private Light[] m_aspkDLight = new Light[2];
-
-	private MaterialState m_pkMaterial;
-
-	private ColorRGB m_kDiffuseColor;
-
-	/** Window with the shader parameter interface: */
-	private ApplicationGUI m_kShaderParamsWindow = null;
-
-	// toggle stereo on/off with the 's' or 'S' key:
-	private boolean m_bStereo = false;
-
-	private String getExternalDirs() {
-		String jar_filename = "";
-		String class_path_key = "java.class.path";
-		String class_path = System.getProperty(class_path_key);
-		for (String fn : class_path.split(";")) {
-			if (fn.endsWith("WildMagic.jar")) {
-				jar_filename = fn;
-				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-				externalDirs = externalDirs.concat("WildMagic");
-				return externalDirs;
-			}
-		}
-		return System.getProperties().getProperty("user.dir");
-	}
-
-	public void dispose(GLAutoDrawable arg0) {}
-
 }

@@ -11,8 +11,6 @@ import java.awt.Dimension;
 import java.io.Serializable;
 import java.util.Vector;
 
-
-
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Rendering.Light;
@@ -21,9 +19,8 @@ import WildMagic.LibGraphics.Rendering.Light;
 public class VolumeRenderState implements Serializable
 {
     private static final long serialVersionUID = 4937933351322531830L;
-    public VolumeRenderState() {};
     // Images:
-    public VolumeImage ImageA;
+    public VolumeImage ImageA;;
     public VolumeImage ImageB;
     public int Blend = 0;
     // LUT Info:
@@ -49,24 +46,24 @@ public class VolumeRenderState implements Serializable
     public TransferFunction OpacityGMB;
     public boolean OpacityGMOnB;
     public int SelectedTab = 0;
-    
     // Menu:
     public boolean ShowAxes = true;
+    
     public boolean ShowCrossHairs = true;
     public boolean ShowVOI = false;
     public boolean Show4D = false;
     // Position Panel:
-    public boolean Radiological = true;    
-    
+    public boolean Radiological = true;
     // Slices Panel Info
-    public int[] Opacity = new int[3];
+    public int[] Opacity = new int[3];    
+    
     public Color[] SliceColor = new Color[3];
     public boolean[] ShowSlice = new boolean[3];
     public boolean[] ShowSliceBox = new boolean[3];
     public Vector3f Center = new Vector3f();
-    
     // Render Mode Panel Info:
     public boolean DisplayRayCast = false;
+    
     public boolean DisplaySlices = true;
     public boolean DisplaySurface = false;
     public int StereoType = 0;
@@ -86,9 +83,9 @@ public class VolumeRenderState implements Serializable
     // MultiHistogram Panel Info:
     public Vector<ClassificationWidget> MultiHistoWidgets;
     public int WidgetSelected = -1;
-    
     // Display Panel Info
     public Color BoundingBoxColor;
+    
     public boolean ShowBoundingBox = false;
     public Color BackgroundColor;
     public boolean ShowOrientationCube = false;
@@ -97,13 +94,13 @@ public class VolumeRenderState implements Serializable
     public Vector3f CameraLocation = new Vector3f();
     public float[] ObjectLocation;
     public Matrix3f ObjectRotation = new Matrix3f();
-    
     // Surface Panel Info:
     public Vector<SurfaceState> SurfaceList;
-    public int SelectedSurface = 0;
     
+    public int SelectedSurface = 0;
     // SurfaceTexture Info:
     public boolean TextureEnabled;
+    
     public boolean TextureOn;
     public String OtherImageDirectory;
     public String OtherImageName;
@@ -115,25 +112,25 @@ public class VolumeRenderState implements Serializable
     public TransferFunction OtherGreen;
     public TransferFunction OtherBlue;
     public boolean UseOtherLUT;
-    
     // Sculpt Panel Info:
     public int SculptShape;
+    
     public boolean SculptDrawn;
     public byte[] SculptImage;
-    
     // Clip Panel Info
     public boolean[] ClipEnabled;
+    
     public boolean[] ClipDisplayed;
     public int[] ClipValues;
     public Color[] ClipColors;
     public Matrix3f ArbitratyEquation;
-    
     // Lights Panel Info:
     public Light[] Lights;
-    public int LightSelected;
     
+    public int LightSelected;
     // Current Tabs:
     public Vector<String> TabbedList = new Vector<String>();
+    
     // Window Options:
     public int MainDividerLocation;
     public int PlanesDividerLocation;
@@ -141,8 +138,9 @@ public class VolumeRenderState implements Serializable
     public Dimension WindowSize;
     public int WindowX, WindowY;
     public int ExtendedState;
-    
     //PlaneRender Info:
     public float[] PlaneZoom = new float[3];
+    
+    public VolumeRenderState() {}
     
 }

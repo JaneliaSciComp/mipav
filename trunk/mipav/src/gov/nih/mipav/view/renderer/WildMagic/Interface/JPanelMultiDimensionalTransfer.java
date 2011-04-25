@@ -26,8 +26,29 @@ import javax.swing.event.ChangeListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
+import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
+
+/*
+import com.jogamp.newt.Window;
+import com.jogamp.newt.event.KeyEvent;
+import com.jogamp.newt.event.KeyListener;
+import com.jogamp.newt.event.MouseAdapter;
+import com.jogamp.newt.event.MouseEvent;
+import com.jogamp.newt.event.MouseListener;
+import com.jogamp.newt.event.awt.AWTMouseAdapter;
+import com.jogamp.newt.opengl.GLWindow;
+*/
 public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements ChangeListener {
 
 
@@ -55,12 +76,12 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
      * Creates new dialog for turning bounding box frame on and off.
      * @param  parent  parent frame.
      */
-    public JPanelMultiDimensionalTransfer(VolumeTriPlanarInterface parent,
+    public JPanelMultiDimensionalTransfer( GLCanvas canvas, VolumeTriPlanarInterface parent,
                                 Animator kAnimator, VolumeImage kVolumeImage) {
         m_kVolumeViewer = parent;
         m_kAnimator = kAnimator;
         //m_kAnimator = new Animator();
-        m_kMultiHistogram = new VolumeImageMultiDimensionalTransfer( parent, kVolumeImage);
+        m_kMultiHistogram = new VolumeImageMultiDimensionalTransfer( canvas, parent, kVolumeImage);
         m_kMultiHistogram.SetAnimator(m_kAnimator);
         m_kMultiHistogram.SetInterface(this);
 
@@ -144,6 +165,16 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         }
     }
 
+    public void update()
+    {
+        float fAlpha = boundaryEmphasisSlider.getValue()/100.0f;
+        m_kMultiHistogram.setBoundary( fAlpha );
+        
+        fAlpha = alphaSlider.getValue()/100.0f;
+        Color kColor = colorButton.getBackground();
+        m_kMultiHistogram.setColor( new ColorRGBA( kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f, fAlpha ) );
+        m_kMultiHistogram.display();
+    }
 
     public void updateColorButton( float[] afColor, float fColor )
     {

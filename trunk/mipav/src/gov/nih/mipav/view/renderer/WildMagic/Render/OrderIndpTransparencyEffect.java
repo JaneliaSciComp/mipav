@@ -33,6 +33,19 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
     public OrderIndpTransparencyEffect (Texture[] akTextures)
     {
         super(1);   
+
+        PixelShader kPShader = new PixelShader( "OrderIndpTransparencyFinalP");
+        kPShader.SetTextureQuantity(akTextures.length);
+        for ( int i = 0; i < akTextures.length; i++ )
+        {
+            kPShader.SetTexture( i, akTextures[i] );
+            kPShader.SetImageName( i, akTextures[i].GetName() );
+        }
+        SetPShader(0, kPShader);
+        SetVShader(0, new VertexShader( "TextureV.glsl"));
+        
+        
+        /*
         SetVShader(0,new VertexShader("TextureV", true));
         PixelShader kPShader = new PixelShader("OrderIndpTransparencyFinalP", true);
         SetPShader(0,kPShader);
@@ -43,5 +56,6 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
             kPShader.SetTexture( i, akTextures[i] );
             kPShader.SetImageName( i, akTextures[i].GetName() );
         }
+        */
     }
 }

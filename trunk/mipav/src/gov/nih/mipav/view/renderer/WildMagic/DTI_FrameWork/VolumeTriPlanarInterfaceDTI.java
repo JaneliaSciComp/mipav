@@ -12,14 +12,25 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 
 
-import com.sun.opengl.util.Animator;
-//import com.jogamp.opengl.util.*;
-
 import java.awt.event.*;
 import java.io.File;
 
 import javax.swing.*;
 import javax.swing.event.*;
+
+
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeTriPlanarInterfaceDTI extends VolumeTriPlanarInterface 
 implements ChangeListener {
@@ -316,6 +327,8 @@ implements ChangeListener {
      */
     protected void constructRenderers() {
 
+    	initShared();
+    	
         /** Progress bar show up during the volume view frame loading */
         ViewJProgressBar progressBar = new ViewJProgressBar("Constructing renderers...", "Constructing renderers...", 0, 100, false,
                 null, null);
@@ -328,13 +341,13 @@ implements ChangeListener {
 
         m_kAnimator = new Animator();
         m_akPlaneRender = new PlaneRender_WM[3];
-        m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
-        m_akPlaneRender[1] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL);
-        m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL);
+        m_akPlaneRender[0] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
+        m_akPlaneRender[1] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL);
+        m_akPlaneRender[2] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL);
 
         progressBar.setMessage("Constructing gpu renderer...");
 
-        raycastRenderWM = new VolumeTriPlanerRenderDTI( this, m_kAnimator, m_kVolumeImageA,
+        raycastRenderWM = new VolumeTriPlanerRenderDTI( new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA,
                 m_kVolumeImageB);
 
         progressBar.updateValueImmed(80);
