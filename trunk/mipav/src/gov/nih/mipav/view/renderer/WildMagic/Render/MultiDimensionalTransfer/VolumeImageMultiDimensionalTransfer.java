@@ -5,16 +5,14 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
 
-import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
@@ -26,12 +24,12 @@ import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
-
 public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     implements GLEventListener, KeyListener
 {
-    public int MAX_WIDGETS = 6;
+
+	private static final long serialVersionUID = 401740242306942355L;
+	public int MAX_WIDGETS = 6;
     /** For processing picking: */
     protected Picker m_kPicker = new Picker();
     private int m_iMouseButton;
@@ -49,16 +47,15 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     private boolean m_bFirstAdded = false;
     private boolean m_bUpdateLev = false;
     
-    public VolumeImageMultiDimensionalTransfer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
+    public VolumeImageMultiDimensionalTransfer( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
-        super(kParentFrame, kVolumeImage );
+        super( canvas, kParentFrame, kVolumeImage );
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );  
         m_bDisplay = true;
     }
     /**
      * @param args
-     */
     public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, boolean bShowFrame )
     {
         final VolumeImageMultiDimensionalTransfer kWorld = new VolumeImageMultiDimensionalTransfer(kParentFrame, kVolumeImage);
@@ -89,6 +86,7 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         kWorld.SetFrame(frame);
         animator.start();
     }
+     */
     
     public void display()
     {
@@ -96,7 +94,8 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         GetCanvas().display();
     }
 
-    public void display(GLAutoDrawable arg0) {
+    @Override
+	public void display(GLAutoDrawable arg0) {
         if ( !m_bDisplay )
         {
             return;
@@ -105,6 +104,7 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         {
             return;
         }      
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if ( m_bUpdateLev )
         {
             m_bUpdateLev = false;
@@ -129,9 +129,11 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
                 m_kParent.updateLevWidgetState( ClassificationWidgetState.ZERO_STATE, i );
             }            
         }
-        Pick();
+        Pick();    
         m_pkPlane.DetachAllEffects();
         m_pkPlane.AttachEffect(m_spkEffect);
+        m_pkPlane.UpdateGS();
+        m_spkScene.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
@@ -139,13 +141,15 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
             m_pkRenderer.EndScene();
         }
-        m_pkRenderer.DisplayBackBuffer();        
+        m_pkRenderer.DisplayBackBuffer();    
+
 
         if ( m_bAdded ) 
         {
             m_bAdded = false;
             m_akLev.get(m_iCurrent).setColor(m_kCurrentColor);
             m_bFirstAdded = true;
+            GetCanvas().display();
         }
         if ( m_bFirstAdded )
         {
@@ -153,7 +157,8 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         }
     }
     
-    public void dispose()
+    @Override
+	public void dispose()
     {
         m_kPicker = null;
         m_kTMin = null;
@@ -167,16 +172,38 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     }
 
 
-    public void init(GLAutoDrawable arg0) {
+    public int getPicked()
+    {
+        return m_iCurrent;
+    }
+    
+
+    public Vector<ClassificationWidget> getWidgets()
+    {
+        Vector<ClassificationWidget> kWidgetList = new Vector<ClassificationWidget>();
+        for ( int i = 0; i < m_akLev.size(); i++ )
+        {
+            ClassificationWidget kWidget = m_akLev.get(i);
+            if ( kWidget instanceof SquareClassificationWidget )
+            {
+                kWidgetList.add( new SquareClassificationWidget((SquareClassificationWidget)kWidget) );
+            }
+            else if ( kWidget instanceof TriangleClassificationWidget )
+            {
+                kWidgetList.add( new TriangleClassificationWidget((TriangleClassificationWidget)kWidget) );
+            }
+        }
+        return kWidgetList;
+    }
+    
+    @Override
+	public void init(GLAutoDrawable arg0) {
         m_bDisplay = true;
         if ( m_bInit )
         {
             return;
         }      
-        if ( m_pkRenderer != null )
-        {
-            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        }
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         super.init(arg0);
         m_spkCamera.SetFrustum(0, 1, 0, 1,1f,10.0f);
         m_pkRenderer.OnFrustumChange();
@@ -184,13 +211,13 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         m_spkScene.UpdateRS();
         m_kAnimator.add( GetCanvas() );
     }
-    
 
     /** 
      * keyPressed callback.
      * @param kKey the KeyEvent triggering the callback.
      */
-    public void keyPressed(KeyEvent kKey)
+    @Override
+	public void keyPressed(KeyEvent kKey)
     {
         char ucKey = kKey.getKeyChar();            
         int iKey = kKey.getKeyCode();
@@ -234,8 +261,9 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         m_bDisplay = true;
         GetCanvas().display();
     }
-    
-    public void mouseDragged(MouseEvent e)
+  
+    @Override
+	public void mouseDragged(MouseEvent e)
     {
         if ( m_iCurrent == -1 )
         {
@@ -248,10 +276,17 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         
         m_iMouseX = e.getX();
         m_iMouseY = e.getY();
-        //System.err.println( m_iMouseX + " " + m_iMouseY );
     }
-
-    public void mousePressed(MouseEvent e)
+    
+    @Override
+	public void mouseMoved(MouseEvent e)
+    {
+        m_bDisplay = true;
+        GetCanvas().display();
+    }
+    
+    @Override
+	public void mousePressed(MouseEvent e)
     {
         m_iMouseButton = e.getButton();
         m_iMouseX = e.getX();
@@ -264,8 +299,9 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         m_bDisplay = true;
         GetCanvas().display();
     }
-  
-    public void mouseReleased(MouseEvent e)
+    
+    @Override
+	public void mouseReleased(MouseEvent e)
     {
         if ( e.getButton() == MouseEvent.BUTTON3 )
         {
@@ -293,8 +329,10 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         GetCanvas().display();
     }
     
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
+    @Override
+	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
     {      
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         m_iWidth = 256;
         m_iHeight = 256;
         m_spkCamera.Perspective = false;
@@ -304,6 +342,7 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );   
         m_bDisplay = true;
     }
+
     
     public void setBoundary( float fAlpha )
     {
@@ -325,6 +364,7 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
             m_bDisplay = true;
         GetCanvas().display();
     }
+    
 
     
     public void SetInterface( JInterfaceBase kInterface )
@@ -332,45 +372,20 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         m_kInterface = kInterface;
     }
     
+    public void setPicked( int value )
+    {
+        m_iPicked = value;
+    }
+    
     public void setWidget( String kWidgetType )
     {
         m_kWidgetType = new String(kWidgetType);
-    }
-    
-
-    
-    public Vector<ClassificationWidget> getWidgets()
-    {
-        Vector<ClassificationWidget> kWidgetList = new Vector<ClassificationWidget>();
-        for ( int i = 0; i < m_akLev.size(); i++ )
-        {
-            ClassificationWidget kWidget = m_akLev.get(i);
-            if ( kWidget instanceof SquareClassificationWidget )
-            {
-                kWidgetList.add( new SquareClassificationWidget((SquareClassificationWidget)kWidget) );
-            }
-            else if ( kWidget instanceof TriangleClassificationWidget )
-            {
-                kWidgetList.add( new TriangleClassificationWidget((TriangleClassificationWidget)kWidget) );
-            }
-        }
-        return kWidgetList;
     }
     
     public void setWidgets(Vector<ClassificationWidget> kWidgetList)
     {
         m_akLev = kWidgetList;
         m_bUpdateLev = true;        
-    }
-    
-    public int getPicked()
-    {
-        return m_iCurrent;
-    }
-    
-    public void setPicked( int value )
-    {
-        m_iPicked = value;
     }
     
     private void updateLev()
@@ -401,7 +416,8 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         }
     }
     
-    protected void CreatePlaneNode()
+    @Override
+	protected void CreatePlaneNode()
     {
         m_spkScene = new Node();
         Attributes kAttributes = new Attributes();
@@ -447,7 +463,8 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         m_spkScene.AttachChild(m_pkPlane);
     }
     
-    protected void CreateScene ()
+    @Override
+	protected void CreateScene ()
     {
         CreatePlaneNode();
         //m_spkEffect = new VertexColor3Effect();
@@ -476,32 +493,6 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
                     m_akLev.get(m_iCurrent).setPicked( m_kPicker.Records );
                 }
             }
-            /*
-            for ( int i = 0; i < m_akLev.size(); i++ )
-            {
-                m_kPicker.Execute(m_akLev.get(i).getWidget(),kPos,kDir,0.0f,
-                        Float.MAX_VALUE);
-
-                if (m_kPicker.Records.size() > 0)
-                {
-                    //m_akLev.get(i).setPicked( m_kPicker.Records );
-                    if ( m_akLev.get(i).setPicked( m_kPicker.GetClosestNonnegative() ) )
-                    {
-                        if ( m_iCurrent != i )
-                        {
-                            m_iCurrent = i;
-                            m_kInterface.updateColorButton(m_akLev.get(i).getState().Color );
-                            
-
-                            m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
-                            m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
-                            m_spkScene.UpdateGS();
-                        }
-                        break;
-                    }
-                }
-            }
-            */
         }
     }    
 }

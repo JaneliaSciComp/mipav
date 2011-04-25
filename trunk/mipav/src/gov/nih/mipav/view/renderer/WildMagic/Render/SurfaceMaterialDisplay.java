@@ -5,9 +5,8 @@ import gov.nih.mipav.util.MipavInitGPU;
 import java.awt.event.KeyListener;
 
 import javax.media.opengl.GLAutoDrawable;
-
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -77,7 +76,8 @@ implements GLEventListener, KeyListener
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
-    public void display(GLAutoDrawable arg0) {      
+    @Override
+	public void display(GLAutoDrawable arg0) {      
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
@@ -87,11 +87,10 @@ implements GLEventListener, KeyListener
         m_pkRenderer.DisplayBackBuffer();
     }
     
-    /* (non-Javadoc)
-     * @see javax.media.opengl.GLEventListener#displayChanged(javax.media.opengl.GLAutoDrawable, boolean, boolean)
-     */
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
     
+    @Override
+	public void dispose(GLAutoDrawable arg0) {}
+
     /**
      * Return the GLCanvas for display.
      * @return GLCanvas
@@ -100,11 +99,11 @@ implements GLEventListener, KeyListener
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
-
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
      */
-    public void init(GLAutoDrawable arg0) {      
+    @Override
+	public void init(GLAutoDrawable arg0) {      
         if ( m_pkRenderer != null )
         {
             ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -143,7 +142,8 @@ implements GLEventListener, KeyListener
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
      */
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {      
+    @Override
+	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {      
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -220,7 +220,9 @@ implements GLEventListener, KeyListener
             }
         }
     }
-    /**
+
+
+	/**
      * Create the scene.
      */
     private void CreateScene ()
@@ -241,8 +243,5 @@ implements GLEventListener, KeyListener
         m_pkRenderer.LoadResources(m_spkSphere);
         updateLighting( m_akLights );
     }
-
-
-	public void dispose(GLAutoDrawable arg0) {}
 
 }

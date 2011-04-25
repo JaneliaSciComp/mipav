@@ -569,6 +569,11 @@ uniform float BoundaryEmphasis5;
 /** Raycasting fragment program implementation */
 void p_VolumeShaderMultiPass()
 {
+//     vec2 texc = ((outPos.xy / outPos.w) + 1.0) * 0.5;
+//     gl_FragColor.rgb = texture2D(aSceneImage, texc).xyz;
+//     gl_FragColor.a = 1;
+//     return;
+
     // find the right place to lookup in the backside buffer
     vec2 texc = ((outPos.xy / outPos.w) + 1.0) * 0.5;
     vec3 back_position  = texture2D(aSceneImage, texc).xyz;

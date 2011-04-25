@@ -14,8 +14,8 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -28,7 +28,7 @@ import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageViewer extends JavaApplication3D
     implements GLEventListener, KeyListener
@@ -36,34 +36,6 @@ public class VolumeImageViewer extends JavaApplication3D
     /**  */
     private static final long serialVersionUID = -2042201391319899982L;
     protected static int m_iScreenCaptureCounter = 0;
-    protected Node m_spkScene;    
-    protected Culler m_kCuller = new Culler(0,0,null);
-    protected VolumeImage m_kVolumeImage;
-    protected ShaderEffect m_spkEffect;
-    protected TriMesh m_pkPlane;
-    protected int m_iSlice = 0;
-    protected Animator m_kAnimator;
-    protected Frame m_kFrame;
-    protected VolumeTriPlanarInterface m_kParent;
-    protected boolean m_bDisplay = true;
-    protected boolean m_bInit = false;
-
-    
-    public VolumeImageViewer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
-    {
-        super( "VolumeImageViewer", 0, 0,
-               kVolumeImage.GetImage().getExtents()[0],
-               kVolumeImage.GetImage().getExtents()[1],
-               new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
-        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-                                          m_eBuffering, m_eMultisampling,
-                                           m_iWidth, m_iHeight );
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );    
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );    
-        m_kParent = kParentFrame;
-        m_kVolumeImage = kVolumeImage;
-        MipavInitGPU.InitGPU();
-    }
     /**
      * @param args
      */
@@ -74,11 +46,13 @@ public class VolumeImageViewer extends JavaApplication3D
         frame.add( kWorld.GetCanvas() );
         final Animator animator = new Animator( kWorld.GetCanvas() );    
         frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
+            @Override
+			public void windowClosing(WindowEvent e) {
                 // Run this on another thread than the AWT event queue to
                 // avoid deadlocks on shutdown on some platforms
                 new Thread(new Runnable() {
-                    public void run() {
+                    @Override
+					public void run() {
                         animator.stop();
                     }
                 }).start();
@@ -96,9 +70,54 @@ public class VolumeImageViewer extends JavaApplication3D
         kWorld.SetAnimator(animator);
         kWorld.SetFrame(frame);
         animator.start();
+    }    
+    protected Node m_spkScene;
+    protected Culler m_kCuller = new Culler(0,0,null);
+    protected VolumeImage m_kVolumeImage;
+    protected ShaderEffect m_spkEffect;
+    protected TriMesh m_pkPlane;
+    protected int m_iSlice = 0;
+    protected Animator m_kAnimator;
+    protected Frame m_kFrame;
+    protected VolumeTriPlanarInterface m_kParent;
+    protected boolean m_bDisplay = true;
+
+    
+    protected boolean m_bInit = false;
+    
+    public VolumeImageViewer( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
+    {
+        super( "VolumeImageViewer", 0, 0,
+               kVolumeImage.GetImage().getExtents()[0],
+               kVolumeImage.GetImage().getExtents()[1],
+               new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
+        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
+                                          m_eBuffering, m_eMultisampling,
+                                           m_iWidth, m_iHeight, canvas );
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );    
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );    
+        m_kParent = kParentFrame;
+        m_kVolumeImage = kVolumeImage;
+        MipavInitGPU.InitGPU();
+    }
+    public VolumeImageViewer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
+    {
+        super( "VolumeImageViewer", 0, 0,
+               kVolumeImage.GetImage().getExtents()[0],
+               kVolumeImage.GetImage().getExtents()[1],
+               new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
+        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
+                                          m_eBuffering, m_eMultisampling,
+                                           m_iWidth, m_iHeight );
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );    
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );    
+        m_kParent = kParentFrame;
+        m_kVolumeImage = kVolumeImage;
+        MipavInitGPU.InitGPU();
     }
 
-    public void display(GLAutoDrawable arg0) {
+    @Override
+	public void display(GLAutoDrawable arg0) {
         if ( m_kAnimator == null )
         {
             return;
@@ -124,7 +143,8 @@ public class VolumeImageViewer extends JavaApplication3D
         m_bDisplay = true;
     }
     
-    public void dispose(GLAutoDrawable arg0)
+    @Override
+	public void dispose(GLAutoDrawable arg0)
     {
         if ( m_spkScene != null )
         {
@@ -168,7 +188,8 @@ public class VolumeImageViewer extends JavaApplication3D
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
 
-    public void init(GLAutoDrawable arg0) {
+    @Override
+	public void init(GLAutoDrawable arg0) {
         if ( m_bInit )
         {
             return;
@@ -214,7 +235,8 @@ public class VolumeImageViewer extends JavaApplication3D
      * keyPressed callback.
      * @param kKey the KeyEvent triggering the callback.
      */
-    public void keyPressed(KeyEvent kKey)
+    @Override
+	public void keyPressed(KeyEvent kKey)
     {
         char ucKey = kKey.getKeyChar();
         if ( ucKey == 'q' )
@@ -251,7 +273,8 @@ public class VolumeImageViewer extends JavaApplication3D
     }
 
 
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
+    @Override
+	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
     {      
         if (iWidth > 0 && iHeight > 0)
         {

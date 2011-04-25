@@ -19,26 +19,73 @@
 
 package WildMagic.ApplicationDemos;
 
-import javax.media.opengl.*;
 
-import com.sun.opengl.util.Animator;
-//import com.jogamp.opengl.util.*;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import java.awt.Frame;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import java.awt.*;
-import java.awt.event.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
 
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
-//import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
+import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.Effect;
+import WildMagic.LibGraphics.Effects.GoochEffect;
+import WildMagic.LibGraphics.Effects.WireframeBehindEffect;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-public class Gooch extends JavaApplication3D
+import com.jogamp.opengl.util.Animator;
+
+public class Gooch extends DemoBase
 implements GLEventListener, KeyListener
 {
+	private static final long serialVersionUID = -1402084549384096973L;
+
+	/**
+	 * Gooch.main creates the Gooch object and window frame to
+	 * contain the GLCanvas. An Animator object is created with the GLCanvas
+	 * as an argument. The Animator provides the same function as the
+	 * glutMainLoop() function call commonly used in OpenGL applications. */
+	public static void main(String[] args) {
+		Gooch kWorld = new Gooch();        
+		/* Animator serves the purpose of the idle function, calls display: */
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		@Override
+			public void windowClosing(WindowEvent e) {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				@Override
+					public void run() {
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
+        frame.setVisible(true);
+        animator.start();
+	}
+
+	private GoochEffect m_spkEffect;
+
+	private TriMesh m_pkMesh;
+
+	/** Window with the shader parameter interface: */
+	private ApplicationGUI m_kShaderParamsWindow = null;
+
 	/**
 	 * The constructor initializes the OpenGLRender, and sets up the GLEvent,
 	 * KeyEvent, and Mouse listeners.  The last three statements initialize
@@ -51,50 +98,7 @@ implements GLEventListener, KeyListener
 	 *
 	 */
 	public Gooch() {
-		super("Gooch",0,0,640,480, new ColorRGBA(1.0f,1.0f,1.0f,1.0f));
-		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-				m_eBuffering, m_eMultisampling,
-				m_iWidth, m_iHeight );
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-
-		String kExternalDirs = getExternalDirs();        
-		ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-		VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-		PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-		CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-	}
-
-	/**
-	 * Gooch.main creates the Gooch object and window frame to
-	 * contain the GLCanvas. An Animator object is created with the GLCanvas
-	 * as an argument. The Animator provides the same function as the
-	 * glutMainLoop() function call commonly used in OpenGL applications. */
-	public static void main(String[] args) {
-		Gooch kWorld = new Gooch();        
-		Frame frame = new Frame(kWorld.GetWindowTitle());
-		frame.add( kWorld.GetCanvas() );
-		frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
-		/* Animator serves the purpose of the idle function, calls display: */
-		final Animator animator = new Animator( kWorld.GetCanvas() );
-		frame.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				// Run this on another thread than the AWT event queue to
-				// avoid deadlocks on shutdown on some platforms
-				new Thread(new Runnable() {
-					public void run() {
-						animator.stop();
-						System.exit(0);
-					}
-				}).start();
-			}
-		});
-		frame.setVisible(true);
-		animator.start();
-		// and all the rest happens in the display function...
+		super("Gooch");
 	}
 
 	/**
@@ -105,6 +109,7 @@ implements GLEventListener, KeyListener
 	 * updated. Renderer.ClearBuffers() is called, the scene and framerate are
 	 * drawn, and the back-buffer displayed with Renderer.DisplayBackBuffer().
 	 */
+	@Override
 	public void display(GLAutoDrawable arg0) {
 		MeasureTime();
 		if (MoveCamera())
@@ -136,7 +141,12 @@ implements GLEventListener, KeyListener
 		}
 	}
 
-	public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
+	@Override
+	public void dispose(GLAutoDrawable arg0)
+	{
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        m_pkRenderer.ReleaseAllResources( m_spkScene );
+	}
 
 	/**
 	 * Gooch.init is called only once when the GLCanvas is initialized. It
@@ -144,6 +154,7 @@ implements GLEventListener, KeyListener
 	 * scene, and initializes the culling object with the camera and scene
 	 * objects.
 	 */
+	@Override
 	public void init(GLAutoDrawable arg0) {
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		m_pkRenderer.InitializeState();
@@ -170,72 +181,13 @@ implements GLEventListener, KeyListener
 		InitializeCameraMotion(0.01f,0.001f);
 		InitializeObjectMotion(m_spkScene);
 	}
-
-	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-		if (iWidth > 0 && iHeight > 0)
-		{
-			if (m_pkRenderer != null)
-			{
-				m_pkRenderer.Resize(iWidth,iHeight);
-			}
-
-			m_iWidth = iWidth;
-			m_iHeight = iHeight;
-		}
-	}
-
-	public GLCanvas GetCanvas()
-	{
-		return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-	}
-
-	/**
-	 * Gooch.CreateScene() creates the scene graph. The root node is
-	 * m_spkScene. It contains a single TriMesh object, the torus. The TriMesh
-	 * object is created with a set of rendering Attributes with three
-	 * channels for point data (x,y,z); three channels for normal data
-	 * (x,y,z).  A GoochEffect is created and attached to the torus, and 
-	 * a WireframeBehind effect is attached, which causes two-pass rendering.
-	 */
-	private void CreateScene ()
-	{
-		m_spkScene = new Node();
-		Attributes kAttr = new Attributes();
-		kAttr.SetPChannels(3);
-		kAttr.SetNChannels(3);
-		StandardMesh kSM = new StandardMesh(kAttr);
-		//m_pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
-		m_pkMesh = kSM.Torus(50,50,2.0f,1.0f);
-
-		// pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), 
-		//        new Vector3f(0.707f, 0.707f, 0f), 
-		//        new Vector3f(-0.707f, 0.707f, 0f),false));
-
-
-		m_spkEffect = new GoochEffect();
-
-		final int iPassQuantity = m_spkEffect.GetPassQuantity();
-		for (int iPass = 0; iPass < iPassQuantity; iPass++)
-		{
-			m_spkEffect.LoadPrograms(m_pkRenderer, iPass,m_pkRenderer.GetMaxColors(),m_pkRenderer.GetMaxTCoords(),
-					m_pkRenderer.GetMaxVShaderImages(),m_pkRenderer.GetMaxPShaderImages());
-		}
-		m_pkMesh.AttachEffect(m_spkEffect);
-
-		// Do a second effect, a wire-frame pass
-		Effect pkEffect = new WireframeBehindEffect();
-		m_pkMesh.AttachEffect(pkEffect);
-
-
-		m_spkScene.AttachChild(m_pkMesh);
-	}
-
 	/**
 	 * Gooch.keyPressed() processes key-input from the user. A shader-editor
 	 * GUI can be launched by pressing 'l'. The scene-graph is streamed to
 	 * disk by pressing the 's' key.
 	 */
-	public void keyPressed(KeyEvent e) {
+	@Override
+	public void keyTyped(KeyEvent e) {
 		char ucKey = e.getKeyChar();
 		super.keyPressed(e);
 		switch (ucKey)
@@ -255,30 +207,53 @@ implements GLEventListener, KeyListener
 		return;
 	}
 
-	private Node m_spkScene;
-	private GoochEffect m_spkEffect;
-	private Culler m_kCuller = new Culler(0,0,null);
-	private TriMesh m_pkMesh;
-
-	/** Window with the shader parameter interface: */
-	private ApplicationGUI m_kShaderParamsWindow = null;
-
-	private String getExternalDirs()
-	{
-		String jar_filename = "";
-		String class_path_key = "java.class.path";
-		String class_path = System.getProperty(class_path_key);
-		for (String fn : class_path.split(";") ) {
-			if (fn.endsWith("WildMagic.jar")) {
-				jar_filename = fn;   
-				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-				externalDirs = externalDirs.concat("WildMagic");
-				return externalDirs;
+	@Override
+	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+		if (iWidth > 0 && iHeight > 0)
+		{
+			if (m_pkRenderer != null)
+			{
+				m_pkRenderer.Resize(iWidth,iHeight);
 			}
+
+			m_iWidth = iWidth;
+			m_iHeight = iHeight;
 		}
-		return System.getProperties().getProperty("user.dir");
 	}
 
-	public void dispose(GLAutoDrawable arg0) {}
+	/**
+	 * Gooch.CreateScene() creates the scene graph. The root node is
+	 * m_spkScene. It contains a single TriMesh object, the torus. The TriMesh
+	 * object is created with a set of rendering Attributes with three
+	 * channels for point data (x,y,z); three channels for normal data
+	 * (x,y,z).  A GoochEffect is created and attached to the torus, and 
+	 * a WireframeBehind effect is attached, which causes two-pass rendering.
+	 */
+	private void CreateScene ()
+	{
+		m_spkScene = new Node();
+		Attributes kAttr = new Attributes();
+		kAttr.SetPChannels(3);
+		kAttr.SetNChannels(3);
+		StandardMesh kSM = new StandardMesh(kAttr);
+		m_pkMesh = kSM.Torus(50,50,2.0f,1.0f);
+
+		m_spkEffect = new GoochEffect();
+
+		final int iPassQuantity = m_spkEffect.GetPassQuantity();
+		for (int iPass = 0; iPass < iPassQuantity; iPass++)
+		{
+			m_spkEffect.LoadPrograms(m_pkRenderer, iPass,m_pkRenderer.GetMaxColors(),m_pkRenderer.GetMaxTCoords(),
+					m_pkRenderer.GetMaxVShaderImages(),m_pkRenderer.GetMaxPShaderImages());
+		}
+		m_pkMesh.AttachEffect(m_spkEffect);
+
+		// Do a second effect, a wire-frame pass
+		Effect pkEffect = new WireframeBehindEffect();
+		m_pkMesh.AttachEffect(pkEffect);
+
+
+		m_spkScene.AttachChild(m_pkMesh);
+	}
 
 }

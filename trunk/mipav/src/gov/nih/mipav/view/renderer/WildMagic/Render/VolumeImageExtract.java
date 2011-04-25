@@ -8,9 +8,6 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import java.awt.Frame;
 import java.awt.event.KeyListener;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-
 import WildMagic.LibFoundation.Meshes.VETMesh;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
@@ -18,7 +15,19 @@ import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageExtract extends VolumeImageViewer
     implements GLEventListener, KeyListener
@@ -39,18 +48,18 @@ public class VolumeImageExtract extends VolumeImageViewer
     /** Intensity level for GPU-surface extraction. */
     private int m_iExtractLevel = 1;
     
-    public VolumeImageExtract( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, int iLevel  )
+    public VolumeImageExtract( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, int iLevel  )
     {
-        super(kParentFrame, kVolumeImage );
+        super( kCanvas, kParentFrame, kVolumeImage );
         m_iExtractLevel = iLevel;
         m_kClipEffect = kClip;
     }
     /**
      * @param args
      */
-    public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, int iLevel )
+    public static void main( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, int iLevel )
     {
-        VolumeImageExtract kWorld = new VolumeImageExtract(kParentFrame, kVolumeImage, kClip, iLevel);
+        VolumeImageExtract kWorld = new VolumeImageExtract(kCanvas,kParentFrame, kVolumeImage, kClip, iLevel);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
          final Animator animator = new Animator( kWorld.GetCanvas() );
@@ -61,7 +70,7 @@ public class VolumeImageExtract extends VolumeImageViewer
          frame.setVisible(true);
          frame.setBounds(0,0,
                  kWorld.GetWidth(), kWorld.GetHeight() );
-         frame.setVisible(false);
+         //frame.setVisible(false);
          kWorld.SetAnimator(animator);
          kWorld.SetFrame(frame);
          animator.start();

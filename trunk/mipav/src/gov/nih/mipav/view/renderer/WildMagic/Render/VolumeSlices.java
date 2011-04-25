@@ -10,6 +10,7 @@ import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.GlobalState;
 import WildMagic.LibGraphics.Rendering.PolygonOffsetState;
 import WildMagic.LibGraphics.Rendering.Renderer;
+import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -203,6 +204,26 @@ public class VolumeSlices extends VolumeObject
         return m_akPlaneEffect[iIndex].GetBlend(); 
     }
     
+    public float[] GetSliceOpacity()
+    {
+    	return new float[]{
+    			m_akPlaneEffect[0].GetBlend(),
+    			m_akPlaneEffect[1].GetBlend(),
+    			m_akPlaneEffect[2].GetBlend()
+    	};
+    }
+    
+    public void SetSliceOpacity(float[] afAlpha)
+    {
+    	for ( int i = 0; i < afAlpha.length; i++ )
+    	{
+    		m_abSolid[i] = afAlpha[i] >= 1.0 ? true : false;
+    		m_akPlaneEffect[i].Blend( afAlpha[i] );
+    		m_akPlaneEffectTransparent[i].Blend( afAlpha[i] );
+    		m_kVolumePreShader[i].Blend(afAlpha[i]);
+    		m_kVolumePreShaderTransparent[i].Blend(afAlpha[i]);
+    	}
+    }
 
 
 
@@ -278,6 +299,7 @@ public class VolumeSlices extends VolumeObject
         else
         {
             m_kScene.AttachGlobalState(m_kAlpha);
+            m_kScene.AttachGlobalState(m_kZBuffer);
         }
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
@@ -496,6 +518,16 @@ public class VolumeSlices extends VolumeObject
             m_akPlaneEffectTransparent[i].ShowSurface(bOn);
         }
     }
+    
+    public void SetTranslate(Vector3f kTranslate)
+    {
+    	super.SetTranslate(kTranslate);
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
+            m_akPlanes[i].Local.SetTranslate(m_kTranslate);
+        }    	
+    }
 
     /** Creates the bounding frames for the planes. */
     private void CreateBoundingBox ( )
@@ -559,6 +591,10 @@ public class VolumeSlices extends VolumeObject
         m_kAlpha = new AlphaState();
         m_kAlpha.BlendEnabled = true;
         m_kScene.AttachGlobalState(m_kAlpha);
+        
+        m_kZBuffer = new ZBufferState();
+        m_kZBuffer.Enabled = true;
+        m_kScene.AttachGlobalState(m_kZBuffer);
 
         m_kPolygonOffset = new PolygonOffsetState();
         m_kPolygonOffset.FillEnabled = true;

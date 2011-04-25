@@ -27,6 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
@@ -42,6 +43,20 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     private static final long serialVersionUID = -2749305357977770854L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /**
+     * Builds a titled border with the given title, an etched border, and the
+     * proper font and color.  Changed to public static member so that it can
+     * be used for other JPanels not inherited from this base class.
+     * @param   title  Title of the border
+     *
+     * @return  The titled border.
+     */
+    public static TitledBorder buildTitledBorder(String title) {
+        return new TitledBorder(new EtchedBorder(), title,
+                                TitledBorder.LEFT, TitledBorder.CENTER,
+                                MipavUtil.font12B, Color.black);
+    }
 
     /** The main control. */
     protected JPanel mainPanel = null;
@@ -104,25 +119,27 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     /** Picking button group -- switch between picking correspondence points
      * and the puncture triangle. */
     private ButtonGroup m_kPickButtonGroup = new ButtonGroup();
-
     /** Correspondence point picking. */
     private JRadioButton m_kPickCorrespondence = new JRadioButton();
     /** Puncture triangle picking. */
     private JRadioButton m_kPickPuncture = new JRadioButton();
+    
     /** Brain Surface TriMesh */
     private TriMesh m_kTriangleMesh = null;
     
     /** Brain Surface Renderer. */
     private CorticalAnalysisRender m_kView;
-    
     /** The scroll pane holding the panel content. Useful when the screen is small. */
     private JScrollPane scroller;
+    
     /** Panel container. */
     private JPanel m_kInsidePanel;
-    
+
     /** Parent user-interface frame. */
     private VolumeTriPlanarInterface m_kVolumeViewer;
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Create the control-panel for the brainsurfaceFlattener interface:
@@ -142,27 +159,12 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
-    /**
-     * Builds a titled border with the given title, an etched border, and the
-     * proper font and color.  Changed to public static member so that it can
-     * be used for other JPanels not inherited from this base class.
-     * @param   title  Title of the border
-     *
-     * @return  The titled border.
-     */
-    public static TitledBorder buildTitledBorder(String title) {
-        return new TitledBorder(new EtchedBorder(), title,
-                                TitledBorder.LEFT, TitledBorder.CENTER,
-                                MipavUtil.font12B, Color.black);
-    }
-
 
     /* (non-Javadoc)
      * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
      */
-    public void actionPerformed(ActionEvent event) {
+    @Override
+	public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
         String command = event.getActionCommand();
 
@@ -355,39 +357,45 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#setSlice(int)
      */
-    public void setSlice(int slice) { }
+    @Override
+	public void setSlice(int slice) { }
 
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#setTimeSlice(int)
      */
-    public void setTimeSlice(int tSlice) { }
+    @Override
+	public void setTimeSlice(int tSlice) { }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImageExtents()
      */
-    public boolean updateImageExtents() {
+    @Override
+	public boolean updateImageExtents() {
         return false;
     }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages()
      */
-    public boolean updateImages() {
+    @Override
+	public boolean updateImages() {
         return false;
     }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages(boolean)
      */
-    public boolean updateImages(boolean flag) {
+    @Override
+	public boolean updateImages(boolean flag) {
         return false;
     }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages(gov.nih.mipav.model.structures.ModelLUT, gov.nih.mipav.model.structures.ModelLUT, boolean, int)
      */
-    public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
+    @Override
+	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
 
         if (LUTa != null) {
             m_kLUTa = LUTa;
@@ -396,30 +404,6 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         }
 
         return true;
-    }
-    
-    /**
-     * Builds the OK button. Sets it internally as well return the just-built button.
-     * @return  OK button.
-     */
-    protected JButton buildOKButton() {
-        OKButton = new JButton("OK");
-        OKButton.addActionListener(this);
-
-        // OKButton.setToolTipText("Accept values and perform action.");
-        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        OKButton.setFont(serif12B);
-
-        return OKButton;
-    }
-    
-    /* (non-Javadoc)
-     * @see java.lang.Object#finalize()
-     */
-    protected void finalize() throws Throwable {
-        disposeLocal();
-        super.finalize();
     }
     
     /**
@@ -465,7 +449,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         mainPanel.updateUI();
         m_kView.setLUTCurvature(m_kLUTa);
     }
-
+    
     /**
      * Initialize the user-interface, buttons and ActionCommands.
      */
@@ -657,8 +641,8 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         // Scroll panel that hold the control panel layout in order to use JScrollPane
         JPanel mainScrollPanel = new JPanel();
         mainScrollPanel.setLayout(new BorderLayout());
-        scroller = new JScrollPane(mainScrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroller = new JScrollPane(mainScrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         
         m_kInsidePanel = new JPanel();
         m_kInsidePanel.setLayout(new GridBagLayout());
@@ -681,5 +665,30 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         /* Create and add the mainPanel: */
         mainPanel = new JPanel();
         mainPanel.add(scroller, BorderLayout.CENTER);
+    }
+    
+    /**
+     * Builds the OK button. Sets it internally as well return the just-built button.
+     * @return  OK button.
+     */
+    protected JButton buildOKButton() {
+        OKButton = new JButton("OK");
+        OKButton.addActionListener(this);
+
+        // OKButton.setToolTipText("Accept values and perform action.");
+        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        OKButton.setFont(serif12B);
+
+        return OKButton;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+	protected void finalize() throws Throwable {
+        disposeLocal();
+        super.finalize();
     }
 }

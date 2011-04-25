@@ -57,6 +57,7 @@ public abstract class VolumeObject
 
     /** Alpha blending for this object. */
     protected AlphaState m_kAlpha;
+    protected ZBufferState m_kZBuffer;
 
     /** PolygonOffset blending for this object. */
     protected PolygonOffsetState m_kPolygonOffset;
@@ -75,7 +76,7 @@ public abstract class VolumeObject
 
     /** Surface light shader for rendering objects without volume-texture mapping. */
     protected MipavLightingEffect m_kLightShader = null;
-
+    
     /** Create a new VolumeObject with the VolumeImage parameter.
      * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
@@ -361,6 +362,15 @@ public abstract class VolumeObject
             m_kWireframe.Fill = eType;
         }
     }
+
+    /**
+     * Copy translation vector.
+     * @param kTranslate new translation amount.
+     */
+    public void SetTranslate(Vector3f kTranslate)
+    {
+        m_kTranslate.Copy(kTranslate);
+    }
     
     /**
      * Add to the object translation vector.
@@ -370,7 +380,7 @@ public abstract class VolumeObject
     {
         m_kTranslate.Add(kTranslate);
     }
-    
+        
     protected void scale( VertexBuffer kVertexBuffer )
     {
         ModelImage kImageA = m_kVolumeImageA.GetImage();

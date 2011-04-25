@@ -9,9 +9,6 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
-import javax.media.opengl.GLContext;
 import javax.swing.JFrame;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
@@ -32,6 +29,20 @@ import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 //import com.mentorgen.tools.profile.runtime.Profile;
+
+
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 public class ImageRegistrationGPU extends JavaApplication3D
 //implements GLEventListener, KeyListener
@@ -216,7 +227,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
     }
     
     public void display(GLAutoDrawable arg0) {
-        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if ( m_bDispose )
         {
             m_bDispose = false;
@@ -235,7 +246,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         {
             cleanUp();
             OnResize(m_iWidth,m_iHeight);
-            CreateScene();
+            CreateScene(arg0);
             m_bCleanUp = false;
         }
         m_bDisplay = false;
@@ -708,15 +719,15 @@ public class ImageRegistrationGPU extends JavaApplication3D
     }
     
     
-    protected void CreateScene ()
+    protected void CreateScene (GLAutoDrawable arg0)
     {           
         int iWidth = m_iWidth;
         int iHeight = m_iHeight;
 
         int iDepth = m_kImageA.nDims == 3 ? m_kImageA.extents[2] : 1;
-        m_kHistogramOutput = CreateRenderTarget( "Histogram2D", iWidth, iHeight );
-        m_kHistogramOutputB = CreateRenderTarget( "Histogram2DB", iWidth, iHeight  );
-        m_kEntropyOut = CreateRenderTarget( "EntropyOut", 1, 1  );
+        m_kHistogramOutput = CreateRenderTarget( arg0, "Histogram2D", iWidth, iHeight );
+        m_kHistogramOutputB = CreateRenderTarget( arg0, "Histogram2DB", iWidth, iHeight  );
+        m_kEntropyOut = CreateRenderTarget( arg0, "EntropyOut", 1, 1  );
                 
         if ( CreateImageMesh(m_kImageA.extents[0],m_kImageA.extents[1],iDepth) == null )
         {
@@ -1078,7 +1089,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
     
     
 
-    private OpenGLFrameBuffer CreateRenderTarget( String kImageName, int iWidth, int iHeight )
+    private OpenGLFrameBuffer CreateRenderTarget( GLAutoDrawable arg0, String kImageName, int iWidth, int iHeight )
     {      
         //System.err.println( kImageName + " " + iWidth + " " + iHeight );
         float[] afData = new float[iWidth*iHeight*4];
@@ -1093,11 +1104,13 @@ public class ImageRegistrationGPU extends JavaApplication3D
         akSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP);
         akSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP);
         m_pkRenderer.LoadTexture( akSceneTarget[0] );
-        return new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,GetCanvas());
+        OpenGLFrameBuffer kFB = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
+                m_eBuffering,m_eMultisampling,m_pkRenderer, arg0 );
+        kFB.InitializeBuffer(akSceneTarget);
+        return kFB;
     }
         
-    private OpenGLFrameBuffer CreateRenderTargetInit( String kImageName, int iWidth, int iHeight )
+    private OpenGLFrameBuffer CreateRenderTargetInit( GLAutoDrawable arg0, String kImageName, int iWidth, int iHeight )
     {      
         float[] afData = new float[iWidth*iHeight*4];
         for ( int i = 0; i < afData.length; i++ )
@@ -1115,8 +1128,10 @@ public class ImageRegistrationGPU extends JavaApplication3D
         akSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP);
         akSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP);
         m_pkRenderer.LoadTexture( akSceneTarget[0] );
-        return new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,GetCanvas());
+        OpenGLFrameBuffer kFB = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
+                m_eBuffering,m_eMultisampling,m_pkRenderer, arg0 );
+        kFB.InitializeBuffer(akSceneTarget);
+        return kFB;
 
     }
 

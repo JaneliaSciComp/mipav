@@ -60,10 +60,10 @@ public class FlyPathBehavior_WM implements KeyListener {
         public Curve3f m_kBranchCurve;
 
         /** Range of normalized path distances that have not been visited. */
-        private float m_fDistUnvisitedMax;
+        protected float m_fDistUnvisitedMax;
 
         /** Range of normalized path distances that have not been visited. */
-        private float m_fDistUnvisitedMin;
+        protected float m_fDistUnvisitedMin;
 
         /**
          * Constructor.
@@ -208,7 +208,8 @@ public class FlyPathBehavior_WM implements KeyListener {
          *
          * @throws  InternalError  DOCUMENT ME!
          */
-        protected Object clone() {
+        @Override
+		protected Object clone() {
 
             // Should not get clone unsupported exception since we use
             // the Object mehtod's clone which just replicated data
@@ -235,6 +236,13 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /** on a viewChanged event change the fly path branch */
     public static final int EVENT_CHANGE_BRANCH = 0x00000008;
+
+    /**
+     * Sound a beep.
+     */
+    private static void beep() {
+        Toolkit.getDefaultToolkit().beep();
+    }
 
     /** current and previous key press time. */
     long currEventTime, prevEventTime;
@@ -288,7 +296,6 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /** Keep reference to instance which describes the path. */
     private FlyPathGraphCurve m_kFlyPathGraph;
-
     /**
      * The desired view up vector is a normalized average of these two orthogonal axes vectors. The problem is that if
      * just one desired view up vector is chosen, then when the view direction vector is "aligned" with that vector,
@@ -297,9 +304,10 @@ public class FlyPathBehavior_WM implements KeyListener {
     private Vector3f m_kViewup1 = new Vector3f(0.0f, 1.0f, 0.0f);
     /** For calculating the view up vector. */
     private Vector3f m_kViewup2 = new Vector3f(0.0f, 0.0f, 1.0f);
+    
     /** Parent frame references. */
     private FlyThroughRender parentScene;
-    
+
     /** Current view position along the path. */
     private Vector3f m_kViewPoint = new Vector3f(0f,0f,0f);
 
@@ -343,13 +351,6 @@ public class FlyPathBehavior_WM implements KeyListener {
         m_fPathStep = 1.0f;
         m_fGazeDist = 10.0f;
         setBranch(0);
-    }
-
-    /**
-     * Sound a beep.
-     */
-    private static void beep() {
-        Toolkit.getDefaultToolkit().beep();
     }
 
     /**
@@ -527,7 +528,8 @@ public class FlyPathBehavior_WM implements KeyListener {
      * Handle the key pressed event from the text field.
      * @param  event  key event to handle
      */
-    public void keyPressed(KeyEvent event) {
+    @Override
+	public void keyPressed(KeyEvent event) {
         if (KeyEvent.KEY_PRESSED == event.getID()) {
             int iKeyCode = event.getKeyCode();
             char iKeyChar = event.getKeyChar();
@@ -672,12 +674,14 @@ public class FlyPathBehavior_WM implements KeyListener {
     /* (non-Javadoc)
      * @see java.awt.event.KeyListener#keyReleased(java.awt.event.KeyEvent)
      */
-    public void keyReleased(KeyEvent event) {}
+    @Override
+	public void keyReleased(KeyEvent event) {}
 
     /* (non-Javadoc)
      * @see java.awt.event.KeyListener#keyTyped(java.awt.event.KeyEvent)
      */
-    public void keyTyped(KeyEvent event) {}
+    @Override
+	public void keyTyped(KeyEvent event) {}
 
     /**
      * Call from the JPanelFlythruMove.

@@ -30,6 +30,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -55,7 +56,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         /* (non-Javadoc)
          * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
          */
-        protected void paintComponent(Graphics g) {
+        @Override
+		protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
         }
@@ -189,36 +191,12 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     }
 
     /**
-     * Show the psesudo color.
-     * @param  e  ActionEvent
-     */
-    void m_kCheckBoxShowCurvatures_actionPerformed(@SuppressWarnings("unused")
-    ActionEvent e) {
-        m_bShowMeanCurvatures = m_kCheckBoxShowCurvatures.isSelected();
-        m_kView.doPseudoColor(m_bShowMeanCurvatures);
-    }
-
-    /**
-     * Continue update the surface render and the plane render.
-     * @param  e  ActionEvent
-     */
-    void m_kContinueUpdate_actionPerformed(@SuppressWarnings("unused")
-    ActionEvent e) {
-        continueUpdate = m_kContinueUpdate.isSelected();
-
-        if (continueUpdate == true) {
-            updateButton.setEnabled(false);
-        } else {
-            updateButton.setEnabled(true);
-        }
-    }
-
-    /**
      * Closes dialog box when the OK button is pressed, sets up the variables needed for running the algorithm, and
      * calls the algorithm.
      * @param  event  Event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
+    @Override
+	public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
         String command = event.getActionCommand();
 
@@ -315,7 +293,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
      * Return the main control panel.
      * @return  JPanel the main control panel
      */
-    public JPanel getMainPanel() {
+    @Override
+	public JPanel getMainPanel() {
         return mainPanel;
     }
 
@@ -325,7 +304,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
      * @param  panelWidth   control panel width
      * @param  frameHeight  control panel height
      */
-    public void resizePanel(int panelWidth, int frameHeight) {
+    @Override
+	public void resizePanel(int panelWidth, int frameHeight) {
         scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - kPanelButton.getHeight()));
         scroller.setSize(new Dimension(panelWidth, frameHeight - kPanelButton.getHeight()));
         scroller.revalidate();
@@ -341,7 +321,7 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     public void updateOrientation(Matrix3f kOrientation) {
         setViewOrientation(kOrientation);
     }
-    
+
     /**
      * Update the appropriate controls based on the current settings of the position-based information in the
      * FlyPathBehavior instance.
@@ -358,105 +338,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     }
 
     /**
-     * Update the display to show the current branch and path direction (forward or reverse) for moving along the length
-     * of the path.
-     *
-     * @param  iBranch           index which identifies the branch currently on
-     * @param  bPathMoveForward  flag set if moving forward, as opposed to in reverse, along the length of the path.
-     */
-    protected void setBranchInfo(int iBranch, boolean bPathMoveForward) {
-        m_kTextBranch.setText((bPathMoveForward ? "Start-to-End" : "End-to-Start") + " on " +
-                              Integer.toString(iBranch));
-    }
-
-    /**
-     * Update the display to show the current distance along the length of the path.
-     * @param  fDist       distance along the path from the start
-     * @param  fTotalDist  total distance along the path from start to end
-     */
-    protected void setPathDistance(float fDist, float fTotalDist) {
-        m_kDecimalFormat.setMinimumFractionDigits(1);
-        m_kDecimalFormat.setMaximumFractionDigits(1);
-        m_kTextDistance.setText(m_kDecimalFormat.format(fDist) + " of " + m_kDecimalFormat.format(fTotalDist) + "  (" +
-                                m_kDecimalFormat.format(100.0f * fDist / fTotalDist) + "%)");
-    }
-
-    /**
-     * Update the display to show the coordinates of the current position along the path.
-     * @param  kPosition  3D coordinates of current position
-     */
-    protected void setPathPosition(Vector3f kPosition) {
-        m_kDecimalFormat.setMinimumFractionDigits(1);
-        m_kDecimalFormat.setMaximumFractionDigits(1);
-        m_kTextPosition.setText(m_kDecimalFormat.format(kPosition.X) + " " + m_kDecimalFormat.format(kPosition.Y) +
-                                " " + m_kDecimalFormat.format(kPosition.Z));
-    }
-
-    /**
-     * Update the display to show the current gaze distance for looking ahead down the path.
-     * @param  fStepDist  magnitude is the distance increment along the path for moving; sign is the direction of moving
-     *                    along the path from one end to the other or vice versa.
-     * @param  fGazeDist  distance ahead for looking down the path.
-     */
-    protected void setStepGazeDist(float fStepDist, float fGazeDist) {
-        m_kTextStepGaze.setText(m_kDecimalFormat.format(Math.abs(fStepDist)) + " / " +
-                                m_kDecimalFormat.format(fGazeDist));
-    }
-
-    /**
-     * Update the display to show the current base viewing direction at the current point along the path.
-     * @param  kVector  normalized direciton vector
-     */
-    protected void setViewDirection(Vector3f kVector) {
-        m_kDecimalFormat.setMinimumFractionDigits(2);
-        m_kDecimalFormat.setMaximumFractionDigits(2);
-        m_kTextDirection.setText(m_kDecimalFormat.format(kVector.X) + " " + m_kDecimalFormat.format(kVector.Y) + " " +
-                                 m_kDecimalFormat.format(kVector.Z));
-    }
-
-    /**
-     * Update the display to show the current viewing orientation which is always relative to the base viewing
-     * direction.
-     * @param  kMatrix  3x3 matrix containing orientation transform
-     */
-    protected void setViewOrientation(Matrix3f kMatrix) {
-        m_kDecimalFormat.setMinimumFractionDigits(1);
-        m_kDecimalFormat.setMaximumFractionDigits(1);
-
-        float fRotateX = (float) Math.toDegrees(Math.atan2((-kMatrix.M12), (kMatrix.M22)));
-        float fRotateY = (float) Math.toDegrees(Math.asin(((-kMatrix.M02))));
-        float fRotateZ = (float) Math.toDegrees(Math.atan2((-kMatrix.M01), (kMatrix.M00)));
-
-        m_kTextOrientation.setText(m_kDecimalFormat.format(fRotateX) + " " + m_kDecimalFormat.format(fRotateY) + " " +
-                                   m_kDecimalFormat.format(fRotateZ));
-    }
-
-    /**
-     * Tests that the entered parameter is larger than the specified value.
-     * @param   str       The value entered by the user.
-     * @param   minValue  The minimum value this variable may be set to.
-     * @return  <code>true</code> if parameters passed range test, <code>false</code> if failed.
-     */
-    protected boolean testParameterMin(String str, double minValue) {
-        double tmp;
-
-        try {
-            tmp = Double.valueOf(str).doubleValue();
-
-            if (tmp < minValue) {
-                MipavUtil.displayError("Value is smaller than " + String.valueOf(minValue));
-
-                return false;
-            } 
-            return true;
-        } catch (NumberFormatException error) {
-            MipavUtil.displayError("Must enter numeric value");
-
-            return false;
-        }
-    }
-
-    /**
      * Initializes the GUI components and displays the control panel.
      */
     private void init() {
@@ -466,8 +347,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         scrollPanel.setLayout(new BorderLayout());
 
         // Put the drawing area in a scroll pane.
-        scroller = new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroller = new JScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         contentBox = new Box(BoxLayout.Y_AXIS);
         scrollPanel.add(contentBox, BorderLayout.NORTH);
         mainPanel = new JPanel();
@@ -747,7 +628,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         m_kCheckBoxShowCurvatures.setText("Pseudocolored");
         m_kCheckBoxShowCurvatures.setSelected(m_bShowMeanCurvatures);
         m_kCheckBoxShowCurvatures.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Override
+				public void actionPerformed(ActionEvent e) {
                     m_kCheckBoxShowCurvatures_actionPerformed(e);
                 }
             });
@@ -757,7 +639,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         m_kContinueUpdate.setText("Update View");
         m_kContinueUpdate.setSelected(continueUpdate);
         m_kContinueUpdate.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Override
+				public void actionPerformed(ActionEvent e) {
                     m_kContinueUpdate_actionPerformed(e);
                 }
             });
@@ -772,7 +655,7 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         updateButton.setFont(MipavUtil.font12B);
         updateButton.setMinimumSize(MipavUtil.defaultButtonSize);
         updateButton.setEnabled(false);
-    } 
+    }
     
     /**
      * Method to load the mask image.
@@ -785,56 +668,180 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         m_kView.GetCanvas().display();
     }
 
- /**
-     * Sets up the variables needed for the algorithm from the GUI components.
-     * @return  Flag indicating if the setup was successful.
+    /**
+	     * Sets up the variables needed for the algorithm from the GUI components.
+	     * @return  Flag indicating if the setup was successful.
+	     */
+	    private boolean setVariables() {
+	
+	        String tmpStr;
+	
+	        // Maximum number of branches.
+	        tmpStr = m_kTextMaxNumBranches.getText();
+	
+	        if (testParameterMin(tmpStr, 1)) {
+	            m_kOptions.m_iMaxBranches = Integer.valueOf(tmpStr).intValue();
+	        } else {
+	            m_kTextMaxNumBranches.requestFocus();
+	            m_kTextMaxNumBranches.selectAll();
+	
+	            return false;
+	        }
+	
+	        // Minimum branch length.
+	        tmpStr = m_kTextMinBranchLength.getText();
+	
+	        if (testParameterMin(tmpStr, 0.1)) {
+	            m_kOptions.m_fMinBranchLength = Float.valueOf(tmpStr).floatValue();
+	        } else {
+	            m_kTextMinBranchLength.requestFocus();
+	            m_kTextMinBranchLength.selectAll();
+	
+	            return false;
+	        }
+	
+	        // BSpline number of control points fraction of
+	        // number of branch path samples.
+	        tmpStr = m_kTextPercentBSplineNumControlPoints.getText();
+	
+	        if (testParameter(tmpStr, 0.01, 0.99)) {
+	            m_kOptions.m_fFractionNumControlPoints = Float.valueOf(tmpStr).floatValue();
+	        } else {
+	            m_kTextPercentBSplineNumControlPoints.requestFocus();
+	            m_kTextPercentBSplineNumControlPoints.selectAll();
+	
+	            return false;
+	        }
+	        
+	        // Path samples reduction factor for segmentation of the surface.
+	        m_kOptions.m_iSegmentSurfaceBranchSamplesReductionFactor = 1 <<
+	        m_kComboSegmentSurfaceBranchSamplesReductionFactor.getSelectedIndex();
+	       
+	        return true;
+	    }
+
+    /**
+     * Update the display to show the current branch and path direction (forward or reverse) for moving along the length
+     * of the path.
+     *
+     * @param  iBranch           index which identifies the branch currently on
+     * @param  bPathMoveForward  flag set if moving forward, as opposed to in reverse, along the length of the path.
      */
-    private boolean setVariables() {
-
-        String tmpStr;
-
-        // Maximum number of branches.
-        tmpStr = m_kTextMaxNumBranches.getText();
-
-        if (testParameterMin(tmpStr, 1)) {
-            m_kOptions.m_iMaxBranches = Integer.valueOf(tmpStr).intValue();
-        } else {
-            m_kTextMaxNumBranches.requestFocus();
-            m_kTextMaxNumBranches.selectAll();
-
-            return false;
-        }
-
-        // Minimum branch length.
-        tmpStr = m_kTextMinBranchLength.getText();
-
-        if (testParameterMin(tmpStr, 0.1)) {
-            m_kOptions.m_fMinBranchLength = Float.valueOf(tmpStr).floatValue();
-        } else {
-            m_kTextMinBranchLength.requestFocus();
-            m_kTextMinBranchLength.selectAll();
-
-            return false;
-        }
-
-        // BSpline number of control points fraction of
-        // number of branch path samples.
-        tmpStr = m_kTextPercentBSplineNumControlPoints.getText();
-
-        if (testParameter(tmpStr, 0.01, 0.99)) {
-            m_kOptions.m_fFractionNumControlPoints = Float.valueOf(tmpStr).floatValue();
-        } else {
-            m_kTextPercentBSplineNumControlPoints.requestFocus();
-            m_kTextPercentBSplineNumControlPoints.selectAll();
-
-            return false;
-        }
-        
-        // Path samples reduction factor for segmentation of the surface.
-        m_kOptions.m_iSegmentSurfaceBranchSamplesReductionFactor = 1 <<
-        m_kComboSegmentSurfaceBranchSamplesReductionFactor.getSelectedIndex();
-       
-        return true;
+    protected void setBranchInfo(int iBranch, boolean bPathMoveForward) {
+        m_kTextBranch.setText((bPathMoveForward ? "Start-to-End" : "End-to-Start") + " on " +
+                              Integer.toString(iBranch));
     }
+
+    /**
+     * Update the display to show the current distance along the length of the path.
+     * @param  fDist       distance along the path from the start
+     * @param  fTotalDist  total distance along the path from start to end
+     */
+    protected void setPathDistance(float fDist, float fTotalDist) {
+        m_kDecimalFormat.setMinimumFractionDigits(1);
+        m_kDecimalFormat.setMaximumFractionDigits(1);
+        m_kTextDistance.setText(m_kDecimalFormat.format(fDist) + " of " + m_kDecimalFormat.format(fTotalDist) + "  (" +
+                                m_kDecimalFormat.format(100.0f * fDist / fTotalDist) + "%)");
+    }
+
+    /**
+     * Update the display to show the coordinates of the current position along the path.
+     * @param  kPosition  3D coordinates of current position
+     */
+    protected void setPathPosition(Vector3f kPosition) {
+        m_kDecimalFormat.setMinimumFractionDigits(1);
+        m_kDecimalFormat.setMaximumFractionDigits(1);
+        m_kTextPosition.setText(m_kDecimalFormat.format(kPosition.X) + " " + m_kDecimalFormat.format(kPosition.Y) +
+                                " " + m_kDecimalFormat.format(kPosition.Z));
+    }
+
+    /**
+     * Update the display to show the current gaze distance for looking ahead down the path.
+     * @param  fStepDist  magnitude is the distance increment along the path for moving; sign is the direction of moving
+     *                    along the path from one end to the other or vice versa.
+     * @param  fGazeDist  distance ahead for looking down the path.
+     */
+    protected void setStepGazeDist(float fStepDist, float fGazeDist) {
+        m_kTextStepGaze.setText(m_kDecimalFormat.format(Math.abs(fStepDist)) + " / " +
+                                m_kDecimalFormat.format(fGazeDist));
+    }
+
+    /**
+     * Update the display to show the current base viewing direction at the current point along the path.
+     * @param  kVector  normalized direciton vector
+     */
+    protected void setViewDirection(Vector3f kVector) {
+        m_kDecimalFormat.setMinimumFractionDigits(2);
+        m_kDecimalFormat.setMaximumFractionDigits(2);
+        m_kTextDirection.setText(m_kDecimalFormat.format(kVector.X) + " " + m_kDecimalFormat.format(kVector.Y) + " " +
+                                 m_kDecimalFormat.format(kVector.Z));
+    }
+
+    /**
+     * Update the display to show the current viewing orientation which is always relative to the base viewing
+     * direction.
+     * @param  kMatrix  3x3 matrix containing orientation transform
+     */
+    protected void setViewOrientation(Matrix3f kMatrix) {
+        m_kDecimalFormat.setMinimumFractionDigits(1);
+        m_kDecimalFormat.setMaximumFractionDigits(1);
+
+        float fRotateX = (float) Math.toDegrees(Math.atan2((-kMatrix.M12), (kMatrix.M22)));
+        float fRotateY = (float) Math.toDegrees(Math.asin(((-kMatrix.M02))));
+        float fRotateZ = (float) Math.toDegrees(Math.atan2((-kMatrix.M01), (kMatrix.M00)));
+
+        m_kTextOrientation.setText(m_kDecimalFormat.format(fRotateX) + " " + m_kDecimalFormat.format(fRotateY) + " " +
+                                   m_kDecimalFormat.format(fRotateZ));
+    }
+
+    /**
+     * Tests that the entered parameter is larger than the specified value.
+     * @param   str       The value entered by the user.
+     * @param   minValue  The minimum value this variable may be set to.
+     * @return  <code>true</code> if parameters passed range test, <code>false</code> if failed.
+     */
+    protected boolean testParameterMin(String str, double minValue) {
+        double tmp;
+
+        try {
+            tmp = Double.valueOf(str).doubleValue();
+
+            if (tmp < minValue) {
+                MipavUtil.displayError("Value is smaller than " + String.valueOf(minValue));
+
+                return false;
+            } 
+            return true;
+        } catch (NumberFormatException error) {
+            MipavUtil.displayError("Must enter numeric value");
+
+            return false;
+        }
+    } 
+    
+    /**
+     * Show the psesudo color.
+     * @param  e  ActionEvent
+     */
+    void m_kCheckBoxShowCurvatures_actionPerformed(@SuppressWarnings("unused")
+    ActionEvent e) {
+        m_bShowMeanCurvatures = m_kCheckBoxShowCurvatures.isSelected();
+        m_kView.doPseudoColor(m_bShowMeanCurvatures);
+    }
+
+ /**
+ * Continue update the surface render and the plane render.
+ * @param  e  ActionEvent
+ */
+void m_kContinueUpdate_actionPerformed(@SuppressWarnings("unused")
+ActionEvent e) {
+    continueUpdate = m_kContinueUpdate.isSelected();
+
+    if (continueUpdate == true) {
+        updateButton.setEnabled(false);
+    } else {
+        updateButton.setEnabled(true);
+    }
+}
 
 }

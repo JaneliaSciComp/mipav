@@ -31,8 +31,7 @@ import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
-
+import com.jogamp.opengl.util.Animator;
 
 /**
  * Cortical analysis applet and viewer. This class contains the static 'main' method to launch the application. This
@@ -218,7 +217,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
-    public void display(GLAutoDrawable arg0)
+    @Override
+	public void display(GLAutoDrawable arg0)
     {      
         if ( !m_bInit )
         {
@@ -425,7 +425,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
      */
-    public void init(GLAutoDrawable arg0) {      
+    @Override
+	public void init(GLAutoDrawable arg0) {      
         if ( m_pkRenderer != null )
         {
             ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -481,7 +482,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
-    public void mouseDragged(MouseEvent e)
+    @Override
+	public void mouseDragged(MouseEvent e)
     {
         super.mouseDragged(e);
         if ((m_bPickCorrespondenceEnabled | m_bPickPunctureEnabled) && e.isControlDown())
@@ -495,7 +497,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
      */
-    public void mousePressed(MouseEvent e) {
+    @Override
+	public void mousePressed(MouseEvent e) {
         super.mousePressed(e);
         
         /* Only capture mouse events when enabled, and only when the control key is down and the left mouse
@@ -732,7 +735,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      * Called from JPanelLight. Updates the lighting parameters.
      * @param akGLights the set of GeneralLight objects.
      */
-    public void updateLighting(Light[] akGLights )
+    @Override
+	public void updateLighting(Light[] akGLights )
     {
         m_akLights = akGLights;
         if ( !m_bInit )
@@ -803,66 +807,6 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
                             ((MipavLightingEffect)m_kMeshPoints.GetChild(k).GetEffect(0)).SetLight(kLightType, afType);
                         }
                     }   
-                }
-            }
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#finalize()
-     */
-    protected void finalize() throws Throwable {
-        disposeLocal();
-        super.finalize();
-    }
-
-    /** Picking. */
-    protected void Pick()
-    {
-        Vector3f kPos = new Vector3f(0,0,10);
-        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
-
-        if (m_bPickPending)
-        {
-            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
-                                       GetHeight(),kPos,kDir))
-            {
-                m_bPickPending = false;
-                for ( int i = 0; i < m_kDisplayList.size(); i++ )
-                {
-                    if ( m_kDisplayList.get(i).GetPickable() )
-                    {
-                        m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
-                                          Float.MAX_VALUE);
-                        if (m_kPicker.Records.size() > 0)
-                        {
-                            int iClosestPick = 0;
-                            PickRecord kPicked = null;
-                            if (m_kDisplayList.get(i) == m_kCylinder )
-                            {
-                                float fMinDistance = Float.MAX_VALUE;
-
-                                for (int j = 0; j < m_kPicker.Records.size(); j++)
-                                {
-                                    float fDistance = closestPlanePointIndex(m_kPicker.Records.elementAt(j));
-
-                                    if (fDistance < fMinDistance) {
-                                        fMinDistance = fDistance;
-                                        iClosestPick = j;
-                                    }
-                                }
-                                kPicked = m_kPicker.Records.elementAt(iClosestPick);
-                            }
-                            else
-                            {
-                                kPicked = m_kPicker.GetClosestNonnegative();
-                            }
-                            if ( kPicked != null )
-                            {
-                                drawPicked( kPicked.iV0, kPicked.iV1, kPicked.iV2 );
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -1179,5 +1123,66 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         m_kCortical.updateMesh(false);
         m_kSphere.GetMesh().VBuffer.Release();
         m_kCylinder.GetMesh().VBuffer.Release();
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+	protected void finalize() throws Throwable {
+        disposeLocal();
+        super.finalize();
+    }
+
+    /** Picking. */
+    protected void Pick()
+    {
+        Vector3f kPos = new Vector3f(0,0,10);
+        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
+
+        if (m_bPickPending)
+        {
+            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
+                                       GetHeight(),kPos,kDir))
+            {
+                m_bPickPending = false;
+                for ( int i = 0; i < m_kDisplayList.size(); i++ )
+                {
+                    if ( m_kDisplayList.get(i).GetPickable() )
+                    {
+                        m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
+                                          Float.MAX_VALUE);
+                        if (m_kPicker.Records.size() > 0)
+                        {
+                            int iClosestPick = 0;
+                            PickRecord kPicked = null;
+                            if (m_kDisplayList.get(i) == m_kCylinder )
+                            {
+                                float fMinDistance = Float.MAX_VALUE;
+
+                                for (int j = 0; j < m_kPicker.Records.size(); j++)
+                                {
+                                    float fDistance = closestPlanePointIndex(m_kPicker.Records.elementAt(j));
+
+                                    if (fDistance < fMinDistance) {
+                                        fMinDistance = fDistance;
+                                        iClosestPick = j;
+                                    }
+                                }
+                                kPicked = m_kPicker.Records.elementAt(iClosestPick);
+                            }
+                            else
+                            {
+                                kPicked = m_kPicker.GetClosestNonnegative();
+                            }
+                            if ( kPicked != null )
+                            {
+                                drawPicked( kPicked.iV0, kPicked.iV1, kPicked.iV2 );
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -6,13 +6,11 @@ import java.io.IOException;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-
 import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
-
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
@@ -56,19 +54,21 @@ public class TriangleClassificationWidget extends ClassificationWidget
                 new IndexBuffer(kWidget.m_kLowerSphere.IBuffer));
     }
 
-    public void dispose()
+    @Override
+	public void dispose()
     {
         m_kTopOutline = null;
         m_kTopTri = null;
     }
 
-    public boolean processMouseDrag(int iX0ld, int iYOld, int iButton, MouseEvent e )
+    @Override
+	public boolean processMouseDrag(int iX0ld, int iYOld, int iButton, MouseEvent e )
     {
         float fXOld = ((float)iX0ld/(float)m_iWidth);
-        float fYOld = ((float)m_iHeight-(float)iYOld)/(float)m_iHeight;
+        float fYOld = ((float)m_iHeight-(float)iYOld)/m_iHeight;
 
         float fX = ((float)e.getX()/(float)m_iWidth);
-        float fY = ((float)m_iHeight-(float)e.getY())/(float)m_iHeight;
+        float fY = ((float)m_iHeight-(float)e.getY())/m_iHeight;
 
         if ( iButton == MouseEvent.BUTTON1 )
         {
@@ -95,7 +95,74 @@ public class TriangleClassificationWidget extends ClassificationWidget
         return false;
     }
 
-    public void updateDisplay()
+    public void ScaleTriangle( TriMesh kTri, TriMesh kOutline )
+    {
+        Vector3f kPos0 = kOutline.VBuffer.GetPosition3(0);
+        Vector3f kPos1 = kOutline.VBuffer.GetPosition3(1);
+        Vector3f kPos2 = kOutline.VBuffer.GetPosition3(2);
+        float fTransX = (kPos0.X + kPos1.X + kPos2.X)/3.0f;
+        float fTransY = (kPos0.Y + kPos1.Y + kPos2.Y)/3.0f;
+
+        float fNewX = (kPos0.X - fTransX) * .90f + fTransX;
+        float fNewY = (kPos0.Y - fTransY) * .90f + fTransY;
+        kTri.VBuffer.SetPosition3(0, fNewX, fNewY, 0.11f);
+        float fTX = fNewX;
+        float fTY = fNewY;
+        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
+        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
+        kTri.VBuffer.SetTCoord2(0, 0, fTX, fTY);
+
+
+        fNewX = (kPos1.X - fTransX) * .90f + fTransX;
+        fNewY = (kPos1.Y - fTransY) * .90f + fTransY;
+        kTri.VBuffer.SetPosition3(1, fNewX, fNewY, 0.11f);
+        fTX = fNewX;
+        fTY = fNewY;
+        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
+        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
+        kTri.VBuffer.SetTCoord2(0, 1, fTX, fTY);
+
+        fNewX = (kPos2.X - fTransX) * .90f + fTransX;
+        fNewY = (kPos2.Y - fTransY) * .90f + fTransY;
+        kTri.VBuffer.SetPosition3(2, fNewX, fNewY, 0.11f);
+        fTX = fNewX;
+        fTY = fNewY;
+        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
+        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
+        kTri.VBuffer.SetTCoord2(0, 2, fTX, fTY);
+
+        m_kWidget.UpdateGS();
+    }
+    public void ShiftMidTriangle( float fY )
+    {
+        m_fScale = fY;
+        Vector3f kPos0 = m_kBottomOutline.VBuffer.GetPosition3(0);
+        Vector3f kPos1 = m_kBottomOutline.VBuffer.GetPosition3(1);
+        Vector3f kPos2 = m_kBottomOutline.VBuffer.GetPosition3(2);
+
+        float fNewX = fY * kPos1.X + (1.0f - fY) * kPos0.X;
+        float fNewY = fY * kPos1.Y + (1.0f - fY) * kPos0.Y;
+        if ( fNewY > kPos1.Y )
+        {
+            return;
+        }
+        m_kTopOutline.VBuffer.SetPosition3(1, fNewX, fNewY, 0.11f);
+
+        fNewX = fY * kPos2.X + (1.0f - fY) * kPos0.X;
+        fNewY = fY * kPos2.Y + (1.0f - fY) * kPos0.Y;
+        m_kTopOutline.VBuffer.SetPosition3(2, fNewX, fNewY, 0.11f);
+        ScaleTriangle( m_kTopTri, m_kTopOutline );
+        m_kMiddleSphere.Local.SetTranslate( m_kTopTri.VBuffer.GetPosition3(1));
+
+        m_kLowerSphere.Local.SetTranslate(m_kBottomOutline.VBuffer.GetPosition3(0));
+        m_kTopOutline.VBuffer.Release();
+        m_kTopTri.VBuffer.Release();
+        m_kMiddleSphere.VBuffer.Release();
+        m_kWidget.UpdateGS();
+    }
+    
+    @Override
+	public void updateDisplay()
     {
         if ( m_kBottomTriEffect != null )
         {
@@ -120,34 +187,8 @@ public class TriangleClassificationWidget extends ClassificationWidget
                     fRightTexX1, fRightTexY1);
         }
     }
-    private void writeObject(java.io.ObjectOutputStream out)
-    throws IOException 
-    {
-        System.err.println( "writeObj" );
-        out.writeObject( m_kBottomOutline.IBuffer );
-        out.writeObject( m_kBottomOutline.VBuffer );
 
-        out.writeObject( m_kBottomTri.IBuffer );
-        out.writeObject( m_kBottomTri.VBuffer );
-        out.writeObject( m_kBottomTriEffect );
 
-        out.writeObject( m_kUpperSphere.IBuffer );
-        out.writeObject( m_kUpperSphere.VBuffer );
-
-        out.writeObject( m_kTopOutline.IBuffer );
-        out.writeObject( m_kTopOutline.VBuffer );
-        
-        out.writeObject( m_kTopTri.IBuffer );
-        out.writeObject( m_kTopTri.VBuffer );
-        out.writeObject( m_kTexName );
-
-        out.writeObject( m_kLowerSphere.IBuffer );
-        out.writeObject( m_kLowerSphere.VBuffer );
-
-        out.writeObject( m_kMiddleSphere.IBuffer );
-        out.writeObject( m_kMiddleSphere.VBuffer );
-    }
-    
     private void readObject(java.io.ObjectInputStream in)
     throws IOException, ClassNotFoundException
     {
@@ -209,6 +250,35 @@ public class TriangleClassificationWidget extends ClassificationWidget
         m_kMiddleSphere.Local.SetTranslate( m_kTopTri.VBuffer.GetPosition3(1) );
 
         m_kWidget.UpdateGS();
+    }
+
+
+    private void writeObject(java.io.ObjectOutputStream out)
+    throws IOException 
+    {
+        System.err.println( "writeObj" );
+        out.writeObject( m_kBottomOutline.IBuffer );
+        out.writeObject( m_kBottomOutline.VBuffer );
+
+        out.writeObject( m_kBottomTri.IBuffer );
+        out.writeObject( m_kBottomTri.VBuffer );
+        out.writeObject( m_kBottomTriEffect );
+
+        out.writeObject( m_kUpperSphere.IBuffer );
+        out.writeObject( m_kUpperSphere.VBuffer );
+
+        out.writeObject( m_kTopOutline.IBuffer );
+        out.writeObject( m_kTopOutline.VBuffer );
+        
+        out.writeObject( m_kTopTri.IBuffer );
+        out.writeObject( m_kTopTri.VBuffer );
+        out.writeObject( m_kTexName );
+
+        out.writeObject( m_kLowerSphere.IBuffer );
+        out.writeObject( m_kLowerSphere.VBuffer );
+
+        out.writeObject( m_kMiddleSphere.IBuffer );
+        out.writeObject( m_kMiddleSphere.VBuffer );
     }
 
 
@@ -357,7 +427,6 @@ public class TriangleClassificationWidget extends ClassificationWidget
         m_kWidget.UpdateGS();
     }
 
-
     protected void ShearTriangle(float fX, float fY)
     {
         float fNewXR = Math.max( m_kBottomOutline.VBuffer.GetPosition3fX(1),
@@ -464,74 +533,6 @@ public class TriangleClassificationWidget extends ClassificationWidget
         ShiftMidTriangle(m_fScale);
 
         m_kLowerSphere.Local.SetTranslate(m_kBottomOutline.VBuffer.GetPosition3(0));
-        m_kWidget.UpdateGS();
-    }
-
-    public void ShiftMidTriangle( float fY )
-    {
-        m_fScale = fY;
-        Vector3f kPos0 = m_kBottomOutline.VBuffer.GetPosition3(0);
-        Vector3f kPos1 = m_kBottomOutline.VBuffer.GetPosition3(1);
-        Vector3f kPos2 = m_kBottomOutline.VBuffer.GetPosition3(2);
-
-        float fNewX = fY * kPos1.X + (1.0f - fY) * kPos0.X;
-        float fNewY = fY * kPos1.Y + (1.0f - fY) * kPos0.Y;
-        if ( fNewY > kPos1.Y )
-        {
-            return;
-        }
-        m_kTopOutline.VBuffer.SetPosition3(1, fNewX, fNewY, 0.11f);
-
-        fNewX = fY * kPos2.X + (1.0f - fY) * kPos0.X;
-        fNewY = fY * kPos2.Y + (1.0f - fY) * kPos0.Y;
-        m_kTopOutline.VBuffer.SetPosition3(2, fNewX, fNewY, 0.11f);
-        ScaleTriangle( m_kTopTri, m_kTopOutline );
-        m_kMiddleSphere.Local.SetTranslate( m_kTopTri.VBuffer.GetPosition3(1));
-
-        m_kLowerSphere.Local.SetTranslate(m_kBottomOutline.VBuffer.GetPosition3(0));
-        m_kTopOutline.VBuffer.Release();
-        m_kTopTri.VBuffer.Release();
-        m_kMiddleSphere.VBuffer.Release();
-        m_kWidget.UpdateGS();
-    }
-
-
-    public void ScaleTriangle( TriMesh kTri, TriMesh kOutline )
-    {
-        Vector3f kPos0 = kOutline.VBuffer.GetPosition3(0);
-        Vector3f kPos1 = kOutline.VBuffer.GetPosition3(1);
-        Vector3f kPos2 = kOutline.VBuffer.GetPosition3(2);
-        float fTransX = (kPos0.X + kPos1.X + kPos2.X)/3.0f;
-        float fTransY = (kPos0.Y + kPos1.Y + kPos2.Y)/3.0f;
-
-        float fNewX = (kPos0.X - fTransX) * .90f + fTransX;
-        float fNewY = (kPos0.Y - fTransY) * .90f + fTransY;
-        kTri.VBuffer.SetPosition3(0, fNewX, fNewY, 0.11f);
-        float fTX = fNewX;
-        float fTY = fNewY;
-        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
-        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
-        kTri.VBuffer.SetTCoord2(0, 0, fTX, fTY);
-
-
-        fNewX = (kPos1.X - fTransX) * .90f + fTransX;
-        fNewY = (kPos1.Y - fTransY) * .90f + fTransY;
-        kTri.VBuffer.SetPosition3(1, fNewX, fNewY, 0.11f);
-        fTX = fNewX;
-        fTY = fNewY;
-        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
-        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
-        kTri.VBuffer.SetTCoord2(0, 1, fTX, fTY);
-
-        fNewX = (kPos2.X - fTransX) * .90f + fTransX;
-        fNewY = (kPos2.Y - fTransY) * .90f + fTransY;
-        kTri.VBuffer.SetPosition3(2, fNewX, fNewY, 0.11f);
-        fTX = fNewX;
-        fTY = fNewY;
-        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
-        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
-        kTri.VBuffer.SetTCoord2(0, 2, fTX, fTY);
-
         m_kWidget.UpdateGS();
     }
 

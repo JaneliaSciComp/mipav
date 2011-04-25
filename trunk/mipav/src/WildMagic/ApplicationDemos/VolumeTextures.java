@@ -18,76 +18,96 @@
 
 package WildMagic.ApplicationDemos;
 
-import javax.media.opengl.*;
 
-import com.sun.opengl.util.Animator;
-//import com.jogamp.opengl.util.*;
-import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import java.awt.Frame;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import java.awt.*;
-import java.awt.event.*;
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.GraphicsImage;
+import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
+import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.VertexShader;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+
+import com.jogamp.opengl.util.Animator;
 
 
-public class VolumeTextures extends JavaApplication3D
+public class VolumeTextures extends DemoBase
 implements GLEventListener, KeyListener
 {
-	public VolumeTextures()
-	{
-		super("VolumeTextures",0,0,640,480, new ColorRGBA(1.0f,1.0f,1.0f,1.0f));
-		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-				m_eBuffering, m_eMultisampling,
-				m_iWidth, m_iHeight );
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
 
-		String kExternalDirs = getExternalDirs();        
-		ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-		VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-		PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-		CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-	}
-
+	private static final long serialVersionUID = -1844630874114966424L;
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		VolumeTextures kWorld = new VolumeTextures();        
-		Frame frame = new Frame(kWorld.GetWindowTitle());
-
-		frame.add( kWorld.GetCanvas() );
-		frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+		VolumeTextures kWorld = new VolumeTextures(); 
 		/* Animator serves the purpose of the idle function, calls display: */
-		final Animator animator = new Animator( kWorld.GetCanvas() );
-		frame.addWindowListener(new WindowAdapter() {
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		@Override
 			public void windowClosing(WindowEvent e) {
-				// Run this on another thread than the AWT event queue to
-				// avoid deadlocks on shutdown on some platforms
-				new Thread(new Runnable() {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				@Override
 					public void run() {
-						animator.stop();
-						System.exit(0);
-					}
-				}).start();
-			}
-		});
-		frame.setVisible(true);
-		animator.start();
-		// and all the rest happens in the display function...
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
+        frame.setVisible(true);
+        animator.start();
+	}
+final int iBound = 63;
 
+
+	private WireframeState m_spkWireframe;
+
+	private ShaderEffect m_spkVolumeTexture;
+
+	private float[] m_afCommonAlpha = new float[4];  // channel 0 has the alpha value
+
+	public VolumeTextures()
+	{
+		super("VolumeTextures");
 	}
 
+	public VolumeTextures(GLCanvas kCanvas, Node scene, boolean bShared)
+	{
+		super("VolumeTextures", kCanvas);
+		m_spkScene = scene;
+		m_bShared = bShared;
+	}
+
+	@Override
 	public void display(GLAutoDrawable arg0) {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		MeasureTime();
 
 		if (MoveCamera())
@@ -112,8 +132,14 @@ implements GLEventListener, KeyListener
 		UpdateFrameCount();
 	}
 
-	public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
+	@Override
+	public void dispose(GLAutoDrawable arg0)
+	{
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        m_pkRenderer.ReleaseAllResources( m_spkScene );
+	}
 
+	@Override
 	public void init(GLAutoDrawable arg0) {
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		m_pkRenderer.InitializeState();
@@ -129,12 +155,16 @@ implements GLEventListener, KeyListener
 		Vector3f kCRight = new Vector3f();
 		kCRight.Cross( kCDir, kCUp );
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
+		
+		
+		if ( !m_bShared )
+		{			
+			CreateScene();
+			// initial update of objects
+			m_spkScene.UpdateGS();
+			m_spkScene.UpdateRS();
+		}
 
-		CreateScene();
-
-		// initial update of objects
-		m_spkScene.UpdateGS();
-		m_spkScene.UpdateRS();
 
 		// initial culling of scene
 		m_kCuller.SetCamera(m_spkCamera);
@@ -144,7 +174,29 @@ implements GLEventListener, KeyListener
 		InitializeObjectMotion(m_spkScene);
 	}
 
+	@Override
+	public void keyPressed(KeyEvent e) {
+		char ucKey = e.getKeyChar();
+
+		super.keyPressed(e);
+
+		switch (ucKey)
+		{
+		case 'w':
+		case 'W':
+			m_spkWireframe.Enabled = !m_spkWireframe.Enabled;
+			return;
+		case 's':
+		case 'S':
+			TestStreaming(m_spkScene,"VolumeTextures.wmof");
+			return;
+		}
+		return;
+	}
+
+	@Override
 	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		if (iWidth > 0 && iHeight > 0)
 		{
 			if (m_pkRenderer != null)
@@ -156,12 +208,6 @@ implements GLEventListener, KeyListener
 			m_iHeight = iHeight;
 		}
 	}
-
-	public GLCanvas GetCanvas()
-	{
-		return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-	}
-
 	private void CreateScene ()
 	{
 		m_spkScene = new Node();
@@ -179,8 +225,17 @@ implements GLEventListener, KeyListener
 		CreateVolumeTexture();
 		CreateGridMesh();
 	}
-
-	final int iBound = 63;
+	void CreateGridMesh ()
+	{
+		final int iSlices = iBound;
+		final int iDelta = 32;
+		for (int i = 0; i < iSlices; i++)
+		{
+			float fW = i/(float)(iSlices-1);
+			m_spkScene.AttachChild(Rectangle(iDelta,iDelta,fW));
+		}
+		m_spkScene.AttachEffect(m_spkVolumeTexture);
+	}
 	void CreateVolumeTexture ()
 	{
 		byte[] aucData = new byte[4*iBound*iBound*iBound];
@@ -202,13 +257,13 @@ implements GLEventListener, KeyListener
 		int i = 0;
 		for (int iZ = 0; iZ < iBound; iZ++)
 		{
-			kPoint.Z = -fExtreme + 2.0f*fExtreme*iZ/(float)(iBound-1);
+			kPoint.Z = -fExtreme + 2.0f*fExtreme*iZ/(iBound-1);
 			for (int iY = 0; iY < iBound; iY++)
 			{
-				kPoint.Y = -fExtreme + 2.0f*fExtreme*iY/(float)(iBound-1);
+				kPoint.Y = -fExtreme + 2.0f*fExtreme*iY/(iBound-1);
 				for (int iX = 0; iX < iBound; iX++)
 				{
-					kPoint.X = -fExtreme + 2.0f*fExtreme*iX/(float)(iBound-1);
+					kPoint.X = -fExtreme + 2.0f*fExtreme*iX/(iBound-1);
 					kDiff.Sub( kPoint, kRCenter );
 					float fRSqr = kDiff.SquaredLength();
 					float fRGauss = 1.0f - fRParam*fRSqr;
@@ -240,7 +295,7 @@ implements GLEventListener, KeyListener
 		}
 		kDiff = null;
 
-		m_spkVolume = new GraphicsImage(
+		new GraphicsImage(
 				GraphicsImage.FormatMode.IT_CUBE_RGBA8888,iBound,iBound,iBound,aucData,
 				"VolumeImage");
 
@@ -262,17 +317,6 @@ implements GLEventListener, KeyListener
 		pkCProgram.GetUC("CommonAlpha").SetDataSource(m_afCommonAlpha);
 	}
 
-	void CreateGridMesh ()
-	{
-		final int iSlices = iBound;
-		final int iDelta = 32;
-		for (int i = 0; i < iSlices; i++)
-		{
-			float fW = i/(float)(iSlices-1);
-			m_spkScene.AttachChild(Rectangle(iDelta,iDelta,fW));
-		}
-		m_spkScene.AttachEffect(m_spkVolumeTexture);
-	}
 
 	TriMesh Rectangle (int iXSamples, int iYSamples, float fW)
 	{
@@ -329,56 +373,6 @@ implements GLEventListener, KeyListener
 				aiIndex[i++] = iV3;
 			}
 		}
-
 		return new TriMesh(pkVB,pkIB);
 	}
-
-	public void keyPressed(KeyEvent e) {
-		char ucKey = e.getKeyChar();
-
-		super.keyPressed(e);
-
-		switch (ucKey)
-		{
-		case 'w':
-		case 'W':
-			m_spkWireframe.Enabled = !m_spkWireframe.Enabled;
-			return;
-		case 's':
-		case 'S':
-			TestStreaming(m_spkScene,"VolumeTextures.wmof");
-			return;
-		}
-		return;
-	}
-
-	private Node m_spkScene;
-	private WireframeState m_spkWireframe;
-	//private TriMesh m_spkMesh;
-	private GraphicsImage m_spkVolume;
-	private ShaderEffect m_spkVolumeTexture;
-	private float[] m_afCommonAlpha = new float[4];  // channel 0 has the alpha value
-
-	private Culler m_kCuller = new Culler(0,0,null);
-
-	private String getExternalDirs()
-	{
-		String jar_filename = "";
-		String class_path_key = "java.class.path";
-		String class_path = System.getProperty(class_path_key);
-		for (String fn : class_path.split(";") ) {
-			if (fn.endsWith("WildMagic.jar")) {
-				jar_filename = fn;   
-				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-				externalDirs = externalDirs.concat("WildMagic");
-				return externalDirs;
-			}
-		}
-		return System.getProperties().getProperty("user.dir");
-	}
-
-
-	public void dispose(GLAutoDrawable arg0) {}
-
-
 }

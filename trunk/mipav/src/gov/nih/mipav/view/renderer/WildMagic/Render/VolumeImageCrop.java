@@ -7,30 +7,21 @@ import java.awt.event.KeyListener;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 
-import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
-
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageCrop extends VolumeImageViewer
     implements GLEventListener, KeyListener
 {
     /**  */
     private static final long serialVersionUID = -3884075404385493867L;
-    private VolumeClipEffect m_kClipEffect = null;
-    
-    public VolumeImageCrop( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )
-    {
-        super(kParentFrame, kVolumeImage );
-
-        m_kClipEffect = kClip;
-    }
     /**
      * @param args
      */
-    public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )
+    public static void main( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )
     {
-        VolumeImageCrop kWorld = new VolumeImageCrop(kParentFrame, kVolumeImage, kClip);
+        VolumeImageCrop kWorld = new VolumeImageCrop(kCanvas, kParentFrame, kVolumeImage, kClip);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
          final Animator animator = new Animator( kWorld.GetCanvas() );
@@ -41,13 +32,22 @@ public class VolumeImageCrop extends VolumeImageViewer
          frame.setVisible(true);
          frame.setBounds(0,0,
                  kWorld.GetWidth(), kWorld.GetHeight() );
-         frame.setVisible(false);
+         //frame.setVisible(false);
          kWorld.SetAnimator(animator);
          kWorld.SetFrame(frame);
          animator.start();
     }
+    
+    private VolumeClipEffect m_kClipEffect = null;
+    public VolumeImageCrop( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )
+    {
+        super( kCanvas, kParentFrame, kVolumeImage );
 
-    public void display(GLAutoDrawable arg0) {
+        m_kClipEffect = kClip;
+    }
+
+    @Override
+	public void display(GLAutoDrawable arg0) {
         if ( m_kAnimator == null )
         {
             return;
@@ -69,7 +69,7 @@ public class VolumeImageCrop extends VolumeImageViewer
                 m_pkRenderer.EndScene();
             }
             m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetVolumeTarget(), m_iSlice, true );
-            m_pkRenderer.DisplayBackBuffer();
+            //m_pkRenderer.DisplayBackBuffer();
             m_iSlice++; 
             if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
             {
@@ -80,13 +80,15 @@ public class VolumeImageCrop extends VolumeImageViewer
         }
     }
 
-    public void dispose(GLAutoDrawable arg0)
+    @Override
+	public void dispose(GLAutoDrawable arg0)
     {
         m_kClipEffect = null;
         super.dispose(arg0);
     }
 
-    protected void CreateScene ()
+    @Override
+	protected void CreateScene ()
     {
         CreatePlaneNode();
 

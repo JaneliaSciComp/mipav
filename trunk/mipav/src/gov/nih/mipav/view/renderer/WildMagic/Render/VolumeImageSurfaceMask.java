@@ -12,33 +12,26 @@ import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;//import javax.media.opengl.GLCanvas;//import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
+
 
 public class VolumeImageSurfaceMask extends VolumeImageViewer
     implements GLEventListener, KeyListener
 {
     /**  */
     private static final long serialVersionUID = -6880453836501887284L;
-    private Vector<VolumeObject> m_kDisplayList = null;
-    private SurfaceClipEffect m_kSurfaceClip = null;
-    
-    public VolumeImageSurfaceMask( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList )
-    {
-        super(kParentFrame, kVolumeImage );
-
-        m_kDisplayList = kDisplayList;
-    }
     /**
      * @param args
      */
-    public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList )
+    public static void main( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList )
     {
-        VolumeImageSurfaceMask kWorld = new VolumeImageSurfaceMask(kParentFrame, kVolumeImage, kDisplayList);
+        VolumeImageSurfaceMask kWorld = new VolumeImageSurfaceMask(canvas, kParentFrame, kVolumeImage, kDisplayList);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
         final Animator animator = new Animator( kWorld.GetCanvas() );
@@ -54,12 +47,23 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         kWorld.SetFrame(frame);
         animator.start();
     }
+    private Vector<VolumeObject> m_kDisplayList = null;
+    
+    private SurfaceClipEffect m_kSurfaceClip = null;
+    public VolumeImageSurfaceMask( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList )
+    {
+        super( canvas, kParentFrame, kVolumeImage );
 
-    public void display(GLAutoDrawable arg0) {
+        m_kDisplayList = kDisplayList;
+    }
+
+    @Override
+	public void display(GLAutoDrawable arg0) {
         if ( m_kAnimator == null )
         {
             return;
         }      
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         boolean bSurfaceAdded = true;
         boolean bDrawSurface = false;
         while ( bSurfaceAdded )
@@ -129,8 +133,10 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         dispose(arg0);
     }
 
-    public void dispose(GLAutoDrawable arg0)
+    @Override
+	public void dispose(GLAutoDrawable arg0)
     {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         for (int i = 0; i < m_kDisplayList.size(); i++ )
         {
             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
@@ -153,7 +159,8 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
     }
     
     
-    protected void CreateScene ()
+    @Override
+	protected void CreateScene ()
     {
         CreatePlaneNode();
 

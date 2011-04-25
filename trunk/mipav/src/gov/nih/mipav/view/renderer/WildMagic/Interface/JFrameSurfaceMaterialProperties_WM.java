@@ -1,8 +1,28 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
-import com.sun.opengl.util.Animator;
-import com.sun.opengl.util.*;
-//import com.jogamp.opengl.util.*;
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.Animator;
+
+/*
+import com.jogamp.newt.Window;
+import com.jogamp.newt.event.KeyEvent;
+import com.jogamp.newt.event.KeyListener;
+import com.jogamp.newt.event.MouseAdapter;
+import com.jogamp.newt.event.MouseEvent;
+import com.jogamp.newt.event.MouseListener;
+import com.jogamp.newt.event.awt.AWTMouseAdapter;
+import com.jogamp.newt.opengl.GLWindow;
+*/
 import java.awt.*;
 import java.awt.event.*;
 
