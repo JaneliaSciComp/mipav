@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -219,6 +220,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     
     private JCheckBox complexInverseCheckbox;
     
+    private JCheckBox useOCLCheckbox;
+    
     private boolean testDouble = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -389,6 +392,17 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             MipavUtil.showHelp("10003");
         } else if (source == cancelButton) {
             dispose();
+        } else if (source == image25DCheckbox ) {
+        	// if the images is a power of two it doesn't matter if the 25D is selected or not
+        	// it the image is not a power of two only enable OCL if the slice is a power of two
+        	// and the 25D checkbox is selected.
+            if ( image.isSlicePowerOfTwo() && !image.isPowerOfTwo() ) {
+            	useOCLCheckbox.setEnabled(image25DCheckbox.isSelected() && OpenCLAlgorithmFFT.isOCLAvailable());
+            	if ( !useOCLCheckbox.isEnabled() )
+            	{
+            		useOCLCheckbox.setSelected(false);
+            	}
+            }
         }
 
     }
@@ -977,7 +991,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     private void init() {
         setTitle("FFT");
 
-        JPanel optionsPanel = new JPanel(new GridLayout(4, 1));
+        JPanel optionsPanel = new JPanel(new GridLayout(5, 1));
         optionsPanel.setBorder(buildTitledBorder("Options"));
 
         image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
@@ -1038,6 +1052,16 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         }
         complexInverseCheckbox.setSelected(false);
         optionsPanel.add(complexInverseCheckbox);
+        
+        useOCLCheckbox = new JCheckBox("Use OpenCL");
+        useOCLCheckbox.setFont(serif12);
+        useOCLCheckbox.setForeground(Color.black);
+    	useOCLCheckbox.setEnabled(false);
+        if ( image.isPowerOfTwo() ) {
+        	useOCLCheckbox.setEnabled(true && OpenCLAlgorithmFFT.isOCLAvailable());
+        }
+        useOCLCheckbox.setSelected(useOCLCheckbox.isEnabled());
+        optionsPanel.add(useOCLCheckbox);
 
         constructionPanel = new JPanel(new GridBagLayout());
         constructionPanel.setBorder(buildTitledBorder("Filter construction methods"));

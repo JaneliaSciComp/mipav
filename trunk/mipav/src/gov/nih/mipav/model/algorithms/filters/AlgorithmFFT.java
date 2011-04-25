@@ -161,6 +161,8 @@ public class AlgorithmFFT extends AlgorithmBase {
     private boolean zeroPad;
 
     private float[] finalData;
+    
+    private boolean useOCL = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -229,26 +231,25 @@ public class AlgorithmFFT extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        //final long startTime = System.currentTimeMillis();
 
         if (srcImage == null) {
             displayError("Source Image is null");
             return;
         }
-/*
-        long time = nanoTime();
-        OpenCLAlgorithmFFT oclFFT = new OpenCLAlgorithmFFT( destImage, srcImage, transformDir, logMagDisplay, unequalDim, image25D );
-        oclFFT.run();
-        setCompleted(false);
-        time = nanoTime() - time;
-        System.out.println("build : " + (time/1000000)+"ms");
-		time = nanoTime();
-        */
 
         final long startTime = System.currentTimeMillis();
-        beforeExecute();
-        execute();
-        afterExecute();
+        if ( useOCL )
+        {
+        	OpenCLAlgorithmFFT oclFFT = new OpenCLAlgorithmFFT( destImage, srcImage, transformDir, logMagDisplay, unequalDim, image25D );
+        	oclFFT.run();
+        	setCompleted(false);
+        }
+        else
+        {
+        	beforeExecute();
+        	execute();
+        	afterExecute();
+        }
         System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
     }
 

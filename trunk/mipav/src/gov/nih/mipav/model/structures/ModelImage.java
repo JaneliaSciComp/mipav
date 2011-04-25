@@ -2318,6 +2318,34 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
+     * Returns true if the ModelImage 3D dimensions combine to be a power of two.
+     * @return true if the ModelImage 3D dimensions combine to be a power of two.
+     */
+    public boolean isPowerOfTwo()
+    {
+    	int size = 1;
+    	for ( int i = 0; i < Math.min( 3, getExtents().length); i++ )
+    	{
+    		size *= getExtents()[i];
+    	}
+    	return MipavMath.isPowerOfTwo(size);
+    }
+
+    /**
+     * Returns true if the ModelImage 2D dimensions (slice size) combine to be a power of two.
+     * @return true if the ModelImage 2D dimensions (slice size) combine to be a power of two.
+     */
+    public boolean isSlicePowerOfTwo()
+    {
+    	int size = 1;
+    	for ( int i = 0; i < Math.min( 2, getExtents().length); i++ )
+    	{
+    		size *= getExtents()[i];
+    	}
+    	return MipavMath.isPowerOfTwo(size);
+    }
+
+    /**
      * Accessor that returns whether or not the image is a MINC image.
      * 
      * @return <code>true</code> if MINC, <code>false</code> if not MINC.
