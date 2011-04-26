@@ -62,6 +62,7 @@ public class OpenCLAlgorithmFFT extends AlgorithmBase {
 
 	/** If true allow unequal FFT dimensions. */
 	private boolean unequalDim;
+    private boolean complexInverse;
 
 	private int width, height, depth;
 
@@ -71,12 +72,12 @@ public class OpenCLAlgorithmFFT extends AlgorithmBase {
 	long startTime;
 
 	public OpenCLAlgorithmFFT(final ModelImage srcImg, final int transformDir, final boolean logMagDisplay,
-			final boolean unequalDim, final boolean image25D) {
-		this(null, srcImg, transformDir, logMagDisplay, unequalDim, image25D);
+			final boolean unequalDim, final boolean image25D, final boolean complexInverse) {
+		this(null, srcImg, transformDir, logMagDisplay, unequalDim, image25D, complexInverse);
 	}
 
 	public OpenCLAlgorithmFFT(final ModelImage destImg, final ModelImage srcImg, final int transformDir,
-			final boolean logMagDisplay, final boolean unequalDim, final boolean image25D) {
+			final boolean logMagDisplay, final boolean unequalDim, final boolean image25D, final boolean complexInverse) {
 
 		super(destImg, srcImg);
 		this.transformDir = transformDir;
@@ -95,6 +96,7 @@ public class OpenCLAlgorithmFFT extends AlgorithmBase {
 		} else if (transformDir == OpenCLAlgorithmFFT.INVERSE) {
 			this.unequalDim = srcImage.getUnequalDim();
 			this.image25D = srcImage.getImage25D();
+            this.complexInverse = complexInverse;
 		}
 
 
@@ -226,7 +228,14 @@ public class OpenCLAlgorithmFFT extends AlgorithmBase {
 	{
 		if ( destImage == null )
 		{
-			destImage = new ModelImage( ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "OpenCL_FFT_INV" );
+			if ( complexInverse )
+			{
+				destImage = new ModelImage( ModelStorageBase.COMPLEX, srcImage.getExtents(), srcImage.getImageName() + "OpenCL_FFT_INV" );
+			}
+			else
+			{
+				destImage = new ModelImage( ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "OpenCL_FFT_INV" );
+			}
 		}
 		int imgSize = width * height;
 		float val, mag, re, im;
@@ -243,9 +252,17 @@ public class OpenCLAlgorithmFFT extends AlgorithmBase {
 					re = data[slice * imgSize * 2 + indexSrc*2];
 					im = data[slice * imgSize * 2 + indexSrc*2 + 1];
 
-					mag = (float)Math.sqrt( re*re + im*im);
-					val = mag / (width*height*depth);
-					destImage.set(slice * imgSize + indexDest, val);
+					//mag = (float)Math.sqrt( re*re + im*im);
+					val = re / (width*height*depth);
+					if ( complexInverse )
+					{
+						destImage.set(slice * imgSize * 2 + indexDest*2 + 0, re);
+						destImage.set(slice * imgSize * 2 + indexDest*2 + 1, im);
+					}
+					else
+					{
+						destImage.set(slice * imgSize + indexDest, val);
+					}
 				}
 			}
 		}
@@ -257,7 +274,14 @@ public class OpenCLAlgorithmFFT extends AlgorithmBase {
 	{
 		if ( destImage == null )
 		{
-			destImage = new ModelImage( ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "OpenCL_FFT_INV" );
+			if ( complexInverse )
+			{
+				destImage = new ModelImage( ModelStorageBase.COMPLEX, srcImage.getExtents(), srcImage.getImageName() + "OpenCL_FFT_INV" );
+			}
+			else
+			{
+				destImage = new ModelImage( ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "OpenCL_FFT_INV" );
+			}
 		}
 		int imgSize = width * height;
 		float val, mag, re, im;
@@ -272,9 +296,17 @@ public class OpenCLAlgorithmFFT extends AlgorithmBase {
 				re = data[indexSrc*2];
 				im = data[indexSrc*2 + 1];
 
-				mag = (float)Math.sqrt( re*re + im*im);
-				val = mag / (width*height*depth);
-				destImage.set(slice * imgSize + indexDest, val);
+				//mag = (float)Math.sqrt( re*re + im*im);
+				val = re / (width*height);
+				if ( complexInverse )
+				{
+					destImage.set(slice * imgSize * 2 + indexDest*2 + 0, re);
+					destImage.set(slice * imgSize * 2 + indexDest*2 + 1, im);
+				}
+				else
+				{
+					destImage.set(slice * imgSize + indexDest, val);
+				}
 			}
 		}
 
