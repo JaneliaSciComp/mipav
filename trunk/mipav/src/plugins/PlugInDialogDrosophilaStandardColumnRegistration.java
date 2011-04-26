@@ -157,7 +157,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v3.4");
+        setTitle("Drosophila Standard Column Registration v3.5");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
