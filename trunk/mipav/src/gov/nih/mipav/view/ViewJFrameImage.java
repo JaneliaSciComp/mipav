@@ -4703,49 +4703,49 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             if (imageA.getNDims() == 4) { // Setup the title for 4D image
                 if (imageNameArray != null) {
-                    str = imageNameArray[componentImage.getSlice() + nImage * componentImage.getTimeSlice()] + "  "
-                            + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
+                    str = imageNameArray[componentImage.getSlice() + nImage * componentImage.getTimeSlice()] + "      "
+                            + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z      "
                             + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1)
-                            + "t M:" + makeString(componentImage.getZoomX(), 2);
+                            + "t     M:" + makeString(componentImage.getZoomX(), 2);
                 } else {
-                    str = imageA.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/"
-                            + String.valueOf(nImage - 1) + "z  " + String.valueOf(componentImage.getTimeSlice()) + "/"
-                            + String.valueOf(nTImage - 1) + "t M:" + makeString(componentImage.getZoomX(), 2);
+                    str = imageA.getImageName() + "      " + String.valueOf(componentImage.getSlice()) + "/"
+                            + String.valueOf(nImage - 1) + "z      " + String.valueOf(componentImage.getTimeSlice()) + "/"
+                            + String.valueOf(nTImage - 1) + "t     M:" + makeString(componentImage.getZoomX(), 2);
                 }
             } else if (imageA.getNDims() == 3) { // Setup the title for 3D image
                 if (imageNameArray != null) {
-                    str = imageNameArray[componentImage.getSlice()] + "  " + String.valueOf(componentImage.getSlice())
-                            + "/" + String.valueOf(nImage - 1) + " M:" + makeString(componentImage.getZoomX(), 2);
+                    str = imageNameArray[componentImage.getSlice()] + "      " + String.valueOf(componentImage.getSlice())
+                            + "/" + String.valueOf(nImage - 1) + "     M:" + makeString(componentImage.getZoomX(), 2);
                 } else {
-                    str = imageA.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/"
-                            + String.valueOf(nImage - 1) + " M:" + makeString(componentImage.getZoomX(), 2);
+                    str = imageA.getImageName() + "      " + String.valueOf(componentImage.getSlice()) + "/"
+                            + String.valueOf(nImage - 1) + "     M:" + makeString(componentImage.getZoomX(), 2);
                 }
             } else {
-                str = imageA.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);
+                str = imageA.getImageName() + "     M:" + makeString(componentImage.getZoomX(), 2);
             }
         } else {
             imageNameArray = imageB.getImageNameArray();
             if (imageB.getNDims() == 4) { // Setup the title for 4D image of image B
                 if (imageNameArray != null) {
-                    str = imageNameArray[componentImage.getSlice() + nImage * componentImage.getTimeSlice()] + "  "
-                            + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
+                    str = imageNameArray[componentImage.getSlice() + nImage * componentImage.getTimeSlice()] + "      "
+                            + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z      "
                             + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1)
-                            + "t M:" + makeString(componentImage.getZoomX(), 2);
+                            + "t     M:" + makeString(componentImage.getZoomX(), 2);
                 } else {
-                    str = imageB.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/"
-                            + String.valueOf(nImage - 1) + "z  " + String.valueOf(componentImage.getTimeSlice()) + "/"
-                            + String.valueOf(nTImage - 1) + "t M:" + makeString(componentImage.getZoomX(), 2);
+                    str = imageB.getImageName() + "      " + String.valueOf(componentImage.getSlice()) + "/"
+                            + String.valueOf(nImage - 1) + "z      " + String.valueOf(componentImage.getTimeSlice()) + "/"
+                            + String.valueOf(nTImage - 1) + "t     M:" + makeString(componentImage.getZoomX(), 2);
                 }
             } else if (imageB.getNDims() == 3) { // Setup the title
                 if (imageNameArray != null) {
-                    str = imageNameArray[componentImage.getSlice()] + "  " + String.valueOf(componentImage.getSlice())
-                            + "/" + String.valueOf(nImage - 1) + " M:" + makeString(componentImage.getZoomX(), 2);
+                    str = imageNameArray[componentImage.getSlice()] + "      " + String.valueOf(componentImage.getSlice())
+                            + "/" + String.valueOf(nImage - 1) + "     M:" + makeString(componentImage.getZoomX(), 2);
                 } else {
-                    str = imageB.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/"
-                            + String.valueOf(nImage - 1) + " M:" + makeString(componentImage.getZoomX(), 2);
+                    str = imageB.getImageName() + "      " + String.valueOf(componentImage.getSlice()) + "/"
+                            + String.valueOf(nImage - 1) + "     M:" + makeString(componentImage.getZoomX(), 2);
                 }
             } else {
-                str = imageB.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);
+                str = imageB.getImageName() + "     M:" + makeString(componentImage.getZoomX(), 2);
             }
         }
 
