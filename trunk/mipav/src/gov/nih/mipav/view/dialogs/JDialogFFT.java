@@ -754,7 +754,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FFTAlgo.addListener(this);
-
+                FFTAlgo.useOCL(useOCLCheckbox.isSelected());
                 createProgressBar(image.getImageName(), FFTAlgo);
 
                 // Hide dialog since the algorithm is about to run
@@ -791,6 +791,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FFTAlgo.addListener(this);
+                FFTAlgo.useOCL(useOCLCheckbox.isSelected());
 
                 createProgressBar(image.getImageName(), FFTAlgo);
 

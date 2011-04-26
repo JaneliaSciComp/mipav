@@ -1143,6 +1143,15 @@ public class AlgorithmFFT extends AlgorithmBase {
         }
         return indices;
     }
+    
+    /**
+     * Turns on/off using OpenCL to compute the FFT.
+     * @param on
+     */
+    public void useOCL( boolean on )
+    {
+    	useOCL = on;
+    }
 
     /**
      * Swap slices in order to apply FFT algorithm.
