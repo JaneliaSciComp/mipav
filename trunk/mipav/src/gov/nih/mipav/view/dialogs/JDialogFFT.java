@@ -1061,6 +1061,9 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         if ( image.isPowerOfTwo() ) {
         	useOCLCheckbox.setEnabled(true && OpenCLAlgorithmFFT.isOCLAvailable());
         }
+        else if ( image.isSlicePowerOfTwo() ) {
+        	useOCLCheckbox.setEnabled(image25DCheckbox.isSelected() && OpenCLAlgorithmFFT.isOCLAvailable());
+        }
         useOCLCheckbox.setSelected(useOCLCheckbox.isEnabled());
         optionsPanel.add(useOCLCheckbox);
 
