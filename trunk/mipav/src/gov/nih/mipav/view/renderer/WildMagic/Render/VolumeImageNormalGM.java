@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 
 import java.awt.Frame;
@@ -20,8 +21,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.media.opengl.*;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.Animator;
 
@@ -64,7 +63,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
         frame.setVisible(true);
         frame.setBounds(0,0,
                 kWorld.GetWidth(), kWorld.GetHeight() );
-        frame.setVisible(false);
+        //frame.setVisible(false);
         kWorld.SetAnimator(animator);
         kWorld.SetFrame(frame);
         animator.start();
@@ -75,6 +74,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
         {
             return;
         }
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         while ( m_bDisplayFirst )
         {
             float fZ = ((float)m_iSlice)/(m_kImage.getExtents()[2] -1);
@@ -128,6 +128,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
 
     public void dispose(GLAutoDrawable arg0)
     {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         m_spkEffect2.dispose();
         m_spkEffect2 = null;
         m_pkVolumeCalcTarget.dispose();

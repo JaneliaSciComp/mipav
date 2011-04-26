@@ -1043,7 +1043,7 @@ public class VolumeImage implements Serializable {
             for (int i = 0; i < 256; i++) {
                 for (int j = 0; j < 256; j++) {
                     iIndex = i * 256 + j;
-                    if (abHisto[iIndex] != 0) {
+                    if (abHisto[iIndex] > 50) {
                         if (iMinX > j) {
                             iMinX = j;
                         }
@@ -1058,7 +1058,7 @@ public class VolumeImage implements Serializable {
             for (int j = 0; j < 256; j++) {
                 for (int i = 0; i < 256; i++) {
                     iIndex = i * 256 + j;
-                    if (abHisto[iIndex] != 0) {
+                    if (abHisto[iIndex] > 50) {
                         if (iMinY > i) {
                             iMinY = i;
                         }

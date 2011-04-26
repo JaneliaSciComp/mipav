@@ -69,6 +69,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     private int m_iSrcBlend;
     private int m_iDstBlend;
     private ColorRGBA m_kBlendColor = new ColorRGBA();
+    private float m_fMaxLength = 1f;
     
     /** 
      * Creates a new VolumeShaderEffect object.
@@ -467,6 +468,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         m_aafLight[iLight][0] = afType[0];
     }
     
+    public void setMaxLength( float length )
+    {
+    	m_fMaxLength = length;
+    }
     
     public void setRGBTA(ModelRGB RGBT) {
         if ( m_kPShaderCMP != null )
@@ -525,6 +530,12 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             SetCProgram(i,pkCProgram);
         }
         setCurrentShader();
+        
+        pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("StepSize") != null )
+        {
+            pkCProgram.GetUC("StepSize").GetData()[0] = m_fMaxLength/(float)m_iPasses;
+        }
     }
     /**
      * Change to the Surface mode pixel shader program.
