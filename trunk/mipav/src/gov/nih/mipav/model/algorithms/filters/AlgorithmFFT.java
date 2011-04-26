@@ -240,7 +240,8 @@ public class AlgorithmFFT extends AlgorithmBase {
         final long startTime = System.currentTimeMillis();
         if ( useOCL )
         {
-        	OpenCLAlgorithmFFT oclFFT = new OpenCLAlgorithmFFT( destImage, srcImage, transformDir, logMagDisplay, unequalDim, image25D );
+        	OpenCLAlgorithmFFT oclFFT = 
+        		new OpenCLAlgorithmFFT( destImage, srcImage, transformDir, logMagDisplay, unequalDim, image25D, complexInverse );
         	oclFFT.run();
         	setCompleted(false);
         }
