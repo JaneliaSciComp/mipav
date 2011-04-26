@@ -3034,9 +3034,8 @@ parse:  while (i < args.length) {
      * @param str the application title
      */
     public void setTitle(final String str) {
-
         if (getAppTitle() != null) {
-            mainFrame.setTitle(getAppTitle() + str);
+            mainFrame.setTitle(getAppTitle() + " v" + MipavUtil.getVersion() + "     " + str);
         } else {
             mainFrame.setTitle(str);
         }
