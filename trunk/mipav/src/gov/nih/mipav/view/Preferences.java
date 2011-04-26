@@ -612,7 +612,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_UNITS, "7,7,7,7"); // 7 = millimeters
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_TYPE, "3"); // 3 = ModelStorageBase.SHORT
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_DATA_OFFSET, "0");
-        Preferences.defaultProps.setProperty(Preferences.PREF_APP_TITLE, "MIPAV: ");
+        Preferences.defaultProps.setProperty(Preferences.PREF_APP_TITLE, "MIPAV: " + " v" + MipavUtil.getVersion());
         Preferences.defaultProps.setProperty(Preferences.PREF_APP_ICON, "divinci.gif");
         Preferences.defaultProps.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, "ff0000"); // red
         Preferences.defaultProps.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, "default");

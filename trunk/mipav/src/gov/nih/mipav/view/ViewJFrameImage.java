@@ -4236,7 +4236,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         final String str = makeTitle();
 
         setTitle(str);
-        userInterface.getMainFrame().setTitle("MIPAV: " + str);
+        
+        
+        userInterface.getMainFrame().setTitle(ViewUserInterface.getReference().getAppTitle() + "     " + str);
     }
 
     /**
