@@ -1744,6 +1744,7 @@ public class CLFFTPlan {
                 if (this.size.z > 1) {
                     createGlobalFFTKernelString(this.size.z, this.size.x * this.size.y, dir, 1);
                 }
+                break;
             default:
                 return;
         }
