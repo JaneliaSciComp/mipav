@@ -1306,6 +1306,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		if ( !isActive() || kEvent.getButton() != MouseEvent.BUTTON1 )
 		{
 			m_bMouseDrag = false;
+			System.gc();
 			return;
 		}
 		// turn off the flag for left-mouse drag:
@@ -1329,6 +1330,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			m_kParent.doVOI(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand());
 			m_bDrawVOI = false;
 			m_bMouseDrag = false;
+			System.gc();
 			return;
 		}
 		// The Quick LUT is processed on mouse release:
@@ -1339,6 +1341,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			m_bDrawVOI = false;
 			m_kParent.setDefaultCursor( );
 			m_bMouseDrag = false;
+			System.gc();
 			return;
 		}
 		// Split-line is processed on mouse release:
@@ -1352,6 +1355,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			kSplitDialog = null;
 			m_bDrawVOI = false;
 			m_kParent.setDefaultCursor( );
+			System.gc();
 			return;
 		}
 		// If the current draw type is a polyline or livewire, a new anchor point is added on mouse release:
@@ -1393,6 +1397,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 					m_iNearStatus = NearNone;
 					m_kParent.setDefaultCursor();
 					m_bMouseDrag = false;
+					System.gc();
 					return;
 				}
 			}
@@ -1406,6 +1411,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				anchorPolyline( kEvent.getX(), kEvent.getY(), false );
 			}
 			m_bMouseDrag = false;
+			System.gc();
 			return;
 		}
 		// If the draw type is levelset, trim the points on mouse release:
@@ -1434,6 +1440,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				m_kParent.doVOI("deleteVOIActivePt");
 			}
 			m_kParent.setDefaultCursor( );
+			System.gc();
 			return;
 		}
 
@@ -1460,6 +1467,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		m_bMouseDrag = false;
 		m_bCtrlDown = false;
+		System.gc();
 	}
 
 	/**
