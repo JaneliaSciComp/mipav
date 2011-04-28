@@ -703,7 +703,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Z axis +90", "RotateZPlus", 0, null, false),
                         menuBuilder.buildMenuItem("Z axis -90", "RotateZMinus", 0, null, false)}),
                 menuBuilder.makeMenu("Slice tools", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Concatenate", "Concat", 0, null, false),
+                        menuBuilder.buildMenuItem("Concat Multiple 2D to 3D", "Concat", 0, null, false),
                         menuBuilder.buildMenuItem("Extract slices", null, 0, null, false),
                         menuBuilder.buildMenuItem("Insert missing slices", "InsertMSlices", 0, null, false),
                         menuBuilder.buildMenuItem("Insert slice", null, 0, null, false),
@@ -962,6 +962,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Shading correction", false);
             menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Skeletonize", false);
+            
 
             // menuBuilder.setMenuItemEnabled("AFNI - Shear", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration", false);
@@ -983,6 +984,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
             menuBuilder.setMenuItemEnabled("Convert Single 3D to 4D", false);
             menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 4D", false);
+            menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
             menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
@@ -1020,6 +1022,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
+            menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
@@ -1207,6 +1210,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Evolve boundary 2D", true);
         menuBuilder.setMenuItemEnabled("Convert Single 3D to 4D", true);
         menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 4D", true);
+        menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", true);
         menuBuilder.setMenuItemEnabled("Capture image slices to new frame", true);
         menuBuilder.setMenuItemEnabled("Haralick texture", true);
         menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", true);
