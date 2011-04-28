@@ -157,7 +157,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v3.5");
+        setTitle("Drosophila Standard Column Registration v3.6");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -701,7 +701,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
             	
             }
             raFile.close();
-            if(pointsMap.size() != 27) {
+            if(pointsMap.size() != 75) {
             	return false;
             }
             return true;
