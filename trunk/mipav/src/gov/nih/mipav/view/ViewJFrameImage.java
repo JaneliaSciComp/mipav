@@ -966,7 +966,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                      }
                  }
                  if (imagesToConcat.size() <= 1) {
-                     MipavUtil.displayError("There are no other images of like dimension to concatenate with");
+                     MipavUtil.displayError("There are no other images of like dimension to concatenate");
                      return;
                  }
 
@@ -1271,7 +1271,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     }
                 }
                 if (imagesToConcat.size() <= 1) {
-                    MipavUtil.displayError("There are no other images of like dimension to concatenate with");
+                    MipavUtil.displayError("There are no other images of like dimension to concatenate");
                     return;
                 }
 
