@@ -2831,49 +2831,60 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param mouseWheelEvent DOCUMENT ME!
      */
     public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
+    	
+    	
+    	
+    	
+    	
         final int wheelRotation = mouseWheelEvent.getWheelRotation();
 
         if (frame instanceof ViewJFrameImage) {
+        	
+        	boolean isActiveFrame = frame.isActive();
+        	
+        	if(isActiveFrame) {
+        		if (wheelRotation < 0) {
 
-            if (wheelRotation < 0) {
+                    if (imageActive.getNDims() > 2) {
 
-                if (imageActive.getNDims() > 2) {
+                        if (mouseWheelEvent.isShiftDown()) {
 
-                    if (mouseWheelEvent.isShiftDown()) {
-
-                        if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                            ((ViewJFrameImage) frame).setShiftDown(true);
+                            if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                                ((ViewJFrameImage) frame).setShiftDown(true);
+                            }
+                        }else {
+                        	if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                                ((ViewJFrameImage) frame).setShiftDown(false);
+                            }
                         }
-                    }else {
-                    	if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                            ((ViewJFrameImage) frame).setShiftDown(false);
-                        }
+
+                        ((ViewJFrameImage) frame).incSlice();
+                    } else {
+                        ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f);
                     }
-
-                    ((ViewJFrameImage) frame).incSlice();
                 } else {
-                    ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f);
-                }
-            } else {
 
-                if (imageActive.getNDims() > 2) {
+                    if (imageActive.getNDims() > 2) {
 
-                    if (mouseWheelEvent.isShiftDown()) {
+                        if (mouseWheelEvent.isShiftDown()) {
 
-                        if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                            ((ViewJFrameImage) frame).setShiftDown(true);
+                            if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                                ((ViewJFrameImage) frame).setShiftDown(true);
+                            }
+                        }else {
+                        	if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                                ((ViewJFrameImage) frame).setShiftDown(false);
+                            }
                         }
-                    }else {
-                    	if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                            ((ViewJFrameImage) frame).setShiftDown(false);
-                        }
+
+                        ((ViewJFrameImage) frame).decSlice();
+                    } else {
+                        ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f);
                     }
-
-                    ((ViewJFrameImage) frame).decSlice();
-                } else {
-                    ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f);
                 }
-            }
+        	}
+
+            
         }
     }
 
