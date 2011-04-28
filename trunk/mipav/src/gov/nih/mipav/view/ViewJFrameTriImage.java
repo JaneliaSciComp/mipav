@@ -500,35 +500,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         } else if (command.equals("ScrollLink")) {
             linkedScrolling = !linkedScrolling;
 
-            final Enumeration<String> names = userInterface.getRegisteredImageNames();
-
-            boolean sameDims = false;
-            while (names.hasMoreElements()) {
-                final String name = names.nextElement();
-                sameDims = true;
-
-                if ( !imageA.getImageName().equals(name)) {
-                    final ModelImage img = userInterface.getRegisteredImageByName(name);
-
-                    if (img.getTriImageFrame() != null) {
-
-                        if (imageA.getNDims() == img.getNDims()) {
-
-                            for (int z = 0; z < imageA.getNDims(); z++) {
-
-                                if (imageA.getExtents()[z] != img.getExtents()[z]) {
-                                    sameDims = false;
-                                }
-                            }
-
-                            if (sameDims == true) {
-                                img.getTriImageFrame().setLinkButtonSelected(linkedScrolling);
-                            }
-                        }
-                    }
-                }
-            }
-
         } else if (command.equals("CloseFrame")) {
             windowClosing(null);
         } else if (command.equals("leastSquares")) {
