@@ -1411,14 +1411,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				anchorPolyline( kEvent.getX(), kEvent.getY(), false );
 			}
 			m_bMouseDrag = false;
-			System.gc();
+	
 			return;
 		}
 		// If the draw type is levelset, trim the points on mouse release:
 		else if ( m_iDrawType == LEVELSET && m_kCurrentVOI != null )
 		{
 			m_kCurrentVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
-			m_iDrawType = NONE;
+			if(!kEvent.isShiftDown()) {
+				m_iDrawType = NONE;
+			}
 		}
 		// If the mode was retrace contour, end retrace on mouse release and trim the points:
 		else if ( m_iDrawType == RETRACE && m_kCurrentVOI != null )
