@@ -3202,7 +3202,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 menuObj
                         .buildMenuItem("Show volume coordinates and Talairach controls", "PositionFrame", 0, null,
                                 false),
-                menuObj.buildMenuItem("Link to another TriImage frame", "LinkFrame", 0, null, false),
+        
                 menuObj.buildMenuItem("Select panel plug-in", ViewJFrameTriImage.PANEL_PLUGIN, 0, null, false)}));
 
         boolean showVOIToolbar = Preferences.is(Preferences.PREF_VOI_TOOLBAR_ON);
