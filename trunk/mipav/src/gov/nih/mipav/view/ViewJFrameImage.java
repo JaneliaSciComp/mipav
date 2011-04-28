@@ -939,13 +939,40 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("Concat")) {
 
-            if (isMultipleImages() == true) {
-                new JDialogConcat(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("There are no other images to operate on.");
+        	 if (getActiveImage().getNDims() == 2) {
 
-                return;
-            }
+                 final Enumeration<String> names = userInterface.getRegisteredImageNames();
+                 final ArrayList<ModelImage> imagesToConcat = new ArrayList<ModelImage>();
+                 imagesToConcat.add(getActiveImage());
+
+                 // Add images from user interface that have the same exact dimensionality
+                 while (names.hasMoreElements()) {
+                     final String name = names.nextElement();
+
+                     if ( !getActiveImage().getImageName().equals(name)) {
+
+                         final ModelImage img = userInterface.getRegisteredImageByName(name);
+
+                         if (getActiveImage().getNDims() == img.getNDims()) {
+                             if (getActiveImage().getExtents()[0] == img.getExtents()[0]
+                                     && getActiveImage().getExtents()[1] == img.getExtents()[1]) {
+                                 if (img.getDataType() == getActiveImage().getDataType()) {
+                                     imagesToConcat.add(img);
+                                 }
+                             }
+
+                         }
+
+                     }
+                 }
+                 if (imagesToConcat.size() <= 1) {
+                     MipavUtil.displayError("There are no other images of like dimension to concatenate with");
+                     return;
+                 }
+
+                 new JDialogConcatMult2Dto3D(this, imagesToConcat);
+
+             }
         } else if (command.equals("ReplaceBlankWithAvg")) {
             final JDialogReplaceBlankSlicesWithAverages rBlankWithAvg = new JDialogReplaceBlankSlicesWithAverages(this,
                     getActiveImage());
