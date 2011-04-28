@@ -1111,11 +1111,19 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			{
 				anchorPolyline( kEvent.getX(), kEvent.getY(), true );                
 			}
+			
 			m_kCurrentVOI.trimPoints(Preferences.getTrim(),
 					Preferences.getTrimAdjacient());
-			m_bDrawVOI = false;
+			//m_bDrawVOI = false;
 			m_iNearStatus = NearNone;
-			m_kParent.setDefaultCursor();
+			//m_kParent.setDefaultCursor();
+			
+			if(!kEvent.isShiftDown()) {
+				m_bDrawVOI = false;
+				m_kParent.setDefaultCursor();
+			}else {
+				m_kCurrentVOI = null;
+			}
 		} 
 		m_bMouseDrag = false;
 	}
@@ -1393,9 +1401,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 							}
 						}
 					}
-					m_bDrawVOI = false;
+					if(!kEvent.isShiftDown()) {
+						m_bDrawVOI = false;
+						m_kParent.setDefaultCursor();
+					}else {
+						m_kCurrentVOI = null;
+					}
+					//m_bDrawVOI = false;
 					m_iNearStatus = NearNone;
-					m_kParent.setDefaultCursor();
+					//m_kParent.setDefaultCursor();
 					m_bMouseDrag = false;
 					System.gc();
 					return;
