@@ -3933,6 +3933,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	// prostateSegAutoDialog.validate();
     }
 
+    
+    /**
+     * method that performs the quick LUT operation
+     * @param akMinMax
+     * @param image
+     * @param LUT
+     */
     private void quickLUT(Vector3f[] akMinMax, ModelImage image, ModelLUT LUT) {
         if ( !(((akMinMax[1].Z - akMinMax[0].Z) > 5) ||
                 ((akMinMax[1].Y - akMinMax[0].Y) > 5) ||
@@ -3943,13 +3950,22 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         float min = Float.MAX_VALUE;
         float max = -100000000;
         float val;
+        int t = 0;
+        if(image.is4DImage()) {
+        	t = ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getTimeSlice();
+        }
         for ( int z = (int)akMinMax[0].Z; z <= akMinMax[1].Z; z++ )
         {
             for ( int y = (int)akMinMax[0].Y; y <= akMinMax[1].Y; y++ )
             {
                 for ( int x = (int)akMinMax[0].X; x <= akMinMax[1].X; x++ )
                 {
-                    val = image.getFloat(x,y,z);
+                    if(image.is4DImage()) {
+                    	val = image.getFloat(x,y,z,t);
+                    }else {
+                    	val = image.getFloat(x,y,z);
+                    }
+                    
                     if ( val < min )
                     {
                         min = val;
