@@ -1067,8 +1067,12 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         if (panelParent.getImageB() != null) {
             buildPanelB(panelParent.getImageB(), panelParent.getLUTb(), entireFlag);
         }
-
-        tabbedPane.setSelectedIndex(0);
+        if(panelParent.getUserInterface().getActiveImageFrame().getActiveImage() == panelParent.getImageA()) {
+        	tabbedPane.setSelectedIndex(0);
+        }else {
+        	tabbedPane.setSelectedIndex(1);
+        }
+        
         tabbedPane.addChangeListener(this);
         this.add(tabbedPane, BorderLayout.SOUTH);
         validate();
