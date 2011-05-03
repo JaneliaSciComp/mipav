@@ -280,7 +280,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v3.6" + "\n");
+        outputTextArea.append("Running Algorithm v3.8" + "\n");
         
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
         /*String text = "";
@@ -2057,10 +2057,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         }
         standardColumnImage.notifyImageDisplayListeners();
 
-        final VOIVector neuronVOIs = neuronImage_grey.getVOIs();
+        VOIVector neuronVOIs = neuronImage_grey.getVOIs();
         voi = neuronVOIs.elementAt(0);
         curves = voi.getCurves();
         nCurves = curves.size();
+
         for (int j = nCurves-1; j >= 0; j--) {
             final VOIPoint voiPoint = (VOIPoint) (curves.elementAt(j));
             label = voiPoint.getLabel();
@@ -4276,10 +4277,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         newVOI = new VOI((short) 0, "point3D.voi", VOI.POINT, -1.0f);
         newVOI.setUID(newVOI.hashCode());
         Vector<VOIBase>[] curves = voi.getSortedCurves(neuronImage_grey.getExtents()[2]);
+        
+        Vector<VOIBase> curves3;
+        curves3 = neuronImage_grey.getVOIs().VOIAt(0).getCurves(); //
+        int nPtsC = curves3.size();
 
+        int testTotal = 0;
         Integer labelInt;
         for (int s = 0; s < neuronImage_grey.getExtents()[2]; s++) {
             nCurves = curves[s].size();
+            testTotal = testTotal + nCurves;
             for (int j = 0; j < nCurves; j++) {
                 final float[] xPt = new float[1];
                 final float[] yPt = new float[1];
@@ -4299,6 +4306,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                 if (xPt[0] < 0 || yPt[0] < 0 || zPt[0] < 0 || xPt[0] > neuronImage_grey.getExtents()[0] - 1
                         || yPt[0] > neuronImage_grey.getExtents()[1] - 1
                         || zPt[0] > neuronImage_grey.getExtents()[2] - 1) {
+                	
+
                     outputTextArea.append("neuron image point after rigid least squares alg is out of bounds - "
                             + label + "\n");
                     indexAL_std.add(new Integer(j));
@@ -4311,6 +4320,27 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                 }
             }
         }
+        
+        //the getSortedCurves does upperbounds checking and it removes some points..we need to add these to the labelAL_std list
+        for(int i=0;i<nPtsC;i++) {
+           Integer ig = new Integer(i);
+           String l = String.valueOf(i);
+           if(addCurvesMap.get(ig) == null) {
+        	   boolean found = false;
+        	   for(int k=0;k<labelAL_std.size();k++) {
+        		   if(l.equals(labelAL_std.get(k))) {
+        			   found = true;
+        			   break;
+        		   }
+        	   }
+        	   if(!found) {
+        		   labelAL_std.add(l);
+        	   }
+        	   
+        	   
+           }
+        }
+        
 
         // need to add curves to result image...treemap is ascending order...so should be straightforward
         final Set<Integer> keySet = addCurvesMap.keySet();
@@ -4325,7 +4355,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         // need to remove the corresponding out of bounds points from the standard column image
         if (labelAL_std.size() > 0) {
-            final VOIVector stdVOIs = standardColumnImage.getVOIs();
+            VOIVector stdVOIs = standardColumnImage.getVOIs();
             voi = stdVOIs.elementAt(0);
             curves = voi.getSortedCurves(standardColumnImage.getExtents()[2]);
             String removeLabel;
@@ -4350,6 +4380,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         resultImage1.registerVOI(newVOI);
 
         resultImage1.notifyImageDisplayListeners();
+        
 
         if (neuronImage_grey != null) {
             neuronImage_grey.disposeLocal();
@@ -4698,7 +4729,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             for (int i = 0; i < transformedPointsList.size(); i++) {
                 final float[] f = transformedPointsList.get(i);
                 final String ind = String.valueOf(i + 1);
-                if (i == 0) {
+                /*if (i == 0) {
                     bw.write("top");
                     bw.newLine();
                 }
@@ -4711,7 +4742,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                 if (i == 18) {
                     bw.write("r7");
                     bw.newLine();
-                }
+                }*/
 
                 bw.write(ind + ":");
                 if (f != null) {
