@@ -80,6 +80,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
         entireFlag = _entireFlag;
         setTitle("Lookup Table: " + _imageA.getImageName());
 
+
         try {
             setIconImage(MipavUtil.getIconImage("histolut.gif"));
         } catch (FileNotFoundException error) {
