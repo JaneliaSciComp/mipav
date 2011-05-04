@@ -233,7 +233,7 @@ implements StreamInterface
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("Color_Opacity_TextureV"));
+        SetVShader(0,new VertexShader("TextureV"));
         PixelShader kPShader = null;
         if ( !bTransparency )
         {

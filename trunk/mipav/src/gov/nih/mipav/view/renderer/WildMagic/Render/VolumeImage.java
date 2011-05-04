@@ -131,6 +131,7 @@ public class VolumeImage implements Serializable {
     /** 3D sub-images (4D data) */
     private ModelImage[] m_akImages;
 
+    private Vector2f[] m_akGradientMagMinMax;
 
     /* Default Constructor */
     public VolumeImage() {}
@@ -443,11 +444,6 @@ public class VolumeImage implements Serializable {
         m_kColorMapTarget.dispose();
         m_kColorMapTarget = null;
 
-        m_kOpacityMap.dispose();
-        m_kOpacityMap = null;
-        m_kOpacityMapTarget.dispose();
-        m_kOpacityMapTarget = null;
-
         for (final GraphicsImage element : m_kVolumeGM) {
             element.dispose();
         }
@@ -573,12 +569,41 @@ public class VolumeImage implements Serializable {
         return m_kHisto[m_iTimeSlice].GetName();
     }
 
+
+    private ModelImage[] m_akHistogram;
+    public ModelImage GetHistogram() {
+
+    	if ( !m_bHistoInit )
+    	{
+    		SetGradientMagnitude(null, true, m_kPostfix);   
+    	}
+    	if ( m_akHistogram == null )
+    	{
+    		m_akHistogram = new ModelImage[m_akImages.length];
+    	}
+    	if ( m_akHistogram[m_iTimeSlice] == null )
+    	{
+    		m_akHistogram[m_iTimeSlice] = new ModelImage(ModelStorageBase.INTEGER, new int[]{256,256}, "JointHisto" + m_iTimeSlice);
+    		try {
+				m_akHistogram[m_iTimeSlice].importData(m_kHisto[m_iTimeSlice].GetData());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	}
+        return m_akHistogram[m_iTimeSlice];
+    }
+
     /**
      * Return the texture coordinates for the multi-histogram histogram texture.
      * @return the texture coordinates for the multi-histogram histogram texture.
      */
     public Vector2f[] GetHistoTCoords() {
         return m_akHistoTCoord;
+    }
+    
+    public Vector2f GetGradientMagnitudeMinMax()
+    {
+    	return m_akGradientMagMinMax[m_iTimeSlice];
     }
 
     /**
@@ -843,8 +868,8 @@ public class VolumeImage implements Serializable {
      */
     public boolean UpdateImages(final TransferFunction kTransfer, final int iImage, final ModelImage kImage) {
         if (iImage == 0) {
-            UpdateImages2(m_kImage, m_kColorMapTarget, m_kColorMap, kTransfer);
-            return UpdateImages(m_kImage, m_kOpacityMapTarget, m_kOpacityMap, kTransfer);
+            return UpdateImages2(m_kImage, m_kColorMapTarget, m_kColorMap, kTransfer);
+            //return UpdateImages(m_kImage, m_kOpacityMapTarget, m_kOpacityMap, kTransfer);
         } else if ( (iImage == 2) && (kImage != null) && (m_kOpacityMapTarget_GM != null) && (m_kOpacityMap_GM != null)) {
             return UpdateImages(kImage, m_kOpacityMapTarget_GM, m_kOpacityMap_GM, kTransfer);
         }
@@ -1166,6 +1191,7 @@ public class VolumeImage implements Serializable {
     					m_kVolumeGM[i] = VolumeImage.UpdateData(kImage, i, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true);
     				} else {
     					kImageGM.calcMinMax();
+    					m_akGradientMagMinMax[i] = new Vector2f( (float)kImageGM.getMin(), (float)kImageGM.getMax() );
     					m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM, 0, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true);
     				}
     				final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
@@ -1288,6 +1314,7 @@ public class VolumeImage implements Serializable {
         m_kVolumeGM = new GraphicsImage[m_iTimeSteps];
         m_kVolumeLaplace = new GraphicsImage[m_iTimeSteps];
         m_kNormal = new GraphicsImage[m_iTimeSteps];
+        m_akGradientMagMinMax = new Vector2f[m_iTimeSteps];
 
         final int[] aiSubset = new int[] {aiExtents[0], aiExtents[1], aiExtents[2]};
         for (int i = 0; i < m_iTimeSteps; i++) {

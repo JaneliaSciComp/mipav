@@ -928,7 +928,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	public void init( JFrame kFrame, ModelImage kImageA, ModelImage kImageB, Component kComponent, 
 			ScreenCoordinateListener kContext, int iOrientation )
 	{
-		kFrame.addKeyListener(this);
+		if ( kFrame != null )
+		{
+			kFrame.addKeyListener(this);
+		}
 		m_akImages[0] = kImageA;
 		m_akImages[1] = kImageB;
 		if ( kImageA != null )
