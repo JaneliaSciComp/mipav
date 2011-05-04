@@ -131,7 +131,7 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
 
             // show dest image
             destImage = attenuationAlgo.getResultImage();
-            new ViewJFrameImage(destImage, null, userInterface.getNewFrameLocation());
+            new ViewJFrameImage(destImage, null, userInterface.getNewFrameLocation(destImage.getExtents()[0], destImage.getExtents()[1]));
 
             insertScriptLine();
         }

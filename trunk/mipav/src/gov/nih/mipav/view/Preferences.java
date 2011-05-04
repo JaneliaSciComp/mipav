@@ -305,6 +305,9 @@ public class Preferences {
     /** Constant that indicates if right mouse click inside image should cause window/level changes*/
     public static final String PREF_SHOW_WINLEV_ON_RIGHT_CLICK = "winLevOnRightClick";
     
+    /** Constant that indicates if images are to be open im tiled format*/
+    public static final String PREF_OPEN_IMAGES_IN_TILED_FORMAT = "openImagesInTiledFormat";
+    
     /**
      * Constant that indicates the last used paint brush so that it will be set as the default when new images are
      * opened or mipav is restarted.

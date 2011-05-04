@@ -218,6 +218,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     
     /** Check boxes for whether right and left mouse clicks produce default actions. */
 	private JCheckBox doIntensityOnLeftBox, doWinLevOnRightBox;
+	
+	/** opens images in tiled format **/
+	private JCheckBox openImagesInTiledFormatBox;
 
 	/** Gives user choices for displaying complex images. */
     private JPanel displayImagePanel;
@@ -465,6 +468,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     .isSelected()));
 
             Preferences.setProperty(Preferences.PREF_SHOW_SPLASH, String.valueOf(displaySplash.isSelected()));
+            Preferences.setProperty(Preferences.PREF_OPEN_IMAGES_IN_TILED_FORMAT, String.valueOf(openImagesInTiledFormatBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_LINE_ANGLE, String.valueOf(showLineVOIAngleBox.isSelected()));
 
             Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil
@@ -1323,6 +1327,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     protected void makeMouseClickOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
 
         boolean doLeft = true, doRight = true;
+        
+        
 
         if (Preferences.getProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK) != null) {
             doLeft = Preferences.is(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK);
@@ -1353,6 +1359,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(doWinLevOnRightBox, gbc);
         displayUserInterfacePanel.add(doWinLevOnRightBox);
+        
+        
+        
+        
     }
 
     /**
@@ -1857,6 +1867,20 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices:
         displaySplash.setSelected(Preferences.is(Preferences.PREF_SHOW_SPLASH));
+        
+        
+        openImagesInTiledFormatBox = new JCheckBox("Open images in tiled format");
+        openImagesInTiledFormatBox.setFont(MipavUtil.font12);
+        openImagesInTiledFormatBox.setForeground(Color.black);
+        openImagesInTiledFormatBox.addActionListener(this);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(openImagesInTiledFormatBox, gbc);
+        displayUserInterfacePanel.add(openImagesInTiledFormatBox);
+        
+        openImagesInTiledFormatBox.setSelected(Preferences.is(Preferences.PREF_OPEN_IMAGES_IN_TILED_FORMAT));
+        
     }
 
     /**

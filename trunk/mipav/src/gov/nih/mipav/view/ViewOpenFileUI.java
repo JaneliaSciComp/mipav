@@ -306,7 +306,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             try {
 
                 if (putInFrame == true) {
-                    imageFrame = new ViewJFrameImage(image, LUT, ViewUserInterface.getReference().getNewFrameLocation());
+                    imageFrame = new ViewJFrameImage(image, LUT, ViewUserInterface.getReference().getNewFrameLocation(image.getExtents()[0], image.getExtents()[1]));
 
                     if (modelRGB != null) {
                         imageFrame.setRGBTA(modelRGB);
@@ -359,7 +359,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     try {
 
                         if (putInFrame == true) {
-                            new ViewJFrameImage(image2, LUT2, ViewUserInterface.getReference().getNewFrameLocation());
+                            new ViewJFrameImage(image2, LUT2, ViewUserInterface.getReference().getNewFrameLocation(image2.getExtents()[0], image2.getExtents()[1]));
                         }
 
                         images.addElement(image2.getImageName());
@@ -460,7 +460,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         try {
 
             if (putInFrame == true) {
-                imageFrame = new ViewJFrameImage(image, LUT, ViewUserInterface.getReference().getNewFrameLocation());
+                imageFrame = new ViewJFrameImage(image, LUT, ViewUserInterface.getReference().getNewFrameLocation(image.getExtents()[0], image.getExtents()[1]));
 
                 if (modelRGB != null) {
                     imageFrame.setRGBTA(modelRGB);
@@ -510,7 +510,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
                 if (putInFrame == true) {
                     imageFrame2 = new ViewJFrameImage(image2, LUT2, ViewUserInterface.getReference()
-                            .getNewFrameLocation());
+                            .getNewFrameLocation(image2.getExtents()[0], image2.getExtents()[1]));
 
                     if (modelRGB2 != null) {
                         imageFrame2.setRGBTA(modelRGB2);

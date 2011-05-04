@@ -331,7 +331,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             if (algoSub.isCompleted()) {
 
                 try {
-                    new ViewJFrameImage(resultImage, null, userInterface.getNewFrameLocation());
+                    new ViewJFrameImage(resultImage, null, userInterface.getNewFrameLocation(resultImage.getExtents()[0], resultImage.getExtents()[1]));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Subsample reports: out of memory; " + "unable to open a new frame");
                 }

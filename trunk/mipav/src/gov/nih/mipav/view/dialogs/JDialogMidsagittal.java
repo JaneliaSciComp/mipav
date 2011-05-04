@@ -113,7 +113,7 @@ public class JDialogMidsagittal extends JDialogScriptableBase
                 resultImage.clearMask();
 
                 try {
-                    new ViewJFrameImage(resultImage, null, ViewUserInterface.getReference().getNewFrameLocation());
+                    new ViewJFrameImage(resultImage, null, ViewUserInterface.getReference().getNewFrameLocation(resultImage.getExtents()[0], resultImage.getExtents()[1]));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");

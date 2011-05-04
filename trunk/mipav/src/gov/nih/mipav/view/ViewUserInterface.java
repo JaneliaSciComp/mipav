@@ -203,6 +203,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** error handling for cmd line, if set to false will not exit on MipavUtil.displayError() */
     private boolean exitCmdLineOnError = true;
+    
+    /** if user selects to open images as tiles, then this counter tells us how many tile sheets there are**/
+    private int numTileSheets = 0;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1510,7 +1513,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         try {
-            new ViewJFrameImage(image, null, getNewFrameLocation());
+            new ViewJFrameImage(image, null, getNewFrameLocation(image.getExtents()[0], image.getExtents()[1]));
         } catch (final OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory");
         }
@@ -1764,17 +1767,67 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @return The new location.
      */
-    public Dimension getNewFrameLocation() {
-        frameLocation.width += 100;
-        frameLocation.height += 20;
+    public Dimension getNewFrameLocation(int newImageXDim, int newImageYDim) {
 
-        if ( (frameLocation.width + 512) > Toolkit.getDefaultToolkit().getScreenSize().width) {
-            frameLocation.width = 50;
-            frameLocation.height = 280;
-        } else if ( (frameLocation.height + 512) > Toolkit.getDefaultToolkit().getScreenSize().height) {
-            frameLocation.width = 50;
-            frameLocation.height = 280;
-        }
+    	if(Preferences.is(Preferences.PREF_OPEN_IMAGES_IN_TILED_FORMAT)) {
+    		Vector<Frame> imageFrames = getImageFrameVector();
+
+            if (imageFrames.size() < 1) {
+            	frameLocation.width = 50;
+                frameLocation.height = 300;
+                numTileSheets = 0;
+            } else {
+            	Frame lastFrame = imageFrames.get(0);
+            	int lastFrameWidth = lastFrame.getWidth();
+            	frameLocation.width = frameLocation.width + lastFrameWidth + 10;
+            	int height = 0;
+            	 if ( (frameLocation.width + newImageXDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().width) {
+            		 frameLocation.width = 50 + (numTileSheets * 20);
+            		 //for height, we need to get the biggest frame height and add 10 to it
+            		 int size = imageFrames.size();
+            		 for(int i=0;i<size;i++) {
+                 		Frame frame = imageFrames.get(i);
+                 		if(frame.getHeight() > height) {
+                 			height = frame.getHeight();
+                 		}
+                 	  }
+              		frameLocation.height = frameLocation.height + height + 10;
+              		if(frameLocation.height + newImageYDim + 50 > Toolkit.getDefaultToolkit().getScreenSize().height) {
+              			numTileSheets = numTileSheets + 1;
+              			frameLocation.width = 50 + (numTileSheets * 20);
+              			frameLocation.height = 300 + (numTileSheets * 20);
+              		} 
+            	 }
+               
+            }
+    	}else {
+    		Vector<Frame> imageFrames = getImageFrameVector();
+    		 if (imageFrames.size() < 1) {
+             	 frameLocation.width = 50;
+                 frameLocation.height = 300;
+             } else {
+            	 frameLocation.width += 100;
+                 frameLocation.height += 20;
+
+                 if ( (frameLocation.width + newImageXDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().width) {
+                     frameLocation.width = 50;
+                     frameLocation.height = 280;
+                 } else if ( (frameLocation.height + newImageYDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().height) {
+                     frameLocation.width = 50;
+                     frameLocation.height = 280;
+                 }
+             }
+    		
+    		
+    	}
+    	 
+    	
+    	
+    	
+    	
+    	
+    	
+        
 
         return frameLocation;
     }
