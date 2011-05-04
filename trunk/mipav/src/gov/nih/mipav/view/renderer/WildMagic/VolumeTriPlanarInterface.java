@@ -535,7 +535,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             raycastRenderWM.cropClipVolume();
             setModified();
         } else if (command.equals("UndoCropVolume")) {
-            updateData(true);
+            updateData(false);
         } else if (command.equals("SaveCropVolume")) {
             raycastRenderWM.saveImageFromTexture();
         } else if (command.equals("Slices")) {
@@ -2229,7 +2229,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                     || (kSelectedComp == m_kVolOpacityPanel.getCompA())) {
                 final TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
                 m_kVolumeImageA.UpdateImages(kTransfer, 0, null);
-            } else if ( (forceShow && m_kVolOpacityPanel.getCompA_GM() != null)
+            } 
+            if ( (forceShow && m_kVolOpacityPanel.getCompA_GM() != null)
                     || (kSelectedComp == m_kVolOpacityPanel.getCompA_GM())) {
                 final TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
                 m_kVolumeImageA.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagA());
@@ -2240,7 +2241,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                     || (kSelectedComp == m_kVolOpacityPanel.getCompB())) {
                 final TransferFunction kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
                 m_kVolumeImageB.UpdateImages(kTransfer, 0, null);
-            } else if ( (forceShow && m_kVolOpacityPanel.getCompB_GM() != null)
+            } 
+            if ( (forceShow && m_kVolOpacityPanel.getCompB_GM() != null)
                     || (kSelectedComp == m_kVolOpacityPanel.getCompB_GM())) {
                 final TransferFunction kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
                 m_kVolumeImageB.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagB());
