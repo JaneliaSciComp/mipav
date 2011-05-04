@@ -134,7 +134,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
                 resultImage.setImageName(imageName + "_4D");
 
                 try {
-                    new ViewJFrameImage(resultImage, null, ViewUserInterface.getReference().getNewFrameLocation());
+                    new ViewJFrameImage(resultImage, null, ViewUserInterface.getReference().getNewFrameLocation(resultImage.getExtents()[0], resultImage.getExtents()[1]));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
