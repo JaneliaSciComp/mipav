@@ -3825,11 +3825,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		kVOI.setTextWidth( kVolumePt );
 
 		//determine if text is out of bounds.....if it is...shift it over so it is in bounds
-		if(width + xS + 1 > (m_kImageActive.getExtents()[0] * zoomX) - 5) {
+		if(width + xS > (m_kImageActive.getExtents()[0] * zoomX) - 5) {
 			//now find place where text goes out of bounds
 			int textOutOfBoundsWidth = 0;
 			for(int i=1;i<=width;i++) {
-				if(i + xS + 1 > (m_kImageActive.getExtents()[0] * zoomX) - 5) {
+				if(i + xS > (m_kImageActive.getExtents()[0] * zoomX) - 5) {
 					textOutOfBoundsWidth = i;
 					break;
 				}
@@ -3849,7 +3849,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 		kVOI.setTextFont( new Font(kVOI.getFontName(), kVOI.getFontDescriptors(), kVOI.getFontSize()) );
 
-		Font previousFont = g.getFont();
 
 		g.setFont(kVOI.getTextFont());
 
@@ -3869,7 +3868,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 		g.setColor( kVOI.getColor() );
 		g.drawString(kVOI.getText(), xS, yS);
-		g.setFont(previousFont);
+
 		
 		// draw the arrow if useMarker is true
 		if ( kVOI.useMarker() ) {
