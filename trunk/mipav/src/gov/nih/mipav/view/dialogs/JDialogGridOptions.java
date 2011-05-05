@@ -44,7 +44,7 @@ public class JDialogGridOptions extends JDialogBase {
     private JTextField heightField;
 
     /** DOCUMENT ME! */
-    private JCheckBox labelBox;
+    private JCheckBox labelBox, showGridBox;
 
     /** DOCUMENT ME! */
     private JRadioButton labelXAlphaButton;
@@ -105,9 +105,17 @@ public class JDialogGridOptions extends JDialogBase {
                 comp.setGridLabelOrientation(labelXAlphaButton.isSelected());
 
 
-                if (comp.getGridOverlay()) {
+                /*if (comp.getGridOverlay()) {
                     comp.paintComponent(comp.getGraphics());
+                }*/
+                
+                
+                if(showGridBox.isSelected()) {
+                	 comp.setGridOverlay(true);
+                }else {
+                	 comp.setGridOverlay(false);
                 }
+                comp.paintComponent(comp.getGraphics());
             }
         } else if (command.equals("Color")) {
             chooser = new ViewJColorChooser(new Frame(), "Pick VOI color", new OkColorListener(), new CancelListener());
@@ -123,7 +131,7 @@ public class JDialogGridOptions extends JDialogBase {
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-        setTitle("Grid Overlay Options");
+        setTitle("Grid Overlay");
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
@@ -209,6 +217,14 @@ public class JDialogGridOptions extends JDialogBase {
 
         gbc.gridx = 2;
         paramPanel.add(labelXAlphaButton, gbc);
+        
+        showGridBox = new JCheckBox("Show overlay grid");
+        showGridBox.setFont(MipavUtil.font12);
+        showGridBox.setSelected(true);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        paramPanel.add(showGridBox, gbc);
 
 
         JPanel mainPanel = new JPanel();
@@ -227,7 +243,7 @@ public class JDialogGridOptions extends JDialogBase {
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         pack();
-        //setResizable(false);
+        setResizable(false);
         setVisible(true);
     }
 

@@ -70,6 +70,10 @@ public class JDialogOverlay extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JDialogChooseOverlay tagDialog;
+    
+    private JCheckBox showOverlayBox;
+    
+    private ViewJComponentEditImage comp;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -80,9 +84,9 @@ public class JDialogOverlay extends JDialogBase {
      * @param  isDicom         boolean is the image dicom
      * @param  headerStr       DOCUMENT ME!
      */
-    public JDialogOverlay(Frame theParentFrame, boolean isDicom, String headerStr) {
+    public JDialogOverlay(Frame theParentFrame, boolean isDicom, String headerStr,ViewJComponentEditImage comp) {
         super(theParentFrame, false);
-
+        this.comp = comp;
         this.isDicom = isDicom;
         this.headerString = headerStr;
         init();
@@ -120,12 +124,21 @@ public class JDialogOverlay extends JDialogBase {
 
             Preferences.setOverlayNames(isDicom, overlayNames);
 
+            if(showOverlayBox.isSelected()) {
+      		  comp.setOverlay(true);
+      	  	}else {
+      		  comp.setOverlay(false);
+      	  	}
+            
+            comp.paintComponent(comp.getGraphics());
+            
+
             if (parentFrame instanceof ViewJFrameImage) {
                 ((ViewJFrameImage) parentFrame).updateImages();
             }
 
-            setVisible(false);
-            dispose();
+            //setVisible(false);
+           // dispose();
         } else if (e.getSource().equals(cancelButton)) {
             setVisible(false);
             dispose();
@@ -250,12 +263,18 @@ public class JDialogOverlay extends JDialogBase {
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        
+        showOverlayBox = new JCheckBox("Show overlay");
+        showOverlayBox.setSelected(true);
 
-        this.getContentPane().add(mainPanel, BorderLayout.CENTER);
+        this.getContentPane().add(mainPanel, BorderLayout.NORTH);
+        this.getContentPane().add(showOverlayBox, BorderLayout.CENTER);
         this.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         pack();
-        setSize(670, 500);
+        //setSize(670, 500);
+        setResizable(false);
+        this.setMinimumSize(new Dimension(670,(int)this.getSize().getHeight()));
         setVisible(true);
     }
 
