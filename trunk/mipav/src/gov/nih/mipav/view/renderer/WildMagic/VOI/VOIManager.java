@@ -2042,7 +2042,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			return;
 		}
-
+ 
 		int colorID = 0;
 		VOI newTextVOI = new VOI((short) colorID, "annotation3d.voi", VOI.ANNOTATION, -1.0f);
 
@@ -3817,10 +3817,58 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		int yS2 = Math.round(kScreen.Y);
 
 		int width = (g.getFontMetrics(kVOI.getTextFont()).stringWidth( kVOI.getText()));
+
 		Vector3f kVolumePt = new Vector3f();
 		m_kDrawingContext.screenToFileVOI( new Vector3f (xS + width, yS, m_kDrawingContext.getSlice()), kVolumePt );
 		kVOI.setTextWidth( kVolumePt );
 
+		//determine if text is out of bounds.....if it is...shift it over so it is in bounds
+		if(width + xS + 1 > m_kImageActive.getExtents()[0] - 20) {
+			//now find place where text goes out of bounds
+			int textOutOfBoundsWidth = 0;
+			for(int i=1;i<=width;i++) {
+				if(i + xS + 1 > m_kImageActive.getExtents()[0] - 20) {
+					textOutOfBoundsWidth = i;
+					break;
+				}
+			}
+			xS = xS - (width - textOutOfBoundsWidth);
+
+			kVolumePt = new Vector3f();
+			m_kDrawingContext.screenToFileVOI( new Vector3f (xS, yS, m_kDrawingContext.getSlice()), kVolumePt );
+			kVOI.remove(0);
+			kVOI.add(0, kVolumePt);
+			
+			kVolumePt = new Vector3f();
+			m_kDrawingContext.screenToFileVOI( new Vector3f (xS + width, yS, m_kDrawingContext.getSlice()), kVolumePt );
+			kVOI.setTextWidth( kVolumePt );
+	
+		}
+
+		kVOI.setTextFont( new Font(kVOI.getFontName(), kVOI.getFontDescriptors(), kVOI.getFontSize()) );
+
+		Font previousFont = g.getFont();
+
+		g.setFont(kVOI.getTextFont());
+
+
+		if (kVOI.isActive()) {
+			g.setColor(Color.RED);            
+			g.drawString( kVOI.getText(), xS, yS + 1);
+			g.drawString(kVOI.getText(), xS + 1, yS);
+		} else {
+			g.setColor( kVOI.getBackgroundColor() );
+			g.drawString(kVOI.getText(), xS + 1, yS);
+			g.drawString(kVOI.getText(), xS - 1, yS);
+			g.drawString(kVOI.getText(), xS, yS - 1);
+			g.drawString(kVOI.getText(), xS, yS + 1);
+		}
+
+
+		g.setColor( kVOI.getColor() );
+		g.drawString(kVOI.getText(), xS, yS);
+		g.setFont(previousFont);
+		
 		// draw the arrow if useMarker is true
 		if ( kVOI.useMarker() ) {
 			// determine the width/height of the TEXT (for marker line location)
@@ -3847,28 +3895,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 			this.drawArrow( kVOI, (Graphics2D)g, markerX, markerY, xS2, yS2, .1f);
 		} //arrow not off
-		kVOI.setTextFont( new Font(kVOI.getFontName(), kVOI.getFontDescriptors(), kVOI.getFontSize()) );
-
-		Font previousFont = g.getFont();
-
-		g.setFont(kVOI.getTextFont());
-
-		if (kVOI.isActive()) {
-			g.setColor(Color.RED);            
-			g.drawString( kVOI.getText(), xS, yS + 1);
-			g.drawString(kVOI.getText(), xS + 1, yS);
-		} else {
-			g.setColor( kVOI.getBackgroundColor() );
-			g.drawString(kVOI.getText(), xS + 1, yS);
-			g.drawString(kVOI.getText(), xS - 1, yS);
-			g.drawString(kVOI.getText(), xS, yS - 1);
-			g.drawString(kVOI.getText(), xS, yS + 1);
-		}
-
-
-		g.setColor( kVOI.getColor() );
-		g.drawString(kVOI.getText(), xS, yS);
-		g.setFont(previousFont);
 	}
 
 	/**
