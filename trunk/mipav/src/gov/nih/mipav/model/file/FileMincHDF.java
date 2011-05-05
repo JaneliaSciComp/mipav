@@ -19,13 +19,13 @@ import ncsa.hdf.object.h5.*;
  * HDF5 based reader/writer for MINC 2.0
  * 
  * 
- * Currently, for the image max and image min nodes:  in the case of 3d images in which 1 image min and 1 image max is to be written
- * out per slice, the dimorder is hardcoded to zspace.
- * Sometimes minc2 3D images come in with just 1 image min and 1 image max per volume...in that case, we write out the same way and do
- * not write out a dimorder
+ * Currently, for the image max and image min nodes: in the case of 3d images in which 1 image min and 1 image max is to
+ * be written out per slice, the dimorder is hardcoded to zspace. Sometimes minc2 3D images come in with just 1 image
+ * min and 1 image max per volume...in that case, we write out the same way and do not write out a dimorder
  * 
- * ToDo:  We need to make this type of functionality work for 4D images.  Currently the code writes out 1 image min nd 1 image max
- * per slice and hardcode the dimorder to time,zspace.   We need to write out the same way we read in....yet to do.
+ * ToDo: We need to make this type of functionality work for 4D images. Currently the code writes out 1 image min nd 1
+ * image max per slice and hardcode the dimorder to time,zspace. We need to write out the same way we read in....yet to
+ * do.
  * 
  * @author linkb
  */
@@ -47,7 +47,7 @@ public class FileMincHDF extends FileBase {
     public static final String LEAF_Y_SPACE = "yspace";
 
     public static final String LEAF_Z_SPACE = "zspace";
-    
+
     public static final String LEAF_T_SPACE = "time";
 
     public static final String LEAF_ACQUISITION = "acquisition";
@@ -108,10 +108,10 @@ public class FileMincHDF extends FileBase {
     private double[] mincStartLoc = null;
 
     /** The directory containing the minc file being written out or read in. */
-    private String fileDir;
+    private final String fileDir;
 
     /** The name of the minc file to be read in or written out. */
-    private String fileName;
+    private final String fileName;
 
     /** The ordering of the dimensions. Should be found in the image node attributes. */
     private String[] dimOrder;
@@ -124,13 +124,11 @@ public class FileMincHDF extends FileBase {
     /** the file to be read/written */
     private H5File h5File;
 
-    private FileInfoMincHDF fileInfo;
+    private final FileInfoMincHDF fileInfo;
 
     private int[] dimReorderIndexes = null;
-    
-    private boolean is4D;
 
-    
+    private boolean is4D;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -151,7 +149,6 @@ public class FileMincHDF extends FileBase {
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
-
 
     public void readHeader(final DefaultMutableTreeNode rootNode) throws Exception {
         // before recursively parsing the tree, get the image dim order from the image var attributes
@@ -235,6 +232,7 @@ public class FileMincHDF extends FileBase {
 
     /**
      * parses the dim order
+     * 
      * @param rootNode
      */
     private void parseImageDimOrder(final DefaultMutableTreeNode rootNode) throws Exception {
@@ -263,9 +261,9 @@ public class FileMincHDF extends FileBase {
                 } else if (dimOrderString.startsWith("yspace")) {
                     fileInfo.setImageOrientation(FileInfoBase.CORONAL);
                 } else if (dimOrderString.startsWith("time")) {
-                	is4D = true;
-                	String dimOrderString_sub = dimOrderString.substring(dimOrderString.indexOf(",")+1);
-                	if (dimOrderString_sub.startsWith("zspace")) {
+                    is4D = true;
+                    final String dimOrderString_sub = dimOrderString.substring(dimOrderString.indexOf(",") + 1);
+                    if (dimOrderString_sub.startsWith("zspace")) {
                         fileInfo.setImageOrientation(FileInfoBase.AXIAL);
                     } else if (dimOrderString_sub.startsWith("xspace")) {
                         fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
@@ -320,8 +318,8 @@ public class FileMincHDF extends FileBase {
 
         dimReorderIndexes = new int[dimOrder.length];
 
-        if(is4D) {
-        	for (int i = 0; i < dimOrder.length; i++) {
+        if (is4D) {
+            for (int i = 0; i < dimOrder.length; i++) {
                 if (dimOrder[i].equals(FileMincHDF.LEAF_X_SPACE)) {
                     dimReorderIndexes[i] = 2;
 
@@ -330,14 +328,13 @@ public class FileMincHDF extends FileBase {
 
                 } else if (dimOrder[i].equals(FileMincHDF.LEAF_Z_SPACE)) {
                     dimReorderIndexes[i] = 0;
-                }
-                else if (dimOrder[i].equals(FileMincHDF.LEAF_T_SPACE)) {
+                } else if (dimOrder[i].equals(FileMincHDF.LEAF_T_SPACE)) {
                     dimReorderIndexes[i] = 3;
 
                 }
             }
-        }else {
-        	for (int i = 0; i < dimOrder.length; i++) {
+        } else {
+            for (int i = 0; i < dimOrder.length; i++) {
                 if (dimOrder[i].equals(FileMincHDF.LEAF_X_SPACE)) {
                     dimReorderIndexes[i] = 2;
 
@@ -350,76 +347,14 @@ public class FileMincHDF extends FileBase {
                 }
             }
         }
-        
-        
 
         // following is needed to determine the order of the axes
         // this is needed when setting up the axes orientations in mipav
         // which uses the dimString and the step
-        int order = -1;
         for (int i = 0; i < dimensionNode.getChildCount(); i++) {
             currentDimNode = (DefaultMutableTreeNode) dimensionNode.getChildAt(i);
-            if(is4D) {
 
-            	if (currentDimNode.toString().equals(FileMincHDF.LEAF_X_SPACE)) {
-                    for (int k = 0; k < dimReorderIndexes.length; k++) {
-                        if (dimReorderIndexes[k] == 2) {
-                            order = k;
-                            break;
-                        }
-                    }
-
-                } else if (currentDimNode.toString().equals(FileMincHDF.LEAF_Y_SPACE)) {
-                    for (int k = 0; k < dimReorderIndexes.length; k++) {
-                        if (dimReorderIndexes[k] == 1) {
-                            order = k;
-                            break;
-                        }
-                    }
-
-                } else if (currentDimNode.toString().equals(FileMincHDF.LEAF_Z_SPACE)) {
-                    for (int k = 0; k < dimReorderIndexes.length; k++) {
-                        if (dimReorderIndexes[k] == 0) {
-                            order = k;
-                            break;
-                        }
-                    }
-                } else if (currentDimNode.toString().equals(FileMincHDF.LEAF_T_SPACE)) {
-                    for (int k = 0; k < dimReorderIndexes.length; k++) {
-                        if (dimReorderIndexes[k] == 3) {
-                            order = k;
-                            break;
-                        }
-                    }
-                }
-            }else {
-
-            	if (currentDimNode.toString().equals(FileMincHDF.LEAF_X_SPACE)) {
-                    for (int k = 0; k < dimReorderIndexes.length; k++) {
-                        if (dimReorderIndexes[k] == 2) {
-                            order = k;
-                            break;
-                        }
-                    }
-
-                } else if (currentDimNode.toString().equals(FileMincHDF.LEAF_Y_SPACE)) {
-                    for (int k = 0; k < dimReorderIndexes.length; k++) {
-                        if (dimReorderIndexes[k] == 1) {
-                            order = k;
-                            break;
-                        }
-                    }
-
-                } else if (currentDimNode.toString().equals(FileMincHDF.LEAF_Z_SPACE)) {
-                    for (int k = 0; k < dimReorderIndexes.length; k++) {
-                        if (dimReorderIndexes[k] == 0) {
-                            order = k;
-                            break;
-                        }
-                    }
-                }
-            }
-            
+            final int order = getMipavOrderFromDimNode(currentDimNode.toString());
 
             dimStringsReordered[order] = currentDimNode.toString();
             dimStrings[dimReorderIndexes[i]] = currentDimNode.toString();
@@ -614,8 +549,9 @@ public class FileMincHDF extends FileBase {
         double[] imageMin = null;
         int numImages = 1;
         int numVols = 1;
-        //some minc2 images will only have 1 image min and 1 image max....in this case the minMaxDimOrder is not set..so it is false
-        //TODO:  make this work for 4D images
+        // some minc2 images will only have 1 image min and 1 image max....in this case the minMaxDimOrder is not
+        // set..so it is false
+        // TODO: make this work for 4D images
         boolean hasImageMinMaxDimOrder = false;
         fileInfo.setImageNode(childNode);
 
@@ -626,7 +562,7 @@ public class FileMincHDF extends FileBase {
 
                 // determine the Datatype class (int)
                 final int dataType = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeClass();
-                //final int sign = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeSign();
+                // final int sign = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeSign();
                 final boolean isUnsigned = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().isUnsigned();
                 final int order = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeOrder();
                 final int size = ((H5ScalarDS) currentNode.getUserObject()).getDatatype().getDatatypeSize();
@@ -707,9 +643,9 @@ public class FileMincHDF extends FileBase {
                             fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
                         } else if (dimOrder.startsWith("yspace")) {
                             fileInfo.setImageOrientation(FileInfoBase.CORONAL);
-                        }else if (dimOrder.startsWith("time")) {
-                        	String dimOrderString_sub = dimOrder.substring(dimOrder.indexOf(",")+1);
-                        	if (dimOrderString_sub.startsWith("zspace")) {
+                        } else if (dimOrder.startsWith("time")) {
+                            final String dimOrderString_sub = dimOrder.substring(dimOrder.indexOf(",") + 1);
+                            if (dimOrderString_sub.startsWith("zspace")) {
                                 fileInfo.setImageOrientation(FileInfoBase.AXIAL);
                             } else if (dimOrderString_sub.startsWith("xspace")) {
                                 fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
@@ -719,7 +655,7 @@ public class FileMincHDF extends FileBase {
                         }
 
                         final int[] axisOrientation = new int[fileInfo.getExtents().length];
-                        
+
                         if (axisOrientation.length == 3) {
 
                             axisOrientation[0] = FileInfoMinc.setOrientType(dimStringsReordered[2],
@@ -738,8 +674,8 @@ public class FileMincHDF extends FileBase {
 
                 }
 
-               H5ScalarDS imageData = (H5ScalarDS) currentNode.getUserObject();
-          
+                final H5ScalarDS imageData = (H5ScalarDS) currentNode.getUserObject();
+
                 final int rank = imageData.getRank();
                 if (rank <= 0) {
                     imageData.init();
@@ -747,82 +683,109 @@ public class FileMincHDF extends FileBase {
 
                 final boolean is3D = (imageData.getRank() == 3) && ! ((ScalarDS) imageData).isTrueColor();
 
-                final int w = imageData.getWidth();
-                final int h = imageData.getHeight();
-
                 image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName);
+
+                final long[] dims = imageData.getDims();
+                final int[] selectedIndex = imageData.getSelectedIndex();
+
+                // set of the size of the slice of data we want to read in each time
+                final long[] selected = imageData.getSelectedDims();
 
                 if (is3D) {
                     numImages = fileInfo.getExtents()[2];
-                }else if (is4D) {
-                	numVols = fileInfo.getExtents()[3];
-                	numImages = fileInfo.getExtents()[2] * fileInfo.getExtents()[3];
+
+                    for (int di = 0; di < dims.length; di++) {
+                        final int mipavOrder = getMipavOrderFromDimNode(dimStrings[di]);
+                        selectedIndex[mipavOrder] = di;
+                        selected[mipavOrder] = dims[mipavOrder];
+                    }
+
+                    // set the out-of-plane selection size to 1
+                    selected[selectedIndex[2]] = 1;
+                } else if (is4D) {
+                    numVols = fileInfo.getExtents()[3];
+                    numImages = fileInfo.getExtents()[2] * fileInfo.getExtents()[3];
+
+                    for (int di = 0; di < dims.length; di++) {
+                        final int mipavOrder = getMipavOrderFromDimNode(dimStrings[di]);
+                        selectedIndex[mipavOrder] = di;
+                        selected[mipavOrder] = dims[mipavOrder];
+
+                        selected[selectedIndex[3]] = 1;
+                    }
                 }
 
                 Object data = null;
 
-                long[] start = imageData.getStartDims(); // the starting dims
+                final long[] start = imageData.getStartDims(); // the starting dims - should be 0,0,0,... to start
+
+                final int sliceSize = imageData.getWidth() * imageData.getHeight();
+
                 int sliceCounter = 0;
                 int volCounter = 0;
                 int counter = 0;
-                final int sliceSize = w * h;
 
-                	for (int j = 0; j < numImages; j++) {
-                		if(is4D) {
-                			if(j!= 0 && j%fileInfo.getExtents()[3] == 0) {
-                				start[1] = sliceCounter;
-                				sliceCounter++;
-                			}
-            				if(volCounter >= numVols) {
-            					volCounter = 0;
-            				}
-            				start[0] = volCounter;
-            				data = imageData.read();
+                for (int j = 0; j < numImages; j++) {
+                    if (is4D) {
+                        if (j != 0 && j % fileInfo.getExtents()[3] == 0) {
+                            start[1] = sliceCounter;
+                            sliceCounter++;
+                        }
+                        if (volCounter >= numVols) {
+                            volCounter = 0;
+                        }
+                        start[0] = volCounter;
+                        data = imageData.read();
 
-            				 if (fileInfo.getDataType() == ModelStorageBase.SHORT
-                                     || fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                                 image.importData((fileInfo.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), (short[]) data, false);
-                             } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
-                                     || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
-                                 image.importData((fileInfo.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), (int[]) data, false);
-                             } else if (fileInfo.getDataType() == ModelStorageBase.BYTE
-                                     || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-                                 image.importData((fileInfo.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), (byte[]) data, false);
-                             } else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
-                                 image.importData((fileInfo.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), (float[]) data, false);
-                             } else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
-                                 image.importData((fileInfo.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), (double[]) data, false);
-                             }
-            				volCounter++;
-            				if(j!=0 && j%numVols == 0) {
-            					counter++;
-            				}
-                		}else {
-                			start[0] = j;
-                			 data = imageData.read();
-                			 if (fileInfo.getDataType() == ModelStorageBase.SHORT
-                                     || fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                                 image.importData(j * sliceSize, (short[]) data, false);
-                             } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
-                                     || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
-                                 image.importData(j * sliceSize, (int[]) data, false);
-                             } else if (fileInfo.getDataType() == ModelStorageBase.BYTE
-                                     || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-                                 image.importData(j * sliceSize, (byte[]) data, false);
-                             } else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
-                                 image.importData(j * sliceSize, (float[]) data, false);
-                             } else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
-                                 image.importData(j * sliceSize, (double[]) data, false);
-                             }
-                		}
-
-                        fireProgressStateChanged(Math.round(5 + ((float) j / numImages) * 95));
+                        if (fileInfo.getDataType() == ModelStorageBase.SHORT
+                                || fileInfo.getDataType() == ModelStorageBase.USHORT) {
+                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                    + (sliceSize * counter), (short[]) data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
+                                || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
+                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                    + (sliceSize * counter), (int[]) data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.BYTE
+                                || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
+                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                    + (sliceSize * counter), (byte[]) data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
+                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                    + (sliceSize * counter), (float[]) data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
+                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                    + (sliceSize * counter), (double[]) data, false);
+                        }
+                        volCounter++;
+                        if (j != 0 && j % numVols == 0) {
+                            counter++;
+                        }
+                    } else {
+                        start[0] = j;
+                        data = imageData.read();
+                        if (fileInfo.getDataType() == ModelStorageBase.SHORT
+                                || fileInfo.getDataType() == ModelStorageBase.USHORT) {
+                            image.importData(j * sliceSize, (short[]) data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
+                                || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
+                            image.importData(j * sliceSize, (int[]) data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.BYTE
+                                || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
+                            image.importData(j * sliceSize, (byte[]) data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
+                            image.importData(j * sliceSize, (float[]) data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
+                            image.importData(j * sliceSize, (double[]) data, false);
+                        }
                     }
-                }
 
-        else if (currentNode.getUserObject().toString().equals(FileMincHDF.LEAF_IMAGE_MAX)) {
+                    fireProgressStateChanged(Math.round(5 + ((float) j / numImages) * 95));
+                }
+            }
+
+            else if (currentNode.getUserObject().toString().equals(FileMincHDF.LEAF_IMAGE_MAX)) {
                 final H5ScalarDS data = (H5ScalarDS) currentNode.getUserObject();
-                
+
                 final List<Attribute> imageMetaData = ((HObject) currentNode.getUserObject()).getMetadata();
                 final Iterator<Attribute> it = imageMetaData.iterator();
                 while (it.hasNext()) {
@@ -852,8 +815,6 @@ public class FileMincHDF extends FileBase {
             }
 
         }
-        
-       
 
         // create the array of fileinfos for the model image
         final FileInfoMincHDF[] fileInfos = new FileInfoMincHDF[numImages];
@@ -867,11 +828,12 @@ public class FileMincHDF extends FileBase {
 
             rescaleSlope = new double[numImages];
             rescaleIntercept = new double[numImages];
-            FileInfoMincHDF.calculateRescaleIntercept(rescaleIntercept, rescaleSlope, imageMax, imageMin, fileInfo.getValidRange(), hasImageMinMaxDimOrder);
+            FileInfoMincHDF.calculateRescaleIntercept(rescaleIntercept, rescaleSlope, imageMax, imageMin, fileInfo
+                    .getValidRange(), hasImageMinMaxDimOrder);
             fileInfos[0].setRescaleIntercept(rescaleIntercept[0]);
             fileInfos[0].setRescaleSlope(rescaleSlope[0]);
             fileInfos[0].setValidRange(fileInfo.getValidRange());
- 
+
         }
 
         // set the dicom tag hashtable in the first file info
@@ -881,23 +843,23 @@ public class FileMincHDF extends FileBase {
 
         // set the origin on the first slice
         if (step != null && dirCosines != null && isCentered != null) {
-        	if(is4D) {
-        		double[] step2 = {step[0], step[1], step[2]};
-        		double[][] dirCosines2 = new double[3][3];
-        		for(int m=0;m<3;m++) {
-        			dirCosines2[m][0] = dirCosines[m][0];
-        			dirCosines2[m][1] = dirCosines[m][1];
-        			dirCosines2[m][2] = dirCosines[m][2];
-        		}
-        		boolean[] isCentered2 = {isCentered[0], isCentered[1],isCentered[2]};
-        		double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
-        		fileInfos[0].setStartLocations(fileInfos[0].getConvertStartLocationsToDICOM(step2, dirCosines2,
+            if (is4D) {
+                final double[] step2 = {step[0], step[1], step[2]};
+                final double[][] dirCosines2 = new double[3][3];
+                for (int m = 0; m < 3; m++) {
+                    dirCosines2[m][0] = dirCosines[m][0];
+                    dirCosines2[m][1] = dirCosines[m][1];
+                    dirCosines2[m][2] = dirCosines[m][2];
+                }
+                final boolean[] isCentered2 = {isCentered[0], isCentered[1], isCentered[2]};
+                final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
+                fileInfos[0].setStartLocations(fileInfos[0].getConvertStartLocationsToDICOM(step2, dirCosines2,
                         isCentered2, 0, mincStartLoc2));
-        		
-        	}else {
-            fileInfos[0].setStartLocations(fileInfos[0].getConvertStartLocationsToDICOM(step, dirCosines, isCentered,
-                    0, mincStartLoc));
-        	}
+
+            } else {
+                fileInfos[0].setStartLocations(fileInfos[0].getConvertStartLocationsToDICOM(step, dirCosines,
+                        isCentered, 0, mincStartLoc));
+            }
         }
 
         for (int i = 1; i < numImages; i++) {
@@ -911,29 +873,28 @@ public class FileMincHDF extends FileBase {
 
             // set start locations (convert to dicom)
             if (step != null && dirCosines != null && isCentered != null) {
-            	if(is4D) {
-            		double[] step2 = {step[0], step[1], step[2]};
-            		double[][] dirCosines2 = new double[3][3];
-            		for(int m=0;m<3;m++) {
-            			dirCosines2[m][0] = dirCosines[m][0];
-            			dirCosines2[m][1] = dirCosines[m][1];
-            			dirCosines2[m][2] = dirCosines[m][2];
-            		}
-            		boolean[] isCentered2 = {isCentered[0], isCentered[1],isCentered[2]};
-            		double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
-            		fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step2, dirCosines2,
+                if (is4D) {
+                    final double[] step2 = {step[0], step[1], step[2]};
+                    final double[][] dirCosines2 = new double[3][3];
+                    for (int m = 0; m < 3; m++) {
+                        dirCosines2[m][0] = dirCosines[m][0];
+                        dirCosines2[m][1] = dirCosines[m][1];
+                        dirCosines2[m][2] = dirCosines[m][2];
+                    }
+                    final boolean[] isCentered2 = {isCentered[0], isCentered[1], isCentered[2]};
+                    final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
+                    fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step2, dirCosines2,
                             isCentered2, i, mincStartLoc2));
-            		
-            	}else {
-                fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step, dirCosines,
-                        isCentered, i, mincStartLoc));
-            	}
+
+                } else {
+                    fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step, dirCosines,
+                            isCentered, i, mincStartLoc));
+                }
             }
 
         }
-        
-        
-        //Rescale actual image data
+
+        // Rescale actual image data
         byte[] byteBuff = null;
         short[] shortBuff = null;
         int[] intBuff = null;
@@ -949,64 +910,65 @@ public class FileMincHDF extends FileBase {
         intercept = 0.0;
         float f;
         if (fileInfo.getDataType() == ModelStorageBase.SHORT || fileInfo.getDataType() == ModelStorageBase.USHORT) {
-        	shortBuff = new short[image.getExtents()[0] * image.getExtents()[1]];
-        } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
-        	intBuff = new int[image.getExtents()[0] * image.getExtents()[1]];
+            shortBuff = new short[image.getExtents()[0] * image.getExtents()[1]];
+        } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
+                || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
+            intBuff = new int[image.getExtents()[0] * image.getExtents()[1]];
         } else if (fileInfo.getDataType() == ModelStorageBase.BYTE || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-        	byteBuff = new byte[image.getExtents()[0] * image.getExtents()[1]];
+            byteBuff = new byte[image.getExtents()[0] * image.getExtents()[1]];
         } else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
-        	floatBuff = new float[image.getExtents()[0] * image.getExtents()[1]];
+            floatBuff = new float[image.getExtents()[0] * image.getExtents()[1]];
         } else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
-        	doubleBuff = new double[image.getExtents()[0] * image.getExtents()[1]];
+            doubleBuff = new double[image.getExtents()[0] * image.getExtents()[1]];
         }
         for (int j = 0; j < numImages; j++) {
-        	slope = fileInfos[j].getRescaleSlope();
+            slope = fileInfos[j].getRescaleSlope();
             intercept = fileInfos[j].getRescaleIntercept();
-        	if (fileInfo.getDataType() == ModelStorageBase.SHORT || fileInfo.getDataType() == ModelStorageBase.USHORT) {
-        		image.exportSliceXY(j, shortBuff);
-        		for(int k=0;k<shortBuff.length;k++) {
-        			shortVal = shortBuff[k];
-        			f = (float)((shortVal * slope) + intercept);
-        			shortBuff[k] = (short)f;
-        		}
-        		image.importData(j * image.getExtents()[0] * image.getExtents()[1], shortBuff, false);
-            } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
-            	image.exportSliceXY(j, intBuff);
-            	for(int k=0;k<intBuff.length;k++) {
-        			intVal = intBuff[k];
-        			f = (float)((intVal * slope) + intercept);
-        			intBuff[k] = (int)f;
-        		}
-        		image.importData(j * image.getExtents()[0] * image.getExtents()[1], intBuff, false);
-            } else if (fileInfo.getDataType() == ModelStorageBase.BYTE || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-            	image.exportSliceXY(j, byteBuff);
-            	for(int k=0;k<byteBuff.length;k++) {
-        			byteVal = byteBuff[k];
-        			f = (float)((byteVal * slope) + intercept);
-        			byteBuff[k] = (byte)f;
-        		}
-        		image.importData(j * image.getExtents()[0] * image.getExtents()[1], byteBuff, false);
+            if (fileInfo.getDataType() == ModelStorageBase.SHORT || fileInfo.getDataType() == ModelStorageBase.USHORT) {
+                image.exportSliceXY(j, shortBuff);
+                for (int k = 0; k < shortBuff.length; k++) {
+                    shortVal = shortBuff[k];
+                    f = (float) ( (shortVal * slope) + intercept);
+                    shortBuff[k] = (short) f;
+                }
+                image.importData(j * image.getExtents()[0] * image.getExtents()[1], shortBuff, false);
+            } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
+                    || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
+                image.exportSliceXY(j, intBuff);
+                for (int k = 0; k < intBuff.length; k++) {
+                    intVal = intBuff[k];
+                    f = (float) ( (intVal * slope) + intercept);
+                    intBuff[k] = (int) f;
+                }
+                image.importData(j * image.getExtents()[0] * image.getExtents()[1], intBuff, false);
+            } else if (fileInfo.getDataType() == ModelStorageBase.BYTE
+                    || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
+                image.exportSliceXY(j, byteBuff);
+                for (int k = 0; k < byteBuff.length; k++) {
+                    byteVal = byteBuff[k];
+                    f = (float) ( (byteVal * slope) + intercept);
+                    byteBuff[k] = (byte) f;
+                }
+                image.importData(j * image.getExtents()[0] * image.getExtents()[1], byteBuff, false);
             } else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
-            	image.exportSliceXY(j, floatBuff);
-            	for(int k=0;k<floatBuff.length;k++) {
-        			floatVal = floatBuff[k];
-        			f = (float)((floatVal * slope) + intercept);
-        			floatBuff[k] = f;
-        		}
-        		image.importData(j * image.getExtents()[0] * image.getExtents()[1], floatBuff, false);
+                image.exportSliceXY(j, floatBuff);
+                for (int k = 0; k < floatBuff.length; k++) {
+                    floatVal = floatBuff[k];
+                    f = (float) ( (floatVal * slope) + intercept);
+                    floatBuff[k] = f;
+                }
+                image.importData(j * image.getExtents()[0] * image.getExtents()[1], floatBuff, false);
             } else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
-            	image.exportSliceXY(j, doubleBuff);
-            	for(int k=0;k<doubleBuff.length;k++) {
-        			doubleVal = doubleBuff[k];
-        			f = (float)((doubleVal * slope) + intercept);
-        			doubleBuff[k] = (double)f;
-        		}
-        		image.importData(j * image.getExtents()[0] * image.getExtents()[1], doubleBuff, false);
+                image.exportSliceXY(j, doubleBuff);
+                for (int k = 0; k < doubleBuff.length; k++) {
+                    doubleVal = doubleBuff[k];
+                    f = (float) ( (doubleVal * slope) + intercept);
+                    doubleBuff[k] = f;
+                }
+                image.importData(j * image.getExtents()[0] * image.getExtents()[1], doubleBuff, false);
             }
         }
-        
-        
-        
+
         image.setFileInfo(fileInfos);
         image.calcMinMax();
 
@@ -1056,10 +1018,10 @@ public class FileMincHDF extends FileBase {
     private void buildDimensionNode(final ModelImage image, final FileWriteOptions options, final FileFormat format,
             final HDFNode mincNode, final DefaultTreeModel model) throws Exception {
 
-    	boolean is4D = false;
-    	if(image.is4DImage()) {
-    		is4D = true;
-    	}
+        boolean is4D = false;
+        if (image.is4DImage()) {
+            is4D = true;
+        }
         HDFNode dimNode = null;
         final Group dimGroup = format.createGroup("dimensions", (Group) mincNode.getUserObject());
 
@@ -1128,9 +1090,9 @@ public class FileMincHDF extends FileBase {
         double tstart = 0;
         double tstep = 1;
 
-        if(is4D) {
-        	tstart = options.getTStart();
-        	tstep = options.getTSpace();
+        if (is4D) {
+            tstart = options.getTStart();
+            tstep = options.getTSpace();
         }
 
         switch (options.getAxisOrientation()[2]) {
@@ -1339,7 +1301,7 @@ public class FileMincHDF extends FileBase {
 
         // units
         attrDims[0] = 1;
-        
+
         unitsString = new String[] {Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(1)).getAbbrev()};
         dType = fileFormat.createDatatype(Datatype.CLASS_STRING, alignmentString[0].length() + 1, -1, -1);
         unitsAttr = new Attribute("units", dType, attrDims);
@@ -1355,8 +1317,8 @@ public class FileMincHDF extends FileBase {
         ySpaceObj.writeMetadata(lengthAttr);
 
         if (image.getExtents().length > 2) {
-        	int endSlice = options.getEndSlice();
-        	int beginSlice = options.getBeginSlice();
+            final int endSlice = options.getEndSlice();
+            final int beginSlice = options.getBeginSlice();
 
             // ZSPACE NODE
             final H5ScalarDS zSpaceObj = (H5ScalarDS) fileFormat.createScalarDS("zspace", dimGroup, datatype, dims,
@@ -1407,7 +1369,8 @@ public class FileMincHDF extends FileBase {
 
             // units
             attrDims[0] = 1;
-            unitsString = new String[] {Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(1)).getAbbrev()};
+            unitsString = new String[] {Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(1))
+                    .getAbbrev()};
             dType = fileFormat.createDatatype(Datatype.CLASS_STRING, alignmentString[0].length() + 1, -1, -1);
             unitsAttr = new Attribute("units", dType, attrDims);
             unitsAttr.setValue(unitsString);
@@ -1417,21 +1380,20 @@ public class FileMincHDF extends FileBase {
             zSpaceObj.writeMetadata(spaceTypeAttr);
 
             // length
-            length = new int[] {(endSlice-beginSlice)+1};
+            length = new int[] {(endSlice - beginSlice) + 1};
             lengthAttr.setValue(length);
             zSpaceObj.writeMetadata(lengthAttr);
-            
-            
-            if(is4D) {
-            	int endTime = options.getEndTime();
-            	int beginTime = options.getBeginTime();
-            	
-            	// ZSPACE NODE
+
+            if (is4D) {
+                final int endTime = options.getEndTime();
+                final int beginTime = options.getBeginTime();
+
+                // ZSPACE NODE
                 final H5ScalarDS tSpaceObj = (H5ScalarDS) fileFormat.createScalarDS("time", dimGroup, datatype, dims,
                         maxdims, null, 0, null);
                 final DefaultMutableTreeNode tSpaceNode = new DefaultMutableTreeNode(tSpaceObj);
                 model.insertNodeInto(tSpaceNode, dimNode, dimNode.getChildCount());
-                
+
                 // varid
                 zSpaceObj.writeMetadata(varIDAttr);
 
@@ -1440,7 +1402,7 @@ public class FileMincHDF extends FileBase {
 
                 // version
                 zSpaceObj.writeMetadata(versionAttr);
-                
+
                 // alignment
                 zSpaceObj.writeMetadata(alignmentAttr);
 
@@ -1453,11 +1415,11 @@ public class FileMincHDF extends FileBase {
                 // start (origin)
                 startAttr.setValue(new double[] {tstart});
                 tSpaceObj.writeMetadata(startAttr);
-                
-                
+
                 // units
                 attrDims[0] = 1;
-                unitsString = new String[] {Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(3)).getAbbrev()};
+                unitsString = new String[] {Unit.getUnitFromLegacyNum(image.getFileInfo()[0].getUnitsOfMeasure(3))
+                        .getAbbrev()};
                 dType = fileFormat.createDatatype(Datatype.CLASS_STRING, alignmentString[0].length() + 1, -1, -1);
                 unitsAttr = new Attribute("units", dType, attrDims);
                 unitsAttr.setValue(unitsString);
@@ -1467,13 +1429,13 @@ public class FileMincHDF extends FileBase {
                 tSpaceObj.writeMetadata(spaceTypeAttr);
 
                 // length
-                length = new int[] {(endTime-beginTime)+1};
+                length = new int[] {(endTime - beginTime) + 1};
                 lengthAttr.setValue(length);
                 tSpaceObj.writeMetadata(lengthAttr);
 
+            }
+
         }
-      
-    }
 
     }
 
@@ -1571,12 +1533,12 @@ public class FileMincHDF extends FileBase {
      */
     private void buildImageNode(final ModelImage image, final FileWriteOptions options, final FileFormat format,
             final HDFNode mincNode, final DefaultTreeModel model) throws Exception {
-    	
-    	boolean is4D = false;
-    	if(image.is4DImage()) {
-    		is4D = true;
-    	}
-    	
+
+        boolean is4D = false;
+        if (image.is4DImage()) {
+            is4D = true;
+        }
+
         // create the image node (root of image)
         HDFNode imageNode = null;
         final Group imageGroup = format.createGroup("image", (Group) mincNode.getUserObject());
@@ -1651,17 +1613,15 @@ public class FileMincHDF extends FileBase {
         }
 
         final Datatype datatype = fileFormat.createDatatype(tclass, tsize, torder, tsign);
-        
-        
-        int beginSlice = options.getBeginSlice();
-        int endSlice = options.getEndSlice();
+
+        final int beginSlice = options.getBeginSlice();
+        final int endSlice = options.getEndSlice();
         int beginTime = 0;
         int endTime = 0;
-        if(image.is4DImage()) {
-        	beginTime = options.getBeginTime();
-        	endTime = options.getEndTime();
+        if (image.is4DImage()) {
+            beginTime = options.getBeginTime();
+            endTime = options.getEndTime();
         }
-        
 
         long[] dims = new long[image.getExtents().length];
         long[] maxdims = new long[dims.length];
@@ -1671,8 +1631,8 @@ public class FileMincHDF extends FileBase {
             maxdims[0] = dims[0];
             maxdims[1] = dims[1];
         } else {
-        	if(is4D) {
-        		// order is t, z, y, x
+            if (is4D) {
+                // order is t, z, y, x
                 dims[0] = image.getExtents()[3];
                 dims[1] = image.getExtents()[2];
                 dims[2] = image.getExtents()[1];
@@ -1682,16 +1642,16 @@ public class FileMincHDF extends FileBase {
                 maxdims[1] = dims[1];
                 maxdims[2] = dims[2];
                 maxdims[3] = dims[3];
-        	}else {
-            // order is z, y, x
-            dims[0] = (endSlice - beginSlice) + 1;
-            dims[1] = image.getExtents()[1];
-            dims[2] = image.getExtents()[0];
+            } else {
+                // order is z, y, x
+                dims[0] = (endSlice - beginSlice) + 1;
+                dims[1] = image.getExtents()[1];
+                dims[2] = image.getExtents()[0];
 
-            maxdims[0] = dims[0];
-            maxdims[1] = dims[1];
-            maxdims[2] = dims[2];
-        }
+                maxdims[0] = dims[0];
+                maxdims[1] = dims[1];
+                maxdims[2] = dims[2];
+            }
 
         }
 
@@ -1706,19 +1666,50 @@ public class FileMincHDF extends FileBase {
         // import the data
         final long[] start = imageObj.getStartDims(); // the starting dims
 
+        // TODO: fix writing for hdf-java-2.7
+        /*
+         * final int[] selectedIndex = imageObj.getSelectedIndex(); final long[] selected = imageObj.getSelectedDims();
+         * final String dimOrder = buildDimOrder(options.getAxisOrientation(), is4D); final String[] dimStrings =
+         * dimOrder.split(",");
+         */
+
+        /*
+         * selectedIndex[0] = 2; selected[0] = 26; selectedIndex[1] = 1; selected[1] = 512; selectedIndex[2] = 0;
+         * selected[2] = 512;
+         */
+
+        /*
+         * dimReorderIndexes = new int[dimStrings.length];
+         * 
+         * if (is4D) { for (int i = 0; i < dimStrings.length; i++) { if (dimStrings[i].equals(FileMincHDF.LEAF_X_SPACE)) {
+         * dimReorderIndexes[i] = 2; } else if (dimStrings[i].equals(FileMincHDF.LEAF_Y_SPACE)) { dimReorderIndexes[i] =
+         * 1; } else if (dimStrings[i].equals(FileMincHDF.LEAF_Z_SPACE)) { dimReorderIndexes[i] = 0; } else if
+         * (dimStrings[i].equals(FileMincHDF.LEAF_T_SPACE)) { dimReorderIndexes[i] = 3; } } } else { for (int i = 0; i <
+         * dimStrings.length; i++) { if (dimStrings[i].equals(FileMincHDF.LEAF_X_SPACE)) { dimReorderIndexes[i] = 2; }
+         * else if (dimStrings[i].equals(FileMincHDF.LEAF_Y_SPACE)) { dimReorderIndexes[i] = 1; } else if
+         * (dimStrings[i].equals(FileMincHDF.LEAF_Z_SPACE)) { dimReorderIndexes[i] = 0; } } }
+         * 
+         * for (int di = 0; di < dims.length; di++) { final int mipavOrder = getMipavOrderFromDimNode(dimStrings[di]);
+         * selectedIndex[mipavOrder] = di; selected[mipavOrder] = dims[mipavOrder]; }
+         * 
+         * if ( !is4D) { // set the out-of-plane selection size to 1 selected[selectedIndex[2]] = 1; } else { // set the
+         * time selection size to 1 selected[selectedIndex[3]] = 1; }
+         */
+
+        /* final int sliceSize = (int) (dims[0] * dims[1]); */
+
         final int sliceSize = image.getSliceSize();
 
         int numImages = 1;
         if (image.getExtents().length == 3) {
-            //numImages = image.getExtents()[2];
-            
-        	numImages = (endSlice - beginSlice) + 1;
+            // numImages = image.getExtents()[2];
+
+            numImages = (endSlice - beginSlice) + 1;
         } else if (image.getExtents().length == 4) {
             numImages = image.getExtents()[2] * image.getExtents()[3];
-            
-            numImages = ((endSlice - beginSlice) + 1) * ((endTime - beginTime) + 1);
-        }
 
+            numImages = ( (endSlice - beginSlice) + 1) * ( (endTime - beginTime) + 1);
+        }
 
         Object dataImportObj = null;
         switch (mDataType) {
@@ -1749,23 +1740,24 @@ public class FileMincHDF extends FileBase {
         int volCounter = 0;
         int counter = 0;
         int numVols = 0;
-        if(is4D) {
-        	numVols = image.getExtents()[3];
+        if (is4D) {
+            numVols = image.getExtents()[3];
         }
-        
-        //sometimes the minc2 file comes in with just a single min or max....in that case, we want to write it out like that
+
+        // sometimes the minc2 file comes in with just a single min or max....in that case, we want to write it out like
+        // that
         boolean hasImageMinMaxDimOrder = false;
         if (image.getFileInfo()[0].getFileFormat() == FileUtility.MINC_HDF) {
-        	hasImageMinMaxDimOrder = ((FileInfoMincHDF)image.getFileInfo()[0]).isHasImageMinMaxDimOrder();
+            hasImageMinMaxDimOrder = ((FileInfoMincHDF) image.getFileInfo()[0]).isHasImageMinMaxDimOrder();
         }
 
         double[] mins = new double[numImages];
         double[] maxs = new double[numImages];
         double[] intercepts = new double[numImages];
         double[] slopes = new double[numImages];
-        
-        if(!hasImageMinMaxDimOrder) {
-        	mins = new double[1];
+
+        if ( !hasImageMinMaxDimOrder) {
+            mins = new double[1];
             maxs = new double[1];
             intercepts = new double[1];
             slopes = new double[1];
@@ -1774,8 +1766,8 @@ public class FileMincHDF extends FileBase {
         double vmin, vmax; // volume min and max
 
         if (image.getFileInfo()[0].getFileFormat() == FileUtility.MINC_HDF) {
-        	vmin = ((FileInfoMincHDF) (image.getFileInfo()[0])).getValidRange()[0];
-        	vmax = ((FileInfoMincHDF) (image.getFileInfo()[0])).getValidRange()[1];
+            vmin = ((FileInfoMincHDF) (image.getFileInfo()[0])).getValidRange()[0];
+            vmax = ((FileInfoMincHDF) (image.getFileInfo()[0])).getValidRange()[1];
         } else {
             vmin = image.getMin();
             vmax = image.getMax();
@@ -1787,211 +1779,220 @@ public class FileMincHDF extends FileBase {
             slopeDivisor = 1;
         }
 
-        //int jp;
+        // int jp;
         final float[] sliceData = new float[sliceSize];
         double smin, smax; // slice min and max
-        
+
         int begin = 0;
         int end = 0;
-        
-        if(image.is3DImage()) {
-        	begin = beginSlice;
-        	end = endSlice;
+
+        if (image.is3DImage()) {
+            begin = beginSlice;
+            end = endSlice;
         }
-        if(image.is4DImage()) {
-        	begin = beginSlice * beginTime;
-        	end = endSlice * endTime;
-        }
-        
-        if(!hasImageMinMaxDimOrder) {
-        	 if ( (image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT)
-	                    || (image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE)) {
-	                slopes[0] = 1.0;
-	                intercepts[0] = 0.0;
-	                mins[0] = vmin;
-	                maxs[0] = vmax;
-	            } else {
-	            	 mins[0] = image.getMin();
-		             maxs[0] = image.getMax();
-		
-		             slopes[0] = (maxs[0] - mins[0]) / slopeDivisor;
-		      
-		             intercepts[0] = mins[0] - (slopes[0] * vmin);
-	            }
-        }else {
-	        for (int j = begin,jp=0; j <= end; j++,jp++) {
-	            if ( (image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT)
-	                    || (image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE)) {
-	                slopes[jp] = 1.0;
-	                intercepts[jp] = 0.0;
-	                mins[jp] = vmin;
-	                maxs[jp] = vmax;
-	            } else {
-	
-	                image.exportData(j * sliceSize, sliceSize, sliceData);
-	                smin = Double.MAX_VALUE;
-	                smax = -Double.MAX_VALUE;
-	
-	                // calculate min max values per slice
-	                for (final float element : sliceData) {
-	
-	                    if (element < smin) {
-	                        smin = element;
-	                    }
-	
-	                    if (element > smax) {
-	                        smax = element;
-	                    }
-	                }
-	
-	                mins[jp] = smin;
-	                maxs[jp] = smax;
-	
-	                slopes[jp] = (smax - smin) / slopeDivisor;
-	      
-	                intercepts[jp] = smin - (slopes[jp] * vmin);
-	            }
-	        }
+        if (image.is4DImage()) {
+            begin = beginSlice * beginTime;
+            end = endSlice * endTime;
         }
 
-       float f;
-       sliceCounter = 0;
-       volCounter = 0;
-       counter = 0;
-        for (int j = begin,jp=0; j <= end; j++,jp++) {
-        	
-        	if(is4D) {
-        		if(j%image.getExtents()[3] == 0) {
-    				start[1] = sliceCounter;
-    			}
-				if(volCounter >= numVols) {
-					volCounter = 0;
-				}
-				start[0] = volCounter;
+        if ( !hasImageMinMaxDimOrder) {
+            if ( (image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT)
+                    || (image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE)) {
+                slopes[0] = 1.0;
+                intercepts[0] = 0.0;
+                mins[0] = vmin;
+                maxs[0] = vmax;
+            } else {
+                mins[0] = image.getMin();
+                maxs[0] = image.getMax();
 
-        	}else {
-            start[0] = jp;
+                slopes[0] = (maxs[0] - mins[0]) / slopeDivisor;
 
-        	}
+                intercepts[0] = mins[0] - (slopes[0] * vmin);
+            }
+        } else {
+            for (int j = begin, jp = 0; j <= end; j++, jp++) {
+                if ( (image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT)
+                        || (image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE)) {
+                    slopes[jp] = 1.0;
+                    intercepts[jp] = 0.0;
+                    mins[jp] = vmin;
+                    maxs[jp] = vmax;
+                } else {
+
+                    image.exportData(j * sliceSize, sliceSize, sliceData);
+                    smin = Double.MAX_VALUE;
+                    smax = -Double.MAX_VALUE;
+
+                    // calculate min max values per slice
+                    for (final float element : sliceData) {
+
+                        if (element < smin) {
+                            smin = element;
+                        }
+
+                        if (element > smax) {
+                            smax = element;
+                        }
+                    }
+
+                    mins[jp] = smin;
+                    maxs[jp] = smax;
+
+                    slopes[jp] = (smax - smin) / slopeDivisor;
+
+                    intercepts[jp] = smin - (slopes[jp] * vmin);
+                }
+            }
+        }
+
+        float f;
+        sliceCounter = 0;
+        volCounter = 0;
+        counter = 0;
+        for (int j = begin, jp = 0; j <= end; j++, jp++) {
+
+            if (is4D) {
+                if (j % image.getExtents()[3] == 0) {
+                    start[1] = sliceCounter;
+                }
+                if (volCounter >= numVols) {
+                    volCounter = 0;
+                }
+                start[0] = volCounter;
+
+            } else {
+                start[0] = jp;
+            }
 
             switch (mDataType) {
                 case ModelStorageBase.UBYTE:
                 case ModelStorageBase.BYTE:
-                	if(is4D) {
-                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (byte[]) dataImportObj);
-                		for(int k=0;k<((byte[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((byte[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((byte[]) dataImportObj)[k] - intercepts[(image.getExtents()[2] * volCounter) + counter]) / slopes[(image.getExtents()[2] * volCounter) + counter]);
-                			}
-                			((byte[]) dataImportObj)[k] = (byte)(Math.round(f));
-                		}
-                	}else {
-                    image.exportData(j * sliceSize, sliceSize, (byte[]) dataImportObj);
-                		for(int k=0;k<((byte[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((byte[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((byte[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
-                			}
-                			((byte[]) dataImportObj)[k] = (byte)(Math.round(f));
-                		}
-                	}
+                    if (is4D) {
+                        image.exportData( (image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter),
+                                sliceSize, (byte[]) dataImportObj);
+                        for (int k = 0; k < ((byte[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((byte[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((byte[]) dataImportObj)[k] - intercepts[ (image.getExtents()[2] * volCounter)
+                                        + counter]) / slopes[ (image.getExtents()[2] * volCounter) + counter]);
+                            }
+                            ((byte[]) dataImportObj)[k] = (byte) (Math.round(f));
+                        }
+                    } else {
+                        image.exportData(j * sliceSize, sliceSize, (byte[]) dataImportObj);
+                        for (int k = 0; k < ((byte[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((byte[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((byte[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
+                            }
+                            ((byte[]) dataImportObj)[k] = (byte) (Math.round(f));
+                        }
+                    }
                     break;
                 case ModelStorageBase.USHORT:
                 case ModelStorageBase.SHORT:
-                	if(is4D) {
-                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (short[]) dataImportObj);
-                		for(int k=0;k<((short[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((short[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((short[]) dataImportObj)[k] - intercepts[(image.getExtents()[2] * volCounter) + counter]) / slopes[(image.getExtents()[2] * volCounter) + counter]);
-                			}
-                			((short[]) dataImportObj)[k] = (short)(Math.round(f));
-                		}
-                	}else {
-                    image.exportData(j * sliceSize, sliceSize, (short[]) dataImportObj);
-                		for(int k=0;k<((short[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((short[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((short[]) dataImportObj)[k] - intercepts[jp]) / slopes[jp]);
-                			}
-                			((short[]) dataImportObj)[k] = (short)(Math.round(f));
-                		}
-                	}
+                    if (is4D) {
+                        image.exportData( (image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter),
+                                sliceSize, (short[]) dataImportObj);
+                        for (int k = 0; k < ((short[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((short[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((short[]) dataImportObj)[k] - intercepts[ (image.getExtents()[2] * volCounter)
+                                        + counter]) / slopes[ (image.getExtents()[2] * volCounter) + counter]);
+                            }
+                            ((short[]) dataImportObj)[k] = (short) (Math.round(f));
+                        }
+                    } else {
+                        image.exportData(j * sliceSize, sliceSize, (short[]) dataImportObj);
+                        for (int k = 0; k < ((short[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((short[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((short[]) dataImportObj)[k] - intercepts[jp]) / slopes[jp]);
+                            }
+                            ((short[]) dataImportObj)[k] = (short) (Math.round(f));
+                        }
+                    }
                     break;
                 case ModelStorageBase.UINTEGER:
                 case ModelStorageBase.INTEGER:
-                	if(is4D) {
-                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (int[]) dataImportObj);
-                		for(int k=0;k<((int[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((int[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((int[]) dataImportObj)[k] - intercepts[(image.getExtents()[2] * volCounter) + counter]) / slopes[(image.getExtents()[2] * volCounter) + counter]);
-                			}
-                			((int[]) dataImportObj)[k] = (int)(Math.round(f));
-                		}
-                	}else {
-                    image.exportData(j * sliceSize, sliceSize, (int[]) dataImportObj);
-                		for(int k=0;k<((int[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((int[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((int[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
-                			}
-                			((int[]) dataImportObj)[k] = (int)(Math.round(f));
-                		}
-                	}
+                    if (is4D) {
+                        image.exportData( (image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter),
+                                sliceSize, (int[]) dataImportObj);
+                        for (int k = 0; k < ((int[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((int[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((int[]) dataImportObj)[k] - intercepts[ (image.getExtents()[2] * volCounter)
+                                        + counter]) / slopes[ (image.getExtents()[2] * volCounter) + counter]);
+                            }
+                            ((int[]) dataImportObj)[k] = (Math.round(f));
+                        }
+                    } else {
+                        image.exportData(j * sliceSize, sliceSize, (int[]) dataImportObj);
+                        for (int k = 0; k < ((int[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((int[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((int[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
+                            }
+                            ((int[]) dataImportObj)[k] = (Math.round(f));
+                        }
+                    }
                     break;
                 case ModelStorageBase.FLOAT:
-                	if(is4D) {
-                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (float[]) dataImportObj);
-                		for(int k=0;k<((float[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((float[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((float[]) dataImportObj)[k] - intercepts[(image.getExtents()[2] * volCounter) + counter]) / slopes[(image.getExtents()[2] * volCounter) + counter]);
-                			}
-                			((float[]) dataImportObj)[k] = f;
-                		}
-                	}else {
-                    image.exportData(j * sliceSize, sliceSize, (float[]) dataImportObj);
-                		for(int k=0;k<((float[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((float[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((float[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
-                			}
-                			((float[]) dataImportObj)[k] = f;
-                		}
-                	}
+                    if (is4D) {
+                        image.exportData( (image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter),
+                                sliceSize, (float[]) dataImportObj);
+                        for (int k = 0; k < ((float[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((float[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((float[]) dataImportObj)[k] - intercepts[ (image.getExtents()[2] * volCounter)
+                                        + counter]) / slopes[ (image.getExtents()[2] * volCounter) + counter]);
+                            }
+                            ((float[]) dataImportObj)[k] = f;
+                        }
+                    } else {
+                        image.exportData(j * sliceSize, sliceSize, (float[]) dataImportObj);
+                        for (int k = 0; k < ((float[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((float[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((float[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
+                            }
+                            ((float[]) dataImportObj)[k] = f;
+                        }
+                    }
                     break;
                 case ModelStorageBase.DOUBLE:
-                	if(is4D) {
-                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (double[]) dataImportObj);
-                		for(int k=0;k<((double[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((double[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((double[]) dataImportObj)[k] - intercepts[(image.getExtents()[2] * volCounter) + counter]) / slopes[(image.getExtents()[2] * volCounter) + counter]);
-                			}
-                			((double[]) dataImportObj)[k] = (double)f;
-                		}
-                	}else {
-                    image.exportData(j * sliceSize, sliceSize, (double[]) dataImportObj);
-                		for(int k=0;k<((double[]) dataImportObj).length;k++) {
-                			if(!hasImageMinMaxDimOrder) {
-                				f = (float)((((double[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
-                			}else {
-                				f = (float)((((double[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
-                			}
-                			((double[]) dataImportObj)[k] = (double)(f);
-                		}
-                	}
+                    if (is4D) {
+                        image.exportData( (image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter),
+                                sliceSize, (double[]) dataImportObj);
+                        for (int k = 0; k < ((double[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((double[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((double[]) dataImportObj)[k] - intercepts[ (image.getExtents()[2] * volCounter)
+                                        + counter]) / slopes[ (image.getExtents()[2] * volCounter) + counter]);
+                            }
+                            ((double[]) dataImportObj)[k] = f;
+                        }
+                    } else {
+                        image.exportData(j * sliceSize, sliceSize, (double[]) dataImportObj);
+                        for (int k = 0; k < ((double[]) dataImportObj).length; k++) {
+                            if ( !hasImageMinMaxDimOrder) {
+                                f = (float) ( ( ((double[]) dataImportObj)[k] - intercepts[0]) / slopes[0]);
+                            } else {
+                                f = (float) ( ( ((double[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
+                            }
+                            ((double[]) dataImportObj)[k] = (f);
+                        }
+                    }
                     break;
                 default:
                     System.err.println("Third switch(mDataType) not valid yet mDataType = " + mDataType);
@@ -2000,14 +2001,14 @@ public class FileMincHDF extends FileBase {
                     return;
             }
             imageObj.write(dataImportObj);
-            if(is4D) {
-            	volCounter++;
-				if(j!=0 && j%numVols == 0) {
-					counter++;
-				}
-				if(j%image.getExtents()[3] == 0) {
-    				sliceCounter++;
-    			}
+            if (is4D) {
+                volCounter++;
+                if (j != 0 && j % numVols == 0) {
+                    counter++;
+                }
+                if (j % image.getExtents()[3] == 0) {
+                    sliceCounter++;
+                }
             }
             fireProgressStateChanged(Math.round(5 + ((float) j / numImages) * 95));
         }
@@ -2015,8 +2016,8 @@ public class FileMincHDF extends FileBase {
         // dimorder based on orientation
         // orientation of the image.
         String dimOrder = new String();
-        if(is4D) {
-        	dimOrder = "time,";
+        if (is4D) {
+            dimOrder = "time,";
         }
         switch (options.getAxisOrientation()[2]) {
 
@@ -2133,30 +2134,30 @@ public class FileMincHDF extends FileBase {
         // create the image-max and image-min arrays (always 64bit float?)
         tsize = 8;
         final Datatype imageRangeDatatype = fileFormat.createDatatype(Datatype.CLASS_FLOAT, tsize, -1, Datatype.SIGN_2);
-        if(is4D) {
-        	dims = new long[2];
-        	maxdims = new long[2];
-        }else {
-        dims = new long[1];
-        maxdims = new long[1];
+        if (is4D) {
+            dims = new long[2];
+            maxdims = new long[2];
+        } else {
+            dims = new long[1];
+            maxdims = new long[1];
         }
-        
-        //int numSlices = 1;
+
+        // int numSlices = 1;
         dims[0] = 1;
         if (image.getExtents().length == 3) {
             dims[0] = image.getExtents()[2];
             maxdims[0] = dims[0];
-            //numSlices = image.getExtents()[2];
-        }else if(image.getExtents().length == 4) {
-        	dims[0] = image.getExtents()[3];
-        	dims[1] = image.getExtents()[2];
-        	maxdims[0] = dims[0];
-        	maxdims[1] = dims[1];
-        	//numSlices = image.getExtents()[2] * image.getExtents()[3];
+            // numSlices = image.getExtents()[2];
+        } else if (image.getExtents().length == 4) {
+            dims[0] = image.getExtents()[3];
+            dims[1] = image.getExtents()[2];
+            maxdims[0] = dims[0];
+            maxdims[1] = dims[1];
+            // numSlices = image.getExtents()[2] * image.getExtents()[3];
         }
 
-        if(!hasImageMinMaxDimOrder) {
-        	dims[0] = 1;
+        if ( !hasImageMinMaxDimOrder) {
+            dims[0] = 1;
         }
 
         final H5ScalarDS imageMaxObj = (H5ScalarDS) fileFormat.createScalarDS("image-max", imageNumGroup,
@@ -2169,15 +2170,15 @@ public class FileMincHDF extends FileBase {
         final DefaultMutableTreeNode imageMinNode = new DefaultMutableTreeNode(imageMinObj);
         model.insertNodeInto(imageMinNode, imageNumNode, imageNumNode.getChildCount());
 
-       //double[] imageMax = new double[numSlices];
-       //double[] imageMin = new double[numSlices];
+        // double[] imageMax = new double[numSlices];
+        // double[] imageMin = new double[numSlices];
 
-        //final double[] imageSliceBuffer = new double[image.getSliceSize()];
+        // final double[] imageSliceBuffer = new double[image.getSliceSize()];
         sliceCounter = 0;
         volCounter = 0;
         counter = 0;
-        if(is4D) {
-        	numVols = image.getExtents()[3];
+        if (is4D) {
+            numVols = image.getExtents()[3];
         }
 
         // init and then read in the two arrays
@@ -2188,15 +2189,16 @@ public class FileMincHDF extends FileBase {
         imageMinObj.write(mins);
 
         // write the dimorder attribute to the image-max and image-min nodes
-        if(hasImageMinMaxDimOrder) {
-	        String[] rangeDimString = new String[] {"zspace"};
-	        if(is4D) {
-	        	rangeDimString[0] = "time,zspace";
-	        }
-	        dType = fileFormat.createDatatype(Datatype.CLASS_STRING, rangeDimString[0].length() + 1, Datatype.NATIVE, -1);
-	        attrDims[0] = 1;
-	        attr = new Attribute("dimorder", dType, attrDims);
-	        attr.setValue(rangeDimString);
+        if (hasImageMinMaxDimOrder) {
+            final String[] rangeDimString = new String[] {"zspace"};
+            if (is4D) {
+                rangeDimString[0] = "time,zspace";
+            }
+            dType = fileFormat.createDatatype(Datatype.CLASS_STRING, rangeDimString[0].length() + 1, Datatype.NATIVE,
+                    -1);
+            attrDims[0] = 1;
+            attr = new Attribute("dimorder", dType, attrDims);
+            attr.setValue(rangeDimString);
         }
 
         final String[] varTypeMMString = new String[] {"var_attribute"};
@@ -2204,15 +2206,15 @@ public class FileMincHDF extends FileBase {
         attrDims[0] = 1;
         final Attribute varTypeAttr = new Attribute("vartype", dType, attrDims);
         varTypeAttr.setValue(varTypeMMString);
-        if(hasImageMinMaxDimOrder) {
-        	imageMaxObj.writeMetadata(attr);
+        if (hasImageMinMaxDimOrder) {
+            imageMaxObj.writeMetadata(attr);
         }
         imageMaxObj.writeMetadata(varIDAttr);
         imageMaxObj.writeMetadata(varTypeAttr);
         imageMaxObj.writeMetadata(versionAttr);
 
-        if(hasImageMinMaxDimOrder) {
-        	imageMinObj.writeMetadata(attr);
+        if (hasImageMinMaxDimOrder) {
+            imageMinObj.writeMetadata(attr);
         }
         imageMinObj.writeMetadata(varIDAttr);
         imageMinObj.writeMetadata(varTypeAttr);
@@ -2255,11 +2257,160 @@ public class FileMincHDF extends FileBase {
 
         buildInfoNode(image, format, mincNode, model);
 
-
         Preferences.debug("Entering buildImageNode\n");
         buildImageNode(image, options, format, mincNode, model);
 
         h5File.close();
+    }
+
+    /**
+     * TODO
+     * 
+     * @param dimNodeStr
+     * @return
+     */
+    private int getMipavOrderFromDimNode(final String dimNodeStr) {
+        int order = -1;
+
+        if (is4D) {
+
+            if (dimNodeStr.equals(FileMincHDF.LEAF_X_SPACE)) {
+                for (int k = 0; k < dimReorderIndexes.length; k++) {
+                    if (dimReorderIndexes[k] == 2) {
+                        order = k;
+                        break;
+                    }
+                }
+
+            } else if (dimNodeStr.equals(FileMincHDF.LEAF_Y_SPACE)) {
+                for (int k = 0; k < dimReorderIndexes.length; k++) {
+                    if (dimReorderIndexes[k] == 1) {
+                        order = k;
+                        break;
+                    }
+                }
+
+            } else if (dimNodeStr.equals(FileMincHDF.LEAF_Z_SPACE)) {
+                for (int k = 0; k < dimReorderIndexes.length; k++) {
+                    if (dimReorderIndexes[k] == 0) {
+                        order = k;
+                        break;
+                    }
+                }
+            } else if (dimNodeStr.equals(FileMincHDF.LEAF_T_SPACE)) {
+                for (int k = 0; k < dimReorderIndexes.length; k++) {
+                    if (dimReorderIndexes[k] == 3) {
+                        order = k;
+                        break;
+                    }
+                }
+            }
+        } else {
+
+            if (dimNodeStr.equals(FileMincHDF.LEAF_X_SPACE)) {
+                for (int k = 0; k < dimReorderIndexes.length; k++) {
+                    if (dimReorderIndexes[k] == 2) {
+                        order = k;
+                        break;
+                    }
+                }
+
+            } else if (dimNodeStr.equals(FileMincHDF.LEAF_Y_SPACE)) {
+                for (int k = 0; k < dimReorderIndexes.length; k++) {
+                    if (dimReorderIndexes[k] == 1) {
+                        order = k;
+                        break;
+                    }
+                }
+
+            } else if (dimNodeStr.equals(FileMincHDF.LEAF_Z_SPACE)) {
+                for (int k = 0; k < dimReorderIndexes.length; k++) {
+                    if (dimReorderIndexes[k] == 0) {
+                        order = k;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return order;
+    }
+
+    /**
+     * TODO
+     * 
+     * @param axisOrient
+     * @param is4D
+     * @return
+     */
+    private String buildDimOrder(final int[] axisOrient, final boolean is4D) {
+        // dimorder based on orientation
+        // orientation of the image.
+        String dimOrder = new String();
+        if (is4D) {
+            dimOrder = "time,";
+        }
+        switch (axisOrient[2]) {
+
+            case FileInfoBase.ORI_L2R_TYPE:
+            case FileInfoBase.ORI_R2L_TYPE:
+                dimOrder += "xspace";
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                dimOrder += "yspace";
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+            default:
+                dimOrder += "zspace";
+        }
+
+        switch (axisOrient[1]) {
+
+            case FileInfoBase.ORI_L2R_TYPE:
+            case FileInfoBase.ORI_R2L_TYPE:
+                dimOrder += ",xspace";
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                dimOrder += ",yspace";
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                dimOrder += ",zspace";
+                break;
+
+            default:
+                dimOrder += ",yspace";
+        }
+
+        switch (axisOrient[0]) {
+
+            case FileInfoBase.ORI_L2R_TYPE:
+            case FileInfoBase.ORI_R2L_TYPE:
+                dimOrder += ",xspace";
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                dimOrder += ",yspace";
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                dimOrder += ",zspace";
+                break;
+
+            default:
+                dimOrder += ",xspace";
+        }
+
+        return dimOrder;
     }
 
     public class HDFNode extends DefaultMutableTreeNode {

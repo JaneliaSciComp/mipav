@@ -20,8 +20,7 @@ import java.util.*;
 import java.util.zip.*;
 
 import javax.imageio.ImageIO;
-import javax.swing.JOptionPane;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 import com.sun.jimi.core.*;
 
@@ -105,7 +104,7 @@ public class FileIO {
     public FileIO() {
         UI = ViewUserInterface.getReference();
 
-        if(!GraphicsEnvironment.isHeadless()) {
+        if ( !GraphicsEnvironment.isHeadless()) {
             unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
         }
         UI.setLoad(false); // default to "opening "
@@ -123,7 +122,7 @@ public class FileIO {
         UI = ViewUserInterface.getReference();
         LUT = _LUT;
 
-        if(!GraphicsEnvironment.isHeadless()) {
+        if ( !GraphicsEnvironment.isHeadless()) {
             unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
         }
     }
@@ -1139,13 +1138,13 @@ public class FileIO {
         }
         int enhancedCounter1 = 0;
         int enhancedCounter2 = 0;
-        
+
         for (int i = 0; i < nImages; i++) {
             if (multiframe) {
                 filename = fileList[0];
                 start = i;
                 location = i;
-            }else {
+            } else {
                 filename = fileList[i];
                 start = 0;
                 location = indicies[i];
@@ -1250,14 +1249,14 @@ public class FileIO {
                 } else {
                     image.setFileInfo(curFileInfo, location);
                 }
-                if(isEnhanced4D) {
-            		if(enhancedCounter1 == enhancedNumVolumes) {
-            			enhancedCounter1 = 0;
-            			enhancedCounter2++;
-            		}
-            		location = (enhancedCounter1 * enhancedNumSlices) + enhancedCounter2;
-            		enhancedCounter1++;
-            	}
+                if (isEnhanced4D) {
+                    if (enhancedCounter1 == enhancedNumVolumes) {
+                        enhancedCounter1 = 0;
+                        enhancedCounter2++;
+                    }
+                    location = (enhancedCounter1 * enhancedNumSlices) + enhancedCounter2;
+                    enhancedCounter1++;
+                }
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     image.importData(location * length, bufferFloat, false);
                 } else if (image.getType() == ModelStorageBase.UINTEGER) {
@@ -2111,10 +2110,10 @@ public class FileIO {
                 case FileUtility.JP2:
                     image = readJpeg2000(fileName, fileDir, one);
                     break;
-                    
+
                 case FileUtility.VISTA:
-                	image = readVista(fileName, fileDir, one);
-                	break;
+                    image = readVista(fileName, fileDir, one);
+                    break;
 
                 default:
                     return null;
@@ -2503,12 +2502,7 @@ public class FileIO {
             oneSliceBuffer = null;
         }
     }
-    
-    
-    
-    
-    
-    
+
     /**
      * This method will load a group of files in the order of <i>fileList<i>. The result will be a grayscale
      * ModelImage. </i></i>
@@ -2526,7 +2520,7 @@ public class FileIO {
      * @return ModelImage
      */
     public ModelImage readOrderedGrayscale(final File[] fileList, final boolean showLocalProgressBar,
-            final Dimension subsampleDimension, final boolean forceUBYTE, int numSlices, int numTimePoints) {
+            final Dimension subsampleDimension, final boolean forceUBYTE, final int numSlices, final int numTimePoints) {
         ModelImage modelImageTemp = null;
         ModelImage modelImageResult = null;
         float[] oneSliceBuffer;
@@ -2540,7 +2534,8 @@ public class FileIO {
         try {
 
             // read one image so we can get extents
-            modelImageTemp = readOneImage(fileList[0].getName(), fileList[0].getParentFile().getAbsolutePath() + File.separator);
+            modelImageTemp = readOneImage(fileList[0].getName(), fileList[0].getParentFile().getAbsolutePath()
+                    + File.separator);
 
             if (subsampleDimension != null) // subsample the image if we have subsampling dimensions
             {
@@ -2555,72 +2550,69 @@ public class FileIO {
             modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
 
             // the result image's dimensions (possibly subsampled dimensions)
-       
-            if(numTimePoints > 1) {
-            	extents = new int[4];
-            	extents[0] = modelImageTemp.getExtents()[0];
-            	extents[1] = modelImageTemp.getExtents()[1];
-            	extents[2] = numSlices;
-            	extents[3] = numTimePoints;
-            }else {
-            	extents = new int[3];
-            	extents[0] = modelImageTemp.getExtents()[0];
-            	extents[1] = modelImageTemp.getExtents()[1];
-            	extents[2] = fileList.length;
-            }
 
+            if (numTimePoints > 1) {
+                extents = new int[4];
+                extents[0] = modelImageTemp.getExtents()[0];
+                extents[1] = modelImageTemp.getExtents()[1];
+                extents[2] = numSlices;
+                extents[3] = numTimePoints;
+            } else {
+                extents = new int[3];
+                extents[0] = modelImageTemp.getExtents()[0];
+                extents[1] = modelImageTemp.getExtents()[1];
+                extents[2] = fileList.length;
+            }
 
             modelImageResult = new ModelImage(modelImageTemp.getType(), extents, modelImageTemp.getImageName());
             firstFileInfo = modelImageTemp.getFileInfo(0);
-            if(modelImageTemp.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
-            	if(numTimePoints <= 1) {
-            		is3DDicom = true;
-            		childTagTables = new FileDicomTagTable[fileList.length-1];
-                	FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageTemp.getFileInfo(0);
-                	FileInfoDicom destFileInfo = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),oldDicomInfo.getFileFormat());
-                	((FileInfoDicom)destFileInfo).vr_type = oldDicomInfo.vr_type;
-                	((FileInfoDicom) destFileInfo).getTagTable().importTags((FileInfoDicom) oldDicomInfo);
-                	modelImageResult.setFileInfo(destFileInfo, 0);
-            	}
-            	
+            if (modelImageTemp.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+                if (numTimePoints <= 1) {
+                    is3DDicom = true;
+                    childTagTables = new FileDicomTagTable[fileList.length - 1];
+                    final FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageTemp.getFileInfo(0);
+                    final FileInfoDicom destFileInfo = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo
+                            .getFileDirectory(), oldDicomInfo.getFileFormat());
+                    (destFileInfo).vr_type = oldDicomInfo.vr_type;
+                    (destFileInfo).getTagTable().importTags(oldDicomInfo);
+                    modelImageResult.setFileInfo(destFileInfo, 0);
+                }
+
             }
-            if(numTimePoints > 1) {
-            	resolutions = new float[4];
+            if (numTimePoints > 1) {
+                resolutions = new float[4];
                 resolutions[0] = modelImageTemp.getFileInfo(0).getResolution(0);
                 resolutions[1] = modelImageTemp.getFileInfo(0).getResolution(1);
                 resolutions[2] = 1.0f;
                 resolutions[3] = 1.0f;
 
-            }else {
-            	resolutions = new float[3];
+            } else {
+                resolutions = new float[3];
                 resolutions[0] = modelImageTemp.getFileInfo(0).getResolution(0);
                 resolutions[1] = modelImageTemp.getFileInfo(0).getResolution(1);
                 resolutions[2] = 1.0f;
 
             }
-            //FileIO.copyResolutions(modelImageTemp, modelImageResult, 0); // save the resolutions from the file info
+            // FileIO.copyResolutions(modelImageTemp, modelImageResult, 0); // save the resolutions from the file info
             // structure
 
-           
             modelImageTemp.disposeLocal(false);
 
             // import first slice to result image from modelImageTemp
             modelImageResult.importData(0, oneSliceBuffer, false);
-            
 
             progressBar.updateValue((int) ( (1.0f / fileList.length) * 100), false);
-            
-
-            
 
             for (int i = 1; i < fileList.length; i++) {
-            	System.out.println(i);
+                System.out.println(i);
                 if (fileList[i].exists()) {
 
                     try {
 
                         // read images one slice at a time
-                        modelImageTemp = readOneImage(fileList[i].getName(), fileList[i].getParentFile().getAbsolutePath() + File.separator);
+                        modelImageTemp = readOneImage(fileList[i].getName(), fileList[i].getParentFile()
+                                .getAbsolutePath()
+                                + File.separator);
 
                         if (subsampleDimension != null) // subsample if we have subsampling dimensions
                         {
@@ -2631,19 +2623,20 @@ public class FileIO {
                         FileIO.copyResolutions(modelImageTemp, modelImageResult, i);
 
                         modelImageResult.importData(i * oneSliceBuffer.length, oneSliceBuffer, false);
-                         
-                        if(is3DDicom) {
-                        	FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageTemp.getFileInfo(0);
-                        	FileInfoDicom destFileInfo = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),oldDicomInfo.getFileFormat(),(FileInfoDicom) modelImageResult.getFileInfo(0));
-                        	((FileInfoDicom)destFileInfo).vr_type = oldDicomInfo.vr_type;
-                        	
-                        	childTagTables[i - 1] = ((FileInfoDicom) destFileInfo).getTagTable();
 
-                        	((FileInfoDicom) destFileInfo).getTagTable().importTags((FileInfoDicom) oldDicomInfo);
-                        	modelImageResult.setFileInfo(destFileInfo, i);
+                        if (is3DDicom) {
+                            final FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageTemp.getFileInfo(0);
+                            final FileInfoDicom destFileInfo = new FileInfoDicom(oldDicomInfo.getFileName(),
+                                    oldDicomInfo.getFileDirectory(), oldDicomInfo.getFileFormat(),
+                                    (FileInfoDicom) modelImageResult.getFileInfo(0));
+                            (destFileInfo).vr_type = oldDicomInfo.vr_type;
+
+                            childTagTables[i - 1] = (destFileInfo).getTagTable();
+
+                            (destFileInfo).getTagTable().importTags(oldDicomInfo);
+                            modelImageResult.setFileInfo(destFileInfo, i);
                         }
-                        
-                        
+
                     } catch (final IOException ioe) {
                         ioe.printStackTrace();
 
@@ -2656,16 +2649,13 @@ public class FileIO {
                 }
 
                 progressBar.updateValue((int) ( ((float) (i + 1) / (float) fileList.length) * 100), false);
-                
-                
-                
-                
-            }
-            if(is3DDicom) {
 
-            	((FileInfoDicom) modelImageResult.getFileInfo(0)).getTagTable().attachChildTagTables(childTagTables);
             }
-            
+            if (is3DDicom) {
+
+                ((FileInfoDicom) modelImageResult.getFileInfo(0)).getTagTable().attachChildTagTables(childTagTables);
+            }
+
             modelImageResult.calcMinMax();
 
             if ( (forceUBYTE == true) && (modelImageResult.getType() != ModelStorageBase.UBYTE)) {
@@ -2674,22 +2664,20 @@ public class FileIO {
                 return FileIO.convertToUBYTE(modelImageResult);
             }
 
-            
-            
-            for(int i=0;i<fileList.length;i++) {
-            	modelImageResult.getFileInfo(i).setExtents(extents);
-            	modelImageResult.getFileInfo(i).setResolutions(resolutions);
-            	modelImageResult.getFileInfo(i).setAxisOrientation(firstFileInfo.getAxisOrientation());
-            	modelImageResult.getFileInfo(i).setDataType(firstFileInfo.getDataType());
-            	modelImageResult.getFileInfo(i).setEndianess(firstFileInfo.getEndianess());
-            	modelImageResult.getFileInfo(i).setImageOrientation(firstFileInfo.getImageOrientation());
-            	
-            	modelImageResult.getFileInfo(i).setMin(modelImageResult.getMin());
-            	modelImageResult.getFileInfo(i).setMax(modelImageResult.getMax());
-            	modelImageResult.getFileInfo(i).setModality(firstFileInfo.getModality());
+            for (int i = 0; i < fileList.length; i++) {
+                modelImageResult.getFileInfo(i).setExtents(extents);
+                modelImageResult.getFileInfo(i).setResolutions(resolutions);
+                modelImageResult.getFileInfo(i).setAxisOrientation(firstFileInfo.getAxisOrientation());
+                modelImageResult.getFileInfo(i).setDataType(firstFileInfo.getDataType());
+                modelImageResult.getFileInfo(i).setEndianess(firstFileInfo.getEndianess());
+                modelImageResult.getFileInfo(i).setImageOrientation(firstFileInfo.getImageOrientation());
+
+                modelImageResult.getFileInfo(i).setMin(modelImageResult.getMin());
+                modelImageResult.getFileInfo(i).setMax(modelImageResult.getMax());
+                modelImageResult.getFileInfo(i).setModality(firstFileInfo.getModality());
 
             }
-            
+
             return modelImageResult;
         } catch (final Exception ioe) {
             ioe.printStackTrace();
@@ -2706,143 +2694,104 @@ public class FileIO {
             oneSliceBuffer = null;
         }
     }
-    
-    
-    
-    
-    
-    public ModelImage readOrderedGrayscale2(final File[] fileList, final boolean showLocalProgressBar, final Dimension subsampleDimension, final boolean forceUBYTE, int numSlices, int numTimePoints) {
-    	 ModelImage modelImageResult = null;
-    	 ModelImage modelImageTemp = null;
-    	 float[] oneSliceBuffer;
-    	 int[] extents = null;
-    	 float[] resolutions = null;
-    	 boolean isDicom = false;
-    	 FileInfoBase[] destFileInfo = new FileInfoBase[fileList.length];
-    
-    	 
-    	 try{
-    		 
-    		 
-    		// read one image so we can get extents
-             modelImageTemp = readOneImage(fileList[0].getName(), fileList[0].getParentFile().getAbsolutePath() + File.separator);
-             
-             if(modelImageTemp.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
-             	isDicom = true;
-             }
 
-             if (subsampleDimension != null) // subsample the image if we have subsampling dimensions
-             {
-                 modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
-             }
+    public ModelImage readOrderedGrayscale2(final File[] fileList, final boolean showLocalProgressBar,
+            final Dimension subsampleDimension, final boolean forceUBYTE, final int numSlices, final int numTimePoints) {
+        ModelImage modelImageResult = null;
+        ModelImage modelImageTemp = null;
+        float[] oneSliceBuffer;
+        int[] extents = null;
+        float[] resolutions = null;
+        boolean isDicom = false;
+        final FileInfoBase[] destFileInfo = new FileInfoBase[fileList.length];
 
-             // create a buffer to hold exchange image data between temp and result images
-             oneSliceBuffer = new float[modelImageTemp.getExtents()[0] * modelImageTemp.getExtents()[1]];
+        try {
 
-             // the first slice has already been read. instead of re-reading it in the loop, export to buffer and save
-             // an iteration
-             modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
-    		 
-    		 
-             if(numTimePoints > 1) {
-             	extents = new int[4];
-             	extents[0] = modelImageTemp.getExtents()[0];
-             	extents[1] = modelImageTemp.getExtents()[1];
-             	extents[2] = numSlices;
-             	extents[3] = numTimePoints;
-             }else {
-             	extents = new int[3];
-             	extents[0] = modelImageTemp.getExtents()[0];
-             	extents[1] = modelImageTemp.getExtents()[1];
-             	extents[2] = fileList.length;
-             }
-             
-             if(numTimePoints > 1) {
-             	resolutions = new float[4];
+            // read one image so we can get extents
+            modelImageTemp = readOneImage(fileList[0].getName(), fileList[0].getParentFile().getAbsolutePath()
+                    + File.separator);
+
+            if (modelImageTemp.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+                isDicom = true;
+            }
+
+            if (subsampleDimension != null) // subsample the image if we have subsampling dimensions
+            {
+                modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
+            }
+
+            // create a buffer to hold exchange image data between temp and result images
+            oneSliceBuffer = new float[modelImageTemp.getExtents()[0] * modelImageTemp.getExtents()[1]];
+
+            // the first slice has already been read. instead of re-reading it in the loop, export to buffer and
+                // save
+            // an iteration
+            modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
+
+            if (numTimePoints > 1) {
+                extents = new int[4];
+                extents[0] = modelImageTemp.getExtents()[0];
+                extents[1] = modelImageTemp.getExtents()[1];
+                extents[2] = numSlices;
+                extents[3] = numTimePoints;
+            } else {
+                extents = new int[3];
+                extents[0] = modelImageTemp.getExtents()[0];
+                extents[1] = modelImageTemp.getExtents()[1];
+                extents[2] = fileList.length;
+            }
+
+            if (numTimePoints > 1) {
+                resolutions = new float[4];
                 resolutions[0] = modelImageTemp.getFileInfo(0).getResolution(0);
                 resolutions[1] = modelImageTemp.getFileInfo(0).getResolution(1);
                 resolutions[2] = 1.0f;
                 resolutions[3] = 1.0f;
-             }else {
-             	resolutions = new float[3];
+            } else {
+                resolutions = new float[3];
                 resolutions[0] = modelImageTemp.getFileInfo(0).getResolution(0);
                 resolutions[1] = modelImageTemp.getFileInfo(0).getResolution(1);
-                resolutions[2] = 1.0f;  
-             }
-             
-             
-             if(isDicom) {
-            	FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageTemp.getFileInfo(0);
-             	destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),oldDicomInfo.getFileFormat());
-             }
+                resolutions[2] = 1.0f;
+            }
 
+            if (isDicom) {
+                final FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageTemp.getFileInfo(0);
+                destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                        oldDicomInfo.getFileFormat());
+            }
 
-             modelImageResult = new ModelImage(modelImageTemp.getType(), extents, modelImageTemp.getImageName());
+            modelImageResult = new ModelImage(modelImageTemp.getType(), extents, modelImageTemp.getImageName());
 
-             
-             modelImageTemp.disposeLocal(false);
+            modelImageTemp.disposeLocal(false);
 
-             // import first slice to result image from modelImageTemp
-             modelImageResult.importData(0, oneSliceBuffer, false);
-             
-             
-             for (int i = 1; i < fileList.length; i++) {
-            	 System.out.println(i);
-            	                 if (fileList[i].exists()) {
+            // import first slice to result image from modelImageTemp
+            modelImageResult.importData(0, oneSliceBuffer, false);
 
-            	                
-            	                         // read images one slice at a time
-            	                         modelImageTemp = readOneImage(fileList[i].getName(), fileList[i].getParentFile().getAbsolutePath() + File.separator);
+            for (int i = 1; i < fileList.length; i++) {
+                System.out.println(i);
+                if (fileList[i].exists()) {
 
-            	                         if (subsampleDimension != null) // subsample if we have subsampling dimensions
-            	                         {
-            	                             modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
-            	                         }
+                    // read images one slice at a time
+                    modelImageTemp = readOneImage(fileList[i].getName(), fileList[i].getParentFile().getAbsolutePath()
+                            + File.separator);
 
-            	                         modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
-            	                         
-            	                         
-            	                         
-            	                         
-            	                 }
-             }
-             
-             
-    		 
-    		 
-    		 
-    	 }catch(Exception e) {
-    		 return null;
-    	 }
-    	 
-    	 
-    	 
-    	 
-    	
-    	
-    	 return modelImageResult;
+                    if (subsampleDimension != null) // subsample if we have subsampling
+                                                                            // dimensions
+                    {
+                        modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
+                    }
+
+                    modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
+
+                }
+            }
+
+        } catch (final Exception e) {
+            return null;
+        }
+
+        return modelImageResult;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     /**
      * Reads a thumbnail image from an XML file. if thumbnail is empty, will returned FileImageXML will be null.
@@ -3207,11 +3156,11 @@ public class FileIO {
                 success = writeMATLAB(image, options);
                 break;
             case FileUtility.GE_SIGNA4X:
-            	success = writeGESigna4X(image, options);
-            	break;
+                success = writeGESigna4X(image, options);
+                break;
             case FileUtility.GE_GENESIS:
-            	success = writeGEGenesis5X(image, options);
-            	break;
+                success = writeGEGenesis5X(image, options);
+                break;
             case FileUtility.SPM:
                 success = writeSPM(image, options);
                 break;
@@ -3363,7 +3312,12 @@ public class FileIO {
                 break;
 
             case FileUtility.MINC_HDF:
-                success = writeMincHDF(image, options);
+                success = false;
+                if ( !quiet) {
+                    MipavUtil.displayError("Writing of Minc 2.0 files is currently unsupported.");
+                }
+                // TODO: MINC2 writing is disabled until we fix it to work with hdf-java-2.7
+                // success = writeMincHDF(image, options);
                 break;
 
             case FileUtility.INTERFILE:
@@ -3414,10 +3368,10 @@ public class FileIO {
             case FileUtility.JP2:
                 success = writeJpeg2000(image, options);
                 break;
-                
+
             case FileUtility.VISTA:
-            	success = writeVista(image, options);
-            	break;
+                success = writeVista(image, options);
+                break;
 
             default:
                 if ( !quiet) {
@@ -4988,7 +4942,7 @@ public class FileIO {
         // progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
 
         // the quiet flag is needed to determine if progress bar is visible or not
-        if(!GraphicsEnvironment.isHeadless()) {
+        if ( !GraphicsEnvironment.isHeadless()) {
             progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true, null, null, !quiet);
             progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
         }
@@ -8623,10 +8577,10 @@ public class FileIO {
             width = imageFile.getWidth();
             height = imageFile.getHeight();
             buffer = new float[width * height];
-  
+
             extents = new int[2];
             extents[0] = width;
-            extents[1] = height;          
+            extents[1] = height;
 
             image = new ModelImage(ModelStorageBase.USHORT, extents, "GE");
             imageFile.readImage(buffer);
@@ -8838,16 +8792,15 @@ public class FileIO {
         return image;
     }
 
-    
     private ModelImage readVista(final String fileName, final String fileDir, final boolean one) {
         ModelImage image = null;
         FileVista imageFile;
-        
-        try{
-        	imageFile = new FileVista(fileName, fileDir);
-        	createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+
+        try {
+            imageFile = new FileVista(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FileIO.FILE_READ);
             image = imageFile.readImage();
-        }catch (final IOException error) {
+        } catch (final IOException error) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -8884,8 +8837,6 @@ public class FileIO {
         imageFile = null;
         return image;
     }
-    
-    
 
     /**
      * Reads a PARREC file by calling the read method of the file. This method contains special code to not display the
@@ -9915,7 +9866,7 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
-            //error.printStackTrace();
+            // error.printStackTrace();
             progressBar.dispose();
             return null;
         } catch (final OutOfMemoryError error) {
@@ -11777,7 +11728,7 @@ public class FileIO {
 
         return true;
     }
-    
+
     /**
      * Writes a GESigna4X file to store the image.
      * 
@@ -11817,7 +11768,7 @@ public class FileIO {
 
         return true;
     }
-    
+
     /**
      * Writes a GESigna5X file to store the image.
      * 
@@ -12296,7 +12247,6 @@ public class FileIO {
         return true;
     }
 
-
     /**
      * Writes a raw file to store the image.
      * 
@@ -12545,39 +12495,40 @@ public class FileIO {
 
         return true;
     }
-    
+
     /**
      * writes Vista format files
+     * 
      * @param image
      * @param options
      * @return
      */
     private boolean writeVista(final ModelImage image, final FileWriteOptions options) {
-    	try {
-	    	 FileVista fv = new FileVista(options.getFileName(), options.getFileDirectory());
-	    	 
-	    	 if(isQuiet()) {
-	    		 createProgressBar(fv, options.getFileName(), FileIO.FILE_WRITE);
-		         fv.writeImage(image, options, null);
-		         fv.finalize();
-		         fv = null;
-	    	 }else {
-	    		 JDialogSaveVistaParams dialog = new JDialogSaveVistaParams(UI.getMainFrame(), image);
+        try {
+            FileVista fv = new FileVista(options.getFileName(), options.getFileDirectory());
 
-		            if (dialog.isCancelled()) {
-		                return false;
-		            }
-		    	 
-		            ArrayList<JTextField> vistaParamFields = dialog.getVistaParamTextfields();
-		            dialog.dispose();
-		
-		         createProgressBar(fv, options.getFileName(), FileIO.FILE_WRITE);
-		         fv.writeImage(image, options, vistaParamFields);
-		         fv.finalize();
-		         fv = null;
-	    	 }
-	    	 
-    	}catch (final IOException error) {
+            if (isQuiet()) {
+                createProgressBar(fv, options.getFileName(), FileIO.FILE_WRITE);
+                fv.writeImage(image, options, null);
+                fv.finalize();
+                fv = null;
+            } else {
+                final JDialogSaveVistaParams dialog = new JDialogSaveVistaParams(UI.getMainFrame(), image);
+
+                if (dialog.isCancelled()) {
+                    return false;
+                }
+
+                final ArrayList<JTextField> vistaParamFields = dialog.getVistaParamTextfields();
+                dialog.dispose();
+
+                createProgressBar(fv, options.getFileName(), FileIO.FILE_WRITE);
+                fv.writeImage(image, options, vistaParamFields);
+                fv.finalize();
+                fv = null;
+            }
+
+        } catch (final IOException error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -12596,11 +12547,9 @@ public class FileIO {
 
             return false;
         }
-    	
-    	return true;
+
+        return true;
     }
-    
-    
 
     /**
      * Writes a PAR/REC file to store the image.
