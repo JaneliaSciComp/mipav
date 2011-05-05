@@ -226,8 +226,6 @@ public class VolumeImageViewer extends JavaApplication3D
 
         InitializeCameraMotion(0.001f,0.001f);
         InitializeObjectMotion(m_spkScene);
-
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
         m_bInit = true;
     }
 

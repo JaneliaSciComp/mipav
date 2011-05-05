@@ -22,6 +22,6 @@ void p_CalcNormalsPerSlice_Pass2()
     color += (1.0, 1.0, 1.0);
     color /= (2.0, 2.0, 2.0);
 
-    gl_FragColor.rgb = color.xyz;
+    gl_FragColor.rgb = color.rgb;
 }
 //----------------------------------------------------------------------------

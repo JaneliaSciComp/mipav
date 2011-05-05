@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -491,7 +492,7 @@ public class VolumeImage implements Serializable {
      * function launches the GPU-based Normal calculation.  That calculation when finished calls the CopyNormalFiles
      * which writes the calculated normals to disk and updates the Normal map on the GPU for rendering.
      */
-    public void GenerateNormalFiles() {
+    public void GenerateNormalFiles( VolumeTriPlanarInterface parentFrame ) {
     	// Return if already initialized.
     	if ( m_bNormalsInit )
     	{
@@ -521,7 +522,7 @@ public class VolumeImage implements Serializable {
     	if ( !m_bNormalsInit )
     	{
     		for (int i = 0; i < m_iTimeSteps; i++) {
-    			VolumeImageNormalGM.main(this, m_akImages[i], m_kNormalMapTarget, i, ModelImage.makeImageName(m_kImage
+    			VolumeImageNormalGM.main( parentFrame.newSharedCanvas(), parentFrame, this, m_akImages[i], m_kNormalMapTarget, i, ModelImage.makeImageName(m_kImage
     					.getFileInfo(0).getFileName(), "_Normal_" + i));
     		}
     		m_bNormalsInit = true;

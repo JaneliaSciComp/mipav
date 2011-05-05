@@ -491,7 +491,24 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
                 if (m_kPicker.Records.size() > 0)
                 {
                     m_akLev.get(m_iCurrent).setPicked( m_kPicker.Records );
+                    return;
                 }
+            }
+            for ( int i = 0; i < m_akLev.size(); i++ )
+            {
+                m_kPicker.Execute(m_akLev.get(i).getWidget(),kPos,kDir,0.0f,
+                        Float.MAX_VALUE);
+                if (m_kPicker.Records.size() > 0)
+                {
+                	m_iCurrent = i;
+                    m_akLev.get(m_iCurrent).setPicked( m_kPicker.Records );
+                    m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
+                            m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+                    m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
+                    m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
+                    m_spkScene.UpdateGS();
+                    return;
+                }            	
             }
         }
     }    
