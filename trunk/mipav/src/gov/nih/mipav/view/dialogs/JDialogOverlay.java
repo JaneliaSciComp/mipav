@@ -222,6 +222,7 @@ public class JDialogOverlay extends JDialogBase {
             gbc.weightx = 1;
             gbc.fill = GridBagConstraints.BOTH;
             nameArray[i] = new JTextField(7);
+            nameArray[i].setEditable(false);
             nameArray[i].setFont(MipavUtil.font12);
 
             gbc.gridx++;
