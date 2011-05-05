@@ -1935,17 +1935,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         else if (command.equals("ShowSliceNum")) {
             componentImage.setShowSliceNum( ((JCheckBoxMenuItem) event.getSource()).isSelected());
             updateImages(true);
-        } else if (command.equals("ShowGrid")) {
-
-            if ( ((JCheckBoxMenuItem) event.getSource()).isSelected()) {
-                componentImage.setGridOverlay(true);
-            } else {
-                componentImage.setGridOverlay(false);
-            }
-
-            componentImage.paintComponent(componentImage.getGraphics());
-
-        } else if (command.equals("writeGrid")) {
+        }else if (command.equals("writeGrid")) {
             new JDialogGenerateGrid(this, componentImage);
         }
 
@@ -1970,9 +1960,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.paintComponent(componentImage.getGraphics());
             // componentImage.repaint();
         } else if (command.equals("DICOMOverlayOptions")) {
-            new JDialogOverlay(this, true, null);
+            new JDialogOverlay(this, true, null,componentImage);
         } else if (command.equals("ImageOverlayOptions")) {
-            new JDialogOverlay(this, false, null);
+            new JDialogOverlay(this, false, null, componentImage);
         } else if (command.equals("Open LUT")) {
             loadLUT(true, false);
         } else if (command.equals("Open functions")) {
@@ -5000,13 +4990,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (getActiveImage().getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
 
             // menuBuilder.setMenuItemEnabled("Show image/DICOM overlay", true);
-            menuBuilder.setMenuItemEnabled("DICOM overlay options", true);
-            menuBuilder.setMenuItemEnabled("Image overlay options", false);
+            menuBuilder.setMenuItemEnabled("DICOM overlay", true);
+            menuBuilder.setMenuItemEnabled("Image overlay", false);
         } else {
 
             // menuBuilder.setMenuItemEnabled("Show image/DICOM overlay", false);
-            menuBuilder.setMenuItemEnabled("DICOM overlay options", false);
-            menuBuilder.setMenuItemEnabled("Image overlay options", true);
+            menuBuilder.setMenuItemEnabled("DICOM overlay", false);
+            menuBuilder.setMenuItemEnabled("Image overlay", true);
         }
 
         setTitle();

@@ -545,11 +545,10 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Histogram - LUT", "DisplayLUT", 0, "histolut.gif", true),
                 ViewMenuBar.separator,
                 menuBuilder.buildCheckBoxMenuItem("Show slice number overlay", "ShowSliceNum", true),
-                menuBuilder.buildCheckBoxMenuItem("Show image/DICOM overlay", "ShowOverlay", showOverlay),
-                menuBuilder.buildCheckBoxMenuItem("Show overlay grid", "ShowGrid", false),
-                menuBuilder.buildMenuItem("Grid overlay options", "GridOptions", 0, null, true),
-                menuBuilder.buildMenuItem("DICOM overlay options", "DICOMOverlayOptions", 0, null, true),
-                menuBuilder.buildMenuItem("Image overlay options", "ImageOverlayOptions", 0, null, true),});
+                //menuBuilder.buildCheckBoxMenuItem("Show image/DICOM overlay", "ShowOverlay", showOverlay),
+                menuBuilder.buildMenuItem("Grid overlay", "GridOptions", 0, null, true),
+                menuBuilder.buildMenuItem("DICOM overlay", "DICOMOverlayOptions", 0, null, true),
+                menuBuilder.buildMenuItem("Image overlay", "ImageOverlayOptions", 0, null, true),});
     }
 
     /**

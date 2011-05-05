@@ -1425,7 +1425,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             	//no valid dicom tag was selected or an error occurred during parsing, will just initialize overlay dialog normally
             }
 
-            JDialogOverlay overlayDialog = new JDialogOverlay(parentFrame, true, tagKey);
+            JDialogOverlay overlayDialog = new JDialogOverlay(parentFrame, true, tagKey, ((ViewJFrameImage)parentFrame).getComponentImage());
             //will display overlay assuming OK button is pressed
             overlayDialog.OKButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
