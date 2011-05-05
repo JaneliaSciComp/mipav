@@ -262,6 +262,7 @@ public class JDialogOverlay extends JDialogBase {
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
+        OKButton.setText("Apply");
         buildCancelButton();
         buttonPanel.add(cancelButton);
         
