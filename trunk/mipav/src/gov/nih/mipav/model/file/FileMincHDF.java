@@ -2264,10 +2264,10 @@ public class FileMincHDF extends FileBase {
     }
 
     /**
-     * TODO
+     * Gets the proper MIPAV dimension ordering index for a given Minc dim node string using the image info.
      * 
-     * @param dimNodeStr
-     * @return
+     * @param dimNodeStr A minc dimension node string (i.e., xspace, yspace, zspace, time).
+     * @return The proper MIPAV dimension ordering index.
      */
     private int getMipavOrderFromDimNode(final String dimNodeStr) {
         int order = -1;
@@ -2334,83 +2334,6 @@ public class FileMincHDF extends FileBase {
         }
 
         return order;
-    }
-
-    /**
-     * TODO
-     * 
-     * @param axisOrient
-     * @param is4D
-     * @return
-     */
-    private String buildDimOrder(final int[] axisOrient, final boolean is4D) {
-        // dimorder based on orientation
-        // orientation of the image.
-        String dimOrder = new String();
-        if (is4D) {
-            dimOrder = "time,";
-        }
-        switch (axisOrient[2]) {
-
-            case FileInfoBase.ORI_L2R_TYPE:
-            case FileInfoBase.ORI_R2L_TYPE:
-                dimOrder += "xspace";
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-            case FileInfoBase.ORI_P2A_TYPE:
-                dimOrder += "yspace";
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-            case FileInfoBase.ORI_S2I_TYPE:
-            default:
-                dimOrder += "zspace";
-        }
-
-        switch (axisOrient[1]) {
-
-            case FileInfoBase.ORI_L2R_TYPE:
-            case FileInfoBase.ORI_R2L_TYPE:
-                dimOrder += ",xspace";
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-            case FileInfoBase.ORI_P2A_TYPE:
-                dimOrder += ",yspace";
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-            case FileInfoBase.ORI_S2I_TYPE:
-                dimOrder += ",zspace";
-                break;
-
-            default:
-                dimOrder += ",yspace";
-        }
-
-        switch (axisOrient[0]) {
-
-            case FileInfoBase.ORI_L2R_TYPE:
-            case FileInfoBase.ORI_R2L_TYPE:
-                dimOrder += ",xspace";
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-            case FileInfoBase.ORI_P2A_TYPE:
-                dimOrder += ",yspace";
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-            case FileInfoBase.ORI_S2I_TYPE:
-                dimOrder += ",zspace";
-                break;
-
-            default:
-                dimOrder += ",xspace";
-        }
-
-        return dimOrder;
     }
 
     public class HDFNode extends DefaultMutableTreeNode {
