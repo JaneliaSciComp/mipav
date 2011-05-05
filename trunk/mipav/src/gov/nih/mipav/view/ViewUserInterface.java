@@ -1780,18 +1780,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             	Frame lastFrame = imageFrames.get(0);
             	int lastFrameWidth = lastFrame.getWidth();
             	frameLocation.width = frameLocation.width + lastFrameWidth + 10;
-            	int height = 0;
+            	int maxHeight = 0;
             	 if ( (frameLocation.width + newImageXDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().width) {
             		 frameLocation.width = 50 + (numTileSheets * 20);
             		 //for height, we need to get the biggest frame height and add 10 to it
             		 int size = imageFrames.size();
             		 for(int i=0;i<size;i++) {
                  		Frame frame = imageFrames.get(i);
-                 		if(frame.getHeight() > height) {
-                 			height = frame.getHeight();
+                 		if(frame.getHeight() > maxHeight) {
+                 			maxHeight = frame.getHeight();
                  		}
                  	  }
-              		frameLocation.height = frameLocation.height + height + 10;
+              		frameLocation.height = frameLocation.height + maxHeight + 10;
               		if(frameLocation.height + newImageYDim + 50 > Toolkit.getDefaultToolkit().getScreenSize().height) {
               			numTileSheets = numTileSheets + 1;
               			frameLocation.width = 50 + (numTileSheets * 20);
