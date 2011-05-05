@@ -3817,17 +3817,19 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		int yS2 = Math.round(kScreen.Y);
 
 		int width = (g.getFontMetrics(kVOI.getTextFont()).stringWidth( kVOI.getText()));
+		
+		float zoomX = m_kDrawingContext.getZoomX();
 
 		Vector3f kVolumePt = new Vector3f();
 		m_kDrawingContext.screenToFileVOI( new Vector3f (xS + width, yS, m_kDrawingContext.getSlice()), kVolumePt );
 		kVOI.setTextWidth( kVolumePt );
 
 		//determine if text is out of bounds.....if it is...shift it over so it is in bounds
-		if(width + xS + 1 > m_kImageActive.getExtents()[0] - 20) {
+		if(width + xS + 1 > (m_kImageActive.getExtents()[0] * zoomX) - 5) {
 			//now find place where text goes out of bounds
 			int textOutOfBoundsWidth = 0;
 			for(int i=1;i<=width;i++) {
-				if(i + xS + 1 > m_kImageActive.getExtents()[0] - 20) {
+				if(i + xS + 1 > (m_kImageActive.getExtents()[0] * zoomX) - 5) {
 					textOutOfBoundsWidth = i;
 					break;
 				}
