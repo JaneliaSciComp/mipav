@@ -29,10 +29,10 @@ public class MipavUtil extends JComponent {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 4180127127881019813L;
 
-    /** DOCUMENT ME! */
+    /** A 12 point, serif font. */
     public static Font defaultMenuFont = new Font("Serif", 0, 12);
 
-    /** DOCUMENT ME! */
+    /** A 10 point, serif font. */
     public static Font defaultAcceleratorFont = new Font("Serif", Font.BOLD, 10);
 
     /** A 10 point, plain, serif font. */
