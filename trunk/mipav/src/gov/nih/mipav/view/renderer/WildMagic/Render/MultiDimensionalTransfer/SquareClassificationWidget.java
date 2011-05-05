@@ -60,7 +60,8 @@ public class SquareClassificationWidget extends ClassificationWidget
             }
             else if ( (m_kPicked == m_kLowerSphere) || (m_kPicked == m_kUpperSphere) )
             {
-                ScaleRectangle( fX-fXOld, fY-fYOld, (m_kPicked == m_kLowerSphere) );
+                //ScaleRectangle( fX-fXOld, fY-fYOld, (m_kPicked == m_kLowerSphere) );
+                ScaleRectangle( e.getX()/(float)m_iWidth, (m_iHeight - e.getY())/(float)m_iHeight, (m_kPicked == m_kLowerSphere) );
             }
             else if ( m_kPicked == m_kMiddleSphere )
             {
@@ -358,37 +359,28 @@ public class SquareClassificationWidget extends ClassificationWidget
         float fCenterX = (m_kBottomTri.VBuffer.GetPosition3fX(0) + m_kBottomTri.VBuffer.GetPosition3fX(1))/2.0f;
         float fCenterY = (m_kBottomTri.VBuffer.GetPosition3fY(0) + m_kBottomTri.VBuffer.GetPosition3fY(2))/2.0f;
         Vector3f kStart;
-        Vector3f kEnd = new Vector3f();
-        Vector3f kBound = new Vector3f();
         if ( bLower )
         {
             kStart = m_kLowerSphere.Local.GetTranslate();
-            kBound = m_kBottomTri.VBuffer.GetPosition3(2);
         }
         else
         {
             kStart = m_kUpperSphere.Local.GetTranslate();
-            kBound = m_kBottomTri.VBuffer.GetPosition3(0);
         }
-        kEnd.X = kStart.X + fX;
-        kEnd.Y = kStart.Y + fY;
-        kEnd.Z = kStart.Z;
 
-        if ( kEnd.X < kBound.X )
-        {
-            return;
-        }
-        if ( !bLower && (kEnd.Y < kBound.Y) )
-        {
-            return;
-        }
-        if ( bLower && (kEnd.Y > kBound.Y ) )
-        {
-            return;
-        }
+		float fScaleX = (fX-fCenterX) / (kStart.X-fCenterX);
+		float fScaleY = (fY-fCenterY) / (kStart.Y-fCenterY);
+		
+		if ( (fScaleX == 1) && (fScaleY == 1) )
+		{
+			return;
+		}
+		if( (fScaleX <= 0.001) || (fScaleY <= 0.001) )
+		{
+			return;
+		}
         
-        float fScaleX = (kEnd.X-fCenterX)/(kStart.X-fCenterX);
-        float fScaleY = (kEnd.Y-fCenterY)/(kStart.Y-fCenterY);
+        
         float fNewX, fNewY;
         for ( int i = 0; i < 4; i++ )
         {

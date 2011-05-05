@@ -2,16 +2,22 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.awt.Frame;
 import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
 
+import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
+import java.awt.image.Raster;
+import java.awt.image.SampleModel;
 
 import java.awt.Frame;
 import java.awt.event.WindowAdapter;
@@ -39,9 +45,9 @@ public class VolumeImageNormalGM extends VolumeImageViewer
     private String m_kImageName;
     private ModelImage m_kOutputImage = null;
     
-    public VolumeImageNormalGM( VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture, int iVolume, String kImageName )
+    public VolumeImageNormalGM( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture, int iVolume, String kImageName )
     {
-        super(null, kVolumeImage);
+        super(kCanvas, kParentFrame, kVolumeImage);
         m_kImage = kImage;
         m_kTexture = kTexture;
         m_iVolume = iVolume;
@@ -50,9 +56,9 @@ public class VolumeImageNormalGM extends VolumeImageViewer
     /**
      * @param args
      */
-    public static void main( VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture, int iVolume, String kImageName )
+    public static void main( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture, int iVolume, String kImageName )
     {
-        VolumeImageNormalGM kWorld = new VolumeImageNormalGM(kVolumeImage, kImage, kTexture, iVolume, kImageName);
+        VolumeImageNormalGM kWorld = new VolumeImageNormalGM(kCanvas, kParentFrame, kVolumeImage, kImage, kTexture, iVolume, kImageName);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
         Animator animator = new Animator( kWorld.GetCanvas() );
@@ -75,6 +81,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
             return;
         }
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        
         while ( m_bDisplayFirst )
         {
             float fZ = ((float)m_iSlice)/(m_kImage.getExtents()[2] -1);
@@ -87,18 +94,19 @@ public class VolumeImageNormalGM extends VolumeImageViewer
             {          
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 m_pkRenderer.EndScene();
-                //writeImage();
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeCalcTarget, m_iSlice, false );
             //m_pkRenderer.DisplayBackBuffer();
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetNormalMapTarget(), m_iSlice, false );
+        	//SaveImage(m_iSlice);
             m_iSlice++; 
             if ( m_iSlice >= m_kImage.getExtents()[2])
             {
                 m_iSlice = 0;
                 m_bDisplayFirst = false;
-                //System.err.println("Done first pass");
+                //m_kVolumeImage.CopyNormalFiles(m_iVolume, m_kOutputImage);
             }
         }
+        /*
         while ( m_bDisplaySecond )
         {
             float fZ = ((float)m_iSlice)/(m_kImage.getExtents()[2] -1);
@@ -109,20 +117,20 @@ public class VolumeImageNormalGM extends VolumeImageViewer
             m_pkRenderer.ClearBuffers();
             if (m_pkRenderer.BeginScene())
             {          
-                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-                m_pkRenderer.EndScene();
-                //writeImage();
-                SaveImage(m_iSlice);
+            	m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+            	m_pkRenderer.EndScene();
+            	m_pkRenderer.FrameBufferToTexSubImage3D( m_kTexture, m_iSlice, false );
+            	m_pkRenderer.DisplayBackBuffer();
+            	//SaveImage(m_iSlice);
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kTexture, m_iSlice, false );
-            //m_pkRenderer.DisplayBackBuffer();
             m_iSlice++; 
             if ( m_iSlice >= m_kImage.getExtents()[2])
             {
                 m_bDisplaySecond = false;
-                m_kVolumeImage.CopyNormalFiles(m_iVolume, m_kOutputImage);
+                //m_kVolumeImage.CopyNormalFiles(m_iVolume, m_kOutputImage);
             }
         }
+        */
         dispose(arg0);
     }
 
@@ -147,38 +155,55 @@ public class VolumeImageNormalGM extends VolumeImageViewer
         ((VolumeCalcEffect)m_spkEffect).SetStepSize(m_kVolumeImage);
         m_pkPlane.DetachAllEffects();
         
-        GraphicsImage kImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,m_iWidth,m_iHeight,
-                m_kImage.getExtents()[2],(byte[])null,
-                                                 "VolumeCalc" );
+        GraphicsImage kNormalImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 
+        		m_kImage.getExtents()[0], m_kImage.getExtents()[1],
+        		m_kImage.getExtents()[2],
+    			(byte[])null, "VolumeCalc");
+        
         m_pkVolumeCalcTarget = new Texture();
-        m_pkVolumeCalcTarget.SetImage(kImage);
-        m_spkEffect2 = new VolumeCalcEffect( "VolumeCalc", m_pkVolumeCalcTarget, "CalcNormalsPerSlice_Pass2" );
+        m_pkVolumeCalcTarget.SetImage(kNormalImage);
+        m_pkVolumeCalcTarget.SetShared(true);
+        m_pkVolumeCalcTarget.SetFilterType(Texture.FilterType.LINEAR);
+        m_pkVolumeCalcTarget.SetWrapType(0, Texture.WrapType.REPEAT);
+        m_pkVolumeCalcTarget.SetWrapType(1, Texture.WrapType.REPEAT);
+        m_pkVolumeCalcTarget.SetWrapType(2, Texture.WrapType.REPEAT);
+        
+        m_spkEffect2 = new VolumeCalcEffect( m_pkVolumeCalcTarget.GetName(), m_pkVolumeCalcTarget, "CalcNormalsPerSlice_Pass2" );
         m_pkPlane.AttachEffect(m_spkEffect2);
         m_pkRenderer.LoadResources(m_pkPlane);
-        (m_spkEffect2).SetStepSize(m_kVolumeImage);
+        m_spkEffect2.SetStepSize(m_kVolumeImage);
         m_pkPlane.DetachAllEffects();
+        
     }
     
     private void SaveImage(int iZ)
     {
+        Raster kRaster = ((OpenGLRenderer)m_pkRenderer).Screenshot().getData();
+        int iWidth = kRaster.getWidth();
+        int iHeight = kRaster.getHeight();
         if ( m_kOutputImage == null )
         {
-            m_kOutputImage = new ModelImage( ModelStorageBase.ARGB, m_kImage.getExtents(), m_kImageName );
+            m_kOutputImage = new ModelImage( ModelStorageBase.ARGB, new int[]{iWidth, iHeight, m_kImage.getExtents()[2]}, m_kImageName );
         }
-        int iWidth = m_kImage.getExtents()[0];
-        int iHeight = m_kImage.getExtents()[1];
-        ByteBuffer kBuffer = m_pkRenderer.GetScreenImage( iWidth, iHeight );
-        int iSize = iWidth * iHeight * 4;
+
+        DataBuffer kBuffer = kRaster.getDataBuffer();
+        SampleModel kSampleModel = kRaster.getSampleModel();
+        int iSize = iWidth * iHeight;
+        float[] samples = new float[ kSampleModel.getNumBands() ];
         try {
-            byte[] aucData = new byte[iSize];
-            for ( int i = 0; i < iSize; i += 4)
+            byte[] aucData = new byte[iSize * 4];
+            for ( int y = 0; y < iHeight; y++)
             {
-                aucData[i] = (byte)255;
-                aucData[i+1] = kBuffer.array()[i];
-                aucData[i+2] = kBuffer.array()[i+1];
-                aucData[i+3] = kBuffer.array()[i+2];
+            for ( int x = 0; x < iWidth; x++)
+            {
+            	kSampleModel.getPixel(x,y,samples,kBuffer);
+                aucData[y*iWidth + 0] = (byte)255;
+                aucData[y*iWidth + 1] = (byte) samples[0];
+                aucData[y*iWidth + 2] = (byte) samples[1];
+                aucData[y*iWidth + 3] = (byte) samples[2];
             }
-            m_kOutputImage.importData( iZ * iSize, aucData, false );
+            }
+            m_kOutputImage.importData( iZ * iSize * 4, aucData, false );
         } catch (IOException e) {
             e.printStackTrace();
         }
