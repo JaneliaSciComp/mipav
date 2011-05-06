@@ -355,8 +355,5 @@ public class VolumeImageViewer extends JavaApplication3D
         m_pkPlane.VBuffer.SetTCoord3(0, 3, 1,1, fZ);    
         m_pkPlane.VBuffer.Release();
         m_bDisplay = true;
-        
-        //((VolumePlaneEffect)m_spkEffect).ZSlice( fZ );
-        m_bDisplay = true;        
     }
 }

@@ -38,32 +38,18 @@ public class VolumeCalcEffect extends VolumeClipEffect
     /** stores the gradient magnitude filter on/off value: */
     private float[] m_afMinMax = new float[]{0,0,0,0};
     
-    /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
-     * fn creates the second-pass shader.
-     * @param kTextureName the name of the output texture from the first pass.
-     * @param kTexture the output texture from the first pass.
-     */
-    public VolumeCalcEffect ( String kTextureName, Texture kTexture, String kShaderName )
-    {
-        SetPassQuantity(1);
-        SetVShader(0,new VertexShader("TextureV"));
-        PixelShader kPShader = new PixelShader(kShaderName, false);
-        SetPShader(0,kPShader);
-        kPShader.SetTextureQuantity(1);
-        kPShader.SetImageName(0,kTextureName);
-        kPShader.SetTexture(0, kTexture );
-    }
 
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
      * fn creates the first-pass shader.
      * @param kVolumeImageA the shared volume data and textures.
      */
-    public VolumeCalcEffect ( VolumeImage kVolumeImage, Texture kTexture, String kShaderName )
+    public VolumeCalcEffect ( VolumeImage kVolumeImage, Texture kTexture, String kShaderName, boolean bPostFix )
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
         SetVShader(0,new VertexShader("TextureV"));
-        PixelShader kPShader = new PixelShader(kShaderName + kVolumeImage.GetPostfix(), false);
+        String kName = kShaderName + (bPostFix ? kVolumeImage.GetPostfix() : "");
+        PixelShader kPShader = new PixelShader(kName, false);
         SetPShader(0,kPShader);
         kPShader.SetTextureQuantity(1);
         kPShader.SetImageName(0,kTexture.GetImage().GetName());

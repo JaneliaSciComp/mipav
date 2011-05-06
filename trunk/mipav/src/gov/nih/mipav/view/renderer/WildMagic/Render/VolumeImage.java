@@ -60,6 +60,9 @@ public class VolumeImage implements Serializable {
 
     /** Texture object for normal map: */
     private Texture m_kNormalMapTarget;
+    
+    /** Texture object for GPU computations: */
+    private Texture m_kScratchTarget;
 
     /** Data storage for color map: */
     private GraphicsImage m_kColorMap;
@@ -439,6 +442,9 @@ public class VolumeImage implements Serializable {
         m_kNormal = null;
         m_kNormalMapTarget.dispose();
         m_kNormalMapTarget = null;
+        
+        m_kScratchTarget.dispose();
+        m_kScratchTarget = null;
 
         m_kColorMap.dispose();
         m_kColorMap = null;
@@ -629,6 +635,10 @@ public class VolumeImage implements Serializable {
      */
     public Texture GetNormalMapTarget() {
         return m_kNormalMapTarget;
+    }
+
+    public Texture GetScratchTarget() {
+        return m_kScratchTarget;
     }
 
     /**
@@ -1402,6 +1412,17 @@ public class VolumeImage implements Serializable {
         m_kNormalMapTarget.SetWrapType(0, Texture.WrapType.CLAMP_BORDER);
         m_kNormalMapTarget.SetWrapType(1, Texture.WrapType.CLAMP_BORDER);
         m_kNormalMapTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
+        
+
+        // Initialize the Normal Map Texture and set its GraphicsImage:
+        m_kScratchTarget = new Texture();
+        m_kScratchTarget.SetImage(new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound,
+    			(byte[])null, "ScratchBuffer"));
+        m_kScratchTarget.SetShared(true);
+        m_kScratchTarget.SetFilterType(Texture.FilterType.LINEAR);
+        m_kScratchTarget.SetWrapType(0, Texture.WrapType.CLAMP_BORDER);
+        m_kScratchTarget.SetWrapType(1, Texture.WrapType.CLAMP_BORDER);
+        m_kScratchTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
 
         // Initialize the Opacity Map for the Gradient Magnitude Texture and set its GraphicsImage:
         m_kOpacityMapTarget_GM = new Texture();
