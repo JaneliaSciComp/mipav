@@ -2765,6 +2765,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_pkRenderer.LoadTexture( m_kVolumeImageA.GetOpacityMapGMTarget() );
         m_pkRenderer.LoadTexture( m_kVolumeImageA.GetLaplaceMapTarget() );
         m_pkRenderer.LoadTexture( m_kVolumeImageA.GetSurfaceTarget() );
+        m_pkRenderer.LoadTexture( m_kVolumeImageA.GetScratchTarget() );
         if ( m_kVolumeImageB.GetImage() != null )
         {
             m_pkRenderer.LoadTexture( m_kVolumeImageB.GetVolumeTarget() );
