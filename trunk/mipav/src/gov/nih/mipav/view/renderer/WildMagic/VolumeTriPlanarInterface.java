@@ -102,6 +102,7 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -2544,13 +2545,13 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
     }
 
-    private String getVolumeRenderStateFile() {
+    private String getVolumeRenderStateFile(boolean bSave) {
         final JFileChooser chooser = new JFileChooser();
         chooser.setMultiSelectionEnabled(false);
 
         // TODO: Use FileNameExtensionFilter introduced in 1.6
-        // FileNameExtensionFilter kFileFilter = new FileNameExtensionFilter( "VolumeRenderStateFiles", "vrs" );
-        // chooser.addChoosableFileFilter(kFileFilter);
+        FileNameExtensionFilter kFileExtFilter = new FileNameExtensionFilter( "VolumeRenderStateFiles", "vrs" );
+        chooser.addChoosableFileFilter(kFileExtFilter);
 
         final FileFilter kFileFilter = new FileFilter() {
             public boolean accept(File f) {
@@ -2572,7 +2573,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
         }
 
-        if (JFileChooser.APPROVE_OPTION != chooser.showOpenDialog(null)) {
+        if (bSave && JFileChooser.APPROVE_OPTION != chooser.showSaveDialog(null)) {
+            return null;
+        }
+        else if (!bSave && JFileChooser.APPROVE_OPTION != chooser.showSaveDialog(null)) {
             return null;
         }
         String kFile = chooser.getSelectedFile().getName();
@@ -2599,7 +2603,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
 
     private void LoadState() {
-        final String kFile = getVolumeRenderStateFile();
+        final String kFile = getVolumeRenderStateFile(false);
         if (kFile == null) {
             return;
         }
@@ -2904,7 +2908,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
 
     private void SaveState() {
-        final String kFile = getVolumeRenderStateFile();
+        final String kFile = getVolumeRenderStateFile(true);
         if (kFile == null) {
             return;
         }
