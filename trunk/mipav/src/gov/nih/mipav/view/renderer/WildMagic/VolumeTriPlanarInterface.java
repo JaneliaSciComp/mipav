@@ -357,7 +357,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     protected boolean m_bDependentInterfaceInit = false;
 
-    protected GLPbuffer sharedDrawable;
+    protected GLPbuffer sharedDrawable = null;
 
     protected VolumeTriPlanarRender sharedRenderer;
 
@@ -438,6 +438,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
         progressBar.updateValueImmed(100);
         progressBar.dispose();
+        
+
+        raycastRenderWM.setVisible(true);
+    	m_kAnimator.start();
     }
 
     /*
@@ -498,8 +502,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             raycastRenderWM.displayVolumeRaycast(rendererGUI.getVolumeCheck().isSelected());
             raycastRenderWM.setVolumeBlend(rendererGUI.getBlendSliderValue() / 100.0f);
         } else if (command.equals("StereoOFF")) {
-            m_kStereoIPD.close();
-            m_kStereoIPD = null;
+        	if ( m_kStereoIPD != null )
+        	{
+        		m_kStereoIPD.close();
+        		m_kStereoIPD = null;
+        	}
             raycastRenderWM.setStereo(0);
         } else if (command.equals("StereoRED")) {
             if (m_kStereoIPD == null) {
@@ -2422,12 +2429,12 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
         m_bDependentInterfaceInit = false;
 
-        //panelAxial.remove(m_akPlaneRender[0].GetCanvas());
-        //panelSagittal.remove(m_akPlaneRender[1].GetCanvas());
-        //panelCoronal.remove(m_akPlaneRender[2].GetCanvas());
-        //raycastRenderWM.setVisible(false);
+        panelAxial.remove(m_akPlaneRender[0].GetCanvas());
+        panelSagittal.remove(m_akPlaneRender[1].GetCanvas());
+        panelCoronal.remove(m_akPlaneRender[2].GetCanvas());
+        raycastRenderWM.setVisible(false);
         //m_kAnimator.remove(raycastRenderWM.GetCanvas());
-        //gpuPanel.remove(raycastRenderWM.GetCanvas());
+        gpuPanel.remove(raycastRenderWM.GetCanvas());
 
         if (surfaceGUI != null) {
             surfaceGUI.dispose();
@@ -2531,7 +2538,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         for (int i = 0; i < 3; i++) {
 
             if (m_akPlaneRender[i] != null) {
-                m_akPlaneRender[i].disposeLocal();
+                m_akPlaneRender[i].dispose();
                 m_akPlaneRender[i] = null;
             }
         }
@@ -2633,7 +2640,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                 "Creating Volume & Surface Renderer...", 0, 100, false, null, null);
         MipavUtil.centerOnScreen(progressBar);
         progressBar.setVisible(true);
-        progressBar.updateValueImmed(0);
+        progressBar.updateValueImmed(0);        
+
         constructRenderers(progressBar);
 
         setBlendValue(kState.Blend);
@@ -2642,16 +2650,20 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         menuObj.getMenuItem("Show axes").setSelected(kState.ShowAxes);
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].showAxes(kState.ShowAxes);
-            m_akPlaneRender[i].updateDisplay();
+            //m_akPlaneRender[i].updateDisplay();
         }
         menuObj.getMenuItem("Show crosshairs").setSelected(kState.ShowCrossHairs);
         //final boolean showXHairs = menuObj.isMenuItemSelected("Show crosshairs");
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].showXHairs(kState.ShowCrossHairs);
-            m_akPlaneRender[i].updateDisplay();
+            //m_akPlaneRender[i].updateDisplay();
         }
         menuObj.getMenuItem("VOI toolbar").setSelected(kState.ShowVOI);
-        m_kVOIInterface.getToolBar().setVisible(kState.ShowVOI);
+        if ( kState.ShowVOI && (m_kVOIInterface == null) )
+        {
+            initVOI();
+            m_kVOIInterface.getToolBar().setVisible(kState.ShowVOI);
+        }
         menuObj.getMenuItem("4D toolbar").setSelected(kState.Show4D);
         if (kState.Show4D) {
             insertTab("4D", m_kVolume4DGUI.getMainPanel());
@@ -2838,6 +2850,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
         progressBar.updateValueImmed(100);
         progressBar.dispose();
+        
+
+        raycastRenderWM.setVisible(true);
+    	//m_kAnimator.start();
     }
 
     private void RestoreTabs(final VolumeRenderState kState) {
@@ -3149,7 +3165,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             }
         }
         updateImages(true);
-        raycastRenderWM.setVisible(true);
     }
     /**
      * Builds menus for the tri-planar view.
@@ -3378,8 +3393,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         if (progressBar != null) {
             progressBar.setMessage("Creating Slice Views...");
         }
-
         m_kAnimator = new Animator();
+        
         m_akPlaneRender = new PlaneRender_WM[3];
         
         m_akPlaneRender[0] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
@@ -3415,21 +3430,28 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
         pack();
         setVisible(true);
-        m_kAnimator.start();
     }
 
     protected void initShared() {
-        sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
-        sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
-        sharedDrawable.addGLEventListener(sharedRenderer);
-        // init and render one frame, which will setup the Gears display lists
-        sharedDrawable.display();
+    	if ( sharedDrawable == null )
+    	{
+    		sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
+    		sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
+    		sharedDrawable.addGLEventListener(sharedRenderer);
+    		// init and render one frame, which will setup the shared textures
+    		sharedDrawable.display();
+    	}
+    	else
+    	{
+    		sharedRenderer.reInitialize(m_kVolumeImageA, m_kVolumeImageB);
+        	sharedDrawable.display();  
+    	}
     }
 
     protected void releaseShared() {
         sharedDrawable.destroy();
     }
-    
+        
     /**
      * Method that resizes the frame and adjusts the rows, columns as needed.
      */

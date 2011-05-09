@@ -1,6 +1,6 @@
 uniform vec4    StepSize;
 uniform sampler3D bVolumeImageA; 
-uniform sampler1D dOpacityMapA; 
+uniform sampler1D cColorMapA; 
 
 void p_SurfaceExtract()
 {
@@ -26,7 +26,7 @@ void p_SurfaceExtract()
     int iShow = 8;
 
     color[0] = texture3D(bVolumeImageA,cube[0]);
-    opacity = texture1D(dOpacityMapA,color[0].r).r;
+    opacity = texture1D(cColorMapA,color[0].r).a;
     if ( opacity <= 0.0 )
     {
         color[0].r = 0.0;
@@ -36,7 +36,7 @@ void p_SurfaceExtract()
     }
 
     color[1] = texture3D(bVolumeImageA,cube[1]);
-    opacity = texture1D(dOpacityMapA,color[1].r).r;
+    opacity = texture1D(cColorMapA,color[1].r).a;
     if ( opacity <= 0.0 )
     {
         color[1].r = 0.0;
@@ -46,7 +46,7 @@ void p_SurfaceExtract()
     }
 
     color[2] = texture3D(bVolumeImageA,cube[2]);
-    opacity = texture1D(dOpacityMapA,color[2].r).r;
+    opacity = texture1D(cColorMapA,color[2].r).a;
     if ( opacity <= 0.0 )
     {
         color[2].r = 0.0;
@@ -56,7 +56,7 @@ void p_SurfaceExtract()
     }
 
     color[3] = texture3D(bVolumeImageA,cube[3]);
-    opacity = texture1D(dOpacityMapA,color[3].r).r;
+    opacity = texture1D(cColorMapA,color[3].r).a;
     if ( opacity <= 0.0 )
     {
         color[3].r = 0.0;
@@ -66,7 +66,7 @@ void p_SurfaceExtract()
     }
 
     color[4] = texture3D(bVolumeImageA,cube[4]);
-    opacity = texture1D(dOpacityMapA,color[4].r).r;
+    opacity = texture1D(cColorMapA,color[4].r).a;
     if ( opacity <= 0.0 )
     {
         color[4].r = 0.0;
@@ -77,7 +77,7 @@ void p_SurfaceExtract()
 
 
     color[5] = texture3D(bVolumeImageA,cube[5]);
-    opacity = texture1D(dOpacityMapA,color[5].r).r;
+    opacity = texture1D(cColorMapA,color[5].r).a;
     if ( opacity <= 0.0 )
     {
         color[5].r = 0.0;
@@ -87,7 +87,7 @@ void p_SurfaceExtract()
     }
 
     color[6] = texture3D(bVolumeImageA,cube[6]);
-    opacity = texture1D(dOpacityMapA,color[6].r).r;
+    opacity = texture1D(cColorMapA,color[6].r).a;
     if ( opacity <= 0.0 )
     {
         color[6].r = 0.0;
@@ -97,7 +97,7 @@ void p_SurfaceExtract()
     }
 
     color[7] = texture3D(bVolumeImageA,cube[7]);
-    opacity = texture1D(dOpacityMapA,color[7].r).r;
+    opacity = texture1D(cColorMapA,color[7].r).a;
     if ( opacity <= 0.0 )
     {
         color[7].r = 0.0;

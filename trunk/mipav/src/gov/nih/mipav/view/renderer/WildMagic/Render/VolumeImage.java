@@ -70,12 +70,6 @@ public class VolumeImage implements Serializable {
     /** Texture object for color map: */
     private Texture m_kColorMapTarget;
 
-    /** Data storage for opacity map: */
-    private GraphicsImage m_kOpacityMap = null;
-
-    /** Texture object for opacity map: */
-    private Texture m_kOpacityMapTarget;
-
     /** Data storage for volume gradient magnitude: */
     private GraphicsImage[] m_kVolumeGM;
     /** Set to true if the Gradient Magnitude texture map has been initialized.  */
@@ -650,14 +644,6 @@ public class VolumeImage implements Serializable {
     }
 
     /**
-     * Return the Volume opacity transfer function Texture.
-     * @return Volume opacity transfer function Texture.
-     */
-    public Texture GetOpacityMapTarget() {
-        return m_kOpacityMapTarget;
-    }
-
-    /**
      * Return the postfix for this VolumeImage.
      * @return postfix for this VolumeImage.
      */
@@ -880,7 +866,6 @@ public class VolumeImage implements Serializable {
     public boolean UpdateImages(final TransferFunction kTransfer, final int iImage, final ModelImage kImage) {
         if (iImage == 0) {
             return UpdateImages2(m_kImage, m_kColorMapTarget, m_kColorMap, kTransfer);
-            //return UpdateImages(m_kImage, m_kOpacityMapTarget, m_kOpacityMap, kTransfer);
         } else if ( (iImage == 2) && (kImage != null) && (m_kOpacityMapTarget_GM != null) && (m_kOpacityMap_GM != null)) {
             return UpdateImages(kImage, m_kOpacityMapTarget_GM, m_kOpacityMap_GM, kTransfer);
         }
@@ -1293,8 +1278,6 @@ public class VolumeImage implements Serializable {
         m_fDRRNormalize = computeIntegralNormalizationFactor();
         // Initialize Color Map GraphicsImage:
         m_kColorMap = VolumeImage.InitColorMap(m_kLUT, m_kRGBT, m_kPostfix);
-        // Initialize Opacity Map GrpahicsImage:
-        m_kOpacityMap = InitOpacityMap(m_kImage, m_kPostfix);
         // Initialize Opacity Map for the GradientMagnitude image:
         m_kOpacityMap_GM = InitOpacityMap(m_kImage, new String(m_kPostfix + "_GM"));
 
@@ -1399,11 +1382,6 @@ public class VolumeImage implements Serializable {
         m_kColorMapTarget.SetImage(m_kColorMap);
         m_kColorMapTarget.SetShared(true);
 
-        // Initialize the Opacity Map Texture and set its GraphicsImage:
-        m_kOpacityMapTarget = new Texture();
-        m_kOpacityMapTarget.SetImage(m_kOpacityMap);
-        m_kOpacityMapTarget.SetShared(true);
-
         // Initialize the Normal Map Texture and set its GraphicsImage:
         m_kNormalMapTarget = new Texture();
         m_kNormalMapTarget.SetImage(m_kNormal[0]);
@@ -1430,7 +1408,7 @@ public class VolumeImage implements Serializable {
         m_kOpacityMapTarget_GM.SetShared(true);
 
         // Initialize the Surface Mask Texture and set its GraphicsImage:
-        m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_L8, iXBound, iYBound, iZBound, new byte[iXBound
+        m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, new byte[4* iXBound
                 * iYBound * iZBound], "SurfaceImage");
         m_kSurfaceTarget = new Texture();
         m_kSurfaceTarget.SetImage(m_kSurfaceImage);
@@ -1640,9 +1618,9 @@ public class VolumeImage implements Serializable {
     private void writeObject(final java.io.ObjectOutputStream out) throws IOException {
         if (m_kImage != null) {
             out.writeObject(m_kDir);
-            out.writeObject(m_kImage.getImageName());
+            out.writeObject(m_kImage.getImageFileName());
             out.writeObject(m_kPostfix);
-            m_kImage.saveImage(m_kDir, m_kImage.getImageName(), FileUtility.XML, false, false);
+            m_kImage.saveImage(m_kDir, m_kImage.getImageFileName(), FileUtility.XML, false, false);
         } else {
             out.writeObject("null");
         }

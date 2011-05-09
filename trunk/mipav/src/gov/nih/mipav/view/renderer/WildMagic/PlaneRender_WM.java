@@ -254,18 +254,10 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
        
-    /**
-     * Closes the frame.
-     */
-    public void close() {
-        disposeLocal();
-    }
-
      
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
-    @Override
 	public void display(GLAutoDrawable arg0) {
         if ( !m_bModified )
         {
@@ -283,6 +275,12 @@ public class PlaneRender_WM extends GPURenderBase
         {
             init(arg0);
         }
+        if ( m_bDispose )
+        {
+        	dispose(arg0);
+        	return;
+        }
+
 
         m_bModified = false;   
         m_pkRenderer.ClearBuffers();
@@ -354,7 +352,7 @@ public class PlaneRender_WM extends GPURenderBase
     /**
      * Clean memory.
      */
-    public void disposeLocal() {
+    public void dispose(GLAutoDrawable arg0) {
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < 3; j++)
@@ -407,7 +405,7 @@ public class PlaneRender_WM extends GPURenderBase
         m_aiAxisOrder = null;
         m_abAxisFlip = null;
 
-        super.dispose();
+        super.dispose(arg0);
     }
     
 

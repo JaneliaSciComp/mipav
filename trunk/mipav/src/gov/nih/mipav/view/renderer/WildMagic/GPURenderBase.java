@@ -154,12 +154,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return kVNode;
     }
 
+    protected boolean m_bDispose = false;
+	public void dispose()
+    {
+		m_bDispose = true;
+    }
 
     /**
      * memory cleanup.
      */
-    @Override
-	public void dispose()
+	public void dispose(GLAutoDrawable kDrawable)
     {
         m_kParent = null;
         m_kVolumeImageA = null;
@@ -214,9 +218,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         super.dispose();
     }
-
-    @Override
-	public void dispose(GLAutoDrawable a) {}
 
     /**
      * Returns the GLCanvas in the m_pkRenderer object.
@@ -323,6 +324,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             saveAVIMovie();
         }
+    }
+    
+    public void reInitialize(VolumeImage kImageA, VolumeImage kImageB)
+    {
+    	m_kVolumeImageA = kImageA;
+    	m_kVolumeImageB = kImageB;
+    	m_bInit = false;
     }
 
     public VolumeObject RemoveNode( String kNodeName )

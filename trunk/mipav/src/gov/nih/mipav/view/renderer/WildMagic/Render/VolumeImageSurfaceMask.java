@@ -111,11 +111,12 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                 m_pkRenderer.EndScene();
                 //writeImage();
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetSurfaceTarget(), m_iSlice, true );
             //m_pkRenderer.DisplayBackBuffer();
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetSurfaceTarget(), m_iSlice, true );
             m_iSlice++; 
             if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
             {
+            	/*
                 if ( bDrawSurface )
                 {
                     ModelImage kMask = VolumeImage.CreateImageFromTexture( m_kVolumeImage.GetSurfaceTarget().GetImage(), true );
@@ -125,7 +126,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: unable to open new frame");
                     }
-                }
+                } */
                 bSurfaceAdded = false;
                 m_iSlice = 0;
             }
