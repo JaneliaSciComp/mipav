@@ -553,11 +553,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     @Override
 	public void display(GLAutoDrawable arg0) {
-        if ( !m_bVisible || !m_bDisplay )
-        {
-            return;
-        }
-        
         if ( m_kVolumeImageA == null ) {
         	return;
         }           
@@ -568,6 +563,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( !m_bInit )
         {
             init(arg0);
+        }
+        if ( !m_bVisible || !m_bDisplay )
+        {
+            return;
+        }
+        if ( m_bDispose )
+        {
+        	dispose(arg0);
+        	return;
         }
 
         
@@ -770,11 +774,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#dispose()
-     */
-    @Override
-	public void dispose()
+	public void dispose(GLAutoDrawable kDrawable)
     {
         if ( m_kSculptor != null )
         { 
@@ -793,7 +793,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kArbitraryClip = null;
         }
-
+        if ( m_kFBO != null )
+    	{
+    		m_kFBO.SetDrawable(kDrawable);
+    		m_kFBO.TerminateBuffer();
+    		m_kFBO = null;
+    	}
         super.dispose();
     }
 
@@ -1211,6 +1216,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     	
         m_bInit = true;
+        if ( !m_bShared )
+        {
+        	loadShared( );
+        	return;
+        }
+        
         m_pkRenderer.InitializeState();
         m_pkRenderer.SetLineWidth(3);
 
@@ -1226,14 +1237,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         kCLoc.Scale(-1.4f);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
-        if ( !m_bShared )
-        {
-        	loadShared( );
-        }
-        else
-        {
-        	CopyShared( );
-        }
+
+        CopyShared( );
+        
     	CreateScene( );
         // initial update of objects
         m_spkScene.UpdateGS();
@@ -1263,11 +1269,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * proxy-geometry versus the ray-traced volume.
      * @param e the key event.
      */
-    @Override
 	public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
         super.keyPressed(e);
-        System.err.println( "keyPressed " + ucKey );
         switch (ucKey)
         {
         case 'b':
@@ -2965,7 +2969,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kFBO.Enable();
             m_kFBO.DrawBuffers(new int[]{3});
         }
-        m_pkRenderer.SetBackgroundColor( new ColorRGBA(1.0f, 1.0f,0.0f,0.0f) /*m_kBackgroundColor*/ );
+        m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
         m_pkRenderer.ClearBuffers();
         m_pkRenderer.Draw( m_pkPlane ); 
         if ( bPreRender )

@@ -575,6 +575,7 @@ uniform vec4    LevLeftLine5;
 uniform vec4    LevRightLine5;
 uniform float BoundaryEmphasis5;
 
+uniform float StepSize;
 
 /** Raycasting fragment program implementation */
 void p_VolumeShaderABMultiPass()
@@ -595,6 +596,7 @@ void p_VolumeShaderABMultiPass()
 
     // the ray direction
     vec3 dir = back_position - start;
+    dir = normalize(dir);
 
     // The color at the current position along the ray:
     vec4 color = vec4(0.0);
@@ -612,7 +614,17 @@ void p_VolumeShaderABMultiPass()
     // current position along the ray: 
     float fPos = iPass;
     vec3 position = vec3(0.0);
-    position = start + fPos * dir;
+    position = start + fPos * StepSize * dir;
+    vec3 dir2 = position - start;
+    dir = back_position - start;
+    if ( length(dir2) > length(dir) )
+    {
+        gl_FragColor.r = 0;
+        gl_FragColor.g = 0;
+        gl_FragColor.b = 0;
+        gl_FragColor.a = 0;
+        return;
+    }
 
     vec3 LocalMaterialAmbient = MaterialAmbient;
     vec3 LocalMaterialEmissive = MaterialEmissive;

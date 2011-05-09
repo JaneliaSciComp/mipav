@@ -99,8 +99,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
         kPShader.SetTextureQuantity(4);
         kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
         kPShader.SetTexture(0, kVolumeImage.GetVolumeTarget() );
-        kPShader.SetImageName(1,kVolumeImage.GetOpacityMapTarget().GetImage().GetName());
-        kPShader.SetTexture(1, kVolumeImage.GetOpacityMapTarget() );
+        kPShader.SetImageName(1,kVolumeImage.GetColorMapTarget().GetImage().GetName());
+        kPShader.SetTexture(1, kVolumeImage.GetColorMapTarget() );
         kPShader.SetImageName(2,kVolumeImage.GetNormalMapTarget().GetImage().GetName());
         kPShader.SetTexture(2, kVolumeImage.GetNormalMapTarget() );
         kPShader.SetImageName(3,kVolumeImage.GetOpacityMapGMTarget().GetImage().GetName());

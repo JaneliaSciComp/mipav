@@ -619,7 +619,7 @@ public class VolumeSurface extends VolumeObject
     public void Paint( Renderer kRenderer, PickRecord kRecord, ColorRGBA kPaintColor, int iBrushSize )
     {
         m_bPainted = true;
-        System.err.println( "Painting: " + m_kMesh.VBuffer.GetAttributes().GetCChannels(0) );
+        //System.err.println( "Painting: " + m_kMesh.VBuffer.GetAttributes().GetCChannels(0) );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV0, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV1, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV2, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
