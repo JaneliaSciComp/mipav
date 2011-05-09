@@ -2853,7 +2853,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         
 
         raycastRenderWM.setVisible(true);
-    	//m_kAnimator.start();
+    	m_kAnimator.start();
     }
 
     private void RestoreTabs(final VolumeRenderState kState) {
