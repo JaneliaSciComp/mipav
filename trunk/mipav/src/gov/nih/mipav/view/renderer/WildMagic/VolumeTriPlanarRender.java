@@ -180,7 +180,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected boolean m_bDisplay = false;
     
     
-    Texture[] m_akSceneTarget = new Texture[4];
+    protected Texture[] m_akSceneTarget = new Texture[4];
+	
+    protected boolean m_bWriteImage = false;
     
 
     /*
@@ -1303,50 +1305,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             	}
             }
             break;
-            /*
-
-
-        case 'v':
-            m_bDisplayEllipsoids = !m_bDisplayEllipsoids;
-            return;
-        case 'd':
-            m_iEllipsoidMod--;
-            if ( m_iEllipsoidMod < 1 )
-            {
-                m_iEllipsoidMod = 1;
-            }
-            return;
-        case 'f':
-            m_iEllipsoidMod++;
-            if ( m_iEllipsoidMod > 100 )
-            {
-                m_iEllipsoidMod = 100;
-            }
-            return;
-        case 'c':
-            System.err.println(m_iActive);
-            if (m_iActive == 0)
-            {
-                m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
-                m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
-                m_iActive = 1;
-            }
-            else if (m_iActive == 1)
-            {
-                // soft additive
-                m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
-                m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
-                m_iActive = 2;
-            }
-            else
-            {
-                // multiplicative
-                m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_DST_COLOR;
-                m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ZERO;
-                m_iActive = 0;
-            }
-            return;
-                    */
+        case 's':
+        	m_bWriteImage = true;
+        	break;
         }
         m_kParent.setCameraParameters();
     	m_kParent.setObjectParameters();
@@ -2826,9 +2787,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 RenderSculpt();
                 
                 RenderFrameRate();                
-                if ( m_bSnapshot )
+                if ( m_bSnapshot || m_bWriteImage )
                 {
                     writeImage();
+                    m_bWriteImage = false;
                 }
                 m_pkRenderer.DisplayBackBuffer();
             }

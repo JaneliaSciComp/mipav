@@ -47,7 +47,7 @@ float computeAlpha( float fX,
     {
         fAlpha = (fX - xRight) / ((xMid+fShiftR) - xRight);
     }
-    return fAlpha;
+    return (fAlpha);
 }
 //----------------------------------------------------------------------------
 void GetDirectionalLightFactors
@@ -714,99 +714,62 @@ void p_VolumeShaderMultiPass()
             {
                 float opacity0 =
                     computeAlpha( fMapX, fMapY, Shift0, InvY0MY10, LevMidLine0, LevLeftLine0, LevRightLine0 );
-                opacity0 = opacity0 * LevColor0.a;
                 opacity0 *= (1.0 - BoundaryEmphasis0 * 2.0 * (0.5 - fMapZ));
-                vec4 color0 = LevColor0 * opacity0;
-                color = color0;
-                opacity = opacity0;
-                //fCount += 1.0;
-
-                LocalMaterialDiffuse.r = color.r;
-                LocalMaterialDiffuse.g = color.g;
-                LocalMaterialDiffuse.b = color.b;
+                color = LevColor0 * opacity0;
+                opacity = opacity0 * LevColor0.a;
             }
             if ( UseWidget1 != 0.0 )
             {
                 float opacity1 =
                     computeAlpha( fMapX, fMapY, Shift1, InvY0MY11, LevMidLine1, LevLeftLine1, LevRightLine1 );
-                opacity1 *= LevColor1.a;
                 opacity1 *= (1.0 - BoundaryEmphasis1 * 2.0 * (0.5 - fMapZ));
                 vec4 color1 = LevColor1 * opacity1;
-//                 color += color1;
-//                 opacity += opacity1;
-                color = color1 + (1 - opacity1)*color;
-                if ( opacity != 0.0 )
-                {
-                    opacity = opacity1 * opacity1 + (1 - opacity1) * opacity;
-                }
-                else
-                {
-                    opacity = opacity1;
-                }
-
-                LocalMaterialDiffuse.r = color.r;
-                LocalMaterialDiffuse.g = color.g;
-                LocalMaterialDiffuse.b = color.b;
-                //fCount += 1.0;
+                color += color1;
+                opacity += (opacity1 * LevColor1.a);
             }
             if ( UseWidget2 != 0.0 )
             {
                 float opacity2 =
                     computeAlpha( fMapX, fMapY, Shift2, InvY0MY12, LevMidLine2, LevLeftLine2, LevRightLine2 );
-                opacity2 *= LevColor2.a;
                 opacity2 *= (1.0 - BoundaryEmphasis2 * 2.0 * (0.5 - fMapZ));
                 vec4 color2 = LevColor2 * opacity2;
-//                 color += color2;
-//                 opacity += opacity2;
-                color = color2 + (1 - opacity2)*color;
-                opacity = opacity2 * opacity2 + (1 - opacity2) * opacity;
-                //fCount += 1.0;
+                color += color2;
+                opacity += (opacity2 * LevColor2.a);
             }
             if ( UseWidget3 != 0.0 )
             {
                 float opacity3 =
                     computeAlpha( fMapX, fMapY, Shift3, InvY0MY13, LevMidLine3, LevLeftLine3, LevRightLine3 );
-                vec4 color3 = LevColor3 * opacity3;
                 opacity3 *= (1.0 - BoundaryEmphasis3 * 2.0 * (0.5 - fMapZ));
+                vec4 color3 = LevColor3 * opacity3;
                 color += color3;
                 opacity3 *= LevColor3.a;
-                opacity += opacity3;
-                //fCount += 1.0;
+                opacity += (opacity3 * LevColor3.a);
             }
             if ( UseWidget4 != 0.0 )
             {
                 float opacity4 =
                     computeAlpha( fMapX, fMapY, Shift4, InvY0MY14, LevMidLine4, LevLeftLine4, LevRightLine4 );
+                opacity4 *= (1.0 - BoundaryEmphasis4 * 2.0 * (0.5 - fMapZ));
                 vec4 color4 = LevColor4 * opacity4;
                 color += color4;
-                opacity4 *= LevColor4.a;
-                opacity4 *= (1.0 - BoundaryEmphasis4 * 2.0 * (0.5 - fMapZ));
-                opacity += opacity4;
-                //fCount += 1.0;
+                opacity += (opacity4 * LevColor4.a);
             }
             if ( UseWidget5 != 0.0 )
             {
                 float opacity5 =
                     computeAlpha( fMapX, fMapY, Shift5, InvY0MY15, LevMidLine5, LevLeftLine5, LevRightLine5 );
+                opacity5 *= (1.0 - BoundaryEmphasis5 * 2.0 * (0.5 - fMapZ));
                 vec4 color5 = LevColor5 * opacity5;
                 color += color5;
-                opacity5 *= LevColor5.a;
-                opacity5 *= (1.0 - BoundaryEmphasis5 * 2.0 * (0.5 - fMapZ));
-                opacity += opacity5;
-                //fCount += 1.0;
+                opacity += (opacity5 * LevColor5.a);
             }
-            //if ( fCount != 0.0 )
-            //{
-            //opacity /= fCount;
-            //}
         }
         else
         {
             if ( IsColorA != 0.0 )
             {
                 opacity = 0.0;
-                //opacity = color.r;
-                //opacity = texture1D(dOpacityMapA_TEXUNIT3,opacity).r;
                 if ( ColorLUTOnA.x != 0.0 )
                 {
                     colorTemp = texture1D(cColorMapA,color.r);
@@ -854,6 +817,10 @@ void p_VolumeShaderMultiPass()
         
         if ( Surface != 0.0 )
         {
+            LocalMaterialDiffuse.r = color.r;
+            LocalMaterialDiffuse.g = color.g;
+            LocalMaterialDiffuse.b = color.b;
+
             // Surface and Composite surface display:
             vec4 normal = texture3D(eNormalMapA,position);
             normal.w = 0.0;
