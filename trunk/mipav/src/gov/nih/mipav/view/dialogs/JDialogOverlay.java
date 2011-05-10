@@ -126,8 +126,18 @@ public class JDialogOverlay extends JDialogBase {
 
             if(showOverlayBox.isSelected()) {
       		  comp.setOverlay(true);
+      		  if(isDicom) {
+      			Preferences.setShowDICOMOverlays(true);
+      		  }else {
+      			  Preferences.setShowImageOverlays(true);
+      		  }
       	  	}else {
       		  comp.setOverlay(false);
+      		  if(isDicom) {
+      			Preferences.setShowDICOMOverlays(false);
+      		  }else {
+      			  Preferences.setShowImageOverlays(false);
+      		  }
       	  	}
             
             comp.paintComponent(comp.getGraphics());
@@ -265,6 +275,7 @@ public class JDialogOverlay extends JDialogBase {
         OKButton.setText("Apply");
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        cancelButton.setText("Close");
         
         showOverlayBox = new JCheckBox("Show overlay");
         showOverlayBox.setSelected(true);
