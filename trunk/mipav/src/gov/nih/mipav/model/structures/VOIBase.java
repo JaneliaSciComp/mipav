@@ -167,7 +167,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     protected int numPixels = 0;
     
-    protected BitSet m_kMask = null;
     protected Vector<Vector3f> m_kMaskPositions = new Vector<Vector3f>();
     protected Vector3f m_kPositionSum = new Vector3f();
     
@@ -299,18 +298,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
         this.numPixels = kBase.numPixels;
         
-        if ( kBase.m_kMask != null )
-        {
-            this.m_kMask = (BitSet)kBase.m_kMask.clone();
-        }
         for ( int i = 0; i < kBase.m_kMaskPositions.size(); i++ )
         {
             this.m_kMaskPositions.add( new Vector3f( kBase.m_kMaskPositions.elementAt(i)));
         }
-        this.m_kPositionSum.Copy( kBase.m_kPositionSum );
-        
-        //this.m_bUpdateMask = true;
-        
+        this.m_kPositionSum.Copy( kBase.m_kPositionSum );               
 
         for ( int i = 0; i < kBase.size(); i++ )
         {
@@ -431,7 +423,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public float calcIntensity(ModelImage kImage, int t) {
         numPixels = 0;
-        getMask();
+        getAllContourPoints();
         float sum = 0;
         for ( int i = 0; i < m_kMaskPositions.size(); i++ )
         {
@@ -455,7 +447,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public Vector<Float> calcIntensity( ModelImage kImage, Vector3f kValues, float ignoreMin, float ignoreMax, ExclusionRangeType rangeFlag)
     {
-        getMask();
+    	getAllContourPoints();
         Vector<Float> values = new Vector<Float>();
         float fVal = 0;
         for ( int i = 0; i < m_kMaskPositions.size(); i++ )
@@ -489,7 +481,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public float calcIntensityThreshold(ModelImage kImage, float threshold, int t) {
         numPixels = 0;
-        getMask();
+        getAllContourPoints();
         float sum = 0;
         for ( int i = 0; i < m_kMaskPositions.size(); i++ )
         {
@@ -518,7 +510,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public Vector<ColorRGB> calcRGBIntensity(ModelImage kImage, ColorRGB kMin, ColorRGB kMax, ColorRGB kSum, float ignoreMin, float ignoreMax, ExclusionRangeType rangeFlag) {
         Vector<ColorRGB> values = new Vector<ColorRGB>();
         float r, g, b;
-        getMask();
+        getAllContourPoints();
         for ( int i = 0; i < m_kMaskPositions.size(); i++ )
         {
             Vector3f kPos = m_kMaskPositions.elementAt(i);
@@ -558,7 +550,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public float calcRGBIntensity(ModelImage kImage, int RGorB) {
         numPixels = 0;
-        getMask();
+        getAllContourPoints();
         float sum = 0;
         for ( int i = 0; i < m_kMaskPositions.size(); i++ )
         {
@@ -585,7 +577,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public float calcRGBIntensityThreshold(ModelImage kImage, int RGorB, float threshold) {
         numPixels = 0;
-        getMask();
+        getAllContourPoints();
         float sum = 0;
         for ( int i = 0; i < m_kMaskPositions.size(); i++ )
         {
@@ -1190,7 +1182,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param c color channel.
      */
     public void getCenterOfMass(ModelImage kImage, Vector3f centerPt, int c) {
-        getMask();
+    	getAllContourPoints();
         float sum = 0;
         double sumX = 0.0;
         double sumY = 0.0;
@@ -1289,7 +1281,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         //Profile.start();
         //long time = System.currentTimeMillis();
         //System.out.println("getGeometricCenter " + getGroup().getName() + getLabel() );
-        getMask();
+        getAllContourPoints();
         m_bUpdateGeometricCenter = false;
         //System.out.println(" ... " + (System.currentTimeMillis() - time));
         //Profile.stop();
@@ -1441,34 +1433,27 @@ public abstract class VOIBase extends Vector<Vector3f> {
         return tmpString;
     }
 
-    public BitSet getMask()
+    
+    public void getAllContourPoints()
     {
         if ( !m_bUpdateMask )
         {
-            return m_kMask;
+            return;
         }  
-        //System.err.println( "updateMask" );
         Vector3f[] kBounds = getImageBoundingBox();
         int xDim = (int)kBounds[1].X;
         int yDim = (int)kBounds[1].Y;
-        int zDim = (int)kBounds[1].Z;
-        if ( m_kMask == null )
-        {
-            m_kMask = new BitSet(xDim * yDim * zDim); 
-        }                                                 
-        m_kMask.clear();
-        fillVolume( m_kMask, xDim, yDim );
+        fillVolume( null, xDim, yDim );
 
         m_bUpdateGeometricCenter = false;
         m_bUpdateMask = false;
-        return m_kMask;
     }
     
     
     
     public Vector<Vector3f> getMaskPositions()
     {
-        getMask();
+    	getAllContourPoints();
         return m_kMaskPositions;
     }
 
@@ -1502,7 +1487,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     
     public int getNumVoxels()
     {
-        getMask();
+    	getAllContourPoints();
         return m_kMaskPositions.size();
     }
     
@@ -1905,7 +1890,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     {
         if ( m_bUpdateMask )
         {
-            getMask();
+        	getAllContourPoints();
         }
         for ( int i = 0; i < m_kMaskPositions.size(); i++ )
         {
@@ -1932,7 +1917,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     {
         if ( m_bUpdateMask )
         {
-            getMask();
+        	getAllContourPoints();
         }
         for ( int i = 0; i < m_kMaskPositions.size(); i++ )
         {
@@ -2508,7 +2493,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     private void fillVolume( BitSet kMask, int xDim, int yDim )
     {
-        if ( size() == 0 || kMask == null )
+        if ( size() == 0 )
         {
             return;
         }
@@ -2556,10 +2541,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     m_kPositionSum.Y += kPos.Y;
                     m_kPositionSum.Z += kPos.Z;
                     
-                    int iMaskIndex = z * xDim * yDim;
-                    iMaskIndex += y * xDim;
-                    iMaskIndex += iX;
-                    kMask.set(iMaskIndex);            
+                    if ( kMask != null )
+                    {
+                    	int iMaskIndex = z * xDim * yDim;
+                    	iMaskIndex += y * xDim;
+                    	iMaskIndex += iX;
+                    	kMask.set(iMaskIndex);
+                    }
                 }
             }
         }
@@ -2596,10 +2584,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     m_kPositionSum.X += kPos.X;
                     m_kPositionSum.Z += kPos.Z;
                     
-                    int iMaskIndex = z * xDim * yDim;
-                    iMaskIndex += iY * xDim;
-                    iMaskIndex += x;
-                    kMask.set(iMaskIndex);            
+                    if ( kMask != null )
+                    {                    	
+                    	int iMaskIndex = z * xDim * yDim;
+                    	iMaskIndex += iY * xDim;
+                    	iMaskIndex += x;
+                    	kMask.set(iMaskIndex);      
+                    }
                 }
             }
         }
@@ -2633,10 +2624,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     m_kPositionSum.X += kPos.X;
                     m_kPositionSum.Y += kPos.Y;
                     
-                    int iMaskIndex = iZ * xDim * yDim;
-                    iMaskIndex += y * xDim;
-                    iMaskIndex += x;
-                    kMask.set(iMaskIndex);            
+                    if ( kMask != null )
+                    {
+                    	int iMaskIndex = iZ * xDim * yDim;
+                    	iMaskIndex += y * xDim;
+                    	iMaskIndex += x;
+                    	kMask.set(iMaskIndex);
+                    }
                 }
             }
         }

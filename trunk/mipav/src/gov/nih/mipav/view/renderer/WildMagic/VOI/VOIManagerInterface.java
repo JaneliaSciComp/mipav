@@ -2191,6 +2191,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void saveVOIs( String kCommand )
     {
+    	/*
         //System.err.println( "saveVOIs " + kCommand );
         if ( m_kUndoList.size() > m_iMaxUndo )
         {
@@ -2210,6 +2211,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_kRedoCommands.clear();
     	clearList( m_kRedoList, m_kRedoList.size() );
         //m_kRedoList.clear();
+         */
     }
 
     /* (non-Javadoc)

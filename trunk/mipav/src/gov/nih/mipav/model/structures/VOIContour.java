@@ -711,8 +711,8 @@ public class VOIContour extends VOIBase {
 	public void secondOrderAttributes( ModelImage kImage, float[] pAxis,
 			float[] eccentricity, float[] majorAxis, float[] minorAxis) {  	    
 
-		getMask();
-		int nPts = m_kMask.cardinality();
+		getAllContourPoints();
+		int nPts = m_kMaskPositions.size();
 		
 		float xRes = kImage.getResolutions(0).length > 0 ? kImage.getResolutions(0)[0] : 1;
 		float yRes = kImage.getResolutions(0).length > 1 ? kImage.getResolutions(0)[1] : 1;
@@ -722,7 +722,6 @@ public class VOIContour extends VOIBase {
 		double m10 = 0.0;
 		double m01 = 0.0;
 
-		nPts = m_kMaskPositions.size();
 		if ( m_iPlane == NOT_A_PLANE )
 		{
 			m_bUpdatePlane = true;
