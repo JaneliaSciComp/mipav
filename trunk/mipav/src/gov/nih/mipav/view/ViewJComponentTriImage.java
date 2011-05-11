@@ -2365,63 +2365,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * The following is a utlity method for drawing VOIs during this object's paintComponent method. It was factored out
-     * of paintComponent for simplicity's sake. -- lorsino
-     * 
-     * @param offscreenGraphics2d the graphics context to draw in
-     */
-    @SuppressWarnings("unused")
-    private void drawTriPlanarVOIs(final Graphics2D offscreenGraphics2d) {
-        final ViewVOIVector VOIs = (ViewVOIVector) imageA.getVOIs().clone();
-
-        if ( (this == triImageFrame.getTriImage(ViewJFrameTriImage.AXIAL_AB))
-                || (this == triImageFrame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB))
-                || (this == triImageFrame.getTriImage(ViewJFrameTriImage.CORONAL_AB))) {
-
-            if (imageB != null) {
-                VOIs.addAll((ViewVOIVector) imageB.getVOIs().clone());
-            }
-        }
-
-        if (VOIs != null) {
-            //final int nVOI = VOIs.size();
-/*
-            for (int i = nVOI - 1; i >= 0; i--) {
-                if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-
-                    for (int k = 0; k < imageActive.getExtents()[2]; k++) {
-                        final Vector3f[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
-
-                        for (int j = 0; j < voiPoints.length; j++) {
-                            final Vector3f screenPt = new Vector3f();
-                            final Vector3f patientPt = new Vector3f();
-                            MipavCoordinateSystems.fileToPatient(voiPoints[j], patientPt, imageActive, orientation);
-
-                            super.LocalToScreen(patientPt, screenPt);
-
-                            if ( ( ! ( ((int) screenPt.X == -1) && ((int) screenPt.Y == -1))) && (patientPt.Z == slice)) {
-                                offscreenGraphics2d.setColor(VOIs.VOIAt(i).getColor());
-
-                                ((VOIPoint) (VOIs.VOIAt(i).getCurvesTemp()[k].elementAt(j))).drawAxialSelf(offscreenGraphics2d,
-                                        (int)
-                                        screenPt.X,
-                                        (int)
-                                        screenPt.Y,
-
-                                        // voiPoints[j] );
-                                        patientPt);
-                            }
-                        }
-                    }
-                }
-            } // if (VOIs != null)
-                */
-        }
-
-        draw3DVOIs(offscreenGraphics2d, false);
-    }
-
-    /**
      * Builds the dashed stroke used to render the minor talairach grid lines.
      * 
      * @return the BasicStroke object used to render the minor talairach grid lines

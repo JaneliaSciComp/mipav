@@ -3024,7 +3024,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             }
 
             if ( ! (this instanceof ViewJComponentRegistration)) {
-                draw3DVOIs(offscreenGraphics2d, true);
+                //draw3DVOIs(offscreenGraphics2d, true);
             }
 
             if (memImageA == null) { // create imageA if it hasn't already been created
@@ -5077,7 +5077,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     {
         if ( imageA.getVOIs() != null )
         {
-            ViewVOIVector VOIs = (ViewVOIVector) imageA.getVOIs();
+            ViewVOIVector VOIs = imageA.getVOIs();
             if (VOIs != null && voiManager != null) {
                 int nVOI = VOIs.size();
                 for (int i = nVOI - 1; i >= 0; i--) {    
@@ -5087,12 +5087,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     {
                         VOIBase kVOI3D = kCurves.get(k);
                         offscreenGraphics2d.setColor( kVOI.getColor() );
-                        if ( kVOI.getDisplayMode() == VOI.SOLID && kVOI3D.getType() == VOI.CONTOUR && bBlend )
-                        {
-                            voiManager.drawBlendContour( kVOI3D, getPaintBuffer(), kVOI.getOpacity(), kVOI.getColor(), 
-                                    slice );
-                        }
-                        else
+                        //if ( kVOI.getDisplayMode() == VOI.SOLID && kVOI3D.getType() == VOI.CONTOUR && bBlend )
+                        //{
+                        //    voiManager.drawBlendContour( kVOI3D, getPaintBuffer(), kVOI.getOpacity(), kVOI.getColor(), 
+                        //            slice );
+                        //}
+                        //else
                         {
                             voiManager.draw( kVOI3D, 
                                     imageA.getResolutions(0), 
@@ -5115,9 +5115,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     for ( int k = 0; k < kCurves.size(); k++ )
                     {
                         VOIBase kVOI3D = kCurves.get(k);
-                        if ( kVOI3D.getType() == VOI.CONTOUR && bBlend )
-                        {}
-                        else
+                        //if ( kVOI3D.getType() == VOI.CONTOUR && bBlend )
+                        //{}
+                        //else
                         {
                             offscreenGraphics2d.setColor( kVOI.getColor() );
                             voiManager.draw( kVOI3D, 
