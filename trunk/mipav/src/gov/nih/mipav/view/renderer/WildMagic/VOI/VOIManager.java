@@ -773,27 +773,27 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		int[] xB = new int[2];
 		int[] yB = new int[2];
 		int[] zB = new int[2];
-		BitSet mask = kVOI.getMask();
+		Vector<Vector3f> kMaskPositions = kVOI.getMaskPositions();
 		kVOI.getBounds( xB, yB, zB );
 
-		for (int z = zB[0]; z <= zB[1]; z++) {
-			for (int y = yB[0]; y <= yB[1]; y++) {
-				for (int x = xB[0]; x <= xB[1]; x++) {
-					int index = z * xB[1] * yB[1] + y * xB[1] + x;
-					if ( mask.get(index) )
-					{
-						kFile.Set( x, y, z );
-						MipavCoordinateSystems.fileToPatient( kFile, kLocal, m_kImageActive, m_iPlaneOrientation );                       
-						int bufferIndex = (int)(kLocal.Y * m_aiLocalImageExtents[0] + kLocal.X);
-						int opacityInt = (int) (opacity * 255);
-						opacityInt = opacityInt << 24;
+        for ( int i = 0; i < kMaskPositions.size(); i++ )
+        {
+            Vector3f kPos = kMaskPositions.elementAt(i);
+            int x = (int)kPos.X;
+            int y = (int)kPos.Y;
+            int z = (int)kPos.Z;
+            kFile.Set( x, y, z );
+            MipavCoordinateSystems.fileToPatient( kFile, kLocal, m_kImageActive, m_iPlaneOrientation );  
+            if ( kLocal.Z == slice )
+            {
+            	int bufferIndex = (int)(kLocal.Y * m_aiLocalImageExtents[0] + kLocal.X);
+            	int opacityInt = (int) (opacity * 255);
+            	opacityInt = opacityInt << 24;
 
-						int colorInt = color.getRGB() & 0x00ffffff;
-						pixBuffer[bufferIndex] = colorInt | opacityInt;
-					}
-				}
-			}
-		}    
+            	int colorInt = color.getRGB() & 0x00ffffff;
+            	pixBuffer[bufferIndex] = colorInt | opacityInt;
+            }
+        }    
 	}
 
 
@@ -4535,21 +4535,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * showing that the voi can be selected.
 	 */
 	private boolean nearLine( VOIBase kVOI, int iX, int iY, int iZ) {
-		VOIBase kBase = kVOI.clone();
+		Vector<Vector3f> backUpPts = new Vector<Vector3f>();
 		for ( int i = 0; i < kVOI.size(); i++ )
 		{
 			Vector3f kFilePos = kVOI.get(i);
+			backUpPts.add(kFilePos);
 			Vector3f kPos = m_kDrawingContext.fileToScreenVOI(kFilePos);
-			kBase.set(i, kPos);
+			kVOI.set(i, kPos);
 		}
-		if ( kBase.nearLine( iX, iY, iZ ) )
+		boolean bNear = kVOI.nearLine( iX, iY, iZ );
+		for ( int i = 0; i < kVOI.size(); i++ )
 		{
-			kVOI.setNearPoint( kBase.getNearPoint() );
-			kBase = null;
-			return true;
+			kVOI.set(i, backUpPts.get(i));
 		}
-		kBase = null;
-		return false;
+		return bNear;
 	}
 
 	/**
