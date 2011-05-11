@@ -751,7 +751,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param color polygon color.
 	 * @param slice current slice in local ViewJComponentEditImage coordinates.
 	 * @return
-	 */
 	public void drawBlendContour( VOIBase kVOI, int[] pixBuffer, float opacity, Color color, int slice )
 	{
 
@@ -795,6 +794,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
         }    
 	}
+	 */
 
 
 	/**
@@ -3000,9 +3000,19 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 
 		int thickness = kVOI.getGroup() != null ? kVOI.getGroup().getThickness() : 1;
+		boolean filled = kVOI.getGroup() != null ? (kVOI.getGroup().getDisplayMode() == VOI.SOLID) : false;
+		int opacity = kVOI.getGroup() != null ? (int)(kVOI.getGroup().getOpacity() * 255) : 255;
 		if ( thickness == 1) {
 			if (kVOI.isClosed() == true) {
 				g.drawPolygon(gon);
+				if ( filled )
+				{
+					Color currentColor = g.getColor();
+					g.setColor( new Color( currentColor.getRed(), 
+							currentColor.getGreen(), currentColor.getBlue(), opacity ) );
+					g.fillPolygon(gon);
+					g.setColor(currentColor);
+				}
 				if(m_bMouseDrag && m_bCtrlDown && m_iDrawType == OVAL && kVOI.getSubtype() == VOIBase.CIRCLE && kVOI.getGroup().getBoundingBoxFlag() == false && kVOI == m_kCurrentVOI) {
 					Vector3f kMin = kVOI.getImageBoundingBox()[0];
 					Vector3f kMax = kVOI.getImageBoundingBox()[1];
