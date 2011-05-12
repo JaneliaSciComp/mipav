@@ -741,62 +741,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 	}
 
-
-
-	/**
-	 * Called from ViewJComponentEditImage. Draw the input VOI as a semi-transparent polygon.
-	 * @param kVOI the input VOI.
-	 * @param pixBuffer the paint buffer the polygon is drawn into.
-	 * @param opacity polygon opacity.
-	 * @param color polygon color.
-	 * @param slice current slice in local ViewJComponentEditImage coordinates.
-	 * @return
-	public void drawBlendContour( VOIBase kVOI, int[] pixBuffer, float opacity, Color color, int slice )
-	{
-
-		if ( pixBuffer == null )
-		{
-			return;
-		}
-		if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
-		{
-			return;
-		}
-		int iNumPoints = kVOI.size();
-		if ( iNumPoints == 0 )
-		{
-			return;
-		}
-		Vector3f kLocal = new Vector3f();
-		Vector3f kFile = new Vector3f();
-		int[] xB = new int[2];
-		int[] yB = new int[2];
-		int[] zB = new int[2];
-		Vector<Vector3f> kMaskPositions = kVOI.getMaskPositions();
-		kVOI.getBounds( xB, yB, zB );
-
-        for ( int i = 0; i < kMaskPositions.size(); i++ )
-        {
-            Vector3f kPos = kMaskPositions.elementAt(i);
-            int x = (int)kPos.X;
-            int y = (int)kPos.Y;
-            int z = (int)kPos.Z;
-            kFile.Set( x, y, z );
-            MipavCoordinateSystems.fileToPatient( kFile, kLocal, m_kImageActive, m_iPlaneOrientation );  
-            if ( kLocal.Z == slice )
-            {
-            	int bufferIndex = (int)(kLocal.Y * m_aiLocalImageExtents[0] + kLocal.X);
-            	int opacityInt = (int) (opacity * 255);
-            	opacityInt = opacityInt << 24;
-
-            	int colorInt = color.getRGB() & 0x00ffffff;
-            	pixBuffer[bufferIndex] = colorInt | opacityInt;
-            }
-        }    
-	}
-	 */
-
-
 	/**
 	 * Called from the JDialogEditCircleDiameter. Changes the diameter of a circly VOI.
 	 * @param kVOI the selected VOI to change.

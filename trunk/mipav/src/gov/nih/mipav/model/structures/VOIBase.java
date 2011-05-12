@@ -2305,7 +2305,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
                                 {
                                     kVolume.set( iX, iY, iZ, 85 );
                                 }
-                                else if ( iTemp != 0 )
+                                else if ( (iValue == 1) && (iTemp >= 85) )
+                                {
+                                    kVolume.set( iX, iY, iZ, 150 );
+                                }
+                                else if ( (iValue == 2) && (iTemp >= 150) )
                                 {
                                     kVolume.set( iX, iY, iZ, 255 );
                                 }
@@ -2386,7 +2390,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
                                 {
                                     kVolume.set( iX, iY, iZ, 85 );
                                 }
-                                else if ( iTemp != 0 )
+                                else if ( (iValue == 1) && (iTemp >= 85) )
+                                {
+                                    kVolume.set( iX, iY, iZ, 150 );
+                                }
+                                else if ( (iValue == 2) && (iTemp >= 150) )
                                 {
                                     kVolume.set( iX, iY, iZ, 255 );
                                 }
@@ -2465,7 +2473,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
                                 {
                                     kVolume.set( iX, iY, iZ, 85 );
                                 }
-                                else if ( iTemp != 0 )
+                                else if ( (iValue == 1) && (iTemp >= 85) )
+                                {
+                                    kVolume.set( iX, iY, iZ, 150 );
+                                }
+                                else if ( (iValue == 2) && (iTemp >= 150) )
                                 {
                                     kVolume.set( iX, iY, iZ, 255 );
                                 }

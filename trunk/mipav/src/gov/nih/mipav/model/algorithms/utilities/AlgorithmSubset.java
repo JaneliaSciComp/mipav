@@ -189,7 +189,7 @@ public class AlgorithmSubset extends AlgorithmBase {
                 fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
                     
                 try {
-                    srcImage.export( axisOrder, axisFlip, t, sliceNum, imageBuffer);
+                    srcImage.export( axisOrder, axisFlip, t, sliceNum, imageBuffer, false);
                     destImage.importData(t * buffFactor * slice, imageBuffer, false);
                 } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
