@@ -1836,7 +1836,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
         boolean bCreated = true;
         for (int i = 0; i < m_kVOIManagers.size(); i++) {
-            bCreated &= make3DVOI(bIntersection, m_kParent.getActiveImage(), kVolume, null, i);
+            bCreated &= make3DVOI(bIntersection, m_kParent.getActiveImage(), kVolume, null, 
+            		m_kVOIManagers.elementAt(i), i);
         }
         return bCreated;
     }
@@ -2191,7 +2192,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void saveVOIs( String kCommand )
     {    	
-        //System.err.println( "saveVOIs " + kCommand );
         if ( m_kUndoList.size() > m_iMaxUndo )
         {
         	while ( m_kUndoList.size() > m_iMaxUndo )
@@ -2209,7 +2209,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_kUndoList.add( getVOIState() );
         m_kRedoCommands.clear();
     	clearList( m_kRedoList, m_kRedoList.size() );
-        //m_kRedoList.clear();         
     }
 
     /* (non-Javadoc)
@@ -2829,7 +2828,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         kActive.createMask(iSize);
         boolean bMask = true;
         for (int i = 0; i < m_kVOIManagers.size(); i++) {
-            bMask &= make3DVOI( false, kActive, kActive, kActive.getMask(), i);
+            bMask &= make3DVOI( false, kActive, kActive, kActive.getMask(), 
+            		m_kVOIManagers.elementAt(i), i);
         }
         if ( !bMask )
         {
@@ -3559,7 +3559,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         loadProstateMaskDialog.validate();
     }
 
-    private boolean make3DVOI( boolean bIntersection, ModelImage kSrc, ModelImage kVolume, BitSet kMask, int iValue )
+    private boolean make3DVOI( boolean bIntersection, ModelImage kSrc, ModelImage kVolume, BitSet kMask, 
+    		VOIManager kManager, int iValue )
     {
         VOIVector kVOIs = kSrc.getVOIs();
 
@@ -3572,8 +3573,18 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
                 if ( kCurrentVOI.isActive() )
                 {
-                    bCreated = true;
-                    kCurrentVOI.fillVolume( kVolume, kMask, bIntersection, iValue );     
+                    for ( int m = 0; m < m_kVOIManagers.size(); m++ )
+                    {
+                    	int iPlane = m_kVOIManagers.elementAt(m).getPlane();
+                        if ( iPlane == (iPlane & kCurrentVOI.getPlane()) )
+                        {
+                            if ( kManager == m_kVOIManagers.elementAt(m) )
+                            {
+                            	bCreated = true;
+                                kCurrentVOI.fillVolume( kVolume, kMask, bIntersection, iValue ); 
+                            }
+                        }
+                    }              	
                 }
             }
         }

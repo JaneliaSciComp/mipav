@@ -2470,6 +2470,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
 
         processDefaultMouseDrag(mouseEvent, xS, yS);
+        if ( cursorMode == ViewJComponentBase.DEFAULT && ((mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) != 0) )
+        {
+        	return;
+        }
         
         int scrollX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
     	int scrollY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
@@ -5087,18 +5091,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     {
                         VOIBase kVOI3D = kCurves.get(k);
                         offscreenGraphics2d.setColor( kVOI.getColor() );
-                        //if ( kVOI.getDisplayMode() == VOI.SOLID && kVOI3D.getType() == VOI.CONTOUR && bBlend )
-                        //{
-                        //    voiManager.drawBlendContour( kVOI3D, getPaintBuffer(), kVOI.getOpacity(), kVOI.getColor(), 
-                        //            slice );
-                        //}
-                        //else
-                        {
-                            voiManager.draw( kVOI3D, 
+                        voiManager.draw( kVOI3D, 
                                     imageA.getResolutions(0), 
                                     imageA.getUnitsOfMeasure(), slice, 
                                     offscreenGraphics2d );
-                        }
                     }
                 }
             }
@@ -5115,16 +5111,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     for ( int k = 0; k < kCurves.size(); k++ )
                     {
                         VOIBase kVOI3D = kCurves.get(k);
-                        //if ( kVOI3D.getType() == VOI.CONTOUR && bBlend )
-                        //{}
-                        //else
-                        {
-                            offscreenGraphics2d.setColor( kVOI.getColor() );
-                            voiManager.draw( kVOI3D, 
+                        voiManager.draw( kVOI3D, 
                                     imageB.getResolutions(0), 
                                     imageB.getUnitsOfMeasure(), slice, 
                                     offscreenGraphics2d );
-                        }
                     }
                 }
             }

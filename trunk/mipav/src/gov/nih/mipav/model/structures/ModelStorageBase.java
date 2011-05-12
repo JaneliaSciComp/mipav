@@ -1012,11 +1012,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @throws IOException Throws an error when there is a locking or bounds error.
      */
     public final synchronized float[] export(final int orientation, final int tSlice, final int slice,
-            final float[] values) throws IOException {
+            final float[] values, boolean bMask) throws IOException {
         final int[] axisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
         final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(this, orientation);
 
-        return export(axisOrder, axisFlip, tSlice, slice, values);
+        return export(axisOrder, axisFlip, tSlice, slice, values, bMask);
     }
 
     /**
@@ -1034,7 +1034,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @throws IOException Throws an error when there is a locking or bounds error.
      */
     public final synchronized float[] export(final int[] axisOrder, final boolean[] axisFlip, final int tSlice,
-            final int slice, final float[] values) throws IOException {
+            final int slice, final float[] values, boolean bMask) throws IOException {
         float[] fReturn = null;
 
         try {
@@ -1097,7 +1097,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     /* surface Mask? */
                     ColorRGBA kMaskColor = null;
 
-                    if (m_kMaskVector != null) {
+                    if ( bMask && (m_kMaskVector != null) ) {
 
                         for (int iMask = 0; iMask < m_kMaskVector.size(); iMask++) {
                             final BitSet kMaskSet = (BitSet) m_kMaskVector.elementAt(iMask);

@@ -217,11 +217,11 @@ public class AlgorithmFlip extends AlgorithmBase {
                     }
 
                     try {
-                        srcImage.export(axisOrder, axisFlip, t, z, sliceBuffer);
+                        srcImage.export(axisOrder, axisFlip, t, z, sliceBuffer, false);
 
                         if (index == 2) {
                             int zTemp = (srcImage.getExtents()[2] - 1 - z);
-                            srcImage.export(axisOrder, axisFlip, t, zTemp, sliceBufferTemp);
+                            srcImage.export(axisOrder, axisFlip, t, zTemp, sliceBufferTemp, false);
                             srcImage.importData((t * volume) + (zTemp * slice), sliceBufferTemp, false);
                         }
 

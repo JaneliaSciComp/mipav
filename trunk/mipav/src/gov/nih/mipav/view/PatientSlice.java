@@ -614,7 +614,7 @@ public class PatientSlice {
                 colorMappedB = new ColorRGBA();
             }
 
-            fillImageBuffer(slice);
+            fillImageBuffer(slice, bShowMask);
 
             for (int j = 0; j < localImageExtents[1]; j++) {
 
@@ -698,7 +698,7 @@ public class PatientSlice {
                 LUTa.exportIndexedLUT(lutBufferRemapped);
             }
 
-            fillImageBuffer(slice);
+            fillImageBuffer(slice, bShowMask);
 
             float imageMinA = (float) Math.min(0, imageA.getMin());
             //set variables related to display of complex images
@@ -825,7 +825,7 @@ public class PatientSlice {
                 colorMappedB = new ColorRGBA();
             }
 
-            fillImageBuffer(slice);
+            fillImageBuffer(slice, bShowMask);
 
             for (int j = 0; j < localImageExtents[1]; j++) {
 
@@ -905,7 +905,7 @@ public class PatientSlice {
                 LUTa.exportIndexedLUT(lutBufferRemapped);
             }
 
-            fillImageBuffer(slice);
+            fillImageBuffer(slice, bShowMask);
 
             float imageMinA = (float) Math.min(0, imageA.getMin());
             //set variables related to display of complex images
@@ -1151,7 +1151,7 @@ public class PatientSlice {
      *
      * @param  slice  data slize
      */
-    private void fillImageBuffer(int slice) {
+    private void fillImageBuffer(int slice, boolean bShowMask) {
 
         try {
             int buffFactor = imageA.isColorImage() ? 4 : 1;
@@ -1194,14 +1194,20 @@ public class PatientSlice {
                                                    imageBufferColocalize, m_bInterpolate);
                 }
             } else {
-                m_afMask = imageA.export(orientation, timeSliceA, slice, imageBufferA);
-
+            	if ( bShowMask )
+            	{
+            		m_afMask = imageA.export(orientation, timeSliceA, slice, imageBufferA, bShowMask);
+            	}
+            	else
+            	{
+            		imageA.export(orientation, timeSliceA, slice, imageBufferA, bShowMask);
+            	}
                 if (imageB != null) {
-                    imageB.export(orientation, timeSliceB, slice, imageBufferB);
+                    imageB.export(orientation, timeSliceB, slice, imageBufferB, false);
                 }
 
                 if ((imageColocalize != null) && (hasThreshold1 || hasThreshold2)) {
-                    imageColocalize.export(orientation, timeSliceA, slice, imageBufferColocalize);
+                    imageColocalize.export(orientation, timeSliceA, slice, imageBufferColocalize, false);
                 }
             }
         } catch (IOException error) {
