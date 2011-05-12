@@ -835,6 +835,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                     while ((entry = zIn.getNextEntry()) != null) {
 
                         if (entry.isDirectory()) {
+                            
                             String dirname = pluginDir + File.separator +
                                              entry.getName().substring(0, entry.getName().length() - 1);
                             new File(dirname).mkdir();
@@ -848,9 +849,13 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                             } catch (Exception ex) {
                                 // do nothing...no parent dir here
                             }
-
-                            fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
-
+                            
+                            try {
+                                fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
+                            } catch(FileNotFoundException fe) {
+                                System.err.println("Warning: could not create the file "+pluginDir + File.separator + entry.getName());
+                            }
+                                
                             // Transfer bytes from the ZIP file to the output file
                             buf = new byte[1024];
 
