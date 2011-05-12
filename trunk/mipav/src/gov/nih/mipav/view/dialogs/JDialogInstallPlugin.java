@@ -833,14 +833,15 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
                     // if the entry is a directory of is a class file, extract it
                     while ((entry = zIn.getNextEntry()) != null) {
-
+                        
                         if (entry.isDirectory()) {
                             
                             String dirname = pluginDir + File.separator +
                                              entry.getName().substring(0, entry.getName().length() - 1);
                             new File(dirname).mkdir();
                         } else {
-                        	File f = null;
+                            
+                            File f = null;
                             try {
                                 (f = new File(pluginDir + File.separator + entry.getName())).getParentFile().mkdirs();
                                 if(f.getName().contains(".class")) {
@@ -854,17 +855,20 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                                 fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
                             } catch(FileNotFoundException fe) {
                                 System.err.println("Warning: could not create the file "+pluginDir + File.separator + entry.getName());
-                            }
+                            }       
+                            
+                            try {
+                                // Transfer bytes from the ZIP file to the output file
+                                buf = new byte[1024];
+
+                                while ((len = zIn.read(buf)) > 0) {
+                                    fw.write(buf, 0, len);
+                                }
                                 
-                            // Transfer bytes from the ZIP file to the output file
-                            buf = new byte[1024];
-
-                            while ((len = zIn.read(buf)) > 0) {
-                                fw.write(buf, 0, len);
+                                fw.close();
+                            } catch(IOException io) {
+                                //likely that a file not found exception was thrown previously
                             }
-
-                            fw.close();
-
                         }
                     }
 
