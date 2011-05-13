@@ -280,7 +280,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v3.8" + "\n");
+        outputTextArea.append("Running Algorithm v3.9" + "\n");
         
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
         /*String text = "";
@@ -2244,16 +2244,20 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			//I am using the allFilamnetCoords to determine connectivity b/c for some reason some
 			// of the transformed filament points are not exact
 			//
+			//MAY BE DELETING THE ABOVE COMMENT SOON   5/13/2011
+			
+			
+			
 			for(int i=1;i<allFilamentsSize;i++) {
 				 al = filamentCoords.get(i);
 				 coords = al.get(0);
-				 al2 = allFilamentCoords.get(i);
+				 al2 = allFilamentCoords_newCoords.get(i);
 				 coords2 = al2.get(0);
 
 				 int k;
 				 
 				 for(k=0;k<i;k++) {
-					 alMatch = allFilamentCoords.get(k);
+					 alMatch = allFilamentCoords_newCoords.get(k);
 					 alMatchSize = alMatch.size();
 					 coordsMatch[0] = alMatch.get(alMatchSize-1)[0];
 					 coordsMatch[1] = alMatch.get(alMatchSize-1)[1];
