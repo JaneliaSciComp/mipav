@@ -2475,8 +2475,18 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         	return;
         }
         
-        int scrollX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
-    	int scrollY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
+        int scrollX;
+        int scrollY;
+        
+        if(frame instanceof ViewJFrameTriImage) {
+        	scrollX = ((ViewJFrameTriImage) frame).getParentFrame().getScrollPane().getViewport().getExtentSize().width;
+        	scrollY = ((ViewJFrameTriImage) frame).getParentFrame().getScrollPane().getViewport().getExtentSize().height;
+        }else {
+        	scrollX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
+        	scrollY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
+        }
+        
+        
     	float imageX = imageActive.getExtents()[0]*getZoomX();
     	float imageY = imageActive.getExtents()[1]*getZoomY();
 
