@@ -646,6 +646,7 @@ public class JDialogACPC extends JDialogBase {
 	    Vector3f pt;
 	    if (command.equals("setOrientation")) {
 	    	setOrient();
+	    	return;
 	    }
 	    if (!getOrient()) {
 	        return;	
@@ -1007,7 +1008,7 @@ public class JDialogACPC extends JDialogBase {
         anotherPt.setSelected(false);
         superiorEdgePt = new Vector3f(pt.X, pt.Y, pt.Z);
         haveSuperiorEdge = true;
-        superiorEdge.setText("AC superior edge " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
+        superiorEdge.setText("AC superior edge " + Math.round(pt.X) + "," + Math.round(pt.Y) + "," + Math.round(pt.Z));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
@@ -1028,7 +1029,7 @@ public class JDialogACPC extends JDialogBase {
         anotherPt.setSelected(false);
         posteriorMarginPt = new Vector3f(pt.X, pt.Y, pt.Z);
         havePosteriorMargin = true;
-        posteriorMargin.setText("AC posterior margin " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
+        posteriorMargin.setText("AC posterior margin " + Math.round(pt.X) + "," + Math.round(pt.Y) + "," + Math.round(pt.Z));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
@@ -1049,7 +1050,7 @@ public class JDialogACPC extends JDialogBase {
         anotherPt.setSelected(false);
         inferiorEdgePt = new Vector3f(pt.X, pt.Y, pt.Z);
         haveInferiorEdge = true;
-        inferiorEdge.setText("PC inferior edge " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
+        inferiorEdge.setText("PC inferior edge " + Math.round(pt.X) + "," + Math.round(pt.Y) + "," + Math.round(pt.Z));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
@@ -1070,7 +1071,7 @@ public class JDialogACPC extends JDialogBase {
         anotherPt.setSelected(false);
         firstMidSagPt = new Vector3f(pt.X, pt.Y, pt.Z);
         haveFirstPt = true;
-        firstPt.setText("First mid-sag pt " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
+        firstPt.setText("First mid-sag pt " + Math.round(pt.X) + "," + Math.round(pt.Y) + "," + Math.round(pt.Z));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
@@ -1091,7 +1092,7 @@ public class JDialogACPC extends JDialogBase {
         anotherPt.setSelected(true);
         anotherMidSagPt = new Vector3f(pt.X, pt.Y, pt.Z);
         haveAnotherPt = true;
-        anotherPt.setText("Another mid-sag pt " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
+        anotherPt.setText("Another mid-sag pt " + Math.round(pt.X) + "," + Math.round(pt.Y) + "," + Math.round(pt.Z));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
