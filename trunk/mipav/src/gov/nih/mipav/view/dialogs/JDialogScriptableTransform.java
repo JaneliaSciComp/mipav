@@ -835,8 +835,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     noTransform.setSelected(true);
                 } else {
                     rotOrigin.setSelected(true);
-                    rotCenter.setEnabled(false);
-                    rotOrigin.setEnabled(false);
+                    rotCenter.setEnabled(true);
+                    rotOrigin.setEnabled(true);
                 }
             } else {
                 rotCenter.setEnabled(true);
