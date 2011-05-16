@@ -80,6 +80,7 @@ import java.util.Vector;
 
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLDrawableFactory;
+import javax.media.opengl.GLException;
 import javax.media.opengl.GLPbuffer;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -514,7 +515,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                 m_kStereoIPD = new JDialogStereoControls(this, .02f);
             }
             raycastRenderWM.setStereo(1);
-
         } else if (command.equals("StereoSHUTTER")) {
             if (m_kStereoIPD == null) {
                 m_kStereoIPD = new JDialogStereoControls(this, .02f);
@@ -1524,23 +1524,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     public void removeSurface(final String kSurfaceName) {
         raycastRenderWM.removeSurface(kSurfaceName);
         deleteVOISurface(kSurfaceName);
-    }
-
-    /**
-     * remove the multi-histo tab.
-     * 
-     * @param _name
-     */
-    public void removeTab(final String _name) {
-        int i;
-
-        for (i = 0; i < tabbedPane.getTabCount(); i++) {
-
-            if ( (tabbedPane.getComponentAt(i) != null) && tabbedPane.getTitleAt(i).equals(_name)) {
-                tabbedPane.remove(i);
-                return;
-            }
-        }
     }
 
     /**
@@ -3439,7 +3422,13 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     protected void initShared() {
     	if ( sharedDrawable == null )
     	{
-    		sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
+            caps.setStereo(true);
+            try {
+            	sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
+            } catch ( GLException e ) {
+            	caps.setStereo( !caps.getStereo() );
+            	sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
+            }
     		sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
     		sharedDrawable.addGLEventListener(sharedRenderer);
     		// init and render one frame, which will setup the shared textures

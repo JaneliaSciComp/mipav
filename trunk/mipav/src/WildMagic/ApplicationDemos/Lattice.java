@@ -36,6 +36,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.LatticeEffect;
 import WildMagic.LibGraphics.Effects.LightingEffect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.FrameBuffer;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
@@ -105,7 +106,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 	 * 
 	 */
 	public Lattice() {
-		super("Lattice");
+		super( "Lattice", FrameBuffer.BufferingType.BT_QUAD_STEREO );
 	}
 
 	public Lattice(GLCanvas kWindow, Node scene, boolean bShared) {

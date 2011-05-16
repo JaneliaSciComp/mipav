@@ -51,6 +51,7 @@ import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Rendering.Camera;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
+import WildMagic.LibGraphics.Rendering.FrameBuffer;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Texture;
@@ -285,7 +286,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
         super();
-        //m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
+        m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
@@ -2739,7 +2740,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_pkRenderer.LoadTexture( m_kVolumeImageB.GetGradientMapTarget() );
             m_pkRenderer.LoadTexture( m_kVolumeImageB.GetOpacityMapGMTarget() );
             m_pkRenderer.LoadTexture( m_kVolumeImageB.GetLaplaceMapTarget() );
-            m_pkRenderer.LoadTexture( m_kVolumeImageB.GetSurfaceTarget() );        	
+            m_pkRenderer.LoadTexture( m_kVolumeImageB.GetSurfaceTarget() );   
+            m_pkRenderer.LoadTexture( m_kVolumeImageB.GetScratchTarget() );     	
         }
 
         m_fX = m_kVolumeImageA.GetScaleX();
