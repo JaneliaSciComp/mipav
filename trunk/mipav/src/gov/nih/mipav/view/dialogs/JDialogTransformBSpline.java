@@ -3,6 +3,13 @@ package gov.nih.mipav.view.dialogs;
 
 import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterDouble;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterString;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -30,7 +37,8 @@ import javax.swing.event.*;
  *           algorithm.
  */
 
-public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInterface, ListSelectionListener {
+public class JDialogTransformBSpline extends JDialogScriptableBase implements AlgorithmInterface, ListSelectionListener,
+                                                                              ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -92,8 +100,16 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private String directory;
+    
+    private File nltFile;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+    
+    public JDialogTransformBSpline() {
+    	
+    }
 
     /**
      * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
@@ -194,6 +210,10 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
                 resultImage.disposeLocal(); // clean up memory
                 resultImage = null;
             }
+            
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         System.gc();
@@ -201,7 +221,8 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
         // Update frames
         image.notifyImageDisplayListeners(null, true);
 
-        // insertScriptLine(algorithm);
+        // save the completion status for later
+        setComplete(algorithm.isCompleted());
 
         if (algoTrans != null) {
             algoTrans.disposeLocal();
@@ -322,14 +343,7 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
      */
     private boolean open() {
         JFileChooser chooser = null;
-        File nltFile;
-        String directory;
-        RandomAccessFile in;
-        String str = null;
-        StringTokenizer stoken = null;
-        int i, j, k;
-        int srcMinExtent;
-        int iNumControlPointsMax;
+        boolean success;
 
         try {
 
@@ -367,7 +381,19 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
             return false;
         }
 
-        // open the file containing B-Spline parameters
+        success = openNLT();
+        return success;
+
+    }
+    
+    private boolean openNLT() {
+    	RandomAccessFile in;
+        String str = null;
+        StringTokenizer stoken = null;
+        int i, j, k;
+        int srcMinExtent;
+        int iNumControlPointsMax;
+    	// open the file containing B-Spline parameters
 
         if (nltName.endsWith("nlt")) {
 
@@ -533,8 +559,142 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
             }
         } else { // nltName does not end with .nlt
             return false;
+        }	
+    }
+    
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+        	//System.out.println("beginning input params");
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            
+            table.put(new ParameterString("nlt_name"));
+            table.put(new ParameterString("nlt_directory"));
+            //System.out.println("ending input params");
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
         }
 
+        return table;
+    }
+    
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+    
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+        	return resultImage.getImageName();
+        }
+        
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+    
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithm.TransformBSpline");
+            }
+
+            public String getDescription() {
+                return new String("Nonlinear BSpline transformation.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Nonlinear BSpline transformation.");
+            }
+
+            public String getShortLabel() {
+                return new String("NLT");
+            }
+
+            public String getLabel() {
+                return new String("NLT");
+            }
+
+            public String getName() {
+                return new String("NLT");
+            }
+        };
+    }
+    
+    /**
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        nltName = scriptParameters.getParams().getString("nlt_name");
+        directory = scriptParameters.getParams().getString("nlt_directory");
+        if (nltName != null) {
+	        nltFile = new File(directory + nltName); 	
+        }
+        else {
+        	MipavUtil.displayError("nltName is null");
+        	return;
+        }
+        
+        openNLT();
+    }
+    
+    /**
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     * 
+     * @throws ParserException If there is a problem creating one of the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, true);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("nlt_name", nltName));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("nlt_directory", directory));
     }
 
 }
