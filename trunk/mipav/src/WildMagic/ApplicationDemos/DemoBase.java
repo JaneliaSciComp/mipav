@@ -69,6 +69,26 @@ implements GLEventListener, KeyListener
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
         CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
     }
+
+    public DemoBase( String title, FrameBuffer.BufferingType eBuffering )
+    {
+        super(title,0,0,512,512, new ColorRGBA(0.635294f,0.917647f,1.0f,1.0f));
+        m_eBuffering = eBuffering;
+        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
+                                           m_eBuffering, m_eMultisampling,
+                                           m_iWidth, m_iHeight );
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );  
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );     
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+        
+        String kExternalDirs = getExternalDirs();        
+        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
+        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
+        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
+        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+    }
     
     public DemoBase( String title, GLCanvas canvas )
     {
