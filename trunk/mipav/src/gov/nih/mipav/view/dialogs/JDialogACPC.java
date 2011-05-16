@@ -35,6 +35,7 @@ public class JDialogACPC extends JDialogBase {
 	private JButton              cancelACPCButton;
 	private JButton              setACPCButton;
 	private JButton              clearACPCButton;
+	private JButton              setOrientationButton;
     private JRadioButton         superiorEdge;
 	private JRadioButton         posteriorMargin;
 	private JRadioButton         inferiorEdge;
@@ -278,7 +279,7 @@ public class JDialogACPC extends JDialogBase {
   	    JLabel labelVoxelLength;
   	    setTitle("Create AC-PC image");
 		if (orient[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
-  	        orientPanel = new JPanel(new GridLayout(3,2));
+  	        orientPanel = new JPanel(new GridLayout(4,2));
   	        orientPanel.setForeground(Color.black);
 	        orientPanel.setBorder(buildTitledBorder("Describe input orientation"));
 
@@ -329,6 +330,17 @@ public class JDialogACPC extends JDialogBase {
             comboBoxOrientZ.addItem("Inferior to superior");
             comboBoxOrientZ.addItem("Superior to inferior");
             orientPanel.add(comboBoxOrientZ);
+            
+            JLabel labelFixOrient = new JLabel("Fix orientation:");
+            labelFixOrient.setForeground(Color.black);
+            labelFixOrient.setFont(serif12);
+            orientPanel.add(labelFixOrient);
+            
+            setOrientationButton = new JButton("Set new orientation");
+    		setOrientationButton.setFont(serif12B);
+    		setOrientationButton.addActionListener(this);
+    		setOrientationButton.setActionCommand("setOrientation");
+    		orientPanel.add(setOrientationButton);
         } // if (orient[0] == -1)
 
         voxelPanel = new JPanel(new GridLayout(1,2));
@@ -632,6 +644,12 @@ public class JDialogACPC extends JDialogBase {
         boolean found;
         int pointType;
 	    Vector3f pt;
+	    if (command.equals("setOrientation")) {
+	    	setOrient();
+	    }
+	    if (!getOrient()) {
+	        return;	
+	    }
 
         if (command.equals("setACPC")) {
             found = false;
@@ -844,13 +862,40 @@ public class JDialogACPC extends JDialogBase {
             }
         }
     }
+	
+	private boolean getOrient() {
+		boolean success = true;
+		orient = image.getFileInfo()[0].getAxisOrientation();
+		// check that all directions are accounted for - one patient x-axis, one patient y-axis, and one patient z-axis
+        if (!((orient[0] == FileInfoBase.ORI_R2L_TYPE) || (orient[0] == FileInfoBase.ORI_L2R_TYPE) || (orient[1] == FileInfoBase.ORI_R2L_TYPE) || (orient[1] == FileInfoBase.ORI_L2R_TYPE) ||
+              (orient[2] == FileInfoBase.ORI_R2L_TYPE) || (orient[2] == FileInfoBase.ORI_L2R_TYPE))) {
+                success = false;
+        }
+
+        if (!((orient[0] == FileInfoBase.ORI_P2A_TYPE) || (orient[0] == FileInfoBase.ORI_A2P_TYPE) || (orient[1] == FileInfoBase.ORI_P2A_TYPE) || (orient[1] == FileInfoBase.ORI_A2P_TYPE) ||
+              (orient[2] == FileInfoBase.ORI_P2A_TYPE) || (orient[2] == FileInfoBase.ORI_A2P_TYPE))) {
+                success = false;
+        }
+
+        if (!((orient[0] == FileInfoBase.ORI_I2S_TYPE) || (orient[0] == FileInfoBase.ORI_S2I_TYPE) || (orient[1] == FileInfoBase.ORI_I2S_TYPE) || (orient[1] == FileInfoBase.ORI_S2I_TYPE) ||
+              (orient[2] == FileInfoBase.ORI_I2S_TYPE) || (orient[2] == FileInfoBase.ORI_S2I_TYPE))) {
+                success = false;
+        }
+
+
+        if (!success) {
+            MipavUtil.displayError("Illegal selections for axes orientations - Must correct axis orientations");
+        }
+
+        return success;	
+	}
 
     /**
     *   Gets the orientation from the combo boxes and checks if it's consistent.
     *   @return <code>true</code> if orientation is consistent.
     */
-	/*
-    private boolean getOrient() {
+	
+    private boolean setOrient() {
         boolean success = true;
 
         // Obtain the input axes orientations 
@@ -938,13 +983,17 @@ public class JDialogACPC extends JDialogBase {
 
 
         if (!success) {
-            MipavUtil.displayError("Illegal selections for axes orientations");
+            MipavUtil.displayError("Illegal selections for axes orientations - Must correct axis orientations");
+        }
+        
+        for (i = 0; i < image.getExtents()[2]; i++) {
+        	image.getFileInfo()[i].setAxisOrientation(orient);
         }
 
         return success;
 
     }
-	*/
+	
 	
     /**
     *   Sets superior label based on the point.  Enables "Apply" if all points have been set.
