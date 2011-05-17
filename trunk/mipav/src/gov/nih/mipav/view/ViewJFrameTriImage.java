@@ -441,6 +441,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
     /** talairach voxel label * */
     public JLabel tTalVoxLabel;
+    
+    private int currentOrientation;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -5711,5 +5713,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     @Override
     public void maskToPaint() {
         imageA.getParentFrame().maskToPaint();
+    }
+    
+    public void setCurrentOrientation(int currentOrientation) {
+    	this.currentOrientation = currentOrientation;
+    }
+    
+    public int getCurrentOrientation() {
+    	return currentOrientation;
     }
 }
