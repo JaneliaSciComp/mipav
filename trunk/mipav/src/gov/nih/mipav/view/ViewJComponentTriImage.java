@@ -901,6 +901,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         /* Get focus from the ViewJFrameTriImage for key events: */
         this.requestFocusInWindow();
+        triImageFrame.setCurrentOrientation(orientation);
     }
 
     /**
