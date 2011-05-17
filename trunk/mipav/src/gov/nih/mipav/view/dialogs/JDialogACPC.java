@@ -666,7 +666,7 @@ public class JDialogACPC extends JDialogBase {
             else {
                 pt = new Vector3f(frame.getSagittalComponentSlice(), frame.getCoronalComponentSlice(), frame.getAxialComponentSlice());
             }
-            //System.out.println("Second pt: " + (int)pt.X + "," + (int)pt.Y + "," + (int)pt.Z);
+            //System.out.println("pt: " + (int)pt.X + "," + (int)pt.Y + "," + (int)pt.Z);
 			//System.out.println("corrected pt: " + (int)toOriginal(pt).X + "," + (int)toOriginal(pt).Y + "," + (int)toOriginal(pt).Z);
 			if (superiorEdge.isSelected()) {
                 pointType = ViewJComponentTriImage.SUPERIOR_EDGE;
