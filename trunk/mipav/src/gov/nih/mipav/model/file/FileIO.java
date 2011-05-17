@@ -552,7 +552,7 @@ public class FileIO {
                 seriesNoMaster = seriesNoMaster.trim();
 
                 if (seriesNoRef.length() > 5) {
-                    seriesNoRef = seriesNoMaster.substring(0, 5);
+                    seriesNoRef = seriesNoMaster.substring(0, Math.min(5,seriesNoMaster.length()));
                 }
             } else {
                 seriesNoMaster = "";
