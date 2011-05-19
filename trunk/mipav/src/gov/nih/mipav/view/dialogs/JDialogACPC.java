@@ -644,6 +644,7 @@ public class JDialogACPC extends JDialogBase {
         boolean found;
         int pointType;
 	    Vector3f pt = null;
+	    boolean dotoOriginal;
 	    if (command.equals("setOrientation")) {
 	    	setOrient();
 	    	return;
@@ -656,22 +657,31 @@ public class JDialogACPC extends JDialogBase {
             found = false;
             if (frame.getCurrentOrientation() == FileInfoBase.AXIAL) {
                 pt = new Vector3f(((ViewJComponentTriImage)frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).getCenter());	
+                dotoOriginal = false;
             }
             else if (frame.getCurrentOrientation() == FileInfoBase.CORONAL) {
-            	pt = new Vector3f(((ViewJComponentTriImage)frame.getTriImage(ViewJFrameTriImage.CORONAL_A)).getCenter());		
+            	pt = new Vector3f(((ViewJComponentTriImage)frame.getTriImage(ViewJFrameTriImage.CORONAL_A)).getCenter());	
+            	dotoOriginal = false;
             }
             else if (frame.getCurrentOrientation() == FileInfoBase.SAGITTAL) {
-            	pt = new Vector3f(((ViewJComponentTriImage)frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A)).getCenter());		
+            	pt = new Vector3f(((ViewJComponentTriImage)frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A)).getCenter());	
+            	dotoOriginal = false;
             }
             else {
                 pt = new Vector3f(frame.getSagittalComponentSlice(), frame.getCoronalComponentSlice(), frame.getAxialComponentSlice());
+                dotoOriginal = true;
             }
             //System.out.println("pt: " + (int)pt.X + "," + (int)pt.Y + "," + (int)pt.Z);
 			//System.out.println("corrected pt: " + (int)toOriginal(pt).X + "," + (int)toOriginal(pt).Y + "," + (int)toOriginal(pt).Z);
 			if (superiorEdge.isSelected()) {
                 pointType = ViewJComponentTriImage.SUPERIOR_EDGE;
                 ((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACS");
-                setSuperiorEdge(toOriginal(pt));
+                if (dotoOriginal) {
+                    setSuperiorEdge(toOriginal(pt));
+                }
+                else {
+                	setSuperiorEdge(pt);
+                }
 				posteriorMargin.setSelected(true);
 				if (havePosteriorMargin) {
 					setACPCButton.setEnabled(false);
@@ -685,7 +695,12 @@ public class JDialogACPC extends JDialogBase {
             else if (posteriorMargin.isSelected()) {
                 pointType = ViewJComponentTriImage.POSTERIOR_MARGIN;
                 ((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACP");
-                setPosteriorMargin(toOriginal(pt));
+                if (dotoOriginal) {
+                    setPosteriorMargin(toOriginal(pt));
+                }
+                else {
+                	setPosteriorMargin(pt);
+                }
 				inferiorEdge.setSelected(true);
 				if (haveInferiorEdge) {
 					setACPCButton.setEnabled(false);
@@ -699,7 +714,12 @@ public class JDialogACPC extends JDialogBase {
             else if (inferiorEdge.isSelected()) {
                 pointType = ViewJComponentTriImage.INFERIOR_EDGE;
                 ((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("PC");
-                setInferiorEdge(toOriginal(pt));
+                if (dotoOriginal) {
+                    setInferiorEdge(toOriginal(pt));
+                }
+                else {
+                	setInferiorEdge(pt);
+                }
 				firstPt.setSelected(true);
 				if (haveFirstPt) {
 					setACPCButton.setEnabled(false);
@@ -713,7 +733,12 @@ public class JDialogACPC extends JDialogBase {
             else if (firstPt.isSelected()) {
                 pointType = ViewJComponentTriImage.FIRST_PT;
                 ((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS1");
-                setFirstPt(toOriginal(pt));
+                if (dotoOriginal) {
+                    setFirstPt(toOriginal(pt));
+                }
+                else {
+                	setFirstPt(pt);
+                }
 				anotherPt.setSelected(true);
 				if (haveAnotherPt) {
 					setACPCButton.setEnabled(false);
@@ -727,9 +752,19 @@ public class JDialogACPC extends JDialogBase {
             else {
                 pointType = ViewJComponentTriImage.ANOTHER_PT;
                 ((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS2");
-                setAnotherPt(toOriginal(pt));
+                if (dotoOriginal) {
+                    setAnotherPt(toOriginal(pt));
+                }
+                else {
+                	setAnotherPt(pt);
+                }
             }
-            ((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(pointType,toOriginal(pt));
+			if (dotoOriginal) {
+                ((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(pointType,toOriginal(pt));
+			}
+			else {
+				((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(pointType,pt);	
+			}
 			// alternate: add a VOI point for each new point
 			
         }
