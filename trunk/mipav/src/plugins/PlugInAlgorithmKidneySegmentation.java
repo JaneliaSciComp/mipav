@@ -5,7 +5,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 
 import java.awt.*;
 
@@ -289,7 +289,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         fireProgressStateChanged("Processing image ...");
         contourVOI.setActive(true);
         algoVOIProps = new AlgorithmVOIProps(srcImage, AlgorithmVOIProps.PROCESS_PER_VOI,
-                                                ExclusionRangeType.NO_RANGE, getActiveVOIs(srcImage));
+                                                RangeType.NO_RANGE, getActiveVOIs(srcImage));
         algoVOIProps.run();
         VOIMin = algoVOIProps.getMinIntensity();
         Preferences.debug("VOI minimum = " + VOIMin + "\n");
@@ -1860,7 +1860,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
         contourVOI.setActive(true);
         algoVOIProps = new AlgorithmVOIProps(srcImage, AlgorithmVOIProps.PROCESS_PER_VOI,
-                                                ExclusionRangeType.NO_RANGE, getActiveVOIs(srcImage));
+                                                RangeType.NO_RANGE, getActiveVOIs(srcImage));
         algoVOIProps.run();
         VOIMin = algoVOIProps.getMinIntensity();
         Preferences.debug("VOI minimum = " + VOIMin + "\n");
@@ -2379,7 +2379,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             sliceVOI = sliceImage.getVOIs().VOIAt(0);
             sliceVOI.setAllActive(true);
             algoVOIProps = new AlgorithmVOIProps(sliceImage, AlgorithmVOIProps.PROCESS_PER_VOI,
-                                                    ExclusionRangeType.NO_RANGE, getActiveVOIs(sliceImage));
+                                                    RangeType.NO_RANGE, getActiveVOIs(sliceImage));
             algoVOIProps.run();
             VOIMin = algoVOIProps.getMinIntensity();
             VOIMax = algoVOIProps.getMaxIntensity();
@@ -2639,7 +2639,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             sliceVOI = sliceImage.getVOIs().VOIAt(0);
             sliceVOI.setAllActive(true);
             algoVOIProps = new AlgorithmVOIProps(sliceImage, AlgorithmVOIProps.PROCESS_PER_VOI,
-                                                    ExclusionRangeType.NO_RANGE, getActiveVOIs(sliceImage));
+                                                    RangeType.NO_RANGE, getActiveVOIs(sliceImage));
             algoVOIProps.run();
             VOIMin = algoVOIProps.getMinIntensity();
             VOIMax = algoVOIProps.getMaxIntensity();

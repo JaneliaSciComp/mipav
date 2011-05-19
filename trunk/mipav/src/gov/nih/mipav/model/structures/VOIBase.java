@@ -3,7 +3,7 @@ package gov.nih.mipav.model.structures;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 
@@ -446,7 +446,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param rangeFlag flag indicating (between, outside, none).
      * @return list of values inside this contour that fit the parameters.
      */
-    public Vector<Float> calcIntensity( ModelImage kImage, Vector3f kValues, float ignoreMin, float ignoreMax, ExclusionRangeType rangeFlag)
+    public Vector<Float> calcIntensity( ModelImage kImage, Vector3f kValues, float ignoreMin, float ignoreMax, RangeType rangeFlag)
     {
     	Vector<Vector3f> kMaskPositions = getAllContourPoints();
         //getAllContourPoints();
@@ -511,7 +511,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param rangeFlag flag indicating (between, outside, none).
      * @return list of values inside this contour that fit the parameters.
      */
-    public Vector<ColorRGB> calcRGBIntensity(ModelImage kImage, ColorRGB kMin, ColorRGB kMax, ColorRGB kSum, float ignoreMin, float ignoreMax, ExclusionRangeType rangeFlag) {
+    public Vector<ColorRGB> calcRGBIntensity(ModelImage kImage, ColorRGB kMin, ColorRGB kMax, ColorRGB kSum, float ignoreMin, float ignoreMax, RangeType rangeFlag) {
         Vector<ColorRGB> values = new Vector<ColorRGB>();
         float r, g, b;
         Vector<Vector3f> kMaskPositions = getAllContourPoints();

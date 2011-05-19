@@ -4,7 +4,7 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.structures.TokenizerException;
 
 
-import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 import gov.nih.mipav.view.icons.PlaceHolder;
 
 import java.awt.*;
@@ -803,7 +803,7 @@ public class MipavUtil extends JComponent {
      * @param rangeFlag (no test, between, outside) the min and max.
      * @return true if num satisfies the test.
      */
-    public static boolean inRange(float min, float max, float num, ExclusionRangeType rangeFlag) {
+    public static boolean inRange(float min, float max, float num, RangeType rangeFlag) {
         if(rangeFlag == null) {
             return false;
         }

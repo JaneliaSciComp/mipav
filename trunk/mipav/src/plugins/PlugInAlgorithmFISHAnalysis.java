@@ -5,7 +5,7 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 
 
 
@@ -986,7 +986,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
 
         // find the properties of the segmented VOI
-        algoVOIProps = new AlgorithmVOIProps(blueSegImage[0], AlgorithmVOIProps.PROCESS_PER_VOI, ExclusionRangeType.BETWEEN, getActiveVOIs(blueSegImage[0]));
+        algoVOIProps = new AlgorithmVOIProps(blueSegImage[0], AlgorithmVOIProps.PROCESS_PER_VOI, RangeType.BETWEEN, getActiveVOIs(blueSegImage[0]));
         algoVOIProps.run();
         UI.setDataText("\n--------------------------------------------------------");
         UI.setDataText("\n Image: " + blueSegImage[0].getImageFileName());

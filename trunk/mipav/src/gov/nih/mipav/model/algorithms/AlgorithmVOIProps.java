@@ -12,7 +12,7 @@ import gov.nih.mipav.model.structures.VOIStatisticalProperties;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewVOIVector;
-import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -1336,7 +1336,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             BitSet mask = new BitSet( xDim * yDim * zDim );
             kVOI.createBinaryMask3D(mask, xDim, yDim, false, false);
             
-            if(rangeFlag != ExclusionRangeType.NO_RANGE && rangeFlag != null) { //some intensity values need to be ignored in relevant calculations
+            if(rangeFlag != RangeType.NO_RANGE && rangeFlag != null) { //some intensity values need to be ignored in relevant calculations
             
                 float fVal = 0.0f;   
                 for (int i = mask.nextSetBit(0); i >= 0; i = mask.nextSetBit(i+1)) {
@@ -1932,7 +1932,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     protected Vector<VOIStatisticalProperties> propertyList;
 
     /**  Specifies how a range of pixels is excluded from VOI calculations. */
-    protected ExclusionRangeType rangeFlag = ExclusionRangeType.NO_RANGE;
+    protected RangeType rangeFlag = RangeType.NO_RANGE;
 
     /** Whether or not to calculate largest slice distance, true by default */
     protected boolean sliceDistanceFlag;
@@ -1964,7 +1964,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  rangeFlag  Whether the range of values specified by the statistics generator should be ignored
      * @param  voiSet     The VOIs that will be calculated
      */
-    public AlgorithmVOIProps(ModelImage srcImg, int pType, ExclusionRangeType rangeFlag, ViewVOIVector voiSet) {
+    public AlgorithmVOIProps(ModelImage srcImg, int pType, RangeType rangeFlag, ViewVOIVector voiSet) {
         nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
         nf.setMinimumFractionDigits(0);
@@ -2009,7 +2009,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  voiSet     The VOIs that will be calculated
      */
     public AlgorithmVOIProps(ModelImage srcImg, int processType, ViewVOIVector voiSet) {
-        this(srcImg, processType, ExclusionRangeType.NO_RANGE, voiSet);
+        this(srcImg, processType, RangeType.NO_RANGE, voiSet);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

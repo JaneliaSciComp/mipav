@@ -7,7 +7,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 
 import java.io.IOException;
 
@@ -187,7 +187,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             final VOI VOIX = VOIsX.VOIAt(0);
             VOIX.setAllActive(true);
             algoVOIProps = new AlgorithmVOIProps(imageX, AlgorithmVOIProps.PROCESS_PER_VOI,
-                    ExclusionRangeType.NO_RANGE, getActiveVOIs(imageX));
+                    RangeType.NO_RANGE, getActiveVOIs(imageX));
             algoVOIProps.run();
 
 
@@ -201,7 +201,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             final VOI VOIY = VOIsY.VOIAt(0);
             VOIY.setAllActive(true);
             algoVOIProps = new AlgorithmVOIProps(imageY, AlgorithmVOIProps.PROCESS_PER_VOI,
-                    ExclusionRangeType.NO_RANGE, getActiveVOIs(imageY));
+                    RangeType.NO_RANGE, getActiveVOIs(imageY));
             algoVOIProps.run();
 
 
