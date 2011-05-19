@@ -525,6 +525,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             r = kImage.getFloatC(x,y,z,1);
             g = kImage.getFloatC(x,y,z,2);
             b = kImage.getFloatC(x,y,z,3);
+            //TODO: Allow separate values for RGB ignore ranges
             if ( !MipavUtil.inRange( ignoreMin, ignoreMax, r, rangeFlag ) &&
                     !MipavUtil.inRange( ignoreMin, ignoreMax, g, rangeFlag ) &&
                     !MipavUtil.inRange( ignoreMin, ignoreMax, b, rangeFlag ) )

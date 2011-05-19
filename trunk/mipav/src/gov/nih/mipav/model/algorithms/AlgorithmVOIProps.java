@@ -478,7 +478,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 float fG = srcImage.getFloatC(x,y,z,2);
                 float fB = srcImage.getFloatC(x,y,z,3);
 
-
+                //TODO: Allow separate ignore values for RGB
                 if ( !MipavUtil.inRange(ignoreMin, ignoreMax, fR, rangeFlag) &&
                         !MipavUtil.inRange(ignoreMin, ignoreMax, fG, rangeFlag) &&
                         !MipavUtil.inRange(ignoreMin, ignoreMax, fB, rangeFlag)) {
