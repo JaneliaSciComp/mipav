@@ -9,7 +9,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.event.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.ExclusionRangeType;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -422,7 +422,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         String rangeFlag = scriptParameters.getParams().getString("do_use_exclusion_range");
 
-        if (ExclusionRangeType.valueOf(rangeFlag) != ExclusionRangeType.NO_RANGE) {
+        if (RangeType.valueOf(rangeFlag) != RangeType.NO_RANGE) {
             rangeMinimum = scriptParameters.getParams().getFloat("exclusion_range_min");
             rangeMaximum = scriptParameters.getParams().getFloat("exclusion_range_max");
 
@@ -471,7 +471,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_totals", showTotals));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_exclusion_range", outputOptionsPanel.getExcluder().getRangeFlag().name()));
 
-        if (outputOptionsPanel.getExcluder().getRangeFlag() != ExclusionRangeType.NO_RANGE) {
+        if (outputOptionsPanel.getExcluder().getRangeFlag() != RangeType.NO_RANGE) {
             scriptParameters.getParams().put(
                     ParameterFactory.newParameter("exclusion_range_min", outputOptionsPanel.getExcluder().getLowerBound()
                             .floatValue()));

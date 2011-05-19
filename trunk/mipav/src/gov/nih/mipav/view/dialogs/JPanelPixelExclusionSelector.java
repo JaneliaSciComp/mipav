@@ -24,7 +24,7 @@ import javax.swing.border.TitledBorder;
  */
 public class JPanelPixelExclusionSelector extends JPanel implements ActionListener {
 
-    public enum ExclusionRangeType {
+    public enum RangeType {
         /** No pixels will be excluded from a calculation. */
         NO_RANGE,
         /** Pixels between boundA and boundB (inclusive) will be excluded from a calculation. */
@@ -55,7 +55,7 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
     private Float upperLimit;
 
     /** The range type that this pixel exclusion selector covers. */
-    private ExclusionRangeType rangeFlag;
+    private RangeType rangeFlag;
     
     /** A reference to the JDialogVOIStatistic or JDialogVOIStats check box panel. */
     private JPanelStatisticsList checkBoxPanel;
@@ -160,7 +160,7 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
                 excludeSelection.setEnabled(false);
                 boundA.setEnabled(false);
                 boundB.setEnabled(false);
-                rangeFlag = ExclusionRangeType.NO_RANGE;
+                rangeFlag = RangeType.NO_RANGE;
 
                 // storeLimitValues(); // store before blanking the values
                 boundA.setText("");
@@ -208,7 +208,7 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
     /**
      * @return the range type
      */
-    public ExclusionRangeType getRangeFlag() {
+    public RangeType getRangeFlag() {
         return rangeFlag;
     }
 
@@ -251,10 +251,10 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
      * largest possible values, if the fields have not been set, or will reset the fields to the stored values.
      */
     public void selectRangeInput() {
-        rangeFlag = ExclusionRangeType.NO_RANGE;
+        rangeFlag = RangeType.NO_RANGE;
 
         if (excludeSelection.getSelectedItem().equals("Above")) {
-            rangeFlag = ExclusionRangeType.BETWEEN;
+            rangeFlag = RangeType.BETWEEN;
             storeLimitValues();
             boundB.setEnabled(false);
             boundB.setText(Float.toString(Float.MAX_VALUE));
@@ -266,7 +266,7 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
                 boundA.setText(Float.toString( -Float.MAX_VALUE));
             }
         } else if (excludeSelection.getSelectedItem().equals("Below")) {
-            rangeFlag = ExclusionRangeType.BETWEEN;
+            rangeFlag = RangeType.BETWEEN;
             storeLimitValues();
             boundA.setEnabled(false);
             boundA.setText(Float.toString( -Float.MAX_VALUE));
@@ -280,7 +280,7 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
         } else if (excludeSelection.getSelectedItem().equals("Between")) {
 
             // set both text-inputs as needed, then make them editable
-            rangeFlag = ExclusionRangeType.BETWEEN;
+            rangeFlag = RangeType.BETWEEN;
             storeLimitValues();
 
             if (lowerLimit != null) {
@@ -298,7 +298,7 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
             boundA.setEnabled(true);
             boundB.setEnabled(true);
         } else if (excludeSelection.getSelectedItem().equals("Outside")) {
-            rangeFlag = ExclusionRangeType.OUTSIDE;
+            rangeFlag = RangeType.OUTSIDE;
             storeLimitValues();
 
             // set both text-inputs as needed, then make them editable
