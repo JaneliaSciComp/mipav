@@ -452,6 +452,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         //getAllContourPoints();
         Vector<Float> values = new Vector<Float>();
         float fVal = 0;
+        boolean foundInRange = false;
         for ( int i = 0; i < kMaskPositions.size(); i++ )
         {
             Vector3f kPos = kMaskPositions.elementAt(i);
@@ -462,10 +463,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
             if ( !MipavUtil.inRange( ignoreMin, ignoreMax, fVal, rangeFlag ) )
             {
                 values.add( new Float(fVal) );
-                if ( i == 0 )
-                {
+                if (!foundInRange) {
                     kValues.X = fVal;
                     kValues.Y = fVal;
+                    foundInRange = true;
                 }
                 kValues.X = Math.min( kValues.X, fVal );
                 kValues.Y = Math.max( kValues.Y, fVal );
