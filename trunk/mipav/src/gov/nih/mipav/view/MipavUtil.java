@@ -797,33 +797,34 @@ public class MipavUtil extends JComponent {
     
     /**
      * Determines if a value is within the given pixel intensity range.
-     * @param ignoreMin minimum intensity.
-     * @param ignoreMax maximum intensity.
+     * @param min minimum intensity.
+     * @param max maximum intensity.
      * @param num value to test.
      * @param rangeFlag (no test, between, outside) the min and max.
      * @return true if num satisfies the test.
      */
-    public static boolean inRange(float ignoreMin, float ignoreMax, float num, ExclusionRangeType rangeFlag) {
+    public static boolean inRange(float min, float max, float num, ExclusionRangeType rangeFlag) {
+        if(rangeFlag == null) {
+            return false;
+        }
         
-        if (rangeFlag == ExclusionRangeType.NO_RANGE || rangeFlag == null) {
-            return false;
-        } else if (rangeFlag == ExclusionRangeType.BETWEEN) {
-
-            if ((num >= ignoreMin) && (num <= ignoreMax)) {
-                return true;
+        switch(rangeFlag) {
+        case BETWEEN:
+            if ((num >= min) && (num <= max)) {
+                return true; //pixel is within min to max
             }
-            return false;
-        } else if (rangeFlag == ExclusionRangeType.OUTSIDE) {
-
-            if ((num <= ignoreMin) || (num >= ignoreMax)) {
-                return true;
+            return false; 
+            
+        case OUTSIDE:
+            if ((num < min) || (num > max)) {
+                return true; //pixel is either below min or above max
             }
-            return false;
-        } else {
-            if ((num >= ignoreMin) && (num <= ignoreMax)) {
-                return true;
-            }
-            return false;
+            return false; 
+        
+        case NO_RANGE:
+        default:
+            return false; //no range for pixel to be in
+            
         }
     }
 
