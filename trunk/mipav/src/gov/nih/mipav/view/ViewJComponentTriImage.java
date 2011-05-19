@@ -179,6 +179,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
     /** the gap (in one direction) between the center of the crosshair and the actual crosshair line */
     private int crosshairPixelGap = 0;
+    
+    private int axisOrientation[];
+    
+    private int xCursorAdjustment = 0;
+    
+    private int yCursorAdjustment = 0;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -240,6 +246,44 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         /* res is ordered based on orientation: */
         res = imageActive.getResolutions(0, orientation);
+        
+        axisOrientation = imageActive.getFileInfo()[0].getAxisOrientation();
+        
+        // Adjust cursor when x, y, or z = 0 starts at the right hand boundary or bottom so that you position
+        // the cursor from the right hand boundary or bottom rather than 1 away from the right hand boundary or 
+        // bottom.
+        if (orientation == FileInfoBase.AXIAL) {
+        	if ((axisOrientation[0] == FileInfoBase.ORI_L2R_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_L2R_TYPE) ||
+        	    (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
+        	    	xCursorAdjustment = 1;
+        	    }
+            if ((axisOrientation[0] == FileInfoBase.ORI_P2A_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) ||
+               (axisOrientation[2] == FileInfoBase.ORI_P2A_TYPE)) {
+            	   yCursorAdjustment = 1;
+               }
+        }
+        
+        if (orientation == FileInfoBase.SAGITTAL) {
+        	if ((axisOrientation[0] == FileInfoBase.ORI_P2A_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) ||
+                    (axisOrientation[2] == FileInfoBase.ORI_P2A_TYPE)) {
+                 	   xCursorAdjustment = 1;
+                    }
+        	if ((axisOrientation[0] == FileInfoBase.ORI_I2S_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_I2S_TYPE) ||
+        	    (axisOrientation[2] == FileInfoBase.ORI_I2S_TYPE)) {
+        	    	yCursorAdjustment = 1;
+        	    }
+        }
+        
+        if (orientation == FileInfoBase.CORONAL) {
+        	if ((axisOrientation[0] == FileInfoBase.ORI_L2R_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_L2R_TYPE) ||
+            	    (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
+            	    	xCursorAdjustment = 1;
+            	    }
+        	if ((axisOrientation[0] == FileInfoBase.ORI_I2S_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_I2S_TYPE) ||
+            	    (axisOrientation[2] == FileInfoBase.ORI_I2S_TYPE)) {
+            	    	yCursorAdjustment = 1;
+            	    }
+        }
 
         if ( (res[0] == 0.0f) || (res[1] == 0.0f) || (res[2] == 0.0f)) {
             res[0] = 1.0f;
@@ -1871,8 +1915,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private void drawCenterMark(final Graphics2D offscreenGraphics2d) {
         offscreenGraphics2d.setColor(Color.yellow);
 
-        final int centerXD = (int) crosshairPt.X;
-        final int centerYD = (int) crosshairPt.Y;
+        final int centerXD = (int) (crosshairPt.X + xCursorAdjustment);
+        final int centerYD = (int) (crosshairPt.Y + yCursorAdjustment);
         offscreenGraphics2d.drawLine(centerXD, centerYD - 5, centerXD, centerYD + 5);
         offscreenGraphics2d.drawLine(centerXD - 5, centerYD, centerXD + 5, centerYD);
         offscreenGraphics2d.setColor(Color.black);
@@ -1888,19 +1932,21 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param offscreenGraphics2d Graphics2D
      */
     private void drawCrosshairLines(final Graphics2D offscreenGraphics2d) {
+    	int adjustedX = (int) (crosshairPt.X + xCursorAdjustment);
+    	int adjustedY = (int) (crosshairPt.Y + yCursorAdjustment);
 
         // This snaps the crosshair to the voxel boundary
         offscreenGraphics2d.setColor(xColor[orientation]);
-        offscreenGraphics2d.drawLine((int) crosshairPt.X, 0, (int) crosshairPt.X, (int) crosshairPt.Y
+        offscreenGraphics2d.drawLine(adjustedX, 0, adjustedX, adjustedY
                 - crosshairPixelGap);
-        offscreenGraphics2d.drawLine((int) crosshairPt.X, getSize().height, (int) crosshairPt.X, (int) crosshairPt.Y
+        offscreenGraphics2d.drawLine(adjustedX, getSize().height, adjustedX, adjustedY
                 + crosshairPixelGap);
 
         offscreenGraphics2d.setColor(yColor[orientation]);
-        offscreenGraphics2d.drawLine(0, (int) crosshairPt.Y, (int) crosshairPt.X - crosshairPixelGap,
-                (int) crosshairPt.Y);
-        offscreenGraphics2d.drawLine(getSize().width, (int) crosshairPt.Y, (int) crosshairPt.X + crosshairPixelGap,
-                (int) crosshairPt.Y);
+        offscreenGraphics2d.drawLine(0, adjustedY, adjustedX - crosshairPixelGap,
+                adjustedY);
+        offscreenGraphics2d.drawLine(getSize().width, adjustedY, adjustedX + crosshairPixelGap,
+                adjustedY);
     }
 
     /**
@@ -1922,6 +1968,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param offscreenGraphics2d Graphics2D
      */
     private void drawCrosshairStubs(final Graphics2D offscreenGraphics2d) {
+    	int adjustedX = (int) (crosshairPt.X + xCursorAdjustment);
+    	int adjustedY = (int) (crosshairPt.Y + yCursorAdjustment);
 
         // border
         offscreenGraphics2d.setColor(zColor[orientation]);
@@ -1929,13 +1977,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         // x stubs
         offscreenGraphics2d.setColor(xColor[orientation]);
-        offscreenGraphics2d.drawLine((int) crosshairPt.X, 0, (int) crosshairPt.X, 10);
-        offscreenGraphics2d.drawLine((int) crosshairPt.X, getSize().height, (int) crosshairPt.X, getSize().height - 10);
+        offscreenGraphics2d.drawLine(adjustedX, 0, adjustedX, 10);
+        offscreenGraphics2d.drawLine(adjustedX, getSize().height, adjustedX, getSize().height - 10);
 
         // y stubs
         offscreenGraphics2d.setColor(yColor[orientation]);
-        offscreenGraphics2d.drawLine(0, (int) crosshairPt.Y, 10, (int) crosshairPt.Y);
-        offscreenGraphics2d.drawLine(getSize().width, (int) crosshairPt.Y, getSize().width - 10, (int) crosshairPt.Y);
+        offscreenGraphics2d.drawLine(0, adjustedY, 10, adjustedY);
+        offscreenGraphics2d.drawLine(getSize().width, adjustedY, getSize().width - 10, adjustedY);
     }
 
 
