@@ -1915,8 +1915,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private void drawCenterMark(final Graphics2D offscreenGraphics2d) {
         offscreenGraphics2d.setColor(Color.yellow);
 
-        final int centerXD = (int) (crosshairPt.X + xCursorAdjustment);
-        final int centerYD = (int) (crosshairPt.Y + yCursorAdjustment);
+        final int centerXD = (int) (crosshairPt.X + xCursorAdjustment * zoomX);
+        final int centerYD = (int) (crosshairPt.Y + yCursorAdjustment * zoomY);
         offscreenGraphics2d.drawLine(centerXD, centerYD - 5, centerXD, centerYD + 5);
         offscreenGraphics2d.drawLine(centerXD - 5, centerYD, centerXD + 5, centerYD);
         offscreenGraphics2d.setColor(Color.black);
@@ -1932,8 +1932,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param offscreenGraphics2d Graphics2D
      */
     private void drawCrosshairLines(final Graphics2D offscreenGraphics2d) {
-    	int adjustedX = (int) (crosshairPt.X + xCursorAdjustment);
-    	int adjustedY = (int) (crosshairPt.Y + yCursorAdjustment);
+    	int adjustedX = (int) (crosshairPt.X + xCursorAdjustment * zoomX);
+    	int adjustedY = (int) (crosshairPt.Y + yCursorAdjustment * zoomY);
 
         // This snaps the crosshair to the voxel boundary
         offscreenGraphics2d.setColor(xColor[orientation]);
@@ -1968,8 +1968,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param offscreenGraphics2d Graphics2D
      */
     private void drawCrosshairStubs(final Graphics2D offscreenGraphics2d) {
-    	int adjustedX = (int) (crosshairPt.X + xCursorAdjustment);
-    	int adjustedY = (int) (crosshairPt.Y + yCursorAdjustment);
+    	int adjustedX = (int) (crosshairPt.X + xCursorAdjustment * zoomX);
+    	int adjustedY = (int) (crosshairPt.Y + yCursorAdjustment * zoomY);
 
         // border
         offscreenGraphics2d.setColor(zColor[orientation]);
