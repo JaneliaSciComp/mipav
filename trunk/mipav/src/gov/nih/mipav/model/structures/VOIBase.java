@@ -426,14 +426,18 @@ public abstract class VOIBase extends Vector<Vector3f> {
     	Vector<Vector3f> kMaskPositions = getAllContourPoints();
         //getAllContourPoints();
         float sum = 0;
+        float temp;
         for ( int i = 0; i < kMaskPositions.size(); i++ )
         {
             Vector3f kPos = kMaskPositions.elementAt(i);
             int x = (int)kPos.X;
             int y = (int)kPos.Y;
             int z = (int)kPos.Z;
-            sum += kImage.getFloat(x,y,z,t);
-            numPixels++;
+            temp = kImage.getFloat(x,y,z,t);
+            if (!Float.isNaN(temp)) {
+                sum += temp;
+                numPixels++;
+            }
         }
         return sum;
     }
@@ -460,7 +464,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int y = (int)kPos.Y;
             int z = (int)kPos.Z;
             fVal = kImage.getFloat(x,y,z);
-            if ( !MipavUtil.inRange( ignoreMin, ignoreMax, fVal, rangeFlag ) )
+            if (( !MipavUtil.inRange( ignoreMin, ignoreMax, fVal, rangeFlag ) ) && (!Float.isNaN(fVal)))
             {
                 values.add( new Float(fVal) );
                 if (!foundInRange) {
@@ -494,7 +498,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int y = (int)kPos.Y;
             int z = (int)kPos.Z;
             float val = kImage.getFloat(x,y,z, t);
-            if ( val >= threshold )
+            if ((!Float.isNaN(val)) && ( val >= threshold ))
             {
                 sum += val;
                 numPixels++;
@@ -529,7 +533,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             //TODO: Allow separate values for RGB ignore ranges
             if ( !MipavUtil.inRange( ignoreMin, ignoreMax, r, rangeFlag ) &&
                     !MipavUtil.inRange( ignoreMin, ignoreMax, g, rangeFlag ) &&
-                    !MipavUtil.inRange( ignoreMin, ignoreMax, b, rangeFlag ) )
+                    !MipavUtil.inRange( ignoreMin, ignoreMax, b, rangeFlag ) &&
+                    (!Float.isNaN(r)) && (!Float.isNaN(g)) && (!Float.isNaN(b)))
             {
                 ColorRGB kColor = new ColorRGB(r,g,b);
                 values.add( kColor );
@@ -559,15 +564,18 @@ public abstract class VOIBase extends Vector<Vector3f> {
         Vector<Vector3f> kMaskPositions = getAllContourPoints();
         //getAllContourPoints();
         float sum = 0;
+        float temp;
         for ( int i = 0; i < kMaskPositions.size(); i++ )
         {
             Vector3f kPos = kMaskPositions.elementAt(i);
             int x = (int)kPos.X;
             int y = (int)kPos.Y;
             int z = (int)kPos.Z;
-
-            sum += kImage.getFloatC(x,y,z,RGorB+1);
-            numPixels++;
+            temp = kImage.getFloatC(x,y,z,RGorB+1);
+            if (!Float.isNaN(temp)){
+                sum += temp;
+                numPixels++;
+            }
         }
         return sum;
     }
@@ -595,7 +603,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int z = (int)kPos.Z;
 
             float val = kImage.getFloatC(x,y,z,RGorB+1);
-            if ( val >= threshold )
+            if ((!Float.isNaN(val)) && ( val >= threshold ))
             {
                 sum += val;
                 numPixels++;
@@ -1210,10 +1218,12 @@ public abstract class VOIBase extends Vector<Vector3f> {
             {
                 val = kImage.getFloat(x,y,z);                            
             }
-            sumX += x * val;
-            sumY += y * val;
-            sumZ += z * val;
-            sum += val;
+            if (!Float.isNaN(val)) {
+                sumX += x * val;
+                sumY += y * val;
+                sumZ += z * val;
+                sum += val;
+            }
         }
         centerPt.X = MipavMath.round(sumX / sum);
         centerPt.Y = MipavMath.round(sumY / sum);
