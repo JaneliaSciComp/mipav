@@ -169,18 +169,31 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
          */
         public void getMedianStatistics( ContourStats stats )
         {
+        	int j;
+        	float temp;
             int nVox = stats.values.size();
-            float[] buff = new float[nVox];
-            for ( int i = 0; i < stats.values.size(); i++ )
+            int nVoxValid = 0;
+            for (int i = 0; i < nVox; i++) {
+            	temp = stats.values.elementAt(i).floatValue();
+                if (!Float.isNaN(temp)) {
+                	nVoxValid++;
+                }
+            }
+            float[] buff = new float[nVoxValid];
+            j = 0;
+            for ( int i = 0; i < nVox; i++ )
             {
-                buff[i] = stats.values.elementAt(i).floatValue();
+            	temp = stats.values.elementAt(i).floatValue();
+            	if (!Float.isNaN(temp)) {
+                    buff[j++] = temp;
+            	}
             }
 
             Arrays.sort(buff);
             float[] sorted = buff;
             int cnt = sorted.length;
             double median;
-            float temp = 0;
+            temp = 0;
             int count = 0;
             float mode = 0;
             float maxCount = 0;
@@ -224,15 +237,36 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
          */
         public void getMedianStatisticsRGB( ContourStats stats )
         {
+        	int j;
+        	float tempR;
+        	float tempG;
+        	float tempB;
             int nVox = stats.valuesRGB.size();
-            float[] buffR = new float[nVox];
-            float[] buffG = new float[nVox];
-            float[] buffB = new float[nVox];
-            for ( int i = 0; i < stats.valuesRGB.size(); i++ )
+            int nVoxValid = 0;
+            for (int i = 0; i < nVox; i++) {
+            	tempR = stats.valuesRGB.elementAt(i).R;
+            	tempG = stats.valuesRGB.elementAt(i).G;
+            	tempB = stats.valuesRGB.elementAt(i).B;
+                if ((!Float.isNaN(tempR)) && (!Float.isNaN(tempG)) &&
+                	(!Float.isNaN(tempG))) {
+                	nVoxValid++;
+                }
+            }
+            float[] buffR = new float[nVoxValid];
+            float[] buffG = new float[nVoxValid];
+            float[] buffB = new float[nVoxValid];
+            j = 0;
+            for ( int i = 0; i < nVox; i++ )
             {
-                buffR[i] = stats.valuesRGB.elementAt(i).R;
-                buffG[i] = stats.valuesRGB.elementAt(i).G;
-                buffB[i] = stats.valuesRGB.elementAt(i).B;
+            	tempR = stats.valuesRGB.elementAt(i).R;
+            	tempG = stats.valuesRGB.elementAt(i).G;
+            	tempB = stats.valuesRGB.elementAt(i).B;
+            	if ((!Float.isNaN(tempR)) && (!Float.isNaN(tempG)) &&
+                    	(!Float.isNaN(tempG))) {
+                buffR[j] = tempR;
+                buffG[j] = tempG;
+                buffB[j++] = tempB;
+            	}
             }
 
             //red
@@ -241,7 +275,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             int cntR = sortedR.length;
             double medianR;
-            float tempR = 0;
+            tempR = 0;
             int countR = 0;
             float modeR = 0;
             float maxCountR = 0;
@@ -278,7 +312,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             float[] sortedG = buffG;
             int cntG = sortedG.length;
             double medianG;
-            float tempG = 0;
+            tempG = 0;
             int countG = 0;
             float modeG = 0;
             float maxCountG = 0;
@@ -315,7 +349,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             float[] sortedB = buffB;
             int cntB = sortedB.length;
             double medianB;
-            float tempB = 0;
+            tempB = 0;
             int countB = 0;
             float modeB = 0;
             float maxCountB = 0;
@@ -391,7 +425,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 float fVal = srcImage.getFloat(x,y,z);
 
-                if (!MipavUtil.inRange(ignoreMin, ignoreMax, fVal, rangeFlag)) {
+                if ((!MipavUtil.inRange(ignoreMin, ignoreMax, fVal, rangeFlag)) && (!Float.isNaN(fVal))) {
                     xMass += x * fVal;
                     yMass += y * fVal;
                     zMass += z * fVal;
@@ -481,7 +515,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 //TODO: Allow separate ignore values for RGB
                 if ( !MipavUtil.inRange(ignoreMin, ignoreMax, fR, rangeFlag) &&
                         !MipavUtil.inRange(ignoreMin, ignoreMax, fG, rangeFlag) &&
-                        !MipavUtil.inRange(ignoreMin, ignoreMax, fB, rangeFlag)) {
+                        !MipavUtil.inRange(ignoreMin, ignoreMax, fB, rangeFlag) &&
+                        (!Float.isNaN(fR)) && (!Float.isNaN(fG)) && (!Float.isNaN(fB))) {
                     xMassR += x * fR;
                     yMassR += y * fG;
                     zMassR += z * fB;
