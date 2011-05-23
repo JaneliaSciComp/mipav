@@ -1128,12 +1128,11 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill = GridBagConstraints.BOTH;
         
         if (image.isColorImage()) {
             colorPanel = new JPanel(new GridLayout(3, 1));
             colorPanel.setForeground(Color.black);
-            colorPanel.setBorder(buildTitledBorder("Colors"));
 
             colorGroup = new ButtonGroup();
             redButton = new JRadioButton("Red", true);
@@ -1158,45 +1157,72 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
             colorPanel.add(blueButton);
             gbc.gridx = 0;
             gbc.gridy = ypos++;
-            mainPanel.add(colorPanel, gbc);
+            gbc.weighty = .1;
+            JScrollPane colorScroll = new JScrollPane(colorPanel);
+            colorScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            colorScroll.setBorder(buildTitledBorder("Colors"));
+            mainPanel.add(colorScroll, gbc);   
         } // if (image.isColorImage())
 
-        scalePanel = new JPanel(new GridLayout(3, 2));
+        scalePanel = new JPanel(new GridBagLayout()); //3 rows x 2 columns
         scalePanel.setForeground(Color.black);
-        scalePanel.setBorder(buildTitledBorder("Sizes"));
         gbc.gridx = 0;
         gbc.gridy = ypos++;
-        mainPanel.add(scalePanel, gbc);
+        gbc.weighty = .1;
+        JScrollPane scaleScroll = new JScrollPane(scalePanel);
+        scaleScroll.setBorder(buildTitledBorder("Sizes"));
+        scaleScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        mainPanel.add(scaleScroll, gbc);
 
-        labelWindowSize = new JLabel("Window size - odd");
+        GridBagConstraints gbcScale = new GridBagConstraints();
+        labelWindowSize = new JLabel("Window size - odd: ");
         labelWindowSize.setForeground(Color.black);
         labelWindowSize.setFont(serif12);
-        scalePanel.add(labelWindowSize);
+        gbcScale.gridx = 0;
+        gbcScale.gridy = 0;
+        gbcScale.fill = GridBagConstraints.HORIZONTAL;
+        gbcScale.anchor = GridBagConstraints.WEST;
+        gbcScale.insets = new Insets(0, 0, 2, 0);
+        scalePanel.add(labelWindowSize, gbcScale);
         textWindowSize = new JTextField(10);
         textWindowSize.setText("7");
         textWindowSize.setFont(serif12);
         textWindowSize.setForeground(Color.black);
-        scalePanel.add(textWindowSize);
+        gbcScale.gridx++;
+        gbcScale.insets = new Insets(0, 4, 2, 0);
+        scalePanel.add(textWindowSize, gbcScale);
 
-        labelOffsetDistance = new JLabel("Offset distance");
+        //second row
+        labelOffsetDistance = new JLabel("Offset distance: ");
         labelOffsetDistance.setForeground(Color.black);
         labelOffsetDistance.setFont(serif12);
-        scalePanel.add(labelOffsetDistance);
+        gbcScale.gridx = 0;
+        gbcScale.gridy++;
+        gbcScale.insets = new Insets(0, 0, 2, 0);
+        scalePanel.add(labelOffsetDistance, gbcScale);
         textOffsetDistance = new JTextField(10);
         textOffsetDistance.setText("1");
         textOffsetDistance.setFont(serif12);
         textOffsetDistance.setForeground(Color.black);
-        scalePanel.add(textOffsetDistance);
+        gbcScale.gridx++;
+        gbcScale.insets = new Insets(0, 4, 2, 0);
+        scalePanel.add(textOffsetDistance, gbcScale);
         
-        labelRescaling = new JLabel("Grey levels if rescaled (8-64)");
+        //third row
+        labelRescaling = new JLabel("Grey levels if rescaled (8-64): ");
         labelRescaling.setForeground(Color.black);
         labelRescaling.setFont(serif12);
-        scalePanel.add(labelRescaling);
+        gbcScale.gridx = 0;
+        gbcScale.gridy++;
+        gbcScale.insets = new Insets(0, 0, 2, 0);
+        scalePanel.add(labelRescaling, gbcScale);
         textRescaling = new JTextField(10);
         textRescaling.setText("32");
         textRescaling.setFont(serif12);
         textRescaling.setForeground(Color.black);
-        scalePanel.add(textRescaling);
+        gbcScale.gridx++;
+        gbcScale.insets = new Insets(0, 4, 2, 0);
+        scalePanel.add(textRescaling, gbcScale);
 
         JPanel directionPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc2 = new GridBagConstraints();
@@ -1206,7 +1232,6 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         gbc2.weightx = 1;
         gbc2.insets = new Insets(3, 3, 3, 3);
         gbc2.fill = GridBagConstraints.HORIZONTAL;
-        directionPanel.setBorder(buildTitledBorder("Offset directions"));
 
         nsCheckBox = new JCheckBox("North-South");
         nsCheckBox.setFont(serif12);
@@ -1245,7 +1270,11 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
         gbc.gridx = 0;
         gbc.gridy = ypos++;
-        mainPanel.add(directionPanel, gbc);
+        gbc.weighty = .2;  
+        JScrollPane directionScroll = new JScrollPane(directionPanel);
+        directionScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        directionScroll.setBorder(buildTitledBorder("Offset directions"));
+        mainPanel.add(directionScroll, gbc);
 
         JPanel operatorPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc3 = new GridBagConstraints();
@@ -1253,9 +1282,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         gbc3.gridheight = 1;
         gbc3.anchor = GridBagConstraints.WEST;
         gbc3.weightx = 1;
-        gbc3.insets = new Insets(3, 3, 3, 3);
+        gbc3.insets = new Insets(2, 3, 2, 3);
         gbc3.fill = GridBagConstraints.HORIZONTAL;
-        operatorPanel.setBorder(buildTitledBorder("Texture operators"));
 
         contrastCheckBox = new JCheckBox("Contrast (Inertia) (Sum of Squares Variance)");
         contrastCheckBox.setFont(serif12);
@@ -1357,7 +1385,11 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
         gbc.gridx = 0;
         gbc.gridy = ypos++;
-        mainPanel.add(operatorPanel, gbc);
+        gbc.weighty = .55;  
+        JScrollPane operatorScroll = new JScrollPane(operatorPanel);
+        operatorScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        operatorScroll.setBorder(buildTitledBorder("Texture operators"));
+        mainPanel.add(operatorScroll, gbc);
         
         JPanel outputPanel = new JPanel(new GridBagLayout());
         gbc3 = new GridBagConstraints();
@@ -1367,7 +1399,6 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         gbc3.weightx = 1;
         gbc3.insets = new Insets(3, 3, 3, 3);
         gbc3.fill = GridBagConstraints.HORIZONTAL;
-        outputPanel.setBorder(buildTitledBorder("Output options"));
         
         concatenateCheckBox = new JCheckBox("Concatenate source and calculated features together");
         concatenateCheckBox.setFont(serif12);
@@ -1385,7 +1416,11 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         
         gbc.gridx = 0;
         gbc.gridy = ypos++;
-        mainPanel.add(outputPanel, gbc);
+        gbc.weighty = .1;  
+        JScrollPane outputScroll = new JScrollPane(outputPanel);
+        outputScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        outputScroll.setBorder(buildTitledBorder("Output options"));
+        mainPanel.add(outputScroll, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
