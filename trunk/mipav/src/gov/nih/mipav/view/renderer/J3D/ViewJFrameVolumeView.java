@@ -3298,7 +3298,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         mainPane.setOneTouchExpandable(true);
         mainPane.setDividerSize(6);
         mainPane.setContinuousLayout(true);
-
+        
         getContentPane().add(mainPane, BorderLayout.CENTER);
 
         // MUST register frame to image models
