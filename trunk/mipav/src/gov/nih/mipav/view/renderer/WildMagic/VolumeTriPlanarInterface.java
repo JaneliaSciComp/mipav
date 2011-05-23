@@ -3351,6 +3351,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         rightPane.setOneTouchExpandable(true);
         rightPane.setDividerSize(6);
         rightPane.setContinuousLayout(true);
+        rightPane.setResizeWeight(1.0);
 
         tabbedPane.setPreferredSize(new Dimension(maxPanelWidth, tabbedPane.getPreferredSize().height));
 
@@ -3364,6 +3365,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         mainPane.setOneTouchExpandable(true);
         mainPane.setDividerSize(6);
         mainPane.setContinuousLayout(true);
+   
+        
 
         getContentPane().add(mainPane, BorderLayout.CENTER);
     }
