@@ -2,6 +2,9 @@ package gov.nih.mipav.util;
 
 
 
+import java.net.URL;
+
+import gov.nih.mipav.view.icons.PlaceHolder;
 import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
 import WildMagic.LibGraphics.Shaders.ImageCatalog;
 import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
@@ -42,19 +45,8 @@ public class MipavInitGPU {
      */
     static public String getExternalDirs()
     {
-        String jar_filename = "";
-        String class_path_key = "java.class.path";
-        String class_path = System.getProperty(class_path_key);
-        for (String fn : class_path.split(":")) {
-            if (fn.contains("WildMagic.jar")) {
-                jar_filename = fn;
-                String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
-                externalDirs = externalDirs.concat("WildMagic");
-                //System.err.println("Shader dir found: " + externalDirs);
-                return externalDirs;
-            }
-        }
-        System.err.println("Shader dir not found");
-        return System.getProperties().getProperty("user.dir");
+    	String dir = new String(System.getProperty("user.dir"));
+    	dir = dir + System.getProperty("file.separator") + "src" + System.getProperty("file.separator") + "WildMagic";
+    	return dir;
     }
 }
