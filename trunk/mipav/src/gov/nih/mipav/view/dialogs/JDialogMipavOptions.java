@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.util.ThreadUtil;
 
+import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.structures.ModelImage;
 
@@ -1689,8 +1690,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     protected void makeGpuCompEnabledOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        gpuCompEnabledCheckBox = new JCheckBox("GPU Computing Enabled"); // TODO: Add status of GPUs once method is
-        // implemented in Java
+        gpuCompEnabledCheckBox = new JCheckBox("GPU Computing Enabled"); 
         gpuCompEnabledCheckBox.setFont(MipavUtil.font12);
         gpuCompEnabledCheckBox.setForeground(Color.black);
         gpuCompEnabledCheckBox.addActionListener(this);
@@ -1701,7 +1701,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         otherPanel.add(gpuCompEnabledCheckBox);
 
         // preset the choices.
-        gpuCompEnabledCheckBox.setSelected(Preferences.isGpuCompEnabled());
+        gpuCompEnabledCheckBox.setSelected(Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable());
+        gpuCompEnabledCheckBox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable());
     }
 
     /**
