@@ -29,6 +29,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -42,6 +44,19 @@ public class JPanelRenderMode_WM extends JInterfaceBase
 	/**  */
     private static final long serialVersionUID = 3015333092796701354L;
 
+    /**
+     * Builds a titled border with the given title, an etched border, and the
+     * proper font and color.  Changed to public static member so that it can
+     * be used for other JPanels not inherited from this base class.
+     * @param   title  Title of the border
+     *
+     * @return  The titled border.
+     */
+    public static TitledBorder buildTitledBorder(String title) {
+        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+                                Color.black);
+    }
+    
     /** Text box for setting the intensity level for extraction. */
     JTextField m_kIntensityTF;
     
@@ -50,13 +65,13 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     
     /** Turn display 3D Slices on/off */
     protected JCheckBox m_kDisplaySlicesCheck;
-    
+
     /** Turn display 3D TriMesh Surface on/off */
     protected JCheckBox m_kDisplaySurfaceCheck;
-
+        
     /** The combo box for the polygon mode to display. */
     private JComboBox m_kStereoModeCB;
-        
+
     /** Radio button of the COMPOSITE mode option. */
     protected JRadioButton radioCOMPOSITE;
 
@@ -71,19 +86,19 @@ public class JPanelRenderMode_WM extends JInterfaceBase
 
     /** Radio button of the SURFACE mode option. */
     protected JRadioButton radioSURFACEFAST;
-
+    
     /** Radio button of the surface render composite mode. */
     protected JRadioButton radioSurrenderCOMPOSITE;
-    
+
     /** Radio button of the XRAY mode option. */
     protected JRadioButton radioXRAY;
-
+    
     /** Checkbox for the Multi-histo mode option. */
     protected JCheckBox radioMULTIHISTO;
-    
+
     /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
     protected Font serif12, serif12B;
-
+    
     /** Volume alpha-blending slider. */
     protected JSlider m_kVolumeBlendSlider;
     
@@ -99,10 +114,19 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** The scroll pane holding the panel content. Useful when the screen is small. */
     private JScrollPane scroller;
     
-    //** Check box to enable/disable surface self-shadowing */
+	//** Check box to enable/disable surface self-shadowing */
     private JCheckBox kSelfShadow;
+	
+    /** Label that gives current value of slider. */
+    private JLabel mkCurrent;
     
-	/**
+    /** IPD number. */
+    private float m_fIPD;
+    
+    /** Opacity slider. */
+    private JSlider m_kIPDSlider;
+
+    /**
      * Constructor.
      * @param kVolumeViewer parent frame.
      */
@@ -111,24 +135,12 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         super(kVolumeViewer);
         init();
     }
-	
-    /**
-     * Builds a titled border with the given title, an etched border, and the
-     * proper font and color.  Changed to public static member so that it can
-     * be used for other JPanels not inherited from this base class.
-     * @param   title  Title of the border
-     *
-     * @return  The titled border.
-     */
-    public static TitledBorder buildTitledBorder(String title) {
-        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-                                Color.black);
-    }
     
     /**
      * Empty function call
      */
-    public void actionPerformed(ActionEvent event) {
+    @Override
+	public void actionPerformed(ActionEvent event) {
         String levelStr = m_kIntensityTF.getText();
         rayBasedRenderWM.setIntenstityLevel(Integer.valueOf(levelStr).intValue());
         if ( event.getActionCommand().equals("ChangeStereoMode") )
@@ -146,6 +158,34 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         }
     }
     
+    /**
+     * Get the blender slider value
+     * @return   slider value.
+     */
+    public int getBlendSliderValue() {
+    	return m_kVolumeBlendSlider.getValue();
+    }
+    
+    public int getIntensityLevel()
+    {
+        String levelStr = m_kIntensityTF.getText();
+        return Integer.valueOf(levelStr).intValue();
+    }
+   
+    public int getMovingSliderValue() {
+        return m_kVolumeSamplesSliderMouseDragged.getValue();
+    }
+    
+    public boolean getMultiHistoEnabled()
+    {
+        return radioMULTIHISTO.isSelected();
+    }
+    
+    public int getReleasedSliderValue() {
+        return m_kVolumeSamplesSliderMouseReleased.getValue();
+    }
+    
+    
     public int getRenderMode()
     {
         if ( radioMIP.isSelected() ) { return 0; }
@@ -156,7 +196,136 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         if ( radioCustum.isSelected() ) { return 5; }
         return 2;
     }
+    
+    /**
+     * Get the slice check box. 
+     * @return true or false
+     */
+    public JCheckBox getSlicesCheck() {
+    	return m_kDisplaySlicesCheck;
+    }
+    
+    public int getStereo()
+    {
+    	return m_kStereoModeCB.getSelectedIndex();
+    }
+    
+    /**
+     * Get the surface check box. 
+     * @return true or false
+     */
+    public JCheckBox getSurfaceCheck() {
+    	return m_kDisplaySurfaceCheck;
+    }
+    
+    /**
+     * Get the volume display checkbox.
+     * @return  true or false
+     */
+    public JCheckBox getVolumeCheck()  {
+    	return m_kDisplayVolumeCheck;
+    }
+    
+    /* (non-Javadoc)
+     * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+     */
+    @Override
+	public void itemStateChanged(ItemEvent event) {
+        Object source = event.getSource();
 
+        if (radioMIP.isSelected() && (source == radioMIP)) {
+        	rayBasedRenderWM.MIPMode();
+        } else if (radioXRAY.isSelected() && (source == radioXRAY)) {
+        	rayBasedRenderWM.DRRMode();
+        } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
+        	rayBasedRenderWM.CMPMode();
+        } else if (radioCustum.isSelected() && (source == radioCustum)) {
+            m_kVolumeViewer.CustumBlendMode();
+        } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
+        	m_kVolumeViewer.SURMode( false );
+        } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
+        	m_kVolumeViewer.SURMode( true );
+        } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
+        	rayBasedRenderWM.selfShadow( kSelfShadow.isSelected() );
+        if ( (m_kVolumeViewer.getImageB() == null) )
+        {
+            kSelfShadow.setEnabled(radioSURFACEFAST.isSelected());
+        }
+        m_kExtractTriMesh.setEnabled(radioSURFACEFAST.isSelected());
+        rayBasedRenderWM.MULTIHISTOMode(radioMULTIHISTO.isSelected());
+        m_kVolumeViewer.updateMultihistoTab(radioMULTIHISTO.isSelected());
+    }
+    
+    /**
+     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
+     *
+     * @param  panelWidth   int width
+     * @param  frameHeight  int height
+     */
+    public void resizePanel(int panelWidth, int frameHeight) {
+        scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
+        scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
+        scroller.revalidate();
+    }
+    
+    /**
+     * Get the blender slider value
+     * @return   slider value.
+     */
+    public void setBlendSliderValue( int value ) {
+        m_kVolumeBlendSlider.setValue(value);
+        rayBasedRenderWM.setVolumeBlend( m_kVolumeBlendSlider.getValue()/100.0f );
+    }
+    
+    /**
+     * Set the tri-planar slices check box to true of false
+     * @param flag  true or false
+     */
+    public void setDisplaySlicesCheck(boolean flag) {
+    	m_kDisplaySlicesCheck.setSelected(flag);
+    }
+    
+    /**
+     * Set the surface check box to true of false
+     * @param flag  true or false
+     */
+    public void setDisplaySurfaceCheck(boolean flag ) {
+    	m_kDisplaySurfaceCheck.setSelected(flag);
+    	m_kDisplaySurfaceCheck.setEnabled(flag);
+    }
+    
+    /**
+     * Set the volume check box to true of false
+     * @param flag  true or false
+     */
+    public void setDisplayVolumeCheck(boolean flag ) {
+        m_kDisplayVolumeCheck.setSelected(flag);
+    }
+    
+    public void setIntensityLevel(int value)
+    {
+        String levelStr = String.valueOf(value);
+        m_kIntensityTF.setText(levelStr);
+        rayBasedRenderWM.setIntenstityLevel(Integer.valueOf(levelStr).intValue());
+    }
+    
+    public void setMovingSliderValue( int value ) {
+        m_kVolumeSamplesSliderMouseDragged.setValue(value);
+        rayBasedRenderWM.setVolumeSamplesMouseDragged( m_kVolumeSamplesSliderMouseDragged.getValue()/1000.0f );
+    }
+    
+    public void setMultiHistoEnabled( boolean value )
+    {
+        radioMULTIHISTO.setSelected(value);
+        rayBasedRenderWM.MULTIHISTOMode(radioMULTIHISTO.isSelected());
+        m_kVolumeViewer.updateMultihistoTab(radioMULTIHISTO.isSelected());
+    }
+    
+    public void setReleasedSliderValue( int value ) {
+        m_kVolumeSamplesSliderMouseReleased.setValue(value);
+        rayBasedRenderWM.setVolumeSamplesMouseReleased( m_kVolumeSamplesSliderMouseReleased.getValue()/1000.0f );
+    }
+    
     public void setRenderMode( int which )
     {
         radioMIP.setSelected(false);
@@ -203,11 +372,6 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         }
     }
     
-    public int getStereo()
-    {
-    	return m_kStereoModeCB.getSelectedIndex();
-    }
-    
     public void setStereo(int which )
     {
     	if ( which >= 0 && which < 3 )
@@ -215,162 +379,12 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     		m_kStereoModeCB.setSelectedIndex(which);
     	}
     }
-    
-    public int getIntensityLevel()
-    {
-        String levelStr = m_kIntensityTF.getText();
-        return Integer.valueOf(levelStr).intValue();
-    }
-   
-    public void setIntensityLevel(int value)
-    {
-        String levelStr = String.valueOf(value);
-        m_kIntensityTF.setText(levelStr);
-        rayBasedRenderWM.setIntenstityLevel(Integer.valueOf(levelStr).intValue());
-    }
-    
-    /**
-     * Get the blender slider value
-     * @return   slider value.
-     */
-    public int getBlendSliderValue() {
-    	return m_kVolumeBlendSlider.getValue();
-    }
-    
-    /**
-     * Get the blender slider value
-     * @return   slider value.
-     */
-    public void setBlendSliderValue( int value ) {
-        m_kVolumeBlendSlider.setValue(value);
-        rayBasedRenderWM.setVolumeBlend( m_kVolumeBlendSlider.getValue()/100.0f );
-    }
-    
-    
-    public int getReleasedSliderValue() {
-        return m_kVolumeSamplesSliderMouseReleased.getValue();
-    }
-    
-    public void setReleasedSliderValue( int value ) {
-        m_kVolumeSamplesSliderMouseReleased.setValue(value);
-        rayBasedRenderWM.setVolumeSamplesMouseReleased( m_kVolumeSamplesSliderMouseReleased.getValue()/1000.0f );
-    }
-    
-    public int getMovingSliderValue() {
-        return m_kVolumeSamplesSliderMouseDragged.getValue();
-    }
-    
-    public void setMovingSliderValue( int value ) {
-        m_kVolumeSamplesSliderMouseDragged.setValue(value);
-        rayBasedRenderWM.setVolumeSamplesMouseDragged( m_kVolumeSamplesSliderMouseDragged.getValue()/1000.0f );
-    }
-    
-    public boolean getMultiHistoEnabled()
-    {
-        return radioMULTIHISTO.isSelected();
-    }
-    
-    public void setMultiHistoEnabled( boolean value )
-    {
-        radioMULTIHISTO.setSelected(value);
-        rayBasedRenderWM.MULTIHISTOMode(radioMULTIHISTO.isSelected());
-        m_kVolumeViewer.updateMultihistoTab(radioMULTIHISTO.isSelected());
-    }
-    
-    /**
-     * Get the slice check box. 
-     * @return true or false
-     */
-    public JCheckBox getSlicesCheck() {
-    	return m_kDisplaySlicesCheck;
-    }
-    
-    /**
-     * Get the surface check box. 
-     * @return true or false
-     */
-    public JCheckBox getSurfaceCheck() {
-    	return m_kDisplaySurfaceCheck;
-    }
-    
-    /**
-     * Get the volume display checkbox.
-     * @return  true or false
-     */
-    public JCheckBox getVolumeCheck()  {
-    	return m_kDisplayVolumeCheck;
-    }
-    
-    /* (non-Javadoc)
-     * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
-     */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
 
-        if (radioMIP.isSelected() && (source == radioMIP)) {
-        	rayBasedRenderWM.MIPMode();
-        } else if (radioXRAY.isSelected() && (source == radioXRAY)) {
-        	rayBasedRenderWM.DRRMode();
-        } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
-        	rayBasedRenderWM.CMPMode();
-        } else if (radioCustum.isSelected() && (source == radioCustum)) {
-            m_kVolumeViewer.CustumBlendMode();
-        } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
-        	m_kVolumeViewer.SURMode( false );
-        } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
-        	m_kVolumeViewer.SURMode( true );
-        } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
-        	rayBasedRenderWM.selfShadow( kSelfShadow.isSelected() );
-        if ( (m_kVolumeViewer.getImageB() == null) )
-        {
-            kSelfShadow.setEnabled(radioSURFACEFAST.isSelected());
-        }
-        m_kExtractTriMesh.setEnabled(radioSURFACEFAST.isSelected());
-        rayBasedRenderWM.MULTIHISTOMode(radioMULTIHISTO.isSelected());
-        m_kVolumeViewer.updateMultihistoTab(radioMULTIHISTO.isSelected());
-    }
-    
-    /**
-     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
-     *
-     * @param  panelWidth   int width
-     * @param  frameHeight  int height
-     */
-    public void resizePanel(int panelWidth, int frameHeight) {
-        scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
-        scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
-        scroller.revalidate();
-    }
-    
-    /**
-     * Set the surface check box to true of false
-     * @param flag  true or false
-     */
-    public void setDisplaySurfaceCheck(boolean flag ) {
-    	m_kDisplaySurfaceCheck.setSelected(flag);
-    	m_kDisplaySurfaceCheck.setEnabled(flag);
-    }
-    
-    /**
-     * Set the volume check box to true of false
-     * @param flag  true or false
-     */
-    public void setDisplayVolumeCheck(boolean flag ) {
-        m_kDisplayVolumeCheck.setSelected(flag);
-    }
-    
-    /**
-     * Set the tri-planar slices check box to true of false
-     * @param flag  true or false
-     */
-    public void setDisplaySlicesCheck(boolean flag) {
-    	m_kDisplaySlicesCheck.setSelected(flag);
-    }
-    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#stateChanged(javax.swing.event.ChangeEvent)
      */
-    public void stateChanged(ChangeEvent event) {
+    @Override
+	public void stateChanged(ChangeEvent event) {
         Object source = event.getSource();
         if ( source == m_kVolumeBlendSlider )
         {
@@ -384,6 +398,12 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         {
             rayBasedRenderWM.setVolumeSamplesMouseDragged( m_kVolumeSamplesSliderMouseDragged.getValue()/1000.0f );
         }
+        if (source == m_kIPDSlider) {
+            m_fIPD = m_kIPDSlider.getValue() / 100f;
+
+            mkCurrent.setText("Stereo IPD " + String.valueOf(m_fIPD));
+            rayBasedRenderWM.setIPD( m_fIPD );
+        }
     }
     
     /**
@@ -396,8 +416,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     	 JPanel mainScrollPanel = new JPanel();
          mainScrollPanel.setLayout(new BorderLayout());
 
-         scroller = new JScrollPane(mainScrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+         scroller = new JScrollPane(mainScrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
          mainPanel = new JPanel(new BorderLayout());
 
@@ -445,14 +465,43 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          m_kStereoModeCB.setBackground(Color.white);
          gbc.gridy = 3;
          componentsPanel.add(m_kStereoModeCB, gbc);
-                  
+         
+         
+
+         m_kIPDSlider = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 10);
+
+         //m_kIPDSlider.setMajorTickSpacing(20);
+         //m_kIPDSlider.setPaintTicks(true);
+         m_kIPDSlider.setEnabled(true);
+         m_kIPDSlider.addChangeListener(this);
+
+         JLabel maximum = new JLabel(String.valueOf(1));
+         maximum.setForeground(Color.black);
+         maximum.setFont(MipavUtil.font12);
+
+         mkCurrent = new JLabel("Stereo IPD " + String.valueOf(m_kIPDSlider.getValue() / 100.0f));
+         mkCurrent.setForeground(Color.black);
+         mkCurrent.setFont(MipavUtil.font12B);
+
+         JLabel minimum = new JLabel(String.valueOf(0));
+         minimum.setForeground(Color.black);
+         minimum.setFont(MipavUtil.font12);
+         gbc.gridx = 0;
+         gbc.gridy = 4;
+         componentsPanel.add(mkCurrent, gbc);
+         gbc.gridx++;
+         componentsPanel.add(m_kIPDSlider, gbc);
+         
+         
+         /*
          gbc.gridx = 0;
          kSelfShadow = new JCheckBox("Self Shadow", false);
          kSelfShadow.setFont(MipavUtil.font12);
          kSelfShadow.addItemListener(this);
          kSelfShadow.setEnabled(false);
-         gbc.gridy = 4;
+         gbc.gridy = 5;
          componentsPanel.add(kSelfShadow, gbc);
+         */
     
          JPanel renderModePanel = new JPanel(new GridBagLayout());
          renderModePanel.setBorder(buildTitledBorder("Render Mode"));
@@ -505,9 +554,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          renderModePanel.add(radioMULTIHISTO, gbc);
          
          JPanel blendPanel = new JPanel(new GridBagLayout());
-         blendPanel.setBorder(buildTitledBorder("Blend"));
+         blendPanel.setBorder(buildTitledBorder("Volume Sampling Controls"));
          
-         JLabel kBlendLabel = new JLabel("Volume Blend" );
+         JLabel kBlendLabel = new JLabel("Sample Opacity" );
          gbc.gridx = 0;
          gbc.gridy = 0;
          blendPanel.add(kBlendLabel, gbc);
@@ -516,7 +565,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 1;
          blendPanel.add(m_kVolumeBlendSlider, gbc);         
          
-         JLabel kSamplesLabelMR = new JLabel("Volume Samples Mouse Released" );
+         JLabel kSamplesLabelMR = new JLabel("Samples Mouse Release" );
          gbc.gridx = 0;
          gbc.gridy = 1;
          blendPanel.add(kSamplesLabelMR, gbc);
@@ -527,7 +576,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 1;
          blendPanel.add(m_kVolumeSamplesSliderMouseReleased, gbc);
          
-         JLabel kSamplesLabelMD = new JLabel("Volume Samples Mouse Rotation" );
+         JLabel kSamplesLabelMD = new JLabel("Samples Mouse Rotation" );
          gbc.gridx = 0;
          gbc.gridy = 2;
          blendPanel.add(kSamplesLabelMD, gbc);
@@ -539,7 +588,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          blendPanel.add(m_kVolumeSamplesSliderMouseDragged, gbc);
          
          
-         
+         /*
          JButton kShaderButton = new JButton( "Shader Parameters" );
          kShaderButton.addActionListener(this);
          kShaderButton.setActionCommand("ShaderParameters");
@@ -552,6 +601,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          buttonPanel.setBorder(buildTitledBorder("Advanced shader parameters"));
          gbc.gridy = 0;
          buttonPanel.add(kShaderButton, gbc);
+         */
          
          m_kExtractTriMesh = new JButton( "Extract Mesh from Volume" );
          m_kExtractTriMesh.addActionListener(this);
@@ -584,7 +634,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          contentBox.add(renderModePanel);
          contentBox.add(blendPanel);
          contentBox.add(extractPanel);
-         contentBox.add(buttonPanel);
+         //contentBox.add(buttonPanel);
   
          mainScrollPanel.add(contentBox, BorderLayout.NORTH);
          
