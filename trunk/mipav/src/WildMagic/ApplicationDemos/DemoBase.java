@@ -19,7 +19,12 @@
 package WildMagic.ApplicationDemos;
 
 
+import gov.nih.mipav.view.icons.PlaceHolder;
+
 import java.awt.event.KeyListener;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.Properties;
 
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
@@ -174,17 +179,8 @@ implements GLEventListener, KeyListener
 
     protected String getExternalDirs()
     {
-        String jar_filename = "";
-        String class_path_key = "java.class.path";
-        String class_path = System.getProperty(class_path_key);
-        for (String fn : class_path.split(";") ) {
-            if (fn.endsWith("WildMagic.jar")) {
-                jar_filename = fn;   
-                String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-                externalDirs = externalDirs.concat("WildMagic");
-                return externalDirs;
-            }
-        }
-        return System.getProperties().getProperty("user.dir");
+    	String dir = new String(System.getProperty("user.dir"));
+    	dir = dir + System.getProperty("file.separator") + "src" + System.getProperty("file.separator") + "WildMagic";
+    	return dir;
     }
 }
