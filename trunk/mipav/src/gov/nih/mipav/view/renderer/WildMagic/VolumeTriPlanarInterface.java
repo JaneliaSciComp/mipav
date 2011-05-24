@@ -24,7 +24,6 @@ import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
 import gov.nih.mipav.view.renderer.J3D.JPanelVolOpacity;
 import gov.nih.mipav.view.renderer.J3D.JPanelVolOpacityBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogStereoControls;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustumBlend;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelDisplay_WM;
@@ -313,9 +312,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     /** Opacity panel. */
     protected JPanelVolOpacityBase m_kVolOpacityPanel;
-
-    /** Stereo view IPD control. */
-    protected JDialogStereoControls m_kStereoIPD = null;
     
     /** Axial view panel. */
     protected JPanel panelAxial;
@@ -504,21 +500,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             raycastRenderWM.displayVolumeRaycast(rendererGUI.getVolumeCheck().isSelected());
             raycastRenderWM.setVolumeBlend(rendererGUI.getBlendSliderValue() / 100.0f);
         } else if (command.equals("StereoOFF")) {
-        	if ( m_kStereoIPD != null )
-        	{
-        		m_kStereoIPD.close();
-        		m_kStereoIPD = null;
-        	}
             raycastRenderWM.setStereo(0);
         } else if (command.equals("StereoRED")) {
-            if (m_kStereoIPD == null) {
-                m_kStereoIPD = new JDialogStereoControls(this, .02f);
-            }
             raycastRenderWM.setStereo(1);
         } else if (command.equals("StereoSHUTTER")) {
-            if (m_kStereoIPD == null) {
-                m_kStereoIPD = new JDialogStereoControls(this, .02f);
-            }
             raycastRenderWM.setStereo(2);
         } else if (command.equals("ChangeLight")) {
             insertTab("Light", m_kLightsPanel.getMainPanel());
@@ -2754,11 +2739,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         raycastRenderWM.displaySurface(rendererGUI.getSurfaceCheck().isSelected());
         rendererGUI.setStereo(kState.StereoType);
         if (kState.StereoType != 0) {
-            if (m_kStereoIPD == null) {
-                m_kStereoIPD = new JDialogStereoControls(this, kState.IPD);
-            }
             raycastRenderWM.setStereo(kState.StereoType);
-            m_kStereoIPD.setIPD(kState.IPD);
+            raycastRenderWM.setIPD(kState.IPD);
         }
 
         // Display Panel:
@@ -2989,11 +2971,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         kState.DisplaySurface = rendererGUI.getSurfaceCheck().isSelected();
         kState.StereoType = rendererGUI.getStereo();
         if (kState.StereoType != 0) {
-            if (m_kStereoIPD == null) {
-                kState.IPD = raycastRenderWM.getIPD();
-            } else {
-                kState.IPD = m_kStereoIPD.getIPD();
-            }
+        	kState.IPD = raycastRenderWM.getIPD();
         }
         kState.RenderMode = rendererGUI.getRenderMode();
         kState.MultiHistogram = rendererGUI.getMultiHistoEnabled();
