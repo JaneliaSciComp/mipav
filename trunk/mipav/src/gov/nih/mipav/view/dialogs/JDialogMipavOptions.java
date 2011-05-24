@@ -1702,7 +1702,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices.
         gpuCompEnabledCheckBox.setSelected(Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable());
-        gpuCompEnabledCheckBox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable());
+        gpuCompEnabledCheckBox.setEnabled(OpenCLAlgorithmBase.isOCLAvailable());
     }
 
     /**
