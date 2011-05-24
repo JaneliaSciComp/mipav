@@ -3392,18 +3392,18 @@ parse:  while (i < args.length) {
         }
     }
 
-    // TODO: Enable once GPU implementation is standardized
     /**
      * This method updates the "whether algorithms will use the GPU" when the relevant button has been pushed in either
      * the preferences pane.
      */
-    // public void updateGpuUsage() {
-    // if(Preferences.isGpuCompEnabled()) {
-    // btnGpuComp.setIcon(MipavUtil.getIcon("greenbox.gif"));
-    // } else {
-    // btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
-    // }
-    // }
+    public void updateGpuUsage() {
+    	if(Preferences.isGpuCompEnabled()) {
+    		btnGpuComp.setIcon(MipavUtil.getIcon("greenbox.gif"));
+    	} else {
+    		btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
+    	}
+    }
+    
     /**
      * Do nothing - required by ScriptRecordingListener interface.
      * 
