@@ -4,6 +4,7 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.plugins.*;
 import gov.nih.mipav.util.ThreadUtil;
 
+import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.provenance.*;
@@ -169,10 +170,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** The button indicating that MIPAV is set to run in a threaded environment */
     private JButton btnMultiCore;
-
-    // TODO: Enable once GPU button is standardized
-    /** The button indicating that processing will take place on the GPU when available */
-    // private JButton btnGpuComp;
+    
+    /** The button indicating that MIPAV is set to run OpenCL -- GPU based algorithms */
+    private JButton btnGpuComp;
+    
     /**
      * The periodic thread which updates the memory usage display once every second.
      * 
@@ -917,8 +918,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             imageRegistryMonitoring();
         } else if (command.equals("Options")) {
             options();
-            // TODO: Enable once GPU implementation is standardized
-            if (/* event.getSource().equals(btnGpuComp) || */event.getSource().equals(btnMultiCore)) {
+            if ( event.getSource().equals(btnGpuComp) || event.getSource().equals(btnMultiCore)) {
                 optionsDialog.showPane("Other");
             }
         } else if (command.equals("Shortcuts")) {
@@ -3642,29 +3642,28 @@ parse:  while (i < args.length) {
         btnMultiCore.setActionCommand("Options");
         btnMultiCore.addActionListener(this);
 
-        // TODO: Enable once GPU implementation is standardized
-        // final JLabel gpuCompEnabledLabel = new JLabel(" GPU: ");
-        // gpuCompEnabledLabel.setFont(MipavUtil.font12);
+        final JLabel gpuCompEnabledLabel = new JLabel(" GPU: ");
+        gpuCompEnabledLabel.setFont(MipavUtil.font12);
 
-        // ImageIcon backgroundGpu;
-        // if(Preferences.isGpuCompEnabled()) {
-        // backgroundGpu = MipavUtil.getIcon("greenbox.gif");
-        // } else {
-        // backgroundGpu = MipavUtil.getIcon("redbox.gif");
-        // }
-        // btnGpuComp = new JButton(backgroundGpu);
-        // btnGpuComp.setBounds(new Rectangle(17, 17));
-        // btnGpuComp.setBorder(new EmptyBorder(2, 2, 2, 2));
-        // btnGpuComp.setFocusPainted(false);
+        ImageIcon backgroundGpu;
+        if(Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable()) {
+        	backgroundGpu = MipavUtil.getIcon("greenbox.gif");
+        } else {
+        	backgroundGpu = MipavUtil.getIcon("redbox.gif");
+        }
+        btnGpuComp = new JButton(backgroundGpu);
+        btnGpuComp.setBounds(new Rectangle(17, 17));
+        btnGpuComp.setBorder(new EmptyBorder(2, 2, 2, 2));
+        btnGpuComp.setFocusPainted(false);
 
-        // btnGpuComp.setFont(MipavUtil.font12);
-        // btnGpuComp.setActionCommand("Options");
-        // btnGpuComp.addActionListener(this);
+        btnGpuComp.setFont(MipavUtil.font12);
+        btnGpuComp.setActionCommand("Options");
+        btnGpuComp.addActionListener(this);
 
         panel.add(multiCoreEnabledLabel);
         panel.add(btnMultiCore);
-        // panel.add(gpuCompEnabledLabel);
-        // panel.add(btnGpuComp);
+        panel.add(gpuCompEnabledLabel);
+        panel.add(btnGpuComp);
 
         return panel;
     }
