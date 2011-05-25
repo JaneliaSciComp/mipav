@@ -113,10 +113,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     
     /** The scroll pane holding the panel content. Useful when the screen is small. */
     private JScrollPane scroller;
-    
-	//** Check box to enable/disable surface self-shadowing */
-    private JCheckBox kSelfShadow;
-	
+    	
     /** Label that gives current value of slider. */
     private JLabel mkCurrent;
     
@@ -136,10 +133,6 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         init();
     }
     
-    /**
-     * Empty function call
-     */
-    @Override
 	public void actionPerformed(ActionEvent event) {
         String levelStr = m_kIntensityTF.getText();
         rayBasedRenderWM.setIntenstityLevel(Integer.valueOf(levelStr).intValue());
@@ -229,7 +222,6 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /* (non-Javadoc)
      * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
      */
-    @Override
 	public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
 
@@ -245,11 +237,6 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         	m_kVolumeViewer.SURMode( false );
         } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
         	m_kVolumeViewer.SURMode( true );
-        } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
-        	rayBasedRenderWM.selfShadow( kSelfShadow.isSelected() );
-        if ( (m_kVolumeViewer.getImageB() == null) )
-        {
-            kSelfShadow.setEnabled(radioSURFACEFAST.isSelected());
         }
         m_kExtractTriMesh.setEnabled(radioSURFACEFAST.isSelected());
         rayBasedRenderWM.MULTIHISTOMode(radioMULTIHISTO.isSelected());
@@ -383,7 +370,6 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#stateChanged(javax.swing.event.ChangeEvent)
      */
-    @Override
 	public void stateChanged(ChangeEvent event) {
         Object source = event.getSource();
         if ( source == m_kVolumeBlendSlider )
@@ -491,17 +477,6 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          componentsPanel.add(mkCurrent, gbc);
          gbc.gridx++;
          componentsPanel.add(m_kIPDSlider, gbc);
-         
-         
-         /*
-         gbc.gridx = 0;
-         kSelfShadow = new JCheckBox("Self Shadow", false);
-         kSelfShadow.setFont(MipavUtil.font12);
-         kSelfShadow.addItemListener(this);
-         kSelfShadow.setEnabled(false);
-         gbc.gridy = 5;
-         componentsPanel.add(kSelfShadow, gbc);
-         */
     
          JPanel renderModePanel = new JPanel(new GridBagLayout());
          renderModePanel.setBorder(buildTitledBorder("Render Mode"));
@@ -587,21 +562,6 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 1;
          blendPanel.add(m_kVolumeSamplesSliderMouseDragged, gbc);
          
-         
-         /*
-         JButton kShaderButton = new JButton( "Shader Parameters" );
-         kShaderButton.addActionListener(this);
-         kShaderButton.setActionCommand("ShaderParameters");
-         kShaderButton.setToolTipText("Open Shader Dialig");
-         kShaderButton.setBorderPainted(true);
-         kShaderButton.setFocusPainted(true);
-         kShaderButton.setMargin(new Insets(0, 0, 0, 0));
-         
-         JPanel buttonPanel = new JPanel(new GridBagLayout());
-         buttonPanel.setBorder(buildTitledBorder("Advanced shader parameters"));
-         gbc.gridy = 0;
-         buttonPanel.add(kShaderButton, gbc);
-         */
          
          m_kExtractTriMesh = new JButton( "Extract Mesh from Volume" );
          m_kExtractTriMesh.addActionListener(this);
