@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -14,25 +13,21 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.Vector;
 
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
-import javax.swing.event.CellEditorListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcatMult3Dto3D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcatMult3Dto4D;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
@@ -45,17 +40,9 @@ import gov.nih.mipav.view.ViewTableModel;
 import gov.nih.mipav.view.ViewUserInterface;
 
 
+public class JDialogConcatMult3Dto3D extends JDialogScriptableBase implements
+		AlgorithmInterface {
 
-
-
-
-
-/**
- * @author pandyan
- * This utilty concats multiple 3D images of same type to a 4D image
- *
- */
-public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements AlgorithmInterface {
 	
 	/** available images to concat...the ones that are open in mipav **/
 	private ArrayList<ModelImage> availableImagesToConcat;
@@ -76,7 +63,7 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
     private int selectedRow;
 	
     /** algorithm **/
-    private AlgorithmConcatMult3Dto4D alg;
+    private AlgorithmConcatMult3Dto3D alg;
     
     /** destination image **/
     private ModelImage destImage;
@@ -86,7 +73,7 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	 * empty constructor..needed for scripting
 	 *
 	 */
-	public JDialogConcatMult3Dto4D() {
+	public JDialogConcatMult3Dto3D() {
 		
 	}
 	
@@ -95,7 +82,7 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	 * @param theParentFrame
 	 * @param im
 	 */
-	public JDialogConcatMult3Dto4D(Frame theParentFrame, ArrayList<ModelImage> imagesToConcat) {
+	public JDialogConcatMult3Dto3D(Frame theParentFrame, ArrayList<ModelImage> imagesToConcat) {
 		 super(theParentFrame, false);
 		 this.availableImagesToConcat = imagesToConcat;
 		 additionalImagesToConcat = new ArrayList<ModelImage>();
@@ -114,7 +101,7 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	private void init() {
 		setForeground(Color.black);
 
-		setTitle("Concat Multiple 3D Images to 4D");
+		setTitle("Concat Multiple 3D Images to One 3D");
 
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
@@ -405,16 +392,20 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 
 		
 
-			int [] destExtents = new int[4];
+			int [] destExtents = new int[3];
 	         destExtents[0] = images[0].getExtents()[0];
 	         destExtents[1] = images[0].getExtents()[1];
-	         destExtents[2] = images[0].getExtents()[2];
-	         destExtents[3] = images.length;
+	         int zLength = 0;
+	         for (int i=0;i<images.length;i++) {
+	        	 zLength = zLength + images[i].getExtents()[2];
+	         }
+	         destExtents[2] = zLength;
+	  
 
 
 		destImage = new ModelImage(images[0].getType(), destExtents, makeImageName(images[0].getImageName(), "_concat"));
 		
-		alg = new AlgorithmConcatMult3Dto4D(images, destImage);
+		alg = new AlgorithmConcatMult3Dto3D(images, destImage);
 		
 		
 		 alg.addListener(this);
@@ -457,7 +448,7 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	 * algorithm performed
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		if(algorithm instanceof AlgorithmConcatMult3Dto4D) {
+		if(algorithm instanceof AlgorithmConcatMult3Dto3D) {
 			if (alg.isCompleted() == true) {
 				new ViewJFrameImage(destImage);
 				cleanup();
@@ -645,6 +636,7 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	        }
 	}
 	
+
 
 
 }

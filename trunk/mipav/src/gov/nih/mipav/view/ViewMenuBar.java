@@ -634,8 +634,18 @@ public class ViewMenuBar {
      */
     public JMenu makeUtilitiesMenu() {
         return menuBuilder.makeMenu("Utilities", 'U', false, new JMenuItem[] {
-
-                menuBuilder.makeMenu("4D tools", false, new JMenuItem[] {
+        		 menuBuilder.makeMenu("2D slice tools", false, new JMenuItem[] {
+                         menuBuilder.buildMenuItem("Concat Multiple 2D to 3D", "Concat", 0, null, false),
+                         menuBuilder.buildMenuItem("Extract slices", null, 0, null, false),
+                         menuBuilder.buildMenuItem("Insert missing slices", "InsertMSlices", 0, null, false),
+                         menuBuilder.buildMenuItem("Insert slice", null, 0, null, false),
+                         menuBuilder.buildMenuItem("Pad slices to power of 2", "padding", 0, null, false),
+                         menuBuilder.buildMenuItem("Randomize slice order", "RandOrder", 0, null, false),
+                         menuBuilder.buildMenuItem("Remove slices", null, 0, null, false),
+                         menuBuilder
+                                 .buildMenuItem("Replace blanks with averages", "ReplaceBlankWithAvg", 0, null, false),
+                         menuBuilder.buildMenuItem("Replace slice", null, 0, null, false),}),
+                menuBuilder.makeMenu("4D volume tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Convert Single 3D to 4D", "Convert3Dto4D", 0, null, false),
                         menuBuilder.buildMenuItem("Concat Multiple 3D to 4D", "ConvertMultiple3Dto4D", 0, null, false),
                         menuBuilder.buildMenuItem("Convert 4D to Single 3D", "Convert4Dto3D", 0, null, false),
@@ -650,6 +660,12 @@ public class ViewMenuBar {
 
                 menuBuilder.buildMenuItem("Center of mass", "COM", 0, null, false),
                 menuBuilder.buildMenuItem("Clone (copy)", "Clone", 0, null, false),
+                
+                menuBuilder.makeMenu("Concatenate", false, new JMenuItem[] {
+                		menuBuilder.buildMenuItem("Concat Multiple 2D to 3D", "Concat", 0, null, false),
+                		menuBuilder.buildMenuItem("Concat Multiple 3D to 3D", "ConvertMultiple3Dto3D", 0, null, false),
+                		menuBuilder.buildMenuItem("Concat Multiple 3D to 4D", "ConvertMultiple3Dto4D", 0, null, false)}),
+                
                 menuBuilder.makeMenu("Conversion tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Convert type", null, 0, null, false),
                         menuBuilder.buildMenuItem("Grays -> RGB", null, 0, null, false),
@@ -701,17 +717,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Z axis 180", "RotateZ180", 0, null, false),
                         menuBuilder.buildMenuItem("Z axis +90", "RotateZPlus", 0, null, false),
                         menuBuilder.buildMenuItem("Z axis -90", "RotateZMinus", 0, null, false)}),
-                menuBuilder.makeMenu("Slice tools", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Concat Multiple 2D to 3D", "Concat", 0, null, false),
-                        menuBuilder.buildMenuItem("Extract slices", null, 0, null, false),
-                        menuBuilder.buildMenuItem("Insert missing slices", "InsertMSlices", 0, null, false),
-                        menuBuilder.buildMenuItem("Insert slice", null, 0, null, false),
-                        menuBuilder.buildMenuItem("Pad slices to power of 2", "padding", 0, null, false),
-                        menuBuilder.buildMenuItem("Randomize slice order", "RandOrder", 0, null, false),
-                        menuBuilder.buildMenuItem("Remove slices", null, 0, null, false),
-                        menuBuilder
-                                .buildMenuItem("Replace blanks with averages", "ReplaceBlankWithAvg", 0, null, false),
-                        menuBuilder.buildMenuItem("Replace slice", null, 0, null, false),}),
+               
 
                 menuBuilder.buildMenuItem("Subtract VOI background", "SubVOI", 0, null, false),});
 
@@ -982,6 +988,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
             menuBuilder.setMenuItemEnabled("Convert Single 3D to 4D", false);
+            menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 3D", false);
             menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 4D", false);
             menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
             menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
@@ -1063,6 +1070,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
             menuBuilder.setMenuItemEnabled("Convert Single 3D to 4D", false);
+            menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 3D", false);
             menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 4D", false);
             menuBuilder.setMenuItemEnabled("Reslice - isotropic voxels", false);
             menuBuilder.setMenuItemEnabled("Slice averaging", false);
@@ -1208,6 +1216,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Surface plotter", true);
         menuBuilder.setMenuItemEnabled("Evolve boundary 2D", true);
         menuBuilder.setMenuItemEnabled("Convert Single 3D to 4D", true);
+        menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 3D", true);
         menuBuilder.setMenuItemEnabled("Concat Multiple 3D to 4D", true);
         menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", true);
         menuBuilder.setMenuItemEnabled("Capture image slices to new frame", true);
