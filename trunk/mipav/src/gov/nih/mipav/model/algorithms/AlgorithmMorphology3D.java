@@ -3539,7 +3539,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             for (vox = 0, i = 0; vox < volSize; vox++) {
 
                 if (imgBuffer[vox] > 0) {
-                    erodeObjs[i] = new Vector4f(distanceMap[vox], vox % xDim, vox / xDim % yDim, vox / sliceSize);
+                    erodeObjs[i] = new Vector4f(vox % xDim, vox / xDim % yDim, vox / sliceSize, distanceMap[vox]);
                     i++;
                 }
             }
