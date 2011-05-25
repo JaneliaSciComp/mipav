@@ -9,11 +9,12 @@ import com.jogamp.opencl.CLPlatform;
 
 public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
     private static boolean isOCLAvailable = false;
+    private static boolean isOCLAvailableCheck = false;
     public static boolean isOCLAvailable()
     {
-        if ( isOCLAvailable )
+        if ( isOCLAvailableCheck )
         {
-            return true;
+            return isOCLAvailable;
         }
         CLDevice testGPU = null;
         try {
@@ -25,8 +26,11 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
                     break;
                 }
             }
-        } catch ( com.jogamp.opencl.CLException e ) {}
-        return (testGPU != null);
+        }
+        catch ( com.jogamp.opencl.CLException e1 ) {}
+        catch ( com.jogamp.common.JogampRuntimeException e2 ) {}
+        isOCLAvailableCheck = true;
+        return isOCLAvailable;
     }
 	
 }
