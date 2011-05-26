@@ -3,6 +3,7 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.util.MipavMath;
 
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.rawjp2.*;
@@ -1867,6 +1868,7 @@ public class FileDicom extends FileDicomBase {
                         buffer[i] = (short) jpegData[j];
                         j++;
                     }
+                    
                 } catch (final ArrayIndexOutOfBoundsException aioobe) {
                     MipavUtil.displayError("Image is smaller than expected.  Showing as much as available.");
                 }
@@ -1953,6 +1955,7 @@ public class FileDicom extends FileDicomBase {
                 }
             }
         }
+        
         // End of Matt changes for 2/2003
     }
 
@@ -2835,7 +2838,6 @@ public class FileDicom extends FileDicomBase {
 
             if (lossy == true) {
                 inSQ = false;
-
                 return extractLossyJPEGImage(v.elementAt(0));
             } else {
                 final FileDicomJPEG fileReader = new FileDicomJPEG(v.elementAt(0), fileInfo.getExtents()[0], fileInfo
@@ -2859,10 +2861,15 @@ public class FileDicom extends FileDicomBase {
      */
     private int[] extractLossyJPEGImage(final byte[] imageFrag) throws IOException {
         int w = 0, h = 0;
-
+        
         final ByteArrayInputStream stream = new ByteArrayInputStream(imageFrag);
         final BufferedImage img = ImageIO.read(stream);
         if (img == null) {
+        	// JPEG2000 only has signed BYTE, SHORT, and INTEGER.
+            if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
+            	fileInfo.setDataType(ModelStorageBase.SHORT);
+            	fileInfo.displayType = ModelStorageBase.SHORT;
+            }
         	try {
         	    FileJP2 fileJP2 = new FileJP2();
         	    return fileJP2.decodeImageData(imageFrag, ModelStorageBase.ARGB);
