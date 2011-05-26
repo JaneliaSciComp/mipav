@@ -42,6 +42,18 @@ import gov.nih.mipav.model.file.rawjp2.*;
  * @see      FileRaw
  */
 public class FileJP2 extends FileBase implements ActionListener{
+	
+	/** The identifier for the data type, as signed 8 bits. */
+	private final static int TYPE_BYTE = 0;
+	
+	/** The identifier for the data type, as signed 16 bits. */
+	private final static int TYPE_SHORT = 1;
+	
+	/** The identifier for the data type, as signed 32 bits. */
+	private final static int TYPE_INT = 3;
+	
+	/** The identifier for the data type, as float */
+	private final static int TYPE_FLOAT = 4;
 
     /** DOCUMENT ME! */
     private boolean endianess;
@@ -147,9 +159,9 @@ public class FileJP2 extends FileBase implements ActionListener{
     
     
     public int[] decodeImageData(byte[] imageData, int imageType) {
-    	System.out.println("decoding compressed data");
     	BEByteArrayInputStream inStream;
         BlkImgDataSrc slc;
+        int dataType;
         //DecoderRAW dec;
         ParameterList defpl = new ParameterList();
         
@@ -174,6 +186,23 @@ public class FileJP2 extends FileBase implements ActionListener{
 	    slc = dec.run1Slice(inStream);
 	    Coord nT = slc.getNumTiles(null);
 	    DataBlkInt db = new DataBlkInt();
+	    dataType = db.getDataType();
+	    switch (dataType) {
+	        case TYPE_BYTE:
+	    	    Preferences.debug("decodeImageData BYTE\n");
+	    	    break;
+	        case TYPE_SHORT:
+	        	Preferences.debug("decodeImageData SHORT\n");
+	        	break;
+	        case TYPE_INT:
+	        	Preferences.debug("decodeImageData INT\n");
+	        	break;
+	        case TYPE_FLOAT:
+	        	Preferences.debug("decodeImageData FLOAT\n");
+	        	break;
+	        default:
+	        	Preferences.debug("decodeImageData unrecognized data type\n");
+	    }
 	    int w = slc.getImgWidth();
         int h = slc.getImgHeight();
 	 // Loop on vertical tiles
@@ -271,6 +300,7 @@ public class FileJP2 extends FileBase implements ActionListener{
             			}
             		}		
             	}else {
+            	
 	            	db.ulx = 0;
 	                db.uly = 0;
 	                db.w = w;
