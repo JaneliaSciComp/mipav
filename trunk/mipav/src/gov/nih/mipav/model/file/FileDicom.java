@@ -1849,11 +1849,11 @@ public class FileDicom extends FileDicomBase {
 
             if (jpegData == null) {
                 if (encapsulatedJP2) {
-                    System.out.println("calling encapsulatedJP2ImageData");
+                    //System.out.println("calling encapsulatedJP2ImageData");
                     jpegData = encapsulatedJP2ImageData(imageType);
 
                 } else {
-                    System.out.println("Calling encapsulatedImageData");
+                    //System.out.println("Calling encapsulatedImageData");
                     jpegData = encapsulatedImageData();
                 }
             }
