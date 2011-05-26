@@ -300,11 +300,22 @@ public class VolumeImage implements Serializable {
             aucData = new byte[iSize];
             try {
                 kImage.exportDataUseMask(iTimeSlice * iSize, iSize, aucData);
+                // Temporary make the texture an RGBA texture until JOGL2 fixes NPOT textures.
+                byte[] aucData2 = new byte[iSize*4];
+                for (int i = 0; i < iSize; i++) {
+                	aucData2[i * 4 + 0] = aucData[i];
+                	aucData2[i * 4 + 1] = aucData[i];
+                	aucData2[i * 4 + 2] = aucData[i];
+                	aucData2[i * 4 + 3] = 1;
+                }
+                
                 if (kReturn == null) {
-                    kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_L8, iXBound, iYBound, iZBound, aucData,
+                    kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, aucData2,
                             kImageName);
+                    //kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_L8, iXBound, iYBound, iZBound, aucData,
+                            //kImageName);
                 } else {
-                    kReturn.SetData(aucData, iXBound, iYBound, iZBound);
+                    kReturn.SetData(aucData2, iXBound, iYBound, iZBound);
                 }
             } catch (final IOException e) {
                 e.printStackTrace();

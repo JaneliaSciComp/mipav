@@ -18,14 +18,7 @@
 
 package WildMagic.ApplicationDemos;
 
-
-import gov.nih.mipav.view.icons.PlaceHolder;
-
 import java.awt.event.KeyListener;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.Properties;
-
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 
