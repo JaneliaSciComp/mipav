@@ -1062,6 +1062,8 @@ public class FileIO {
         } else {
             image = new ModelImage(refFileInfo.displayType, extents, studyIDMaster.trim() + "_" + seriesNoRef.trim());
         }
+        int originalDataType = refFileInfo.displayType;
+        boolean haveChangedType = false;
 
         if (refFileInfo.isMultiFrame() == true) {
             image.setFileInfo(refFileInfo, 0);
@@ -1190,6 +1192,11 @@ public class FileIO {
                     imageFile.readImage(bufferInt, curFileInfo.getDataType(), start);
                 } else {
                     imageFile.readImage(bufferShort, curFileInfo.getDataType(), start);
+                    if ((!haveChangedType) && (refFileInfo.getDataType() != originalDataType)) {
+                    	haveChangedType = true;
+                        image.setType(refFileInfo.displayType);
+                        image.reallocate(refFileInfo.displayType);
+                    }
                 }
                 if ( !isEnhanced4D) {
                     curFileInfo.setExtents(extents);
