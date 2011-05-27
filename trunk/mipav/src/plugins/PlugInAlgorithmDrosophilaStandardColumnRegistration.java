@@ -234,22 +234,19 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             final ArrayList<float[]> al = allFilamentCoords.get(i);
             final int size = al.size();
             final ArrayList<float[]> al_new = new ArrayList<float[]>();
-            final ArrayList<float[]> al_new2 = new ArrayList<float[]>();
+
 
             for (int k = 0; k < size; k++) {
                 al_new.add(k, null);
             }
-            for (int k = 0; k < size; k++) {
-                al_new2.add(k, null);
-            }
+
 
             allFilamentCoords_newCoords.add(al_new);
         }
 
         final double sqrRtThree = Math.sqrt(3);
 
-        tolerance = (sqrRtThree / 2)
-                * ( ( (resols[0] / resols[0]) + (resols[1] / resols[0]) + (resols[2] / resols[0])) / 3);
+        tolerance = (sqrRtThree / 2) * ( ( (resols[0] / resols[0]) + (resols[1] / resols[0]) + (resols[2] / resols[0])) / 3);
 
         toleranceSq = tolerance * tolerance;
 
@@ -280,7 +277,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v3.9" + "\n");
+        outputTextArea.append("Running Algorithm v4.2" + "\n");
         
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
         /*String text = "";
@@ -2085,6 +2082,26 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         thinPlateSplineAlgorithmPerformed();
 
         createFinalImage();
+        
+        //remove any null points from 
+        ArrayList<float[]> al;
+        int size = allFilamentCoords_newCoords.size();
+        for(int i=0;i<size;i++) {
+			 al = allFilamentCoords_newCoords.get(i);
+			 float[] coords;
+			 int size2 = al.size();
+			 for(int k=size2-1;k>=0;k--) {
+				 coords = al.get(k);
+				 if(coords == null) {
+					 System.out.println("removing " + k + " from " + i);
+					 al.remove(k);
+				 }
+			 }
+			 
+        }
+			 
+			 
+        
         
         
         //create SWC file
@@ -4095,8 +4112,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         for (i = 0; i < nPtsB; i++) {
             xTar[i] = ptB[i].X;
-            yTar[i] = ptB[i].Y;
-            zTar[i] = ptB[i].Z;
+            yTar[i] = ptB[i].Y; 
         }
 
         // 0.0f for no smoothing, with smoothing interpolation is not exact
@@ -4422,7 +4438,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         float[] tPt1 = new float[3];
         float[] tPt2 = new float[3];
-        float[] tPtR = new float[3];  //transformedm points only after rigd body
+        //float[] tPtR = new float[3];  //transformedm points only after rigd body
 
         float xmm, ymm, zmm;
 
@@ -4467,9 +4483,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                     final float zFloor = (float) Math.floor(z);
 
                     if(doRigidOnly) {
-                    	xmm = xFloor * finalImageRes[0];
-                        ymm = yFloor * finalImageRes[1];
-                        zmm = zFloor * finalImageRes[2];
+                    	//xmm = xFloor * finalImageRes[0];
+                        //ymm = yFloor * finalImageRes[1];
+                        //zmm = zFloor * finalImageRes[2];
+                        
+                        xmm = x * finalImageRes[0];
+                        ymm = y * finalImageRes[1];
+                        zmm = z * finalImageRes[2];
 
                         lsMatrix.transform(xmm, ymm, zmm, tPt2);
                     }else {
@@ -4489,9 +4509,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                     tPt2[1] = tPt2[1] / finalImageRes[1];
                     tPt2[2] = tPt2[2] / finalImageRes[2];
                     
-                    tPtR[0] = tPtR[0] / finalImageRes[0];
-                    tPtR[1] = tPtR[1] / finalImageRes[1];
-                    tPtR[2] = tPtR[2] / finalImageRes[2];
+                    //tPtR[0] = tPtR[0] / finalImageRes[0];
+                    //tPtR[1] = tPtR[1] / finalImageRes[1];
+                    //tPtR[2] = tPtR[2] / finalImageRes[2];
 
                     if (tPt2[0] < 0 || tPt2[1] < 0 || tPt2[2] < 0 || tPt2[0] > finalImageExts[0] - 1
                             || tPt2[1] > finalImageExts[1] - 1 || tPt2[2] > finalImageExts[2] - 1) {
@@ -4565,8 +4585,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                             }
 
                             // Calculating new surface file points!!!!!
-                            if (cityBlockImage.getByte((int) (tPt2[0] + 0.5f), (int) (tPt2[1] + 0.5f),
-                                    (int) (tPt2[2] + 0.5f)) != 100) {
+                            /*if (cityBlockImage.getByte((int) (tPt2[0] + 0.5f), (int) (tPt2[1] + 0.5f),
+                                    (int) (tPt2[2] + 0.5f)) != 100) {*/
+                            	
+                            if (cityBlockImage.getByte(Math.round(tPt2[0]), Math.round(tPt2[1]),
+                            		Math.round(tPt2[2])) != 100) {	
                                 ArrayList<float[]> al;
                                 ArrayList<float[]> al_new;
                                 float[] coords;
@@ -4843,6 +4866,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
                                 bw.write(tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
                                 bw.newLine();
+                            }else {
+                            	System.out.println("index is " + index);
+                            	System.out.println(k + " is null");
+                            	System.out.println();
                             }
 
                         }
