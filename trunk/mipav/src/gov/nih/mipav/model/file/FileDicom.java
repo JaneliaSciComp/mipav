@@ -2865,15 +2865,9 @@ public class FileDicom extends FileDicomBase {
         final ByteArrayInputStream stream = new ByteArrayInputStream(imageFrag);
         final BufferedImage img = ImageIO.read(stream);
         if (img == null) {
-        	// JPEG2000 only has signed SHORT and INTEGER.
-        	// Information about BYTE in Datablk.java is contradictory
-        	// /** The identifier for the data type, as signed 8 bits. */
-        	// public static final int TYPE_BYTE = 0;
-        	// public String toString() {
-        	//     String typeString = "";
-        	//     switch(getDataType()) {
-        	//     case TYPE_BYTE:
-        	//         typeString = "Unsigned Byte";
+        	// JPEG2000 only has signed BYTE, SHORT and INTEGER.
+        	// getFixedPoint(0) and getNomRangeBits(0) are used to calculate
+        	// an offset value added to every point in the buffer.
             if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
             	fileInfo.setDataType(ModelStorageBase.SHORT);
             	fileInfo.displayType = ModelStorageBase.SHORT;
