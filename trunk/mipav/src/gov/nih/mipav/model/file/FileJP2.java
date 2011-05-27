@@ -44,16 +44,16 @@ import gov.nih.mipav.model.file.rawjp2.*;
 public class FileJP2 extends FileBase implements ActionListener{
 	
 	/** The identifier for the data type, as signed 8 bits. */
-	private final static int TYPE_BYTE = 0;
+	//private final static int TYPE_BYTE = 0;
 	
 	/** The identifier for the data type, as signed 16 bits. */
-	private final static int TYPE_SHORT = 1;
+	//private final static int TYPE_SHORT = 1;
 	
 	/** The identifier for the data type, as signed 32 bits. */
-	private final static int TYPE_INT = 3;
+	//private final static int TYPE_INT = 3;
 	
 	/** The identifier for the data type, as float */
-	private final static int TYPE_FLOAT = 4;
+	//private final static int TYPE_FLOAT = 4;
 
     /** DOCUMENT ME! */
     private boolean endianess;
@@ -161,7 +161,7 @@ public class FileJP2 extends FileBase implements ActionListener{
     public int[] decodeImageData(byte[] imageData, int imageType) {
     	BEByteArrayInputStream inStream;
         BlkImgDataSrc slc;
-        int dataType;
+        //int dataType;
         //DecoderRAW dec;
         ParameterList defpl = new ParameterList();
         
@@ -186,7 +186,7 @@ public class FileJP2 extends FileBase implements ActionListener{
 	    slc = dec.run1Slice(inStream);
 	    Coord nT = slc.getNumTiles(null);
 	    DataBlkInt db = new DataBlkInt();
-	    dataType = db.getDataType();
+	    /*dataType = db.getDataType();
 	    switch (dataType) {
 	        case TYPE_BYTE:
 	    	    Preferences.debug("decodeImageData BYTE\n");
@@ -202,7 +202,8 @@ public class FileJP2 extends FileBase implements ActionListener{
 	        	break;
 	        default:
 	        	Preferences.debug("decodeImageData unrecognized data type\n");
-	    }
+	    }*/
+	    
 	    int w = slc.getImgWidth();
         int h = slc.getImgHeight();
 	 // Loop on vertical tiles
@@ -224,6 +225,12 @@ public class FileJP2 extends FileBase implements ActionListener{
         	levShift[0] = 1<< (slc.getNomRangeBits(0)-1);
             levShift[1] = 1<< (slc.getNomRangeBits(1)-1);
             levShift[2] = 1<< (slc.getNomRangeBits(2)-1);
+        }
+        else {
+        	fb = new int[1];
+        	fb[0] = slc.getFixedPoint(0);
+        	levShift = new int[1];
+        	levShift[0] = 1 << (slc.getNomRangeBits(0)-1);
         }
         int[] barr = null;
         for(int y=0; y<nT.y; y++){
@@ -315,6 +322,17 @@ public class FileJP2 extends FileBase implements ActionListener{
 	                do {
 	                    db = (DataBlkInt) slc.getInternCompData(db,0);
 	                } while (db.progressive);
+	                int dataLength = db.data.length;
+	                if (fb[0]==0) {
+            			for(int i=0;i<dataLength;i++){	
+            				db.data[i] = db.data[i] + levShift[0];
+            			
+            			}
+            		}else{
+            			for(int i=0;i<dataLength;i++){
+            				db.data[i] = db.data[i]>>>fb[0] + levShift[0];
+            			}
+            		}
             	}
 	
             } // End loop on horizontal tiles            
