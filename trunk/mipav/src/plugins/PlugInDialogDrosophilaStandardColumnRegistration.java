@@ -157,7 +157,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v3.9");
+        setTitle("Drosophila Standard Column Registration v4.2");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -192,6 +192,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         surfaceFileSamplingCB.addItem("1.0");
         surfaceFileSamplingCB.addItem("0.5");
         surfaceFileSamplingCB.addItem("0.25");
+        surfaceFileSamplingCB.addItem("0.125");
         surfaceFileSamplingCB.setSelectedIndex(1);
         
         invertIVFileCBLabel = new JLabel("Invert IV File");
@@ -434,6 +435,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 				 callAlgorithm();
 			 }
 		 }else if(command.equalsIgnoreCase("surfaceBrowse")) {
+
 			 JFileChooser chooser = new JFileChooser();
 		        if (currDir != null) {
 					chooser.setCurrentDirectory(new File(currDir));
@@ -445,10 +447,20 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        	currDir = chooser.getSelectedFile().getAbsolutePath();
 		        	surfaceFile = new File(currDir);
 		        	if(!readSurfaceFile(surfaceFile)) {
+		        		
 		        		MipavUtil.displayError("Error parsing surface file");
+		        		allFilamentCoords = new ArrayList <ArrayList<float[]>>();
+		        		
 		        	}else {
-		        		createCityBlockImage();
-		        		surfaceFilePathTextField.setText(currDir);
+
+		        		boolean success = determineIfProperlyConnected();
+		        		if(success == false) {
+		        			allFilamentCoords = new ArrayList <ArrayList<float[]>>();
+		        			
+		        		}else {
+		        			createCityBlockImage();
+		        			surfaceFilePathTextField.setText(currDir);
+		        		}
 		        	}
 		        	
 		        }
@@ -530,11 +542,13 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 							float coord_x = new Float(splits[0]).floatValue();
 							float coord_y = new Float(splits[1]).floatValue();
 							float coord_z = new Float(splits[2]).floatValue();
-							float x = coord_x/resols[0];
+							
+							//we will get the coords in proper mipav space in the method, determineIfProperlyConnected
+							/*float x = coord_x/resols[0];
 							float y = coord_y/resols[1];
-							float z = coord_z/resols[2];
+							float z = coord_z/resols[2];*/
 							  
-							float[] coords = {x,y,z,0};
+							float[] coords = {coord_x,coord_y,coord_z,0};
 							
 							filamentCoords.add(coords);
 						}
@@ -560,6 +574,109 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			e.printStackTrace();
 			return false;
 		}
+		
+		return success;
+	}
+	
+	
+	
+	private boolean determineIfProperlyConnected() {
+		boolean success = true;
+		int[] connectednessList = new int[allFilamentCoords.size()];
+		//initialize all to 0
+		for(int i=0;i<connectednessList.length;i++) {
+			connectednessList[i] = 0;
+		}
+		
+		
+		
+		
+		//set first one to -1
+		connectednessList[0] = -1;
+		int alMatchSize;
+		ArrayList<float[]> al;
+		ArrayList<float[]> alMatch;
+		float[] coordsMatch = new float[3];
+		float[] coords;
+		
+		for(int i=1;i<allFilamentCoords.size();i++) {
+			
+			
+			 al = allFilamentCoords.get(i);
+			 coords = al.get(0);
+			
+			int k;
+			 
+			 for(k=0;k<i;k++) {
+				 alMatch = allFilamentCoords.get(k);
+				 alMatchSize = alMatch.size();
+				 
+				 coordsMatch[0] = alMatch.get(alMatchSize-1)[0];
+				 coordsMatch[1] = alMatch.get(alMatchSize-1)[1];
+				 coordsMatch[2] = alMatch.get(alMatchSize-1)[2];
+				 
+				 if(coords[0]==coordsMatch[0] && coords[1]==coordsMatch[1] && coords[2]==coordsMatch[2]) {
+
+					 connectednessList[i] = k+1;
+
+
+					 break;
+				 }
+				 
+				 
+				 
+			 }
+			
+			
+		}
+		
+		
+		//if any in connectednessList is 0, then this is not a properly connected iv file
+		int index = 0;
+		for(int i=0;i<connectednessList.length;i++) {
+			if(connectednessList[i] == 0) {
+				success = false;
+				index = i;
+				break;
+			}
+		}
+		
+		if(success == false) {
+			al = allFilamentCoords.get(index);
+			coords = al.get(0);
+			String coordsString = coords[0] + "," + coords[1] + "," + coords[2];
+			MipavUtil.displayError("IV file is not properly connected: the block of points starting with " + coordsString + " is not connected to anything");
+			System.out.println("IV file is not properly connected: the block of points starting with " + coordsString + " is not connected to anything");
+		}else {
+			//get the coords in proper mipav space!!!
+			for(int i=0;i<allFilamentCoords.size();i++) {
+				 al = allFilamentCoords.get(i);
+				 for(int k=0;k<al.size();k++) {
+					 float[] coords2 = al.get(k);
+					 
+					 
+					 float x = coords2[0]/resols[0];
+					 float y = coords2[1]/resols[1];
+					 float z = coords2[2]/resols[2];
+					 
+					 coords2[0] = x;
+					 coords2[1] = y;
+					 coords2[2] = z;
+					 
+					 al.set(k, coords2);
+					 
+					 
+					 
+					 
+				 }
+				 
+				 
+				 
+			}
+			
+		}
+		
+		
 		
 		return success;
 	}
