@@ -1332,7 +1332,8 @@ public class FileDicomJPEG {
                 // boolean isNeverRead = true;
                 for (int i = 0; i < s; i++) {
 
-                    if (bitCount == 8 && i < 9) {
+                    //if (bitCount == 8 && i < 9) {
+                	if (bitCount == 8) {
                         // if(z==1)
                         // System.out.println("Already Happened: "+s+"\tI: "+i+"\tBitCount: "+bitCount);
                         // isNeverRead = false;
