@@ -163,7 +163,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	
 	private float greenThresold;
 	
-	private String outputFilename, outputFilename_auto, outputFilename_regionGrow;
+	//private String outputFilename, outputFilename_auto, outputFilename_regionGrow;
 
 	
 	/** coords of filament **/
@@ -219,8 +219,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             final TreeMap<Integer, float[]> pointsMap, final ArrayList<ArrayList<float[]>> allFilamentCoords,
             final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
             final File pointsFile, final JTextArea outputTextArea, final boolean flipX, final boolean flipY,
-            final boolean flipZ,float greenThreshold, float subsamplingDistance, String outputFilename, String outputFilename_auto,
-            String outputFilename_regionGrow, boolean rigidOnly,boolean doSWC, boolean rvld) {
+            final boolean flipZ,float greenThreshold, float subsamplingDistance, boolean rigidOnly,boolean doSWC, boolean rvld) {
         this.neuronImage = neuronImage;
         this.neuronImageExtents = neuronImage.getExtents();
         dir = neuronImage.getImageDirectory();
@@ -262,9 +261,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	    if(doSWC) {
 	        this.greenThresold = greenThreshold;
 			this.subsamplingDistance = subsamplingDistance;
-			this.outputFilename = outputFilename;
-			this.outputFilename_auto = outputFilename_auto;
-			this.outputFilename_regionGrow = outputFilename_regionGrow;
+			//this.outputFilename = outputFilename;
+			//this.outputFilename_auto = outputFilename_auto;
+			//this.outputFilename_regionGrow = outputFilename_regionGrow;
 
 	    }
 		this.doRigidOnly = rigidOnly;
@@ -277,7 +276,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v4.2" + "\n");
+        outputTextArea.append("Running Algorithm v4.3" + "\n");
         
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
         /*String text = "";
@@ -2072,14 +2071,23 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         }
 
         neuronImage_grey.notifyImageDisplayListeners();
+        
+        
+        if(doRigidOnly) {
+        	// call rigid least squares alg
+            leastSquaredAlg();
+            leastSquaredAlgorithmPerformed();
+        }else {
+        	// call rigid least squares alg
+            leastSquaredAlg();
+            leastSquaredAlgorithmPerformed();
 
-        // call rigid least squares alg
-        leastSquaredAlg();
-        leastSquaredAlgorithmPerformed();
+            // call non linear thin plate spline alg
+            thinPlateSplineAlg();
+            thinPlateSplineAlgorithmPerformed();
+        }
 
-        // call non linear thin plate spline alg
-        thinPlateSplineAlg();
-        thinPlateSplineAlgorithmPerformed();
+        
 
         createFinalImage();
         
@@ -2196,7 +2204,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		createGreenImage();
 		
-		outputTextArea.append("SWC - determining radii via region grow/distance map..." + "\n");
+		/*outputTextArea.append("SWC - determining radii via region grow/distance map..." + "\n");
         outputTextArea.append("\n");
         determineRadiiRegionGrow_swc(newFilamentCoords_swc);
         
@@ -2211,12 +2219,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		output_swc(outputFilename_auto,newFilamentCoords_swc);
 		outputTextArea.append("Saving automatic SWC file to " + filamentFileParentDir + File.separator + outputFilename_auto + "\n");
-        outputTextArea.append("\n");
+        outputTextArea.append("\n");*/
 
 		outputTextArea.append("SWC - determining radd via threshold..." + "\n");
         outputTextArea.append("\n");
 		determineRadiiThreshold_swc(newFilamentCoords_swc);
 		
+		String outputFilename = oldSurfaceFile.getName().substring(0, oldSurfaceFile.getName().indexOf(".")) + ".swc";
 		output_swc(outputFilename,newFilamentCoords_swc);
 		outputTextArea.append("Saving threshold SWC file to " + filamentFileParentDir + File.separator + outputFilename + "\n");
         outputTextArea.append("\n");
@@ -2265,7 +2274,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			
 			
 			
-			for(int i=1;i<allFilamentsSize;i++) {
+			/*for(int i=1;i<allFilamentsSize;i++) {
 				 al = filamentCoords.get(i);
 				 coords = al.get(0);
 				 al2 = allFilamentCoords_newCoords.get(i);
@@ -2289,7 +2298,69 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 					 
 				 }
 				 
-		   }
+		   }*/
+			
+			
+			
+			
+			
+			for(int i=1;i<allFilamentsSize;i++) {
+				
+				
+				 al = filamentCoords.get(i);
+				 coords = al.get(0);
+				
+				int k;
+				 
+				 for(k=0;k<i;k++) {
+					 alMatch = filamentCoords.get(k);
+					 alMatchSize = alMatch.size();
+					 
+					 coordsMatch[0] = alMatch.get(alMatchSize-1)[0];
+					 coordsMatch[1] = alMatch.get(alMatchSize-1)[1];
+					 coordsMatch[2] = alMatch.get(alMatchSize-1)[2];
+					 
+					 if(coords[0]==coordsMatch[0] && coords[1]==coordsMatch[1] && coords[2]==coordsMatch[2]) {
+
+						 coords[4] = k+1;
+						 al.set(0, coords);
+
+
+						 break;
+					 }
+					 
+					 
+					 
+				 }
+				
+				
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			//make sure all are connected
+			for(int i=1;i<allFilamentsSize;i++) {
+				 al = filamentCoords.get(i);
+				 coords = al.get(0);
+				 if(coords[4] == 0) {
+					 //this means this block is not connected!
+					 String coordsString = coords[0] + "," + coords[1] + "," + coords[2];
+					 System.out.println("Standardized IV file is not properly connecte: the block of points starting with " + coordsString + " is not connected to anything");
+					 
+					 break;
+					 
+				 }
+				 
+			}
+			
+			
 
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -3727,7 +3798,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		float z;
 		int highestZBlockIndex = 0;
 		float connectedTo = 0;  //This is 1-based!
-		
+		 
 		for(int i=0,m=1;i<allFilamentsSize;i++,m++) {
 			 al = filamentCoords.get(i);
 			 alSize = al.size();
@@ -4113,6 +4184,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         for (i = 0; i < nPtsB; i++) {
             xTar[i] = ptB[i].X;
             yTar[i] = ptB[i].Y; 
+            zTar[i] = ptB[i].Z;
         }
 
         // 0.0f for no smoothing, with smoothing interpolation is not exact
@@ -4588,8 +4660,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                             /*if (cityBlockImage.getByte((int) (tPt2[0] + 0.5f), (int) (tPt2[1] + 0.5f),
                                     (int) (tPt2[2] + 0.5f)) != 100) {*/
                             	
-                            if (cityBlockImage.getByte(Math.round(tPt2[0]), Math.round(tPt2[1]),
-                            		Math.round(tPt2[2])) != 100) {	
+                            if (cityBlockImage.getByte(Math.round(tPt2[0]), Math.round(tPt2[1]),Math.round(tPt2[2])) != 100) {	
                                 ArrayList<float[]> al;
                                 ArrayList<float[]> al_new;
                                 float[] coords;
@@ -4603,6 +4674,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                                         diffX = Math.abs(tPt2[0] - coords[0]);
                                         diffY = Math.abs(tPt2[1] - coords[1]);
                                         diffZ = Math.abs(tPt2[2] - coords[2]);
+                                        
+                                        //5/30/2011
+                                       /* diffX = Math.abs(Math.round(tPt2[0]) - coords[0]);
+                                        diffY = Math.abs(Math.round(tPt2[1]) - coords[1]);
+                                        diffZ = Math.abs(Math.round(tPt2[2]) - coords[2]);*/
+
 
                                         diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
 
