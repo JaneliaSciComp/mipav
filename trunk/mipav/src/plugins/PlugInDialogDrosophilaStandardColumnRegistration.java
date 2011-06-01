@@ -94,7 +94,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     private JCheckBox flipXCB, flipYCB, flipZCB;
     
     /** rigidOnly registration **/
-    private JCheckBox rigidOnlyCB;
+    //private JCheckBox rigidOnlyCB;
     
     /** checkbox for swc output **/
     private JCheckBox swcCB;
@@ -112,10 +112,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     private JScrollPane scrollPane;
     
     /** button group * */
-    private ButtonGroup eyeGroup;
+    private ButtonGroup eyeGroup, regGroup;
     
     /** radio buttons * */
-    private JRadioButton lvrdRadio, rvldRadio;
+    private JRadioButton lvrdRadio, rvldRadio, rigTPSRadio, rigRadio;
     
 
     
@@ -157,7 +157,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v4.2");
+        setTitle("Drosophila Standard Column Registration v4.3");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -215,7 +215,24 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         eyePanel.add(lvrdRadio);
         eyePanel.add(rvldRadio);
         
-        rigidOnlyCB = new JCheckBox("Rigid Body Registration Only");
+        //rigidOnlyCB = new JCheckBox("Rigid Body Registration Only");
+        
+        
+        
+
+        regGroup = new ButtonGroup();
+        rigTPSRadio = new JRadioButton("Rigid and TPS Registration");
+        rigTPSRadio.setSelected(true);
+        rigRadio = new JRadioButton("Rigid Registration Only");
+        rigRadio.setSelected(false);
+        regGroup.add(rigTPSRadio);
+        regGroup.add(rigRadio);
+        
+        JPanel regPanel = new JPanel();
+        regPanel.add(rigTPSRadio);
+        regPanel.add(rigRadio);
+        
+        
         
         swcCB = new JCheckBox("Create SWC file");
         swcCB.addActionListener(this);
@@ -304,7 +321,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         
         gbc.gridy = 6;
         gbc.gridx = 1;
-        mainPanel.add(rigidOnlyCB,gbc);
+        mainPanel.add(regPanel,gbc);
         
         gbc.gridy = 7;
         gbc.gridx = 1;
@@ -331,15 +348,15 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.anchor = GridBagConstraints.EAST;
         
         
-        gbc.gridy = 10;
+        /*gbc.gridy = 10;
         gbc.gridx = 0;
         mainPanel.add(outputFilenameLabel,gbc);
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(outputFilenameTextField,gbc);
-        gbc.anchor = GridBagConstraints.EAST;
+        gbc.anchor = GridBagConstraints.EAST;*/
         
-        gbc.gridy = 11;
+       /* gbc.gridy = 11;
         gbc.gridx = 0;
         mainPanel.add(outputFilenameLabel_auto,gbc);
         gbc.gridx = 1;
@@ -353,7 +370,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(outputFilenameTextField_regionGrow,gbc);
-        gbc.anchor = GridBagConstraints.EAST;
+        gbc.anchor = GridBagConstraints.EAST;*/
         
         
         
@@ -767,7 +784,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	protected void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
 
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,outputFilename,outputFilename_auto,outputFilename_regionGrow,rigidOnlyCB.isSelected(),doSWC,rvldRadio.isSelected());
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,rigRadio.isSelected(),doSWC,rvldRadio.isSelected());
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		

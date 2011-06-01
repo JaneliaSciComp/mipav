@@ -24,7 +24,36 @@ public class PlugInDrosophilaStandardColumnRegistration implements PlugInGeneric
 
 	
 	public int parseArguments(String[] args, int initArg) {
-		// TODO Auto-generated method stub
+		for(int i=0;i<args.length;i++) {
+			String varName = args[i];
+			i = i + 1;
+			String value = args[i];
+			if( varName.equals("image")) {
+				
+			}else if(varName.equals("pointsFile")) {
+				
+			}else if(varName.equals("filamentFile")) {
+				
+			}else if(varName.equals("filamentSamplin")) {
+				
+			}else if(varName.equals("flipX")) {
+				
+			}else if(varName.equals("flipY")) {
+				
+			}else if(varName.equals("flipZ")) {
+				
+			}
+			
+			
+			
+			
+			
+			
+		}
+		
+		
+		
+		
 		return 0;
 	}
 
