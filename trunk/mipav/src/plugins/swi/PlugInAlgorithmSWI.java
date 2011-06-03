@@ -56,26 +56,26 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
 
     private double maskThreshold;
 
-    private int roFilterSize;
+    private int xFilterSize;
 
     
-    private int peFilterSize;
+    private int yFilterSize;
 
     
     private int multFactor;
 
     /** X dimension length */    
-    private int sizeRo;
+    private int xDim;
 
     /** Y dimension length */
-    private int sizePe;
+    private int yDim;
     
     /** Z dimension length */
-    private int sizeSs;
+    private int zDim;
     
-    private double originRo;
+    private double xFilterTopLeft;
     
-    private double originPe;
+    private double yFilterTopLeft;
 
     /** Whether intermediate images should be displayed during pipeline processing */
     private boolean showInterImages;
@@ -111,8 +111,8 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         this.magImage = magImage;
         this.phaseImage = phaseImage;
         this.maskThreshold = maskThreshold;
-        this.roFilterSize = roFilterSize;
-        this.peFilterSize = peFilterSize;
+        this.xFilterSize = roFilterSize;
+        this.yFilterSize = peFilterSize;
         this.multFactor = multFactor;
         this.showInterImages = showInterImages;
     }
@@ -155,17 +155,17 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     private void calc3D() {
     	
     	System.out.println("SWI processing here");
-    	sizeRo = magImage.getExtents()[0];
-    	sizePe = magImage.getExtents()[1];
-    	sizeSs = magImage.getExtents()[2];
+    	xDim = magImage.getExtents()[0];
+    	yDim = magImage.getExtents()[1];
+    	zDim = magImage.getExtents()[2];
     	
-    	originRo = (sizeRo - roFilterSize)/2;
-    	originPe = (sizePe - peFilterSize)/2;
+    	xFilterTopLeft = (xDim - xFilterSize)/2;
+    	yFilterTopLeft = (yDim - yFilterSize)/2;
     	
     	ModelImage brainMask = createBrainMask();
     	
-    	double[] realData = new double[sizeRo*sizePe*sizeSs];
-        double[] imagData = new double[sizeRo*sizePe*sizeSs];
+    	double[] realData = new double[xDim*yDim*zDim];
+        double[] imagData = new double[xDim*yDim*zDim];
         
         rescaleToComplex(magImage, phaseImage, realData, imagData);
     	
@@ -178,12 +178,12 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	int upper = (int) Math.pow(2, 128);
     	boolean foundRo = false, foundPe = false;
     	for(int i=1; i<upper; i=i*2) {
-    	    if(i > sizeRo) {
-    	        sizeRo = i;
+    	    if(i >= xDim) {
+    	        xDim = i;
     	        foundRo = true;
     	    }
-    	    if(i > sizePe) {
-    	        sizePe = i;
+    	    if(i >= yDim) {
+    	        yDim = i;
     	        foundPe = true;
     	    }
     	    if(foundRo && foundPe) {
@@ -191,37 +191,37 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     	    }
     	}
     	
-    	System.out.println("Complex Ro: "+sizeRo);
-    	System.out.println("Complex Pe: "+sizePe);
+    	System.out.println("Complex Ro: "+xDim);
+    	System.out.println("Complex Pe: "+yDim);
     	
-        originRo = (sizeRo - roFilterSize)/2;
-        originPe = (sizePe - peFilterSize)/2;
+        xFilterTopLeft = (xDim - xFilterSize)/2;
+        yFilterTopLeft = (yDim - yFilterSize)/2;
         
         fireProgressStateChanged(25, "SWI", "Creating frequency window...");
     	ModelImage kCenterImage = createKCenterImage(kImage);
     	
-    	sizeRo = magImage.getExtents()[0];
-        sizePe = magImage.getExtents()[1];
+    	xDim = magImage.getExtents()[0];
+        yDim = magImage.getExtents()[1];
         
-        originRo = (sizeRo - roFilterSize)/2;
-        originPe = (sizePe - peFilterSize)/2;
+        xFilterTopLeft = (xDim - xFilterSize)/2;
+        yFilterTopLeft = (yDim - yFilterSize)/2;
         fireProgressStateChanged(45, "SWI", "Running inverse FFT...");
     	ModelImage iCenterImage = runiFFTonKCenter(kCenterImage); //once again 480x480
     	
-    	BitSet brainMaskSet = new BitSet(sizeRo*sizePe*sizeSs);
+    	BitSet brainMaskSet = new BitSet(xDim*yDim*zDim);
         try {
-            brainMask.exportData(0, sizeRo*sizePe*sizeSs, brainMaskSet);
+            brainMask.exportData(0, xDim*yDim*zDim, brainMaskSet);
         } catch(Exception e) {
             e.printStackTrace();
         }
     	
-        double[] ixRealFinal = new double[sizeRo*sizePe*sizeSs];
-        double[] ixImagFinal = new double[sizeRo*sizePe*sizeSs];
+        double[] ixRealFinal = new double[xDim*yDim*zDim];
+        double[] ixImagFinal = new double[xDim*yDim*zDim];
 
         fireProgressStateChanged(55, "SWI", "Dividing by complex image...");
         generateIFinal(iImage, iCenterImage, brainMaskSet, ixRealFinal, ixImagFinal);
         
-    	double[] phaseMaskData = new double[sizeRo*sizePe*sizeSs];
+    	double[] phaseMaskData = new double[xDim*yDim*zDim];
 
     	fireProgressStateChanged(75, "SWI", "Creating phase mask...");
         generatePhaseMask(brainMaskSet, ixRealFinal, ixImagFinal, phaseMaskData);
@@ -231,7 +231,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage generateMagEnhanced(double[] phaseMaskData, ModelImage magnitude) {
-        ModelImage magEnhanced = new ModelImage(ModelImage.DOUBLE, new int[]{sizeRo,sizePe,sizeSs}, "magEnhanced");
+        ModelImage magEnhanced = new ModelImage(ModelImage.DOUBLE, new int[]{xDim,yDim,zDim}, "magEnhanced");
         double[] realData = new double[magnitude.getDataSize()];
         try {
             magnitude.exportData(0, magnitude.getDataSize(), realData);
@@ -263,9 +263,9 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage generatePhaseMask(BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal, double[] phaseMaskData) {
-        ModelImage phaseMask = new ModelImage(ModelImage.DOUBLE, new int[]{sizeRo,sizePe,sizeSs}, "phaseMask");
+        ModelImage phaseMask = new ModelImage(ModelImage.DOUBLE, new int[]{xDim,yDim,zDim}, "phaseMask");
 
-        for(int i=0; i<sizeRo*sizePe*sizeSs; i++) {
+        for(int i=0; i<xDim*yDim*zDim; i++) {
             phaseMaskData[i] = 1;
         }
         
@@ -295,14 +295,14 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage generateIFinal(ModelImage iImage, ModelImage iCenterImage, BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal) {
-        ModelImage iFinal = new ModelImage(ModelImage.DCOMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iFinal");
-        double[] ixReal = new double[sizeRo*sizePe*sizeSs];
-        double[] ixImag = new double[sizeRo*sizePe*sizeSs];
-        double[] ixRealCenter = new double[sizeRo*sizePe*sizeSs];
-        double[] ixImagCenter = new double[sizeRo*sizePe*sizeSs];
+        ModelImage iFinal = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim,yDim,zDim}, "iFinal");
+        double[] ixReal = new double[xDim*yDim*zDim];
+        double[] ixImag = new double[xDim*yDim*zDim];
+        double[] ixRealCenter = new double[xDim*yDim*zDim];
+        double[] ixImagCenter = new double[xDim*yDim*zDim];
         try {
-            iImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixReal, ixImag);
-            iCenterImage.exportDComplexData(0, sizeRo*sizePe*sizeSs, ixRealCenter, ixImagCenter);
+            iImage.exportDComplexData(0, xDim*yDim*zDim, ixReal, ixImag);
+            iCenterImage.exportDComplexData(0, xDim*yDim*zDim, ixRealCenter, ixImagCenter);
             
         } catch (IOException e1) {
             // TODO Auto-generated catch block
@@ -337,7 +337,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage runiFFTonKCenter(ModelImage kCenterImage) {
-        ModelImage iFFTDest = new ModelImage(ModelImage.DCOMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "ifftDest");
+        ModelImage iFFTDest = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim, yDim, zDim}, "ifftDest");
         kCenterImage.setImage25D(true);
         iFFTDest.setImage25D(true);
         boolean complexInverse = true;
@@ -345,14 +345,14 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         		                             complexInverse);
         fft2.run();
         fft2.finalize();
-        float[] realData = new float[sizeRo*sizePe*sizeSs], imagData = new float[sizeRo*sizePe*sizeSs];
+        float[] realData = new float[xDim*yDim*zDim], imagData = new float[xDim*yDim*zDim];
         try {
-            iFFTDest.exportComplexData(0, sizeRo*sizePe*sizeSs, realData, imagData);
+            iFFTDest.exportComplexData(0, xDim*yDim*zDim, realData, imagData);
         } catch (IOException e) {
             e.printStackTrace();
         }
         
-        ModelImage iCenter = new ModelImage(ModelImage.COMPLEX, new int[]{sizeRo, sizePe, sizeSs}, "ixcenter");
+        ModelImage iCenter = new ModelImage(ModelImage.COMPLEX, new int[]{xDim, yDim, zDim}, "ixcenter");
         try {
             iCenter.importComplexData(0, realData, imagData, true, false);
         } catch (IOException e) {
@@ -378,9 +378,9 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         kCenterImage.setImageName("kCenterImage");
         for(int i=0; i<xDim; i++) {
             for(int j=0; j<yDim; j++) {
-                if(i < originRo+1 || i > originRo+roFilterSize) {
+                if(i < xFilterTopLeft+1 || i > xFilterTopLeft+xFilterSize) {
                     //System.out.println("Coord: ("+i+", "+j+")");
-                    for(int k=0; k<sizeSs; k++) {
+                    for(int k=0; k<zDim; k++) {
                         kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i), 0);
                         kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i)+1, 0);
                     }
@@ -389,9 +389,9 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
         }
         for(int i=0; i<xDim; i++) {
             for(int j=0; j<yDim; j++) {
-                if(j < originPe+1 || j > originPe + peFilterSize) {
+                if(j < yFilterTopLeft+1 || j > yFilterTopLeft + yFilterSize) {
                     //System.out.println("Coord: ("+i+", "+j+")");
-                    for(int k=0; k<sizeSs; k++) {
+                    for(int k=0; k<zDim; k++) {
                         kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i), 0);
                         kCenterImage.set(2*(k*(xDim*yDim) + j*(xDim) + i)+1, 0);
                     }
@@ -411,7 +411,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage createkImage(ModelImage iImage) {
-        ModelImage kImage = new ModelImage(ModelImage.DCOMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "kData");
+        ModelImage kImage = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim,yDim,zDim}, "kData");
         
         //kImage is now at 512x512
         boolean complexInverse = false;
@@ -434,7 +434,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage createiImage(double[] realData, double[] imagData) {
-        ModelImage iImage  = new ModelImage(ModelImage.DCOMPLEX, new int[]{sizeRo,sizePe,sizeSs}, "iData");
+        ModelImage iImage  = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim,yDim,zDim}, "iData");
 
         try {
             iImage.importDComplexData(0, realData, imagData, true, false);
@@ -456,11 +456,11 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage createBrainMask() {
-        ModelImage brainMask = new ModelImage(ModelImage.BOOLEAN, new int[]{sizeRo,sizePe,sizeSs}, "brainMask");
+        ModelImage brainMask = new ModelImage(ModelImage.BOOLEAN, new int[]{xDim,yDim,zDim}, "brainMask");
         
-        for(int i=0; i<sizeRo; i++) {
-            for(int j=0; j<sizePe; j++) {
-                for(int k=0; k<sizeSs; k++) {
+        for(int i=0; i<xDim; i++) {
+            for(int j=0; j<yDim; j++) {
+                for(int k=0; k<zDim; k++) {
                     if(magImage.getDouble(i, j, k) > maskThreshold) {
                         brainMask.set(i, j, k, true);
                     }
