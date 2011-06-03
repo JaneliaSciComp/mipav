@@ -32,6 +32,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 
+
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -1331,7 +1332,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogCropPointParam(this, getActiveImage());
         } else if (command.equals("FFT")) {
             new JDialogFFT(this, getActiveImage());
-        } else if (command.equals("Filters (frequency)")) {
+        } else if (command.equals("High/lowpass")) {
             new JDialogFrequencyFilter(this, getActiveImage());
         } else if (command.equals("HoughCircle")) {
             new JDialogHoughCircle(this, getActiveImage());
@@ -1369,6 +1370,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogSkeletonize(this, getActiveImage());
         } else if (command.equals("Skeletonize3D")) {
             new JDialogSkeletonize3D(this, getActiveImage());
+        } else if(command.equals("SWI")) { 
+            new JDialogSWI(this, getActiveImage());
         } else if (command.equals("Find edges")) {
             new JDialogFindEdges(this, getActiveImage());
         } else if (command.equals("Ultimate erode")) {

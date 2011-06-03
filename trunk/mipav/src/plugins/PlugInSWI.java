@@ -28,10 +28,10 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.plugins.*; // needed to load PlugInAlgorithm / PlugInView / PlugInFile interface
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogSWI;
 
 import java.awt.*;
 
-import swi.PlugInDialogSWI;
 
 /**
  * 
@@ -63,7 +63,7 @@ public class PlugInSWI implements PlugInAlgorithm {
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogSWI(parentFrame, image);
+            new JDialogSWI(parentFrame, image);
         } else {
             MipavUtil.displayError("PlugInSWI only runs on an image frame.");
         }

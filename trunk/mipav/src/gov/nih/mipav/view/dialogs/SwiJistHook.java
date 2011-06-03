@@ -1,6 +1,5 @@
 package gov.nih.mipav.view.dialogs;
 
-import swi.PlugInDialogSWI;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 
 /**
@@ -11,39 +10,34 @@ import gov.nih.mipav.model.scripting.parameters.ParameterTable;
  * @author senseneyj
  *
  */
-public class SwiJistHook implements ActionDiscovery {
+public class SwiJistHook {//implements ActionDiscovery {
 
-    private PlugInDialogSWI internalDialog;
+    private JDialogSWI internalDialog;
     
     public SwiJistHook() {
-        this.internalDialog = new PlugInDialogSWI();
+        this.internalDialog = new JDialogSWI();
     }
     
     public ActionMetadata getActionMetadata() {
         return internalDialog.getActionMetadata();
     }
 
-    @Override
     public ParameterTable createInputParameters() {
         return internalDialog.createInputParameters();
     }
 
-    @Override
     public ParameterTable createOutputParameters() {
         return internalDialog.createOutputParameters();
     }
 
-    @Override
     public void scriptRun(ParameterTable table) {
         internalDialog.scriptRun(table);
     }
 
-    @Override
     public String getOutputImageName(String imageParamName) {
         return internalDialog.getOutputImageName(imageParamName);
     }
 
-    @Override
     public boolean isActionComplete() {
         return internalDialog.isActionComplete();
     }

@@ -1,4 +1,4 @@
-package swi;
+package gov.nih.mipav.view.dialogs;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -24,6 +24,7 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmSWI;
 
 
 
@@ -38,13 +39,6 @@ import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.ActionDiscovery;
-import gov.nih.mipav.view.dialogs.ActionMetadata;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
-import gov.nih.mipav.view.dialogs.GuiBuilder;
-import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
-import gov.nih.mipav.view.dialogs.MipavActionMetadata;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -56,19 +50,20 @@ import java.util.Enumeration;
 
 import javax.swing.*;
 
+
 /**
  * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 
  * meaning it can be executed and recorded as part of a script.  It implements AlgorithmInterface,
  * meaning it has methods for listening to and recording the progress of an algorithm.
  * 
- * @version  June 4, 2010
+ * @version  June 3, 2011
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
+public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -84,7 +79,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
     private ModelImage image; // 
     
     /** This is the SWIs algorithm */
-    private PlugInAlgorithmSWI swiAlgo = null;
+    private AlgorithmSWI swiAlgo = null;
 
 	/** The variable representing whether the blur should be performed. */
 	private boolean doErnst;
@@ -126,7 +121,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogSWI() { }
+    public JDialogSWI() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -134,7 +129,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogSWI(Frame theParentFrame, ModelImage im) {
+    public JDialogSWI(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
 
         image = im;
@@ -173,7 +168,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmSWI) {
+       if (algorithm instanceof AlgorithmSWI) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             resultImage = algorithm.getDestImage();
@@ -226,7 +221,7 @@ public class PlugInDialogSWI extends JDialogScriptableBase implements AlgorithmI
             
         
             
-            swiAlgo = new PlugInAlgorithmSWI(isScriptRunning(), resultImage, magImage, phaseImage, 
+            swiAlgo = new AlgorithmSWI(isScriptRunning(), resultImage, magImage, phaseImage, 
                                                     maskThreshold, roFilterSize, peFilterSize, multFactor, showInterImages);
 
             // This is very important. Adding this object as a listener allows the algorithm to
