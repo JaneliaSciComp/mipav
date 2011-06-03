@@ -167,7 +167,9 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Zero X non-maximum suppression", "zxsuppression", 0, null, false)}),
                 menuBuilder.buildMenuItem("Extract surface (marching cubes)", "extractSurfaceCubes", 0, null, false),
                 menuBuilder.buildMenuItem("FFT", null, 0, null, false),
-                menuBuilder.buildMenuItem("Filters (frequency)", null, 0, null, false),
+                menuBuilder.makeMenu("Filters (frequency)", false, new JMenuItem[] {
+                    menuBuilder.buildMenuItem("High/lowpass", null, 0, null, false),
+                    menuBuilder.buildMenuItem("SWI", null, 0, null, false),}),
                 menuBuilder.buildMenuItem("Filters (Gabor)", "gFilter", 0, null, false),
                 menuBuilder.buildMenuItem("Filters (homomorphic)", "hFilter", 0, null, false),
                 menuBuilder.makeMenu("Filters (spatial)", false, new JMenuItem[] {
@@ -945,7 +947,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Slice averaging", false);
             menuBuilder.setMenuItemEnabled("Unsharp mask", false);
             menuBuilder.setMenuItemEnabled("Fill image", false);
-            menuBuilder.setMenuItemEnabled("Filters (frequency)", false);
+            menuBuilder.setMenuItemEnabled("High/lowpass", false);
+            menuBuilder.setMenuItemEnabled("SWI", false);
             menuBuilder.setMenuItemEnabled("FRAP", false);
             menuBuilder.setMenuItemEnabled("FRET", false);
             menuBuilder.setMenuItemEnabled("FRET bleed thru", false);
@@ -1098,7 +1101,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Edge detection", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("FFT", false);
-            menuBuilder.setMenuItemEnabled("Filters (frequency)", false);
+            menuBuilder.setMenuItemEnabled("High/lowpass", false);
+            menuBuilder.setMenuItemEnabled("SWI", false);
             menuBuilder.setMenuItemEnabled("Filters (Gabor)", false);
             menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
@@ -1170,7 +1174,8 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Slice averaging", true);
         menuBuilder.setMenuItemEnabled("Unsharp mask", true);
         menuBuilder.setMenuItemEnabled("Fill image", true);
-        menuBuilder.setMenuItemEnabled("Filters (frequency)", true);
+        menuBuilder.setMenuItemEnabled("High/lowpass", true);
+        menuBuilder.setMenuItemEnabled("SWI", true);
         menuBuilder.setMenuItemEnabled("FRAP", true);
         menuBuilder.setMenuItemEnabled("FRET", true);
         menuBuilder.setMenuItemEnabled("FRET bleed thru", true);

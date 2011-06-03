@@ -1,4 +1,4 @@
-package swi;
+package gov.nih.mipav.model.algorithms.filters;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -32,7 +32,6 @@ import java.util.BitSet;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT2;
 
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 
@@ -48,7 +47,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmSWI extends AlgorithmBase {
+public class AlgorithmSWI extends AlgorithmBase {
     
     private ModelImage magImage;
 
@@ -104,7 +103,7 @@ public class PlugInAlgorithmSWI extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmSWI(boolean inScript, ModelImage resultImage, ModelImage magImage, ModelImage phaseImage, 
+    public AlgorithmSWI(boolean inScript, ModelImage resultImage, ModelImage magImage, ModelImage phaseImage, 
             double maskThreshold, int roFilterSize, int peFilterSize, int multFactor, boolean showInterImages) {
         super(resultImage, magImage);
         this.inScript = inScript;
