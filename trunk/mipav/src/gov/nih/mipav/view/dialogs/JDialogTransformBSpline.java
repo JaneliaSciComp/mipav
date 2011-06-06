@@ -640,7 +640,7 @@ public class JDialogTransformBSpline extends JDialogScriptableBase implements Al
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
             public String getCategory() {
-                return new String("Algorithm.TransformBSpline");
+                return new String("Algorithms.TransformBSpline");
             }
 
             public String getDescription() {
