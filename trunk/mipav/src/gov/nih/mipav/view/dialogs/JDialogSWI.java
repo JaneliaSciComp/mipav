@@ -90,15 +90,15 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
 
     private JTextField maskThresholdField;
 
-    private JTextField roFilterSizeField;
+    private JTextField xFilterSizeField;
 
-    private JTextField peFilterSizeField;
+    private JTextField yFilterSizeField;
 
     private double maskThreshold;
 
-    private int roFilterSize;
+    private int xFilterSize;
 
-    private int peFilterSize;
+    private int yFilterSize;
 
     private JComboBox magnitudeCombo;
 
@@ -222,7 +222,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
         
             
             swiAlgo = new AlgorithmSWI(isScriptRunning(), resultImage, magImage, phaseImage, 
-                                                    maskThreshold, roFilterSize, peFilterSize, multFactor, showInterImages);
+                                                    maskThreshold, xFilterSize, yFilterSize, multFactor, showInterImages);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -259,8 +259,8 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      * Used in turning the plugin into a script
      */
     protected void setGUIFromParams() {
-    	roFilterSize = scriptParameters.getParams().getInt("roFilterSize");
-    	peFilterSize = scriptParameters.getParams().getInt("peFilterSize");
+    	xFilterSize = scriptParameters.getParams().getInt("xFilterSize");
+    	yFilterSize = scriptParameters.getParams().getInt("yFilterSize");
     	multFactor = scriptParameters.getParams().getInt("multFactor");
     	showInterImages = scriptParameters.getParams().getBoolean("showInterImages");
     	maskThreshold = scriptParameters.getParams().getDouble("maskThreshold");
@@ -277,8 +277,8 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.storeImage(magImage, "MagnitudeImage");
         scriptParameters.storeImage(phaseImage, "PhaseImage");
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("roFilterSize", roFilterSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("peFilterSize", peFilterSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("xFilterSize", xFilterSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("yFilterSize", yFilterSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("multFactor", multFactor));
         scriptParameters.getParams().put(ParameterFactory.newParameter("showInterImages", showInterImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("maskThreshold", maskThreshold));
@@ -358,16 +358,16 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridy = 0;
         
         maskThresholdField = guiBuilder.buildDecimalField("Brain Mask Threshold", .5e4);
-        roFilterSizeField = guiBuilder.buildIntegerField("Ro filter size", 64);
-        peFilterSizeField = guiBuilder.buildIntegerField("Pe filter size", 64);
+        xFilterSizeField = guiBuilder.buildIntegerField("Ro filter size", 64);
+        yFilterSizeField = guiBuilder.buildIntegerField("Pe filter size", 64);
         multFactorField = guiBuilder.buildIntegerField("Multiplication factor", 4);
         showInterImagesBox = guiBuilder.buildCheckBox("Show intermediate images", true);
         
         paramPanel.add(maskThresholdField.getParent(), gbc);
         gbc.gridy++;
-        paramPanel.add(roFilterSizeField.getParent(), gbc);
+        paramPanel.add(xFilterSizeField.getParent(), gbc);
         gbc.gridy++;
-        paramPanel.add(peFilterSizeField.getParent(), gbc);
+        paramPanel.add(yFilterSizeField.getParent(), gbc);
         gbc.gridy++;
         paramPanel.add(multFactorField.getParent(), gbc);
         gbc.gridy++;
@@ -412,8 +412,8 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
 	private boolean setVariables() {
 	    
 	    maskThreshold = Double.valueOf(maskThresholdField.getText()).doubleValue();
-	    roFilterSize = Integer.valueOf(roFilterSizeField.getText()).intValue();
-	    peFilterSize = Integer.valueOf(peFilterSizeField.getText()).intValue();
+	    xFilterSize = Integer.valueOf(xFilterSizeField.getText()).intValue();
+	    yFilterSize = Integer.valueOf(yFilterSizeField.getText()).intValue();
 	    multFactor = Integer.valueOf(multFactorField.getText()).intValue();
 	    showInterImages = showInterImagesBox.isSelected();
 	    
@@ -472,8 +472,8 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
         final ParameterTable table = new ParameterTable();
         
         try {
-            table.put(new ParameterInt("roFilterSize", roFilterSize));
-            table.put(new ParameterInt("peFilterSize", peFilterSize));
+            table.put(new ParameterInt("xFilterSize", xFilterSize));
+            table.put(new ParameterInt("yFilterSize", yFilterSize));
             table.put(new ParameterInt("multFactor", multFactor));
             table.put(new ParameterBoolean("showInterImages", showInterImages));
             table.put(new ParameterDouble("maskThreshold", maskThreshold));
