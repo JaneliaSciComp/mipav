@@ -819,8 +819,13 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     protected void fireProgressStateChanged(int value, String title, String message) {
 
         Object[] listeners = listenerList.getListenerList();
-
-        if (listeners == null) {
+        if (listeners == null || listeners.length < 2) {
+            if(title != null) {
+                System.out.print(title+": ");
+            }
+            if(message != null) {
+                System.out.println(message);
+            }
             return;
         }
 
