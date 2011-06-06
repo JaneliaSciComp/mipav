@@ -213,7 +213,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      * Once all the necessary variables are set, call the kidney segmentation algorithm
      */
     protected void callAlgorithm() {
-
+        System.out.println("Algorithm is called");
         try {
             String name = makeImageName(image.getImageName(), "_T1Map");
             resultImage = (ModelImage) image.clone();
@@ -236,10 +236,12 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
+                System.out.println("Algorithm is started");
                 if (swiAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+                System.out.println("Algorithm is running");
                 swiAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -470,7 +472,6 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      */
     public ParameterTable createInputParameters() {
         final ParameterTable table = new ParameterTable();
-        
         try {
             table.put(new ParameterInt("xFilterSize", xFilterSize));
             table.put(new ParameterInt("yFilterSize", yFilterSize));
@@ -503,15 +504,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      */
     public ParameterTable createOutputParameters() {
         final ParameterTable table = new ParameterTable();
-
         try {
-            table.put(new ParameterImage("kImage"));
-            table.put(new ParameterImage("iImage"));
-            table.put(new ParameterImage("brainMask"));
-            table.put(new ParameterImage("kCenterImage"));
-            table.put(new ParameterImage("iFinal"));
-            table.put(new ParameterImage("phaseMask"));
-            table.put(new ParameterImage("iCenter"));
             table.put(new ParameterImage("magEnhancedFINAL"));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...

@@ -106,6 +106,7 @@ public class AlgorithmSWI extends AlgorithmBase {
     public AlgorithmSWI(boolean inScript, ModelImage resultImage, ModelImage magImage, ModelImage phaseImage, 
             double maskThreshold, int roFilterSize, int peFilterSize, int multFactor, boolean showInterImages) {
         super(resultImage, magImage);
+        System.out.println("Algorithm is initialized");
         this.inScript = inScript;
         this.magImage = magImage;
         this.phaseImage = phaseImage;
@@ -133,7 +134,8 @@ public class AlgorithmSWI extends AlgorithmBase {
      * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
     public void runAlgorithm() {
-    	if(srcImage.getNDims() < 3) {
+        System.out.println("Algorithm is running");
+        if(srcImage.getNDims() < 3) {
     		calc2D();
             } else {
     		calc3D();
