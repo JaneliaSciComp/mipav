@@ -232,7 +232,7 @@ public class AlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage generateMagEnhanced(double[] phaseMaskData, ModelImage magnitude) {
-        ModelImage magEnhanced = new ModelImage(ModelImage.DOUBLE, new int[]{xDim,yDim,zDim}, "magEnhanced");
+        ModelImage magEnhanced = new ModelImage(ModelImage.DOUBLE, new int[]{xDim,yDim,zDim}, "magEnhancedFINAL");
         double[] realData = new double[magnitude.getDataSize()];
         try {
             magnitude.exportData(0, magnitude.getDataSize(), realData);
