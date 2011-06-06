@@ -10,12 +10,12 @@ import gov.nih.mipav.model.scripting.parameters.ParameterTable;
  * @author senseneyj
  *
  */
-public class SwiJistHook {//implements ActionDiscovery {
+public class BlankJistHook {//implements ActionDiscovery {
 
     private JDialogSWI internalDialog;
     
-    public SwiJistHook() {
-        this.internalDialog = new JDialogSWI();
+    public BlankJistHook() {
+        //this.internalDialog = new JDialogSWI();
     }
     
     public ActionMetadata getActionMetadata() {
