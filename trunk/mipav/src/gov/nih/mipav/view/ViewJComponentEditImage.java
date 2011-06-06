@@ -439,6 +439,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	private boolean doCheckerboardAnimate = false;
 	private int xSep = 0;
 	private int ySep = 0;
+	int xMod = 0;
+	int yMod = 0;
+	
+	
 	private int checkerboardCounter = 0;
 	
 	
@@ -5777,7 +5781,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     private void makeCheckerboard() {
     	System.out.println("making checkerboard");
-        int xMod, yMod;
+        
         int xDim, yDim;
         int xIndex, yIndex;
         int x, y;
