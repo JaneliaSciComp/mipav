@@ -128,7 +128,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
                 regImage.setCheckerboard(rowNumber, columnNumber);
                 regImage.repaint();
             } else {
-
+            	compImage.setCheckerboardCounter(0);
                 compImage.setCheckerboard(rowNumber, columnNumber);
                 compImage.repaint();
                 if(compImage.isCheckerboarded()) {
@@ -201,6 +201,8 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         		setStopAnimate(false);
         		animateButton.setText("Stop");
         		compImage.setCheckerboardAnimate(true);
+        		OKButton.setEnabled(false);
+        		closeButton.setEnabled(false);
 
         		Thread t1 = new Animate();
     	    	try {
@@ -216,6 +218,8 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         		setStopAnimate(true);
         		animateButton.setText("Start");
         		compImage.setCheckerboardAnimate(false);
+        		OKButton.setEnabled(true);
+        		closeButton.setEnabled(true);
         		
         	}
         	
@@ -414,7 +418,8 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 	public class Animate extends Thread {
 		
 		public void run() {
-			int i = 0;
+			//int i = 0;
+			int i = compImage.getCheckerboardCounter();
     		while(!isStopAnimate()) {
 
     			compImage.paintComponent(compImage.getGraphics());
