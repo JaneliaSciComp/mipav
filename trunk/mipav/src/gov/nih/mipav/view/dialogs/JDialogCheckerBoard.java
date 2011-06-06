@@ -12,6 +12,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 
+
 /**
  * Dialog to get the row and column numbers of checkerboard squares
  *
@@ -39,10 +40,10 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     private boolean doReg = false;
 
     /** DOCUMENT ME! */
-    private JLabel labelColumnNumber, labelRowNumber;
+    private JLabel labelColumnNumber, labelRowNumber, speedLabel;
 
     /** DOCUMENT ME! */
-    private Hashtable<Integer,JLabel> labelTable, labelTable2;
+    private Hashtable<Integer,JLabel> labelTable, labelTable2, speedLabelTable;
 
     /** DOCUMENT ME! */
     private int maxColumn;
@@ -54,10 +55,14 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     private ViewJComponentRegistration regImage;
 
     /** DOCUMENT ME! */
-    private JSlider slider, slider2;
+    private JSlider slider, slider2, speedSlider;
+    
+    private JButton animateButton;
 
     /** DOCUMENT ME! */
     private JTextField textRowNumber, textColumnNumber;
+    
+    private boolean stopAnimate = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -115,15 +120,31 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
             } else { // no checkerboarding
                 rowNumber = -1;
                 columnNumber = -1;
+                //stopAnimate = true;
+                setStopAnimate(true);
             }
 
             if (doReg) {
                 regImage.setCheckerboard(rowNumber, columnNumber);
                 regImage.repaint();
             } else {
+
                 compImage.setCheckerboard(rowNumber, columnNumber);
                 compImage.repaint();
+                if(compImage.isCheckerboarded()) {
+                	if(rowNumber == 1 || columnNumber ==1) {
+                		speedLabel.setEnabled(true);
+                		speedSlider.setEnabled(true);
+                		animateButton.setEnabled(true);
+                	}else {
+                		speedLabel.setEnabled(false);
+                		speedSlider.setEnabled(false);
+                		animateButton.setEnabled(false);
+                	}
+                }
             }
+            
+            
 
             if (command.equals("Close")) {
 
@@ -173,6 +194,33 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
                     (en.nextElement()).setEnabled(false);
                 }
             }
+        }else if (command.equals("animate")) {
+        	if(animateButton.getText().equals("Start")) {
+
+        		
+        		setStopAnimate(false);
+        		animateButton.setText("Stop");
+        		compImage.setCheckerboardAnimate(true);
+
+        		Thread t1 = new Animate();
+    	    	try {
+    	    		t1.start();
+    	    	}catch (Exception e) {
+    				e.printStackTrace();
+    				return;
+    			}
+        		
+        		
+        		
+        	}else {
+        		setStopAnimate(true);
+        		animateButton.setText("Start");
+        		compImage.setCheckerboardAnimate(false);
+        		
+        	}
+        	
+        	
+        	
         }
     }
 
@@ -187,11 +235,19 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
         if (source == slider) {
             rowNumber = slider.getValue();
+            if(rowNumber == 1 && slider2.getValue() == 1) {
+            	slider.setValue(2);
+            	slider.updateUI();
+            }
             textRowNumber.setText(String.valueOf(rowNumber));
         }
 
         if (source == slider2) {
             columnNumber = slider2.getValue();
+            if(columnNumber == 1 && slider.getValue() == 1) {
+            	slider2.setValue(2);
+            	slider2.updateUI();
+            }
             textColumnNumber.setText(String.valueOf(columnNumber));
         }
     }
@@ -227,7 +283,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
         rowPanel.add(Box.createHorizontalStrut(10));
 
-        slider = new JSlider(2, maxRow, 2);
+        slider = new JSlider(1, maxRow, 2);
         slider.setFont(serif12);
         slider.setEnabled(true);
         slider.setMinorTickSpacing(5);
@@ -235,7 +291,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         slider.addChangeListener(this);
         slider.setVisible(true);
         labelTable = new Hashtable<Integer,JLabel>();
-        labelTable.put(new Integer(2), createLabel("2"));
+        labelTable.put(new Integer(1), createLabel("1"));
         labelTable.put(new Integer(maxRow), createLabel(String.valueOf(maxRow)));
         slider.setLabelTable(labelTable);
         slider.setPaintLabels(true);
@@ -258,7 +314,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         labelColumnNumber.setEnabled(true);
         columnPanel.add(labelColumnNumber);
 
-        slider2 = new JSlider(2, maxColumn, 2);
+        slider2 = new JSlider(1, maxColumn, 2);
         slider2.setFont(serif12);
         slider2.setEnabled(true);
         slider2.setMinorTickSpacing(5);
@@ -266,7 +322,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         slider2.addChangeListener(this);
         slider2.setVisible(true);
         labelTable2 = new Hashtable<Integer,JLabel>();
-        labelTable2.put(new Integer(2), createLabel("2"));
+        labelTable2.put(new Integer(1), createLabel("1"));
         labelTable2.put(new Integer(maxColumn), createLabel(String.valueOf(maxColumn)));
         slider2.setLabelTable(labelTable2);
         slider2.setPaintLabels(true);
@@ -280,9 +336,49 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
         columnPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         paramPanel.add(columnPanel);
+        
+        
+        
+        JPanel speedPanel = new JPanel();
+        speedPanel.setLayout(new BoxLayout(speedPanel, BoxLayout.Y_AXIS));
+        speedPanel.setBorder(buildTitledBorder("Animate"));
+        
+        JPanel panel = new JPanel();
+        
+        speedLabel = new JLabel("Speed");
+        speedLabel.setForeground(Color.black);
+        speedLabel.setFont(serif12);
+        speedLabel.setEnabled(false);
+        
+        panel.add(speedLabel);
+        
+        speedSlider = new JSlider(1, 10, 3);
+        speedSlider.setFont(serif12);
+        speedSlider.setEnabled(false);
+        speedSlider.setMinorTickSpacing(5);
+        speedSlider.setPaintTicks(true);
+        speedSlider.addChangeListener(this);
+        speedSlider.setVisible(true);
+        speedLabelTable = new Hashtable<Integer,JLabel>();
+        speedLabelTable.put(new Integer(1), createLabel("1"));
+        speedLabelTable.put(new Integer(10), createLabel("10"));
+        speedSlider.setLabelTable(speedLabelTable);
+        speedSlider.setPaintLabels(true);
+        
+        panel.add(speedSlider);
+        
+        
+        animateButton = new JButton("Start");
+        animateButton.setActionCommand("animate");
+        animateButton.addActionListener(this);
+        animateButton.setEnabled(false);
+        
+        panel.add(animateButton);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        speedPanel.add(panel);
 
-        getContentPane().add(paramPanel);
-
+        getContentPane().add(paramPanel, BorderLayout.NORTH);
+        getContentPane().add(speedPanel, BorderLayout.CENTER);
         JPanel buttonPanel = new JPanel();
 
         buildOKButton();
@@ -301,6 +397,43 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
+    }
+    
+    
+    
+    public synchronized boolean isStopAnimate() {
+		return stopAnimate;
+	}
+
+	public synchronized void setStopAnimate(boolean stopAnimate) {
+		this.stopAnimate = stopAnimate;
+	}
+
+
+
+	public class Animate extends Thread {
+		
+		public void run() {
+			int i = 0;
+    		while(!isStopAnimate()) {
+
+    			compImage.paintComponent(compImage.getGraphics());
+    			i = i + 1;
+    			if(i == compImage.getySep()) {
+    				i = 0;
+    			}
+    			compImage.setCheckerboardCounter(i);
+    			try{
+    				Thread.sleep(10);
+    			}catch(InterruptedException e) {
+    				break;
+    			}
+    		}
+    		
+    		
+    		
+		}
+    	
     }
 
 }

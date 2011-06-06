@@ -434,6 +434,14 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     protected VOIManager voiManager;
 
 	private long lastMouseEvent = 0;
+	
+	
+	private boolean doCheckerboardAnimate = false;
+	private int xSep = 0;
+	private int ySep = 0;
+	private int checkerboardCounter = 0;
+	
+	
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2270,7 +2278,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @return boolean
      */
     public boolean isCheckerboarded() {
-        return ( (nRowCheckers > 1) && (nColumnCheckers > 1));
+        return ( (nRowCheckers > 0) && (nColumnCheckers > 0));
     }
 
     // ************************************************************************
@@ -2942,6 +2950,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param graphics graphics
      */
     public void paintComponent(final Graphics graphics) {
+
         try {
             if (modifyFlag == false) {
                 return;
@@ -3064,7 +3073,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                 // if checkerboarding is OFF, this means blending should be enabled
                 if ( ! (frame instanceof ViewJFrameLightBox)) {
-                    cleanBuffer(ViewJComponentBase.BOTH);
+                    //cleanBuffer(ViewJComponentBase.BOTH);
+                    cleanBuffer(ViewJComponentBase.IMAGE_A);
                 }
 
                 if ( !isCheckerboarded()) {
@@ -3072,7 +3082,16 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     offscreenGraphics2d.setComposite(AlphaComposite
                             .getInstance(AlphaComposite.SRC_OVER, 1 - alphaBlend));
                 } else {
-                    makeCheckerboard();
+
+                	if(isCheckerboardAnimate()) {
+                		//checkerboard has already been made....now animate it
+
+                		animateCheckerboard();
+                	}else {
+
+                		makeCheckerboard();
+                	}
+                    
                 }
 
                 if (memImageB == null) {
@@ -4108,6 +4127,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param columnCheckers int # of columns
      */
     public void setCheckerboard(final int rowCheckers, final int columnCheckers) {
+    	
+
+    	cleanBuffer(ViewJComponentBase.IMAGE_B);
+    	
         this.nRowCheckers = rowCheckers;
         this.nColumnCheckers = columnCheckers;
 
@@ -4590,7 +4613,48 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
     }
 
-    /**
+    
+    
+    public synchronized boolean isCheckerboardAnimate() {
+		return doCheckerboardAnimate;
+	}
+
+	public synchronized void setCheckerboardAnimate(boolean doCheckerboardAnimate) {
+		this.doCheckerboardAnimate = doCheckerboardAnimate;
+	}
+	
+	
+	
+	
+	
+
+	public synchronized int getxSep() {
+		return xSep;
+	}
+
+	public synchronized void setxSep(int xSep) {
+		this.xSep = xSep;
+	}
+
+	public synchronized int getySep() {
+		return ySep;
+	}
+
+	public synchronized void setySep(int ySep) {
+		this.ySep = ySep;
+	}
+
+	public synchronized int getCheckerboardCounter() {
+		//notify();
+		return checkerboardCounter;
+	}
+
+	public synchronized void setCheckerboardCounter(int checkerboardCounter) {
+		this.checkerboardCounter = checkerboardCounter;
+		//notify();
+	}
+
+	/**
      * Sets the variables used to remember the point where the last region grow was started from.
      * 
      * @param x x coordinate
@@ -5543,7 +5607,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 if ( (pixBufferB == null) || (pixBufferB.length != cleanImageBufferB.length)) {
                     pixBufferB = new int[cleanImageBufferB.length];
                 }
-
+                
                 System.arraycopy(cleanImageBufferB, 0, pixBufferB, 0, cleanImageBufferB.length);
             }
         } else if (buffer == ViewJComponentBase.BOTH) {
@@ -5648,13 +5712,72 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             }
         }
     }
+    
+    private void flip(int x, int y, int dim) {
+
+    	if(pixBufferB[x + (y * dim)] == 0) {
+        	pixBufferB[x + (y * dim)] = cleanImageBufferB[x + (y * dim)];
+        }else {
+        	pixBufferB[x + (y * dim)] = 0;
+        }
+    }
+    
+    
+    private void animateCheckerboard() {
+    	int xDim, yDim;
+    	xDim = maxExtents[0];
+        yDim = maxExtents[1];
+        int cc = getCheckerboardCounter();
+        int y =0;
+        int x = 0;
+
+        
+    	if(nColumnCheckers == 1) {
+
+	    		for (y = 0; y < yDim;) {
+	
+	                for (x = 0; x < xDim; x++) {
+	                		
+	                	if(y <= cc) {
+	                		if(y == cc) {
+	                			flip(x,y,xDim);
+	                		}
+	                	}else {
+	                		flip(x,y,xDim);
+	                	}
+     
+	                }
+	                
+	                if(y < cc) {
+                		
+                		y++;
+                	}else {
+                		y = y + ySep;
+                	}
+	                
+	    		}
+    		
+                        
+                        
+    		
+    	}else if(nRowCheckers == 1) {
+    		
+    	}
+    	
+    }
+    
+    
+    
+    
+    
 
     // When the apply or close button is pressed, JDialogCheckerBoard sets the following 2 parameters used.
     /**
      * Sets the number of checkers in a row and a column.
      */
     private void makeCheckerboard() {
-        int xSep, ySep, xMod, yMod;
+    	System.out.println("making checkerboard");
+        int xMod, yMod;
         int xDim, yDim;
         int xIndex, yIndex;
         int x, y;
