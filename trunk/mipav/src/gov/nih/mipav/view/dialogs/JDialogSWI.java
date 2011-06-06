@@ -94,11 +94,11 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
 
     private JTextField yFilterSizeField;
 
-    private double maskThreshold;
+    private double maskThreshold = 5000;
 
-    private int xFilterSize;
+    private int xFilterSize = 64;
 
-    private int yFilterSize;
+    private int yFilterSize = 64;
 
     private JComboBox magnitudeCombo;
 
@@ -108,13 +108,13 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
 
     private JTextField multFactorField;
 
-    private int multFactor;
+    private int multFactor = 4;
 
     private ModelImage magImage;
 
     private ModelImage phaseImage;
 
-    private boolean showInterImages;
+    private boolean showInterImages = false;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
