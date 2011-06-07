@@ -338,15 +338,43 @@ public class AlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage runiFFTonKCenter(ModelImage kCenterImage) {
-        ModelImage iFFTDest = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim, yDim, zDim}, "ifftDest");
+        ModelImage iFFTDest = new ModelImage(ModelImage.COMPLEX, new int[]{xDim, yDim, zDim}, "ifftDest");
         kCenterImage.setImage25D(true);
         iFFTDest.setImage25D(true);
         boolean complexInverse = true;
-        AlgorithmFFT fft2 = new AlgorithmFFT(iFFTDest, kCenterImage, AlgorithmFFT2.INVERSE, false, false, true,
-        		                             complexInverse);
-        fft2.useOCL(true);
-        fft2.run();
-        fft2.finalize();
+        for(int i=0; i<zDim; i++) {
+            fireProgressStateChanged("iFFT on slice "+i);
+            ModelImage kCenterSlice = new ModelImage(ModelImage.COMPLEX, new int[] {xDim, yDim}, "kCenter"+i);
+            float[] realData = new float[xDim*yDim];
+            float[] imagData = new float[xDim*yDim];
+            try {
+                kCenterImage.exportComplexData(i*xDim*yDim*2, xDim*yDim, realData, imagData);
+                kCenterSlice.importComplexData(0, realData, imagData, true, false);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+            ModelImage iFFTDestSlice = new ModelImage(ModelImage.COMPLEX, new int[]{xDim, yDim}, "iFFTDest"+i);
+            iFFTDestSlice.setImage25D(true);
+            kCenterSlice.setImage25D(true);
+            AlgorithmFFT fft2 = new AlgorithmFFT(iFFTDestSlice, kCenterSlice, AlgorithmFFT2.INVERSE, false, false, true,
+            		                             complexInverse);
+            fft2.useOCL(false);
+            fft2.run();
+            fft2.finalize();
+            
+            realData = new float[xDim*yDim];
+            imagData = new float[xDim*yDim];
+            try {
+                iFFTDestSlice.exportComplexData(0, xDim*yDim, realData, imagData);
+                iFFTDest.importComplexData(i*xDim*yDim*2, realData, imagData, true, false);
+            } catch(IOException io) {
+                io.printStackTrace();
+            }
+            
+        }  
+            
         float[] realData = new float[xDim*yDim*zDim], imagData = new float[xDim*yDim*zDim];
         try {
             iFFTDest.exportComplexData(0, xDim*yDim*zDim, realData, imagData);
