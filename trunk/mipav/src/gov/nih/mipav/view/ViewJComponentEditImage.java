@@ -3138,22 +3138,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                             .getInstance(AlphaComposite.SRC_OVER, 1 - alphaBlend));
                     
                 } else {
-                	
-                	
-/*                	if(isMakeCheckerboard()) {
-                		makeCheckerboard();
-                	}*/
 
-                	/*if(isCheckerboardAnimate()) {
-                		//checkerboard has already been made....now animate it
-
-                		//animateCheckerboard();
-                	}else {
-
-                		makeCheckerboard();
-                	}*/
-                    
-                	if(!isCheckerboardAnimate()) {
+                	if(!isCheckerboardAnimate() && isMakingCheckerboard()) {
                 		makeCheckerboard();
                 	}
                 	
@@ -5862,10 +5848,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     private void makeCheckerboard() {
     	System.out.println("making checkerboard");
-    	if(checkerDialog != null) {
-    		checkerDialog.setCc(0);
-    	}
-        
+
     	cleanBuffer(ViewJComponentBase.IMAGE_B);
     	
         int xDim, yDim;

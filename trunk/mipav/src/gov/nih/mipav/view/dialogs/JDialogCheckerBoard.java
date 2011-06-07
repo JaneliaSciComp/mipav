@@ -150,8 +150,9 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
             	cc = 0;
             	
                 compImage.setCheckerboard(rowNumber, columnNumber);
-                compImage.repaint();
-             
+                compImage.setMakingCheckerboard(true);
+                compImage.paintComponent(compImage.getGraphics());
+                compImage.setMakingCheckerboard(false);
 
                 if(compImage.isCheckerboarded()) {
                 	if(rowNumber == 1 || columnNumber ==1) {
@@ -249,11 +250,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         		animateButton.setText("Start");
         		compImage.setCheckerboardAnimate(false);
         		
-        		setCc(0);
-				compImage.repaint();
-				
-        		
-        		
+
         		OKButton.setEnabled(true);
         		closeButton.setEnabled(true);
         		doCheckbox.setEnabled(true);
