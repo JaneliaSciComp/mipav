@@ -15,6 +15,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.Preferences.ComplexDisplay;
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.dialogs.JDialogCheckerBoard.Animate;
 import gov.nih.mipav.view.icons.PlaceHolder;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
@@ -123,7 +124,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     /** Buffer used to store ARGB images of the image presently being displayed. */
     protected int[] cleanImageBufferB = null;
 
-    /** Crosshair cursor that can be changed per user preference (in Mipav Options). */
+    
+
+	/** Crosshair cursor that can be changed per user preference (in Mipav Options). */
     protected Cursor crosshairCursor = MipavUtil.crosshairCursor;
 
     /** Used to describe the cursor mode. */
@@ -443,7 +446,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	int yMod = 0;
 	
 	
-	private int checkerboardCounter = 0;
+	//private int checkerboardCounter = 0;
+	
+	private boolean makingCheckerboard = false;
+	
+	
 	
 	
 
@@ -2861,6 +2868,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         	boolean isActiveFrame = frame.isActive();
         	
         	if(isActiveFrame) {
+        		
+        		
+        		
+        		
         		if (wheelRotation < 0) {
 
                     if (imageActive.getNDims() > 2) {
@@ -2900,6 +2911,42 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f);
                     }
                 }
+        		
+        		
+        		if(checkerDialog != null) {
+        			if(!checkerDialog.isStopAnimate()) {
+        				//first stop currrent thread
+        				checkerDialog.setStopAnimate(true);
+        				setCheckerboardAnimate(false);
+        
+        				while(!checkerDialog.isThreadStopped()) {
+        					//do nothing
+        				}
+        				//now reset checkerboard
+        				checkerDialog.setCc(0);
+        				paintComponent(getGraphics());
+        				
+        				//now restart thread
+        				checkerDialog.setStopAnimate(false);
+        				setCheckerboardAnimate(true);
+        				
+        				checkerDialog.animateThread = checkerDialog.new Animate();
+            	    	try {
+            	    		checkerDialog.animateThread.start();
+            	    	}catch (Exception e) {
+            				e.printStackTrace();
+            				return;
+            			}
+        				
+        				
+        				
+        			}
+        			
+        		}
+        		
+        		
+        		
+        		
         	}
 
             
@@ -2948,6 +2995,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         this.rgbString = rgb;
     }
 
+ 
+    
+
+    
     /**
      * Paints the image and calls drawSelf for all VOIs.
      * 
@@ -3085,17 +3136,28 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     adjustOpacityFor000Color();
                     offscreenGraphics2d.setComposite(AlphaComposite
                             .getInstance(AlphaComposite.SRC_OVER, 1 - alphaBlend));
+                    
                 } else {
+                	
+                	
+/*                	if(isMakeCheckerboard()) {
+                		makeCheckerboard();
+                	}*/
 
-                	if(isCheckerboardAnimate()) {
+                	/*if(isCheckerboardAnimate()) {
                 		//checkerboard has already been made....now animate it
 
-                		animateCheckerboard();
+                		//animateCheckerboard();
                 	}else {
 
                 		makeCheckerboard();
-                	}
+                	}*/
                     
+                	if(!isCheckerboardAnimate()) {
+                		makeCheckerboard();
+                	}
+                	
+                	
                 }
 
                 if (memImageB == null) {
@@ -4632,6 +4694,25 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	
 	
 
+	
+	
+	public synchronized boolean isMakingCheckerboard() {
+		return makingCheckerboard;
+	}
+
+	public synchronized void setMakingCheckerboard(boolean makingCheckerboard) {
+		this.makingCheckerboard = makingCheckerboard;
+	}
+
+	public synchronized int[] getCleanImageBufferB() {
+		return cleanImageBufferB;
+	}
+	
+
+	public synchronized int[] getMaxExtents() {
+		return maxExtents;
+	}
+
 	public synchronized int getxSep() {
 		return xSep;
 	}
@@ -4648,7 +4729,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		this.ySep = ySep;
 	}
 
-	public synchronized int getCheckerboardCounter() {
+	/*public synchronized int getCheckerboardCounter() {
 		//notify();
 		return checkerboardCounter;
 	}
@@ -4657,7 +4738,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		this.checkerboardCounter = checkerboardCounter;
 		//notify();
 	}
-
+*/
 	/**
      * Sets the variables used to remember the point where the last region grow was started from.
      * 
@@ -5717,17 +5798,17 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
     }
     
-    private void flip(int x, int y, int dim) {
+    /*private void flip(int x, int y, int dim) {
 
     	if(pixBufferB[x + (y * dim)] == 0) {
         	pixBufferB[x + (y * dim)] = cleanImageBufferB[x + (y * dim)];
         }else {
         	pixBufferB[x + (y * dim)] = 0;
         }
-    }
+    }*/
     
     
-    private void animateCheckerboard() {
+    /*private void animateCheckerboard() {
     	int xDim, yDim;
     	xDim = maxExtents[0];
         yDim = maxExtents[1];
@@ -5768,7 +5849,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     		
     	}
     	
-    }
+    }*/
     
     
     
@@ -5781,7 +5862,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     private void makeCheckerboard() {
     	System.out.println("making checkerboard");
+    	if(checkerDialog != null) {
+    		checkerDialog.setCc(0);
+    	}
         
+    	cleanBuffer(ViewJComponentBase.IMAGE_B);
+    	
         int xDim, yDim;
         int xIndex, yIndex;
         int x, y;
