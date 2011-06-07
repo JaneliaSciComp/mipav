@@ -342,8 +342,9 @@ public class AlgorithmSWI extends AlgorithmBase {
         kCenterImage.setImage25D(true);
         iFFTDest.setImage25D(true);
         boolean complexInverse = true;
-        AlgorithmFFT2 fft2 = new AlgorithmFFT2(iFFTDest, kCenterImage, AlgorithmFFT2.INVERSE, false, false, true,
+        AlgorithmFFT fft2 = new AlgorithmFFT(iFFTDest, kCenterImage, AlgorithmFFT2.INVERSE, false, false, true,
         		                             complexInverse);
+        fft2.useOCL(true);
         fft2.run();
         fft2.finalize();
         float[] realData = new float[xDim*yDim*zDim], imagData = new float[xDim*yDim*zDim];
@@ -412,16 +413,41 @@ public class AlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage createkImage(ModelImage iImage) {
-        ModelImage kImage = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim,yDim,zDim}, "kData");
-        
-        //kImage is now at 512x512
-        boolean complexInverse = false;
-        AlgorithmFFT2 fft = new AlgorithmFFT2(kImage, iImage, AlgorithmFFT2.FORWARD, false, false, true,
-        		                            complexInverse);
-        iImage.setImage25D(true);
-        kImage.setImage25D(true);
-        fft.run();
-        fft.finalize();
+        ModelImage kImage = new ModelImage(ModelImage.COMPLEX, new int[]{xDim, yDim, zDim}, "kData");
+        for(int i=0; i<zDim; i++) {
+            fireProgressStateChanged("FFT on slice "+i);
+            ModelImage iImageSlice = new ModelImage(ModelImage.COMPLEX, new int[]{xDim, yDim}, "iData"+i);
+            float[] realData = new float[xDim*yDim];
+            float[] imagData = new float[xDim*yDim];
+            try {
+                iImage.exportComplexData(i*xDim*yDim*2, xDim*yDim, realData, imagData);
+                iImageSlice.importComplexData(0, realData, imagData, true, false);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            ModelImage kImageSlice = new ModelImage(ModelImage.COMPLEX, new int[]{xDim,yDim}, "kData"+i);
+            
+            //kImage is now at 512x512
+            boolean complexInverse = false;
+            AlgorithmFFT fft = new AlgorithmFFT(kImageSlice, iImageSlice, AlgorithmFFT2.FORWARD, false, false, true,
+            		                            complexInverse);
+            iImageSlice.setImage25D(true);
+            kImageSlice.setImage25D(true);
+            fft.useOCL(false);
+            fft.run();
+            fft.finalize();
+            
+            realData = new float[xDim*yDim];
+            imagData = new float[xDim*yDim];
+            try {
+                kImageSlice.exportComplexData(0, xDim*yDim, realData, imagData);
+                kImage.importComplexData(i*xDim*yDim*2, realData, imagData, true, false);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
         
         if(showInterImages) {
             this.kImage = kImage;
