@@ -636,7 +636,7 @@ public class ViewMenuBar {
      */
     public JMenu makeUtilitiesMenu() {
         return menuBuilder.makeMenu("Utilities", 'U', false, new JMenuItem[] {
-        		 menuBuilder.makeMenu("2D slice tools", false, new JMenuItem[] {
+        		 menuBuilder.makeMenu("3D slice tools", false, new JMenuItem[] {
                          menuBuilder.buildMenuItem("Concat Multiple 2D to 3D", "Concat", 0, null, false),
                          menuBuilder.buildMenuItem("Extract slices", null, 0, null, false),
                          menuBuilder.buildMenuItem("Insert missing slices", "InsertMSlices", 0, null, false),
