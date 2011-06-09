@@ -2764,6 +2764,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         // System.err.println("Adding complistener back...done\n\n");
+        
+        
+        componentImage.restartCheckerboardAnimateThread();
+        
         addComponentListener(this);
     }
 
