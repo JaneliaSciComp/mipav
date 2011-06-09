@@ -36,7 +36,13 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     private ViewJComponentEditImage compImage;
 
     /** DOCUMENT ME! */
-    private JCheckBox doCheckbox;
+    //private JCheckBox doCheckbox;
+    
+    private JComboBox checkerboardTypesCB;
+    
+    private JLabel checkerboardTypesLabel;
+    
+    
 
     /** DOCUMENT ME! */
     private boolean doReg = false;
@@ -64,7 +70,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     /** DOCUMENT ME! */
     private JTextField textRowNumber, textColumnNumber;
     
-    private boolean stopAnimate = false;
+
     
     public Thread animateThread;
     
@@ -76,11 +82,23 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     
     private int rowNumber, columnNumber;
     
-    private int ySep;
+    private int ySep, xSep;
+    
+    private int yMod, xMod;
     
     private int[] maxExtents;
     
     private boolean isStopped = false;
+    
+    long animateTime = 40;
+    
+    private boolean checkerboardApplied = false;
+    
+    int bandSpacingCounter = 0;
+    
+    private boolean animating = false;
+    
+ 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -99,7 +117,11 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         setup();
     }
 
-    /**
+    
+
+	
+
+	/**
      * Creates new dialog and sets up GUI components.
      *
      * @param  theParentFrame  Parent frame.
@@ -132,21 +154,22 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
         if ((command.equals("OK")) || (command.equals("Close"))) {
 
-            if (doCheckbox.isSelected()) {
+            if ((command.equals("OK"))) {
                 rowNumber = slider.getValue();
                 columnNumber = slider2.getValue();
+                setCheckerboardApplied(true);
             } else { // no checkerboarding
                 rowNumber = -1;
                 columnNumber = -1;
-                //stopAnimate = true;
-                setStopAnimate(true);
+                setAnimating(false);
+                setCheckerboardApplied(false);
             }
 
             if (doReg) {
                 regImage.setCheckerboard(rowNumber, columnNumber);
                 regImage.repaint();
             } else {
-            	//compImage.setCheckerboardCounter(0);
+
             	cc = 0;
             	
                 compImage.setCheckerboard(rowNumber, columnNumber);
@@ -188,50 +211,22 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
             }
 
             dispose();
-        } else if (source == doCheckbox) {
-
-            if (doCheckbox.isSelected()) {
-                slider.setEnabled(true);
-                slider2.setEnabled(true);
-                labelRowNumber.setEnabled(true);
-                labelColumnNumber.setEnabled(true);
-
-                for (Enumeration<JLabel> en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                    (en.nextElement()).setEnabled(true);
-                }
-
-                for (Enumeration<JLabel> en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
-                    (en.nextElement()).setEnabled(true);
-                }
-            } else {
-                slider.setEnabled(false);
-                slider2.setEnabled(false);
-                labelRowNumber.setEnabled(false);
-                labelColumnNumber.setEnabled(false);
-
-                for (Enumeration<JLabel> en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                    (en.nextElement()).setEnabled(false);
-                }
-
-                for (Enumeration<JLabel> en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
-                    (en.nextElement()).setEnabled(false);
-                }
-            }
         }else if (command.equals("animate")) {
         	if(animateButton.getText().equals("Start")) {
 
-        		
-        		setStopAnimate(false);
+        		setAnimating(true);
         		animateButton.setText("Stop");
         		compImage.setCheckerboardAnimate(true);
         		OKButton.setEnabled(false);
         		closeButton.setEnabled(false);
-        		doCheckbox.setEnabled(false);
         		slider.setEnabled(false);
         		slider2.setEnabled(false);
-        		speedSlider.setEnabled(false);
         		compImage.removeMouseListener(compImage);
         		compImage.removeMouseMotionListener(compImage);
+        		checkerboardTypesLabel.setEnabled(false);
+        		checkerboardTypesCB.setEnabled(false);
+        		labelRowNumber.setEnabled(false);
+        		labelColumnNumber.setEnabled(false);
 
         		animateThread = new Animate();
     	    	try {
@@ -240,25 +235,22 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     				e.printStackTrace();
     				return;
     			}
-        		
-        		
+
         		
         	}else {
-        		setStopAnimate(true);
-        		
-
+        		setAnimating(false);
         		animateButton.setText("Start");
         		compImage.setCheckerboardAnimate(false);
-        		
-
         		OKButton.setEnabled(true);
         		closeButton.setEnabled(true);
-        		doCheckbox.setEnabled(true);
         		slider.setEnabled(true);
         		slider2.setEnabled(true);
-        		speedSlider.setEnabled(true);
         		compImage.addMouseListener(compImage);
         		compImage.addMouseMotionListener(compImage);
+        		checkerboardTypesLabel.setEnabled(true);
+        		checkerboardTypesCB.setEnabled(true);
+        		labelRowNumber.setEnabled(true);
+        		labelColumnNumber.setEnabled(true);
         	}
         	
         	
@@ -274,27 +266,114 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     public void stateChanged(ChangeEvent e) {
         int rowNumber, columnNumber;
         Object source = e.getSource();
+        int type = checkerboardTypesCB.getSelectedIndex();
 
         if (source == slider) {
             rowNumber = slider.getValue();
-            if(rowNumber == 1 && slider2.getValue() == 1) {
-            	slider.setValue(2);
-            	slider.updateUI();
+            
+            
+            if(type == 0) {
+            	if(rowNumber == 1) {
+            		slider.setValue(2);
+                	slider.updateUI();
+            	}
+            	
+            	
+            }else if(type == 1) {
+            	if(rowNumber == 1) {
+            		slider.setValue(2);
+                	slider.updateUI();
+            	}
             }
+
             textRowNumber.setText(String.valueOf(rowNumber));
         }
 
         if (source == slider2) {
             columnNumber = slider2.getValue();
-            if(columnNumber == 1 && slider.getValue() == 1) {
-            	slider2.setValue(2);
-            	slider2.updateUI();
+            
+            if(type == 0) {
+            	if(columnNumber == 1) {
+            		slider2.setValue(2);
+                	slider2.updateUI();
+            	}
+            	
+            	
+            }else if(type == 2) {
+            	if(columnNumber == 1) {
+            		slider2.setValue(2);
+                	slider2.updateUI();
+            	}
             }
+
             textColumnNumber.setText(String.valueOf(columnNumber));
         }
-    }
+        
+        
+        
+        
+        if(source == speedSlider) {
+        	int value = speedSlider.getValue();
 
-    /**
+        	if(value == 1) {
+
+        		setAnimateTime(100);
+        		
+        	}else if(value == 2) {
+
+        		setAnimateTime(90);
+        		
+        	}else if(value == 3) {
+ 
+        		setAnimateTime(80);
+        		
+        	}else if(value == 4) {
+
+        		setAnimateTime(70);
+        		
+        	}else if(value == 5) {
+
+        		setAnimateTime(60);
+        		
+        	}else if(value == 6) {
+
+        		setAnimateTime(50);
+        		
+        	}else if(value == 7) {
+
+        		setAnimateTime(40);
+        		
+        	}else if(value == 8) {
+
+        		setAnimateTime(30);
+        		
+        	}else if(value == 9) {
+
+        		setAnimateTime(20);
+        		
+        	}else if(value == 10) {
+
+        		setAnimateTime(10);
+        		
+        	}
+        	
+        	
+        }
+    }
+    
+    
+    
+    
+
+    public synchronized long getAnimateTime() {
+		return animateTime;
+	}
+
+	public synchronized void setAnimateTime(long animateTime) {
+		this.animateTime = animateTime;
+	}
+
+	/**
      * Sets up the GUI components of the dialog.
      */
     private void setup() {
@@ -307,13 +386,19 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         paramPanel.setLayout(new BoxLayout(paramPanel, BoxLayout.Y_AXIS));
         paramPanel.setBorder(buildTitledBorder("Parameters"));
 
-        doCheckbox = new JCheckBox("Use checkerboarding");
-        doCheckbox.setFont(serif12);
-        doCheckbox.setSelected(true);
-        doCheckbox.setEnabled(true);
-        doCheckbox.addActionListener(this);
-        doCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        paramPanel.add(doCheckbox);
+        JPanel cbPanel = new JPanel();
+        
+        checkerboardTypesLabel = new JLabel("Type ");
+        checkerboardTypesCB = new JComboBox();
+        checkerboardTypesCB.addItem("Checkerboard");
+        checkerboardTypesCB.addItem("Horizontal");
+        checkerboardTypesCB.addItem("Vertical");
+        checkerboardTypesCB.setSelectedIndex(0);
+        checkerboardTypesCB.addItemListener(this);
+        cbPanel.add(checkerboardTypesLabel);
+        cbPanel.add(checkerboardTypesCB);
+        cbPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        paramPanel.add(cbPanel);
 
         JPanel rowPanel = new JPanel();
 
@@ -341,7 +426,8 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
         textRowNumber = new JTextField(String.valueOf(2), 4);
         textRowNumber.setFont(serif12);
-        textRowNumber.setEnabled(false);
+        textRowNumber.setEditable(false);
+        textRowNumber.setForeground(Color.black);
         textRowNumber.addFocusListener(this);
         rowPanel.add(textRowNumber);
 
@@ -372,7 +458,8 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
         textColumnNumber = new JTextField(String.valueOf(2), 4);
         textColumnNumber.setFont(serif12);
-        textColumnNumber.setEnabled(false);
+        textColumnNumber.setEditable(false);
+        textColumnNumber.setForeground(Color.black);
         textColumnNumber.addFocusListener(this);
         columnPanel.add(textColumnNumber);
 
@@ -394,11 +481,12 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         
         panel.add(speedLabel);
         
-        speedSlider = new JSlider(1, 10, 3);
+        speedSlider = new JSlider(1, 10, 7);
         speedSlider.setFont(serif12);
         speedSlider.setEnabled(false);
-        speedSlider.setMinorTickSpacing(5);
+        speedSlider.setMinorTickSpacing(1);
         speedSlider.setPaintTicks(true);
+        speedSlider.setSnapToTicks(true);
         speedSlider.addChangeListener(this);
         speedSlider.setVisible(true);
         speedLabelTable = new Hashtable<Integer,JLabel>();
@@ -441,21 +529,75 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         setVisible(true);
     }
     
-    
-    
-    public synchronized boolean isStopAnimate() {
-		return stopAnimate;
-	}
+    /**
+     * item state changed
+     */
+    public void itemStateChanged(ItemEvent event) {
+        Object source = event.getSource();
 
-	public synchronized void setStopAnimate(boolean stopAnimate) {
-		this.stopAnimate = stopAnimate;
-	}
-	
-	
-	
-	
-	
-
+        if(checkerboardTypesCB.getSelectedIndex() == 0) {
+        	//checkerboard
+        	if(slider.getValue() == 1) {
+	        	slider.setValue(2);
+	        	slider.updateUI();
+        	}
+        	slider.setEnabled(true);
+        	
+        	if(slider2.getValue() == 1) {
+	        	slider2.setValue(2);
+	        	slider2.updateUI();
+        	}
+        	slider2.setEnabled(true);
+        	
+        	speedLabel.setEnabled(false);
+    		speedSlider.setEnabled(false);
+    		animateButton.setEnabled(false);
+    		labelColumnNumber.setEnabled(true);
+    		labelRowNumber.setEnabled(true);
+        	
+        }else if(checkerboardTypesCB.getSelectedIndex() == 1) {
+        	//horizontal
+        	if(slider.getValue() == 1) {
+        		slider.setValue(2);
+        		slider.updateUI();
+        	}
+        	slider.setEnabled(true);
+        	
+        	slider2.setValue(1);
+        	slider2.updateUI();
+        	slider2.setEnabled(false);
+        	
+        	speedLabel.setEnabled(true);
+    		speedSlider.setEnabled(true);
+    		animateButton.setEnabled(false);
+    		labelColumnNumber.setEnabled(false);
+    		labelRowNumber.setEnabled(true);
+        	
+        	
+        }else if(checkerboardTypesCB.getSelectedIndex() == 2) {
+        	//vertical
+        	slider.setValue(1);
+        	slider.updateUI();
+        	slider.setEnabled(false);
+        	
+        	if(slider2.getValue() == 1) {
+        		slider2.setValue(2);
+        		slider2.updateUI();
+        	}
+        	slider2.setEnabled(true);
+        	
+        	speedLabel.setEnabled(true);
+    		speedSlider.setEnabled(true);
+    		animateButton.setEnabled(false);
+    		labelRowNumber.setEnabled(false);
+    		labelColumnNumber.setEnabled(true);
+        	
+        	
+        }
+        
+        
+    }
+    
 
 
 	public synchronized int getCc() {
@@ -469,9 +611,30 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
 
 
+	public synchronized int getBandSpacingCounter() {
+		return bandSpacingCounter;
+	}
 
 
 
+	public synchronized void setBandSpacingCounter(int bandSpacingCounter) {
+		this.bandSpacingCounter = bandSpacingCounter;
+	}
+
+
+
+	public synchronized boolean isCheckerboardApplied() {
+		return checkerboardApplied;
+	}
+
+
+
+	public synchronized void setCheckerboardApplied(boolean checkerboardApplied) {
+		this.checkerboardApplied = checkerboardApplied;
+	}
+
+
+	
 
 	public synchronized boolean isThreadStopped() {
 		return isStopped;
@@ -479,20 +642,49 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 	
 	
 	
-	 /**
+	 public synchronized boolean isAnimating() {
+		return animating;
+	}
+
+
+
+
+
+	public synchronized void setAnimating(boolean animating) {
+		this.animating = animating;
+	}
+
+
+
+
+
+	/**
      * Cleans up the frame before closing.
      * 
      * @param event the window event that triggered this method
      */
     public void windowClosing(final WindowEvent event) {
     	if(animateThread != null && animateThread.isAlive()) {
-    		setStopAnimate(true);
-    		
+
+    		setAnimating(false);
+    		setCheckerboardApplied(false);
     		while(!isThreadStopped()) {
 				//do nothing
 			}
     		compImage.addMouseListener(compImage);
     		compImage.addMouseMotionListener(compImage);
+    		
+    		
+    		rowNumber = -1;
+            columnNumber = -1;
+            cc = 0;
+            compImage.setCheckerboardAnimate(false);
+            compImage.setCheckerboard(rowNumber, columnNumber);
+            compImage.setMakingCheckerboard(true);
+            compImage.paintComponent(compImage.getGraphics());
+            compImage.setMakingCheckerboard(false);
+            
+    		
     		dispose();
     	
     		
@@ -505,28 +697,74 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
 
 
-
+    /**
+     * 
+     * @author pandyan
+     *
+     *
+     * this animate thread will animate the checkerboard if its in horizontal or vertical mode
+     */
 	public class Animate extends Thread {
 		
+		
+		
+		
+		
 		public void run() {
-			//int i = 0;
-			//int cc = compImage.getCheckerboardCounter();
+
 			pixBufferB = compImage.getPixBufferB();
 			cleanImageBufferB = compImage.getCleanImageBufferB();
+		
 			ySep = compImage.getySep();
+			yMod = compImage.getyMod();
+			
+			xSep = compImage.getxSep();
+			xMod = compImage.getxMod();
+
 			maxExtents = compImage.getMaxExtents();
 			isStopped = false;
 
-    		while(!isStopAnimate()) {
+
+    		while(isAnimating()) {
     			animateCheckerboard();
     			compImage.paintComponent(compImage.getGraphics());
     			cc = cc + 1;
-    			if(cc == ySep) {
-    				cc = 0;
+    			
+    			if(columnNumber == 1) {
+    				if(yMod == 0) {
+    	    			if(cc == ySep) {
+    	    				cc = 0;
+    	    			}
+        			}else {
+
+        				int lastIndex = compImage.getBandSpacing().length - 1;
+        				if(cc == compImage.getBandSpacing()[lastIndex]) {
+        					cc = 0;
+        					compImage.loopBandSpacing();
+        				}
+
+        			}
+    			}else if(rowNumber == 1) {
+    				if(xMod == 0) {
+    	    			if(cc == xSep) {
+    	    				cc = 0;
+    	    			}
+        			}else {
+
+        				int lastIndex = compImage.getBandSpacing().length - 1;
+        				if(cc == compImage.getBandSpacing()[lastIndex]) {
+        					cc = 0;
+        					compImage.loopBandSpacing();
+        				}
+
+        			}
     			}
-    			//compImage.setCheckerboardCounter(cc);
+    			
+    			
+    			
+
     			try{
-    				Thread.sleep(10);
+    				Thread.sleep(getAnimateTime());
     			}catch(InterruptedException e) {
     				break;
     			}
@@ -539,7 +777,12 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 		
 		
 		
-		
+		/**
+		 * flip
+		 * @param x
+		 * @param y
+		 * @param dim
+		 */
 		 private void flip(int x, int y, int dim) {
 
 		    	if(pixBufferB[x + (y * dim)] == 0) {
@@ -550,21 +793,22 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 		    }
 		    
 		    
+		 
+		 
+		 
 		    private void animateCheckerboard() {
 		    	int xDim, yDim;
 		    	xDim = maxExtents[0];
 		        yDim = maxExtents[1];
-		        //int cc = getCheckerboardCounter();
+
 		        int y =0;
 		        int x = 0;
 
 		        
 		    	if(columnNumber == 1) {
-
+		    		if(yMod == 0) {
 			    		for (y = 0; y < yDim;) {
-			
-			                for (x = 0; x < xDim; x++) {
-			                		
+			                for (x = 0; x < xDim; x++) {	
 			                	if(y <= cc) {
 			                		if(y == cc) {
 			                			flip(x,y,xDim);
@@ -572,23 +816,73 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 			                	}else {
 			                		flip(x,y,xDim);
 			                	}
-		     
-			                }
-			                
+			                } 
 			                if(y < cc) {
-		                		
 		                		y++;
 		                	}else {
 		                		y = y + ySep;
 		                	}
-			                
 			    		}
-		    		
-		                        
-		                        
-		    		
+		    		}else {
+		    			setBandSpacingCounter(0);
+		    			for (y = 0; y < yDim;) {
+			                for (x = 0; x < xDim; x++) {	
+			                	if(y <= cc) {
+			                		if(y == cc) {
+			                			flip(x,y,xDim);
+			                		}
+			                	}else {
+			                		flip(x,y,xDim);
+			                	}
+			                }
+			                if(y < cc) {
+		                		y++;
+		                	}else {
+		                		y = y + compImage.getBandSpacing()[getBandSpacingCounter()];
+		                		int counter = getBandSpacingCounter() + 1;
+		                		setBandSpacingCounter(counter);
+		                	} 
+			    		}
+		    		}	
 		    	}else if(rowNumber == 1) {
-		    		
+		    		if(xMod == 0) {
+			    		for (x = 0; x < xDim;) {
+			                for (y = 0; y < yDim; y++) {	
+			                	if(x <= cc) {
+			                		if(x == cc) {
+			                			flip(x,y,xDim);
+			                		}
+			                	}else {
+			                		flip(x,y,xDim);
+			                	}
+			                } 
+			                if(x < cc) {
+		                		x++;
+		                	}else {
+		                		x = x + xSep;
+		                	}
+			    		}
+		    		}else {
+		    			setBandSpacingCounter(0);
+		    			for (x = 0; x < xDim;) {
+			                for (y = 0; y < yDim; y++) {	
+			                	if(x <= cc) {
+			                		if(x == cc) {
+			                			flip(x,y,xDim);
+			                		}
+			                	}else {
+			                		flip(x,y,xDim);
+			                	}
+			                }
+			                if(x < cc) {
+		                		x++;
+		                	}else {
+		                		x = x + compImage.getBandSpacing()[getBandSpacingCounter()];
+		                		int counter = getBandSpacingCounter() + 1;
+		                		setBandSpacingCounter(counter);
+		                	} 
+			    		}
+		    		}
 		    	}
 		    	
 		    }

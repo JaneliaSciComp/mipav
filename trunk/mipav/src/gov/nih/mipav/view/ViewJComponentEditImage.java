@@ -439,16 +439,16 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	private long lastMouseEvent = 0;
 	
 	
+	//following methods are primarily used in the creation of checkerboards and animting it
 	private boolean doCheckerboardAnimate = false;
 	private int xSep = 0;
 	private int ySep = 0;
 	int xMod = 0;
 	int yMod = 0;
-	
-	
-	//private int checkerboardCounter = 0;
-	
+	int[] xStart;
+    int[] yStart;
 	private boolean makingCheckerboard = false;
+	private int[] bandSpacing;
 	
 	
 	
@@ -2913,37 +2913,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 }
         		
         		
-        		if(checkerDialog != null) {
-        			if(!checkerDialog.isStopAnimate()) {
-        				//first stop currrent thread
-        				checkerDialog.setStopAnimate(true);
-        				setCheckerboardAnimate(false);
-        
-        				while(!checkerDialog.isThreadStopped()) {
-        					//do nothing
-        				}
-        				//now reset checkerboard
-        				checkerDialog.setCc(0);
-        				paintComponent(getGraphics());
-        				
-        				//now restart thread
-        				checkerDialog.setStopAnimate(false);
-        				setCheckerboardAnimate(true);
-        				
-        				checkerDialog.animateThread = checkerDialog.new Animate();
-            	    	try {
-            	    		checkerDialog.animateThread.start();
-            	    	}catch (Exception e) {
-            				e.printStackTrace();
-            				return;
-            			}
-        				
-        				
-        				
-        			}
-        			
-        		}
         		
+        		restartCheckerboardAnimateThread();
         		
         		
         		
@@ -2952,6 +2923,58 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             
         }
     }
+    
+    
+    
+    public void restartCheckerboardAnimateThread() {
+
+    	if(checkerDialog != null) {
+			if(checkerDialog.isAnimating()) {
+				
+				//first stop currrent thread
+				checkerDialog.setAnimating(false);
+				setCheckerboardAnimate(false);
+
+				while(!checkerDialog.isThreadStopped()) {
+					//do nothing
+				}
+				
+				setMakingCheckerboard(true);
+				//now reset checkerboard
+				checkerDialog.setCc(0);
+				paintComponent(getGraphics());
+				
+				setMakingCheckerboard(false);
+				
+				//now restart thread
+				checkerDialog.setAnimating(true);
+				setCheckerboardAnimate(true);
+				
+				checkerDialog.animateThread = checkerDialog.new Animate();
+    	    	try {
+    	    		checkerDialog.animateThread.start();
+    	    	}catch (Exception e) {
+    				e.printStackTrace();
+    				return;
+    			}
+			}else {
+				//just reset checkerboard
+				if(checkerDialog.isCheckerboardApplied()) {
+					setMakingCheckerboard(true);
+					//now reset checkerboard
+					checkerDialog.setCc(0);
+					paintComponent(getGraphics());
+					
+					setMakingCheckerboard(false);
+				}
+				
+				
+			}
+			
+		}
+    }
+    
+    
 
     /**
      * Open the user defined LUT table and transfer function.
@@ -5783,79 +5806,20 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             }
         }
     }
-    
-    /*private void flip(int x, int y, int dim) {
 
-    	if(pixBufferB[x + (y * dim)] == 0) {
-        	pixBufferB[x + (y * dim)] = cleanImageBufferB[x + (y * dim)];
-        }else {
-        	pixBufferB[x + (y * dim)] = 0;
-        }
-    }*/
-    
-    
-    /*private void animateCheckerboard() {
-    	int xDim, yDim;
-    	xDim = maxExtents[0];
-        yDim = maxExtents[1];
-        int cc = getCheckerboardCounter();
-        int y =0;
-        int x = 0;
-
-        
-    	if(nColumnCheckers == 1) {
-
-	    		for (y = 0; y < yDim;) {
-	
-	                for (x = 0; x < xDim; x++) {
-	                		
-	                	if(y <= cc) {
-	                		if(y == cc) {
-	                			flip(x,y,xDim);
-	                		}
-	                	}else {
-	                		flip(x,y,xDim);
-	                	}
-     
-	                }
-	                
-	                if(y < cc) {
-                		
-                		y++;
-                	}else {
-                		y = y + ySep;
-                	}
-	                
-	    		}
-    		
-                        
-                        
-    		
-    	}else if(nRowCheckers == 1) {
-    		
-    	}
-    	
-    }*/
-    
-    
-    
-    
-    
 
     // When the apply or close button is pressed, JDialogCheckerBoard sets the following 2 parameters used.
     /**
      * Sets the number of checkers in a row and a column.
      */
     private void makeCheckerboard() {
-    	System.out.println("making checkerboard");
 
     	cleanBuffer(ViewJComponentBase.IMAGE_B);
     	
         int xDim, yDim;
         int xIndex, yIndex;
         int x, y;
-        int[] xStart;
-        int[] yStart;
+        
         boolean doA;
 
         if ( (imageB == null) || (pixBufferB == null)) {
@@ -5963,11 +5927,89 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 yIndex++;
             }
         } // for (y = yStart[1]; y < yDim;)
+        
+        
+        
+        if(nColumnCheckers == 1 || nRowCheckers == 1) {
+        	if(nColumnCheckers == 1) {
+        		bandSpacing = new int[nRowCheckers];
+        		for(int i=0;i<bandSpacing.length;i++) {
+        			bandSpacing[i] = ySep;
+        		}
+        		
+        		for(int i=0;i<yMod;i++) {
+    				bandSpacing[i] = bandSpacing[i] + 1;
+    			}
+        		
+        		
+        	}else {
+        		bandSpacing = new int[nColumnCheckers];
+        		
+        		for(int i=0;i<bandSpacing.length;i++) {
+        			bandSpacing[i] = xSep;
+        		}
+        		
+        		for(int i=0;i<xMod;i++) {
+    				bandSpacing[i] = bandSpacing[i] + 1;
+    			}
+        	}
+        	
+
+    		if(checkerDialog != null) {
+    				checkerDialog.setBandSpacingCounter(0);
+    		}
+    				
+    				
+
+    		
+        }
+        
+		
+		
+		
     }
 
 
+    public void loopBandSpacing() {
+		int temp = bandSpacing[bandSpacing.length-1];
+		for(int i=bandSpacing.length-1;i>=0;i--) {
+			if(i==0) {
+				bandSpacing[0] = temp;
+			}else {
+				bandSpacing[i] = bandSpacing[i-1];
+			}
+		}
 
-    /**
+	}
+    
+    
+    
+
+    public synchronized int[] getBandSpacing() {
+		return bandSpacing;
+	}
+
+	public synchronized void setBandSpacing(int[] bandSpacing) {
+		this.bandSpacing = bandSpacing;
+	}
+
+	public synchronized int[] getxStart() {
+		return xStart;
+	}
+
+	public synchronized int[] getyStart() {
+		return yStart;
+	}
+
+	public synchronized int getyMod() {
+		return yMod;
+	}
+	
+	public synchronized int getxMod() {
+		return xMod;
+	}
+
+	/**
      * Repaints the image intensity label.
      * 
      * @param graphics2d Graphics2D the graphics context to draw in
