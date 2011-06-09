@@ -288,13 +288,14 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 LUT = fileIO.getModelLUT();
                 modelRGB = fileIO.getModelRGB();
 
+                //readLinkedImage also gets LUT2 and modelRGB2
                 linkedImage = readLinkedImage();
 
                 if (linkedImage != null) {
                     xmlLinked = true;
 
-                    LUT2 = fileIO.getModelLUT();
-                    modelRGB2 = fileIO.getModelRGB();
+                    //LUT2 = fileIO.getModelLUT();
+                    //modelRGB2 = fileIO.getModelRGB();
 
                 }
             } catch (OutOfMemoryError e) {
@@ -313,6 +314,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     }
 
                     if (xmlLinked && (linkedImage != null)) {
+                    	System.out.println("aaa"); 
                         imageFrame.setAndLoad(linkedImage);
 
                         if (LUT2 != null) {
@@ -454,7 +456,8 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         LUT = fileIO.getModelLUT(); // LUT is not null if TIFF image has a LUT else it is null
 
         modelRGB = fileIO.getModelRGB();
-
+        
+       //readLinkedImage also gets LUT2 and modelRGB2
         ModelImage linkedImage = readLinkedImage();
 
         try {
@@ -467,8 +470,10 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 }
 
                 if (linkedImage != null) {
-                    imageFrame.setAndLoad(linkedImage);
 
+                    imageFrame.setAndLoad(linkedImage);
+                       
+ 
                     if (LUT2 != null) {
 
                         if (modelRGB2 != null) {
@@ -601,7 +606,12 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             if ( (linkedFilename != null) && !linkedFilename.equals("")) {
                 FileIO fileIO = new FileIO();
 
-                return fileIO.readImage(linkedFilename);
+                ModelImage img = fileIO.readImage(linkedFilename);
+                
+                LUT2 = fileIO.getModelLUT();
+                modelRGB2 = fileIO.getModelRGB();
+                
+                return img;
             }
 
         }
