@@ -1321,6 +1321,10 @@ public class FileDicomJPEG {
                     s = huffval[tableNum][valptr[tableNum][k] + ( (code - mincode[tableNum][k]))];
                 }
             }
+            
+            if (s == 16) {
+            	return -32768;
+            }
 
             // read in s number of bits and set d to that number
             if (s != 0) {
