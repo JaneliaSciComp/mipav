@@ -2941,7 +2941,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 				
 				setMakingCheckerboard(true);
 				//now reset checkerboard
-				checkerDialog.setCc(0);
+				//checkerDialog.setCc(0);
+				
+				checkerDialog.refreshCc();
 				paintComponent(getGraphics());
 				
 				setMakingCheckerboard(false);
@@ -2962,7 +2964,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 				if(checkerDialog.isCheckerboardApplied()) {
 					setMakingCheckerboard(true);
 					//now reset checkerboard
-					checkerDialog.setCc(0);
+					//checkerDialog.setCc(0);
+					checkerDialog.refreshCc();
+					checkerDialog.setPressedStart(0);
 					paintComponent(getGraphics());
 					
 					setMakingCheckerboard(false);
@@ -5977,6 +5981,20 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 				bandSpacing[0] = temp;
 			}else {
 				bandSpacing[i] = bandSpacing[i-1];
+			}
+		}
+
+	}
+    
+    
+    
+    public void loopBandSpacingReverse() {
+		int temp = bandSpacing[0];
+		for(int i=0;i<bandSpacing.length;i++) {
+			if(i==bandSpacing.length-1) {
+				bandSpacing[bandSpacing.length-1] = temp;
+			}else {
+				bandSpacing[i] = bandSpacing[i+1];
 			}
 		}
 

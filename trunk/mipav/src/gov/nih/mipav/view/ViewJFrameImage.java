@@ -2775,7 +2775,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * Decreases the slice to be displayed by one and updates title frame.
      */
     public synchronized void decSlice() {
-
+System.out.println("helle");
         if (imageA.getNDims() <= 2) {
             return;
         }
@@ -2814,6 +2814,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             updateImages(true);
+            
+            componentImage.restartCheckerboardAnimateThread();
 
             // registeredFramedImages = null;
         }
@@ -3472,6 +3474,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             updateImages(true);
+            
+            componentImage.restartCheckerboardAnimateThread();
 
             // registeredFramedImages = null;
 
@@ -4194,6 +4198,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
             }
         }
+        
+        componentImage.restartCheckerboardAnimateThread();
     }
 
     /**
