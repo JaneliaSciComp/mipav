@@ -257,6 +257,16 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     private int outOfBoundsIndex = 0;
 
     private float fillValue = 0.0f;
+    
+    private JLabel matrixLabel;
+    
+    private JComboBox matrixComboBox;
+    
+    private String matrixDirectory;
+    
+    private JLabel userDirectoryLabel;
+    
+    private JTextField userDirectoryText;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -584,7 +594,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 message += "with a Y coarse rate of " + coarseRateY + " and Y fine rate of " + fineRateY + ".\n";
                 message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
                 message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
-                finalMatrix.saveMatrix(UI.getDefaultDirectory() + File.separator + matchImage.getImageName() + "_To_"
+                finalMatrix.saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
                         + refImage.getImageName() + ".mtx", message);
 
                 insertScriptLine();
@@ -836,6 +846,28 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     break;
             } // switch (outOfBoundsComboBox.getSelectedIndex())
         } // else if (event.getSource() == outOfBoundsComboBox)
+        else if (event.getSource() == comboBoxImage) {
+        	refImage = UI.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+        	
+        	matrixComboBox.removeAllItems();
+            
+            if (refImage != null) {
+                matrixComboBox.addItem(refImage.getImageDirectory());	
+            }
+            
+            if ((matchImage.getImageDirectory() != null) && 
+                	(!refImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
+                	matrixComboBox.addItem(matchImage.getImageDirectory());
+            }
+            
+            if ((UI.getDefaultDirectory() != null) && 
+            	(!UI.getDefaultDirectory().equals(refImage.getImageDirectory())) &&
+            	(!UI.getDefaultDirectory().equals(matchImage.getImageDirectory()))) {
+            	matrixComboBox.addItem(UI.getDefaultDirectory());
+            }
+            matrixComboBox.addItem("User specified matrix directory");
+            matrixComboBox.setSelectedIndex(0);
+        }
     }
 
     /**
@@ -1103,6 +1135,14 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     public void setFillValue(final float fillValue) {
         this.fillValue = fillValue;
     }
+    
+    /**
+     * Accessor to set directory in which the matrix file is stored
+     * @param matrixDirectory
+     */
+    public void setMatrixDirectory(String matrixDirectory) {
+    	this.matrixDirectory = matrixDirectory;
+    }
 
     /**
      * Calls the algorithm with the set-up parameters.
@@ -1305,6 +1345,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 setFillValue((float) imageMax);
                 break;
         }
+        setMatrixDirectory(scriptParameters.getParams().getString("matrix_directory"));
 
         setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"), scriptParameters.getParams().getInt(
                 "max_iterations"), scriptParameters.getParams().getInt("num_minima"));
@@ -1347,6 +1388,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_COG", calcCOG));
         scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
         scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("matrix_directory", matrixDirectory));
         scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
@@ -1495,7 +1537,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 }
             }
         }
-
+        comboBox.addItemListener(this);
         return comboBox;
     }
 
@@ -2084,6 +2126,42 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         valueText = new JTextField(String.valueOf(imageMin));
         valueText.setFont(serif12);
         valueText.setEnabled(false);
+        
+        matrixLabel = new JLabel("Matrix file directory");
+        matrixLabel.setForeground(Color.black);
+        matrixLabel.setFont(serif12);
+        matrixLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        matrixComboBox = new JComboBox();
+        matrixComboBox.setFont(serif12);
+        matrixComboBox.setBackground(Color.white);
+        matrixComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        refImage = UI.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+        
+        if (refImage != null) {
+            matrixComboBox.addItem(refImage.getImageDirectory());	
+        }
+        if ((matchImage.getImageDirectory() != null) && 
+        	(!refImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
+        	matrixComboBox.addItem(matchImage.getImageDirectory());
+        }
+        if ((UI.getDefaultDirectory() != null) && 
+        	(!UI.getDefaultDirectory().equals(refImage.getImageDirectory())) &&
+        	(!UI.getDefaultDirectory().equals(matchImage.getImageDirectory()))) {
+        	matrixComboBox.addItem(UI.getDefaultDirectory());
+        }
+        matrixComboBox.addItem("User specified matrix directory");
+        matrixComboBox.setSelectedIndex(0);
+        
+        userDirectoryLabel = new JLabel("User specified matrix directory");
+        userDirectoryLabel.setForeground(Color.black);
+        userDirectoryLabel.setFont(serif12);
+        userDirectoryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        userDirectoryText = new JTextField();
+        userDirectoryText.setFont(serif12);
+        userDirectoryText.setEnabled(true);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -2121,6 +2199,27 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(valueText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outPanel.add(matrixLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(matrixComboBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outPanel.add(userDirectoryLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        gbc.weightx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(userDirectoryText, gbc);
 
         final JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -2710,6 +2809,11 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 return false;
             }
         }
+        
+        matrixDirectory = (String)matrixComboBox.getSelectedItem();
+        if (matrixDirectory.equals("User specified matrix directory")) {
+            matrixDirectory = userDirectoryText.getText();
+        }
 
         return true;
     }
@@ -3037,6 +3141,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             p = new ParameterFloat("fill_value", 0);
             p.setParentCondition(table.getParameter("out_of_bounds_index"), "2");
             table.put(p);
+            table.put(new ParameterString("matrix_directory"));
 
             table.put(new ParameterInt("bracket_bound", 10));
             table.put(new ParameterInt("max_iterations", 2));
