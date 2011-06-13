@@ -300,14 +300,38 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         		compImage.setCheckerboardAnimate(false);
         		OKButton.setEnabled(true);
         		closeButton.setEnabled(true);
-        		slider.setEnabled(true);
-        		slider2.setEnabled(true);
+        		//slider.setEnabled(true);
+        		//slider2.setEnabled(true);
         		compImage.addMouseListener(compImage);
         		compImage.addMouseMotionListener(compImage);
         		checkerboardTypesLabel.setEnabled(true);
         		checkerboardTypesCB.setEnabled(true);
         		labelRowNumber.setEnabled(true);
         		labelColumnNumber.setEnabled(true);
+        		
+        		
+        		
+        		
+        		if(checkerboardTypesCB.getSelectedIndex() == 1) {
+                	//horizontal
+
+                	slider.setEnabled(true);
+                	slider2.setEnabled(false);
+                	labelRowNumber.setEnabled(true);
+                	labelColumnNumber.setEnabled(false);
+                	
+                	
+                	
+                }else if(checkerboardTypesCB.getSelectedIndex() == 2) {
+                	//vertical
+
+                	slider.setEnabled(false);
+                	slider2.setEnabled(true);
+                	labelRowNumber.setEnabled(false);
+                	labelColumnNumber.setEnabled(true);
+                	
+                	
+                }
         	}
         	
         	
@@ -671,18 +695,21 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 	        	slider.updateUI();
         	}
         	slider.setEnabled(true);
+        	labelRowNumber.setEnabled(true);
+        	
         	
         	if(slider2.getValue() == 1) {
 	        	slider2.setValue(2);
 	        	slider2.updateUI();
         	}
         	slider2.setEnabled(true);
+        	labelColumnNumber.setEnabled(true);
         	
         	speedLabel.setEnabled(false);
     		speedSlider.setEnabled(false);
     		animateButton.setEnabled(false);
-    		labelColumnNumber.setEnabled(true);
-    		labelRowNumber.setEnabled(true);
+    		//labelColumnNumber.setEnabled(true);
+    		//labelRowNumber.setEnabled(true);
         	
         }else if(checkerboardTypesCB.getSelectedIndex() == 1) {
         	//horizontal
@@ -691,16 +718,18 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         		slider.updateUI();
         	}
         	slider.setEnabled(true);
+        	labelRowNumber.setEnabled(true);
         	
         	slider2.setValue(1);
         	slider2.updateUI();
         	slider2.setEnabled(false);
+        	labelColumnNumber.setEnabled(false);
         	
         	speedLabel.setEnabled(true);
     		speedSlider.setEnabled(true);
     		animateButton.setEnabled(false);
-    		labelColumnNumber.setEnabled(false);
-    		labelRowNumber.setEnabled(true);
+    		//labelColumnNumber.setEnabled(false);
+    		//labelRowNumber.setEnabled(true);
         	
         	
         }else if(checkerboardTypesCB.getSelectedIndex() == 2) {
@@ -708,18 +737,20 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         	slider.setValue(1);
         	slider.updateUI();
         	slider.setEnabled(false);
+        	labelRowNumber.setEnabled(false);
         	
         	if(slider2.getValue() == 1) {
         		slider2.setValue(2);
         		slider2.updateUI();
         	}
         	slider2.setEnabled(true);
+        	labelColumnNumber.setEnabled(true);
         	
         	speedLabel.setEnabled(true);
     		speedSlider.setEnabled(true);
     		animateButton.setEnabled(false);
-    		labelRowNumber.setEnabled(false);
-    		labelColumnNumber.setEnabled(true);
+    		//labelRowNumber.setEnabled(false);
+    		//labelColumnNumber.setEnabled(true);
         	
         	
         }
