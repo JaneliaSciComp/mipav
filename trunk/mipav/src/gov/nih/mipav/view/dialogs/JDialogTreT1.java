@@ -166,8 +166,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private JPanel generalThresholdPanel;
 	private JTabbedPane tab;
 	private JPanel irspgrGeneralPanel;
-	private JButton ok;
-	private JButton cancel;
+	//private JButton ok;
+	//private JButton cancel;
 	private JRadioButton noCheckBox;
 	
 	private JScrollPane irspgrPanel;
@@ -1116,8 +1116,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.weighty = 0;
 	    
 	    add(guiBuilder.buildOKCancelPanel(), gbc);
-	    ok.addActionListener(this);
-	    cancel.addActionListener(this);
+	    //ok.addActionListener(this);
+	    //cancel.addActionListener(this);
 	    setLocationRelativeTo(null);
 	    pack();
 	    setModal(true);
