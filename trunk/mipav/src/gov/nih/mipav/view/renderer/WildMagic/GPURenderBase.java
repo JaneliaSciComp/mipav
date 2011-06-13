@@ -55,6 +55,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** VolumeImage for ModelImageB, contains data and textures. */
     protected VolumeImage m_kVolumeImageB;
     
+    protected VolumeImage m_kVolumeImageA_Old;
+    protected VolumeImage m_kVolumeImageB_Old;
+    
     /** Scene-graph root node: */
     protected Node m_spkScene;
     /** Culling: turns backface/frontface culling on/off: */
@@ -158,6 +161,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	public void dispose()
     {
 		m_bDispose = true;
+		//GetCanvas().display();
     }
 
     /**
@@ -165,11 +169,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
 	public void dispose(GLAutoDrawable kDrawable)
     {
+		 System.err.println( "dispose(GLAutoDrawable) called" );
         m_kParent = null;
         m_kVolumeImageA = null;
         m_kVolumeImageB = null;
         if ( m_kAnimator != null ) {
-        	//m_kAnimator.remove(GetCanvas());
         	m_kAnimator = null;
         }
         if ( m_spkScene != null )
@@ -208,7 +212,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
             {
-                m_kDisplayList.get(i).dispose();
+                m_kDisplayList.get(i).dispose(m_pkRenderer);
             }
             m_kDisplayList.clear();
             m_kDisplayList = null;
@@ -328,6 +332,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     public void reInitialize(VolumeImage kImageA, VolumeImage kImageB)
     {
+    	m_kVolumeImageA_Old = m_kVolumeImageA;
+    	m_kVolumeImageB_Old = m_kVolumeImageB;
     	m_kVolumeImageA = kImageA;
     	m_kVolumeImageB = kImageB;
     	m_bInit = false;

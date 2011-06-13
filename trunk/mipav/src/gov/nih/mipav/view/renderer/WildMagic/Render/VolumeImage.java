@@ -313,9 +313,10 @@ public class VolumeImage implements Serializable {
                     kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, aucData2,
                             kImageName);
                     //kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_L8, iXBound, iYBound, iZBound, aucData,
-                            //kImageName);
+                    //        kImageName);
                 } else {
                     kReturn.SetData(aucData2, iXBound, iYBound, iZBound);
+                    //kReturn.SetData(aucData, iXBound, iYBound, iZBound);
                 }
             } catch (final IOException e) {
                 e.printStackTrace();
@@ -1047,17 +1048,18 @@ public class VolumeImage implements Serializable {
                     afCount[a1 + a2 * 256] += 1;
                     iHisto++;
                 }
-            } else {
-                int iHisto = 0;
-                for (final byte element : abData) {
-                    a1 = (element);
-                    a1 = (short) (a1 & 0x00ff);
-                    a2 = (abHistoData[iHisto]);
-                    a2 = (short) (a2 & 0x00ff);
-                    afCount[a1 + a2 * 256] += 1;
-                    iHisto++;
-                }
             }
+            else {
+            	int iHisto = 0;
+                for (int i = 0; i < abData.length; i += 4) {
+            		a1 = (abData[i]);
+            		a1 = (short) (a1 & 0x00ff);
+            		a2 = (abHistoData[iHisto]);
+            		a2 = (short) (a2 & 0x00ff);
+            		afCount[a1 + a2 * 256] += 1;
+            		iHisto += 4;
+            	}
+            } 
             float max = 0;
             for (int i = 0; i < 256 * 256; ++i) {
                 afCount[i] = (float) Math.log(afCount[i]);
@@ -1199,7 +1201,7 @@ public class VolumeImage implements Serializable {
     				} else {
     					kImageGM.calcMinMax();
     					m_akGradientMagMinMax[i] = new Vector2f( (float)kImageGM.getMin(), (float)kImageGM.getMax() );
-    					m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM, 0, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true);
+    					m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM, i, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true);
     				}
     				final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
     				if (kImageFrame != null) {
@@ -1302,8 +1304,9 @@ public class VolumeImage implements Serializable {
         final int[] aiExtents = m_kImage.getExtents();
         final int iNDims = aiExtents.length;
         String kImageName;
-        GraphicsImage.FormatMode type = m_kImage.isColorImage() ? GraphicsImage.FormatMode.IT_RGBA8888 :
-        	GraphicsImage.FormatMode.IT_L8;
+        //GraphicsImage.FormatMode type = m_kImage.isColorImage() ? GraphicsImage.FormatMode.IT_RGBA8888 :
+        //	GraphicsImage.FormatMode.IT_L8;
+        GraphicsImage.FormatMode type = GraphicsImage.FormatMode.IT_RGBA8888 ;
         
         
         if (iNDims == 3) { // ModelImage is 3D:

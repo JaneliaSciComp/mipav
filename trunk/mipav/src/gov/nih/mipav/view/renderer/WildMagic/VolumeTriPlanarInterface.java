@@ -633,8 +633,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             setRadiological(true);
         } else if (command.equals("NeurologicalView")) {
             setRadiological(false);
-        } else if (command.equals("ShaderParameters")) {
-            raycastRenderWM.displayShaderParameters();
         } else if (command.equals("VOIToolbar")) {
             final boolean showVOI = menuObj.isMenuItemSelected("VOI toolbar");
             if ( m_kVOIInterface == null )
@@ -1017,8 +1015,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      */
     public void disposeLocal(final boolean flag) {
         disposeImageIndependentComponents();
-        disposeImageDependentComponents();
         disposeRenderers();
+        disposeImageDependentComponents();
 
         // hack using the flag parameter to prevent a second resetting of the progress bar when
         // the finalizer comes around (window closing does the first one with flag = true)
@@ -2398,13 +2396,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
         m_bDependentInterfaceInit = false;
 
-        panelAxial.remove(m_akPlaneRender[0].GetCanvas());
-        panelSagittal.remove(m_akPlaneRender[1].GetCanvas());
-        panelCoronal.remove(m_akPlaneRender[2].GetCanvas());
-        raycastRenderWM.setVisible(false);
-        //m_kAnimator.remove(raycastRenderWM.GetCanvas());
-        gpuPanel.remove(raycastRenderWM.GetCanvas());
-
         if (surfaceGUI != null) {
             surfaceGUI.dispose();
             surfaceGUI = null;
@@ -2484,6 +2475,35 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
 
     private void disposeRenderers() {
+
+    	
+        if (raycastRenderWM != null) {
+            raycastRenderWM.setVisible(false);
+            raycastRenderWM.dispose();
+            gpuPanel.remove(raycastRenderWM.GetCanvas());
+        }
+        for (int i = 0; i < 3; i++) {
+
+            if (m_akPlaneRender[i] != null) {
+            	m_akPlaneRender[i].setVisible(false);
+                m_akPlaneRender[i].dispose();
+            }
+        }
+        panelAxial.remove(m_akPlaneRender[0].GetCanvas());
+        panelSagittal.remove(m_akPlaneRender[1].GetCanvas());
+        panelCoronal.remove(m_akPlaneRender[2].GetCanvas());
+        
+        if ( sharedRenderer != null )
+        {
+        	sharedRenderer.dispose();
+        	sharedRenderer = null;
+        }
+        if ( sharedDrawable != null )
+        {
+        	releaseShared();
+        	sharedDrawable = null;
+        }
+
         if (m_kVolumeImageA != null) {
             if (m_kVolumeImageA.GetImage() != null) {
                 m_kVolumeImageA.GetImage().removeImageDisplayListener(this);
@@ -2498,18 +2518,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             }
             m_kVolumeImageB.dispose();
             m_kVolumeImageB = null;
-        }
-
-        if (raycastRenderWM != null) {
-            raycastRenderWM.dispose();
-            raycastRenderWM = null;
-        }
-        for (int i = 0; i < 3; i++) {
-
-            if (m_akPlaneRender[i] != null) {
-                m_akPlaneRender[i].dispose();
-                m_akPlaneRender[i] = null;
-            }
         }
     }
 
@@ -2575,8 +2583,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         if (kFile == null) {
             return;
         }
-        disposeImageDependentComponents();
         disposeRenderers();
+        disposeImageDependentComponents();
         try {
             ObjectInputStream objstream;
             objstream = new ObjectInputStream(new FileInputStream(kFile));

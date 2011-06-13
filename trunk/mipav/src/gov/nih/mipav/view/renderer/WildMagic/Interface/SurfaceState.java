@@ -32,6 +32,15 @@ public class SurfaceState implements Serializable
         Surface = kMesh;
     }
     
+    public void dispose()
+    {
+    	SurfaceColor = null;
+    	Material = null;
+    	Fill = null;
+    	Name = null;
+    	Surface = null;
+    }
+    
 
     private void writeObject(java.io.ObjectOutputStream out)
     throws IOException 
