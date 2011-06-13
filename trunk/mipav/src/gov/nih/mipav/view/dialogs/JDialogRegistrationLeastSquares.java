@@ -97,6 +97,16 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     private int outOfBoundsIndex = 0;
     
     private float fillValue = 0.0f;
+    
+    private JLabel matrixLabel;
+    
+    private JComboBox matrixComboBox;
+    
+    private String matrixDirectory;
+    
+    private JLabel userDirectoryLabel;
+    
+    private JTextField userDirectoryText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -175,7 +185,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                 lsCompleted = true;
                 matchImage.setMatrix(LSMatch.getTransformBtoA());
                 Preferences.debug(matchImage.getMatrix().toString());
-                LSMatch.getTransformBtoA().saveMatrix(userInterface.getDefaultDirectory() + matchImage.getImageName() +
+                LSMatch.getTransformBtoA().saveMatrix(matrixDirectory + matchImage.getImageName() +
                                                       "_To_" + baseImage.getImageName() + ".mtx");
                 LSMatch.calculateResiduals();
                 xdimA = baseImage.getExtents()[0];
@@ -490,6 +500,14 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     public void setFillValue(float fillValue) {
         this.fillValue = fillValue;
     }
+    
+    /**
+     * Accessor to set directory in which the matrix file is stored
+     * @param matrixDirectory
+     */
+    public void setMatrixDirectory(String matrixDirectory) {
+    	this.matrixDirectory = matrixDirectory;
+    }
 
     /**
      * {@inheritDoc}
@@ -531,7 +549,9 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                 setFillValue((float)imageMax);
                 break;
         }
+        setMatrixDirectory(scriptParameters.getParams().getString("matrix_directory"));
     }
+    
 
     /**
      * {@inheritDoc}
@@ -543,6 +563,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         scriptParameters.storeImageInRecorder(getResultImage());
         scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
         scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("matrix_directory", matrixDirectory));
     }
 
     /**
@@ -574,7 +595,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         JLabel labelImage = new JLabel("Register [" + matchName + "] to:");
         labelImage.setForeground(Color.black);
         labelImage.setFont(serif12);
-        comboBoxImage = buildImageComboBox(matchImage);
+        comboBoxImage = buildImgComboBox(matchImage);
 
         JPanel imagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         imagePanel.add(labelImage);
@@ -611,6 +632,42 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         valueText.setFont(serif12);
         valueText.setEnabled(false);
         
+        matrixLabel = new JLabel("Matrix file directory");
+        matrixLabel.setForeground(Color.black);
+        matrixLabel.setFont(serif12);
+        matrixLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        matrixComboBox = new JComboBox();
+        matrixComboBox.setFont(serif12);
+        matrixComboBox.setBackground(Color.white);
+        matrixComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        baseImage = userInterface.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+        
+        if (baseImage != null) {
+            matrixComboBox.addItem(baseImage.getImageDirectory());	
+        }
+        if ((matchImage.getImageDirectory() != null) && 
+        	(!baseImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
+        	matrixComboBox.addItem(matchImage.getImageDirectory());
+        }
+        if ((userInterface.getDefaultDirectory() != null) && 
+        	(!userInterface.getDefaultDirectory().equals(baseImage.getImageDirectory())) &&
+        	(!userInterface.getDefaultDirectory().equals(matchImage.getImageDirectory()))) {
+        	matrixComboBox.addItem(userInterface.getDefaultDirectory());
+        }
+        matrixComboBox.addItem("User specified matrix directory");
+        matrixComboBox.setSelectedIndex(0);
+        
+        userDirectoryLabel = new JLabel("User specified matrix directory");
+        userDirectoryLabel.setForeground(Color.black);
+        userDirectoryLabel.setFont(serif12);
+        userDirectoryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        userDirectoryText = new JTextField();
+        userDirectoryText.setFont(serif12);
+        userDirectoryText.setEnabled(true);
+        
         GridBagConstraints gbc = new GridBagConstraints();
         Insets insets = new Insets(2, 5, 2, 5);
         gbc.gridx = 0;
@@ -636,8 +693,60 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         extentsPanel.add(valueText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        extentsPanel.add(matrixLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        extentsPanel.add(matrixComboBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        extentsPanel.add(userDirectoryLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.weightx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        extentsPanel.add(userDirectoryText, gbc);
         
         return extentsPanel;
+    }
+    
+    /**
+     * Builds a list of images. Returns combobox.
+     *
+     * @param   image  DOCUMENT ME!
+     *
+     * @return  Newly created combo box.
+     */
+    private JComboBox buildImgComboBox(ModelImage image) {
+        JComboBox comboBox = new JComboBox();
+        comboBox.setFont(serif12);
+        comboBox.setBackground(Color.white);
+
+        Enumeration<String> names = userInterface.getRegisteredImageNames();
+
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+
+            if (!name.equals(image.getImageName())) {
+                ModelImage img = userInterface.getRegisteredImageByName(name);
+
+                if ((image.getNDims() == img.getNDims()) && (image.isColorImage() == img.isColorImage()) &&
+                        (userInterface.getFrameContainingImage(img) != null)) {
+                    comboBox.addItem(name);
+                }
+            }
+        }
+        comboBox.addItemListener(this);
+
+        return comboBox;
     }
     
     /**
@@ -671,6 +780,28 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     break;
             } // switch (outOfBoundsComboBox.getSelectedIndex())
         } // if (event.getSource() == outOfBoundsComboBox)
+        else if (event.getSource() == comboBoxImage) {
+        	baseImage = userInterface.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+        	
+        	matrixComboBox.removeAllItems();
+            
+            if (baseImage != null) {
+                matrixComboBox.addItem(baseImage.getImageDirectory());	
+            }
+            
+            if ((matchImage.getImageDirectory() != null) && 
+                	(!baseImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
+                	matrixComboBox.addItem(matchImage.getImageDirectory());
+            }
+            
+            if ((userInterface.getDefaultDirectory() != null) && 
+            	(!userInterface.getDefaultDirectory().equals(baseImage.getImageDirectory())) &&
+            	(!userInterface.getDefaultDirectory().equals(matchImage.getImageDirectory()))) {
+            	matrixComboBox.addItem(userInterface.getDefaultDirectory());
+            }
+            matrixComboBox.addItem("User specified matrix directory");
+            matrixComboBox.setSelectedIndex(0);
+        }
     }
 
 
@@ -704,6 +835,11 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                 valueText.selectAll();
                 return false;
             }
+        }
+        
+        matrixDirectory = (String)matrixComboBox.getSelectedItem();
+        if (matrixDirectory.equals("User specified matrix directory")) {
+            matrixDirectory = userDirectoryText.getText();	
         }
 
         return true;
