@@ -2775,7 +2775,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * Decreases the slice to be displayed by one and updates title frame.
      */
     public synchronized void decSlice() {
-System.out.println("helle");
+
         if (imageA.getNDims() <= 2) {
             return;
         }
