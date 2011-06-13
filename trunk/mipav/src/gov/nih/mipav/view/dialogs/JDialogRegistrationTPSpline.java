@@ -4,6 +4,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -98,6 +99,16 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
 
     /** DOCUMENT ME! */
     private double[] zTar;
+    
+    private JLabel matrixLabel;
+    
+    private JComboBox matrixComboBox;
+    
+    private String matrixDirectory;
+    
+    private JLabel userDirectoryLabel;
+    
+    private JTextField userDirectoryText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -158,7 +169,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         if (algorithm instanceof AlgorithmTPSpline) {
 
             if (spline.isCompleted() == true) {
-                spline.saveMatrix(UI.getDefaultDirectory() + matchImage.getImageName() +
+                spline.saveMatrix(matrixDirectory + matchImage.getImageName() +
                         "_To_" + baseImage.getImageName() + ".tps", null);
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
@@ -221,6 +232,36 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
      */
     public ModelImage getResultImage() {
         return resultImage;
+    }
+    
+    /**
+     * Changes the interpolation box to enabled or disabled depending on if the transform box is checked or not.
+     *
+     * @param  event  Event that triggered this function.
+     */
+    public void itemStateChanged(ItemEvent event) {
+        if (event.getSource() == comboBoxImage) {
+        	baseImage = UI.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+        	
+        	matrixComboBox.removeAllItems();
+            
+            if (baseImage != null) {
+                matrixComboBox.addItem(baseImage.getImageDirectory());	
+            }
+            
+            if ((matchImage.getImageDirectory() != null) && 
+                	(!baseImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
+                	matrixComboBox.addItem(matchImage.getImageDirectory());
+            }
+            
+            if ((UI.getDefaultDirectory() != null) && 
+            	(!UI.getDefaultDirectory().equals(baseImage.getImageDirectory())) &&
+            	(!UI.getDefaultDirectory().equals(matchImage.getImageDirectory()))) {
+            	matrixComboBox.addItem(UI.getDefaultDirectory());
+            }
+            matrixComboBox.addItem("User specified matrix directory");
+            matrixComboBox.setSelectedIndex(0);
+        }
     }
 
     /**
@@ -460,6 +501,14 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
     protected void doPostAlgorithmActions() {
         AlgorithmParameters.storeImageInRunner(getResultImage());
     }
+    
+    /**
+     * Accessor to set directory in which the matrix file is stored
+     * @param matrixDirectory
+     */
+    public void setMatrixDirectory(String matrixDirectory) {
+    	this.matrixDirectory = matrixDirectory;
+    }
 
     /**
      * {@inheritDoc}
@@ -476,6 +525,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
 
         UI = ViewUserInterface.getReference();
         parentFrame = matchImage.getParentFrame();
+        setMatrixDirectory(scriptParameters.getParams().getString("matrix_directory"));
     }
 
     /**
@@ -486,6 +536,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         scriptParameters.storeImage(baseImage, "reference_image");
 
         scriptParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.getParams().put(ParameterFactory.newParameter("matrix_directory", matrixDirectory));
     }
 
     /**
@@ -495,22 +546,129 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         setForeground(Color.black);
         setTitle("Thin Plate Spline Registration");
 
-        String matchName = matchImage.getImageName();
+        JPanel imagePanel = buildImagePanel();
+        JPanel outputPanel = buildOutputPanel();
 
-        JLabel labelImage = new JLabel("Register [" + matchName + "] to:");
-        labelImage.setForeground(Color.black);
-        labelImage.setFont(serif12);
-        comboBoxImage = buildImageComboBox(matchImage);
-
-        JPanel imagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        imagePanel.add(labelImage);
-        imagePanel.add(comboBoxImage);
-
-        getContentPane().add(imagePanel);
+        getContentPane().add(imagePanel, BorderLayout.NORTH);
+        getContentPane().add(outputPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
         setVisible(true);
+    }
+    
+    protected JPanel buildImagePanel() {
+    	String matchName = matchImage.getImageName();
+
+        JLabel labelImage = new JLabel("Register [" + matchName + "] to:");
+        labelImage.setForeground(Color.black);
+        labelImage.setFont(serif12);
+        comboBoxImage = buildImgComboBox(matchImage);
+
+        JPanel imagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        imagePanel.add(labelImage);
+        imagePanel.add(comboBoxImage);
+        
+        return imagePanel;
+    }
+    
+    protected JPanel buildOutputPanel() {
+    	JPanel outputPanel = new JPanel(new GridBagLayout());
+        
+        matrixLabel = new JLabel("Matrix file directory");
+        matrixLabel.setForeground(Color.black);
+        matrixLabel.setFont(serif12);
+        matrixLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        matrixComboBox = new JComboBox();
+        matrixComboBox.setFont(serif12);
+        matrixComboBox.setBackground(Color.white);
+        matrixComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        baseImage = UI.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+        
+        if (baseImage != null) {
+            matrixComboBox.addItem(baseImage.getImageDirectory());	
+        }
+        if ((matchImage.getImageDirectory() != null) && 
+        	(!baseImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
+        	matrixComboBox.addItem(matchImage.getImageDirectory());
+        }
+        if ((UI.getDefaultDirectory() != null) && 
+        	(!UI.getDefaultDirectory().equals(baseImage.getImageDirectory())) &&
+        	(!UI.getDefaultDirectory().equals(matchImage.getImageDirectory()))) {
+        	matrixComboBox.addItem(UI.getDefaultDirectory());
+        }
+        matrixComboBox.addItem("User specified matrix directory");
+        matrixComboBox.setSelectedIndex(0);
+        
+        userDirectoryLabel = new JLabel("User specified matrix directory");
+        userDirectoryLabel.setForeground(Color.black);
+        userDirectoryLabel.setFont(serif12);
+        userDirectoryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        userDirectoryText = new JTextField();
+        userDirectoryText.setFont(serif12);
+        userDirectoryText.setEnabled(true);
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        Insets insets = new Insets(2, 5, 2, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = insets;
+        outputPanel.add(matrixLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outputPanel.add(matrixComboBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outputPanel.add(userDirectoryLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outputPanel.add(userDirectoryText, gbc);
+        
+        return outputPanel;
+    }
+    
+    /**
+     * Builds a list of images. Returns combobox.
+     *
+     * @param   image  DOCUMENT ME!
+     *
+     * @return  Newly created combo box.
+     */
+    private JComboBox buildImgComboBox(ModelImage image) {
+        JComboBox comboBox = new JComboBox();
+        comboBox.setFont(serif12);
+        comboBox.setBackground(Color.white);
+
+        Enumeration<String> names = UI.getRegisteredImageNames();
+
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+
+            if (!name.equals(image.getImageName())) {
+                ModelImage img = UI.getRegisteredImageByName(name);
+
+                if ((image.getNDims() == img.getNDims()) && (image.isColorImage() == img.isColorImage()) &&
+                        (UI.getFrameContainingImage(img) != null)) {
+                    comboBox.addItem(name);
+                }
+            }
+        }
+        comboBox.addItemListener(this);
+
+        return comboBox;
     }
 
     /**
@@ -532,6 +690,11 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             MipavUtil.displayError("Error! No VOIs were present in the match image");
 
             return false;
+        }
+        
+        matrixDirectory = (String)matrixComboBox.getSelectedItem();
+        if (matrixDirectory.equals("User specified matrix directory")) {
+            matrixDirectory = userDirectoryText.getText();	
         }
 
         return true;
