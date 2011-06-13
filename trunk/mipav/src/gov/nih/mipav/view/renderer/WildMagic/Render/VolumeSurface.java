@@ -433,9 +433,12 @@ public class VolumeSurface extends VolumeObject
         {
         	for ( int i = 0; i < m_akGeodesicNodes.length; i++ )
         	{
-        		kRenderer.ReleaseAllResources( m_akGeodesicNodes[i] );
-        		m_akGeodesicNodes[i].dispose();
-        		m_akGeodesicNodes[i] = null;
+        		if ( m_akGeodesicNodes[i] != null )
+        		{
+        			kRenderer.ReleaseAllResources( m_akGeodesicNodes[i] );
+        			m_akGeodesicNodes[i].dispose();
+        			m_akGeodesicNodes[i] = null;
+        		}
         	}	
         	m_akGeodesicNodes = null;
         }

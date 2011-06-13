@@ -169,7 +169,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
 	public void dispose(GLAutoDrawable kDrawable)
     {
-		 System.err.println( "dispose(GLAutoDrawable) called" );
+		// System.err.println( "dispose(GLAutoDrawable) called" );
         m_kParent = null;
         m_kVolumeImageA = null;
         m_kVolumeImageB = null;

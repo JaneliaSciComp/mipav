@@ -1201,7 +1201,7 @@ public class VolumeImage implements Serializable {
     				} else {
     					kImageGM.calcMinMax();
     					m_akGradientMagMinMax[i] = new Vector2f( (float)kImageGM.getMin(), (float)kImageGM.getMax() );
-    					m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM, i, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true);
+    					m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM, 0, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true);
     				}
     				final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
     				if (kImageFrame != null) {
