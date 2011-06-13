@@ -224,6 +224,16 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     private int outOfBoundsIndex = 0;
     
     private float fillValue = 0.0f;
+    
+    private JLabel matrixLabel;
+    
+    private JComboBox matrixComboBox;
+    
+    private String matrixDirectory;
+    
+    private JLabel userDirectoryLabel;
+    
+    private JTextField userDirectoryText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -687,7 +697,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 
                 matchImage.getMatrixHolder().addMatrix(resultMatrix);
 
-                reg2.getTransform().saveMatrix(UI.getDefaultDirectory() + matchImage.getImageName() + "_To_" +
+                reg2.getTransform().saveMatrix(matrixDirectory + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mat");
 
 
@@ -979,6 +989,28 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     break;
             } // switch (outOfBoundsComboBox.getSelectedIndex())
         } // else if (event.getSource() == outOfBoundsComboBox)
+        else if (event.getSource() == comboBoxImage) {
+        	refImage = UI.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+        	
+        	matrixComboBox.removeAllItems();
+            
+            if (refImage != null) {
+                matrixComboBox.addItem(refImage.getImageDirectory());	
+            }
+            
+            if ((matchImage.getImageDirectory() != null) && 
+                	(!refImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
+                	matrixComboBox.addItem(matchImage.getImageDirectory());
+            }
+            
+            if ((UI.getDefaultDirectory() != null) && 
+            	(!UI.getDefaultDirectory().equals(refImage.getImageDirectory())) &&
+            	(!UI.getDefaultDirectory().equals(matchImage.getImageDirectory()))) {
+            	matrixComboBox.addItem(UI.getDefaultDirectory());
+            }
+            matrixComboBox.addItem("User specified matrix directory");
+            matrixComboBox.setSelectedIndex(0);
+        }
     }
 
     /**
@@ -1137,6 +1169,15 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     public void setFillValue(float fillValue) {
         this.fillValue = fillValue;
     }
+    
+    
+    /**
+     * Accessor to set directory in which the matrix file is stored
+     * @param matrixDirectory
+     */
+    public void setMatrixDirectory(String matrixDirectory) {
+    	this.matrixDirectory = matrixDirectory;
+    }
 
     /**
      * Calls the algorithm with the set-up parameters.
@@ -1287,6 +1328,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 setFillValue((float)imageMax);
                 break;
         }
+        setMatrixDirectory(scriptParameters.getParams().getString("matrix_directory"));
     }
 
     /**
@@ -1319,6 +1361,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
         scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
         scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("matrix_directory", matrixDirectory));
     }
 
     /**
@@ -1582,6 +1625,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 }
             }
         }
+        comboBox.addItemListener(this);
 
         return comboBox;
     }
@@ -1955,6 +1999,42 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         valueText = new JTextField(String.valueOf(imageMin));
         valueText.setFont(serif12);
         valueText.setEnabled(false);
+        
+        matrixLabel = new JLabel("Matrix file directory");
+        matrixLabel.setForeground(Color.black);
+        matrixLabel.setFont(serif12);
+        matrixLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        matrixComboBox = new JComboBox();
+        matrixComboBox.setFont(serif12);
+        matrixComboBox.setBackground(Color.white);
+        matrixComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        refImage = UI.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+        
+        if (refImage != null) {
+            matrixComboBox.addItem(refImage.getImageDirectory());	
+        }
+        if ((matchImage.getImageDirectory() != null) && 
+        	(!refImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
+        	matrixComboBox.addItem(matchImage.getImageDirectory());
+        }
+        if ((UI.getDefaultDirectory() != null) && 
+        	(!UI.getDefaultDirectory().equals(refImage.getImageDirectory())) &&
+        	(!UI.getDefaultDirectory().equals(matchImage.getImageDirectory()))) {
+        	matrixComboBox.addItem(UI.getDefaultDirectory());
+        }
+        matrixComboBox.addItem("User specified matrix directory");
+        matrixComboBox.setSelectedIndex(0);
+        
+        userDirectoryLabel = new JLabel("User specified matrix directory");
+        userDirectoryLabel.setForeground(Color.black);
+        userDirectoryLabel.setFont(serif12);
+        userDirectoryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        userDirectoryText = new JTextField();
+        userDirectoryText.setFont(serif12);
+        userDirectoryText.setEnabled(true);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1992,6 +2072,27 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(valueText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outPanel.add(matrixLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(matrixComboBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outPanel.add(userDirectoryLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        gbc.weightx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(userDirectoryText, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -2704,6 +2805,11 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 return false;
             }
         }
+        
+        matrixDirectory = (String)matrixComboBox.getSelectedItem();
+        if (matrixDirectory.equals("User specified matrix directory")) {
+            matrixDirectory = userDirectoryText.getText();	
+        }
 
         return true;
     }
@@ -2887,6 +2993,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
             table.put(new ParameterBoolean("do_subsample", true));
             table.put(new ParameterInt("out_of_bounds_index", 0));
+            table.put(new ParameterString("matrix_directory"));
 
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
