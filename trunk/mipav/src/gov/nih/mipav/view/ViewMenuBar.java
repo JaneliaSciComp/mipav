@@ -1020,7 +1020,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
             menuBuilder.setMenuItemEnabled("Mosaic to 3D volume", false);
-            // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
+            menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("Remove time volumes", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
@@ -1060,7 +1060,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Manual 2D series", true);
             menuBuilder.setMenuItemEnabled("Constrained optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 2.5D", false);
-            // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
+            menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("B-Spline automatic registration 2.5D", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("X axis 180", false);
