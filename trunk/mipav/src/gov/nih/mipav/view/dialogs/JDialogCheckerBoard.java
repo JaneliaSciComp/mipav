@@ -98,6 +98,10 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     
     private boolean animating = false;
     
+    private boolean negativeSpeed = false;
+    
+    private int pressedStart = 0;
+    
  
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -138,6 +142,45 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+    
+    
+    
+    public void refreshCc() {
+
+    	if(columnNumber == 1) {
+    		if(yMod == 0) {
+    			if(!isNegativeSpeed()) {
+        			setCc(0);
+        		}else {
+        			setCc(ySep-1);
+        		}
+    		}else {
+    			if(!isNegativeSpeed()) {
+    				setCc(0);
+        		}else {
+        			setCc(-1);
+        			//setCc(compImage.getBandSpacing()[1]-1);
+        			//compImage.loopBandSpacingReverse();
+        		}
+    		}
+    	}else if(rowNumber == 1) {
+    		if(xMod == 0) {
+    			if(!isNegativeSpeed()) {
+        			setCc(0);
+        		}else { 
+        			setCc(xSep-1);
+        		}
+    		}else {
+    			if(!isNegativeSpeed()) {
+    				setCc(0);
+        		}else {
+        			setCc(-1);
+        			//setCc(compImage.getBandSpacing()[1]-1);
+        			//compImage.loopBandSpacingReverse();
+        		}
+    		}
+    	}
+    }
 
     /**
      * Sets parameters in ViewJComponentEditImage when Apply is pressed. Closes dialog box in response to both Apply and
@@ -158,6 +201,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
                 rowNumber = slider.getValue();
                 columnNumber = slider2.getValue();
                 setCheckerboardApplied(true);
+                pressedStart = 0;
             } else { // no checkerboarding
                 rowNumber = -1;
                 columnNumber = -1;
@@ -170,7 +214,9 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
                 regImage.repaint();
             } else {
 
-            	cc = 0;
+            	//cc = 0;
+            	//setCc(ySep-1);
+            	//setCc(compImage.getBandSpacing()[0]-1);
             	
                 compImage.setCheckerboard(rowNumber, columnNumber);
                 compImage.setMakingCheckerboard(true);
@@ -213,7 +259,6 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
             dispose();
         }else if (command.equals("animate")) {
         	if(animateButton.getText().equals("Start")) {
-
         		setAnimating(true);
         		animateButton.setText("Stop");
         		compImage.setCheckerboardAnimate(true);
@@ -227,6 +272,18 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         		checkerboardTypesCB.setEnabled(false);
         		labelRowNumber.setEnabled(false);
         		labelColumnNumber.setEnabled(false);
+        		
+        		ySep = compImage.getySep();
+    			yMod = compImage.getyMod();
+    			
+    			xSep = compImage.getxSep();
+    			xMod = compImage.getxMod();
+    			
+    			
+        		if(pressedStart == 0) {
+        			refreshCc();
+        			pressedStart++;
+        		}
 
         		animateThread = new Animate();
     	    	try {
@@ -316,43 +373,111 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         	int value = speedSlider.getValue();
 
         	if(value == 1) {
-
-        		setAnimateTime(100);
+        		
+        		setNegativeSpeed(true);
+        		setAnimateTime(10);
         		
         	}else if(value == 2) {
 
-        		setAnimateTime(90);
+        		setNegativeSpeed(true);
+        		setAnimateTime(20);
         		
         	}else if(value == 3) {
  
-        		setAnimateTime(80);
+        		setNegativeSpeed(true);
+        		setAnimateTime(30);
         		
         	}else if(value == 4) {
 
-        		setAnimateTime(70);
+        		setNegativeSpeed(true);
+        		setAnimateTime(40);
         		
         	}else if(value == 5) {
 
-        		setAnimateTime(60);
+        		setNegativeSpeed(true);
+        		setAnimateTime(50);
         		
         	}else if(value == 6) {
 
-        		setAnimateTime(50);
+        		setNegativeSpeed(true);
+        		setAnimateTime(60);
         		
         	}else if(value == 7) {
 
-        		setAnimateTime(40);
+        		setNegativeSpeed(true);
+        		setAnimateTime(70);
         		
         	}else if(value == 8) {
 
-        		setAnimateTime(30);
+        		setNegativeSpeed(true);
+        		setAnimateTime(80);
         		
         	}else if(value == 9) {
 
-        		setAnimateTime(20);
+        		setNegativeSpeed(true);
+        		setAnimateTime(90);
         		
         	}else if(value == 10) {
+        		if(isNegativeSpeed() == false) {
+        			setCc(getCc() - 1);
+        		}
+        		setNegativeSpeed(true);
+        		setAnimateTime(100);
+        		
+        	}
+        	
+        	
+        	
+        	if(value == 11) {
+        		if(isNegativeSpeed() == true) {
+        			setCc(getCc() + 1);
+        		}
+        		setNegativeSpeed(false);
+        		setAnimateTime(100);
+        		
+        	}else if(value == 12) {
 
+        		setNegativeSpeed(false);
+        		setAnimateTime(90);
+        		
+        	}else if(value == 13) {
+ 
+        		setNegativeSpeed(false);
+        		setAnimateTime(80);
+        		
+        	}else if(value == 14) {
+
+        		setNegativeSpeed(false);
+        		setAnimateTime(70);
+        		
+        	}else if(value == 15) {
+
+        		setNegativeSpeed(false);
+        		setAnimateTime(60);
+        		
+        	}else if(value == 16) {
+
+        		setNegativeSpeed(false);
+        		setAnimateTime(50);
+        		
+        	}else if(value == 17) {
+
+        		setNegativeSpeed(false);
+        		setAnimateTime(40);
+        		
+        	}else if(value == 18) {
+
+        		setNegativeSpeed(false);
+        		setAnimateTime(30);
+        		
+        	}else if(value == 19) {
+
+        		setNegativeSpeed(false);
+        		setAnimateTime(20);
+        		
+        	}else if(value == 20) {
+
+        		setNegativeSpeed(false);
         		setAnimateTime(10);
         		
         	}
@@ -481,7 +606,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         
         panel.add(speedLabel);
         
-        speedSlider = new JSlider(1, 10, 7);
+        speedSlider = new JSlider(1, 20, 17);
         speedSlider.setFont(serif12);
         speedSlider.setEnabled(false);
         speedSlider.setMinorTickSpacing(1);
@@ -490,8 +615,12 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         speedSlider.addChangeListener(this);
         speedSlider.setVisible(true);
         speedLabelTable = new Hashtable<Integer,JLabel>();
-        speedLabelTable.put(new Integer(1), createLabel("1"));
-        speedLabelTable.put(new Integer(10), createLabel("10"));
+        speedLabelTable.put(new Integer(1), createLabel("-10"));
+        speedLabelTable.put(new Integer(6), createLabel("-5"));
+        speedLabelTable.put(new Integer(10), createLabel("-1   "));
+        speedLabelTable.put(new Integer(11), createLabel("1"));
+        speedLabelTable.put(new Integer(15), createLabel("5"));
+        speedLabelTable.put(new Integer(20), createLabel("10"));
         speedSlider.setLabelTable(speedLabelTable);
         speedSlider.setPaintLabels(true);
         
@@ -594,7 +723,17 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         	
         	
         }
+        setPressedStart(0);
         
+        ySep = compImage.getySep();
+		yMod = compImage.getyMod();
+		
+		xSep = compImage.getxSep();
+		xMod = compImage.getxMod();
+		
+        refreshCc();
+        
+
         
     }
     
@@ -658,26 +797,45 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
 
 
+	public synchronized boolean isNegativeSpeed() {
+		return negativeSpeed;
+	}
+
+
+
+
+
+	public synchronized void setNegativeSpeed(boolean negativeSpeed) {
+		this.negativeSpeed = negativeSpeed;
+	}
+
+
+
+
+
 	/**
      * Cleans up the frame before closing.
      * 
      * @param event the window event that triggered this method
      */
     public void windowClosing(final WindowEvent event) {
-    	if(animateThread != null && animateThread.isAlive()) {
+    	
 
     		setAnimating(false);
     		setCheckerboardApplied(false);
-    		while(!isThreadStopped()) {
-				//do nothing
-			}
+    		if(animateThread != null && animateThread.isAlive()) {
+	    		while(!isThreadStopped()) {
+					//do nothing
+				}
+    		}
     		compImage.addMouseListener(compImage);
     		compImage.addMouseMotionListener(compImage);
     		
     		
     		rowNumber = -1;
             columnNumber = -1;
-            cc = 0;
+            //cc = 0;
+            setCc(0);
             compImage.setCheckerboardAnimate(false);
             compImage.setCheckerboard(rowNumber, columnNumber);
             compImage.setMakingCheckerboard(true);
@@ -688,7 +846,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     		dispose();
     	
     		
-    	}
+    	
     }
 
 
@@ -697,7 +855,25 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
 
 
-    /**
+    public synchronized int getPressedStart() {
+		return pressedStart;
+	}
+
+
+
+
+
+	public synchronized void setPressedStart(int pressedStart) {
+		this.pressedStart = pressedStart;
+	}
+
+
+
+
+
+
+
+	/**
      * 
      * @author pandyan
      *
@@ -726,40 +902,100 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
 
     		while(isAnimating()) {
-    			animateCheckerboard();
+    			/*animateCheckerboard();
     			compImage.paintComponent(compImage.getGraphics());
-    			cc = cc + 1;
+    			
+    			
+    			if(!isNegativeSpeed()) {
+    				//cc = cc + 1;
+    				setCc(getCc() + 1);
+    			}else {
+    				//cc = cc - 1;
+    				setCc(getCc() - 1);
+    			}*/
     			
     			if(columnNumber == 1) {
     				if(yMod == 0) {
-    	    			if(cc == ySep) {
-    	    				cc = 0;
-    	    			}
+    					if(!isNegativeSpeed()) {
+	    	    			if(getCc() == ySep) {
+	    	    				//cc = 0;
+	    	    				setCc(0);
+	    	    			}
+    					}else {
+    						if(getCc() < 0) {
+    							//cc = ySep - 1;
+    							setCc(ySep-1);
+    						}
+    					}
         			}else {
-
-        				int lastIndex = compImage.getBandSpacing().length - 1;
-        				if(cc == compImage.getBandSpacing()[lastIndex]) {
-        					cc = 0;
-        					compImage.loopBandSpacing();
+        				//this is for positive speed
+        				if(!isNegativeSpeed()) {
+	        				int lastIndex = compImage.getBandSpacing().length - 1;
+	        				if(getCc() == compImage.getBandSpacing()[lastIndex]) {
+	        					//cc = 0;
+	        					setCc(0);
+	        					compImage.loopBandSpacing();
+	        				}
+        				}else {
+        					if(getCc() < 0) {
+	        					//cc = 0;
+	        					setCc(compImage.getBandSpacing()[0]-1);
+	        					compImage.loopBandSpacingReverse();
+	        				}
+        					
+        					
+        					
+        					
         				}
 
         			}
     			}else if(rowNumber == 1) {
     				if(xMod == 0) {
-    	    			if(cc == xSep) {
-    	    				cc = 0;
-    	    			}
+    	    			if(!isNegativeSpeed()) {
+	    	    			if(getCc() == xSep) {
+	    	    				//cc = 0;
+	    	    				setCc(0);
+	    	    			}
+    					}else {
+    						if(getCc() < 0) {
+    							//cc = ySep - 1;
+    							setCc(xSep-1);
+    						}
+    					}
         			}else {
-
-        				int lastIndex = compImage.getBandSpacing().length - 1;
-        				if(cc == compImage.getBandSpacing()[lastIndex]) {
-        					cc = 0;
-        					compImage.loopBandSpacing();
+        				if(!isNegativeSpeed()) {
+	        				int lastIndex = compImage.getBandSpacing().length - 1;
+	        				if(getCc() == compImage.getBandSpacing()[lastIndex]) {
+	        					//cc = 0;
+	        					setCc(0);
+	        					compImage.loopBandSpacing();
+	        				}
+        				}else {
+        					if(getCc() < 0) {
+	        					//cc = 0;
+	        					setCc(compImage.getBandSpacing()[0]-1);
+	        					compImage.loopBandSpacingReverse();
+	        				}
         				}
 
         			}
     			}
     			
+    			
+    			
+    			
+    			
+    			animateCheckerboard();
+    			compImage.paintComponent(compImage.getGraphics());
+    			
+    			
+    			if(!isNegativeSpeed()) {
+    				//cc = cc + 1;
+    				setCc(getCc() + 1);
+    			}else {
+    				//cc = cc - 1;
+    				setCc(getCc() - 1);
+    			}
     			
     			
 
@@ -805,86 +1041,87 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 		        int x = 0;
 
 		        
-		    	if(columnNumber == 1) {
-		    		if(yMod == 0) {
-			    		for (y = 0; y < yDim;) {
-			                for (x = 0; x < xDim; x++) {	
-			                	if(y <= cc) {
-			                		if(y == cc) {
-			                			flip(x,y,xDim);
-			                		}
+		      
+			    	if(columnNumber == 1) {
+			    		if(yMod == 0) {
+				    		for (y = 0; y < yDim;) {
+				                for (x = 0; x < xDim; x++) {	
+				                	if(y <= getCc()) {
+				                		if(y == getCc()) {
+				                			flip(x,y,xDim);
+				                		}
+				                	}else {
+				                		flip(x,y,xDim);
+				                	}
+				                } 
+				                if(y < getCc()) {
+			                		y++;
 			                	}else {
-			                		flip(x,y,xDim);
+			                		y = y + ySep;
 			                	}
-			                } 
-			                if(y < cc) {
-		                		y++;
-		                	}else {
-		                		y = y + ySep;
-		                	}
-			    		}
-		    		}else {
-		    			setBandSpacingCounter(0);
-		    			for (y = 0; y < yDim;) {
-			                for (x = 0; x < xDim; x++) {	
-			                	if(y <= cc) {
-			                		if(y == cc) {
-			                			flip(x,y,xDim);
-			                		}
+				    		}
+			    		}else {
+			    			setBandSpacingCounter(0);
+			    			for (y = 0; y < yDim;) {
+				                for (x = 0; x < xDim; x++) {	
+				                	if(y <= getCc()) {
+				                		if(y == getCc()) {
+				                			flip(x,y,xDim);
+				                		}
+				                	}else {
+				                		flip(x,y,xDim);
+				                	}
+				                }
+				                if(y < getCc()) {
+			                		y++;
 			                	}else {
-			                		flip(x,y,xDim);
-			                	}
-			                }
-			                if(y < cc) {
-		                		y++;
-		                	}else {
-		                		y = y + compImage.getBandSpacing()[getBandSpacingCounter()];
-		                		int counter = getBandSpacingCounter() + 1;
-		                		setBandSpacingCounter(counter);
-		                	} 
-			    		}
-		    		}	
-		    	}else if(rowNumber == 1) {
-		    		if(xMod == 0) {
-			    		for (x = 0; x < xDim;) {
-			                for (y = 0; y < yDim; y++) {	
-			                	if(x <= cc) {
-			                		if(x == cc) {
-			                			flip(x,y,xDim);
-			                		}
+			                		y = y + compImage.getBandSpacing()[getBandSpacingCounter()];
+			                		int counter = getBandSpacingCounter() + 1;
+			                		setBandSpacingCounter(counter);
+			                	} 
+				    		}
+			    		}	
+			    	}else if(rowNumber == 1) {
+			    		if(xMod == 0) {
+				    		for (x = 0; x < xDim;) {
+				                for (y = 0; y < yDim; y++) {	
+				                	if(x <= getCc()) {
+				                		if(x == getCc()) {
+				                			flip(x,y,xDim);
+				                		}
+				                	}else {
+				                		flip(x,y,xDim);
+				                	}
+				                } 
+				                if(x < getCc()) {
+			                		x++;
 			                	}else {
-			                		flip(x,y,xDim);
+			                		x = x + xSep;
 			                	}
-			                } 
-			                if(x < cc) {
-		                		x++;
-		                	}else {
-		                		x = x + xSep;
-		                	}
-			    		}
-		    		}else {
-		    			setBandSpacingCounter(0);
-		    			for (x = 0; x < xDim;) {
-			                for (y = 0; y < yDim; y++) {	
-			                	if(x <= cc) {
-			                		if(x == cc) {
-			                			flip(x,y,xDim);
-			                		}
+				    		}
+			    		}else {
+			    			setBandSpacingCounter(0);
+			    			for (x = 0; x < xDim;) {
+				                for (y = 0; y < yDim; y++) {	
+				                	if(x <= getCc()) {
+				                		if(x == getCc()) {
+				                			flip(x,y,xDim);
+				                		}
+				                	}else {
+				                		flip(x,y,xDim);
+				                	}
+				                }
+				                if(x < getCc()) {
+			                		x++;
 			                	}else {
-			                		flip(x,y,xDim);
-			                	}
-			                }
-			                if(x < cc) {
-		                		x++;
-		                	}else {
-		                		x = x + compImage.getBandSpacing()[getBandSpacingCounter()];
-		                		int counter = getBandSpacingCounter() + 1;
-		                		setBandSpacingCounter(counter);
-		                	} 
+			                		x = x + compImage.getBandSpacing()[getBandSpacingCounter()];
+			                		int counter = getBandSpacingCounter() + 1;
+			                		setBandSpacingCounter(counter);
+			                	} 
+				    		}
 			    		}
-		    		}
-		    	}
-		    	
+			    	}
+		
 		    }
     	
     }
