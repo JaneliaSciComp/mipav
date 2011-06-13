@@ -62,7 +62,7 @@ public class VolumeSlices extends VolumeObject
      * @param fY the size of the volume in the y-dimension (extent * resolutions)
      * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
-    public VolumeSlices ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ )
+    public VolumeSlices ( Renderer kRenderer, VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ )
     {
         super(kImageA,kImageB,kTranslate,fX,fY,fZ);
 
@@ -89,10 +89,30 @@ public class VolumeSlices extends VolumeObject
         SetCenter(new Vector3f( .5f, .5f, .5f ) );
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlanes[i].AttachEffect( m_akPlaneEffect[i] );
+            kRenderer.LoadResources( m_akPlanes[i] );
+            m_akPlanes[i].DetachAllEffects();
+            
+            m_akPlanes[i].AttachEffect( m_akPlaneEffectTransparent[i] );
+            kRenderer.LoadResources( m_akPlanes[i] );
+            m_akPlanes[i].DetachAllEffects();
+            
+            m_akPlanes[i].AttachEffect( m_kVolumePreShader[i] );
+            kRenderer.LoadResources( m_akPlanes[i] );
+            m_akPlanes[i].DetachAllEffects();
+            
+            m_akPlanes[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
+            kRenderer.LoadResources( m_akPlanes[i] );
+            m_akPlanes[i].DetachAllEffects();
+        }
+        kRenderer.LoadAllResources( m_kScene );
     }
 
     /** Delete local memory. */
-    public void dispose()
+    public void dispose(Renderer kRenderer)
     {
         for ( int i = 0; i < 3; i++ )
         {   
@@ -100,6 +120,7 @@ public class VolumeSlices extends VolumeObject
             {
                 if ( m_kVolumePreShader[i] != null )
                 {
+                	kRenderer.ReleaseResources(m_kVolumePreShader[i]);
                     m_kVolumePreShader[i].dispose();
                     m_kVolumePreShader[i] = null;
                 }
@@ -109,6 +130,7 @@ public class VolumeSlices extends VolumeObject
             {
                 if ( m_kVolumePreShaderTransparent[i] != null )
                 {
+                	kRenderer.ReleaseResources(m_kVolumePreShaderTransparent[i]);
                     m_kVolumePreShaderTransparent[i].dispose();
                     m_kVolumePreShaderTransparent[i] = null;
                 }
@@ -118,6 +140,7 @@ public class VolumeSlices extends VolumeObject
             {
                 if ( m_akPlaneEffect[i] != null )
                 {
+                	kRenderer.ReleaseResources(m_akPlaneEffect[i]);
                     m_akPlaneEffect[i].dispose();
                     m_akPlaneEffect[i] = null;
                 }
@@ -127,6 +150,7 @@ public class VolumeSlices extends VolumeObject
             {
                 if ( m_akPlaneEffectTransparent[i] != null )
                 {
+                	kRenderer.ReleaseResources(m_akPlaneEffectTransparent[i]);
                     m_akPlaneEffectTransparent[i].dispose();
                     m_akPlaneEffectTransparent[i] = null;
                 }
@@ -136,6 +160,8 @@ public class VolumeSlices extends VolumeObject
             {
                 if ( m_akPlanes[i] != null )
                 {
+                	kRenderer.ReleaseVBuffer(m_akPlanes[i].VBuffer);
+                	kRenderer.ReleaseIBuffer(m_akPlanes[i].IBuffer);
                     m_akPlanes[i].dispose();
                     m_akPlanes[i] = null;
                 }
@@ -145,6 +171,8 @@ public class VolumeSlices extends VolumeObject
             {
                 if ( m_akBoundingBox[i] != null )
                 {
+                	kRenderer.ReleaseVBuffer(m_akBoundingBox[i].VBuffer);
+                	kRenderer.ReleaseIBuffer(m_akBoundingBox[i].IBuffer);
                     m_akBoundingBox[i].dispose();
                     m_akBoundingBox[i] = null;
                 }
@@ -162,6 +190,7 @@ public class VolumeSlices extends VolumeObject
         m_abShowPlanes = null;
         m_abShowBoundingBox = null;
 
+        super.dispose(kRenderer);
     }
 
     public Node GetScene()

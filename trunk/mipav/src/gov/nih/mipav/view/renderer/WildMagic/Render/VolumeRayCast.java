@@ -132,7 +132,7 @@ public class VolumeRayCast extends VolumeObject
     }
 
     /** delete local memory. */
-    public void dispose()
+    public void dispose(Renderer kRenderer)
     {
         if ( m_kMaterial != null )
         {
@@ -141,20 +141,24 @@ public class VolumeRayCast extends VolumeObject
         }
         if ( m_kMesh != null )
         {
+        	kRenderer.ReleaseVBuffer( m_kMesh.VBuffer );
+        	kRenderer.ReleaseIBuffer( m_kMesh.IBuffer );
             m_kMesh.dispose();
             m_kMesh = null;
         }
         if ( m_kVolumeShaderEffect != null )
         {
+        	kRenderer.ReleaseResources( m_kVolumeShaderEffect );
             m_kVolumeShaderEffect.dispose();
             m_kVolumeShaderEffect = null;
         }
         if ( m_spkVertexColor3Shader != null )
         {
+        	kRenderer.ReleaseResources( m_spkVertexColor3Shader );
             m_spkVertexColor3Shader.dispose();
             m_spkVertexColor3Shader = null;
         }
-        super.dispose();
+        super.dispose(kRenderer);
     }
 
     /**

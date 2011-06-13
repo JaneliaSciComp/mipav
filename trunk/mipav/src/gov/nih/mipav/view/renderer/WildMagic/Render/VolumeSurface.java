@@ -65,7 +65,6 @@ public class VolumeSurface extends VolumeObject
     /** Current displayed geodesic component. */
     private int m_iCurrentGeodesic = 0;
     private float m_fBlend = 1.0f;
-    private Vector<Spatial> m_kDisplayObjs = new Vector<Spatial>();
     private SurfaceState m_kSurfaceState = null;
 
     /** Create a new VolumeSurface with the VolumeImage parameter.
@@ -380,20 +379,24 @@ public class VolumeSurface extends VolumeObject
     }
 
     /** Delete local memory. */
-    public void dispose()
+    public void dispose(Renderer kRenderer)
     {
         if ( m_kVolumePreShader != null )
         {
+        	kRenderer.ReleaseResources(m_kVolumePreShader);
             m_kVolumePreShader.dispose();
             m_kVolumePreShader = null;
         }
         if ( m_kVolumePreShaderTransparent != null )
         {
+        	kRenderer.ReleaseResources(m_kVolumePreShaderTransparent);
             m_kVolumePreShaderTransparent.dispose();
             m_kVolumePreShaderTransparent = null;
         }
         if ( m_kMesh != null )
         {
+        	kRenderer.ReleaseVBuffer(m_kMesh.VBuffer);
+        	kRenderer.ReleaseIBuffer(m_kMesh.IBuffer);        	
             m_kMesh.dispose();
             m_kMesh = null;
         }
@@ -404,17 +407,39 @@ public class VolumeSurface extends VolumeObject
         }
         if ( m_kLightShader != null )
         {
+        	kRenderer.ReleaseResources(m_kLightShader);
             m_kLightShader.dispose();
             m_kLightShader = null;
         }
         if ( m_kLightShaderTransparent != null )
         {
+        	kRenderer.ReleaseResources(m_kLightShaderTransparent);
             m_kLightShaderTransparent.dispose();
             m_kLightShaderTransparent = null;
         }
         
         m_kCenter = null;
-        m_akBackupColor = null;        
+        for ( int i = 0; i < m_akBackupColor.length; i++ )
+        {
+        	m_akBackupColor[i] = null;
+        }
+        m_akBackupColor = null;    
+        if ( m_kSurfaceState != null )
+        {
+        	m_kSurfaceState.dispose();
+        }
+        
+        if ( m_akGeodesicNodes != null )
+        {
+        	for ( int i = 0; i < m_akGeodesicNodes.length; i++ )
+        	{
+        		kRenderer.ReleaseAllResources( m_akGeodesicNodes[i] );
+        		m_akGeodesicNodes[i].dispose();
+        		m_akGeodesicNodes[i] = null;
+        	}	
+        	m_akGeodesicNodes = null;
+        }
+        super.dispose(kRenderer);
     }
 
 

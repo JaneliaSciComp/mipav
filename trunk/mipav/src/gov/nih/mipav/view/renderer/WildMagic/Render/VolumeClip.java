@@ -151,15 +151,17 @@ public class VolumeClip extends VolumeObject
     }
 
     /** Delete local memory. */
-    public void dispose()
+    public void dispose(Renderer kRenderer)
     {
         if ( m_kVertexColor3Shader != null )
         {
+        	kRenderer.ReleaseResources(m_kVertexColor3Shader);
             m_kVertexColor3Shader.dispose();
             m_kVertexColor3Shader = null;
         }
         if ( m_kArbRotate != null )
         {
+        	kRenderer.ReleaseAllResources(m_kArbRotate);
             m_kArbRotate.dispose();
             m_kArbRotate = null;
         }
@@ -171,10 +173,13 @@ public class VolumeClip extends VolumeObject
         }
         for ( int i = 0; i < MAX_CLIP_PLANES; i++ )
         {
+        	kRenderer.ReleaseVBuffer(m_akPolyline[i].VBuffer);
+        	kRenderer.ReleaseIBuffer(m_akPolyline[i].IBuffer);
             m_akPolyline[i].dispose();
             m_akPolyline[i] = null;
         }
         m_akPolyline = null;
+        super.dispose(kRenderer);
     }
 
     /** Returns the value of the specified axis-aligend clip plane.

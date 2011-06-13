@@ -137,12 +137,13 @@ public abstract class VolumeObject
     public void Blend( @SuppressWarnings("unused")float fValue ) {}
 
     /** delete local memory. */
-    public void dispose()
+    public void dispose(Renderer kRenderer)
     {
         m_kVolumeImageA = null;
         m_kTranslate = null;
         if ( m_kScene != null )
         {
+        	kRenderer.ReleaseAllResources(m_kScene);
             m_kScene.dispose();
             m_kScene = null;
         }
@@ -156,6 +157,7 @@ public abstract class VolumeObject
         }
         if ( m_kLightShader != null )
         {
+        	kRenderer.ReleaseResources(m_kLightShader);
             m_kLightShader.dispose();
             m_kLightShader = null;
         }

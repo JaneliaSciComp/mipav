@@ -405,6 +405,8 @@ public class PlaneRender_WM extends GPURenderBase
         m_aiAxisOrder = null;
         m_abAxisFlip = null;
 
+        // Shared context will delete the slices:
+        m_kDisplayList.clear();
         super.dispose(arg0);
     }
     

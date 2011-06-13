@@ -34,9 +34,12 @@ public class VolumeNode extends VolumeObject
     }
 
     /** Delete local memory. */
-    public void dispose()
+    public void dispose(Renderer kRenderer)
     {
+    	kRenderer.ReleaseAllResources(m_kNode);
+    	m_kNode.dispose();
         m_kNode = null;
+        super.dispose(kRenderer);
     }
     
     /* (non-Javadoc)

@@ -188,13 +188,13 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         if ( m_kSphere != null )
         {
             m_kDisplayList.remove( m_kSphere );
-            m_kSphere.dispose();
+            m_kSphere.dispose(m_pkRenderer);
             m_kSphere = null;
         }
         if ( m_kCylinder != null )
         {
             m_kDisplayList.remove( m_kCylinder );
-            m_kCylinder.dispose();
+            m_kCylinder.dispose(m_pkRenderer);
             m_kCylinder = null;
         }
         

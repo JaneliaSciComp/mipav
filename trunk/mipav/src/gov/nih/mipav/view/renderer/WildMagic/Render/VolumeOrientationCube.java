@@ -45,12 +45,22 @@ public class VolumeOrientationCube extends VolumeObject
     }
     
     /** Delete local memory. */
-    public void dispose()
+    public void dispose(Renderer kRenderer)
     {
+    	if (m_akOrientationCube != null)
+    	{
+    		for ( int i = 0; i < m_akOrientationCube.length; i++ )
+    		{
+    			kRenderer.ReleaseVBuffer(m_akOrientationCube[i].VBuffer);
+    			kRenderer.ReleaseIBuffer(m_akOrientationCube[i].IBuffer);
+    			m_akOrientationCube[i].dispose();
+    		}
+    	}
         m_akOrientationCube = null;
 
         m_aakAxisFiles = null;
         m_kCubeTranslate = null;
+        super.dispose(kRenderer);
     }
     
     /* (non-Javadoc)

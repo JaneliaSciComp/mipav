@@ -44,19 +44,23 @@ public class VolumeBoundingBox extends VolumeObject
     }
 
     /** Delete local memory. */
-    public void dispose()
+    public void dispose(Renderer kRenderer)
     {
         for ( int i = 0; i < 6; i++ )
         {
+        	kRenderer.ReleaseVBuffer(m_akBoundingBox[i].VBuffer);
+        	kRenderer.ReleaseIBuffer(m_akBoundingBox[i].IBuffer);
             m_akBoundingBox[i].dispose();
             m_akBoundingBox[i] = null;
         }
         m_akBoundingBox = null;
         if ( m_kVertexColor3Shader != null )
         {
+        	kRenderer.ReleaseResources(m_kVertexColor3Shader);
             m_kVertexColor3Shader.dispose();
             m_kVertexColor3Shader = null;
         }
+        super.dispose(kRenderer);
     }
 
     /* (non-Javadoc)
