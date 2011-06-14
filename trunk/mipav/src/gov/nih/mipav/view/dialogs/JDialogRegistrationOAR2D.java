@@ -699,7 +699,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
                 reg2.getTransform().saveMatrix(matrixDirectory + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mat");
-
+                Preferences.debug("Saved " + matrixDirectory + matchImage.getImageName() + "_To_" +
+                                               refImage.getImageName() + ".mat\n");
 
                 insertScriptLine();
             }
