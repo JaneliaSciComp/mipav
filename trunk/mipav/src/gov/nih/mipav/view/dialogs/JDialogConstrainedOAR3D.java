@@ -623,6 +623,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                 message += "with number or Z angles in coarse sampling " + numCoarseZ + ".\n";
                 reg3.getTransform().saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mtx", message);
+                Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
+                                               refImage.getImageName() + ".mtx\n");
 
                 insertScriptLine();
             }
