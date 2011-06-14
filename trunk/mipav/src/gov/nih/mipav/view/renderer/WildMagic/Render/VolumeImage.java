@@ -194,6 +194,7 @@ public class VolumeImage implements Serializable {
                     aucData[i + 1] = kImage.GetData()[i + 1];
                     aucData[i + 2] = kImage.GetData()[i + 2];
                     aucData[i + 3] = kImage.GetData()[i];
+                    System.err.println( kImage.GetData()[i + 3] + " " + kImage.GetData()[i + 1] + " " + kImage.GetData()[i + 2] );
                 }
                 // System.err.println( bVal );
             }

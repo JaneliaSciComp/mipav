@@ -94,8 +94,7 @@ public class VolumeImageExtract extends VolumeImageViewer
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 m_pkRenderer.EndScene();
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeCalcTarget, m_iSlice, false );
-            //m_pkRenderer.DisplayBackBuffer();
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeCalcTarget, m_iSlice );
             m_iSlice++; 
             if ( m_iSlice >= m_aiNewExtents[2])
             {
@@ -116,16 +115,13 @@ public class VolumeImageExtract extends VolumeImageViewer
               {          
                   m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                   m_pkRenderer.EndScene();
-                  //writeImage();
               }
               m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeCalcTarget2, m_iSlice, true );
-              //m_pkRenderer.DisplayBackBuffer();
               m_iSlice++; 
               if ( m_iSlice >= m_aiNewExtents[2])
               {
                   m_bDisplaySecond = false;
                   m_iSlice = 0;
-                  //System.err.println( m_kCalcImage2.Min + " " + m_kCalcImage2.Max + " " + m_kCalcImage2.TriTable.size() );
                   
                   int[] direction = MipavCoordinateSystems.getModelDirections(m_kVolumeImage.GetImage());
                   float[] startLocation = m_kVolumeImage.GetImage().getFileInfo(0).getOrigin();
