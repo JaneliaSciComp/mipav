@@ -933,6 +933,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         final JPanel generalPanel = new JPanel(new GridBagLayout());
         generalPanel.setBorder(buildTitledBorder(""));
+        
+        final JLabel directoryLabel = new JLabel("Image directory:  " + image.getImageDirectory());
+        directoryLabel.setFont(serif12);
+        directoryLabel.setForeground(Color.black);
 
         final JLabel nameLabel = new JLabel("Image name (without suffix):");
         nameLabel.setFont(serif12);
@@ -1054,6 +1058,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             gbc.gridwidth = 1;
         }
 
+        generalPanel.add(directoryLabel, gbc);
+        gbc.gridy++;
         generalPanel.add(nameLabel, gbc);
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
