@@ -68,8 +68,7 @@ public class VolumeImageCrop extends VolumeImageViewer
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 m_pkRenderer.EndScene();
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetVolumeTarget(), m_iSlice, true );
-            //m_pkRenderer.DisplayBackBuffer();
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetVolumeTarget(), m_iSlice );
             m_iSlice++; 
             if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
             {

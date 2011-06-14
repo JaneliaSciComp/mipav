@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
@@ -8,6 +9,8 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.KeyListener;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -51,6 +54,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
     
     private SurfaceClipEffect m_kSurfaceClip = null;
     private boolean m_bCreateMaskImage = false;
+    private ModelImage m_kOutputImage = null;
     
     public VolumeImageSurfaceMask( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList, boolean bCreateMask )
     {
@@ -115,19 +119,18 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
             }
             if ( m_bCreateMaskImage )
             {
-               m_pkRenderer.DisplayBackBuffer();
+            	SaveImage(m_iSlice);
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetSurfaceTarget(), m_iSlice, m_bCreateMaskImage );
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetSurfaceTarget(), m_iSlice );
             m_iSlice++; 
             if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
-            {
-            	
+            {            	
                 if ( bDrawSurface && m_bCreateMaskImage )
                 {
-                    ModelImage kMask = VolumeImage.CreateImageFromTexture( m_kVolumeImage.GetSurfaceTarget().GetImage(), true );
+                    //ModelImage kMask = VolumeImage.CreateImageFromTexture( m_kVolumeImage.GetSurfaceTarget().GetImage(), true );
                     // The algorithm has completed and produced a new image to be displayed.
                     try {
-                        new ViewJFrameImage(kMask, null, new Dimension(610, 200));
+                        new ViewJFrameImage(m_kOutputImage, null, new Dimension(610, 200));
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: unable to open new frame");
                     }
@@ -163,7 +166,31 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         m_kSurfaceClip = null;
         super.dispose(arg0);
     }
-    
+
+    private void SaveImage(int iZ)
+    {
+        if ( m_kOutputImage == null )
+        {
+            m_kOutputImage = new ModelImage( ModelStorageBase.ARGB, m_kVolumeImage.GetImage().getExtents(), "SurfaceMask" );
+        }
+        int iWidth = m_kOutputImage.getExtents()[0];
+        int iHeight = m_kOutputImage.getExtents()[1];
+        ByteBuffer kBuffer = m_pkRenderer.GetScreenImage( iWidth, iHeight );
+        int iSize = iWidth * iHeight * 4;
+        try {
+            byte[] aucData = new byte[iSize];
+            for ( int i = 0; i < iSize; i += 4)
+            {
+                aucData[i] = (byte)255;
+                aucData[i+1] = kBuffer.array()[i];
+                aucData[i+2] = kBuffer.array()[i+1];
+                aucData[i+3] = kBuffer.array()[i+2];
+            }
+            m_kOutputImage.importData( iZ * iSize, aucData, false );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     
     @Override
 	protected void CreateScene ()
