@@ -508,7 +508,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			 }
 			 UpdateSceneRotation();
 			 updateLighting( m_akLights );
-			 VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList);
+			 VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList, false);
 		 }
 		 if ( m_bCrop )
 		 {
