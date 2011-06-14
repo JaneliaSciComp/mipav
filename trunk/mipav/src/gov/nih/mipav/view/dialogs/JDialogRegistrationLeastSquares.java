@@ -12,6 +12,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 
 import java.util.*;
 
@@ -187,6 +188,8 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                 Preferences.debug(matchImage.getMatrix().toString());
                 LSMatch.getTransformBtoA().saveMatrix(matrixDirectory + matchImage.getImageName() +
                                                       "_To_" + baseImage.getImageName() + ".mtx");
+                Preferences.debug("Saved " + matrixDirectory + matchImage.getImageName() + "_To_" +
+                        baseImage.getImageName() + ".mtx\n");
                 LSMatch.calculateResiduals();
                 xdimA = baseImage.getExtents()[0];
                 ydimA = baseImage.getExtents()[1];
