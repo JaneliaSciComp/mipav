@@ -29,9 +29,9 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
     /**
      * @param args
      */
-    public static void main( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList )
+    public static void main( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList, boolean bCreateMask )
     {
-        VolumeImageSurfaceMask kWorld = new VolumeImageSurfaceMask(canvas, kParentFrame, kVolumeImage, kDisplayList);
+        VolumeImageSurfaceMask kWorld = new VolumeImageSurfaceMask(canvas, kParentFrame, kVolumeImage, kDisplayList, bCreateMask );
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
         final Animator animator = new Animator( kWorld.GetCanvas() );
@@ -50,11 +50,14 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
     private Vector<VolumeObject> m_kDisplayList = null;
     
     private SurfaceClipEffect m_kSurfaceClip = null;
-    public VolumeImageSurfaceMask( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList )
+    private boolean m_bCreateMaskImage = false;
+    
+    public VolumeImageSurfaceMask( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList, boolean bCreateMask )
     {
         super( canvas, kParentFrame, kVolumeImage );
 
         m_kDisplayList = kDisplayList;
+        m_bCreateMaskImage = bCreateMask;
     }
 
     @Override
@@ -109,15 +112,17 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                     }
                 }
                 m_pkRenderer.EndScene();
-                //writeImage();
             }
-            //m_pkRenderer.DisplayBackBuffer();
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetSurfaceTarget(), m_iSlice, true );
+            if ( m_bCreateMaskImage )
+            {
+               m_pkRenderer.DisplayBackBuffer();
+            }
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetSurfaceTarget(), m_iSlice, m_bCreateMaskImage );
             m_iSlice++; 
             if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
             {
-            	/*
-                if ( bDrawSurface )
+            	
+                if ( bDrawSurface && m_bCreateMaskImage )
                 {
                     ModelImage kMask = VolumeImage.CreateImageFromTexture( m_kVolumeImage.GetSurfaceTarget().GetImage(), true );
                     // The algorithm has completed and produced a new image to be displayed.
@@ -126,7 +131,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: unable to open new frame");
                     }
-                } */
+                }
                 bSurfaceAdded = false;
                 m_iSlice = 0;
             }
