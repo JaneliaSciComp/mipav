@@ -1073,6 +1073,7 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                         else
                         {}
                     }
+                    
                     else
                     {
                         float fValue = m_kImageA.get(iDataIndex).floatValue();
@@ -1081,6 +1082,9 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                         if ( m_aucTextureImageDataA != null )
                         {
                             m_aucTextureImageDataA[iA++] = bValue;
+                            m_aucTextureImageDataA[iA++] = bValue;
+                            m_aucTextureImageDataA[iA++] = bValue;
+                            m_aucTextureImageDataA[iA++] = (byte)255;
                         }
                         else
                         {
@@ -1109,6 +1113,9 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                             if ( m_aucTextureImageDataB != null )
                             {
                                 m_aucTextureImageDataB[iB++] = bValue;
+                                m_aucTextureImageDataB[iB++] = bValue;
+                                m_aucTextureImageDataB[iB++] = bValue;
+                                m_aucTextureImageDataB[iB++] = (byte)255;
                             }
                             else
                             {
@@ -1230,17 +1237,17 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         
         if ( aucTextureImageData != null )
         {
-            if ( kImage.isColorImage() )
+            //if ( kImage.isColorImage() )
             {
                 aucTextureImageData[iTextureIndex * 4 + 0] = (byte)0;
                 aucTextureImageData[iTextureIndex * 4 + 1] = (byte)0;
                 aucTextureImageData[iTextureIndex * 4 + 2] = (byte)0;
                 aucTextureImageData[iTextureIndex * 4 + 3] = (byte)0;
             }
-            else
-            {
-                aucTextureImageData[iTextureIndex] = (byte)0;
-            }
+            //else
+            //{
+            //    aucTextureImageData[iTextureIndex] = (byte)0;
+            //}
         }
         else
         {

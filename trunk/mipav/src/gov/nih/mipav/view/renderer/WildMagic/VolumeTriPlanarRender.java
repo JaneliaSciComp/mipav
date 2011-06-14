@@ -902,14 +902,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  if ( m_kSculptor == null )
 		  {
 			  m_kSculptor = new Sculptor_WM( ((OpenGLRenderer)m_pkRenderer).GetCanvas() );
-			  if ( m_kVolumeImageB.GetImage() != null )
-			  {
-				  m_kSculptor.setImage(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
-			  }
-			  else
-			  {
-				  m_kSculptor.setImage(m_kVolumeImageA.GetImage(), null);
-			  }
+			  m_kSculptor.setImage(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
 		  }
 		  m_kSculptor.enableSculpt(bSculpt);
 	  }
