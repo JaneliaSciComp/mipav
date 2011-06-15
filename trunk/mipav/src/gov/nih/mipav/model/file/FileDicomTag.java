@@ -32,7 +32,7 @@ public class FileDicomTag extends ModelSerialCloneable {
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
-
+    
     /** Integer element word (in hexadecimal). */
     private int element;
 
@@ -76,12 +76,12 @@ public class FileDicomTag extends ModelSerialCloneable {
      * @param value the object to be stored
      */
     public FileDicomTag(final FileDicomTagInfo info, final Object value) {
-        this.tagInfo = info;
-        this.group = tagInfo.getKey().getGroupNumber();
-        this.element = tagInfo.getKey().getElementNumber();
+        this(info);
 
         this.value = value;
     }
+    
+    
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
