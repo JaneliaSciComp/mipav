@@ -124,15 +124,20 @@ public class JDialogSaveSlices extends JDialogBase {
     /** Check box for specifying whether DICOM files should be saved as an encapsulated JPEG2000*/
     private JCheckBox encapJP2Checkbox;
     
-    /**Check box for specifying whether DICOM files should be stamped with MIPAV information*/
+    /** Check box for specifying whether DICOM files should be stamped with MIPAV information*/
     private JCheckBox stampSecondaryCheckbox;
     
-    /** whether DICOM files should be saved as an encapsulated JPEG2000 */
+    /** Check box for saving dicom files in enhanced format (concatenates all frames in one file */
+    private JCheckBox saveEnhancedDicomCheckbox;
+    
+    /** Whether DICOM files should be saved as an encapsulated JPEG2000 */
     private boolean saveAsEncapJP2 = false;
     
     /** Whether to stamp DICOM files with the MIPAV secondary stamp */
     private boolean stampSecondary = true;
-    
+
+    /** Whether 3D or higher dimensionality dicom images should be saved as a single file */
+    private boolean saveEnhancedDicom;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -381,8 +386,18 @@ public class JDialogSaveSlices extends JDialogBase {
         return options;
     }
     
+    /**
+     * @return Whether dicom files should be stamped with MIPAV information.
+     */
     public boolean doStampSecondary() {
     	return stampSecondary;
+    }
+
+    /**
+     * @return Whether dicom should be saved in enhanced format.
+     */
+    public JCheckBox doSaveEnhancedDicom() {
+        return saveEnhancedDicomCheckbox;
     }
 
     public boolean getSaveAsEncapJP2() {
@@ -537,6 +552,14 @@ public class JDialogSaveSlices extends JDialogBase {
         stampSecondaryCheckbox.setSelected(true);
         stampSecondaryCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
         dicomInfoPanel.add(stampSecondaryCheckbox, BorderLayout.CENTER);
+        
+        if(maxValue != 0) { //image is 3D or greater in dimensions
+            saveEnhancedDicomCheckbox = new JCheckBox("Save as enhanced dicom");
+            saveEnhancedDicomCheckbox.setFont(serif12);
+            saveEnhancedDicomCheckbox.setSelected(true);
+            saveEnhancedDicomCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+            dicomInfoPanel.add(saveEnhancedDicomCheckbox, BorderLayout.CENTER);
+        }
 
         JPanel generalPanel = new JPanel();
         generalPanel.setBorder(buildTitledBorder("General Options"));
