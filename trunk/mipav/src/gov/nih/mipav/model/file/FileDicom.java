@@ -3293,6 +3293,13 @@ public class FileDicom extends FileDicomBase {
                     item.setLength(name, len);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type +
                     // "; element length = "+ elementLength + "\n", 2);
+                } else if (type.equals(FileDicomBase.TYPE_DATA_ELEMENT_TAG)) {
+                    int groupWord = getUnsignedShort(fileInfo.getEndianess());
+                    int elementWord = getUnsignedShort(fileInfo.getEndianess());
+                    String tagName = convertGroupElement(groupWord, elementWord);
+                    entry.setValue(tagName, elementLength);
+                    item.putTag(nameSQ, entry);
+                    item.setLength(nameSQ, elementLength);
                 }
             } catch (final OutOfMemoryError e) {
 

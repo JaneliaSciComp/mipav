@@ -158,6 +158,8 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
                 return FileDicomBase.OTHER_BYTE_STRING;
             } else if (vr.equals("SQ")) {
                 return FileDicomBase.TYPE_SEQUENCE;
+            } else if (vr.equals("AT")) {
+                return FileDicomBase.TYPE_DATA_ELEMENT_TAG;
             } else {
                 return FileDicomBase.TYPE_UNKNOWN; // unknown
             }
