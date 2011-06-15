@@ -341,6 +341,7 @@ public class JDialogSaveSlices extends JDialogBase {
             }
             saveAsEncapJP2 = encapJP2Checkbox.isSelected();
             stampSecondary = stampSecondaryCheckbox.isSelected();
+            saveEnhancedDicom = saveEnhancedDicomCheckbox.isSelected();
             options.setWritePackBit(packBitCheckbox.isSelected());
 
             dispose();
@@ -396,8 +397,8 @@ public class JDialogSaveSlices extends JDialogBase {
     /**
      * @return Whether dicom should be saved in enhanced format.
      */
-    public JCheckBox doSaveEnhancedDicom() {
-        return saveEnhancedDicomCheckbox;
+    public boolean doSaveEnhancedDicom() {
+        return saveEnhancedDicom;
     }
 
     public boolean getSaveAsEncapJP2() {
@@ -547,7 +548,7 @@ public class JDialogSaveSlices extends JDialogBase {
         encapJP2Checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
         dicomInfoPanel.add(encapJP2Checkbox, BorderLayout.NORTH);
         
-        stampSecondaryCheckbox = new JCheckBox("Stamp DICOM files with MIPAV information");
+        stampSecondaryCheckbox = new JCheckBox("Stamp dicom files with MIPAV information");
         stampSecondaryCheckbox.setFont(serif12);
         stampSecondaryCheckbox.setSelected(true);
         stampSecondaryCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -558,7 +559,7 @@ public class JDialogSaveSlices extends JDialogBase {
             saveEnhancedDicomCheckbox.setFont(serif12);
             saveEnhancedDicomCheckbox.setSelected(true);
             saveEnhancedDicomCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-            dicomInfoPanel.add(saveEnhancedDicomCheckbox, BorderLayout.CENTER);
+            dicomInfoPanel.add(saveEnhancedDicomCheckbox, BorderLayout.SOUTH);
         }
 
         JPanel generalPanel = new JPanel();
