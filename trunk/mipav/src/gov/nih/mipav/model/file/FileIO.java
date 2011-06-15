@@ -3186,9 +3186,15 @@ public class FileIO {
 
             case FileUtility.DICOM:
                 // not handling 4d or greater images
-                if (image.getNDims() > 3) {
-                    MipavUtil.displayInfo("Saving of 4D or greater datasets as DICOM is not currently supported");
-                    break;
+                if (image.getNDims() > 3 && options.doEnhanced() != true) {
+                    int enhancedError = JOptionPane.showConfirmDialog(null, "4D or greater image sets must be saved in enhanced dicom format, save as enhanced dicom?"
+                                , image.getNDims()+"D image writing", JOptionPane.YES_NO_OPTION);
+                    if(enhancedError == JOptionPane.NO_OPTION) {
+                        break;
+                    } else {
+                        options.doEnhanced(true);
+                    }
+                    
                 }
 
                 // if we save off dicom as encapsulated jpeg2000, call the writeDicom method
@@ -11085,7 +11091,7 @@ public class FileIO {
      */
     private boolean writeDicom(ModelImage image, final FileWriteOptions options) {
 
-        int i;
+        //int i;
         int index;
         String prefix = "";
         String fileSuffix = "";
@@ -11169,7 +11175,21 @@ public class FileIO {
                     myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
                 }
             }
-
+            
+            //if saving enhanced, need to recapture unique dicom tags to store in 5200, 9230 sequence of base FileInfoDicom
+            if(options.doEnhanced()) {
+                int tDim = image.getExtents().length <= 3 ? 1 : image.getExtents()[3];
+                int zDim = image.getExtents().length <= 2 ? 1 : image.getExtents()[2];
+                FileInfoDicom[][] infoAr = new FileInfoDicom[zDim][tDim];
+                for(int t = 0; t < tDim; t++) {
+                    for(int z = 0; z < zDim; z++) {
+                        infoAr[z][t] = ((FileInfoDicom)image.getFileInfo(zDim*t + z));
+                    }
+                }
+                
+                insertEnhancedSequence(myFileInfo, infoAr);
+            }
+            
         } else { // if source image is a Non-DICOM image
             myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
             final JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo,
@@ -11311,7 +11331,7 @@ public class FileIO {
                 TransMatrix matrix = myFileInfo.getPatientOrientation();
                 if (matrix != null) {
                     final TransMatrix transposeMatrix = new TransMatrix(4);
-                    for (i = 0; i < 4; i++) {
+                    for (int i = 0; i < 4; i++) {
                         for (int j = 0; j < 4; j++) {
                             transposeMatrix.set(i, j, matrix.get(j, i));
                         }
@@ -11383,7 +11403,7 @@ public class FileIO {
                 APIndex = 1;
                 ISIndex = 2;
                 increaseRes = true;
-                for (i = 0; i <= 2; i++) {
+                for (int i = 0; i <= 2; i++) {
                     if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
                         RLIndex = i;
                     } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
@@ -11593,7 +11613,7 @@ public class FileIO {
             if ( ! ( (myFileInfo)).isMultiFrame()) {
                 final String sopUID = ((String) ((FileInfoDicom) image.getFileInfo(0)).getTagTable().get("0008,0018")
                         .getValue(true)).toString();
-                for (i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
+                for (int i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
                     progressBar.updateValue(Math.round((float) i / (options.getEndSlice()) * 100), false);
 
                     myFileInfo = (FileInfoDicom) image.getFileInfo(i);
@@ -11631,7 +11651,7 @@ public class FileIO {
 
                 }
 
-            } else { // its a multi frame image to be saved!!!
+            } else { // its a multi frame image
 
                 // progressBar.updateValue( Math.round((float)i/(endSlice) * 100));
                 dicomFile = new FileDicom(fileName, fileDir); // was (UI, fileDir, fileDir). think this fixes...
@@ -11640,6 +11660,7 @@ public class FileIO {
                 // myFileInfo = (FileInfoDicom)image.getFileInfo(i);
                 // if (saveAs) myFileInfo.updateValue("0020,0013", s, s.length());
                 dicomFile.doStampSecondary(options.doStamp());
+                dicomFile.doEnhanced(options.doEnhanced(), image.getExtents());
                 dicomFile.writeMultiFrameImage(image, options.getBeginSlice(), options.getEndSlice());
             }
         } catch (final IOException error) {
@@ -11695,6 +11716,34 @@ public class FileIO {
          * if(dicomFile != null) { dicomFile.finalize(); dicomFile = null; }
          */
         return true;
+    }
+
+    private void insertEnhancedSequence(FileInfoDicom myFileInfo,
+            FileInfoDicom[][] infoAr) {
+        //create sequence ordered by current slice number
+        FileDicomSQ seq = new FileDicomSQ();
+        int tDim = infoAr[0].length;
+        int zDim = infoAr.length;
+        for(int t = 0; t < tDim; t++) {
+            for(int z = 0; z < zDim; z++) {
+                FileDicomTagTable table = infoAr[z][t].getTagTable();
+                if(table.getValue("0020,9056") == null) {
+                    table.setValue("0020,9056", tDim);
+                }
+                if(table.getValue("0020,9057") == null) {
+                    table.setValue("0020,9057", zDim);
+                }
+                FileDicomItem item = new FileDicomItem();
+                Enumeration<FileDicomTag> tags = table.getTagList().elements();
+                while(tags.hasMoreElements()) {
+                    FileDicomTag tag = tags.nextElement();
+                    item.putTag(tag.getKey().toString(), tag);
+                }
+                seq.addItem(item);
+            }
+        }
+        //insert constructed sequence into tag table
+        myFileInfo.getTagTable().setValue("5200,9230", seq);
     }
 
     /**

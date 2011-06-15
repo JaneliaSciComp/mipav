@@ -177,6 +177,8 @@ public class FileDicom extends FileDicomBase {
     
     private int enhancedNumVolumes;
 
+    private Byte[] bytesV;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -687,7 +689,6 @@ public class FileDicom extends FileDicomBase {
             // ******* Gets the next element
             getNextElement(endianess); // gets group, element, length
             name = convertGroupElement(groupWord, elementWord);
-
             final FileDicomKey key = new FileDicomKey(name);
             int tagVM;
             // Should be removed
@@ -1096,9 +1097,9 @@ public class FileDicom extends FileDicomBase {
                                                 }
                                             }
                                             if (i == 0) {
-                                                tagTable.setValue(fdKey, subEntry.getValue(true), elemLength);
+                                                tagTable.setValue(fdKey, subEntry.getValue(false), elemLength);
                                             } else {
-                                                childrenTagTables[i - 1].setValue(fdKey, subEntry.getValue(true),
+                                                childrenTagTables[i - 1].setValue(fdKey, subEntry.getValue(false),
                                                         elemLength);
                                             }
                                         }
@@ -2556,7 +2557,7 @@ public class FileDicom extends FileDicomBase {
             if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
                 final float[] data = new float[imageSize];
 
-                // if the data type isn't short, this will be majorly screwed up
+                //rescale data, TODO: test using non-short data
                 final double invSlope = fileInfo.getRescaleSlope();
                 final double intercept = fileInfo.getRescaleIntercept();
                 final short[] data2 = new short[imageSize];
@@ -4159,10 +4160,19 @@ public class FileDicom extends FileDicomBase {
             } else if (type.equals(FileDicomBase.TYPE_SHORT)) {
 
                 if ( (vm > 1) || (nValues > 1)) {
-                    final Short[] data = (Short[]) element.getValue(false);
+                    Object[] obj = (Object[]) element.getValue(false);
+                    if(obj instanceof Short[]) {
+                        final Short[] data = (Short[]) element.getValue(false);
 
-                    for (int vmI = 0; vmI < nValues; vmI++) {
-                        writeShort(data[vmI].shortValue(), endianess);
+                        for (int vmI = 0; vmI < nValues; vmI++) {
+                            writeShort(data[vmI].shortValue(), endianess);
+                        }
+                    } else {
+                        final Byte[] data = (Byte[]) element.getValue(false);
+
+                        for (int vmI = 0; vmI < nValues; vmI++) {
+                            writeByte(data[vmI].byteValue());
+                        } 
                     }
                 } else {
                     writeShort( ((Short) element.getValue(false)).shortValue(), endianess);
@@ -4170,10 +4180,20 @@ public class FileDicom extends FileDicomBase {
             } else if (type.equals(FileDicomBase.TYPE_INT)) {
 
                 if ( (vm > 1) || (nValues > 1)) {
-                    final Integer[] data = (Integer[]) element.getValue(false);
-
-                    for (int vmI = 0; vmI < nValues; vmI++) {
-                        writeInt(data[vmI].intValue(), endianess);
+                    Object[] obj = (Object[]) element.getValue(false);
+                    if(obj instanceof Integer[]) {
+                        final Integer[] data = (Integer[]) element.getValue(false);
+    
+                        for (int vmI = 0; vmI < nValues; vmI++) {
+                            writeInt(data[vmI].intValue(), endianess);
+                        }
+                        
+                    } else {
+                        final Byte[] data = (Byte[]) element.getValue(false);
+    
+                        for (int vmI = 0; vmI < nValues; vmI++) {
+                            writeByte(data[vmI].byteValue());
+                        } 
                     }
                 } else {
                     writeInt( ((Integer) element.getValue(false)).intValue(), endianess);
@@ -4371,7 +4391,15 @@ public class FileDicom extends FileDicomBase {
                     // writeInt(bytesV.length, endianess);
                     outputFile.write(bytesValue);
                 } else if (type.equals(FileDicomBase.TYPE_FLOAT)) {
-                    writeFloat( ((Float) entry.getValue(false)).floatValue(), endianess);
+                    Float[] f = null;
+                    if(entry.getValue(false) instanceof Float[]) {
+                        f = (Float[]) entry.getValue(false);
+                        for(int j=0; j<f.length; j++) {
+                            writeFloat(f[j], endianess);
+                        }
+                    } else {
+                        writeFloat( ((Float) entry.getValue(false)).floatValue(), endianess);
+                    }
                 } else if (type.equals(FileDicomBase.TYPE_DOUBLE)) {
                     if (entry.getValue(false) instanceof Double[]) {
                         final Double[] dArr = (Double[]) entry.getValue(false);
@@ -4382,9 +4410,50 @@ public class FileDicom extends FileDicomBase {
                         writeDouble( ((Double) entry.getValue(false)).doubleValue(), endianess);
                     }
                 } else if (type.equals(FileDicomBase.TYPE_SHORT)) {
-                    writeShort( ((Short) entry.getValue(false)).shortValue(), endianess);
+                    try {
+                        Short[] f = null;
+                        if(entry.getValue(false) instanceof Short[]) {
+                            f = (Short[]) entry.getValue(false);
+                            for(int j=0; j<f.length; j++) {
+                                writeShort(f[j], endianess);
+                            }
+                        } else {
+                            writeShort( ((Short) entry.getValue(false)).shortValue(), endianess);
+                        }
+                    } catch(ClassCastException e) {
+                        bytesV = (Byte[]) entry.getValue(false);
+
+                        final byte[] bytesValue = new byte[bytesV.length];
+
+                        for (int k = 0; k < bytesV.length; k++) {
+                            bytesValue[k] = bytesV[k].byteValue();
+                            // System.err.print(" [" + bytesV[k].toString()+"]");
+                        }
+                        outputFile.write(bytesValue);
+                    }
+                    
                 } else if (type.equals(FileDicomBase.TYPE_INT)) {
-                    writeInt( ((Integer) entry.getValue(false)).intValue(), endianess);
+                    try {
+                        Integer[] f = null;
+                        if(entry.getValue(false) instanceof Integer[]) {
+                            f = (Integer[]) entry.getValue(false);
+                            for(int j=0; j<f.length; j++) {
+                                writeInt(f[j], endianess);
+                            }
+                        } else {
+                            writeInt( ((Integer) entry.getValue(false)).intValue(), endianess);
+                        }
+                    } catch(ClassCastException e) {
+                        bytesV = (Byte[]) entry.getValue(false);
+    
+                        final byte[] bytesValue = new byte[bytesV.length];
+    
+                        for (int k = 0; k < bytesV.length; k++) {
+                            bytesValue[k] = bytesV[k].byteValue();
+                            // System.err.print(" [" + bytesV[k].toString()+"]");
+                        }
+                        outputFile.write(bytesValue);
+                    }
                 } else if (type.equals(FileDicomBase.TYPE_SEQUENCE)) {
                     final FileDicomSQ sq2 = (FileDicomSQ) entry.getValue(false);
                     writeInt(0xFFFFFFFF, endianess);
@@ -4402,5 +4471,19 @@ public class FileDicom extends FileDicomBase {
         writeShort((short) 0xE0DD, endianess);
         writeInt(0, endianess);
         // System.err.println("3333pointer = " + outputFile.getFilePointer());
+    }
+
+    public void doEnhanced(boolean doEnhanced, int[] extents) {
+        this.isEnhanced = doEnhanced;
+        if(extents.length > 3) {
+            this.isEnhanced4D = doEnhanced;
+            this.enhancedNumVolumes = extents[3];
+        } else {
+            this.isEnhanced4D = false;
+            this.enhancedNumVolumes = 1;
+        }
+        if(extents.length > 2) {
+            this.enhancedNumSlices = extents[2];
+        }
     }
 }
