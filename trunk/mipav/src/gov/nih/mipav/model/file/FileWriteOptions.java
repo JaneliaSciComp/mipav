@@ -93,6 +93,9 @@ public class FileWriteOptions {
     
     /**Used for stamping DICOM images with MIPAV reference. */
     private boolean doStamp = true;
+    
+    /**Whether dicom files are saved in enhanced format. */
+    private boolean doEnhanced;
 
     /** DOCUMENT ME! */
     private float opacity;
@@ -181,6 +184,8 @@ public class FileWriteOptions {
     
     private boolean isBz2zip = false;
 
+    
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -242,12 +247,30 @@ public class FileWriteOptions {
     }
     
     /**
+     * Whether to save dicom files in enhanced format.
+     * 
+     * @return
+     */
+    public boolean doEnhanced() {
+        return this.doEnhanced;
+    }
+    
+    /**
      * Whether or not to stamp DICOM images.
      * 
      * @return
      */
     public boolean doStamp() {
     	return this.doStamp;
+    }
+    
+    /**
+     * Sets the flag for saving dicom files in enhanced format.
+     * 
+     * @param doSaveEnhancedDicom
+     */
+    public void doEnhanced(boolean doSaveEnhancedDicom) {
+        this.doEnhanced = doSaveEnhancedDicom; 
     }
     
     /**
@@ -1213,4 +1236,6 @@ public class FileWriteOptions {
 
         return s;
     }
+
+    
 }

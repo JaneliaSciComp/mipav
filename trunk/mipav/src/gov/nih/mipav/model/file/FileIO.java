@@ -4898,6 +4898,7 @@ public class FileIO {
             saveAsEncapJP2 = dialogSave.getSaveAsEncapJP2();
             options = dialogSave.getWriteOptions();
             options.doStamp(dialogSave.doStampSecondary());
+            options.doEnhanced(dialogSave.doSaveEnhancedDicom());
 
             if (extents.length == 3) {
 
