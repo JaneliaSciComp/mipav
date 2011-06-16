@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.text.DecimalFormat;
 
 import javax.swing.*;
 
@@ -85,6 +86,9 @@ public class ViewJComponentGraphAxes extends JComponent {
         if (g == null) {
             return;
         }
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        df.setMinimumFractionDigits(0);
         
         if ( orientation == X_AXIS && (this.label != null) )
         {
@@ -107,7 +111,7 @@ public class ViewJComponentGraphAxes extends JComponent {
                 g.drawLine(bounds.x + this.border + (int) Math.round(i * xTick), 0,
                 		bounds.x + this.border + (int) Math.round(i * xTick), + 6);
                 g.setColor(Color.blue);
-                String label = String.valueOf(min + i * labelTick);
+                String label = df.format(min + i * labelTick);
                 g.drawString(label, bounds.x + border + (int) Math.round(i * xTick) - (g.getFontMetrics().stringWidth(label)/2), 20);
             }
             
@@ -139,7 +143,7 @@ public class ViewJComponentGraphAxes extends JComponent {
             	g.drawLine(bounds.x, bounds.y + (int) Math.round(i * yTick), bounds.x + 6,
             			bounds.y + (int) Math.round(i * yTick));
                 g.setColor(Color.blue);
-                String label = String.valueOf(min + (gridLines - i) * labelTick);
+                String label = df.format(min + (gridLines - i) * labelTick);
                 if ( i == 0 )
                 {
                 	g.drawString(label, bounds.x + 10, bounds.y + fontSize + (int) Math.round(i * yTick));
