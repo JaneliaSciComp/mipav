@@ -3764,11 +3764,12 @@ public class FileDicom extends FileDicomBase {
                 // other tags; it indicates that we are done with this
                 // sequence.
 
-                while ( (getFilePointer() - seqStart) < seqLength) {
+                //check to make sure that sequence delimination tag has not shown up, although it shouldn't for a defined length sequence
+                while ( (getFilePointer() - seqStart) < seqLength && !nameSQ.equals(FileDicom.SEQ_ITEM_UNDEF_END)) { 
 
                     // loop is meant to read out each sub-sequence tag from the sequence.
                     // Must make it able to read out the
-                    Preferences.debug(nameSQ + "; len:" + Long.toString(getFilePointer() - seqStart, 0x10) + "\n");
+                    Preferences.debug(nameSQ + "; len:" + (getFilePointer() - seqStart) + "\n");
 
                     if (nameSQ.equals(FileDicom.SEQ_ITEM_BEGIN)) { // this should always be true
 
@@ -3776,7 +3777,7 @@ public class FileDicom extends FileDicomBase {
                         // elementLength here is the length of the
                         // item as it written into the File
                         // System.out.println("Special ele length = " + Integer.toString(elementLength, 0x10));
-                        sq.addItem((FileDicomItem) getDataSet(elementLength, endianess));
+                        sq.addItem((FileDicomItem) getDataSet(seqLength, endianess));
                     } else { // should never get here
                         Preferences.debug("getSequence(): sub-sequence tags not starting with "
                                 + FileDicom.SEQ_ITEM_BEGIN + "\n", 2);
@@ -4038,11 +4039,14 @@ public class FileDicom extends FileDicomBase {
 
                     // explicit VR 32 bit length
                     outputFile.writeShort(0); // skip two reserved bytes
-                    System.out.println( ((FileDicomSQ) element.getValue(false)).getLength());
+                    int sqLength = ((FileDicomSQ) element.getValue(false)).getLength();
+                    System.out.println("SQ Length: "+ sqLength);
+                    
                     if ( ((FileDicomSQ) element.getValue(false)).getLength() == 0) {
                         writeInt(0, endianess); // write length of 0.
                     } else {
-                        writeInt(0xFFFFFFFF, endianess); // write undefined length
+                        writeInt(sqLength, endianess);
+                        //writeInt(0xFFFFFFFF, endianess); // write undefined length
                     }
                 } else if (vr.equals("OB") || vr.equals("OW") || vr.equals("UN")) {
 
