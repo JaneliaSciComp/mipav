@@ -380,7 +380,6 @@ public class FileIO {
     @SuppressWarnings("unchecked")
     public ModelImage readDicom(String selectedFileName, String[] fileList, final boolean performSort) {
 
-        ModelImage image = null;
         FileDicom imageFile;
         FileInfoDicom refFileInfo;
         FileInfoDicom[] savedFileInfos;
@@ -441,11 +440,6 @@ public class FileIO {
                 return readDicom(selectedFileName, fileList, performSort);
             }
         } catch (final OutOfMemoryError error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
 
             System.gc();
 
@@ -563,11 +557,6 @@ public class FileIO {
                     + FileUtility.getExtension(selectedFileName), FileIO.FILE_READ);
 
         } catch (final OutOfMemoryError error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
 
             System.gc();
 
@@ -723,11 +712,6 @@ public class FileIO {
                         Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(" FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
-                    }
-
-                    if (image != null) {
-                        image.disposeLocal();
-                        image = null;
                     }
 
                     error.printStackTrace();
@@ -1057,6 +1041,7 @@ public class FileIO {
         extents[1] = refFileInfo.getExtents()[1];
         refFileInfo.setExtents(extents);
 
+        ModelImage image = null;
         if (studyIDMaster.trim().equals("") && seriesNoRef.trim().equals("")) {
             image = new ModelImage(refFileInfo.displayType, extents, selectedFileName);
         } else {
@@ -1073,8 +1058,8 @@ public class FileIO {
         if (refFileInfo.displayType != refFileInfo.getDataType()) {
 
             // TODO: the image was just created with refFileInfo.displayType... does this realloc have any effect
-            image.setType(refFileInfo.displayType);
-            image.reallocate(refFileInfo.displayType);
+            //image.setType(refFileInfo.displayType);
+            //image.reallocate(refFileInfo.displayType);
         }
 
         String filename;
@@ -1087,6 +1072,9 @@ public class FileIO {
 
         // ENHANCED DICOM is multiframe...so we need to do matrix/orientation stuff here
         if (isEnhanced) {
+            for(int i=0; i<image.getFileInfo().length; i++) {
+                image.setFileInfo(refFileInfo, i);
+            }
             matrix = refFileInfo.getPatientOrientation();
 
             if (matrix != null) {
@@ -1136,7 +1124,6 @@ public class FileIO {
                 }
 
             }
-
         }
         int enhancedCounter1 = 0;
         int enhancedCounter2 = 0;
@@ -11598,6 +11585,19 @@ public class FileIO {
                 image.setFileInfo(myFileInfo, 0);
             }
         }
+        
+        if(options.doEnhanced()) {
+            int tDim = image.getExtents().length <= 3 ? 1 : image.getExtents()[3];
+            int zDim = image.getExtents().length <= 2 ? 1 : image.getExtents()[2];
+            FileInfoDicom[][] infoAr = new FileInfoDicom[zDim][tDim];
+            for(int t = 0; t < tDim; t++) {
+                for(int z = 0; z < zDim; z++) {
+                    infoAr[z][t] = ((FileInfoDicom)image.getFileInfo(zDim*t + z));
+                }
+            }
+            
+            insertEnhancedSequence(myFileInfo, infoAr);
+        }
 
         createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
 
@@ -11610,7 +11610,7 @@ public class FileIO {
 
         try {
             String name = "";
-            if ( ! ( (myFileInfo)).isMultiFrame()) {
+            if ( !myFileInfo.isMultiFrame() && !options.doEnhanced()) {
                 final String sopUID = ((String) ((FileInfoDicom) image.getFileInfo(0)).getTagTable().get("0008,0018")
                         .getValue(true)).toString();
                 for (int i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
@@ -11730,7 +11730,7 @@ public class FileIO {
                 if(table.getValue("0020,9056") == null) {
                     table.setValue("0020,9056", tDim);
                 }
-                if(table.getValue("0020,9057") == null) {
+                if(tDim > 1 && table.getValue("0020,9057") == null) {
                     table.setValue("0020,9057", zDim);
                 }
                 FileDicomItem item = new FileDicomItem();
