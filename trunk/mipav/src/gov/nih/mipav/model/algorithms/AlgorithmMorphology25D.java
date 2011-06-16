@@ -139,6 +139,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int sliceLength;
 
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -485,6 +486,9 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
             return;
         }
+        
+        
+     
 
         try {
             imgLength = srcImage.getSliceSize() * srcImage.getExtents()[2];
@@ -1107,7 +1111,6 @@ kernelLoop:
      * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
      */
     private void fillHoles(boolean returnFlag) {
-
         if (threadStopped) {
             finalize();
 
@@ -1121,15 +1124,15 @@ kernelLoop:
         int offset;
         short floodValue = 2;
         int z;
-        
+
         fireProgressStateChanged("Filling holes in image ...");
-        
+
         for (z = 0; z < zDim; z++) {
             fireProgressStateChanged(z * 100/zDim);
             offset = z * sliceSize;
             // Fill the boundary of the image with value 0, which represent the seed value
             int i = 0;
-    
+
             // top boundary
             for (i = 0; i < xDim; i++) {
                 imgBuffer[offset + i] = 0;
@@ -1214,6 +1217,7 @@ kernelLoop:
         indexZ = z * sliceSize;
         Point seedPt = new Point((stIndex % sliceSize) % xDim, (stIndex % sliceSize) / xDim);
         Stack<Point> stack = new Stack<Point>();
+        
 
         if (imgBuffer[indexZ + (seedPt.y * xDim) + seedPt.x] == objValue) {
             stack.push(seedPt);
