@@ -11730,7 +11730,7 @@ public class FileIO {
                 if(table.getValue("0020,9056") == null) {
                     table.setValue("0020,9056", tDim);
                 }
-                if(tDim > 1 && table.getValue("0020,9057") == null) {
+                if(table.getValue("0020,9057") == null) {
                     table.setValue("0020,9057", zDim);
                 }
                 FileDicomItem item = new FileDicomItem();
