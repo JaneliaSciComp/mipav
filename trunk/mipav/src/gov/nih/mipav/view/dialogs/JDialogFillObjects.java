@@ -490,11 +490,16 @@ public class JDialogFillObjects extends JDialogScriptableBase
 
                 try {
                     ubyteImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
+                    
+                    
+                    
 
                     AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, true);
 
                     changeTypeAlgo.run();
+                   
 
+                    
                     // Make algorithm
                     idObjectsAlgo25D = new AlgorithmMorphology25D(ubyteImage, kernel, 0,
                                                               AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0, regionFlag);
@@ -502,6 +507,8 @@ public class JDialogFillObjects extends JDialogScriptableBase
                     if (regionFlag == false) {
                         idObjectsAlgo25D.setMask(image.generateVOIMask());
                     }
+                    
+                   
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.

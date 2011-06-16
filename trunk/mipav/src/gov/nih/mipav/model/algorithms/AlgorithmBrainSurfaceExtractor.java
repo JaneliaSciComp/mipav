@@ -545,66 +545,24 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         // fill in interior holes of the mask
         if (fillHolesFlag) {
-
-            // fireProgressStateChanged("Filling interior mask holes...");
-            progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
-
-            if (progressValueBounds == null) {
-                MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
-                                       " can't be calculated!");
-
-                return;
+        	//Filling of holes is now being done by calling AlgorithmMorphogy Fill Holes
+            
+            AlgorithmMorphology25D idObjectsAlgo25D = new AlgorithmMorphology25D(resultImage, 0, 0,
+                    AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0, regionFlag);
+            
+            idObjectsAlgo25D.run();
+            
+            if (showIntermediateImages) {
+	            ModelImage tempImage = (ModelImage) resultImage.clone(imgName + "_filledHoles");
+	            tempImage.calcMinMax();
+	            new ViewJFrameImage(tempImage);
             }
+            
 
-            fireProgressStateChanged(progressValueBounds[0], null, "Extracting VOI ...");
-
-            // create a voi from the mask
-            AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(resultImage);
-
-            // VOIExtractionAlgo.setProgressBarVisible(false);
-            VOIExtractionAlgo.addListener(this);
-            VOIExtractionAlgo.run();
-
-
-            fireProgressStateChanged(progressValueBounds[1]);
-
-            ViewVOIVector VOIs = resultImage.getVOIs();
-            int nVOI = VOIs.size();
-
-            for (int i = 0; i < nVOI; i++) { // activate all VOIs
-                VOIs.VOIAt(i).setAllActive(true);
-            }
-
-            progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
-
-            if (progressValueBounds == null) {
-                MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
-                                       " can't be calculated!");
-
-                return;
-            }
-
-            fireProgressStateChanged(progressValueBounds[0], null, "Filling interior mask holes ...");
-
-            // make a mask from the voi
-            AlgorithmMask maskAlgo = new AlgorithmMask(resultImage, 1, true, true);
-            maskAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
-
-            // maskAlgo.setProgressBarVisible(false);
-            maskAlgo.addListener(this);
-            maskAlgo.run();
-
-            fireProgressStateChanged(progressValueBounds[1]);
-
-            // get rid of the vois
-            resultImage.getVOIs().removeAllElements();
-            resultImage.clearMask();
-
-            // fireProgressStateChanged(progInc * curStep);
-
-            if (isThreadStopped()) {
-                return;
-            }
+            
+            
+            
+            
         }
 
         // mask against original image
@@ -668,6 +626,8 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             resultImage.getFileInfo(i).setImageOrientation(orient);
             resultImage.getFileInfo(i).setAxisOrientation(axisOrient);
         }
+        
+
 
         setCompleted(true);
     }
@@ -677,7 +637,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
      */
     public void finalize() {
         image = null;
-        resultImage = null;
+        //resultImage = null;
 
         if (regionPointStack != null) {
             regionPointStack.finalize();
