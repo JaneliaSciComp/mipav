@@ -685,7 +685,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         }
         //System.err.println( "DONE " + nOverlap);
 
-        System.err.println( "CPU: " + nBins + " " + nVoxels + " " + nOverlap + " " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
+        //System.err.println( "CPU: " + nBins + " " + nVoxels + " " + nOverlap + " " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
         
         // correct for difference in total histogram size
         // that is: nOverlap vs nVoxels
