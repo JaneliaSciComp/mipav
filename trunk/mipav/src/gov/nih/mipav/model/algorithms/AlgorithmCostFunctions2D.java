@@ -306,7 +306,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                     double valueGPU = m_kGPUCost.getError();
                     if ( Math.abs( valueGPU - value ) > 0.01 )
                     {
-                        System.err.println( "CPU: " + value + "   GPU: " + valueGPU );
+                        //System.err.println( "CPU: " + value + "   GPU: " + valueGPU );
                     }
                     //value = valueGPU;
 
