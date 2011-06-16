@@ -530,8 +530,11 @@ public class AlgorithmChangeType extends AlgorithmBase {
                         if (imDiff != 0.0) {
                             destImage.set((i * length) + j, (((buffer[j] - imMin) / imDiff) * newDiff) + stRange2);
                         }
-                        else {
-                            destImage.set((i * length) + j,(stRange2 + endRange2)/2.0);
+                        else if(imDiff == 0 && imMin == 0){
+                            //destImage.set(index + j,(stRange2 + endRange2)/2.0);
+                        	destImage.set(i + j,0);
+                        }else if(imDiff == 0 && imMin != 0) {
+                        	destImage.set(i + j,(stRange2 + endRange2)/2.0);
                         }
                     } else if (buffer[j] < imMin) {
                         destImage.set((i * length) + j, stRange2);
@@ -567,14 +570,17 @@ public class AlgorithmChangeType extends AlgorithmBase {
                         if (imDiff != 0.0) {
                             destImage.set(index + j, (((buffer[j] - imMin) / imDiff) * newDiff) + stRange2);
                         }
-                        else {
-                            destImage.set(index + j,(stRange2 + endRange2)/2.0);
+                        else if(imDiff == 0 && imMin == 0){
+                            //destImage.set(index + j,(stRange2 + endRange2)/2.0);
+                        	destImage.set(index + j,0);
+                        }else if(imDiff == 0 && imMin != 0) {
+                        	destImage.set(index + j,(stRange2 + endRange2)/2.0);
                         }
                     } else if (buffer[j] < imMin) {
                         destImage.set(index + j, stRange2);
                     } else if (buffer[j] > imMax) {
                         destImage.set(index + j, endRange2);
-                    }
+                    } 
                 }
             }
 
