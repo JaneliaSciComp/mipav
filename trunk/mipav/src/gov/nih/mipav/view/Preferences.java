@@ -871,7 +871,7 @@ public class Preferences {
      */
     public static final void debug(final String string) {
 
-        if (Preferences.messageFrame == null) {
+        if (Preferences.messageFrame == null || !Preferences.messageFrame.isVisible()) {
             System.err.println("DEBUG: "+string);
         } else {
             final boolean[] levels = Preferences.getDebugLevels();
