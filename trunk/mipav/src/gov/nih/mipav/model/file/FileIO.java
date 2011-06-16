@@ -11602,6 +11602,7 @@ public class FileIO {
             }
             
             insertEnhancedSequence(myFileInfo, infoAr);
+            image.setFileInfo(myFileInfo, 0);
         }
 
         createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
