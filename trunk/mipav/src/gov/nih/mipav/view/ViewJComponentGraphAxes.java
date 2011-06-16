@@ -51,7 +51,6 @@ public class ViewJComponentGraphAxes extends JComponent {
     
     public void setMinMax( float min, float max )
     {
-    	System.err.println( min + " " + max );
     	this.min = min;
     	this.max = max;
     }
@@ -143,7 +142,6 @@ public class ViewJComponentGraphAxes extends JComponent {
                 String label = String.valueOf(min + (gridLines - i) * labelTick);
                 if ( i == 0 )
                 {
-                	System.err.println( label );
                 	g.drawString(label, bounds.x + 10, bounds.y + fontSize + (int) Math.round(i * yTick));
                 }
                 else
