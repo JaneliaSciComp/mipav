@@ -1108,9 +1108,9 @@ public class FileDicom extends FileDicomBase {
                                     elemLength = entry.getLength();
                                     fdKey = new FileDicomKey(k);
                                     if (i == 0) {
-                                        tagTable.setValue(fdKey, entry.getValue(true), elemLength);
+                                        tagTable.setValue(fdKey, entry.getValue(false), elemLength);
                                     } else {
-                                        childrenTagTables[i - 1].setValue(fdKey, entry.getValue(true), elemLength);
+                                        childrenTagTables[i - 1].setValue(fdKey, entry.getValue(false), elemLength);
                                     }
                                 }
                             }
