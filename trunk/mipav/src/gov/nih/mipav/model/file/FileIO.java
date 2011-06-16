@@ -11028,7 +11028,7 @@ public class FileIO {
                 // myFileInfo = (FileInfoDicom)image.getFileInfo(i);
                 // if (saveAs) myFileInfo.updateValue("0020,0013", s, s.length());
                 dicomFile.doStampSecondary(options.doStamp());
-                dicomFile.writeMultiFrameImage(image, 0, 0);
+                dicomFile.writeMultiFrameImage(image, 0, 0, 0, 0);
             }
         } catch (final IOException error) {
             // image.setFileInfo(originalFileInfos);
@@ -11312,8 +11312,13 @@ public class FileIO {
             int ISIndex;
             boolean increaseRes;
             final double sliceResolution = myFileInfo.getResolution(2);
-            if (image.getNDims() > 2) { // This sets the fileinfo to the same for all slices !!
-                final FileInfoBase[] fBase = new FileInfoBase[image.getExtents()[2]];
+            if (image.getNDims() > 2) {
+                //create as many file-infos as dicom frames exist in the image
+                int fBaseLength = image.getExtents()[2];
+                for(int i=3; i<image.getExtents().length; i++) {
+                    fBaseLength *= image.getExtents()[i];
+                }
+                final FileInfoBase[] fBase = new FileInfoBase[fBaseLength];
 
                 TransMatrix matrix = myFileInfo.getPatientOrientation();
                 if (matrix != null) {
@@ -11488,7 +11493,7 @@ public class FileIO {
                 }
 
                 final float[] sliceData = new float[sliceSize];
-                for (int k = 0; k < image.getExtents()[2]; k++) {
+                for (int k = 0; k < fBaseLength; k++) {
 
                     // System.err.println("FileIO k = " + k);
                     fBase[k] = (FileInfoBase) myFileInfo.clone();
@@ -11661,7 +11666,7 @@ public class FileIO {
                 // if (saveAs) myFileInfo.updateValue("0020,0013", s, s.length());
                 dicomFile.doStampSecondary(options.doStamp());
                 dicomFile.doEnhanced(options.doEnhanced(), image.getExtents());
-                dicomFile.writeMultiFrameImage(image, options.getBeginSlice(), options.getEndSlice());
+                dicomFile.writeMultiFrameImage(image, options.getBeginSlice(), options.getEndSlice(), options.getBeginTime(), options.getEndTime());
             }
         } catch (final IOException error) {
             if (didClone) {
@@ -11728,10 +11733,10 @@ public class FileIO {
             for(int z = 0; z < zDim; z++) {
                 FileDicomTagTable table = infoAr[z][t].getTagTable();
                 if(table.getValue("0020,9056") == null) {
-                    table.setValue("0020,9056", tDim);
+                    table.setValue("0020,9056", t);
                 }
                 if(table.getValue("0020,9057") == null) {
-                    table.setValue("0020,9057", zDim);
+                    table.setValue("0020,9057", z);
                 }
                 FileDicomItem item = new FileDicomItem();
                 Enumeration<FileDicomTag> tags = table.getTagList().elements();

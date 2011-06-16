@@ -2529,18 +2529,20 @@ public class FileDicom extends FileDicomBase {
      * Writes a dicom format type image.
      * 
      * @param image Image model where the data is stored.
-     * @param start Start image index (begin slice).
-     * @param end End image index (end slice).
+     * @param startSlice Start image index (begin slice).
+     * @param endSlice End image index (end slice).
+     * @param endTime end time index
+     * @param startTime beginning time index
      * 
      * @exception IOException if there is an error writing the file.
      * 
      * @see FileRawChunk
      */
-    public void writeMultiFrameImage(final ModelImage image, final int start, final int end) throws IOException {
+    public void writeMultiFrameImage(final ModelImage image, final int startSlice, final int endSlice, int startTime, int endTime) throws IOException {
 
         fileInfo = (FileInfoDicom) image.getFileInfo(0);
 
-        final String nFramesStr = String.valueOf(end - start + 1);
+        final String nFramesStr = String.valueOf(endSlice - startSlice + 1);
         fileInfo.getTagTable().setValue("0028,0008", nFramesStr, nFramesStr.length());
 
         if (stampSecondary) {
@@ -2548,9 +2550,14 @@ public class FileDicom extends FileDicomBase {
             stampSecondaryCapture(fileInfo);
         }
         this.image = image;
-
+        
+        
         final int imageSize = image.getSliceSize();
-
+        int volumeSize = 0;
+        if(image.getExtents().length > 2) {
+            volumeSize = imageSize*image.getExtents()[2];
+        }
+        
         try {
             writeHeader(raFile, fileInfo, false);
 
@@ -2575,8 +2582,10 @@ public class FileDicom extends FileDicomBase {
             FileRawChunk rawChunkFile;
             rawChunkFile = new FileRawChunk(raFile, fileInfo);
 
-            for (int i = start; i <= end; i++) {
-                rawChunkFile.writeImage(image, i * imageSize, (i * imageSize) + imageSize, i);
+            for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                    rawChunkFile.writeImage(image, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize, sliceNum);
+                }
             }
 
             rawChunkFile.close();
