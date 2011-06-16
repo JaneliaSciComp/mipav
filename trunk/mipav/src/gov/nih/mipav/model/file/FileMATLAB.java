@@ -337,6 +337,9 @@ public class FileMATLAB extends FileBase {
         int highIndex;
         double lowFraction;
         double highFraction;
+        byte buf[] = null;
+        int bufSize;
+        boolean memoryError;
 
         try {
            
@@ -467,7 +470,25 @@ public class FileMATLAB extends FileBase {
                 	ByteArrayOutputStream bos = new ByteArrayOutputStream(buffer.length);
                 	
                 	// Decompress the data
-                	byte[] buf = new byte[65536];
+                	// Let buf be the smallest power of 2 which is at least 65536 and twice the uncompressed
+                	// size so as to balance the need for speed against excessive memory use
+                	// The maximum integer value is 2**31 -1, so limit size to 2**30.
+                	// Cast elementBytes to long in while loop in case elementBytes >= 2**30.
+                	bufSize = 65536;
+                	while ((bufSize < 2*(long)elementBytes) && (bufSize < (int)Math.pow(2,30))){
+                		bufSize *= 2;
+                	}
+                	memoryError = true;
+                	while (memoryError) {
+	                	try {
+	                	     buf = new byte[bufSize];
+	                	     memoryError = false;
+	                	}
+	                	catch (OutOfMemoryError e) {
+	                	    bufSize = bufSize/2;
+	                	    memoryError = true;
+	                	}
+                	}
                 	try {
                 		while (true) {
                 			int count = zlibDecompresser.inflate(buf);
