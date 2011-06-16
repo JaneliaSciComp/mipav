@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
 import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.ViewJComponentGraphAxes;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.VolumeImageMultiDimensionalTransfer;
@@ -25,6 +26,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import java.awt.Frame;
 import java.awt.event.WindowAdapter;
@@ -34,8 +36,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.media.opengl.*;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.Animator;
 
@@ -70,7 +70,11 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
     private Animator m_kAnimator;
     private VolumeImageMultiDimensionalTransfer m_kMultiHistogram;
 
+    private JPanel histogramPanel;
 
+    private ViewJComponentGraphAxes imageAxis;
+    private ViewJComponentGraphAxes gmAxis;
+    
 
     /**
      * Creates new dialog for turning bounding box frame on and off.
@@ -123,6 +127,13 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         super.dispose();
     }
     
+    public void setMinMax( float imageMin, float imageMax, float gmMin, float gmMax )
+    {
+    	imageAxis.setMinMax( imageMin, imageMax );
+    	gmAxis.setMinMax( gmMin, gmMax );
+    }
+
+    
     public VolumeImageMultiDimensionalTransfer getHistogram()
     {
         return m_kMultiHistogram;
@@ -140,6 +151,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         scroller.setPreferredSize(new Dimension(iWidth, iHeight));
         scroller.setSize(new Dimension(iWidth, iHeight));
         scroller.revalidate();
+        histogramPanel.setSize(new Dimension(iWidth, histogramPanel.getHeight()));
     }
     
     public void setButtonColor(JButton _button, Color _color)
@@ -186,7 +198,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
     /**
      * Initializes GUI components.
      */
-    private void init() {
+    private void init( ) {
         GridBagConstraints kGBC = new GridBagConstraints();
         GridBagLayout kGrid = new GridBagLayout();
         kGBC.gridx = 0;
@@ -235,10 +247,21 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         kGBC.gridx++;
         buttonPanel.add( boundaryEmphasisSlider, kGBC );
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(m_kMultiHistogram.GetCanvas(), BorderLayout.CENTER);
-        panel.setPreferredSize(new Dimension(256, 256));
-        panel.setBackground(Color.white);
+        histogramPanel = new JPanel(new BorderLayout());
+        histogramPanel.setBorder(buildTitledBorder("2D Histogram Visualization Tool"));
+        JPanel canvasPanel = new JPanel(new BorderLayout());
+        canvasPanel.add(m_kMultiHistogram.GetCanvas(), BorderLayout.CENTER);
+        canvasPanel.setPreferredSize(new Dimension(256, 256));
+        canvasPanel.setBackground(Color.white);
+        histogramPanel.add( canvasPanel, BorderLayout.CENTER );
+        imageAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.X_AXIS, ViewJComponentGraphAxes.TOP, 
+        		256 + 160, 50, "Image Intensities", 80 );
+        histogramPanel.add( imageAxis, BorderLayout.SOUTH );
+        gmAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS,  ViewJComponentGraphAxes.LEFT, 
+        		80, 256, "Gradient Magnitude", 0 );
+        histogramPanel.add( gmAxis, BorderLayout.EAST );
+        histogramPanel.add( new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS, ViewJComponentGraphAxes.RIGHT, 
+        		80, 256, null, 0 ), BorderLayout.WEST);
         //panel.add(colorButton, BorderLayout.CENTER);
         //panel.setPreferredSize(new Dimension(m_kMultiHistogram.GetWidth(), m_kMultiHistogram.GetHeight()));
         //panel.setMinimumSize(new Dimension(m_kMultiHistogram.GetWidth(), m_kMultiHistogram.GetHeight()));
@@ -254,7 +277,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         gbConstraints.gridy = 0;
         //scrollPanel.add(panel, BorderLayout.CENTER);   
         //scrollPanel.add(buttonPanel, BorderLayout.SOUTH);   
-        scrollPanel.add(panel, gbConstraints);   
+        scrollPanel.add(histogramPanel, gbConstraints);   
         gbConstraints.gridy++;
         scrollPanel.add(buttonPanel, gbConstraints);   
 

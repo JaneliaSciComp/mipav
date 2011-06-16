@@ -20,8 +20,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.media.opengl.*;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.Animator;
 
@@ -50,21 +48,7 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
     public VolumeTriPlanerRenderDTI( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
-        super();
-        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-                m_eBuffering, m_eMultisampling,
-                m_iWidth, m_iHeight );
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
-
-        m_kAnimator = kAnimator;
-        m_kVolumeImageA = kVolumeImageA;
-        m_kVolumeImageB = kVolumeImageB;
-        m_kParent = kParent;        
-        m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+        super(kParent, kAnimator, kVolumeImageA, kVolumeImageB);
     }
         
     /**
@@ -74,24 +58,10 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
      * @param kVolumeImageA volume data and textures for ModelImage A.
      * @param kVolumeImageB volume data and textures for ModelImage B.
      */
-    public VolumeTriPlanerRenderDTI( GLCanvas kCanvas, VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
+    public VolumeTriPlanerRenderDTI( VolumeTriPlanarRender kShared, GLCanvas kCanvas, VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
-        super();
-        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-                m_eBuffering, m_eMultisampling,
-                m_iWidth, m_iHeight, kCanvas );
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
-
-        m_kAnimator = kAnimator;
-        m_kVolumeImageA = kVolumeImageA;
-        m_kVolumeImageB = kVolumeImageB;
-        m_kParent = kParent;        
-        m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+        super(kShared, kCanvas, kParent, kAnimator, kVolumeImageA, kVolumeImageB );
     }
 
     public void loadImage( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 

@@ -601,6 +601,16 @@ public class VolumeDTI extends VolumeObject
 		{
 			return;
 		}
+		   
+		
+		int iPassQuantity = m_kLightShader.GetPassQuantity();
+		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
+			m_kLightShader.LoadPrograms(kRenderer, iPass, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
+					kRenderer.GetMaxVShaderImages(), kRenderer.GetMaxPShaderImages());
+		}
+		m_kLightShader.SetPerPixelLighting( kRenderer, true );
+		
+		
 		AlphaState aTemp = kRenderer.GetAlphaState();
 		kRenderer.SetAlphaState(m_kAlpha);
 
@@ -852,13 +862,7 @@ public class VolumeDTI extends VolumeObject
 		}
 
 
-		m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA, false );    
-		int iPassQuantity = m_kLightShader.GetPassQuantity();
-		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
-			m_kLightShader.LoadPrograms(kRenderer, iPass, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
-					kRenderer.GetMaxVShaderImages(), kRenderer.GetMaxPShaderImages());
-		}
-		m_kLightShader.SetPerPixelLighting( kRenderer, true );
+		m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA, false ); 
 
 		m_kEllipseMaterial = new MaterialState();
 		m_kEllipseMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);

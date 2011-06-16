@@ -619,6 +619,16 @@ public class VolumeImage implements Serializable {
     {
     	return m_akGradientMagMinMax[m_iTimeSlice];
     }
+    
+    public float GetGradientMagnitudeMin()
+    {
+    	return m_akGradientMagMinMax[m_iTimeSlice].X;
+    }
+    
+    public float GetGradientMagnitudeMax()
+    {
+    	return m_akGradientMagMinMax[m_iTimeSlice].Y;
+    }
 
     /**
      * Return the ModelImage volume data.
