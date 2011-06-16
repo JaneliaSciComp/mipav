@@ -11726,6 +11726,7 @@ public class FileIO {
 
     private void insertEnhancedSequence(FileInfoDicom myFileInfo,
             FileInfoDicom[][] infoAr) {
+        long time = System.currentTimeMillis();
         //create sequence ordered by current slice number
         FileDicomSQ seq = new FileDicomSQ();
         int tDim = infoAr[0].length;
@@ -11741,13 +11742,18 @@ public class FileIO {
                 }
                 FileDicomItem item = new FileDicomItem();
                 Enumeration<FileDicomTag> tags = table.getTagList().elements();
+                Object tagValue = null;
                 while(tags.hasMoreElements()) {
                     FileDicomTag tag = tags.nextElement();
-                    item.putTag(tag.getKey().toString(), tag);
+                    if((tagValue = myFileInfo.getTagTable().getValue(tag.getKey())) == null || !tag.getValue(true).equals(tagValue)) {
+                        item.putTag(tag.getKey().toString(), tag);
+                        System.out.println("Inserting unique value from key: "+tag.getKey());
+                    }
                 }
                 seq.addItem(item);
             }
         }
+        System.out.println("Finished enhanced sequence construction in "+(System.currentTimeMillis() - time));
         //insert constructed sequence into tag table
         myFileInfo.getTagTable().setValue("5200,9230", seq);
     }

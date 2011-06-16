@@ -333,8 +333,10 @@ public class FileDicomTag extends ModelSerialCloneable {
             } else {
                 returnValue = value;
             }
-        } else if (parse && (vr != null) && (keyword != null) && (value == null)) {
+        } else if (parse && vr != null && keyword != null && value == null) {
         	returnValue = "";
+        } else if (parse && value == null) {
+            returnValue = "";
         } else {
             returnValue = value;
         }
