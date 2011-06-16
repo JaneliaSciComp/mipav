@@ -27,8 +27,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.media.opengl.*;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.Animator;
 
@@ -161,6 +159,11 @@ implements ChangeListener {
         m_kVolumeImageB = new VolumeImage();
     	
     	constructRenderers();
+        gpuPanel.setVisible(true);
+        raycastRenderWM.setVisible(true);
+    	m_kAnimator.start();
+        raycastRenderWM.GetCanvas().display();
+    	
         buildDTIParametersPanel();
         getParamPanel().processDTI();
     }
@@ -310,7 +313,14 @@ implements ChangeListener {
     public void windowClosing(WindowEvent event) {
         close();
         disposeLocal(true);
-        dispose();
+		// Run this on another thread than the AWT event queue to
+		// avoid deadlocks on shutdown on some platforms
+		new Thread(new Runnable() {
+			public void run() {
+				m_kAnimator.stop();
+		        dispose();
+			}
+		}).start();
     }
 
     /**
@@ -347,7 +357,7 @@ implements ChangeListener {
 
         progressBar.setMessage("Constructing gpu renderer...");
 
-        raycastRenderWM = new VolumeTriPlanerRenderDTI( new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA,
+        raycastRenderWM = new VolumeTriPlanerRenderDTI( sharedRenderer, new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA,
                 m_kVolumeImageB);
 
         progressBar.updateValueImmed(80);
@@ -361,10 +371,6 @@ implements ChangeListener {
         
         pack();
         setVisible(true);
-        raycastRenderWM.GetCanvas().display();
-        m_akPlaneRender[0].GetCanvas().display();
-        m_akPlaneRender[1].GetCanvas().display();
-        m_akPlaneRender[2].GetCanvas().display();
     }
 
     /**

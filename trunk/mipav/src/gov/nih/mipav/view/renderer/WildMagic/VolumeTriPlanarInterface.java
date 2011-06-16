@@ -2284,6 +2284,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     	}
         if (flag) {
             insertTab("MultiHistogram", multiHistogramGUI.getMainPanel());
+            multiHistogramGUI.setMinMax( (float)m_kVolumeImageA.GetImage().getMin(), (float)m_kVolumeImageA.GetImage().getMax(), 
+            		m_kVolumeImageA.GetGradientMagnitudeMin(), m_kVolumeImageA.GetGradientMagnitudeMax() );
             multiHistogramGUI.getHistogram().display();
             multiHistogramGUI.update();
             rendererGUI.setDisplayVolumeCheck(true);

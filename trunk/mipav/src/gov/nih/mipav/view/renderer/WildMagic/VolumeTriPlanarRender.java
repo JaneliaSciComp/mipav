@@ -144,7 +144,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	private TriMesh m_pkPlane;
 	private Camera m_pkScreenCamera;
 
-	private VolumeTriPlanarRender m_kShared = null;
+	protected VolumeTriPlanarRender m_kShared = null;
 
 	private boolean m_bUpdateCenterOnDisplay = false;    
 
