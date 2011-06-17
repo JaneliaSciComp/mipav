@@ -196,7 +196,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     private boolean doRigidOnly = false;
     
     
-    private ModelImage greenImage, greenRegionGrowMaskImage;
+    private ModelImage greenImage;
+    
+    //private ModelImage greenRegionGrowMaskImage;
+    
 
     private BitSet paintBitmap;
     
@@ -220,6 +223,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
             final File pointsFile, final JTextArea outputTextArea, final boolean flipX, final boolean flipY,
             final boolean flipZ,float greenThreshold, float subsamplingDistance, boolean rigidOnly,boolean doSWC, boolean rvld) {
+    	
+    	
         this.neuronImage = neuronImage;
         this.neuronImageExtents = neuronImage.getExtents();
         dir = neuronImage.getImageDirectory();
@@ -245,6 +250,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         final double sqrRtThree = Math.sqrt(3);
 
+        
         tolerance = (sqrRtThree / 2) * ( ( (resols[0] / resols[0]) + (resols[1] / resols[0]) + (resols[2] / resols[0])) / 3);
 
         toleranceSq = tolerance * tolerance;
@@ -271,12 +277,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 
     }
+    
 
     /**
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v4.3" + "\n");
+        outputTextArea.append("Running Algorithm v4.7" + "\n");
         
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
         /*String text = "";
@@ -2109,16 +2116,15 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         }
 			 
 			 
+        System.gc();
         
-        
-        
+      
         //create SWC file
         if(doSWC) {
         	createSWCFile();
         }
         
-        
-        
+
 
         if (standardColumnImage != null) {
             standardColumnImage.disposeLocal();
@@ -2145,6 +2151,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             resultImage1 = null;
         }
         
+
+        
+        
         if (greenImage!= null) {
         	greenImage.disposeLocal();
         	greenImage = null;
@@ -2156,13 +2165,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         }
         
         
-        if (greenRegionGrowMaskImage!= null) {
+       /* if (greenRegionGrowMaskImage!= null) {
         	greenRegionGrowMaskImage.disposeLocal();
         	greenRegionGrowMaskImage = null;
         }
+        */
         
-        
-        
+        System.gc();
 
         final long endTime = System.currentTimeMillis();
         final long diffTime = endTime - begTime;
@@ -2181,23 +2190,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * 
      */
     private void createSWCFile() {
-    	
     	outputTextArea.append("Creating SWC file..." + "\n");
         outputTextArea.append("\n");
-
     	File filamentFile = new File(filamentFileParentDir + File.separator + standardizedFilamentFileName);
     	readFilamentFile_swc(filamentFile);
-
     	determineConnectivity1_swc(allFilamentCoords_swc);
-
     	determineAxon_swc(allFilamentCoords_swc);
-
 		determineDistances_swc(allFilamentCoords_swc);
-
 		outputTextArea.append("SWC - subsampling..." + "\n");
         outputTextArea.append("\n");
 		subsample_swc(allFilamentCoords_swc,newFilamentCoords_swc);
-		
 		outputTextArea.append("SWC - determining connectivity..." + "\n");
         outputTextArea.append("\n");
 		determineConnectivity2_swc(newFilamentCoords_swc);
@@ -2484,11 +2486,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 * and then walking along the value to get the radius
 	 * @param newFilamentCoords
 	 */
-	private void determineRadiiRegionGrow_swc(ArrayList <ArrayList<float[]>> newFilamentCoords) {
+	/*private void determineRadiiRegionGrow_swc(ArrayList <ArrayList<float[]>> newFilamentCoords) {
 		int[] extents;
 		
 		
-		/*extents = {512, 512, 512};
+		extents = {512, 512, 512};
         maskImageRegionGrow = new ModelImage(ModelStorageBase.UBYTE, extents, "maskImage_swc_regionGrow");
         for (int i = 0; i < maskImageRegionGrow.getExtents()[2]; i++) {
         	maskImageRegionGrow.setResolutions(i, resols);
@@ -2503,7 +2505,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             fileInfoBases[i].setOrigin(finalImage.getFileInfo()[0].getOrigin());
 
         }
-        maskImageRegionGrow.setFileInfo(fileInfoBases);*/
+        maskImageRegionGrow.setFileInfo(fileInfoBases);
 		
 
 		paintBitmap = greenImage.getMask();
@@ -3070,7 +3072,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         
         
         
-        /*float resX = resols[0];
+        float resX = resols[0];
 		float resY = resols[1];
 		float resZ = resols[2];
 		
@@ -3082,9 +3084,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		float xDist,yDist,zDist;
 		float distance;
 		int xStart,yStart,zStart;
-		int xEnd,yEnd,zEnd;*/
+		int xEnd,yEnd,zEnd;
 
-        /*for(int i=0;i<newFilamentsSize;i++) {
+        for(int i=0;i<newFilamentsSize;i++) {
 			 al = newFilamentCoords.get(i);
 			 alSize = al.size();
 			 for(int k=0;k<alSize;k++) {
@@ -3144,9 +3146,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 							 } //end loop:
 			 }
 		}
-        */
+        
 	
-	}
+	}*/
 	
 	
     
@@ -4490,12 +4492,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * creates final image
      */
     private void createFinalImage() {
-
+    	String neuronImageName = neuronImage.getImageFileName();
+    	String finalImageName = neuronImageName.substring(0, neuronImageName.lastIndexOf(".")) + "_Standardized";
         // make LS MAtrix into inverse
         lsMatrix.Inverse();
 
         final int[] extents = {512, 512, 512};
-        finalImage = new ModelImage(ModelStorageBase.ARGB, extents, "finalStandardizedImage");
+        finalImage = new ModelImage(ModelStorageBase.ARGB, extents, finalImageName);
 
         final float[] finalImageResols = new float[3];
         finalImageResols[0] = neuronImage.getResolutions(0)[0];
@@ -4785,14 +4788,14 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         final FileWriteOptions opts = new FileWriteOptions(true);
         opts.setFileType(FileUtility.ICS);
         opts.setFileDirectory(dir);
-        final String finalImageFileName = "finalStandardizedImage";
-        opts.setFileName(finalImageFileName + ".ics");
+        //final String finalImageFileName = "finalStandardizedImage";
+        opts.setFileName(finalImageName + ".ics");
         opts.setBeginSlice(0);
         opts.setEndSlice(511);
         opts.setOptionsSet(true);
         fileIO.writeImage(finalImage, opts);
         outputTextArea.append("Saving final standardized image as: \n");
-        outputTextArea.append(dir + finalImageFileName + ".ics" + "\n");
+        outputTextArea.append(dir + finalImageName + ".ics" + "\n");
         outputTextArea.append("\n");
 
         writeSurfaceFile();

@@ -58,16 +58,16 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	private JPanel mainPanel;
 	
 	/** image to register to standard column **/
-	private ModelImage neuronImage,cityBlockImage;
+	public ModelImage neuronImage,cityBlockImage;
 	
 	/** points file **/
-	private File pointsFile, surfaceFile;
+	public File pointsFile, surfaceFile;
 	
 	 /** textfields **/
-    private JTextField imageFilePathTextField, pointsFilePathTextField, surfaceFilePathTextField;
+    public JTextField imageFilePathTextField, pointsFilePathTextField, surfaceFilePathTextField;
     
     /** browse button **/
-    private JButton imageBrowseButton, pointsBrowseButton, surfaceBrowseButton;
+    public JButton imageBrowseButton, pointsBrowseButton, surfaceBrowseButton;
     
     /** labels **/
     private JLabel pointsLabel, imageLabel, surfaceLabel, surfaceSamplingLabel, invertIVFileCBLabel;
@@ -76,31 +76,31 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     private String currDir = null;
     
     /** handle to algorithm **/
-    private PlugInAlgorithmDrosophilaStandardColumnRegistration alg;
+    public PlugInAlgorithmDrosophilaStandardColumnRegistration alg;
     
     /** points collection **/
     public TreeMap<Integer, float[]> pointsMap;
     
     /** coords of filament **/
-    ArrayList <ArrayList<float[]>> allFilamentCoords = new ArrayList <ArrayList<float[]>>();
+    public ArrayList <ArrayList<float[]>> allFilamentCoords = new ArrayList <ArrayList<float[]>>();
 
     /** resolutions **/
-    private float[] resols;
+    public float[] resols;
     
     /** surface file sampling checkbox **/
-    private JComboBox surfaceFileSamplingCB;
+    public JComboBox surfaceFileSamplingCB;
     
     /** flip checkboxes **/
-    private JCheckBox flipXCB, flipYCB, flipZCB;
+    public JCheckBox flipXCB, flipYCB, flipZCB;
     
     /** rigidOnly registration **/
     //private JCheckBox rigidOnlyCB;
     
     /** checkbox for swc output **/
-    private JCheckBox swcCB;
+    public JCheckBox swcCB;
     
     /** boolean for doing swc **/
-    private boolean doSWC = false;
+    public boolean doSWC = false;
     
     /** flip panel **/
     private JPanel flipPanel;
@@ -115,26 +115,28 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     private ButtonGroup eyeGroup, regGroup;
     
     /** radio buttons * */
-    private JRadioButton lvrdRadio, rvldRadio, rigTPSRadio, rigRadio;
+    public JRadioButton lvrdRadio, rvldRadio, rigTPSRadio, rigRadio;
     
 
     
     //SWC params
 
 	 /** textfields **/
-   private JTextField  greenValueRadiusThresholdTextField, subsamplingDistanceTextField, outputFilenameTextField, outputFilenameTextField_auto, outputFilenameTextField_regionGrow;
+   public JTextField  greenValueRadiusThresholdTextField, subsamplingDistanceTextField, outputFilenameTextField, outputFilenameTextField_auto, outputFilenameTextField_regionGrow;
    
    /** labels **/
    private JLabel  greenValueRadiusThresholdLabel, subsamplingDistanceLabel, outputFilenameLabel, outputFilenameLabel_auto, outputFilenameLabel_regionGrow;
    
    /** green value radius threshold **/
-   private float greenThreshold;
+   public float greenThreshold;
    
 	/** subsampling distance **/
-   private float subsamplingDistance;
+   public float subsamplingDistance;
    
    /** output filename **/
    private String outputFilename, outputFilename_auto, outputFilename_regionGrow;
+   
+   private boolean plugInCompleted = false;
 
 	/**
 	 * constructor
@@ -152,12 +154,13 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		init();
 	}
 	
+	
 	/**
 	 * init
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v4.3");
+        setTitle("Drosophila Standard Column Registration v4.7");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -514,7 +517,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 * @param surfaceFile
 	 * @return
 	 */
-	private boolean readSurfaceFile(File surfaceFile) {
+	public boolean readSurfaceFile(File surfaceFile) {
 		boolean success = true;
 		RandomAccessFile raFile = null;
 		try {
@@ -597,7 +600,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	
 	
 	
-	private boolean determineIfProperlyConnected() {
+	public boolean determineIfProperlyConnected() {
 		boolean success = true;
 		int[] connectednessList = new int[allFilamentCoords.size()];
 		//initialize all to 0
@@ -781,7 +784,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	/**
 	 * call algorithm
 	 */
-	protected void callAlgorithm() {
+	public void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
 
 		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,rigRadio.isSelected(),doSWC,rvldRadio.isSelected());
@@ -806,7 +809,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 * @param pointsFile
 	 * @return
 	 */
-	private boolean readPointsFile(File pointsFile) {
+	public boolean readPointsFile(File pointsFile) {
 		RandomAccessFile raFile = null;
 		try {
 			pointsMap = new TreeMap<Integer, float[]>();
@@ -818,14 +821,14 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
             int counter = 1;
             while((line = raFile.readLine()) != null) {
             		arr = line.trim().split(",");
-            		if(arr.length == 4) {
-                    	x = new Float(arr[1]).floatValue();
-                    	y = new Float(arr[2]).floatValue();
-                    	z = new Float(arr[3]).floatValue();
+            		if(arr.length == 3) {
+                    	x = new Float(arr[0]).floatValue();
+                    	y = new Float(arr[1]).floatValue();
+                    	z = new Float(arr[2]).floatValue();
                     	float[] f = {x,y,z};
                     	pointsMap.put(new Integer(counter), f);
                     }else {
-                    	if(arr.length == 1) {
+                    	if(arr.length == 0) {
                     		pointsMap.put(new Integer(counter), null);
                     	}else {
                     		return false;
@@ -856,7 +859,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	/**
 	 * creates city block image
 	 */
-	private void createCityBlockImage() {
+	public void createCityBlockImage() {
 		
 		int[] extents = {512,512,512};
         cityBlockImage = new ModelImage(ModelImage.UBYTE, extents,"cityBlockImage");
@@ -1018,6 +1021,14 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	
 	
 	
+	public synchronized boolean isPlugInCompleted() {
+		return plugInCompleted;
+	}
+
+	public synchronized void setPlugInCompleted(boolean plugInCompleted) {
+		this.plugInCompleted = plugInCompleted;
+	}
+
 	/**
 	 * algorithm performed
 	 */
@@ -1028,6 +1039,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			 cancelButton.setText("Close");
 			 
 			 outputTextArea.append("Finished" + "\n");
+			 setPlugInCompleted(true);
 		}
 		
 	}
