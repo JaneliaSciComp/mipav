@@ -1035,7 +1035,7 @@ public class VolumeImage implements Serializable {
         m_kHisto = new GraphicsImage[m_iTimeSteps];
         for (int t = 0; t < m_iTimeSteps; t++) {
             float[] afCount = new float[256 * 256];
-            for (int i = 0; i < 256 * 256; ++i) {
+            for (int i = 0; i < 256 * 256; i++) {
                 afCount[i] = 0;
             }
 
@@ -1071,16 +1071,24 @@ public class VolumeImage implements Serializable {
             		iHisto += 4;
             	}
             } 
-            float max = 0;
+            float max = Float.MIN_VALUE;
+            float min = Float.MAX_VALUE;
             for (int i = 0; i < 256 * 256; ++i) {
-                afCount[i] = (float) Math.log(afCount[i]);
+                afCount[i] = (float) Math.log(afCount[i]+1);
                 max = Math.max(afCount[i], max);
+                min = Math.min(afCount[i], min);
             }
-
+            //System.err.println( min + " " + max );
             final byte[] abHisto = new byte[256 * 256];
+            int maxB = Integer.MIN_VALUE;
+            int minB = Integer.MAX_VALUE;
             for (int i = 0; i < 256 * 256; ++i) {
-                abHisto[i] = new Float(afCount[i] / max * 255f).byteValue();
+            	int iVal = new Float((afCount[i] / max) * 255f).intValue();
+                abHisto[i] = new Float((afCount[i] / max) * 255f).byteValue();
+                maxB = ( iVal > maxB ) ? iVal : maxB;
+                minB = ( iVal < minB ) ? iVal : minB;
             }
+            //System.err.println( minB + " " + maxB );
             afCount = null;
 
             int iMinX = 255, iMaxX = 0;
@@ -1134,6 +1142,15 @@ public class VolumeImage implements Serializable {
             m_kHisto[t] = new GraphicsImage(GraphicsImage.FormatMode.IT_L8, 256, 256, (byte[]) null, new String(
                     "VolumeImageHisto" + kPostFix));
             m_kHisto[t].SetData(abHisto, 256, 256);
+            /*
+            ModelImage kTestHisto2D = new ModelImage( ModelStorageBase.UBYTE, new int[]{256,256}, "Histo2D" );
+            try {
+				kTestHisto2D.importData(abHisto);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+            kTestHisto2D.calcMinMax();
+            new ViewJFrameImage( kTestHisto2D ); */
         }
 
         m_kHistoTarget = new Texture();
