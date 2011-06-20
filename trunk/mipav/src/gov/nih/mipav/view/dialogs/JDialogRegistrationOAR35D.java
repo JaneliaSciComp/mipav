@@ -434,9 +434,6 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         if ((event.getSource() == weightRadio) || (event.getSource() == noneRadio) || (event.getSource() == voiRadio)) {
             buttonWeightInput.setEnabled(weightRadio.isSelected());
 
-            if (weightRadio.isSelected()) {
-                comboBoxDOF.setSelectedIndex(3);
-            } // if (weightRadio.isSelected())
         } // if ((event.getSource() == weightRadio) || (event.getSource() == noneRadio) ||
 
         // (event.getSource() == voiRadio))
