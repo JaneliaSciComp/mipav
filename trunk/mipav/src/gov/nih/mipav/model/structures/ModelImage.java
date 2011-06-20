@@ -5102,18 +5102,33 @@ public class ModelImage extends ModelStorageBase {
 
             try {
                 setLock(ModelStorageBase.W_LOCKED);
-
-                for (i = start, j = 0; j < length; i++, j++) {
-                    if ( (mask != null) && useMask) {
-                        if (mask.get(j)) {                        	                        	
-                            values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * 255);
-                        } else {
-                            values[j] = (byte)imMin;
-                        }
-                    } else {
-                        values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * 255);
-                    }
-
+                if ( getType() == UBYTE || getType() == BYTE )
+                {
+                	for (i = start, j = 0; j < length; i++, j++) {
+                		if ( (mask != null) && useMask) {
+                			if (mask.get(j)) {                        	                        	
+                				values[j] = getByte(i);
+                			} else {
+                				values[j] = 0;
+                			}
+                		} else {
+                			values[j] = getByte(i);
+                		}
+                	}                	
+                }
+                else
+                {
+                	for (i = start, j = 0; j < length; i++, j++) {
+                		if ( (mask != null) && useMask) {
+                			if (mask.get(j)) {                        	                        	
+                				values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * 255);
+                			} else {
+                				values[j] = (byte)imMin;
+                			}
+                		} else {
+                			values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * 255);
+                		}
+                	}
                 }
 
             } catch (final IOException error) {
