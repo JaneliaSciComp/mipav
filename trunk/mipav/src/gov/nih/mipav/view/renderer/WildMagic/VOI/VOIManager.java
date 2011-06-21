@@ -625,7 +625,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 
 
-		if (kCommand.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) ) { }
+		if (kCommand.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) ) { 
+			m_kParent.setCursor(MipavUtil.defaultCursor);
+			m_kParent.updateDisplay();
+		}
 		else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand()) || 
 				kCommand.equals("ResetVOI") )
 		{
