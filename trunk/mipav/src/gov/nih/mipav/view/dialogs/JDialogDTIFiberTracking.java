@@ -25,7 +25,7 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
     /** current directory * */
     private String currDir = null;
 
-    private ModelImage tensorImage, eigenVectorImage, anisotropyImage, eigenValueImage, rgbImage, traceImage, raImage,
+    private ModelImage tensorImage, eigenVectorImage, FAImage, eigenValueImage, rgbImage, traceImage, raImage,
             vrImage, adcImage;
 
     private JCheckBox negXCheckBox;
@@ -246,7 +246,10 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
 
     }
 
-    /** Calls AlgorithmDTI2EGFA to create eigen vector and functional anisotropy images. */
+    /** Calls AlgorithmDTI2EGFA to create an Apparent Diffusion Coefficient Image, 
+ * Functional Anisotropy Image, Color Image, Eigen Value Image, Eigen Vector Image, Relative Anisotropy Image,
+ * Trace Image, and Volume Ratio Image. */
+ 
     private void calcEigenVectorImage() {
         final int[] extents = tensorImage.getExtents();
         float[] res = tensorImage.getFileInfo(0).getResolutions();
@@ -284,8 +287,8 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
                 transformFunct = null;
             }
 
-            final ModelImage kDTIImageScaled = transformFunct.getTransformedImage();
-            kDTIImageScaled.calcMinMax();
+            final ModelImage kDTIScaled = transformFunct.getTransformedImage();
+            kDTIScaled.calcMinMax();
 
             if (transformFunct != null) {
                 transformFunct.disposeLocal();
@@ -294,15 +297,15 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
 
             tensorImage.disposeLocal();
             tensorImage = null;
-            tensorImage = kDTIImageScaled;
+            tensorImage = kDTIScaled;
 
             res = tensorImage.getFileInfo(0).getResolutions();
         }
 
         AlgorithmDTI2EGFA kAlgorithm = new AlgorithmDTI2EGFA(tensorImage);
         kAlgorithm.run();
-        eigenVectorImage = kAlgorithm.getEigenImage();
-        anisotropyImage = kAlgorithm.getFAImage();
+        eigenVectorImage = kAlgorithm.getEigenVectorImage();
+        FAImage = kAlgorithm.getFAImage();
         traceImage = kAlgorithm.getTraceImage();
         traceImage.saveImage(outputDirTextField.getText() + File.separator, "TraceImage.xml", FileUtility.XML, false);
         raImage = kAlgorithm.getRAImage();
@@ -316,10 +319,10 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
         eigenValueImage = kAlgorithm.getEigenValueImage();
         eigenValueImage.saveImage(outputDirTextField.getText() + File.separator, "EigenValueImage.xml",
                 FileUtility.XML, false);
-        // tensorImage.saveImage(outputDirTextField.getText(), "DTIImage.xml", FileUtility.XML, true);
+        // tensorImage.saveImage(outputDirTextField.getText(), "DTI.xml", FileUtility.XML, true);
         eigenVectorImage.saveImage(outputDirTextField.getText() + File.separator, "EigenVectorImage.xml",
                 FileUtility.XML, true);
-        anisotropyImage.saveImage(outputDirTextField.getText() + File.separator, "AnisotropyImage.xml",
+        FAImage.saveImage(outputDirTextField.getText() + File.separator, "FAImage.xml",
                 FileUtility.XML, true);
         kAlgorithm.disposeLocal();
         kAlgorithm = null;
@@ -447,11 +450,11 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
         }
 
         float[] anisotropyBuffer;
-        final int anisLength = anisotropyImage.getExtents()[0] * anisotropyImage.getExtents()[1]
-                * anisotropyImage.getExtents()[2];
+        final int anisLength = FAImage.getExtents()[0] * FAImage.getExtents()[1]
+                * FAImage.getExtents()[2];
         anisotropyBuffer = new float[anisLength];
         try {
-            anisotropyImage.exportData(0, anisLength, anisotropyBuffer);
+            FAImage.exportData(0, anisLength, anisotropyBuffer);
         } catch (final IOException error) {
             System.out.println("IO exception");
             // return null;
@@ -482,20 +485,23 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
         }
 
         rgbImage.calcMinMax();
-        rgbImage.saveImage(outputDirTextField.getText() + File.separator, "colorMapImage.xml", FileUtility.XML, false);
+        rgbImage.saveImage(outputDirTextField.getText() + File.separator, "ColorMapImage.xml", FileUtility.XML, false);
         // new ViewJFrameImage(eigenVectorImage);
-        // new ViewJFrameImage(anisotropyImage);
+        // new ViewJFrameImage(FAImage);
         // new ViewJFrameImage(rgbImage);
 
         // return rgbImage;
     }
 
+    /** Calls AlgorithmDTITRACT to calculate fiber bundle tracts 
+    */
+    
     private void trackFibers() {
         final float fFAMin = Float.valueOf(faMinThresholdTextField.getText()).floatValue();
         final float fFAMax = Float.valueOf(faMaxThresholdTextField.getText()).floatValue();
         final float fMaxAngle = Float.valueOf(maxAngleTextField.getText()).floatValue();
-        AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(tensorImage, anisotropyImage, eigenVectorImage,
-                eigenValueImage, outputDirTextField.getText() + File.separator + "DTIImage.xml_tract", negXCheckBox
+        AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(tensorImage, FAImage, eigenVectorImage,
+                eigenValueImage, outputDirTextField.getText() + File.separator + "TractData.bin", negXCheckBox
                         .isSelected(), negYCheckBox.isSelected(), negZCheckBox.isSelected(), fFAMin, fFAMax, fMaxAngle);
         kTractAlgorithm.run();
         kTractAlgorithm.disposeLocal();
@@ -552,9 +558,9 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
             eigenVectorImage.disposeLocal();
             eigenVectorImage = null;
         }
-        if (anisotropyImage != null) {
-            anisotropyImage.disposeLocal();
-            anisotropyImage = null;
+        if (FAImage != null) {
+            FAImage.disposeLocal();
+            FAImage = null;
         }
         if (eigenValueImage != null) {
             eigenValueImage.disposeLocal();
@@ -583,3 +589,4 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
     }
 
 }
+
