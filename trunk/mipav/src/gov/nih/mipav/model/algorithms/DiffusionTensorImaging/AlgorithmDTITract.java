@@ -12,8 +12,11 @@ import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
- * Algorithm calculates an Eigen Vector Image and Functional Anisotropy Image
- * from the input Diffusion Tensor Image.
+ * Algorithm requires input of previous calculated FA, EigenVector and EigenValue images from
+ * AlgorithmDTI2EGFA to calculate fiber bundle tracts
+ * 
+ * This algorithm works in conjunction with AlgorithmDTI2EGFA to create the 
+ * MIPAV DTI Fiber Tracking/ Statistics Dialog
  * 
  * See: Introduction to Diffusion Tensor Imaging, by Susumu Mori
  */
@@ -21,11 +24,11 @@ public class AlgorithmDTITract extends AlgorithmBase
 {
 
     /** Input Diffusion Tensor Image: */
-    private ModelImage m_kDTIImage = null;
+    private ModelImage m_kDTI = null;
     /** Input FA Image: */
     private ModelImage m_kFAImage = null;
     /** Input EigenVector Image: */
-    private ModelImage m_kEigenImage = null;
+    private ModelImage m_kEigenVectorImage = null;
     /** Input EigenValue Image: */
     private ModelImage m_kEigenValueImage = null;
     /** The name of the tract output file, specified by the user. */
@@ -45,13 +48,13 @@ public class AlgorithmDTITract extends AlgorithmBase
 
 
     /** Initialize the Algorithm with the input DTI Image:
-     * @param kDTIImage input DTI Image.
+     * @param kDTI input DTI Image.
      */
-    public AlgorithmDTITract( ModelImage kDTIImage, ModelImage kEigenImage, ModelImage kEigenValueImage,
+    public AlgorithmDTITract( ModelImage kDTI, ModelImage kEigenVectorImage, ModelImage kEigenValueImage,
                               String kFile, boolean bNegX, boolean bNegY, boolean bNegZ )
     {
-        m_kDTIImage = kDTIImage;
-        m_kEigenImage = kEigenImage;
+        m_kDTI = kDTI;
+        m_kEigenVectorImage = kEigenVectorImage;
         m_kEigenValueImage = kEigenValueImage;
         m_kOutputFile = kFile;
         m_bNegX = bNegX;
@@ -60,15 +63,15 @@ public class AlgorithmDTITract extends AlgorithmBase
     }
 
     /** Initialize the Algorithm with the input DTI Image:
-     * @param kDTIImage input DTI Image.
+     * @param kDTI input DTI Image.
      */
-    public AlgorithmDTITract( ModelImage kDTIImage, ModelImage kFAImage, ModelImage kEigenImage, ModelImage kEigenValueImage,
+    public AlgorithmDTITract( ModelImage kDTI, ModelImage kFAImage, ModelImage kEigenVectorImage, ModelImage kEigenValueImage,
                               String kFile, boolean bNegX, boolean bNegY, boolean bNegZ,
                               float fFAMin, float fFAMax, float fMaxAngle )
     {
-        m_kDTIImage = kDTIImage;
+        m_kDTI = kDTI;
         m_kFAImage = kFAImage;
-        m_kEigenImage = kEigenImage;
+        m_kEigenVectorImage = kEigenVectorImage;
         m_kEigenValueImage = kEigenValueImage;
         m_kOutputFile = kFile;
         m_bNegX = bNegX;
@@ -83,16 +86,16 @@ public class AlgorithmDTITract extends AlgorithmBase
     /** Clean up memory. */
     public void disposeLocal()
     {
-        m_kDTIImage = null;
-        m_kEigenImage = null;
+        m_kDTI = null;
+        m_kEigenVectorImage = null;
         m_abVisited = null;
     }
 
     /** Run the DTI -> EigenVector Functional Anisotropy algorithm. */
     public void runAlgorithm()
     {
-        if ( (m_kDTIImage == null) ||
-             (m_kEigenImage == null) )
+        if ( (m_kDTI == null) ||
+             (m_kEigenVectorImage == null) )
         {
             return;
         }
@@ -100,11 +103,11 @@ public class AlgorithmDTITract extends AlgorithmBase
     }
 
     
-    /** Constructs the Fiber Bundle Tracts from the dtiImage and the
-     * eigenImage parameters. The fiber bundles are output to a file
-     * sepecified by the user.
-     * @param dtiImage Diffusion Tensor Image.
-     * @param eigenImage EigenVector Image.
+    /** Constructs the Fiber Bundle Tracts from the DTI and the
+     * EigenVectorImage parameters. The fiber bundles are output to a file
+     * specified by the user.
+     * @param DTI Diffusion Tensor Image.
+     * @param EigenVectorImage EigenVector Image.
      */
     private void reconstructTracts()
     {
@@ -115,12 +118,12 @@ public class AlgorithmDTITract extends AlgorithmBase
             kFileWriter = new FileOutputStream(kFile);
         } catch ( FileNotFoundException e1 ) {}
 
-        int iDimX = m_kDTIImage.getExtents()[0];
-        int iDimY = m_kDTIImage.getExtents()[1];
-        int iDimZ = m_kDTIImage.getExtents()[2];
-        int iLen = m_kDTIImage.getExtents()[0] *
-            m_kDTIImage.getExtents()[1] * m_kDTIImage.getExtents()[2];
-
+        int iDimX = m_kDTI.getExtents()[0];
+        int iDimY = m_kDTI.getExtents()[1];
+        int iDimZ = m_kDTI.getExtents()[2];
+        int iLen = m_kDTI.getExtents()[0] *
+            m_kDTI.getExtents()[1] * m_kDTI.getExtents()[2];
+        
         float[] afVectorData = new float[3];
 
         int iCount = 0;
@@ -128,7 +131,7 @@ public class AlgorithmDTITract extends AlgorithmBase
 
         ViewJProgressBar kProgressBar =
             new ViewJProgressBar("Calculating Fiber Bundle Tracts ",
-                                 "calculating tracts...", 0, 100, true);
+                                 "Calculating tracts...", 0, 100, true);
 
         m_abVisited  = new boolean[iLen];
         for ( int i = 0; i < iLen; i++ )
@@ -152,7 +155,7 @@ public class AlgorithmDTITract extends AlgorithmBase
                     boolean bAllZero = true;
                     for ( int j = 0; j < 3; j++ )
                     {
-                        afVectorData[j] = m_kEigenImage.getFloat(i + j*iLen);
+                        afVectorData[j] = m_kEigenVectorImage.getFloat(i + j*iLen);
                         if ( afVectorData[j] != 0 )
                         {
                             bAllZero = false;
@@ -174,7 +177,7 @@ public class AlgorithmDTITract extends AlgorithmBase
                             afVectorData[2] *= -1;
                         }
                         
-                    	// System.out.println("point: iX = " + iX +  " iY = " + iY + " iZ = " + iZ  );
+                        //System.out.println("point: iX = " + iX +  " iY = " + iY + " iZ = " + iZ  );
                         kPos.Set( iX, iY, iZ );
                         kTract.add(i);
 
@@ -185,16 +188,16 @@ public class AlgorithmDTITract extends AlgorithmBase
                         kV1.Normalize();
                         kV2.Normalize();
 
-                        traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV1), m_kEigenImage, m_kEigenValueImage, m_kFAImage, true );
+                        traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV1), m_kEigenVectorImage, m_kEigenValueImage, m_kFAImage, true );
                         m_abVisited[i] = true;
-                        traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV2), m_kEigenImage, m_kEigenValueImage, m_kFAImage, false );
+                        traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV2), m_kEigenVectorImage, m_kEigenValueImage, m_kFAImage, false );
                         
                         
-                        //traceTract( kTract, kPos, kV1, m_kDTIImage, true );
+                        //traceTract( kTract, kPos, kV1, m_kDTI, true );
                         //m_abVisited[i] = true;
-                        //traceTract( kTract, kPos, kV2, m_kDTIImage, false );
+                        //traceTract( kTract, kPos, kV2, m_kDTI, false );
 
-                    	iCount++;
+                        iCount++;
                         iTractSize += kTract.size();
                         outputTract( kTract, iDimX, iDimY, iDimZ, kFileWriter );
                         
@@ -216,20 +219,20 @@ public class AlgorithmDTITract extends AlgorithmBase
     /** Traces a single fiber bundle tract starting at the input
      * position and following the input direction.
      * @param kTract fiber bundle tract, new positions are stored in this tract as the fiber is traced.
-     * @param kStart starting positon of the tract.
+     * @param kStart starting position of the tract.
      * @param kDir direction from the position.
-     * @param dtiImage Diffusion Tensor image used to calculate next direction of tract.
+     * @param DTI Diffusion Tensor image used to calculate next direction of tract.
      * @param bDir boolean when true the positions are added to the
      * end of the tract (positive direction). When false the positions
      * are added to the beginning of the tract (negative direction).
      */
     /*private void traceTract( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
-                             ModelImage dtiImage, boolean bDir )
+                             ModelImage DTI, boolean bDir )
     {
-        int iDimX = dtiImage.getExtents()[0];
-        int iDimY = dtiImage.getExtents()[1];
-        int iDimZ = dtiImage.getExtents()[2];
-        int iLen = dtiImage.getExtents()[0] * dtiImage.getExtents()[1] * dtiImage.getExtents()[2];
+        int iDimX = DTI.getExtents()[0];
+        int iDimY = DTI.getExtents()[1];
+        int iDimZ = DTI.getExtents()[2];
+        int iLen = DTI.getExtents()[0] * DTI.getExtents()[1] * DTI.getExtents()[2];
 
         float[] afTensorData = new float[6];
 
@@ -245,7 +248,7 @@ public class AlgorithmDTITract extends AlgorithmBase
 
         while ( !bDone )
         {
-        	kNext.Add( kStart, kDir );
+            kNext.Add( kStart, kDir );
             iX = Math.round(kNext.X);
             iY = Math.round(kNext.Y);
             iZ = Math.round(kNext.Z);
@@ -262,7 +265,7 @@ public class AlgorithmDTITract extends AlgorithmBase
             bAllZero = true;
             for ( int j = 0; j < 6; j++ )
             {
-                afTensorData[j] = dtiImage.getFloat(i + j*iLen);
+                afTensorData[j] = DTI.getFloat(i + j*iLen);
                 if ( afTensorData[j] != 0 )
                 {
                     bAllZero = false;
@@ -305,12 +308,12 @@ public class AlgorithmDTITract extends AlgorithmBase
     }*/
 
     private void traceTract2( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
-            ModelImage eigenImage, ModelImage eigenValueImage, ModelImage kFAImage, boolean bDir )
+            ModelImage EigenVectorImage, ModelImage eigenValueImage, ModelImage kFAImage, boolean bDir )
     {
-        int iDimX = eigenImage.getExtents()[0];
-        int iDimY = eigenImage.getExtents()[1];
-        int iDimZ = eigenImage.getExtents()[2];
-        int iLen = eigenImage.getExtents()[0] * eigenImage.getExtents()[1] * eigenImage.getExtents()[2];
+        int iDimX = EigenVectorImage.getExtents()[0];
+        int iDimY = EigenVectorImage.getExtents()[1];
+        int iDimZ = EigenVectorImage.getExtents()[2];
+        int iLen = EigenVectorImage.getExtents()[0] * EigenVectorImage.getExtents()[1] * EigenVectorImage.getExtents()[2];
 
         float[] afVectorData = new float[6];
 
@@ -352,7 +355,7 @@ public class AlgorithmDTITract extends AlgorithmBase
             bAllZero = true;
             for ( int j = 0; j < 3; j++ )
             {
-                afVectorData[j] = eigenImage.getFloat(i + j*iLen);
+                afVectorData[j] = EigenVectorImage.getFloat(i + j*iLen);
                 if ( afVectorData[j] != 0 )
                 {
                     bAllZero = false;
@@ -435,34 +438,34 @@ public class AlgorithmDTITract extends AlgorithmBase
      * @param kFileWrite FileOutputStream.
      */
     private void outputTract( Vector<Integer> kTract, int iDimX, int iDimY, int iDimZ,
-			      FileOutputStream kFileWriter )
+                  FileOutputStream kFileWriter )
     {
         int iVQuantity = kTract.size();
 
         int iBufferSize = iVQuantity*4 + 4;
         if ( m_bFirstWrite )
         {
-        	iBufferSize += (3*4 + 3);
+            iBufferSize += (3*4 + 3);
         }
         ByteArrayOutputStream acBufferOut = new ByteArrayOutputStream( iBufferSize );
         DataOutputStream acDataOut = new DataOutputStream( acBufferOut );
         if ( kFileWriter != null )
         {
-        	try {
-        		if ( m_bFirstWrite )
-        		{
-        			acDataOut.writeInt(iDimX);
-        			acDataOut.writeInt(iDimY);
-        			acDataOut.writeInt(iDimZ);
-        			acDataOut.writeBoolean(m_bNegX);
-        			acDataOut.writeBoolean(m_bNegY);
-        			acDataOut.writeBoolean(m_bNegZ);
-        			m_bFirstWrite = false;
-        		}
-        		acDataOut.writeInt(iVQuantity);
-        	} catch (IOException e) {
-        		e.printStackTrace();
-        	}
+            try {
+                if ( m_bFirstWrite )
+                {
+                    acDataOut.writeInt(iDimX);
+                    acDataOut.writeInt(iDimY);
+                    acDataOut.writeInt(iDimZ);
+                    acDataOut.writeBoolean(m_bNegX);
+                    acDataOut.writeBoolean(m_bNegY);
+                    acDataOut.writeBoolean(m_bNegZ);
+                    m_bFirstWrite = false;
+                }
+                acDataOut.writeInt(iVQuantity);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         for (int i = 0; i < iVQuantity; i++)
@@ -497,3 +500,4 @@ public class AlgorithmDTITract extends AlgorithmBase
         acDataOut = null;
     }
 }
+
