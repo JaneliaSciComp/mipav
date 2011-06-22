@@ -15,23 +15,27 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
- * Algorithm calculates an Eigen Vector Image and Functional Anisotropy Image
- * from the input Diffusion Tensor Image.
+ * Algorithm requires input of a Diffusion Tensor Image to calculate an Apparent Diffusion Coefficient Image, 
+ * Functional Anisotropy Image, Color Image, Eigen Value Image, Eigen Vector Image, Relative Anisotropy Image,
+ * Trace Image, and Volume Ratio Image
  * 
+ * This algorithm works in conjunction with AlgorithmDTITract to create the 
+ * MIPAV DTI Fiber Tracking/ Statistics Dialog
+ *
  * See: Introduction to Diffusion Tensor Imaging, by Susumu Mori
  */
 public class AlgorithmDTI2EGFA extends AlgorithmBase
 {
 
     /** Input Diffusion Tensor Image: */
-    private ModelImage m_kDTIImage = null;
+    private ModelImage m_kDTI = null;
     /** Output EigenVector Image: */
-    private ModelImage m_kEigenImage = null;
+    private ModelImage m_kEigenVectorImage = null;
     /** Output EigenValue Image: */
     private ModelImage m_kEigenValueImage = null;
     /** Output Functional Anisotropy Image: */
     private ModelImage m_kFAImage = null;
-    /** Output Trace Image (before diagonalization of diffusion tensor): */
+    /** Output Trace (ADC) Image (before diagonalization of diffusion tensor): */
     private ModelImage m_kADCImage = null;
     /** Output Trace Image (before diagonalization of diffusion tensor): */
     private ModelImage m_kTraceImage = null;
@@ -41,18 +45,18 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
     private ModelImage m_kVRImage = null;
 
     /** Initialize the Algorithm with the input DTI Image:
-     * @param kDTIImage input DTI Image.
+     * @param kDTI input DTI Image.
      */
-    public AlgorithmDTI2EGFA( ModelImage kDTIImage )
+    public AlgorithmDTI2EGFA( ModelImage kDTI )
     {
-        m_kDTIImage = kDTIImage;
+        m_kDTI = kDTI;
     }
 
     /** Clean up memory. */
     public void disposeLocal()
     {
-        m_kDTIImage = null;
-        m_kEigenImage = null;
+        m_kDTI = null;
+        m_kEigenVectorImage = null;
         m_kEigenValueImage = null;
         m_kFAImage = null;
 
@@ -90,9 +94,9 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
     /** Returns the Eigen Vector Image. 
      * @return the Eigen Vector Image. 
      */
-    public ModelImage getEigenImage()
+    public ModelImage getEigenVectorImage()
     {
-        return m_kEigenImage;
+        return m_kEigenVectorImage;
     }
 
 
@@ -139,7 +143,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
     /** Run the DTI -> EigenVector Functional Anisotropy algorithm. */
     public void runAlgorithm()
     {
-        if ( m_kDTIImage == null )
+        if ( m_kDTI == null )
         {
             return;
         }
@@ -148,17 +152,17 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
 
 
     /** 
-     * Calculates the eigen vector data from the dtiImage.
+     * Calculates the eigen vector data from the DTI.
      */
     private void calcEigenVectorFA( )
     {
-        if ( m_kDTIImage == null )
+        if ( m_kDTI == null )
         {
             return;
         }
-        int iLen = m_kDTIImage.getExtents()[0] * m_kDTIImage.getExtents()[1] * m_kDTIImage.getExtents()[2];
-        //int iZDim = m_kDTIImage.getExtents()[2];
-        int iSliceSize = m_kDTIImage.getExtents()[0] * m_kDTIImage.getExtents()[1];
+        int iLen = m_kDTI.getExtents()[0] * m_kDTI.getExtents()[1] * m_kDTI.getExtents()[2];
+        //int iZDim = m_kDTI.getExtents()[2];
+        int iSliceSize = m_kDTI.getExtents()[0] * m_kDTI.getExtents()[1];
         float[] afData = new float[iLen];
         float[] afTraceData = new float[iLen];
         float[] afADCData = new float[iLen];
@@ -169,7 +173,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         float[] afTensorData = new float[6];
 
         ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating Eigen Vectors ",
-                                                             "calculating eigen vectors...", 0, 100, true);
+                                                             "Calculating Eigen Vectors...", 0, 100, true);
         Matrix3f kMatrix = new Matrix3f();
         Vector3f kV1 = new Vector3f();
         Vector3f kV2 = new Vector3f();
@@ -180,7 +184,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             boolean bAllZero = true;
             for ( int j = 0; j < 6; j++ )
             {
-                afTensorData[j] = m_kDTIImage.getFloat(i + j*iLen);
+                afTensorData[j] = m_kDTI.getFloat(i + j*iLen);
                 if ( afTensorData[j] != 0 )
                 {
                     bAllZero = false;
@@ -278,14 +282,14 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         kProgressBar.dispose();
         kProgressBar = null;
 
-        int[] extentsEV = new int[]{m_kDTIImage.getExtents()[0], m_kDTIImage.getExtents()[1], m_kDTIImage.getExtents()[2], 9};
-        int[] extentsA = new int[]{m_kDTIImage.getExtents()[0], m_kDTIImage.getExtents()[1], m_kDTIImage.getExtents()[2]};
+        int[] extentsEV = new int[]{m_kDTI.getExtents()[0], m_kDTI.getExtents()[1], m_kDTI.getExtents()[2], 9};
+        int[] extentsA = new int[]{m_kDTI.getExtents()[0], m_kDTI.getExtents()[1], m_kDTI.getExtents()[2]};
 
 
         /** Fractional Anisotropy Image */
         m_kFAImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "FA") );
+                                     ModelImage.makeImageName( m_kDTI.getFileInfo(0).getFileName(), "FA") );
         try {
             m_kFAImage.importData(0, afData, true);
         } catch (IOException e) {
@@ -296,12 +300,12 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         {           
             //new ViewJFrameImage(m_kFAImage, null, new Dimension(610, 200), false);
             m_kFAImage.setExtents(extentsA);
-            m_kFAImage.copyFileTypeInfo(m_kDTIImage);        
+            m_kFAImage.copyFileTypeInfo(m_kDTI);        
             //copy core file info over
             FileInfoBase[] fileInfoBases = m_kFAImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
-                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
+                fileInfoBases[i].setFileDirectory( m_kDTI.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -314,7 +318,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         /** Trace Image */
         m_kTraceImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "Trace") );
+                                     ModelImage.makeImageName( m_kDTI.getFileInfo(0).getFileName(), "Trace") );
         try {
             m_kTraceImage.importData(0, afTraceData, true);
         } catch (IOException e) {
@@ -325,12 +329,12 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         {
             //new ViewJFrameImage(m_kTraceImage, null, new Dimension(610, 200), false);
             m_kTraceImage.setExtents(extentsA);
-            m_kTraceImage.copyFileTypeInfo(m_kDTIImage);        
+            m_kTraceImage.copyFileTypeInfo(m_kDTI);        
             //copy core file info over
             FileInfoBase[] fileInfoBases = m_kTraceImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
-                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
+                fileInfoBases[i].setFileDirectory( m_kDTI.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -343,7 +347,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         /** RA Image */
         m_kRAImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "RA") );
+                                     ModelImage.makeImageName( m_kDTI.getFileInfo(0).getFileName(), "RA") );
         try {
             m_kRAImage.importData(0, afRAData, true);
         } catch (IOException e) {
@@ -354,12 +358,12 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         {
             //new ViewJFrameImage(m_kRAImage, null, new Dimension(610, 200), false);
             m_kRAImage.setExtents(extentsA);
-            m_kRAImage.copyFileTypeInfo(m_kDTIImage);        
+            m_kRAImage.copyFileTypeInfo(m_kDTI);        
             //copy core file info over
             FileInfoBase[] fileInfoBases = m_kRAImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
-                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
+                fileInfoBases[i].setFileDirectory( m_kDTI.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -372,7 +376,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         /** Volume Ratio Image */
         m_kVRImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "VR") );
+                                     ModelImage.makeImageName( m_kDTI.getFileInfo(0).getFileName(), "VR") );
         try {
             m_kVRImage.importData(0, afVRData, true);
         } catch (IOException e) {
@@ -384,12 +388,12 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         {
            //new ViewJFrameImage(m_kVRImage, null, new Dimension(610, 200), false);
             m_kVRImage.setExtents(extentsA);
-            m_kVRImage.copyFileTypeInfo(m_kDTIImage);        
+            m_kVRImage.copyFileTypeInfo(m_kDTI);        
             //copy core file info over
             FileInfoBase[] fileInfoBases = m_kVRImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
-                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
+                fileInfoBases[i].setFileDirectory( m_kDTI.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -401,7 +405,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         /** ADC Image */
         m_kADCImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "ADC") );
+                                     ModelImage.makeImageName( m_kDTI.getFileInfo(0).getFileName(), "ADC") );
         try {
             m_kADCImage.importData(0, afADCData, true);
         } catch (IOException e) {
@@ -412,12 +416,12 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         {
            //new ViewJFrameImage(m_kADCImage, null, new Dimension(610, 200), false);
             m_kADCImage.setExtents(extentsA);
-            m_kADCImage.copyFileTypeInfo(m_kDTIImage);        
+            m_kADCImage.copyFileTypeInfo(m_kDTI);        
             //copy core file info over
             FileInfoBase[] fileInfoBases = m_kADCImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
-                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
+                fileInfoBases[i].setFileDirectory( m_kDTI.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -427,25 +431,25 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
    
         
         /** Eigen Vector Image */
-        m_kEigenImage = new ModelImage( ModelStorageBase.FLOAT,
+        m_kEigenVectorImage = new ModelImage( ModelStorageBase.FLOAT,
                                         extentsEV,
-                                        ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "EG") );
+                                        ModelImage.makeImageName( m_kDTI.getFileInfo(0).getFileName(), "EG") );
         try {
-            m_kEigenImage.importData(0, afDataCM, true);
+            m_kEigenVectorImage.importData(0, afDataCM, true);
         } catch (IOException e) {
-            m_kEigenImage.disposeLocal();
-            m_kEigenImage = null;
+            m_kEigenVectorImage.disposeLocal();
+            m_kEigenVectorImage = null;
         }
-        if ( m_kEigenImage != null )
+        if ( m_kEigenVectorImage != null )
         {
-           //new ViewJFrameImage(m_kEigenImage, null, new Dimension(610, 200), false);
-            m_kEigenImage.setExtents(extentsEV);
-            m_kEigenImage.copyFileTypeInfo(m_kDTIImage);        
+           //new ViewJFrameImage(m_kEigenVectorImage, null, new Dimension(610, 200), false);
+            m_kEigenVectorImage.setExtents(extentsEV);
+            m_kEigenVectorImage.copyFileTypeInfo(m_kDTI);        
             //copy core file info over
-            FileInfoBase[] fileInfoBases = m_kEigenImage.getFileInfo();
+            FileInfoBase[] fileInfoBases = m_kEigenVectorImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsEV);
-                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
+                fileInfoBases[i].setFileDirectory( m_kDTI.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -457,7 +461,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         /** Eigen Value Image */
         m_kEigenValueImage = new ModelImage( ModelStorageBase.ARGB_FLOAT,
                 extentsA,
-                                        ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "EV") );
+                                        ModelImage.makeImageName( m_kDTI.getFileInfo(0).getFileName(), "EV") );
         try {
             m_kEigenValueImage.importData(0, afEigenValues, true);
         } catch (IOException e) {
@@ -468,12 +472,12 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         {
             // looks good...
             m_kEigenValueImage.setExtents(extentsA);
-            m_kEigenValueImage.copyFileTypeInfo(m_kDTIImage);        
+            m_kEigenValueImage.copyFileTypeInfo(m_kDTI);        
             //copy core file info over
             FileInfoBase[] fileInfoBases = m_kEigenValueImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
-                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
+                fileInfoBases[i].setFileDirectory( m_kDTI.getFileInfo(0).getFileDirectory());
             }
             
            //new ViewJFrameImage(m_kEigenValueImage, null, new Dimension(610, 200), false);
