@@ -694,8 +694,8 @@ public class FileDicom extends FileDicomBase {
             // Should be removed
             // final int dirLength;
 
-            // Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
-            // elementLength + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("name = " + name + " length = " +
+             elementLength + "\n", Preferences.DEBUG_FILEIO);
 
             if ( (fileInfo.vr_type == FileInfoDicom.IMPLICIT) || (groupWord == 2)) {
 
