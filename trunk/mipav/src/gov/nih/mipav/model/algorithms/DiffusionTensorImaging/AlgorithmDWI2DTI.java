@@ -68,7 +68,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
     private String m_kRawImageFormat = null;
 
     /** Output DTI Image: */
-    private ModelImage m_kDTIImage = null;
+    private ModelImage m_kDTI = null;
 
     /** handle to BSE Algorithm * */
     private AlgorithmBrainSurfaceExtractor alg;
@@ -126,7 +126,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         m_aakDWIList = null;
         m_aiMatrixEntries = null;
         m_kRawImageFormat = null;
-        m_kDTIImage = null;
+        m_kDTI = null;
     }
 
     /** Calculate the DTI image. If the mask image is null, calculate the mask image first. */
@@ -143,8 +143,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
      * 
      * @return the DTI Image.
      */
-    public ModelImage getDTIImage() {
-        return m_kDTIImage;
+    public ModelImage getDTI() {
+        return m_kDTI;
     }
 
     /**
@@ -683,7 +683,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
                 final int end = (int) ( (i + 1) * step);
                 final Runnable task = new Runnable() {
                     public void run() {
-                        calculateDTIImage(start, end, afTensorData, aaafWeights, B, H);
+                        calculateDTI(start, end, afTensorData, aaafWeights, B, H);
                         doneSignal.countDown();
                     }
                 };
@@ -696,14 +696,14 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
                 e.printStackTrace();
             }
         } else {
-            calculateDTIImage(0, m_iSlices, afTensorData, aaafWeights, B, H);
+            calculateDTI(0, m_iSlices, afTensorData, aaafWeights, B, H);
         }
         // kProgressBar.dispose();
 
         final int[] extents = new int[] {m_iDimX, m_iDimY, m_iSlices, 6};
-        m_kDTIImage = new ModelImage(ModelStorageBase.FLOAT, extents, new String("DiffusionTensorImage"));
+        m_kDTI = new ModelImage(ModelStorageBase.FLOAT, extents, new String("DiffusionTensorImage"));
         try {
-            m_kDTIImage.importData(0, afTensorData, true);
+            m_kDTI.importData(0, afTensorData, true);
         } catch (final IOException e) {
             e.printStackTrace();
         }
@@ -713,7 +713,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         return afTensorData;
     }
 
-    public void calculateDTIImage(final int start, final int end, final float[] dtiData, final float[][][] weightData,
+    public void calculateDTI(final int start, final int end, final float[] dtiData, final float[][][] weightData,
             final Matrix B, final Matrix H) {
         for (int iSlice = start; iSlice < end; iSlice++) {
             final float[][] buffer = new float[m_iWeights][];
