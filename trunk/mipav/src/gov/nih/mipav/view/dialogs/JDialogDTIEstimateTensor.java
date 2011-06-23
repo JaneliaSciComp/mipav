@@ -95,7 +95,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     private AlgorithmDWI2DTI kAlgorithm;
 
     /** Diffusion Tensor image. */
-    private ModelImage DTIImage = null;
+    private ModelImage DTI = null;
 
     /** button * */
     private JButton loadMaskButton;
@@ -1459,18 +1459,18 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     public void algorithmPerformed(final AlgorithmBase algorithm) {
 
         if (kAlgorithm.isCompleted()) {
-            DTIImage = (kAlgorithm).getDTIImage();
+            DTI = (kAlgorithm).getDTI();
 
             float[] buffer;
 
             // determine length of dec image
-            final int length = DTIImage.getExtents()[0] * DTIImage.getExtents()[1] * DTIImage.getExtents()[2]
-                    * DTIImage.getExtents()[3];
+            final int length = DTI.getExtents()[0] * DTI.getExtents()[1] * DTI.getExtents()[2]
+                    * DTI.getExtents()[3];
 
             buffer = new float[length];
 
             try {
-                DTIImage.exportData(0, length, buffer);
+                DTI.exportData(0, length, buffer);
             } catch (final IOException error) {
                 System.out.println("IO exception");
                 return;
@@ -1487,7 +1487,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             }
 
             try {
-                DTIImage.importData(0, buffer, true);
+                DTI.importData(0, buffer, true);
             } catch (final IOException error) {
                 System.out.println("IO exception");
 
@@ -1496,8 +1496,8 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             // end hack
 
             // change to power of two
-            final int[] extents = DTIImage.getExtents();
-            final float[] res = DTIImage.getFileInfo(0).getResolutions();
+            final int[] extents = DTI.getExtents();
+            final float[] res = DTI.getFileInfo(0).getResolutions();
             final float[] saveRes = new float[] {res[0], res[1], res[2], res[3]};
 
             final float[] newRes = new float[extents.length];
@@ -1516,7 +1516,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             }
 
             if ( !originalVolPowerOfTwo) {
-                AlgorithmTransform transformFunct = new AlgorithmTransform(DTIImage, new TransMatrix(4),
+                AlgorithmTransform transformFunct = new AlgorithmTransform(DTI, new TransMatrix(4),
                         AlgorithmTransform.TRILINEAR, newRes[0], newRes[1], newRes[2], volExtents[0], volExtents[1],
                         volExtents[2], false, true, false);
                 transformFunct.setRunningInSeparateThread(false);
@@ -1527,29 +1527,29 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                     transformFunct = null;
                 }
 
-                final ModelImage kDTIImageScaled = transformFunct.getTransformedImage();
-                kDTIImageScaled.calcMinMax();
+                final ModelImage kDTIScaled = transformFunct.getTransformedImage();
+                kDTIScaled.calcMinMax();
 
                 /*
                  * transformFunct.disposeLocal(); transformFunct = null;
                  */
 
-                DTIImage.disposeLocal();
-                DTIImage = null;
-                DTIImage = transformFunct.getTransformedImage();
-                DTIImage.calcMinMax();
+                DTI.disposeLocal();
+                DTI = null;
+                DTI = transformFunct.getTransformedImage();
+                DTI.calcMinMax();
 
                 /*
-                 * for ( int i = 0; i < DTIImage.getFileInfo().length; i++ ) {
-                 * DTIImage.getFileInfo(i).setResolutions(saveRes);
-                 * DTIImage.getFileInfo(i).setSliceThickness(saveRes[2]); }
+                 * for ( int i = 0; i < DTI.getFileInfo().length; i++ ) {
+                 * DTI.getFileInfo(i).setResolutions(saveRes);
+                 * DTI.getFileInfo(i).setSliceThickness(saveRes[2]); }
                  */
 
             }
 
-            DTIImage.saveImage(outputDirTextField.getText() + File.separator, "DTIImage.xml", FileUtility.XML, false);
+            DTI.saveImage(outputDirTextField.getText() + File.separator, "DTI.xml", FileUtility.XML, false);
             MipavUtil.displayInfo("Tensor image saved as " + outputDirTextField.getText() + File.separator
-                    + "DTIImage.xml");
+                    + "DTI.xml");
             setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             if (maskImage != null) {
                 maskImage.disposeLocal();
