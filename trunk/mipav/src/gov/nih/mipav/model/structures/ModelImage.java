@@ -968,7 +968,7 @@ public class ModelImage extends ModelStorageBase {
         float flippedOr[] = new float[3];
         Vector3f position;
         Vector3f out;
-        float origin[] = new float[3];
+        float origin[] = new float[Math.max(3,newLoc.length)];
 
         final int[] axisOrient = fileInfo[0].getAxisOrientation();
         for (i = 0; i < Math.min(3, getNDims()); i++) {
