@@ -94,6 +94,7 @@ public class JDialogReorient extends JDialogScriptableBase
     
 	// storage for header information
 	FileInfoBase 	fileInfo;
+	FileInfoNIFTI   fileInfoNIFTI;
 	
     // dialog elements
 	private 	JPanel  	mainPanel;
@@ -547,7 +548,23 @@ public class JDialogReorient extends JDialogScriptableBase
             resultImage = algoTrans.getTransformedImage();
 			if (algorithm.isCompleted() == true && resultImage != null) {
                 // The algorithm has completed and produced a new image to be displayed.
-				JDialogBase.updateFileInfoStatic(fileInfo, resultImage);
+				if (image.getFileInfo()[0].getFileFormat() == FileUtility.NIFTI) {
+					fileInfoNIFTI.setMin(resultImage.getMin());
+					fileInfoNIFTI.setMax(resultImage.getMax());
+                    if (resultImage.getNDims() == 3) {
+                    	for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                    		resultImage.setFileInfo((FileInfoNIFTI)fileInfoNIFTI.clone(),i);
+                    	}
+                    }
+                    else if (resultImage.getNDims() == 4) {
+                    	for (int i = 0; i < resultImage.getExtents()[2]*resultImage.getExtents()[3]; i++) {
+                    		resultImage.setFileInfo((FileInfoNIFTI)fileInfoNIFTI.clone(),i);
+                    	}	
+                    }
+				}
+				else {
+				    JDialogBase.updateFileInfoStatic(fileInfo, resultImage);
+				}
 				if (resultImage.getNDims() >= 3) {
 		        	// Update any destImage NIFTI matrices
 		            MatrixHolder matHolder = null;
@@ -859,7 +876,12 @@ public class JDialogReorient extends JDialogScriptableBase
 	    Vector3f position;
 	    Vector3f out;
         
-		fileInfo = (FileInfoBase)(image.getFileInfo()[0].clone());
+	    if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+	    	fileInfoNIFTI = (FileInfoNIFTI)(image.getFileInfo()[0].clone());
+	    }
+	    else {
+	        fileInfo = (FileInfoBase)(image.getFileInfo()[0].clone());
+	    }
 		
 		// set resampled resolutions, dimensions
 		ri[0] = image.getFileInfo()[0].getResolutions()[0];
@@ -1047,9 +1069,16 @@ public class JDialogReorient extends JDialogScriptableBase
         } // for (j = 0; j <= 2; j++)
         
         for (i = 0; i <= 2; i++) {
-            fileInfo.setResolutions(r0[i], i);   
-            fileInfo.setExtents(n0[i], i);
-            fileInfo.setAxisOrientation(newOr[i], i);
+        	if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+        		fileInfoNIFTI.setResolutions(r0[i], i);   
+                fileInfoNIFTI.setExtents(n0[i], i);
+                fileInfoNIFTI.setAxisOrientation(newOr[i], i);	
+        	}
+        	else {
+                fileInfo.setResolutions(r0[i], i);   
+                fileInfo.setExtents(n0[i], i);
+                fileInfo.setAxisOrientation(newOr[i], i);
+        	}
         }
         
         for (i = 0; i < 3; i++) {
@@ -1114,7 +1143,12 @@ public class JDialogReorient extends JDialogScriptableBase
             }
         }
         
-        fileInfo.setOrigin(newOrigin);
+        if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+        	fileInfoNIFTI.setOrigin(newOrigin);
+        }
+        else {
+            fileInfo.setOrigin(newOrigin);
+        }
         
         if ((newOr[2] == FileInfoBase.ORI_I2S_TYPE) || (newOr[2] == FileInfoBase.ORI_S2I_TYPE)) {
             newOrient = FileInfoBase.AXIAL;
@@ -1128,7 +1162,12 @@ public class JDialogReorient extends JDialogScriptableBase
         else {
             newOrient = FileInfoBase.UNKNOWN_ORIENT;
         } 
-        fileInfo.setImageOrientation(newOrient);
+        if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+        	fileInfoNIFTI.setImageOrientation(newOrient);
+        }
+        else {
+            fileInfo.setImageOrientation(newOrient);
+        }
 		
 		TransMatrix transform = new TransMatrix(4);
         transform.setMatrix(0, 2, 0, 3, X);
