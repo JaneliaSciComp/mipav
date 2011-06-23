@@ -230,10 +230,9 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         	MouseEvent evt3 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_PRESSED, currentTime, mod, 149, 149, 1, false, MouseEvent.BUTTON1);
         	GetCanvas().dispatchEvent(evt3);
         	
-        	
         	currentTime = System.currentTimeMillis();
         	mod = MouseEvent.BUTTON1;
-        	MouseEvent evt4 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_DRAGGED, currentTime, mod, 175, 175, 1, false, MouseEvent.BUTTON1);
+        	MouseEvent evt4 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_DRAGGED, currentTime, mod, 200, 200, 1, false, MouseEvent.BUTTON1);
         	GetCanvas().dispatchEvent(evt4);
 
         }
