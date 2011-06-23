@@ -745,7 +745,7 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
         }
         AlgorithmDTI2EGFA kAlgorithm = new AlgorithmDTI2EGFA(m_kDTIImage);
         kAlgorithm.run();
-        m_kEigenVectorImage = kAlgorithm.getEigenImage();
+        m_kEigenVectorImage = kAlgorithm.getEigenVectorImage();
         m_kAnisotropyImage = kAlgorithm.getFAImage();
         kAlgorithm.getTraceImage().saveImage(m_kParentDir, "TraceImage.xml", FileUtility.XML, false);
         kAlgorithm.getRAImage().saveImage(m_kParentDir, "RAImage.xml", FileUtility.XML, false);
@@ -800,7 +800,7 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
     public void algorithmPerformed(final AlgorithmBase kAlgorithm) {
         if (kAlgorithm instanceof AlgorithmDWI2DTI) {
             if (kAlgorithm.isCompleted()) {
-                m_kDTIImage = ((AlgorithmDWI2DTI) kAlgorithm).getDTIImage();
+                m_kDTIImage = ((AlgorithmDWI2DTI) kAlgorithm).getDTI();
                 ((AlgorithmDWI2DTI) kAlgorithm).disposeLocal();
                 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
                 processDTI();
