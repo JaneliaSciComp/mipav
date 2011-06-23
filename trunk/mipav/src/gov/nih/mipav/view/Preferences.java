@@ -889,7 +889,7 @@ public class Preferences {
      */
     public static final void data(final String string) {
 
-        if (Preferences.messageFrame == null) {
+        if (Preferences.messageFrame == null || !Preferences.messageFrame.isVisible()) {
             System.err.println("DATA: "+string);
         } else {
             Preferences.messageFrame.append(string, ViewJFrameMessage.DATA);
@@ -905,7 +905,7 @@ public class Preferences {
     public static final void debug(final String string, final int level) {
         final boolean[] debugLevels = Preferences.getDebugLevels();
 
-        if (Preferences.messageFrame == null) {
+        if (Preferences.messageFrame == null  || !Preferences.messageFrame.isVisible()) {
             System.err.println("DEBUG level "+level+": "+string);
         } else {
 
