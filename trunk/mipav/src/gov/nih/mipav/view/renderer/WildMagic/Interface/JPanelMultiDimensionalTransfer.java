@@ -13,8 +13,12 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -65,7 +69,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
     private JScrollPane scroller;
     
     /** Scroll panel that holding the all the control components. */
-    private DrawingPanel scrollPanel;
+    private JPanel scrollPanel;
     
     private Animator m_kAnimator;
     private VolumeImageMultiDimensionalTransfer m_kMultiHistogram;
@@ -91,6 +95,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
         //VolumeImageHistogram.main(parent, kVolumeImage, true);
         init();
+        
     }
     
     public void actionPerformed(ActionEvent event) {
@@ -195,7 +200,14 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         boundaryEmphasisSlider.setValue( (int)(fColor * 100) );
     }
     
-    /**
+    
+    
+    
+    public synchronized VolumeImageMultiDimensionalTransfer getM_kMultiHistogram() {
+		return m_kMultiHistogram;
+	}
+
+	/**
      * Initializes GUI components.
      */
     private void init( ) {
@@ -203,7 +215,10 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         GridBagLayout kGrid = new GridBagLayout();
         kGBC.gridx = 0;
         kGBC.gridy = 0;
+        kGBC.insets = new Insets(5,5,5,5);
+        kGBC.anchor = GridBagConstraints.WEST;
         JPanel buttonPanel = new JPanel( kGrid );
+        buttonPanel.setBorder(buildTitledBorder("Options"));
         JRadioButton kSquare = new JRadioButton( "Square", true );
         kSquare.addActionListener(this);
         kSquare.setActionCommand("SquareWidget");
@@ -229,7 +244,10 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         kGBC.gridy++;
         buttonPanel.add( new JLabel( "Histogram Constant Color: "), kGBC );
         kGBC.gridx++;
+
         buttonPanel.add( colorButton, kGBC );
+
+        
 
         kGBC.gridx = 0;
         kGBC.gridy++;
@@ -237,14 +255,17 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         alphaSlider.addChangeListener(this);
         buttonPanel.add( new JLabel( "Histogram opacity: "), kGBC );
         kGBC.gridx++;
+        kGBC.gridwidth = 2;
         buttonPanel.add( alphaSlider, kGBC );
-        
+        kGBC.insets = new Insets(5,5,10,5);
+        kGBC.gridwidth = 1;
         kGBC.gridx = 0;
         kGBC.gridy++;
         boundaryEmphasisSlider = new JSlider();
         boundaryEmphasisSlider.addChangeListener(this);
         buttonPanel.add( new JLabel( "Boundary Emphasis Slider: "), kGBC );
         kGBC.gridx++;
+        kGBC.gridwidth = 2;
         buttonPanel.add( boundaryEmphasisSlider, kGBC );
 
         histogramPanel = new JPanel(new BorderLayout());
@@ -271,19 +292,47 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         GridBagLayout gbLayout = new GridBagLayout();
         GridBagConstraints gbConstraints = new GridBagConstraints();
         
-        scrollPanel = new DrawingPanel();
-        scrollPanel.setLayout(gbLayout);
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 0;
+        scrollPanel = new JPanel(new BorderLayout());
+        //scrollPanel.setLayout(gbLayout);
+        //gbConstraints.gridx = 0;
+       // gbConstraints.gridy = 0;
         //scrollPanel.add(panel, BorderLayout.CENTER);   
         //scrollPanel.add(buttonPanel, BorderLayout.SOUTH);   
-        scrollPanel.add(histogramPanel, gbConstraints);   
-        gbConstraints.gridy++;
-        scrollPanel.add(buttonPanel, gbConstraints);   
+       // scrollPanel.add(histogramPanel, gbConstraints);   
+        //gbConstraints.gridy++;
+        //scrollPanel.add(buttonPanel, gbConstraints);   
 
         scroller = new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        mainPanel = new JPanel();
-        mainPanel.add(scroller);
+        mainPanel = new JPanel(new BorderLayout());
+        
+        JPanel helpPanel = new JPanel(new GridBagLayout());
+        helpPanel.setBorder(buildTitledBorder("Help"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(5,5,5,5);
+        gbc.anchor = GridBagConstraints.WEST;
+        helpPanel.add( new JLabel( "- To insert a new widget, right-mouse click in the 2D Histogram "), gbc );
+        gbc.gridy++;
+        helpPanel.add( new JLabel( "- To move the widget, drag the interior of the widget "), gbc );
+        gbc.gridy++;
+        helpPanel.add( new JLabel( "- To resize the widget, drag the blue control points "), gbc );
+        gbc.gridy++;
+        helpPanel.add( new JLabel( "- To control intensity distribution, drag the green control point"), gbc );
+        gbc.gridy++;
+        helpPanel.add( new JLabel( "- To delete a widget, select it and then press the delete key"), gbc );
+        gbc.gridy++;
+        
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
+        contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        contentBox.add(histogramPanel);
+        contentBox.add(buttonPanel);
+        contentBox.add(helpPanel);
+        
+        scrollPanel.add(contentBox, BorderLayout.NORTH);
+        
+        
+        mainPanel.add(scroller, BorderLayout.NORTH);
     }
 }

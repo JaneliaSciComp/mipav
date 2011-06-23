@@ -198,6 +198,7 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     
     @Override
 	public void init(GLAutoDrawable arg0) {
+
         m_bDisplay = true;
         if ( m_bInit )
         {
@@ -210,6 +211,32 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         m_spkScene.UpdateGS();
         m_spkScene.UpdateRS();
         m_kAnimator.add( GetCanvas() );
+        
+        
+        //following code places a square box over the 2d histogram the first time it is shown
+        if(getM_akLev().size() == 0) {
+        	long currentTime = System.currentTimeMillis();
+        	int mod = MouseEvent.BUTTON3;
+        	MouseEvent evt1 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_PRESSED, currentTime, mod, 127, 127, 1, false, MouseEvent.BUTTON3);
+        	GetCanvas().dispatchEvent(evt1);
+        	 
+        	currentTime = System.currentTimeMillis();
+        	mod = MouseEvent.BUTTON3;
+        	MouseEvent evt2 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_RELEASED, currentTime, mod, 127, 127, 1, false, MouseEvent.BUTTON3);
+        	GetCanvas().dispatchEvent(evt2);
+        	
+        	currentTime = System.currentTimeMillis();
+        	mod = MouseEvent.BUTTON1;
+        	MouseEvent evt3 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_PRESSED, currentTime, mod, 149, 149, 1, false, MouseEvent.BUTTON1);
+        	GetCanvas().dispatchEvent(evt3);
+        	
+        	
+        	currentTime = System.currentTimeMillis();
+        	mod = MouseEvent.BUTTON1;
+        	MouseEvent evt4 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_DRAGGED, currentTime, mod, 175, 175, 1, false, MouseEvent.BUTTON1);
+        	GetCanvas().dispatchEvent(evt4);
+
+        }
     }
 
     /** 
@@ -267,7 +294,7 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     {
         if ( m_iCurrent == -1 )
         {
-            return;
+            return; 
         }
         m_akLev.get(m_iCurrent).processMouseDrag( m_iMouseX, m_iMouseY, m_iMouseButton, e );
         m_spkScene.UpdateGS();
@@ -291,6 +318,7 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         m_iMouseButton = e.getButton();
         m_iMouseX = e.getX();
         m_iMouseY = e.getY();
+        
         if ( (m_iMouseX >= 0) && (m_iMouseX < m_iWidth) &&
                 (m_iMouseY >= 0) && (m_iMouseY < m_iHeight) )
         {          
@@ -302,13 +330,14 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     
     @Override
 	public void mouseReleased(MouseEvent e)
-    {
+    {   
         if ( e.getButton() == MouseEvent.BUTTON3 )
-        {
+        {	
             if ( m_akLev.size() < MAX_WIDGETS )
             {
                 float fX = ((float)e.getX()/(float)m_iWidth);
                 float fY = ((float)m_iHeight-(float)e.getY())/m_iHeight;
+                
                 m_iCurrent++;
                 ClassificationWidget kLev = null;
                 if ( m_kWidgetType.equals( "Square" ) )
@@ -319,6 +348,7 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
                 {
                     kLev = new TriangleClassificationWidget(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHistoName(), m_iWidth, m_iHeight);
                 }
+
                 m_spkScene.AttachChild(  kLev.getWidget() );
                 m_spkScene.UpdateGS();
                 m_akLev.add(kLev);
@@ -511,5 +541,12 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
                 }            	
             }
         }
-    }    
+    }
+    
+	public synchronized Vector<ClassificationWidget> getM_akLev() {
+		return m_akLev;
+	}
+    
+    
+    
 }

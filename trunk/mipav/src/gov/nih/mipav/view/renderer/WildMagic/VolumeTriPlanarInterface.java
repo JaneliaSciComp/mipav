@@ -44,6 +44,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.VolumeImageMultiDimensionalTransfer;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender;
@@ -65,6 +66,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -2088,6 +2090,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     	{
             multiHistogramGUI.getHistogram().display();
             multiHistogramGUI.update();
+
     	}
     }
 
@@ -2291,6 +2294,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             rendererGUI.setDisplayVolumeCheck(true);
             raycastRenderWM.displayVolumeRaycast(true);
             raycastRenderWM.setVolumeBlend(rendererGUI.getBlendSliderValue() / 100.0f);
+     
         } 
     }
 
