@@ -4,12 +4,14 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
-import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /** Displays the BoundingBox frame around the volume data in the VolumeViewer.
@@ -19,10 +21,12 @@ import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 public class VolumeBoundingBox extends VolumeObject
 {
     /** The bounding box Polyline array. */
-    private Polyline[] m_akBoundingBox;
+    private TriMesh[] m_akBoundingBox;
 
-    /** The ShaderEffect for the bounding box. */
+    /** The Pre - ShaderEffect for the bounding box. */
     private VertexColor3Effect m_kVertexColor3Shader;
+    /** The ShaderEffect for the bounding box. */
+    private BoundingBoxEffect[] m_akBoundingBoxEffect;
 
     /** Creates a new bounding box object.
      * @param kImageA the VolumeImage containing shared data and textures for
@@ -72,9 +76,33 @@ public class VolumeBoundingBox extends VolumeObject
         {
             return;
         }
-        m_kScene.UpdateGS();
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
+    	m_kScene.UpdateGS();
+    	kCuller.ComputeVisibleSet(m_kScene);
+        if ( bPreRender )
+        {
+            for ( int i = 0; i < 6; i++ )
+            {
+                m_akBoundingBox[i].DetachAllEffects( );
+                m_akBoundingBox[i].AttachEffect( m_kVertexColor3Shader );
+            }
+            
+            // Cull front-facing polygons:
+            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+            //kRenderer.DrawScene(kCuller.GetVisibleSet());
+            // Undo culling:
+            m_kCull.CullFace = CullState.CullMode.CT_BACK;
+        }
+        else
+        {
+            for ( int i = 0; i < 6; i++ )
+            {
+                m_akBoundingBox[i].DetachAllEffects( );
+                m_akBoundingBox[i].AttachEffect( m_akBoundingBoxEffect[i] );
+            }
+            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+        	kRenderer.DrawScene(kCuller.GetVisibleSet());
+            m_kCull.CullFace = CullState.CullMode.CT_BACK;
+        }
     }
     /**
      * Called from JPanelDisplay. Sets the bounding box color.
@@ -95,8 +123,14 @@ public class VolumeBoundingBox extends VolumeObject
     private void CreateBox()
     {
         m_kScene = new Node();
+        m_kCull = new CullState();
+        m_kScene.AttachGlobalState(m_kCull);
 
-        m_akBoundingBox = new Polyline[6];
+        m_kAlpha = new AlphaState();
+        m_kAlpha.BlendEnabled = true;
+        m_kScene.AttachGlobalState(m_kAlpha);
+
+        m_akBoundingBox = new TriMesh[6];
         IndexBuffer kIndexBuffer = new IndexBuffer(6);
         int[] aiIndexData = kIndexBuffer.GetData();
         aiIndexData[0] = 0;
@@ -109,7 +143,7 @@ public class VolumeBoundingBox extends VolumeObject
         Attributes kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetCChannels(0,3);
-        kAttributes.SetTChannels(0,2);
+        kAttributes.SetTChannels(0,3);
 
         VertexBuffer[] akOutlineSquare = new VertexBuffer[6];
         for ( int i = 0; i < 6; i++ )
@@ -119,50 +153,95 @@ public class VolumeBoundingBox extends VolumeObject
             {
                 akOutlineSquare[i].SetColor3( 0, j, 1, 0, 0 ) ;
             }
-
-            akOutlineSquare[i].SetTCoord2( 0, 0, 1, 1 ) ;
-            akOutlineSquare[i].SetTCoord2( 0, 1, 0, 1 ) ;
-            akOutlineSquare[i].SetTCoord2( 0, 2, 0, 0 ) ;
-            akOutlineSquare[i].SetTCoord2( 0, 3, 1, 0 ) ;
         }
+        m_akBoundingBoxEffect = new BoundingBoxEffect[6];
+        
+        //System.err.println( m_fX + " " + m_fY + " " + m_fZ );
+        float[] afOrigin = m_kVolumeImageA.GetImage().getOrigin();
+        Vector3f origin = new Vector3f( afOrigin[0], afOrigin[1], afOrigin[2] );
+        int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+        int midZ = aiExtents.length > 2 ? aiExtents[2]/2 : 0;
+        float[] afRes = m_kVolumeImageA.GetImage().getResolutions(midZ);
+        Vector3f range = new Vector3f( aiExtents[0] * afRes[0],
+        		aiExtents[1] * afRes[1],
+        		aiExtents[2] * afRes[2]);
+        //System.err.println( range );
         // neg x polyline:
         akOutlineSquare[0].SetPosition3( 0, 0, 0, 0 ) ;
         akOutlineSquare[0].SetPosition3( 1, 0, 0, m_fZ ) ;
         akOutlineSquare[0].SetPosition3( 2, 0, m_fY, m_fZ ) ;
         akOutlineSquare[0].SetPosition3( 3, 0, m_fY, 0 ) ;
+        akOutlineSquare[0].SetTCoord3( 0, 0, 0, 0, 0 ) ;
+        akOutlineSquare[0].SetTCoord3( 0, 1, 0, 0, 1 ) ;
+        akOutlineSquare[0].SetTCoord3( 0, 2, 0, 1, 1 ) ;
+        akOutlineSquare[0].SetTCoord3( 0, 3, 0, 1, 0 ) ;
+        m_akBoundingBoxEffect[0] = new BoundingBoxEffect( origin, range,
+        		new Vector3f( m_fX, m_fY, m_fZ ), new Vector3f( -1, 0, 0) );
 
         // pos x polyline:
         akOutlineSquare[1].SetPosition3( 0, m_fX, 0, m_fZ ) ;
         akOutlineSquare[1].SetPosition3( 1, m_fX, 0, 0 ) ;
         akOutlineSquare[1].SetPosition3( 2, m_fX, m_fY, 0 ) ;
         akOutlineSquare[1].SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
+        akOutlineSquare[1].SetTCoord3( 0, 0, 1, 0, 1 ) ;
+        akOutlineSquare[1].SetTCoord3( 0, 1, 1, 0, 0 ) ;
+        akOutlineSquare[1].SetTCoord3( 0, 2, 1, 1, 0 ) ;
+        akOutlineSquare[1].SetTCoord3( 0, 3, 1, 1, 1 ) ;
+        m_akBoundingBoxEffect[1] = new BoundingBoxEffect( origin, range,
+        		new Vector3f( m_fX, m_fY, m_fZ ), new Vector3f( 1, 0, 0) );
 
         // neg y polyline:
         akOutlineSquare[2].SetPosition3( 0, m_fX, 0, m_fZ ) ;
         akOutlineSquare[2].SetPosition3( 1, 0, 0, m_fZ ) ;
         akOutlineSquare[2].SetPosition3( 2, 0, 0, 0 ) ;
         akOutlineSquare[2].SetPosition3( 3, m_fX, 0, 0 ) ;
+        akOutlineSquare[2].SetTCoord3( 0, 0, 1, 0, 1 ) ;
+        akOutlineSquare[2].SetTCoord3( 0, 1, 0, 0, 1 ) ;
+        akOutlineSquare[2].SetTCoord3( 0, 2, 0, 0, 0 ) ;
+        akOutlineSquare[2].SetTCoord3( 0, 3, 1, 0, 0 ) ;
+        m_akBoundingBoxEffect[2] = new BoundingBoxEffect( origin, range,
+        		new Vector3f( m_fX, m_fY, m_fZ ), new Vector3f( 0, -1, 0) );
+        
+        
         // pos y polyline:
         akOutlineSquare[3].SetPosition3( 0, m_fX, m_fY, 0 ) ;
         akOutlineSquare[3].SetPosition3( 1, 0, m_fY, 0 ) ;
         akOutlineSquare[3].SetPosition3( 2, 0, m_fY, m_fZ ) ;
         akOutlineSquare[3].SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
+        akOutlineSquare[3].SetTCoord3( 0, 0, 1, 1, 0 ) ;
+        akOutlineSquare[3].SetTCoord3( 0, 1, 0, 1, 0 ) ;
+        akOutlineSquare[3].SetTCoord3( 0, 2, 0, 1, 1 ) ;
+        akOutlineSquare[3].SetTCoord3( 0, 3, 1, 1, 1 ) ;
+        m_akBoundingBoxEffect[3] = new BoundingBoxEffect( origin, range,
+        		new Vector3f( m_fX, m_fY, m_fZ ), new Vector3f( 0, 1, 0) );
 
         // neg z polyline:
         akOutlineSquare[4].SetPosition3( 0, m_fX, 0, 0 ) ;
         akOutlineSquare[4].SetPosition3( 1, 0, 0, 0 ) ;
         akOutlineSquare[4].SetPosition3( 2, 0, m_fY, 0 ) ;
         akOutlineSquare[4].SetPosition3( 3, m_fX, m_fY, 0 ) ;
+        akOutlineSquare[4].SetTCoord3( 0, 0, 1, 0, 0 ) ;
+        akOutlineSquare[4].SetTCoord3( 0, 1, 0, 0, 0 ) ;
+        akOutlineSquare[4].SetTCoord3( 0, 2, 0, 1, 0 ) ;
+        akOutlineSquare[4].SetTCoord3( 0, 3, 1, 1, 0 ) ;
+        m_akBoundingBoxEffect[4] = new BoundingBoxEffect( origin, range,
+        		new Vector3f( m_fX, m_fY, m_fZ ), new Vector3f( 0, 0, -1) );
 
         // pos z polyline:
         akOutlineSquare[5].SetPosition3( 0, 0, 0, m_fZ ) ;
         akOutlineSquare[5].SetPosition3( 1, m_fX, 0, m_fZ ) ;
         akOutlineSquare[5].SetPosition3( 2, m_fX, m_fY, m_fZ ) ;
         akOutlineSquare[5].SetPosition3( 3, 0, m_fY, m_fZ ) ;
+        akOutlineSquare[5].SetTCoord3( 0, 0, 0, 0, 1 ) ;
+        akOutlineSquare[5].SetTCoord3( 0, 1, 1, 0, 1 ) ;
+        akOutlineSquare[5].SetTCoord3( 0, 2, 1, 1, 1 ) ;
+        akOutlineSquare[5].SetTCoord3( 0, 3, 0, 1, 1 ) ;
+        m_akBoundingBoxEffect[5] = new BoundingBoxEffect( origin, range,
+        		new Vector3f( m_fX, m_fY, m_fZ ), new Vector3f( 0, 0, 1) );
 
         for ( int i = 0; i < 6; i++ )
         {
-            m_akBoundingBox[i] = new Polyline( akOutlineSquare[i], true, true );
+            m_akBoundingBox[i] = new TriMesh( akOutlineSquare[i], kIndexBuffer );
             m_akBoundingBox[i].AttachEffect( m_kVertexColor3Shader );
             m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
             m_kScene.AttachChild(m_akBoundingBox[i]);
