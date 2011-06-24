@@ -1279,13 +1279,7 @@ public class FileInfoAnalyze extends FileInfoBase {
      */
     public void setOrigin(float[] stlocat) {
 
-        if (stlocat.length > 4) {
-            Preferences.debug("Start locations array must be of length less than 4.\n");
-
-            return;
-        }
-
-        for (int i = 0; i < stlocat.length; i++) {
+        for (int i = 0; i < Math.min(4,stlocat.length); i++) {
             setOrigin(stlocat[i], i);
         }
     }
