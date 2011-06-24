@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -435,7 +436,8 @@ public class FileInfoMinc extends FileInfoBase {
         final String groupPrefix = "dicom_0x";
         final String elemPrefix = "el_0x";
 
-        String group, elem, data, vr;
+        String group, elem, data;
+        VR vr;
         int index;
 
         for (int varIndex = 0; varIndex < getVarArray().length; varIndex++) {
@@ -450,7 +452,7 @@ public class FileInfoMinc extends FileInfoBase {
                     if (index != -1) {
                         elem = getVarElem(varIndex).getVattElem(attIndex).name.substring(elemPrefix.length());
                         vr = DicomDictionary.getVR(new FileDicomKey(group + "," + elem));
-                        if (vr != null && vr.equals("SQ")) {
+                        if (vr != null && vr.equals(VR.SQ)) {
                             continue;
                         }
 

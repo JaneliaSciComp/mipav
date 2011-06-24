@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.GetPath.Purpose;
 
@@ -294,7 +295,7 @@ public class DicomDictionary {
      * 
      * @return the type if the tag is not in the hashtable, <code>null</code> is returned.
      */
-    public static String getType(FileDicomKey key) {
+    public static VR getType(FileDicomKey key) {
 
         if (DicomDictionary.masterHashtable == null) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
@@ -347,7 +348,7 @@ public class DicomDictionary {
      * 
      * @return the value representation if the tag is not in the hashtable, <code>null</code> is returned.
      */
-    public static String getVR(FileDicomKey key) {
+    public static VR getVR(FileDicomKey key) {
 
         if (DicomDictionary.masterHashtable == null) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
@@ -633,10 +634,14 @@ public class DicomDictionary {
 
                 values = (String) tok.nextElement();
 
-                String vr = values.substring(1, 5);
+                String vrStr = values.substring(1, 5);
+                VR vr = VR.XX;
 
-                if ( !vr.equals("NONE")) {
-                    vr = vr.substring(0, 2);
+                if ( !vrStr.equals("NONE")) {
+                    vrStr = vrStr.substring(0, 2);
+                    vr = VR.valueOf(vrStr);
+                } else {
+                    vr = VR.UN;
                 }
 
                 values = (String) tok.nextElement();

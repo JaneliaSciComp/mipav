@@ -19,7 +19,11 @@ import javax.swing.JTextField;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 
+import gov.nih.mipav.model.file.DicomType;
 import gov.nih.mipav.model.file.FileDicomTagInfo;
+import gov.nih.mipav.model.file.FileDicomTagInfo.NumType;
+import gov.nih.mipav.model.file.FileDicomTagInfo.StringType;
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -151,7 +155,7 @@ public class PlugInDialogDicomDataElementsGenerator extends JDialogBase implemen
 			String line;
 			String elementName;
 			String valueRep;
-			String type;
+			DicomType type;
 			String ndarType;
 			String size = " ";
 			String required = "Optional";
@@ -167,23 +171,23 @@ public class PlugInDialogDicomDataElementsGenerator extends JDialogBase implemen
 					valueRep = valueRep.substring(valueRep.indexOf("\"") + 1, valueRep.lastIndexOf("\""));
 					if(!valueRep.equals("SQ")) {
 
-						type = FileDicomTagInfo.getType(valueRep);
+						type = FileDicomTagInfo.getType(VR.valueOf(valueRep));
 						
-						if(type.equals("typeInt")) {
+						if(type.equals(NumType.LONG)) {
 							ndarType = "Integer";
 							size = " ";
-						}else if(type.equals("typeShort")) {
+						}else if(type.equals(NumType.SHORT)) {
 							ndarType = "Integer";
 							size = " ";
-						}else if(type.equals("typeString")) {
+						}else if(type instanceof StringType) {
 							ndarType = "String";
 							size = "1024";
 						}
-						else if(type.equals("typeFloat")) {
+						else if(type.equals(NumType.FLOAT)) {
 							ndarType = "Float";
 							size = " ";
 						}
-						else if(type.equals("typeDouble")) {
+						else if(type.equals(NumType.DOUBLE)) {
 							ndarType = "Float";
 							size = " ";
 						}else {

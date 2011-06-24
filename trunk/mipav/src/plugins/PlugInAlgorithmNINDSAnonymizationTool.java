@@ -3,6 +3,7 @@ import gov.nih.mipav.model.file.DicomDictionary;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomSQ;
 import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoDicom;
@@ -1141,14 +1142,14 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     	while(e2.hasMoreElements()) {
     		FileDicomKey tagKey = e2.nextElement();
     		String tag = tagKey.getKey();
-    		String type = DicomDictionary.getType(tagKey);
+    		VR type = DicomDictionary.getType(tagKey);
     		if (type == null) {
-                type = "typeUnknown";
+                type = VR.UN;
     		}
-    		if (type.equals("typeSequence")) {
+    		if (type.equals(VR.SQ)) {
     			tagTable.removeTag(tag);
     		}
-    		if(type.equals("typeUnknown")) {
+    		if(type.equals(VR.UN)) {
 				if(tagTable.getValue(tagKey) instanceof FileDicomSQ) {
 					tagTable.removeTag(tag);	
 				}
