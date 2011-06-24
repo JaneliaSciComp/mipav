@@ -99,7 +99,7 @@ public class VolumeImage implements Serializable {
     private ModelRGB m_kRGBT = null;
 
     /** Image scale factors for display in 3D */
-    private float m_fX = 1, m_fY = 1, m_fZ = 1;
+    private float m_fX = 1, m_fY = 1, m_fZ = 1, m_fMax = 1;
 
     /** Image name post-fix typically either 'A' or 'B' */
     private String m_kPostfix = null;
@@ -680,6 +680,14 @@ public class VolumeImage implements Serializable {
      */
     public ModelRGB GetRGB() {
         return m_kRGBT;
+    }
+
+    /**
+     * The ModelImage Volume max-scale factor.
+     * @return Volume max-scale factor.
+     */
+    public float GetScaleMax() {
+        return m_fMax;
     }
 
     /**
@@ -1533,16 +1541,16 @@ public class VolumeImage implements Serializable {
         final float fMaxY = (m_kImage.getExtents()[1] - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
         final float fMaxZ = (m_kImage.getExtents()[2] - 1) * m_kImage.getFileInfo(0).getResolutions()[2];
 
-        float fMax = fMaxX;
-        if (fMaxY > fMax) {
-            fMax = fMaxY;
+        m_fMax = fMaxX;
+        if (fMaxY > m_fMax) {
+        	m_fMax = fMaxY;
         }
-        if (fMaxZ > fMax) {
-            fMax = fMaxZ;
+        if (fMaxZ > m_fMax) {
+        	m_fMax = fMaxZ;
         }
-        m_fX = fMaxX / fMax;
-        m_fY = fMaxY / fMax;
-        m_fZ = fMaxZ / fMax;
+        m_fX = fMaxX / m_fMax;
+        m_fY = fMaxY / m_fMax;
+        m_fZ = fMaxZ / m_fMax;
     }
 
     /**
