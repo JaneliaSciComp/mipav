@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileDicomTagInfo.NumType;
+import gov.nih.mipav.model.file.FileDicomTagInfo.StringType;
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.model.structures.ModelSerialCloneable;
 
 import gov.nih.mipav.view.Preferences;
@@ -45,14 +48,14 @@ public class FileDicomTag extends ModelSerialCloneable {
     /** Pointer to more information about this tag, read in and contained within the dicom dictionary. */
     private final FileDicomTagInfo tagInfo;
 
-    /** Actual value of the tag. */
+    /** Actual value of the tag (may be an array of elements). */
     private Object value;
 
     /**
      * Value representation for this tag, if the tags in this dicom file have explicit VRs. If the dicom tags have
      * implicit VRs, then the DicomDictionary VR is used.
      */
-    private String valueRepresentation = null;
+    private VR valueRepresentation = null;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -159,20 +162,20 @@ public class FileDicomTag extends ModelSerialCloneable {
 
     /**
      * Calculates the number of bytes that the data (the object value) takes to be stored. This method returns the
-     * number of data items times the sizeof the data type. This method will be so much simpler when (if) the tags are
-     * seperated out as individual classes.
+     * number of data items times the sizeof the data type. 
      * 
      * @return size of the value in bytes
      */
     public final int getDataLength() {
         int dataItems = 0;
 
-        if (tagInfo.getType().equalsIgnoreCase("typeString")) {
+        if (tagInfo.getType().getType() instanceof FileDicomTagInfo.StringType) {
             dataItems = value.toString().length();
-        } else if (tagInfo.getType().equalsIgnoreCase("otherWordString")) {
-            dataItems = getValueList().length;
-        } else if (tagInfo.getType().equalsIgnoreCase("otherByteString")) {
-            dataItems = getValueList().length;
+        //TODO: the following statements do not handle multiple data elements correctly
+        //} else if (tagInfo.getType().equalsIgnoreCase("otherWordString")) {
+          //  dataItems = getValueList().length;
+        //} else if (tagInfo.getType().equalsIgnoreCase("otherByteString")) {
+        //    dataItems = getValueList().length;
         } else { // ????
         	Object[] obj = getValueList();
         	for(int i=0; i<obj.length; i++) {
@@ -287,7 +290,7 @@ public class FileDicomTag extends ModelSerialCloneable {
      * 
      * @return The tag type.
      */
-    public final String getType() {
+    public final VR getType() {
         return tagInfo.getType();
     }
 
@@ -311,57 +314,44 @@ public class FileDicomTag extends ModelSerialCloneable {
      * @return the value
      */
     public Object getValue(final boolean parse) {
-        Object returnValue;
 
-        final String vr = getValueRepresentation();
+        final VR vr = getValueRepresentation();
         final String keyword = tagInfo.getKeyword();
-
-        if (parse && (vr != null) && (keyword != null) && (value != null)) {
-
-            if (vr.equals("AE")) {
-                returnValue = (value);
-            } else if (vr.equals("AS")) {
+        
+        if (parse && vr != null && keyword != null) {
+            
+            String returnValue = "";
+            
+            switch(vr) {
+            case AS:
                 returnValue = fromAStoVisibleString();
-            } else if (vr.equals("DA")) {
+                break;
+            case DA:
                 returnValue = fromDAtoVisibleString();
-            } else if (vr.equals("TM")) {
+                break;
+            case TM:
                 returnValue = fromTMtoVisibleString();
-            } else if (keyword.equals("PatientSex")) {
-                returnValue = fromPatientSexToVisibleString();
-            } else if (keyword.equals("PatientOrientation")) {
-                returnValue = fromPatientOrientationToVisibleString();
-            } else {
-                returnValue = value;
-            }
-        } else if (parse && vr != null && keyword != null && value == null) {
-        	returnValue = "";
-        } else if (parse && value == null) {
-            returnValue = "";
-        } else {
-            returnValue = value;
-        }
-
-        if (parse && returnValue instanceof Object[]) {
-            String tempReturn;
-            if (returnValue instanceof Byte[]) {
-                final Byte[] bytesV = (Byte[]) returnValue;
-
-                final byte[] bytesValue = new byte[bytesV.length];
-
-                for (int k = 0; k < bytesV.length; k++) {
-                    bytesValue[k] = bytesV[k].byteValue();
-                }
-                tempReturn = new String(bytesValue);
-            } else {
-                tempReturn = new String();
-                for (final Object obj : ((Object[]) returnValue)) {
-                    tempReturn += obj.toString() + " ";
+                break;
+            default:
+                if (value == null) {
+                    returnValue = "";
+                } else if (value instanceof Object[]) {
+                    for(int i=0; i<((Object[])value).length; i++) {
+                        returnValue += ((Object[])value)[i].toString()+"\\"; //dicom uses slash to separate elements
+                    }
+                } else if (keyword.equals("PatientSex")) {
+                    returnValue = fromPatientSexToVisibleString();
+                } else if (keyword.equals("PatientOrientation")) {
+                    returnValue = fromPatientOrientationToVisibleString();
+                } else {
+                    returnValue = value.toString();
                 }
             }
-            returnValue = tempReturn;
-        }
+            
+            return returnValue;
+        } 
 
-        return returnValue;
+        return value;
     }
 
 	/**
@@ -375,7 +365,7 @@ public class FileDicomTag extends ModelSerialCloneable {
         Object[] stuff = new Object[1];
 
         try {
-            final String type = tagInfo.getType();
+            final VR type = tagInfo.getType();
 
             if(value == null) {
             	stuff[0] = null;
@@ -494,7 +484,7 @@ public class FileDicomTag extends ModelSerialCloneable {
      * 
      * @return The tag vr.
      */
-    public final String getValueRepresentation() {
+    public final VR getValueRepresentation() {
 
         // explicit VR
         if (this.valueRepresentation != null) {
@@ -564,7 +554,7 @@ public class FileDicomTag extends ModelSerialCloneable {
      * @param value the value to store
      */
     public void setValue(Object value) {
-        final String vr = getValueRepresentation();
+        final VR vr = getValueRepresentation();
         final String keyword = tagInfo.getKeyword();
 
         // if the vr is null or has no keyword (maybe a private tag?), ignore. Must call setValue
@@ -572,118 +562,35 @@ public class FileDicomTag extends ModelSerialCloneable {
             return;
         }
 
-        final String type = tagInfo.getType();
+        final VR type = tagInfo.getType();
 
-        if (type.equals("typeString")) {
-            String val;
-
-            // convert from byte array to string
-            if (value instanceof byte[]) {
-                value = new String((byte[]) value);
-            }
-
-            if (vr.equals("AE")) { // vr: Application Entity
-                val = (String) value;
-            } else if (vr.equals("AS")) { // vr: Age String
+        String val;
+        if(type.getType() instanceof StringType) {
+            switch(type) {
+            case AS:
                 val = fromVisibleStringToAS(value.toString());
-            } else if (vr.equals("DA")) { // vr: Date
+                break;
+            case DA:
                 val = fromVisibleStringToDA(value.toString());
-            } else if (vr.equals("TM")) { // vr: Time
+                break;
+            case TM:
                 val = fromVisibleStringToTM(value.toString());
-            } else if (keyword.equals("PatientSex")) { // Patient Sex
-                val = fromVisibleStringToPatientSex(value.toString());
-            } else if (keyword.equals("PatientOrientation")) { // Patient Orientation
-                val = fromVisibleStringToPatientOrientation(value.toString());
-            } else {
-                val = value.toString();
+                break;
+            default:
+                if (keyword.equals("PatientSex")) { // Patient Sex
+                    val = fromVisibleStringToPatientSex(value.toString());
+                } else if (keyword.equals("PatientOrientation")) { // Patient Orientation
+                    val = fromVisibleStringToPatientOrientation(value.toString());
+                } else {
+                    val = value.toString();
+                }  
             }
-
+            
             setValue(val, val.length());
-        }
-        // explicitly call setValue(obj, len) for sequences, and unknowns
-        else if (type.equals("typeSequence") || type.equals("typeUnknown") || type.equals("otherWordString")
-                || type.equals("otherByteString")) {
-            return;
+        } else if (type.getType() instanceof NumType) {
+            setValue(value, ((NumType)type.getType()).getNumBytes()); //TODO: would not work with arrays
         } else {
-            // this made little sense. it required that any number string start with a letter l (otherwise a NPE)
-            // occurs. also, it required that the value be a string.
-            /*
-             * // all other types convert the value to an appropriate type when a string, // or just setValue. ?May
-             * throw an exception? // if value has lower case letter l instead of number 1 substitute 1 for l final
-             * String valS = (String) value; String valT = null; for (int i = 0; i < valS.length(); i++) { if (
-             * (valS.charAt(i) == 'l') && (valT == null)) { valT = "1"; } else if (valS.charAt(i) == '1') { valT =
-             * valT.concat("1"); } else { valT = valT.concat(valS.substring(i, i)); } }
-             */
-
-            // TODO: might want to add a catch of NumberFormatExceptions to find malformed number strings (likely
-            // composed of the byte equivalents and stored in xxxx,0000 tags)
-            int valueLength = -1;
-            final int vm = tagInfo.getValueMultiplicity();
-
-            if (value instanceof String) {
-                // if the value is a string, replace any ells in it with ones (not sure when this should be the case..)
-                final String valS = (String) value;
-                for (int i = 0; i < valS.length(); i++) {
-                    valS.replace('l', '1');
-                }
-                value = valS;
-
-                if (type.equals("typeFloat")) {
-                    value = Float.valueOf((String) value);
-                } else if (type.equals("typeDouble")) {
-                    value = Double.valueOf((String) value);
-                } else if (type.equals("typeShort")) {
-                    value = Short.valueOf((String) value);
-                } else if (type.equals("typeInt")) {
-                    value = Integer.valueOf((String) value);
-                }
-            }
-
-            // TODO: not sure at all that these should always be BIG_ENDIAN. works for example Minc2 files from samir
-            // das, though.
-            if (value instanceof byte[]) {
-                Object[] array = null;
-                if (type.equals("typeFloat")) {
-                    array = FileDicomTag.toFloat((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
-                } else if (type.equals("typeDouble")) {
-                    array = FileDicomTag.toDouble((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
-                } else if (type.equals("typeShort")) {
-                    if (vr.equals("US")) {
-                        array = FileDicomTag.toUShort((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
-                    } else {
-                        array = FileDicomTag.toShort((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
-                    }
-                } else if (type.equals("typeInt")) {
-                    array = FileDicomTag.toInt((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
-                }
-
-                if (array != null) {
-                    String str = array[0].toString();
-                    if (vm > 1) {
-                        for (int i = 1; i < vm; i++) {
-                            str += "\\" + array[i];
-                        }
-                    }
-                    value = str;
-                }
-            }
-
-            if (type.equals("typeFloat")) {
-                valueLength = 4;
-            } else if (type.equals("typeDouble")) {
-                valueLength = 8;
-            } else if (type.equals("typeShort")) {
-                valueLength = 2;
-            } else if (type.equals("typeInt")) {
-                valueLength = 4;
-            } else {
-                Preferences.debug("Unrecognized tag type: " + vr + " (" + type + ") -- " + tagInfo.getKey() + "\n",
-                        Preferences.DEBUG_FILEIO);
-                System.err.println("Unrecognized tag type: " + vr + " (" + type + ") -- " + tagInfo.getKey());
-                return;
-            }
-
-            setValue(value, valueLength);
+            return;   // explicitly call setValue(obj, len) for sequences, and unknowns
         }
     }
 
@@ -717,65 +624,24 @@ public class FileDicomTag extends ModelSerialCloneable {
      * 
      * @param vr The tag's explicit value representation.
      */
-    public final void setValueRepresentation(final String vr) {
+    public final void setValueRepresentation(final VR vr) {
         this.valueRepresentation = vr;
     }
 
     /**
-     * Gets the data size in bytes of the units held in this class. This method will be so much simpler when (if) the
-     * tags are seperated out as individual classes.
+     * Gets the data size in bytes of the units held in this class. 
      * 
      * @return DOCUMENT ME!
      */
     public int sizeof() {
-        int retval = 0;
-        final String type = tagInfo.getType();
-
-        if (type.equals("typeString")) {
-
-            // loop through all values in the list to find total length of all
-            // strings.... consider for other types tooo....
-            retval = 1; // one char, no?
-        } else if (type.equals("typeShort")) {
-            retval = 2;
-        } else if (type.equals("typeInt")) {
-            retval = 4;
-        } else if (type.equals("typeFloat")) {
-            retval = 4;
-        } else if (type.equals("typeDouble")) {
-            retval = 8;
-        } else if (type.equalsIgnoreCase("otherWordString")) {
-            final Object[] val = getValueList();
-
-            if (val instanceof Short[]) {
-                retval = 2;
-            } else {
-            	try {
-            		retval = val[0].toString().length();
-            	} catch(NullPointerException e) {
-            		retval = 0;
-            	} 
-            }
-        } else if (type.equalsIgnoreCase("otherByteString") || type.equalsIgnoreCase("typeUnknown")) {
-            final Object[] val = getValueList();
-
-            if (val instanceof Byte[]) {
-                retval = 1;
-            } else if (val instanceof Short[]) {
-                retval = 2;
-            } else if (val instanceof Integer[]) {
-                retval = 4;
-            } else if (val instanceof Float[]) {
-                retval = 4;
-            } else if (val instanceof Double[]) {
-                retval = 8;
-            } else {
-                System.err.println("FileDicomTag.sizeof  " + val);
-                retval = 1;
-            }
+        final VR vr = tagInfo.getType();
+        final DicomType type = vr.getType();
+        
+        if(type instanceof NumType) {
+            return ((NumType) type).getNumBytes();
+        } else {
+            return 1;
         }
-
-        return retval;
     }
 
     /**

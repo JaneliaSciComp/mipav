@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -179,10 +180,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 rowData[1] = tagName;
                 rowData[2] = ((FileDicomTag) tagsList.get(key)).getName();
 
-                final String vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
+                final VR vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
                 final int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
 
-                if (rowData[2].equals("Private Tag") || vr.equals("OB")) {
+                if (rowData[2].equals("Private Tag") || vr.equals(VR.OB)) {
 
                     // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
                     // if (rowData[1].equals("Private Tag") || vr.equals("OB") || vm > 1) {
@@ -209,7 +210,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[3] = JDialogFileInfoDICOM.convertType(bytesValue, DicomInfo.getEndianess(), vm);
                             }
                         }
-                    } else if (vr.equals("SQ")) {
+                    } else if (vr.equals(VR.SQ)) {
                         final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
                         final Vector<String> display = sq.getSequenceDisplay();
 
@@ -294,7 +295,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     // }
                     // }
                 } // special cases which contain coded information:
-                else if (vr.equals("PN")) {
+                else if (vr.equals(VR.PN)) {
                     String s = (String) ((FileDicomTag) tagsList.get(key)).getValue(true);
                     s = s.replace('^', ',');
 
@@ -494,7 +495,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     } else {
                         rowData[3] = s;
                     }
-                } else if (vr.equals("SQ")) {
+                } else if (vr.equals(VR.SQ)) {
 
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
@@ -584,7 +585,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             final boolean show) {
         Enumeration<FileDicomKey> e;
         String name;
-        @SuppressWarnings("unused")
         String [] tags = null;
         FileDicomKey key;
         final Object[] rowData = {"", "", ""};
@@ -609,10 +609,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 rowData[0] = tagName;
                 rowData[1] = ((FileDicomTag) tagsList.get(key)).getName();
 
-                final String vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
+                final VR vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
                 final int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
 
-                if (rowData[1].equals("Private Tag") || vr.equals("OB")) {
+                if (rowData[1].equals("Private Tag") || vr.equals(VR.OB)) {
 
                     // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
                     // if (rowData[1].equals("Private Tag") || vr.equals("OB") || vm > 1) {
@@ -639,7 +639,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[2] = JDialogFileInfoDICOM.convertType(bytesValue, DicomInfo.getEndianess(), vm);
                             }
                         }
-                    } else if (vr.equals("SQ")) {
+                    } else if (vr.equals(VR.SQ)) {
                         final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
                         final Vector<String> display = sq.getSequenceDisplay();
 
@@ -725,7 +725,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     // }
                     // }
                 } // special cases which contain coded information:
-                else if (vr.equals("PN")) {
+                else if (vr.equals(VR.PN)) {
                     String s = (String) ((FileDicomTag) tagsList.get(key)).getValue(true);
                     s = s.replace('^', ',');
                     if (s.length() > 0) {
@@ -914,7 +914,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     } else {
                         rowData[2] = s;
                     }
-                } else if (vr.equals("SQ")) {
+                } else if (vr.equals(VR.SQ)) {
 
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
@@ -1019,10 +1019,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 rowData[0] = tagName;
                 rowData[1] = (tagsList.get(key)).getName();
 
-                final String vr = (tagsList.get(key)).getValueRepresentation();
+                final VR vr = (tagsList.get(key)).getValueRepresentation();
                 final int vm = (tagsList.get(key)).getValueMultiplicity();
 
-                if (rowData[1].equals("Private Tag") || vr.equals("OB")) {
+                if (rowData[1].equals("Private Tag") || vr.equals(VR.OB)) {
 
                     // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
                     // if (rowData[1].equals("Private Tag") || vr.equals("OB") || vm > 1) {
@@ -1049,7 +1049,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[2] = JDialogFileInfoDICOM.convertType(bytesValue, true, vm);
                             }
                         }
-                    } else if (vr.equals("SQ")) {
+                    } else if (vr.equals(VR.SQ)) {
                         final FileDicomSQ sq = (FileDicomSQ) (tagsList.get(key)).getValue(true);
                         final Vector<String> display = sq.getSequenceDisplay();
 
@@ -1134,7 +1134,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     // }
                     // }
                 } // special cases which contain coded information:
-                else if (vr.equals("PN")) {
+                else if (vr.equals(VR.PN)) {
                     String s = (String) (tagsList.get(key)).getValue(true);
                     s = s.replace('^', ',');
                     if (s.length() > 0) {
@@ -1180,7 +1180,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     } else {
                         rowData[2] = s;
                     }
-                } else if (vr.equals("SQ")) {
+                } else if (vr.equals(VR.SQ)) {
 
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) (tagsList.get(key)).getValue(true);

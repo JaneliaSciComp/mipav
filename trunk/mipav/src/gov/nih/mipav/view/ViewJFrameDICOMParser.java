@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 
@@ -693,11 +694,11 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                     newRow.addElement(SortingTableModel.EMPTY_CELL); // if data is not present, add
                                     // empty cell
                                 } else {
-                                    String vr = dicomTag.getValueRepresentation();
+                                    VR vr = dicomTag.getValueRepresentation();
                                     String value = (String) dicomTag.getValue(true);
 
-                                    if (vr.equals("SL") || vr.equals("UL") || vr.equals("SS")
-                                            || vr.equals("US") || vr.equals("IS")) {
+                                    if (vr.equals(VR.SL) || vr.equals(VR.UL) || vr.equals(VR.SS)
+                                            || vr.equals(VR.US) || vr.equals(VR.IS)) {
 
                                         /*
                                          * Try to create a Number object out of the data. This is important because the
@@ -718,7 +719,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                             // sorting
                                             newRow.addElement(value);
                                         }
-                                    } else if (vr.equals("FD") || vr.equals("FL") || vr.equals("DS")) {
+                                    } else if (vr.equals(VR.FD) || vr.equals(VR.FL) || vr.equals(VR.DS)) {
 
                                         try {
                                             Double doubleObj = new Double(Double.parseDouble(value));

@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.file;
 
-
 import gov.nih.mipav.model.structures.*;
 
 
@@ -14,6 +13,118 @@ import gov.nih.mipav.model.structures.*;
  */
 public class FileDicomTagInfo extends ModelSerialCloneable {
 
+    public enum StringType implements DicomType {
+        /** A character string that may be possibly have further format specifications is stored in the tag's value */
+        STRING("typeString", VR.ST, VR.LT, VR.CS, VR.UI, VR.PN, VR.AS, VR.AE, VR.UT, VR.IS, VR.LO, VR.DS, VR.SH, VR.OF),
+        /** A string with VR "OB" is stored in the tag's value. */
+        BYTE_STRING("otherByteString", VR.OB),
+        /** A string with VR "OW" is stored in the tag's value. */
+        WORD_STRING("otherWordString", VR.OW),
+        /** A sequence is encoded in the tag's value */
+        SEQUENCE("typeSequence", VR.SQ),
+        /** A dicom tag is stored in the tag's value*/
+        TAG("typeTag", VR.AT),
+        /** Data with VR "UN"  */
+        UNKNOWN("typeUnknown", VR.UN),
+        /** Data not supported by MIPAV is stored in the tag's value */
+        UNSUPPORTED("typeUnsupported", VR.XX),
+        /** Date/time data */
+        DATE("typeDate", VR.DA, VR.DT, VR.TM);
+        
+        StringType(String name, VR... v) {
+            
+        }
+
+        @Override
+        public Object[] read(byte[] data) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public byte[] write(Object obj) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+    }
+    
+    
+    
+    public enum VR {
+        ST("ST", StringType.STRING), // Short Text
+        LT("LT", StringType.STRING), // Long Text
+        CS("CS", StringType.STRING), // Code String
+        UI("UI", StringType.STRING), // UID
+        PN("PN", StringType.STRING), // Person's Name
+        AS("AS", StringType.STRING), // Age String
+        AE("AE", StringType.STRING), // Application Entity Title
+        UT("UT", StringType.STRING), // Unlimited Text
+        IS("IS", StringType.STRING), // Integer String
+        LO("LO", StringType.STRING), // Long String
+        DS("DS", StringType.STRING), // Decimal String
+        SH("SH", StringType.STRING), // Short String
+        OF("OF", StringType.STRING), // Other Float String
+        OB("OB", StringType.BYTE_STRING),
+        OW("OW", StringType.WORD_STRING), 
+        SQ("SQ", StringType.SEQUENCE), 
+        AT("AT", StringType.TAG), 
+        UN("UN", StringType.UNKNOWN), 
+        XX("XX", StringType.UNSUPPORTED), 
+        DA("DA", StringType.DATE), 
+        DT("DT", StringType.DATE), 
+        TM("TM", StringType.DATE),
+        SS("SS", NumType.SHORT), // Signed short 
+        US("US", NumType.SHORT), // Unsigned short
+        SL("SL", NumType.LONG), // Signed Long  
+        UL("UL", NumType.LONG), // Unsigned Long
+        FL("FL", NumType.FLOAT), // Floating Point Single (float)
+        FD("FD", NumType.DOUBLE); // Floating Point Double
+        
+        private DicomType type;
+        
+        VR(String name, DicomType t) {
+            this.type = t;
+        }
+        
+        public DicomType getType() {
+            return type;
+        }
+    }
+    
+    public enum NumType implements DicomType {
+        
+        /** A signed or unsigned short in 2's complement is stored in the tag's value. */
+        SHORT("typeShort", 2, VR.SS, VR.US),
+        /** A signed or unsigned integer in 2's complement is stored in the tag's value. */
+        LONG("typeLong", 4, VR.SL, VR.UL),
+        /** An IEEE754:1985 32-bit float is stored in the tag's value. */
+        FLOAT("typeFloat", 4, VR.FL),
+        /** An IEEE754:1985 64-bit double is stored in the tag's value. */
+        DOUBLE("typeDouble", 8, VR.FD);
+        
+        private int numBytes;
+
+        NumType(String name, int numBytes, VR... vr) {
+            this.numBytes = numBytes;
+        }
+        
+        public int getNumBytes() {
+            return this.numBytes;
+        }
+
+        @Override
+        public Object[] read(byte[] data) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public byte[] write(Object obj) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+    }
+    
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
@@ -37,7 +148,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
     protected int valueMultiplicity;
 
     /** DICOM value representation (vr) for this tag. */
-    protected String valueRepresentation;
+    protected VR valueRepresentation;
 
     /**
      * Version of the tag. Usually '2' or '3', although some tags get strings like 'GEM' or 'TSH' when the tag is from a
@@ -59,7 +170,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
      *
      * @see    #DEFAULT_TAG_VERSION
      */
-    public FileDicomTagInfo(FileDicomKey dicomKey, String vr, int vm, String keyword, String name) {
+    public FileDicomTagInfo(FileDicomKey dicomKey, VR vr, int vm, String keyword, String name) {
         this(dicomKey, DEFAULT_TAG_VERSION, vr, vm, keyword, name);
     }
 
@@ -73,7 +184,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
      * @param  keyword   the keyword (no spaces)
      * @param  name      the real world name
      */
-    public FileDicomTagInfo(FileDicomKey dicomKey, String version, String vr, int vm, String keyword, String name) {
+    public FileDicomTagInfo(FileDicomKey dicomKey, String version, VR vr, int vm, String keyword, String name) {
         this.key = dicomKey;
         this.version = version;
         this.valueRepresentation = vr;
@@ -94,7 +205,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
      *
      * @see    #DEFAULT_TAG_VERSION
      */
-    public FileDicomTagInfo(int group, int element, String vr, int vm, String keyword, String name) {
+    public FileDicomTagInfo(int group, int element, VR vr, int vm, String keyword, String name) {
         this(new FileDicomKey(group, element), vr, vm, keyword, name);
     }
 
@@ -109,7 +220,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
      * @param  keyword  the keyword (no spaces)
      * @param  name     the real world name
      */
-    public FileDicomTagInfo(int group, int element, String version, String vr, int vm, String keyword, String name) {
+    public FileDicomTagInfo(int group, int element, String version, VR vr, int vm, String keyword, String name) {
         this(new FileDicomKey(group, element), version, vr, vm, keyword, name);
     }
 
@@ -123,49 +234,9 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
      *
      * @return  the type (int, double, short, String, or unknown)
      */
-    public static final String getType(String vr) {
+    public static final DicomType getType(VR vr) {
 
-        try {
-
-            if (vr.equals("SL") || vr.equals("UL")) { // Signed Long  || Unsigned Long
-                return FileDicomBase.TYPE_INT;
-            } else if (vr.equals("SS") || vr.equals("US")) { // Signed short || Unsigned short
-                return FileDicomBase.TYPE_SHORT;
-            } else if (vr.equals("SH") || // Short String
-                           vr.equals("DS") || // Decimal String
-                           vr.equals("IS") || // Integer String
-                           vr.equals("LO") || // Long String
-                           vr.equals("ST") || // Short Text
-                           vr.equals("LT") || // Long Text
-                           vr.equals("CS") || // Code String
-                           vr.equals("DA") || // Date
-                           vr.equals("DT") || // Date and Time
-                           vr.equals("TM") || // Time
-                           vr.equals("UI") || // UID
-                           vr.equals("PN") || // Person's Name
-                           vr.equals("AS") || // Age String
-                           vr.equals("AE") || // Application Entity Title
-                           vr.equals("UN") || // Unknown
-                           vr.equals("UT")) { // Unlimited Text
-                return FileDicomBase.TYPE_STRING;
-            } else if (vr.equals("FL")) { // Floating Point Single (float)
-                return FileDicomBase.TYPE_FLOAT;
-            } else if (vr.equals("FD")) { // Floating Point Double
-                return FileDicomBase.TYPE_DOUBLE;
-            } else if (vr.equals("OW")) {
-                return FileDicomBase.OTHER_WORD_STRING;
-            } else if (vr.equals("OB")) {
-                return FileDicomBase.OTHER_BYTE_STRING;
-            } else if (vr.equals("SQ")) {
-                return FileDicomBase.TYPE_SEQUENCE;
-            } else if (vr.equals("AT")) {
-                return FileDicomBase.TYPE_DATA_ELEMENT_TAG;
-            } else {
-                return FileDicomBase.TYPE_UNKNOWN; // unknown
-            }
-        } catch (NullPointerException npe) {
-            return FileDicomBase.TYPE_UNKNOWN;
-        }
+        return vr.getType();
     }
 
     /**
@@ -231,8 +302,8 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
      *
      * @return  the type (int, double, short, String, or unknown)
      */
-    public final String getType() {
-        return getType(getValueRepresentation());
+    public final VR getType() {
+        return valueRepresentation;
     }
 
     /**
@@ -252,7 +323,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
      *
      * @return  the value representation
      */
-    public final String getValueRepresentation() {
+    public final VR getValueRepresentation() {
         return valueRepresentation;
     }
 
@@ -305,7 +376,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
      *
      * @param  vr  the value representation
      */
-    public final void setValueRepresentation(String vr) {
+    public final void setValueRepresentation(VR vr) {
         this.valueRepresentation = vr;
     }
 

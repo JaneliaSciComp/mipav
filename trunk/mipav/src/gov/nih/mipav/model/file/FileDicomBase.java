@@ -16,36 +16,10 @@ public class FileDicomBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** A character string that may be possibly have further format specifications is stored in the tag's value */ 
-	protected static final String TYPE_STRING = "typeString";
-
-	/** A string with VR "OB" is stored in the tag's value. */
-    protected static final String OTHER_BYTE_STRING = "otherByteString";
-
-    /** A string with VR "OW" is stored in the tag's value. */
-    protected static final String OTHER_WORD_STRING = "otherWordString";
-
-    /** A signed or unsigned short in 2's complement is stored in the tag's value. */
-    protected static final String TYPE_SHORT = "typeShort";
-
-    /** A signed or unsigned integer in 2's complement is stored in the tag's value. */
-	protected static final String TYPE_INT = "typeInt";
-
-	/** An IEEE754:1985 32-bit float is stored in the tag's value. */
-	protected static final String TYPE_FLOAT = "typeFloat";
-
-	/** An IEEE754:1985 64-bit double is stored in the tag's value. */
-	protected static final String TYPE_DOUBLE = "typeDouble";
-
-	/** Data with VR "UN" or data not supported by MIPAV is stored in the tag's value */
-	protected static final String TYPE_UNKNOWN = "typeUnknown";
-
-	/** A sequence is encoded in the tag's value */
-	protected static final String TYPE_SEQUENCE = "typeSequence";
-	
-	/** A dicom tag is stored in the tag's value*/
-	public static final String TYPE_DATA_ELEMENT_TAG = "typeTag";
-	
+    
+    
+    
+    
     /** Byte order. Rightmost byte is most significant. */
     public static final boolean LITTLE_ENDIAN = false;
 
