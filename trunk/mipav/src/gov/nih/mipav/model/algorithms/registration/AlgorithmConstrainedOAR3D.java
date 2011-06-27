@@ -976,7 +976,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         if (!allowLevel2XY || !allowLevel2Z) {
             Preferences.debug("Image resolution is too low to subsample for level 2, given " +
-                              "the prescribed translation limits. \n");
+                              "the prescribed translation limits. \n",Preferences.DEBUG_ALGORITHM);
         }
 
         if (((resRef[0] * 4.) > maxPixSizeX) || ((resRef[1] * 4.) > maxPixSizeY)) {
@@ -989,7 +989,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         if (!allowLevel4XY || !allowLevel4Z) {
             Preferences.debug("Image resolution is too low to subsample for level 4, given " +
-                              "the prescribed translation limits. \n");
+                              "the prescribed translation limits. \n",Preferences.DEBUG_ALGORITHM);
         }
 
         if (((resRef[0] * 8.) > maxPixSizeX) || ((resRef[1] * 8.) > maxPixSizeY)) {
@@ -1002,7 +1002,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         if (!allowLevel8XY || !allowLevel8Z) {
             Preferences.debug("Image resolution is too low to subsample for level 8, given " +
-                              "the prescribed translation limits. \n");
+                              "the prescribed translation limits. \n",Preferences.DEBUG_ALGORITHM);
         }
 
         if (((resRef[0] * 16.) > maxPixSizeX) || ((resRef[1] * 16.) > maxPixSizeY)) {
@@ -1015,7 +1015,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         if (!allowLevel16XY || !allowLevel16Z) {
             Preferences.debug("Image resolution is too low to subsample for level 16, given " +
-                              "the prescribed translation limits. \n");
+                              "the prescribed translation limits. \n",Preferences.DEBUG_ALGORITHM);
         }
 
 
@@ -1082,10 +1082,12 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         }
 
-        Preferences.debug("Blurring ref = " + sigmasRef[0] + ", " + sigmasRef[1] + ", " + sigmasRef[2] + "\n");
-        Preferences.debug("Blurring inp = " + sigmasInput[0] + ", " + sigmasInput[1] + ", " + sigmasInput[2] + "\n");
+        Preferences.debug("Blurring ref = " + sigmasRef[0] + ", " + sigmasRef[1] + ", " + sigmasRef[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Blurring inp = " + sigmasInput[0] + ", " + sigmasInput[1] + ", " + sigmasInput[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
         
-        Preferences.debug(getConstructionInfo());
+        Preferences.debug(getConstructionInfo(),Preferences.DEBUG_ALGORITHM);
 
         if (blurRef) {
 
@@ -1491,7 +1493,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                         allowLevel16Z) {
                     ModelSimpleImage simpleWeightRefSub16;
                     ModelSimpleImage simpleWeightInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16  ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16  ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleWeightRefSub16 = subsampleBy2(simpleWeightRefSub8, false);
                     simpleWeightInputSub16 = subsampleBy2(simpleWeightInputSub8, false);
@@ -1502,7 +1504,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                                doSubsample && allowLevel16XY) {
                     ModelSimpleImage simpleWeightRefSub16;
                     ModelSimpleImage simpleWeightInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleWeightRefSub16 = subsampleBy2XY(simpleWeightRefSub8, false);
                     simpleWeightInputSub16 = subsampleBy2XY(simpleWeightInputSub8, false);
@@ -1539,7 +1541,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                         allowLevel16XY) {
                     ModelSimpleImage simpleWeightRefSub16;
                     ModelSimpleImage simpleWeightInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleWeightRefSub16 = subsampleBy2XY(simpleWeightRefSub8, false);
                     simpleWeightInputSub16 = subsampleBy2XY(simpleWeightInputSub8, false);
@@ -1560,7 +1562,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                               simpleWeightRefSub4 + "Weighted ref subsampled 8 = " + simpleWeightRefSub8 +
                               "Weighted input subsampled 2 = " + simpleWeightInputSub2 +
                               "Weighted input subsampled 4 = " + simpleWeightInputSub4 +
-                              "Weighted input subsampled 8 = " + simpleWeightInputSub8);
+                              "Weighted input subsampled 8 = " + simpleWeightInputSub8,Preferences.DEBUG_ALGORITHM);
 
         } // end of (if weighted && fullAnalysisMode)
 
@@ -1580,16 +1582,17 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 simpleInputSub2 = subsampleBy2XY(simpleInput, doColor);
                 level1FactorXY = 2.0f;
             } else {
-                Preferences.debug("Level one image not resampled because ");
+                Preferences.debug("Level one image not resampled because ",Preferences.DEBUG_ALGORITHM);
 
                 if (simpleRef.dataSize <= subMinFactor) {
-                    Preferences.debug("reference image data size is too small. \n");
+                    Preferences.debug("reference image data size is too small. \n",Preferences.DEBUG_ALGORITHM);
                 } else {
 
                     if (simpleInput.dataSize <= subMinFactor) {
-                        Preferences.debug("input image data size is too small. \n");
+                        Preferences.debug("input image data size is too small. \n",Preferences.DEBUG_ALGORITHM);
                     } else {
-                        Preferences.debug("resolution too low for user defined translation limits. \n");
+                        Preferences.debug("resolution too low for user defined translation limits. \n",
+                        		Preferences.DEBUG_ALGORITHM);
                     }
                 }
 
@@ -1611,16 +1614,17 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 simpleInputSub4 = subsampleBy2XY(simpleInputSub2, doColor);
                 level2FactorXY = 2.0f;
             } else {
-                Preferences.debug("Level two image not resampled because ");
+                Preferences.debug("Level two image not resampled because ",Preferences.DEBUG_ALGORITHM);
 
                 if (simpleRefSub2.dataSize <= subMinFactor) {
-                    Preferences.debug("reference image data size is too small. \n");
+                    Preferences.debug("reference image data size is too small. \n",Preferences.DEBUG_ALGORITHM);
                 } else {
 
                     if (simpleInputSub2.dataSize <= subMinFactor) {
-                        Preferences.debug("input image data size is too small. \n");
+                        Preferences.debug("input image data size is too small. \n",Preferences.DEBUG_ALGORITHM);
                     } else {
-                        Preferences.debug("resolution too low for user defined translation limits. \n");
+                        Preferences.debug("resolution too low for user defined translation limits. \n",
+                        		Preferences.DEBUG_ALGORITHM);
                     }
                 }
 
@@ -1643,7 +1647,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                         (simpleInputSub8.zDim >= minimumZForSub)) {
                     ModelSimpleImage simpleRefSub16;
                     ModelSimpleImage simpleInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16  ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16  ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleRefSub16 = subsampleBy2(simpleRefSub8, doColor);
                     simpleInputSub16 = subsampleBy2(simpleInputSub8, doColor);
@@ -1656,7 +1660,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                                allowLevel16XY) {
                     ModelSimpleImage simpleRefSub16;
                     ModelSimpleImage simpleInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleRefSub16 = subsampleBy2XY(simpleRefSub8, doColor);
                     simpleInputSub16 = subsampleBy2XY(simpleInputSub8, doColor);
@@ -1676,7 +1680,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                         allowLevel16XY) {
                     ModelSimpleImage simpleRefSub16;
                     ModelSimpleImage simpleInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleRefSub16 = subsampleBy2XY(simpleRefSub8, doColor);
                     simpleInputSub16 = subsampleBy2XY(simpleInputSub8, doColor);
@@ -1696,7 +1700,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                               "Level 4 factor Z = " + level4FactorZ + "\n" + "Ref subsampled 2 = " + simpleRefSub2 +
                               "Ref subsampled 4 = " + simpleRefSub4 + "Ref subsampled 8 = " + simpleRefSub8 +
                               "Input subsampled 2 = " + simpleInputSub2 + "Input subsampled 4 = " + simpleInputSub4 +
-                              "Input subsampled 8 = " + simpleInputSub8);
+                              "Input subsampled 8 = " + simpleInputSub8,Preferences.DEBUG_ALGORITHM);
 
             // STARTING LEVEL 8
 
@@ -1705,7 +1709,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             float multXY, multZ;
             multXY = level1FactorXY * level2FactorXY * level4FactorXY;
             multZ = level1FactorZ * level2FactorZ * level4FactorZ;
-            Preferences.debug("multxy " + multXY + ".\n");
+            Preferences.debug("multxy " + multXY + ".\n",Preferences.DEBUG_ALGORITHM);
 
             for (int j = 0; j <= 1; j++) {
                 limits[j][3] = limits_mm[j][0] / (resInput[0] * multXY);
@@ -1714,14 +1718,15 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             }
 
             time = System.currentTimeMillis();
-            Preferences.debug(" Starting level 8 ************************************************\n");
+            Preferences.debug(" Starting level 8 ************************************************\n",
+            		Preferences.DEBUG_ALGORITHM);
 
             Vector<MatrixListItem>[] minimas = levelEight(simpleRefSub8, simpleInputSub8);
 
             // "minimas" is an array of Vector, because it will have two Vectors - one with
             // the original minima and one with the optimized minima.
             time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 8 minutes = " + ((float) time / 60000.0f) + "\n");
+            Preferences.debug(" Level 8 minutes = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
             time = System.currentTimeMillis();
 
             if (threadStopped) {
@@ -1736,7 +1741,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             // for the current image resolution.
             multXY = level1FactorXY * level2FactorXY;
             multZ = level1FactorZ * level2FactorZ;
-            Preferences.debug("multxy " + multXY + ".\n");
+            Preferences.debug("multxy " + multXY + ".\n",Preferences.DEBUG_ALGORITHM);
 
             for (int j = 0; j <= 1; j++) {
                 limits[j][3] = limits_mm[j][0] / (resInput[0] * multXY);
@@ -1744,11 +1749,11 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 limits[j][5] = limits_mm[j][2] / (resInput[2] * multZ);
             }
 
-            Preferences.debug(" Starting level 4 ************************************************\n");
+            Preferences.debug(" Starting level 4 ************************************************\n",Preferences.DEBUG_ALGORITHM);
 
             Vector<MatrixListItem> minima = levelFour(simpleRefSub4, simpleInputSub4, minimas[0], minimas[1]);
             time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 4  minutes = " + ((float) time / 60000.0f) + "\n");
+            Preferences.debug(" Level 4  minutes = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
             time = System.currentTimeMillis();
 
             if (threadStopped) {
@@ -1763,7 +1768,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             // for the current image resolution.
             multXY = level1FactorXY;
             multZ = level1FactorZ;
-            Preferences.debug("multxy " + multXY + ".\n");
+            Preferences.debug("multxy " + multXY + ".\n",Preferences.DEBUG_ALGORITHM);
 
             for (int j = 0; j <= 1; j++) {
                 limits[j][3] = limits_mm[j][0] / (resInput[0] * multXY);
@@ -1771,10 +1776,11 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 limits[j][5] = limits_mm[j][2] / (resInput[2] * multZ);
             }
 
-            Preferences.debug(" Starting level 2 ************************************************\n");
+            Preferences.debug(" Starting level 2 ************************************************\n",
+            		Preferences.DEBUG_ALGORITHM);
             bestGuessLevel2 = levelTwo(simpleRefSub2, simpleInputSub2, minima);
             time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 2 minutes = " + ((float) time / 60000.0f) + "\n");
+            Preferences.debug(" Level 2 minutes = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
             time = System.currentTimeMillis();
 
             if (threadStopped) {
@@ -1795,8 +1801,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             if (calcCOG == true) {
                 Vector3f cog = calculateCenterOfMass3D(simpleInput, simpleWeightInput, doColor);
                 Vector3f cogR = calculateCenterOfMass3D(simpleRef, simpleWeightRef, doColor);
-                Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
-                Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
+                Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n",Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n",
+                		Preferences.DEBUG_ALGORITHM);
 
                 diffX = (cog.X - cogR.X);
                 diffY = (cog.Y - cogR.Y);
@@ -1822,11 +1829,11 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             limits[j][5] = limits_mm[j][2] / resInput[2];
         }
 
-        Preferences.debug(" Starting level 1 ************************************************\n");
+        Preferences.debug(" Starting level 1 ************************************************\n",Preferences.DEBUG_ALGORITHM);
         maxIter = baseNumIter * 1;
         answer = levelOne(simpleRef, simpleInput, bestGuessLevel2, maxIter);
         time = System.currentTimeMillis() - time;
-        Preferences.debug(" Level 1 minutes = " + ((float) time / 60000.0f) + "\n");
+        Preferences.debug(" Level 1 minutes = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
 
         if (threadStopped) {
             finalize();
@@ -1864,15 +1871,15 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         }
 
         if (test) {
-            Preferences.debug(message);
-            Preferences.debug("\n");
+            Preferences.debug(message,Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
 
             for (int m = 0; m < 6; m++) {
-                Preferences.debug("point: " + point[m] + ", min: ");
-                Preferences.debug(limits[0][m] + ", max: " + limits[1][m] + ".\n");
+                Preferences.debug("point: " + point[m] + ", min: ",Preferences.DEBUG_ALGORITHM);
+                Preferences.debug(limits[0][m] + ", max: " + limits[1][m] + ".\n",Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("\n");
+            Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
         }
 
         return test;
@@ -2298,8 +2305,10 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         numberOfCoarseAngles = coarseNumX * coarseNumY * coarseNumZ;
         numberOfFineAngles = fineNumX * fineNumY * fineNumZ;
 
-        Preferences.debug("Total number of positions at coarse sampling to be tested: " + numberOfCoarseAngles + ".\n");
-        Preferences.debug("Total number of positions at fine sampling to be tested: " + numberOfFineAngles + ".\n");
+        Preferences.debug("Total number of positions at coarse sampling to be tested: " + numberOfCoarseAngles + ".\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Total number of positions at fine sampling to be tested: " + numberOfFineAngles + ".\n",
+        		Preferences.DEBUG_ALGORITHM);
 
         if (weighted) {
             cost.setRefWgtImage(simpleWeightRefSub8);
@@ -2316,8 +2325,8 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         if (calcCOG == true) {
             cog = calculateCenterOfMass3D(input, simpleWeightInputSub8, doColor);
             cogR = calculateCenterOfMass3D(ref, simpleWeightRefSub8, doColor);
-            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
-            Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
+            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n",Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n",Preferences.DEBUG_ALGORITHM);
 
             diffX = (cog.X - cogR.X);
             diffY = (cog.Y - cogR.Y);
@@ -2336,7 +2345,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         double[][][][] transforms = new double[coarseNumX][coarseNumY][coarseNumZ][4];
 
         fireProgressStateChanged("\nOptimizing at coarse samples");
-        Preferences.debug("Level Eight. Optimizing at coarse samples.\n");
+        Preferences.debug("Level Eight. Optimizing at coarse samples.\n",Preferences.DEBUG_ALGORITHM);
 
         AlgorithmConstPowellOpt3D powell = null;
         maxIter = baseNumIter * 2;
@@ -2350,7 +2359,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         powell.setLimits(limits);
 
         int iG = 0;
-        Preferences.debug("Coarse increment " + iG + ".\n");
+        Preferences.debug("Coarse increment " + iG + ".\n",Preferences.DEBUG_ALGORITHM);
 
         boolean[] foundMin = new boolean[numberOfCoarseAngles];
 
@@ -2368,7 +2377,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                     initial[5] = diffZ;
 
                     if (testBounds3D(initial, initialMessage)) {
-                        Preferences.debug("Initial point no good.\n");
+                        Preferences.debug("Initial point no good.\n",Preferences.DEBUG_ALGORITHM);
                     } else {
                         powell.setInitialPoint(initial);
                         powell.run();
@@ -2381,7 +2390,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                             initial[5] = powell.getPoint()[2];
                         } else {
                             Preferences.debug("For coarse increment " + iG +
-                                              ", minimum was not found (Powell failed).\n");
+                                              ", minimum was not found (Powell failed).\n",Preferences.DEBUG_ALGORITHM);
                         }
                     }
 
@@ -2397,7 +2406,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         // Fine sampling
         MatrixListItem[][][] matrixList = new MatrixListItem[fineNumX][fineNumY][fineNumZ];
         fireProgressStateChanged("Measuring at fine samples");
-        Preferences.debug("Level Eight.  Measuring at fine samples.\n");
+        Preferences.debug("Level Eight.  Measuring at fine samples.\n",Preferences.DEBUG_ALGORITHM);
 
         double[] costs = new double[fineNumX * fineNumY * fineNumZ];
         int index = 0;
@@ -2423,7 +2432,8 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
                     if (testBounds3D(initial, initialMessage)) {
                         matrixList[i][j][k] = new MatrixListItem(maxPossibleCost);
-                        Preferences.debug("Setting the cost to the maximum possible for fine increment, " + iG + ".\n");
+                        Preferences.debug("Setting the cost to the maximum possible for fine increment, " + iG + ".\n",
+                        		Preferences.DEBUG_ALGORITHM);
                     } else {
                         powell.setInitialPoint(initial);
                         powell.measureCost();
@@ -2444,7 +2454,8 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         // Sorting costs and calculating 20% cut-off value.
         Arrays.sort(costs);
         if (costs[0] == costs[costs.length - 1]) {
-            Preferences.debug("!Warning all " + (costs.length) + " costs values = " + costs[0] + "\n");
+            Preferences.debug("!Warning all " + (costs.length) + " costs values = " + costs[0] + "\n",
+            		Preferences.DEBUG_ALGORITHM);
             System.err.println("!Warning all " + (costs.length) + " costs values = " + costs[0]);
         }
 
@@ -2454,7 +2465,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             threshold = costs[(int) (0.2 * costs.length)];
         }
 
-        Preferences.debug("Threshold is:" + threshold + "\n");
+        Preferences.debug("Threshold is:" + threshold + "\n",Preferences.DEBUG_ALGORITHM);
 
         // Optimize top 20% of points
         double[] tempInitial = new double[12];
@@ -2464,7 +2475,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Optimizing top samples");
-        Preferences.debug("Level Eight. Optimizing top samples. \n");
+        Preferences.debug("Level Eight. Optimizing top samples. \n",Preferences.DEBUG_ALGORITHM);
         powell.setRunningInSeparateThread(runningInSeparateThread);
 
         for (int i = 0; (i < fineNumX) && !threadStopped; i++) {
@@ -2582,13 +2593,13 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             return null;
         }
 
-        Preferences.debug("Number of minima: " + minima.size() + "\n");
+        Preferences.debug("Number of minima: " + minima.size() + "\n",Preferences.DEBUG_ALGORITHM);
 
         Vector<MatrixListItem> optMinima = new Vector<MatrixListItem>();
 
         // Now freely optimizes over rotations:
         fireProgressStateChanged("Optimizing minima");
-        Preferences.debug("Level Eight. Optimizing minima freely over rotations. \n");
+        Preferences.debug("Level Eight. Optimizing minima freely over rotations. \n",Preferences.DEBUG_ALGORITHM);
 
         int count = 0;
         int degree = (DOF < 7) ? DOF : 7;
@@ -2620,7 +2631,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             return null;
         }
 
-        Preferences.debug("Number of optimized minima: " + count + "\n");
+        Preferences.debug("Number of optimized minima: " + count + "\n",Preferences.DEBUG_ALGORITHM);
         cost.disposeLocal();
         powell.disposeLocal();
 
@@ -2669,8 +2680,8 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         if (calcCOG == true) {
             cog = calculateCenterOfMass3D(input, simpleWeightInputSub4, doColor);
-            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
-            // Preferences.debug("Center of mass for the subsampled reference image:" + cog + "\n");
+            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n",Preferences.DEBUG_ALGORITHM);
+            // Preferences.debug("Center of mass for the subsampled reference image:" + cog + "\n",Preferences.DEBUG_ALGORITHM);
         }
 
         MatrixListItem item = null;
@@ -2782,19 +2793,21 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         // Print out the recalculated best minima.
         best4Now = null;
-        Preferences.debug("Top optimized minima from Level Eight: (already sorted and recalculated)\n");
+        Preferences.debug("Top optimized minima from Level Eight: (already sorted and recalculated)\n",
+        		Preferences.DEBUG_ALGORITHM);
 
         for (int i = 0; i < (2 * total); i++) {
-            Preferences.debug("\n Minimum number " + (i + 1) + ": \n");
+            Preferences.debug("\n Minimum number " + (i + 1) + ": \n",Preferences.DEBUG_ALGORITHM);
             best4Now = newMinima.elementAt(i);
-            Preferences.debug(best4Now.toAbridgedString());
+            Preferences.debug(best4Now.toAbridgedString(),Preferences.DEBUG_ALGORITHM);
         }
 
         if (minimumIndex < total) {
-            Preferences.debug("New minimum is at index " + (minimumIndex + 1) + " and is " + currentMinimum + "\n");
+            Preferences.debug("New minimum is at index " + (minimumIndex + 1) + " and is " + currentMinimum + "\n",
+            		Preferences.DEBUG_ALGORITHM);
         } else {
             Preferences.debug("New minimum is from optimized minima at index " + (minimumIndex - total + 1) +
-                              " and is " + currentMinimum + "\n");
+                              " and is " + currentMinimum + "\n",Preferences.DEBUG_ALGORITHM);
         }
 
         // Resort the minima.  Shouldn't have switched much from previous sorting.
@@ -2819,7 +2832,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             }
         }
 
-        Preferences.debug("Removed " + remove + " items outside rotation limits\n");
+        Preferences.debug("Removed " + remove + " items outside rotation limits\n",Preferences.DEBUG_ALGORITHM);
 
         fireProgressStateChanged("Perturbing minima");
 
@@ -2833,7 +2846,8 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         minimumIndex = 0;
         best4Now = null;
 
-        Preferences.debug("Number of minima to test at levelFour: " + ((2 * total) - remove) + ".\n");
+        Preferences.debug("Number of minima to test at levelFour: " + ((2 * total) - remove) + ".\n",
+        		Preferences.DEBUG_ALGORITHM);
 
         // Perturb rotations.  In each of the three dimensions, add fine delta and optimize,
         // then subtract fine delta and optimize.
@@ -2847,9 +2861,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
                 // Output to debug window.
                 if (((i + 1) % 2) == 0) {
-                    Preferences.debug("Perturbing optimized minimum " + ((i / 2) + 1));
+                    Preferences.debug("Perturbing optimized minimum " + ((i / 2) + 1),Preferences.DEBUG_ALGORITHM);
                 } else {
-                    Preferences.debug("Perturbing minimum " + ((i / 2) + 1));
+                    Preferences.debug("Perturbing minimum " + ((i / 2) + 1),Preferences.DEBUG_ALGORITHM);
                 }
 
                 // Will we add or subtract fine delta?  Add for j=1,3,5. Subract for j=2,4,6.
@@ -2861,20 +2875,20 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
                 // Apply perturbation and send message to debug window.
                 if (j == 0) {
-                    Preferences.debug(".\n");
+                    Preferences.debug(".\n",Preferences.DEBUG_ALGORITHM);
                 } else {
 
                     if ((j == 1) || (j == 2)) {
                         Preferences.debug(" by adding " + (sign * fineDeltaX) + " to initial[0] (" + (int) initial[0] +
-                                          ").\n");
+                                          ").\n",Preferences.DEBUG_ALGORITHM);
                         initial[0] += sign * fineDeltaX;
                     } else if ((j == 3) || (j == 4)) {
                         Preferences.debug(" by adding " + (sign * fineDeltaY) + " to initial[1] (" + (int) initial[1] +
-                                          ").\n");
+                                          ").\n",Preferences.DEBUG_ALGORITHM);
                         initial[1] += sign * fineDeltaY;
                     } else {
                         Preferences.debug(" by adding " + (sign * fineDeltaZ) + " to initial[2] (" + (int) initial[2] +
-                                          ").\n");
+                                          ").\n",Preferences.DEBUG_ALGORITHM);
                         initial[2] += sign * fineDeltaZ;
                     }
                 }
@@ -2904,7 +2918,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         }
 
         Preferences.debug("Best minimum from level four is a perturbed version of " + (minimumIndex + 1) + " and is " +
-                          currentMinimum + ".\n");
+                          currentMinimum + ".\n",Preferences.DEBUG_ALGORITHM);
 
         if (DOF > 6) {
 
@@ -2927,9 +2941,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                         scaleDelta = 1.2f;
                     }
 
-                    Preferences.debug("Perturbing initial[6] by ");
+                    Preferences.debug("Perturbing initial[6] by ",Preferences.DEBUG_ALGORITHM);
                     initial[6] *= scaleDelta;
-                    Preferences.debug("Multiplying by " + scaleDelta + "\n");
+                    Preferences.debug("Multiplying by " + scaleDelta + "\n",Preferences.DEBUG_ALGORITHM);
 
                     // make initial variable old initial * scaleDelta in each dimension
                     powell.setInitialPoint(initial);
@@ -2948,9 +2962,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         Collections.sort(perturbList);
 
         // Print out best value from level4.
-        // Preferences.debug("Top minimum from Level Four: \n");
+        // Preferences.debug("Top minimum from Level Four: \n",Preferences.DEBUG_ALGORITHM);
         best4Now = perturbList.elementAt(0);
-        Preferences.debug(best4Now.toString());
+        Preferences.debug(best4Now.toString(),Preferences.DEBUG_ALGORITHM);
 
         fireProgressStateChanged(35);
         cost.disposeLocal();
@@ -3003,13 +3017,14 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                     max = simpleWeightInput.data[i];
                 }
                 if (Double.isNaN(simpleWeightInput.data[i])) {
-                    Preferences.debug("simpleWeightInput[" + i + "] = NaN\n");
+                    Preferences.debug("simpleWeightInput[" + i + "] = NaN\n",Preferences.DEBUG_ALGORITHM);
                 }
                 if (Double.isInfinite(simpleWeightInput.data[i])) {
-                    Preferences.debug("simpleWeightInput[" + i + "] = Infinite\n");
+                    Preferences.debug("simpleWeightInput[" + i + "] = Infinite\n",Preferences.DEBUG_ALGORITHM);
                 }
             }
-            Preferences.debug("simpleWeightInput.min = " + min + " simpleWeightInput.max = " + max + "\n");
+            Preferences.debug("simpleWeightInput.min = " + min + " simpleWeightInput.max = " + max + "\n",
+            		Preferences.DEBUG_ALGORITHM);
             
             min = Double.MAX_VALUE;
             max = -Double.MAX_VALUE;
@@ -3021,13 +3036,14 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                     max = simpleWeightRef.data[i];
                 }
                 if (Double.isNaN(simpleWeightRef.data[i])) {
-                    Preferences.debug("simpleWeightRef[" + i + "] = NaN\n");
+                    Preferences.debug("simpleWeightRef[" + i + "] = NaN\n",Preferences.DEBUG_ALGORITHM);
                 }
                 if (Double.isInfinite(simpleWeightRef.data[i])) {
-                    Preferences.debug("simpleWeightRef[" + i + "] = Infinite\n");
+                    Preferences.debug("simpleWeightRef[" + i + "] = Infinite\n",Preferences.DEBUG_ALGORITHM);
                 }
             }
-            Preferences.debug("simpleWeightRef.min = " + min + " simpleWeightRef.max = " + max + "\n");
+            Preferences.debug("simpleWeightRef.min = " + min + " simpleWeightRef.max = " + max + "\n",
+            		Preferences.DEBUG_ALGORITHM);
         }
         
         double min = Double.MAX_VALUE;
@@ -3040,13 +3056,13 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 max = input.data[i];
             }
             if (Double.isNaN(input.data[i])) {
-                Preferences.debug("input[" + i + "] = NaN\n");
+                Preferences.debug("input[" + i + "] = NaN\n",Preferences.DEBUG_ALGORITHM);
             }
             if (Double.isInfinite(input.data[i])) {
-                Preferences.debug("input[" + i + "] = Infinite\n");
+                Preferences.debug("input[" + i + "] = Infinite\n",Preferences.DEBUG_ALGORITHM);
             }
         }
-        Preferences.debug("input.min = " + min + " input.max = " + max + "\n");
+        Preferences.debug("input.min = " + min + " input.max = " + max + "\n",Preferences.DEBUG_ALGORITHM);
         
         min = Double.MAX_VALUE;
         max = -Double.MAX_VALUE;
@@ -3058,13 +3074,13 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 max = ref.data[i];
             }
             if (Double.isNaN(ref.data[i])) {
-                Preferences.debug("ref[" + i + "] = NaN\n");
+                Preferences.debug("ref[" + i + "] = NaN\n",Preferences.DEBUG_ALGORITHM);
             }
             if (Double.isInfinite(ref.data[i])) {
-                Preferences.debug("ref[" + i + "] = Infinite\n");
+                Preferences.debug("ref[" + i + "] = Infinite\n",Preferences.DEBUG_ALGORITHM);
             }
         }
-        Preferences.debug("ref.min = " + min + " ref.max = " + max + "\n");
+        Preferences.debug("ref.min = " + min + " ref.max = " + max + "\n",Preferences.DEBUG_ALGORITHM);
 
         Vector3f cog = new Vector3f(0, 0, 0);
 
@@ -3079,24 +3095,25 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         int degree = (DOF < 12) ? DOF : 12;
 
         fireProgressStateChanged("Starting last optimization");
-        Preferences.debug("cog.X = " + cog.X + " cog.Y = " + cog.Y + " cog.Z = " + cog.Z + "\n");
-        Preferences.debug("degree = " + degree + "\n");
+        Preferences.debug("cog.X = " + cog.X + " cog.Y = " + cog.Y + " cog.Z = " + cog.Z + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("degree = " + degree + "\n",Preferences.DEBUG_ALGORITHM);
         for (int i = 0; i < item.initial.length; i++) {
-            Preferences.debug("item.initial[" + i + "] = " + item.initial[i] + "\n");
+            Preferences.debug("item.initial[" + i + "] = " + item.initial[i] + "\n",Preferences.DEBUG_ALGORITHM);
         }
         for (int i = 0; i < getTolerance(degree).length; i++ ) {
-            Preferences.debug("getTolerance(degree)[" + i + "] = " + getTolerance(degree)[i] + "\n");
+            Preferences.debug("getTolerance(degree)[" + i + "] = " + getTolerance(degree)[i] + "\n",
+            		Preferences.DEBUG_ALGORITHM);
         }
-        Preferences.debug("maxIter = " + maxIter + "\n");
-        Preferences.debug("bracketBound = " + bracketBound + "\n");
+        Preferences.debug("maxIter = " + maxIter + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("bracketBound = " + bracketBound + "\n",Preferences.DEBUG_ALGORITHM);
         for (int i = 0; i < limits.length; i++) {
 
             for (int j = 0; j < limits[i].length; j++) {
-                Preferences.debug("limits[" + i + "][" + j + "] = " + limits[i][j] + "\n");    
+                Preferences.debug("limits[" + i + "][" + j + "] = " + limits[i][j] + "\n",Preferences.DEBUG_ALGORITHM);    
             }
         }
         Preferences.debug("input.xRes = " + input.xRes + " input.yRes = " + input.yRes +  
-                          " input.zRes = " + input.zRes + "\n");
+                          " input.zRes = " + input.zRes + "\n",Preferences.DEBUG_ALGORITHM);
 
         AlgorithmConstPowellOpt3D powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial,
                                                                          getTolerance(degree), maxIter, bracketBound);
@@ -3117,13 +3134,13 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         item2.halfMatrix = powell.getMatrixHalf(input.xRes);
         item2.midsagMatrix = powell.getMatrixMidsagittal(input.xRes);
         fireProgressStateChanged(100);
-        Preferences.debug("Best answer: \n" + item2 + "\n");
-        Preferences.debug("item2.initial[3] = " + item2.initial[3] + "\n");
-        Preferences.debug("item2.initial[4] = " + item2.initial[4] + "\n");
-        Preferences.debug("item2.initial[5] = " + item2.initial[5] + "\n");
-        Preferences.debug("resRef[0] = " + resRef[0] + "\n");
-        Preferences.debug("resRef[1] = " + resRef[1] + "\n");
-        Preferences.debug("resRef[2] = " + resRef[2] + "\n");
+        Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("item2.initial[3] = " + item2.initial[3] + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("item2.initial[4] = " + item2.initial[4] + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("item2.initial[5] = " + item2.initial[5] + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resRef[0] = " + resRef[0] + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resRef[1] = " + resRef[1] + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resRef[2] = " + resRef[2] + "\n",Preferences.DEBUG_ALGORITHM);
 
         cost.disposeLocal();
         powell.disposeLocal();
@@ -3195,7 +3212,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
             if (testBounds3D(item.initial, initialMessage)) {
                 item.cost = maxPossibleCost;
-                Preferences.debug("Setting the cost to the maximum possible.\n");
+                Preferences.debug("Setting the cost to the maximum possible.\n",Preferences.DEBUG_ALGORITHM);
             } else {
                 powell.setInitialPoint(item.initial);
                 powell.measureCost();
@@ -3226,7 +3243,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         MatrixListItem itemPtr = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes),
                                                     powell.getFinal(input.xRes));
-        Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n");
+        Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n",Preferences.DEBUG_ALGORITHM);
 
         maxIter = baseNumIter * 2;
 
@@ -3249,7 +3266,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
             item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
             itemPtr = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes), powell.getFinal(input.xRes));
-            Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n");
+            Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n",Preferences.DEBUG_ALGORITHM);
 
             if (DOF > 9) {
                 degree = 12;
@@ -3271,7 +3288,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
                 itemPtr = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes),
                                              powell.getFinal(input.xRes));
-                Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n");
+                Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n",Preferences.DEBUG_ALGORITHM);
             }
         }
 
