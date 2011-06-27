@@ -161,7 +161,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         for (i = 0; i < VOIlength; i++) {
             baseVOIGradMagSum += gradMagBuf[(int) (VOIposition.elementAt(i).X + (VOIposition.elementAt(i).Y * xdim))];
         }
-        Preferences.debug("baseVOIGradMagSum = " + baseVOIGradMagSum + "\n");
+        Preferences.debug("baseVOIGradMagSum = " + baseVOIGradMagSum + "\n",Preferences.DEBUG_ALGORITHM);
         search();
         if ( gradMagVol != null ) {
         	gradMagVol.disposeLocal();
@@ -208,7 +208,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
         p[0] = minX;
         p[1] = minY;
         p[2] = minR;
-        Preferences.debug(" mincost = " + minCost + "\n");
+        Preferences.debug(" mincost = " + minCost + "\n",Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -228,7 +228,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
      * Search.
      */
     private void search() {
-        Preferences.debug("Search:\n");
+        Preferences.debug("Search:\n",Preferences.DEBUG_ALGORITHM);
 
         TransMatrix xfrm;
         float increment;
@@ -264,16 +264,16 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
                         {0,scale*(maxTy-minTy),0},{0,0,scale*(maxRz-minRz)}};
                 double dCost = NelderMead.search(initialPoint, xi,
                         0.0000001, this, 50000, null);
-                Preferences.debug("cost = " + dCost + "\n");
+                Preferences.debug("cost = " + dCost + "\n",Preferences.DEBUG_ALGORITHM);
             }
 
             xfrm = getTransform(initialPoint);            
             xfrm.Inverse();                     
             transformSlice(t, xfrm, imgBuf, tImgBuf, volume.getImageCenter());
-            Preferences.debug(xfrm.toString());
+            Preferences.debug(xfrm.toString(),Preferences.DEBUG_ALGORITHM);
 
             // Preferences.debug( "Transformed slice "+t+"\n");
-            Preferences.debug("*******************************************\n");
+            Preferences.debug("*******************************************\n",Preferences.DEBUG_ALGORITHM);
         }
     }
 
