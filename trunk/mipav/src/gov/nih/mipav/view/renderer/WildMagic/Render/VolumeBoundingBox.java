@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
@@ -112,13 +113,30 @@ public class VolumeBoundingBox extends VolumeObject
     {
         for ( int i = 0; i < 6; i++ )
         {
-            for ( int j = 0; j < 4; j++ )
-            {
-                m_akBoundingBox[i].VBuffer.SetColor3( 0, j, kColor );
-            }
-            m_akBoundingBox[i].VBuffer.Release();
+            m_akBoundingBoxEffect[i].setColor( kColor );
         }
     }
+    
+    /**
+     * Sets the background color.
+     * @param kColor new background color.
+     */
+    public void SetBackgroundColor( ColorRGBA kColor )
+    {
+        for ( int i = 0; i < 6; i++ )
+        {
+            m_akBoundingBoxEffect[i].setBackground( kColor );
+        }
+    } 
+    
+	public void toggleMethod()
+	{
+        for ( int i = 0; i < 6; i++ )
+        {
+            m_akBoundingBoxEffect[i].toggleMethod( );
+        }
+	}
+    
     /** Creates the bounding box Polylines. */
     private void CreateBox()
     {
