@@ -68,20 +68,20 @@ public class AlgorithmRegValidation extends AlgorithmBase {
         pointSetA = null;
         pointSetB = null;
         xfrmBA = null;
-        Preferences.debug("coordsA3D.length = " + coordsA3D.length + "\n");
+        Preferences.debug("coordsA3D.length = " + coordsA3D.length + "\n",Preferences.DEBUG_ALGORITHM);
 
         try {
 
             if (dim == 2) {
                 Vector2f[] coordsA2D = new Vector2f[coordsA3D.length];
                 Vector2f[] coordsB2D = new Vector2f[coordsB3D.length];
-                Preferences.debug("coordsA3D[0].x=" + coordsA3D[0].X + "\n");
+                Preferences.debug("coordsA3D[0].x=" + coordsA3D[0].X + "\n",Preferences.DEBUG_ALGORITHM);
 
                 for (int i = 0; i < coordsA3D.length; i++) {
                     coordsA2D[i] = new Vector2f((float)coordsA3D[i].X, (float)coordsA3D[i].Y);
                 }
 
-                Preferences.debug("assigned A" + "\n");
+                Preferences.debug("assigned A" + "\n",Preferences.DEBUG_ALGORITHM);
 
                 for (int i = 0; i < coordsB3D.length; i++) {
                     coordsB2D[i] = new Vector2f((float)coordsB3D[i].X, (float)coordsB3D[i].Y);
@@ -148,7 +148,7 @@ public class AlgorithmRegValidation extends AlgorithmBase {
             }
 
             xfrm.set(dim, dim, 1.0);
-            Preferences.debug(xfrm.toString());
+            Preferences.debug(xfrm.toString(),Preferences.DEBUG_ALGORITHM);
 
             return xfrm;
         } catch (OutOfMemoryError x) {
@@ -293,12 +293,12 @@ public class AlgorithmRegValidation extends AlgorithmBase {
             X = Vmat.times(Umat.transpose());
             
             det = X.det();
-            Preferences.debug("det=" + det + "\n");
+            Preferences.debug("det=" + det + "\n",Preferences.DEBUG_ALGORITHM);
 
             if ((det >= 0.99) && (det <= 1.01)) {
                 rotateBA = X.copy();
                 xfrmBA = buildXfrm(p1, p2, rotateBA);
-                Preferences.debug("Least Squares Succeeded\n");
+                Preferences.debug("Least Squares Succeeded\n",Preferences.DEBUG_ALGORITHM);
                 setCompleted(true);
                 // return 0;
             } else if ((det <= -0.99) && (det >= -1.01) && (dim == 3)) {
@@ -320,9 +320,10 @@ public class AlgorithmRegValidation extends AlgorithmBase {
 
                 if (numberZeroes == 0) {
                     MipavUtil.displayError("Least Squares Failed due to excessive noise \n");
-                    Preferences.debug("Least Squares Failed. Determinate = -1\n");
-                    Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n");
-                    Preferences.debug("The points are too noisy.\n");
+                    Preferences.debug("Least Squares Failed. Determinate = -1\n",Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n",
+                    		Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("The points are too noisy.\n",Preferences.DEBUG_ALGORITHM);
 
                     // The points are colinear.
                     setCompleted(false);
@@ -332,9 +333,10 @@ public class AlgorithmRegValidation extends AlgorithmBase {
 
                     if ((ratio > 0.9999) && (ratio < 1.0001)) {
                         MipavUtil.displayError("Least Squares Failed in 3D colinear case \n");
-                        Preferences.debug("Least Squares Failed. Determinate = -1\n");
-                        Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n");
-                        Preferences.debug("The points are colinear.\n");
+                        Preferences.debug("Least Squares Failed. Determinate = -1\n",Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n",
+                        		Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("The points are colinear.\n",Preferences.DEBUG_ALGORITHM);
 
                         // The points are colinear.
                         setCompleted(false);
@@ -348,13 +350,14 @@ public class AlgorithmRegValidation extends AlgorithmBase {
                     X = Vmat.times(Umat.transpose());
                     rotateBA = X.copy();
                     xfrmBA = buildXfrm(p1, p2, rotateBA);
-                    Preferences.debug("Least Squares Succeeded in coplanar case\n");
+                    Preferences.debug("Least Squares Succeeded in coplanar case\n",Preferences.DEBUG_ALGORITHM);
                     setCompleted(true);
                 } else if (numberZeroes == 2) {
                     MipavUtil.displayError("Least Squares Failed in 3D colinear case \n");
-                    Preferences.debug("Least Squares Failed. Determinate = -1\n");
-                    Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n");
-                    Preferences.debug("The points are colinear.\n");
+                    Preferences.debug("Least Squares Failed. Determinate = -1\n",Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n",
+                    		Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("The points are colinear.\n",Preferences.DEBUG_ALGORITHM);
 
                     // The points are colinear.
                     setCompleted(false);
@@ -382,16 +385,18 @@ public class AlgorithmRegValidation extends AlgorithmBase {
 
                 if (numberZeroes == 0) {
                     MipavUtil.displayError("Least Squares Failed due to noisy data \n");
-                    Preferences.debug("Least Squares Failed. Determinate = -1\n");
-                    Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n");
-                    Preferences.debug("The points are too noisy.\n");
+                    Preferences.debug("Least Squares Failed. Determinate = -1\n",Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n",
+                    		Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("The points are too noisy.\n",Preferences.DEBUG_ALGORITHM);
                     setCompleted(false);
                     
                 } else if (numberZeroes == 1) {
                     MipavUtil.displayError("Least Squares Failed due to colinear points \n");
-                    Preferences.debug("Least Squares Failed. Determinate = -1\n");
-                    Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n");
-                    Preferences.debug("The points are colinear.\n");
+                    Preferences.debug("Least Squares Failed. Determinate = -1\n",Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n",
+                    		Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("The points are colinear.\n",Preferences.DEBUG_ALGORITHM);
 
                     // The points are colinear.
                     setCompleted(false);
@@ -400,7 +405,7 @@ public class AlgorithmRegValidation extends AlgorithmBase {
                 // return -1;
             } else {
                 MipavUtil.displayError("Least Squares Rounding Problem");
-                Preferences.debug("Least Squares Rounding Problem: determinate did not = 1 or -1\n");
+                Preferences.debug("Least Squares Rounding Problem: determinate did not = 1 or -1\n",Preferences.DEBUG_ALGORITHM);
                 setCompleted(false);
                 // 
                 // return -2;
@@ -443,7 +448,7 @@ public class AlgorithmRegValidation extends AlgorithmBase {
         int n = coordsA[0].length;
 
         if (coordsA[0].length != coordsB[0].length) {
-            Preferences.debug("Least Squares ERROR: nA != nB\n");
+            Preferences.debug("Least Squares ERROR: nA != nB\n",Preferences.DEBUG_ALGORITHM);
 
             return -1;
         }
@@ -466,8 +471,8 @@ public class AlgorithmRegValidation extends AlgorithmBase {
             for (j = 0; j < numCoords; j++) {
 
                 for (i = 0; i < dim; i++) {
-                    Preferences.debug("pointSetA[" + i + "][" + j + "]=" + pointSetA[i][j] + "\n");
-                    Preferences.debug("pointSetB[" + i + "][" + j + "]=" + pointSetB[i][j] + "\n");
+                    Preferences.debug("pointSetA[" + i + "][" + j + "]=" + pointSetA[i][j] + "\n",Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("pointSetB[" + i + "][" + j + "]=" + pointSetB[i][j] + "\n",Preferences.DEBUG_ALGORITHM);
                 }
             }
 
@@ -492,7 +497,7 @@ public class AlgorithmRegValidation extends AlgorithmBase {
         int n = coordsA.length;
 
         if (coordsA.length != coordsB.length) {
-            Preferences.debug("Least Squares ERROR: nA != nB\n");
+            Preferences.debug("Least Squares ERROR: nA != nB\n",Preferences.DEBUG_ALGORITHM);
 
             return -1;
         }
@@ -521,8 +526,8 @@ public class AlgorithmRegValidation extends AlgorithmBase {
             for (i = 0; i < 3; i++) {
 
                 for (j = 0; j < numCoords; j++) {
-                    Preferences.debug("pointSetA[" + i + "][" + j + "]=" + pointSetA[i][j] + "\n");
-                    Preferences.debug("pointSetB[" + i + "][" + j + "]=" + pointSetB[i][j] + "\n");
+                    Preferences.debug("pointSetA[" + i + "][" + j + "]=" + pointSetA[i][j] + "\n",Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("pointSetB[" + i + "][" + j + "]=" + pointSetB[i][j] + "\n",Preferences.DEBUG_ALGORITHM);
                 }
             }
 
@@ -547,7 +552,7 @@ public class AlgorithmRegValidation extends AlgorithmBase {
         int n = coordsA.length;
 
         if (coordsA.length != coordsB.length) {
-            Preferences.debug("Least Squares ERROR: nA != nB\n");
+            Preferences.debug("Least Squares ERROR: nA != nB\n",Preferences.DEBUG_ALGORITHM);
 
             return -1;
         }
@@ -574,8 +579,8 @@ public class AlgorithmRegValidation extends AlgorithmBase {
             for (i = 0; i < 2; i++) {
 
                 for (j = 0; j < numCoords; j++) {
-                    Preferences.debug("pointSetA[" + i + "][" + j + "]=" + pointSetA[i][j] + "\n");
-                    Preferences.debug("pointSetB[" + i + "][" + j + "]=" + pointSetB[i][j] + "\n");
+                    Preferences.debug("pointSetA[" + i + "][" + j + "]=" + pointSetA[i][j] + "\n",Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("pointSetB[" + i + "][" + j + "]=" + pointSetB[i][j] + "\n",Preferences.DEBUG_ALGORITHM);
                 }
             }
 
