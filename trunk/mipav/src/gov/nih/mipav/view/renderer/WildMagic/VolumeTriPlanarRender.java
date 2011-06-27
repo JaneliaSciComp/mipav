@@ -1204,6 +1204,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  super.keyPressed(e);
 		  switch (ucKey)
 		  {
+		  case 'a':
+			  if ( m_kVolumeBox != null )
+			  {
+				  m_kVolumeBox.toggleMethod( );
+			  }
+			  return;
 		  case 'b':
 			  m_bDisplaySecond = !m_bDisplaySecond;
 			  return;
@@ -1645,6 +1651,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  if ( m_kVolumeRayCast != null )
 		  {
 			  m_kVolumeRayCast.SetBackgroundColor( kColor );
+		  }
+		  if ( m_kVolumeBox != null )
+		  {
+			  m_kVolumeBox.SetBackgroundColor( kColor );
 		  }
 		  if ( m_kSlices != null )
 		  {
