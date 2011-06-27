@@ -238,22 +238,23 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
                     // copy slice into 1D array
                     edgeImg.exportData(baseSlice * volLength, volLength, baseBuffer);
                     N = getNumberMatchPts25D(matchSlice);
-                    Preferences.debug("N = " + N + "\n");
+                    Preferences.debug("N = " + N + "\n",Preferences.DEBUG_ALGORITHM);
                     generateCoordList25D(matchSlice);
                     distanceTransform25D();
                     search(tMatrixMatchtoBase[matchSlice]);
-                    Preferences.debug("***********************************************\n");
-                    Preferences.debug("Transform for slice " + matchSlice + " =\n");
+                    Preferences.debug("***********************************************\n",Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("Transform for slice " + matchSlice + " =\n",Preferences.DEBUG_ALGORITHM);
                     //System.out.println(tMatrixMatchtoBase[matchSlice]);
 
                     if (matchSlice > 1) {
-                        Preferences.debug("Transform for slice " + matchSlice + " after concatenation =\n");
+                        Preferences.debug("Transform for slice " + matchSlice + " after concatenation =\n",
+                        		Preferences.DEBUG_ALGORITHM);
 
                         tMatrixMatchtoBase[matchSlice].Mult(tMatrixMatchtoBase[matchSlice - 1]);
                         //System.out.println(tMatrixMatchtoBase[matchSlice]);
                     }
 
-                    Preferences.debug("***********************************************\n");
+                    Preferences.debug("***********************************************\n",Preferences.DEBUG_ALGORITHM);
                     transform25DMatchSlice(matchSlice, tMatrixMatchtoBase[matchSlice], imgBuf, tImgBuf);
                 }
             } else { // for 2D or 3D images
@@ -297,7 +298,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
      */
     @SuppressWarnings("unused")
     private void distanceTransform() {
-        Preferences.debug("distanceTransform...\n");
+        Preferences.debug("distanceTransform...\n",Preferences.DEBUG_ALGORITHM);
 
         int i, j, k;
 
@@ -389,7 +390,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
      * intensity = distance to nearest surface pixel.
      */
     private void distanceTransform25D() {
-        Preferences.debug("distanceTransform...\n");
+        Preferences.debug("distanceTransform...\n",Preferences.DEBUG_ALGORITHM);
 
         int i, j, index;
 
@@ -444,7 +445,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
      */
     @SuppressWarnings("unused")
     private void generateCoordList() {
-        Preferences.debug("generateCoordList...\n");
+        Preferences.debug("generateCoordList...\n",Preferences.DEBUG_ALGORITHM);
 
         int i, j, k;
         int n = 0;
@@ -495,7 +496,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
      * @param  matchSlice  Slice to match.
      */
     private void generateCoordList25D(int matchSlice) {
-        Preferences.debug("generateCoordList25D...\n");
+        Preferences.debug("generateCoordList25D...\n",Preferences.DEBUG_ALGORITHM);
 
         int i, j, index;
         int n = 0;
@@ -536,7 +537,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
      */
     @SuppressWarnings("unused")
     private int getNumberMatchPts() {
-        Preferences.debug("getNumberMatchPts...\n");
+        Preferences.debug("getNumberMatchPts...\n",Preferences.DEBUG_ALGORITHM);
 
         int i, j, k;
         N = 0;
@@ -579,7 +580,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
      * @return  Number of match points.
      */
     private int getNumberMatchPts25D(int matchSlice) {
-        Preferences.debug("getNumberMatchPts25D...\n");
+        Preferences.debug("getNumberMatchPts25D...\n",Preferences.DEBUG_ALGORITHM);
 
         int i, j, index;
         N = 0;
@@ -639,7 +640,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
     /**
      */
     private void initializeNelderMead(double[][] xi, double[] initialPoint) {
-        Preferences.debug("InitializePandY:\n");
+        Preferences.debug("InitializePandY:\n",Preferences.DEBUG_ALGORITHM);
 
         int i, j;
 
@@ -698,7 +699,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
         // This function has not been fully tested.
         // When it is ready to test, see AlgorithmRegVOILandmark for how
         // to use the NelderMead class.
-        Preferences.debug("Search:\n");
+        Preferences.debug("Search:\n",Preferences.DEBUG_ALGORITHM);
 
         func = new CostFunction();
         double[][] xi = new double[simplexDim][simplexDim];
@@ -753,7 +754,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
             return;
         }
 
-        Preferences.debug("Transforming slice " + matchSlice + " done\n");
+        Preferences.debug("Transforming slice " + matchSlice + " done\n",Preferences.DEBUG_ALGORITHM);
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
