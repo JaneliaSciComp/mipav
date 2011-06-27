@@ -991,10 +991,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
 
         }
 
-        Preferences.debug("Blurring ref = " + sigmasRef[0] + ", " + sigmasRef[1] + ", " + sigmasRef[2] + "\n");
-        Preferences.debug("Blurring inp = " + sigmasInput[0] + ", " + sigmasInput[1] + ", " + sigmasInput[2] + "\n");
+        Preferences.debug("Blurring ref = " + sigmasRef[0] + ", " + sigmasRef[1] + ", " + sigmasRef[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Blurring inp = " + sigmasInput[0] + ", " + sigmasInput[1] + ", " + sigmasInput[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
 
-        Preferences.debug(getConstructionInfo());
+        Preferences.debug(getConstructionInfo(),Preferences.DEBUG_ALGORITHM);
 
         if (blurRef) {
 
@@ -1390,7 +1392,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                         && (simpleWeightInputSub8.zDim >= AlgorithmRegOAR3D.minimumZForSub) && doSubsample) {
                     ModelSimpleImage simpleWeightRefSub16;
                     ModelSimpleImage simpleWeightInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16  ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16  ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleWeightRefSub16 = AlgorithmRegOAR3D.subsampleBy2(simpleWeightRefSub8, false);
                     simpleWeightInputSub16 = AlgorithmRegOAR3D.subsampleBy2(simpleWeightInputSub8, false);
@@ -1401,7 +1403,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                         && doSubsample) {
                     ModelSimpleImage simpleWeightRefSub16;
                     ModelSimpleImage simpleWeightInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleWeightRefSub16 = AlgorithmRegOAR3D.subsampleBy2XY(simpleWeightRefSub8, false);
                     simpleWeightInputSub16 = AlgorithmRegOAR3D.subsampleBy2XY(simpleWeightInputSub8, false);
@@ -1437,7 +1439,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 if ( (weightedRefPixelsSub8 > subMinFactor) && (weightedInputPixelsSub8 > subMinFactor) && doSubsample) {
                     ModelSimpleImage simpleWeightRefSub16;
                     ModelSimpleImage simpleWeightInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleWeightRefSub16 = AlgorithmRegOAR3D.subsampleBy2XY(simpleWeightRefSub8, false);
                     simpleWeightInputSub16 = AlgorithmRegOAR3D.subsampleBy2XY(simpleWeightInputSub8, false);
@@ -1457,7 +1459,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             Preferences.debug("Weighted ref subsampled 2 = " + simpleWeightRefSub2 + "Weighted ref subsampled 4 = "
                     + simpleWeightRefSub4 + "Weighted ref subsampled 8 = " + simpleWeightRefSub8
                     + "Weighted input subsampled 2 = " + simpleWeightInputSub2 + "Weighted input subsampled 4 = "
-                    + simpleWeightInputSub4 + "Weighted input subsampled 8 = " + simpleWeightInputSub8);
+                    + simpleWeightInputSub4 + "Weighted input subsampled 8 = " + simpleWeightInputSub8,
+                    Preferences.DEBUG_ALGORITHM);
 
         } // end of (if weighted && fullAnalysisMode)
 
@@ -1483,14 +1486,14 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 simpleInputSub2 = AlgorithmRegOAR3D.subsampleBy2XY(simpleInput, doColor);
                 level1FactorXY = 2.0f;
             } else {
-                Preferences.debug("Level one image not resampled because ");
+                Preferences.debug("Level one image not resampled because ",Preferences.DEBUG_ALGORITHM);
 
                 if (simpleRef.dataSize <= subMinFactor) {
-                    Preferences.debug("reference image data size is too small. \n");
+                    Preferences.debug("reference image data size is too small. \n",Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (simpleInput.dataSize <= subMinFactor) {
-                    Preferences.debug("input image data size is too small. \n");
+                    Preferences.debug("input image data size is too small. \n",Preferences.DEBUG_ALGORITHM);
                 }
 
                 simpleRefSub2 = simpleRef;
@@ -1510,14 +1513,14 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 simpleInputSub4 = AlgorithmRegOAR3D.subsampleBy2XY(simpleInputSub2, doColor);
                 level2FactorXY = 2.0f;
             } else {
-                Preferences.debug("Level two image not resampled because ");
+                Preferences.debug("Level two image not resampled because ",Preferences.DEBUG_ALGORITHM);
 
                 if (simpleRefSub2.dataSize <= subMinFactor) {
-                    Preferences.debug("reference image data size is too small. \n");
+                    Preferences.debug("reference image data size is too small. \n",Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (simpleInputSub2.dataSize <= subMinFactor) {
-                    Preferences.debug("input image data size is too small. \n");
+                    Preferences.debug("input image data size is too small. \n",Preferences.DEBUG_ALGORITHM);
                 }
 
                 simpleRefSub4 = simpleRefSub2;
@@ -1538,7 +1541,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                         && (simpleInputSub8.zDim >= AlgorithmRegOAR3D.minimumZForSub)) {
                     ModelSimpleImage simpleRefSub16;
                     ModelSimpleImage simpleInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16  ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16  ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleRefSub16 = AlgorithmRegOAR3D.subsampleBy2(simpleRefSub8, doColor);
                     simpleInputSub16 = AlgorithmRegOAR3D.subsampleBy2(simpleInputSub8, doColor);
@@ -1551,7 +1554,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                         && allowLevel16XY) {
                     ModelSimpleImage simpleRefSub16;
                     ModelSimpleImage simpleInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleRefSub16 = AlgorithmRegOAR3D.subsampleBy2XY(simpleRefSub8, doColor);
                     simpleInputSub16 = AlgorithmRegOAR3D.subsampleBy2XY(simpleInputSub8, doColor);
@@ -1571,7 +1574,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                         && allowLevel16XY) {
                     ModelSimpleImage simpleRefSub16;
                     ModelSimpleImage simpleInputSub16;
-                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n");
+                    Preferences.debug("Sub sampled level 8 to 16 in XY ***********\n",Preferences.DEBUG_ALGORITHM);
 
                     simpleRefSub16 = AlgorithmRegOAR3D.subsampleBy2XY(simpleRefSub8, doColor);
                     simpleInputSub16 = AlgorithmRegOAR3D.subsampleBy2XY(simpleInputSub8, doColor);
@@ -1590,18 +1593,19 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                     + "\n" + "Level 4 factor XY = " + level4FactorXY + "\n" + "Level 4 factor Z = " + level4FactorZ
                     + "\n" + "Ref subsampled 2 = " + simpleRefSub2 + "Ref subsampled 4 = " + simpleRefSub4
                     + "Ref subsampled 8 = " + simpleRefSub8 + "Input subsampled 2 = " + simpleInputSub2
-                    + "Input subsampled 4 = " + simpleInputSub4 + "Input subsampled 8 = " + simpleInputSub8);
+                    + "Input subsampled 4 = " + simpleInputSub4 + "Input subsampled 8 = " + simpleInputSub8,
+                    Preferences.DEBUG_ALGORITHM);
 
             // STARTING LEVEL 8
             time = System.currentTimeMillis();
-            Preferences.debug(" Starting level 8 ************************************************\n");
+            Preferences.debug(" Starting level 8 ************************************************\n",Preferences.DEBUG_ALGORITHM);
 
             final Vector<MatrixListItem>[] minimas = levelEight(simpleRefSub8, simpleInputSub8, 0, 30);
 
             // "minimas" is an array of Vector, because it will have two Vectors - one with
             // the original minima and one with the optimized minima.
             time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 8 milliseconds = " + time + "\n");
+            Preferences.debug(" Level 8 milliseconds = " + time + "\n",Preferences.DEBUG_ALGORITHM);
             time = System.currentTimeMillis();
 
             if (threadStopped) {
@@ -1611,12 +1615,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             }
 
             // STARTING LEVEL 4
-            Preferences.debug(" Starting level 4 ************************************************\n");
+            Preferences.debug(" Starting level 4 ************************************************\n",Preferences.DEBUG_ALGORITHM);
 
             final Vector<MatrixListItem> minima = levelFour(simpleRefSub4, simpleInputSub4, minimas[0], minimas[1], 30,
                     60);
             time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 4  milliseconds = " + time + "\n");
+            Preferences.debug(" Level 4  milliseconds = " + time + "\n",Preferences.DEBUG_ALGORITHM);
             time = System.currentTimeMillis();
 
             if (threadStopped) {
@@ -1626,10 +1630,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             }
 
             // STARTING LEVEL 2
-            Preferences.debug(" Starting level 2 ************************************************\n");
+            Preferences.debug(" Starting level 2 ************************************************\n",Preferences.DEBUG_ALGORITHM);
             bestGuessLevel2 = levelTwo(simpleRefSub2, simpleInputSub2, minima, 60, 90);
             time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 2 milliseconds = " + time + "\n");
+            Preferences.debug(" Level 2 milliseconds = " + time + "\n",Preferences.DEBUG_ALGORITHM);
             time = System.currentTimeMillis();
 
             if (threadStopped) {
@@ -1651,8 +1655,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             if (calcCOG) {
                 final Vector3f cog = AlgorithmRegOAR3D.calculateCenterOfMass3D(simpleInput, simpleWeightInput, doColor);
                 final Vector3f cogR = AlgorithmRegOAR3D.calculateCenterOfMass3D(simpleRef, simpleWeightRef, doColor);
-                Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
-                Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
+                Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n",Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n",Preferences.DEBUG_ALGORITHM);
 
                 diffX = (cog.X - cogR.X);
                 diffY = (cog.Y - cogR.Y);
@@ -1671,11 +1675,11 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         } // end of (fastMode)
 
         // STARTING LEVEL 0NE - note - this is for fastMode and fullAnalysisMode
-        Preferences.debug(" Starting level 1 ************************************************\n");
+        Preferences.debug(" Starting level 1 ************************************************\n",Preferences.DEBUG_ALGORITHM);
         maxIter = baseNumIter * 1;
         answer = levelOne(simpleRef, simpleInput, bestGuessLevel2, maxIter, 90, 100);
         time = System.currentTimeMillis() - time;
-        Preferences.debug(" Level 1 milliseconds = " + time + "\n");
+        Preferences.debug(" Level 1 milliseconds = " + time + "\n",Preferences.DEBUG_ALGORITHM);
 
         if (threadStopped) {
             finalize();
@@ -1688,9 +1692,11 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         disposeLocal();
         finalize();
         setCompleted(true);
-        Preferences.debug("Time consumed by OAR registration algorithm: " + (System.currentTimeMillis() - startTime));
+        Preferences.debug("Time consumed by OAR registration algorithm: " + (System.currentTimeMillis() - startTime),
+        		Preferences.DEBUG_ALGORITHM);
         time = (System.currentTimeMillis() - startTime);
-        Preferences.debug("Time consumed by OAR registration algorithm: " + (time * .001f) + " seconds");
+        Preferences.debug("Time consumed by OAR registration algorithm: " + (time * .001f) + " seconds",
+        		Preferences.DEBUG_ALGORITHM);
 
         if (m_kGPUCost != null) {
             m_kGPUCost.dispose();
@@ -2025,9 +2031,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
          * (int) (overAmt[1]) + " voxels, yielding " + (int) (overAmt[2]) + " percent.\n"); }
          */
         Preferences.debug("Total number of positions at coarse sampling to be tested: "
-                + (coarseNumX * coarseNumY * coarseNumZ) + ".\n");
+                + (coarseNumX * coarseNumY * coarseNumZ) + ".\n",Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Total number of positions at fine sampling to be tested: "
-                + (fineNumX * fineNumY * fineNumZ) + ".\n");
+                + (fineNumX * fineNumY * fineNumZ) + ".\n",Preferences.DEBUG_ALGORITHM);
 
         if (weighted) {
             cost.setRefWgtImage(simpleWeightRefSub8);
@@ -2044,8 +2050,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         if (calcCOG) {
             cog = AlgorithmRegOAR3D.calculateCenterOfMass3D(input, simpleWeightInputSub8, doColor);
             cogR = AlgorithmRegOAR3D.calculateCenterOfMass3D(ref, simpleWeightRefSub8, doColor);
-            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
-            Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
+            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n",Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n",Preferences.DEBUG_ALGORITHM);
 
             diffX = (cog.X - cogR.X);
             diffY = (cog.Y - cogR.Y);
@@ -2345,7 +2351,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             return null;
         }
 
-        Preferences.debug("Number of minima: " + minima.size() + "\n");
+        Preferences.debug("Number of minima: " + minima.size() + "\n",Preferences.DEBUG_ALGORITHM);
 
         final Vector<MatrixListItem> optMinima = new Vector<MatrixListItem>();
         // Now freely optimizes over rotations:
@@ -2436,9 +2442,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             cog = AlgorithmRegOAR3D.calculateCenterOfMass3D(input, simpleWeightInputSub4, doColor);
         }
 
-        Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
+        Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n",Preferences.DEBUG_ALGORITHM);
 
-        // Preferences.debug("Center of mass for the subsampled reference image:" + cog + "\n");
+        // Preferences.debug("Center of mass for the subsampled reference image:" + cog + "\n",Preferences.DEBUG_ALGORITHM);
         MatrixListItem item = null;
 
         for (final Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
@@ -2540,7 +2546,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             }
         }
 
-        Preferences.debug("Removed " + (total - newMinima.size()) + " items outside rotation limits\n");
+        Preferences.debug("Removed " + (total - newMinima.size()) + " items outside rotation limits\n",Preferences.DEBUG_ALGORITHM);
 
         fireProgressStateChanged("Perturbing minima");
 
@@ -2586,15 +2592,15 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 // Apply perturbation and send message to debug window.
                 if ( (j == 1) || (j == 2)) {
                     Preferences.debug(" by adding " + (sign * fineDeltaX) + " to initial[0] (" + (int) initial[0]
-                            + ").\n");
+                            + ").\n",Preferences.DEBUG_ALGORITHM);
                     initial[0] += sign * fineDeltaX;
                 } else if ( (j == 3) || (j == 4)) {
                     Preferences.debug(" by adding " + (sign * fineDeltaY) + " to initial[1] (" + (int) initial[1]
-                            + ").\n");
+                            + ").\n",Preferences.DEBUG_ALGORITHM);
                     initial[1] += sign * fineDeltaY;
                 } else {
                     Preferences.debug(" by adding " + (sign * fineDeltaZ) + " to initial[2] (" + (int) initial[2]
-                            + ").\n");
+                            + ").\n",Preferences.DEBUG_ALGORITHM);
                     initial[2] += sign * fineDeltaZ;
                 }
 
@@ -2625,9 +2631,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                         scaleDelta = 1.2f;
                     }
 
-                    Preferences.debug("Perturbing initial[6] by ");
+                    Preferences.debug("Perturbing initial[6] by ",Preferences.DEBUG_ALGORITHM);
                     initial[6] *= scaleDelta;
-                    Preferences.debug("Multiplying by " + scaleDelta + "\n");
+                    Preferences.debug("Multiplying by " + scaleDelta + "\n",Preferences.DEBUG_ALGORITHM);
                     initials[index++] = new Vectornd(initial);
 
                 }
@@ -2753,7 +2759,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         item2.midsagMatrix = powell.getMatrixMidsagittal(0, input.xRes);
 
         fireProgressStateChanged((int) progressTo);
-        Preferences.debug("Best answer: \n" + item2 + "\n");
+        Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
 
         cost.disposeLocal();
         powell.disposeLocal();
@@ -2867,7 +2873,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 .getPoint(0, input.xRes));
 
         powell.disposeLocal();
-        Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n");
+        Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n",Preferences.DEBUG_ALGORITHM);
         maxIter = baseNumIter * 2;
 
         if (DOF > 7) {
@@ -2901,7 +2907,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             itemPtr = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0,
                     input.xRes));
             powell.disposeLocal();
-            Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n");
+            Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n",Preferences.DEBUG_ALGORITHM);
 
             if (DOF > 9) {
                 degree = 12;
@@ -2928,7 +2934,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 itemPtr = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0,
                         input.xRes));
                 powell.disposeLocal();
-                Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n");
+                Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n",Preferences.DEBUG_ALGORITHM);
             }
         }
 
