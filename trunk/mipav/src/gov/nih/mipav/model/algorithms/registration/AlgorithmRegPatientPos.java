@@ -409,9 +409,12 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
                             { 0, 0, 0, 1 }
                         };
 
-        Preferences.debug("A: patientOrientX = " + xOrientA[0] + ", " + xOrientA[1] + ", " + xOrientA[2] + "\n");
-        Preferences.debug("A: patientOrientY = " + yOrientA[0] + ", " + yOrientA[1] + ", " + yOrientA[2] + "\n");
-        Preferences.debug("A: patientOrientZ = " + zOrientA[0] + ", " + zOrientA[1] + ", " + zOrientA[2] + "\n");
+        Preferences.debug("A: patientOrientX = " + xOrientA[0] + ", " + xOrientA[1] + ", " + xOrientA[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("A: patientOrientY = " + yOrientA[0] + ", " + yOrientA[1] + ", " + yOrientA[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("A: patientOrientZ = " + zOrientA[0] + ", " + zOrientA[1] + ", " + zOrientA[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
 
         // ImageB (moving image):  Get image orientation
         getPatientOrientation(xOrientB, yOrientB, imageB);
@@ -423,9 +426,12 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
                             { 0, 0, 0, 1 }
                         };
 
-        Preferences.debug("B: patientOrientX = " + xOrientB[0] + ", " + xOrientB[1] + ", " + xOrientB[2] + "\n");
-        Preferences.debug("B: patientOrientY = " + yOrientB[0] + ", " + yOrientB[1] + ", " + yOrientB[2] + "\n");
-        Preferences.debug("B: patientOrientZ = " + zOrientB[0] + ", " + zOrientB[1] + ", " + zOrientB[2] + "\n");
+        Preferences.debug("B: patientOrientX = " + xOrientB[0] + ", " + xOrientB[1] + ", " + xOrientB[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("B: patientOrientY = " + yOrientB[0] + ", " + yOrientB[1] + ", " + yOrientB[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("B: patientOrientZ = " + zOrientB[0] + ", " + zOrientB[1] + ", " + zOrientB[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
 
         // Figure out the transformation to reorient Image B.
         alignmentXfrm.MakeIdentity();
@@ -438,8 +444,8 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         orientB_inv.Inverse();
         alignmentXfrm.Mult(orientB_inv);
 
-        Preferences.debug("Transformation Matrix = \n");
-        Preferences.debug(alignmentXfrm.toString());
+        Preferences.debug("Transformation Matrix = \n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug(alignmentXfrm.toString(),Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -472,10 +478,10 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         // Get image origins (i.e. start locations)
         getPatientPosition(coordA, imageA);
         Preferences.debug("ImageA startLocation in MatchOrigin: " + (float) coordA[0] + ", " + (float) coordA[1] +
-                          ", " + (float) coordA[2] + "\n");
+                          ", " + (float) coordA[2] + "\n",Preferences.DEBUG_ALGORITHM);
         getPatientPosition(coordB, resultImg);
         Preferences.debug("ImageB startLocation in order in MatchOrigin: " + (float) coordB[0] + ", " +
-                          (float) coordB[1] + ", " + (float) coordB[2] + "\n");
+                          (float) coordB[1] + ", " + (float) coordB[2] + "\n",Preferences.DEBUG_ALGORITHM);
 
         // If all the origin for Image A are 0.0, assume that start locations aren't known and shouldn't be used
         // in the registration.  Likewise for Image B.  Set the diff to zero.
@@ -601,7 +607,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         // Get image origin before transformation.
         getPatientPosition(coordB, imageB);
         Preferences.debug("Original ImageB startLocation: " + (float) coordB[0] + ", " + (float) coordB[1] + ", " +
-                          (float) coordB[2] + "\n");
+                          (float) coordB[2] + "\n",Preferences.DEBUG_ALGORITHM);
 
         // Call AlgorithmTransform with padding.
         AlgorithmTransform algoTransform = new AlgorithmTransform(imageB, alignmentXfrm, AlgorithmTransform.TRILINEAR,
@@ -633,9 +639,9 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         }
 
         Preferences.debug("ImageB resolution in reOrient after transform: " + (float) resB[0] + ", " + (float) resB[1] +
-                          ", " + (float) resB[2] + "\n");
+                          ", " + (float) resB[2] + "\n",Preferences.DEBUG_ALGORITHM);
         Preferences.debug("ImageB dimensions in reOrient after transform: " + (int) dimB[0] + ", " + (int) dimB[1] +
-                          ", " + (int) dimB[2] + "\n");
+                          ", " + (int) dimB[2] + "\n",Preferences.DEBUG_ALGORITHM);
 
         // Reorder origin.
         for (int i = 0; i < 3; i++) {
@@ -647,7 +653,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         }
 
         Preferences.debug("ImageB startLocation in A order: " + (float) coordB[0] + ", " + (float) coordB[1] + ", " +
-                          (float) coordB[2] + "\n");
+                          (float) coordB[2] + "\n",Preferences.DEBUG_ALGORITHM);
 
         // When necessary, shift origin to opposite end of image.
         int[] oldDims = new int[3];
@@ -658,7 +664,8 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
 
         for (int i = 0; i < 3; i++) {
             fieldOfView[i] = oldRes[index2ImgA[i]] * (oldDims[index2ImgA[i]] - 1);
-            Preferences.debug("Field of view in " + i + " direction is " + (float) fieldOfView[i] + ".\n");
+            Preferences.debug("Field of view in " + i + " direction is " + (float) fieldOfView[i] + ".\n",
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         /* Read the direction vector from MipavCoordinateSystems class: */
@@ -674,7 +681,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         }
 
         Preferences.debug("New image origin: " + (float) coordB[0] + ", " + (float) coordB[1] + ", " +
-                          (float) coordB[2] + "\n");
+                          (float) coordB[2] + "\n",Preferences.DEBUG_ALGORITHM);
 
         // Crop image on side opposite padding
         int[] cropAmt = new int[] { 0, 0, 0 };
@@ -697,11 +704,13 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         boundZ[1] = (int) dimB[2] - cropAmt[2] - 1;
 
         Preferences.debug("Original image dimensions: " + oldDims[index2ImgA[0]] + " " + oldDims[index2ImgA[1]] + " " +
-                          oldDims[index2ImgA[2]] + ".\n");
-        Preferences.debug("OrientedB dimensions: " + dimB[0] + " " + dimB[1] + " " + dimB[2] + ".\n");
-        Preferences.debug("Amount to crop " + cropAmt[0] + ", " + cropAmt[1] + ", and " + cropAmt[2] + " pixels.\n");
+                          oldDims[index2ImgA[2]] + ".\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("OrientedB dimensions: " + dimB[0] + " " + dimB[1] + " " + dimB[2] + ".\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Amount to crop " + cropAmt[0] + ", " + cropAmt[1] + ", and " + cropAmt[2] + " pixels.\n",
+        		Preferences.DEBUG_ALGORITHM);
         Preferences.debug("New orientedB (tempImg) dimensions: " + newNewDims[0] + " " + newNewDims[1] + " " +
-                          newNewDims[2] + ".\n");
+                          newNewDims[2] + ".\n",Preferences.DEBUG_ALGORITHM);
 
         name = JDialogBase.makeImageName(imageB.getImageName(), "_cropped");
 
@@ -723,7 +732,8 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             dimB[i] = (double) orientedImgB.getExtents()[i];
         }
 
-        Preferences.debug("After crop, dimB = " + dimB[0] + ", " + dimB[1] + ", " + dimB[2] + "\n");
+        Preferences.debug("After crop, dimB = " + dimB[0] + ", " + dimB[1] + ", " + dimB[2] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
 
         // Set file properties of result image.
         FileInfoBase fileInfoB, fileInfoA;
