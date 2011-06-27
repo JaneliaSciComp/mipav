@@ -149,19 +149,19 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
         if (algorithm instanceof AlgorithmRegChamfer) {
 
             if (chamfer.isCompleted() == true) {
-                Preferences.debug("chamfer completed = true\n");
+                Preferences.debug("chamfer completed = true\n",Preferences.DEBUG_ALGORITHM);
 
                 if (!image25D) {
                     matchImage.setMatrix(chamfer.getTransformMatchtoBase());
-                    Preferences.debug("matchor25DImage.getMatrix = ");
+                    Preferences.debug("matchor25DImage.getMatrix = ",Preferences.DEBUG_ALGORITHM);
                     System.out.println(matchImage.getMatrix());
-                    Preferences.debug("chamfer.getTransformBtoA = ");
+                    Preferences.debug("chamfer.getTransformBtoA = ",Preferences.DEBUG_ALGORITHM);
                     System.out.println(chamfer.getTransformMatchtoBase());
                 } else {
                     matchImage.calcMinMax();
                 }
 
-                Preferences.debug("Chamfer Done\n");
+                Preferences.debug("Chamfer Done\n",Preferences.DEBUG_ALGORITHM);
             }
 
             // These next lines set the titles in all frames where the source image is displayed to
