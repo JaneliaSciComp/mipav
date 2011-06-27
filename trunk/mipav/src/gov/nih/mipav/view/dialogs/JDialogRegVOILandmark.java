@@ -247,9 +247,9 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
 
             try {
                 Preferences.debug(minTx + "," + maxTx + "," + minTy + "," + maxTy + "," + minRz + "," + maxRz + "," +
-                                  step + "\n");
+                                  step + "\n",Preferences.DEBUG_ALGORITHM);
                 nVOIs = image.getVOIs().size();
-                Preferences.debug("nVOIs = " + nVOIs + "\n");
+                Preferences.debug("nVOIs = " + nVOIs + "\n",Preferences.DEBUG_ALGORITHM);
 
                 ViewVOIVector VOIs = image.getVOIs();
 
@@ -320,12 +320,12 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                 tmpPosition = new Vector3f[2 * length];
                 tmpIntensity = new float[2 * length];
 
-                Preferences.debug("VOI predicted array length = " + length + "\n");
+                Preferences.debug("VOI predicted array length = " + length + "\n",Preferences.DEBUG_ALGORITHM);
 
                 length = image.getVOIs().VOIAt(VOIindex).getPositionAndIntensity(0, j, tmpPosition, tmpIntensity,
                                                                                  volBuffer, xdim);
 
-                Preferences.debug("actual VOI length = " + length + "\n");
+                Preferences.debug("actual VOI length = " + length + "\n",Preferences.DEBUG_ALGORITHM);
 
                 position = new VOIContour(false, true);
 
