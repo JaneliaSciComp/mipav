@@ -926,7 +926,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         
-        Preferences.debug(getConstructionInfo());
+        Preferences.debug(getConstructionInfo(),Preferences.DEBUG_ALGORITHM);
 
         fireProgressStateChanged("Registering images", "Beginning registration");
 
@@ -1321,7 +1321,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             }
 
             Preferences.debug("Level 1 factor = " + level1Factor + "\n" + "Level 2 factor = " + level2Factor + "\n" +
-                              "Level 4 factor = " + level4Factor + "\n");
+                              "Level 4 factor = " + level4Factor + "\n",Preferences.DEBUG_ALGORITHM);
         } // if (DOF >= 3)
 
         long time;
@@ -1433,8 +1433,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
             fireProgressStateChanged((int) (m / (float) (inputImage.getExtents()[2] - 1) * 100));
 
-            Preferences.debug(" ***********************Starting Image " + iNumber + "  **************************\n");
-            Preferences.debug(" **************************************************************************\n\n");
+            Preferences.debug(" ***********************Starting Image " + iNumber + "  **************************\n",
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug(" **************************************************************************\n\n",
+            		Preferences.DEBUG_ALGORITHM);
 
             try {
 
@@ -1532,7 +1534,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             time = System.currentTimeMillis();
 
             if (DOF >= 3) {
-                Preferences.debug(" Starting level 8 ************************************************\n");
+                Preferences.debug(" Starting level 8 ************************************************\n",
+                		Preferences.DEBUG_ALGORITHM);
 
                 Vector<MatrixListItem>[] minimas;
 
@@ -1543,7 +1546,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 }
 
                 time = System.currentTimeMillis() - time;
-                Preferences.debug(" Level 8 min = " + ((float) time / 60000.0f) + "\n");
+                Preferences.debug(" Level 8 min = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
                 time = System.currentTimeMillis();
 
                 if (threadStopped) {
@@ -1553,11 +1556,12 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     return;
                 }
 
-                Preferences.debug(" Starting level 4 ************************************************\n");
+                Preferences.debug(" Starting level 4 ************************************************\n",
+                		Preferences.DEBUG_ALGORITHM);
 
                 Vector<MatrixListItem> minima = levelFour(simpleRefSub4_1, simpleInputSub4_1, minimas[0], minimas[1]);
                 time = System.currentTimeMillis() - time;
-                Preferences.debug(" Level 4  min = " + ((float) time / 60000.0f) + "\n");
+                Preferences.debug(" Level 4  min = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
                 time = System.currentTimeMillis();
 
                 if (threadStopped) {
@@ -1567,11 +1571,11 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     return;
                 }
 
-                Preferences.debug(" Starting level 2 ************************************************\n");
+                Preferences.debug(" Starting level 2 ************************************************\n",Preferences.DEBUG_ALGORITHM);
 
                 MatrixListItem item = levelTwo(simpleRefSub2_1, simpleInputSub2_1, minima);
                 time = System.currentTimeMillis() - time;
-                Preferences.debug(" Level 2 min = " + ((float) time / 60000.0f) + "\n");
+                Preferences.debug(" Level 2 min = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
                 time = System.currentTimeMillis();
 
                 if (threadStopped) {
@@ -1581,16 +1585,16 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     return;
                 }
 
-                Preferences.debug(" Starting level 1 ************************************************\n");
+                Preferences.debug(" Starting level 1 ************************************************\n",Preferences.DEBUG_ALGORITHM);
                 answer = levelOne(simpleRef_1, simpleInput_1, item, iNumber);
             } // if (DOF >= 3)
             else {
-                Preferences.debug(" Starting level 1 ************************************************\n");
+                Preferences.debug(" Starting level 1 ************************************************\n",Preferences.DEBUG_ALGORITHM);
                 answer = levelOne2D(simpleRef_1, simpleInput_1);
             }
 
             time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 1 min = " + ((float) time / 60000.0f) + "\n");
+            Preferences.debug(" Level 1 min = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
 
             if (threadStopped) {
                 notifyListeners(this);
@@ -2652,8 +2656,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             cogR = calculateCenterOfMass2D(ref, simpleWeightRSub8_1, doColor);
         }
 
-        Preferences.debug("COG of Ref   = " + cogR + "\n");
-        Preferences.debug("COG of Input = " + cog + "\n");
+        Preferences.debug("COG of Ref   = " + cogR + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("COG of Input = " + cog + "\n",Preferences.DEBUG_ALGORITHM);
 
         double diffX = (cog.X - cogR.X);
         double diffY = (cog.Y - cogR.Y);
@@ -2792,7 +2796,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             return null;
         }
 
-        // Preferences.debug("Number of minima: " + minima.size() + "\n");
+        // Preferences.debug("Number of minima: " + minima.size() + "\n",Preferences.DEBUG_ALGORITHM);
         Vector<MatrixListItem> optMinima = new Vector<MatrixListItem>();
 
         // Now freely optimizes over rotation:
@@ -2858,7 +2862,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         Vector2f cog = calculateCenterOfMass2D(input, simpleWeightISub4_1, doColor);
 
-        // Preferences.debug("COG of input = " + cog + "\n");
+        // Preferences.debug("COG of input = " + cog + "\n",Preferences.DEBUG_ALGORITHM);
         MatrixListItem item = null;
 
         // fix translations based on image resolutions!
@@ -2906,7 +2910,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         // Now changed so that the number of minima to test at Level Four is a variable,
         // passed in from JDialog.  It used to be set to "3".
         int total = (numMinima < minima.size()) ? numMinima : minima.size();
-        Preferences.debug("Number of minima to test at levelFour: " + total + ".\n");
+        Preferences.debug("Number of minima to test at levelFour: " + total + ".\n",Preferences.DEBUG_ALGORITHM);
         powell.setMaxIterations(7);
         Vectornd[] initials = new Vectornd[total*2];
         for (int i = 0; (i < total) && !threadStopped; i++) {
@@ -2947,18 +2951,18 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             for (int i = 0; (i < 2*total) && !threadStopped; i++) {
                 initial = (double[]) newMinima.elementAt(i).initial.clone();
 
-                // Preferences.debug("Perturbing initial[0] by ");
-                if (j == 0) { // Preferences.debug("No fineDelta added or subtracted\n");
+                // Preferences.debug("Perturbing initial[0] by ",Preferences.DEBUG_ALGORITHM);
+                if (j == 0) { // Preferences.debug("No fineDelta added or subtracted\n",Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (j == 1) {
                     initial[0] += fineDelta;
-                    // Preferences.debug("adding " + fineDelta + "\n");
+                    // Preferences.debug("adding " + fineDelta + "\n",Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (j == 2) {
                     initial[0] -= fineDelta;
-                    // Preferences.debug("subtracting " + fineDelta + "\n");
+                    // Preferences.debug("subtracting " + fineDelta + "\n",Preferences.DEBUG_ALGORITHM);
                 }
 
                 // 1.) unchanged initial
@@ -2983,10 +2987,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                         scaleDelta = 1.2f;
                     } 
 
-                    // Preferences.debug("Perturbing initial[3] by ");
+                    // Preferences.debug("Perturbing initial[3] by ",Preferences.DEBUG_ALGORITHM);
                     initial[3] *= scaleDelta;
 
-                    // Preferences.debug("Multiplying by " + scaleDelta + "\n");
+                    // Preferences.debug("Multiplying by " + scaleDelta + "\n",Preferences.DEBUG_ALGORITHM);
                     // make initial variable old initial * scaleDelta in each dimension
                     initials[index++] = new Vectornd(initial);
                 }
@@ -3059,7 +3063,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         MatrixListItem item2 = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0));
-        Preferences.debug("Best answer: \n" + item2 + "\n");
+        Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
 
         sliceCosts[frame] = item2.getCost();
 
@@ -3091,8 +3095,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         Vector2f cog = calculateCenterOfMass2D(input, simpleWeightI_1, doColor);
         Vector2f cogR = calculateCenterOfMass2D(ref, simpleWeightR_1, doColor);
 
-        Preferences.debug("COG of Ref   = " + cogR + "\n");
-        Preferences.debug("COG of Input = " + cog + "\n");
+        Preferences.debug("COG of Ref   = " + cogR + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("COG of Input = " + cog + "\n",Preferences.DEBUG_ALGORITHM);
 
         double diffX = (cog.X - cogR.X);
         double diffY = (cog.Y - cogR.Y);
@@ -3121,7 +3125,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         MatrixListItem item2 = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0));
-        Preferences.debug("Best answer: \n" + item2 + "\n");
+        Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
         cost.disposeLocal();
         powell.finalize();
 
@@ -3186,7 +3190,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
-        // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n");
+        // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n",Preferences.DEBUG_ALGORITHM);
 
         if (DOF > 4) {
             degree = 5;
@@ -3206,7 +3210,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             }
 
             item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
-            // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n");
+            // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n",Preferences.DEBUG_ALGORITHM);
 
             if (DOF > 5) {
                 degree = (DOF < 7) ? DOF : 7;
@@ -3227,7 +3231,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 }
 
                 item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
-                // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n");
+                // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n",Preferences.DEBUG_ALGORITHM);
             }
         }
 
