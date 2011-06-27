@@ -172,7 +172,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
                 spline.saveMatrix(matrixDirectory + matchImage.getImageName() +
                         "_To_" + baseImage.getImageName() + ".tps", null);
                 Preferences.debug("Saved " + matrixDirectory + matchImage.getImageName() +
-                        "_To_" + baseImage.getImageName() + ".tps\n");
+                        "_To_" + baseImage.getImageName() + ".tps\n",Preferences.DEBUG_FILEIO);
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
@@ -218,7 +218,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
                     MipavUtil.displayError("result Image is null");
                 }
 
-                Preferences.debug("Done.");
+                Preferences.debug("Done.",Preferences.DEBUG_ALGORITHM);
                 insertScriptLine();
             }
 
@@ -295,12 +295,12 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             curvesB = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
             nPtsA = curvesB.size();
 
-            Preferences.debug("nPtsA = " + nPtsA);
+            Preferences.debug("nPtsA = " + nPtsA,Preferences.DEBUG_ALGORITHM);
 
             curvesM = matchImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
             nPtsB += curvesM.size();
 
-            Preferences.debug("nPtsB = " + nPtsB);
+            Preferences.debug("nPtsB = " + nPtsB,Preferences.DEBUG_ALGORITHM);
 
             try {
                 ptA = new Vector3f[nPtsA];
@@ -339,11 +339,11 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         } else if ((baseImage.getNDims() == 2) && (matchImage.getNDims() == 2)) {
             curvesB = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
             nPtsA = curvesB.size();
-            Preferences.debug("nPtsA = " + nPtsA);
+            Preferences.debug("nPtsA = " + nPtsA,Preferences.DEBUG_ALGORITHM);
 
             curvesM = matchImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
             nPtsB = curvesM.size();
-            Preferences.debug("nPtsB = " + nPtsB);
+            Preferences.debug("nPtsB = " + nPtsB,Preferences.DEBUG_ALGORITHM);
 
             try {
                 ptA = new Vector3f[nPtsA];
