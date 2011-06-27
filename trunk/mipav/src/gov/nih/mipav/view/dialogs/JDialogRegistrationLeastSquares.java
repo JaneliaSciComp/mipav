@@ -185,11 +185,11 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
             if (LSMatch.isCompleted() == true) {
                 lsCompleted = true;
                 matchImage.setMatrix(LSMatch.getTransformBtoA());
-                Preferences.debug(matchImage.getMatrix().toString());
+                Preferences.debug(matchImage.getMatrix().toString(),Preferences.DEBUG_ALGORITHM);
                 LSMatch.getTransformBtoA().saveMatrix(matrixDirectory + matchImage.getImageName() +
                                                       "_To_" + baseImage.getImageName() + ".mtx");
                 Preferences.debug("Saved " + matrixDirectory + matchImage.getImageName() + "_To_" +
-                        baseImage.getImageName() + ".mtx\n");
+                        baseImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
                 LSMatch.calculateResiduals();
                 xdimA = baseImage.getExtents()[0];
                 ydimA = baseImage.getExtents()[1];
@@ -334,7 +334,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                 curves = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
                 nPtsA = curves.size();
 
-                Preferences.debug("nPtsA = " + nPtsA + "\n");
+                Preferences.debug("nPtsA = " + nPtsA + "\n",Preferences.DEBUG_ALGORITHM);
                 ptA = new Vector3f[nPtsA];
                 tmpptA = baseImage.getVOIs().VOIAt(0).exportAllPoints();
                 for (i = 0; i < tmpptA.length; i++) {
@@ -350,7 +350,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     return;
                 }
 
-                Preferences.debug("nPtsB = " + nPtsB + "\n");
+                Preferences.debug("nPtsB = " + nPtsB + "\n",Preferences.DEBUG_ALGORITHM);
                 ptB = new Vector3f[nPtsB];
                 tmpptB = matchImage.getVOIs().VOIAt(0).exportAllPoints();
                 for (i = 0; i < tmpptB.length; i++) {
@@ -365,7 +365,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
             } else if ((baseImage.getNDims() == 2) && (matchImage.getNDims() == 2)) {
                 curves = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
                 nPtsA = curves.size();
-                Preferences.debug("nPtsA = " + nPtsA + "\n");
+                Preferences.debug("nPtsA = " + nPtsA + "\n",Preferences.DEBUG_ALGORITHM);
                 ptA = new Vector3f[nPtsA];
                 tmpptA = baseImage.getVOIs().VOIAt(0).exportAllPoints();
                 for (i = 0; i < tmpptA.length; i++) {
@@ -382,7 +382,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     return;
                 }
 
-                Preferences.debug("nPtsB = " + nPtsB + "\n");
+                Preferences.debug("nPtsB = " + nPtsB + "\n",Preferences.DEBUG_ALGORITHM);
                 ptB = new Vector3f[nPtsB];
                 tmpptB = matchImage.getVOIs().VOIAt(0).exportAllPoints();
                 for (i = 0; i < tmpptB.length; i++) {
@@ -410,7 +410,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
             for (i = 0; i < nPtsA; i++) {
                 ptAmm[i] = new Vector3f((ptA[i].X * xresA), (ptA[i].Y * yresA),
                                         (ptA[i].Z * zresA));
-                Preferences.debug(ptAmm[i].X + ", " + ptAmm[i].Y + ", " + ptAmm[i].Z + "\n");
+                Preferences.debug(ptAmm[i].X + ", " + ptAmm[i].Y + ", " + ptAmm[i].Z + "\n",Preferences.DEBUG_ALGORITHM);
             }
 
             xresB = matchImage.getFileInfo(0).getResolutions()[0];
@@ -423,7 +423,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
             for (i = 0; i < nPtsB; i++) {
                 ptBmm[i] = new Vector3f((ptB[i].X * xresB), (ptB[i].Y * yresB),
                                         (ptB[i].Z * zresB));
-                Preferences.debug(ptBmm[i].X + ", " + ptBmm[i].Y + ", " + ptBmm[i].Z + "\n");
+                Preferences.debug(ptBmm[i].X + ", " + ptBmm[i].Y + ", " + ptBmm[i].Z + "\n",Preferences.DEBUG_ALGORITHM);
             }
 
             LSMatch = new AlgorithmRegLeastSquares(ptAmm, ptBmm, DIM);
