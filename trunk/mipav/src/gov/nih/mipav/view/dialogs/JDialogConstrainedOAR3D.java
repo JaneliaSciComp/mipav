@@ -624,7 +624,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                 reg3.getTransform().saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mtx", message);
                 Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
-                                               refImage.getImageName() + ".mtx\n");
+                                               refImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
 
                 insertScriptLine();
             }
