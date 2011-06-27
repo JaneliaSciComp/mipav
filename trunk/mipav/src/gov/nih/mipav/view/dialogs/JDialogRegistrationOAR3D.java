@@ -564,7 +564,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 zCenNew = xCen * finalMatrix.Get(2, 0) + yCen * finalMatrix.Get(2, 1) + zCen * finalMatrix.Get(2, 2)
                         + finalMatrix.Get(2, 3);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" + xCen + ", " + yCen
-                        + ", " + zCen + ")\n");
+                        + ", " + zCen + ")\n",Preferences.DEBUG_ALGORITHM);
                 if (resultImage != null) {
                     comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ", " + nf.format(zCenNew)
                             + ") in " + resultImage.getImageName() + ".\n";
@@ -572,7 +572,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ", " + nf.format(zCenNew)
                             + ").\n";
                 }
-                Preferences.debug(comStr);
+                Preferences.debug(comStr,Preferences.DEBUG_ALGORITHM);
 
                 if (resultImage != null) {
                     resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
@@ -597,7 +597,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 finalMatrix.saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
                         + refImage.getImageName() + ".mtx", message);
                 Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
-                        + refImage.getImageName() + ".mtx\n");
+                        + refImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
 
                 insertScriptLine();
             }
