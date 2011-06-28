@@ -606,7 +606,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_TRIM, "0.3");
-        Preferences.defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false, false");
         Preferences.defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, System.getProperty("user.dir")
                 + File.separator + "mipav.log");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_EXTENTS, "256,256,0,0,0");
@@ -870,17 +870,12 @@ public class Preferences {
      * @param string String string to be output
      */
     public static final void debug(final String string) {
+        final boolean[] levels = Preferences.getDebugLevels();
 
-        if (Preferences.messageFrame == null || !Preferences.messageFrame.isVisible()) {
-        	final boolean[] levels = Preferences.getDebugLevels();
-
-            if (levels[0] || levels[1] || levels[2] || levels[3] || levels[4]) {
+        if (levels[0] || levels[1] || levels[2] || levels[3] || levels[4]) {
+            if (Preferences.messageFrame == null || !Preferences.messageFrame.isVisible()) {	
                 System.err.println("DEBUG: "+string);
-            }
-        } else {
-            final boolean[] levels = Preferences.getDebugLevels();
-
-            if (levels[0] || levels[1] || levels[2] || levels[3] || levels[4]) {
+            } else {
                 Preferences.messageFrame.append(string, ViewJFrameMessage.DEBUG);
             }
         }
@@ -908,17 +903,14 @@ public class Preferences {
      */
     public static final void debug(final String string, final int level) {
         final boolean[] debugLevels = Preferences.getDebugLevels();
-
-        if (Preferences.messageFrame == null  || !Preferences.messageFrame.isVisible()) {
-            System.err.println("DEBUG level "+level+": "+string);
-        } else {
-
-            try {
-
-                if (debugLevels[level]) {
+        if (debugLevels[level]) {
+            if (Preferences.messageFrame == null  || !Preferences.messageFrame.isVisible()) {
+                System.err.println("DEBUG level "+level+": "+string);
+            } else {
+                try {
                     Preferences.messageFrame.append(string, ViewJFrameMessage.DEBUG);
-                }
-            } catch (final Exception e) {}
+                } catch (final Exception e) {}
+            }
         }
     }
 
@@ -988,27 +980,23 @@ public class Preferences {
     }
 
     /**
-     * Gets the on/off values for the 4 DEBUG levels (minor, algorithm, fileIO, comms).
+     * Gets the on/off values for the 5 DEBUG levels (minor, algorithm, fileIO, comms, scripting).
      * 
      * @return boolean[] debug levels
      */
     public static final boolean[] getDebugLevels() {
         final boolean[] levels = new boolean[5];
 
-        final String str = Preferences.getProperty(Preferences.PREF_DEBUG);
-        final StringTokenizer st = new StringTokenizer(str, ",");
-        int index = 0;
-
-        while (st.hasMoreTokens()) {
-
-            try {
-                levels[index] = Boolean.valueOf(st.nextToken()).booleanValue();
-                index++;
-            } catch (final Exception e) {
-                System.err.println("exception: " + e);
+        if(Preferences.getProperty(Preferences.PREF_DEBUG) != null) {
+            final String[] str = Preferences.getProperty(Preferences.PREF_DEBUG).split(",");
+            for(int i=0; i<levels.length; i++) {
+                levels[i] = Boolean.valueOf(str[i]).booleanValue();
+            }
+        } else {
+            for(int i=0; i<levels.length; i++) {
+                levels[i] = false; //do not print out any debug output if debug preferences have not been set
             }
         }
-
         return levels;
     }
 
