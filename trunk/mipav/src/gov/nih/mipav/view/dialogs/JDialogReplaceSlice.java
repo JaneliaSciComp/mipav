@@ -116,7 +116,8 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
                 Preferences.debug(image.getImageName() + " with ");
                 Preferences.debug(sliceImage.getImageName() + "\n");
             } // if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM))
-
+            image.notifyImageExtentsListeners(); //update display of image to show changes
+            
         }
     }
 
