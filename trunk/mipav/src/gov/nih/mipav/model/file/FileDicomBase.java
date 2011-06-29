@@ -32,8 +32,8 @@ public class FileDicomBase {
     /** Read-write access. */
     public static final int READ_WRITE = 1;
 
-    /** The size of the buffer that contains the tags of the DICOM image. Default = 4Mil. */
-    public static final int BUFFER_SIZE = 4000000;
+    /** The size of the buffer that contains the tags of the DICOM image. Default = 400Thousand. */
+    public static final long BUFFER_SIZE = 400000;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -407,6 +407,25 @@ public class FileDicomBase {
     }
 
     /**
+     * Performs internal search for the image tag in a dicom file, given an appropriate endianess.
+     */
+    private boolean searchForImageTag(byte[] tempTagBuffer, byte[] endianBuffer, int bufferIndex) {
+        
+        if(tempTagBuffer[bufferIndex] == endianBuffer[0]) {
+            int j = 0;
+  tagSearch:for(j=1; j<endianBuffer.length; j++) {
+                if(tempTagBuffer[bufferIndex+j] != endianBuffer[j]) {
+                    break tagSearch;
+                }
+            }
+            if(j==endianBuffer.length) {
+                return true;
+            } 
+        }
+        return false;
+    }
+    
+    /**
      * Setups the allocation of memory for the byte buffer to load tags. This tag buffer is a cache to speed the loading
      * of the images.
      */
@@ -414,24 +433,46 @@ public class FileDicomBase {
 
         try {
             bPtr = 0;
-
+            long raFileLength = 0;
             if (raFile != null) {
-                fLength = raFile.length();
+                raFileLength = raFile.length();
+                fLength = raFile.length() < BUFFER_SIZE ? raFile.length() : BUFFER_SIZE;
             }
 
-            if (fLength < BUFFER_SIZE) {
-
-                if (tagBuffer == null) {
-                    tagBuffer = new byte[(int) fLength];
-                } else if (fLength > tagBuffer.length) {
-                    tagBuffer = new byte[(int) fLength];
+            byte b0 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(0, 2), 16);
+            byte b1 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(2, 4), 16);
+            byte b2 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(5, 7), 16);
+            byte b3 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(7, 9), 16);
+            
+            byte[] littleEndianImageTag = {b1, b0, b3, b2}; 
+            byte[] bigEndianImageTag = {b0, b1, b2, b3};
+            int bufferLoc = 4;
+            int tagSize = 0;
+            boolean isImage = false;
+            byte[] tempTagBuffer = new byte[(int) fLength];
+imageSearch:while(bufferLoc < raFileLength && !isImage) {
+                raFile.readFully(tempTagBuffer, bufferLoc != 4 ? -4 : 0, ((int)fLength)); //offset of 4 bytes to capture image tag overlap
+                for(int i=0; i<tempTagBuffer.length-4; i++) {
+                    isImage = searchForImageTag(tempTagBuffer, littleEndianImageTag, i);
+                    if(!isImage) {
+                        isImage = searchForImageTag(tempTagBuffer, bigEndianImageTag, i);
+                    }
+                    if(isImage) {
+                        Preferences.debug("Image tag found for dicom image", Preferences.DEBUG_FILEIO);
+                        tagSize += i+12; //Algorithm stops at byte when image is seen, capture entire image tag and length
+                        break imageSearch;
+                    }
                 }
-            } else if (tagBuffer == null) {
-                tagBuffer = new byte[BUFFER_SIZE];
-            } else if (tagBuffer.length < BUFFER_SIZE) {
-                tagBuffer = new byte[BUFFER_SIZE];
+                tagSize += fLength;
+                bufferLoc += fLength;
             }
-
+            
+            if(!isImage) {
+                MipavUtil.displayError("No image tag was found for this DICOM image");
+            } 
+            
+            tagBuffer = new byte[tagSize]; //tagBuffer now guaranteed to contain all necessary header information
+            raFile.seek(0);
             raFile.readFully(tagBuffer);
         } catch (IOException ioE) { }
     }
