@@ -1054,7 +1054,7 @@ public class FileDicom extends FileDicomBase {
             } else if (name.equals("0028,0011")) {
                 extents[0] = ((Short) tagTable.getValue(name)).intValue();
                 // fileInfo.rows = extents[0];
-            }
+            } 
 
             // for dicom files that contain no image information, the image tag will never be encountered
             if (getFilePointer() == fLength) {
@@ -1066,98 +1066,7 @@ public class FileDicom extends FileDicomBase {
 
         if (notDir) {
 
-            String photometricInterp = null;
-
-            if (tagTable.getValue("0028,0004") != null) {
-                fileInfo.photometricInterp = ((String) (tagTable.getValue("0028,0004"))).trim();
-                photometricInterp = fileInfo.photometricInterp.trim();
-            }
-            if (photometricInterp == null) { // Default to MONOCROME2 and hope for the best
-                photometricInterp = new String("MONOCHROME2");
-            }
-
-            if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (fileInfo.bitsAllocated == 1)) {
-                fileInfo.setDataType(ModelStorageBase.BOOLEAN);
-                fileInfo.displayType = ModelStorageBase.BOOLEAN;
-                fileInfo.bytesPerPixel = 1;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
-                    && (fileInfo.bitsAllocated == 8)) {
-                fileInfo.setDataType(ModelStorageBase.UBYTE);
-                fileInfo.displayType = ModelStorageBase.UBYTE;
-                fileInfo.bytesPerPixel = 1;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (fileInfo.pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP)
-                    && (fileInfo.bitsAllocated == 8)) {
-                fileInfo.setDataType(ModelStorageBase.BYTE);
-                fileInfo.displayType = ModelStorageBase.BYTE;
-                fileInfo.bytesPerPixel = 1;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
-                    && (fileInfo.bitsAllocated > 16)) {
-                fileInfo.setDataType(ModelStorageBase.UINTEGER);
-                fileInfo.displayType = ModelStorageBase.UINTEGER;
-                fileInfo.bytesPerPixel = 4;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
-                    && (fileInfo.bitsAllocated > 8)) {
-                fileInfo.setDataType(ModelStorageBase.USHORT);
-                fileInfo.displayType = ModelStorageBase.USHORT;
-                fileInfo.bytesPerPixel = 2;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (fileInfo.pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (fileInfo.bitsAllocated > 8)) {
-                fileInfo.setDataType(ModelStorageBase.SHORT);
-                fileInfo.displayType = ModelStorageBase.SHORT;
-                fileInfo.bytesPerPixel = 2;
-            }
-            // add something for RGB DICOM images - search on this !!!!
-            else if (photometricInterp.equals("RGB") && (fileInfo.bitsAllocated == 8)) {
-                fileInfo.setDataType(ModelStorageBase.ARGB);
-                fileInfo.displayType = ModelStorageBase.ARGB;
-                fileInfo.bytesPerPixel = 3;
-
-                if (tagTable.getValue("0028,0006") != null) {
-                    fileInfo.planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
-                } else {
-                    fileInfo.planarConfig = 0; // rgb, rgb, rgb
-                }
-            } else if (photometricInterp.equals("YBR_FULL_422") && (fileInfo.bitsAllocated == 8) && encapsulated) {
-                fileInfo.setDataType(ModelStorageBase.ARGB);
-                fileInfo.displayType = ModelStorageBase.ARGB;
-                fileInfo.bytesPerPixel = 3;
-
-                if (tagTable.getValue("0028,0006") != null) {
-                    fileInfo.planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
-                } else {
-                    fileInfo.planarConfig = 0; // rgb, rgb, rgb
-                }
-            } else if (photometricInterp.equals("PALETTE COLOR")
-                    && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
-                    && (fileInfo.bitsAllocated == 8)) {
-                fileInfo.setDataType(ModelStorageBase.UBYTE);
-                fileInfo.displayType = ModelStorageBase.UBYTE;
-                fileInfo.bytesPerPixel = 1;
-
-                final int[] dimExtents = new int[2];
-                dimExtents[0] = 4;
-                dimExtents[1] = 256;
-                lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
-
-                for (int q = 0; q < dimExtents[1]; q++) {
-                    lut.set(0, q, 1); // the alpha channel is preloaded.
-                }
-
-            } else {
-                Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation" + "\n",
-                        Preferences.DEBUG_FILEIO);
-
-                if (raFile != null) {
-                    raFile.close();
-                }
-
-                return false;
-            }
+            
 
             if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
                 fileInfo.displayType = ModelStorageBase.FLOAT;
@@ -2961,16 +2870,6 @@ public class FileDicom extends FileDicomBase {
             }
 
             fileInfo.getTagTable().setValue(palleteKey.getKey(), data, numberOfLUTValues);
-            
-            //for keyNum, from dicom standard, 1 is red, 2 is green, 3 is blue
-            int keyNum = Integer.valueOf(palleteKey.getElement().substring(palleteKey.getElement().length()-1));
-            if (data instanceof Number[]) {
-                final int lutVals = ((Number[])data).length;
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(keyNum, qq, (((Number[]) data)[qq]).intValue());
-                }
-            }
-            lut.makeIndexedLUT(null);
         } catch (final NullPointerException npe) {
             final FileDicomTag t = fileInfo.getTagTable().get(palleteKey);
             MipavUtil.displayError("This image carries " + t.getName() + ", but specifies it incorrectly.\n"
