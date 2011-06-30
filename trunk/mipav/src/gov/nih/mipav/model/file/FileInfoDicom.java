@@ -187,6 +187,9 @@ public class FileInfoDicom extends FileInfoBase {
     /** whether it is enhanced dicom or not **/
     private boolean isEnhancedDicom = false;
 
+    /** LUT for pre-processing of dicom file*/
+    private ModelLUT lut;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -542,70 +545,9 @@ public class FileInfoDicom extends FileInfoBase {
      */
     public final void setInfoFromTags() {
 
-        // type 1
-        if (tagTable.containsTag("0008,0060")) {
-            setInfoFromTag(tagTable.get("0008,0060"));
-        }
-
-        if (tagTable.containsTag("0018,0088")) {
-            setInfoFromTag(tagTable.get("0018,0088"));
-        }
-
-        if (tagTable.containsTag("0028,0100")) {
-            setInfoFromTag(tagTable.get("0028,0100"));
-        } else {
-            MipavUtil.displayError("FileInfoDicom: tag (0028,0100) is missing a type 1 tag.");
-        }
-
-        if (tagTable.containsTag("0028,0103")) {
-            setInfoFromTag(tagTable.get("0028,0103"));
-        } else {
-            MipavUtil.displayError("FileInfoDicom: tag (0028,0103) is missing a type 1 tag.");
-        }
-
-        if (tagTable.containsTag("0028,1052")) {
-            setInfoFromTag(tagTable.get("0028,1052"));
-        }
-
-        if (tagTable.containsTag("0028,1053")) {
-            setInfoFromTag(tagTable.get("0028,1053"));
-        }
-
-        // type 2, etc
-        if (tagTable.containsTag("0018,0050")) {
-            setInfoFromTag(tagTable.get("0018,0050"));
-        }
-
-        if (tagTable.containsTag("0018,602C")) {
-            setInfoFromTag(tagTable.get("0018,602C"));
-        }
-
-        if (tagTable.containsTag("0018,602E")) {
-            setInfoFromTag(tagTable.get("0018,602E"));
-        }
-
-        if (tagTable.containsTag("0020,0032")) {
-            setInfoFromTag(tagTable.get("0020,0032"));
-        }
-
-        if (tagTable.containsTag("0020,0013")) {
-            setInfoFromTag(tagTable.get("0020,0013"));
-        }
-
-        if (tagTable.containsTag("0020,1041")) {
-            setInfoFromTag(tagTable.get("0020,1041"));
-        }
-
-        if (tagTable.containsTag("0028,0030")) {
-            setInfoFromTag(tagTable.get("0028,0030"));
-        }
-
-        if (tagTable.containsTag("0018,1164")) {
-            setInfoFromTag(tagTable.get("0018,1164"));
-        }
-
-        if (tagTable.containsTag("0028,0120")) {
-            setInfoFromTag(tagTable.get("0028,0120"));
+        Iterator<FileDicomKey> itr = tagTable.getTagList().keySet().iterator();
+        while(itr.hasNext()) {
+            setInfoFromTag(tagTable.get(itr.next()));
         }
     }
 
@@ -712,11 +654,6 @@ public class FileInfoDicom extends FileInfoBase {
      */
     protected final void setInfoFromTag(FileDicomTag tag) {
         FileDicomKey tagKey = tag.getInfo().getKey();
-
-        // skip empty values.. (e.g., bad instance number string)
-        if ((tag.getValue(false) instanceof String) && tag.getValue(false).equals("")) {
-            return;
-        }
 
         // ordering by type 1 tags first.  Then in numerical order.
         if (tagKey.equals("0008,0060")) {
@@ -909,6 +846,97 @@ public class FileInfoDicom extends FileInfoBase {
             }
         } else if (tagKey.equals("0028,0120")) { // type 3
             pixelPaddingValue = (Short) tag.getValue(false);
+        } else if(tagKey.equals("0028,0004")) {
+            photometricInterp = (String) tag.getValue(false);
+            
+            if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                    && (bitsAllocated == 1)) {
+                setDataType(ModelStorageBase.BOOLEAN);
+                displayType = ModelStorageBase.BOOLEAN;
+                bytesPerPixel = 1;
+            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                    && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                    && (bitsAllocated == 8)) {
+                setDataType(ModelStorageBase.UBYTE);
+                displayType = ModelStorageBase.UBYTE;
+                bytesPerPixel = 1;
+            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                    && (pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP)
+                    && (bitsAllocated == 8)) {
+                setDataType(ModelStorageBase.BYTE);
+                displayType = ModelStorageBase.BYTE;
+                bytesPerPixel = 1;
+            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                    && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                    && (bitsAllocated > 16)) {
+                setDataType(ModelStorageBase.UINTEGER);
+                displayType = ModelStorageBase.UINTEGER;
+                bytesPerPixel = 4;
+            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                    && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                    && (bitsAllocated > 8)) {
+                setDataType(ModelStorageBase.USHORT);
+                displayType = ModelStorageBase.USHORT;
+                bytesPerPixel = 2;
+            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                    && (pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (bitsAllocated > 8)) {
+                setDataType(ModelStorageBase.SHORT);
+                displayType = ModelStorageBase.SHORT;
+                bytesPerPixel = 2;
+            } else if (photometricInterp.equals("RGB") && (bitsAllocated == 8)) {
+                setDataType(ModelStorageBase.ARGB);
+                displayType = ModelStorageBase.ARGB;
+                bytesPerPixel = 3;
+
+                if (tagTable.getValue("0028,0006") != null) {
+                    planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+                } else {
+                    planarConfig = 0; // rgb, rgb, rgb
+                }
+            } else if (photometricInterp.equals("YBR_FULL_422") && (bitsAllocated == 8)) {
+                setDataType(ModelStorageBase.ARGB);
+                displayType = ModelStorageBase.ARGB;
+                bytesPerPixel = 3;
+
+                if (tagTable.getValue("0028,0006") != null) {
+                    planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+                } else {
+                    planarConfig = 0; // rgb, rgb, rgb
+                }
+            } else if (photometricInterp.equals("PALETTE COLOR")
+                    && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                    && (bitsAllocated == 8)) {
+                setDataType(ModelStorageBase.UBYTE);
+                displayType = ModelStorageBase.UBYTE;
+                bytesPerPixel = 1;
+
+                final int[] dimExtents = new int[2];
+                dimExtents[0] = 4;
+                dimExtents[1] = 256;
+                lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
+
+                for (int q = 0; q < dimExtents[1]; q++) {
+                    lut.set(0, q, 1); // the alpha channel is preloaded.
+                }
+
+            } else {
+                Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation" + "\n",
+                        Preferences.DEBUG_FILEIO);
+            }
+        } else if(tagKey.equals("0028, 1201") || tagKey.equals("0028, 1202") || tagKey.equals("0028, 1203")) {
+        //for keyNum, from dicom standard, 1 is red, 2 is green, 3 is blue
+            int keyNum = Integer.valueOf(tagKey.getElement().substring(tagKey.getElement().length()-1));
+            Object data = tagTable.getValue(tagKey);
+            if (data instanceof Number[]) {
+                final int lutVals = ((Number[])data).length;
+                for (int qq = 0; qq < lutVals; qq++) {
+                    lut.set(keyNum, qq, (((Number[]) data)[qq]).intValue());
+                }
+            }
+            if(lut.get(1) != null && lut.get(2) != null && lut.get(3) != null) {
+                lut.makeIndexedLUT(null);
+                //TODO: store this in file for display
+            }
         }
     }
 
