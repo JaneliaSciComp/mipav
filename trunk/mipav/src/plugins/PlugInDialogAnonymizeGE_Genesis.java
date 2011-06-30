@@ -1469,7 +1469,7 @@ public class PlugInDialogAnonymizeGE_Genesis extends JDialogBase {
                 try {
                     sleep(200);
                 } catch (InterruptedException ie) {
-                    Preferences.debug("Thread interrupted!\n", 5);
+                    Preferences.debug("Thread interrupted!\n", Preferences.DEBUG_MINOR);
                 }
 
                 /* anonymousName is used in creating the
