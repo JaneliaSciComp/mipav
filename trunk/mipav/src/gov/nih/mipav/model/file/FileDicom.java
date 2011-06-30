@@ -778,6 +778,32 @@ public class FileDicom extends FileDicomBase {
                     data = getByte(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
                     break;
+                case UN:
+                    processUnknownVR(strValue, key, tagVM, strValue);
+                    break;
+                    
+                    
+                }
+                
+                if(vr.getType() instanceof NumType) {
+                    switch(((NumType)vr.getType())) {
+                    case SHORT:
+                        data = getShort(tagVM, elementLength, endianess);
+                        break;
+                    case LONG:
+                        data = getInteger(tagVM, elementLength, endianess);
+                        break;
+                    case FLOAT:
+                        data = getFloat(tagVM, elementLength, endianess);
+                        break;
+                    case DOUBLE:
+                        data = getDouble(tagVM, elementLength, endianess);
+                        break;
+                    }
+                    tagTable.setValue(key, data, elementLength);
+
+                    Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t ("+vr.getType()+") value = " + data
+                            + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
                 }
                 
                 
@@ -818,36 +844,7 @@ public class FileDicom extends FileDicomBase {
                         }
                     }
 
-                } else if (vr.getType().equals(NumType.SHORT)) {
-                    data = getShort(tagVM, elementLength, endianess);
-                    
-                    tagTable.setValue(key, data, elementLength);
-	                Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (short) value = " + data
-	                            + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
-
-                } else if (vr.getType().equals(NumType.LONG)) {
-                    data = getInteger(tagVM, elementLength, endianess);
-
-                    tagTable.setValue(key, data, elementLength);
-
-                    Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (int) value = " + data
-                            + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
-
-                } else if (vr.getType().equals(NumType.FLOAT)) {
-                    data = getFloat(tagVM, elementLength, endianess);
-                    tagTable.setValue(key, data, elementLength);
-
-                    Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (float) value = " + data
-                            + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
-
-                } else if (vr.getType().equals(NumType.DOUBLE)) {
-                    data = getDouble(tagVM, elementLength, endianess);
-                    tagTable.setValue(key, data, elementLength);
-
-                    Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (double) value = " + data
-                            + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
-
-                }
+                } 
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
                 else if (vr.equals(VR.SQ)
                         || ( (vr == VR.UN) && (elementLength == -1))) {
@@ -1065,43 +1062,6 @@ public class FileDicom extends FileDicomBase {
             } else if (name.equals("0028,0011")) {
                 extents[0] = ((Short) tagTable.getValue(name)).intValue();
                 // fileInfo.rows = extents[0];
-            } else if (vr.equals(VR.UN)) { // Private tag, may not be reading in correctly.
-                try {
-
-                    // set the value if the tag is in the dictionary (which means it isn't private..) or has already
-                    // been put into the tag table without a value (private tag with explicit vr)
-                    if (DicomDictionary.containsTag(key) || tagTable.containsTag(key)) {
-                        tagTable.setValue(key, readUnknownData(), elementLength);
-                    } else {
-                        tagTable
-                                .putPrivateTagValue(new FileDicomTagInfo(key, null, tagVM, "PrivateTag", "Private Tag"));
-
-                        tagTable.setValue(key, readUnknownData(), elementLength);
-
-                        Preferences.debug("Group = " + groupWord + " element = " + elementWord + " Type unknown"
-                                + "; value = " + strValue + "; element length = " + elementLength + "\n",
-                                Preferences.DEBUG_FILEIO);
-                    }
-                } catch (final OutOfMemoryError e) {
-
-                    if ( !isQuiet()) {
-                        MipavUtil.displayError("Out of memory error while reading \"" + fileName
-                                + "\".\nThis may not be a DICOM image.");
-                        Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n",
-                                Preferences.DEBUG_FILEIO);
-                    } else {
-                        Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n",
-                                Preferences.DEBUG_FILEIO);
-                    }
-
-                    e.printStackTrace();
-
-                    throw new IOException("Out of memory storing unknown tags in FileDicom.readHeader");
-                } catch (final NullPointerException npe) {
-                    Preferences.debug("name: " + name + "\n" + "no hashtable? " + (tagTable == null) + "\n",
-                            Preferences.DEBUG_FILEIO);
-                    throw npe;
-                }
             }
 
             // for dicom files that contain no image information, the image tag will never be encountered
@@ -1310,6 +1270,44 @@ public class FileDicom extends FileDicomBase {
         	@SuppressWarnings("unused")
             final JDialogDicomDir dirBrowser = new JDialogDicomDir(null, fileHeader, this);
             return true;
+        }
+    }
+
+    private void processUnknownVR(String name, FileDicomKey key, int tagVM, String strValue) throws IOException {
+        try {
+            // set the value if the tag is in the dictionary (which means it isn't private..) or has already
+            // been put into the tag table without a value (private tag with explicit vr)
+            if (DicomDictionary.containsTag(key) || tagTable.containsTag(key)) {
+                tagTable.setValue(key, readUnknownData(), elementLength);
+            } else {
+                tagTable
+                        .putPrivateTagValue(new FileDicomTagInfo(key, null, tagVM, "PrivateTag", "Private Tag"));
+
+                tagTable.setValue(key, readUnknownData(), elementLength);
+
+                Preferences.debug("Group = " + groupWord + " element = " + elementWord + " Type unknown"
+                        + "; value = " + strValue + "; element length = " + elementLength + "\n",
+                        Preferences.DEBUG_FILEIO);
+            }
+        } catch (final OutOfMemoryError e) {
+
+            if ( !isQuiet()) {
+                MipavUtil.displayError("Out of memory error while reading \"" + fileName
+                        + "\".\nThis may not be a DICOM image.");
+                Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n",
+                        Preferences.DEBUG_FILEIO);
+            } else {
+                Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n",
+                        Preferences.DEBUG_FILEIO);
+            }
+
+            e.printStackTrace();
+
+            throw new IOException("Out of memory storing unknown tags in FileDicom.readHeader");
+        } catch (final NullPointerException npe) {
+            Preferences.debug("name: " + name + "\n" + "no hashtable? " + (tagTable == null) + "\n",
+                    Preferences.DEBUG_FILEIO);
+            throw npe;
         }
     }
 
