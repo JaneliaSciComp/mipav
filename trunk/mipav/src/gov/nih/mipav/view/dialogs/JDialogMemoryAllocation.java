@@ -924,12 +924,12 @@ public class JDialogMemoryAllocation extends JDialogBase {
                     + startupFile.getAbsolutePath() + "\n" + "To alter the memory allocation, either "
                     + "set the permissions or \n" + "contact the system administrator.");
             Preferences.debug("JDialogMemoryAllocation:Not able to read the " + "InstallAnywhere start-up file: "
-                    + startupFile.getAbsolutePath() + "\n", 2);
+                    + startupFile.getAbsolutePath() + "\n", Preferences.DEBUG_FILEIO);
 
             return false; // no point in continuing if we can't do both
         }
 
-        Preferences.debug("JDialogMemoryAllocation: Reading from \"" + startupFile.getAbsolutePath() + "\"\n", 5);
+        Preferences.debug("JDialogMemoryAllocation: Reading from \"" + startupFile.getAbsolutePath() + "\"\n", Preferences.DEBUG_MINOR);
 
         readFile = new BufferedReader(new FileReader(startupFile));
         // FileNotFoundException thrown
