@@ -544,7 +544,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             try {
                 ((JDialogText) aboutDialog).setScrollPaneTop();
             } catch (final ClassCastException cce) {
-                Preferences.debug("ClassCastException in ViewJFrameBase.about\n", 5);
+                Preferences.debug("ClassCastException in ViewJFrameBase.about\n", Preferences.DEBUG_MINOR);
             }
 
             aboutDialog.validate();

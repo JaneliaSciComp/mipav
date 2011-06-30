@@ -3814,8 +3814,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.useHighlight(false);
             getActiveImage().notifyImageDisplayListeners(); // ie., componentImage.repaint();
         } catch (final NullPointerException npe) {
-            Preferences.debug("NullPointerException in ViewJFrameImage:\n" + npe.getMessage()
-                    + "\n in removeControls().\n", 5);
+            Preferences.debug("NullPointerException in ViewJFrameImage:\n" + npe.getMessage() + "\n in removeControls().\n", Preferences.DEBUG_MINOR);
         }
     }
 
