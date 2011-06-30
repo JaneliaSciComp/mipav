@@ -752,7 +752,21 @@ public class FileDicom extends FileDicomBase {
             }
 
             try {
-
+                switch(vr) {
+                case OW:
+                    if(name.equals("0028,1201") || name.equals("0028,1202") || name.equals("0028,1203")) {
+                        getColorPallete(new FileDicomKey(name));  //for processing either red(1201), green(1202), or blue(1203)
+                    }
+                case OB:
+                    if(name.equals(FileDicom.IMAGE_TAG)) { //can be either OW or OB
+                        return processImageData(extents); //finished reading image tags and all image data
+                    }
+                    data = getByte(tagVM, elementLength, endianess);
+                    tagTable.setValue(key, data, elementLength);
+                    break;
+                }
+                
+                
                 if (vr.getType() instanceof StringType) {
                     strValue = getString(elementLength);
                     
@@ -802,26 +816,6 @@ public class FileDicom extends FileDicomBase {
                         }
                     }
 
-                } else if (vr.equals(VR.OB)) {
-
-                    if ( !name.equals(FileDicom.IMAGE_TAG)) {
-                        data = getByte(tagVM, elementLength, endianess);
-                        tagTable.setValue(key, data, elementLength);
-
-                        if (tagVM == 1) {
-                            // if ( debug >= dicomDebugOutputValue) Preferences.debug(
-                            // ((FileDicomTag)(fileInfo.getEntry(name))).getName() + "\t\t(" + name + ");\t
-                            // (byte) value = " + ((Byte)(data)).byteValue() + " element length = 2" + "\n", 2);
-                        }
-                    }
-                } else if (vr.equals(VR.OW) && !name.equals("0028,1201")
-                        && !name.equals("0028,1202") && !name.equals("0028,1203")) {
-                	
-                	
-                    if ( !name.equals(FileDicom.IMAGE_TAG)) {
-                        data = getByte(tagVM, elementLength, endianess);
-                        tagTable.setValue(key, data, elementLength);
-                    }
                 } else if (vr.getType().equals(NumType.SHORT)) {
                     data = getShort(tagVM, elementLength, endianess);
                     if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("0A") && (isSiemensMRI)) {
@@ -1108,97 +1102,6 @@ public class FileDicom extends FileDicomBase {
             } else if (name.equals("0028,0011")) {
                 extents[0] = ((Short) tagTable.getValue(name)).intValue();
                 // fileInfo.rows = extents[0];
-            } else if (name.equals("0028,1201")) { // LUT for red-channel
-
-                // red channel LUT
-                try {
-                    getColorPallete(new FileDicomKey(name));
-                } catch (final IllegalArgumentException iae) {
-                    // System.err.println("Dude. You screwed up somewhere! "+
-                    // " storeColorPallete throws iae when something other than"+
-                    // " 0028,120[1|2|3] is used.");
-                }
-            } else if (name.equals("0028,1202")) { // LUT for blue-channel
-
-                // blue channel LUT
-                try {
-                    getColorPallete(new FileDicomKey(name));
-                } catch (final IllegalArgumentException iae) {
-                    // System.err.println("Dude. You screwed up somewhere! "+
-                    // " storeColorPallete throws iae when something other than"+
-                    // " 0028,120[1|2|3] is used.");
-                }
-            } else if (name.equals("0028,1203")) { // LUT for gree-channel
-
-                // green channel LUT
-                try {
-                    getColorPallete(new FileDicomKey(name));
-                } catch (final IllegalArgumentException iae) {
-                    // storeColorPallete throws iae when something other than
-                    // 0028,120[1|2|3] is used.
-                    // System.err.println("Dude. You screwed up somewhere! "+
-                    // " storeColorPallete throws iae when something other than"+
-                    // " 0028,120[1|2|3] is used.");
-                }
-            } else if (name.equals(FileDicom.IMAGE_TAG)) { // && elementLength!=0) { // The image.
-
-                // This complicated code determines whether or not the offset is correct for the image.
-                // For that to be true, (height * width * pixel spacing) + the present offset should equal
-                // the length of the file. If not, 4 might need to be added (I don't know why). If not again,
-                // the function returns false.
-
-                final int imageLength = extents[0] * extents[1] * fileInfo.bitsAllocated / 8;
-
-                Preferences.debug("File Dicom: readHeader - Data tag = " + FileDicom.IMAGE_TAG + "\n",
-                        Preferences.DEBUG_FILEIO);
-                Preferences.debug("File Dicom: readHeader - imageLength = " + imageLength + "\n",
-                        Preferences.DEBUG_FILEIO);
-                Preferences.debug("File Dicom: readHeader - getFilePointer = " + getFilePointer() + "\n",
-                        Preferences.DEBUG_FILEIO);
-
-                if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
-                    fileInfo.displayType = ModelStorageBase.FLOAT;
-                } else {
-                    fileInfo.displayType = fileInfo.getDataType();
-                }
-
-                if ( !encapsulated) {
-                    // System.err.println( "\n" +
-                    // Long.toString(getFilePointer()) + " " +
-                    // Long.toString(raFile.length()) +
-                    // " image length = " + imageLength );
-
-                    long fileEnd;
-
-                    if (loadTagBuffer == true) {
-                        fileEnd = raFile.length();
-                    } else {
-                        fileEnd = fLength;
-                    }
-
-                    if ( (imageLength + getFilePointer()) <= fileEnd) {
-                        fileInfo.setOffset(getFilePointer()); // Mark where the image is
-                    }
-                    // I think the extra 4 bytes is for explicit tags!!
-                    // see Part 5 page 27 1998
-                    else if ( (imageLength + getFilePointer() + 4) <= fileEnd) {
-                        fileInfo.setOffset(getFilePointer() + 4);
-                    } else {
-
-                        // Preferences.debug( "File Dicom: readHeader: xDim = " + extents[0] + " yDim = " + extents[1] +
-                        // " Bits allocated = " + fileInfo.bitsAllocated, 2);
-                        if ( !isQuiet()) {
-                            MipavUtil.displayError("Image not at expected offset.");
-                        }
-
-                        throw new IOException("Error while reading header");
-                    }
-                } else { // encapsulated
-                    fileInfo.setOffset(getFilePointer() - 12);
-                }
-
-                fileInfo.setExtents(extents);
-                flag = false; // break loop
             } else if (vr.equals(VR.UN)) { // Private tag, may not be reading in correctly.
                 try {
 
@@ -1445,6 +1348,51 @@ public class FileDicom extends FileDicomBase {
             final JDialogDicomDir dirBrowser = new JDialogDicomDir(null, fileHeader, this);
             return true;
         }
+    }
+
+    private boolean processImageData(int[] extents) throws IOException {
+        final int imageLength = extents[0] * extents[1] * fileInfo.bitsAllocated / 8;
+
+        Preferences.debug("File Dicom: readHeader - Data tag = " + FileDicom.IMAGE_TAG + "\n",
+                Preferences.DEBUG_FILEIO);
+        Preferences.debug("File Dicom: readHeader - imageLength = " + imageLength + "\n",
+                Preferences.DEBUG_FILEIO);
+        Preferences.debug("File Dicom: readHeader - getFilePointer = " + getFilePointer() + "\n",
+                Preferences.DEBUG_FILEIO);
+
+        if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
+            fileInfo.displayType = ModelStorageBase.FLOAT;
+        } else {
+            fileInfo.displayType = fileInfo.getDataType();
+        }
+
+        if ( !encapsulated) {
+
+            long fileEnd = raFile.length();
+
+            if ( (imageLength + getFilePointer()) <= fileEnd) {
+                fileInfo.setOffset(getFilePointer()); // Mark where the image is
+            }
+            // for explicit tags - see Part 5 page 27 1998
+            else if ( (imageLength + getFilePointer() + 4) <= fileEnd) {
+                fileInfo.setOffset(getFilePointer() + 4);
+            } else {
+
+                // Preferences.debug( "File Dicom: readHeader: xDim = " + extents[0] + " yDim = " + extents[1] +
+                // " Bits allocated = " + fileInfo.bitsAllocated, 2);
+                if ( !isQuiet()) {
+                    MipavUtil.displayError("Image not at expected offset.");
+                }
+                
+                Preferences.debug("Error while reading header", Preferences.DEBUG_FILEIO);
+                return false;
+            }
+        } else { // encapsulated
+            fileInfo.setOffset(getFilePointer() - 12);
+        }
+
+        fileInfo.setExtents(extents);
+        return true;
     }
 
     /**
@@ -3054,19 +3002,11 @@ public class FileDicom extends FileDicomBase {
      * 
      * @param palleteKey The DICOM key which contains some pallete or LUT information.
      * 
-     * @throws IllegalArgumentException When a DICOM key is provided that is not related to the pallete information;
-     *             that is, one that is not <tt>0028,1201</tt>, <tt>0028,1202</tt>, or <tt>
-     *                                    0028,1203</tt>.
      * @throws IOException A problem occurs when reading the image file.
      * 
      * @see "DICOM PS 3.3, Information Object Definitions"
      */
     private void getColorPallete(final FileDicomKey palleteKey) throws IllegalArgumentException, IOException {
-
-        if ( !palleteKey.equals("0028,1201") && !palleteKey.equals("0028,1202") && !palleteKey.equals("0028,1203")) {
-            System.out.println("Throwing exception in FileDicom:storeColorPallete.");
-            throw new IllegalArgumentException("Not a color pallete tag");
-        }
 
         try {
 
