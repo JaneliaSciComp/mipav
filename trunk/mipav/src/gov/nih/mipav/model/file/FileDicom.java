@@ -759,7 +759,7 @@ public class FileDicom extends FileDicomBase {
                         if (!isSiemensMRI && name.equals("0019,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
                             isSiemensMRI = true;
                         } else if(isSiemensMRI){
-                            byte b = Byte.valueOf(name.substring(7, 9));
+                            byte b = (byte) Integer.parseInt(name.substring(7, 9));
                             switch(b) {
                             case 0x08:
                                 tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
@@ -855,7 +855,7 @@ public class FileDicom extends FileDicomBase {
                         if (!isSiemensMRI2 && name.equals("0051,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
                             isSiemensMRI2 = true;
                         } else if(isSiemensMRI2) {
-                            byte b = Byte.valueOf(name.substring(7, 9));
+                            byte b = (byte) Integer.parseInt(name.substring(7, 9));
                             switch(b) {
                             case 0x08:
                                 tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
@@ -3694,7 +3694,7 @@ public class FileDicom extends FileDicomBase {
                 elementLength = getLength(bigEndian, byteBuffer4[0], byteBuffer4[1], byteBuffer4[2], byteBuffer4[3]);
                 // Preferences.debug(" length " + Integer.toString(elementLength, 0x10) + "\n");
             }
-        } else { // this is what is standardly used.
+        } else { // this is what is commonly used.
 
             // either IMPLICIT or group element is not SEQ_ITEM_BEGIN
             read(byteBuffer4);
