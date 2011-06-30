@@ -163,7 +163,7 @@ public class FileDicom extends FileDicomBase {
     private final int UNDEFINED_LENGTH = -2;
 
     /** Value Representation - see FileDicomTagInfo. */
-    private byte[] vr = new byte[2];
+    private byte[] vrBytes = new byte[2];
 
     /** Whether MIPAV should be written to this dicom file as the secondary stamp * */
     private boolean stampSecondary = true;
@@ -309,7 +309,7 @@ public class FileDicom extends FileDicomBase {
 
         fileInfo = null;
         image = null;
-        vr = null;
+        vrBytes = null;
 
         if (rawFile != null) {
 
@@ -626,7 +626,7 @@ public class FileDicom extends FileDicomBase {
      */
     public boolean readHeader(final boolean loadTagBuffer) throws IOException {
         int[] extents;
-        VR type; // value representation of data
+        VR vr; // value representation of data
         String name; // string representing the tag
         boolean isSiemensMRI = false;
         boolean isSiemensMRI2 = false;
@@ -703,22 +703,22 @@ public class FileDicom extends FileDicomBase {
             if ( (fileInfo.vr_type == FileInfoDicom.IMPLICIT) || (groupWord == 2)) {
 
                 // implicit VR means VR is based on tag as defined in dictionary
-                type = DicomDictionary.getType(key);
+                vr = DicomDictionary.getType(key);
                 tagVM = DicomDictionary.getVM(key);
 
                 // the tag was not found in the dictionary..
-                if (type == null) {
-                    type = VR.UN;
+                if (vr == null) {
+                    vr = VR.UN;
                     tagVM = 0;
                 }
             } else { // Explicit VR
-                type = VR.valueOf(new String(vr));
+                vr = VR.valueOf(new String(vrBytes));
 
                 if ( !DicomDictionary.containsTag(key)) {
                     tagVM = 0;
 
                     // put private tags with explicit VRs in file info hashtable
-                    tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, "PrivateTag",
+                    tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, "PrivateTag",
                             "Private Tag"));
                 } else {
                     final FileDicomTagInfo info = DicomDictionary.getInfo(key);
@@ -726,7 +726,7 @@ public class FileDicom extends FileDicomBase {
                     info.setKey(key);
                     tagTable.putPrivateTagValue(info);
                     tagVM = info.getValueMultiplicity();
-                    tagTable.get(key).setValueRepresentation(type);
+                    tagTable.get(key).setValueRepresentation(vr);
 
                 }
             }
@@ -753,183 +753,25 @@ public class FileDicom extends FileDicomBase {
 
             try {
 
-                if (type.getType() instanceof StringType) {
+                if (vr.getType() instanceof StringType) {
                     strValue = getString(elementLength);
+                    
                     if(name.startsWith("0019")) {
                         if (!isSiemensMRI && name.equals("0019,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
                             isSiemensMRI = true;
                         } else if(isSiemensMRI){
-                            byte b = (byte) Integer.parseInt(name.substring(7, 9));
-                            switch(b) {
-                            case 0x08:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "HeaderType", "Header Type")); 
-                                break;
-                            case 0x09:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "HeaderVersion", "Header Version"));
-                                break;
-                            case 0x0B:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "SliceMeasurementDuration", "Slice Measurement Duration")); 
-                                break;
-                            case 0x0C:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "BValue", "B_Value"));
-                                break;
-                            case 0x0D:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "DiffusionDirectionality", "Diffusion Directionality")); 
-                                break;
-                            case 0x0F:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "GradientMode", "Gradient Mode"));  
-                                break;
-                            case 0x11:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "FlowCompensation", "Flow Compensation"));
-                                break;
-                            case 0x14:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "ImaRelTablePosition", "Ima Rel Table Position"));
-                                break;
-                            case 0x16:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "TimeAfterStart", "Time After Start")); 
-                                break;
-                            case 0x17:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "SliceResolution", "Slice Resolution"));  
-                                break;
-                            case 0x18:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "RealDwellTime", "Real Dwell Time"));   
-                                break;
-                            case 0x19:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelThickness", "Voxel Thickness"));  
-                                break;
-                            case 0x1A:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelPhaseFOV", "Voxel PhaseFOV"));  
-                                break;
-                            case 0x1B:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelReadoutFOV", "Voxel ReadoutFOV")); 
-                                break;
-                            case 0x1C:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelPositionSag", "Voxel PositionSag"));  
-                                break;
-                            case 0x1D:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelPositionCor", "Voxel PositionCor"));
-                                break;
-                            case 0x1E:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelPositionTra", "Voxel PositionTra")); 
-                                break;
-                            case 0x1F:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelNormalSag", "Voxel Normal Sag")); 
-                                break;
-                            case 0x20:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelNormalCor", "Voxel Normal Cor")); 
-                                break;
-                            case 0x21:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelNormalTra", "Voxel Normal tra")); 
-                                break;
-                            case 0x22:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "VoxelInPlaneRot", "Voxel In Plane Rot"));  
-                                break;
-                            case 0x23:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "FMRIStimulInfo", "FMRI Stimul Info")); 
-                                break;
-                            }
+                            processSiemensMRITag(name, key, vr, tagVM);
                         }
                     } else if(name.startsWith("0051")) {
                         if (!isSiemensMRI2 && name.equals("0051,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
                             isSiemensMRI2 = true;
                         } else if(isSiemensMRI2) {
-                            byte b = (byte) Integer.parseInt(name.substring(7, 9));
-                            switch(b) {
-                            case 0x08:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "HeaderType", "Header Type"));  
-                                break;
-                            case 0x09:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
-                                        "HeaderVersion", "Header Version"));
-                                break;
-                            case 0x0A:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "MeasDuration", "Meas Duration"));
-                                break;
-                            case 0x0B:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "AcquisitionMatrix", "Acquisition Matrix"));
-                                break;
-                            case 0x0C:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "FieldOfView", "Field Of View"));
-                                break;
-                            case 0x0D:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "SlicePosition", "Slice Position"));
-                                break;
-                            case 0x0E:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "SliceOrientation", "Slice Orientation"));
-                                break;
-                            case 0x0F:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "CoilString", "Coil String"));
-                                break;
-                            case 0x11:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "PATModeText", "PAT Mode Text"));
-                                break;
-                            case 0x12:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "RelTablePosition", "Rel Table Position"));
-                                break;
-                            case 0x13:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "PositivePCSDirections", "Positive PCS Directions"));
-                                break;
-                            case 0x14:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "FlowEncodingDirectionString", "Flow Encoding Direction String"));
-                                break;
-                            case 0x15:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "SequenceMask", "Sequence Mask"));
-                                break;
-                            case 0x16:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "ImageType", "Image Type"));
-                                break;
-                            case 0x17:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "SliceThickness", "Slice Thickness"));
-                                break;
-                            case 0x18:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "ScanOptions1", "Scan Options 1"));
-                                break;
-                            case 0x19:
-                                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
-                                        "ScanOptions2", "Scan Options 2"));
-                            }
+                            processSiemensMRI2Tag(name, key, vr, tagVM);
                         }
                     }
                     tagTable.setValue(key, strValue, elementLength);
 
-                    Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t" + type + "; value = "
+                    Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t" + vr + "; value = "
                             + strValue + "; element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
 
                     // need to determine if this is enhanced dicom
@@ -960,7 +802,7 @@ public class FileDicom extends FileDicomBase {
                         }
                     }
 
-                } else if (type.equals(VR.OB)) {
+                } else if (vr.equals(VR.OB)) {
 
                     if ( !name.equals(FileDicom.IMAGE_TAG)) {
                         data = getByte(tagVM, elementLength, endianess);
@@ -972,7 +814,7 @@ public class FileDicom extends FileDicomBase {
                             // (byte) value = " + ((Byte)(data)).byteValue() + " element length = 2" + "\n", 2);
                         }
                     }
-                } else if (type.equals(VR.OW) && !name.equals("0028,1201")
+                } else if (vr.equals(VR.OW) && !name.equals("0028,1201")
                         && !name.equals("0028,1202") && !name.equals("0028,1203")) {
                 	
                 	
@@ -980,24 +822,24 @@ public class FileDicom extends FileDicomBase {
                         data = getByte(tagVM, elementLength, endianess);
                         tagTable.setValue(key, data, elementLength);
                     }
-                } else if (type.getType().equals(NumType.SHORT)) {
+                } else if (vr.getType().equals(NumType.SHORT)) {
                     data = getShort(tagVM, elementLength, endianess);
                     if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("0A") && (isSiemensMRI)) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
                     			                    "NumberOfImagesInMosaic", "Number Of Images in Mosaic"));
                     }
                     tagTable.setValue(key, data, elementLength);
 	                Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (short) value = " + data
 	                            + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
 
-                } else if (type.getType().equals(NumType.LONG)) {
+                } else if (vr.getType().equals(NumType.LONG)) {
                     data = getInteger(tagVM, elementLength, endianess);
                     if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("12") && isSiemensMRI) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
 			                    "TablePositionOrigin", "Table Position Origin"));	
                     }
                     else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("13") && isSiemensMRI) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
 			                    "ImaAbsTablePosition", "Ima Abs Table Position"));	
                     }
 
@@ -1006,41 +848,41 @@ public class FileDicom extends FileDicomBase {
                     Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (int) value = " + data
                             + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
 
-                } else if (type.getType().equals(NumType.FLOAT)) {
+                } else if (vr.getType().equals(NumType.FLOAT)) {
                     data = getFloat(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
 
                     Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (float) value = " + data
                             + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
 
-                } else if (type.getType().equals(NumType.DOUBLE)) {
+                } else if (vr.getType().equals(NumType.DOUBLE)) {
                     data = getDouble(tagVM, elementLength, endianess);
                     if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("0E") && isSiemensMRI) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
 			                    "DiffusionGradientDirection", "Diffusion Gradient Direction"));	
                     }
                     else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("15") && isSiemensMRI) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM,
                     			"SlicePositionPCS", "SlicePosition PCS"));
                     }
                     else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("24") && isSiemensMRI) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
 			                    "FMRIStimulLevel", "FMRI Stimul Level"));	
                     }
                     else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("25") && isSiemensMRI) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
 			                    "RBMoCoTrans", "RB MoCo Trans"));	
                     }
                     else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("26") && isSiemensMRI) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
 			                    "RBMoCoRot", "RB MoCo Rot"));	
                     }
                     else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("27")&& isSiemensMRI) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
 			                    "BMatrix", "B_Matrix"));	
                     }
                     else if (name.substring(0,5).equals("0019,") && name.substring(7,9).equals("28") && isSiemensMRI) {
-                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
 			                    "BandwidthPerPixelPhaseEncode", "Bandwidth Per Pixel Phase Encode"));	
                     }
                     tagTable.setValue(key, data, elementLength);
@@ -1050,8 +892,8 @@ public class FileDicom extends FileDicomBase {
 
                 }
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
-                else if (type.equals(VR.SQ)
-                        || ( (type == VR.UN) && (elementLength == -1))) {
+                else if (vr.equals(VR.SQ)
+                        || ( (vr == VR.UN) && (elementLength == -1))) {
                     final int len = elementLength;
 
                     // save these values because they'll change as the sequence is read in below.
@@ -1075,8 +917,8 @@ public class FileDicom extends FileDicomBase {
                             while (iter.hasNext()) {
                                 final String k = iter.next();
                                 final FileDicomTag entry = dataSet.get(k);
-                                final VR vr = entry.getValueRepresentation();
-                                if (vr.equals(VR.SQ)) {
+                                final VR entryVr = entry.getValueRepresentation();
+                                if (entryVr.equals(VR.SQ)) {
                                     elemLength = entry.getLength();
                                     final Vector<FileDicomItem> vSeq = ((FileDicomSQ) entry.getValue(true))
                                             .getSequence();
@@ -1357,7 +1199,7 @@ public class FileDicom extends FileDicomBase {
 
                 fileInfo.setExtents(extents);
                 flag = false; // break loop
-            } else if (type.equals(VR.UN)) { // Private tag, may not be reading in correctly.
+            } else if (vr.equals(VR.UN)) { // Private tag, may not be reading in correctly.
                 try {
 
                     // set the value if the tag is in the dictionary (which means it isn't private..) or has already
@@ -1602,6 +1444,180 @@ public class FileDicom extends FileDicomBase {
         	@SuppressWarnings("unused")
             final JDialogDicomDir dirBrowser = new JDialogDicomDir(null, fileHeader, this);
             return true;
+        }
+    }
+
+    /**
+     * Handles useful private siemens mri tags in the 0051 group
+     */
+    private void processSiemensMRI2Tag(String name, FileDicomKey key, VR type,
+            int tagVM) {
+        byte b = (byte) Integer.parseInt(name.substring(7, 9));
+        switch(b) {
+        case 0x08:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "HeaderType", "Header Type"));  
+            break;
+        case 0x09:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "HeaderVersion", "Header Version"));
+            break;
+        case 0x0A:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "MeasDuration", "Meas Duration"));
+            break;
+        case 0x0B:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "AcquisitionMatrix", "Acquisition Matrix"));
+            break;
+        case 0x0C:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "FieldOfView", "Field Of View"));
+            break;
+        case 0x0D:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "SlicePosition", "Slice Position"));
+            break;
+        case 0x0E:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "SliceOrientation", "Slice Orientation"));
+            break;
+        case 0x0F:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "CoilString", "Coil String"));
+            break;
+        case 0x11:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "PATModeText", "PAT Mode Text"));
+            break;
+        case 0x12:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "RelTablePosition", "Rel Table Position"));
+            break;
+        case 0x13:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "PositivePCSDirections", "Positive PCS Directions"));
+            break;
+        case 0x14:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "FlowEncodingDirectionString", "Flow Encoding Direction String"));
+            break;
+        case 0x15:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "SequenceMask", "Sequence Mask"));
+            break;
+        case 0x16:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "ImageType", "Image Type"));
+            break;
+        case 0x17:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "SliceThickness", "Slice Thickness"));
+            break;
+        case 0x18:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "ScanOptions1", "Scan Options 1"));
+            break;
+        case 0x19:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM,
+                    "ScanOptions2", "Scan Options 2"));
+        } 
+    }
+
+    /**
+     * Handles useful private siemens mri tags in the 0019 group
+     */
+    private void processSiemensMRITag(String keyStr, FileDicomKey key, VR type, int tagVM) {
+        byte b = (byte) Integer.parseInt(keyStr.substring(7, 9));
+        switch(b) {
+        case 0x08:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "HeaderType", "Header Type")); 
+            break;
+        case 0x09:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "HeaderVersion", "Header Version"));
+            break;
+        case 0x0B:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "SliceMeasurementDuration", "Slice Measurement Duration")); 
+            break;
+        case 0x0C:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "BValue", "B_Value"));
+            break;
+        case 0x0D:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "DiffusionDirectionality", "Diffusion Directionality")); 
+            break;
+        case 0x0F:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "GradientMode", "Gradient Mode"));  
+            break;
+        case 0x11:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "FlowCompensation", "Flow Compensation"));
+            break;
+        case 0x14:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "ImaRelTablePosition", "Ima Rel Table Position"));
+            break;
+        case 0x16:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "TimeAfterStart", "Time After Start")); 
+            break;
+        case 0x17:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "SliceResolution", "Slice Resolution"));  
+            break;
+        case 0x18:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "RealDwellTime", "Real Dwell Time"));   
+            break;
+        case 0x19:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelThickness", "Voxel Thickness"));  
+            break;
+        case 0x1A:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelPhaseFOV", "Voxel PhaseFOV"));  
+            break;
+        case 0x1B:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelReadoutFOV", "Voxel ReadoutFOV")); 
+            break;
+        case 0x1C:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelPositionSag", "Voxel PositionSag"));  
+            break;
+        case 0x1D:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelPositionCor", "Voxel PositionCor"));
+            break;
+        case 0x1E:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelPositionTra", "Voxel PositionTra")); 
+            break;
+        case 0x1F:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelNormalSag", "Voxel Normal Sag")); 
+            break;
+        case 0x20:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelNormalCor", "Voxel Normal Cor")); 
+            break;
+        case 0x21:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelNormalTra", "Voxel Normal tra")); 
+            break;
+        case 0x22:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "VoxelInPlaneRot", "Voxel In Plane Rot"));  
+            break;
+        case 0x23:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, type, tagVM, 
+                    "FMRIStimulInfo", "FMRI Stimul Info")); 
+            break;
         }
     }
 
@@ -3621,9 +3637,9 @@ public class FileDicom extends FileDicomBase {
                 || ( (b1 == 85) && (b2 == 78)) || ( (b1 == 85) && (b2 == 84))) {
 
             // VR = 'OB', or 'OW' or 'SQ' or 'UN' or 'UT'
-            vr[0] = b1;
-            vr[1] = b2;
-            fileInfo.isCurrentTagSQ = new String(vr).equals("SQ");
+            vrBytes[0] = b1;
+            vrBytes[1] = b2;
+            fileInfo.isCurrentTagSQ = new String(vrBytes).equals("SQ");
 
             // SQ - check for length FFFFFFFF (undefined), otherwise should be 0.
             if ( (b1 == 83) && (b2 == 81)) { // 'SQ'
@@ -3647,10 +3663,10 @@ public class FileDicom extends FileDicomBase {
         }
         // explicit VR with 16-bit length
         else {
-            vr[0] = b1; // these are not VR for item tags!!!!!!!!!
-            vr[1] = b2;
+            vrBytes[0] = b1; // these are not VR for item tags!!!!!!!!!
+            vrBytes[1] = b2;
 
-            fileInfo.isCurrentTagSQ = new String(vr).equals("SQ");
+            fileInfo.isCurrentTagSQ = new String(vrBytes).equals("SQ");
 
             if (endianess == FileBase.LITTLE_ENDIAN) {
                 return ( (b3 & 0xff) | ( (b4 & 0xff) << 8));
