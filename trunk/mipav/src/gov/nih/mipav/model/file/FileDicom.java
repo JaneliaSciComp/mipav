@@ -671,8 +671,8 @@ public class FileDicom extends FileDicomBase {
                     endianess = fileInfo.getEndianess();
                 }
             }
-
-            flag = processNextTag(endianess);
+            FileDicomKey key = getNextTag(endianess);
+            flag = processNextTag(key, endianess);
             // for dicom files that contain no image information, the image tag will never be encountered
             if (getFilePointer() == fLength) {
                 flag = false;
@@ -719,16 +719,20 @@ public class FileDicom extends FileDicomBase {
         }
     }
 
-    private boolean processNextTag(boolean endianess) throws IOException {
+    private FileDicomKey getNextTag(boolean endianess) throws IOException {
+        // ******* Gets the next element
+        getNextElement(endianess); // gets group, element, length
+        final String name = convertGroupElement(groupWord, elementWord);
+        final FileDicomKey key = new FileDicomKey(name);
+        return key;
+    }
+    
+    private boolean processNextTag(FileDicomKey key, boolean endianess) throws IOException {
         String strValue = null;
         Object data = null;
         VR vr; // value representation of data
-        String name; // string representing the tag
-        
-        // ******* Gets the next element
-        getNextElement(endianess); // gets group, element, length
-        name = convertGroupElement(groupWord, elementWord);
-        final FileDicomKey key = new FileDicomKey(name);
+        String name = key.toString(); // string representing the tag
+
         int tagVM;
         // Should be removed
         // final int dirLength;
