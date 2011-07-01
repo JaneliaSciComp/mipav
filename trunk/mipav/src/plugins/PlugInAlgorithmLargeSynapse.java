@@ -5215,7 +5215,7 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
                         }
 
                         if ((valueArray[0] & 0x02) == 0x02) {
-                            Preferences.debug("Image is a single page of a multi-page image\n", 2);
+                            Preferences.debug("Image is a single page of a multi-page image\n", Preferences.DEBUG_FILEIO);
                         } else {
                             Preferences.debug("Image is not a single page of a multi-page image\n",
                                               Preferences.DEBUG_FILEIO);
@@ -5243,7 +5243,7 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
 
                     xDim = (int) valueArray[0];
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: Image_Width = " + xDim + "\n", 2);
+                        Preferences.debug("FileTiff.openIFD: Image_Width = " + xDim + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -5259,7 +5259,7 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
 
                     yDim = (int) valueArray[0];
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: Image_Length = " + yDim + "\n", 2);
+                        Preferences.debug("FileTiff.openIFD: Image_Length = " + yDim + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -5406,7 +5406,7 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
                     } else if (valueArray[0] == 3) { // Color Indexed
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: PhotoInterp = Palette color\n", 2);
+                            Preferences.debug("FileTiff.openIFD: PhotoInterp = Palette color\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 4) { // Transparency Mask
 
