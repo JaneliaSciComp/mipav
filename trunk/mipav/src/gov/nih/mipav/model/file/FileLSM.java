@@ -6111,7 +6111,7 @@ public class FileLSM extends FileBase {
         int[][] reserved;
 
         bytesToFollow = getInt(endianess);
-        Preferences.debug("Bytes to follow in offset channel factors = " + bytesToFollow + "\n");
+        Preferences.debug("Bytes to follow in offset channel factors = " + bytesToFollow + "\n", Preferences.DEBUG_FILEIO);
         nChannels = bytesToFollow / 32;
         factor = new double[nChannels];
         offset = new double[nChannels];
@@ -6120,11 +6120,11 @@ public class FileLSM extends FileBase {
 
         for (i = 0; i < nChannels; i++) {
             factor[i] = getDouble(endianess);
-            Preferences.debug("Factor[" + (i + 1) + "] = " + factor[i] + " in offsetChannelFactors\n");
+            Preferences.debug("Factor[" + (i + 1) + "] = " + factor[i] + " in offsetChannelFactors\n", Preferences.DEBUG_FILEIO);
             offset[i] = getDouble(endianess);
-            Preferences.debug("Offset[" + (i + 1) + "] = " + offset[i] + " in offsetChannelFactors\n");
+            Preferences.debug("Offset[" + (i + 1) + "] = " + offset[i] + " in offsetChannelFactors\n", Preferences.DEBUG_FILEIO);
             unit[i] = getInt(endianess);
-            Preferences.debug("Unit[" + (i + 1) + "] = " + unit[i] + " in offsetChannelFactors\n");
+            Preferences.debug("Unit[" + (i + 1) + "] = " + unit[i] + " in offsetChannelFactors\n", Preferences.DEBUG_FILEIO);
             reserved[i][0] = getInt(endianess);
             reserved[i][1] = getInt(endianess);
             reserved[i][2] = getInt(endianess);
@@ -7383,7 +7383,7 @@ public class FileLSM extends FileBase {
         } while (level > 0);
 
         for (i = 0; i < (index - 1); i++) {
-            Preferences.debug(tempString[i] + "\n");
+            Preferences.debug(tempString[i] + "\n", Preferences.DEBUG_FILEIO);
         }
     }
 
