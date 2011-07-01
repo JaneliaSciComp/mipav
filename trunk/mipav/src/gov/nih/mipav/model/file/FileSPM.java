@@ -535,7 +535,7 @@ public class FileSPM extends FileBase {
         int dims = getBufferShort(bufferByte, 40, endianess); // number of Dimensions should = 4
 
         // SPM dims = 4
-        Preferences.debug("FileSPM:readHeader. Number of dimensions = " + dims + "\n", 2);
+        Preferences.debug("FileSPM:readHeader. Number of dimensions = " + dims + "\n", Preferences.DEBUG_FILEIO);
 
         for (i = 0; i < dims; i++) {
             spmExtents[i] = getBufferShort(bufferByte, 42 + (2 * i), endianess);
