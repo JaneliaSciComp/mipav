@@ -1359,7 +1359,7 @@ public class FileLSM extends FileBase {
             boolean moreIFDs = true;
             imgResols = new float[5];
 
-            Preferences.debug("\n ************** FileTiff.openIFD: Opening = " + fileName + "\n");
+            Preferences.debug("\n ************** FileTiff.openIFD: Opening = " + fileName + "\n", Preferences.DEBUG_FILEIO);
             tileOffsetNumber = 0;
             tileByteNumber = 0;
 
@@ -1368,7 +1368,7 @@ public class FileLSM extends FileBase {
                 moreIFDs = openIFD(fileInfo);
             }
 
-            Preferences.debug("Just past init IFD read");
+            Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
             if (doTile) {
                 tilesPerSlice = tilesAcross * tilesDown;
@@ -1432,7 +1432,7 @@ public class FileLSM extends FileBase {
 
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
 
-            Preferences.debug("imageSlice = " + imageSlice);
+            Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
 
             if (manySpectrums) {
 
@@ -2240,7 +2240,7 @@ public class FileLSM extends FileBase {
             throw new IOException("First 2 IFD bytes are an illegal " + nDirEntries);
         }
 
-        Preferences.debug("\nOpenIFD: Entries = " + nDirEntries + "\n");
+        Preferences.debug("\nOpenIFD: Entries = " + nDirEntries + "\n", Preferences.DEBUG_FILEIO);
 
         for (i = 0; i < nDirEntries; i++) {
 
@@ -2399,60 +2399,61 @@ public class FileLSM extends FileBase {
                 // Ignore these fields for now
                 value_offset = getInt(endianess);
             } else {
-                Preferences.debug("\nOpenIFD: Unknown field type = " + type + " Tag = " + tag + "\n");
+                Preferences.debug("\nOpenIFD: Unknown field type = " + type + " Tag = " + tag + "\n",
+                		Preferences.DEBUG_FILEIO);
                 throw new IOException("OpenIFD: Unknown field type = " + type + " Tag = " + tag);
             }
 
-            Preferences.debug("\nFileTiff.openIFD: Tag = " + tag + "\n");
+            Preferences.debug("\nFileTiff.openIFD: Tag = " + tag + "\n", Preferences.DEBUG_FILEIO);
 
             switch (type) {
 
                 case BYTE:
-                    Preferences.debug("FileTiff.openIFD: Type = BYTE  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = BYTE  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ASCII:
-                    Preferences.debug("FileTiff.openIFD: Type = ASCII  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = ASCII  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SHORT:
-                    Preferences.debug("FileTiff.openIFD: Type = SHORT  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = SHORT  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case LONG:
-                    Preferences.debug("FileTiff.openIFD: Type = LONG  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = LONG  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case RATIONAL:
-                    Preferences.debug("FileTiff.openIFD: Type = RATIONAL  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = RATIONAL  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SBYTE:
-                    Preferences.debug("FileTiff.openIFD: Type = SBYTE  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = SBYTE  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case UNDEFINED:
-                    Preferences.debug("FileTiff.openIFD: Type = UNDEFINED  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = UNDEFINED  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SSHORT:
-                    Preferences.debug("FileTiff.openIFD: Type = SSHORT  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = SSHORT  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SLONG:
-                    Preferences.debug("FileTiff.openIFD: Type = SLONG  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = SLONG  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SRATIONAL:
-                    Preferences.debug("FileTiff.openIFD: Type = SRATIONAL  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = SRATIONAL  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case FLOAT:
-                    Preferences.debug("FileTiff.openIFD: Type = FLOAT  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = FLOAT  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case DOUBLE:
-                    Preferences.debug("FileTiff.openIFD: Type = DOUBLE  Count = " + count + "\n");
+                    Preferences.debug("FileTiff.openIFD: Type = DOUBLE  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
             }
 
@@ -2465,12 +2466,13 @@ public class FileLSM extends FileBase {
             if ((type != DOUBLE) && (type != FLOAT)) {
 
                 for (i1 = 0; ((i1 < ecount) && (i1 < 1000)); i1++) {
-                    Preferences.debug("FileTiff.openIFD: value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n");
+                    Preferences.debug("FileTiff.openIFD: value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                 }
             } else if ((type == DOUBLE) && (count == 1)) {
-                Preferences.debug("FIleTiff.openIFD: value = " + valueDouble + "\n");
+                Preferences.debug("FIleTiff.openIFD: value = " + valueDouble + "\n", Preferences.DEBUG_FILEIO);
             } else if ((type == FLOAT) && (count == 1)) {
-                Preferences.debug("fileTiff.openIFD: value = " + valueFloat + "\n");
+                Preferences.debug("fileTiff.openIFD: value = " + valueFloat + "\n", Preferences.DEBUG_FILEIO);
             }
 
             switch (tag) {
@@ -2484,29 +2486,29 @@ public class FileLSM extends FileBase {
                         throw new IOException("NEW_SUBFILE_TYPE has illegal count = " + count + "\n");
                     }
 
-                    Preferences.debug("FileTiff.openIFD: tag = NEW_SUBTYPE_FILE\n");
+                    Preferences.debug("FileTiff.openIFD: tag = NEW_SUBTYPE_FILE\n", Preferences.DEBUG_FILEIO);
                     if ((valueArray[0] & 0x01) == 0x01) {
                         Preferences.debug("Image is a reduced resolution version of another " +
-                                          "image in this TIFF file\n");
+                                          "image in this TIFF file\n", Preferences.DEBUG_FILEIO);
                         thumbNail = true;
                     } else {
                         Preferences.debug("Image is not a reduced resolution version of another " +
-                                          "image in this TIFF file\n");
+                                          "image in this TIFF file\n", Preferences.DEBUG_FILEIO);
                         thumbNail = false;
                     }
 
                     if ((valueArray[0] & 0x02) == 0x02) {
-                        Preferences.debug("Image is a single page of a multi-page image\n");
+                        Preferences.debug("Image is a single page of a multi-page image\n", Preferences.DEBUG_FILEIO);
                     } else {
-                        Preferences.debug("Image is not a single page of a multi-page image\n");
+                        Preferences.debug("Image is not a single page of a multi-page image\n", Preferences.DEBUG_FILEIO);
                     }
 
                     if ((valueArray[0] & 0x04) == 0x04) {
                         Preferences.debug("Images defines a transparency mask for another image " +
-                                          "in this TIFF file\n");
+                                          "in this TIFF file\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug("Images does not define a transparency mask for another image " +
-                                          "in this TIFF file\n");
+                                          "in this TIFF file\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -2522,7 +2524,7 @@ public class FileLSM extends FileBase {
 
                     haveXDim = true;
                     xDimTemp = valueArray[0];
-                    Preferences.debug("FileTiff.openIFD: Image_Width = " + xDimTemp + "\n");
+                    Preferences.debug("FileTiff.openIFD: Image_Width = " + xDimTemp + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case IMAGE_LENGTH:
@@ -2536,7 +2538,7 @@ public class FileLSM extends FileBase {
 
                     haveYDim = true;
                     yDimTemp = valueArray[0];
-                    Preferences.debug("FileTiff.openIFD: Image_Length = " + yDimTemp + "\n");
+                    Preferences.debug("FileTiff.openIFD: Image_Length = " + yDimTemp + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case BITS_PER_SAMPLE:
@@ -2546,7 +2548,8 @@ public class FileLSM extends FileBase {
 
                     haveBitsPerSample = true;
                     if (count == 1) {
-                        Preferences.debug("FileTiff.openIFD: BitsPerSample = " + valueArray[0] + "\n");
+                        Preferences.debug("FileTiff.openIFD: BitsPerSample = " + valueArray[0] + "\n",
+                        		Preferences.DEBUG_FILEIO);
 
                         switch (valueArray[0]) {
 
@@ -2566,10 +2569,10 @@ public class FileLSM extends FileBase {
                                 throw new IOException("TIFF Tag BitsPerSample has illegal value = " + valueArray[0]);
                         }
                     } else if ((count == 2) || (count == 3)) {
-                        Preferences.debug("FileTiff.openIFD: BitsPerSample\n");
+                        Preferences.debug("FileTiff.openIFD: BitsPerSample\n", Preferences.DEBUG_FILEIO);
 
                         for (i1 = 0; i1 < count; i1++) {
-                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n");
+                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n", Preferences.DEBUG_FILEIO);
                         }
 
                         if (valueArray[0] == 8) {
@@ -2580,10 +2583,10 @@ public class FileLSM extends FileBase {
                             dataTypeTemp = ModelStorageBase.ARGB_FLOAT;
                         }
                     } else {
-                        Preferences.debug("FileTiff.openIFD: BitsPerSample\n");
+                        Preferences.debug("FileTiff.openIFD: BitsPerSample\n", Preferences.DEBUG_FILEIO);
 
                         for (i1 = 0; i1 < count; i1++) {
-                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n");
+                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n", Preferences.DEBUG_FILEIO);
                         }
 
                         if (valueArray[0] == 8) {
@@ -2596,7 +2599,8 @@ public class FileLSM extends FileBase {
 
                         manySpectrums = true;
                         spectrumNumber = count;
-                        Preferences.debug("BITS_PER_SAMPLE shows " + spectrumNumber + " spectrums\n");
+                        Preferences.debug("BITS_PER_SAMPLE shows " + spectrumNumber + " spectrums\n",
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -2613,7 +2617,7 @@ public class FileLSM extends FileBase {
                     }
 
                     rowsPerStrip = valueArray[0];
-                    Preferences.debug("ROWS_PER_STRIP = " + valueArray[0] + "\n");
+                    Preferences.debug("ROWS_PER_STRIP = " + valueArray[0] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case STRIP_OFFSETS:
@@ -2623,17 +2627,19 @@ public class FileLSM extends FileBase {
 
                     haveOffset = true;
                     if (count == 1) {
-                        Preferences.debug("FileTiff.openIFD: Strip_offset = " + valueArray[0] + "\n");
+                        Preferences.debug("FileTiff.openIFD: Strip_offset = " + valueArray[0] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                         offsetCountTemp = 1;
                         offsetTemp[0] = valueArray[0];
                     } else if (count > 1) {
-                        Preferences.debug("FileTiff.openIFD: Strip_offset\n");
+                        Preferences.debug("FileTiff.openIFD: Strip_offset\n", Preferences.DEBUG_FILEIO);
                         offsetCountTemp = count;
 
                         for (i1 = 0; i1 < count; i1++) {
 
                             // System.err.println("Strip byte count: " + valueArray[i1]);
-                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n");
+                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n",
+                            		Preferences.DEBUG_FILEIO);
                             offsetTemp[i1] = valueArray[i1];
                         }
                     }
@@ -2648,15 +2654,17 @@ public class FileLSM extends FileBase {
 
                     haveByte = true;
                     if (count == 1) {
-                        Preferences.debug("FileTiff.openIFD: Strip byte counts = " + valueArray[0] + "\n");
+                        Preferences.debug("FileTiff.openIFD: Strip byte counts = " + valueArray[0] + "\n",
+                        		Preferences.DEBUG_FILEIO);
                         byteCountTemp = 1;
                         byteTemp[0] = valueArray[0];
                     } else if (count > 1) {
-                        Preferences.debug("FileTiff.openIFD. Strip byte counts\n");
+                        Preferences.debug("FileTiff.openIFD. Strip byte counts\n", Preferences.DEBUG_FILEIO);
                         byteCountTemp = count;
 
                         for (i1 = 0; i1 < count; i1++) {
-                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n");
+                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n",
+                            		Preferences.DEBUG_FILEIO);
                             byteTemp[i1] = valueArray[i1];
                         }
                     }
@@ -2676,24 +2684,24 @@ public class FileLSM extends FileBase {
                         throw new IOException("PHOTO_INTERP has illegal value = " + valueArray[0] + "\n");
                     }
 
-                    Preferences.debug("FileTiff.openIFD: PhotoInterp= " + valueArray[0] + "\n");
+                    Preferences.debug("FileTiff.openIFD: PhotoInterp= " + valueArray[0] + "\n", Preferences.DEBUG_FILEIO);
                     if (valueArray[0] == 1) { // Black is zero
                         fileInfo.setPhotometric((short) 1);
                         Preferences.debug("FileTiff.openIFD: PhotoInterp = Black is zero\n" +
-                                          "For bilevel and grayscale images\n");
+                                          "For bilevel and grayscale images\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 0) { // white is zero
                         fileInfo.setPhotometric((short) 0);
                         Preferences.debug("FileTiff.openIFD: PhotoInterp = White is zero\n" +
-                                          "For bilevel and grayscale images\n");
+                                          "For bilevel and grayscale images\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 2) { // Color RGB
                         fileInfo.setPhotometric((short) 2);
-                        Preferences.debug("FileTiff.openIFD: PhotoInterp = RGB\n");
+                        Preferences.debug("FileTiff.openIFD: PhotoInterp = RGB\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 3) { // Color Indexed
                         fileInfo.setPhotometric((short) 3);
-                        Preferences.debug("FileTiff.openIFD: PhotoInterp = Palette color\n");
+                        Preferences.debug("FileTiff.openIFD: PhotoInterp = Palette color\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 4) { // Transparency Mask
                         fileInfo.setPhotometric((short) 4);
-                        Preferences.debug("FileTiff.openIFD: PhotoInterp = Transparency Mask\n");
+                        Preferences.debug("FileTiff.openIFD: PhotoInterp = Transparency Mask\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -2708,7 +2716,8 @@ public class FileLSM extends FileBase {
                     }
 
                     haveSamples = true;
-                    Preferences.debug("FileTiff.openIFD: samplesPerPixel = " + valueArray[0] + "\n");
+                    Preferences.debug("FileTiff.openIFD: samplesPerPixel = " + valueArray[0] + "\n",
+                    		Preferences.DEBUG_FILEIO);
 
                     samplesPerPixelTemp = valueArray[0];
                     break;
@@ -2729,10 +2738,11 @@ public class FileLSM extends FileBase {
                     havePlanar = true;
                     if (valueArray[0] == 1) { // can be black and white or color
                         chunkyTemp = true;
-                        Preferences.debug("FileTiff.openIFD: planar config = chunky \n");
+                        Preferences.debug("FileTiff.openIFD: planar config = chunky \n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 2) { // Color RGB
                         chunkyTemp = false;
-                        Preferences.debug("FileTiff.openIFD: planar config = RRRRR, GGGG, BBBB. \n");
+                        Preferences.debug("FileTiff.openIFD: planar config = RRRRR, GGGG, BBBB. \n",
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -2748,23 +2758,25 @@ public class FileLSM extends FileBase {
 
                     if ((valueArray[0] != 1) && (valueArray[0] != 2) && (valueArray[0] != 5) &&
                             (valueArray[0] != 32773)) {
-                        Preferences.debug("COMPRESSION has illegal value = " + valueArray[0] + "\n");
+                        Preferences.debug("COMPRESSION has illegal value = " + valueArray[0] + "\n",
+                        		Preferences.DEBUG_FILEIO);
                         throw new IOException("COMPRESSION has illegal value = " + valueArray[0] + "\n");
                     }
 
                     if (valueArray[0] == 2) {
-                        Preferences.debug("Modified Huffman run length encoding is not supported\n");
+                        Preferences.debug("Modified Huffman run length encoding is not supported\n", 
+                        		Preferences.DEBUG_FILEIO);
                         throw new IOException("Modified Huffman run length encoding is not supported\n");
                     } else if (valueArray[0] == 1) {
                         packBit = false;
-                        Preferences.debug("FileTiff.openIFD: compression = no compression\n ");
+                        Preferences.debug("FileTiff.openIFD: compression = no compression\n ", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 32773) {
                         packBit = true;
-                        Preferences.debug("FileTiff.openIFD: compression = packed bit\n ");
+                        Preferences.debug("FileTiff.openIFD: compression = packed bit\n ", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 5) {
                         packBit = false;
                         lzwCompression = true;
-                        Preferences.debug("FileTiff.openIFD: compression = LZW\n ", 2);
+                        Preferences.debug("FileTiff.openIFD: compression = LZW\n ", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -2830,75 +2842,75 @@ public class FileLSM extends FileBase {
                     if (valueArray[0] == Unit.MILLIMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLIMETERS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLIMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = UNKNOWN\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = UNKNOWN\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.INCHES.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = INCHES\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = INCHES\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MILS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MILS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MILS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.CENTIMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = CENTIMETERS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = CENTIMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.ANGSTROMS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.ANGSTROMS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.ANGSTROMS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = ANGSTROMS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = ANGSTROMS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.NANOMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = NANOMETERS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = NANOMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MICROMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MICROMETERS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MICROMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.METERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = METERS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = METERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.KILOMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.KILOMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.KILOMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = KILOMETERS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = KILOMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MILES.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILES.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILES.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MILES\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MILES\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.NANOSEC.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = NANOSEC\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = NANOSEC\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MICROSEC.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MICROSEC\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MICROSEC\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MILLISEC.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLISEC\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLISEC\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.SECONDS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = SECONDS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = SECONDS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MINUTES.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MINUTES\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MINUTES\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.HOURS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = HOURS\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = HOURS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.HZ.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 1);
-                        Preferences.debug("FileTiff.openIFD: Resolution Unit = HERTZ\n");
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = HERTZ\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -2916,7 +2928,7 @@ public class FileLSM extends FileBase {
                     denominator = valueArray[1];
                     imgResols[0] = (float) numerator / denominator;
                     imgResols[0] = 1 / imgResols[0];
-                    Preferences.debug("FileTiff.openIFD: X Resolution = " + imgResols[0] + "\n");
+                    Preferences.debug("FileTiff.openIFD: X Resolution = " + imgResols[0] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case YRESOLUTION:
@@ -2932,7 +2944,7 @@ public class FileLSM extends FileBase {
                     denominator = valueArray[1];
                     imgResols[1] = (float) numerator / denominator;
                     imgResols[1] = 1 / imgResols[1];
-                    Preferences.debug("FileTiff.openIFD: Y Resolution = " + imgResols[1] + "\n");
+                    Preferences.debug("FileTiff.openIFD: Y Resolution = " + imgResols[1] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ZRESOLUTION:
@@ -2945,7 +2957,7 @@ public class FileLSM extends FileBase {
                     }
 
                     imgResols[2] = (float) valueDouble;
-                    Preferences.debug("FileTiff.openIFD: Z Resolution = " + imgResols[2] + "\n");
+                    Preferences.debug("FileTiff.openIFD: Z Resolution = " + imgResols[2] + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
                     break;
 
@@ -2959,7 +2971,7 @@ public class FileLSM extends FileBase {
                     }
 
                     imgResols[3] = (float) valueDouble;
-                    Preferences.debug("FileTiff.openIFD: T Resolution = " + imgResols[3] + "\n");
+                    Preferences.debug("FileTiff.openIFD: T Resolution = " + imgResols[3] + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 3);
                     break;
 
@@ -2974,9 +2986,9 @@ public class FileLSM extends FileBase {
 
                     doTile = true;
                     tileWidth = valueArray[0];
-                    Preferences.debug("FileTiff.openIFD: tileWidth = " + tileWidth + "\n");
+                    Preferences.debug("FileTiff.openIFD: tileWidth = " + tileWidth + "\n", Preferences.DEBUG_FILEIO);
                     tilesAcross = (xDim + tileWidth - 1) / tileWidth;
-                    Preferences.debug("FileTiff.openIFD: tilesAcross = " + tilesAcross + "\n");
+                    Preferences.debug("FileTiff.openIFD: tilesAcross = " + tilesAcross + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TILE_LENGTH:
@@ -2991,9 +3003,9 @@ public class FileLSM extends FileBase {
                     }
 
                     tileLength = valueArray[0];
-                    Preferences.debug("FileTiff.openIFD: tileLength = " + tileLength + "\n");
+                    Preferences.debug("FileTiff.openIFD: tileLength = " + tileLength + "\n", Preferences.DEBUG_FILEIO);
                     tilesDown = (yDim + tileLength - 1) / tileLength;
-                    Preferences.debug("FileTiff.openIFD: tilesDown = " + tilesDown + "\n");
+                    Preferences.debug("FileTiff.openIFD: tilesDown = " + tilesDown + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TILE_OFFSETS:
@@ -3007,8 +3019,8 @@ public class FileLSM extends FileBase {
                         tilesPerImage = count / samplesPerPixel;
                     }
 
-                    Preferences.debug("FileTiff.openIFD: tilesPerImage = " + tilesPerImage + "\n");
-                    Preferences.debug("FileTiff.openIFD: tileOffsets are above\n");
+                    Preferences.debug("FileTiff.openIFD: tilesPerImage = " + tilesPerImage + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("FileTiff.openIFD: tileOffsets are above\n", Preferences.DEBUG_FILEIO);
                     if (tileOffsetNumber == 0) {
                         tileOffsets = new int[count];
 
@@ -3059,7 +3071,7 @@ public class FileLSM extends FileBase {
                         }
                     }
 
-                    Preferences.debug("FileTiff.openIFD: tileByteCounts are above\n");
+                    Preferences.debug("FileTiff.openIFD: tileByteCounts are above\n", Preferences.DEBUG_FILEIO);
                     if (tileByteNumber == 0) {
                         tileByteCounts = new int[count];
 
@@ -3102,7 +3114,7 @@ public class FileLSM extends FileBase {
 
                     str = new String(imageDescription);
                     fileInfo.setImageDescription(str);
-                    Preferences.debug("FileTiff.openIFD: imageDescription = " + str + "\n");
+                    Preferences.debug("FileTiff.openIFD: imageDescription = " + str + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case MIN_SAMPLE_VALUE:
@@ -3111,7 +3123,8 @@ public class FileLSM extends FileBase {
                     }
 
                     for (i1 = 0; i1 < count; i1++) {
-                        Preferences.debug("FileTiff.openIFD: minSampleValue[" + i1 + "] = " + valueArray[i1] + "\n");
+                        Preferences.debug("FileTiff.openIFD: minSampleValue[" + i1 + "] = " + valueArray[i1] + "\n",
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -3122,7 +3135,8 @@ public class FileLSM extends FileBase {
                     }
 
                     for (i1 = 0; i1 < count; i1++) {
-                        Preferences.debug("FileTiff.openIFD: maxSampleValue[" + i1 + "] = " + valueArray[i1] + "\n");
+                        Preferences.debug("FileTiff.openIFD: maxSampleValue[" + i1 + "] = " + valueArray[i1] + "\n",
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -3138,7 +3152,7 @@ public class FileLSM extends FileBase {
                     }
 
                     str = new String(software);
-                    Preferences.debug("FileTiff.openIFD: software = " + str + "\n");
+                    Preferences.debug("FileTiff.openIFD: software = " + str + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case DATE_TIME:
@@ -3156,7 +3170,7 @@ public class FileLSM extends FileBase {
                     }
 
                     str = new String(dateTime);
-                    Preferences.debug("FileTiff.openIFD: dateTime = " + str + "\n");
+                    Preferences.debug("FileTiff.openIFD: dateTime = " + str + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SAMPLE_FORMAT:
@@ -3165,16 +3179,18 @@ public class FileLSM extends FileBase {
                     }
 
                     for (i1 = 0; i1 < count; i1++) {
-                        Preferences.debug("FileTiff.openIFD: sampleFormat[ " + i1 + "] = " + valueArray[i1] + "\n");
+                        Preferences.debug("FileTiff.openIFD: sampleFormat[ " + i1 + "] = " + valueArray[i1] + "\n",
+                        		Preferences.DEBUG_FILEIO);
 
                         if (valueArray[i1] == 1) {
-                            Preferences.debug("FileTiff.openIFD: unsigned integer data\n");
+                            Preferences.debug("FileTiff.openIFD: unsigned integer data\n", Preferences.DEBUG_FILEIO);
                         } else if (valueArray[i1] == 2) {
-                            Preferences.debug("FileTiff.openIFD: two's complement signed integer data\n");
+                            Preferences.debug("FileTiff.openIFD: two's complement signed integer data\n",
+                            		Preferences.DEBUG_FILEIO);
                         } else if (valueArray[i1] == 3) {
-                            Preferences.debug("FileTiff.openIFD: IEEE floating point data\n");
+                            Preferences.debug("FileTiff.openIFD: IEEE floating point data\n", Preferences.DEBUG_FILEIO);
                         } else if (valueArray[i1] == 4) {
-                            Preferences.debug("FileTiff.openIFD: undefined data format\n");
+                            Preferences.debug("FileTiff.openIFD: undefined data format\n", Preferences.DEBUG_FILEIO);
                         }
                     }
 
@@ -3191,12 +3207,12 @@ public class FileLSM extends FileBase {
 
                     if (valueArray[0] == 1) {
                         predictor = 1;
-                        Preferences.debug("PREDICTOR = 1 for no prediction scheme used\n");
+                        Preferences.debug("PREDICTOR = 1 for no prediction scheme used\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 2) {
                         predictor = 2;
-                        Preferences.debug("PREDICTOR = 2 for horizontal differencing\n");
+                        Preferences.debug("PREDICTOR = 2 for horizontal differencing\n", Preferences.DEBUG_FILEIO);
                     } else {
-                        Preferences.debug("PREDICTOR = " + valueArray[0] + ", an illegal value");
+                        Preferences.debug("PREDICTOR = " + valueArray[0] + ", an illegal value", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -3248,11 +3264,12 @@ public class FileLSM extends FileBase {
         } // if (!thumbNail)
         else { // thumbnail image
             thumbnailOffset = offsetTemp[0];
-            Preferences.debug("thumbnail offset: " + thumbnailOffset + "\n");
+            Preferences.debug("thumbnail offset: " + thumbnailOffset + "\n", Preferences.DEBUG_FILEIO);
         }
 
         IFDoffsets[imageSlice] = getInt(endianess);
-        Preferences.debug("\nFileLSM.openIFD: Ref. to next imageSlice = " + IFDoffsets[imageSlice] + "\n");
+        Preferences.debug("\nFileLSM.openIFD: Ref. to next imageSlice = " + IFDoffsets[imageSlice] + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         if (IFDoffsets[imageSlice] == 0) {
             return false; // Done reading images
@@ -3992,90 +4009,90 @@ public class FileLSM extends FileBase {
         magicNumber = getInt(endianess);
 
         if (magicNumber == 0x00300494C) {
-            Preferences.debug("Magic number corresponds to version 1.3\n");
+            Preferences.debug("Magic number corresponds to version 1.3\n", Preferences.DEBUG_FILEIO);
         } else if (magicNumber == 0x00400494C) {
-            Preferences.debug("Magic number corresponds to version 1.5 to 3.0\n");
+            Preferences.debug("Magic number corresponds to version 1.5 to 3.0\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("Illegal magic number = " + magicNumber + "\n");
+            Preferences.debug("Illegal magic number = " + magicNumber + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException("Illegal magic number = " + magicNumber);
         }
 
         structureSize = getInt(endianess);
-        Preferences.debug("The number of bytes in the CZ private tag is = " + structureSize + "\n");
+        Preferences.debug("The number of bytes in the CZ private tag is = " + structureSize + "\n", Preferences.DEBUG_FILEIO);
         czDimX = getInt(endianess);
-        Preferences.debug("Intensity values in x direction = " + czDimX + "\n");
+        Preferences.debug("Intensity values in x direction = " + czDimX + "\n", Preferences.DEBUG_FILEIO);
         czDimY = getInt(endianess);
-        Preferences.debug("Intensity values in y direction = " + czDimY + "\n");
+        Preferences.debug("Intensity values in y direction = " + czDimY + "\n", Preferences.DEBUG_FILEIO);
         czDimZ = getInt(endianess);
-        Preferences.debug("Intensity values in z direction = " + czDimZ + "\n");
+        Preferences.debug("Intensity values in z direction = " + czDimZ + "\n", Preferences.DEBUG_FILEIO);
         czChannels = getInt(endianess);
-        Preferences.debug("Number of channels = " + czChannels + "\n");
+        Preferences.debug("Number of channels = " + czChannels + "\n", Preferences.DEBUG_FILEIO);
         fileInfo.setChannels(czChannels);
         czDimT = getInt(endianess);
-        Preferences.debug("Intensity values in time direction = " + czDimT + "\n");
+        Preferences.debug("Intensity values in time direction = " + czDimT + "\n", Preferences.DEBUG_FILEIO);
         fileInfo.setTimeDim(czDimT);
         czDataType = getInt(endianess);
 
         if (czDataType == 0) {
-            Preferences.debug("Different CZ bit numbers for different channels\n");
+            Preferences.debug("Different CZ bit numbers for different channels\n", Preferences.DEBUG_FILEIO);
         } else if (czDataType == 1) {
-            Preferences.debug("CZ data is 8-bit unsigned integer\n");
+            Preferences.debug("CZ data is 8-bit unsigned integer\n", Preferences.DEBUG_FILEIO);
         } else if (czDataType == 2) {
-            Preferences.debug("CZ data is 12-bit unsigned integer\n");
+            Preferences.debug("CZ data is 12-bit unsigned integer\n", Preferences.DEBUG_FILEIO);
         } else if (czDataType == 5) {
-            Preferences.debug("CZ data is 32 bit float\n");
+            Preferences.debug("CZ data is 32 bit float\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("Illegal CZ data type = " + czDataType + "\n");
+            Preferences.debug("Illegal CZ data type = " + czDataType + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException("Illegal CZ data type");
         }
 
         fileInfo.setLSMDataType(czDataType);
         thumbNailX = getInt(endianess);
-        Preferences.debug("Width in pixels of a thumbnail = " + thumbNailX + "\n");
+        Preferences.debug("Width in pixels of a thumbnail = " + thumbNailX + "\n", Preferences.DEBUG_FILEIO);
         thumbNailY = getInt(endianess);
-        Preferences.debug("Height in pixels of a thumbnail = " + thumbNailY + "\n");
+        Preferences.debug("Height in pixels of a thumbnail = " + thumbNailY + "\n", Preferences.DEBUG_FILEIO);
         voxelSizeX = getDouble(endianess);
 
         // Change from meters to micrometers
         imgResols[0] = (float) (1.0E6 * voxelSizeX);
-        Preferences.debug("Voxel Size X in micrometers = " + imgResols[0] + "\n");
+        Preferences.debug("Voxel Size X in micrometers = " + imgResols[0] + "\n", Preferences.DEBUG_FILEIO);
         voxelSizeY = getDouble(endianess);
         imgResols[1] = (float) (1.0E6 * voxelSizeY);
-        Preferences.debug("Voxel Size Y in micrometers = " + imgResols[1] + "\n");
+        Preferences.debug("Voxel Size Y in micrometers = " + imgResols[1] + "\n", Preferences.DEBUG_FILEIO);
         voxelSizeZ = getDouble(endianess);
 
         if (czDimZ > 1) {
             imgResols[2] = (float) (1.0E6 * voxelSizeZ);
-            Preferences.debug("Voxel Size Z in micrometers = " + imgResols[2] + "\n");
+            Preferences.debug("Voxel Size Z in micrometers = " + imgResols[2] + "\n", Preferences.DEBUG_FILEIO);
         }
 
         raFile.seek(startCZ + 88L);
         czScanType = getUnsignedShort(endianess);
 
         if (czScanType == 0) {
-            Preferences.debug("Normal x-y-z-scan\n");
+            Preferences.debug("Normal x-y-z-scan\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 1) {
-            Preferences.debug("Z-Scan (x-z-plane)\n");
+            Preferences.debug("Z-Scan (x-z-plane)\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 2) {
-            Preferences.debug("Line scan\n");
+            Preferences.debug("Line scan\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 3) {
-            Preferences.debug("Time series x-y\n");
+            Preferences.debug("Time series x-y\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 4) {
-            Preferences.debug("Time series x-z\n");
+            Preferences.debug("Time series x-z\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 5) {
-            Preferences.debug("Time series - Mean of ROIs\n");
+            Preferences.debug("Time series - Mean of ROIs\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 6) {
-            Preferences.debug("Time series x-y-z\n");
+            Preferences.debug("Time series x-y-z\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 7) {
-            Preferences.debug("Spline scan\n");
+            Preferences.debug("Spline scan\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 8) {
-            Preferences.debug("Spline plane x-z\n");
+            Preferences.debug("Spline plane x-z\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 9) {
-            Preferences.debug("Time series spline plane x-z\n");
+            Preferences.debug("Time series spline plane x-z\n", Preferences.DEBUG_FILEIO);
         } else if (czScanType == 10) {
-            Preferences.debug("Point mode\n");
+            Preferences.debug("Point mode\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("Illegal scan type = " + czScanType + "\n");
+            Preferences.debug("Illegal scan type = " + czScanType + "\n", Preferences.DEBUG_FILEIO);
         }
 
         fileInfo.setScanType(czScanType);
@@ -4083,10 +4100,10 @@ public class FileLSM extends FileBase {
         czSpectralScan = getUnsignedShort(endianess);
 
         if (czSpectralScan == 0) {
-            Preferences.debug("No spectral scan\n");
+            Preferences.debug("No spectral scan\n", Preferences.DEBUG_FILEIO);
         } else if (czSpectralScan == 1) {
-            Preferences.debug("Image has been acquired in spectral scan mode with a ");
-            Preferences.debug("Meta detector\n");
+            Preferences.debug("Image has been acquired in spectral scan mode with a ", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Meta detector\n", Preferences.DEBUG_FILEIO);
         }
 
         fileInfo.setSpectralScan(czSpectralScan);
@@ -4094,13 +4111,13 @@ public class FileLSM extends FileBase {
         czDataType2 = getInt(endianess);
 
         if (czDataType2 == 0) {
-            Preferences.debug("Scan data\n");
+            Preferences.debug("Scan data\n", Preferences.DEBUG_FILEIO);
         } else if (czDataType2 == 1) {
-            Preferences.debug("Calculated data\n");
+            Preferences.debug("Calculated data\n", Preferences.DEBUG_FILEIO);
         } else if (czDataType2 == 2) {
-            Preferences.debug("Animation\n");
+            Preferences.debug("Animation\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("Data type has illegal value = " + czDataType2 + "\n");
+            Preferences.debug("Data type has illegal value = " + czDataType2 + "\n", Preferences.DEBUG_FILEIO);
         }
 
         fileInfo.setLSMDataType2(czDataType2);
@@ -4108,7 +4125,7 @@ public class FileLSM extends FileBase {
         offsetVectorOverlay = getInt(endianess);
 
         if (offsetVectorOverlay != 0) {
-            Preferences.debug("Vector overlay is present\n");
+            Preferences.debug("Vector overlay is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetVectorOverlay);
@@ -4120,7 +4137,7 @@ public class FileLSM extends FileBase {
         offsetInputLut = getInt(endianess);
 
         if (offsetInputLut != 0) {
-            Preferences.debug("Input LUT is present\n");
+            Preferences.debug("Input LUT is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetInputLut);
@@ -4132,7 +4149,7 @@ public class FileLSM extends FileBase {
         offsetOutputLut = getInt(endianess);
 
         if (offsetOutputLut != 0) {
-            Preferences.debug("Output LUT is present\n");
+            Preferences.debug("Output LUT is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetOutputLut);
@@ -4144,7 +4161,7 @@ public class FileLSM extends FileBase {
         offsetChannelColors = getInt(endianess);
 
         if (offsetChannelColors != 0) {
-            Preferences.debug("List of channel colors and names is present\n");
+            Preferences.debug("List of channel colors and names is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetChannelColors);
@@ -4153,14 +4170,14 @@ public class FileLSM extends FileBase {
 
             if (numberColors != czChannels) {
                 Preferences.debug("Number of channels = " + czChannels + ", but number of colors = " + numberColors +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_FILEIO);
             }
 
             numberNames = getInt(endianess);
 
             if (numberNames != czChannels) {
                 Preferences.debug("Number of channels = " + czChannels + ", but number of names = " + numberNames +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_FILEIO);
             }
 
             colorsOffset = getInt(endianess);
@@ -4177,7 +4194,7 @@ public class FileLSM extends FileBase {
                 greenArray[i] = 0x000000ff & (colorValue >> 8);
                 blueArray[i] = 0x000000ff & (colorValue >> 16);
                 Preferences.debug("Channel # " + i + " red = " + redArray[i] + " green = " + greenArray[i] +
-                                  " blue = " + blueArray[i] + "\n");
+                                  " blue = " + blueArray[i] + "\n", Preferences.DEBUG_FILEIO);
 
                 if (i == 0) {
 
@@ -4249,7 +4266,7 @@ public class FileLSM extends FileBase {
                 channelNames[i] = new String(description, startPos, endPos - startPos);
 
                 if (channelNames[i] != null) {
-                    Preferences.debug("Channel # " + i + " Name = " + channelNames[i] + "\n");
+                    Preferences.debug("Channel # " + i + " Name = " + channelNames[i] + "\n", Preferences.DEBUG_FILEIO);
                 }
 
                 startPos = endPos + 5;
@@ -4260,9 +4277,9 @@ public class FileLSM extends FileBase {
             mono = getInt(endianess);
 
             if (mono == 0) {
-                Preferences.debug("The mono button was not pressed\n");
+                Preferences.debug("The mono button was not pressed\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("The mono button was pressed\n");
+                Preferences.debug("The mono button was pressed\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setMono(mono);
@@ -4270,7 +4287,7 @@ public class FileLSM extends FileBase {
         }
 
         timeInterval = getDouble(endianess);
-        Preferences.debug("Time interval for time series = " + timeInterval + "\n");
+        Preferences.debug("Time interval for time series = " + timeInterval + "\n", Preferences.DEBUG_FILEIO);
 
         if (timeInterval != 0.0) {
 
@@ -4288,7 +4305,7 @@ public class FileLSM extends FileBase {
         offsetChannelDataTypes = getInt(endianess);
 
         if (offsetChannelDataTypes != 0) {
-            Preferences.debug("Channel data types array is present\n");
+            Preferences.debug("Channel data types array is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetChannelDataTypes);
@@ -4298,13 +4315,14 @@ public class FileLSM extends FileBase {
                 channelDataTypes[i] = getInt(endianess);
 
                 if (channelDataTypes[i] == 1) {
-                    Preferences.debug("Channel # " + i + " has 8-bit unsigned integers\n");
+                    Preferences.debug("Channel # " + i + " has 8-bit unsigned integers\n", Preferences.DEBUG_FILEIO);
                 } else if (channelDataTypes[i] == 2) {
-                    Preferences.debug("Channel # " + i + " has 12-bit unsigned integers\n");
+                    Preferences.debug("Channel # " + i + " has 12-bit unsigned integers\n", Preferences.DEBUG_FILEIO);
                 } else if (channelDataTypes[i] == 5) {
-                    Preferences.debug("Channel # " + i + " has 32-bit floats\n");
+                    Preferences.debug("Channel # " + i + " has 32-bit floats\n", Preferences.DEBUG_FILEIO);
                 } else {
-                    Preferences.debug("Channel # " + i + " has illegal data type = " + channelDataTypes[i] + "\n");
+                    Preferences.debug("Channel # " + i + " has illegal data type = " + channelDataTypes[i] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                     throw new IOException("Channel # " + i + " has illegal data type");
                 }
             } // for (i = 0; i < czChannels; i++)
@@ -4316,7 +4334,8 @@ public class FileLSM extends FileBase {
         offsetScanInformation = getInt(endianess);
 
         if (offsetScanInformation != 0) {
-            Preferences.debug("Information of the device settings used to scan the image is present\n");
+            Preferences.debug("Information of the device settings used to scan the image is present\n", 
+            		Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetScanInformation);
@@ -4327,7 +4346,7 @@ public class FileLSM extends FileBase {
         offsetKsData = getInt(endianess);
 
         if (offsetKsData != 0) {
-            Preferences.debug("Zeiss Vision Ks-3d specific data is present\n");
+            Preferences.debug("Zeiss Vision Ks-3d specific data is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetKsData);
@@ -4338,20 +4357,20 @@ public class FileLSM extends FileBase {
         offsetTimeStamps = getInt(endianess);
 
         if (offsetTimeStamps != 0) {
-            Preferences.debug("Time stamp structure is present\n");
+            Preferences.debug("Time stamp structure is present\n", Preferences.DEBUG_FILEIO);
             haveTimeStamps = true;
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetTimeStamps);
             timeStampBytes = getInt(endianess);
-            Preferences.debug("Number of bytes of in time stamp block = " + timeStampBytes + "\n");
+            Preferences.debug("Number of bytes of in time stamp block = " + timeStampBytes + "\n", Preferences.DEBUG_FILEIO);
             timeStampNumber = getInt(endianess);
-            Preferences.debug("Time stamp number = " + timeStampNumber + "\n");
+            Preferences.debug("Time stamp number = " + timeStampNumber + "\n", Preferences.DEBUG_FILEIO);
             timeStamp = new double[timeStampNumber];
 
             for (i = 0; i < timeStampNumber; i++) {
                 timeStamp[i] = getDouble(endianess);
-                Preferences.debug("Time stamp # " + (i + 1) + " = " + timeStamp[i] + "\n");
+                Preferences.debug("Time stamp # " + (i + 1) + " = " + timeStamp[i] + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTimeStamp(timeStamp);
@@ -4361,7 +4380,7 @@ public class FileLSM extends FileBase {
         offsetEventList = getInt(endianess);
 
         if (offsetEventList != 0) {
-            Preferences.debug("Event list structure is present\n");
+            Preferences.debug("Event list structure is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetEventList);
@@ -4375,7 +4394,7 @@ public class FileLSM extends FileBase {
             for (i = 0; i < eventNumber; i++) {
                 long eventStart = raFile.getFilePointer();
                 thisEventBytes = getInt(endianess);
-                Preferences.debug("Event # " + (i + 1) + " has " + thisEventBytes + " bytes\n");
+                Preferences.debug("Event # " + (i + 1) + " has " + thisEventBytes + " bytes\n", Preferences.DEBUG_FILEIO);
                 eventTime[i] = getDouble(endianess);
                 eventType[i] = getInt(endianess);
                 tempByte = 1;
@@ -4392,14 +4411,14 @@ public class FileLSM extends FileBase {
                 }
 
                 eventDescription[i] = new String(description, 0, j - 1);
-                Preferences.debug("Event # " + (i + 1) + " time = " + eventTime[i] + "\n");
+                Preferences.debug("Event # " + (i + 1) + " time = " + eventTime[i] + "\n", Preferences.DEBUG_FILEIO);
 
                 if (eventType[i] == 0) {
-                    Preferences.debug("Event # " + (i + 1) + " type = experimental annotation\n");
+                    Preferences.debug("Event # " + (i + 1) + " type = experimental annotation\n", Preferences.DEBUG_FILEIO);
                 } else if (eventType[i] == 1) {
-                    Preferences.debug("Event # " + (i + 1) + " type = time interval has changed\n");
+                    Preferences.debug("Event # " + (i + 1) + " type = time interval has changed\n", Preferences.DEBUG_FILEIO);
                 } else if (eventType[i] == 2) {
-                    Preferences.debug("Event # " + (i + 1) + " type = start of a bleach operation\n");
+                    Preferences.debug("Event # " + (i + 1) + " type = start of a bleach operation\n", Preferences.DEBUG_FILEIO);
 
                     // Find last slice before start of bleach operation
                     if (haveTimeStamps) {
@@ -4415,7 +4434,7 @@ public class FileLSM extends FileBase {
                         }
                     } // if (haveTimeStamps)
                 } else if (eventType[i] == 3) {
-                    Preferences.debug("Event # " + (i + 1) + " type = end of a bleach operation\n");
+                    Preferences.debug("Event # " + (i + 1) + " type = end of a bleach operation\n", Preferences.DEBUG_FILEIO);
 
                     // Find first slice after end of bleach operation
                     if (haveTimeStamps) {
@@ -4431,14 +4450,15 @@ public class FileLSM extends FileBase {
                         }
                     } // if (haveTimeStamps)
                 } else if (eventType[i] == 4) {
-                    Preferences.debug("Event # " + (i + 1) + " type = trigger signal was detected\n");
+                    Preferences.debug("Event # " + (i + 1) + " type = trigger signal was detected\n", Preferences.DEBUG_FILEIO);
                 } else {
-                    Preferences.debug("Event # " + (i + 1) + " illegal type = " + eventType[i] + "\n");
+                    Preferences.debug("Event # " + (i + 1) + " illegal type = " + eventType[i] + "\n", Preferences.DEBUG_FILEIO);
                     throw new IOException("Event # " + (i + 1) + " has illegal event type");
                 }
 
                 if (eventDescription[i] != null) {
-                    Preferences.debug("Event # " + (i + 1) + " description:\n" + eventDescription[i] + "\n");
+                    Preferences.debug("Event # " + (i + 1) + " description:\n" + eventDescription[i] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                 }
 
                 if (i < (eventNumber - 1)) {
@@ -4455,7 +4475,7 @@ public class FileLSM extends FileBase {
         offsetRoi = getInt(endianess);
 
         if (offsetRoi != 0) {
-            Preferences.debug("List of ROIs is present\n");
+            Preferences.debug("List of ROIs is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetRoi);
@@ -4467,7 +4487,7 @@ public class FileLSM extends FileBase {
         offsetBleachRoi = getInt(endianess);
 
         if (offsetBleachRoi != 0) {
-            Preferences.debug("Description of the bleach region is present\n");
+            Preferences.debug("Description of the bleach region is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetBleachRoi);
@@ -4479,32 +4499,36 @@ public class FileLSM extends FileBase {
         secondImage = getInt(endianess);
 
         if (secondImage != 0) {
-            Preferences.debug("A second image is stored in this file\n");
+            Preferences.debug("A second image is stored in this file\n", Preferences.DEBUG_FILEIO);
         }
 
         displayAspectX = getDouble(endianess);
-        Preferences.debug("Zoom factor for image display in the x-direction = " + displayAspectX + "\n");
+        Preferences.debug("Zoom factor for image display in the x-direction = " + displayAspectX + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         if (displayAspectX > 0.0) {
             fileInfo.setDisplayAspectX(displayAspectX);
         }
 
         displayAspectY = getDouble(endianess);
-        Preferences.debug("Zoom factor for image display in the y-direction = " + displayAspectY + "\n");
+        Preferences.debug("Zoom factor for image display in the y-direction = " + displayAspectY + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         if (displayAspectY > 0.0) {
             fileInfo.setDisplayAspectY(displayAspectY);
         }
 
         displayAspectZ = getDouble(endianess);
-        Preferences.debug("Zoom factor for image display in the z-direction = " + displayAspectZ + "\n");
+        Preferences.debug("Zoom factor for image display in the z-direction = " + displayAspectZ + "\n", 
+        		Preferences.DEBUG_FILEIO);
 
         if (displayAspectZ > 0.0) {
             fileInfo.setDisplayAspectZ(displayAspectZ);
         }
 
         displayAspectTime = getDouble(endianess);
-        Preferences.debug("Zoom factor for image display in the time-direction = " + displayAspectTime + "\n");
+        Preferences.debug("Zoom factor for image display in the time-direction = " + displayAspectTime + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         if (displayAspectTime > 0.0) {
             fileInfo.setDisplayAspectTime(displayAspectTime);
@@ -4513,8 +4537,8 @@ public class FileLSM extends FileBase {
         offsetMeanOfRoisOverlay = getInt(endianess);
 
         if (offsetMeanOfRoisOverlay != 0) {
-            Preferences.debug("Description of the vector overlay with the ROIs used\n");
-            Preferences.debug("during a scan in the Mean of ROIs mode is present\n");
+            Preferences.debug("Description of the vector overlay with the ROIs used\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("during a scan in the Mean of ROIs mode is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetMeanOfRoisOverlay);
@@ -4526,9 +4550,9 @@ public class FileLSM extends FileBase {
         offsetTopolsolineOverlay = getInt(endianess);
 
         if (offsetTopolsolineOverlay != 0) {
-            Preferences.debug("Description of the vector overlay for the topography\n");
-            Preferences.debug("-iso-lines and height display with the profile\n");
-            Preferences.debug("selection line is present\n");
+            Preferences.debug("Description of the vector overlay for the topography\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("-iso-lines and height display with the profile\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("selection line is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetTopolsolineOverlay);
@@ -4540,8 +4564,8 @@ public class FileLSM extends FileBase {
         offsetTopoProfileOverlay = getInt(endianess);
 
         if (offsetTopoProfileOverlay != 0) {
-            Preferences.debug("Description of the vector overlay for the topography\n");
-            Preferences.debug("-profile display is present\n");
+            Preferences.debug("Description of the vector overlay for the topography\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("-profile display is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetTopoProfileOverlay);
@@ -4553,9 +4577,9 @@ public class FileLSM extends FileBase {
         offsetLinescanOverlay = getInt(endianess);
 
         if (offsetLinescanOverlay != 0) {
-            Preferences.debug("Description of the vector overlay for the line\n");
-            Preferences.debug("scan line selection with the selected line or\n");
-            Preferences.debug("Bezier curve\n");
+            Preferences.debug("Description of the vector overlay for the line\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("scan line selection with the selected line or\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Bezier curve\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetLinescanOverlay);
@@ -4565,12 +4589,12 @@ public class FileLSM extends FileBase {
         }
 
         toolbarFlags = getInt(endianess);
-        Preferences.debug("toolbarFlags = " + toolbarFlags + "\n");
+        Preferences.debug("toolbarFlags = " + toolbarFlags + "\n", Preferences.DEBUG_FILEIO);
 
         offsetChannelWavelength = getInt(endianess);
 
         if (offsetChannelWavelength != 0) {
-            Preferences.debug("Channel wavelength is present\n");
+            Preferences.debug("Channel wavelength is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetChannelWavelength);
@@ -4580,8 +4604,10 @@ public class FileLSM extends FileBase {
             for (i = 0; i < wavelengthNumber; i++) {
                 wavelengths[2 * i] = getDouble(endianess);
                 wavelengths[(2 * i) + 1] = getDouble(endianess);
-                Preferences.debug("Start wavelength[" + (i + 1) + "] = " + wavelengths[2 * i] + "\n");
-                Preferences.debug("End wavelength[" + (i + 1) + "] = " + wavelengths[(2 * i) + 1] + "\n");
+                Preferences.debug("Start wavelength[" + (i + 1) + "] = " + wavelengths[2 * i] + "\n",
+                		Preferences.DEBUG_FILEIO);
+                Preferences.debug("End wavelength[" + (i + 1) + "] = " + wavelengths[(2 * i) + 1] + "\n",
+                		Preferences.DEBUG_FILEIO);
             }
 
             if ((wavelengthNumber > 0) && (wavelengths[0] > 0.0)) {
@@ -4594,8 +4620,8 @@ public class FileLSM extends FileBase {
         offsetChannelFactors = getInt(endianess);
 
         if (offsetChannelFactors != 0) {
-            Preferences.debug("Offset to memory block with scaling factor, offset,\n");
-            Preferences.debug("and unit for each image channel is present\n");
+            Preferences.debug("Offset to memory block with scaling factor, offset,\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("and unit for each image channel is present\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetChannelFactors);
@@ -4604,15 +4630,15 @@ public class FileLSM extends FileBase {
         }
 
         objectiveSphereCorrection = getDouble(endianess);
-        Preferences.debug("Objective sphere correction = " + objectiveSphereCorrection + "\n");
+        Preferences.debug("Objective sphere correction = " + objectiveSphereCorrection + "\n", Preferences.DEBUG_FILEIO);
         fileInfo.setObjectiveSphereCorrection(objectiveSphereCorrection);
 
         offsetUnmixParameters = getInt(endianess);
 
         if (offsetUnmixParameters != 0) {
-            Preferences.debug("Offset to the parameters for linear unmixing\n");
-            Preferences.debug("that have been used to generate the image data\n");
-            Preferences.debug("from scan data of the spectral detector\n");
+            Preferences.debug("Offset to the parameters for linear unmixing\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("that have been used to generate the image data\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("from scan data of the spectral detector\n", Preferences.DEBUG_FILEIO);
 
             long saveLocus = raFile.getFilePointer();
             raFile.seek(offsetUnmixParameters);
@@ -4722,37 +4748,39 @@ public class FileLSM extends FileBase {
         }
 
         if (numberDrawingElements == 1) {
-            Preferences.debug(drawString + "has " + numberDrawingElements + " drawing element in the list\n");
+            Preferences.debug(drawString + "has " + numberDrawingElements + " drawing element in the list\n",
+            		Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug(drawString + "has " + numberDrawingElements + " drawing elements in the list\n");
+            Preferences.debug(drawString + "has " + numberDrawingElements + " drawing elements in the list\n", 
+            		Preferences.DEBUG_FILEIO);
         }
 
         blockSize = getInt(endianess);
-        Preferences.debug(drawString + "block size is " + blockSize + " bytes\n");
+        Preferences.debug(drawString + "block size is " + blockSize + " bytes\n", Preferences.DEBUG_FILEIO);
         lineWidth = getInt(endianess);
-        Preferences.debug("The most recently used line width was " + lineWidth + "\n");
+        Preferences.debug("The most recently used line width was " + lineWidth + "\n", Preferences.DEBUG_FILEIO);
         measure = getInt(endianess);
 
         if (measure == 0) {
-            Preferences.debug("The measure button was not checked in\n");
+            Preferences.debug("The measure button was not checked in\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("The measure button was checked in\n");
+            Preferences.debug("The measure button was checked in\n", Preferences.DEBUG_FILEIO);
         }
 
         reserved1 = getInt(endianess);
 
         if (reserved1 == 0) {
-            Preferences.debug("reserved1 == 0 as expected\n");
+            Preferences.debug("reserved1 == 0 as expected\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("reserved1 == " + reserved1 + " instead of the expected 0\n");
+            Preferences.debug("reserved1 == " + reserved1 + " instead of the expected 0\n", Preferences.DEBUG_FILEIO);
         }
 
         reserved2 = getInt(endianess);
 
         if (reserved2 == 0) {
-            Preferences.debug("reserved2 == 0 as expected\n");
+            Preferences.debug("reserved2 == 0 as expected\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("reserved2 == " + reserved1 + " instead of the expected 0\n");
+            Preferences.debug("reserved2 == " + reserved1 + " instead of the expected 0\n", Preferences.DEBUG_FILEIO);
         }
 
         color = getInt(endianess);
@@ -4760,130 +4788,133 @@ public class FileLSM extends FileBase {
         greenValue = (color >> 8) & 0x000000ff;
         blueValue = (color >> 16) & 0x000000ff;
         Preferences.debug("The most recently used color had red = " + redValue + " green = " + greenValue + " blue = " +
-                          blueValue + "\n");
+                          blueValue + "\n", Preferences.DEBUG_FILEIO);
         disabled = getInt(endianess);
 
         if (disabled == 0) {
-            Preferences.debug("The overlay was not enabled in the editor\n");
+            Preferences.debug("The overlay was not enabled in the editor\n", Preferences.DEBUG_FILEIO);
         } else if (disabled == 1) {
-            Preferences.debug("The overlay was enabled in the editor\n");
+            Preferences.debug("The overlay was enabled in the editor\n", Preferences.DEBUG_FILEIO);
         }
 
         knotWidth = getInt(endianess);
-        Preferences.debug("knotWidth = " + knotWidth + "\n");
+        Preferences.debug("knotWidth = " + knotWidth + "\n", Preferences.DEBUG_FILEIO);
         catchArea = getInt(endianess);
-        Preferences.debug("The size of the mouse catch area was " + catchArea + "\n");
+        Preferences.debug("The size of the mouse catch area was " + catchArea + "\n", Preferences.DEBUG_FILEIO);
         fontHeight = getInt(endianess);
-        Preferences.debug("The font height in logical units was " + fontHeight + "\n");
+        Preferences.debug("The font height in logical units was " + fontHeight + "\n", Preferences.DEBUG_FILEIO);
         fontWidth = getInt(endianess);
 
         if (fontWidth == 0) {
-            Preferences.debug("The default font width was used\n");
+            Preferences.debug("The default font width was used\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("The font width in logical units was " + fontWidth + "\n");
+            Preferences.debug("The font width in logical units was " + fontWidth + "\n", Preferences.DEBUG_FILEIO);
         }
 
         fontEscapement = getInt(endianess);
-        Preferences.debug("Angle of each text line = " + (fontEscapement / 10.0f) + "\n");
+        Preferences.debug("Angle of each text line = " + (fontEscapement / 10.0f) + "\n", Preferences.DEBUG_FILEIO);
         fontOrientation = getInt(endianess);
-        Preferences.debug("Angle of each character's base line = " + (fontOrientation / 10.0f) + "\n");
+        Preferences.debug("Angle of each character's base line = " + (fontOrientation / 10.0f) + "\n",
+        		Preferences.DEBUG_FILEIO);
         fontWeight = getInt(endianess);
 
         if (fontWeight == 0) {
-            Preferences.debug("The default font weight was used\n");
+            Preferences.debug("The default font weight was used\n", Preferences.DEBUG_FILEIO);
         } else if (fontWeight == 400) {
-            Preferences.debug("The font weight was 400, the value for normal\n");
+            Preferences.debug("The font weight was 400, the value for normal\n", Preferences.DEBUG_FILEIO);
         } else if (fontWeight == 700) {
-            Preferences.debug("The font weight was 700, the value for bold\n");
+            Preferences.debug("The font weight was 700, the value for bold\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("The font weight was = " + fontWeight + "\n");
+            Preferences.debug("The font weight was = " + fontWeight + "\n", Preferences.DEBUG_FILEIO);
         }
 
         fontItalic = getInt(endianess);
 
         if (fontItalic == 0) {
-            Preferences.debug("An italic font was not specified\n");
+            Preferences.debug("An italic font was not specified\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("An italic font was specified\n");
+            Preferences.debug("An italic font was specified\n", Preferences.DEBUG_FILEIO);
         }
 
         fontUnderline = getInt(endianess);
 
         if (fontUnderline == 0) {
-            Preferences.debug("An underlined font was not specified\n");
+            Preferences.debug("An underlined font was not specified\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("An underlined font was specified\n");
+            Preferences.debug("An underlined font was specified\n", Preferences.DEBUG_FILEIO);
         }
 
         fontStrikeOut = getInt(endianess);
 
         if (fontStrikeOut == 0) {
-            Preferences.debug("A strikeout font was not specified\n");
+            Preferences.debug("A strikeout font was not specified\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("A strikeout font was specified\n");
+            Preferences.debug("A strikeout font was specified\n", Preferences.DEBUG_FILEIO);
         }
 
         fontCharSet = getInt(endianess);
 
         if (fontCharSet == 0) {
-            Preferences.debug("FontCharSet = 0 as expected\n");
+            Preferences.debug("FontCharSet = 0 as expected\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("FontCharSet = " + fontCharSet + " instead of the expected zero\n");
+            Preferences.debug("FontCharSet = " + fontCharSet + " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
         }
 
         fontOutPrecision = getInt(endianess);
 
         if (fontOutPrecision == 0) {
-            Preferences.debug("FontOutPrecision = 0 as expected\n");
+            Preferences.debug("FontOutPrecision = 0 as expected\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("FontOutPrecision = " + fontOutPrecision + " instead of the expected zero\n");
+            Preferences.debug("FontOutPrecision = " + fontOutPrecision + " instead of the expected zero\n",
+            		Preferences.DEBUG_FILEIO);
         }
 
         fontClipPrecision = getInt(endianess);
 
         if (fontClipPrecision == 0) {
-            Preferences.debug("FontClipPrecision = 0 as expected\n");
+            Preferences.debug("FontClipPrecision = 0 as expected\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("FontClipPrecision = " + fontClipPrecision + " instead of the expected zero\n");
+            Preferences.debug("FontClipPrecision = " + fontClipPrecision + " instead of the expected zero\n",
+            		Preferences.DEBUG_FILEIO);
         }
 
         fontQuality = getInt(endianess);
 
         if (fontQuality == 0) {
-            Preferences.debug("FontQuality = 0 as expected\n");
+            Preferences.debug("FontQuality = 0 as expected\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("FontQuality = " + fontQuality + " instead of the expected zero\n");
+            Preferences.debug("FontQuality = " + fontQuality + " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
         }
 
         fontPitchAndFamily = getInt(endianess);
         fontPitch = fontPitchAndFamily & 0x00000003;
 
         if (fontPitch == 0) {
-            Preferences.debug("The system default pitch was used\n");
+            Preferences.debug("The system default pitch was used\n", Preferences.DEBUG_FILEIO);
         } else if (fontPitch == 1) {
-            Preferences.debug("A fixed pitch was used\n");
+            Preferences.debug("A fixed pitch was used\n", Preferences.DEBUG_FILEIO);
         } else if (fontPitch == 2) {
-            Preferences.debug("A variable pitch was used\n");
+            Preferences.debug("A variable pitch was used\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("FontPitch = 3\n");
+            Preferences.debug("FontPitch = 3\n", Preferences.DEBUG_FILEIO);
         }
 
         fontFamily = (0x000000f0 & fontPitchAndFamily) >> 4;
 
         if (fontFamily == 0) {
-            Preferences.debug("Font family is a don't care\n");
+            Preferences.debug("Font family is a don't care\n", Preferences.DEBUG_FILEIO);
         } else if (fontFamily == 1) {
-            Preferences.debug("Font family is a variable stroke width, serified\n");
+            Preferences.debug("Font family is a variable stroke width, serified\n", Preferences.DEBUG_FILEIO);
         } else if (fontFamily == 2) {
-            Preferences.debug("Font family was a variable stroke width, " + "sans-serified\n");
+            Preferences.debug("Font family was a variable stroke width, " + "sans-serified\n", Preferences.DEBUG_FILEIO);
         } else if (fontFamily == 3) {
-            Preferences.debug("Font family was a constant stroke width, " + "serified or sans-serified\n");
+            Preferences.debug("Font family was a constant stroke width, " + "serified or sans-serified\n", Preferences.DEBUG_FILEIO);
         } else if (fontFamily == 4) {
-            Preferences.debug("Font family was cursive\n");
+            Preferences.debug("Font family was cursive\n", Preferences.DEBUG_FILEIO);
         } else if (fontFamily == 5) {
-            Preferences.debug("Font family was old English\n");
+            Preferences.debug("Font family was old English\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("Font family = " + fontFamily + "\n");
+            Preferences.debug("Font family = " + fontFamily + "\n", Preferences.DEBUG_FILEIO);
         }
 
         for (i = 0; i < 32; i++) {
@@ -4892,7 +4923,7 @@ public class FileLSM extends FileBase {
 
         fontFaceName = new String(fName);
         fontFaceName = fontFaceName.trim();
-        Preferences.debug("Font face name = " + fontFaceName + "\n");
+        Preferences.debug("Font face name = " + fontFaceName + "\n", Preferences.DEBUG_FILEIO);
         raFile.read(measureFlags);
 
         for (i = 0; i < 10; i++) {
@@ -4902,71 +4933,71 @@ public class FileLSM extends FileBase {
                 switch (i) {
 
                     case 0:
-                        Preferences.debug("Closed polyline has flags for ");
+                        Preferences.debug("Closed polyline has flags for ", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 1:
-                        Preferences.debug("Open polyline has flags for ");
+                        Preferences.debug("Open polyline has flags for ", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 2:
-                        Preferences.debug("Closed Bezier curve has flags for ");
+                        Preferences.debug("Closed Bezier curve has flags for ", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 3:
-                        Preferences.debug("Open Bezier curve has flags for ");
+                        Preferences.debug("Open Bezier curve has flags for ", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 4:
-                        Preferences.debug("Arrow with closed tip has flags for ");
+                        Preferences.debug("Arrow with closed tip has flags for ", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 5:
-                        Preferences.debug("Arrow with open tip has flags for ");
+                        Preferences.debug("Arrow with open tip has flags for ", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 6:
-                        Preferences.debug("Ellipse has flags for ");
+                        Preferences.debug("Ellipse has flags for ", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 7:
-                        Preferences.debug("Circle has flags for ");
+                        Preferences.debug("Circle has flags for ", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 8:
-                        Preferences.debug("Rectangle has flags for ");
+                        Preferences.debug("Rectangle has flags for ", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 9:
-                        Preferences.debug("Line has flags for ");
+                        Preferences.debug("Line has flags for ", Preferences.DEBUG_FILEIO);
                         break;
                 }
 
                 if ((measureFlags[i] & 0x02) != 0) {
-                    Preferences.debug("circumference ");
+                    Preferences.debug("circumference ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measureFlags[i] & 0x04) != 0) {
-                    Preferences.debug("area ");
+                    Preferences.debug("area ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measureFlags[i] & 0x08) != 0) {
-                    Preferences.debug("radius ");
+                    Preferences.debug("radius ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measureFlags[i] & 0x10) != 0) {
-                    Preferences.debug("angle ");
+                    Preferences.debug("angle ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measureFlags[i] & 0x20) != 0) {
-                    Preferences.debug("distance x ");
+                    Preferences.debug("distance x ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measureFlags[i] & 0x40) != 0) {
-                    Preferences.debug("distance y ");
+                    Preferences.debug("distance y ", Preferences.DEBUG_FILEIO);
                 }
 
-                Preferences.debug("\n");
+                Preferences.debug("\n", Preferences.DEBUG_FILEIO);
             } // if (measureFlags[i] != 0)
         } // for (i = 0; i < 10; i++)
 
@@ -4978,10 +5009,10 @@ public class FileLSM extends FileBase {
             reserved7[i] = getInt(endianess);
 
             if (reserved7[i] == 0) {
-                Preferences.debug("Reserved field " + (i + 1) + " of 7 is an expected zero\n");
+                Preferences.debug("Reserved field " + (i + 1) + " of 7 is an expected zero\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug("Reserved field " + (i + 1) + " of 7 = " + reserved7[i] +
-                                  " instead of the expected zero\n");
+                                  " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
             }
         }
 
@@ -4989,34 +5020,34 @@ public class FileLSM extends FileBase {
 
         for (i = 0; i < numberDrawingElements; i++) {
             Preferences.debug("Reading information for" + drawString2 + (i + 1) + " of " + numberDrawingElements +
-                              "\n");
+                              "\n", Preferences.DEBUG_FILEIO);
             elementType = getInt(endianess);
 
             switch (elementType) {
 
                 case 13:
-                    Preferences.debug(drawString + (i + 1) + " is text\n");
+                    Preferences.debug(drawString + (i + 1) + " is text\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 14:
-                    Preferences.debug(drawString + (i + 1) + " is a line\n");
+                    Preferences.debug(drawString + (i + 1) + " is a line\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 15:
                     Preferences.debug(drawString + (i + 1) + " is a horizontal or vertical " +
-                                      "scale bar with displayed length\n");
+                                      "scale bar with displayed length\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 16:
-                    Preferences.debug(drawString + (i + 1) + " is a line and a two line arrow\n");
+                    Preferences.debug(drawString + (i + 1) + " is a line and a two line arrow\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 17:
-                    Preferences.debug(drawString + (i + 1) + " is a line and a three line arrow\n");
+                    Preferences.debug(drawString + (i + 1) + " is a line and a three line arrow\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 18:
-                    Preferences.debug(drawString + (i + 1) + " is a rectangle\n");
+                    Preferences.debug(drawString + (i + 1) + " is a rectangle\n", Preferences.DEBUG_FILEIO);
                     if (drawingElement == BLEACH_ROI) {
                         bleachedROIShape = RECTANGLE;
                         fileInfo.setBleachedROIShape(bleachedROIShape);
@@ -5025,7 +5056,7 @@ public class FileLSM extends FileBase {
                     break;
 
                 case 19:
-                    Preferences.debug(drawString + (i + 1) + " is an ellipse\n");
+                    Preferences.debug(drawString + (i + 1) + " is an ellipse\n", Preferences.DEBUG_FILEIO);
                     if (drawingElement == BLEACH_ROI) {
                         bleachedROIShape = ELLIPSE;
                         fileInfo.setBleachedROIShape(bleachedROIShape);
@@ -5034,7 +5065,7 @@ public class FileLSM extends FileBase {
                     break;
 
                 case 20:
-                    Preferences.debug(drawString + (i + 1) + " is a closed polyline\n");
+                    Preferences.debug(drawString + (i + 1) + " is a closed polyline\n", Preferences.DEBUG_FILEIO);
                     if (drawingElement == BLEACH_ROI) {
                         bleachedROIShape = CLOSED_POLYLINE;
                         fileInfo.setBleachedROIShape(bleachedROIShape);
@@ -5043,11 +5074,11 @@ public class FileLSM extends FileBase {
                     break;
 
                 case 21:
-                    Preferences.debug(drawString + (i + 1) + " is an open polyline\n");
+                    Preferences.debug(drawString + (i + 1) + " is an open polyline\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 22:
-                    Preferences.debug(drawString + (i + 1) + " is a closed bezier spline curve\n");
+                    Preferences.debug(drawString + (i + 1) + " is a closed bezier spline curve\n", Preferences.DEBUG_FILEIO);
                     if (drawingElement == BLEACH_ROI) {
                         bleachedROIShape = CLOSED_BEZIER;
                         fileInfo.setBleachedROIShape(bleachedROIShape);
@@ -5056,11 +5087,11 @@ public class FileLSM extends FileBase {
                     break;
 
                 case 23:
-                    Preferences.debug(drawString + (i + 1) + " is an open bezier spline curve\n");
+                    Preferences.debug(drawString + (i + 1) + " is an open bezier spline curve\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 24:
-                    Preferences.debug(drawString + (i + 1) + " is a circle\n");
+                    Preferences.debug(drawString + (i + 1) + " is a circle\n", Preferences.DEBUG_FILEIO);
                     if (drawingElement == BLEACH_ROI) {
                         bleachedROIShape = CIRCLE;
                         fileInfo.setBleachedROIShape(bleachedROIShape);
@@ -5069,23 +5100,26 @@ public class FileLSM extends FileBase {
                     break;
 
                 case 25:
-                    Preferences.debug(drawString + (i + 1) + " is a rectangle with color palette\n");
+                    Preferences.debug(drawString + (i + 1) + " is a rectangle with color palette\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 26:
-                    Preferences.debug(drawString + (i + 1) + " is a open polyline with arrow tip\n");
+                    Preferences.debug(drawString + (i + 1) + " is a open polyline with arrow tip\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 27:
-                    Preferences.debug(drawString + (i + 1) + " is an open Bezier spline curve with arrow tip\n");
+                    Preferences.debug(drawString + (i + 1) + " is an open Bezier spline curve with arrow tip\n",
+                    		Preferences.DEBUG_FILEIO);
                     break;
 
                 case 28:
-                    Preferences.debug(drawString + (i + 1) + " is two connected lines for angle measurement\n");
+                    Preferences.debug(drawString + (i + 1) + " is two connected lines for angle measurement\n",
+                    		Preferences.DEBUG_FILEIO);
                     break;
 
                 case 29:
-                    Preferences.debug(drawString + (i + 1) + " is a circle defined by 3 points on the perimeter\n");
+                    Preferences.debug(drawString + (i + 1) + " is a circle defined by 3 points on the perimeter\n",
+                    		Preferences.DEBUG_FILEIO);
                     if (drawingElement == BLEACH_ROI) {
                         bleachedROIShape = CIRCLE;
                         fileInfo.setBleachedROIShape(bleachedROIShape);
@@ -5094,192 +5128,200 @@ public class FileLSM extends FileBase {
                     break;
 
                 default:
-                    Preferences.debug(drawString + (i + 1) + " = " + elementType + "\n");
+                    Preferences.debug(drawString + (i + 1) + " = " + elementType + "\n", Preferences.DEBUG_FILEIO);
             } // switch(elementType)
 
             drawingElementBlockSize = getInt(endianess);
-            Preferences.debug(drawString + (i + 1) + " has a block size = " + drawingElementBlockSize + " bytes\n");
+            Preferences.debug(drawString + (i + 1) + " has a block size = " + drawingElementBlockSize + " bytes\n",
+            		Preferences.DEBUG_FILEIO);
             drawingElementBlockStart = drawingElementBlockStart + drawingElementBlockSize;
             lineWidth = getInt(endianess);
-            Preferences.debug(drawString + (i + 1) + " has line width = " + lineWidth + "\n");
+            Preferences.debug(drawString + (i + 1) + " has line width = " + lineWidth + "\n", Preferences.DEBUG_FILEIO);
             measure = getInt(endianess);
 
             if (measure == 0) {
                 Preferences.debug(drawString + (i + 1) + " has the display of " +
-                                  "measured characteristics switched off\n");
+                                  "measured characteristics switched off\n", Preferences.DEBUG_FILEIO);
             } else if (measure == 1) {
                 Preferences.debug(drawString + (i + 1) + " has the display of " +
-                                  "default measured characteristics switched on\n");
+                                  "default measured characteristics switched on\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " has the display of ");
+                Preferences.debug(drawString + (i + 1) + " has the display of ", Preferences.DEBUG_FILEIO);
 
                 if ((measure & 0x02) != 0) {
-                    Preferences.debug("circumference ");
+                    Preferences.debug("circumference ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measure & 0x04) != 0) {
-                    Preferences.debug("area ");
+                    Preferences.debug("area ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measure & 0x08) != 0) {
-                    Preferences.debug("radius ");
+                    Preferences.debug("radius ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measure & 0x10) != 0) {
-                    Preferences.debug("angle ");
+                    Preferences.debug("angle ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measure & 0x20) != 0) {
-                    Preferences.debug("distance x ");
+                    Preferences.debug("distance x ", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((measure & 0x40) != 0) {
-                    Preferences.debug("distance y ");
+                    Preferences.debug("distance y ", Preferences.DEBUG_FILEIO);
                 }
 
-                Preferences.debug("\n");
+                Preferences.debug("\n", Preferences.DEBUG_FILEIO);
             }
 
             startPointX = getDouble(endianess);
-            Preferences.debug(drawString + (i + 1) + " has a horizontal starting " + "point = " + startPointX + "\n");
+            Preferences.debug(drawString + (i + 1) + " has a horizontal starting " + "point = " + startPointX + "\n",
+            		Preferences.DEBUG_FILEIO);
             startPointY = getDouble(endianess);
-            Preferences.debug(drawString + (i + 1) + " has a vertical starting " + "point = " + startPointY + "\n");
+            Preferences.debug(drawString + (i + 1) + " has a vertical starting " + "point = " + startPointY + "\n",
+            		Preferences.DEBUG_FILEIO);
             color = getInt(endianess);
             redValue = color & 0x000000ff;
             greenValue = (color >> 8) & 0x000000ff;
             blueValue = (color >> 16) & 0x000000ff;
             Preferences.debug(drawString + (i + 1) + " had red = " + redValue + " green = " + greenValue + " blue = " +
-                              blueValue + "\n");
+                              blueValue + "\n", Preferences.DEBUG_FILEIO);
             valid = getInt(endianess);
 
             if (valid == 0) {
-                Preferences.debug(drawString + (i + 1) + " editing was unexpectedly not completed\n");
+                Preferences.debug(drawString + (i + 1) + " editing was unexpectedly not completed\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " editing was completed as expected\n");
+                Preferences.debug(drawString + (i + 1) + " editing was completed as expected\n", Preferences.DEBUG_FILEIO);
             }
 
             knotWidth = getInt(endianess);
-            Preferences.debug(drawString + (i + 1) + " knotWidth = " + knotWidth + "\n");
+            Preferences.debug(drawString + (i + 1) + " knotWidth = " + knotWidth + "\n", Preferences.DEBUG_FILEIO);
             catchArea = getInt(endianess);
-            Preferences.debug(drawString + (i + 1) + " The size of the mouse catch area was " + catchArea + "\n");
+            Preferences.debug(drawString + (i + 1) + " The size of the mouse catch area was " + catchArea + "\n",
+            		Preferences.DEBUG_FILEIO);
             fontHeight = getInt(endianess);
-            Preferences.debug(drawString + (i + 1) + " The font height in logical units was " + fontHeight + "\n");
+            Preferences.debug(drawString + (i + 1) + " The font height in logical units was " + fontHeight + "\n",
+            		Preferences.DEBUG_FILEIO);
             fontWidth = getInt(endianess);
 
             if (fontWidth == 0) {
-                Preferences.debug(drawString + (i + 1) + " The default font width was used\n");
+                Preferences.debug(drawString + (i + 1) + " The default font width was used\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " The font width in logical units was " + fontWidth + "\n");
+                Preferences.debug(drawString + (i + 1) + " The font width in logical units was " + fontWidth + "\n",
+                		Preferences.DEBUG_FILEIO);
             }
 
             fontEscapement = getInt(endianess);
-            Preferences.debug(drawString + (i + 1) + " Angle of each text line = " + (fontEscapement / 10.0f) + "\n");
+            Preferences.debug(drawString + (i + 1) + " Angle of each text line = " + (fontEscapement / 10.0f) + "\n", 
+            		Preferences.DEBUG_FILEIO);
             fontOrientation = getInt(endianess);
             Preferences.debug(drawString + (i + 1) + " Angle of each character's base line = " +
-                              (fontOrientation / 10.0f) + "\n");
+                              (fontOrientation / 10.0f) + "\n", Preferences.DEBUG_FILEIO);
             fontWeight = getInt(endianess);
 
             if (fontWeight == 0) {
-                Preferences.debug(drawString + (i + 1) + " The default font weight was used\n");
+                Preferences.debug(drawString + (i + 1) + " The default font weight was used\n", Preferences.DEBUG_FILEIO);
             } else if (fontWeight == 400) {
-                Preferences.debug(drawString + (i + 1) + " The font weight was 400, the value for normal\n");
+                Preferences.debug(drawString + (i + 1) + " The font weight was 400, the value for normal\n", Preferences.DEBUG_FILEIO);
             } else if (fontWeight == 700) {
-                Preferences.debug(drawString + (i + 1) + " The font weight was 700, the value for bold\n");
+                Preferences.debug(drawString + (i + 1) + " The font weight was 700, the value for bold\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " The font weight was = " + fontWeight + "\n");
+                Preferences.debug(drawString + (i + 1) + " The font weight was = " + fontWeight + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fontItalic = getInt(endianess);
 
             if (fontItalic == 0) {
-                Preferences.debug(drawString + (i + 1) + " An italic font was not specified\n");
+                Preferences.debug(drawString + (i + 1) + " An italic font was not specified\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " An italic font was specified\n");
+                Preferences.debug(drawString + (i + 1) + " An italic font was specified\n", Preferences.DEBUG_FILEIO);
             }
 
             fontUnderline = getInt(endianess);
 
             if (fontUnderline == 0) {
-                Preferences.debug(drawString + (i + 1) + " An underlined font was not specified\n");
+                Preferences.debug(drawString + (i + 1) + " An underlined font was not specified\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " An underlined font was specified\n");
+                Preferences.debug(drawString + (i + 1) + " An underlined font was specified\n", Preferences.DEBUG_FILEIO);
             }
 
             fontStrikeOut = getInt(endianess);
 
             if (fontStrikeOut == 0) {
-                Preferences.debug(drawString + (i + 1) + " A strikeout font was not specified\n");
+                Preferences.debug(drawString + (i + 1) + " A strikeout font was not specified\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " A strikeout font was specified\n");
+                Preferences.debug(drawString + (i + 1) + " A strikeout font was specified\n", Preferences.DEBUG_FILEIO);
             }
 
             fontCharSet = getInt(endianess);
 
             if (fontCharSet == 0) {
-                Preferences.debug(drawString + (i + 1) + " FontCharSet = 0 as expected\n");
+                Preferences.debug(drawString + (i + 1) + " FontCharSet = 0 as expected\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug(drawString + (i + 1) + " FontCharSet = " + fontCharSet +
-                                  " instead of the expected zero\n");
+                                  " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
             }
 
             fontOutPrecision = getInt(endianess);
 
             if (fontOutPrecision == 0) {
-                Preferences.debug(drawString + (i + 1) + " FontOutPrecision = 0 as expected\n");
+                Preferences.debug(drawString + (i + 1) + " FontOutPrecision = 0 as expected\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug(drawString + (i + 1) + " FontOutPrecision = " + fontOutPrecision +
-                                  " instead of the expected zero\n");
+                                  " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
             }
 
             fontClipPrecision = getInt(endianess);
 
             if (fontClipPrecision == 0) {
-                Preferences.debug(drawString + (i + 1) + " FontClipPrecision = 0 as expected\n");
+                Preferences.debug(drawString + (i + 1) + " FontClipPrecision = 0 as expected\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug(drawString + (i + 1) + " FontClipPrecision = " + fontClipPrecision +
-                                  " instead of the expected zero\n");
+                                  " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
             }
 
             fontQuality = getInt(endianess);
 
             if (fontQuality == 0) {
-                Preferences.debug(drawString + (i + 1) + " FontQuality = 0 as expected\n");
+                Preferences.debug(drawString + (i + 1) + " FontQuality = 0 as expected\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug(drawString + (i + 1) + " FontQuality = " + fontQuality +
-                                  " instead of the expected zero\n");
+                                  " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
             }
 
             fontPitchAndFamily = getInt(endianess);
             fontPitch = fontPitchAndFamily & 0x00000003;
 
             if (fontPitch == 0) {
-                Preferences.debug(drawString + (i + 1) + " The system default pitch was used\n");
+                Preferences.debug(drawString + (i + 1) + " The system default pitch was used\n", Preferences.DEBUG_FILEIO);
             } else if (fontPitch == 1) {
-                Preferences.debug(drawString + (i + 1) + " A fixed pitch was used\n");
+                Preferences.debug(drawString + (i + 1) + " A fixed pitch was used\n", Preferences.DEBUG_FILEIO);
             } else if (fontPitch == 2) {
-                Preferences.debug(drawString + (i + 1) + " A variable pitch was used\n");
+                Preferences.debug(drawString + (i + 1) + " A variable pitch was used\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " FontPitch = 3\n");
+                Preferences.debug(drawString + (i + 1) + " FontPitch = 3\n", Preferences.DEBUG_FILEIO);
             }
 
             fontFamily = (0x000000f0 & fontPitchAndFamily) >> 4;
 
             if (fontFamily == 0) {
-                Preferences.debug(drawString + (i + 1) + " Font family is a don't care\n");
+                Preferences.debug(drawString + (i + 1) + " Font family is a don't care\n", Preferences.DEBUG_FILEIO);
             } else if (fontFamily == 1) {
-                Preferences.debug(drawString + (i + 1) + " Font family is a variable stroke width, serified\n");
+                Preferences.debug(drawString + (i + 1) + " Font family is a variable stroke width, serified\n",
+                		Preferences.DEBUG_FILEIO);
             } else if (fontFamily == 2) {
                 Preferences.debug(drawString + (i + 1) + " Font family was a variable stroke width, " +
-                                  "sans-serified\n");
+                                  "sans-serified\n", Preferences.DEBUG_FILEIO);
             } else if (fontFamily == 3) {
                 Preferences.debug(drawString + (i + 1) + " Font family was a constant stroke width, " +
-                                  "serified or sans-serified\n");
+                                  "serified or sans-serified\n", Preferences.DEBUG_FILEIO);
             } else if (fontFamily == 4) {
-                Preferences.debug(drawString + (i + 1) + " Font family was cursive\n");
+                Preferences.debug(drawString + (i + 1) + " Font family was cursive\n", Preferences.DEBUG_FILEIO);
             } else if (fontFamily == 5) {
-                Preferences.debug(drawString + (i + 1) + " Font family was old English\n");
+                Preferences.debug(drawString + (i + 1) + " Font family was old English\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " Font family = " + fontFamily + "\n");
+                Preferences.debug(drawString + (i + 1) + " Font family = " + fontFamily + "\n", Preferences.DEBUG_FILEIO);
             }
 
             for (j = 0; j < 32; j++) {
@@ -5288,30 +5330,30 @@ public class FileLSM extends FileBase {
 
             fontFaceName = new String(fName);
             fontFaceName = fontFaceName.trim();
-            Preferences.debug(drawString + (i + 1) + " Font face name = " + fontFaceName + "\n");
+            Preferences.debug(drawString + (i + 1) + " Font face name = " + fontFaceName + "\n", Preferences.DEBUG_FILEIO);
             enabled = getInt(endianess);
 
             if (enabled == 0) {
-                Preferences.debug(drawString + (i + 1) + " is disabled\n");
+                Preferences.debug(drawString + (i + 1) + " is disabled\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(drawString + (i + 1) + " is enabled\n");
+                Preferences.debug(drawString + (i + 1) + " is enabled\n", Preferences.DEBUG_FILEIO);
             }
 
             notMoveable = getInt(endianess);
 
             if (notMoveable != 0) {
-                Preferences.debug(drawString + (i + 1) + " cannot be moved\n");
-                Preferences.debug("with the editor\n");
+                Preferences.debug(drawString + (i + 1) + " cannot be moved\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("with the editor\n", Preferences.DEBUG_FILEIO);
             }
 
             for (j = 0; j < 8; j++) {
                 reserved8[j] = getInt(endianess);
 
                 if (reserved8[j] == 0) {
-                    Preferences.debug("Reserved field " + (j + 1) + " of 8 is an expected zero\n");
+                    Preferences.debug("Reserved field " + (j + 1) + " of 8 is an expected zero\n", Preferences.DEBUG_FILEIO);
                 } else {
                     Preferences.debug("Reserved field " + (j + 1) + " of 8 = " + reserved8[j] +
-                                      " instead of the expected zero\n");
+                                      " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
                 }
             }
 
@@ -5319,10 +5361,12 @@ public class FileLSM extends FileBase {
 
                 case 13: // text
                     pointOriginX = getDouble(endianess);
-                    Preferences.debug(drawString + "text " + (i + 1) + " has left text start = " + pointOriginX + "\n");
+                    Preferences.debug(drawString + "text " + (i + 1) + " has left text start = " + pointOriginX + "\n",
+                    		Preferences.DEBUG_FILEIO);
                     pointOriginY = getDouble(endianess);
                     Preferences.debug(drawString + "text " + (i + 1) +
-                                      " has upper border of text bounding rectangle at = " + pointOriginY + "\n");
+                                      " has upper border of text bounding rectangle at = " + pointOriginY + "\n", 
+                                      Preferences.DEBUG_FILEIO);
                     currentPos = raFile.getFilePointer();
                     remainingBlockBytes = (int) (drawingElementBlockStart - currentPos);
                     numChars = remainingBlockBytes / 2;
@@ -5333,112 +5377,122 @@ public class FileLSM extends FileBase {
 
                     sText = new String(cText);
                     sText = sText.trim();
-                    Preferences.debug(drawString + "text " + (i + 1) + " = " + sText + "\n");
+                    Preferences.debug(drawString + "text " + (i + 1) + " = " + sText + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 14: // line
                     numberKnots = getInt(endianess);
                     if (numberKnots == 2) {
-                        Preferences.debug(drawString + "line " + (i + 1) + " has the required 2 knots\n");
+                        Preferences.debug(drawString + "line " + (i + 1) + " has the required 2 knots\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "line " + (i + 1) + " has " + numberKnots +
-                                          " knots instead of the required 2\n");
+                                          " knots instead of the required 2\n", Preferences.DEBUG_FILEIO);
                     }
 
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     knotX[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "line " + (i + 1) + " has knot1X = " + knotX[0] + "\n");
+                    Preferences.debug(drawString + "line " + (i + 1) + " has knot1X = " + knotX[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "line " + (i + 1) + " has knot1Y = " + knotY[0] + "\n");
+                    Preferences.debug(drawString + "line " + (i + 1) + " has knot1Y = " + knotY[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotX[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "line " + (i + 1) + " has knot2X = " + knotX[1] + "\n");
+                    Preferences.debug(drawString + "line " + (i + 1) + " has knot2X = " + knotX[1] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "line " + (i + 1) + " has knot2Y = " + knotY[1] + "\n");
+                    Preferences.debug(drawString + "line " + (i + 1) + " has knot2Y = " + knotY[1] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 15: // scale bar
                     numberKnots = getInt(endianess);
                     if (numberKnots == 2) {
-                        Preferences.debug(drawString + "scale bar " + (i + 1) + " has the required 2 knots\n");
+                        Preferences.debug(drawString + "scale bar " + (i + 1) + " has the required 2 knots\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "scale bar " + (i + 1) + " has " + numberKnots +
-                                          " knots instead of the required 2\n");
+                                          " knots instead of the required 2\n", Preferences.DEBUG_FILEIO);
                     }
 
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     knotX[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "scale bar " + (i + 1) + " has knot1X = " + knotX[0] + "\n");
+                    Preferences.debug(drawString + "scale bar " + (i + 1) + " has knot1X = " + knotX[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "scale bar " + (i + 1) + " has knot1Y = " + knotY[0] + "\n");
+                    Preferences.debug(drawString + "scale bar " + (i + 1) + " has knot1Y = " + knotY[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotX[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "scale bar " + (i + 1) + " has knot2X = " + knotX[1] + "\n");
+                    Preferences.debug(drawString + "scale bar " + (i + 1) + " has knot2X = " + knotX[1] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "scale bar " + (i + 1) + " has knot2Y = " + knotY[1] + "\n");
+                    Preferences.debug(drawString + "scale bar " + (i + 1) + " has knot2Y = " + knotY[1] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 16: // open arrow
                     numberKnots = getInt(endianess);
                     if (numberKnots == 2) {
-                        Preferences.debug(drawString + "open arrow " + (i + 1) + " has the required 2 knots\n");
+                        Preferences.debug(drawString + "open arrow " + (i + 1) + " has the required 2 knots\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "open arrow " + (i + 1) + " has " + numberKnots +
-                                          " knots instead of the required 2\n");
+                                          " knots instead of the required 2\n", Preferences.DEBUG_FILEIO);
                     }
 
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     knotX[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "open arrow " + (i + 1) + " has knot1X = " + knotX[0] + "\n");
+                    Preferences.debug(drawString + "open arrow " + (i + 1) + " has knot1X = " + knotX[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "open arrow " + (i + 1) + " has knot1Y = " + knotY[0] + "\n");
+                    Preferences.debug(drawString + "open arrow " + (i + 1) + " has knot1Y = " + knotY[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotX[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "open arrow " + (i + 1) + " has knot2X = " + knotX[1] + "\n");
+                    Preferences.debug(drawString + "open arrow " + (i + 1) + " has knot2X = " + knotX[1] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "open arrow " + (i + 1) + " has knot2Y = " + knotY[1] + "\n");
+                    Preferences.debug(drawString + "open arrow " + (i + 1) + " has knot2Y = " + knotY[1] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 17: // closed arrow
                     numberKnots = getInt(endianess);
                     if (numberKnots == 2) {
-                        Preferences.debug(drawString + "closed arrow " + (i + 1) + " has the required 2 knots\n");
+                        Preferences.debug(drawString + "closed arrow " + (i + 1) + " has the required 2 knots\n",
+                        		Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "closed arrow " + (i + 1) + " has " + numberKnots +
-                                          " knots instead of the required 2\n");
+                                          " knots instead of the required 2\n", Preferences.DEBUG_FILEIO);
                     }
 
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     knotX[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "closed arrow " + (i + 1) + " has knot1X = " + knotX[0] + "\n");
+                    Preferences.debug(drawString + "closed arrow " + (i + 1) + " has knot1X = " + knotX[0] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                     knotY[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "closed arrow " + (i + 1) + " has knot1Y = " + knotY[0] + "\n");
+                    Preferences.debug(drawString + "closed arrow " + (i + 1) + " has knot1Y = " + knotY[0] + "\n", 
+                    		Preferences.DEBUG_FILEIO);
                     knotX[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "closed arrow " + (i + 1) + " has knot2X = " + knotX[1] + "\n");
+                    Preferences.debug(drawString + "closed arrow " + (i + 1) + " has knot2X = " + knotX[1] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                     knotY[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "closed arrow " + (i + 1) + " has knot2Y = " + knotY[1] + "\n");
+                    Preferences.debug(drawString + "closed arrow " + (i + 1) + " has knot2Y = " + knotY[1] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                     break;
 
                 case 18: // rectangle
                     numberKnots = getInt(endianess);
                     if (numberKnots == 2) {
-                        Preferences.debug(drawString + "rectangle " + (i + 1) + " has the required 2 knots\n");
+                        Preferences.debug(drawString + "rectangle " + (i + 1) + " has the required 2 knots\n",
+                        		Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "rectangle " + (i + 1) + " has " + numberKnots +
-                                          " knots instead of the required 2\n");
+                                          " knots instead of the required 2\n", Preferences.DEBUG_FILEIO);
                     }
 
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     knotX[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "rectangle " + (i + 1) + " has knot1X = " + knotX[0] + "\n");
+                    Preferences.debug(drawString + "rectangle " + (i + 1) + " has knot1X = " + knotX[0] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                     knotY[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "rectangle " + (i + 1) + " has knot1Y = " + knotY[0] + "\n");
+                    Preferences.debug(drawString + "rectangle " + (i + 1) + " has knot1Y = " + knotY[0] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                     knotX[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "rectangle " + (i + 1) + " has knot2X = " + knotX[1] + "\n");
+                    Preferences.debug(drawString + "rectangle " + (i + 1) + " has knot2X = " + knotX[1] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                     knotY[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "rectangle " + (i + 1) + " has knot2Y = " + knotY[1] + "\n");
+                    Preferences.debug(drawString + "rectangle " + (i + 1) + " has knot2Y = " + knotY[1] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                     if (drawingElement == BLEACH_ROI) {
                         bleachKnotX = new double[numberKnots];
                         bleachKnotY = new double[numberKnots];
@@ -5460,19 +5514,20 @@ public class FileLSM extends FileBase {
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     if (numberKnots == 4) {
-                        Preferences.debug(drawString + "ellipse " + (i + 1) + " has the required 4 knots\n");
+                        Preferences.debug(drawString + "ellipse " + (i + 1) + " has the required 4 knots\n", 
+                        		Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "ellipse " + (i + 1) + " has " + numberKnots +
-                                          " knots instead of the required 4\n");
+                                          " knots instead of the required 4\n", Preferences.DEBUG_FILEIO);
                     }
 
                     for (j = 0; j < numberKnots; j++) {
                         knotX[j] = getDouble(endianess);
                         Preferences.debug(drawString + "ellipse " + (i + 1) + " has knot" + (j + 1) + "X = " +
-                                          knotX[j] + "\n");
+                                          knotX[j] + "\n", Preferences.DEBUG_FILEIO);
                         knotY[j] = getDouble(endianess);
                         Preferences.debug(drawString + "ellipse " + (i + 1) + " has knot" + (j + 1) + "Y = " +
-                                          knotY[j] + "\n");
+                                          knotY[j] + "\n", Preferences.DEBUG_FILEIO);
                     } // for (j = 0; j < numberKnots; j++)
 
                     if (drawingElement == BLEACH_ROI) {
@@ -5497,16 +5552,16 @@ public class FileLSM extends FileBase {
                 case 20: // closed polyline
                     numberKnots = getInt(endianess);
                     Preferences.debug(drawString + "closed polyline " + (i + 1) + " has " + numberKnots +
-                                      " verticies\n");
+                                      " verticies\n", Preferences.DEBUG_FILEIO);
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     for (j = 0; j < numberKnots; j++) {
                         knotX[j] = getDouble(endianess);
                         Preferences.debug(drawString + "closed polyline " + (i + 1) + " has vertex" + (j + 1) + "X = " +
-                                          knotX[j] + "\n");
+                                          knotX[j] + "\n", Preferences.DEBUG_FILEIO);
                         knotY[j] = getDouble(endianess);
                         Preferences.debug(drawString + "closed polyline " + (i + 1) + " has vertex" + (j + 1) + "Y = " +
-                                          knotY[j] + "\n");
+                                          knotY[j] + "\n", Preferences.DEBUG_FILEIO);
                     } // for (j = 0; j < numberKnots; j++)
 
                     if (drawingElement == BLEACH_ROI) {
@@ -5527,16 +5582,17 @@ public class FileLSM extends FileBase {
 
                 case 21: // open polyline
                     numberKnots = getInt(endianess);
-                    Preferences.debug(drawString + "open polyline " + (i + 1) + " has " + numberKnots + " verticies\n");
+                    Preferences.debug(drawString + "open polyline " + (i + 1) + " has " + numberKnots + " verticies\n",
+                    		Preferences.DEBUG_FILEIO);
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     for (j = 0; j < numberKnots; j++) {
                         knotX[j] = getDouble(endianess);
                         Preferences.debug(drawString + "open polyline " + (i + 1) + " has vertex" + (j + 1) + "X = " +
-                                          knotX[j] + "\n");
+                                          knotX[j] + "\n", Preferences.DEBUG_FILEIO);
                         knotY[j] = getDouble(endianess);
                         Preferences.debug(drawString + "open polyline " + (i + 1) + " has vertex" + (j + 1) + "Y = " +
-                                          knotY[j] + "\n");
+                                          knotY[j] + "\n", Preferences.DEBUG_FILEIO);
                     } // for (j = 0; j < numberKnots; j++)
 
                     break;
@@ -5544,16 +5600,16 @@ public class FileLSM extends FileBase {
                 case 22: // closed Bezier spline curve
                     numberKnots = getInt(endianess);
                     Preferences.debug(drawString + "closed Bezier spline curve " + (i + 1) + " has " + numberKnots +
-                                      " knots\n");
+                                      " knots\n", Preferences.DEBUG_FILEIO);
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     for (j = 0; j < numberKnots; j++) {
                         knotX[j] = getDouble(endianess);
                         Preferences.debug(drawString + "closed Bezier spline curve " + (i + 1) + " has knot" + (j + 1) +
-                                          "X = " + knotX[j] + "\n");
+                                          "X = " + knotX[j] + "\n", Preferences.DEBUG_FILEIO);
                         knotY[j] = getDouble(endianess);
                         Preferences.debug(drawString + "closed Bezier spline curve " + (i + 1) + " has knot" + (j + 1) +
-                                          "Y = " + knotY[j] + "\n");
+                                          "Y = " + knotY[j] + "\n", Preferences.DEBUG_FILEIO);
                     } // for (j = 0; j < numberKnots; j++)
 
                     if (drawingElement == BLEACH_ROI) {
@@ -5575,16 +5631,16 @@ public class FileLSM extends FileBase {
                 case 23: // open Bezier spline curve
                     numberKnots = getInt(endianess);
                     Preferences.debug(drawString + "open Bezier spline curve " + (i + 1) + " has " + numberKnots +
-                                      " knots\n");
+                                      " knots\n", Preferences.DEBUG_FILEIO);
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     for (j = 0; j < numberKnots; j++) {
                         knotX[j] = getDouble(endianess);
                         Preferences.debug(drawString + "open Bezier spline curve " + (i + 1) + " has knot" + (j + 1) +
-                                          "X = " + knotX[j] + "\n");
+                                          "X = " + knotX[j] + "\n", Preferences.DEBUG_FILEIO);
                         knotY[j] = getDouble(endianess);
                         Preferences.debug(drawString + "open Bezier spline curve " + (i + 1) + " has knot" + (j + 1) +
-                                          "Y = " + knotY[j] + "\n");
+                                          "Y = " + knotY[j] + "\n", Preferences.DEBUG_FILEIO);
                     } // for (j = 0; j < numberKnots; j++)
 
                     break;
@@ -5595,22 +5651,22 @@ public class FileLSM extends FileBase {
                     // on the perimiter.
                     numberKnots = getInt(endianess);
                     if (numberKnots == 2) {
-                        Preferences.debug(drawString + "circle " + (i + 1) + " has the required 2 knots\n");
+                        Preferences.debug(drawString + "circle " + (i + 1) + " has the required 2 knots\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "circle " + (i + 1) + " has " + numberKnots +
-                                          " knots instead of the required 2\n");
+                                          " knots instead of the required 2\n", Preferences.DEBUG_FILEIO);
                     }
 
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     knotX[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "circle " + (i + 1) + " has knot1X = " + knotX[0] + "\n");
+                    Preferences.debug(drawString + "circle " + (i + 1) + " has knot1X = " + knotX[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[0] = getDouble(endianess);
-                    Preferences.debug(drawString + "circle " + (i + 1) + " has knot1Y = " + knotY[0] + "\n");
+                    Preferences.debug(drawString + "circle " + (i + 1) + " has knot1Y = " + knotY[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotX[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "circle " + (i + 1) + " has knot2X = " + knotX[1] + "\n");
+                    Preferences.debug(drawString + "circle " + (i + 1) + " has knot2X = " + knotX[1] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[1] = getDouble(endianess);
-                    Preferences.debug(drawString + "circle " + (i + 1) + " has knot2Y = " + knotY[1] + "\n");
+                    Preferences.debug(drawString + "circle " + (i + 1) + " has knot2Y = " + knotY[1] + "\n", Preferences.DEBUG_FILEIO);
                     if (drawingElement == BLEACH_ROI) {
                         bleachKnotX = new double[numberKnots];
                         bleachKnotY = new double[numberKnots];
@@ -5631,41 +5687,41 @@ public class FileLSM extends FileBase {
                     numberKnots = getInt(endianess);
                     if (numberKnots == 2) {
                         Preferences.debug(drawString + "rectangle with color palette " + (i + 1) +
-                                          " has the required 2 knots\n");
+                                          " has the required 2 knots\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "rectangle with color palette " + (i + 1) + " has " +
-                                          numberKnots + " knots instead of the required 2\n");
+                                          numberKnots + " knots instead of the required 2\n", Preferences.DEBUG_FILEIO);
                     }
 
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     knotX[0] = getDouble(endianess);
                     Preferences.debug(drawString + "rectangle with color palette " + (i + 1) + " has knot1X = " +
-                                      knotX[0] + "\n");
+                                      knotX[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[0] = getDouble(endianess);
                     Preferences.debug(drawString + "rectangle with color palette " + (i + 1) + " has knot1Y = " +
-                                      knotY[0] + "\n");
+                                      knotY[0] + "\n", Preferences.DEBUG_FILEIO);
                     knotX[1] = getDouble(endianess);
                     Preferences.debug(drawString + "rectangle with color palette " + (i + 1) + " has knot2X = " +
-                                      knotX[1] + "\n");
+                                      knotX[1] + "\n", Preferences.DEBUG_FILEIO);
                     knotY[1] = getDouble(endianess);
                     Preferences.debug(drawString + "rectangle with color palette " + (i + 1) + " has knot2Y = " +
-                                      knotY[1] + "\n");
+                                      knotY[1] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 26: // open polyline with arrow tip
                     numberKnots = getInt(endianess);
                     Preferences.debug(drawString + "open polyline with arrow tip " + (i + 1) + " has " + numberKnots +
-                                      " verticies\n");
+                                      " verticies\n", Preferences.DEBUG_FILEIO);
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     for (j = 0; j < numberKnots; j++) {
                         knotX[j] = getDouble(endianess);
                         Preferences.debug(drawString + "open polyline with arrow tip " + (i + 1) + " has vertex" +
-                                          (j + 1) + "X = " + knotX[j] + "\n");
+                                          (j + 1) + "X = " + knotX[j] + "\n", Preferences.DEBUG_FILEIO);
                         knotY[j] = getDouble(endianess);
                         Preferences.debug(drawString + "open polyline with arrow tip " + (i + 1) + " has vertex" +
-                                          (j + 1) + "Y = " + knotY[j] + "\n");
+                                          (j + 1) + "Y = " + knotY[j] + "\n", Preferences.DEBUG_FILEIO);
                     } // for (j = 0; j < numberKnots; j++)
 
                     break;
@@ -5673,16 +5729,16 @@ public class FileLSM extends FileBase {
                 case 27: // open Bezier spline curve with arrow tip
                     numberKnots = getInt(endianess);
                     Preferences.debug(drawString + "open Bezier spline curve with arrow tip " + (i + 1) + " has " +
-                                      numberKnots + " knots\n");
+                                      numberKnots + " knots\n", Preferences.DEBUG_FILEIO);
                     knotX = new double[numberKnots];
                     knotY = new double[numberKnots];
                     for (j = 0; j < numberKnots; j++) {
                         knotX[j] = getDouble(endianess);
                         Preferences.debug(drawString + "open Bezier spline curve with arrow tip " + (i + 1) +
-                                          " has knot" + (j + 1) + "X = " + knotX[j] + "\n");
+                                          " has knot" + (j + 1) + "X = " + knotX[j] + "\n", Preferences.DEBUG_FILEIO);
                         knotY[j] = getDouble(endianess);
                         Preferences.debug(drawString + "open Bezier spline curve with arrow tip " + (i + 1) +
-                                          " has knot" + (j + 1) + "Y = " + knotY[j] + "\n");
+                                          " has knot" + (j + 1) + "Y = " + knotY[j] + "\n", Preferences.DEBUG_FILEIO);
                     } // for (j = 0; j < numberKnots; j++)
 
                     break;
@@ -5691,10 +5747,11 @@ public class FileLSM extends FileBase {
                     numberKnots = getInt(endianess);
                     if (numberKnots == 3) {
                         Preferences.debug(drawString + "two connected lines for angle measurement " + (i + 1) +
-                                          " has the required 3 knots\n");
+                                          " has the required 3 knots\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "two connected lines for angle measurement " + (i + 1) +
-                                          " has " + numberKnots + " knots instead of the required 3\n");
+                                          " has " + numberKnots + " knots instead of the required 3\n",
+                                          Preferences.DEBUG_FILEIO);
                     }
 
                     knotX = new double[numberKnots];
@@ -5702,10 +5759,10 @@ public class FileLSM extends FileBase {
                     for (j = 0; j < numberKnots; j++) {
                         knotX[j] = getDouble(endianess);
                         Preferences.debug(drawString + "two connected lines for angle measurement " + (i + 1) +
-                                          " has knot" + (j + 1) + "X = " + knotX[j] + "\n");
+                                          " has knot" + (j + 1) + "X = " + knotX[j] + "\n", Preferences.DEBUG_FILEIO);
                         knotY[j] = getDouble(endianess);
                         Preferences.debug(drawString + "two connected lines for angle measurement " + (i + 1) +
-                                          " has knot" + (j + 1) + "Y = " + knotY[j] + "\n");
+                                          " has knot" + (j + 1) + "Y = " + knotY[j] + "\n", Preferences.DEBUG_FILEIO);
                     } // for (j = 0; j < numberKnots; j++)
 
                     break;
@@ -5713,10 +5770,11 @@ public class FileLSM extends FileBase {
                 case 29: // circle with 3 perimiter points
                     numberKnots = getInt(endianess);
                     if (numberKnots == 3) {
-                        Preferences.debug(drawString + "circle " + (i + 1) + " has the required 3 knots\n");
+                        Preferences.debug(drawString + "circle " + (i + 1) + " has the required 3 knots\n",
+                        		Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug(drawString + "circle " + (i + 1) + " has " + numberKnots +
-                                          " knots instead of the required 3\n");
+                                          " knots instead of the required 3\n", Preferences.DEBUG_FILEIO);
                     }
 
                     knotX = new double[numberKnots];
@@ -5724,10 +5782,10 @@ public class FileLSM extends FileBase {
                     for (j = 0; j < numberKnots; j++) {
                         knotX[j] = getDouble(endianess);
                         Preferences.debug(drawString + "circle " + (i + 1) + " has knot" + (j + 1) + "X = " + knotX[j] +
-                                          "\n");
+                                          "\n", Preferences.DEBUG_FILEIO);
                         knotY[j] = getDouble(endianess);
                         Preferences.debug(drawString + "circle " + (i + 1) + " has knot" + (j + 1) + "Y = " + knotY[j] +
-                                          "\n");
+                                          "\n", Preferences.DEBUG_FILEIO);
                     } // for (j = 0; j < numberKnots; j++)
 
                     if (drawingElement == BLEACH_ROI) {
@@ -5805,27 +5863,28 @@ public class FileLSM extends FileBase {
         }
 
         blockSize = getInt(endianess);
-        Preferences.debug(lutString + "block size = " + blockSize + " bytes\n");
+        Preferences.debug(lutString + "block size = " + blockSize + " bytes\n", Preferences.DEBUG_FILEIO);
         subBlockNumber = getInt(endianess);
-        Preferences.debug(lutString + "has " + subBlockNumber + " sub blocks\n");
+        Preferences.debug(lutString + "has " + subBlockNumber + " sub blocks\n", Preferences.DEBUG_FILEIO);
         lutChannels = getInt(endianess);
 
         if (lutKind == INPUT_LUT) {
 
             if (lutChannels == czChannels) {
                 Preferences.debug(lutString + "handles " + lutChannels +
-                                  " channels, the same as the number of data channels\n");
+                                  " channels, the same as the number of data channels\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug(lutString + "handles " + lutChannels + " channels, but the number expected is " +
-                                  czChannels + ",\n");
-                Preferences.debug("the number of data channels\n");
+                                  czChannels + ",\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("the number of data channels\n", Preferences.DEBUG_FILEIO);
             }
         } else if (lutKind == OUTPUT_LUT) {
 
             if (lutChannels == 3) {
-                Preferences.debug(lutString + "handles 3 channels as expected\n");
+                Preferences.debug(lutString + "handles 3 channels as expected\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(lutString + "handles " + lutChannels + " channels, but the number expected is 3\n");
+                Preferences.debug(lutString + "handles " + lutChannels + " channels, but the number expected is 3\n",
+                		Preferences.DEBUG_FILEIO);
             }
         }
 
@@ -5834,31 +5893,31 @@ public class FileLSM extends FileBase {
         switch (lutType) {
 
             case 0:
-                Preferences.debug(lutString + "is normal type\n");
+                Preferences.debug(lutString + "is normal type\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 1:
-                Preferences.debug(lutString + "is original type\n");
+                Preferences.debug(lutString + "is original type\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 2:
-                Preferences.debug(lutString + "is ramp type\n");
+                Preferences.debug(lutString + "is ramp type\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 3:
-                Preferences.debug(lutString + "is polyline type\n");
+                Preferences.debug(lutString + "is polyline type\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 4:
-                Preferences.debug(lutString + "is cubic spline type\n");
+                Preferences.debug(lutString + "is cubic spline type\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 5:
-                Preferences.debug(lutString + "is exponential type\n");
+                Preferences.debug(lutString + "is exponential type\n", Preferences.DEBUG_FILEIO);
                 break;
 
             default:
-                Preferences.debug(lutString + "has lutType = " + lutType + "\n");
+                Preferences.debug(lutString + "has lutType = " + lutType + "\n", Preferences.DEBUG_FILEIO);
         }
 
         advanced = getInt(endianess);
@@ -5866,29 +5925,30 @@ public class FileLSM extends FileBase {
         if (lutKind == INPUT_LUT) {
 
             if (advanced == 0) {
-                Preferences.debug(lutString + "did not have More/Simple button pressed\n");
+                Preferences.debug(lutString + "did not have More/Simple button pressed\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug(lutString + "did have More/Simple button pressed\n");
+                Preferences.debug(lutString + "did have More/Simple button pressed\n", Preferences.DEBUG_FILEIO);
             }
         }
 
         currentChannel = getInt(endianess);
 
         if (currentChannel == -1) {
-            Preferences.debug(lutString + "selected all channels for modification in the LUT editor\n");
+            Preferences.debug(lutString + "selected all channels for modification in the LUT editor\n", 
+            		Preferences.DEBUG_FILEIO);
         } else {
             Preferences.debug(lutString + " most recently selected channel " + currentChannel +
-                              " for modification in the LUT editor\n");
+                              " for modification in the LUT editor\n", Preferences.DEBUG_FILEIO);
         }
 
         for (i = 0; i < 9; i++) {
             reserved[i] = getInt(endianess);
 
             if (reserved[i] == 0) {
-                Preferences.debug("Reserved word " + (i + 1) + " of 9 equals 0 as expected\n");
+                Preferences.debug("Reserved word " + (i + 1) + " of 9 equals 0 as expected\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug("Reserved word " + (i + 1) + " of 9 equals " + reserved[i] +
-                                  " instead of the expected zero\n");
+                                  " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
             }
         }
 
@@ -5899,42 +5959,42 @@ public class FileLSM extends FileBase {
             switch (subBlockType) {
 
                 case 1:
-                    Preferences.debug(lutString + "SUBBLOCK_GAMMA\n");
+                    Preferences.debug(lutString + "SUBBLOCK_GAMMA\n", Preferences.DEBUG_FILEIO);
                     subBlockString = "SUBBLOCK_GAMMA";
                     break;
 
                 case 2:
-                    Preferences.debug(lutString + "SUBBLOCK_BRIGHTNESS\n");
+                    Preferences.debug(lutString + "SUBBLOCK_BRIGHTNESS\n", Preferences.DEBUG_FILEIO);
                     subBlockString = "SUBBLOCK_BRIGHTNESS";
                     break;
 
                 case 3:
-                    Preferences.debug(lutString + "SUBBLOCK_CONTRAST\n");
+                    Preferences.debug(lutString + "SUBBLOCK_CONTRAST\n", Preferences.DEBUG_FILEIO);
                     subBlockString = "SUBBLOCK_CONTRAST";
                     break;
 
                 case 4:
-                    Preferences.debug(lutString + "SUBBLOCK_RAMP\n");
+                    Preferences.debug(lutString + "SUBBLOCK_RAMP\n", Preferences.DEBUG_FILEIO);
                     subBlockString = "SUBBLOCK_RAMP";
                     break;
 
                 case 5:
-                    Preferences.debug(lutString + "SUBBLOCK_KNOTS\n");
+                    Preferences.debug(lutString + "SUBBLOCK_KNOTS\n", Preferences.DEBUG_FILEIO);
                     subBlockString = "SUBBLOCK_KNOTS";
                     break;
 
                 case 6:
-                    Preferences.debug(lutString + "SUBBLOCK_PALETTE_12_TO_12\n");
+                    Preferences.debug(lutString + "SUBBLOCK_PALETTE_12_TO_12\n", Preferences.DEBUG_FILEIO);
                     subBlockString = "SUBBLOCK_PALETTE_12_TO_12";
                     break;
 
                 default:
-                    Preferences.debug(lutString + "SUBBLOCK = " + subBlockType + "\n");
+                    Preferences.debug(lutString + "SUBBLOCK = " + subBlockType + "\n", Preferences.DEBUG_FILEIO);
                     subBlockString = "SUBBLOCK_UNKNOWN";
             }
 
             subBlockSize = getInt(endianess);
-            Preferences.debug(lutString + subBlockString + " has " + subBlockSize + " bytes\n");
+            Preferences.debug(lutString + subBlockString + " has " + subBlockSize + " bytes\n", Preferences.DEBUG_FILEIO);
 
             switch (subBlockType) {
 
@@ -5942,7 +6002,8 @@ public class FileLSM extends FileBase {
                     gamma = new double[lutChannels];
                     for (j = 0; j < lutChannels; j++) {
                         gamma[j] = getDouble(endianess);
-                        Preferences.debug(lutString + "channel " + (j + 1) + " has exponent " + gamma[j] + "\n");
+                        Preferences.debug(lutString + "channel " + (j + 1) + " has exponent " + gamma[j] + "\n",
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -5951,7 +6012,8 @@ public class FileLSM extends FileBase {
                     brightness = new double[lutChannels];
                     for (j = 0; j < lutChannels; j++) {
                         brightness[j] = getDouble(endianess);
-                        Preferences.debug(lutString + "channel " + (j + 1) + " has brightness " + brightness[j] + "\n");
+                        Preferences.debug(lutString + "channel " + (j + 1) + " has brightness " + brightness[j] + "\n",
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -5960,7 +6022,8 @@ public class FileLSM extends FileBase {
                     contrast = new double[lutChannels];
                     for (j = 0; j < lutChannels; j++) {
                         contrast[j] = getDouble(endianess);
-                        Preferences.debug(lutString + "channel " + (j + 1) + " has contrast " + contrast[j] + "\n");
+                        Preferences.debug(lutString + "channel " + (j + 1) + " has contrast " + contrast[j] + "\n",
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -5976,7 +6039,7 @@ public class FileLSM extends FileBase {
                         endX[j] = getDouble(endianess);
                         endY[j] = getDouble(endianess);
                         Preferences.debug(lutString + "channel " + (j + 1) + " start = (" + startX[j] + "," +
-                                          startY[j] + ")" + " end = (" + endX[j] + "," + endY[j] + ")\n");
+                                          startY[j] + ")" + " end = (" + endX[j] + "," + endY[j] + ")\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -5995,7 +6058,7 @@ public class FileLSM extends FileBase {
                                 lutKnotX[j][k] = getDouble(endianess);
                                 lutKnotY[j][k] = getDouble(endianess);
                                 Preferences.debug(lutString + "channel " + (j + 1) + " knot " + (k + 1) + " = (" +
-                                                  lutKnotX[j][k] + "," + lutKnotY[j][k] + ")\n");
+                                                  lutKnotX[j][k] + "," + lutKnotY[j][k] + ")\n", Preferences.DEBUG_FILEIO);
                             }
                         }
                     } // if (lutChannels > 0)
@@ -6023,9 +6086,9 @@ public class FileLSM extends FileBase {
         lutEnd = getInt(endianess);
 
         if (lutEnd == 0) {
-            Preferences.debug(lutString + "ended with expected SUBBLOCK_LIST_END\n");
+            Preferences.debug(lutString + "ended with expected SUBBLOCK_LIST_END\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug(lutString + "ended with " + lutEnd + " instead of the expected zero\n");
+            Preferences.debug(lutString + "ended with " + lutEnd + " instead of the expected zero\n", Preferences.DEBUG_FILEIO);
         }
 
         return;
