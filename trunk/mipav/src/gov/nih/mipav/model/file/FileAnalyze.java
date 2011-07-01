@@ -375,7 +375,8 @@ public class FileAnalyze extends FileBase {
             File file = new File(completeFileNames[i]);
 
             if (!file.exists()) {
-                Preferences.debug("FileAnalyze: The file can not be found: " + completeFileNames[i] + "!");
+                Preferences.debug("FileAnalyze: The file can not be found: " + completeFileNames[i] + "!",
+                		Preferences.DEBUG_FILEIO);
                 return FileUtility.UNDEFINED;
             }
         }
@@ -403,7 +404,7 @@ public class FileAnalyze extends FileBase {
         int extents = FileBase.bytesToInt(bigEndian, 0, buffer);
 
         if (extents != EXTENTS) {
-            Preferences.debug("extents = " + extents + " instead of the expected 16384\n");
+            Preferences.debug("extents = " + extents + " instead of the expected 16384\n", Preferences.DEBUG_FILEIO);
         }
 
         /** Check whether the value of regular field equals to "r" */
@@ -411,7 +412,7 @@ public class FileAnalyze extends FileBase {
 
         byte regular = raFile.readByte();
         if (regular != 'r') {
-            Preferences.debug("regular = " + regular + " instead of the expected 'r'\n");
+            Preferences.debug("regular = " + regular + " instead of the expected 'r'\n", Preferences.DEBUG_FILEIO);
         }
         
         // 80 byte description field
@@ -717,17 +718,17 @@ public class FileAnalyze extends FileBase {
         }
 
         fileHeaderName = fileName.substring(0, index) + ".hdr";
-        Preferences.debug(" fileHeaderName = " + fileHeaderName + "\n");
+        Preferences.debug(" fileHeaderName = " + fileHeaderName + "\n", Preferences.DEBUG_FILEIO);
         fileHeader = new File(fileDir + fileHeaderName);
 
         if (fileHeader.exists() == false) {
-            Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n");
+            Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n", Preferences.DEBUG_FILEIO);
             fileHeaderName = fileName.substring(0, index) + ".HDR";
-            Preferences.debug("fileHeaderName = " + fileHeaderName + "\n");
+            Preferences.debug("fileHeaderName = " + fileHeaderName + "\n", Preferences.DEBUG_FILEIO);
             fileHeader = new File(fileDir + fileHeaderName);
 
             if (fileHeader.exists() == false) {
-                Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n");
+                Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n", Preferences.DEBUG_FILEIO);
 
                 return false;
             }
@@ -736,7 +737,7 @@ public class FileAnalyze extends FileBase {
         // Required to read in multi-file analyze images. i.e. a set of 3D images to make a 4D dataset
         // The files should all have the same prefix. fooR_001.img, fooR_002.img etc.
         if (fileInfo == null) { // if the file info does not yet exist: make it
-            Preferences.debug("fileInfo is null\n");
+            Preferences.debug("fileInfo is null\n", Preferences.DEBUG_FILEIO);
             fileInfo = new FileInfoAnalyze(imageFileName, fileDir, FileUtility.ANALYZE);
 
             if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) { // Why 3/20/2001
@@ -747,21 +748,22 @@ public class FileAnalyze extends FileBase {
         try {
             raFile = new RandomAccessFile(fileHeader, "r");
         } catch (FileNotFoundException e) {
-            Preferences.debug("raFile = new RandomAccessFile(fileHeader, r) gave " + "FileNotFoundException " + e);
+            Preferences.debug("raFile = new RandomAccessFile(fileHeader, r) gave " + "FileNotFoundException " + e
+            		+ "\n", Preferences.DEBUG_FILEIO);
             throw new IOException("Error on raFile = new RandomAccessFile(fileHeader,r)");
         }
 
         try {
             raFile.read(bufferImageHeader);
         } catch (IOException e) {
-            Preferences.debug("raFile.read(bufferImageHeader gave IOException " + e + "\n");
+            Preferences.debug("raFile.read(bufferImageHeader gave IOException " + e + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException(" Error on raFile.read(bufferImageHeader)");
         }
 
         try {
             raFile.close();
         } catch (IOException e) {
-            Preferences.debug("raFile.close() gave IOException " + e + "\n");
+            Preferences.debug("raFile.close() gave IOException " + e + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException(" Error on raFile.close()");
         }
 
@@ -771,14 +773,14 @@ public class FileAnalyze extends FileBase {
         if (fileInfo.getSizeOfHeader() != headerSize) { // Set the endianess based on header size = 348 Big Endian
             fileInfo.setEndianess(LITTLE_ENDIAN); // or 1,543,569,408 Little endian
             fileInfo.setSizeOfHeader(getBufferInt(bufferImageHeader, 0, LITTLE_ENDIAN));
-            Preferences.debug("FileAnalyze:readHeader Endianess = Little endian.\n");
+            Preferences.debug("FileAnalyze:readHeader Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("FileAnalyze:readHeader Endianess = Big endian.\n");
+            Preferences.debug("FileAnalyze:readHeader Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);
         }
 
         if (fileInfo.getSizeOfHeader() != headerSize) {
             Preferences.debug("FileAnalyze:readHeader Analyze header length = " + fileInfo.getSizeOfHeader() +
-                              " instead of expected 348.\n");
+                              " instead of expected 348.\n", Preferences.DEBUG_FILEIO);
 
             return false;
         }
@@ -788,17 +790,18 @@ public class FileAnalyze extends FileBase {
         // The following reads in certain tags.  In some cases, it returns false and exits out of readHeader
         // if the information is wrong.
         fileInfo.setDataType(new String(bufferImageHeader, 4, 10));
-        Preferences.debug("Data type name = " + fileInfo.getDataTypeName() + "\n");
+        Preferences.debug("Data type name = " + fileInfo.getDataTypeName() + "\n", Preferences.DEBUG_FILEIO);
 
         fileInfo.setDBname(new String(bufferImageHeader, 14, 18));
-        Preferences.debug("DB name = " + fileInfo.getDBname() + "\n");
+        Preferences.debug("DB name = " + fileInfo.getDBname() + "\n", Preferences.DEBUG_FILEIO);
 
         fileInfo.setSessionErr(getBufferShort(bufferImageHeader, 36, endianess));
-        Preferences.debug("session error = " + fileInfo.getSessionErr() + "\n");
+        Preferences.debug("session error = " + fileInfo.getSessionErr() + "\n", Preferences.DEBUG_FILEIO);
         fileInfo.setRegular((char) bufferImageHeader[38]);
 
         if (fileInfo.getRegular() != 'r') {
-            Preferences.debug("fileInfo.getRegular() gave " + fileInfo.getRegular() + " instead of expected r\n");
+            Preferences.debug("fileInfo.getRegular() gave " + fileInfo.getRegular() + " instead of expected r\n",
+            		Preferences.DEBUG_FILEIO);
         }
 
         fileInfo.setHkey((char) bufferImageHeader[39]);
@@ -806,11 +809,12 @@ public class FileAnalyze extends FileBase {
         int dims = getBufferShort(bufferImageHeader, 40, endianess); // number of Dimensions should = 4
 
         // analyze dims = 4
-        Preferences.debug("FileAnalyze:readHeader. Number of dimensions = " + dims + "\n");
+        Preferences.debug("FileAnalyze:readHeader. Number of dimensions = " + dims + "\n", Preferences.DEBUG_FILEIO);
 
         for (i = 0; i < dims; i++) {
             analyzeExtents[i] = getBufferShort(bufferImageHeader, 42 + (2 * i), endianess);
-            Preferences.debug("FileAnalyze:readHeader. Dimension " + (i + 1) + " = " + analyzeExtents[i] + "\n");
+            Preferences.debug("FileAnalyze:readHeader. Dimension " + (i + 1) + " = " + analyzeExtents[i] + "\n",
+            		Preferences.DEBUG_FILEIO);
 
             if (analyzeExtents[i] > 1) {
                 numDims++;
@@ -828,7 +832,7 @@ public class FileAnalyze extends FileBase {
 
         fileInfo.setExtents(extents);
         fileInfo.setVoxUnits(new String(bufferImageHeader, 56, 4));
-        Preferences.debug("FileAnalyze:readHeader. Voxel unit = " + fileInfo.getVoxUnits() + "\n");
+        Preferences.debug("FileAnalyze:readHeader. Voxel unit = " + fileInfo.getVoxUnits() + "\n", Preferences.DEBUG_FILEIO);
         fileInfo.setCalUnits(new String(bufferImageHeader, 60, 4));
         
         fileInfo.setOrientation((byte) bufferImageHeader[252]);
@@ -894,7 +898,8 @@ public class FileAnalyze extends FileBase {
         }
 
         fileInfo.setDataType(getBufferShort(bufferImageHeader, 70, endianess));
-        Preferences.debug("FileAnalyze:readHeader. Data type = " + fileInfo.getDataTypeCode() + "\n");
+        Preferences.debug("FileAnalyze:readHeader. Data type = " + fileInfo.getDataTypeCode() + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         switch (fileInfo.getDataTypeCode()) { // Set the dataType in ModelStorage based on this tag
 
@@ -938,7 +943,8 @@ public class FileAnalyze extends FileBase {
         }
 
         fileInfo.setBitPix(getBufferShort(bufferImageHeader, 72, endianess));
-        Preferences.debug("FileAnalyze:readHeader. bits per pixel = " + fileInfo.getBitPix() + "\n");
+        Preferences.debug("FileAnalyze:readHeader. bits per pixel = " + fileInfo.getBitPix() + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         fileInfo.setDim(getBufferShort(bufferImageHeader, 74, endianess));
 
@@ -951,7 +957,8 @@ public class FileAnalyze extends FileBase {
 
             if ((i >= 1) && (analyzeExtents[i - 1] > 1)) {
                 resolutions[j] = Math.abs(pixdim[i]);
-                Preferences.debug("FileAnalyze:readHeader. Resolutions " + (j + 1) + " = " + resolutions[j] + "\n");
+                Preferences.debug("FileAnalyze:readHeader. Resolutions " + (j + 1) + " = " + resolutions[j] + "\n",
+                		Preferences.DEBUG_FILEIO);
                 j++;
             }
         }
@@ -973,10 +980,12 @@ public class FileAnalyze extends FileBase {
         fileInfo.setVerified(getBufferFloat(bufferImageHeader, 136, endianess));
 
         fileInfo.setGLmax(getBufferInt(bufferImageHeader, 140, endianess));
-        Preferences.debug("FileAnalyze:readHeader. global max intensity = " + fileInfo.getGLmax() + "\n");
+        Preferences.debug("FileAnalyze:readHeader. global max intensity = " + fileInfo.getGLmax() + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         fileInfo.setGLmin(getBufferInt(bufferImageHeader, 144, endianess));
-        Preferences.debug("FileAnalyze:readHeader. global min intensity = " + fileInfo.getGLmin() + "\n");
+        Preferences.debug("FileAnalyze:readHeader. global min intensity = " + fileInfo.getGLmin() + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         fileInfo.setDescription(new String(bufferImageHeader, 148, 80));
 
@@ -1491,8 +1500,8 @@ public class FileAnalyze extends FileBase {
         // 2D example = 256 x 256 x  1 x 1
         // 3D example = 256 x 256 x 17 x 1
 
-        Preferences.debug("FileAnalyze:writeHeader - nImagesSaved = " + nImagesSaved + "\n", 2);
-        Preferences.debug("FileAnalyze:writeHeader - nDims = " + nDims + "\n", 2);
+        Preferences.debug("FileAnalyze:writeHeader - nImagesSaved = " + nImagesSaved + "\n", Preferences.DEBUG_FILEIO);
+        Preferences.debug("FileAnalyze:writeHeader - nDims = " + nDims + "\n", Preferences.DEBUG_FILEIO);
 
         analyzeExtents = new int[] { 1, 1, 1, 1, 1 };
         analyzeExtents[0] = 4;
@@ -1509,7 +1518,8 @@ public class FileAnalyze extends FileBase {
         }
 
         for (int i = 0; i < analyzeExtents.length; i++) {
-            Preferences.debug("FileAnalyze:writeHeader - i = " + i + " dim = " + analyzeExtents[i] + "\n", 2);
+            Preferences.debug("FileAnalyze:writeHeader - i = " + i + " dim = " + analyzeExtents[i] + "\n",
+            		Preferences.DEBUG_FILEIO);
         }
 
         switch (image.getType()) {
@@ -1696,7 +1706,8 @@ public class FileAnalyze extends FileBase {
             setBufferShort(bufferImageHeader, (short) myFileInfo.getAxisOrientation()[1], 66, endianess);
             setBufferShort(bufferImageHeader, (short) myFileInfo.getAxisOrientation()[2], 68, endianess);
 
-            Preferences.debug("FileAnalyze:writeHeader(simple): data type = " + fileInfo.getDataTypeCode() + "\n", 2);
+            Preferences.debug("FileAnalyze:writeHeader(simple): data type = " + fileInfo.getDataTypeCode() + "\n",
+            		Preferences.DEBUG_FILEIO);
             setBufferShort(bufferImageHeader, fileInfo.getDataTypeCode(), 70, endianess);
 
             switch (image.getType()) {
@@ -1748,7 +1759,8 @@ public class FileAnalyze extends FileBase {
                     return false;
             }
 
-            Preferences.debug("FileAnalyze:writeHeader(simple): bits per pixel = " + fileInfo.getBitPix() + "\n", 2);
+            Preferences.debug("FileAnalyze:writeHeader(simple): bits per pixel = " + fileInfo.getBitPix() + "\n", 
+            		Preferences.DEBUG_FILEIO);
             setBufferShort(bufferImageHeader, (short) fileInfo.getBitPix(), 72, endianess);
             setBufferShort(bufferImageHeader, (short) 0, 74, endianess);
 
