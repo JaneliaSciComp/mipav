@@ -209,7 +209,7 @@ public class MipavUtil extends JComponent {
             // System.err.println("created blank cursor");
         } catch (final FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.magRegionCursor = MipavUtil.crosshairCursor;
             MipavUtil.blankCursor = MipavUtil.crosshairCursor;
         }
@@ -222,7 +222,7 @@ public class MipavUtil extends JComponent {
                     "SmallPointer");
         } catch (final FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.smallPointerCursor = MipavUtil.pointCursor;
         }
 
@@ -233,7 +233,7 @@ public class MipavUtil extends JComponent {
                     "WinLevel");
         } catch (final FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.winLevelCursor = MipavUtil.crosshairCursor;
         }
 
@@ -244,7 +244,7 @@ public class MipavUtil extends JComponent {
                     "Probe");
         } catch (final FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.probeCursor = MipavUtil.crosshairCursor;
         }
 
@@ -256,7 +256,7 @@ public class MipavUtil extends JComponent {
                     new Point(10, 10), "zoomout");
         } catch (final Exception error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.magnifyCursor = MipavUtil.crosshairCursor;
         }
 
@@ -406,7 +406,7 @@ public class MipavUtil extends JComponent {
                     JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
                 } catch (final FileNotFoundException ex) {
                     Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
+                            + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
                     System.err.println("Exception ocurred while getting <" + ex.getMessage()
                             + ">.  Check that this file is available.\n");
                 }
@@ -432,7 +432,7 @@ public class MipavUtil extends JComponent {
                         JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
                     } catch (final FileNotFoundException ex) {
                         Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                                + ">.  Check that this file is available.\n");
+                                + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
                         System.err.println("Exception ocurred while getting <" + ex.getMessage()
                                 + ">.  Check that this file is available.\n");
                     }
@@ -466,7 +466,7 @@ public class MipavUtil extends JComponent {
                     JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
                 } catch (final FileNotFoundException ex) {
                     Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
+                            + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
                     System.err.println("Exception ocurred while getting <" + ex.getMessage()
                             + ">.  Check that this file is available.\n");
                 }
@@ -485,7 +485,7 @@ public class MipavUtil extends JComponent {
                         JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
                     } catch (final FileNotFoundException ex) {
                         Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                                + ">.  Check that this file is available.\n");
+                                + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
                         System.err.println("Exception ocurred while getting <" + ex.getMessage()
                                 + ">.  Check that this file is available.\n");
                     }
@@ -517,7 +517,7 @@ public class MipavUtil extends JComponent {
                     JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
                 } catch (final FileNotFoundException ex) {
                     Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
+                            + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
                     System.err.println("Exception ocurred while getting <" + ex.getMessage()
                             + ">.  Check that this file is available.\n");
                 }
@@ -536,7 +536,7 @@ public class MipavUtil extends JComponent {
                         JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
                     } catch (final FileNotFoundException ex) {
                         Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                                + ">.  Check that this file is available.\n");
+                                + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
                         System.err.println("Exception ocurred while getting <" + ex.getMessage()
                                 + ">.  Check that this file is available.\n");
                     }
@@ -582,7 +582,8 @@ public class MipavUtil extends JComponent {
                         + String.valueOf(preferencesColorString.toCharArray()[5]), 16);
             }
         } catch (final Exception npe) {
-            Preferences.debug("MipavOptions: Color string was improper.  String was '" + preferencesColorString + "'");
+            Preferences.debug("MipavOptions: Color string was improper.  String was '" + preferencesColorString + "'", 
+            		Preferences.DEBUG_FILEIO);
 
             // reset all three values with
             RGB[0] = 0;
@@ -1212,16 +1213,16 @@ public class MipavUtil extends JComponent {
                 // hs = null;
                 // helpBroker = null;
             } else {
-                Preferences.debug("Help file URL is " + hsURL + "\n");
+                Preferences.debug("Help file URL is " + hsURL + "\n", Preferences.DEBUG_FILEIO);
                 MipavUtil.displayError("Unable to find helpset.");
             }
         } catch (final NullPointerException npe) {
-            Preferences.debug("MIPAV Help cannot be found." + "\n", 2);
+            Preferences.debug("MIPAV Help cannot be found." + "\n", Preferences.DEBUG_FILEIO);
             MipavUtil.displayError("MIPAV Help cannot be found.");
         } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory error opening help.");
         } catch (final HelpSetException error) {
-            Preferences.debug("HelpSet error = " + error);
+            Preferences.debug("HelpSet error = " + error, Preferences.DEBUG_FILEIO);
         } catch (final BadIDException error) {
             MipavUtil.displayError("HelpSet ID error = " + error);
             if (ID != null) {
