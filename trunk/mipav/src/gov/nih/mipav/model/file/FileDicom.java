@@ -855,7 +855,7 @@ public class FileDicom extends FileDicomBase {
             Preferences.debug("metalength = " + metaGroupLength + " location " + getFilePointer() + "\n",
                     Preferences.DEBUG_FILEIO);
         } else if (name.equals("0004,1220")) {
-            Preferences.debug("DICOMDIR Found! \n");
+            Preferences.debug("DICOMDIR Found! \n", Preferences.DEBUG_FILEIO);
             notDir = false;
         } else if (name.equals("0002,0010")) {
             boolean supportedTransferSyntax = processTransferSyntax(strValue);
@@ -1132,7 +1132,7 @@ public class FileDicom extends FileDicomBase {
             } else {
 
                 // Preferences.debug( "File Dicom: readHeader: xDim = " + extents[0] + " yDim = " + extents[1] +
-                // " Bits allocated = " + fileInfo.bitsAllocated, 2);
+                // " Bits allocated = " + fileInfo.bitsAllocated, Preferences.DEBUG_FILEIO);
                 if ( !isQuiet()) {
                     MipavUtil.displayError("Image not at expected offset.");
                 }
@@ -2274,7 +2274,8 @@ public class FileDicom extends FileDicomBase {
                         System.out.println("Unsupported data type: " + fileInfo.getDataType());
 
                         // left system.out, but added debug; dp, 2003-5-7:
-                        Preferences.debug("Unsupported data type: " + fileInfo.getDataType() + "\n");
+                        Preferences.debug("Unsupported data type: " + fileInfo.getDataType() + "\n",
+                        		Preferences.DEBUG_FILEIO);
                 }
             }
 
@@ -2664,8 +2665,10 @@ public class FileDicom extends FileDicomBase {
         		catch (Exception e2) {
         			MipavUtil.displayError("In extractLossyJPEGImage ImageIO.read(stream) no registered ImageReader claims"
                             + " to be able to read the stream");
-                    Preferences.debug("In extractLossyJPEGImage ImageIO.read(stream) no registered ImageReader claims\n");
-                    Preferences.debug("to be able the read the stream\n");
+                    Preferences.debug("In extractLossyJPEGImage ImageIO.read(stream) no registered ImageReader claims\n", 
+                    		Preferences.DEBUG_FILEIO);
+                    Preferences.debug("to be able the read the stream\n",
+                    		Preferences.DEBUG_FILEIO);
                     throw new IOException();	
         		}
         	}
@@ -2687,13 +2690,13 @@ public class FileDicom extends FileDicomBase {
         try {
             pg.grabPixels();
         } catch (final InterruptedException e) {
-            Preferences.debug("Interrupted waiting for pixels!" + "\n");
+            Preferences.debug("Interrupted waiting for pixels!" + "\n", Preferences.DEBUG_FILEIO);
 
             return new int[0];
         }
 
         if ( (pg.getStatus() & ImageObserver.ABORT) != 0) {
-            Preferences.debug("Image fetch aborted or errored" + "\n");
+            Preferences.debug("Image fetch aborted or errored" + "\n", Preferences.DEBUG_FILEIO);
 
             return new int[0];
         }
@@ -2838,15 +2841,16 @@ public class FileDicom extends FileDicomBase {
             MipavUtil.displayError("This image carries " + t.getName() + ", but specifies it incorrectly.\n"
                     + "The channel will be ignored.");
             Preferences.debug("FileDicom: Error Creating " + t.getName() + "(" + palleteKey.getKey() + ")"
-                    + "; it will be ignored.\n");
+                    + "; it will be ignored.\n", Preferences.DEBUG_FILEIO);
         } catch (final ArrayStoreException ase) {
             final FileDicomTag t = fileInfo.getTagTable().get(palleteKey);
             MipavUtil.displayError(t.getName() + "; " + ase.getLocalizedMessage() + "\n"
                     + "This channel will be ignored.");
-            Preferences.debug("FileDicom: Error creating " + t.getName() + "; " + ase.getLocalizedMessage() + "\n");
+            Preferences.debug("FileDicom: Error creating " + t.getName() + "; " + ase.getLocalizedMessage() + "\n", 
+            		Preferences.DEBUG_FILEIO);
         } catch (final ArrayIndexOutOfBoundsException aioobe) {
             MipavUtil.displayError("Error reading color LUT channel.  This Channel will be ignored.");
-            Preferences.debug("Error reading color LUT channel.  This Channel will be ignored.\n");
+            Preferences.debug("Error reading color LUT channel.  This Channel will be ignored.\n", Preferences.DEBUG_FILEIO);
             // System.err.println("Error reading color LUT channel. This Channel will be ignored.");
         }
     }
@@ -2897,7 +2901,7 @@ public class FileDicom extends FileDicomBase {
         // Preferences.debug("Item: "+Integer.toString(groupWord, 0x10)+","+
         // Integer.toString(elementWord, 0x10)+
         // " for " + Integer.toString(elementLength, 0x10) +
-        // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n");
+        // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n", Preferences.DEBUG_FILEIO);
 
         // either there's an "item end" or we've read the entire element length
         while ( !nameSQ.equals(FileDicom.SEQ_ITEM_END) && ( (getFilePointer() - startfptr) < itemLength)
@@ -2972,7 +2976,7 @@ public class FileDicom extends FileDicomBase {
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("aaaaaaString Tag: (" + nameSQ + ");\t" + type + "; value = " + strValue + ";
-                    // element length = "+ elementLength + "\n", 2);
+                    // element length = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
                 } else if (type.equals(VR.OB)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
@@ -2985,7 +2989,7 @@ public class FileDicom extends FileDicomBase {
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue + "; element length
-                    // = "+ elementLength + "\n", 2);
+                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
                 } else if (type.getType().equals(NumType.SHORT)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
@@ -3000,7 +3004,7 @@ public class FileDicom extends FileDicomBase {
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue + "; element length
-                    // = "+ elementLength + "\n", 2);
+                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
                 } else if (type.getType().equals(NumType.LONG)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
@@ -3015,7 +3019,7 @@ public class FileDicom extends FileDicomBase {
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue + "; element length
-                    // = "+ elementLength + "\n", 2);
+                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
                 } else if (type.getType().equals(NumType.FLOAT)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
@@ -3030,7 +3034,7 @@ public class FileDicom extends FileDicomBase {
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + fValue + "; element length
-                    // = "+ elementLength + "\n", 2);
+                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
                 } else if (type.getType().equals(NumType.DOUBLE)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
@@ -3051,7 +3055,7 @@ public class FileDicom extends FileDicomBase {
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + dValue + "; element length
-                    // = "+ elementLength + "\n", 2);
+                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
                 }
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
                 else if (type.equals(VR.SQ)
@@ -3063,7 +3067,7 @@ public class FileDicom extends FileDicomBase {
                     item.putTag(name, entry);
                     item.setLength(name, len);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type +
-                    // "; element length = "+ elementLength + "\n", 2);
+                    // "; element length = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
                 } else if (type.equals(VR.AT)) {
                     int groupWord = getUnsignedShort(fileInfo.getEndianess());
                     int elementWord = getUnsignedShort(fileInfo.getEndianess());
@@ -3080,7 +3084,7 @@ public class FileDicom extends FileDicomBase {
                     MipavUtil.displayError("Out of memory in FileDicom.getDataSet");
                     // yup, done.... Dave, 04-2004
                 } else {
-                    Preferences.debug("Out of memory in FileDicom.getDataSet\n");
+                    Preferences.debug("Out of memory in FileDicom.getDataSet\n", Preferences.DEBUG_FILEIO);
                     // System.err.println("Out of memory in FileDicom.getDataSet");
                 }
 
@@ -3100,7 +3104,7 @@ public class FileDicom extends FileDicomBase {
                 // Preferences.debug("Item: "+Integer.toString(groupWord, 0x10)+","+
                 // Integer.toString(elementWord, 0x10)+
                 // " for " + Integer.toString(elementLength, 0x10) +
-                // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n");
+                // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n", Preferences.DEBUG_FILEIO);
 
             }
         }
@@ -3423,7 +3427,7 @@ public class FileDicom extends FileDicomBase {
         groupWord = getUnsignedShort(bigEndian);
         elementWord = getUnsignedShort(bigEndian);
         // Preferences.debug("(just found: )"+Integer.toString(groupWord, 0x10) + ":"+Integer.toString(elementWord,
-        // 0x10)+" - " ); System.err.print("( just found: ) "+ Integer.toString(groupWord, 0x10) +
+        // 0x10)+" - " , Preferences.DEBUG_FILEIO); System.err.print("( just found: ) "+ Integer.toString(groupWord, 0x10) +
         // ":"+Integer.toString(elementWord, 0x10)+ " - ");
 
         if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
@@ -3441,7 +3445,7 @@ public class FileDicom extends FileDicomBase {
             } else {
                 read(byteBuffer4); // Reads the explicit VR and following two bytes.
                 elementLength = getLength(bigEndian, byteBuffer4[0], byteBuffer4[1], byteBuffer4[2], byteBuffer4[3]);
-                // Preferences.debug(" length " + Integer.toString(elementLength, 0x10) + "\n");
+                // Preferences.debug(" length " + Integer.toString(elementLength, 0x10) + "\n", Preferences.DEBUG_FILEIO);
             }
         } else { // this is what is commonly used.
 
@@ -3485,13 +3489,13 @@ public class FileDicom extends FileDicomBase {
         getNextElement(endianess); // gets the first ITEM tag
         Preferences.debug("Item: " + Integer.toString(groupWord, 0x10) + "," + Integer.toString(elementWord, 0x10)
                 + " for " + Integer.toString(elementLength, 0x10) + " # readfrom: "
-                + Long.toString(getFilePointer(), 0x10) + "\n");
+                + Long.toString(getFilePointer(), 0x10) + "\n", Preferences.DEBUG_FILEIO);
 
         inSQ = false;
         nameSQ = convertGroupElement(groupWord, elementWord);
 
         // Preferences.debug("getSquence: nameSQ = " + nameSQ +
-        // " fptr = " + Long.toString(getFilePointer(), 0x10) + "\n");
+        // " fptr = " + Long.toString(getFilePointer(), 0x10) + "\n", Preferences.DEBUG_FILEIO);
         try {
 
             if ( (seqLength == UNDEFINED_LENGTH) || (seqLength == ILLEGAL_LENGTH)) {
@@ -3512,10 +3516,11 @@ public class FileDicom extends FileDicomBase {
 
                         // possibility of getting here when subsequence tag length == -1
                         // end of sub-sequence tag
-                        Preferences.debug("End of sub-sequence " + FileDicom.SEQ_ITEM_END + " found; nothing done.\n");
+                        Preferences.debug("End of sub-sequence " + FileDicom.SEQ_ITEM_END + " found; nothing done.\n",
+                        		Preferences.DEBUG_FILEIO);
                     } else { // should never get here
                         Preferences.debug("getSequence(): sub-sequence tags not starting with "
-                                + FileDicom.SEQ_ITEM_BEGIN + "\n", 2);
+                                + FileDicom.SEQ_ITEM_BEGIN + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     inSQ = true; // don't add the element length to the location
@@ -3525,7 +3530,7 @@ public class FileDicom extends FileDicomBase {
 
                     // Preferences.debug("Next item of seq. "+
                     // "nameSQ: " + nameSQ +
-                    // " fpr: " + Long.toString(getFilePointer(), 0x10) + " \n");
+                    // " fpr: " + Long.toString(getFilePointer(), 0x10) + " \n", Preferences.DEBUG_FILEIO);
                 }
             } else { // sequence length is explicitly defined:
 
@@ -3539,7 +3544,7 @@ public class FileDicom extends FileDicomBase {
 
                     // loop is meant to read out each sub-sequence tag from the sequence.
                     // Must make it able to read out the
-                    Preferences.debug(nameSQ + "; len:" + (getFilePointer() - seqStart) + "\n");
+                    Preferences.debug(nameSQ + "; len:" + (getFilePointer() - seqStart) + "\n", Preferences.DEBUG_FILEIO);
 
                     if (nameSQ.equals(FileDicom.SEQ_ITEM_BEGIN)) { // this should always be true
 
@@ -3550,18 +3555,20 @@ public class FileDicom extends FileDicomBase {
                         sq.addItem((FileDicomItem) getDataSet(seqLength, endianess));
                     } else { // should never get here
                         Preferences.debug("getSequence(): sub-sequence tags not starting with "
-                                + FileDicom.SEQ_ITEM_BEGIN + "\n", 2);
+                                + FileDicom.SEQ_ITEM_BEGIN + "\n", Preferences.DEBUG_FILEIO);
                         // System.err.println("getSequence(): sub-sequence tags not starting with FFFE,E000");
                     }
 
                     if ( (getFilePointer() - seqStart) < seqLength) { // '<=' or just '<'??
                         inSQ = true; // don't add the element length to the location
                         Preferences.debug("[FileDicom.getSequence():]" + Integer.toString(groupWord, 0x10) + "-"
-                                + Integer.toString(elementWord, 0x10) + " -- ");
+                                + Integer.toString(elementWord, 0x10) + " -- ", Preferences.DEBUG_FILEIO);
                         getNextElement(endianess); // skipping the tag-length???
-                        Preferences.debug("  the length: " + Integer.toString(elementLength, 0x10) + "\n");
+                        Preferences.debug("  the length: " + Integer.toString(elementLength, 0x10) + "\n",
+                        		Preferences.DEBUG_FILEIO);
                         nameSQ = convertGroupElement(groupWord, elementWord);
-                        Preferences.debug("after converting group-element: " + nameSQ + "!!!!\n");
+                        Preferences.debug("after converting group-element: " + nameSQ + "!!!!\n",
+                        		Preferences.DEBUG_FILEIO);
                         inSQ = false; // may now add element length to location
 
                         // System.err.println("pulled out next item of seq. nameSQ: " +nameSQ);
@@ -3570,8 +3577,8 @@ public class FileDicom extends FileDicomBase {
             }
         } catch (final Exception error) {
             error.printStackTrace();
-            Preferences.debug("Exception caught; Problem in FileDicom.getSequence\n", 2);
-            Preferences.debug(error.toString() + "\n");
+            Preferences.debug("Exception caught; Problem in FileDicom.getSequence\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug(error.toString() + "\n", Preferences.DEBUG_FILEIO);
         }
 
         return sq;
@@ -3658,10 +3665,11 @@ public class FileDicom extends FileDicomBase {
     private Object readUnknownData() throws IOException {
         byte[] bytesValue;
         Byte[] bytesV;
-        Preferences.debug("Unknown data; length is " + elementLength + " fp = " + getFilePointer() + "\n", 2);
+        Preferences.debug("Unknown data; length is " + elementLength + " fp = " + getFilePointer() + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         if (elementLength <= 0) {
-            Preferences.debug("Unknown data; Error length is " + elementLength + "!!!!!\n", 2);
+            Preferences.debug("Unknown data; Error length is " + elementLength + "!!!!!\n", Preferences.DEBUG_FILEIO);
 
             return null;
         }
@@ -3850,7 +3858,7 @@ public class FileDicom extends FileDicomBase {
                     writeInt(length, endianess); // implicit vr, 32 bit length
                 }
             }
-            // Preferences.debug( "this is "+dicomTags[i] + "\n", 2);
+            // Preferences.debug( "this is "+dicomTags[i] + "\n", Preferences.DEBUG_FILEIO);
 
             // write as a string if string, unknown (private), or vm > 1
             // The VM part is consistent with how we're reading it in; hopefully
