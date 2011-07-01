@@ -673,8 +673,8 @@ public class FileDicom extends FileDicomBase {
             }
             FileDicomKey key = getNextTag(endianess);
             flag = processNextTag(key, endianess);
-            // for dicom files that contain no image information, the image tag will never be encountered
-            if (getFilePointer() == fLength) {
+            
+            if (getFilePointer() == fLength) { // for dicom files that contain no image information, the image tag will never be encountered
                 flag = false;
             }
 
@@ -682,30 +682,6 @@ public class FileDicom extends FileDicomBase {
         // Done reading tags, if DICOMDIR then don't do anything else
 
         if (notDir) {
-
-            
-
-            if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
-                fileInfo.displayType = ModelStorageBase.FLOAT;
-                // a bit of a hack - indicates Model image should be reallocated to float for PET image the data is
-                // stored
-                // as 2 bytes (short) but is "normalized" using the slope parameter required for PET images (intercept
-                // always 0 for PET).
-            }
-
-            if ( ( (fileInfo.getDataType() == ModelStorageBase.UBYTE) || (fileInfo.getDataType() == ModelStorageBase.USHORT))
-                    && (fileInfo.getRescaleIntercept() < 0)) {
-                // this performs a similar method as the pet adjustment for float images stored on disk as short to read
-                // in
-                // signed byte and signed short images stored on disk as unsigned byte or unsigned short with a negative
-                // rescale intercept
-                if (fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-                    fileInfo.displayType = ModelStorageBase.BYTE;
-                } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                    fileInfo.displayType = ModelStorageBase.SHORT;
-                }
-            }
-
             hasHeaderBeenRead = true;
 
             if ( (loadTagBuffer == true) && (raFile != null)) {
