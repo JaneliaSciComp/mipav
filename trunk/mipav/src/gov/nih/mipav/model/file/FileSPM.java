@@ -206,7 +206,8 @@ public class FileSPM extends FileBase {
             File file = new File(completeFileNames[i]);
 
             if (!file.exists()) {
-                Preferences.debug("FileSPM: The file can not be found: " + completeFileNames[i] + "!");
+                Preferences.debug("FileSPM: The file can not be found: " + completeFileNames[i] + "!",
+                		Preferences.DEBUG_FILEIO);
                 return false;
             }
         }
@@ -232,11 +233,11 @@ public class FileSPM extends FileBase {
                 if (sizeOfHeader1 < sizeOfHeader2) {
                     bigEndian = true;
                     Preferences.debug("If valid must be SPM2 with extended header size = " +
-                                  sizeOfHeader1 + "\n");
+                                  sizeOfHeader1 + "\n", Preferences.DEBUG_FILEIO);
                 }
                 else {
                     Preferences.debug("If valid must be SPM2 with extended header size = " +
-                            sizeOfHeader2 + "\n");    
+                            sizeOfHeader2 + "\n", Preferences.DEBUG_FILEIO);    
                 }  
             }
         }
@@ -484,17 +485,17 @@ public class FileSPM extends FileBase {
         int headerSize1 = getBufferInt(bufferByte, 0, BIG_ENDIAN);
         if (headerSize1 == headerSize) {
             fileInfo.setSizeOfHeader(headerSize1);
-            Preferences.debug("FileSPM:readHeader Endianess = Big endian.\n", 2);
+            Preferences.debug("FileSPM:readHeader Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);
         }
         else { // Set the endianess based on header size = 348 Big Endian
             fileInfo.setEndianess(LITTLE_ENDIAN); // or 1,543,569,408 Little endian
             int headerSize2 = getBufferInt(bufferByte, 0, LITTLE_ENDIAN);
             if (headerSize2 == headerSize) {
                 fileInfo.setSizeOfHeader(headerSize2);
-                Preferences.debug("FileSPM:readHeader Endianess = Little endian.\n", 2);
+                Preferences.debug("FileSPM:readHeader Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);
             }
             else if ((headerSize1 < headerSize) && (headerSize2 < headerSize)) {
-                Preferences.debug("FileSPM:readHeader SPM header length != 348.\n", 2);
+                Preferences.debug("FileSPM:readHeader SPM header length != 348.\n", Preferences.DEBUG_FILEIO);
 
                 return false;   
             }
@@ -503,11 +504,11 @@ public class FileSPM extends FileBase {
                 if (headerSize1 < headerSize2) {
                     fileInfo.setEndianess(BIG_ENDIAN);
                     fileInfo.setSizeOfHeader(headerSize1);
-                    Preferences.debug("FileSPM:readHeader Endianess = Big endian.\n", 2);    
+                    Preferences.debug("FileSPM:readHeader Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);    
                 }
                 else {
                     fileInfo.setSizeOfHeader(headerSize2);
-                    Preferences.debug("FileSPM:readHeader Endianess = Little endian.\n", 2);    
+                    Preferences.debug("FileSPM:readHeader Endianess = Little endian.\n", Preferences.DEBUG_FILEIO);    
                 }
             }
         }
@@ -538,7 +539,8 @@ public class FileSPM extends FileBase {
 
         for (i = 0; i < dims; i++) {
             spmExtents[i] = getBufferShort(bufferByte, 42 + (2 * i), endianess);
-            Preferences.debug("FileSPM:readHeader. Dimension " + (i + 1) + " = " + spmExtents[i] + "\n", 2);
+            Preferences.debug("FileSPM:readHeader. Dimension " + (i + 1) + " = " + spmExtents[i] + "\n",
+            		Preferences.DEBUG_FILEIO);
 
             if (spmExtents[i] > 1) {
                 numDims++;
@@ -553,7 +555,7 @@ public class FileSPM extends FileBase {
 
         fileInfo.setExtents(extents);
         fileInfo.setVoxUnits(new String(bufferByte, 56, 4));
-        Preferences.debug("FileSPM:readHeader. Voxel unit = " + fileInfo.getVoxUnits() + "\n", 2);
+        Preferences.debug("FileSPM:readHeader. Voxel unit = " + fileInfo.getVoxUnits() + "\n", Preferences.DEBUG_FILEIO);
 
         // fileInfo.vox_units.concat("\n");
         fileInfo.setCalUnits(new String(bufferByte, 60, 8));
@@ -561,7 +563,7 @@ public class FileSPM extends FileBase {
         // fileInfo.cal_units.concat("\n");
         fileInfo.setOrientation(bufferByte[252]);
         fileInfo.setDataType(getBufferShort(bufferByte, 70, endianess));
-        Preferences.debug("FileSPM:readHeader. Data type = " + fileInfo.getDataTypeCode() + "\n", 2);
+        Preferences.debug("FileSPM:readHeader. Data type = " + fileInfo.getDataTypeCode() + "\n", Preferences.DEBUG_FILEIO);
 
         switch (fileInfo.getDataTypeCode()) { // Set the dataType in ModelStorage based on this tag
 
@@ -616,7 +618,7 @@ public class FileSPM extends FileBase {
         }
 
         fileInfo.setBitPix(getBufferShort(bufferByte, 72, endianess));
-        Preferences.debug("FileSPM:readHeader. bits per pixel = " + fileInfo.getBitPix() + "\n", 2);
+        Preferences.debug("FileSPM:readHeader. bits per pixel = " + fileInfo.getBitPix() + "\n", Preferences.DEBUG_FILEIO);
 
         fileInfo.setDim(getBufferShort(bufferByte, 74, endianess));
 
@@ -629,7 +631,8 @@ public class FileSPM extends FileBase {
                 resolutions[i] = 1.0f; // Double check  resolutions - should probably notify user
             }
 
-            Preferences.debug("FileSPM:readHeader. Resolutions " + (i + 1) + " = " + resolutions[i] + "\n", 2);
+            Preferences.debug("FileSPM:readHeader. Resolutions " + (i + 1) + " = " + resolutions[i] + "\n",
+            		Preferences.DEBUG_FILEIO);
         }
 
         fileInfo.setResolutions(resolutions);
@@ -644,10 +647,12 @@ public class FileSPM extends FileBase {
         fileInfo.setVerified(getBufferFloat(bufferByte, 136, endianess));
 
         fileInfo.setGLmax(getBufferInt(bufferByte, 140, endianess));
-        Preferences.debug("FileSPM:readHeader. global max intensity = " + fileInfo.getGLmax() + "\n", 2);
+        Preferences.debug("FileSPM:readHeader. global max intensity = " + fileInfo.getGLmax() + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         fileInfo.setGLmin(getBufferInt(bufferByte, 144, endianess));
-        Preferences.debug("FileSPM:readHeader. global min intensity = " + fileInfo.getGLmin() + "\n", 2);
+        Preferences.debug("FileSPM:readHeader. global min intensity = " + fileInfo.getGLmin() + "\n",
+        		Preferences.DEBUG_FILEIO);
 
         fileInfo.setDescription(new String(bufferByte, 148, 80));
 
@@ -1281,8 +1286,8 @@ public class FileSPM extends FileBase {
         // 2D example = 256 x 256 x  1 x 1
         // 3D example = 256 x 256 x 17 x 1
 
-        Preferences.debug("FileSPM:writeHeader - nImagesSaved = " + nImagesSaved + "\n", 2);
-        Preferences.debug("FileSPM:writeHeader - nDims = " + nDims + "\n", 2);
+        Preferences.debug("FileSPM:writeHeader - nImagesSaved = " + nImagesSaved + "\n", Preferences.DEBUG_FILEIO);
+        Preferences.debug("FileSPM:writeHeader - nDims = " + nDims + "\n", Preferences.DEBUG_FILEIO);
 
         // spmExtents = new int[nDims+2];
         // spmExtents[0] = nDims+1;
@@ -1302,7 +1307,7 @@ public class FileSPM extends FileBase {
         // spmExtents[nDims+1] = 1; // set the last dimension to one
 
         for (int i = 0; i < spmExtents.length; i++) {
-            Preferences.debug("FileSPM:writeHeader - i = " + i + " dim = " + spmExtents[i] + "\n", 2);
+            Preferences.debug("FileSPM:writeHeader - i = " + i + " dim = " + spmExtents[i] + "\n", Preferences.DEBUG_FILEIO);
         }
 
         switch (image.getType()) {
@@ -1468,7 +1473,8 @@ public class FileSPM extends FileBase {
             setBufferString(bufferByte, voxUnits, 56);
             setBufferString(bufferByte, "   \n", 60);
 
-            Preferences.debug("FileSPM:writeHeader(simple): data type = " + fileInfo.getDataTypeCode() + "\n", 2);
+            Preferences.debug("FileSPM:writeHeader(simple): data type = " + fileInfo.getDataTypeCode() + "\n",
+            		Preferences.DEBUG_FILEIO);
             setBufferShort(bufferByte, fileInfo.getDataTypeCode(), 70, endianess);
 
             switch (image.getType()) {
@@ -1520,7 +1526,8 @@ public class FileSPM extends FileBase {
                     return false;
             }
 
-            Preferences.debug("FileSPM:writeHeader(simple): bits per pixel = " + fileInfo.getBitPix() + "\n", 2);
+            Preferences.debug("FileSPM:writeHeader(simple): bits per pixel = " + fileInfo.getBitPix() + "\n",
+            		Preferences.DEBUG_FILEIO);
             setBufferShort(bufferByte, (short) fileInfo.getBitPix(), 72, endianess);
             setBufferShort(bufferByte, (short) 0, 74, endianess);
 
