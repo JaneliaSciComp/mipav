@@ -3129,7 +3129,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
                         MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
                     }
 
-                    Preferences.debug("Out of memory: ViewJFrameBase.save\n", 3);
+                    Preferences.debug("Out of memory: ViewJFrameBase.save\n", Preferences.DEBUG_COMMS);
 
                     return;
                 }
