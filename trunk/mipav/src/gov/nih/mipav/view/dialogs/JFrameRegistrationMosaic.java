@@ -234,7 +234,7 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
         	this.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             error.printStackTrace();
         }
 
@@ -1014,7 +1014,7 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
             }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: JFrameRegistrationMosaic");
-            Preferences.debug("Out of memory: JFrameRegistrationMosaic\n", 3);
+            Preferences.debug("Out of memory: JFrameRegistrationMosaic\n", Preferences.DEBUG_COMMS);
 
             return false;
         }
