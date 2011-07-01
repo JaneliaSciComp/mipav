@@ -2057,7 +2057,7 @@ public class FileTiff extends FileBase {
         } // if (!haveLZWInit)
         if ((inData[0] == 0) && ((inData[1] & 0x1) == 1)) {
             // Check for old bit-reversed codes.
-            Preferences.debug("Old-style LZW codes\n");
+            Preferences.debug("Old-style LZW codes\n", Preferences.DEBUG_FILEIO);
             newLZW = false;
             maxCode = ((1 << BITS_MIN) - 1);
         }
@@ -2130,7 +2130,8 @@ public class FileTiff extends FileBase {
             
             while (occ > 0) {
                 if (bitsLeft < localNBits) {
-                    Preferences.debug("Starting row " + startingRow + " not terminated with EOI code\n");
+                    Preferences.debug("Starting row " + startingRow + " not terminated with EOI code\n",
+                    		Preferences.DEBUG_FILEIO);
                     code = CODE_EOI;
                 }
                 else {
@@ -2153,7 +2154,8 @@ public class FileTiff extends FileBase {
                     localNBitsMask = (1L << BITS_MIN) - 1;
                     localMaxAvailableEntry = (int)(localNBitsMask - 1);
                     if (bitsLeft < localNBits) {
-                        Preferences.debug("Starting row " + startingRow + " not terminated with EOI code\n");
+                        Preferences.debug("Starting row " + startingRow + " not terminated with EOI code\n", 
+                        		Preferences.DEBUG_FILEIO);
                         code = CODE_EOI;
                     }
                     else {
@@ -2311,7 +2313,8 @@ public class FileTiff extends FileBase {
             
             while (occ > 0) {
                 if (bitsLeft < localNBits) {
-                    Preferences.debug("Starting row " + startingRow + " not terminated with EOI code\n");
+                    Preferences.debug("Starting row " + startingRow + " not terminated with EOI code\n",
+                    		Preferences.DEBUG_FILEIO);
                     code = CODE_EOI;
                 }
                 else {
@@ -2335,7 +2338,8 @@ public class FileTiff extends FileBase {
                     localNBitsMask = (1L << BITS_MIN)-1;
                     localMaxAvailableEntry = (int)localNBitsMask;
                     if (bitsLeft < localNBits) {
-                        Preferences.debug("Starting row " + startingRow + " not terminated with EOI code\n");
+                        Preferences.debug("Starting row " + startingRow + " not terminated with EOI code\n", 
+                        		Preferences.DEBUG_FILEIO);
                         code = CODE_EOI;
                     }
                     else {
@@ -2458,7 +2462,7 @@ public class FileTiff extends FileBase {
     
     private void fax34Init() {
         if (bitsPerSample == null) {
-            Preferences.debug("bitsPerSample not found for fax decoding - settting to 1\n");
+            Preferences.debug("bitsPerSample not found for fax decoding - settting to 1\n", Preferences.DEBUG_FILEIO);
             bitsPerSample = new int[1];
             bitsPerSample[0] = 1;
             return;
@@ -6380,7 +6384,7 @@ public class FileTiff extends FileBase {
                         }
 
                         if ((valueArray[0] & 0x02) == 0x02) {
-                            Preferences.debug("Image is a single page of a multi-page image\n", 2);
+                            Preferences.debug("Image is a single page of a multi-page image\n", Preferences.DEBUG_FILEIO);
                         } else {
                             Preferences.debug("Image is not a single page of a multi-page image\n",
                                               Preferences.DEBUG_FILEIO);
@@ -6408,7 +6412,7 @@ public class FileTiff extends FileBase {
 
                     xDim = (int) valueArray[0];
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: Image_Width = " + xDim + "\n", 2);
+                        Preferences.debug("FileTiff.openIFD: Image_Width = " + xDim + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -6424,7 +6428,7 @@ public class FileTiff extends FileBase {
 
                     yDim = (int) valueArray[0];
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: Image_Length = " + yDim + "\n", 2);
+                        Preferences.debug("FileTiff.openIFD: Image_Length = " + yDim + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -6442,15 +6446,16 @@ public class FileTiff extends FileBase {
                         if (fillOrder == 1) {
                             Preferences.debug("FileTiff.openIFD: FILL_ORDER = 1 for pixels are arranged within a byte\n" +
                                                  "such that lower column values are stored in the\n" +
-                                                 "higher-order bits of the byte\n");
+                                                 "higher-order bits of the byte\n", Preferences.DEBUG_FILEIO);
                         }
                         else if (fillOrder == 2) {
                             Preferences.debug("FileTiff.openIFD: FILL_ORDER = 2 for pixels are arranged within a byte\n" +
                                     "such that lower column values are stored in the\n" +
-                                    "lower-order bits of the byte\n");
+                                    "lower-order bits of the byte\n", Preferences.DEBUG_FILEIO);
                         }
                         else {
-                            Preferences.debug("FileTiff.openIFD: FILL_ORDER has an illegal values = " + fillOrder + "\n");
+                            Preferences.debug("FileTiff.openIFD: FILL_ORDER has an illegal values = " + fillOrder + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         }
                     }
                     break;
@@ -6524,7 +6529,7 @@ public class FileTiff extends FileBase {
                     } else if (count > 1) {
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Strip_offsets are above\n");
+                            Preferences.debug("FileTiff.openIFD: Strip_offsets are above\n", Preferences.DEBUG_FILEIO);
                         }
 
                         for (i1 = 0; i1 < count; i1++) {
@@ -6621,7 +6626,7 @@ public class FileTiff extends FileBase {
                         fileInfo.setPhotometric((short) 3);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: PhotoInterp = Palette color\n", 2);
+                            Preferences.debug("FileTiff.openIFD: PhotoInterp = Palette color\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 4) { // Transparency Mask
                         fileInfo.setPhotometric((short) 4);
@@ -6699,9 +6704,11 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: Number of child IFDs = " + count + "\n");
+                        Preferences.debug("FileTiff.openIFD: Number of child IFDs = " + count + "\n",
+                        		Preferences.DEBUG_FILEIO);
                         for (i1 = 0; i1 < count; i1++) {
-                            Preferences.debug("Child IFD " + (i1+1) + " is located at " + valueArray[i1] + "\n");
+                            Preferences.debug("Child IFD " + (i1+1) + " is located at " + valueArray[i1] + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         }
                     }
                     break;
@@ -6723,7 +6730,7 @@ public class FileTiff extends FileBase {
                         chunky = true;
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: planar config = chunky \n", 2);
+                            Preferences.debug("FileTiff.openIFD: planar config = chunky \n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 2) { // Color RGB
                         chunky = false;
@@ -6797,7 +6804,7 @@ public class FileTiff extends FileBase {
                         packBit = true;
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: compression = packed bit\n ", 2);
+                            Preferences.debug("FileTiff.openIFD: compression = packed bit\n ", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 32809) {
                         ThunderScanCompression = true;
@@ -6841,39 +6848,39 @@ public class FileTiff extends FileBase {
                     if ((valueArray[0] & 0x01) != 0) {
                         group3_2D_Coding = true;
                         if (debuggingFileIO) {
-                            Preferences.debug("FAX 3 decompression uses 2-dimensional coding\n");
+                            Preferences.debug("FAX 3 decompression uses 2-dimensional coding\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     else {
                         group3_2D_Coding = false;
                         if (debuggingFileIO) {
-                            Preferences.debug("FAX 3 decompression uses 1-dimensional coding\n");
+                            Preferences.debug("FAX 3 decompression uses 1-dimensional coding\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     
                     if ((valueArray[0] & 0x02) != 0) {
                         group3Uncompressed = true;
                         if (debuggingFileIO) {
-                            Preferences.debug("FAX 3 decompression uses uncompressed mode\n");
+                            Preferences.debug("FAX 3 decompression uses uncompressed mode\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     else {
                         group3Uncompressed = false;
                         if (debuggingFileIO) {
-                            Preferences.debug("FAX 3 decompression does not use uncompressed mode\n");
+                            Preferences.debug("FAX 3 decompression does not use uncompressed mode\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     
                     if ((valueArray[0] & 0x04) != 0) {
                         group3Fillbits = true;
                         if (debuggingFileIO) {
-                            Preferences.debug("In FAX3 decompression fill bits have been added\n");
+                            Preferences.debug("In FAX3 decompression fill bits have been added\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     else {
                         group3Fillbits = false;
                         if (debuggingFileIO) {
-                            Preferences.debug("in FAX3 decompression no fill bits are used\n");
+                            Preferences.debug("in FAX3 decompression no fill bits are used\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     
@@ -6892,13 +6899,13 @@ public class FileTiff extends FileBase {
                     if ((valueArray[0] & 0x02) != 0) {
                         group4Uncompressed = true;
                         if (debuggingFileIO) {
-                            Preferences.debug("FAX 4 decompression allows uncompressed mode\n");
+                            Preferences.debug("FAX 4 decompression allows uncompressed mode\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     else {
                         group4Uncompressed = false;
                         if (debuggingFileIO) {
-                            Preferences.debug("FAX 4 decompression does not allow uncompressed mode\n");
+                            Preferences.debug("FAX 4 decompression does not allow uncompressed mode\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     
@@ -6946,44 +6953,61 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch((int)valueArray[0]) {
                             case 1:
-                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
-                                Preferences.debug("the top of the image, and the 0th column representing\n");
-                                Preferences.debug("the left hand side of the image\n");
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the top of the image, and the 0th column representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the left hand side of the image\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
-                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
-                                Preferences.debug("the top of the image, and the 0th column representing\n");
-                                Preferences.debug("the right hand side of the image\n");
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n", 
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the top of the image, and the 0th column representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the right hand side of the image\n", Preferences.DEBUG_FILEIO);
                                 break;    
                             case 3:
-                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
-                                Preferences.debug("the bottom of the image, and the 0th column representing\n");
-                                Preferences.debug("the right hand side of the image\n");
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the bottom of the image, and the 0th column representing\n", 
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the right hand side of the image\n", 
+                                		Preferences.DEBUG_FILEIO);
                                 break; 
                             case 4:
-                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
-                                Preferences.debug("the bottom of the image, and the 0th column representing\n");
-                                Preferences.debug("the left hand side of the image\n");
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the bottom of the image, and the 0th column representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the left hand side of the image\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 5:
-                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
-                                Preferences.debug("the left hand side of the image, and the 0th column representing\n");
-                                Preferences.debug("the top of the image\n");
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the left hand side of the image, and the 0th column representing\n", 
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the top of the image\n", Preferences.DEBUG_FILEIO);
                                 break; 
                             case 6:
-                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
-                                Preferences.debug("the right hand side of the image, and the 0th column representing\n");
-                                Preferences.debug("the top of the image\n");
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the right hand side of the image, and the 0th column representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the top of the image\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 7:
-                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
-                                Preferences.debug("the right hand side of the image, and the 0th column representing\n");
-                                Preferences.debug("the bottom of the image\n");
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n", 
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the right hand side of the image, and the 0th column representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the bottom of the image\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 8:
-                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
-                                Preferences.debug("the left hand side of the image, and the 0th column representing\n");
-                                Preferences.debug("the bottom of the image\n");
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n",
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the left hand side of the image, and the 0th column representing\n", 
+                                		Preferences.DEBUG_FILEIO);
+                                Preferences.debug("the bottom of the image\n", Preferences.DEBUG_FILEIO);
                                 break;    
                         }
                     }
@@ -7008,7 +7032,7 @@ public class FileTiff extends FileBase {
                     if ((count == expectedCount) && (LUT == null)) {
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff creating color map\n");
+                            Preferences.debug("FileTiff creating color map\n", Preferences.DEBUG_FILEIO);
                         }
 
                         int[] extents = new int[2];
@@ -7215,28 +7239,28 @@ public class FileTiff extends FileBase {
                         fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLIMETERS\n");
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLIMETERS\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = UNKNOWN\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = UNKNOWN\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.INCHES.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = INCHES\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = INCHES\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.MILS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILS\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILS\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.CENTIMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 0);
@@ -7251,7 +7275,7 @@ public class FileTiff extends FileBase {
                         fileInfo.setUnitsOfMeasure(Unit.ANGSTROMS.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = ANGSTROMS\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = ANGSTROMS\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.NANOMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), 0);
@@ -7274,7 +7298,7 @@ public class FileTiff extends FileBase {
                         fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = METERS\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = METERS\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.KILOMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.KILOMETERS.getLegacyNum(), 0);
@@ -7289,56 +7313,56 @@ public class FileTiff extends FileBase {
                         fileInfo.setUnitsOfMeasure(Unit.MILES.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILES\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILES\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.NANOSEC.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = NANOSEC\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = NANOSEC\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.MICROSEC.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MICROSEC\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MICROSEC\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.MILLISEC.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLISEC\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLISEC\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.SECONDS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = SECONDS\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = SECONDS\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.MINUTES.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MINUTES\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MINUTES\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.HOURS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = HOURS\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = HOURS\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == Unit.HZ.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 1);
 
                         if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = HERTZ\n", 2);
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = HERTZ\n", Preferences.DEBUG_FILEIO);
                         }
                     }
 
@@ -7474,7 +7498,7 @@ public class FileTiff extends FileBase {
                     haveTileWidth = true;
                     tileWidth = (int) valueArray[0];
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: tileWidth = " + tileWidth + "\n", 2);
+                        Preferences.debug("FileTiff.openIFD: tileWidth = " + tileWidth + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     tilesAcross = (xDim + tileWidth - 1) / tileWidth;
@@ -7503,7 +7527,7 @@ public class FileTiff extends FileBase {
 
                     tilesDown = (yDim + tileLength - 1) / tileLength;
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: tilesDown = " + tilesDown + "\n", 2);
+                        Preferences.debug("FileTiff.openIFD: tilesDown = " + tilesDown + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -7765,7 +7789,7 @@ public class FileTiff extends FileBase {
 
                     str = new String(artist);
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: artist = " + str.trim() + "\n", 2);
+                        Preferences.debug("FileTiff.openIFD: artist = " + str.trim() + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -7840,13 +7864,14 @@ public class FileTiff extends FileBase {
                                               Preferences.DEBUG_FILEIO);
 
                             if (valueArray[i1] == 1) {
-                                Preferences.debug("FileTiff.openIFD: unsigned integer data\n");
+                                Preferences.debug("FileTiff.openIFD: unsigned integer data\n", Preferences.DEBUG_FILEIO);
                             } else if (valueArray[i1] == 2) {
-                                Preferences.debug("FileTiff.openIFD: two's complement signed integer data\n");
+                                Preferences.debug("FileTiff.openIFD: two's complement signed integer data\n",
+                                		Preferences.DEBUG_FILEIO);
                             } else if (valueArray[i1] == 3) {
-                                Preferences.debug("FileTiff.openIFD: IEEE floating point data\n");
+                                Preferences.debug("FileTiff.openIFD: IEEE floating point data\n", Preferences.DEBUG_FILEIO);
                             } else if (valueArray[i1] == 4) {
-                                Preferences.debug("FileTiff.openIFD: undefined data format\n");
+                                Preferences.debug("FileTiff.openIFD: undefined data format\n", Preferences.DEBUG_FILEIO);
                             }
                         }
                     }
@@ -7866,13 +7891,13 @@ public class FileTiff extends FileBase {
                         predictor = 1;
 
                         if (debuggingFileIO) {
-                            Preferences.debug("PREDICTOR = 1 for no prediction scheme used\n");
+                            Preferences.debug("PREDICTOR = 1 for no prediction scheme used\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 2) {
                         predictor = 2;
 
                         if (debuggingFileIO) {
-                            Preferences.debug("PREDICTOR = 2 for horizontal differencing\n", 2);
+                            Preferences.debug("PREDICTOR = 2 for horizontal differencing\n", Preferences.DEBUG_FILEIO);
                         }
                     } else {
 
@@ -7890,7 +7915,7 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: XMP metadata is above\n");
+                        Preferences.debug("FileTiff.openIFD: XMP metadata is above\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
                     
@@ -9050,7 +9075,7 @@ public class FileTiff extends FileBase {
                                 break;
                             default:
                                 Preferences.debug("FileTiff.openIFD: EXIFTAG_SENSING_METHOD has unrecognized value = " +
-                                                  sensingMethod + "\n");
+                                                  sensingMethod + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     
@@ -9066,7 +9091,8 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: EXIFTAG_PIXEL_X DIMENSION = valid image width = " + valueArray[0] + "\n");
+                        Preferences.debug("FileTiff.openIFD: EXIFTAG_PIXEL_X DIMENSION = valid image width = " + valueArray[0] +
+                        		"\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
                     
@@ -9080,7 +9106,8 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: EXIFTAG_PIXEL_Y DIMENSION = valid image height = " + valueArray[0] + "\n");
+                        Preferences.debug("FileTiff.openIFD: EXIFTAG_PIXEL_Y DIMENSION = valid image height = " + valueArray[0] +
+                        		"\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
                     
@@ -9293,8 +9320,9 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: Collection of PHOTOSHOP 'Image Resource Blocks' is above\n");
-                        Preferences.debug("The Image Resource Blocks have " + count + " bytes\n");
+                        Preferences.debug("FileTiff.openIFD: Collection of PHOTOSHOP 'Image Resource Blocks' is above\n",
+                        		Preferences.DEBUG_FILEIO);
+                        Preferences.debug("The Image Resource Blocks have " + count + " bytes\n", Preferences.DEBUG_FILEIO);
                         bytesExamined = 0;
                         blockSignature = new byte[4];
                         maxLength = Math.min(count, MAX_IFD_LENGTH);
@@ -9305,10 +9333,12 @@ public class FileTiff extends FileBase {
                             bytesExamined += 4;
                             str = new String(blockSignature);
                             if (str.equals("8BIM")) {
-                                Preferences.debug("Image Resource Block Signature is expected 8BIM\n");
+                                Preferences.debug("Image Resource Block Signature is expected 8BIM\n",
+                                		Preferences.DEBUG_FILEIO);
                             }
                             else {
-                                Preferences.debug("Image Resource Block Signature is an unexpected " + str + "\n");
+                                Preferences.debug("Image Resource Block Signature is an unexpected " + str
+                                		+ "\n", Preferences.DEBUG_FILEIO);
                                 break;
                             }
                             if ((bytesExamined+1) >= maxLength) {
@@ -9316,163 +9346,181 @@ public class FileTiff extends FileBase {
                             }
                             imageResourceID = ((((int)valueArray[bytesExamined]) << 8) | ((int)valueArray[bytesExamined+1]));
                             bytesExamined += 2;
-                            Preferences.debug("Image Resource ID = " + imageResourceID + "\n");
+                            Preferences.debug("Image Resource ID = " + imageResourceID + "\n", Preferences.DEBUG_FILEIO);
                             switch(imageResourceID) {
                                 case 1000:
-                                    Preferences.debug("Image Resource ID for channels, rows, columns, depth, and mode\n");
+                                    Preferences.debug("Image Resource ID for channels, rows, columns, depth, and mode\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1001:
-                                    Preferences.debug("Image Resource ID for optional Macintosh print manager information\n");
+                                    Preferences.debug("Image Resource ID for optional Macintosh print manager information\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1003:
-                                    Preferences.debug("Image Resource ID for indexed color table\n");
+                                    Preferences.debug("Image Resource ID for indexed color table\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1005:
-                                    Preferences.debug("Image Resource ID for resolution information\n");
+                                    Preferences.debug("Image Resource ID for resolution information\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1006:
-                                    Preferences.debug("Image Resource ID for alpha channel names in Pascal-format strings\n");
+                                    Preferences.debug("Image Resource ID for alpha channel names in Pascal-format strings\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1007:
-                                    Preferences.debug("Image Resource ID for display information for each channel\n");
+                                    Preferences.debug("Image Resource ID for display information for each channel\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1008:
-                                    Preferences.debug("Image Resource ID for optional Pascal-format caption string\n");
+                                    Preferences.debug("Image Resource ID for optional Pascal-format caption string\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1009:
-                                    Preferences.debug("Image Resource ID for fixed-point border width, border units\n");
+                                    Preferences.debug("Image Resource ID for fixed-point border width, border units\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1010:
-                                    Preferences.debug("Image Resource ID for background color\n");
+                                    Preferences.debug("Image Resource ID for background color\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1011:
-                                    Preferences.debug("Image Resource ID for print flags\n");
+                                    Preferences.debug("Image Resource ID for print flags\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1012:
-                                    Preferences.debug("Image Resource ID for gray-scale and halftoning information\n");
+                                    Preferences.debug("Image Resource ID for gray-scale and halftoning information\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1013:
-                                    Preferences.debug("Image Resource ID for color halftoning information\n");
+                                    Preferences.debug("Image Resource ID for color halftoning information\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1014:
-                                    Preferences.debug("Image Resource ID for duotone halftoning information\n");
+                                    Preferences.debug("Image Resource ID for duotone halftoning information\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1015:
-                                    Preferences.debug("Image Resource ID for gray-scale and multichannel transfer function\n");
+                                    Preferences.debug("Image Resource ID for gray-scale and multichannel transfer function\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1016:
-                                    Preferences.debug("Image Resource ID for color transfer functions\n");
+                                    Preferences.debug("Image Resource ID for color transfer functions\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1017:
-                                    Preferences.debug("Image Resource ID for duotone transfer functions\n");
+                                    Preferences.debug("Image Resource ID for duotone transfer functions\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1018:
-                                    Preferences.debug("Image Resource ID for duotone image information\n");
+                                    Preferences.debug("Image Resource ID for duotone image information\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1019:
-                                    Preferences.debug("Image Resource ID for effective black and white value for dot range\n");
+                                    Preferences.debug("Image Resource ID for effective black and white value for dot range\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1021:
-                                    Preferences.debug("Image Resource ID for EPS options\n");
+                                    Preferences.debug("Image Resource ID for EPS options\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1022:
-                                    Preferences.debug("Image Resource ID for quick mask channel ID, flag for mask initially empty\n");
+                                    Preferences.debug("Image Resource ID for quick mask channel ID, flag for mask initially empty\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1024:
-                                    Preferences.debug("Image Resource ID for index of target layer (0 = bottom)\n");
+                                    Preferences.debug("Image Resource ID for index of target layer (0 = bottom)\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1025:
-                                    Preferences.debug("Image Resource ID for working path\n");
+                                    Preferences.debug("Image Resource ID for working path\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1026:
-                                    Preferences.debug("Image Resource ID for layers group info, group ID for dragging groups\n");
+                                    Preferences.debug("Image Resource ID for layers group info, group ID for dragging groups\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1028:
-                                    Preferences.debug("Image Resource ID for IPTC-NAA record\n");
+                                    Preferences.debug("Image Resource ID for IPTC-NAA record\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1029:
-                                    Preferences.debug("Image Resource ID for raw format files\n");
+                                    Preferences.debug("Image Resource ID for raw format files\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1030:
-                                    Preferences.debug("Image Resource ID for JPEG quality (Adobe internal)\n");
+                                    Preferences.debug("Image Resource ID for JPEG quality (Adobe internal)\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1033:
-                                    Preferences.debug("Image Resource ID for thumbnail written by PhotoShop 4.0\n");
+                                    Preferences.debug("Image Resource ID for thumbnail written by PhotoShop 4.0\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1034:
-                                    Preferences.debug("Image Resource ID for copyright flag\n");
+                                    Preferences.debug("Image Resource ID for copyright flag\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1035:
-                                    Preferences.debug("Image Resource ID for URL\n");
+                                    Preferences.debug("Image Resource ID for URL\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1036:
-                                    Preferences.debug("Image Resource ID for thumbnail written by PhotoShop 5.0 and upward\n");
+                                    Preferences.debug("Image Resource ID for thumbnail written by PhotoShop 5.0 and upward\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1037:
-                                    Preferences.debug("Image Resource ID for global angle\n");
+                                    Preferences.debug("Image Resource ID for global angle\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1038:
-                                    Preferences.debug("Image Resource ID for Color Samplers Resource\n");
+                                    Preferences.debug("Image Resource ID for Color Samplers Resource\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1039:
-                                    Preferences.debug("Image Resource ID for ICC_Profile\n");
+                                    Preferences.debug("Image Resource ID for ICC_Profile\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1040:
-                                    Preferences.debug("Image Resource ID for watermark\n");
+                                    Preferences.debug("Image Resource ID for watermark\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1041:
-                                    Preferences.debug("Image Resource ID for ICC_Untagged\n");
+                                    Preferences.debug("Image Resource ID for ICC_Untagged\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1042:
-                                    Preferences.debug("Image Resource ID for Effects Visible\n");
+                                    Preferences.debug("Image Resource ID for Effects Visible\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1043:
-                                    Preferences.debug("Image Resource ID for Spot Half Tone\n");
+                                    Preferences.debug("Image Resource ID for Spot Half Tone\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1044:
-                                    Preferences.debug("Image Resource ID for ID's base value\n");
+                                    Preferences.debug("Image Resource ID for ID's base value\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1045:
-                                    Preferences.debug("Image Resource ID for Unicode Alpha Names\n");
+                                    Preferences.debug("Image Resource ID for Unicode Alpha Names\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1046:
-                                    Preferences.debug("Image Resource ID for Indexed Color Table Count\n");
+                                    Preferences.debug("Image Resource ID for Indexed Color Table Count\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1047:
-                                    Preferences.debug("Image Resource ID for Transparent Index\n");
+                                    Preferences.debug("Image Resource ID for Transparent Index\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1049:
-                                    Preferences.debug("Image Resource ID for Global Altitude\n");
+                                    Preferences.debug("Image Resource ID for Global Altitude\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1050:
-                                    Preferences.debug("Image Resource ID for slices\n");
+                                    Preferences.debug("Image Resource ID for slices\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1051:
-                                    Preferences.debug("Image Resource ID for Workflow URL\n");
+                                    Preferences.debug("Image Resource ID for Workflow URL\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1052:
-                                    Preferences.debug("Image Resource ID for Jump To XPEP\n");
+                                    Preferences.debug("Image Resource ID for Jump To XPEP\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1053:
-                                    Preferences.debug("Image Resource ID for Alpha Identifiers\n");
+                                    Preferences.debug("Image Resource ID for Alpha Identifiers\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1054:
-                                    Preferences.debug("Image Resource ID for URL_List\n");
+                                    Preferences.debug("Image Resource ID for URL_List\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1057:
-                                    Preferences.debug("Image Resource ID for version info\n");
+                                    Preferences.debug("Image Resource ID for version info\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1058:
-                                    Preferences.debug("Image Resource ID for EXIF Info, #PH (found in EPS and PSD files)\n");
+                                    Preferences.debug("Image Resource ID for EXIF Info, #PH (found in EPS and PSD files)\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1060:
-                                    Preferences.debug("Image Resource ID for XMP\n");
+                                    Preferences.debug("Image Resource ID for XMP\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 2999:
-                                    Preferences.debug("Image Resource ID for clipping pathname\n");
+                                    Preferences.debug("Image Resource ID for clipping pathname\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 10000:
-                                    Preferences.debug("Image Resource ID for print flags information\n");
+                                    Preferences.debug("Image Resource ID for print flags information\n", Preferences.DEBUG_FILEIO);
                                     break;
                             } // switch(imageResourceID)
                             if (bytesExamined >= maxLength) {
@@ -9487,10 +9535,11 @@ public class FileTiff extends FileBase {
                                 // should have 2 bytes of 0 for the null string
                                 if (valueArray[bytesExamined] == 0) {
                                     bytesExamined += 1;
-                                    Preferences.debug("The Pascal string is null\n");
+                                    Preferences.debug("The Pascal string is null\n", Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                    Preferences.debug("Zero for Pascal String length is followed by an unexpected " + valueArray[bytesExamined] + "\n");
+                                    Preferences.debug("Zero for Pascal String length is followed by an unexpected " + valueArray[bytesExamined] +
+                                    		"\n", Preferences.DEBUG_FILEIO);
                                     bytesExamined += 1;
                                     break;
                                 }
@@ -9504,7 +9553,7 @@ public class FileTiff extends FileBase {
                                     pascalString[i1] = (byte)valueArray[bytesExamined+i1];
                                 }
                                 str = new String(pascalString);
-                                Preferences.debug("Pascal string = " + str.trim() + "\n");
+                                Preferences.debug("Pascal string = " + str.trim() + "\n", Preferences.DEBUG_FILEIO);
                                 bytesExamined += pascalStringLength;
                                 // If the length is even, and thus the total oof the length byte and the ASCII sequence isn't,
                                 // a padding byte is appended
@@ -9520,7 +9569,7 @@ public class FileTiff extends FileBase {
                             }
                             resourceDataSize = ((valueArray[bytesExamined] << 24) | (valueArray[bytesExamined+1] << 16) |
                                     (valueArray[bytesExamined+2] << 8) | valueArray[bytesExamined+3]);
-                            Preferences.debug("Size of resource data = " + resourceDataSize + "\n");
+                            Preferences.debug("Size of resource data = " + resourceDataSize + "\n", Preferences.DEBUG_FILEIO);
                             bytesExamined += 4;
                             if ((maxLength - bytesExamined + 1) < resourceDataSize) {
                                 break;    
@@ -9531,74 +9580,74 @@ public class FileTiff extends FileBase {
                                     hResFixed = ((valueArray[bytesExamined] << 24) | (valueArray[bytesExamined+1] << 16) |
                                             (valueArray[bytesExamined+2] << 8) | valueArray[bytesExamined+3]);
                                     hRes = hResFixed/65536.0;
-                                    Preferences.debug("Horizontal resolution is " + hRes + " pixels per inch\n");
+                                    Preferences.debug("Horizontal resolution is " + hRes + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                                     vResFixed = ((valueArray[bytesExamined+8] << 24) | (valueArray[bytesExamined+9] << 16) |
                                             (valueArray[bytesExamined+10] << 8) | valueArray[bytesExamined+11]);
                                     vRes = vResFixed/65536.0;
-                                    Preferences.debug("Vertical resolution is " + vRes + " pixels per inch\n");
+                                    Preferences.debug("Vertical resolution is " + vRes + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1030: // JPEG quality
                                     quality = ((((int)valueArray[bytesExamined]) << 8) | ((int)valueArray[bytesExamined+1]));
                                     switch(quality) {
                                         case 0xFFFD:
-                                            Preferences.debug("JPEG Quality 1 (Low)\n");
+                                            Preferences.debug("JPEG Quality 1 (Low)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0xFFFE:
-                                            Preferences.debug("JPEG Quality 2 (Low)\n");
+                                            Preferences.debug("JPEG Quality 2 (Low)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0xFFFF:
-                                            Preferences.debug("JPEG Quality 3 (Low)\n");
+                                            Preferences.debug("JPEG Quality 3 (Low)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0x0000:
-                                            Preferences.debug("JPEG Quality 4 (Low)\n");
+                                            Preferences.debug("JPEG Quality 4 (Low)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0x0001:
-                                            Preferences.debug("JPEG Quality 5 (Medium)\n");
+                                            Preferences.debug("JPEG Quality 5 (Medium)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0x0002:
-                                            Preferences.debug("JPEG Quality 6 (Medium)\n");
+                                            Preferences.debug("JPEG Quality 6 (Medium)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0x0003:
-                                            Preferences.debug("JPEG Quality 7 (Medium)\n");
+                                            Preferences.debug("JPEG Quality 7 (Medium)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0x0004:
-                                            Preferences.debug("JPEG Quality 8 (High)\n");
+                                            Preferences.debug("JPEG Quality 8 (High)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0x0005:
-                                            Preferences.debug("JPEG Quality 9 (High)\n");
+                                            Preferences.debug("JPEG Quality 9 (High)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0x0006:
-                                            Preferences.debug("JPEG Quality 10 (Maximum)\n");
+                                            Preferences.debug("JPEG Quality 10 (Maximum)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0x0007:
-                                            Preferences.debug("JPEG Quality 11 (Maximum)\n");
+                                            Preferences.debug("JPEG Quality 11 (Maximum)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 0x0008:
-                                            Preferences.debug("JPEG Quality 12 (Maximum)\n");
+                                            Preferences.debug("JPEG Quality 12 (Maximum)\n", Preferences.DEBUG_FILEIO);
                                             break;
                                     }
                                     format = ((((int)valueArray[bytesExamined+2]) << 8) | ((int)valueArray[bytesExamined+3]));
                                     switch (format) {
                                         case 0:
-                                            Preferences.debug("Standard format\n");
+                                            Preferences.debug("Standard format\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 1:
-                                            Preferences.debug("Optimized format\n");
+                                            Preferences.debug("Optimized format\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 5:
-                                            Preferences.debug("Progressive format\n");
+                                            Preferences.debug("Progressive format\n", Preferences.DEBUG_FILEIO);
                                             break;
                                     }
                                     progressiveScans = ((((int)valueArray[bytesExamined+4]) << 8) | ((int)valueArray[bytesExamined+5]));
                                     switch (progressiveScans) {
                                         case 1:
-                                            Preferences.debug("3 scans\n");
+                                            Preferences.debug("3 scans\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 2:
-                                            Preferences.debug("4 scans\n");
+                                            Preferences.debug("4 scans\n", Preferences.DEBUG_FILEIO);
                                             break;
                                         case 3:
-                                            Preferences.debug("5 scans\n");
+                                            Preferences.debug("5 scans\n", Preferences.DEBUG_FILEIO);
                                             break;
                                     }
                                     break;
@@ -9607,31 +9656,31 @@ public class FileTiff extends FileBase {
                                     long thumbnailFormat = ((valueArray[bytesExamined] << 24) | (valueArray[bytesExamined+1] << 16) |
                                             (valueArray[bytesExamined+2] << 8) | valueArray[bytesExamined+3]);
                                     // Appears to always equal 1, although could also equal 0
-                                    Preferences.debug("Thumbnail format = " + thumbnailFormat + "\n");
+                                    Preferences.debug("Thumbnail format = " + thumbnailFormat + "\n", Preferences.DEBUG_FILEIO);
                                     long thumbnailWidth = ((valueArray[bytesExamined+4] << 24) | (valueArray[bytesExamined+5] << 16) |
                                             (valueArray[bytesExamined+6] << 8) | valueArray[bytesExamined+7]);
-                                    Preferences.debug("Thumbnail width = " + thumbnailWidth + "\n");
+                                    Preferences.debug("Thumbnail width = " + thumbnailWidth + "\n", Preferences.DEBUG_FILEIO);
                                     long thumbnailHeight = ((valueArray[bytesExamined+8] << 24) | (valueArray[bytesExamined+9] << 16) |
                                             (valueArray[bytesExamined+10] << 8) | valueArray[bytesExamined+11]);
-                                    Preferences.debug("Thumbnail height = " + thumbnailHeight + "\n");
+                                    Preferences.debug("Thumbnail height = " + thumbnailHeight + "\n", Preferences.DEBUG_FILEIO);
                                     long scanlineSize = ((valueArray[bytesExamined+12] << 24) | (valueArray[bytesExamined+13] << 16) |
                                             (valueArray[bytesExamined+14] << 8) | valueArray[bytesExamined+15]);
                                     // Scanlline size = thumbnail width * 3, padded to nearest multiple of 4
-                                    Preferences.debug("Thumbnail scanline size = " + scanlineSize + "\n");
+                                    Preferences.debug("Thumbnail scanline size = " + scanlineSize + "\n", Preferences.DEBUG_FILEIO);
                                     long memorySize = ((valueArray[bytesExamined+16] << 24) | (valueArray[bytesExamined+17] << 16) |
                                             (valueArray[bytesExamined+18] << 8) | valueArray[bytesExamined+19]);
                                     // Total decompressed thumbnail memory size = scanline size * thumbnail height
-                                    Preferences.debug("Total decompressed thumbnail memory size = " + memorySize + "\n");
+                                    Preferences.debug("Total decompressed thumbnail memory size = " + memorySize + "\n", Preferences.DEBUG_FILEIO);
                                     long JFIFDataSize = ((valueArray[bytesExamined+20] << 24) | (valueArray[bytesExamined+21] << 16) |
                                             (valueArray[bytesExamined+22] << 8) | valueArray[bytesExamined+23]);
                                     // Size of JFIF data (= size of resource data - 28)
-                                    Preferences.debug("Size of thumbnail JFIF data = " + JFIFDataSize + "\n");
+                                    Preferences.debug("Size of thumbnail JFIF data = " + JFIFDataSize + "\n", Preferences.DEBUG_FILEIO);
                                     int thumbnailBitsPerPixel = ((((int)valueArray[bytesExamined+24]) << 8) | ((int)valueArray[bytesExamined+25]));
                                     // Number of bits per pixel - appears to always equal 24
-                                    Preferences.debug("Thumbnail bits per pixel = " + thumbnailBitsPerPixel + "\n");
+                                    Preferences.debug("Thumbnail bits per pixel = " + thumbnailBitsPerPixel + "\n", Preferences.DEBUG_FILEIO);
                                     int thumbnailPlanes = ((((int)valueArray[bytesExamined+26]) << 8) | ((int)valueArray[bytesExamined+27]));
                                     // Appears to always equal 1
-                                    Preferences.debug("Thumbnail number of planes = " + thumbnailPlanes + "\n");
+                                    Preferences.debug("Thumbnail number of planes = " + thumbnailPlanes + "\n", Preferences.DEBUG_FILEIO);
                                     // JFIF data
                                     break;
                             } // switch(imageResourceID)
@@ -9649,7 +9698,7 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: ICC profile data is above\n");
+                        Preferences.debug("FileTiff.openIFD: ICC profile data is above\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
                     
@@ -9659,7 +9708,7 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: IPTC metadata is above\n");
+                        Preferences.debug("FileTiff.openIFD: IPTC metadata is above\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
                     
@@ -9670,8 +9719,8 @@ public class FileTiff extends FileBase {
                     
                     if (debuggingFileIO) {
                         for (i1 = 0; i1 < count/2; i1++) {
-                            Preferences.debug("DotRange[" + (2*i1) + "] corresponds to a " + valueArray[0] + "% dot\n");
-                            Preferences.debug("DotRange[" + (2*i1 + 1) + "] corresponds to a " + valueArray[1] + "% dot\n");
+                            Preferences.debug("DotRange[" + (2*i1) + "] corresponds to a " + valueArray[0] + "% dot\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("DotRange[" + (2*i1 + 1) + "] corresponds to a " + valueArray[1] + "% dot\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     break;
@@ -9682,7 +9731,7 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: Image source data used by Adobe Photoshop is above\n");
+                        Preferences.debug("FileTiff.openIFD: Image source data used by Adobe Photoshop is above\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
                     
@@ -9697,10 +9746,10 @@ public class FileTiff extends FileBase {
                     
                     if (debuggingFileIO) {
                         Preferences.debug("scaleX = " + valueDouble[0] + 
-                        " is the horizontal spacing of raster pixels in model space units\n");
+                        " is the horizontal spacing of raster pixels in model space units\n", Preferences.DEBUG_FILEIO);
                         Preferences.debug("scaleY = " + valueDouble[1] + 
-                        " is the vertical spacing of raster pixels in model space units\n");
-                        Preferences.debug("scaleZ = " + valueDouble[2] + "\n");
+                        " is the vertical spacing of raster pixels in model space units\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("scaleZ = " + valueDouble[2] + "\n", Preferences.DEBUG_FILEIO);
                     }
                     
                     break;
@@ -9719,7 +9768,7 @@ public class FileTiff extends FileBase {
                             Preferences.debug("Tiepoint (" + valueDouble[6*i1] + ", " + valueDouble[6*i1+1] +
                                     ", " + valueDouble[6*i1+2] + ") in raster space to\n (" +
                                     valueDouble[6*i1+3] + ", " + valueDouble[6*i1+4] + ", " +
-                                    valueDouble[6*i1+5]+ ") in model space\n");
+                                    valueDouble[6*i1+5]+ ") in model space\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                     
@@ -9866,14 +9915,16 @@ public class FileTiff extends FileBase {
                             break;
                         case 24:
                             isRGB24UINTtoFLOAT = true;
-                            Preferences.debug("Ideally should be ARGB_UINTEGER, but MIPAV does not have this type\n");
-                            Preferences.debug("so making ARGB_FLOAT\n");
+                            Preferences.debug("Ideally should be ARGB_UINTEGER, but MIPAV does not have this type\n",
+                            		Preferences.DEBUG_FILEIO);
+                            Preferences.debug("so making ARGB_FLOAT\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
                             break;
                         case 32:
                             isRGB32UINTtoFLOAT = true;
-                            Preferences.debug("Ideally should be ARGB_UINTEGER, but MIPAV does not have this type\n");
-                            Preferences.debug("so making ARGB_FLOAT\n");
+                            Preferences.debug("Ideally should be ARGB_UINTEGER, but MIPAV does not have this type\n",
+                            		Preferences.DEBUG_FILEIO);
+                            Preferences.debug("so making ARGB_FLOAT\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
                             break;
                         default:
@@ -9884,16 +9935,19 @@ public class FileTiff extends FileBase {
                     switch(bitsPerSample[0]) {
                         case 8:
                             fileInfo.setDataType(ModelStorageBase.ARGB);
-                            Preferences.debug("Signed byte color is being treated as unsigned byte color\n");
+                            Preferences.debug("Signed byte color is being treated as unsigned byte color\n", 
+                            		Preferences.DEBUG_FILEIO);
                             break;
                         case 16:
                             if (SGILogCompression || SGILog24Compression) {
                                 fileInfo.setDataType(ModelStorageBase.ARGB);
-                                Preferences.debug("Signed short color is being treated as unsigned byte color\n");
+                                Preferences.debug("Signed short color is being treated as unsigned byte color\n",
+                                		Preferences.DEBUG_FILEIO);
                             }
                             else {
                                 fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
-                                Preferences.debug("Signed short color is being treated as unsigned short color\n");   
+                                Preferences.debug("Signed short color is being treated as unsigned short color\n",
+                                		Preferences.DEBUG_FILEIO);   
                             }
                             break;
                         default:
@@ -9909,8 +9963,9 @@ public class FileTiff extends FileBase {
                             fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
                             break;
                         case 64:
-                            Preferences.debug("Ideally should be ARGB_DOUBLE, but MIPAV does not have this type\n");
-                            Preferences.debug("so making ARGB_FLOAT\n");
+                            Preferences.debug("Ideally should be ARGB_DOUBLE, but MIPAV does not have this type\n",
+                            		Preferences.DEBUG_FILEIO);
+                            Preferences.debug("so making ARGB_FLOAT\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
                             break;
 
