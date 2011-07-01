@@ -303,7 +303,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
             if (getSaveTagFilePanel().getSelectedFile().getName().equals(DicomDictionary.DEFAULT_DICTIONARY_FILENAME)) {
                 Preferences.debug("Attempted to write DICOM dictionary file "
                         + "for converting DICOM-to-XML images to the master " + "dicom dictionary, \""
-                        + DicomDictionary.SUBSET_DICTIONARY_FILENAME + "\"." + "  No file was saved.\n", 2);
+                        + DicomDictionary.SUBSET_DICTIONARY_FILENAME + "\"." + "  No file was saved.\n", 
+                        Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY, getSaveTagFilePanel().getSelectedFile()
                         .getPath());
@@ -326,7 +327,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
             }
         } catch (IOException notwritable) {
             MipavUtil.displayWarning(getSaveTagFilePanel().getSelectedFile().toString() + " cannot be written!");
-            Preferences.debug("\"" + getSaveTagFilePanel().getSelectedFile().toString() + "\" cannot be written!\n", 2);
+            Preferences.debug("\"" + getSaveTagFilePanel().getSelectedFile().toString() + "\" cannot be written!\n", 
+            		Preferences.DEBUG_FILEIO);
         }
     }
 
