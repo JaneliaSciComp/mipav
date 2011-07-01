@@ -926,18 +926,19 @@ public class FileNIFTI extends FileBase {
                  if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
                 	    endianess = LITTLE_ENDIAN;
                 	    if (headerSize != getBufferInt(buffer, 0, LITTLE_ENDIAN)) {
-                	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
+                	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n",
+                	    			Preferences.DEBUG_FILEIO);
                          return false; 
                 	    }
                  }
                  else {
-                 	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);	
+                 	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
                  }
                  fileInfo.setEndianess(endianess);
                  fileInfo.setSizeOfHeader(headerSize);
                  vox_offset = getBufferFloat(buffer, 108, endianess);
                  fileInfo.setVoxOffset(vox_offset);
-                 Preferences.debug("vox_offset = " + vox_offset + "\n");
+                 Preferences.debug("vox_offset = " + vox_offset + "\n", Preferences.DEBUG_FILEIO);
                  dataStart = Math.round(vox_offset);
                  if (dataStart > headerSize) {
                 	 buffer2 = new byte[dataStart-headerSize];
@@ -966,18 +967,20 @@ public class FileNIFTI extends FileBase {
                 if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
                	    endianess = LITTLE_ENDIAN;
                	    if (headerSize != getBufferInt(buffer, 0, LITTLE_ENDIAN)) {
-               	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
+               	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 
+               	    			Preferences.DEBUG_FILEIO);
                         return false; 
                	    }
                 }
                 else {
-                	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);	
+                	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 
+                			Preferences.DEBUG_FILEIO);	
                 }
                 fileInfo.setEndianess(endianess);
                 fileInfo.setSizeOfHeader(headerSize);
                 vox_offset = getBufferFloat(buffer, 108, endianess);
                 fileInfo.setVoxOffset(vox_offset);
-                Preferences.debug("vox_offset = " + vox_offset + "\n");
+                Preferences.debug("vox_offset = " + vox_offset + "\n", Preferences.DEBUG_FILEIO);
                 dataStart = Math.round(vox_offset);
                 if (dataStart > headerSize) {
                	 buffer2 = new byte[dataStart-headerSize];
@@ -1006,18 +1009,20 @@ public class FileNIFTI extends FileBase {
                 if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
                	    endianess = LITTLE_ENDIAN;
                	    if (headerSize != getBufferInt(buffer, 0, LITTLE_ENDIAN)) {
-               	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
+               	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 
+               	    			Preferences.DEBUG_FILEIO);
                         return false; 
                	    }
                 }
                 else {
-                	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);	
+                	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 
+                			Preferences.DEBUG_FILEIO);	
                 }
                 fileInfo.setEndianess(endianess);
                 fileInfo.setSizeOfHeader(headerSize);
                 vox_offset = getBufferFloat(buffer, 108, endianess);
                 fileInfo.setVoxOffset(vox_offset);
-                Preferences.debug("vox_offset = " + vox_offset + "\n");
+                Preferences.debug("vox_offset = " + vox_offset + "\n", Preferences.DEBUG_FILEIO);
                 dataStart = Math.round(vox_offset);
                 if (dataStart > headerSize) {
                	 buffer2 = new byte[dataStart-headerSize];
@@ -1094,18 +1099,19 @@ public class FileNIFTI extends FileBase {
             if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
            	    endianess = LITTLE_ENDIAN;
            	    if (headerSize != getBufferInt(buffer, 0, LITTLE_ENDIAN)) {
-           	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
+           	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 
+           	    			Preferences.DEBUG_FILEIO);
                     return false; 
            	    }
             }
             else {
-            	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);	
+            	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", Preferences.DEBUG_FILEIO);	
             }
             fileInfo.setEndianess(endianess);
             fileInfo.setSizeOfHeader(headerSize);
             vox_offset = getBufferFloat(buffer, 108, endianess);
             fileInfo.setVoxOffset(vox_offset);
-            Preferences.debug("vox_offset = " + vox_offset + "\n");
+            Preferences.debug("vox_offset = " + vox_offset + "\n", Preferences.DEBUG_FILEIO);
             int dataStart = Math.round(vox_offset);
             if (dataStart < headerSize) {
             	dataStart = headerSize;
@@ -1114,7 +1120,8 @@ public class FileNIFTI extends FileBase {
             raFile.seek(0L);
             raFile.read(bufferByte);
 	        fileLength = raFile.length();
-	        Preferences.debug("\nThe size of the file with the header information = " + fileLength + "\n");
+	        Preferences.debug("\nThe size of the file with the header information = " + fileLength + "\n",
+	        		Preferences.DEBUG_FILEIO);
         
         }  
 
@@ -1124,19 +1131,19 @@ public class FileNIFTI extends FileBase {
         switch (freq_dim) {
 
             case 0:
-                Preferences.debug("No frequency encoding direction is present\n");
+                Preferences.debug("No frequency encoding direction is present\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 1:
-                Preferences.debug("Frequency encoding in the x direction\n");
+                Preferences.debug("Frequency encoding in the x direction\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 2:
-                Preferences.debug("Frequency encoding in the y direction\n");
+                Preferences.debug("Frequency encoding in the y direction\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 3:
-                Preferences.debug("Frequency encoding in the z direction\n");
+                Preferences.debug("Frequency encoding in the z direction\n", Preferences.DEBUG_FILEIO);
                 break;
         }
 
@@ -1146,19 +1153,19 @@ public class FileNIFTI extends FileBase {
         switch (phase_dim) {
 
             case 0:
-                Preferences.debug("No phase encoding direction is present\n");
+                Preferences.debug("No phase encoding direction is present\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 1:
-                Preferences.debug("Phase encoding in the x direction\n");
+                Preferences.debug("Phase encoding in the x direction\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 2:
-                Preferences.debug("Phase encoding in the y direction\n");
+                Preferences.debug("Phase encoding in the y direction\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 3:
-                Preferences.debug("Phase encoding in the z direction\n");
+                Preferences.debug("Phase encoding in the z direction\n", Preferences.DEBUG_FILEIO);
                 break;
         }
 
@@ -1168,19 +1175,19 @@ public class FileNIFTI extends FileBase {
         switch (slice_dim) {
 
             case 0:
-                Preferences.debug("No slice acquisition direction is present\n");
+                Preferences.debug("No slice acquisition direction is present\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 1:
-                Preferences.debug("Slice acquisition in the x direction\n");
+                Preferences.debug("Slice acquisition in the x direction\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 2:
-                Preferences.debug("Slice acquisition in the y direction\n");
+                Preferences.debug("Slice acquisition in the y direction\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case 3:
-                Preferences.debug("Slice acquisition in the z direction\n");
+                Preferences.debug("Slice acquisition in the z direction\n", Preferences.DEBUG_FILEIO);
                 break;
         }
 
@@ -1190,11 +1197,12 @@ public class FileNIFTI extends FileBase {
         // and any other dimensions as 5, 6, and 7
         // so that a x, y, t image would have dim[3] = 1
         int dims = getBufferShort(bufferByte, 40, endianess);
-        Preferences.debug("FileNIFTI:readHeader. Number of dimensions = " + dims + "\n", 2);
+        Preferences.debug("FileNIFTI:readHeader. Number of dimensions = " + dims + "\n", Preferences.DEBUG_FILEIO);
 
         for (i = 0; i < dims; i++) {
             niftiExtents[i] = getBufferShort(bufferByte, 42 + (2 * i), endianess);
-            Preferences.debug("FileNIFTI:readHeader. Dimension " + (i + 1) + " = " + niftiExtents[i] + "\n", 2);
+            Preferences.debug("FileNIFTI:readHeader. Dimension " + (i + 1) + " = " + niftiExtents[i] + "\n",
+            		Preferences.DEBUG_FILEIO);
 
             if (niftiExtents[i] > 1) {
                 numDims++;
@@ -1222,16 +1230,16 @@ public class FileNIFTI extends FileBase {
         fileInfo.setExtents(extents);
         intentP1 = getBufferFloat(bufferByte, 56, endianess);
         fileInfo.setIntentP1(intentP1);
-        Preferences.debug("FileNIFTI:readHeader. intentP1 = " + fileInfo.getIntentP1() + "\n");
+        Preferences.debug("FileNIFTI:readHeader. intentP1 = " + fileInfo.getIntentP1() + "\n", Preferences.DEBUG_FILEIO);
         intentP2 = getBufferFloat(bufferByte, 60, endianess);
         fileInfo.setIntentP2(intentP2);
-        Preferences.debug("FileNIFTI:readHeader. statPar2 = " + fileInfo.getIntentP2() + "\n");
+        Preferences.debug("FileNIFTI:readHeader. statPar2 = " + fileInfo.getIntentP2() + "\n", Preferences.DEBUG_FILEIO);
         intentP3 = getBufferFloat(bufferByte, 64, endianess);
         fileInfo.setIntentP3(intentP3);
-        Preferences.debug("FileNIFTI:readHeader. intentP3 = " + fileInfo.getIntentP3() + "\n");
+        Preferences.debug("FileNIFTI:readHeader. intentP3 = " + fileInfo.getIntentP3() + "\n", Preferences.DEBUG_FILEIO);
         intentCode = getBufferShort(bufferByte, 68, endianess);
         fileInfo.setIntentCode(intentCode);
-        Preferences.debug("FileNIFTI:readHeader. intentCode = " + intentCode + "\n");
+        Preferences.debug("FileNIFTI:readHeader. intentCode = " + intentCode + "\n", Preferences.DEBUG_FILEIO);
 
         switch (intentCode) {
 
@@ -1241,395 +1249,404 @@ public class FileNIFTI extends FileBase {
 
             case FileInfoNIFTI.NIFTI_INTENT_CORREL:
                 Preferences.debug("Correlation coefficient R\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
+                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has the Correlation Coefficient R\n");
-                    Preferences.debug("in the first data plane and degrees of freedom in the\n");
-                    Preferences.debug("second data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Correlation Coefficient R\n",
+                    		Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane and degrees of freedom in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_TTEST:
-                Preferences.debug("Student t statistic\n");
-                Preferences.debug("Degress of freedom = " + Math.round(intentP1) + "\n");
+                Preferences.debug("Student t statistic\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Degress of freedom = " + Math.round(intentP1) + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has the Student t statistic\n");
-                    Preferences.debug("in the first data plane and degrees of freedom in the\n");
-                    Preferences.debug("second data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Student t statistic\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane and degrees of freedom in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_FTEST:
                 Preferences.debug("Fisher F statistic\n");
-                Preferences.debug("Numerator degrees of freedom = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Denominator degrees of freedom = " + Math.round(intentP2) + "\n");
+                Preferences.debug("Numerator degrees of freedom = " + Math.round(intentP1) + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Denominator degrees of freedom = " + Math.round(intentP2) + "\n",
+                		Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Fisher F statistic\n");
-                    Preferences.debug("in the first data plane, numerator degrees of freedom in the\n");
-                    Preferences.debug("second data plane, and denominator degrees of freedom in the\n");
-                    Preferences.debug("third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Fisher F statistic\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, numerator degrees of freedom in the\n", 
+                    		Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane, and denominator degrees of freedom in the\n",
+                    		Preferences.DEBUG_FILEIO);
+                    Preferences.debug("third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_ZSCORE:
-                Preferences.debug("Standard normal - N(0,1) distributed\n");
+                Preferences.debug("Standard normal - N(0,1) distributed\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_CHISQ:
                 Preferences.debug("Chi - squared\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
+                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has Chi-squared\n");
-                    Preferences.debug("in the first data plane and degrees of freedom in the\n");
-                    Preferences.debug("second data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has Chi-squared\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane and degrees of freedom in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_BETA:
-                Preferences.debug("Beta distribution\n");
-                Preferences.debug("a parameter = " + intentP1 + "\n");
-                Preferences.debug("b parameter = " + intentP2 + "\n");
+                Preferences.debug("Beta distribution\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("a parameter = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("b parameter = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Beta distribution\n");
-                    Preferences.debug("in the first data plane, the a parameter in the\n");
-                    Preferences.debug("second data plane, and the b parameter in the third\n");
-                    Preferences.debug("third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Beta distribution\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, the a parameter in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane, and the b parameter in the third\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_BINOM:
-                Preferences.debug("Binomial distribution\n");
-                Preferences.debug("Number of trials = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Probability per trial = " + intentP2 + "\n");
+                Preferences.debug("Binomial distribution\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Number of trials = " + Math.round(intentP1) + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Probability per trial = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Binomial distribution\n");
-                    Preferences.debug("in the first data plane, the number of trials in the\n");
-                    Preferences.debug("second data plane, and the probability per trial in the\n");
-                    Preferences.debug("third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Binomial distribution\n",
+                    		Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, the number of trials in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane, and the probability per trial in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_GAMMA:
-                Preferences.debug("Gamma with PDF = x^(shape-1) * exp(-Scale*x)\n");
-                Preferences.debug("for x >= 0\n");
-                Preferences.debug("Shape = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
+                Preferences.debug("Gamma with PDF = x^(shape-1) * exp(-Scale*x)\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("for x >= 0\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Shape = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Scale = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has Gamma\n");
-                    Preferences.debug("in the first data plane, shape in the\n");
-                    Preferences.debug("second data plane, and scale in the third\n");
-                    Preferences.debug("data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has Gamma\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, shape in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane, and scale in the third\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_POISSON:
-                Preferences.debug("Poisson distribution\n");
-                Preferences.debug("Mean = " + intentP1 + "\n");
+                Preferences.debug("Poisson distribution\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Mean = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has the Poisson distribution\n");
-                    Preferences.debug("in the first data plane and the mean in the\n");
-                    Preferences.debug("second data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Poisson distribution\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane and the mean in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_NORMAL:
-                Preferences.debug("Normal distribution\n");
-                Preferences.debug("Mean = " + intentP1 + "\n");
-                Preferences.debug("Standard deviation = " + intentP2 + "\n");
+                Preferences.debug("Normal distribution\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Mean = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Standard deviation = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Normal distribution\n");
-                    Preferences.debug("in the first data plane, the mean in the\n");
-                    Preferences.debug("second data plane, and the standard deviation\n");
-                    Preferences.debug("in the third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Normal distribution\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, the mean in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane, and the standard deviation\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_FTEST_NONC:
-                Preferences.debug("Noncentral F statistic\n");
-                Preferences.debug("Numerator degrees of freedom = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Denominator degrees of freedom = " + Math.round(intentP2) + "\n");
-                Preferences.debug("Numerator noncentrality parameter= " + intentP3 + "\n");
+                Preferences.debug("Noncentral F statistic\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Numerator degrees of freedom = " + Math.round(intentP1) + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Denominator degrees of freedom = " + Math.round(intentP2) + "\n", 
+                		Preferences.DEBUG_FILEIO);
+                Preferences.debug("Numerator noncentrality parameter= " + intentP3 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 4)) {
-                    Preferences.debug("Dimension " + numDims + " has the Noncentral F statistic\n");
-                    Preferences.debug("in the first data plane, numerator degrees of freedom in the\n");
-                    Preferences.debug("second data plane, denominator degrees of freedom in the\n");
-                    Preferences.debug("third data plane, and the numerator noncentrality parameter\n");
-                    Preferences.debug("in the fourth data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Noncentral F statistic\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, numerator degrees of freedom in the\n",
+                    		Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane, denominator degrees of freedom in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("third data plane, and the numerator noncentrality parameter\n",
+                    		Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the fourth data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_CHISQ_NONC:
-                Preferences.debug("Noncentral chi-squared statistic\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Noncentrality parameter = " + intentP2 + "\n");
+                Preferences.debug("Noncentral chi-squared statistic\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Noncentrality parameter = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Noncentral chi-squared\n");
-                    Preferences.debug("statistic in the first data plane, degrees of freedom in the\n");
-                    Preferences.debug("second data plane, and the noncentrality parameter in the\n");
-                    Preferences.debug("third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Noncentral chi-squared\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("statistic in the first data plane, degrees of freedom in the\n",
+                    		Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane, and the noncentrality parameter in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_LOGISTIC:
-                Preferences.debug("Logistic distribution\n");
-                Preferences.debug("Location = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
+                Preferences.debug("Logistic distribution\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Location = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Scale = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Logistic distribution\n");
-                    Preferences.debug("in the first data plane, location in the second\n");
-                    Preferences.debug("data plane, and scale in the third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Logistic distribution\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, location in the second\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("data plane, and scale in the third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_LAPLACE:
-                Preferences.debug("Laplace distribution\n");
-                Preferences.debug("Location = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
+                Preferences.debug("Laplace distribution\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Location = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Scale = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Laplace distribution\n");
-                    Preferences.debug("in the first data plane, location in the second\n");
-                    Preferences.debug("data plane, and scale in the third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Laplace distribution\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, location in the second\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("data plane, and scale in the third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_UNIFORM:
-                Preferences.debug("Uniform distribution\n");
-                Preferences.debug("Start = " + intentP1 + "\n");
-                Preferences.debug("End = " + intentP2 + "\n");
+                Preferences.debug("Uniform distribution\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Start = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("End = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Uniform distribution\n");
-                    Preferences.debug("in the first data plane, start in the second data\n");
-                    Preferences.debug("plane, and end in the third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Uniform distribution\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, start in the second data\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("plane, and end in the third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_TTEST_NONC:
-                Preferences.debug("Noncentral t statistic\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Noncentrality parameter = " + intentP2 + "\n");
+                Preferences.debug("Noncentral t statistic\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Noncentrality parameter = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Noncentral t statistic\n");
-                    Preferences.debug("in the first data plane, degrees of freedom in the\n");
-                    Preferences.debug("second data plane, and the noncentrality parameter in\n");
-                    Preferences.debug("third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Noncentral t statistic\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, degrees of freedom in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane, and the noncentrality parameter in\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_WEIBULL:
-                Preferences.debug("Weibull distribution\n");
-                Preferences.debug("Location = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
-                Preferences.debug("Power = " + intentP3 + "\n");
+                Preferences.debug("Weibull distribution\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Location = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Scale = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Power = " + intentP3 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 4)) {
-                    Preferences.debug("Dimension " + numDims + " has the Weibull distribution\n");
-                    Preferences.debug("in the first data plane, location in the second\n");
-                    Preferences.debug("data plane, scale in the third data plane, and power\n");
-                    Preferences.debug("in the fourth data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Weibull distribution\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, location in the second\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("data plane, scale in the third data plane, and power\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the fourth data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_CHI:
-                Preferences.debug("Chi distribution\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
+                Preferences.debug("Chi distribution\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n", Preferences.DEBUG_FILEIO);
 
                 int p1 = Math.round(intentP1);
                 if (p1 == 1) {
-                    Preferences.debug("dof = 1 = half normal distribution\n");
+                    Preferences.debug("dof = 1 = half normal distribution\n", Preferences.DEBUG_FILEIO);
                 } else if (p1 == 2) {
-                    Preferences.debug("dof = 2 = Rayleigh distribution\n");
+                    Preferences.debug("dof = 2 = Rayleigh distribution\n", Preferences.DEBUG_FILEIO);
                 } else if (p1 == 3) {
-                    Preferences.debug("dof = 3 = Maxwell-Boltzmann distribution\n");
+                    Preferences.debug("dof = 3 = Maxwell-Boltzmann distribution\n", Preferences.DEBUG_FILEIO);
                 }
 
                 if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has the Chi distribution\n");
-                    Preferences.debug("in the first data plane and degrees of freedom in the\n");
-                    Preferences.debug("second data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Chi distribution\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane and degrees of freedom in the\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("second data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_INVGAUSS:
-                Preferences.debug("Inverse Gaussian\n");
-                Preferences.debug("Mu = " + intentP1 + "\n");
-                Preferences.debug("Lambda = " + intentP2 + "\n");
+                Preferences.debug("Inverse Gaussian\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Mu = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Lambda = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Inverse Gaussian\n");
-                    Preferences.debug("in the first data plane, mu in the second data\n");
-                    Preferences.debug("plane, and lambda in the third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has the Inverse Gaussian\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, mu in the second data\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("plane, and lambda in the third data plane\n", Preferences.DEBUG_FILEIO);
                 }
 
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_EXTVAL:
-                Preferences.debug("Extreme value type 1\n");
-                Preferences.debug("Location = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
+                Preferences.debug("Extreme value type 1\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Location = " + intentP1 + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Scale = " + intentP2 + "\n", Preferences.DEBUG_FILEIO);
                 if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has Extreme value type 1\n");
-                    Preferences.debug("in the first data plane, location in the second\n");
-                    Preferences.debug("data plane, and scale in the third data plane\n");
+                    Preferences.debug("Dimension " + numDims + " has Extreme value type 1\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("in the first data plane, location in the second\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("data plane, and scale in the third data plane\n", Preferences.DEBUG_FILEIO);
                 }
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_PVAL:
-                Preferences.debug("Data is a p-value\n");
+                Preferences.debug("Data is a p-value\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_LOGPVAL:
-                Preferences.debug("Data is ln(p-value)\n");
+                Preferences.debug("Data is ln(p-value)\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_LOG10PVAL:
-                Preferences.debug("Data is log10(p-value)\n");
+                Preferences.debug("Data is log10(p-value)\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_ESTIMATE:
-                Preferences.debug("Each voxel is an estimate of some parameter\n");
+                Preferences.debug("Each voxel is an estimate of some parameter\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_LABEL:
-                Preferences.debug("Each voxel is an index into some set of labels\n");
+                Preferences.debug("Each voxel is an index into some set of labels\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_NEURONAME:
-                Preferences.debug("Each voxel is an index into the NeuroNames label set\n");
+                Preferences.debug("Each voxel is an index into the NeuroNames label set\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_GENMATRIX:
-                Preferences.debug("Each voxel has a M x N matrix\n");
+                Preferences.debug("Each voxel has a M x N matrix\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_SYMMATRIX:
-                Preferences.debug("Each voxel has a NxN symmetric matrix\n");
+                Preferences.debug("Each voxel has a NxN symmetric matrix\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_DISPVECT:
-                Preferences.debug("Each voxel has a displacement vector\n");
+                Preferences.debug("Each voxel has a displacement vector\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_VECTOR:
-                Preferences.debug("Each voxel has a vector\n");
+                Preferences.debug("Each voxel has a vector\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_POINTSET:
-                Preferences.debug("Each voxel has a spatial coordinate\n");
+                Preferences.debug("Each voxel has a spatial coordinate\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_TRIANGLE:
-                Preferences.debug("Each voxel has a triple of indexes\n");
+                Preferences.debug("Each voxel has a triple of indexes\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_QUATERNION:
-                Preferences.debug("Each voxel has a quarternion\n");
+                Preferences.debug("Each voxel has a quarternion\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_INTENT_DIMLESS:
-                Preferences.debug("Each voxel is a dimensionless value\n");
+                Preferences.debug("Each voxel is a dimensionless value\n", Preferences.DEBUG_FILEIO);
                 break;
 
             default:
-                Preferences.debug("intentCode = " + intentCode + " is not a recognized value\n");
+                Preferences.debug("intentCode = " + intentCode + " is not a recognized value\n", Preferences.DEBUG_FILEIO);
         }
 
         sourceType = getBufferShort(bufferByte, 70, endianess);
         fileInfo.setSourceType(sourceType);
-        Preferences.debug("Original unscaled source data type:\n");
+        Preferences.debug("Original unscaled source data type:\n", Preferences.DEBUG_FILEIO);
 
         switch (sourceType) {
 
             case FileInfoNIFTI.DT_UNKNOWN:
-                Preferences.debug("Unknown data type\n");
+                Preferences.debug("Unknown data type\n", Preferences.DEBUG_FILEIO);
                 MipavUtil.displayError("Mipav cannot handle data type DT_UNKNOWN");
 
                 return false;
 
             case FileInfoNIFTI.DT_BINARY:
-                Preferences.debug("Binary data\n");
+                Preferences.debug("Binary data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_INT8:
-                Preferences.debug("Signed byte data\n");
+                Preferences.debug("Signed byte data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_UINT8:
-                Preferences.debug("Unsigned byte data\n");
+                Preferences.debug("Unsigned byte data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_INT16:
-                Preferences.debug("Signed short data\n");
+                Preferences.debug("Signed short data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_UINT16:
-                Preferences.debug("Unsigned short data\n");
+                Preferences.debug("Unsigned short data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_INT32:
-                Preferences.debug("Signed integer data\n");
+                Preferences.debug("Signed integer data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_UINT32:
-                Preferences.debug("Unsigned integer data\n");
+                Preferences.debug("Unsigned integer data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_INT64:
-                Preferences.debug("Signed long data\n");
+                Preferences.debug("Signed long data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_UINT64:
-                Preferences.debug("Unsigned long data\n");
+                Preferences.debug("Unsigned long data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_FLOAT32:
-                Preferences.debug("32 bit float data\n");
+                Preferences.debug("32 bit float data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_FLOAT64:
-                Preferences.debug("64 bit double data\n");
+                Preferences.debug("64 bit double data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_FLOAT128:
                 Preferences.debug("128 bit float data\n");
-                MipavUtil.displayError("MIPAV cannot handle 128 bit floating point data\n");
+                MipavUtil.displayError("MIPAV cannot handle 128 bit floating point data");
 
                 return false;
 
             case FileInfoNIFTI.NIFTI_TYPE_RGB24:
-                Preferences.debug("RGB 24 bit data\n");
+                Preferences.debug("RGB 24 bit data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_COMPLEX64:
-                Preferences.debug("64 bit complex data\n");
+                Preferences.debug("64 bit complex data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_COMPLEX128:
-                Preferences.debug("128 bit DCOMPLEX data\n");
+                Preferences.debug("128 bit DCOMPLEX data\n", Preferences.DEBUG_FILEIO);
                 break;
 
             case FileInfoNIFTI.NIFTI_TYPE_COMPLEX256:
-                Preferences.debug("256 bit complex data\n");
-                MipavUtil.displayError("MIPAV cannot handle 256 bit complex data\n");
+                Preferences.debug("256 bit complex data\n", Preferences.DEBUG_FILEIO);
+                MipavUtil.displayError("MIPAV cannot handle 256 bit complex data");
 
                 return false;
 
             default:
-                Preferences.debug("Unknown datatype code = " + sourceType + "\n");
+                Preferences.debug("Unknown datatype code = " + sourceType + "\n", Preferences.DEBUG_FILEIO);
                 MipavUtil.displayError("Unknown datatype code = " + sourceType);
 
                 return false;
@@ -1637,7 +1654,7 @@ public class FileNIFTI extends FileBase {
 
         sourceBitPix = getBufferShort(bufferByte, 72, endianess);
         fileInfo.setSourceBitPix(sourceBitPix);
-        Preferences.debug("FileNIFTI:readHeader. source bits per pixel = " + sourceBitPix + "\n", 2);
+        Preferences.debug("FileNIFTI:readHeader. source bits per pixel = " + sourceBitPix + "\n", Preferences.DEBUG_FILEIO);
 
         sliceStart = getBufferShort(bufferByte, 74, endianess);
 
@@ -1649,7 +1666,8 @@ public class FileNIFTI extends FileBase {
 
             if ((i >= 1) && (niftiExtents[i - 1] > 1)) {
                 resolutions[j] = Math.abs(pixdim[i]);
-                Preferences.debug("FileNIFTI:readHeader. Resolutions " + (j + 1) + " = " + resolutions[j] + "\n", 2);
+                Preferences.debug("FileNIFTI:readHeader. Resolutions " + (j + 1) + " = " + resolutions[j] + "\n", 
+                		Preferences.DEBUG_FILEIO);
                 j++;
             }
         }
@@ -1658,10 +1676,10 @@ public class FileNIFTI extends FileBase {
 
         scl_slope = getBufferFloat(bufferByte, 112, endianess);
         fileInfo.setSclSlope(scl_slope);
-        Preferences.debug("Data scaling slope = " + scl_slope + "\n");
+        Preferences.debug("Data scaling slope = " + scl_slope + "\n", Preferences.DEBUG_FILEIO);
         scl_inter = getBufferFloat(bufferByte, 116, endianess);
         fileInfo.setSclInter(scl_inter);
-        Preferences.debug("Data offset = " + scl_inter + "\n");
+        Preferences.debug("Data offset = " + scl_inter + "\n", Preferences.DEBUG_FILEIO);
 
         sliceEnd = getBufferShort(bufferByte, 120, endianess);
 
@@ -1669,43 +1687,43 @@ public class FileNIFTI extends FileBase {
 
         if ((sliceCode > 0) && (sliceStart > 0)) {
             fileInfo.setSliceStart(sliceStart);
-            Preferences.debug("Slice timing pattern starts with slice = " + (sliceStart + 1) + "\n");
+            Preferences.debug("Slice timing pattern starts with slice = " + (sliceStart + 1) + "\n", Preferences.DEBUG_FILEIO);
         }
 
         if ((sliceCode > 0) && (sliceEnd > sliceStart)) {
             fileInfo.setSliceEnd(sliceEnd);
-            Preferences.debug("Slice timing pattern ends with slice = " + (sliceEnd + 1) + "\n");
+            Preferences.debug("Slice timing pattern ends with slice = " + (sliceEnd + 1) + "\n", Preferences.DEBUG_FILEIO);
         }
 
         if (spatialDims == 0) {
-            Preferences.debug("No x, y, or z dimensions are present\n");
+            Preferences.debug("No x, y, or z dimensions are present\n", Preferences.DEBUG_FILEIO);
         } else {
             spaceUnits = (int) (bufferByte[123] & 0x07);
 
             switch (spaceUnits) {
 
                 case FileInfoNIFTI.NIFTI_UNITS_UNKNOWN:
-                    Preferences.debug("Spatial units are unknown\n");
+                    Preferences.debug("Spatial units are unknown\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_METER:
-                    Preferences.debug("Spatial units are meters\n");
+                    Preferences.debug("Spatial units are meters\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.METERS.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_MM:
-                    Preferences.debug("Spatial units are millimeters\n");
+                    Preferences.debug("Spatial units are millimeters\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.MILLIMETERS.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_MICRON:
-                    Preferences.debug("Spatial units are micrometers\n");
+                    Preferences.debug("Spatial units are micrometers\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.MICROMETERS.getLegacyNum();
                     break;
 
                 default:
-                    Preferences.debug("Spatial units are an illegal " + spaceUnits + "\n");
+                    Preferences.debug("Spatial units are an illegal " + spaceUnits + "\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     break;
             }
@@ -1721,42 +1739,42 @@ public class FileNIFTI extends FileBase {
             switch (timeUnits) {
 
                 case FileInfoNIFTI.NIFTI_UNITS_UNKNOWN:
-                    Preferences.debug("Time units are unknown\n");
+                    Preferences.debug("Time units are unknown\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.UNKNOWN_MEASURE.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_SEC:
-                    Preferences.debug("Time units are seconds\n");
+                    Preferences.debug("Time units are seconds\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.SECONDS.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_MSEC:
-                    Preferences.debug("Time units are milliseconds\n");
+                    Preferences.debug("Time units are milliseconds\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.MILLISEC.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_USEC:
-                    Preferences.debug("Time units are microseconds\n");
+                    Preferences.debug("Time units are microseconds\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.MICROSEC.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_HZ:
-                    Preferences.debug("Time units are hertz\n");
+                    Preferences.debug("Time units are hertz\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.HZ.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_PPM:
-                    Preferences.debug("Time units are parts per million\n");
+                    Preferences.debug("Time units are parts per million\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.PPM.getLegacyNum();
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_RADS:
-                    Preferences.debug("Time units are radians per second\n");
+                    Preferences.debug("Time units are radians per second\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.RADS.getLegacyNum();
                     break;
 
                 default:
-                    Preferences.debug("Time units are an illegal = " + timeUnits + "\n");
+                    Preferences.debug("Time units are an illegal = " + timeUnits + "\n", Preferences.DEBUG_FILEIO);
                     unitMeasure = Unit.UNKNOWN_MEASURE.getLegacyNum();
             }
 
@@ -1769,33 +1787,33 @@ public class FileNIFTI extends FileBase {
 
         if ((sliceDuration > 0) && (slice_dim > 0)) {
             fileInfo.setSliceDuration(sliceDuration);
-            Preferences.debug("Time used to acquire 1 slice = " + sliceDuration + "\n");
+            Preferences.debug("Time used to acquire 1 slice = " + sliceDuration + "\n", Preferences.DEBUG_FILEIO);
         }
 
         if ((sliceCode > 0) && (slice_dim > 0) && (sliceDuration > 0)) {
 
             if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_SEQ_INC) {
-                Preferences.debug("Slice timing order is sequentially increasing\n");
+                Preferences.debug("Slice timing order is sequentially increasing\n", Preferences.DEBUG_FILEIO);
             } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_SEQ_DEC) {
-                Preferences.debug("Slice timing order is sequentially decreasing\n");
+                Preferences.debug("Slice timing order is sequentially decreasing\n", Preferences.DEBUG_FILEIO);
             } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_ALT_INC) {
-                Preferences.debug("Slice timing order is alternately increasing\n");
+                Preferences.debug("Slice timing order is alternately increasing\n", Preferences.DEBUG_FILEIO);
             } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_ALT_DEC) {
-                Preferences.debug("Slice timing order is alternately decreasing\n");
+                Preferences.debug("Slice timing order is alternately decreasing\n", Preferences.DEBUG_FILEIO);
             } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_ALT_INC2) {
-                Preferences.debug("Slice timing order is alternately increasing #2\n");
+                Preferences.debug("Slice timing order is alternately increasing #2\n", Preferences.DEBUG_FILEIO);
             } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_ALT_DEC2) {
-                Preferences.debug("Slice timing order is alternately decreasing #2\n");
+                Preferences.debug("Slice timing order is alternately decreasing #2\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("slice code has an illegal value = " + sliceCode + "\n");
+                Preferences.debug("slice code has an illegal value = " + sliceCode + "\n", Preferences.DEBUG_FILEIO);
             }
         } else {
-            Preferences.debug("Slice timing order is not specified\n");
+            Preferences.debug("Slice timing order is not specified\n", Preferences.DEBUG_FILEIO);
         }
 
         tOffset = getBufferFloat(bufferByte, 136, endianess);
         fileInfo.setOrigin(tOffset, 3);
-        Preferences.debug("tOffset = " + tOffset + "\n");
+        Preferences.debug("tOffset = " + tOffset + "\n", Preferences.DEBUG_FILEIO);
 
 
         switch (sourceType) {
@@ -1912,8 +1930,8 @@ public class FileNIFTI extends FileBase {
         // Both methods 2 and 3 could be present
         // MIPAV can handle 2 different transformation matrices
         // for the same image.
-        Preferences.debug("qform_code = " + qform_code + "\n");
-        Preferences.debug("sform_code = " + sform_code + "\n");
+        Preferences.debug("qform_code = " + qform_code + "\n", Preferences.DEBUG_FILEIO);
+        Preferences.debug("sform_code = " + sform_code + "\n", Preferences.DEBUG_FILEIO);
 
         if (qform_code > 0) {
             coord_code = qform_code;
@@ -1937,33 +1955,34 @@ public class FileNIFTI extends FileBase {
             switch (coord_code) {
 
                 case FileInfoNIFTI.NIFTI_XFORM_UNKNOWN:
-                    Preferences.debug("Arbitrary X,Y,Z coordinate system\n", 2);
+                    Preferences.debug("Arbitrary X,Y,Z coordinate system\n", Preferences.DEBUG_FILEIO);
                     matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT:
-                    Preferences.debug("Scanner based anatomical coordinates\n", 2);
+                    Preferences.debug("Scanner based anatomical coordinates\n", Preferences.DEBUG_FILEIO);
                     matrix.setTransformID(TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT:
-                    Preferences.debug("Coordinates aligned to another file's or to anatomical truth\n", 2);
+                    Preferences.debug("Coordinates aligned to another file's or to anatomical truth\n",
+                    		Preferences.DEBUG_FILEIO);
                     matrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_TALAIRACH:
-                    Preferences.debug("Talairach X,Y,Z coordinate system\n", 2);
+                    Preferences.debug("Talairach X,Y,Z coordinate system\n", Preferences.DEBUG_FILEIO);
                     matrix.setTransformID(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_MNI_152:
                     matrix.setTransformID(TransMatrix.TRANSFORM_MNI_152);
-                    Preferences.debug("MNI 152 normalized X,Y,Z coordinates\n", 2);
+                    Preferences.debug("MNI 152 normalized X,Y,Z coordinates\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 default:
                     matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
-                    Preferences.debug("Unknown coord_code = " + coord_code);
+                    Preferences.debug("Unknown coord_code = " + coord_code + "\n", Preferences.DEBUG_FILEIO);
             }
         } // if (coord_code > 0)
 
@@ -1975,33 +1994,34 @@ public class FileNIFTI extends FileBase {
             switch (sform_code) {
 
                 case FileInfoNIFTI.NIFTI_XFORM_UNKNOWN:
-                    Preferences.debug("Matrix 2 arbitrary X,Y,Z coordinate system\n", 2);
+                    Preferences.debug("Matrix 2 arbitrary X,Y,Z coordinate system\n", Preferences.DEBUG_FILEIO);
                     matrix2.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT:
-                    Preferences.debug("Matrix 2 scanner based anatomical coordinates\n", 2);
+                    Preferences.debug("Matrix 2 scanner based anatomical coordinates\n", Preferences.DEBUG_FILEIO);
                     matrix2.setTransformID(TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT:
-                    Preferences.debug("Matrix 2 coordinates aligned to another file's or to anatomical truth\n", 2);
+                    Preferences.debug("Matrix 2 coordinates aligned to another file's or to anatomical truth\n",
+                    		Preferences.DEBUG_FILEIO);
                     matrix2.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_TALAIRACH:
-                    Preferences.debug("Matrix 2 Talairach X,Y,Z coordinate system\n", 2);
+                    Preferences.debug("Matrix 2 Talairach X,Y,Z coordinate system\n", Preferences.DEBUG_FILEIO);
                     matrix2.setTransformID(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_MNI_152:
                     matrix2.setTransformID(TransMatrix.TRANSFORM_MNI_152);
-                    Preferences.debug("Matrix 2 MNI 152 normalized X,Y,Z coordinates\n", 2);
+                    Preferences.debug("Matrix 2 MNI 152 normalized X,Y,Z coordinates\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 default:
                     matrix2.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
-                    Preferences.debug("Unknown sform_code = " + sform_code);
+                    Preferences.debug("Unknown sform_code = " + sform_code + "\n", Preferences.DEBUG_FILEIO);
             }
         }
 
@@ -2059,7 +2079,7 @@ public class FileNIFTI extends FileBase {
 
             axisOrientation = getAxisOrientation(matrix);
             Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
-                              axisOrientation[2] + "\n");
+                              axisOrientation[2] + "\n", Preferences.DEBUG_FILEIO);
             fileInfo.setAxisOrientation(axisOrientation);
 
             for (j = 0; j < 3; j++) {
@@ -2097,25 +2117,25 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setImageOrientation(FileInfoBase.AXIAL);
             }
 
-            Preferences.debug("matrix = \n" + matrix + "\n");
+            Preferences.debug("matrix = \n" + matrix + "\n", Preferences.DEBUG_FILEIO);
 
-            Preferences.debug("quatern_a = " + quatern_a + "\n");
-            Preferences.debug("quatern_b = " + quatern_b + "\n");
-            Preferences.debug("quatern_c = " + quatern_c + "\n");
-            Preferences.debug("quatern_d = " + quatern_d + "\n");
-            Preferences.debug("qoffset_x = " + qoffset_x + "\n");
-            Preferences.debug("qoffset_y = " + qoffset_y + "\n");
-            Preferences.debug("qoffset_z = " + qoffset_z + "\n");
-            Preferences.debug("qfac = " + qfac + "\n");
-            Preferences.debug("r00 = " + r00 + "\n");
-            Preferences.debug("r01 = " + r01 + "\n");
-            Preferences.debug("r02 = " + r02 + "\n");
-            Preferences.debug("r10 = " + r10 + "\n");
-            Preferences.debug("r11 = " + r11 + "\n");
-            Preferences.debug("r12 = " + r12 + "\n");
-            Preferences.debug("r20 = " + r20 + "\n");
-            Preferences.debug("r21 = " + r21 + "\n");
-            Preferences.debug("r22 = " + r22 + "\n");
+            Preferences.debug("quatern_a = " + quatern_a + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("quatern_b = " + quatern_b + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("quatern_c = " + quatern_c + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("quatern_d = " + quatern_d + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("qoffset_x = " + qoffset_x + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("qoffset_y = " + qoffset_y + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("qoffset_z = " + qoffset_z + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("qfac = " + qfac + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("r00 = " + r00 + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("r01 = " + r01 + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("r02 = " + r02 + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("r10 = " + r10 + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("r11 = " + r11 + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("r12 = " + r12 + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("r20 = " + r20 + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("r21 = " + r21 + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("r22 = " + r22 + "\n", Preferences.DEBUG_FILEIO);
         } // if (qform_code > 0)
         else if (sform_code > 0) { // qform_code = 0, so only 1 matrix
             srow_x = new float[4];
@@ -2159,7 +2179,7 @@ public class FileNIFTI extends FileBase {
 
             axisOrientation = getAxisOrientation(matrix);
             Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
-                              axisOrientation[2] + "\n");
+                              axisOrientation[2] + "\n", Preferences.DEBUG_FILEIO);
             fileInfo.setAxisOrientation(axisOrientation);
 
             for (j = 0; j < 3; j++) {
@@ -2197,14 +2217,14 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setImageOrientation(FileInfoBase.AXIAL);
             }
 
-            Preferences.debug("matrix = \n" + matrix + "\n");
+            Preferences.debug("matrix = \n" + matrix + "\n", Preferences.DEBUG_FILEIO);
 
             Preferences.debug("srow_x = " + srow_x[0] + "  " + srow_x[1] + "  " + srow_x[2] + "  " + srow_x[3] +
-                              "\n");
+                              "\n", Preferences.DEBUG_FILEIO);
             Preferences.debug("srow_y = " + srow_y[0] + "  " + srow_y[1] + "  " + srow_y[2] + "  " + srow_y[3] +
-                              "\n");
+                              "\n", Preferences.DEBUG_FILEIO);
             Preferences.debug("srow_z = " + srow_z[0] + "  " + srow_z[1] + "  " + srow_z[2] + "  " + srow_z[3] +
-                              "\n");
+                              "\n", Preferences.DEBUG_FILEIO);
         } // else if (sform_code > 0)
 
         if (matrix2 != null) { // sform_code > 0 and 2 matrices
@@ -2236,7 +2256,7 @@ public class FileNIFTI extends FileBase {
 
             axisOrientation2 = getAxisOrientation(matrix2);
             Preferences.debug("axisOrientation2 = " + axisOrientation2[0] + "  " + axisOrientation2[1] + "  " +
-                              axisOrientation2[2] + "\n");
+                              axisOrientation2[2] + "\n", Preferences.DEBUG_FILEIO);
 
             for (j = 0; j < 3; j++) {
                 if (axisOrientation2[j] == FileInfoBase.ORI_R2L_TYPE) {
@@ -2259,14 +2279,14 @@ public class FileNIFTI extends FileBase {
             matrix2.set(2, 3, (double) LPSOrigin2[2]);
 
 
-            Preferences.debug("matrix2 = \n" + matrix2 + "\n");
+            Preferences.debug("matrix2 = \n" + matrix2 + "\n", Preferences.DEBUG_FILEIO);
 
             Preferences.debug("srow_x = " + srow_x[0] + "  " + srow_x[1] + "  " + srow_x[2] + "  " + srow_x[3] +
-                              "\n");
+                              "\n", Preferences.DEBUG_FILEIO);
             Preferences.debug("srow_y = " + srow_y[0] + "  " + srow_y[1] + "  " + srow_y[2] + "  " + srow_y[3] +
-                              "\n");
+                              "\n", Preferences.DEBUG_FILEIO);
             Preferences.debug("srow_z = " + srow_z[0] + "  " + srow_z[1] + "  " + srow_z[2] + "  " + srow_z[3] +
-                              "\n");
+                              "\n", Preferences.DEBUG_FILEIO);
         } // if (matrix2 != null)
         
         if (numDims == 2) {
@@ -2305,20 +2325,20 @@ public class FileNIFTI extends FileBase {
         
 
         intentName = (new String(bufferByte, 328, 16));
-        Preferences.debug("Name or meaning of data = " + intentName + "\n");
+        Preferences.debug("Name or meaning of data = " + intentName + "\n", Preferences.DEBUG_FILEIO);
         fileInfo.setIntentName(intentName.trim());
         if ((bufferByte.length > 348) && (vox_offset > 352)) {
             // 4 byte extension array is present with only the first byte extension[0] defined
             // If extension[0] is nonzero, it indicates that extended header information is
             // present in the bytes following the extension array.
             extension0 = bufferByte[348];
-            Preferences.debug("First byte in extension array = " + extension0 + "\n");
+            Preferences.debug("First byte in extension array = " + extension0 + "\n", Preferences.DEBUG_FILEIO);
         }
         if (extension0 == 0) {
-            Preferences.debug("No extended header information is present\n");
+            Preferences.debug("No extended header information is present\n", Preferences.DEBUG_FILEIO);
         }
         else {
-            Preferences.debug("This indicates a header extension follows the extension array\n");
+            Preferences.debug("This indicates a header extension follows the extension array\n", Preferences.DEBUG_FILEIO);
             // Read past the 3 unused bytes in the extension array
             // The size of the extended header in bytes including the 8 bytes for esize and ecode
             // esize must be a positive integral multiple of 16
@@ -2355,7 +2375,7 @@ public class FileNIFTI extends FileBase {
                 ecodeNumber++;
                 currentAddress = currentAddress + esize;
             } // while ((fileLength >= currentAddress + 8) && ((!oneFile) || (vox_offset >= currentAddress + 8)))
-            Preferences.debug("The number of header fields = " + ecodeNumber + "\n");
+            Preferences.debug("The number of header fields = " + ecodeNumber + "\n", Preferences.DEBUG_FILEIO);
             if (ecodeNumber >= 1) {
                 esizeArray = new int[ecodeNumber];
                 esizeArray[0] = 8;
@@ -2374,81 +2394,94 @@ public class FileNIFTI extends FileBase {
                 ecodeNumber = 0;
                 while ((bufferByte.length >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]) && ((!oneFile) || (vox_offset >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]))) {
                     esizeArray[ecodeNumber] = getBufferInt(bufferByte, currentAddress, endianess);
-                    Preferences.debug("Header field number " + (ecodeNumber+1) + " size in bytes = " + esizeArray[ecodeNumber] + "\n");
+                    Preferences.debug("Header field number " + (ecodeNumber+1) + " size in bytes = " + esizeArray[ecodeNumber]
+                                      + "\n", Preferences.DEBUG_FILEIO);
                     ecodeArray[ecodeNumber] = getBufferInt(bufferByte, currentAddress+4, endianess);
-                    Preferences.debug("Header field number " + (ecodeNumber+1) + " has ");
+                    Preferences.debug("Header field number " + (ecodeNumber+1) + " has ", Preferences.DEBUG_FILEIO);
                     switch(ecodeArray[ecodeNumber]) {
                     case 0:
-                    	Preferences.debug("ecode = 0 for an unknown private format\n");
+                    	Preferences.debug("ecode = 0 for an unknown private format\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case 2:
-                    	Preferences.debug("ecode = 2 for DICOM format (i.e., attribute tags and values)\n");
+                    	Preferences.debug("ecode = 2 for DICOM format (i.e., attribute tags and values)\n",
+                    			Preferences.DEBUG_FILEIO);
                     	break;
                     case 4:
-                    	Preferences.debug("ecode = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
+                    	Preferences.debug("ecode = 4 for AFNI group (i.e., ASCII XML-ish elements)\n",
+                    			Preferences.DEBUG_FILEIO);
                     	afniGroupArray[afniGroupIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
                     	afniGroupIndex++;
                     	break;
                     case 6:
-                    	Preferences.debug("ecode = 6 for comment: arbitrary non-NUL ASCII text\n");
+                    	Preferences.debug("ecode = 6 for comment: arbitrary non-NUL ASCII text\n", Preferences.DEBUG_FILEIO);
                     	asciiTextArray[asciiTextIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
                     	asciiTextIndex++;
                     	break;
                     case 8:
-                    	Preferences.debug("ecode = 8 for XCEDE metadata\n");
+                    	Preferences.debug("ecode = 8 for XCEDE metadata\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case 10:
-                        Preferences.debug("ecode = 10 for dimensional information for JIM software(XML format)\n");
+                        Preferences.debug("ecode = 10 for dimensional information for JIM software(XML format)\n",
+                        		Preferences.DEBUG_FILEIO);
                         break;
                     case 12:
-                    	Preferences.debug("ecode = 12 for Fiswidget XML pipeline descriptions\n");
+                    	Preferences.debug("ecode = 12 for Fiswidget XML pipeline descriptions\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case 18:
-                    	Preferences.debug("ecode = 18 for MIND_IDENT field with character data\n");
+                    	Preferences.debug("ecode = 18 for MIND_IDENT field with character data\n", Preferences.DEBUG_FILEIO);
                     	mindIdentArray[mindIdentIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
-                    	Preferences.debug("Mind Ident field = " + mindIdentArray[mindIdentIndex] + "\n");
+                    	Preferences.debug("Mind Ident field = " + mindIdentArray[mindIdentIndex] + "\n",
+                    			Preferences.DEBUG_FILEIO);
                     	mindIdentIndex++;
                     	break;
                     case 20:
-                        Preferences.debug("ecode = 20 for B_VALUE for b-value in units of s/mm-squared\n");
+                        Preferences.debug("ecode = 20 for B_VALUE for b-value in units of s/mm-squared\n",
+                        		Preferences.DEBUG_FILEIO);
                         bValueArray[bValueIndex] = getBufferFloat(bufferByte, currentAddress+8, endianess);
-                        Preferences.debug("b-value = " + bValueArray[bValueIndex] + " s/(mm*mm)\n");
+                        Preferences.debug("b-value = " + bValueArray[bValueIndex] + " s/(mm*mm)\n", Preferences.DEBUG_FILEIO);
                         bValueIndex++;
                         break;
                     case 22:
-                    	Preferences.debug("ecode = 22 for SPHERICAL_DIRECTION with spherical coordinates\n");
+                    	Preferences.debug("ecode = 22 for SPHERICAL_DIRECTION with spherical coordinates\n",
+                    			Preferences.DEBUG_FILEIO);
                     	azimuthArray[sphericalDirectionIndex] = getBufferFloat(bufferByte, currentAddress+8, endianess);
-                    	Preferences.debug("Azimuthal angle = " + azimuthArray[sphericalDirectionIndex] + " radians\n");
+                    	Preferences.debug("Azimuthal angle = " + azimuthArray[sphericalDirectionIndex] + " radians\n",
+                    			Preferences.DEBUG_FILEIO);
                     	zenithArray[sphericalDirectionIndex] = getBufferFloat(bufferByte, currentAddress+12, endianess);
-                    	Preferences.debug("Zenith angle = " + zenithArray[sphericalDirectionIndex] + " radians\n");
+                    	Preferences.debug("Zenith angle = " + zenithArray[sphericalDirectionIndex] + " radians\n",
+                    			Preferences.DEBUG_FILEIO);
                     	sphericalDirectionIndex++;
                     	break;
                     case 24:
-                    	Preferences.debug("ecode = 24 for DT_COMPONENT specifying the indicies of a single diffusion tensor component\n");
+                    	Preferences.debug("ecode = 24 for DT_COMPONENT specifying the indicies of a single diffusion tensor component\n",
+                    			Preferences.DEBUG_FILEIO);
                     	dtComponents = (esizeArray[ecodeNumber] - 8)/4;
                     	dtComponentArray[dtComponentIndex] = new int[dtComponents];
                     	for (i = 0; i < dtComponents; i++) {
                     		dtComponentArray[dtComponentIndex][i] = getBufferInt(bufferByte, currentAddress + 8 + 4*i, endianess);
-                    		Preferences.debug("DT component index " + (i+1) + " = " + dtComponentArray[dtComponentIndex][i] + "\n");
+                    		Preferences.debug("DT component index " + (i+1) + " = " + dtComponentArray[dtComponentIndex][i]
+                    		                  + "\n", Preferences.DEBUG_FILEIO);
                     	}
                     	dtComponentIndex++;
                     	break;
                     case 26:
-                    	Preferences.debug("ecode = 26 for SHC_DEGREEORDER specifying degree and order of a spherical harmonic basis function\n");
+                    	Preferences.debug("ecode = 26 for SHC_DEGREEORDER specifying degree and order of a spherical harmonic basis function\n",
+                    			Preferences.DEBUG_FILEIO);
                     	degreeArray[sphericalHarmonicIndex] = getBufferInt(bufferByte, currentAddress+8, endianess);
-                    	Preferences.debug("Degree = " + degreeArray[sphericalHarmonicIndex] + "\n");
+                    	Preferences.debug("Degree = " + degreeArray[sphericalHarmonicIndex] + "\n", Preferences.DEBUG_FILEIO);
                     	orderArray[sphericalHarmonicIndex] = getBufferInt(bufferByte, currentAddress+12, endianess);
-                    	Preferences.debug("Order = " + orderArray[sphericalHarmonicIndex] + "\n");
+                    	Preferences.debug("Order = " + orderArray[sphericalHarmonicIndex] + "\n", Preferences.DEBUG_FILEIO);
                     	sphericalHarmonicIndex++;
                     	break;
                     case 30:
-                    	Preferences.debug("eocde = 30 for CARET an XML extension\n");
+                    	Preferences.debug("ecode = 30 for CARET an XML extension\n", Preferences.DEBUG_FILEIO);
                     	caretArray[caretIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
-                    	Preferences.debug("Caret field = " + caretArray[caretIndex] + "\n");
+                    	Preferences.debug("Caret field = " + caretArray[caretIndex] + "\n", Preferences.DEBUG_FILEIO);
                     	caretIndex++;
                     	break;
                     default:
-                        Preferences.debug("ecode = " + ecodeArray[ecodeNumber] + " an unspecified ecode value\n");
+                        Preferences.debug("ecode = " + ecodeArray[ecodeNumber] + " an unspecified ecode value\n",
+                        		Preferences.DEBUG_FILEIO);
                     } // switch(ecodeArray[ecodeNumber])
                     currentAddress = currentAddress + esizeArray[ecodeNumber];
                     ecodeNumber++;
@@ -4546,8 +4579,8 @@ public class FileNIFTI extends FileBase {
             nDimsLength1 = 3 - firstTimeDim;
         }
 
-        Preferences.debug("FileNIFTI:writeHeader - nImagesSaved = " + nImagesSaved + "\n", 2);
-        Preferences.debug("FileNIFTI:writeHeader - nDims = " + nDims + "\n", 2);
+        Preferences.debug("FileNIFTI:writeHeader - nImagesSaved = " + nImagesSaved + "\n", Preferences.DEBUG_FILEIO);
+        Preferences.debug("FileNIFTI:writeHeader - nDims = " + nDims + "\n", Preferences.DEBUG_FILEIO);
 
         niftiExtents = new int[nDims + 1];
         niftiExtents[0] = nDims;
@@ -4568,7 +4601,8 @@ public class FileNIFTI extends FileBase {
         }
 
         for (i = 0; i < niftiExtents.length; i++) {
-            Preferences.debug("FileNIFTI:writeHeader - i = " + i + " dim = " + niftiExtents[i] + "\n", 2);
+            Preferences.debug("FileNIFTI:writeHeader - i = " + i + " dim = " + niftiExtents[i] + "\n",
+            		Preferences.DEBUG_FILEIO);
         }
 
         switch (image.getType()) {
@@ -4676,7 +4710,7 @@ public class FileNIFTI extends FileBase {
         if ((matrixQ != null) || ((matrixQ == null) && (matrixS == null))) {
 
             if (matrixQ != null) {
-                Preferences.debug("matrixQ on write entry = " + matrixQ + "\n");
+                Preferences.debug("matrixQ on write entry = " + matrixQ + "\n", Preferences.DEBUG_FILEIO);
 
                 // To use matrixQ information must have qform_code > 0,
                 // so cannot have qform_code equal to FileInfoNIFTI.NIFTI_XFORM_UNKNOWN.
@@ -5130,7 +5164,7 @@ public class FileNIFTI extends FileBase {
         } // if ((matrixQ != null) || ((matrixQ == null) && (matrixS == null)))
 
         if (matrixS != null) {
-            Preferences.debug("matrixS on write entry = " + matrixS + "\n");
+            Preferences.debug("matrixS on write entry = " + matrixS + "\n", Preferences.DEBUG_FILEIO);
 
             // To use matrixS information must have sform_code > 0,
             // so cannot have sform_code equal to FileInfoNIFTI.NIFTI_XFORM_UNKNOWN.
@@ -5309,9 +5343,9 @@ public class FileNIFTI extends FileBase {
             setBufferShort(bufferByte, (short) sform_code, 254, endianess);
 
             if (qform_code > 0) {
-                Preferences.debug("Writing quatern_b = " + quatern_b + "\n");
+                Preferences.debug("Writing quatern_b = " + quatern_b + "\n", Preferences.DEBUG_FILEIO);
                 setBufferFloat(bufferByte, quatern_b, 256, endianess);
-                Preferences.debug("Writing quatern_c = " + quatern_c + "\n");
+                Preferences.debug("Writing quatern_c = " + quatern_c + "\n", Preferences.DEBUG_FILEIO);
                 setBufferFloat(bufferByte, quatern_c, 260, endianess);
                 Preferences.debug("Writing quatern_d = " + quatern_d + "\n");
                 setBufferFloat(bufferByte, quatern_d, 264, endianess);
@@ -5395,7 +5429,7 @@ public class FileNIFTI extends FileBase {
             // intent_code
             setBufferShort(bufferByte, (short) 0, 68, endianess);
 
-            Preferences.debug("FileNIFTI:writeHeader(simple): data type = " + sourceType + "\n", 2);
+            Preferences.debug("FileNIFTI:writeHeader(simple): data type = " + sourceType + "\n", Preferences.DEBUG_FILEIO);
             setBufferShort(bufferByte, sourceType, 70, endianess);
 
             switch (image.getType()) {
@@ -5452,7 +5486,8 @@ public class FileNIFTI extends FileBase {
                     return false;
             }
 
-            Preferences.debug("FileNIFTI:writeHeader(simple): bits per pixel = " + fileInfo.getBitPix() + "\n", 2);
+            Preferences.debug("FileNIFTI:writeHeader(simple): bits per pixel = " + fileInfo.getBitPix() + "\n",
+            		Preferences.DEBUG_FILEIO);
             setBufferShort(bufferByte, (short) fileInfo.getBitPix(), 72, endianess);
 
             // slice_start
@@ -5550,11 +5585,11 @@ public class FileNIFTI extends FileBase {
             // sform_code
             setBufferShort(bufferByte, (short) sform_code, 254, endianess);
 
-            Preferences.debug("Writing quatern_b = " + quatern_b + "\n");
+            Preferences.debug("Writing quatern_b = " + quatern_b + "\n", Preferences.DEBUG_FILEIO);
             setBufferFloat(bufferByte, quatern_b, 256, endianess);
-            Preferences.debug("Writing quatern_c = " + quatern_c + "\n");
+            Preferences.debug("Writing quatern_c = " + quatern_c + "\n", Preferences.DEBUG_FILEIO);
             setBufferFloat(bufferByte, quatern_c, 260, endianess);
-            Preferences.debug("Writing quatern_d = " + quatern_d + "\n");
+            Preferences.debug("Writing quatern_d = " + quatern_d + "\n", Preferences.DEBUG_FILEIO);
             setBufferFloat(bufferByte, quatern_d, 264, endianess);
 
             // qoffset_x
