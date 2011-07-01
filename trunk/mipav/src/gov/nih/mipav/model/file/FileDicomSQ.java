@@ -48,7 +48,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      * Creates a new DicomSQ object with initial length.
      */
     public FileDicomSQ() {
-        sequence = new Vector<FileDicomItem>(10, 5);
+        sequence = new Vector<FileDicomItem>(5, 2);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

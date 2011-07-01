@@ -549,6 +549,27 @@ public class FileInfoDicom extends FileInfoBase {
         while(itr.hasNext()) {
             setInfoFromTag(tagTable.get(itr.next()));
         }
+        
+        if (getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
+            displayType = ModelStorageBase.FLOAT;
+            // a bit of a hack - indicates Model image should be reallocated to float for PET image the data is
+            // stored
+            // as 2 bytes (short) but is "normalized" using the slope parameter required for PET images (intercept
+            // always 0 for PET).
+        }
+
+        if ( ( (getDataType() == ModelStorageBase.UBYTE) || (getDataType() == ModelStorageBase.USHORT))
+                && (getRescaleIntercept() < 0)) {
+            // this performs a similar method as the pet adjustment for float images stored on disk as short to read
+            // in
+            // signed byte and signed short images stored on disk as unsigned byte or unsigned short with a negative
+            // rescale intercept
+            if (getDataType() == ModelStorageBase.UBYTE) {
+                displayType = ModelStorageBase.BYTE;
+            } else if (getDataType() == ModelStorageBase.USHORT) {
+                displayType = ModelStorageBase.SHORT;
+            }
+        }
     }
 
     /**
@@ -937,7 +958,11 @@ public class FileInfoDicom extends FileInfoBase {
                 lut.makeIndexedLUT(null);
                 //TODO: store this in file for display
             }
-        }
+        } else if (tagKey.equals("0018,602C")) {
+            setUnitsOfMeasure(Unit.CENTIMETERS, 0);
+        } else if (tagKey.equals("0018,602E")) {
+            setUnitsOfMeasure(Unit.CENTIMETERS, 1);
+        } 
     }
 
     public boolean isEnhancedDicom() {
