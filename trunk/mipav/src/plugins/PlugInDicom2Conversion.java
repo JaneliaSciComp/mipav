@@ -186,7 +186,7 @@ public class PlugInDicom2Conversion implements PlugInGeneric {
 
             } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
-                Preferences.debug("Out of memory: ViewJFrameBase.save\n", 3);
+                Preferences.debug("Out of memory: ViewJFrameBase.save\n", Preferences.DEBUG_COMMS);
 
                 return;
             }
