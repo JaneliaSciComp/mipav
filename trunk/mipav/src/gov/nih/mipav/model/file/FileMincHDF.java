@@ -1058,14 +1058,15 @@ public class FileMincHDF extends FileBase {
 
         if ( (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                 || (image.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
-            Preferences.debug("Copying direction cosines from SCANNER ANATOMICAL matrix\n");
+            Preferences.debug("Copying direction cosines from SCANNER ANATOMICAL matrix\n", Preferences.DEBUG_FILEIO);
             scannerArray = new double[3][3];
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     scannerArray[i][j] = image.getMatrix().get(i, j);
-                    Preferences.debug("scannerArray[" + i + "][" + j + "] = " + scannerArray[i][j] + " ");
+                    Preferences.debug("scannerArray[" + i + "][" + j + "] = " + scannerArray[i][j] + " ",
+                    		Preferences.DEBUG_FILEIO);
                 }
-                Preferences.debug("\n");
+                Preferences.debug("\n", Preferences.DEBUG_FILEIO);
             }
             // MINC is L->R and P->A while MIPAV is R->L and A->P, so multiply first 2 rows by -1
             for (int i = 0; i <= 1; i++) {
@@ -1604,7 +1605,8 @@ public class FileMincHDF extends FileBase {
                 break;
             default:
                 System.err.println("First switch(mDataType) not valid yet mDataType = " + mDataType);
-                Preferences.debug("First switch(mDataType) not valid mDataType = " + mDataType + "\n");
+                Preferences.debug("First switch(mDataType) not valid mDataType = " + mDataType + "\n", 
+                		Preferences.DEBUG_FILEIO);
                 return;
         }
 
@@ -1736,7 +1738,8 @@ public class FileMincHDF extends FileBase {
                 break;
             default:
                 System.err.println("Second switch(mDataType) not valid yet mDataType = " + mDataType);
-                Preferences.debug("Second switch(mDataType) not valid mDataType = " + mDataType + "\n");
+                Preferences.debug("Second switch(mDataType) not valid mDataType = " + mDataType + "\n", 
+                		Preferences.DEBUG_FILEIO);
                 return;
         }
         int sliceCounter = 0;
@@ -1999,8 +2002,9 @@ public class FileMincHDF extends FileBase {
                     break;
                 default:
                     System.err.println("Third switch(mDataType) not valid yet mDataType = " + mDataType);
-                    Preferences.debug("j = " + j + "\n");
-                    Preferences.debug("Third switch(mDataType) not valid mDataType = " + mDataType + "\n");
+                    Preferences.debug("j = " + j + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Third switch(mDataType) not valid mDataType = " + mDataType + "\n", 
+                    		Preferences.DEBUG_FILEIO);
                     return;
             }
             imageObj.write(dataImportObj);
@@ -2237,7 +2241,7 @@ public class FileMincHDF extends FileBase {
      */
     public void writeImage(final ModelImage image, final FileWriteOptions options) throws Exception {
 
-        Preferences.debug("Entering writeImage\n");
+        Preferences.debug("Entering writeImage\n", Preferences.DEBUG_FILEIO);
         final String fullPath = fileDir + File.separator + fileName;
 
         // create the h5File and open it
@@ -2260,7 +2264,7 @@ public class FileMincHDF extends FileBase {
 
         buildInfoNode(image, format, mincNode, model);
 
-        Preferences.debug("Entering buildImageNode\n");
+        Preferences.debug("Entering buildImageNode\n", Preferences.DEBUG_FILEIO);
         buildImageNode(image, options, format, mincNode, model);
 
         h5File.close();
