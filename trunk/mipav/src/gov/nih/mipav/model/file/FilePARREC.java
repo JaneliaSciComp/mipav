@@ -443,17 +443,17 @@ public class FilePARREC extends FileBase {
         //Setup Basic Variables//
         String fileHeaderName;
         fileHeaderName=getHeaderFile();
-        Preferences.debug(" fileHeaderName = " + fileHeaderName  + "\n");
+        Preferences.debug(" fileHeaderName = " + fileHeaderName  + "\n", Preferences.DEBUG_FILEIO);
         File fileHeader = new File(fileHeaderName);
         if (fileHeader.exists() == false) {
-            Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n");
+            Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n", Preferences.DEBUG_FILEIO);
             return false;
         }
 
         // Required to read in multi-file analyze images. i.e. a set of 3D images to make a 4D dataset
         // The files should all have the same prefix. fooR_001.img, fooR_002.img etc.
         if (fileInfo == null) { // if the file info does not yet exist: make it
-            Preferences.debug("fileInfo is null\n");
+            Preferences.debug("fileInfo is null\n", Preferences.DEBUG_FILEIO);
             fileInfo = new FileInfoPARREC(imageFileName, fileDir, FileUtility.PARREC);
             if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) { // Why 3/20/2001
                 throw (new IOException(" Analyze header file error"));
@@ -464,7 +464,8 @@ public class FilePARREC extends FileBase {
         try {
             raFile = new RandomAccessFile(fileHeader, "r");
         } catch (FileNotFoundException e) {
-            Preferences.debug("raFile = new RandomAccessFile(fileHeader, r) gave " + "FileNotFoundException " + e);
+            Preferences.debug("raFile = new RandomAccessFile(fileHeader, r) gave " + "FileNotFoundException " + e,
+            		Preferences.DEBUG_FILEIO);
             throw new IOException("Error on raFile = new RandomAccessFile(fileHeader,r)");
         }
 
@@ -528,7 +529,8 @@ public class FilePARREC extends FileBase {
                     if(null!=stgTag) {
                         VolParameters.put(stgTag,key);
                     } else {
-                        Preferences.debug("FilePARREC:readHeader. Unknown Volume Tag: " + tag + "=" + key + "\n");
+                        Preferences.debug("FilePARREC:readHeader. Unknown Volume Tag: " + tag + "=" + key + "\n",
+                        		Preferences.DEBUG_FILEIO);
                     }
                     break;
                 default: // parse as image slice information
@@ -547,7 +549,7 @@ public class FilePARREC extends FileBase {
         try {
             raFile.close();
         } catch (IOException e) {
-            Preferences.debug("raFile.close() gave IOException " + e + "\n");
+            Preferences.debug("raFile.close() gave IOException " + e + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException(" Error on raFile.close()");
         }
 
@@ -569,7 +571,7 @@ public class FilePARREC extends FileBase {
         //Get the volume variables:
         s = (String)VolParameters.get("max_num_slices");
         if(s==null) {
-            Preferences.debug("FilePARREC:readHeader. Number of slices not found."+ "\n");
+            Preferences.debug("FilePARREC:readHeader. Number of slices not found."+ "\n", Preferences.DEBUG_FILEIO);
             return false;
         }
         numSlices = Integer.valueOf(s);
@@ -604,11 +606,11 @@ public class FilePARREC extends FileBase {
                 fov2 = Float.valueOf(ss[1]);
                 fov3 = Float.valueOf(ss[2]);
             } else {
-                Preferences.debug("FilePARREC:readHeader. FOV doesn't make sense: "+s+ "\n");
+                Preferences.debug("FilePARREC:readHeader. FOV doesn't make sense: "+s+ "\n", Preferences.DEBUG_FILEIO);
                 return false;
             }
         } else {
-            Preferences.debug("FilePARREC:readHeader. FOV not found."+ "\n");
+            Preferences.debug("FilePARREC:readHeader. FOV not found."+ "\n", Preferences.DEBUG_FILEIO);
             return false;
         }
 
@@ -649,7 +651,7 @@ public class FilePARREC extends FileBase {
             
             Integer I = (Integer)SliceMap.get(tag);
             if(I==null) {
-                Preferences.debug("FilePARREC:readHeader. Bad slice tag;"+tag + "\n");
+                Preferences.debug("FilePARREC:readHeader. Bad slice tag;"+tag + "\n", Preferences.DEBUG_FILEIO);
                 return false;
             }
             idx += I.intValue();
@@ -685,7 +687,7 @@ public class FilePARREC extends FileBase {
                 
                 Integer I = (Integer)SliceMap.get(tag);
                 if(I==null) {
-                    Preferences.debug("FilePARREC:readHeader. Bad slice tag;"+tag + "\n");
+                    Preferences.debug("FilePARREC:readHeader. Bad slice tag;"+tag + "\n", Preferences.DEBUG_FILEIO);
                     return false;
                 }
                 idx += I.intValue();
@@ -699,59 +701,63 @@ public class FilePARREC extends FileBase {
             }
         }
         if (sameSliceScalings) {
-            Preferences.debug("FilePARREC:readHeader rescaleIntercept = " + rescaleIntercept[0] + "\n");
-            Preferences.debug("FilePARREC:readHeader rescaleSlope = " + rescaleSlope[0] + "\n");
-            Preferences.debug("FilePARREC:readHeader scaleSlope = " + scaleSlope[0] + "\n");
+            Preferences.debug("FilePARREC:readHeader rescaleIntercept = " + rescaleIntercept[0] + "\n",
+            		Preferences.DEBUG_FILEIO);
+            Preferences.debug("FilePARREC:readHeader rescaleSlope = " + rescaleSlope[0] + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("FilePARREC:readHeader scaleSlope = " + scaleSlope[0] + "\n", Preferences.DEBUG_FILEIO);
         }
         else {
             for (int j = 0; j < Slices.size(); j++) {
-                Preferences.debug("FilePARREC:readHeader rescaleIntercept[" + j + "] = " + rescaleIntercept[j] + "\n");
-                Preferences.debug("FilePARREC:readHeader rescaleSlope[" + j + "] = " + rescaleSlope[j] + "\n");
-                Preferences.debug("FilePARREC:readHeader scaleSlope[" + j + "] = " + scaleSlope[j] + "\n");    
+                Preferences.debug("FilePARREC:readHeader rescaleIntercept[" + j + "] = " + rescaleIntercept[j] + "\n",
+                		Preferences.DEBUG_FILEIO);
+                Preferences.debug("FilePARREC:readHeader rescaleSlope[" + j + "] = " + rescaleSlope[j] + "\n",
+                		Preferences.DEBUG_FILEIO);
+                Preferences.debug("FilePARREC:readHeader scaleSlope[" + j + "] = " + scaleSlope[j] + "\n",
+                		Preferences.DEBUG_FILEIO);    
             }
         }
 
 
         if(bpp==0) {
-            Preferences.debug("FilePARREC:readHeader: BPP not specified" + "\n");
+            Preferences.debug("FilePARREC:readHeader: BPP not specified" + "\n", Preferences.DEBUG_FILEIO);
             return false;
         }
         //Format of the "rec" file
         if(FileUtility.getExtension(getImageFiles()[0]).startsWith(".f")) {
             originalDataType = ModelStorageBase.FLOAT;
             fileInfo.setDataType(ModelStorageBase.FLOAT);
-            Preferences.debug("FilePARREC:readHeader. Floating Point" + "\n");
+            Preferences.debug("FilePARREC:readHeader. Floating Point" + "\n", Preferences.DEBUG_FILEIO);
         } else {
             if(Integer.valueOf(bpp)==16) {
                 originalDataType = ModelStorageBase.USHORT;
                 if ((scaleSlope[0] == 1.0f) && (rescaleIntercept[0] == 0.0f) && sameSliceScalings) {
                     fileInfo.setDataType(ModelStorageBase.USHORT);
-                    Preferences.debug("FilePARREC:readHeader. Unsigned Short" + "\n");
+                    Preferences.debug("FilePARREC:readHeader. Unsigned Short" + "\n", Preferences.DEBUG_FILEIO);
                 }
                 else {
                     fileInfo.setDataType(ModelStorageBase.FLOAT);
-                    Preferences.debug("FilePARREC: readHeader. Raw data USHORT will scale to Float\n");
+                    Preferences.debug("FilePARREC: readHeader. Raw data USHORT will scale to Float\n", Preferences.DEBUG_FILEIO);
                 }
             } else if(Integer.valueOf(bpp)==8) {
                 originalDataType = ModelStorageBase.UBYTE;
                 if ((scaleSlope[0] == 1.0f) && (rescaleIntercept[0] == 0.0f) && sameSliceScalings) {
                     fileInfo.setDataType(ModelStorageBase.UBYTE);
-                    Preferences.debug("FilePARREC:readHeader. Unsigned BYTE" + "\n");
+                    Preferences.debug("FilePARREC:readHeader. Unsigned BYTE" + "\n", Preferences.DEBUG_FILEIO);
                 }
                 else {
                     fileInfo.setDataType(ModelStorageBase.FLOAT);
-                    Preferences.debug("FilePARREC: readHeader. Raw data UBYTE will scale to Float\n");
+                    Preferences.debug("FilePARREC: readHeader. Raw data UBYTE will scale to Float\n", Preferences.DEBUG_FILEIO);
                 }
                 
             } else {
-                Preferences.debug("FilePARREC:readHeader. Unknown bpp" + bpp + "\n");;
+                Preferences.debug("FilePARREC:readHeader. Unknown bpp" + bpp + "\n", Preferences.DEBUG_FILEIO);;
                 return false;
             }
         }
 
 
         if(dim1==0 || dim2==0) {
-            Preferences.debug("FilePARREC:readHeader. Invalid slice dimension"+ "\n");
+            Preferences.debug("FilePARREC:readHeader. Invalid slice dimension"+ "\n", Preferences.DEBUG_FILEIO);
             return false;
         }
         numVolumes =Slices.size()/numSlices;
@@ -821,7 +827,7 @@ public class FilePARREC extends FileBase {
                 break;
 
             default:
-                Preferences.debug("FilePARREC:readHeader. Unknown Orientation;"+ori+ "\n");
+                Preferences.debug("FilePARREC:readHeader. Unknown Orientation;"+ori+ "\n", Preferences.DEBUG_FILEIO);
                 return false;
 
         }
