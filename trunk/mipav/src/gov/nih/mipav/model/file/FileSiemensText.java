@@ -341,17 +341,17 @@ public class FileSiemensText extends FileBase {
         }
 
         fileHeaderName = fileName.substring(0) + ".hdr";
-        Preferences.debug(" fileHeaderName = " + fileHeaderName + "\n");
+        Preferences.debug(" fileHeaderName = " + fileHeaderName + "\n", Preferences.DEBUG_FILEIO);
         fileHeader = new File(fileDir + fileHeaderName);
 
         if (fileHeader.exists() == false) {
-            Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n");
+            Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n", Preferences.DEBUG_FILEIO);
             fileHeaderName = fileName.substring(0, index) + ".HDR";
-            Preferences.debug("fileHeaderName = " + fileHeaderName + "\n");
+            Preferences.debug("fileHeaderName = " + fileHeaderName + "\n", Preferences.DEBUG_FILEIO);
             fileHeader = new File(fileDir + fileHeaderName);
 
             if (fileHeader.exists() == false) {
-                Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n");
+                Preferences.debug(fileDir + fileHeaderName + " cannot be found.\n", Preferences.DEBUG_FILEIO);
 
                 return false;
             }
@@ -360,7 +360,7 @@ public class FileSiemensText extends FileBase {
         // Required to read in multi-file SiemensText images. i.e. a set of 3D images to make a 4D dataset
         // The files should all have the same prefix. fooR_001.img, fooR_002.img etc.
         if (fileInfo == null) { // if the file info does not yet exist: make it
-            Preferences.debug("fileInfo is null\n");
+            Preferences.debug("fileInfo is null\n", Preferences.DEBUG_FILEIO);
             fileInfo = new FileInfoSiemensText(imageFileName, fileDir, FileUtility.SIEMENSTEXT);
 
             if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) { // Why 3/20/2001
@@ -371,7 +371,8 @@ public class FileSiemensText extends FileBase {
         try {
             raFile = new RandomAccessFile(fileHeader, "r");
         } catch (FileNotFoundException e) {
-            Preferences.debug("raFile = new RandomAccessFile(fileHeader, r) gave " + "FileNotFoundException " + e);
+            Preferences.debug("raFile = new RandomAccessFile(fileHeader, r) gave " + "FileNotFoundException " + e +
+            		"\n", Preferences.DEBUG_FILEIO);
             throw new IOException("Error on raFile = new RandomAccessFile(fileHeader,r)");
         }
     	int loc = 0;
@@ -396,14 +397,14 @@ public class FileSiemensText extends FileBase {
         	}
             
         } catch (IOException e) {
-            Preferences.debug("raFile.read(bufferImageHeader gave IOException " + e + "\n");
+            Preferences.debug("raFile.read(bufferImageHeader gave IOException " + e + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException(" Error on raFile.read(bufferImageHeader)");
         }
 
         try {
             raFile.close();
         } catch (IOException e) {
-            Preferences.debug("raFile.close() gave IOException " + e + "\n");
+            Preferences.debug("raFile.close() gave IOException " + e + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException(" Error on raFile.close()");
         }
 
@@ -412,13 +413,13 @@ public class FileSiemensText extends FileBase {
         // The following reads in certain tags.  In some cases, it returns false and exits out of readHeader
         // if the information is wrong.
         fileInfo.setDataType(Short.parseShort((String)storage.get("data_type")));
-        Preferences.debug("Data type name = " + fileInfo.getDataTypeName() + "\n");
+        Preferences.debug("Data type name = " + fileInfo.getDataTypeName() + "\n", Preferences.DEBUG_FILEIO);
 
 
         int dims = Integer.parseInt((String) storage.get("number_of_dimensions")); // number of Dimensions should = 4
 
         // SiemensText dims = 3
-        Preferences.debug("FileSiemensText:readHeader. Number of dimensions = " + dims + "\n");
+        Preferences.debug("FileSiemensText:readHeader. Number of dimensions = " + dims + "\n", Preferences.DEBUG_FILEIO);
         int[] extents = new int[dims];
         
         extents[0] = Integer.parseInt((String) storage.get("x_dimension"));
@@ -430,7 +431,8 @@ public class FileSiemensText extends FileBase {
         fileInfo.setExtents(extents);
 
         
-        Preferences.debug("FileSiemensText:readHeader. Data type = " + fileInfo.getDataTypeCode() + "\n");
+        Preferences.debug("FileSiemensText:readHeader. Data type = " + fileInfo.getDataTypeCode() + "\n", 
+        		Preferences.DEBUG_FILEIO);
 
         switch (fileInfo.getDataTypeCode()) { // Set the dataType in ModelStorage based on this tag
 
@@ -476,7 +478,8 @@ public class FileSiemensText extends FileBase {
                 return false;
         }
 
-        Preferences.debug("FileSiemensText:readHeader. bits per pixel = " + fileInfo.getBitPix() + "\n");
+        Preferences.debug("FileSiemensText:readHeader. bits per pixel = " + fileInfo.getBitPix() + "\n", 
+        		Preferences.DEBUG_FILEIO);
 
         fileInfo.setDim((short) dims);
 
