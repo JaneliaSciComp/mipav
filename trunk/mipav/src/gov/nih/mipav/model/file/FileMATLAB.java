@@ -349,19 +349,19 @@ public class FileMATLAB extends FileBase {
             st = fileName.lastIndexOf(".");
             
             fileLength = raFile.length();
-            Preferences.debug("fileLength = " + fileLength + "\n");
+            Preferences.debug("fileLength = " + fileLength + "\n", Preferences.DEBUG_FILEIO);
             raFile.seek(126L);
             firstEndianByte = raFile.readByte();
             secondEndianByte = raFile.readByte();
             if ((firstEndianByte == 77) && (secondEndianByte == 73)) {
             	// M followed by I
             	endianess = FileBase.BIG_ENDIAN;
-            	Preferences.debug("The MATLAB file is big endian\n");
+            	Preferences.debug("The MATLAB file is big endian\n", Preferences.DEBUG_FILEIO);
             }
             else if ((firstEndianByte == 73) && (secondEndianByte == 77)) {
             	// I followed by M
             	endianess = FileBase.LITTLE_ENDIAN;
-            	Preferences.debug("The MATLAB file is little endian\n");
+            	Preferences.debug("The MATLAB file is little endian\n", Preferences.DEBUG_FILEIO);
             }
             else {
             	raFile.close();
@@ -380,12 +380,12 @@ public class FileMATLAB extends FileBase {
             if ((firstByte == 0) || (secondByte == 0) || (thirdByte == 0) || (fourthByte == 0)) {
             	 // MATLAB uses level 4 format
                  level5Format = false;	
-                 Preferences.debug("The MATLAB file uses level 4 format\n");
+                 Preferences.debug("The MATLAB file uses level 4 format\n", Preferences.DEBUG_FILEIO);
             }
             else {
             	// MATLAB uses level 5 format
             	level5Format = true;
-            	Preferences.debug("The MATLAB file uses level 5 format\n");
+            	Preferences.debug("The MATLAB file uses level 5 format\n", Preferences.DEBUG_FILEIO);
             }
             
             fileInfo.setLevel5Format(level5Format);
@@ -393,7 +393,7 @@ public class FileMATLAB extends FileBase {
             raFile.seek(0L);
             
             headerTextField = getString(116);
-            Preferences.debug("Header text field = " + headerTextField.trim() + "\n");
+            Preferences.debug("Header text field = " + headerTextField.trim() + "\n", Preferences.DEBUG_FILEIO);
             fileInfo.setHeaderTextField(headerTextField);
             
             // Location 116
@@ -401,20 +401,22 @@ public class FileMATLAB extends FileBase {
             // All zeros or all spaces in this field indicate that there is no 
             // subsystem-specific data stored in this file
             if ((subsystemSpecificDataOffset == 0L) || (subsystemSpecificDataOffset == 0x2020202020202020L)) {
-            	Preferences.debug("No subsystem specific data stored in file\n");
+            	Preferences.debug("No subsystem specific data stored in file\n", Preferences.DEBUG_FILEIO);
             }
             else {
-            	Preferences.debug("Subystem specific data stored at location " + subsystemSpecificDataOffset + "\n");
+            	Preferences.debug("Subystem specific data stored at location " + subsystemSpecificDataOffset + "\n", 
+            			Preferences.DEBUG_FILEIO);
             	fileInfo.setSubsystemSpecificDataOffset(subsystemSpecificDataOffset);
             }
             
             // Location 124
             version = getUnsignedShort(endianess);
             if (version == 256) {
-                Preferences.debug("The version number is the expected 256\n");	
+                Preferences.debug("The version number is the expected 256\n", Preferences.DEBUG_FILEIO);	
             }
             else {
-            	Preferences.debug("The version number = " + version + " instead of the expected 256\n");
+            	Preferences.debug("The version number = " + version + " instead of the expected 256\n", 
+            			Preferences.DEBUG_FILEIO);
             }
             fileInfo.setVersion(version);
             
@@ -446,7 +448,7 @@ public class FileMATLAB extends FileBase {
                         nextElementAddress = nextElementAddress + elementBytes + padBytes + 8;
                     }
                 }
-                Preferences.debug("nextElementAddress = " + nextElementAddress + "\n");
+                Preferences.debug("nextElementAddress = " + nextElementAddress + "\n", Preferences.DEBUG_FILEIO);
                 if (dataType == miCOMPRESSED) {
                 	fireProgressStateChanged("Decompressing element number " + String.valueOf(elementNumber));
                 	if (elementNumber == 1) {
@@ -459,8 +461,8 @@ public class FileMATLAB extends FileBase {
                 		fireProgressStateChanged(85);
                 	}
                 	isCompressed = true;
-                	Preferences.debug("Data type = miCOMPRESSED\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miCOMPRESSED\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	buffer = new byte[elementBytes];
                 	raFile.read(buffer);
                 	zlibDecompresser = new Inflater();
@@ -538,115 +540,117 @@ public class FileMATLAB extends FileBase {
                 }
                 switch(dataType) {
                 case miINT8:
-                	Preferences.debug("Data type = miINT8\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miINT8\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miUINT8:
-                	Preferences.debug("Data type = miUINT8\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miUINT8\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miINT16:
-                	Preferences.debug("Data type = miINT16\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miINT16\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miUINT16:
-                	Preferences.debug("Data type = miUINT16\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miUINT16\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miINT32:
-                	Preferences.debug("Data type = miINT32\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miINT32\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miUINT32:
-                	Preferences.debug("Data type = miUINT32\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miUINT32\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miSINGLE:
-                	Preferences.debug("Data type = miSINGLE\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miSINGLE\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miDOUBLE:
-                	Preferences.debug("Data type = miDOUBLE\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miDOUBLE\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miINT64:
-                	Preferences.debug("Data type = miINT64\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miINT64\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miUINT64:
-                	Preferences.debug("Data type = miUINT64\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miUINT64\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miMATRIX:
-                	Preferences.debug("Data type = miMATRIX\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miMATRIX\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	imageExtents = null;
                 	imagesFound++;
                 	logicalFields = 0;
                 	arrayFlagsDataType = getInt(endianess);
                 	if (arrayFlagsDataType == miUINT32) {
-                		Preferences.debug("Array flags data type is the expected miUINT32\n");
+                		Preferences.debug("Array flags data type is the expected miUINT32\n", Preferences.DEBUG_FILEIO);
                 	}
                 	else {
-                		Preferences.debug("Array flags data type is an unexpected " + arrayFlagsDataType + "\n");
+                		Preferences.debug("Array flags data type is an unexpected " + arrayFlagsDataType + "\n", 
+                				Preferences.DEBUG_FILEIO);
                 	}
                     arrayFlagsBytes = getInt(endianess);
                     if (arrayFlagsBytes == 8) {
-                    	Preferences.debug("Array flags byte length = 8 as expected\n");
+                    	Preferences.debug("Array flags byte length = 8 as expected\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
-                    	Preferences.debug("Array flags byte length is an unexpected " + arrayFlagsBytes + "\n");
+                    	Preferences.debug("Array flags byte length is an unexpected " + arrayFlagsBytes + "\n", 
+                    			Preferences.DEBUG_FILEIO);
                     }
                     arrayFlags = getInt(endianess);
                     arrayClass = arrayFlags & 0x000000ff;
                     switch(arrayClass) {
                     case mxCELL_CLASS:
-                    	Preferences.debug("Array type is cell array\n");
+                    	Preferences.debug("Array type is cell array\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxSTRUCT_CLASS:
-                    	Preferences.debug("Array type is structure\n");
+                    	Preferences.debug("Array type is structure\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxOBJECT_CLASS:
-                    	Preferences.debug("Array type is object\n");
+                    	Preferences.debug("Array type is object\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxCHAR_CLASS:
-                    	Preferences.debug("Array type is character\n");
+                    	Preferences.debug("Array type is character\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxSPARSE_CLASS:
-                    	Preferences.debug("Array type is sparse\n");
+                    	Preferences.debug("Array type is sparse\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxDOUBLE_CLASS:
-                    	Preferences.debug("Array type is 8 byte double\n");
+                    	Preferences.debug("Array type is 8 byte double\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxSINGLE_CLASS:
-                    	Preferences.debug("Array type is 4 byte float\n");
+                    	Preferences.debug("Array type is 4 byte float\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxINT8_CLASS:
-                    	Preferences.debug("Array type is signed byte\n");
+                    	Preferences.debug("Array type is signed byte\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxUINT8_CLASS:
-                    	Preferences.debug("Array type is unsigned byte\n");
+                    	Preferences.debug("Array type is unsigned byte\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxINT16_CLASS:
-                    	Preferences.debug("Array type is signed short\n");
+                    	Preferences.debug("Array type is signed short\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxUINT16_CLASS:
-                    	Preferences.debug("Array type is unsigned short\n");
+                    	Preferences.debug("Array type is unsigned short\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxINT32_CLASS:
-                        Preferences.debug("Array type is signed integer\n");
+                        Preferences.debug("Array type is signed integer\n", Preferences.DEBUG_FILEIO);
                         break;
                     case mxUINT32_CLASS:
-                    	Preferences.debug("Array type is unsigned integer\n");
+                    	Preferences.debug("Array type is unsigned integer\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxINT64_CLASS:
-                    	Preferences.debug("Array type is signed long\n");
+                    	Preferences.debug("Array type is signed long\n", Preferences.DEBUG_FILEIO);
                     	break;
                     case mxUINT64_CLASS:
-                    	Preferences.debug("Array type is unsigned long\n");
+                    	Preferences.debug("Array type is unsigned long\n", Preferences.DEBUG_FILEIO);
                     	break;
                     default:
-                    	Preferences.debug("Array type is an illegal = " + arrayClass + "\n");
+                    	Preferences.debug("Array type is an illegal = " + arrayClass + "\n", Preferences.DEBUG_FILEIO);
                     }
                     if (arrayClass == mxCHAR_CLASS) {
                     	imagesFound--;
@@ -670,56 +674,60 @@ public class FileMATLAB extends FileBase {
                     }
                     if ((arrayFlags & 0x00000800) != 0) {
                     	complexFlag = true;
-                    	Preferences.debug("Complex flag is set\n");
+                    	Preferences.debug("Complex flag is set\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
                     	complexFlag = false;
-                    	Preferences.debug("Complex flag is not set\n");
+                    	Preferences.debug("Complex flag is not set\n", Preferences.DEBUG_FILEIO);
                     }
                     if ((arrayFlags & 0x00000400) != 0) {
                     	globalFlag = true;
-                    	Preferences.debug("Global flag is set\n");
+                    	Preferences.debug("Global flag is set\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
                     	globalFlag = false;
-                    	Preferences.debug("Global flag is not set\n");
+                    	Preferences.debug("Global flag is not set\n", Preferences.DEBUG_FILEIO);
                     }
                     if ((arrayFlags & 0x00000200) != 0) {
                     	logicalFlag = true;
-                    	Preferences.debug("Logical flag is set\n");
+                    	Preferences.debug("Logical flag is set\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
                     	logicalFlag = false;
-                    	Preferences.debug("Logical flag is not set\n");
+                    	Preferences.debug("Logical flag is not set\n", Preferences.DEBUG_FILEIO);
                     }
                     // 4 undefined bytes
                 	getInt(endianess);
                 	dimensionsArrayDataType = getInt(endianess);
                 	if (dimensionsArrayDataType == miINT32) {
-                		Preferences.debug("Dimensions array data type is the expected miINT32\n");
+                		Preferences.debug("Dimensions array data type is the expected miINT32\n", Preferences.DEBUG_FILEIO);
                 	}
                 	else {
-                		Preferences.debug("Dimensions array data type is an unexpected " + dimensionsArrayDataType + "\n");
+                		Preferences.debug("Dimensions array data type is an unexpected " + dimensionsArrayDataType + "\n", 
+                				Preferences.DEBUG_FILEIO);
                 	}
                 	dimensionsArrayBytes = getInt(endianess);
-                	Preferences.debug("dimensionsArrayBytes = " + dimensionsArrayBytes + "\n");
+                	Preferences.debug("dimensionsArrayBytes = " + dimensionsArrayBytes + "\n", Preferences.DEBUG_FILEIO);
                 	if ((dimensionsArrayBytes % 4) == 0) {
-                		Preferences.debug("dimensionsArrayBytes is a multiple of 4 as expected\n");
+                		Preferences.debug("dimensionsArrayBytes is a multiple of 4 as expected\n", Preferences.DEBUG_FILEIO);
                 	}
                 	else {
-                		Preferences.debug("dimensionArrayBytes is unexpectedly not a multiple of 4\n");
+                		Preferences.debug("dimensionArrayBytes is unexpectedly not a multiple of 4\n", 
+                				Preferences.DEBUG_FILEIO);
                 	}
                 	nDim = dimensionsArrayBytes/4;
-                	Preferences.debug("Number of dimensions = " + nDim + "\n");
+                	Preferences.debug("Number of dimensions = " + nDim + "\n", Preferences.DEBUG_FILEIO);
                 	if (nDim < 2) {
-                		Preferences.debug("Error! All numeric arrays should have at least 2 dimensions\n");
+                		Preferences.debug("Error! All numeric arrays should have at least 2 dimensions\n",
+                				Preferences.DEBUG_FILEIO);
                 	}
                 	if (arrayClass == mxSTRUCT_CLASS) {
                 		structureDimensions = new int[nDim];
                 	    for (i = 0; i < nDim; i++) {
                 	    	// Ignore structure dimensions
                 	    	structureDimensions[i] = getInt(endianess);
-                	    	Preferences.debug("Ignored structureDimensions[" + i + " ] = " + structureDimensions[i] + "\n");
+                	    	Preferences.debug("Ignored structureDimensions[" + i + " ] = " + structureDimensions[i] + "\n", 
+                	    			Preferences.DEBUG_FILEIO);
                 	    }
                 	}
                 	else { // arrayClass != mxSTRUCT_CLASS
@@ -734,15 +742,16 @@ public class FileMATLAB extends FileBase {
 	                	for (i = 0; i < nDim; i++) {
 	                		if (i == 0) {
 	                			imageExtents[1] = getInt(endianess);
-	                			Preferences.debug("imageExtents[1] = " + imageExtents[1] + "\n");
+	                			Preferences.debug("imageExtents[1] = " + imageExtents[1] + "\n", Preferences.DEBUG_FILEIO);
 	                		}
 	                		else if (i == 1) {
 	                			imageExtents[0] = getInt(endianess);
-	                			Preferences.debug("imageExtents[0] = " + imageExtents[0] + "\n");
+	                			Preferences.debug("imageExtents[0] = " + imageExtents[0] + "\n", Preferences.DEBUG_FILEIO);
 	                		}
 	                		else {
 	                		    imageExtents[i] = getInt(endianess);
-	                		    Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n");
+	                		    Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n", 
+	                		    		Preferences.DEBUG_FILEIO);
 	                		}
 	                		imageLength = imageLength * imageExtents[i];
 	                		if (i > 1) {
@@ -816,7 +825,7 @@ public class FileMATLAB extends FileBase {
 	                		}
                     	}
                     }
-                    Preferences.debug("Array name = " + arrayName + "\n");
+                    Preferences.debug("Array name = " + arrayName + "\n", Preferences.DEBUG_FILEIO);
                     if (imagesFound == 1) {
                 	    fileInfo.setArrayName(arrayName);
                 	}
@@ -829,45 +838,51 @@ public class FileMATLAB extends FileBase {
                     	maximumFieldNameLengthBytes = (maximumFieldNameLengthDataType & 0xffff0000) >>> 16;
                     	maximumFieldNameLengthDataType = maximumFieldNameLengthDataType & 0xffff;
                     	if (maximumFieldNameLengthDataType == miINT32) {
-                    		Preferences.debug("maximumFieldNameLengthDataType == miINT32 as expected\n");
+                    		Preferences.debug("maximumFieldNameLengthDataType == miINT32 as expected\n", 
+                    				Preferences.DEBUG_FILEIO);
                     	}
                     	else {
-                    		Preferences.debug("maximumFieldNameLengthDataType unexpectedly == " + maximumFieldNameLengthDataType + "\n");
+                    		Preferences.debug("maximumFieldNameLengthDataType unexpectedly == " + 
+                    				maximumFieldNameLengthDataType + "\n", Preferences.DEBUG_FILEIO);
                     	}
                     	if (maximumFieldNameLengthBytes == 4) {
-                    		Preferences.debug("maximumFieldNameLengthBytes == 4 as expected\n");
+                    		Preferences.debug("maximumFieldNameLengthBytes == 4 as expected\n", Preferences.DEBUG_FILEIO);
                     	}
                     	else {
                     		Preferences.debug("maximumFieldNameLengthBytes == " + maximumFieldNameLengthBytes +
-                    				          " instead of the expected 4\n");
+                    				          " instead of the expected 4\n", Preferences.DEBUG_FILEIO);
                     	}
                     	maximumFieldNameLength = getInt(endianess);
-                    	Preferences.debug("maximumFieldNameLength including null terminator = " + maximumFieldNameLength + "\n");
+                    	Preferences.debug("maximumFieldNameLength including null terminator = " + 
+                    			maximumFieldNameLength + "\n", Preferences.DEBUG_FILEIO);
                     	if (maximumFieldNameLength > 32) {
-                    		Preferences.debug("maximumFieldNameLength should not be greater than 32\n");
+                    		Preferences.debug("maximumFieldNameLength should not be greater than 32\n", 
+                    				Preferences.DEBUG_FILEIO);
                     	}
                     	fieldNamesDataType = getInt(endianess);
                     	if (fieldNamesDataType == miINT8) {
-                    		Preferences.debug("fieldNamesDataType == miINT8 as expected\n");
+                    		Preferences.debug("fieldNamesDataType == miINT8 as expected\n", Preferences.DEBUG_FILEIO);
                     	}
                     	else {
-                    		Preferences.debug("fieldNamesDataType unexpectely == " + fieldNamesDataType + "\n");
+                    		Preferences.debug("fieldNamesDataType unexpectely == " + fieldNamesDataType + "\n", 
+                    				Preferences.DEBUG_FILEIO);
                     	}
                     	fieldNamesBytes = getInt(endianess);
-                    	Preferences.debug("fieldNamesBytes = " + fieldNamesBytes + "\n");
+                    	Preferences.debug("fieldNamesBytes = " + fieldNamesBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if ((fieldNamesBytes % maximumFieldNameLength) == 0) {
-                    		Preferences.debug("fieldNamesBytes % maximumFieldNameLength == 0 as expected\n");
+                    		Preferences.debug("fieldNamesBytes % maximumFieldNameLength == 0 as expected\n", 
+                    				Preferences.DEBUG_FILEIO);
                     	}
                     	else {
                     		Preferences.debug("fieldNamesBytes % maximumFieldNameLength unexpectedly == " +
-                    				(fieldNamesBytes % maximumFieldNameLength) + "\n");
+                    				(fieldNamesBytes % maximumFieldNameLength) + "\n", Preferences.DEBUG_FILEIO);
                     	}
                     	fieldNumber = fieldNamesBytes / maximumFieldNameLength;
-                    	Preferences.debug("Field number = " + fieldNumber + "\n");
+                    	Preferences.debug("Field number = " + fieldNumber + "\n", Preferences.DEBUG_FILEIO);
                     	fieldNames = new String[fieldNumber];
                     	for (i = 0; i < fieldNumber; i++) {
                     	    fieldNames[i] = readCString();
-                    	    Preferences.debug("field name " + i + " = " + fieldNames[i] + "\n");
+                    	    Preferences.debug("field name " + i + " = " + fieldNames[i] + "\n", Preferences.DEBUG_FILEIO);
                     	    bytesRead = fieldNames[i].length() + 1;
                     	    padBytes = maximumFieldNameLength - bytesRead;
                     	    for (j = 0; j < padBytes; j++) {
@@ -889,95 +904,100 @@ public class FileMATLAB extends FileBase {
                     } // if (arrayClass == mxSTRUCT_CLASS)
                     for (field = 0; field < fieldNumber; field++) {
                     if (arrayClass == mxSTRUCT_CLASS) {
-                    	Preferences.debug("Reading numeric array number " + field + "\n");
+                    	Preferences.debug("Reading numeric array number " + field + "\n", Preferences.DEBUG_FILEIO);
                         numericArrayDataType = getInt(endianess);
                         if (numericArrayDataType == miMATRIX) {
                         	Preferences.debug("Numeric array data type == miMATRIX as expected\n");
                         }
                         else {
-                        	Preferences.debug("Numeric array data type unexpectedly == " + numericArrayDataType + "\n");
+                        	Preferences.debug("Numeric array data type unexpectedly == " + numericArrayDataType + "\n", 
+                        			Preferences.DEBUG_FILEIO);
                         }
                         numericArrayBytes= getInt(endianess);
-                        Preferences.debug("Numeric array bytes = " + numericArrayBytes + "\n");
+                        Preferences.debug("Numeric array bytes = " + numericArrayBytes + "\n", Preferences.DEBUG_FILEIO);
                         numericArrayFlagsDataType = getInt(endianess);
                     	if (arrayFlagsDataType == miUINT32) {
-                    		Preferences.debug("Numeric array flags data type is the expected miUINT32\n");
+                    		Preferences.debug("Numeric array flags data type is the expected miUINT32\n",
+                    				Preferences.DEBUG_FILEIO);
                     	}
                     	else {
-                    		Preferences.debug("Numeric array flags data type is an unexpected " + numericArrayFlagsDataType + "\n");
+                    		Preferences.debug("Numeric array flags data type is an unexpected " + numericArrayFlagsDataType +
+                    				"\n", Preferences.DEBUG_FILEIO);
                     	}
                         numericArrayFlagsBytes = getInt(endianess);
                         if (numericArrayFlagsBytes == 8) {
-                        	Preferences.debug("Numeric array flags byte length = 8 as expected\n");
+                        	Preferences.debug("Numeric array flags byte length = 8 as expected\n", Preferences.DEBUG_FILEIO);
                         }
                         else {
-                        	Preferences.debug("Numeric array flags byte length is an unexpected " + numericArrayFlagsBytes + "\n");
+                        	Preferences.debug("Numeric array flags byte length is an unexpected " + numericArrayFlagsBytes +
+                        			"\n", Preferences.DEBUG_FILEIO);
                         }
                         numericArrayFlags = getInt(endianess);
                         numericArrayClass = numericArrayFlags & 0x000000ff;
                         switch(numericArrayClass) {
                         case mxCELL_CLASS:
-                        	Preferences.debug("Numeric array type is cell array\n");
+                        	Preferences.debug("Numeric array type is cell array\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxSTRUCT_CLASS:
-                        	Preferences.debug("Numeric array type is structure\n");
+                        	Preferences.debug("Numeric array type is structure\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxOBJECT_CLASS:
-                        	Preferences.debug("Numeric array type is object\n");
+                        	Preferences.debug("Numeric array type is object\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxCHAR_CLASS:
-                        	Preferences.debug("Numeric array type is character\n");
+                        	Preferences.debug("Numeric array type is character\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxSPARSE_CLASS:
-                        	Preferences.debug("Numereic array type is sparse\n");
+                        	Preferences.debug("Numereic array type is sparse\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxDOUBLE_CLASS:
-                        	Preferences.debug("Numeric array type is 8 byte float\n");
+                        	Preferences.debug("Numeric array type is 8 byte float\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxSINGLE_CLASS:
-                        	Preferences.debug("Numeric array type is 4 byte float\n");
+                        	Preferences.debug("Numeric array type is 4 byte float\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxINT8_CLASS:
-                        	Preferences.debug("Numeric array type is signed byte\n");
+                        	Preferences.debug("Numeric array type is signed byte\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxUINT8_CLASS:
-                        	Preferences.debug("Numeric array type is unsigned byte\n");
+                        	Preferences.debug("Numeric array type is unsigned byte\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxINT16_CLASS:
-                        	Preferences.debug("Numeric array type is signed short\n");
+                        	Preferences.debug("Numeric array type is signed short\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxUINT16_CLASS:
-                        	Preferences.debug("Numeric array type is unsigned short\n");
+                        	Preferences.debug("Numeric array type is unsigned short\n", Preferences.DEBUG_FILEIO);
                         	break;
                         case mxINT32_CLASS:
-                            Preferences.debug("Numeric array type is signed integer\n");
+                            Preferences.debug("Numeric array type is signed integer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case mxUINT32_CLASS:
-                        	Preferences.debug("Numeric array type is unsigned integer\n");
+                        	Preferences.debug("Numeric array type is unsigned integer\n", Preferences.DEBUG_FILEIO);
                         	break;
                         default:
-                        	Preferences.debug("Numeric array type is an illegal = " + numericArrayClass + "\n");
+                        	Preferences.debug("Numeric array type is an illegal = " + numericArrayClass + "\n", 
+                        			Preferences.DEBUG_FILEIO);
                         }
                         
                         if ((numericArrayFlags & 0x00000800) != 0) {
                         	complexFlag = true;
-                        	Preferences.debug("Complex flag is set\n");
+                        	Preferences.debug("Complex flag is set\n", Preferences.DEBUG_FILEIO);
                         }
                         else {
                         	complexFlag = false;
-                        	Preferences.debug("Complex flag is not set\n");
+                        	Preferences.debug("Complex flag is not set\n", Preferences.DEBUG_FILEIO);
                         }
                         if ((numericArrayFlags & 0x00000400) != 0) {
                         	globalFlag = true;
-                        	Preferences.debug("Global flag is set\n");
+                        	Preferences.debug("Global flag is set\n", Preferences.DEBUG_FILEIO);
                         }
                         else {
                         	globalFlag = false;
-                        	Preferences.debug("Global flag is not set\n");
+                        	Preferences.debug("Global flag is not set\n", Preferences.DEBUG_FILEIO);
                         }
                         if ((numericArrayFlags & 0x00000200) != 0) {
                         	logicalFlag = true;
-                        	Preferences.debug("Logical flag is set\n");
+                        	Preferences.debug("Logical flag is set\n", Preferences.DEBUG_FILEIO);
                         	logicalFields++;
                         	if (imagesFound == 1) {
                         	    isVOI = true;
@@ -988,7 +1008,7 @@ public class FileMATLAB extends FileBase {
                         }
                         else {
                         	logicalFlag = false;
-                        	Preferences.debug("Logical flag is not set\n");
+                        	Preferences.debug("Logical flag is not set\n", Preferences.DEBUG_FILEIO);
                         	if (imagesFound == 1) {
                         	    isVOI = false;
                         	}
@@ -1018,23 +1038,27 @@ public class FileMATLAB extends FileBase {
                     	getInt(endianess);
                     	dimensionsArrayDataType = getInt(endianess);
                     	if (dimensionsArrayDataType == miINT32) {
-                    		Preferences.debug("Dimensions array data type is the expected miINT32\n");
+                    		Preferences.debug("Dimensions array data type is the expected miINT32\n", Preferences.DEBUG_FILEIO);
                     	}
                     	else {
-                    		Preferences.debug("Dimensions array data type is an unexpected " + dimensionsArrayDataType + "\n");
+                    		Preferences.debug("Dimensions array data type is an unexpected " + dimensionsArrayDataType + "\n", 
+                    				Preferences.DEBUG_FILEIO);
                     	}
                     	dimensionsArrayBytes = getInt(endianess);
-                    	Preferences.debug("dimensionsArrayBytes = " + dimensionsArrayBytes + "\n");
+                    	Preferences.debug("dimensionsArrayBytes = " + dimensionsArrayBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if ((dimensionsArrayBytes % 4) == 0) {
-                    		Preferences.debug("dimensionsArrayBytes is a multiple of 4 as expected\n");
+                    		Preferences.debug("dimensionsArrayBytes is a multiple of 4 as expected\n", 
+                    				Preferences.DEBUG_FILEIO);
                     	}
                     	else {
-                    		Preferences.debug("dimensionArrayBytes is unexpectedly not a multiple of 4\n");
+                    		Preferences.debug("dimensionArrayBytes is unexpectedly not a multiple of 4\n", 
+                    				Preferences.DEBUG_FILEIO);
                     	}
                     	nDim = dimensionsArrayBytes/4;
-                    	Preferences.debug("Number of dimensions = " + nDim + "\n");
+                    	Preferences.debug("Number of dimensions = " + nDim + "\n", Preferences.DEBUG_FILEIO);
                     	if (nDim < 2) {
-                    		Preferences.debug("Error! All numeric arrays should have at least 2 dimensions\n");
+                    		Preferences.debug("Error! All numeric arrays should have at least 2 dimensions\n", 
+                    				Preferences.DEBUG_FILEIO);
                     	}
                     	
                     	if (logicalFlag) {
@@ -1086,15 +1110,16 @@ public class FileMATLAB extends FileBase {
 		                	for (i = 0; i < nDim; i++) {
 		                		if (i == 0) {
 		                			imageExtents[1] = getInt(endianess);
-		                			Preferences.debug("imageExtents[1] = " + imageExtents[1] + "\n");
+		                			Preferences.debug("imageExtents[1] = " + imageExtents[1] + "\n", Preferences.DEBUG_FILEIO);
 		                		}
 		                		else if (i == 1) {
 		                			imageExtents[0] = getInt(endianess);
-		                			Preferences.debug("imageExtents[0] = " + imageExtents[0] + "\n");
+		                			Preferences.debug("imageExtents[0] = " + imageExtents[0] + "\n", Preferences.DEBUG_FILEIO);
 		                		}
 		                		else {
 		                		    imageExtents[i] = getInt(endianess);
-		                		    Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n");
+		                		    Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n", 
+		                		    		Preferences.DEBUG_FILEIO);
 		                		}
 		                		imageLength = imageLength * imageExtents[i];
 		                		
@@ -1111,7 +1136,8 @@ public class FileMATLAB extends FileBase {
 		                	
 		                	// Note that imageLength only includes slices in one field of a structure
 		                	imageExtents[nDim] = fieldNumber;
-		                	Preferences.debug("imageExtents[" + nDim + "] = " + imageExtents[nDim] + "\n");
+		                	Preferences.debug("imageExtents[" + nDim + "] = " + imageExtents[nDim] + "\n", 
+		                			Preferences.DEBUG_FILEIO);
 		                	if (nDim > 1) {
 		                		if (imagesFound == 1) {
 		                			imageSlices = imageSlices * fieldNumber;
@@ -1160,7 +1186,7 @@ public class FileMATLAB extends FileBase {
 	                		    }
 	                    	}
 	                    }
-	                    Preferences.debug("Numeric array name = " + numericArrayName + "\n");
+	                    Preferences.debug("Numeric array name = " + numericArrayName + "\n", Preferences.DEBUG_FILEIO);
                     } // if (arrayClass == mxSTRUCT_CLASS)
                     realDataType = getInt(endianess);
                     if ((realDataType & 0xffff0000) != 0) {
@@ -1201,8 +1227,8 @@ public class FileMATLAB extends FileBase {
                     if (imagesFound == 1) {
                     switch(realDataType) {
                     case miINT8:
-                    	Preferences.debug("Real data type = miINT8\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miINT8\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (logicalFlag) {
                     	    if (logicalFields == 1) {
 	                    	    maskImage = new ModelImage(ModelStorageBase.BYTE, maskExtents, fileName + "_mask");
@@ -1325,17 +1351,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miINT8) {
-                    	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n",
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
           
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryBuffer = new float[imaginaryDataBytes];
@@ -1374,8 +1403,8 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     case miUINT8:
-                    	Preferences.debug("Real data type = miUINT8\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miUINT8\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (logicalFlag) {
                     		if (logicalFields == 1) {
 	                    	    maskImage = new ModelImage(ModelStorageBase.UBYTE, maskExtents, fileName + "_mask");
@@ -1548,17 +1577,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miUINT8) {
-                    	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
                          
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryBuffer = new float[imaginaryDataBytes];
@@ -1597,8 +1629,8 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     case miINT16:
-                    	Preferences.debug("Real data type = miINT16\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miINT16\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (!complexFlag) {
                     		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
@@ -1701,17 +1733,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miINT16) {
-                    	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
                             
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryBuffer = new float[shortNumber];
@@ -1758,8 +1793,8 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     case miUINT16:
-                    	Preferences.debug("Real data type = miUINT16\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miUINT16\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (isColor) {
                     		if (nonLogicalField == 0) {
                     			image = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
@@ -1919,17 +1954,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miUINT16) {
-                    	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
                             
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryBuffer = new float[shortNumber];
@@ -1976,8 +2014,8 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     case miINT32:
-                    	Preferences.debug("Real data type = miINT32\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miINT32\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (!complexFlag) {
                     		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
@@ -2084,17 +2122,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miINT32) {
-                    	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
                     	    
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryDBuffer = new double[intNumber];
@@ -2143,8 +2184,8 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     case miUINT32:
-                    	Preferences.debug("Real data type = miUINT32\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miUINT32\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (!complexFlag) {
                     		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName); 
@@ -2251,17 +2292,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miUINT32) {
-                    	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
                     	    
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryDBuffer = new double[intNumber];
@@ -2310,8 +2354,8 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     case miSINGLE:
-                    	Preferences.debug("Real data type = miSINGLE\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miSINGLE\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (!complexFlag) {
                     		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
@@ -2420,17 +2464,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miSINGLE) {
-                    	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
                     	   
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryBuffer = new float[floatNumber];
@@ -2480,8 +2527,8 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     case miDOUBLE:
-                    	Preferences.debug("Real data type = miDOUBLE\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miDOUBLE\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (isColor) {
                     		if (nonLogicalField == 0) {
                     			image = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageExtents, fileName);
@@ -2668,17 +2715,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miDOUBLE) {
-                    	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
                     	    
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryDBuffer = new double[doubleNumber];
@@ -2734,8 +2784,8 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     case miINT64:
-                    	Preferences.debug("Real data type = miINT64\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miINT64\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (!complexFlag) {
                     		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
@@ -2854,17 +2904,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miINT64) {
-                    	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
                     	    
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryDBuffer = new double[longNumber];
@@ -2919,8 +2972,8 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     case miUINT64:
-                    	Preferences.debug("Real data type = miUINT64\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Real data type = miUINT64\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     	if (!complexFlag) {
                     		if (nonLogicalField == 0) {
                     		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
@@ -3039,17 +3092,20 @@ public class FileMATLAB extends FileBase {
                                 haveSmallImaginaryData = false;
                             }
                     	    if (imaginaryDataType == miUINT64) {
-                    	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n");
+                    	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n", Preferences.DEBUG_FILEIO);
                     	    }
                     	    else {
-                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                    	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                    	    			Preferences.DEBUG_FILEIO);
                     	    }
                     	    
                             if (imaginaryDataBytes == realDataBytes) {
-                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                            	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             else {
-                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                            	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                            			Preferences.DEBUG_FILEIO);
                             }
                             raFile.read(buffer);
                             imaginaryDBuffer = new double[longNumber];
@@ -3105,16 +3161,16 @@ public class FileMATLAB extends FileBase {
                     	}
                     	break;
                     default:
-                    	Preferences.debug("Illegal data type = " + realDataType + "\n");
-                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                    	Preferences.debug("Illegal data type = " + realDataType + "\n", Preferences.DEBUG_FILEIO);
+                    	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                     }
                     
                     } // if (imagesFound == 1)
                     else { // imagesFound > 1
                     	switch(realDataType) {
                         case miINT8:
-                        	Preferences.debug("Real data type = miINT8\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miINT8\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (logicalFlag) {
                         		if (logicalFields == 1) {
     	                    	    maskImage2 = new ModelImage(ModelStorageBase.BYTE, maskExtents, fileName + "_mask");
@@ -3237,17 +3293,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miINT8) {
-                        	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                                
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryBuffer = new float[imaginaryDataBytes];
@@ -3286,8 +3345,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         case miUINT8:
-                        	Preferences.debug("Real data type = miUINT8\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miUINT8\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (logicalFlag) {
                         		if (logicalFields == 1) {
     	                    	    maskImage2 = new ModelImage(ModelStorageBase.UBYTE, maskExtents, fileName + "_mask");
@@ -3460,17 +3519,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miUINT8) {
-                        	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                                 
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryBuffer = new float[imaginaryDataBytes];
@@ -3509,8 +3571,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         case miINT16:
-                        	Preferences.debug("Real data type = miINT16\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miINT16\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (!complexFlag) {
                         		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
@@ -3613,17 +3675,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miINT16) {
-                        	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                                 
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryBuffer = new float[shortNumber];
@@ -3670,8 +3735,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         case miUINT16:
-                        	Preferences.debug("Real data type = miUINT16\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miUINT16\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (isColor) {
                         		if (nonLogicalField == 0) {
                         			image2 = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
@@ -3831,17 +3896,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miUINT16) {
-                        	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                                
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryBuffer = new float[shortNumber];
@@ -3888,8 +3956,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         case miINT32:
-                        	Preferences.debug("Real data type = miINT32\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miINT32\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (!complexFlag) {
                         		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
@@ -3996,17 +4064,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miINT32) {
-                        	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                         	    
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryDBuffer = new double[intNumber];
@@ -4055,8 +4126,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         case miUINT32:
-                        	Preferences.debug("Real data type = miUINT32\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miUINT32\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (!complexFlag) {
                         		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName);
@@ -4163,17 +4234,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miUINT32) {
-                        	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                         	    
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryDBuffer = new double[intNumber];
@@ -4222,8 +4296,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         case miSINGLE:
-                        	Preferences.debug("Real data type = miSINGLE\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miSINGLE\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (!complexFlag) {
                         		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
@@ -4332,17 +4406,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miSINGLE) {
-                        	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                         	    
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryBuffer = new float[floatNumber];
@@ -4392,8 +4469,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         case miDOUBLE:
-                        	Preferences.debug("Real data type = miDOUBLE\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miDOUBLE\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (isColor) {
                         		if (nonLogicalField == 0) {
                         			image2 = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageExtents, fileName);
@@ -4580,17 +4657,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miDOUBLE) {
-                        	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                         	    
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryDBuffer = new double[doubleNumber];
@@ -4646,8 +4726,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         case miINT64:
-                        	Preferences.debug("Real data type = miINT64\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miINT64\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (!complexFlag) {
                         		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
@@ -4766,17 +4846,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miINT64) {
-                        	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                         	    
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryDBuffer = new double[longNumber];
@@ -4831,8 +4914,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         case miUINT64:
-                        	Preferences.debug("Real data type = miUINT64\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Real data type = miUINT64\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         	if (!complexFlag) {
                         		if (nonLogicalField == 0) {
                         		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName); 
@@ -4951,17 +5034,20 @@ public class FileMATLAB extends FileBase {
                                     haveSmallImaginaryData = false;
                                 }
                         	    if (imaginaryDataType == miUINT64) {
-                        	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n");
+                        	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n", Preferences.DEBUG_FILEIO);
                         	    }
                         	    else {
-                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n");
+                        	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
+                        	    			Preferences.DEBUG_FILEIO);
                         	    }
                         	     
                                 if (imaginaryDataBytes == realDataBytes) {
-                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n");
+                                	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 else {
-                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n");
+                                	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
+                                			Preferences.DEBUG_FILEIO);
                                 }
                                 raFile.read(buffer);
                                 imaginaryDBuffer = new double[longNumber];
@@ -5016,8 +5102,8 @@ public class FileMATLAB extends FileBase {
                         	}
                         	break;
                         default:
-                        	Preferences.debug("Illegal data type = " + realDataType + "\n");
-                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n");
+                        	Preferences.debug("Illegal data type = " + realDataType + "\n", Preferences.DEBUG_FILEIO);
+                        	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                         }	
                     	
                     } // else imagesFound > 1
@@ -5494,16 +5580,16 @@ public class FileMATLAB extends FileBase {
                     }
                 	break;
                 case miUTF8:
-                	Preferences.debug("Data type = miUTF8\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miUTF8\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	buffer = new byte[elementBytes];
                 	raFile.read(buffer);
                 	str = new String(buffer, 0, elementBytes, "UTF-8");
-                	Preferences.debug("UTF-8 encoded character data:\n" + str + "\n");
+                	Preferences.debug("UTF-8 encoded character data:\n" + str + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miUTF16:
-                	Preferences.debug("Data type = miUTF16\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miUTF16\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	buffer = new byte[elementBytes];
                 	raFile.read(buffer);
                 	if (endianess == FileBase.BIG_ENDIAN) {
@@ -5512,11 +5598,11 @@ public class FileMATLAB extends FileBase {
                 	else {
                 		str = new String(buffer, 0, elementBytes, "UTF-16LE");	
                 	}
-                	Preferences.debug("UTF-16 encoded character data:\n" + str + "\n");
+                	Preferences.debug("UTF-16 encoded character data:\n" + str + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 case miUTF32:
-                	Preferences.debug("Data type = miUTF32\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Data type = miUTF32\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	buffer = new byte[elementBytes];
                 	raFile.read(buffer);
                 	if (endianess == FileBase.BIG_ENDIAN) {
@@ -5525,11 +5611,11 @@ public class FileMATLAB extends FileBase {
                 	else {
                 		str = new String(buffer, 0, elementBytes, "UTF-32LE");	
                 	}
-                	Preferences.debug("UTF-32 encoded character data:\n" + str + "\n");
+                	Preferences.debug("UTF-32 encoded character data:\n" + str + "\n", Preferences.DEBUG_FILEIO);
                 	break;
                 default:
-                	Preferences.debug("Illegal data type = " + dataType + "\n");
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n");
+                	Preferences.debug("Illegal data type = " + dataType + "\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 }
                 if (isCompressed) {
                 	raFile.close();
