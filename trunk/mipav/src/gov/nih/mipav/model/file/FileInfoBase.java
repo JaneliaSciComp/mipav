@@ -1979,7 +1979,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public void setAxisOrientation(final int[] axOrient) {
 
         if ( (axOrient == null) || (axOrient.length != 3)) {
-            Preferences.debug("Axis orientations array must be of length 3.\n");
+            Preferences.debug("Axis orientations array must be of length 3.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -2000,7 +2000,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         // System.out.println("axis orient is " + axOrient);
         if ( (axis < 0) || (axis > 2)) {
-            Preferences.debug("Error: Axis must be 0, 1, or 2.\n");
+            Preferences.debug("Error: Axis must be 0, 1, or 2.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -2012,7 +2012,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             axisOrientation[axis] = axOrient;
         } else {
             axisOrientation[axis] = FileInfoBase.ORI_UNKNOWN_TYPE;
-            Preferences.debug(axOrient + " is an invalid axis orientation.\n");
+            Preferences.debug(axOrient + " is an invalid axis orientation.\n", Preferences.DEBUG_FILEIO);
         }
     }
 
@@ -2239,7 +2239,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public void setOrigin(final float[] originlocat) {
 
         if ( (originlocat == null) || (originlocat.length > 5)) {
-            Preferences.debug("Start locations array must be of length less than or equal to 5.\n");
+            Preferences.debug("Start locations array must be of length less than or equal to 5.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -2258,7 +2258,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public void setOrigin(final float originCoord, final int axis) {
 
         if ( (axis < 0) || (axis > 3)) {
-            Preferences.debug("Error: Axis must be 0, 1, 2, or 3.\n");
+            Preferences.debug("Error: Axis must be 0, 1, 2, or 3.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
