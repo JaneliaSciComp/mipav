@@ -78,7 +78,7 @@ public class FileMincAttElem extends ModelSerialCloneable {
                 break;
 
             default:
-                Preferences.debug("name is " + name + " type is " + nc_type + "\n");
+                Preferences.debug("name is " + name + " type is " + nc_type + "\n", Preferences.DEBUG_FILEIO);
                 MipavUtil.displayError("Invalid type in FileInfoMinc");
         }
     }
