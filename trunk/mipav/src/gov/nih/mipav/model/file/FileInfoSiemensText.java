@@ -591,7 +591,7 @@ public class FileInfoSiemensText extends FileInfoBase {
     public void setAxisOrientation(int[] axOrient) {
 
         if (axOrient.length != 3) {
-            Preferences.debug("Axis orientations array must be of length 3.\n");
+            Preferences.debug("Axis orientations array must be of length 3.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -909,7 +909,7 @@ public class FileInfoSiemensText extends FileInfoBase {
     public void setOrigin(float[] stlocat) {
 
         if (stlocat.length > 4) {
-            Preferences.debug("Start locations array must be of length less than 4.\n");
+            Preferences.debug("Start locations array must be of length less than 4.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -928,7 +928,7 @@ public class FileInfoSiemensText extends FileInfoBase {
     public void setOrigin(float fun, int axis) {
 
         if ((axis < 0) || (axis > 3)) {
-            Preferences.debug("Error: Axis must be 0, 1, 2, or 3.\n");
+            Preferences.debug("Error: Axis must be 0, 1, 2, or 3.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
