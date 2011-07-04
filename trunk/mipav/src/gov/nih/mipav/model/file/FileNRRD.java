@@ -587,7 +587,7 @@ public class FileNRRD extends FileBase {
         lineString = lineString.substring(4);
         versionNumber = Float.valueOf(lineString).floatValue();
         fileInfo.setVersionNumber(versionNumber);
-        Preferences.debug("versionNumber = " + versionNumber + "\n");
+        Preferences.debug("versionNumber = " + versionNumber + "\n", Preferences.DEBUG_FILEIO);
 
         while (lineString != null) {
             lineString = readLine();
@@ -605,20 +605,21 @@ public class FileNRRD extends FileBase {
                     if (keyString.equalsIgnoreCase("MODALITY")) {
 
                         if (valueString.equalsIgnoreCase("DWMRI")) {
-                            Preferences.debug("Modality = Diffusion weighted MRI\n");
+                            Preferences.debug("Modality = Diffusion weighted MRI\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setModality("Diffusion weighted MRI");
                         } else {
-                            Preferences.debug("Modality = " + valueString + "\n");
+                            Preferences.debug("Modality = " + valueString + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setModality(valueString);
                         }
                     } // if (keyString.equalsIgnoreCase("MODALITY"))
                     else if (keyString.equalsIgnoreCase("DWMRI_B-VALUE")) {
-                        Preferences.debug("Scalar diffusion weighting b-value = " + valueString + " sec/mm^2\n");
+                        Preferences.debug("Scalar diffusion weighting b-value = " + valueString + " sec/mm^2\n", 
+                        		Preferences.DEBUG_FILEIO);
                         fileInfo.setDWMRI_B_VALUE(valueString);
                     } // else if (keyString.equalsIgnoreCase("DWMRI_B-VALUE"))
                     else if ((keyString.length() >= 19) &&
                                  (keyString.substring(0, 14).equalsIgnoreCase("DWMRI_GRADIENT"))) {
-                        Preferences.debug(keyString + " = " + valueString + "\n");
+                        Preferences.debug(keyString + " = " + valueString + "\n", Preferences.DEBUG_FILEIO);
 
                         if (dwmriGradient == null) {
                             dwmriGradient = new String[100][2];
@@ -629,7 +630,7 @@ public class FileNRRD extends FileBase {
                         dwmriGradient[gradientIndex][1] = valueString;
                     } else if ((keyString.length() >= 14) &&
                                    (keyString.substring(0, 9).equalsIgnoreCase("DWMRI_NEX"))) {
-                        Preferences.debug(keyString + " = " + valueString + "\n");
+                        Preferences.debug(keyString + " = " + valueString + "\n", Preferences.DEBUG_FILEIO);
 
                         if (dwmriNex == null) {
                             dwmriNex = new String[100][2];
@@ -652,13 +653,13 @@ public class FileNRRD extends FileBase {
                                 (fieldDescriptorString.equalsIgnoreCase("INT8")) ||
                                 (fieldDescriptorString.equalsIgnoreCase("INT8_T"))) {
                             nrrdDataType = ModelStorageBase.BYTE;
-                            Preferences.debug("NRRD data type = BYTE\n");
+                            Preferences.debug("NRRD data type = BYTE\n", Preferences.DEBUG_FILEIO);
                         } else if ((fieldDescriptorString.equalsIgnoreCase("UCHAR")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UNSIGNED CHAR")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UINT8")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UINT8_T"))) {
                             nrrdDataType = ModelStorageBase.UBYTE;
-                            Preferences.debug("NRRD data type = UBYTE\n");
+                            Preferences.debug("NRRD data type = UBYTE\n", Preferences.DEBUG_FILEIO);
                         } else if ((fieldDescriptorString.equalsIgnoreCase("SHORT")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("SHORT INT")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("SIGNED SHORT")) ||
@@ -666,26 +667,26 @@ public class FileNRRD extends FileBase {
                                        (fieldDescriptorString.equalsIgnoreCase("INT16")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("INT16_T"))) {
                             nrrdDataType = ModelStorageBase.SHORT;
-                            Preferences.debug("NRRD data type = SHORT\n");
+                            Preferences.debug("NRRD data type = SHORT\n", Preferences.DEBUG_FILEIO);
                         } else if ((fieldDescriptorString.equalsIgnoreCase("USHORT")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UNSIGNED SHORT")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UNSIGNED SHORT INT")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UINT16")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UINT16_T"))) {
                             nrrdDataType = ModelStorageBase.USHORT;
-                            Preferences.debug("NRRD data type = USHORT\n");
+                            Preferences.debug("NRRD data type = USHORT\n", Preferences.DEBUG_FILEIO);
                         } else if ((fieldDescriptorString.equalsIgnoreCase("INT")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("SIGNED INT")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("INT32")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("INT32_T"))) {
                             nrrdDataType = ModelStorageBase.INTEGER;
-                            Preferences.debug("NRRD data type = INTEGER\n");
+                            Preferences.debug("NRRD data type = INTEGER\n", Preferences.DEBUG_FILEIO);
                         } else if ((fieldDescriptorString.equalsIgnoreCase("UINT")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UNSIGNED INT")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UINT32")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UINT32_T"))) {
                             nrrdDataType = ModelStorageBase.UINTEGER;
-                            Preferences.debug("NRRD data type = UINTEGER\n");
+                            Preferences.debug("NRRD data type = UINTEGER\n", Preferences.DEBUG_FILEIO);
                         } else if ((fieldDescriptorString.equalsIgnoreCase("LONGLONG")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("LONG LONG")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("LONG LONG INT")) ||
@@ -694,7 +695,7 @@ public class FileNRRD extends FileBase {
                                        (fieldDescriptorString.equalsIgnoreCase("INT64")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("INT64_T"))) {
                             nrrdDataType = ModelStorageBase.LONG;
-                            Preferences.debug("NRRD data type = LONG\n");
+                            Preferences.debug("NRRD data type = LONG\n", Preferences.DEBUG_FILEIO);
                         } else if ((fieldDescriptorString.equalsIgnoreCase("ULONGLONG")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UNSIGNED LONG LONG")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("UNSIGNED LONG LONG INT")) ||
@@ -702,26 +703,27 @@ public class FileNRRD extends FileBase {
                                        (fieldDescriptorString.equalsIgnoreCase("UINT64_T"))) {
                             nrrdDataType = ModelStorageBase.LONG;
                             MipavUtil.displayWarning("Warning: Reading unsigned long as signed long");
-                            Preferences.debug("Warning: Reading unsigned long as signed long\n");
+                            Preferences.debug("Warning: Reading unsigned long as signed long\n", Preferences.DEBUG_FILEIO);
                         } else if (fieldDescriptorString.equalsIgnoreCase("FLOAT")) {
                             nrrdDataType = ModelStorageBase.FLOAT;
-                            Preferences.debug("NRRD data type = FLOAT\n");
+                            Preferences.debug("NRRD data type = FLOAT\n", Preferences.DEBUG_FILEIO);
                         } else if (fieldDescriptorString.equalsIgnoreCase("DOUBLE")) {
                             nrrdDataType = ModelStorageBase.DOUBLE;
-                            Preferences.debug("NRRD data type = DOUBLE\n");
+                            Preferences.debug("NRRD data type = DOUBLE\n", Preferences.DEBUG_FILEIO);
                         } else if (fieldDescriptorString.equalsIgnoreCase("BLOCK")) {
                             MipavUtil.displayError("Cannot handle nrrd block data type");
-                            Preferences.debug("NRRD data type = BLOCK\n");
+                            Preferences.debug("NRRD data type = BLOCK\n", Preferences.DEBUG_FILEIO);
                             throw new IOException();
                         } else {
                             MipavUtil.displayError("Unknown NRRD data type = " + fieldDescriptorString);
-                            Preferences.debug("Unknown NRRD data type = " + fieldDescriptorString + "\n");
+                            Preferences.debug("Unknown NRRD data type = " + fieldDescriptorString + "\n",
+                            		Preferences.DEBUG_FILEIO);
                             throw new IOException();
                         }
                     } // if (fieldIDString.equalsIgnoreCase("TYPE"))
                     else if (fieldIDString.equalsIgnoreCase("DIMENSION")) {
                         nrrdDimensions = Integer.valueOf(fieldDescriptorString).intValue();
-                        Preferences.debug("NRRD dimensions = " + nrrdDimensions + "\n");
+                        Preferences.debug("NRRD dimensions = " + nrrdDimensions + "\n", Preferences.DEBUG_FILEIO);
                         startBlank = new int[Math.max(nrrdDimensions - 1, 4)];
                         finishBlank = new int[Math.max(nrrdDimensions - 1, 4)];
                         startQuote = new int[nrrdDimensions];
@@ -744,11 +746,11 @@ public class FileNRRD extends FileBase {
 
                                 if (i == 0) {
                                     nrrdSizes[i] = Integer.valueOf(fieldDescriptorString.substring(0, startBlank[0])).intValue();
-                                    Preferences.debug("NRRD sizes[" + i + "] = " + nrrdSizes[i] + "\n");
+                                    Preferences.debug("NRRD sizes[" + i + "] = " + nrrdSizes[i] + "\n", Preferences.DEBUG_FILEIO);
                                 } else {
                                     nrrdSizes[i] = Integer.valueOf(fieldDescriptorString.substring(finishBlank[i - 1] +
                                                                                                    1, startBlank[i])).intValue();
-                                    Preferences.debug("NRRD sizes[" + i + "] = " + nrrdSizes[i] + "\n");
+                                    Preferences.debug("NRRD sizes[" + i + "] = " + nrrdSizes[i] + "\n", Preferences.DEBUG_FILEIO);
                                 }
 
                                 i++;
@@ -758,33 +760,33 @@ public class FileNRRD extends FileBase {
                         nrrdSizes[nrrdDimensions - 1] = Integer.valueOf(fieldDescriptorString.substring(finishBlank[nrrdDimensions -
                                                                                                                     2] +
                                                                                                         1)).intValue();
-                        Preferences.debug("NRRD sizes[" + i + "] = " + nrrdSizes[i] + "\n");
+                        Preferences.debug("NRRD sizes[" + i + "] = " + nrrdSizes[i] + "\n", Preferences.DEBUG_FILEIO);
                     } // else if (fieldIDString.equalsIgnoreCase("SIZES"))
                     else if (fieldIDString.equalsIgnoreCase("ENDIAN")) {
 
                         if (fieldDescriptorString.equalsIgnoreCase("BIG")) {
                             endianess = FileBase.BIG_ENDIAN;
                             fileInfo.setEndianess(endianess);
-                            Preferences.debug("BIG ENDIAN\n");
+                            Preferences.debug("BIG ENDIAN\n", Preferences.DEBUG_FILEIO);
                         } else if (fieldDescriptorString.equalsIgnoreCase("LITTLE")) {
                             endianess = FileBase.LITTLE_ENDIAN;
                             fileInfo.setEndianess(endianess);
-                            Preferences.debug("LITTLE ENDIAN\n");
+                            Preferences.debug("LITTLE ENDIAN\n", Preferences.DEBUG_FILEIO);
                         } else {
                             MipavUtil.displayError("Illegal endian value of " + fieldDescriptorString);
-                            Preferences.debug("Illegal endian value of " + fieldDescriptorString + "\n");
+                            Preferences.debug("Illegal endian value of " + fieldDescriptorString + "\n", Preferences.DEBUG_FILEIO);
                             throw new IOException();
                         }
                     } // else if (fieldIDString.equalsIgnoreCase("ENDIAN"))
                     else if ((fieldIDString.equalsIgnoreCase("LINE SKIP")) ||
                                  (fieldIDString.equalsIgnoreCase("LINESKIP"))) {
                         skippedLines = Integer.valueOf(fieldDescriptorString).intValue();
-                        Preferences.debug("Skipped lines = " + skippedLines + "\n");
+                        Preferences.debug("Skipped lines = " + skippedLines + "\n", Preferences.DEBUG_FILEIO);
                     } // else if ((fieldIDString.equalsIgnoreCase("LINE SKIP")) ||
                     else if ((fieldIDString.equalsIgnoreCase("BYTE SKIP")) ||
                                  (fieldIDString.equalsIgnoreCase("BYTESKIP"))) {
                         skippedBytes = Integer.valueOf(fieldDescriptorString).intValue();
-                        Preferences.debug("Skipped bytes = " + skippedBytes + "\n");
+                        Preferences.debug("Skipped bytes = " + skippedBytes + "\n", Preferences.DEBUG_FILEIO);
                     } // else if ((fieldIDString.equalsIgnoreCase("BYTE SKIP")) ||
                     else if ((fieldIDString.equalsIgnoreCase("DATA FILE")) ||
                                  (fieldIDString.equalsIgnoreCase("DATAFILE"))) {
@@ -817,27 +819,27 @@ public class FileNRRD extends FileBase {
 
                                 if (lastSlashIndex > 1) {
                                     fileDir = fileDir.concat(fieldDescriptorString.substring(1, lastSlashIndex + 1));
-                                    Preferences.debug("Data file directory = " + fileDir + "\n");
+                                    Preferences.debug("Data file directory = " + fileDir + "\n", Preferences.DEBUG_FILEIO);
                                     fileInfo.setFileDirectory(fileDir);
                                     fileName = fieldDescriptorString.substring(lastSlashIndex + 1);
-                                    Preferences.debug("Data file name = " + fileName + "\n");
+                                    Preferences.debug("Data file name = " + fileName + "\n", Preferences.DEBUG_FILEIO);
                                     fileInfo.setFileName(fileName);
                                 } else {
                                     fileName = fieldDescriptorString.substring(2);
-                                    Preferences.debug("Data file name = " + fileName + "\n");
+                                    Preferences.debug("Data file name = " + fileName + "\n", Preferences.DEBUG_FILEIO);
                                     fileInfo.setFileName(fileName);
                                 }
                             } else if (fieldDescriptorString.substring(0, 1).equals(".")) {
                                 lastSlashIndex = fieldDescriptorString.lastIndexOf("/");
                                 fileDir = fieldDescriptorString.substring(0, lastSlashIndex + 1);
-                                Preferences.debug("Data file directory = " + fileDir + "\n");
+                                Preferences.debug("Data file directory = " + fileDir + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setFileDirectory(fileName);
                                 fileName = fieldDescriptorString.substring(lastSlashIndex + 1);
-                                Preferences.debug("Data file name = " + fileName + "\n");
+                                Preferences.debug("Data file name = " + fileName + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setFileName(fileName);
                             } else {
                                 fileName = fieldDescriptorString;
-                                Preferences.debug("Data file name = " + fileName + "\n");
+                                Preferences.debug("Data file name = " + fileName + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setFileName(fileName);
                             }
                         } // if ((numBlanks == 0) && (!fieldDescriptorString.equalsIgnoreCase("LIST")))
@@ -929,17 +931,17 @@ public class FileNRRD extends FileBase {
                     else if (fieldIDString.equalsIgnoreCase("ENCODING")) {
 
                         if (fieldDescriptorString.equalsIgnoreCase("RAW")) {
-                            Preferences.debug("Encoding = raw\n");
+                            Preferences.debug("Encoding = raw\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setEncoding("Raw");
                         } else if ((fieldDescriptorString.equalsIgnoreCase("GZ")) ||
                                        (fieldDescriptorString.equalsIgnoreCase("GZIP"))) {
-                            Preferences.debug("Encoding = gzip\n");
+                            Preferences.debug("Encoding = gzip\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setEncoding("Gzip");
                             gunzip = true;
                         }
                     } // else if (fieldIDString.equalsIgnoreCase("ENCODING"))
                     else if (fieldIDString.equalsIgnoreCase("CONTENT")) {
-                        Preferences.debug("Content = " + fieldDescriptorString + "\n");
+                        Preferences.debug("Content = " + fieldDescriptorString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setContent(fieldDescriptorString);
                     } // else if (fieldIDString.equalsIgnoreCase("CONTENT"))
                     else if (fieldIDString.equalsIgnoreCase("SPACINGS")) {
@@ -965,7 +967,8 @@ public class FileNRRD extends FileBase {
                                         spacings[i] = Double.valueOf(fieldDescriptorString.substring(0, startBlank[0])).doubleValue();
                                     }
 
-                                    Preferences.debug("NRRD spacings[" + i + "] = " + spacings[i] + "\n");
+                                    Preferences.debug("NRRD spacings[" + i + "] = " + spacings[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 } else {
 
                                     if (fieldDescriptorString.substring(finishBlank[i - 1] + 1, startBlank[i]).equalsIgnoreCase("NAN")) {
@@ -975,7 +978,8 @@ public class FileNRRD extends FileBase {
                                                                                                      1, startBlank[i])).doubleValue();
                                     }
 
-                                    Preferences.debug("NRRD spacings[" + i + "] = " + spacings[i] + "\n");
+                                    Preferences.debug("NRRD spacings[" + i + "] = " + spacings[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 }
 
                                 i++;
@@ -990,7 +994,7 @@ public class FileNRRD extends FileBase {
                                                                                                           1)).doubleValue();
                         }
 
-                        Preferences.debug("NRRD spacings[" + i + "] = " + spacings[i] + "\n");
+                        Preferences.debug("NRRD spacings[" + i + "] = " + spacings[i] + "\n", Preferences.DEBUG_FILEIO);
                     } // else if (fieldIDString.equalsIgnoreCase("SPACINGS"))
                     else if ((fieldIDString.equalsIgnoreCase("AXIS MINS")) ||
                                  (fieldIDString.equalsIgnoreCase("AXISMINS"))) {
@@ -1016,7 +1020,8 @@ public class FileNRRD extends FileBase {
                                         axisMins[i] = Double.valueOf(fieldDescriptorString.substring(0, startBlank[0])).doubleValue();
                                     }
 
-                                    Preferences.debug("NRRD axis minimum[" + i + "] = " + axisMins[i] + "\n");
+                                    Preferences.debug("NRRD axis minimum[" + i + "] = " + axisMins[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 } else {
 
                                     if (fieldDescriptorString.substring(finishBlank[i - 1] + 1, startBlank[i]).equalsIgnoreCase("NAN")) {
@@ -1026,7 +1031,8 @@ public class FileNRRD extends FileBase {
                                                                                                      1, startBlank[i])).doubleValue();
                                     }
 
-                                    Preferences.debug("NRRD axis minimum[" + i + "] = " + axisMins[i] + "\n");
+                                    Preferences.debug("NRRD axis minimum[" + i + "] = " + axisMins[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 }
 
                                 i++;
@@ -1041,7 +1047,7 @@ public class FileNRRD extends FileBase {
                                                                                                           1)).doubleValue();
                         }
 
-                        Preferences.debug("NRRD axis minimum[" + i + "] = " + axisMins[i] + "\n");
+                        Preferences.debug("NRRD axis minimum[" + i + "] = " + axisMins[i] + "\n", Preferences.DEBUG_FILEIO);
                     } // else if (fieldIDString.equalsIgnoreCase("AXIS MINS")) ||
                     else if ((fieldIDString.equalsIgnoreCase("AXIS MAXS")) ||
                                  (fieldIDString.equalsIgnoreCase("AXISMAXS"))) {
@@ -1067,7 +1073,8 @@ public class FileNRRD extends FileBase {
                                         axisMaxs[i] = Double.valueOf(fieldDescriptorString.substring(0, startBlank[0])).doubleValue();
                                     }
 
-                                    Preferences.debug("NRRD axis maximum[" + i + "] = " + axisMaxs[i] + "\n");
+                                    Preferences.debug("NRRD axis maximum[" + i + "] = " + axisMaxs[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 } else {
 
                                     if (fieldDescriptorString.substring(finishBlank[i - 1] + 1, startBlank[i]).equalsIgnoreCase("NAN")) {
@@ -1077,7 +1084,8 @@ public class FileNRRD extends FileBase {
                                                                                                      1, startBlank[i])).doubleValue();
                                     }
 
-                                    Preferences.debug("NRRD axis maximum[" + i + "] = " + axisMaxs[i] + "\n");
+                                    Preferences.debug("NRRD axis maximum[" + i + "] = " + axisMaxs[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 }
 
                                 i++;
@@ -1092,7 +1100,7 @@ public class FileNRRD extends FileBase {
                                                                                                           1)).doubleValue();
                         }
 
-                        Preferences.debug("NRRD axis maximum[" + i + "] = " + axisMaxs[i] + "\n");
+                        Preferences.debug("NRRD axis maximum[" + i + "] = " + axisMaxs[i] + "\n", Preferences.DEBUG_FILEIO);
                     } // else if (fieldIDString.equalsIgnoreCase("AXIS MAXS")) ||
                     else if (fieldIDString.equalsIgnoreCase("UNITS")) {
                         nrrdUnits = new String[nrrdDimensions];
@@ -1114,7 +1122,7 @@ public class FileNRRD extends FileBase {
 
                         for (i = 0; i < nrrdDimensions; i++) {
                             nrrdUnits[i] = fieldDescriptorString.substring(startQuote[i] + 1, finishQuote[i]);
-                            Preferences.debug("NRRD units[ " + i + "] = " + nrrdUnits[i] + "\n");
+                            Preferences.debug("NRRD units[ " + i + "] = " + nrrdUnits[i] + "\n", Preferences.DEBUG_FILEIO);
                         }
                     } // else if (fieldIDString.equalsIgnoreCase("UNITS))
                     else if (fieldIDString.equalsIgnoreCase("LABELS")) {
@@ -1137,7 +1145,7 @@ public class FileNRRD extends FileBase {
 
                         for (i = 0; i < nrrdDimensions; i++) {
                             nrrdLabels[i] = fieldDescriptorString.substring(startQuote[i] + 1, finishQuote[i]);
-                            Preferences.debug("NRRD labels[ " + i + "] = " + nrrdLabels[i] + "\n");
+                            Preferences.debug("NRRD labels[ " + i + "] = " + nrrdLabels[i] + "\n", Preferences.DEBUG_FILEIO);
                         }
                     } // else if (fieldIDString.equalsIgnoreCase("LABELS))
                     else if (fieldIDString.equalsIgnoreCase("KINDS")) {
@@ -1157,11 +1165,13 @@ public class FileNRRD extends FileBase {
 
                                 if (i == 0) {
                                     kindsString[i] = fieldDescriptorString.substring(0, startBlank[0]);
-                                    Preferences.debug("NRRD kind[" + i + "] = " + kindsString[i] + "\n");
+                                    Preferences.debug("NRRD kind[" + i + "] = " + kindsString[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 } else {
                                     kindsString[i] = fieldDescriptorString.substring(finishBlank[i - 1] + 1,
                                                                                      startBlank[i]);
-                                    Preferences.debug("NRRD kind[" + i + "] = " + kindsString[i] + "\n");
+                                    Preferences.debug("NRRD kind[" + i + "] = " + kindsString[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 }
 
                                 i++;
@@ -1170,7 +1180,8 @@ public class FileNRRD extends FileBase {
 
                         kindsString[nrrdDimensions - 1] = fieldDescriptorString.substring(finishBlank[nrrdDimensions - 2] +
                                                                                           1);
-                        Preferences.debug("NRRD kind[" + i + "] = " + kindsString[i] + "\n");
+                        Preferences.debug("NRRD kind[" + i + "] = " + kindsString[i] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
 
                         for (i = 0; i < nrrdDimensions; i++) {
 
@@ -1211,7 +1222,8 @@ public class FileNRRD extends FileBase {
                                         sliceThickness = (float) thicknesses[i];
                                     }
 
-                                    Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n");
+                                    Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 } else {
 
                                     if (fieldDescriptorString.substring(finishBlank[i - 1] + 1, startBlank[i]).equalsIgnoreCase("NAN")) {
@@ -1225,7 +1237,8 @@ public class FileNRRD extends FileBase {
                                         sliceThickness = (float) thicknesses[i];
                                     }
 
-                                    Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n");
+                                    Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                 }
 
                                 i++;
@@ -1242,14 +1255,15 @@ public class FileNRRD extends FileBase {
                             sliceThickness = (float) thicknesses[i];
                         }
 
-                        Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n");
+                        Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                     } // else if (fieldIDString.equalsIgnoreCase("THICKNESSES"))
                     else if (fieldIDString.equalsIgnoreCase("SPACE")) {
 
                         if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR")) ||
                                 (fieldDescriptorString.equalsIgnoreCase("RAS"))) {
-                            Preferences.debug("Original NRRD Space = right-anterior-superior\n");
-                            Preferences.debug("New MIPAV Space = left-posterior-superior\n");
+                            Preferences.debug("Original NRRD Space = right-anterior-superior\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("New MIPAV Space = left-posterior-superior\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("left-posterior-superior");
                             space = LPS;
                             rlInvert = true;
@@ -1257,22 +1271,23 @@ public class FileNRRD extends FileBase {
                         } // if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("LAS"))) {
-                            Preferences.debug("Original NRRD Space = left-anterior-superior\n");
-                            Preferences.debug("New MIPAV Space = left-posterior-superior\n");
+                            Preferences.debug("Original NRRD Space = left-anterior-superior\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("New MIPAV Space = left-posterior-superior\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("left-posterior-superior");
                             space = LPS;
                             apInvert = true;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("LPS"))) {
-                            Preferences.debug("Space = left-posterior-superior\n");
+                            Preferences.debug("Space = left-posterior-superior\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("left-posterior-superior");
                             space = LPS;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR-TIME")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("RAST"))) {
-                            Preferences.debug("Original NRRD Space = right-anterior-superior-time\n");
-                            Preferences.debug("New MIPAV Space = left-posterior-superior-time\n");
+                            Preferences.debug("Original NRRD Space = right-anterior-superior-time\n",
+                            		Preferences.DEBUG_FILEIO);
+                            Preferences.debug("New MIPAV Space = left-posterior-superior-time\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("left-posterior-superior-time");
                             space = LPST;
                             rlInvert = true;
@@ -1280,45 +1295,45 @@ public class FileNRRD extends FileBase {
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR-TIME")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("LAST"))) {
-                            Preferences.debug("Original NRRD Space = left-anterior-superior-time\n");
-                            Preferences.debug("New MIPAV Space = left-posterior-superior-time\n");
+                            Preferences.debug("Original NRRD Space = left-anterior-superior-time\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("New MIPAV Space = left-posterior-superior-time\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("left-posterior-superior-time");
                             space = LPST;
                             apInvert = true;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR-TIME")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("LPST"))) {
-                            Preferences.debug("Space = left-posterior-superior-time\n");
+                            Preferences.debug("Space = left-posterior-superior-time\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("left-posterior-superior-time");
                             space = LPST;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR-TIME")) ||
                         else if (fieldDescriptorString.equalsIgnoreCase("SCANNER-XYZ")) {
-                            Preferences.debug("Space = scanner-xyz\n");
+                            Preferences.debug("Space = scanner-xyz\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("scanner-xyz");
                             space = SCANNER_XYZ;
                         } // else if (fieldDescriptorString.equalsIgnoreCase("SCANNER-XYZ"))
                         else if (fieldDescriptorString.equalsIgnoreCase("SCANNER-XYZ-TIME")) {
-                            Preferences.debug("Space = scanner-xyz-time\n");
+                            Preferences.debug("Space = scanner-xyz-time\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("scanner-xyz-time");
                             space = SCANNER_XYZ_TIME;
                         } // else if (fieldDescriptorString.equalsIgnoreCase("SCANNER-XYZ-TIME"))
                         else if (fieldDescriptorString.equalsIgnoreCase("3D-RIGHT-HANDED")) {
-                            Preferences.debug("Space = 3d-right-handed\n");
+                            Preferences.debug("Space = 3d-right-handed\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("3d-right-handed");
                             space = THREED_RIGHT_HANDED;
                         } // else if (fieldDescriptorString.equalsIgnoreCase("3D-RIGHT-HANDED"))
                         else if (fieldDescriptorString.equalsIgnoreCase("3D-LEFT-HANDED")) {
-                            Preferences.debug("Space = 3d-left-handed\n");
+                            Preferences.debug("Space = 3d-left-handed\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("3d-left-handed");
                             space = THREED_LEFT_HANDED;
                         } // else if (fieldDescriptorString.equalsIgnoreCase("3D-LEFT-HANDED"))
                         else if (fieldDescriptorString.equalsIgnoreCase("3D-RIGHT-HANDED-TIME")) {
-                            Preferences.debug("Space = 3d-right-handed-time\n");
+                            Preferences.debug("Space = 3d-right-handed-time\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("3d-right-handed-time");
                             space = THREED_RIGHT_HANDED_TIME;
                         } // else if (fieldDescriptorString.equalsIgnoreCase("3D-RIGHT-HANDED-TIME"))
                         else if (fieldDescriptorString.equalsIgnoreCase("3D-LEFT-HANDED-TIME")) {
-                            Preferences.debug("Space = 3d-left-handed-time\n");
+                            Preferences.debug("Space = 3d-left-handed-time\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setSpace("3d-left-handed-time");
                             space = THREED_LEFT_HANDED_TIME;
                         } // else if (fieldDescriptorString.equalsIgnoreCase("3D-LEFT-HANDED-TIME"))
@@ -1347,7 +1362,7 @@ public class FileNRRD extends FileBase {
                                 spaceDirections[i][0] = Double.NaN;
                                 spaceDirections[i][1] = Double.NaN;
                                 spaceDirections[i][2] = Double.NaN;
-                                Preferences.debug("space directions[" + i + " ] = none\n");
+                                Preferences.debug("space directions[" + i + " ] = none\n", Preferences.DEBUG_FILEIO);
                                 i++;
                                 j += 4;
                             } else if (fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase("(")) {
@@ -1406,7 +1421,8 @@ public class FileNRRD extends FileBase {
                                 }
                                 if (numComma == 6) {
 	                                Preferences.debug("space directions[" + i + " ] = (" + spaceDirections[i][0] + "," +
-	                                                  spaceDirections[i][1] + "," + spaceDirections[i][2] + ")\n");
+	                                                  spaceDirections[i][1] + "," + spaceDirections[i][2] + ")\n", 
+	                                                  Preferences.DEBUG_FILEIO);
                                 }
                                 else {
                                 	while (fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(" ")) {
@@ -1423,7 +1439,7 @@ public class FileNRRD extends FileBase {
                                     
                                     Preferences.debug("space directions[" + i + " ] = (" + spaceDirections[i][0] + "," +
                                             spaceDirections[i][1] + "," + spaceDirections[i][2] + "," + 
-                                            spaceDirections[i][3] + ")\n");
+                                            spaceDirections[i][3] + ")\n", Preferences.DEBUG_FILEIO);
                                 }
                                 i++;
                                 m++;
@@ -1497,7 +1513,7 @@ public class FileNRRD extends FileBase {
                             spaceOrigin[2] = Double.valueOf(fieldDescriptorString.substring(startNum, j++)).doubleValue();
                             if (numComma == 2) {
                                 Preferences.debug("space origin = (" + spaceOrigin[0] + "," + spaceOrigin[1] + "," +
-                                                  spaceOrigin[2] + ")\n");
+                                                  spaceOrigin[2] + ")\n", Preferences.DEBUG_FILEIO);
                             }
                             else {
                             	while (fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(" ")) {
@@ -1513,7 +1529,7 @@ public class FileNRRD extends FileBase {
                                 spaceOrigin[3] = Double.valueOf(fieldDescriptorString.substring(startNum, j++)).doubleValue();
                                 
                                 Preferences.debug("space origin = (" + spaceOrigin[0] + "," + spaceOrigin[1] + "," +
-                                        spaceOrigin[2] + "," + spaceOrigin[3] + ")\n");
+                                        spaceOrigin[2] + "," + spaceOrigin[3] + ")\n", Preferences.DEBUG_FILEIO);
                             }
                             origin = new float[numComma+1];
                             origin[0] = (float) spaceOrigin[0];
@@ -1576,7 +1592,8 @@ public class FileNRRD extends FileBase {
 
                                 measurementFrame[i][2] = Double.valueOf(fieldDescriptorString.substring(startNum, j++)).doubleValue();
                                 Preferences.debug("measurement frame[" + i + " ] = (" + measurementFrame[i][0] + "," +
-                                                  measurementFrame[i][1] + "," + measurementFrame[i][2] + ")\n");
+                                                  measurementFrame[i][1] + "," + measurementFrame[i][2] + ")\n", 
+                                                  Preferences.DEBUG_FILEIO);
                                 i++;
                             }
                         }
@@ -1594,24 +1611,24 @@ public class FileNRRD extends FileBase {
                             if ((fieldDescriptorString.substring(j).length() >= 4) &&
                                     (fieldDescriptorString.substring(j, j + 4).equalsIgnoreCase("CELL"))) {
                                 centers[i] = CELL;
-                                Preferences.debug("centers[ " + i + "] = cell\n");
+                                Preferences.debug("centers[ " + i + "] = cell\n", Preferences.DEBUG_FILEIO);
                                 i++;
                                 j += 4;
                             } else if ((fieldDescriptorString.substring(j).length() >= 4) &&
                                            (fieldDescriptorString.substring(j, j + 4).equalsIgnoreCase("NODE"))) {
                                 centers[i] = NODE;
-                                Preferences.debug("centers[ " + i + "] = node\n");
+                                Preferences.debug("centers[ " + i + "] = node\n", Preferences.DEBUG_FILEIO);
                                 i++;
                                 j += 4;
                             } else if ((fieldDescriptorString.substring(j).length() >= 4) &&
                                            (fieldDescriptorString.substring(j, j + 4).equalsIgnoreCase("NONE"))) {
                                 centers[i] = NONE;
-                                Preferences.debug("centers[ " + i + "] = none\n");
+                                Preferences.debug("centers[ " + i + "] = none\n", Preferences.DEBUG_FILEIO);
                                 i++;
                                 j += 4;
                             } else if (fieldDescriptorString.substring(j, j + 3).equalsIgnoreCase("???")) {
                                 centers[i] = NONE;
-                                Preferences.debug("centers[ " + i + "] = none\n");
+                                Preferences.debug("centers[ " + i + "] = none\n", Preferences.DEBUG_FILEIO);
                                 i++;
                                 j += 3;
                             }
@@ -1652,7 +1669,7 @@ public class FileNRRD extends FileBase {
 
             for (i = 0; i < numSpaceUnits; i++) {
                 nrrdSpaceUnits[i] = spaceUnitsString.substring(startQuote[i] + 1, finishQuote[i]);
-                Preferences.debug("NRRD space units[ " + i + "] = " + nrrdSpaceUnits[i] + "\n");
+                Preferences.debug("NRRD space units[ " + i + "] = " + nrrdSpaceUnits[i] + "\n", Preferences.DEBUG_FILEIO);
             }
 
             if (nrrdUnits == null) {
@@ -2243,7 +2260,7 @@ public class FileNRRD extends FileBase {
                           ((kindsString[2].equalsIgnoreCase("DOMAIN")) || (kindsString[2].equalsIgnoreCase("SPACE")) ||
                                (kindsString[2].equalsIgnoreCase("TIME")))))) {
             reorder = true;
-            Preferences.debug("Will reorder data to make first dimension space or time\n");
+            Preferences.debug("Will reorder data to make first dimension space or time\n", Preferences.DEBUG_FILEIO);
         }
 
         if (subdim == 0) {
@@ -2569,7 +2586,7 @@ public class FileNRRD extends FileBase {
                 }
 
                 fileInfoSub.setFileName(fileName);
-                Preferences.debug("Sequencing on " + fileDir + fileName + "\n");
+                Preferences.debug("Sequencing on " + fileDir + fileName + "\n", Preferences.DEBUG_FILEIO);
 
 
                 // Do line skipping before byte skipping
