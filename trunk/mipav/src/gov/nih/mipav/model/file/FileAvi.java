@@ -392,7 +392,8 @@ public class FileAvi extends FileBase {
                 }
 
                 if (readHeader() != 0) {
-                	Preferences.debug("FileAVI.readImage: could not read avi image transcoded to RGB-AVI\n", Preferences.DEBUG_FILEIO);
+                	Preferences.debug("FileAVI.readImage: could not read avi image transcoded to RGB-AVI\n",
+                			Preferences.DEBUG_FILEIO);
                     System.err.println("FileAVI.readImage: could not read avi image transcoded to RGB-AVI");
                 }
             }
@@ -409,8 +410,9 @@ public class FileAvi extends FileBase {
             remainingFileLength = (int) (raFile.length() - startPosition);
 
             if (totalDataArea > remainingFileLength) {
-                Preferences.debug("File appears to be truncated\n");
-                Preferences.debug("totalDataArea = " + totalDataArea + " remainingFileLength = " + remainingFileLength + "\n");
+                Preferences.debug("File appears to be truncated\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("totalDataArea = " + totalDataArea + " remainingFileLength = " + remainingFileLength + "\n",
+                		Preferences.DEBUG_FILEIO);
                 totalDataArea = remainingFileLength;
             }
 
@@ -3338,13 +3340,13 @@ public class FileAvi extends FileBase {
 
                 // read destination rectangle within movie rectangle
                 short left = (short) getSignedShort(endianess);
-                Preferences.debug("left = " + left + "\n");
+                Preferences.debug("left = " + left + "\n", Preferences.DEBUG_FILEIO);
 
                 short top = (short) getSignedShort(endianess);
                 Preferences.debug("top = " + top + "\n", Preferences.DEBUG_FILEIO);
 
                 short right = (short) getSignedShort(endianess);
-                Preferences.debug("right = " + right + "\n");
+                Preferences.debug("right = " + right + "\n", Preferences.DEBUG_FILEIO);
 
                 short bottom = (short) getSignedShort(endianess);
                 Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_FILEIO);
@@ -5142,7 +5144,7 @@ public class FileAvi extends FileBase {
                 Preferences.debug("left = " + left + "\n", Preferences.DEBUG_FILEIO);
 
                 short top = (short) getSignedShort(endianess);
-                Preferences.debug("top = " + top + "\n");
+                Preferences.debug("top = " + top + "\n", Preferences.DEBUG_FILEIO);
 
                 short right = (short) getSignedShort(endianess);
                 Preferences.debug("right = " + right + "\n", Preferences.DEBUG_FILEIO);
