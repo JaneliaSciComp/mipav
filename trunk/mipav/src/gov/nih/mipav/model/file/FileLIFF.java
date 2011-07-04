@@ -610,10 +610,10 @@ public class FileLIFF extends FileBase {
 
             if (byteOrder == 0xffff0000) {
                 endianess = FileBase.LITTLE_ENDIAN;
-                Preferences.debug("\nByte order in unexpectedly little-endian\n");
+                Preferences.debug("\nByte order in unexpectedly little-endian\n", Preferences.DEBUG_FILEIO);
             } else if (byteOrder == 0x0000ffff) {
                 endianess = FileBase.BIG_ENDIAN;
-                Preferences.debug("\nByte order is the expected big-endian (Macintosh)\n");
+                Preferences.debug("\nByte order is the expected big-endian (Macintosh)\n", Preferences.DEBUG_FILEIO);
             } else {
                 raFile.close();
                 throw new IOException("LIFF Read Header: Error - first 4 bytes are an illegal " + byteOrder);
@@ -624,68 +624,70 @@ public class FileLIFF extends FileBase {
             
             String sigStr = getString(4);
             if (sigStr.equals("impr")) {
-                Preferences.debug("sigBytes field is properly set to impr\n");
+                Preferences.debug("sigBytes field is properly set to impr\n", Preferences.DEBUG_FILEIO);
             }
             else {
-                Preferences.debug("sigBytes field is an unexpected " + sigStr + "\n");
+                Preferences.debug("sigBytes field is an unexpected " + sigStr + "\n", Preferences.DEBUG_FILEIO);
                 raFile.close();
                 throw new IOException("sigBytes filed is an unexpected " + sigStr);
             }
             
             int versionNumber = getInt(endianess);
-            Preferences.debug("Version number of the LIFF format is " + versionNumber + "\n");
+            Preferences.debug("Version number of the LIFF format is " + versionNumber + "\n", Preferences.DEBUG_FILEIO);
             
             // layerCount is the total number of tag blocks in the file of all types.  There
             // may actually be fewer actual layers than this, but not more.
             // When parsing the file, it is more reliable to read until there is no more data
             // rather than rely on the layerCount value.
             int layerCount = getUnsignedShort(endianess);
-            Preferences.debug("Total number of tag blocks of all types = " + layerCount + "\n");
+            Preferences.debug("Total number of tag blocks of all types = " + layerCount + "\n", Preferences.DEBUG_FILEIO);
             
             int layerIDSeed = getUnsignedShort(endianess);
-            Preferences.debug("Seed for layer IDs = " + layerIDSeed + "\n");
+            Preferences.debug("Seed for layer IDs = " + layerIDSeed + "\n", Preferences.DEBUG_FILEIO);
             
             long firstTagOffset = getUInt(endianess);
-            Preferences.debug("Absolute offset of first tag block is " + firstTagOffset + "\n");
+            Preferences.debug("Absolute offset of first tag block is " + firstTagOffset + "\n", Preferences.DEBUG_FILEIO);
             
             for (nextOffset = firstTagOffset, i = 1; nextOffset < fileLength-1; i++) {
                 raFile.seek(nextOffset);
-                Preferences.debug("Reading tag " + i + "\n"); 
+                Preferences.debug("Reading tag " + i + "\n", Preferences.DEBUG_FILEIO); 
                 // An image layer will have a tag ID of 67 or 68 (the two types are identical;
                 // for historical reasons the redundancy here has not been removed.)
                 tagType = readShort(endianess);
                 if ((tagType == 67) || (tagType == 68)) {
-                    Preferences.debug("Tag type = " + tagType + " indicates image layer\n");
+                    Preferences.debug("Tag type = " + tagType + " indicates image layer\n", Preferences.DEBUG_FILEIO);
                     imageSlices++;
                 }
                 else if (tagType == 69) {
-                    Preferences.debug("Tag type = " + tagType + " indicates calibration\n");
+                    Preferences.debug("Tag type = " + tagType + " indicates calibration\n", Preferences.DEBUG_FILEIO);
                 }
                 else if (tagType == 71) {
-                    Preferences.debug("Tag type = " + tagType + " indicates measurements data\n");
+                    Preferences.debug("Tag type = " + tagType + " indicates measurements data\n", Preferences.DEBUG_FILEIO);
                 }
                 else if (tagType == 72) {
-                    Preferences.debug("Tag type = " + tagType + " indicates layer user data\n");
+                    Preferences.debug("Tag type = " + tagType + " indicates layer user data\n", Preferences.DEBUG_FILEIO);
                 }
                 else if (tagType == 73) {
-                    Preferences.debug("Tag type = " + tagType + " indicates density calibration data\n");
+                    Preferences.debug("Tag type = " + tagType + " indicates density calibration data\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else if (tagType == 74) {
-                    Preferences.debug("Tag type = " + tagType + " indicates high speed graphing data\n");
+                    Preferences.debug("Tag type = " + tagType + " indicates high speed graphing data\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else if (tagType == 75) {
-                    Preferences.debug("Tag type = " + tagType + " indicates user notes data\n");
+                    Preferences.debug("Tag type = " + tagType + " indicates user notes data\n", Preferences.DEBUG_FILEIO);
                 }
                 else if (tagType == 76) {
-                    Preferences.debug("Tag type = " + tagType + " indicates scale bar settings\n");
+                    Preferences.debug("Tag type = " + tagType + " indicates scale bar settings\n", Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("Tag type = " + tagType + "\n");
+                    Preferences.debug("Tag type = " + tagType + "\n", Preferences.DEBUG_FILEIO);
                 }
                 
                 subType = readShort(endianess);
                 // For image tags, this will generally be set to zero.
-                Preferences.debug("Subtype ID = " + subType + "\n");
+                Preferences.debug("Subtype ID = " + subType + "\n", Preferences.DEBUG_FILEIO);
                 
                 // nextOffset is the absolute location of the next tag header
                 if (versionNumber <= 2) {
@@ -694,27 +696,27 @@ public class FileLIFF extends FileBase {
                 else {
                     nextOffset = readLong(endianess);
                 }
-                Preferences.debug("Absolute location of next tag header = " + nextOffset + "\n");
+                Preferences.debug("Absolute location of next tag header = " + nextOffset + "\n", Preferences.DEBUG_FILEIO);
                 
                 formatStr = getString(4);
                 if ((tagType == 67) || (tagType == 68)) {
                     // This field will most often contain 'PICT', indicating that the image data
                     // is a Macintosh Picture.  For Openlab 5 LIFF files this will be a 'RAWi'
                     // type - this is a compressed raw image instead of PICT data.
-                    Preferences.debug("Format of the data in the image tag is " + formatStr + "\n");
+                    Preferences.debug("Format of the data in the image tag is " + formatStr + "\n", Preferences.DEBUG_FILEIO);
                 }
                 else if (tagType == 69) {
                     if (formatStr.equals("cali")) {
-                        Preferences.debug("calibration tag type has expected format string of cali\n");
+                        Preferences.debug("calibration tag type has expected format string of cali\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
                         Preferences.debug("calibration tag type unexpectedly has format string of " 
-                                          + formatStr + "\n");    
+                                          + formatStr + "\n", Preferences.DEBUG_FILEIO);    
                     }
                 }
                 else if (tagType == 72) {
                     // Have seen "USER"
-                    Preferences.debug("user tag type has format string of " + formatStr + "\n");
+                    Preferences.debug("user tag type has format string of " + formatStr + "\n", Preferences.DEBUG_FILEIO);
                 }
                 
                 if (versionNumber <= 2) {
@@ -725,7 +727,7 @@ public class FileLIFF extends FileBase {
                 }
                 // The blkSize field does not include the layerinfo record for 
                 // tag types 67 and 68
-                Preferences.debug("Number of bytes in this block = " + blkSize + "\n");
+                Preferences.debug("Number of bytes in this block = " + blkSize + "\n", Preferences.DEBUG_FILEIO);
                 if ((tagType == 67) || (tagType == 68)) {
                     // Read layerinfo record if image tag
                     // isOpenlab2Header is set to true for files written with Openlab 2.0 and higher.
@@ -733,35 +735,36 @@ public class FileLIFF extends FileBase {
                     // there is aditional info at the end of the header.
                     raFile.read(isOpenlab2Header);
                     if (isOpenlab2Header[0] == 1) {
-                        Preferences.debug("This is an Openlab 2.x header\n");
+                        Preferences.debug("This is an Openlab 2.x header\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
-                        Preferences.debug("This is not an Openlab 2.x header\n");
+                        Preferences.debug("This is not an Openlab 2.x header\n", Preferences.DEBUG_FILEIO);
                     }
                     // There is a spare byte between isOpenlab2Header and sortTag
                     raFile.read(spareByte);
                     // sortTag is no longer used.  Should be set to zero
                     sortTag = readShort(endianess);
                     if (sortTag == 0) {
-                        Preferences.debug("sortTag is 0 as expected\n");    
+                        Preferences.debug("sortTag is 0 as expected\n", Preferences.DEBUG_FILEIO);    
                     }
                     else {
-                        Preferences.debug("sortTag unexpectedly = " + sortTag + "\n");
+                        Preferences.debug("sortTag unexpectedly = " + sortTag + "\n", Preferences.DEBUG_FILEIO);
                     }
                     layerID = readShort(endianess);
-                    Preferences.debug("The ID number for the layer = " + layerID + "\n");
+                    Preferences.debug("The ID number for the layer = " + layerID + "\n", Preferences.DEBUG_FILEIO);
                     layerType = readShort(endianess);
                     switch (layerType) {
                         case kMasterImageLayer:
                             // This type is no longer used in Openlab or other Improvision software
                             // If Openlab encounters a layer with this type in a LIFF file, it
                             // will convert it to kGeneralImageLayer
-                            Preferences.debug("kMasterImageLayer, which is no longer used\n");
+                            Preferences.debug("kMasterImageLayer, which is no longer used\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kGeneralImageLayer:
                             // This is a layer containing an image with depth, colors, etc.
                             // It has no special properties.  Most layers will be of this type.
-                            Preferences.debug("kGeneralImageLayer, an image with any depth, colors, etc\n");
+                            Preferences.debug("kGeneralImageLayer, an image with any depth, colors, etc\n", 
+                            		Preferences.DEBUG_FILEIO);
                             break;
                         case kBinaryLayer:
                             // This layer contains only binary image data.  Its bit depth is always 1.
@@ -772,73 +775,75 @@ public class FileLIFF extends FileBase {
                             // to.  The layerColour attribute should also be used to tint the bitmap
                             // when rendered.  This is very simple if using CopyBits, etc., just set
                             // the ForeColor to layerColour before calling it.
-                            Preferences.debug("kBinaryLayer contains only binary image data\n");
+                            Preferences.debug("kBinaryLayer contains only binary image data\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kRGBChannelLayer:
                             // This type is not currently used.
-                            Preferences.debug("kRGBChannelLayer not currently used\n");
+                            Preferences.debug("kRGBChannelLayer not currently used\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kRedChannelLayer:
                             // This is an image filtered to display only the red channel of the RGB image.
                             // The image itself will be full color.  It is up to you to apply the correct
                             // filtering when rendering a layer of this type.
-                            Preferences.debug("kRedChannelLayer filtered to only display the red channel\n");
+                            Preferences.debug("kRedChannelLayer filtered to only display the red channel\n",
+                            		Preferences.DEBUG_FILEIO);
                             break;
                         case kGreenChannelLayer:
                             // Same as above, but for green channel.
-                            Preferences.debug("kGreenChannelLayer filtered to only display the green channel\n");
+                            Preferences.debug("kGreenChannelLayer filtered to only display the green channel\n", 
+                            		Preferences.DEBUG_FILEIO);
                             break;
                         case kBlueChannelLayer:
-                            Preferences.debug("kBlueChannelLayer filtered to only display the blue channel\n");
+                            Preferences.debug("kBlueChannelLayer filtered to only display the blue channel\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kCyanChannelLayer:
-                            Preferences.debug("kCyanChannelLayer\n");
+                            Preferences.debug("kCyanChannelLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kMagentaChannelLayer:
-                            Preferences.debug("kMagentaChannelLayer\n");
+                            Preferences.debug("kMagentaChannelLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kYellowChannelLayer:
                             // Same as above, etc.
-                            Preferences.debug("kYellowChannelLayer\n");
+                            Preferences.debug("kYellowChannelLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kBlackChannelLayer:
                             // Similar to above, but it black wherever there is color in the original, and
                             // white where there is white.  (Alternatively, you can allow this to mean black
                             // where the original is black, and white elsewhere - the convention is invoked
                             // by the application, not by anything inherent in the file).
-                            Preferences.debug("kBlackChannelLayer\n");
+                            Preferences.debug("kBlackChannelLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kLuminosityLayer:
                             // A grayscale representation of the master image (8-bit) that maps the relative
                             // luminosity of the colors to the shade of gray.
-                            Preferences.debug("kLuminosityLayer\n");
+                            Preferences.debug("kLuminosityLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kMaskLayer:
-                            Preferences.debug("kMaskLayer\n");
+                            Preferences.debug("kMaskLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kDeepMaskLayer:
-                            Preferences.debug("kDeepMaskLayer\n");
+                            Preferences.debug("kDeepMaskLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kAnnotationLayer:
                             // A layer (generally 8-bit, though not enforced) that can be used to add
                             // annotations to an image.  Usually, such layers will be transparent by 
                             // default.
-                            Preferences.debug("kAnnotationLayer\n");
+                            Preferences.debug("kAnnotationLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kMovieLayer:
                             // A layer type reserved for animated or live images.  LIFF files should
                             // generally not contain this type.  If Openlab encounters a layer with 
                             // this type in a LIFF file, it will ignore it.
-                            Preferences.debug("kMovieLayer\n");
+                            Preferences.debug("kMovieLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kDarkFieldLayer:
-                            Preferences.debug("kDarkFieldLayer\n");
+                            Preferences.debug("kDarkFieldLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         case kBrightFieldLayer:
-                            Preferences.debug("kBrightFieldLayer\n");
+                            Preferences.debug("kBrightFieldLayer\n", Preferences.DEBUG_FILEIO);
                             break;
                         default:
-                            Preferences.debug("layerType has unrecognized value = " + layerType + "\n");
+                            Preferences.debug("layerType has unrecognized value = " + layerType + "\n", Preferences.DEBUG_FILEIO);
                     } // switch (layerType)
                     // layerDepth is the bit-depth of the layer, where this makes sense.  Note that
                     // vector-based layers have no inherent bit-depth as they are rendered to the
@@ -847,23 +852,23 @@ public class FileLIFF extends FileBase {
                     // this is the case, this field may contain values 9, 10, 11, 12, 13, 14, or 16.
                     // Note that 15 bit deep-grey data is not supported for historical reasons.
                     layerDepth = readShort(endianess);
-                    Preferences.debug("Bit depth of the layer = " + layerDepth + "\n");
+                    Preferences.debug("Bit depth of the layer = " + layerDepth + "\n", Preferences.DEBUG_FILEIO);
                     // layerOpacity is the relative percentage opacity of the layer.  It is an integer
                     // from 0 to 100.  A value of 100 indicates totally opaque, and a value of 0
                     // totally transparent.  Note that the actual value of opacity can be modified
                     // by the layer type field.
                     layerOpacity = readShort(endianess);
-                    Preferences.debug("Percentage opacity of the layer = " + layerOpacity + "\n");
+                    Preferences.debug("Percentage opacity of the layer = " + layerOpacity + "\n", Preferences.DEBUG_FILEIO);
                     // layerMode is the drawing mode that the layer uses to render its image.  It is
                     // a QuickDraw mode constant, such as srcCopy, srcOr, etc.  In general, this field
                     // should not be relied on as an absolute indicator of the drawing mode - this 
                     // should ideally be determined on the fly from other factors.
                     layerMode = readShort(endianess);
                     if ((layerMode >= 0) && (layerMode <= 64) && (modeStr[layerMode] != null)) {
-                        Preferences.debug("layerMode = " + modeStr[layerMode] + "\n");
+                        Preferences.debug("layerMode = " + modeStr[layerMode] + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
-                        Preferences.debug("layerMode has unrecognized value = " + layerMode + "\n");    
+                        Preferences.debug("layerMode has unrecognized value = " + layerMode + "\n", Preferences.DEBUG_FILEIO);    
                     }
                     // selected ignore;  set to true if this layer is the 'current' layer in
                     // the Layers Manager
@@ -878,10 +883,10 @@ public class FileLIFF extends FileBase {
                     layerImage = readInt(endianess);
                     imageType = readInt(endianess);
                     if ((imageType >= 0) && (imageType <= 16)) {
-                        Preferences.debug("Image type = " + typeStr[imageType] + "\n");
+                        Preferences.debug("Image type = " + typeStr[imageType] + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
-                        Preferences.debug("imageType has unrecognized value = " + imageType + "\n");
+                        Preferences.debug("imageType has unrecognized value = " + imageType + "\n", Preferences.DEBUG_FILEIO);
                         raFile.close();
                         throw new IOException("imageType has unrecognized value = " + imageType);    
                     }
@@ -895,9 +900,9 @@ public class FileLIFF extends FileBase {
                     greenColor = getUnsignedShort(endianess);
                     blueColor = getUnsignedShort(endianess);
                     if (layerType == kBinaryLayer) {
-                        Preferences.debug("redColor = " + redColor + "\n");
-                        Preferences.debug("greenColor = " + greenColor + "\n");
-                        Preferences.debug("blueColor = " + blueColor + "\n");
+                        Preferences.debug("redColor = " + redColor + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("greenColor = " + greenColor + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("blueColor = " + blueColor + "\n", Preferences.DEBUG_FILEIO);
                     } // if (layerType == kBinaryLayer)
                     // ignore refCon; set to zero
                     refCon = readInt(endianess);
@@ -908,7 +913,7 @@ public class FileLIFF extends FileBase {
                     layerTimeStamp = readInt(endianess);
                     if (isOpenlab2Header[0] == 0) {
                         // Timestamp only used for pre-Openlab 2.0 files
-                        Preferences.debug("Time from start of sequence in ticks = " + layerTimeStamp + "\n");
+                        Preferences.debug("Time from start of sequence in ticks = " + layerTimeStamp + "\n", Preferences.DEBUG_FILEIO);
                     }
                     // markDeleted ignore; set to zero
                     raFile.read(markDeleted);
@@ -917,9 +922,9 @@ public class FileLIFF extends FileBase {
                     // Read length of layerName string
                     raFile.read(prefix);
                     layerNameLength = prefix[0] & 0xff;
-                    Preferences.debug("layer name length = " + layerNameLength + "\n");
+                    Preferences.debug("layer name length = " + layerNameLength + "\n", Preferences.DEBUG_FILEIO);
                     layerName = getString(layerNameLength);
-                    Preferences.debug("layer name = " + layerName.trim() + "\n");
+                    Preferences.debug("layer name = " + layerName.trim() + "\n", Preferences.DEBUG_FILEIO);
                     if ((!layerName.toUpperCase().trim().equals("ORIGINAL IMAGE")) &&
                         (imageType >= DEEP_GREY_10) && (imageType <= DEEP_GREY_16)){
                         colorIndex = layerName.toUpperCase().indexOf("C=");
@@ -934,7 +939,7 @@ public class FileLIFF extends FileBase {
                             spaceIndex = layerName.indexOf(" ");
                             layerName = layerName.substring(0, spaceIndex);
                         }
-                        Preferences.debug("layerName = " + layerName + "\n");
+                        Preferences.debug("layerName = " + layerName + "\n", Preferences.DEBUG_FILEIO);
                         found = false;
                         for (j = 0; j < layerNumber && (!found); j++) {
                            if (layerName.equals(layerString[j])) {
@@ -962,15 +967,17 @@ public class FileLIFF extends FileBase {
                         // Note that java.util.date is a long integer giving milliseconds since
                         // January 1, 1970.
                         microSecsTimeStamp = readLong(endianess);
-                        Preferences.debug("microSecsTimeStamp = " + microSecsTimeStamp + "\n");
+                        Preferences.debug("microSecsTimeStamp = " + microSecsTimeStamp + "\n", Preferences.DEBUG_FILEIO);
                         // isBaseTimeLayer is set to true if this layer is being used as the timebase
                         // for relative layer times
                         raFile.read(isBaseTimeLayer);
                         if (isBaseTimeLayer[0] == 1) {
-                            Preferences.debug("This layer is being used as the timebase for relative layer times\n");    
+                            Preferences.debug("This layer is being used as the timebase for relative layer times\n",
+                            		Preferences.DEBUG_FILEIO);    
                         }
                         else {
-                            Preferences.debug("This layer is not being used as the timebase for relative layer times\n");
+                            Preferences.debug("This layer is not being used as the timebase for relative layer times\n", 
+                            		Preferences.DEBUG_FILEIO);
                         }
                         // read in 1 byte for alignment
                         raFile.read(spareByte);
@@ -987,46 +994,48 @@ public class FileLIFF extends FileBase {
                         // picSize record
                         // picture size; don't use this value for picture size
                         pictureBytes  = getUnsignedShort(endianess);
-                        Preferences.debug("Picture size in bytes = " + pictureBytes + "\n");
+                        Preferences.debug("Picture size in bytes = " + pictureBytes + "\n", Preferences.DEBUG_FILEIO);
                         top = getUnsignedShort(endianess);
-                        Preferences.debug("top = " + top + "\n");
+                        Preferences.debug("top = " + top + "\n", Preferences.DEBUG_FILEIO);
                         left = getUnsignedShort(endianess);
-                        Preferences.debug("left = " + left + "\n");
+                        Preferences.debug("left = " + left + "\n", Preferences.DEBUG_FILEIO);
                         bottom = getUnsignedShort(endianess);
-                        Preferences.debug("bottom = " + bottom + "\n");
+                        Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_FILEIO);
                         right = getUnsignedShort(endianess);
-                        Preferences.debug("right = " + right + "\n");
+                        Preferences.debug("right = " + right + "\n", Preferences.DEBUG_FILEIO);
                         width = right - left;
-                        Preferences.debug("width = " + width + "\n");
+                        Preferences.debug("width = " + width + "\n", Preferences.DEBUG_FILEIO);
                         xDimArray[imageType] = width;
                         height = bottom - top;
-                        Preferences.debug("height = " + height + "\n");
+                        Preferences.debug("height = " + height + "\n", Preferences.DEBUG_FILEIO);
                         yDimArray[imageType] = height;
                         // picFrame (PICT v2.0) record
                         // version should be 0x0011
                         version = getUnsignedShort(endianess);
                         if (version == 0x0011) {
-                            Preferences.debug("picFrame version is 0x0011 as expected\n");
+                            Preferences.debug("picFrame version is 0x0011 as expected\n", Preferences.DEBUG_FILEIO);
                         }
                         else {
-                            Preferences.debug("picFrame version is unexpectedly " + version + "\n");
+                            Preferences.debug("picFrame version is unexpectedly " + version + "\n", Preferences.DEBUG_FILEIO);
                         }
                         // Picture version should be 0x02ff
                         pictureVersion = getUnsignedShort(endianess);
                         if (pictureVersion == 0x02ff) {
-                            Preferences.debug("Picture version is 0x02ff as expected\n");
+                            Preferences.debug("Picture version is 0x02ff as expected\n", Preferences.DEBUG_FILEIO);
                         }
                         else {
-                            Preferences.debug("Picture version is unexpectedly " + pictureVersion + "\n");
+                            Preferences.debug("Picture version is unexpectedly " + pictureVersion + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         }
                         // Header opcode should be 0x0C00 in an extended version 2 or a version 2
                         // format picture
                         headerOpcode = getUnsignedShort(endianess);
                         if (headerOpcode == 0x0C00) {
-                            Preferences.debug("Header opcode is 0x0C00 as expected\n");
+                            Preferences.debug("Header opcode is 0x0C00 as expected\n", Preferences.DEBUG_FILEIO);
                         }
                         else {
-                            Preferences.debug("Header opcode is unexpectedly " + headerOpcode + "\n");
+                            Preferences.debug("Header opcode is unexpectedly " + headerOpcode + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         }
                         // The version opcode has a value of -2 for an extneded version 2 picture and a
                         // value of -1 for a version 2 picture.  The rest of the header for an extended
@@ -1034,62 +1043,70 @@ public class FileLIFF extends FileBase {
                         // for a version 2 picture specifies a fixed-point bounding box.
                         versionOpcode = readShort(endianess);
                         if (versionOpcode == -2) {
-                            Preferences.debug("The version opcode = -2 indicates an extended version 2 picture\n");
+                            Preferences.debug("The version opcode = -2 indicates an extended version 2 picture\n", 
+                            		Preferences.DEBUG_FILEIO);
                         }
                         else if (versionOpcode == -1) {
-                            Preferences.debug("The version opcode = -1 indicates a version 2 picture\n");
+                            Preferences.debug("The version opcode = -1 indicates a version 2 picture\n",
+                            		Preferences.DEBUG_FILEIO);
                         }
                         else {
-                            Preferences.debug("The version opcode is unexpectedly = " + versionOpcode + "\n");
+                            Preferences.debug("The version opcode is unexpectedly = " + versionOpcode + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         }
                         // reserved should be 0
                         reserved = getUnsignedShort(endianess);
-                        Preferences.debug("reserved = " + reserved + "\n");
+                        Preferences.debug("reserved = " + reserved + "\n", Preferences.DEBUG_FILEIO);
                         bestHorizontalResolutionShort = readShort(endianess);
                         bestHorizontalResolutionFract = getUnsignedShort(endianess);
                         bestHorizontalResolution = (float)(bestHorizontalResolutionShort + 
                                                     Math.pow(2.0,-16.0)*bestHorizontalResolutionFract);
                         Preferences.debug("Best horizontal resolution = " +
-                                          bestHorizontalResolution + " pixels per inch\n");
+                                          bestHorizontalResolution + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                         bestVerticalResolutionShort = readShort(endianess);
                         bestVerticalResolutionFract = getUnsignedShort(endianess);
                         bestVerticalResolution = (float)(bestVerticalResolutionShort + 
                                                     Math.pow(2.0,-16.0)*bestVerticalResolutionFract);
                         Preferences.debug("Best vertical resolution = " +
-                                          bestVerticalResolution + " pixels per inch\n");
+                                          bestVerticalResolution + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                         yTopLeft = readShort(endianess);
-                        Preferences.debug("y top left = " + yTopLeft + "\n");
+                        Preferences.debug("y top left = " + yTopLeft + "\n", Preferences.DEBUG_FILEIO);
                         xTopLeft = readShort(endianess);
-                        Preferences.debug("x top left = " + xTopLeft + "\n");
+                        Preferences.debug("x top left = " + xTopLeft + "\n", Preferences.DEBUG_FILEIO);
                         yBottomRight = readShort(endianess);
-                        Preferences.debug("y bottom right = " + yBottomRight + "\n");
+                        Preferences.debug("y bottom right = " + yBottomRight + "\n", Preferences.DEBUG_FILEIO);
                         xBottomRight = readShort(endianess);
-                        Preferences.debug("x bottom right = " + xBottomRight + "\n");
+                        Preferences.debug("x bottom right = " + xBottomRight + "\n", Preferences.DEBUG_FILEIO);
                         // reserved should be 0
                         reserved = readInt(endianess);
-                        Preferences.debug("reserved = " + reserved + "\n");
+                        Preferences.debug("reserved = " + reserved + "\n", Preferences.DEBUG_FILEIO);
                         found = false;
                         while (!found) {
                             opcode = getUnsignedShort(endianess);
                             switch (opcode) {
                                 case NOP:
-                                    Preferences.debug("NOP\n");
+                                    Preferences.debug("NOP\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case Clip:
-                                    Preferences.debug("Clip: Clipping region\n");
+                                    Preferences.debug("Clip: Clipping region\n", Preferences.DEBUG_FILEIO);
                                     regionSize = getUnsignedShort(endianess);
                                     // For rectangular regions (or empty regions), the region size
                                     // field contains 10.
-                                    Preferences.debug("Size in bytes of clipping record = " + regionSize + "\n");
+                                    Preferences.debug("Size in bytes of clipping record = " + regionSize + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // Enclosing rectangle
                                     clipTop = readShort(endianess);
-                                    Preferences.debug("Top of clipping rectangle = " + clipTop + "\n");
+                                    Preferences.debug("Top of clipping rectangle = " + clipTop + "\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     clipLeft = readShort(endianess);
-                                    Preferences.debug("Left of clipping rectangle = " + clipLeft + "\n");
+                                    Preferences.debug("Left of clipping rectangle = " + clipLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     clipBottom = readShort(endianess);
-                                    Preferences.debug("Bottom of clipping rectangle = " + clipBottom + "\n");
+                                    Preferences.debug("Bottom of clipping rectangle = " + clipBottom + "\n",
+                                    		Preferences.DEBUG_FILEIO);
                                     clipRight = readShort(endianess);
-                                    Preferences.debug("Right of clipping rectangle = " + clipRight + "\n");
+                                    Preferences.debug("Right of clipping rectangle = " + clipRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     if (regionSize > 10) {
                                         pad = new byte[regionSize - 10];
                                         raFile.read(pad);
@@ -1099,65 +1116,65 @@ public class FileLIFF extends FileBase {
                                     }
                                     break;
                                 case TxFont:
-                                    Preferences.debug("TxFont: Font number for text\n");
+                                    Preferences.debug("TxFont: Font number for text\n", Preferences.DEBUG_FILEIO);
                                     fontNumber = getUnsignedShort(endianess);
-                                    Preferences.debug("Font number = " + fontNumber + "\n");
+                                    Preferences.debug("Font number = " + fontNumber + "\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case FillPat:
                                     Preferences.debug("FillPat: Fill pattern\n");
                                     fillPat1 = getUnsignedShort(endianess);
-                                    Preferences.debug("fill pattern 1 = " + fillPat1 + "\n");
+                                    Preferences.debug("fill pattern 1 = " + fillPat1 + "\n", Preferences.DEBUG_FILEIO);
                                     fillPat2 = getUnsignedShort(endianess);
-                                    Preferences.debug("fill pattern 2 = " + fillPat2 + "\n");
+                                    Preferences.debug("fill pattern 2 = " + fillPat2 + "\n", Preferences.DEBUG_FILEIO);
                                     fillPat3 = getUnsignedShort(endianess);
-                                    Preferences.debug("fill pattern 3 = " + fillPat3 + "\n");
+                                    Preferences.debug("fill pattern 3 = " + fillPat3 + "\n", Preferences.DEBUG_FILEIO);
                                     fillPat4 = getUnsignedShort(endianess);
-                                    Preferences.debug("fill pattern 4 = " + fillPat4 + "\n");
+                                    Preferences.debug("fill pattern 4 = " + fillPat4 + "\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case TxSize:
-                                    Preferences.debug("TxSize: Text size\n");
+                                    Preferences.debug("TxSize: Text size\n", Preferences.DEBUG_FILEIO);
                                     textSize = getUnsignedShort(endianess);
-                                    Preferences.debug("Text size = " + textSize + "\n");
+                                    Preferences.debug("Text size = " + textSize + "\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case DefHilite:
-                                    Preferences.debug("DefHilite: use default highlight color\n");
+                                    Preferences.debug("DefHilite: use default highlight color\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case DHDVText:
-                                    Preferences.debug("DHDVText\n");
+                                    Preferences.debug("DHDVText\n", Preferences.DEBUG_FILEIO);
                                     raFile.read(prefix);
                                     dh = prefix[0] & 0xff;
-                                    Preferences.debug("dh = " + dh + "\n");
+                                    Preferences.debug("dh = " + dh + "\n", Preferences.DEBUG_FILEIO);
                                     raFile.read(prefix);
                                     dv = prefix[0] & 0xff;
-                                    Preferences.debug("dv = " + dv + "\n");
+                                    Preferences.debug("dv = " + dv + "\n", Preferences.DEBUG_FILEIO);
                                     raFile.read(prefix);
                                     count = prefix[0] & 0xff;
-                                    Preferences.debug("count = " + count + "\n");
+                                    Preferences.debug("count = " + count + "\n", Preferences.DEBUG_FILEIO);
                                     textStr = getString(count);
-                                    Preferences.debug("DHDVText string = " + textStr + "\n");
+                                    Preferences.debug("DHDVText string = " + textStr + "\n", Preferences.DEBUG_FILEIO);
                                     if (((3 + count) % 2)  == 1) {
                                         raFile.read(spareByte);
                                     }
                                     break;
                                 case fontName:
-                                    Preferences.debug("fontName\n");
+                                    Preferences.debug("fontName\n", Preferences.DEBUG_FILEIO);
                                     dataLength = getUnsignedShort(endianess);
-                                    Preferences.debug("Data length = " + dataLength + "\n");
+                                    Preferences.debug("Data length = " + dataLength + "\n", Preferences.DEBUG_FILEIO);
                                     oldFontID = getUnsignedShort(endianess);
-                                    Preferences.debug("old font ID = " + oldFontID + "\n");
+                                    Preferences.debug("old font ID = " + oldFontID + "\n", Preferences.DEBUG_FILEIO);
                                     raFile.read(prefix);
                                     nameLength = prefix[0] & 0xff;
-                                    Preferences.debug("name length = " + nameLength + "\n");
+                                    Preferences.debug("name length = " + nameLength + "\n", Preferences.DEBUG_FILEIO);
                                     fontNameStr = getString(nameLength);
-                                    Preferences.debug("font name = " + fontNameStr + "\n");
+                                    Preferences.debug("font name = " + fontNameStr + "\n", Preferences.DEBUG_FILEIO);
                                     if (((5 + nameLength) % 2) == 1) {
                                         raFile.read(spareByte);
                                     }
                                     break;
                                 case lineJustify:
-                                    Preferences.debug("lineJustify\n");
+                                    Preferences.debug("lineJustify\n", Preferences.DEBUG_FILEIO);
                                     dataLength = getUnsignedShort(endianess);
-                                    Preferences.debug("Data length = " + dataLength + "\n");
+                                    Preferences.debug("Data length = " + dataLength + "\n", Preferences.DEBUG_FILEIO);
                                     // 2 fixed numbers
                                     // intercharacter spacing
                                     // total extra space for justification
@@ -1165,43 +1182,43 @@ public class FileLIFF extends FileBase {
                                     readLong(endianess);
                                     break;
                                 case glyphState:
-                                    Preferences.debug("glyphState\n");
+                                    Preferences.debug("glyphState\n", Preferences.DEBUG_FILEIO);
                                     dataLength = getUnsignedShort(endianess);
-                                    Preferences.debug("Data length = " + dataLength + "\n");
+                                    Preferences.debug("Data length = " + dataLength + "\n", Preferences.DEBUG_FILEIO);
                                     if (dataLength >= 1) {
                                         raFile.read(outlinePreferred);
                                         if (outlinePreferred[0] == 1) {
-                                            Preferences.debug("Outline preferred\n");
+                                            Preferences.debug("Outline preferred\n", Preferences.DEBUG_FILEIO);
                                         }
                                         else {
-                                            Preferences.debug("Outline not preferred\n");
+                                            Preferences.debug("Outline not preferred\n", Preferences.DEBUG_FILEIO);
                                         }
                                     } // if (dataLength >= 1)
                                     if (dataLength >= 2) {
                                         raFile.read(preserveGlyph);
                                         if (preserveGlyph[0] == 1) {
-                                            Preferences.debug("Preserve glyph");
+                                            Preferences.debug("Preserve glyph", Preferences.DEBUG_FILEIO);
                                         }
                                         else {
-                                            Preferences.debug("Don't preserve glyph\n");
+                                            Preferences.debug("Don't preserve glyph\n", Preferences.DEBUG_FILEIO);
                                         }
                                     } // if (dataLength >= 2)
                                     if (dataLength >= 3) {
                                         raFile.read(fractionalWidths);
                                         if (fractionalWidths[0] == 1) {
-                                            Preferences.debug("Fractional widths\n");
+                                            Preferences.debug("Fractional widths\n", Preferences.DEBUG_FILEIO);
                                         }
                                         else {
-                                            Preferences.debug("No fractional widths\n");
+                                            Preferences.debug("No fractional widths\n", Preferences.DEBUG_FILEIO);
                                         }
                                     } // if (dataLength >= 3)
                                     if (dataLength >= 4) {
                                         raFile.read(scalingDisabled);
                                         if (scalingDisabled[0] == 1) {
-                                            Preferences.debug("Scaling disabled\n");
+                                            Preferences.debug("Scaling disabled\n", Preferences.DEBUG_FILEIO);
                                         }
                                         else {
-                                            Preferences.debug("Scaling not disabled\n");
+                                            Preferences.debug("Scaling not disabled\n", Preferences.DEBUG_FILEIO);
                                         }
                                     } // if (dataLength >= 4)
                                     if ((dataLength % 2) == 1) {
@@ -1209,18 +1226,18 @@ public class FileLIFF extends FileBase {
                                     }
                                     break;
                                 case eraseRect:
-                                    Preferences.debug("eraseRect\n");
+                                    Preferences.debug("eraseRect\n", Preferences.DEBUG_FILEIO);
                                     yTopLeft = readShort(endianess);
-                                    Preferences.debug("y top left = " + yTopLeft + "\n");
+                                    Preferences.debug("y top left = " + yTopLeft + "\n", Preferences.DEBUG_FILEIO);
                                     xTopLeft = readShort(endianess);
-                                    Preferences.debug("x top left = " + xTopLeft + "\n");
+                                    Preferences.debug("x top left = " + xTopLeft + "\n", Preferences.DEBUG_FILEIO);
                                     yBottomRight = readShort(endianess);
-                                    Preferences.debug("y bottom right = " + yBottomRight + "\n");
+                                    Preferences.debug("y bottom right = " + yBottomRight + "\n", Preferences.DEBUG_FILEIO);
                                     xBottomRight = readShort(endianess);
-                                    Preferences.debug("x bottom right = " + xBottomRight + "\n");
+                                    Preferences.debug("x bottom right = " + xBottomRight + "\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case PackBitsRect:
-                                    Preferences.debug("PackBitsRect\n");
+                                    Preferences.debug("PackBitsRect\n", Preferences.DEBUG_FILEIO);
                                     // PixMap, ColorTable, srcRect, dstRect, mode(short), PixData
                                     // rowBytes, The offset in bytes from one row of the image to the next.
                                     // The value must be even, less than $4000, and for best performance it
@@ -1229,33 +1246,40 @@ public class FileLIFF extends FileBase {
                                     // record; otherwise it is a bitMap record.
                                     rowBytes = readShort(endianess);
                                     if ((rowBytes & 0x8000) != 0) {
-                                        Preferences.debug("The data structure pointed to is a PixMap record\n");
+                                        Preferences.debug("The data structure pointed to is a PixMap record\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("The data structure pointed to is a BitMap record\n");
+                                        Preferences.debug("The data structure pointed to is a BitMap record\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // Strip out the 2 flag bits
                                     rowBytes = (short)(rowBytes & 0x3fff);
                                     Preferences.debug("Offset in bytes from one row of the image to the next = "
-                                                       + rowBytes + "\n");
+                                                       + rowBytes + "\n", Preferences.DEBUG_FILEIO);
                                     // The boundary rectangle, which links the local coordinate system of a
                                     // graphics port to QuickDraw's global coordinate system and defines the
                                     // area of the bit image into which QuickDraw can draw.  By default,
                                     // the boundary rectangle is the entire main screen.
                                     boundsTop = readShort(endianess);
-                                    Preferences.debug("Boundary rectangle y top left = " + boundsTop + "\n");
+                                    Preferences.debug("Boundary rectangle y top left = " + boundsTop + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     boundsLeft = readShort(endianess);
-                                    Preferences.debug("Boundary rectangle x top left = " + boundsLeft + "\n");
+                                    Preferences.debug("Boundary rectangle x top left = " + boundsLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     boundsBottom = readShort(endianess);
-                                    Preferences.debug("Boundary rectangle y bottom right = " + boundsBottom + "\n");
+                                    Preferences.debug("Boundary rectangle y bottom right = " + boundsBottom + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     boundsRight = readShort(endianess);
-                                    Preferences.debug("Boundary rectangle x bottom right = " + boundsRight + "\n");
+                                    Preferences.debug("Boundary rectangle x bottom right = " + boundsRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // PixMap record version number.  The version number of Color QuickDraw
                                     // that created this pixMap record.  The value of pmVersion is normally 0.
                                     // If pmVersion is 4, Color QuickDraw treats the pixMap reocrd's baseAddr
                                     // field as 32-bit clean.  (All other flags are private.)
                                     pmVersion = readShort(endianess);
-                                    Preferences.debug("The PixMap record version number = " + pmVersion + "\n");
+                                    Preferences.debug("The PixMap record version number = " + pmVersion + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // The packing algorithm used to compress image data.
                                     // To facilitate banding fo images when memory is short, all data
                                     // compression is done on a scan-line basis.  The following pseudocode
@@ -1297,18 +1321,18 @@ public class FileLIFF extends FileBase {
                                     // is compressed by packing scheme 4 and stored in the picture.
                                     packType = readShort(endianess);
                                     Preferences.debug("The pack type used to compress image data = " +
-                                                       packType + "\n");
+                                                       packType + "\n", Preferences.DEBUG_FILEIO);
                                     // The size of the packed image in bytes.  Since each scan line of 
                                     // packed data is preceded by a byte count, packSize is not used and
                                     // must be 0 for future compatibility.
                                     packSize = getUInt(endianess);
                                     if (packSize == 0) {
                                         Preferences.debug("The field for the size of the packed image in bytes " 
-                                                    +  "is set to 0 as expected\n");
+                                                    +  "is set to 0 as expected\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else {
                                         Preferences.debug("The size of the packed image in bytes = " 
-                                             + packSize + "\n");         
+                                             + packSize + "\n", Preferences.DEBUG_FILEIO);         
                                     }
                                     // The horizontal resolution of the pixel image in pixels per inch.
                                     // This value is of type Fixed; by default, the value here is
@@ -1318,7 +1342,7 @@ public class FileLIFF extends FileBase {
                                     horizontalResolution = (float)(horizontalResolutionShort + 
                                                                 Math.pow(2.0,-16.0)*horizontalResolutionFract);
                                     Preferences.debug("Horizontal resolution = " +
-                                                      horizontalResolution + " pixels per inch\n");
+                                                      horizontalResolution + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                                     // The vertical resolution of the pixel image in pixels per inch.
                                     // This value is of type Fixed; by default, the value here is
                                     // $00480000(for 72 pixels per inch).
@@ -1327,25 +1351,26 @@ public class FileLIFF extends FileBase {
                                     verticalResolution = (float)(verticalResolutionShort + 
                                                                 Math.pow(2.0,-16.0)*verticalResolutionFract);
                                     Preferences.debug("Vertical resolution = " +
-                                                      verticalResolution + " pixels per inch\n");
+                                                      verticalResolution + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                                     // The storage format for a pixel image.  Indexed pixels are indicated
                                     // by a value of 0.  Direct pixels sare specified by a value of RGBDirect,
                                     // or 16.
                                     pixelType = readShort(endianess);
                                     if (pixelType == 0) {
-                                        Preferences.debug("Pixel image has indexed pixels\n");
+                                        Preferences.debug("Pixel image has indexed pixels\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else if (pixelType == 16) {
-                                        Preferences.debug("Pixel image has direct pixels\n");
+                                        Preferences.debug("Pixel image has direct pixels\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("pixelType has unrecognized value = " + pixelType + "\n");
+                                        Preferences.debug("pixelType has unrecognized value = " + pixelType + "\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // Pixel depth; that is, the number of bits used to represent a pixel.
                                     // Indexed pixels can have sizes of 1, 2, 4, and 8 bits;  direct pixel
                                     // sizes are 16 and 32 bits.
                                     pixelSize = readShort(endianess);
-                                    Preferences.debug("pixelSize = " + pixelSize + "\n");
+                                    Preferences.debug("pixelSize = " + pixelSize + "\n", Preferences.DEBUG_FILEIO);
                                     // cmpCount - logical components per pixel
                                     // The number of components used to represent a color for a pixel.
                                     // With indexed pixels, each pixel is a single value representing an
@@ -1354,9 +1379,10 @@ public class FileLIFF extends FileBase {
                                     // pixel contains 3 components--one short each for the intnesities
                                     // of red, green, and blue--so this field contains the value 3.
                                     cmpCount = readShort(endianess);
-                                    Preferences.debug("Components per pixel = " + cmpCount + "\n");
+                                    Preferences.debug("Components per pixel = " + cmpCount + "\n", Preferences.DEBUG_FILEIO);
                                     if (cmpCount == 4) {
-                                        Preferences.debug("Alpha channel bytes are placed before red bytes\n");
+                                        Preferences.debug("Alpha channel bytes are placed before red bytes\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // cmpSize - logical bits per component
                                     // The size in bits of each component for a pixel.  Color QuickDraw
@@ -1373,41 +1399,45 @@ public class FileLIFF extends FileBase {
                                     // has a cmpSize vlaue of 8.  This leaves an unused high-order byte,
                                     // which Color QuickDraw sets to 0.
                                     cmpSize = readShort(endianess);
-                                    Preferences.debug("Bits per component = " + cmpSize + "\n");
+                                    Preferences.debug("Bits per component = " + cmpSize + "\n", Preferences.DEBUG_FILEIO);
                                     // planeBytes - the offset in bytes form one drawing plane to the
                                     // next.  This field is set to 0.
                                     planeBytes = getUInt(endianess);
                                     if (planeBytes == 0) {
-                                        Preferences.debug("The planeBytes field is set to 0 as expected\n");
+                                        Preferences.debug("The planeBytes field is set to 0 as expected\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("planeBytes unexpectedly = " + planeBytes + "\n");
+                                        Preferences.debug("planeBytes unexpectedly = " + planeBytes + "\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // pmTable - a pointer to a ColorTable record for the colors in this\
                                     // pixel map.
                                     pmTable = getUInt(endianess);
-                                    Preferences.debug("Location of ColorTable record = " + pmTable + "\n");
+                                    Preferences.debug("Location of ColorTable record = " + pmTable + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // pmReserved - reserved for future expansion.  This field must be
                                     // set to 0 for future compatibility.
                                     pmReserved = readInt(endianess);
                                     if (pmReserved == 0) {
-                                        Preferences.debug("pmReserved = 0 as expected\n");
+                                        Preferences.debug("pmReserved = 0 as expected\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("pmReserved unexpectedly = " + pmReserved + "\n");
+                                        Preferences.debug("pmReserved unexpectedly = " + pmReserved + "\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // ColorTable
                                     // Identifies a particular instance of the color table.
                                     ctSeed = readInt(endianess);
-                                    Preferences.debug("ctSeed = " + ctSeed + "\n");
+                                    Preferences.debug("ctSeed = " + ctSeed + "\n", Preferences.DEBUG_FILEIO);
                                     // Flags that distinguish pixel map color tables from color tables
                                     // in GDevice records
                                     ctFlags = readShort(endianess);
-                                    Preferences.debug("ctFlags = " + ctFlags + "\n");
+                                    Preferences.debug("ctFlags = " + ctFlags + "\n", Preferences.DEBUG_FILEIO);
                                     // One less than the number of entries in the table
                                     LUTSizeLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
                                     ctSize = readShort(endianess);
-                                    Preferences.debug("ctSize = " + ctSize + "\n");
+                                    Preferences.debug("ctSize = " + ctSize + "\n", Preferences.DEBUG_FILEIO);
                                     // An array of ColorSpec records
                                     for (j = 0; j <= ctSize; j++) {
                                         index = getUnsignedShort(endianess);
@@ -1416,36 +1446,44 @@ public class FileLIFF extends FileBase {
                                         blueColor = getUnsignedShort(endianess);
                                         Preferences.debug("j = " + j + " index = " + index + " red = "
                                          + redColor + " green = " + greenColor + " blue = " +
-                                         blueColor + "\n");
+                                         blueColor + "\n", Preferences.DEBUG_FILEIO);
                                     }
                                     // Source rectangle
                                     yTopLeft = readShort(endianess);
-                                    Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n");
+                                    Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xTopLeft = readShort(endianess);
-                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n");
+                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     yBottomRight = readShort(endianess);
-                                    Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n");
+                                    Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xBottomRight = readShort(endianess);
-                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n");
+                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // Destination rectangle
                                     yTopLeft = readShort(endianess);
-                                    Preferences.debug("Destination rectangle y top left = " + yTopLeft + "\n");
+                                    Preferences.debug("Destination rectangle y top left = " + yTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xTopLeft = readShort(endianess);
-                                    Preferences.debug("Destination rectangle x top left = " + xTopLeft + "\n");
+                                    Preferences.debug("Destination rectangle x top left = " + xTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     yBottomRight = readShort(endianess);
-                                    Preferences.debug("Destination rectangle y bottom right = " + yBottomRight + "\n");
+                                    Preferences.debug("Destination rectangle y bottom right = " + yBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xBottomRight = readShort(endianess);
-                                    Preferences.debug("Destination rectangle x bottom right = " + xBottomRight + "\n");
+                                    Preferences.debug("Destination rectangle x bottom right = " + xBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // mode
                                     mode = readShort(endianess);
                                     if ((mode >= 0) && (mode <= 64) && (modeStr[mode] != null)) {
-                                        Preferences.debug("mode = " + modeStr[mode] + "\n");
+                                        Preferences.debug("mode = " + modeStr[mode] + "\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("mode has unrecognized value = " + mode + "\n");    
+                                        Preferences.debug("mode has unrecognized value = " + mode + "\n", Preferences.DEBUG_FILEIO);    
                                     }
                                     // PixData
-                                    Preferences.debug("PixData\n");
+                                    Preferences.debug("PixData\n", Preferences.DEBUG_FILEIO);
                                     // Also read in pixData later if necessary
                                     pictLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
                                     packTypeArray[subPictCount[presentLayer]][presentLayer] = packType;
@@ -1469,7 +1507,8 @@ public class FileLIFF extends FileBase {
                                                 byteCount = prefix[0] & 0xff;
                                                 totalByteCount += (byteCount + 1);
                                             }
-                                            Preferences.debug("row number = " + j + " byte count = " + byteCount + "\n");
+                                            Preferences.debug("row number = " + j + " byte count = " + byteCount + "\n", 
+                                            		Preferences.DEBUG_FILEIO);
                                             pad = new byte[byteCount];
                                             raFile.read(pad);
                                         }
@@ -1480,7 +1519,7 @@ public class FileLIFF extends FileBase {
                                     } // if ((packType == 0) || (packType > 2))
                                     break;
                                 case DirectBitsRect:
-                                    Preferences.debug("DirectBitsRect\n");
+                                    Preferences.debug("DirectBitsRect\n", Preferences.DEBUG_FILEIO);
                                     // PixMap, srcRect, dstRect, mode(short), PixData
                                     // The unsigned 32 bit base address is set to $000000FF because
                                     // of the direct pixMap used here.  This is done because machines
@@ -1491,10 +1530,11 @@ public class FileLIFF extends FileBase {
                                     // picture playback.  A graceful exit from a tough situation
                                     baseAddr = getUInt(endianess);
                                     if (baseAddr == 0x000000FF) {
-                                        Preferences.debug("baseAddr is 0x000000FF as expected\n");
+                                        Preferences.debug("baseAddr is 0x000000FF as expected\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("baseAddr is unexpectedly " + baseAddr + "\n");
+                                        Preferences.debug("baseAddr is unexpectedly " + baseAddr + "\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // rowBytes, The offset in bytes from one row of the image to the next.
                                     // The value must be even, less than $4000, and for best performance it
@@ -1503,33 +1543,40 @@ public class FileLIFF extends FileBase {
                                     // record; otherwise it is a bitMap record.
                                     rowBytes = readShort(endianess);
                                     if ((rowBytes & 0x8000) != 0) {
-                                        Preferences.debug("The data structure pointed to is a PixMap record\n");
+                                        Preferences.debug("The data structure pointed to is a PixMap record\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("The data structure pointed to is a BitMap record\n");
+                                        Preferences.debug("The data structure pointed to is a BitMap record\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // Strip out the 2 flag bits
                                     rowBytes = (short)(rowBytes & 0x3fff);
                                     Preferences.debug("Offset in bytes from one row of the image to the next = "
-                                                       + rowBytes + "\n");
+                                                       + rowBytes + "\n", Preferences.DEBUG_FILEIO);
                                     // The boundary rectangle, which links the local coordinate system of a
                                     // graphics port to QuickDraw's global coordinate system and defines the
                                     // area of the bit image into which QuickDraw can draw.  By default,
                                     // the boundary rectangle is the entire main screen.
                                     boundsTop = readShort(endianess);
-                                    Preferences.debug("Boundary rectangle y top left = " + boundsTop + "\n");
+                                    Preferences.debug("Boundary rectangle y top left = " + boundsTop + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     boundsLeft = readShort(endianess);
-                                    Preferences.debug("Boundary rectangle x top left = " + boundsLeft + "\n");
+                                    Preferences.debug("Boundary rectangle x top left = " + boundsLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     boundsBottom = readShort(endianess);
-                                    Preferences.debug("Boundary rectangle y bottom right = " + boundsBottom + "\n");
+                                    Preferences.debug("Boundary rectangle y bottom right = " + boundsBottom + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     boundsRight = readShort(endianess);
-                                    Preferences.debug("Boundary rectangle x bottom right = " + boundsRight + "\n");
+                                    Preferences.debug("Boundary rectangle x bottom right = " + boundsRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // PixMap record version number.  The version number of Color QuickDraw
                                     // that created this pixMap record.  The value of pmVersion is normally 0.
                                     // If pmVersion is 4, Color QuickDraw treats the pixMap reocrd's baseAddr
                                     // field as 32-bit clean.  (All other flags are private.)
                                     pmVersion = readShort(endianess);
-                                    Preferences.debug("The PixMap record version number = " + pmVersion + "\n");
+                                    Preferences.debug("The PixMap record version number = " + pmVersion + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // The packing algorithm used to compress image data.
                                     // To facilitate banding fo images when memory is short, all data
                                     // compression is done on a scan-line basis.  The following pseudocode
@@ -1571,18 +1618,18 @@ public class FileLIFF extends FileBase {
                                     // is compressed by packing scheme 4 and stored in the picture.
                                     packType = readShort(endianess);
                                     Preferences.debug("The pack type used to compress image data = " +
-                                                       packType + "\n");
+                                                       packType + "\n", Preferences.DEBUG_FILEIO);
                                     // The size of the packed image in bytes.  Since each scan line of 
                                     // packed data is preceded by a byte count, packSize is not used and
                                     // must be 0 for future compatibility.
                                     packSize = getUInt(endianess);
                                     if (packSize == 0) {
                                         Preferences.debug("The field for the size of the packed image in bytes " 
-                                                    +  "is set to 0 as expected\n");
+                                                    +  "is set to 0 as expected\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else {
                                         Preferences.debug("The size of the packed image in bytes = " 
-                                             + packSize + "\n");         
+                                             + packSize + "\n", Preferences.DEBUG_FILEIO);         
                                     }
                                     // The horizontal resolution of the pixel image in pixels per inch.
                                     // This value is of type Fixed; by default, the value here is
@@ -1592,7 +1639,7 @@ public class FileLIFF extends FileBase {
                                     horizontalResolution = (float)(horizontalResolutionShort + 
                                                                 Math.pow(2.0,-16.0)*horizontalResolutionFract);
                                     Preferences.debug("Horizontal resolution = " +
-                                                      horizontalResolution + " pixels per inch\n");
+                                                      horizontalResolution + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                                     // The vertical resolution of the pixel image in pixels per inch.
                                     // This value is of type Fixed; by default, the value here is
                                     // $00480000(for 72 pixels per inch).
@@ -1601,25 +1648,26 @@ public class FileLIFF extends FileBase {
                                     verticalResolution = (float)(verticalResolutionShort + 
                                                                 Math.pow(2.0,-16.0)*verticalResolutionFract);
                                     Preferences.debug("Vertical resolution = " +
-                                                      verticalResolution + " pixels per inch\n");
+                                                      verticalResolution + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                                     // The storage format for a pixel image.  Indexed pixels are indicated
                                     // by a value of 0.  Direct pixels sare specified by a value of RGBDirect,
                                     // or 16.
                                     pixelType = readShort(endianess);
                                     if (pixelType == 0) {
-                                        Preferences.debug("Pixel image has indexed pixels\n");
+                                        Preferences.debug("Pixel image has indexed pixels\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else if (pixelType == 16) {
-                                        Preferences.debug("Pixel image has direct pixels\n");
+                                        Preferences.debug("Pixel image has direct pixels\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("pixelType has unrecognized value = " + pixelType + "\n");
+                                        Preferences.debug("pixelType has unrecognized value = " + pixelType + "\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // Pixel depth; that is, the number of bits used to represent a pixel.
                                     // Indexed pixels can have sizes of 1, 2, 4, and 8 bits;  direct pixel
                                     // sizes are 16 and 32 bits.
                                     pixelSize = readShort(endianess);
-                                    Preferences.debug("pixelSize = " + pixelSize + "\n");
+                                    Preferences.debug("pixelSize = " + pixelSize + "\n", Preferences.DEBUG_FILEIO);
                                     // cmpCount - logical components per pixel
                                     // The number of components used to represent a color for a pixel.
                                     // With indexed pixels, each pixel is a single value representing an
@@ -1628,9 +1676,10 @@ public class FileLIFF extends FileBase {
                                     // pixel contains 3 components--one short each for the intnesities
                                     // of red, green, and blue--so this field contains the value 3.
                                     cmpCount = readShort(endianess);
-                                    Preferences.debug("Components per pixel = " + cmpCount + "\n");
+                                    Preferences.debug("Components per pixel = " + cmpCount + "\n", Preferences.DEBUG_FILEIO);
                                     if (cmpCount == 4) {
-                                        Preferences.debug("Alpha channel bytes are placed before red bytes\n");
+                                        Preferences.debug("Alpha channel bytes are placed before red bytes\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // cmpSize - logical bits per component
                                     // The size in bits of each component for a pixel.  Color QuickDraw
@@ -1647,57 +1696,70 @@ public class FileLIFF extends FileBase {
                                     // has a cmpSize vlaue of 8.  This leaves an unused high-order byte,
                                     // which Color QuickDraw sets to 0.
                                     cmpSize = readShort(endianess);
-                                    Preferences.debug("Bits per component = " + cmpSize + "\n");
+                                    Preferences.debug("Bits per component = " + cmpSize + "\n", Preferences.DEBUG_FILEIO);
                                     // planeBytes - the offset in bytes form one drawing plane to the
                                     // next.  This field is set to 0.
                                     planeBytes = getUInt(endianess);
                                     if (planeBytes == 0) {
-                                        Preferences.debug("The planeBytes field is set to 0 as expected\n");
+                                        Preferences.debug("The planeBytes field is set to 0 as expected\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("planeBytes unexpectedly = " + planeBytes + "\n");
+                                        Preferences.debug("planeBytes unexpectedly = " + planeBytes + "\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // pmTable - a pointer to a ColorTable record for the colors in this\
                                     // pixel map.
                                     pmTable = getUInt(endianess);
-                                    Preferences.debug("Location of ColorTable record = " + pmTable + "\n");
+                                    Preferences.debug("Location of ColorTable record = " + pmTable + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // pmReserved - reserved for future expansion.  This field must be
                                     // set to 0 for future compatibility.
                                     pmReserved = readInt(endianess);
                                     if (pmReserved == 0) {
-                                        Preferences.debug("pmReserved = 0 as expected\n");
+                                        Preferences.debug("pmReserved = 0 as expected\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("pmReserved unexpectedly = " + pmReserved + "\n");
+                                        Preferences.debug("pmReserved unexpectedly = " + pmReserved + "\n", 
+                                        		Preferences.DEBUG_FILEIO);
                                     }
                                     // Source rectangle
                                     yTopLeft = readShort(endianess);
-                                    Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n");
+                                    Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xTopLeft = readShort(endianess);
-                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n");
+                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     yBottomRight = readShort(endianess);
-                                    Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n");
+                                    Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xBottomRight = readShort(endianess);
-                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n");
+                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // Destination rectangle
                                     yTopLeft = readShort(endianess);
-                                    Preferences.debug("Destination rectangle y top left = " + yTopLeft + "\n");
+                                    Preferences.debug("Destination rectangle y top left = " + yTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xTopLeft = readShort(endianess);
-                                    Preferences.debug("Destination rectangle x top left = " + xTopLeft + "\n");
+                                    Preferences.debug("Destination rectangle x top left = " + xTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     yBottomRight = readShort(endianess);
-                                    Preferences.debug("Destination rectangle y bottom right = " + yBottomRight + "\n");
+                                    Preferences.debug("Destination rectangle y bottom right = " + yBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xBottomRight = readShort(endianess);
-                                    Preferences.debug("Destination rectangle x bottom right = " + xBottomRight + "\n");
+                                    Preferences.debug("Destination rectangle x bottom right = " + xBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     // mode
                                     mode = readShort(endianess);
                                     if ((mode >= 0) && (mode <= 64) && (modeStr[mode] != null)) {
-                                        Preferences.debug("mode = " + modeStr[mode] + "\n");
+                                        Preferences.debug("mode = " + modeStr[mode] + "\n", Preferences.DEBUG_FILEIO);
                                     }
                                     else {
-                                        Preferences.debug("mode has unrecognized value = " + mode + "\n");    
+                                        Preferences.debug("mode has unrecognized value = " + mode + "\n", 
+                                        		Preferences.DEBUG_FILEIO);    
                                     }
                                     // PixData
-                                    Preferences.debug("PixData\n");
+                                    Preferences.debug("PixData\n", Preferences.DEBUG_FILEIO);
                                     // Also read in pixData later if necessary
                                     pictLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
                                     packTypeArray[subPictCount[presentLayer]][presentLayer] = packType;
@@ -1721,7 +1783,8 @@ public class FileLIFF extends FileBase {
                                                 byteCount = prefix[0] & 0xff;
                                                 totalByteCount += (byteCount + 1);
                                             }
-                                            Preferences.debug("row number = " + j + " byte count = " + byteCount + "\n");
+                                            Preferences.debug("row number = " + j + " byte count = " + byteCount + "\n", 
+                                            		Preferences.DEBUG_FILEIO);
                                             pad = new byte[byteCount];
                                             raFile.read(pad);
                                         }
@@ -1732,26 +1795,28 @@ public class FileLIFF extends FileBase {
                                     } // if ((packType == 0) || (packType > 2))
                                     break;
                                 case LongComment:
-                                    Preferences.debug("LongComment for imageType = " + typeStr[imageType] + "\n");
+                                    Preferences.debug("LongComment for imageType = " + typeStr[imageType] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     commentKind = readUnsignedShort(endianess);
-                                    Preferences.debug("Comment kind = " + commentKind + "\n");
+                                    Preferences.debug("Comment kind = " + commentKind + "\n", Preferences.DEBUG_FILEIO);
                                     commentSize = readUnsignedShort(endianess);
-                                    Preferences.debug("Comment size = " + commentSize + "\n");
+                                    Preferences.debug("Comment size = " + commentSize + "\n", Preferences.DEBUG_FILEIO);
                                     commentPointer = raFile.getFilePointer();
                                     if (commentKind == 101) {
                                         // Read in first part of comment 101
                                         appSignature = getString(4);
                                         if (appSignature.equals("IVEA")) {
                                             Preferences.debug("PIC Comment 101 appSignature has expected " +
-                                                              appSignature + "\n");
+                                                              appSignature + "\n", Preferences.DEBUG_FILEIO);
                                         }
                                         else {
                                             Preferences.debug("PIC Comment 101 appSignature is unexpectedly " +
-                                                              appSignature + "\n");
+                                                              appSignature + "\n", Preferences.DEBUG_FILEIO);
                                         }
                                         kindSignature = getString(4);
                                         if (kindSignature.equals("dbpq")) {
-                                            Preferences.debug("kindSignature dbpq indicates that image data follows\n");
+                                            Preferences.debug("kindSignature dbpq indicates that image data follows\n", 
+                                            		Preferences.DEBUG_FILEIO);
                                             // Read in the second part of comment 101 later
                                             pictLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
                                             imageTypeLocation[subPictCount[presentLayer]][presentLayer] = imageType;
@@ -1759,34 +1824,38 @@ public class FileLIFF extends FileBase {
                                         }
                                         else if (kindSignature.equals("dbpl")) {
                                             // Read in the second part of comment 101 now
-                                            Preferences.debug("kindSignature dbpl indicates that LUT data follows\n");
+                                            Preferences.debug("kindSignature dbpl indicates that LUT data follows\n", 
+                                            		Preferences.DEBUG_FILEIO);
                                             blkCount = readInt(endianess);
-                                            Preferences.debug("blkCount = " + blkCount + "\n");
+                                            Preferences.debug("blkCount = " + blkCount + "\n", Preferences.DEBUG_FILEIO);
                                             // totalBlocks is the number of blocks that make up this picture or LUT
                                             totalBlocks = readInt(endianess);
-                                            Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                                            Preferences.debug("totalBlocks = " + totalBlocks + "\n", 
+                                            		Preferences.DEBUG_FILEIO);
                                             // originalSize is the count of bytes in the original image or LUT
                                             originalSize = readInt(endianess);
-                                            Preferences.debug("originalSize = " + originalSize + "\n");
+                                            Preferences.debug("originalSize = " + originalSize + "\n", 
+                                            		Preferences.DEBUG_FILEIO);
                                             // compressedSize is always the same as originalSize
                                             compressedSize = readInt(endianess);
-                                            Preferences.debug("compressedSize = " + compressedSize + "\n");
+                                            Preferences.debug("compressedSize = " + compressedSize + "\n", 
+                                            		Preferences.DEBUG_FILEIO);
                                             // picBlkSize is the count of bytes of data in the remainder of the
                                             // comment.  This size does not include the header.  This is the count
                                             // of bytes after bitShift.
                                             picBlkSize = readInt(endianess);
                                             Preferences.debug("Bytes in Pic Comment 101 not including header = "
-                                                              + picBlkSize + "\n");
+                                                              + picBlkSize + "\n", Preferences.DEBUG_FILEIO);
                                             // bitDepth is the logical bitdepth of the image, and may be any
                                             // value from 9 to 16.
                                             bitDepth = readShort(endianess);
-                                            Preferences.debug("bitDepth = " + bitDepth + "\n");
+                                            Preferences.debug("bitDepth = " + bitDepth + "\n", Preferences.DEBUG_FILEIO);
                                             // bitShift should be ignored
                                             bitShift = readShort(endianess);
                                         }
                                         else {
                                             Preferences.debug("kindSignature has unrecognized value = "
-                                                    + kindSignature + "\n");
+                                                    + kindSignature + "\n", Preferences.DEBUG_FILEIO);
                                         }
                                         
                                     } // if (commentKind == 101)
@@ -1797,12 +1866,12 @@ public class FileLIFF extends FileBase {
                                     break;
                                 case OpEndPic:
                                     found = true;
-                                    Preferences.debug("OpEndPic: End of picture\n");
+                                    Preferences.debug("OpEndPic: End of picture\n", Preferences.DEBUG_FILEIO);
                                     break;
                                 case HeaderOp:
-                                    Preferences.debug("HeaderOp\n");
+                                    Preferences.debug("HeaderOp\n", Preferences.DEBUG_FILEIO);
                                     headerVersion = readShort(endianess);
-                                    Preferences.debug("Version = " + headerVersion + "\n");
+                                    Preferences.debug("Version = " + headerVersion + "\n", Preferences.DEBUG_FILEIO);
                                     headerReservedShort = readShort(endianess);
                                     // The horizontal resolution of the pixel image in pixels per inch.
                                     // This value is of type Fixed; by default, the value here is
@@ -1811,7 +1880,7 @@ public class FileLIFF extends FileBase {
                                     hResFract = getUnsignedShort(endianess);
                                     hRes = (float)(hResShort + Math.pow(2.0,-16.0)*hResFract);
                                     Preferences.debug("Horizontal resolution = " +
-                                                      hRes + " pixels per inch\n");
+                                                      hRes + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                                     // The vertical resolution of the pixel image in pixels per inch.
                                     // This value is of type Fixed; by default, the value here is
                                     // $00480000(for 72 pixels per inch).
@@ -1819,31 +1888,35 @@ public class FileLIFF extends FileBase {
                                     vResFract = getUnsignedShort(endianess);
                                     vRes = (float)(vResShort + Math.pow(2.0,-16.0)*vResFract);
                                     Preferences.debug("Vertical resolution = " +
-                                                      vRes + " pixels per inch\n");
+                                                      vRes + " pixels per inch\n", Preferences.DEBUG_FILEIO);
                                     // Source rectangle
                                     yTopLeft = readShort(endianess);
-                                    Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n");
+                                    Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xTopLeft = readShort(endianess);
-                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n");
+                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     yBottomRight = readShort(endianess);
-                                    Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n");
+                                    Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     xBottomRight = readShort(endianess);
-                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n");
+                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
                                     headerReservedInt = readInt(endianess);
                                     break;
                                 default:
-                                    Preferences.debug("opcode = " + opcode + "\n");
+                                    Preferences.debug("opcode = " + opcode + "\n", Preferences.DEBUG_FILEIO);
                             } // switch (opcode)
                         } // while (!found)
                     } // if (versionNumber <= 2)
                     else {
                         // Image width
                         width = readInt(endianess);
-                        Preferences.debug("width = " + width + "\n");
+                        Preferences.debug("width = " + width + "\n", Preferences.DEBUG_FILEIO);
                         xDimArray[imageType] = width;
                         // Image height
                         height = readInt(endianess);
-                        Preferences.debug("height = " + height + "\n");
+                        Preferences.debug("height = " + height + "\n", Preferences.DEBUG_FILEIO);
                         yDimArray[imageType] = height;
                         pictLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
                         pixelSizeArray[subPictCount[presentLayer]][presentLayer] = layerDepth;
@@ -1861,23 +1934,23 @@ public class FileLIFF extends FileBase {
                     // calibration
                     platform = getString(4);
                     if (platform.equals("pwpc")) {
-                        Preferences.debug("Platform is PowerPC\n");
+                        Preferences.debug("Platform is PowerPC\n", Preferences.DEBUG_FILEIO);
                     }
                     else if (platform.equals("m68k")) {
-                        Preferences.debug("Platform is Motorola MC680x0 processor\n");
+                        Preferences.debug("Platform is Motorola MC680x0 processor\n", Preferences.DEBUG_FILEIO);
                     }
                     else if (platform.equals("unkn")) {
-                        Preferences.debug("Platform is unknown\n");
+                        Preferences.debug("Platform is unknown\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
-                        Preferences.debug("Platform has unrecognized value of " + platform + "\n");
+                        Preferences.debug("Platform has unrecognized value of " + platform + "\n", Preferences.DEBUG_FILEIO);
                     }
                     units = readShort(endianess);
                     if ((units == 1) || ((units >= 3) && (units <= 15))) {
-                        Preferences.debug("Units are " + unitStr[units] + "\n");
+                        Preferences.debug("Units are " + unitStr[units] + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
-                        Preferences.debug("Unit has unrecognized value of " + units + "\n");
+                        Preferences.debug("Unit has unrecognized value of " + units + "\n", Preferences.DEBUG_FILEIO);
                     }
                     // calLayerID is obsolete and shoud be set to zero.  In Openlab, calibration is
                     // not done on a per-layer basis, but on a per document basis with multiple layers.
@@ -1887,10 +1960,10 @@ public class FileLIFF extends FileBase {
                     // calibration.  y may not be defined
                     raFile.read(square);
                     if (square[0] == 1) {
-                        Preferences.debug("x and y calibrations are identical\n");
+                        Preferences.debug("x and y calibrations are identical\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
-                        Preferences.debug("x and y calibrations are different\n");
+                        Preferences.debug("x and y calibrations are different\n", Preferences.DEBUG_FILEIO);
                     }
                     // There is a spare byte between square and xOrigin
                     raFile.read(spareByte);
@@ -1900,28 +1973,30 @@ public class FileLIFF extends FileBase {
                     // xOrigin is the absolute position of the left of the calibrated image.
                     // It will almost always be set to 0.0.
                     origin[0] = readFloat(endianess);
-                    Preferences.debug("xOrigin = " + origin[0] + "\n");
+                    Preferences.debug("xOrigin = " + origin[0] + "\n", Preferences.DEBUG_FILEIO);
                     // yOrigin is the absolute position of the top of the calibrated image.
                     // It will almost always be set to 0.0.
                     origin[1] = readFloat(endianess);
-                    Preferences.debug("yOrigin = " + origin[1] + "\n");
+                    Preferences.debug("yOrigin = " + origin[1] + "\n", Preferences.DEBUG_FILEIO);
                     // xScale is the horizontal dimension of a single pixel in the calibrated units.
                     // For example, if this is set to 0.01, and the units are in microns, the length
                     // of a 100 pixel line in the image is 1 micron
                     imgResols[0] = readFloat(endianess);
                     if (((units >= 3) && (units <= 8)) || ((units >= 10) && (units <= 13))) {
-                        Preferences.debug("The width of a pixel is " + imgResols[0] + " " + unitStr[units] + "\n");
+                        Preferences.debug("The width of a pixel is " + imgResols[0] + " " + unitStr[units] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                     }
                     else {
-                        Preferences.debug("The width of a pixel is " + imgResols[0] + "\n");
+                        Preferences.debug("The width of a pixel is " + imgResols[0] + "\n", Preferences.DEBUG_FILEIO);
                     }
                     // yScale is the vertical dimension of a single pixel in the calibrated units
                     imgResols[1] = readFloat(endianess);
                     if (((units >= 3) && (units <= 8)) || ((units >= 10) && (units <= 13))) {
-                        Preferences.debug("The height of a pixel is " + imgResols[1] + " " + unitStr[units] + "\n");
+                        Preferences.debug("The height of a pixel is " + imgResols[1] + " " + unitStr[units] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                     }
                     else {
-                        Preferences.debug("The height of a pixel is " + imgResols[1] + "\n");
+                        Preferences.debug("The height of a pixel is " + imgResols[1] + "\n", Preferences.DEBUG_FILEIO);
                     }
                     // positiveY is a flag indicating the convention of the direction for the Y axis.
                     // In mathematics, the Y axis normally is indicated increasing in value the
@@ -1931,66 +2006,68 @@ public class FileLIFF extends FileBase {
                     // mathematical convention is used.  If false, the computer convention is used.
                     raFile.read(positiveY);
                     if (positiveY[0] == 1) {
-                        Preferences.debug("y increases in value toward the top of the image\n");
+                        Preferences.debug("y increases in value toward the top of the image\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
-                        Preferences.debug("y increases in value toward the bottom of the image\n");
+                        Preferences.debug("y increases in value toward the bottom of the image\n", Preferences.DEBUG_FILEIO);
                     }
                     if (units == kUnitsOther) {
                         raFile.read(prefix);
                         otherUnitStrLength = prefix[0] & 0xff;
-                        Preferences.debug("Other unit string length = " + otherUnitStrLength + "\n");
+                        Preferences.debug("Other unit string length = " + otherUnitStrLength + "\n", Preferences.DEBUG_FILEIO);
                         otherUnitString = getString(otherUnitStrLength);
-                        Preferences.debug("Other unit name = " + otherUnitString.trim() + "\n");
+                        Preferences.debug("Other unit name = " + otherUnitString.trim() + "\n", Preferences.DEBUG_FILEIO);
                     }
                 } // else if (tagType == 69)
                 else if (tagType == 72) {
-                    Preferences.debug("User tag number = " + (userTagNum+1) + "\n");
+                    Preferences.debug("User tag number = " + (userTagNum+1) + "\n", Preferences.DEBUG_FILEIO);
                     userTagNum++;
                     className = readCString();
-                    Preferences.debug("className = " + className.trim() + "\n");
+                    Preferences.debug("className = " + className.trim() + "\n", Preferences.DEBUG_FILEIO);
                     if (className.trim().equals("CVariableList")) {
                         numVars = readShort(endianess);
-                        Preferences.debug("numVars = " + numVars + "\n");
+                        Preferences.debug("numVars = " + numVars + "\n", Preferences.DEBUG_FILEIO);
                         for (j = 0; j < numVars; j++) {
                             className = readCString();
-                            Preferences.debug("j = " + j + " className = " + className.trim() + "\n");
+                            Preferences.debug("j = " + j + " className = " + className.trim() + "\n", Preferences.DEBUG_FILEIO);
                             if ((!className.trim().equals("CStringVariable")) &&
                                 (!className.trim().equals("CFloatVariable"))) {
                                 break;
                             }
                             raFile.read(derivedClassVersion);
                             if (derivedClassVersion[0] == 1) {
-                                Preferences.debug("derivedClassVersion[0] = 1 as expected\n");
+                                Preferences.debug("derivedClassVersion[0] = 1 as expected\n", Preferences.DEBUG_FILEIO);
                             }
                             else {
                                 Preferences.debug("Invalid derivedClassVersion[0] = " + 
-                                                  derivedClassVersion[0] + "\n");
+                                                  derivedClassVersion[0] + "\n", Preferences.DEBUG_FILEIO);
                             }
                             if (className.trim().equals("CStringVariable")) {
                                 strSize = readInt(endianess);
-                                Preferences.debug("strSize = " + strSize + "\n");
+                                Preferences.debug("strSize = " + strSize + "\n", Preferences.DEBUG_FILEIO);
                                 stringValue = getString(strSize);
-                                Preferences.debug("stringValue = " + stringValue + "\n");
+                                Preferences.debug("stringValue = " + stringValue + "\n", Preferences.DEBUG_FILEIO);
                                 raFile.skipBytes(1);
                             }
                             else if (className.trim().equals("CFloatVariable")) {
                                 doubleValue = readDouble(endianess);
-                                Preferences.debug("doubleValue = " + doubleValue + "\n");
+                                Preferences.debug("doubleValue = " + doubleValue + "\n", Preferences.DEBUG_FILEIO);
                             } // else if (className.trim().equals("CFloatVariable"))
                             
                             raFile.read(baseClassVersion);
                             if ((baseClassVersion[0] == 1) || (baseClassVersion[0] == 2)) {
-                                Preferences.debug("baseClassVersion[0] legally = " + baseClassVersion[0] + "\n");    
+                                Preferences.debug("baseClassVersion[0] legally = " + baseClassVersion[0] + "\n", 
+                                		Preferences.DEBUG_FILEIO);    
                             }
                             else {
-                                Preferences.debug("invalid baseClassVersion[0] = " + baseClassVersion[0] + "\n");
+                                Preferences.debug("invalid baseClassVersion[0] = " + baseClassVersion[0] + "\n", 
+                                		Preferences.DEBUG_FILEIO);
                                 break;
                             }
                             strSize2 = readInt(endianess);
-                            Preferences.debug("strSize2 = " + strSize2 + "\n");
+                            Preferences.debug("strSize2 = " + strSize2 + "\n", Preferences.DEBUG_FILEIO);
                             nameStr = getString(strSize2);
-                            Preferences.debug("name = " + nameStr.trim() + "\n");
+                            Preferences.debug("name = " + nameStr.trim() + "\n", Preferences.DEBUG_FILEIO);
                             if (nameStr.trim().toUpperCase().equals("ZSTEP")) {
                                zStepArray[zStepNumber++] = doubleValue;    
                             }
@@ -2215,20 +2292,22 @@ public class FileLIFF extends FileBase {
                   }
                 }
                 if (sameStep) {
-                    Preferences.debug("All " + zStepNumber + " instances of ZStep are " + zStepArray[0] + "\n");
+                    Preferences.debug("All " + zStepNumber + " instances of ZStep are " + zStepArray[0] + "\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else {
-                   Preferences.debug("Warning, not all " + zStepNumber + " instances of ZStep are the same\n");
+                   Preferences.debug("Warning, not all " + zStepNumber + " instances of ZStep are the same\n", 
+                		   Preferences.DEBUG_FILEIO);
                 }
             } // if (ZStepNumber >= 1)
             
             for (i = 0; i <= 16; i++) {
                 if (imageTypeCount[i] == 1) {
-                    Preferences.debug("The image has 1 slice of type " + typeStr[i] + "\n");
+                    Preferences.debug("The image has 1 slice of type " + typeStr[i] + "\n", Preferences.DEBUG_FILEIO);
                 }
                 else if (imageTypeCount[i] > 1) {
                     Preferences.debug("The image has " + imageTypeCount[i] +
-                                      " slices of type " + typeStr[i] + "\n");
+                                      " slices of type " + typeStr[i] + "\n", Preferences.DEBUG_FILEIO);
                 }
                 if (imageTypeCount[i] > majorTypeCount) {
                     majorType = i;
@@ -2255,23 +2334,26 @@ public class FileLIFF extends FileBase {
             }
             
             
-            Preferences.debug("The number of layers for the major image type is " + majorLayerNumber + "\n");
-            Preferences.debug("The major image type layers are: \n");
+            Preferences.debug("The number of layers for the major image type is " + majorLayerNumber + "\n", 
+            		Preferences.DEBUG_FILEIO);
+            Preferences.debug("The major image type layers are: \n", Preferences.DEBUG_FILEIO);
             for (i = 0; i < majorLayerNumber; i++) {
-                Preferences.debug(majorLayerString[i] + "\n");    
+                Preferences.debug(majorLayerString[i] + "\n", Preferences.DEBUG_FILEIO);    
             }
             fileInfo.setLayerString(majorLayerString);
             if (((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) && ((majorTypeCount % 3) == 0) 
                  && (majorLayerNumber == 3)) {
                 doDeepGreyColor = true;
-                Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
-                Preferences.debug("These are RGB stored in " + bitNumber + " depth\n");
+                Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n", 
+                		Preferences.DEBUG_FILEIO);
+                Preferences.debug("These are RGB stored in " + bitNumber + " depth\n", Preferences.DEBUG_FILEIO);
                 imageSlices = majorTypeCount/3;
                 if (imageSlices > 1) {
-                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n");
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("The MIPAV image will have 1 slice of type ARGB_USHORT\n");    
+                    Preferences.debug("The MIPAV image will have 1 slice of type ARGB_USHORT\n", Preferences.DEBUG_FILEIO);    
                 }
                 if (imageSlices > 1) {
                     imageExtents = new int[3];
@@ -2296,14 +2378,16 @@ public class FileLIFF extends FileBase {
             else if (((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) && ((majorTypeCount % 2) == 0) 
                     && (majorLayerNumber == 2)) {
                    doDeepGreyColor = true;
-                   Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
-                   Preferences.debug("These are RGB stored in " + bitNumber + " depth\n");
+                   Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n", 
+                		   Preferences.DEBUG_FILEIO);
+                   Preferences.debug("These are RGB stored in " + bitNumber + " depth\n", Preferences.DEBUG_FILEIO);
                    imageSlices = majorTypeCount/2;
                    if (imageSlices > 1) {
-                       Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n");
+                       Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n", 
+                    		   Preferences.DEBUG_FILEIO);
                    }
                    else {
-                       Preferences.debug("The MIPAV image will have 1 slice of type ARGB_USHORT\n");    
+                       Preferences.debug("The MIPAV image will have 1 slice of type ARGB_USHORT\n", Preferences.DEBUG_FILEIO);    
                    }
                    if (imageSlices > 1) {
                        imageExtents = new int[3];
@@ -2327,18 +2411,20 @@ public class FileLIFF extends FileBase {
                }
             else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
                 if (majorTypeCount > 1) {
-                    Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
+                    Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("Found 1 slice of type " + typeStr[majorType] + "\n");    
+                    Preferences.debug("Found 1 slice of type " + typeStr[majorType] + "\n", Preferences.DEBUG_FILEIO);    
                 }
-                Preferences.debug("These are USHORT stored in " + bitNumber + " depth\n");
+                Preferences.debug("These are USHORT stored in " + bitNumber + " depth\n", Preferences.DEBUG_FILEIO);
                 imageSlices = majorTypeCount;
                 if (imageSlices > 1) {
-                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type USHORT\n");
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type USHORT\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("The MIPAV image will have 1 slice of type USHORT\n");    
+                    Preferences.debug("The MIPAV image will have 1 slice of type USHORT\n", Preferences.DEBUG_FILEIO);    
                 }
                 if (imageSlices > 1) {
                     imageExtents = new int[3];
@@ -2361,18 +2447,19 @@ public class FileLIFF extends FileBase {
             else if ((majorType == MAC_24_BIT_COLOR) || (majorType == MAC_16_BIT_COLOR)) {
                 if (majorTypeCount > 1) {
                     Preferences.debug("Found " + majorTypeCount + " slices of type " +
-                            typeStr[majorType] + "\n");
+                            typeStr[majorType] + "\n", Preferences.DEBUG_FILEIO);
                 }
                 else {
                     Preferences.debug("Found 1 slice of type " +
-                            typeStr[majorType] + "\n");    
+                            typeStr[majorType] + "\n", Preferences.DEBUG_FILEIO);    
                 }
                 imageSlices = majorTypeCount;
                 if (imageSlices > 1) {
-                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB\n");
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("The MIPAV image will have 1 slice of type ARGB\n");    
+                    Preferences.debug("The MIPAV image will have 1 slice of type ARGB\n", Preferences.DEBUG_FILEIO);    
                 }
                 if (imageSlices > 1) {
                     imageExtents = new int[3];
@@ -2402,17 +2489,19 @@ public class FileLIFF extends FileBase {
                      (majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS) || 
                      (majorType == MAC_4_GREYS)) {
                 if (majorTypeCount > 1) {
-                    Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
+                    Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("Found 1 slice of type " + typeStr[majorType] + "\n");    
+                    Preferences.debug("Found 1 slice of type " + typeStr[majorType] + "\n", Preferences.DEBUG_FILEIO);    
                 }
                 imageSlices = majorTypeCount;
                 if (imageSlices > 1) {
-                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type UBYTE\n");
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type UBYTE\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("The MIPAV image will have 1 slice of type UBYTE\n");    
+                    Preferences.debug("The MIPAV image will have 1 slice of type UBYTE\n", Preferences.DEBUG_FILEIO);    
                 }
                 if (imageSlices > 1) {
                     imageExtents = new int[3];
@@ -2448,17 +2537,18 @@ public class FileLIFF extends FileBase {
             } // else if ((majorType == MAC_256_GREYS) || (majorType == MAC_256_COLORS) ||
             else if (majorType == MAC_1_BIT) {
                 if (majorTypeCount > 1) {
-                    Preferences.debug("Found " + majorTypeCount + " slices of type MAC_1_BIT\n");
+                    Preferences.debug("Found " + majorTypeCount + " slices of type MAC_1_BIT\n", Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("Found 1 slice of type MAC_1_BIT\n");    
+                    Preferences.debug("Found 1 slice of type MAC_1_BIT\n", Preferences.DEBUG_FILEIO);    
                 }
                 imageSlices = majorTypeCount;
                 if (imageSlices > 1) {
-                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type BOOLEAN\n");
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type BOOLEAN\n", 
+                    		Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("The MIPAV image will have 1 slice of type BOOLEAN\n");    
+                    Preferences.debug("The MIPAV image will have 1 slice of type BOOLEAN\n", Preferences.DEBUG_FILEIO);    
                 }
                 if (imageSlices > 1) {
                     imageExtents = new int[3];
@@ -2482,7 +2572,7 @@ public class FileLIFF extends FileBase {
             } // else if (majorType == MAC_1_BIT)
             else {
                 Preferences.debug("The MIPAV image will have " + majorTypeCount + 
-                                  " slices of type " + typeStr[majorType] + "\n");
+                                  " slices of type " + typeStr[majorType] + "\n", Preferences.DEBUG_FILEIO);
                 imageSlices = majorTypeCount;
             }
             fileInfo.setDataType(image.getType());
@@ -2557,33 +2647,33 @@ public class FileLIFF extends FileBase {
                         if (imageTypeLocation[i][k] == majorType) {
                             raFile.seek(pictLocation[i][k]);
                             Preferences.debug("Located at subPictCount " + currentSubPictCount + " of " +
-                                              totalSubPictCount + "\n");
+                                              totalSubPictCount + "\n", Preferences.DEBUG_FILEIO);
                             // Read in second section of comment 101
                             // blkCount contains the index of this block in the sequence, and will be
                             // from 0 to totalBlocks - 1.  Remember that it will generally require a
                             // series of blocks to build a single image.  Openlab assumes that pic 
                             // comment blocks arrive in the correct sequential order, starting at 0.
                             blkCount = readInt(endianess);
-                            Preferences.debug("blkCount = " + blkCount + "\n");
+                            Preferences.debug("blkCount = " + blkCount + "\n", Preferences.DEBUG_FILEIO);
                             // totalBlocks is the number of blocks that make up this picture or LUT
                             totalBlocks = readInt(endianess);
-                            Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                            Preferences.debug("totalBlocks = " + totalBlocks + "\n", Preferences.DEBUG_FILEIO);
                             // originalSize is the count of bytes in the original image or LUT
                             originalSize = readInt(endianess);
-                            Preferences.debug("originalSize = " + originalSize + "\n");
+                            Preferences.debug("originalSize = " + originalSize + "\n", Preferences.DEBUG_FILEIO);
                             // compressedSize is always the same as originalSize
                             compressedSize = readInt(endianess);
-                            Preferences.debug("compressedSize = " + compressedSize + "\n");
+                            Preferences.debug("compressedSize = " + compressedSize + "\n", Preferences.DEBUG_FILEIO);
                             // picBlkSize is the count of bytes of data in the remainder of the
                             // comment.  This size does not include the header.  This is the count
                             // of bytes after bitShift.
                             picBlkSize = readInt(endianess);
                             Preferences.debug("Bytes in Pic Comment 101 not including header = "
-                                              + picBlkSize + "\n");
+                                              + picBlkSize + "\n", Preferences.DEBUG_FILEIO);
                             // bitDepth is the logical bitdepth of the image, and may be any
                             // value from 9 to 16.
                             bitDepth = readShort(endianess);
-                            Preferences.debug("bitDepth = " + bitDepth + "\n");
+                            Preferences.debug("bitDepth = " + bitDepth + "\n", Preferences.DEBUG_FILEIO);
                             // bitShift should be ignored
                             bitShift = readShort(endianess);
                             len = Math.min(picBlkSize, sliceColorBytes - index);
@@ -2643,33 +2733,34 @@ public class FileLIFF extends FileBase {
                     for (i = 0; i < subPictCount[0]; i++) {
                         if (imageTypeLocation[i][0] == majorType) {
                             raFile.seek(pictLocation[i][0]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n");
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n",
+                            		Preferences.DEBUG_FILEIO);
                             // Read in second section of comment 101
                             // blkCount contains the index of this block in the sequence, and will be
                             // from 0 to totalBlocks - 1.  Remember that it will generally require a
                             // series of blocks to build a single image.  Openlab assumes that pic 
                             // comment blocks arrive in the correct sequential order, starting at 0.
                             blkCount = readInt(endianess);
-                            Preferences.debug("blkCount = " + blkCount + "\n");
+                            Preferences.debug("blkCount = " + blkCount + "\n", Preferences.DEBUG_FILEIO);
                             // totalBlocks is the number of blocks that make up this picture or LUT
                             totalBlocks = readInt(endianess);
-                            Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                            Preferences.debug("totalBlocks = " + totalBlocks + "\n", Preferences.DEBUG_FILEIO);
                             // originalSize is the count of bytes in the original image or LUT
                             originalSize = readInt(endianess);
-                            Preferences.debug("originalSize = " + originalSize + "\n");
+                            Preferences.debug("originalSize = " + originalSize + "\n", Preferences.DEBUG_FILEIO);
                             // compressedSize is always the same as originalSize
                             compressedSize = readInt(endianess);
-                            Preferences.debug("compressedSize = " + compressedSize + "\n");
+                            Preferences.debug("compressedSize = " + compressedSize + "\n", Preferences.DEBUG_FILEIO);
                             // picBlkSize is the count of bytes of data in the remainder of the
                             // comment.  This size does not include the header.  This is the count
                             // of bytes after bitShift.
                             picBlkSize = readInt(endianess);
                             Preferences.debug("Bytes in Pic Comment 101 not including header = "
-                                              + picBlkSize + "\n");
+                                              + picBlkSize + "\n", Preferences.DEBUG_FILEIO);
                             // bitDepth is the logical bitdepth of the image, and may be any
                             // value from 9 to 16.
                             bitDepth = readShort(endianess);
-                            Preferences.debug("bitDepth = " + bitDepth + "\n");
+                            Preferences.debug("bitDepth = " + bitDepth + "\n", Preferences.DEBUG_FILEIO);
                             // bitShift should be ignored
                             bitShift = readShort(endianess);
                             len = Math.min(picBlkSize, sliceBytes - index);
@@ -2694,7 +2785,8 @@ public class FileLIFF extends FileBase {
                         if (imageTypeLocation[i][0] == majorType) {
                             rowBytes = rowBytesArray[i][0];
                             raFile.seek(pictLocation[i][0]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n");
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n", 
+                            		Preferences.DEBUG_FILEIO);
                             if ((packTypeArray[i][0] == 0) || (packTypeArray[i][0] > 2)) {
                                 totalByteCount = 0;
                                 if (majorType == MAC_16_BIT_COLOR) {
@@ -2888,7 +2980,7 @@ public class FileLIFF extends FileBase {
                                 haveLUT = true;
                                 // One less than the number of entries in the table
                                 ctSize = readShort(endianess);
-                                Preferences.debug("ctSize = " + ctSize + "\n");
+                                Preferences.debug("ctSize = " + ctSize + "\n", Preferences.DEBUG_FILEIO);
                                 // read the color table into a LUT
                                 dimExtentsLUT = new int[2];
                                 dimExtentsLUT[0] = 4;
@@ -2964,13 +3056,14 @@ public class FileLIFF extends FileBase {
                             if (imageTypeLocation[i][k] == majorType) {
                                 raFile.seek(pictLocation[i][k]);
                                 Preferences.debug("Located at subPictCount " + currentSubPictCount + " of " +
-                                        totalSubPictCount + "\n");
+                                        totalSubPictCount + "\n", Preferences.DEBUG_FILEIO);
                                 uncompressedSize = readInt(endianess);
-                                Preferences.debug("Expected uncompressed data size = " + uncompressedSize + "\n");
+                                Preferences.debug("Expected uncompressed data size = " + uncompressedSize + "\n", 
+                                		Preferences.DEBUG_FILEIO);
                                 compressedSize = readInt(endianess);
-                                Preferences.debug("Compressed data size = " + compressedSize + "\n");
+                                Preferences.debug("Compressed data size = " + compressedSize + "\n", Preferences.DEBUG_FILEIO);
                                 dataWidth = uncompressedSize/yDim;
-                                Preferences.debug("dataWidth = " + dataWidth + "\n");
+                                Preferences.debug("dataWidth = " + dataWidth + "\n", Preferences.DEBUG_FILEIO);
                                 // The data is compressed using MiniLZO.
                                 compressedBuffer = new byte[compressedSize];
                                 raFile.read(compressedBuffer);
@@ -2988,7 +3081,8 @@ public class FileLIFF extends FileBase {
                                 MipavUtil.displayError("MIPAV does not support LZO decompression");
                                 return null;
                                 
-                                /*Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                                /*Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n", 
+                                  Preferences.DEBUG_FILEIO);
                                 for (y = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++) {
                                         destIndex = 4*y*xDim + 4*x + color;
@@ -3026,13 +3120,14 @@ public class FileLIFF extends FileBase {
                     for (i = 0; i < subPictCount[0]; i++) {
                         if (imageTypeLocation[i][0] == majorType) {
                             raFile.seek(pictLocation[i][0]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n");
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n", 
+                            		Preferences.DEBUG_FILEIO);
                             uncompressedSize = readInt(endianess);
-                            Preferences.debug("Uncompressed data size = " + uncompressedSize + "\n");
+                            Preferences.debug("Uncompressed data size = " + uncompressedSize + "\n", Preferences.DEBUG_FILEIO);
                             compressedSize = readInt(endianess);
-                            Preferences.debug("Compressed data size = " + compressedSize + "\n");
+                            Preferences.debug("Compressed data size = " + compressedSize + "\n", Preferences.DEBUG_FILEIO);
                             dataWidth = uncompressedSize/yDim;
-                            Preferences.debug("dataWidth = " + dataWidth + "\n");
+                            Preferences.debug("dataWidth = " + dataWidth + "\n", Preferences.DEBUG_FILEIO);
 //                          The data is compressed using MiniLZO. 
                             compressedBuffer = new byte[compressedSize];
                             raFile.read(compressedBuffer);
@@ -3040,7 +3135,8 @@ public class FileLIFF extends FileBase {
                             MipavUtil.displayError("MIPAV does not support LZO decompression");
                             return null;
                             
-                            /*Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                            /*Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n", 
+                              Preferences.DEBUG_FILEIO);
                             for (y = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++) {
                                     destIndex = y*xDim + x;
@@ -3060,13 +3156,14 @@ public class FileLIFF extends FileBase {
                         componentArray = new int[1];
                         if (imageTypeLocation[i][0] == majorType) {
                             raFile.seek(pictLocation[i][0]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n");
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n", 
+                            		Preferences.DEBUG_FILEIO);
                             uncompressedSize = readInt(endianess);
-                            Preferences.debug("Uncompressed data size = " + uncompressedSize + "\n");
+                            Preferences.debug("Uncompressed data size = " + uncompressedSize + "\n", Preferences.DEBUG_FILEIO);
                             compressedSize = readInt(endianess);
-                            Preferences.debug("Compressed data size = " + compressedSize + "\n");
+                            Preferences.debug("Compressed data size = " + compressedSize + "\n", Preferences.DEBUG_FILEIO);
                             dataWidth = uncompressedSize/yDim;
-                            Preferences.debug("dataWidth = " + dataWidth + "\n");
+                            Preferences.debug("dataWidth = " + dataWidth + "\n", Preferences.DEBUG_FILEIO);
                             // The data is compressed using MiniLZO.
                             compressedBuffer = new byte[compressedSize];
                             raFile.read(compressedBuffer);
@@ -3074,7 +3171,8 @@ public class FileLIFF extends FileBase {
                             MipavUtil.displayError("MIPAV does not support LZO decompression");
                             return null;
                             
-                            /*Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                            /*Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n", 
+                              Preferences.DEBUG_FILEIO);
                             if ((majorType == MAC_24_BIT_COLOR) && (pixelSizeArray[i][0] == 32)) {
                                 for (y = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++) {
