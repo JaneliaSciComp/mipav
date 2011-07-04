@@ -66,7 +66,7 @@ public class FileVista extends FileBase {
     	
     	 File fileHeader = new File(fileDir + imageFileName);
     	 if (fileHeader.exists() == false) {
-             Preferences.debug(fileDir + imageFileName + " cannot be found.\n");
+             Preferences.debug(fileDir + imageFileName + " cannot be found.\n", Preferences.DEBUG_FILEIO);
              return false;
          }
     	 
@@ -75,7 +75,8 @@ public class FileVista extends FileBase {
          try {
              raFile = new RandomAccessFile(fileHeader, "r");
          } catch (FileNotFoundException e) {
-             Preferences.debug("raFile = new RandomAccessFile(fileHeader, r) gave " + "FileNotFoundException " + e);
+             Preferences.debug("raFile = new RandomAccessFile(fileHeader, r) gave " + "FileNotFoundException " + e +
+            		 "\n", Preferences.DEBUG_FILEIO);
              throw new IOException("Error on raFile = new RandomAccessFile(fileHeader,r)");
          }
          
