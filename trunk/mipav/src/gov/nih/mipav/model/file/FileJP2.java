@@ -189,19 +189,19 @@ public class FileJP2 extends FileBase implements ActionListener{
 	    /*dataType = db.getDataType();
 	    switch (dataType) {
 	        case TYPE_BYTE:
-	    	    Preferences.debug("decodeImageData BYTE\n");
+	    	    Preferences.debug("decodeImageData BYTE\n", Preferences.DEBUG_FILEIO);
 	    	    break;
 	        case TYPE_SHORT:
-	        	Preferences.debug("decodeImageData SHORT\n");
+	        	Preferences.debug("decodeImageData SHORT\n", Preferences.DEBUG_FILEIO);
 	        	break;
 	        case TYPE_INT:
-	        	Preferences.debug("decodeImageData INT\n");
+	        	Preferences.debug("decodeImageData INT\n", Preferences.DEBUG_FILEIO);
 	        	break;
 	        case TYPE_FLOAT:
-	        	Preferences.debug("decodeImageData FLOAT\n");
+	        	Preferences.debug("decodeImageData FLOAT\n", Preferences.DEBUG_FILEIO);
 	        	break;
 	        default:
-	        	Preferences.debug("decodeImageData unrecognized data type\n");
+	        	Preferences.debug("decodeImageData unrecognized data type\n", Preferences.DEBUG_FILEIO);
 	    }*/
 	    
 	    int w = slc.getImgWidth();
