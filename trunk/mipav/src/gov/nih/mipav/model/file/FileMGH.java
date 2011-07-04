@@ -430,7 +430,7 @@ public class FileMGH extends FileBase {
                 break;
 
             case MRI_BITMAP:
-                Preferences.debug("Cannot handle type = MRI_BITMAP");
+                Preferences.debug("Cannot handle type = MRI_BITMAP", Preferences.DEBUG_FILEIO);
 
                 return false;
         } // switch (mghType)
@@ -506,7 +506,7 @@ public class FileMGH extends FileBase {
 
         axisOrientation = getAxisOrientation(matrix);
         Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
-                          axisOrientation[2] + "\n");
+                          axisOrientation[2] + "\n", Preferences.DEBUG_FILEIO);
         fileInfo.setAxisOrientation(axisOrientation);
 
         if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) || (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
@@ -541,7 +541,7 @@ public class FileMGH extends FileBase {
         matrix.set(0, 3, (double) origin[0]);
         matrix.set(1, 3, (double) origin[1]);
         matrix.set(2, 3, (double) origin[2]);
-        Preferences.debug("matrix = \n" + matrix + "\n");
+        Preferences.debug("matrix = \n" + matrix + "\n", Preferences.DEBUG_FILEIO);
         fileInfo.setMatrix(matrix);
 
         fileInfo.setLeftCenter(-cr);
@@ -594,35 +594,35 @@ public class FileMGH extends FileBase {
             switch (tag) {
 
                 case 0:
-                    Preferences.debug("Tag = 0 signalling end of file read\n");
+                    Preferences.debug("Tag = 0 signalling end of file read\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TAG_OLD_COLORTABLE:
-                    Preferences.debug("TAG_OLD_COLORTABLE\n");
+                    Preferences.debug("TAG_OLD_COLORTABLE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TAG_OLD_USEREALRAS:
-                    Preferences.debug("TAG_OLD_USEREALRAS\n");
+                    Preferences.debug("TAG_OLD_USEREALRAS\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TAG_CMDLINE:
-                    Preferences.debug("TAG_CMDLINE\n");
+                    Preferences.debug("TAG_CMDLINE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TAG_OLD_SURF_GEOM:
-                    Preferences.debug("TAG_OLD_SURF_GEOM\n");
+                    Preferences.debug("TAG_OLD_SURF_GEOM\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TAG_OLD_MGH_XFORM:
-                    Preferences.debug("TAG_OLD_MGH_XFORM\n");
+                    Preferences.debug("TAG_OLD_MGH_XFORM\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TAG_MGH_XFORM:
-                    Preferences.debug("TAG_MGH_XFORM\n");
+                    Preferences.debug("TAG_MGH_XFORM\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 default:
-                    Preferences.debug("Tag = " + tag + "\n");
+                    Preferences.debug("Tag = " + tag + "\n", Preferences.DEBUG_FILEIO);
             }
 
             bytesLeft -= 4;
@@ -669,7 +669,7 @@ public class FileMGH extends FileBase {
                             }
                         } // for (i = 0; i < pLen && okay; i++)
 
-                        Preferences.debug("Transform file name = " + transformFileName + "\n");
+                        Preferences.debug("Transform file name = " + transformFileName + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setTransformFileName(transformFileName);
                         break;
 
@@ -677,10 +677,10 @@ public class FileMGH extends FileBase {
                         if (ncmds < MAX_CMDS) {
                             cmdlines[ncmds] = getString((int) pLen);
                             bytesLeft -= pLen;
-                            Preferences.debug("cmdlines[" + ncmds + "] = " + cmdlines[ncmds] + "\n");
+                            Preferences.debug("cmdlines[" + ncmds + "] = " + cmdlines[ncmds] + "\n", Preferences.DEBUG_FILEIO);
                             ncmds++;
                         } else {
-                            Preferences.debug("Number of comands exceeds 1000/n");
+                            Preferences.debug("Number of comands exceeds 1000/n", Preferences.DEBUG_FILEIO);
                         }
 
                         break;
@@ -935,7 +935,8 @@ public class FileMGH extends FileBase {
                 break;
 
             default:
-                Preferences.debug("Cannot handle type = " + image.getFileInfo(0).getDataType() + "\n");
+                Preferences.debug("Cannot handle type = " + image.getFileInfo(0).getDataType() + "\n",
+                		Preferences.DEBUG_FILEIO);
                 throw (new IOException("Cannot write MGH image with data type = " + image.getFileInfo(0).getDataType()));
         } // switch (mghType)
 
