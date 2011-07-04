@@ -350,7 +350,7 @@ public class FileInfoDicom extends FileInfoBase {
      * @see    JDialogFileInfoDICOM
      */
     public final void displayAboutInfo(JDialogBase dialog, TransMatrix matrix) {
-        Preferences.debug("This method should never be called - FileInfoDicom.displayAboutInfo.");
+        Preferences.debug("This method should never be called - FileInfoDicom.displayAboutInfo.", Preferences.DEBUG_FILEIO);
     }
 
     /**
