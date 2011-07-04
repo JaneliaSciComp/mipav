@@ -231,15 +231,17 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if ( !subS.equals("= ")) {
-                        Preferences.debug("SIMPLE line does not have required =<sp> in cols 9 and 10\n");
+                        Preferences.debug("SIMPLE line does not have required =<sp> in cols 9 and 10\n", 
+                        		Preferences.DEBUG_FILEIO);
                     }
                     subS = s.substring(29, 30);
 
                     if ( ( !subS.equals("T")) && ( !subS.equals("F"))) {
-                        Preferences.debug("\nSIMPLE line does not have required T or F in column 30\n");
+                        Preferences.debug("\nSIMPLE line does not have required T or F in column 30\n",
+                        		Preferences.DEBUG_FILEIO);
                         if (subS.trim() != null) {
                             if (subS.trim().length() != 0) {
-                                Preferences.debug("SIMPLE line has " + subS + " in column 30\n");
+                                Preferences.debug("SIMPLE line has " + subS + " in column 30\n", Preferences.DEBUG_FILEIO);
                             }
                         }
                         i = s.indexOf("/");
@@ -252,15 +254,17 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i - 1);
                         if (subS.equals("T")) {
                             Preferences
-                                    .debug("SIMPLE = T for file conformance to FITS standards in nonstandard column\n");
+                                    .debug("SIMPLE = T for file conformance to FITS standards in nonstandard column\n", 
+                                    		Preferences.DEBUG_FILEIO);
                         } else if (subS.equals("F")) {
                             Preferences.debug("SIMPLE = F for departure from FITS standards in some significant way\n"
-                                    + "in nonstandard column\n");
+                                    + "in nonstandard column\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (subS.equals("T")) {
-                        Preferences.debug("\nSIMPLE = T for file conformance to FITS standards\n");
+                        Preferences.debug("\nSIMPLE = T for file conformance to FITS standards\n", Preferences.DEBUG_FILEIO);
                     } else { // subs.equals("F")
-                        Preferences.debug("\nSIMPLE = F for departure from FITS standards in some significant way\n");
+                        Preferences.debug("\nSIMPLE = F for departure from FITS standards in some significant way\n", 
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                 }
@@ -285,7 +289,8 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if ( !subS.equals("= ")) {
-                        Preferences.debug("BITPIX line does not have required =<sp> in cols 9 and 10\n");
+                        Preferences.debug("BITPIX line does not have required =<sp> in cols 9 and 10\n", 
+                        		Preferences.DEBUG_FILEIO);
                         subS = s.substring(8, 30);
                     } else {
                         subS = s.substring(10, 30);
@@ -305,27 +310,27 @@ public class FileFits extends FileBase {
 
                         case 8:
                             sourceType = ModelStorageBase.UBYTE;
-                            Preferences.debug("sourceType = ModelStorageBase.UBYTE\n");
+                            Preferences.debug("sourceType = ModelStorageBase.UBYTE\n", Preferences.DEBUG_FILEIO);
                             break;
 
                         case 16:
                             sourceType = ModelStorageBase.SHORT;
-                            Preferences.debug("sourceType = ModelStorageBase.SHORT\n");
+                            Preferences.debug("sourceType = ModelStorageBase.SHORT\n", Preferences.DEBUG_FILEIO);
                             break;
 
                         case 32:
                             sourceType = ModelStorageBase.INTEGER;
-                            Preferences.debug("sourceType = ModelStorageBase.INTEGER\n");
+                            Preferences.debug("sourceType = ModelStorageBase.INTEGER\n", Preferences.DEBUG_FILEIO);
                             break;
 
                         case -32:
                             sourceType = ModelStorageBase.FLOAT;
-                            Preferences.debug("sourceType = ModelStorageBase.FLOAT\n");
+                            Preferences.debug("sourceType = ModelStorageBase.FLOAT\n", Preferences.DEBUG_FILEIO);
                             break;
 
                         case -64:
                             sourceType = ModelStorageBase.DOUBLE;
-                            Preferences.debug("sourceType = ModelStorageBase.DOUBLE\n");
+                            Preferences.debug("sourceType = ModelStorageBase.DOUBLE\n", Preferences.DEBUG_FILEIO);
                             break;
 
                         default:
@@ -356,7 +361,8 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if ( !subS.equals("= ")) {
-                        Preferences.debug("NAXIS line does not have required =<sp> in cols 9 and 10\n");
+                        Preferences.debug("NAXIS line does not have required =<sp> in cols 9 and 10\n", 
+                        		Preferences.DEBUG_FILEIO);
                         subS = s.substring(8, 30);
                     } else {
                         subS = s.substring(10, 30);
@@ -372,7 +378,7 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("NAXIS = " + nDimensions + "\n");
+                    Preferences.debug("NAXIS = " + nDimensions + "\n", Preferences.DEBUG_FILEIO);
 
                     if (nDimensions < 0) {
                         raFile.close();
@@ -420,7 +426,8 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if ( !subS.equals("= ")) {
-                        Preferences.debug("NAXIS1 line does not have required =<sp> in cols 9 and 10\n");
+                        Preferences.debug("NAXIS1 line does not have required =<sp> in cols 9 and 10\n", 
+                        		Preferences.DEBUG_FILEIO);
                         subS = s.substring(8, 30);
                     } else {
                         subS = s.substring(10, 30);
@@ -436,7 +443,7 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("NAXIS1 = " + imgExtents[0] + "\n");
+                    Preferences.debug("NAXIS1 = " + imgExtents[0] + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 0);
 
                     if (imgExtents[0] < 0) {
@@ -472,7 +479,8 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if ( !subS.equals("= ")) {
-                        Preferences.debug("NAXIS2 line does not have required =<sp> in cols 9 and 10\n");
+                        Preferences.debug("NAXIS2 line does not have required =<sp> in cols 9 and 10\n", 
+                        		Preferences.DEBUG_FILEIO);
                         subS = s.substring(8, 30);
                     } else {
                         subS = s.substring(10, 30);
@@ -488,7 +496,7 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("NAXIS2 = " + imgExtents[1] + "\n");
+                    Preferences.debug("NAXIS2 = " + imgExtents[1] + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 1);
 
                     if (imgExtents[1] < 0) {
@@ -525,7 +533,8 @@ public class FileFits extends FileBase {
                         subS = s.substring(8, 10);
 
                         if ( !subS.equals("= ")) {
-                            Preferences.debug("NAXIS3 line does not have required =<sp> in cols 9 and 10\n");
+                            Preferences.debug("NAXIS3 line does not have required =<sp> in cols 9 and 10\n", 
+                            		Preferences.DEBUG_FILEIO);
                             subS = s.substring(8, 30);
                         } else {
                             subS = s.substring(10, 30);
@@ -541,7 +550,7 @@ public class FileFits extends FileBase {
                             throw new IOException();
                         }
 
-                        Preferences.debug("NAXIS3 = " + imgExtents[2] + "\n");
+                        Preferences.debug("NAXIS3 = " + imgExtents[2] + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 2);
 
                         if (imgExtents[2] < 0) {
@@ -579,7 +588,8 @@ public class FileFits extends FileBase {
                         subS = s.substring(8, 10);
 
                         if ( !subS.equals("= ")) {
-                            Preferences.debug("NAXIS4 line does not have required =<sp> in cols 9 and 10\n");
+                            Preferences.debug("NAXIS4 line does not have required =<sp> in cols 9 and 10\n",
+                            		Preferences.DEBUG_FILEIO);
                             subS = s.substring(8, 30);
                         } else {
                             subS = s.substring(10, 30);
@@ -595,7 +605,7 @@ public class FileFits extends FileBase {
                             throw new IOException();
                         }
 
-                        Preferences.debug("NAXIS4 = " + imgExtents[3] + "\n");
+                        Preferences.debug("NAXIS4 = " + imgExtents[3] + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 3);
 
                         if (imgExtents[3] < 0) {
@@ -633,7 +643,8 @@ public class FileFits extends FileBase {
                         subS = s.substring(8, 10);
 
                         if ( !subS.equals("= ")) {
-                            Preferences.debug("NAXIS5 line does not have required =<sp> in cols 9 and 10\n");
+                            Preferences.debug("NAXIS5 line does not have required =<sp> in cols 9 and 10\n", 
+                            		Preferences.DEBUG_FILEIO);
                             subS = s.substring(8, 30);
                         } else {
                             subS = s.substring(10, 30);
@@ -649,7 +660,7 @@ public class FileFits extends FileBase {
                             throw new IOException();
                         }
 
-                        Preferences.debug("NAXIS5 = " + imgExtents[4] + "\n");
+                        Preferences.debug("NAXIS5 = " + imgExtents[4] + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 4);
 
                         if (imgExtents[4] < 0) {
@@ -687,7 +698,8 @@ public class FileFits extends FileBase {
                         subS = s.substring(8, 10);
 
                         if ( !subS.equals("= ")) {
-                            Preferences.debug("NAXIS6 line does not have required =<sp> in cols 9 and 10\n");
+                            Preferences.debug("NAXIS6 line does not have required =<sp> in cols 9 and 10\n", 
+                            		Preferences.DEBUG_FILEIO);
                             subS = s.substring(8, 30);
                         } else {
                             subS = s.substring(10, 30);
@@ -703,7 +715,7 @@ public class FileFits extends FileBase {
                             throw new IOException();
                         }
 
-                        Preferences.debug("NAXIS6 = " + imgExtents[5] + "\n");
+                        Preferences.debug("NAXIS6 = " + imgExtents[5] + "\n", Preferences.DEBUG_FILEIO);
 
                         if (imgExtents[5] < 0) {
                             raFile.close();
@@ -743,7 +755,7 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("BSCALE = " + BSCALE + "\n");
+                    Preferences.debug("BSCALE = " + BSCALE + "\n", Preferences.DEBUG_FILEIO);
                 } // if (s.startsWith("BSCALE"))
                 else if (s.startsWith("BZERO")) {
                     subS = s.substring(10, 80);
@@ -764,7 +776,7 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("BZERO = " + BZERO + "\n");
+                    Preferences.debug("BZERO = " + BZERO + "\n", Preferences.DEBUG_FILEIO);
                 } // else if (s.startsWith("BZERO"))
                 else if (s.startsWith("BLANK")) {
                     subS = s.substring(10, 80);
@@ -785,7 +797,7 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("BLANK = " + BLANK + "\n");
+                    Preferences.debug("BLANK = " + BLANK + "\n", Preferences.DEBUG_FILEIO);
                     haveBlank = true;
                 } // else if (s.startsWith("BLANK"))
                 else if (s.startsWith("CDELT")) {
@@ -805,7 +817,8 @@ public class FileFits extends FileBase {
                             scale[dimNumber - 1] = Double.parseDouble(subS);
                         } catch (final NumberFormatException e) {
 
-                            Preferences.debug("Instead of a float CDELT" + s.substring(5, 6) + " line had = " + subS);
+                            Preferences.debug("Instead of a float CDELT" + s.substring(5, 6) + " line had = " + subS, 
+                            		Preferences.DEBUG_FILEIO);
                         }
                     } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CDELT"))
@@ -825,10 +838,12 @@ public class FileFits extends FileBase {
                         try {
                             crpix[dimNumber - 1] = Double.parseDouble(subS);
                             haveCrpix[dimNumber - 1] = true;
-                            Preferences.debug("crpix[" + (dimNumber - 1) + "] = " + crpix[dimNumber - 1] + "\n");
+                            Preferences.debug("crpix[" + (dimNumber - 1) + "] = " + crpix[dimNumber - 1] + "\n", 
+                            		Preferences.DEBUG_FILEIO);
                         } catch (final NumberFormatException e) {
 
-                            Preferences.debug("Instead of a float CRPIX" + s.substring(5, 6) + " line had = " + subS);
+                            Preferences.debug("Instead of a float CRPIX" + s.substring(5, 6) + " line had = " + subS, 
+                            		Preferences.DEBUG_FILEIO);
                         }
                     } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CRPIX"))
@@ -847,11 +862,13 @@ public class FileFits extends FileBase {
 
                         try {
                             crval[dimNumber - 1] = Double.parseDouble(subS);
-                            Preferences.debug("crval[" + (dimNumber - 1) + "] = " + crval[dimNumber - 1] + "\n");
+                            Preferences.debug("crval[" + (dimNumber - 1) + "] = " + crval[dimNumber - 1] + "\n", 
+                            		Preferences.DEBUG_FILEIO);
                             haveCrval[dimNumber - 1] = true;
                         } catch (final NumberFormatException e) {
 
-                            Preferences.debug("Instead of a float CRVAL" + s.substring(5, 6) + " line had = " + subS);
+                            Preferences.debug("Instead of a float CRVAL" + s.substring(5, 6) + " line had = " + subS, 
+                            		Preferences.DEBUG_FILEIO);
                         }
                     } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CRVAL"))
@@ -865,7 +882,7 @@ public class FileFits extends FileBase {
                             if ( (i != -1) && (j != -1)) {
                                 subS = s.substring(i + 1, j);
                                 subS = subS.trim();
-                                Preferences.debug("CTYPE" + s.substring(5, 6) + " = " + subS + "\n");
+                                Preferences.debug("CTYPE" + s.substring(5, 6) + " = " + subS + "\n", Preferences.DEBUG_FILEIO);
                                 if ( (subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3)
                                         && (nDimensions == 3)) {
                                     isColorPlanar2D = true;
@@ -930,7 +947,7 @@ public class FileFits extends FileBase {
                             if ( (i != -1) && (j != -1)) {
                                 subS = s.substring(i + 1, j);
                                 subS = subS.trim();
-                                Preferences.debug("CUNIT" + s.substring(5, 6) + " = " + subS + "\n");
+                                Preferences.debug("CUNIT" + s.substring(5, 6) + " = " + subS + "\n", Preferences.DEBUG_FILEIO);
 
                                 if (subS.toUpperCase().equals(Unit.INCHES.toString().toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), dimNumber - 1);
@@ -986,12 +1003,12 @@ public class FileFits extends FileBase {
                 else if (s.startsWith("COMMENT")) {
                     subS = s.substring(8, 80);
                     subS = subS.trim();
-                    Preferences.debug("COMMENT = " + subS + "\n");
+                    Preferences.debug("COMMENT = " + subS + "\n", Preferences.DEBUG_FILEIO);
                 } // else if (s.startsWith("COMMENT"))
                 else if (s.startsWith("HISTORY")) {
                     subS = s.substring(8, 80);
                     subS = subS.trim();
-                    Preferences.debug("HISTORY = " + subS + "\n");
+                    Preferences.debug("HISTORY = " + subS + "\n", Preferences.DEBUG_FILEIO);
                 } // else if (s.startsWith("HISTORY"))
                 else if (s.startsWith("DATE-OBS")) {
 
@@ -1006,7 +1023,7 @@ public class FileFits extends FileBase {
                         }
                     }
                     if (numApos == 0) {
-                        Preferences.debug("DATE-OBS, date data acquired = " + subS + "\n");
+                        Preferences.debug("DATE-OBS, date data acquired = " + subS + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setDateAcquired(subS);
                     } else if (numApos == 2) {
                         dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
@@ -1019,18 +1036,18 @@ public class FileFits extends FileBase {
                         }
                         if (haveTime) {
                             timeString = dateString.substring(j + 1);
-                            Preferences.debug("TIME data acquired = " + timeString + "\n");
+                            Preferences.debug("TIME data acquired = " + timeString + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setTimeAcquired(timeString);
                             dateString = dateString.substring(0, j);
                         }
-                        Preferences.debug("DATE-OBS, date data acquired = " + dateString + "\n");
+                        Preferences.debug("DATE-OBS, date data acquired = " + dateString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setDateAcquired(dateString);
                     } else if (numApos == 4) {
                         dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
-                        Preferences.debug("DATE-OBS, date data acquired = " + dateString + "\n");
+                        Preferences.debug("DATE-OBS, date data acquired = " + dateString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setDateAcquired(dateString);
                         timeString = subS.substring(aposLoc[2] + 1, aposLoc[3]).trim();
-                        Preferences.debug("TIME data acquired = " + timeString + "\n");
+                        Preferences.debug("TIME data acquired = " + timeString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setTimeAcquired(timeString);
                     }
                 } // else if (s.startsWith("DATE-OBS"))
@@ -1043,7 +1060,7 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
-                    Preferences.debug("TIME data acquired = " + subS + "\n");
+                    Preferences.debug("TIME data acquired = " + subS + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setTimeAcquired(subS);
                 } // else if (s.startsWith("TIME-OBS"))
                 else if (s.startsWith("DATE-MAP")) {
@@ -1059,7 +1076,7 @@ public class FileFits extends FileBase {
                         }
                     }
                     if (numApos == 0) {
-                        Preferences.debug("DATE-MAP, date data last processed = " + subS + "\n");
+                        Preferences.debug("DATE-MAP, date data last processed = " + subS + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setDateProcessed(subS);
                     } else if (numApos == 2) {
                         dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
@@ -1072,18 +1089,20 @@ public class FileFits extends FileBase {
                         }
                         if (haveTime) {
                             timeString = dateString.substring(j + 1);
-                            Preferences.debug("TIME data last processed = " + timeString + "\n");
+                            Preferences.debug("TIME data last processed = " + timeString + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setTimeProcessed(timeString);
                             dateString = dateString.substring(0, j);
                         }
-                        Preferences.debug("DATE-MAP, date data last processed = " + dateString + "\n");
+                        Preferences.debug("DATE-MAP, date data last processed = " + dateString + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                         fileInfo.setDateProcessed(dateString);
                     } else if (numApos == 4) {
                         dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
-                        Preferences.debug("DATE-OBS, date data last processed = " + dateString + "\n");
+                        Preferences.debug("DATE-OBS, date data last processed = " + dateString + "\n",
+                        		Preferences.DEBUG_FILEIO);
                         fileInfo.setDateProcessed(dateString);
                         timeString = subS.substring(aposLoc[2] + 1, aposLoc[3]).trim();
-                        Preferences.debug("TIME data last processed = " + timeString + "\n");
+                        Preferences.debug("TIME data last processed = " + timeString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setTimeProcessed(timeString);
                     }
                 } // else if (s.startsWith("DATE-MAP"))
@@ -1102,7 +1121,7 @@ public class FileFits extends FileBase {
                         }
                     }
                     if (numApos == 0) {
-                        Preferences.debug("DATE file written = " + subS + "\n");
+                        Preferences.debug("DATE file written = " + subS + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setDateWritten(subS);
                     } else if (numApos == 2) {
                         dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
@@ -1115,28 +1134,28 @@ public class FileFits extends FileBase {
                         }
                         if (haveTime) {
                             timeString = dateString.substring(j + 1);
-                            Preferences.debug("TIME file written = " + timeString + "\n");
+                            Preferences.debug("TIME file written = " + timeString + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setTimeWritten(timeString);
                             dateString = dateString.substring(0, j);
                         }
-                        Preferences.debug("DATE file written = " + dateString + "\n");
+                        Preferences.debug("DATE file written = " + dateString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setDateWritten(dateString);
                     } else if (numApos == 4) {
                         dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
-                        Preferences.debug("DATE file written = " + dateString + "\n");
+                        Preferences.debug("DATE file written = " + dateString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setDateWritten(dateString);
                         timeString = subS.substring(aposLoc[2] + 1, aposLoc[3]).trim();
-                        Preferences.debug("TIME file written = " + timeString + "\n");
+                        Preferences.debug("TIME file written = " + timeString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setTimeWritten(timeString);
                     } else if (numApos == 6) {
                         dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
-                        Preferences.debug("DATE file written = " + dateString + "\n");
+                        Preferences.debug("DATE file written = " + dateString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setDateWritten(dateString);
                         timeString = subS.substring(aposLoc[2] + 1, aposLoc[3]).trim();
-                        Preferences.debug("TIME file written = " + timeString + "\n");
+                        Preferences.debug("TIME file written = " + timeString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setTimeWritten(timeString);
                         jobNameString = subS.substring(aposLoc[4] + 1, aposLoc[5]).trim();
-                        Preferences.debug("JOB NAME = " + jobNameString + "\n");
+                        Preferences.debug("JOB NAME = " + jobNameString + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setJobName(jobNameString);
                     }
                 } // else if (s.startsWith("DATE"))
@@ -1149,7 +1168,7 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
-                    Preferences.debug("ORIGIN, installation where file is written = " + subS + "\n");
+                    Preferences.debug("ORIGIN, installation where file is written = " + subS + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setOrigin(subS);
                 } // else if (s.startsWith("ORIGIN"))
                 else if (s.startsWith("INSTRUME")) {
@@ -1161,7 +1180,7 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
-                    Preferences.debug("INSTRUMENT, data acquisition instrument = " + subS + "\n");
+                    Preferences.debug("INSTRUMENT, data acquisition instrument = " + subS + "\n", Preferences.DEBUG_FILEIO);
                     if (subS.length() != 0) {
                         fileInfo.setInstrument(subS);
                     }
@@ -1175,7 +1194,7 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
-                    Preferences.debug("OBSERVER = " + subS + "\n");
+                    Preferences.debug("OBSERVER = " + subS + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setObserver(subS);
                 } // else if (s.startsWith("OBSERVER"))
                 else if (s.startsWith("OBJECT")) {
@@ -1187,7 +1206,7 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
-                    Preferences.debug("OBJECT observed = " + subS + "\n");
+                    Preferences.debug("OBJECT observed = " + subS + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setObject(subS);
                 } // else if (s.startsWith("OBJECT"))
                 else if (s.startsWith("AUTHOR")) {
@@ -1199,13 +1218,13 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
-                    Preferences.debug("AUTHOR = " + subS + "\n");
+                    Preferences.debug("AUTHOR = " + subS + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setAuthor(subS);
                 } // else if (s.startsWith("AUTHOR")
                 else if (s.startsWith("REFERENC")) {
                     subS = s.substring(10, 80);
                     subS = subS.trim();
-                    Preferences.debug("REFERENC = " + subS + "\n");
+                    Preferences.debug("REFERENC = " + subS + "\n", Preferences.DEBUG_FILEIO);
                 } // else if (s.startsWith("REFERENC"))
                 else if (s.startsWith("F_RATIO")) {
                     subS = s.substring(10, 80);
@@ -1219,11 +1238,11 @@ public class FileFits extends FileBase {
 
                     try {
                         focalRatio = Float.parseFloat(subS);
-                        Preferences.debug("Focal ratio = " + focalRatio + "\n");
+                        Preferences.debug("Focal ratio = " + focalRatio + "\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setFocalRatio(focalRatio);
                     } catch (final NumberFormatException e) {
 
-                        Preferences.debug("Instead of a float F_RATIO line had = " + subS);
+                        Preferences.debug("Instead of a float F_RATIO line had = " + subS, Preferences.DEBUG_FILEIO);
                     }
                 } // else if (s.startsWith("F_RATIO"))
                 else if (s.startsWith("BUNIT")) {
@@ -1235,7 +1254,7 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
-                    Preferences.debug("BUNIT = " + subS + "\n");
+                    Preferences.debug("BUNIT = " + subS + "\n", Preferences.DEBUG_FILEIO);
                     if (subS.length() != 0) {
                         fileInfo.setBUNIT(subS);
                     }
