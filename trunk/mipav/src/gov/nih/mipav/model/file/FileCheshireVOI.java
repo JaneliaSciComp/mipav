@@ -332,7 +332,8 @@ public class FileCheshireVOI extends FileBase {
             } // while ((notFound) && (currentLocation < (fileLength - 24)))
 
             if (notFound) {
-                Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: " + file.getName());
+                Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: " + file.getName(),
+                		Preferences.DEBUG_FILEIO);
 
                 raFile.close();
                 progressBar.setVisible(false);
@@ -345,7 +346,7 @@ public class FileCheshireVOI extends FileBase {
         else {
 
             // No UserWndLevels or overlays or sticks found in files
-            Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: " + file.getName());
+            Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: " + file.getName(), Preferences.DEBUG_FILEIO);
 
             raFile.close();
             progressBar.setVisible(false);
@@ -469,7 +470,7 @@ public class FileCheshireVOI extends FileBase {
                 field2 = getInt(endianess); // 4 bytes that always seem to have value of 2
 
                 if (field2 != 2) {
-                    Preferences.debug("field2 = " + field2);
+                    Preferences.debug("field2 = " + field2, Preferences.DEBUG_FILEIO);
                 }
 
                 VOINumber = getInt(endianess); // VOI number starting at 1
@@ -615,7 +616,7 @@ public class FileCheshireVOI extends FileBase {
 
                                                 currentLocation = raFile.getFilePointer();
                                                 Preferences.debug("following bytes current location = " +
-                                                                  currentLocation);
+                                                                  currentLocation, Preferences.DEBUG_FILEIO);
                                                 raFile.close();
 
                                                 return null;
@@ -657,7 +658,7 @@ public class FileCheshireVOI extends FileBase {
 
                                                 currentLocation = raFile.getFilePointer();
                                                 Preferences.debug("multiplier bytes current location = " +
-                                                                  currentLocation);
+                                                                  currentLocation, Preferences.DEBUG_FILEIO);
                                                 raFile.close();
                                                 progressBar.setVisible(false);
 
