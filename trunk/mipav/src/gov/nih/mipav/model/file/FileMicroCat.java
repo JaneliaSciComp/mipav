@@ -204,140 +204,141 @@ public class FileMicroCat extends FileBase {
             // tmpStr = getKeyString(lineString);
             keyString = getKeyString(lineString);
             valString = getValString(lineString);
-            Preferences.debug("\nKey value = " + keyString + "\n");
-            Preferences.debug("Value     = " + valString + "\n");
+            Preferences.debug("\nKey value = " + keyString + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Value     = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
             if (keyString != null) {
 
                 if (keyString.equals("CBR Host Name")) {
                     fileInfo.setCBRHostName(valString);
-                    Preferences.debug("Host Name = " + valString + "\n");
+                    Preferences.debug("Host Name = " + valString + "\n", Preferences.DEBUG_FILEIO);
                 } else if (keyString.equals("RPC Port #")) {
                     fileInfo.setRPCPortNum(valString);
-                    Preferences.debug("RPC Port # = " + valString + "\n");
+                    Preferences.debug("RPC Port # = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("CAT File Name")) {
                     fileInfo.setCATFileName(valString);
-                    Preferences.debug("CAT File Name = " + valString + "\n");
+                    Preferences.debug("CAT File Name = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Image Destination Directory")) {
                     fileInfo.setImageDestinationDirectory(valString);
-                    Preferences.debug("Image Destination Directory = " + valString + "\n");
+                    Preferences.debug("Image Destination Directory = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Base Name for Reconstructed Slices")) {
                     fileInfo.setBaseNameforReconstructedSlices(valString);
-                    Preferences.debug("Base Name for Reconstructed Slices = " + valString + "\n");
+                    Preferences.debug("Base Name for Reconstructed Slices = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Projection U Size")) {
                     fileInfo.setProjectionUSize(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Projection U Size = " + valString + "\n");
+                    Preferences.debug("Projection U Size = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Projection V Size")) {
                     fileInfo.setProjectionVSize(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Projection V Size = " + valString + "\n");
+                    Preferences.debug("Projection V Size = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Number of Projections")) {
                     fileInfo.setNumberOfProjections(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Number of Projections = " + valString + "\n");
+                    Preferences.debug("Number of Projections = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("CBR Projection Directory")) {
                     fileInfo.setCBRProjectionDirectory(valString);
-                    Preferences.debug("CBR Projection Directory = " + valString + "\n");
+                    Preferences.debug("CBR Projection Directory = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("CBR Image Directory")) {
                     fileInfo.setCBRImageDirectory(valString);
-                    Preferences.debug("CBR Image Directory = " + valString + "\n");
+                    Preferences.debug("CBR Image Directory = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Volume Size X")) {
                     fileInfo.setVolumeSizeX(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Volume Size X = " + valString + "\n");
+                    Preferences.debug("Volume Size X = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Volume Size Y")) {
                     fileInfo.setVolumeSizeY(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Volume Size Y = " + valString + "\n");
+                    Preferences.debug("Volume Size Y = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Volume Size Z")) {
                     fileInfo.setVolumeSizeZ(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Volume Size Z = " + valString + "\n");
+                    Preferences.debug("Volume Size Z = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Voxel Size X (mm)")) {
                     fileInfo.setVoxelSizeX(Float.valueOf(valString).floatValue());
-                    Preferences.debug("Volume Size X = " + valString + "\n");
+                    Preferences.debug("Volume Size X = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Voxel Size Y (mm)")) {
                     fileInfo.setVoxelSizeY(Float.valueOf(valString).floatValue());
-                    Preferences.debug("Volume Size Y = " + valString + "\n");
+                    Preferences.debug("Volume Size Y = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Voxel Size Z (mm)")) {
                     fileInfo.setVoxelSizeZ(Float.valueOf(valString).floatValue());
-                    Preferences.debug("Volume Size Z = " + valString + "\n");
+                    Preferences.debug("Volume Size Z = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Filter Type")) {
                     fileInfo.setFilterType(valString);
-                    Preferences.debug("Filter Type = " + valString + "\n");
+                    Preferences.debug("Filter Type = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("U Center Offset (pixels)")) {
                     fileInfo.setUCenterOffset(Integer.valueOf(valString).intValue());
-                    Preferences.debug("U Center Offset (pixels) = " + valString + "\n");
+                    Preferences.debug("U Center Offset (pixels) = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("V Center Offset (pixels)")) {
                     fileInfo.setVCenterOffset(Integer.valueOf(valString).intValue());
-                    Preferences.debug("V Center Offset (pixels) = " + valString + "\n");
+                    Preferences.debug("V Center Offset (pixels) = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Volume Origin X")) {
                     fileInfo.setVolumeOriginX(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Volume Origin X = " + valString + "\n");
+                    Preferences.debug("Volume Origin X = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Volume Origin Y")) {
                     fileInfo.setVolumeOriginY(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Volume Origin Y = " + valString + "\n");
+                    Preferences.debug("Volume Origin Y = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Volume Origin Z")) {
                     fileInfo.setVolumeOriginZ(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Volume Origin Z = " + valString + "\n");
+                    Preferences.debug("Volume Origin Z = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Log Scale")) {
                     fileInfo.setLogScale(Float.valueOf(valString).floatValue());
-                    Preferences.debug("Log Scale = " + valString + "\n");
+                    Preferences.debug("Log Scale = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Start Angle")) {
                     fileInfo.setStartAngle(Float.valueOf(valString).floatValue());
-                    Preferences.debug("Start Angle = " + valString + "\n");
+                    Preferences.debug("Start Angle = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Offset")) {
                     fileInfo.setOffset(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Offset = " + valString + "\n");
+                    Preferences.debug("Offset = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Cylinder Reconstruction")) {
                     fileInfo.setCylinderReconstruction(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Cylinder Reconstruction = " + valString + "\n");
+                    Preferences.debug("Cylinder Reconstruction = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Enable Step Size")) {
                     fileInfo.setEnableStepSize(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Enable Step Size = " + valString + "\n");
+                    Preferences.debug("Enable Step Size = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Step Size File")) {
                     fileInfo.setStepSizeFile(valString);
-                    Preferences.debug("Step Size File = " + valString + "\n");
+                    Preferences.debug("Step Size File = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Rotation Direction (CW=-1, CCW=1)")) {
                     fileInfo.setRotationDirection(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Rotation Direction (CW=-1, CCW=1) = " + valString + "\n");
+                    Preferences.debug("Rotation Direction (CW=-1, CCW=1) = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Timeout Between Projection Transfers (ms)")) {
                     fileInfo.setTimeoutBetweenProjectionTransfers(Integer.valueOf(valString).intValue());
-                    Preferences.debug("Timeout Between Projection Transfers (ms) = " + valString + "\n");
+                    Preferences.debug("Timeout Between Projection Transfers (ms) = " + valString + "\n",
+                                Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Auto-start the CBR Engine")) {
                     fileInfo.setAutoStartCBREngine(valString);
-                    Preferences.debug("Auto-start the CBR Engine = " + valString + "\n");
+                    Preferences.debug("Auto-start the CBR Engine = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (keyString.equals("Projection Data already on CBR")) {
                     fileInfo.setProjectionDataAlreadyOnCBR(valString);
-                    Preferences.debug("Projection Data already on CBR = " + valString + "\n");
+                    Preferences.debug("Projection Data already on CBR = " + valString + "\n", Preferences.DEBUG_FILEIO);
 
                 } else {
-                    Preferences.debug("Unknown tag = " + valString + "\n");
+                    Preferences.debug("Unknown tag = " + valString + "\n", Preferences.DEBUG_FILEIO);
                 }
 
             }
