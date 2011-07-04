@@ -3092,7 +3092,7 @@ public class FileICS extends FileBase {
             }
 
             if (tempString == null) {
-                Preferences.debug("First line of ICS header file is null\n");
+                Preferences.debug("First line of ICS header file is null\n", Preferences.DEBUG_FILEIO);
                 throw new IOException("First line of ICS header file is null");
             }
 
@@ -3107,7 +3107,7 @@ public class FileICS extends FileBase {
             }
 
             if (tempString == null) {
-                Preferences.debug("Second line of ICS header file is null\n");
+                Preferences.debug("Second line of ICS header file is null\n", Preferences.DEBUG_FILEIO);
                 throw new IOException("Second line of ICS header file is null");
             }
 
@@ -3116,13 +3116,13 @@ public class FileICS extends FileBase {
             if (index != -1) {
                 category = tempString.substring(0, index);
             } else {
-                Preferences.debug("Second line of ICS header file has no field separator\n");
-                Preferences.debug("Second line = " + tempString);
+                Preferences.debug("Second line of ICS header file has no field separator\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("Second line = " + tempString, Preferences.DEBUG_FILEIO);
                 throw new IOException("Second line of ICS header file has no field separator");
             }
 
             if ((category.compareTo("ics_version")) != 0) {
-                Preferences.debug("Second line of header file is an erroneous " + tempString + "\n");
+                Preferences.debug("Second line of header file is an erroneous " + tempString + "\n", Preferences.DEBUG_FILEIO);
                 throw new IOException("Second line of ICS header file lacks ics_version");
             }
 
@@ -3138,7 +3138,7 @@ public class FileICS extends FileBase {
             }
 
             if (tempString == null) {
-                Preferences.debug("Third line of ICS header file is null");
+                Preferences.debug("Third line of ICS header file is null", Preferences.DEBUG_FILEIO);
                 throw new IOException("Third line of ICS header file is null");
             }
 
@@ -3147,12 +3147,12 @@ public class FileICS extends FileBase {
             if (index != -1) {
                 category = tempString.substring(0, index);
             } else {
-                Preferences.debug("Third line of ICS header file has no field separator");
+                Preferences.debug("Third line of ICS header file has no field separator", Preferences.DEBUG_FILEIO);
                 throw new IOException("Third line of ICS header file has no field separator");
             }
 
             if ((category.compareTo("filename")) != 0) {
-                Preferences.debug("Third line of header file is an erroneous " + tempString);
+                Preferences.debug("Third line of header file is an erroneous " + tempString, Preferences.DEBUG_FILEIO);
                 throw new IOException("Third line of ICS header file lacks filename");
             }
 
@@ -3184,7 +3184,8 @@ public class FileICS extends FileBase {
                         if ((values[0].compareTo("bits")) != 0) {
 
                             // bits must follow the order keyword
-                            Preferences.debug("order[0] = " + values[0] + " instead of the required bits\n");
+                            Preferences.debug("order[0] = " + values[0] + " instead of the required bits\n", 
+                            		Preferences.DEBUG_FILEIO);
                             throw new IOException("order[0] = " + values[0] + " instead of the required bits");
                         }
 
@@ -3244,7 +3245,8 @@ public class FileICS extends FileBase {
                             // y increases upward
                             invertY = true;
                         } else {
-                            Preferences.debug("Illegal keyword of " + values[0] + " for coordinates\n");
+                            Preferences.debug("Illegal keyword of " + values[0] + " for coordinates\n", 
+                            		Preferences.DEBUG_FILEIO);
                             throw new IOException("Illegal keyword of " + values[0] + " for coordinates");
                         }
                     } // else if ((subcategory.compareTo("coordinates")) == 0)
@@ -3288,8 +3290,8 @@ public class FileICS extends FileBase {
                             endianess = false;
                             fileInfo.setEndianess(endianess);
                         } else {
-                            Preferences.debug("Order is not big or little endian\n");
-                            Preferences.debug("Cannot handle this ordering\n");
+                            Preferences.debug("Order is not big or little endian\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("Cannot handle this ordering\n", Preferences.DEBUG_FILEIO);
                             throw new IOException("Order is not big or little endian");
                         }
                     } // if ((subcategory.compareTo("byte_order")) == 0)
@@ -3300,7 +3302,7 @@ public class FileICS extends FileBase {
 
                         if (((format.compareTo("integer")) != 0) && ((format.compareTo("real")) != 0) &&
                                 ((format.compareTo("complex")) != 0)) {
-                            Preferences.debug("Illegal keyword of " + format + " for format\n");
+                            Preferences.debug("Illegal keyword of " + format + " for format\n", Preferences.DEBUG_FILEIO);
                             throw new IOException("Illegal keyword of " + format + " for format");
                         }
                     } // else if ((subcategory.compareTo("format")) == 0)
@@ -3311,7 +3313,7 @@ public class FileICS extends FileBase {
                         sign = values[0];
 
                         if (((sign.compareTo("signed")) != 0) && ((sign.compareTo("unsigned")) != 0)) {
-                            Preferences.debug("Illegal keyword of " + sign + " for sign\n");
+                            Preferences.debug("Illegal keyword of " + sign + " for sign\n", Preferences.DEBUG_FILEIO);
                             throw new IOException("Illegal keyword of " + sign + " for sign");
 
                         }
@@ -3321,10 +3323,10 @@ public class FileICS extends FileBase {
 
                         if ((compression.compareTo("uncompressed")) == 0) { }
                         else if ((compression.compareTo("gzip")) == 0) {
-                            Preferences.debug("Must handle gzip compression\n");
+                            Preferences.debug("Must handle gzip compression\n", Preferences.DEBUG_FILEIO);
                             useGZIP = true;
                         } else {
-                            Preferences.debug("Cannot handle compression = " + compression + "\n");
+                            Preferences.debug("Cannot handle compression = " + compression + "\n", Preferences.DEBUG_FILEIO);
                             throw new IOException("Cannot handle compression = " + compression + "\n");
                         }
                     } // else if ((subcategory.compareTo("compression")) == 0)
@@ -3337,10 +3339,10 @@ public class FileICS extends FileBase {
 
                     if ((subcategory.compareTo("file")) == 0) {
                         dataFileName = values[0];
-                        Preferences.debug("Data file = " + dataFileName + "\n");
+                        Preferences.debug("Data file = " + dataFileName + "\n", Preferences.DEBUG_FILEIO);
                     } else if ((subcategory.compareTo("offset")) == 0) {
                         dataOffset = Long.valueOf(values[0]).longValue();
-                        Preferences.debug("Data file offset = " + dataOffset + "\n");
+                        Preferences.debug("Data file offset = " + dataOffset + "\n", Preferences.DEBUG_FILEIO);
                     }
                 } // else if ((category.compareTo("source")) == 0)
                 else if ((category.compareTo("parameter")) == 0) {
@@ -3546,17 +3548,20 @@ public class FileICS extends FileBase {
         }
 
         if (parameters != order.length) {
-            Preferences.debug("parameters = " + parameters + " but order.length = " + order.length + "\n");
+            Preferences.debug("parameters = " + parameters + " but order.length = " + order.length + "\n", 
+            		Preferences.DEBUG_FILEIO);
             throw new IOException("parameters = " + parameters + " but order.length = " + order.length);
         }
 
         if (parameters != sizes.length) {
-            Preferences.debug("parameters = " + parameters + " but sizes.length = " + sizes.length + "\n");
+            Preferences.debug("parameters = " + parameters + " but sizes.length = " + sizes.length + "\n", 
+            		Preferences.DEBUG_FILEIO);
             throw new IOException("parameters = " + parameters + " but sizes.length = " + sizes.length);
         }
 
         if ((labels != null) && (parameters != labels.length)) {
-            Preferences.debug("parameters = " + parameters + " but labels.length = " + labels.length + "\n");
+            Preferences.debug("parameters = " + parameters + " but labels.length = " + labels.length + "\n", 
+            		Preferences.DEBUG_FILEIO);
             throw new IOException("parameters = " + parameters + " but labels.length = " + labels.length);
         }
 
@@ -3575,13 +3580,13 @@ public class FileICS extends FileBase {
                            ((rgbPos < zPos) || (zPos == -1)) && ((rgbPos < tPos) || (tPos == -1))) {
                 colorSpacing = RGB_FIRST;
             } else {
-                Preferences.debug("Unexpected color parameter position\n");
+                Preferences.debug("Unexpected color parameter position\n", Preferences.DEBUG_FILEIO);
                 throw new IOException("Unexpected color parameter position");
             }
         }
 
         if (nDims > 4) {
-            Preferences.debug("Cannot handle image with " + nDims + " dimensions\n");
+            Preferences.debug("Cannot handle image with " + nDims + " dimensions\n", Preferences.DEBUG_FILEIO);
             throw new IOException("Cannot handle image with " + nDims + " dimensions");
         }
 
@@ -3592,18 +3597,18 @@ public class FileICS extends FileBase {
             if (((sizes[0] == 8) && ((format.compareTo("integer")) == 0)) &&
                     ((sign == null) || ((sign.compareTo("unsigned")) == 0))) {
                 dataType = ModelStorageBase.ARGB;
-                Preferences.debug("Data type is ARGB\n");
+                Preferences.debug("Data type is ARGB\n", Preferences.DEBUG_FILEIO);
             } else if (((sizes[0] == 16) && ((format.compareTo("integer")) == 0)) &&
                            ((sign == null) || ((sign.compareTo("unsigned")) == 0))) {
                 dataType = ModelStorageBase.ARGB_USHORT;
-                Preferences.debug("Data type is ARGB_USHORT\n");
+                Preferences.debug("Data type is ARGB_USHORT\n", Preferences.DEBUG_FILEIO);
             } else if (((sizes[0] == 32) && ((format.compareTo("real")) == 0)) &&
                            ((sign == null) || ((sign.compareTo("signed")) == 0))) {
                 dataType = ModelStorageBase.ARGB_FLOAT;
-                Preferences.debug("Data type is ARGB_FLOAT\n");
+                Preferences.debug("Data type is ARGB_FLOAT\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug("Cannot handle " + numColors + " color data with " + sizes[0] + " " + sign +
-                                  " bits and " + format + " format\n");
+                                  " bits and " + format + " format\n", Preferences.DEBUG_FILEIO);
                 throw new IOException("Cannot handle " + numColors + " color data with " + sizes[0] + " " + sign +
                                       " bits and " + format + " format");
 
@@ -3615,46 +3620,46 @@ public class FileICS extends FileBase {
             if (((sizes[0] == 8) && ((format.compareTo("integer")) == 0)) &&
                     ((sign == null) || ((sign.compareTo("unsigned")) == 0))) {
                 dataType = ModelStorageBase.UBYTE;
-                Preferences.debug("Data type is UBYTE\n");
+                Preferences.debug("Data type is UBYTE\n", Preferences.DEBUG_FILEIO);
             } else if ((sizes[0] == 8) && ((format.compareTo("integer")) == 0) && ((sign.compareTo("signed")) == 0)) {
                 dataType = ModelStorageBase.BYTE;
-                Preferences.debug("Data type is BYTE\n");
+                Preferences.debug("Data type is BYTE\n", Preferences.DEBUG_FILEIO);
             } else if (((sizes[0] == 16) && ((format.compareTo("integer")) == 0)) &&
                            ((sign == null) || ((sign.compareTo("unsigned")) == 0))) {
                 dataType = ModelStorageBase.USHORT;
-                Preferences.debug("Data type is USHORT\n");
+                Preferences.debug("Data type is USHORT\n", Preferences.DEBUG_FILEIO);
             } else if ((sizes[0] == 16) && ((format.compareTo("integer")) == 0) && ((sign.compareTo("signed")) == 0)) {
                 dataType = ModelStorageBase.SHORT;
-                Preferences.debug("Data type is SHORT\n");
+                Preferences.debug("Data type is SHORT\n", Preferences.DEBUG_FILEIO);
             } else if (((sizes[0] == 32) && ((format.compareTo("integer")) == 0)) &&
                            ((sign == null) || ((sign.compareTo("unsigned")) == 0))) {
                 dataType = ModelStorageBase.UINTEGER;
-                Preferences.debug("Data type is UINTEGER\n");
+                Preferences.debug("Data type is UINTEGER\n", Preferences.DEBUG_FILEIO);
             } else if ((sizes[0] == 32) && ((format.compareTo("integer")) == 0) && ((sign.compareTo("signed")) == 0)) {
                 dataType = ModelStorageBase.INTEGER;
-                Preferences.debug("Data type is INTEGER\n");
+                Preferences.debug("Data type is INTEGER\n", Preferences.DEBUG_FILEIO);
             } else if ((sizes[0] == 64) && ((format.compareTo("integer")) == 0) && ((sign.compareTo("signed")) == 0)) {
                 dataType = ModelStorageBase.LONG;
-                Preferences.debug("Data type is LONG\n");
+                Preferences.debug("Data type is LONG\n", Preferences.DEBUG_FILEIO);
             } else if (((sizes[0] == 32) && ((format.compareTo("real")) == 0)) &&
                            ((sign == null) || ((sign.compareTo("signed")) == 0))) {
                 dataType = ModelStorageBase.FLOAT;
-                Preferences.debug("Data type is FLOAT\n");
+                Preferences.debug("Data type is FLOAT\n", Preferences.DEBUG_FILEIO);
             } else if (((sizes[0] == 64) && ((format.compareTo("real")) == 0)) &&
                            ((sign == null) || ((sign.compareTo("signed")) == 0))) {
                 dataType = ModelStorageBase.DOUBLE;
-                Preferences.debug("Data type is DOUBLE\n");
+                Preferences.debug("Data type is DOUBLE\n", Preferences.DEBUG_FILEIO);
             } else if (((sizes[0] == 64) && ((format.compareTo("complex")) == 0)) &&
                            ((sign == null) || ((sign.compareTo("signed")) == 0))) {
                 dataType = ModelStorageBase.COMPLEX;
-                Preferences.debug("Data type is COMPLEX\n");
+                Preferences.debug("Data type is COMPLEX\n", Preferences.DEBUG_FILEIO);
             } else if (((sizes[0] == 128) && ((format.compareTo("complex")) == 0)) &&
                            ((sign == null) || ((sign.compareTo("signed")) == 0))) {
                 dataType = ModelStorageBase.DCOMPLEX;
-                Preferences.debug("Data type is DCOMPLEX\n");
+                Preferences.debug("Data type is DCOMPLEX\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug("Cannot handle data with " + sizes[0] + " " + sign + " bits and " + format +
-                                  " format\n");
+                                  " format\n", Preferences.DEBUG_FILEIO);
                 throw new IOException("Cannot handle data with " + sizes[0] + " " + sign + " bits and " + format +
                                       " format");
             }
@@ -3988,7 +3993,7 @@ public class FileICS extends FileBase {
         }
 
         if (tempString == null) {
-            Preferences.debug("Null header line");
+            Preferences.debug("Null header line", Preferences.DEBUG_FILEIO);
             throw new IOException("Null header line");
         }
 
@@ -4006,8 +4011,8 @@ public class FileICS extends FileBase {
 
             return;
         } else {
-            Preferences.debug("Field separator between category and subcategory not found\n");
-            Preferences.debug("Header line = " + tempString);
+            Preferences.debug("Field separator between category and subcategory not found\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Header line = " + tempString, Preferences.DEBUG_FILEIO);
             throw new IOException("Field separator between category and subcategory not found\n");
         }
 
@@ -4028,8 +4033,8 @@ public class FileICS extends FileBase {
 
             return;
         } else {
-            Preferences.debug("Field separator between subcategory and keyword not found\n");
-            Preferences.debug("Header line from subcategory = " + tempString);
+            Preferences.debug("Field separator between subcategory and keyword not found\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Header line from subcategory = " + tempString, Preferences.DEBUG_FILEIO);
             throw new IOException("Field separator between subcategory and keyword not found\n");
         }
 
