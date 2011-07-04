@@ -462,7 +462,7 @@ public class FileDicomTag extends ModelSerialCloneable {
             System.out
                     .print("\tFileDicomTag.getValueList(): ??--" + tagInfo.getKeyword() + "--cannot be dealt with.\n");
             Preferences.debug("\"" + tagInfo.getKeyword() + "\" cannot be found as a list;"
-                    + " this may be an error.  \n");
+                    + " this may be an error.  \n", Preferences.DEBUG_FILEIO);
         }
 
         return stuff;
@@ -711,7 +711,7 @@ public class FileDicomTag extends ModelSerialCloneable {
                             break;
                     }
                 } catch (final NumberFormatException error) {
-                    Preferences.debug("FileDICOMTag.fromAStoVisibleString: " + age + " \n");
+                    Preferences.debug("FileDICOMTag.fromAStoVisibleString: " + age + " \n", Preferences.DEBUG_FILEIO);
                 }
             }
 
