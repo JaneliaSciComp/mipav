@@ -446,7 +446,7 @@ public class FileSTK extends FileBase {
             boolean moreIFDs = true;
             imgResols = new float[5];
 
-            Preferences.debug("\n ************** FileSTK.openIFD: Opening = " + fileName + "\n");
+            Preferences.debug("\n ************** FileSTK.openIFD: Opening = " + fileName + "\n", Preferences.DEBUG_FILEIO);
             tileOffsetNumber = 0;
             tileByteNumber = 0;
 
@@ -455,7 +455,7 @@ public class FileSTK extends FileBase {
                 moreIFDs = openIFD(fileInfo);
             }
 
-            Preferences.debug("Just past init IFD read");
+            Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
             if (doTile) {
                 tilesPerSlice = tilesAcross * tilesDown;
@@ -484,7 +484,7 @@ public class FileSTK extends FileBase {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
 
 
-            Preferences.debug("imageSlice = " + imageSlice);
+            Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
 
             if (imageSlice > 1) {
 
@@ -986,7 +986,7 @@ public class FileSTK extends FileBase {
             throw new IOException("First 2 IFD bytes are an illegal " + nDirEntries);
         }
 
-        Preferences.debug("\nOpenIFD: Entries = " + nDirEntries + "\n");
+        Preferences.debug("\nOpenIFD: Entries = " + nDirEntries + "\n", Preferences.DEBUG_FILEIO);
 
         for (i = 0; i < nDirEntries; i++) {
 
@@ -1174,60 +1174,61 @@ public class FileSTK extends FileBase {
                 // Ignore these fields for now
                 value_offset = getInt(endianess);
             } else {
-                Preferences.debug("\nOpenIFD: Unknown field type = " + type + " Tag = " + tag + "\n");
+                Preferences.debug("\nOpenIFD: Unknown field type = " + type + " Tag = " + tag + "\n", 
+                		Preferences.DEBUG_FILEIO);
                 throw new IOException("OpenIFD: Unknown field type = " + type + " Tag = " + tag);
             }
 
-            Preferences.debug("\nFileSTK.openIFD: Tag = " + tag + "\n");
+            Preferences.debug("\nFileSTK.openIFD: Tag = " + tag + "\n", Preferences.DEBUG_FILEIO);
 
             switch (type) {
 
                 case BYTE:
-                    Preferences.debug("FileSTK.openIFD: Type = BYTE  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = BYTE  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ASCII:
-                    Preferences.debug("FileSTK.openIFD: Type = ASCII  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = ASCII  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SHORT:
-                    Preferences.debug("FileSTK.openIFD: Type = SHORT  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = SHORT  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case LONG:
-                    Preferences.debug("FileSTK.openIFD: Type = LONG  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = LONG  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case RATIONAL:
-                    Preferences.debug("FileSTK.openIFD: Type = RATIONAL  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = RATIONAL  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SBYTE:
-                    Preferences.debug("FileSTK.openIFD: Type = SBYTE  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = SBYTE  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case UNDEFINED:
-                    Preferences.debug("FileSTK.openIFD: Type = UNDEFINED  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = UNDEFINED  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SSHORT:
-                    Preferences.debug("FileSTK.openIFD: Type = SSHORT  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = SSHORT  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SLONG:
-                    Preferences.debug("FileSTK.openIFD: Type = SLONG  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = SLONG  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SRATIONAL:
-                    Preferences.debug("FileSTK.openIFD: Type = SRATIONAL  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = SRATIONAL  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case FLOAT:
-                    Preferences.debug("FileSTK.openIFD: Type = FLOAT  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = FLOAT  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case DOUBLE:
-                    Preferences.debug("FileSTK.openIFD: Type = DOUBLE  Count = " + count + "\n");
+                    Preferences.debug("FileSTK.openIFD: Type = DOUBLE  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
             }
 
@@ -1243,12 +1244,13 @@ public class FileSTK extends FileBase {
             if ((type != DOUBLE) && (type != FLOAT)) {
 
                 for (i1 = 0; ((i1 < ecount) && (i1 < 25000)); i1++) {
-                    Preferences.debug("FileSTK.openIFD: value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n");
+                    Preferences.debug("FileSTK.openIFD: value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n",
+                    		Preferences.DEBUG_FILEIO);
                 }
             } else if ((type == DOUBLE) && (count == 1)) {
-                Preferences.debug("FileSTK.openIFD: value = " + valueDouble + "\n");
+                Preferences.debug("FileSTK.openIFD: value = " + valueDouble + "\n", Preferences.DEBUG_FILEIO);
             } else if ((type == FLOAT) && (count == 1)) {
-                Preferences.debug("FileSTK.openIFD: value = " + valueFloat + "\n");
+                Preferences.debug("FileSTK.openIFD: value = " + valueFloat + "\n", Preferences.DEBUG_FILEIO);
             }
 
             switch (tag) {
@@ -1262,27 +1264,27 @@ public class FileSTK extends FileBase {
                         throw new IOException("NEW_SUBFILE_TYPE has illegal count = " + count + "\n");
                     }
 
-                    Preferences.debug("FileSTK.openIFD: tag = NEW_SUBTYPE_FILE\n");
+                    Preferences.debug("FileSTK.openIFD: tag = NEW_SUBTYPE_FILE\n", Preferences.DEBUG_FILEIO);
                     if ((valueArray[0] & 0x01) == 0x01) {
                         Preferences.debug("Image is a reduced resolution version of another " +
-                                          "image in this TIFF file\n");
+                                          "image in this TIFF file\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug("Image is not a reduced resolution version of another " +
-                                          "image in this TIFF file\n");
+                                          "image in this TIFF file\n", Preferences.DEBUG_FILEIO);
                     }
 
                     if ((valueArray[0] & 0x02) == 0x02) {
-                        Preferences.debug("Image is a single page of a multi-page image\n");
+                        Preferences.debug("Image is a single page of a multi-page image\n", Preferences.DEBUG_FILEIO);
                     } else {
-                        Preferences.debug("Image is not a single page of a multi-page image\n");
+                        Preferences.debug("Image is not a single page of a multi-page image\n", Preferences.DEBUG_FILEIO);
                     }
 
                     if ((valueArray[0] & 0x04) == 0x04) {
                         Preferences.debug("Images defines a transparency mask for another image " +
-                                          "in this TIFF file\n");
+                                          "in this TIFF file\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug("Images does not define a transparency mask for another image " +
-                                          "in this TIFF file\n");
+                                          "in this TIFF file\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -1297,7 +1299,7 @@ public class FileSTK extends FileBase {
                     }
 
                     xDim = (int) valueArray[0];
-                    Preferences.debug("FileSTK.openIFD: Image_Width = " + xDim + "\n");
+                    Preferences.debug("FileSTK.openIFD: Image_Width = " + xDim + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case IMAGE_LENGTH:
@@ -1310,7 +1312,7 @@ public class FileSTK extends FileBase {
                     }
 
                     yDim = (int) valueArray[0];
-                    Preferences.debug("FileSTK.openIFD: Image_Length = " + yDim + "\n");
+                    Preferences.debug("FileSTK.openIFD: Image_Length = " + yDim + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case BITS_PER_SAMPLE:
@@ -1319,7 +1321,8 @@ public class FileSTK extends FileBase {
                     }
 
                     if (count == 1) {
-                        Preferences.debug("FileSTK.openIFD: BitsPerSample = " + valueArray[0] + "\n");
+                        Preferences.debug("FileSTK.openIFD: BitsPerSample = " + valueArray[0] + "\n",
+                        		Preferences.DEBUG_FILEIO);
 
                         switch ((int) valueArray[0]) {
 
@@ -1347,10 +1350,10 @@ public class FileSTK extends FileBase {
                                 throw new IOException("TIFF Tag BitsPerSample has illegal value = " + valueArray[0]);
                         }
                     } else if (count > 1) {
-                        Preferences.debug("FileSTK.openIFD: BitsPerSample\n");
+                        Preferences.debug("FileSTK.openIFD: BitsPerSample\n", Preferences.DEBUG_FILEIO);
 
                         for (i1 = 0; i1 < count; i1++) {
-                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n");
+                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n", Preferences.DEBUG_FILEIO);
                         }
 
                         fileInfo.setDataType(ModelStorageBase.ARGB);
@@ -1367,7 +1370,7 @@ public class FileSTK extends FileBase {
                         throw new IOException("ROWS_PER_STRIP has illegal count = " + count + "\n");
                     }
 
-                    Preferences.debug("ROWS_PER_STRIP = " + valueArray[0] + "\n");
+                    Preferences.debug("ROWS_PER_STRIP = " + valueArray[0] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case STRIP_OFFSETS:
@@ -1377,13 +1380,14 @@ public class FileSTK extends FileBase {
 
                     dataOffsets[imageSlice] = new Vector<Index>();
                     if (count == 1) {
-                        Preferences.debug("FileSTK.openIFD: Strip_offset = " + valueArray[0] + "\n");
+                        Preferences.debug("FileSTK.openIFD: Strip_offset = " + valueArray[0] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                         dataOffsets[imageSlice].addElement(new Index((int) valueArray[0]));
                     } else if (count > 1) {
-                        Preferences.debug("FileSTK.openIFD: Strip_offset\n");
+                        Preferences.debug("FileSTK.openIFD: Strip_offset\n", Preferences.DEBUG_FILEIO);
 
                         for (i1 = 0; i1 < count; i1++) {
-                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n");
+                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n", Preferences.DEBUG_FILEIO);
                             dataOffsets[imageSlice].addElement(new Index((int) valueArray[i1]));
                         }
                     }
@@ -1396,13 +1400,14 @@ public class FileSTK extends FileBase {
                     }
 
                     if (count == 1) {
-                        Preferences.debug("FileSTK.openIFD: Strip byte counts = " + valueArray[0] + "\n");
+                        Preferences.debug("FileSTK.openIFD: Strip byte counts = " + valueArray[0] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                         ((Index) (dataOffsets[imageSlice].elementAt(0))).byteCount = (int) valueArray[0];
                     } else if (count > 1) {
-                        Preferences.debug("FileSTK.openIFD. Strip byte counts\n");
+                        Preferences.debug("FileSTK.openIFD. Strip byte counts\n", Preferences.DEBUG_FILEIO);
 
                         for (i1 = 0; i1 < count; i1++) {
-                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n");
+                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n", Preferences.DEBUG_FILEIO);
                             ((Index) (dataOffsets[imageSlice].elementAt(i1))).byteCount = (int) valueArray[i1];
                         }
                     }
@@ -1422,24 +1427,24 @@ public class FileSTK extends FileBase {
                         throw new IOException("PHOTO_INTERP has illegal value = " + valueArray[0] + "\n");
                     }
 
-                    Preferences.debug("FileSTK.openIFD: PhotoInterp= " + valueArray[0] + "\n");
+                    Preferences.debug("FileSTK.openIFD: PhotoInterp= " + valueArray[0] + "\n", Preferences.DEBUG_FILEIO);
                     if (valueArray[0] == 1) { // Black is zero
                         fileInfo.setPhotometric((short) 1);
                         Preferences.debug("FileSTK.openIFD: PhotoInterp = Black is zero\n" +
-                                          "For bilevel and grayscale images\n");
+                                          "For bilevel and grayscale images\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 0) { // white is zero
                         fileInfo.setPhotometric((short) 0);
                         Preferences.debug("FileSTK.openIFD: PhotoInterp = White is zero\n" +
-                                          "For bilevel and grayscale images\n");
+                                          "For bilevel and grayscale images\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 2) { // Color RGB
                         fileInfo.setPhotometric((short) 2);
-                        Preferences.debug("FileSTK.openIFD: PhotoInterp = RGB\n");
+                        Preferences.debug("FileSTK.openIFD: PhotoInterp = RGB\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 3) { // Color Indexed
                         fileInfo.setPhotometric((short) 3);
-                        Preferences.debug("FileSTK.openIFD: PhotoInterp = Palette color\n");
+                        Preferences.debug("FileSTK.openIFD: PhotoInterp = Palette color\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 4) { // Transparency Mask
                         fileInfo.setPhotometric((short) 4);
-                        Preferences.debug("FileSTK.openIFD: PhotoInterp = Transparency Mask\n");
+                        Preferences.debug("FileSTK.openIFD: PhotoInterp = Transparency Mask\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -1453,7 +1458,7 @@ public class FileSTK extends FileBase {
                         throw new IOException("SAMPLES_PER_PIXEL has illegal count = " + count + "\n");
                     }
 
-                    Preferences.debug("FileSTK.openIFD: samplesPerPixel = " + valueArray[0] + "\n");
+                    Preferences.debug("FileSTK.openIFD: samplesPerPixel = " + valueArray[0] + "\n", Preferences.DEBUG_FILEIO);
                     samplesPerPixel = (int) valueArray[0];
                     break;
 
@@ -1472,10 +1477,10 @@ public class FileSTK extends FileBase {
 
                     if (valueArray[0] == 1) { // can be black and white or color
                         chunky = true;
-                        Preferences.debug("FileSTK.openIFD: planar config = chunky \n");
+                        Preferences.debug("FileSTK.openIFD: planar config = chunky \n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 2) { // Color RGB
                         chunky = false;
-                        Preferences.debug("FileSTK.openIFD: planar config = RRRRR, GGGG, BBBB. \n");
+                        Preferences.debug("FileSTK.openIFD: planar config = RRRRR, GGGG, BBBB. \n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -1497,10 +1502,10 @@ public class FileSTK extends FileBase {
                         throw new IOException("Modified Huffman run length encoding is not supported\n");
                     } else if (valueArray[0] == 1) {
                         packBit = false;
-                        Preferences.debug("FileSTK.openIFD: compression = no compression\n ");
+                        Preferences.debug("FileSTK.openIFD: compression = no compression\n ", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 32773) {
                         packBit = true;
-                        Preferences.debug("FileSTK.openIFD: compression = packed bit\n ");
+                        Preferences.debug("FileSTK.openIFD: compression = packed bit\n ", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -1549,75 +1554,75 @@ public class FileSTK extends FileBase {
                     if (valueArray[0] == Unit.MILLIMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MILLIMETERS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MILLIMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = UNKNOWN\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = UNKNOWN\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.INCHES.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = INCHES\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = INCHES\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MILS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MILS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MILS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.CENTIMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = CENTIMETERS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = CENTIMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.ANGSTROMS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.ANGSTROMS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.ANGSTROMS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = ANGSTROMS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = ANGSTROMS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.NANOMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = NANOMETERS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = NANOMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MICROMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MICROMETERS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MICROMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.METERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = METERS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = METERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.KILOMETERS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.KILOMETERS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.KILOMETERS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = KILOMETERS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = KILOMETERS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MILES.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILES.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILES.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MILES\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MILES\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.NANOSEC.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = NANOSEC\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = NANOSEC\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MICROSEC.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MICROSEC\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MICROSEC\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MILLISEC.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MILLISEC\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MILLISEC\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.SECONDS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = SECONDS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = SECONDS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.MINUTES.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MINUTES\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = MINUTES\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.HOURS.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = HOURS\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = HOURS\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == Unit.HZ.getLegacyNum()) {
                         fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 0);
                         fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 1);
-                        Preferences.debug("FileSTK.openIFD: Resolution Unit = HERTZ\n");
+                        Preferences.debug("FileSTK.openIFD: Resolution Unit = HERTZ\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -1635,7 +1640,7 @@ public class FileSTK extends FileBase {
                     denominator = valueArray[1];
                     imgResols[0] = (float) numerator / denominator;
                     imgResols[0] = 1 / imgResols[0];
-                    Preferences.debug("FileSTK.openIFD: X Resolution = " + imgResols[0] + "\n");
+                    Preferences.debug("FileSTK.openIFD: X Resolution = " + imgResols[0] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case YRESOLUTION:
@@ -1651,7 +1656,7 @@ public class FileSTK extends FileBase {
                     denominator = valueArray[1];
                     imgResols[1] = (float) numerator / denominator;
                     imgResols[1] = 1 / imgResols[1];
-                    Preferences.debug("FileSTK.openIFD: Y Resolution = " + imgResols[1] + "\n");
+                    Preferences.debug("FileSTK.openIFD: Y Resolution = " + imgResols[1] + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ZRESOLUTION:
@@ -1664,7 +1669,7 @@ public class FileSTK extends FileBase {
                     }
 
                     imgResols[2] = (float) valueDouble;
-                    Preferences.debug("FileSTK.openIFD: Z Resolution = " + imgResols[2] + "\n");
+                    Preferences.debug("FileSTK.openIFD: Z Resolution = " + imgResols[2] + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
                     break;
 
@@ -1678,7 +1683,7 @@ public class FileSTK extends FileBase {
                     }
 
                     imgResols[3] = (float) valueDouble;
-                    Preferences.debug("FileSTK.openIFD: T Resolution = " + imgResols[3] + "\n");
+                    Preferences.debug("FileSTK.openIFD: T Resolution = " + imgResols[3] + "\n", Preferences.DEBUG_FILEIO);
                     fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 3);
                     break;
 
@@ -1693,9 +1698,9 @@ public class FileSTK extends FileBase {
 
                     doTile = true;
                     tileWidth = (int) valueArray[0];
-                    Preferences.debug("FileSTK.openIFD: tileWidth = " + tileWidth + "\n");
+                    Preferences.debug("FileSTK.openIFD: tileWidth = " + tileWidth + "\n", Preferences.DEBUG_FILEIO);
                     tilesAcross = (xDim + tileWidth - 1) / tileWidth;
-                    Preferences.debug("FileSTK.openIFD: tilesAcross = " + tilesAcross + "\n");
+                    Preferences.debug("FileSTK.openIFD: tilesAcross = " + tilesAcross + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TILE_LENGTH:
@@ -1708,9 +1713,9 @@ public class FileSTK extends FileBase {
                     }
 
                     tileLength = (int) valueArray[0];
-                    Preferences.debug("FileSTK.openIFD: tileLength = " + tileLength + "\n");
+                    Preferences.debug("FileSTK.openIFD: tileLength = " + tileLength + "\n", Preferences.DEBUG_FILEIO);
                     tilesDown = (yDim + tileLength - 1) / tileLength;
-                    Preferences.debug("FileSTK.openIFD: tilesDown = " + tilesDown + "\n");
+                    Preferences.debug("FileSTK.openIFD: tilesDown = " + tilesDown + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case TILE_OFFSETS:
@@ -1724,8 +1729,8 @@ public class FileSTK extends FileBase {
                         tilesPerImage = count / samplesPerPixel;
                     }
 
-                    Preferences.debug("FileSTK.openIFD: tilesPerImage = " + tilesPerImage + "\n");
-                    Preferences.debug("FileSTK.openIFD: tileOffsets are above\n");
+                    Preferences.debug("FileSTK.openIFD: tilesPerImage = " + tilesPerImage + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("FileSTK.openIFD: tileOffsets are above\n", Preferences.DEBUG_FILEIO);
                     if (tileOffsetNumber == 0) {
                         tileOffsets = new int[count];
 
@@ -1774,7 +1779,7 @@ public class FileSTK extends FileBase {
                         }
                     }
 
-                    Preferences.debug("FileSTK.openIFD: tileByteCounts are above\n");
+                    Preferences.debug("FileSTK.openIFD: tileByteCounts are above\n", Preferences.DEBUG_FILEIO);
                     if (tileByteNumber == 0) {
                         tileByteCounts = new int[count];
 
@@ -1826,7 +1831,7 @@ public class FileSTK extends FileBase {
                         if (imageDescription[i1] == 0) {
                             str = new String(imageDescription, j, i1 - j);
                             Preferences.debug("FileSTK.openIFD: imageDescription for plane number " + planeNumber +
-                                              ":\n" + str + "\n");
+                                              ":\n" + str + "\n", Preferences.DEBUG_FILEIO);
                             j = i1 + 1;
                             planeNumber++;
                         }
@@ -1840,7 +1845,8 @@ public class FileSTK extends FileBase {
                     }
 
                     for (i1 = 0; i1 < count; i1++) {
-                        Preferences.debug("FileSTK.openIFD: minSampleValue[" + i1 + "] = " + valueArray[i1] + "\n");
+                        Preferences.debug("FileSTK.openIFD: minSampleValue[" + i1 + "] = " + valueArray[i1] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -1851,7 +1857,8 @@ public class FileSTK extends FileBase {
                     }
 
                     for (i1 = 0; i1 < count; i1++) {
-                        Preferences.debug("FileSTK.openIFD: maxSampleValue[" + i1 + "] = " + valueArray[i1] + "\n");
+                        Preferences.debug("FileSTK.openIFD: maxSampleValue[" + i1 + "] = " + valueArray[i1] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -1867,7 +1874,7 @@ public class FileSTK extends FileBase {
                     }
 
                     str = new String(software);
-                    Preferences.debug("FileSTK.openIFD: software = " + str + "\n");
+                    Preferences.debug("FileSTK.openIFD: software = " + str + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case DATE_TIME:
@@ -1885,7 +1892,7 @@ public class FileSTK extends FileBase {
                     }
 
                     str = new String(dateTime);
-                    Preferences.debug("FileSTK.openIFD: dateTime = " + str + "\n");
+                    Preferences.debug("FileSTK.openIFD: dateTime = " + str + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SAMPLE_FORMAT:
@@ -1894,16 +1901,18 @@ public class FileSTK extends FileBase {
                     }
 
                     for (i1 = 0; i1 < count; i1++) {
-                        Preferences.debug("FileSTK.openIFD: sampleFormat[ " + i1 + "] = " + valueArray[i1] + "\n");
+                        Preferences.debug("FileSTK.openIFD: sampleFormat[ " + i1 + "] = " + valueArray[i1] + "\n", 
+                        		Preferences.DEBUG_FILEIO);
 
                         if (valueArray[i1] == 1) {
-                            Preferences.debug("FileSTK.openIFD: unsigned integer data\n");
+                            Preferences.debug("FileSTK.openIFD: unsigned integer data\n", Preferences.DEBUG_FILEIO);
                         } else if (valueArray[i1] == 2) {
-                            Preferences.debug("FileSTK.openIFD: two's complement signed integer data\n");
+                            Preferences.debug("FileSTK.openIFD: two's complement signed integer data\n", 
+                            		Preferences.DEBUG_FILEIO);
                         } else if (valueArray[i1] == 3) {
-                            Preferences.debug("FileSTK.openIFD: IEEE floating point data\n");
+                            Preferences.debug("FileSTK.openIFD: IEEE floating point data\n", Preferences.DEBUG_FILEIO);
                         } else if (valueArray[i1] == 4) {
-                            Preferences.debug("FileSTK.openIFD: undefined data format\n");
+                            Preferences.debug("FileSTK.openIFD: undefined data format\n", Preferences.DEBUG_FILEIO);
                         }
                     }
 
@@ -1919,11 +1928,11 @@ public class FileSTK extends FileBase {
                     }
 
                     if (valueArray[0] == 1) {
-                        Preferences.debug("PREDICTOR = 1 for no prediction scheme used\n");
+                        Preferences.debug("PREDICTOR = 1 for no prediction scheme used\n", Preferences.DEBUG_FILEIO);
                     } else if (valueArray[0] == 2) {
-                        Preferences.debug("PREDICTOR = 2 for horizontal differencing\n");
+                        Preferences.debug("PREDICTOR = 2 for horizontal differencing\n", Preferences.DEBUG_FILEIO);
                     } else {
-                        Preferences.debug("PREDICTOR = " + valueArray[0] + ", an illegal value");
+                        Preferences.debug("PREDICTOR = " + valueArray[0] + ", an illegal value", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -1936,8 +1945,8 @@ public class FileSTK extends FileBase {
                     numberImages = count;
                     zDistanceNumerator = (int) valueArray[0];
                     zDistanceDenominator = (int) valueArray[1];
-                    Preferences.debug("zDistanceNumerator = " + zDistanceNumerator + "\n");
-                    Preferences.debug("zDistanceDenominator = " + zDistanceDenominator + "\n");
+                    Preferences.debug("zDistanceNumerator = " + zDistanceNumerator + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("zDistanceDenominator = " + zDistanceDenominator + "\n", Preferences.DEBUG_FILEIO);
                     zSameDistance = true;
                     for (i1 = 1; i1 < count; i1++) {
 
@@ -1949,11 +1958,11 @@ public class FileSTK extends FileBase {
 
                     if ((numberImages > 1) && (zSameDistance) && (zDistanceNumerator == 0)) {
                         imgResols[2] = 0.0f;
-                        Preferences.debug("Slices are at the same z position\n");
+                        Preferences.debug("Slices are at the same z position\n", Preferences.DEBUG_FILEIO);
                         fileInfo.setSameZPosition(true);
                     } else if ((numberImages > 1) && (zSameDistance) && (zDistanceDenominator != 0)) {
                         imgResols[2] = (float) zDistanceNumerator / zDistanceDenominator;
-                        Preferences.debug("z resolution = " + imgResols[2] + "\n");
+                        Preferences.debug("z resolution = " + imgResols[2] + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -1976,7 +1985,7 @@ public class FileSTK extends FileBase {
                             raFile.read(cal);
 
                             String calString = new String(cal);
-                            Preferences.debug("Calibration units = " + calString + "\n");
+                            Preferences.debug("Calibration units = " + calString + "\n", Preferences.DEBUG_FILEIO);
                             raFile.seek(saveLocus);
                         } else if (valueArray[i1] == 7) { // Name
                             value_offset = (int) valueArray[i1 + 1];
@@ -1989,7 +1998,7 @@ public class FileSTK extends FileBase {
                             raFile.read(win);
 
                             String winString = new String(win);
-                            Preferences.debug("Window name = " + winString + "\n");
+                            Preferences.debug("Window name = " + winString + "\n", Preferences.DEBUG_FILEIO);
                             raFile.seek(saveLocus);
                         }
                     }
@@ -2003,7 +2012,8 @@ public class FileSTK extends FileBase {
 
         imageSlice++;
         IFDoffsets[imageSlice] = getInt(endianess);
-        Preferences.debug("\nFileSTK.openIFD: Ref. to next imageSlice = " + IFDoffsets[imageSlice] + "\n");
+        Preferences.debug("\nFileSTK.openIFD: Ref. to next imageSlice = " + IFDoffsets[imageSlice] + "\n", 
+        		Preferences.DEBUG_FILEIO);
 
         if (IFDoffsets[imageSlice] == 0) {
             return false; // Done reading images
