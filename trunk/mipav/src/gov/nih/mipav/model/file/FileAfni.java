@@ -1407,7 +1407,7 @@ public class FileAfni extends FileBase {
                 rr.Z = origZDim - 1 - rr.Z;
             }
 
-            Preferences.debug("svec rr = " + rr.X + "," + rr.Y + "," + rr.Z + "\n");
+            Preferences.debug("svec rr = " + rr.X + "," + rr.Y + "," + rr.Z + "\n", Preferences.DEBUG_FILEIO);
 
             xfrm = new TransMatrix(4);
             center = new Vector3f();
@@ -1430,7 +1430,8 @@ public class FileAfni extends FileBase {
 
 
             xfrm.setTranslate(center.X, center.Y, center.Z);
-            Preferences.debug("center.X = " + center.X + " center.Y = " + center.Y + " center.Z = " + center.Z + "\n");
+            Preferences.debug("center.X = " + center.X + " center.Y = " + center.Y + " center.Z = " + center.Z + "\n",
+            		Preferences.DEBUG_FILEIO);
 
             // Since our interpolation routines are doing a output to input mapping, create the mbac
             // transformation matrix which is the transpose(also the inverse) of the mfor matrix.
@@ -1443,9 +1444,9 @@ public class FileAfni extends FileBase {
             gamma.X = warpData[15];
             gamma.Y = warpData[16];
             gamma.Z = warpData[17];
-            Preferences.debug("mbac alpha = " + alpha.X + "," + alpha.Y + "," + alpha.Z + "\n");
-            Preferences.debug("mbac beta = " + beta.X + "," + beta.Y + "," + beta.Z + "\n");
-            Preferences.debug("mbac gamma = " + gamma.X + "," + gamma.Y + "," + gamma.Z + "\n");
+            Preferences.debug("mbac alpha = " + alpha.X + "," + alpha.Y + "," + alpha.Z + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("mbac beta = " + beta.X + "," + beta.Y + "," + beta.Z + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("mbac gamma = " + gamma.X + "," + gamma.Y + "," + gamma.Z + "\n", Preferences.DEBUG_FILEIO);
             xfrm.setRotate(alpha, beta, gamma);
 
 
@@ -1462,7 +1463,7 @@ public class FileAfni extends FileBase {
             Talx = Math.abs(dicomOrigin[0]);
             Taly = Math.abs(dicomOrigin[1]);
             Talz = Math.abs(dicomOrigin[2]);
-            Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n");
+            Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n", Preferences.DEBUG_FILEIO);
 
             
             Tr03 = (iXres * rr.X) - (Talx * xfrm.Get(0, 0)) - (Taly * xfrm.Get(0, 1)) - (Talz * xfrm.Get(0, 2));
@@ -1525,7 +1526,7 @@ public class FileAfni extends FileBase {
             TCenter.Y = Taly / oYres;
             TCenter.Z = Talz / oZres;
             Preferences.debug("Transformed Talairach origin = " + TCenter.X + "  " + TCenter.Y + "  " + TCenter.Z +
-                              "\n");
+                              "\n", Preferences.DEBUG_FILEIO);
 
             // Find the new pc inferior edge in the new coordinates
             b.set(0, 0, pcDicom.X - (xfrm.Get(0, 3) / iXres));
@@ -1644,7 +1645,7 @@ public class FileAfni extends FileBase {
              *  MipavUtil.displayError("Error! The AC + PC + mid-sag points do not form a good plane.");}*/
 
             size = (float) (Math.acos((double) size) * 180.0 / Math.PI); // report angle
-            Preferences.debug("Angular deviation between AC+PC+mid-sag pts: " + size + " degrees\n");
+            Preferences.debug("Angular deviation between AC+PC+mid-sag pts: " + size + " degrees\n", Preferences.DEBUG_FILEIO);
 
             alpha = sclAdd(0.5f, alpha1, 0.5f, alpha2);
             alpha = norm(alpha);
@@ -1745,7 +1746,7 @@ public class FileAfni extends FileBase {
                     rr.Z = origZDim - 1 - rr.Z;
                 }
 
-                Preferences.debug("svec rr = " + rr.X + "," + rr.Y + "," + rr.Z + "\n");
+                Preferences.debug("svec rr = " + rr.X + "," + rr.Y + "," + rr.Z + "\n", Preferences.DEBUG_FILEIO);
 
                 xfrm = new TransMatrix(4);
                 center = new Vector3f();
@@ -1755,7 +1756,7 @@ public class FileAfni extends FileBase {
 
                 xfrm.setTranslate(center.X, center.Y, center.Z);
                 Preferences.debug("center.X = " + center.X + " center.Y = " + center.Y + " center.Z = " + center.Z +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_FILEIO);
 
                 // Since our interpolation routines are doing a output to input mapping, create the mbac
                 // transformation matrix which is the transpose(also the inverse) of the mfor matrix.
@@ -1768,9 +1769,9 @@ public class FileAfni extends FileBase {
                 gamma.X = warpData[15];
                 gamma.Y = warpData[16];
                 gamma.Z = warpData[17];
-                Preferences.debug("mbac alpha = " + alpha.X + "," + alpha.Y + "," + alpha.Z + "\n");
-                Preferences.debug("mbac beta = " + beta.X + "," + beta.Y + "," + beta.Z + "\n");
-                Preferences.debug("mbac gamma = " + gamma.X + "," + gamma.Y + "," + gamma.Z + "\n");
+                Preferences.debug("mbac alpha = " + alpha.X + "," + alpha.Y + "," + alpha.Z + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("mbac beta = " + beta.X + "," + beta.Y + "," + beta.Z + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("mbac gamma = " + gamma.X + "," + gamma.Y + "," + gamma.Z + "\n", Preferences.DEBUG_FILEIO);
                 xfrm.setRotate(alpha, beta, gamma);
 
                 /* Code to make cubic voxels required in acpc and Talairach space */
@@ -1782,7 +1783,7 @@ public class FileAfni extends FileBase {
                 Talx = Math.abs(origin[0]);
                 Taly = Math.abs(origin[1]);
                 Talz = Math.abs(origin[2]);
-                Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n");
+                Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n", Preferences.DEBUG_FILEIO);
 
                 
                 Tr03 = (iXres * rr.X) - (Talx * xfrm.Get(0, 0)) - (Taly * xfrm.Get(0, 1)) - (Talz * xfrm.Get(0, 2));
@@ -1813,7 +1814,7 @@ public class FileAfni extends FileBase {
                 TCenter.Y = Taly / oYres;
                 TCenter.Z = Talz / oZres;
                 Preferences.debug("Transformed Talairach origin = " + TCenter.X + "  " + TCenter.Y + "  " + TCenter.Z +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_FILEIO);
 
                 b.set(0, 0, Tr03 - xfrm.Get(0, 3));
                 b.set(1, 0, Tr13 - xfrm.Get(1, 3));
@@ -2009,7 +2010,8 @@ public class FileAfni extends FileBase {
                  *  MipavUtil.displayError("Error! The AC + PC + mid-sag points do not form a good plane.");      }*/
 
                 size = (float) (Math.acos((double) size) * 180.0 / Math.PI); // report angle
-                Preferences.debug("Angular deviation between AC+PC+mid-sag pts: " + size + " degrees\n");
+                Preferences.debug("Angular deviation between AC+PC+mid-sag pts: " + size + " degrees\n",
+                		Preferences.DEBUG_FILEIO);
 
                 alpha = sclAdd(0.5f, alpha1, 0.5f, alpha2);
                 alpha = norm(alpha);
@@ -2181,7 +2183,8 @@ public class FileAfni extends FileBase {
                     rrArray[i].Z = origZDim - 1 - rrArray[i].Z;
                 }
 
-                Preferences.debug("svec rr = " + rrArray[i].X + "," + rrArray[i].Y + "," + rrArray[i].Z + "\n");
+                Preferences.debug("svec rr = " + rrArray[i].X + "," + rrArray[i].Y + "," + rrArray[i].Z + "\n",
+                		Preferences.DEBUG_FILEIO);
                 xfrm.MakeIdentity();
                 xfrm.setTranslate(center.X, center.Y, center.Z);
 
@@ -2205,8 +2208,10 @@ public class FileAfni extends FileBase {
                 topX[i] = Math.min(dicomXDim - 1, Math.round((warpData[(i * 30) + 27] - origin[0]) / delta[0]));
                 topY[i] = Math.min(dicomYDim - 1, Math.round((warpData[(i * 30) + 28] - origin[1]) / delta[1]));
                 topZ[i] = Math.min(dicomZDim - 1, Math.round((warpData[(i * 30) + 29] - origin[2]) / delta[2]));
-                Preferences.debug("botX = " + botX[i] + " botY = " + botY[i] + " botZ = " + botZ[i] + "\n");
-                Preferences.debug("topX = " + topX[i] + " topY = " + topY[i] + " topZ = " + topZ[i] + "\n");
+                Preferences.debug("botX = " + botX[i] + " botY = " + botY[i] + " botZ = " + botZ[i] + "\n",
+                		Preferences.DEBUG_FILEIO);
+                Preferences.debug("topX = " + topX[i] + " topY = " + topY[i] + " topZ = " + topZ[i] + "\n",
+                		Preferences.DEBUG_FILEIO);
                 
                 Tr03 = (iXres * rrArray[i].X) - (Talx * xfrm.Get(0, 0)) - (Taly * xfrm.Get(0, 1)) - (Talz * xfrm.Get(0, 2));
                 Tr13 = (iYres * rrArray[i].Y) - (Talx * xfrm.Get(1, 0)) - (Taly * xfrm.Get(1, 1)) - (Talz * xfrm.Get(1, 2));
@@ -2260,7 +2265,7 @@ public class FileAfni extends FileBase {
                 TalCenter.Y = Taly / oYres;
                 TalCenter.Z = Talz / oZres;
                 Preferences.debug("Transformed Talairach origin = " + TalCenter.X + "  " + TalCenter.Y + "  " +
-                                  TalCenter.Z + "\n");
+                                  TalCenter.Z + "\n", Preferences.DEBUG_FILEIO);
             } // for (i = 0; i < 12; i++)
 
             image.calcMinMax();
@@ -4791,7 +4796,7 @@ public class FileAfni extends FileBase {
 
                         if ((nameString).equalsIgnoreCase("TYPESTRING")) {
                             typeString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("TYPESTRING = " + typeString + "\n");
+                            Preferences.debug("TYPESTRING = " + typeString + "\n", Preferences.DEBUG_FILEIO);
 
                             if (typeString.equalsIgnoreCase("3DIM_HEAD_ANAT")) {
 
@@ -4809,11 +4814,11 @@ public class FileAfni extends FileBase {
 
                         } else if (nameString.equalsIgnoreCase("IDCODE_STRING")) {
                             idcodeString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("IDCODE_STRING = " + idcodeString + "\n");
+                            Preferences.debug("IDCODE_STRING = " + idcodeString + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setIDCodeString(idcodeString);
                         } else if (nameString.equalsIgnoreCase("IDCODE_DATE")) {
                             idcodeDateString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("IDCODE_DATE = " + idcodeDateString + "\n");
+                            Preferences.debug("IDCODE_DATE = " + idcodeDateString + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setIDCodeDate(idcodeDateString);
                         } else if (nameString.equalsIgnoreCase("BYTEORDER_STRING")) {
                             tmpString = new String(buffer, 0, countEntries - 1);
@@ -4828,99 +4833,107 @@ public class FileAfni extends FileBase {
                                                       tmpString);
                             }
 
-                            Preferences.debug("BYTE_ORDER_STRING = " + tmpString + "\n");
+                            Preferences.debug("BYTE_ORDER_STRING = " + tmpString + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setEndianess(endianess);
                         } // else if (nameString.equalsIgnoreCase("BYTEORDER_STRING"))
                         else if (nameString.equalsIgnoreCase("BRICK_LABS")) {
                             brickLabsString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("BRICK_LABS = " + brickLabsString + "\n");
+                            Preferences.debug("BRICK_LABS = " + brickLabsString + "\n", Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("HISTORY_NOTE")) {
                             historyNoteString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("HISTORY_NOTE = " + historyNoteString + "\n");
+                            Preferences.debug("HISTORY_NOTE = " + historyNoteString + "\n", Preferences.DEBUG_FILEIO);
                         } else if (nameString.substring(0, nameString.length() - 3).equalsIgnoreCase("NOTE_NUMBER_")) {
                             tmpString = nameString.substring(nameString.length() - 3);
 
                             if (tmpString.equals("001")) {
                                 noteNumber001String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_NUMBER_001 = " + noteNumber001String + "\n");
+                                Preferences.debug("NOTE_NUMBER_001 = " + noteNumber001String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteNumber001(noteNumber001String);
                             } else if (tmpString.equals("002")) {
                                 noteNumber002String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_NUMBER_002 = " + noteNumber002String + "\n");
+                                Preferences.debug("NOTE_NUMBER_002 = " + noteNumber002String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteNumber002(noteNumber002String);
                             } else if (tmpString.equals("003")) {
                                 noteNumber003String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_NUMBER_003 = " + noteNumber003String + "\n");
+                                Preferences.debug("NOTE_NUMBER_003 = " + noteNumber003String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteNumber003(noteNumber003String);
                             } else if (tmpString.equals("004")) {
                                 noteNumber004String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_NUMBER_004 = " + noteNumber004String + "\n");
+                                Preferences.debug("NOTE_NUMBER_004 = " + noteNumber004String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteNumber004(noteNumber004String);
                             } else if (tmpString.equals("005")) {
                                 noteNumber005String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_NUMBER_005 = " + noteNumber005String + "\n");
+                                Preferences.debug("NOTE_NUMBER_005 = " + noteNumber005String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteNumber005(noteNumber005String);
                             } else {
                                 tmpString = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug(nameString + " = " + tmpString);
+                                Preferences.debug(nameString + " = " + tmpString, Preferences.DEBUG_FILEIO);
                             }
                         } else if (nameString.substring(0, nameString.length() - 3).equalsIgnoreCase("NOTE_DATE_")) {
                             tmpString = nameString.substring(nameString.length() - 3);
 
                             if (tmpString.equals("001")) {
                                 noteDate001String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_DATE_001 = " + noteDate001String + "\n");
+                                Preferences.debug("NOTE_DATE_001 = " + noteDate001String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteDate001(noteDate001String);
                             } else if (tmpString.equals("002")) {
                                 noteDate002String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_DATE_002 = " + noteDate002String + "\n");
+                                Preferences.debug("NOTE_DATE_002 = " + noteDate002String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteDate002(noteDate002String);
                             } else if (tmpString.equals("003")) {
                                 noteDate003String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_DATE_003 = " + noteDate003String + "\n");
+                                Preferences.debug("NOTE_DATE_003 = " + noteDate003String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteDate003(noteDate003String);
                             } else if (tmpString.equals("004")) {
                                 noteDate004String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_DATE_004 = " + noteDate004String + "\n");
+                                Preferences.debug("NOTE_DATE_004 = " + noteDate004String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteDate004(noteDate004String);
                             } else if (tmpString.equals("005")) {
                                 noteDate005String = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug("NOTE_DATE_005 = " + noteDate005String + "\n");
+                                Preferences.debug("NOTE_DATE_005 = " + noteDate005String + "\n", Preferences.DEBUG_FILEIO);
                                 fileInfo.setNoteDate005(noteDate005String);
                             } else {
                                 tmpString = new String(buffer, 0, countEntries - 1);
-                                Preferences.debug(nameString + " = " + tmpString);
+                                Preferences.debug(nameString + " = " + tmpString, Preferences.DEBUG_FILEIO);
                             }
                         } else if (nameString.equalsIgnoreCase("VOLREG_ROTPARENT_IDCODE")) {
                             volregRotparentIdcodeString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("VOLREG_ROTPARENT_IDCODE = " + volregRotparentIdcodeString + "\n");
+                            Preferences.debug("VOLREG_ROTPARENT_IDCODE = " + volregRotparentIdcodeString + "\n", 
+                            		Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("VOLREG_ROTPARENT_NAME")) {
                             volregRotparentNameString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("VOLREG_ROTPARENT_NAME = " + volregRotparentNameString + "\n");
+                            Preferences.debug("VOLREG_ROTPARENT_NAME = " + volregRotparentNameString + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("VOLREG_GRIDPARENT_IDCODE")) {
                             volregGridparentIdcodeString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("VOLREG_GRIDPARENT_IDCODE = " + volregGridparentIdcodeString + "\n");
+                            Preferences.debug("VOLREG_GRIDPARENT_IDCODE = " + volregGridparentIdcodeString + "\n", 
+                            		Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("VOLREG_GRIDPARENT_NAME")) {
                             volregGridparentNameString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("VOLREG_GRIDPARENT_NAME = " + volregGridparentNameString + "\n");
+                            Preferences.debug("VOLREG_GRIDPARENT_NAME = " + volregGridparentNameString + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("VOLREG_INPUT_IDCODE")) {
                             volregInputIdcodeString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("VOLREG_INPUT_IDCODE = " + volregInputIdcodeString + "\n");
+                            Preferences.debug("VOLREG_INPUT_IDCODE = " + volregInputIdcodeString + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("VOLREG_INPUT_NAME")) {
                             volregInputNameString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("VOLREG_INPUT_NAME = " + volregInputNameString + "\n");
+                            Preferences.debug("VOLREG_INPUT_NAME = " + volregInputNameString + "\n", Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("VOLREG_BASE_IDCODE")) {
                             volregBaseIdcodeString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("VOLREG_BASE_IDCODE = " + volregBaseIdcodeString + "\n");
+                            Preferences.debug("VOLREG_BASE_IDCODE = " + volregBaseIdcodeString + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("VOLREG_BASE_NAME")) {
                             volregBaseNameString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("VOLREG_BASE_NAME = " + volregBaseNameString + "\n");
+                            Preferences.debug("VOLREG_BASE_NAME = " + volregBaseNameString + "\n", Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("IDCODE_ANAT_PARENT")) {
                             idcodeAnatParentString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("IDCODE_ANAT_PARENT = " + idcodeAnatParentString + "\n");
+                            Preferences.debug("IDCODE_ANAT_PARENT = " + idcodeAnatParentString + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("IDCODE_WARP_PARENT")) {
                             idcodeWarpParentString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("IDCODE_WARP_PARENT = " + idcodeWarpParentString + "\n");
+                            Preferences.debug("IDCODE_WARP_PARENT = " + idcodeWarpParentString + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("MARKS_LAB")) {
 
                             if (countEntries < 200) {
@@ -4975,40 +4988,43 @@ public class FileAfni extends FileBase {
                                 }
 
                                 if (marksHelpString[i] != null) {
-                                    Preferences.debug("MARKS_HELP[" + i + "] = " + marksHelpString[i] + "\n");
+                                    Preferences.debug("MARKS_HELP[" + i + "] = " + marksHelpString[i] + "\n",
+                                    		Preferences.DEBUG_FILEIO);
                                 }
                             } // for (i = 0; i < 10; i++)
                         } // else if (nameString.equalsIgnoreCase("MARKS_HELP"))
                         else if (nameString.equalsIgnoreCase("TAGSET_LABELS")) {
                             tagsetLabelsString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("TAGSET_LABELS = " + tagsetLabelsString + "\n");
+                            Preferences.debug("TAGSET_LABELS = " + tagsetLabelsString + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("LABEL_1")) {
                             label1String = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("LABEL_1 = " + label1String + "\n");
+                            Preferences.debug("LABEL_1 = " + label1String + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setLabel1(label1String);
                         } else if (nameString.equalsIgnoreCase("LABEL_2")) {
                             label2String = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("LABEL_2 = " + label2String + "\n");
+                            Preferences.debug("LABEL_2 = " + label2String + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setLabel2(label2String);
                         } else if (nameString.equalsIgnoreCase("DATASET_NAME")) {
                             datasetNameString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("DATASET_NAME = " + datasetNameString + "\n");
+                            Preferences.debug("DATASET_NAME = " + datasetNameString + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setDatasetName(datasetNameString);
                         } else if (nameString.equalsIgnoreCase("DATASET_KEYWORDS")) {
                             datasetKeywordsString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("DATASET_KEYWORDS = " + datasetKeywordsString + "\n");
+                            Preferences.debug("DATASET_KEYWORDS = " + datasetKeywordsString + "\n", Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("BRICK_KEYWORDS")) {
                             brickKeywordsString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("BRICK_KEYWORDS = " + brickKeywordsString + "\n");
+                            Preferences.debug("BRICK_KEYWORDS = " + brickKeywordsString + "\n", Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("WARP_PARENTNAME")) {
                             warpParentnameString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("WARP_PARENTNAME = " + warpParentnameString + "\n");
+                            Preferences.debug("WARP_PARENTNAME = " + warpParentnameString + "\n", Preferences.DEBUG_FILEIO);
                         } else if (nameString.equalsIgnoreCase("ANATOMY_PARENTNAME")) {
                             anatomyParentnameString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("ANATOMY_PARENTNAME = " + anatomyParentnameString + "\n");
+                            Preferences.debug("ANATOMY_PARENTNAME = " + anatomyParentnameString + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         } else {
                             tmpString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug(nameString + " = " + tmpString + "\n");
+                            Preferences.debug(nameString + " = " + tmpString + "\n", Preferences.DEBUG_FILEIO);
                         }
                     } // if (typeAttribute == STRING_ATTRIBUTE)
                     else if (typeAttribute == INTEGER_ATTRIBUTE) {
@@ -5130,7 +5146,7 @@ public class FileAfni extends FileBase {
                             switch (orientSpecific[0]) {
 
                                 case FileInfoBase.ORI_R2L_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC X = 0 for ORI_R2L_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC X = 0 for ORI_R2L_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertX = false;
                                     }
@@ -5138,7 +5154,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_L2R_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC X = 1 for ORI_L2R_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC X = 1 for ORI_L2R_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertX = true;
                                     }
@@ -5146,7 +5162,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_P2A_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC X = 2 for ORI_P2A_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC X = 2 for ORI_P2A_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertY = true;
                                     }
@@ -5154,7 +5170,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_A2P_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC X = 3 for ORI_A2P_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC X = 3 for ORI_A2P_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertY = false;
                                     }
@@ -5162,7 +5178,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_I2S_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC X = 4 for ORI_I2S_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC X = 4 for ORI_I2S_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertZ = false;
                                     }
@@ -5170,7 +5186,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_S2I_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC X = 5 for ORI_S2I_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC X = 5 for ORI_S2I_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertZ = true;
                                     }
@@ -5181,7 +5197,7 @@ public class FileAfni extends FileBase {
                             switch (orientSpecific[1]) {
 
                                 case FileInfoBase.ORI_R2L_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Y = 0 for ORI_R2L_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Y = 0 for ORI_R2L_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertX = false;
                                     }
@@ -5189,7 +5205,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_L2R_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Y = 1 for ORI_L2R_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Y = 1 for ORI_L2R_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertX = true;
                                     }
@@ -5197,7 +5213,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_P2A_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Y = 2 for ORI_P2A_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Y = 2 for ORI_P2A_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertY = true;
                                     }
@@ -5205,7 +5221,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_A2P_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Y = 3 for ORI_A2P_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Y = 3 for ORI_A2P_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertY = false;
                                     }
@@ -5213,7 +5229,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_I2S_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Y = 4 for ORI_I2S_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Y = 4 for ORI_I2S_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertZ = false;
                                     }
@@ -5221,7 +5237,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_S2I_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Y = 5 for ORI_S2I_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Y = 5 for ORI_S2I_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertZ = true;
                                     }
@@ -5232,7 +5248,7 @@ public class FileAfni extends FileBase {
                             switch (orientSpecific[2]) {
 
                                 case FileInfoBase.ORI_R2L_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Z = 0 for ORI_R2L_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Z = 0 for ORI_R2L_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertX = false;
                                     }
@@ -5240,7 +5256,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_L2R_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Z = 1 for ORI_L2R_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Z = 1 for ORI_L2R_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertX = true;
                                     }
@@ -5248,7 +5264,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_P2A_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Z = 2 for ORI_P2A_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Z = 2 for ORI_P2A_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertY = true;
                                     }
@@ -5256,7 +5272,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_A2P_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Z = 3 for ORI_A2P_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Z = 3 for ORI_A2P_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertY = false;
                                     }
@@ -5264,7 +5280,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_I2S_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Z = 4 for ORI_I2S_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Z = 4 for ORI_I2S_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertZ = false;
                                     }
@@ -5272,7 +5288,7 @@ public class FileAfni extends FileBase {
                                     break;
 
                                 case FileInfoBase.ORI_S2I_TYPE:
-                                    Preferences.debug("ORIENT_SPECIFIC Z = 5 for ORI_S2I_TYPE\n");
+                                    Preferences.debug("ORIENT_SPECIFIC Z = 5 for ORI_S2I_TYPE\n", Preferences.DEBUG_FILEIO);
                                     if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                         invertZ = true;
                                     }
@@ -5284,7 +5300,7 @@ public class FileAfni extends FileBase {
 
                             if (countEntries < 2) {
                                 Preferences.debug("AFNI Read Header Error: MARKS_FLAG has only " + countEntries +
-                                                  " instead of the needed 2\n");
+                                                  " instead of the needed 2\n", Preferences.DEBUG_FILEIO);
                             }
 
                             if (countEntries >= 1) {
@@ -5292,17 +5308,17 @@ public class FileAfni extends FileBase {
                                 switch (intVar[0]) {
 
                                     case MARKSET_ALIGN:
-                                        Preferences.debug("MARKS_FLAG[0] = 1 for MARKSET_ALIGN\n");
+                                        Preferences.debug("MARKS_FLAG[0] = 1 for MARKSET_ALIGN\n", Preferences.DEBUG_FILEIO);
                                         marksFlag = intVar[0];
                                         break;
 
                                     case MARKSET_BOUNDING:
-                                        Preferences.debug("MARKS_FLAG[0] = 2 for MARKSET_BOUNDING\n");
+                                        Preferences.debug("MARKS_FLAG[0] = 2 for MARKSET_BOUNDING\n", Preferences.DEBUG_FILEIO);
                                         marksFlag = intVar[0];
                                         break;
 
                                     default:
-                                        Preferences.debug("MARKS_FLAG[0] = " + intVar[0] + "\n");
+                                        Preferences.debug("MARKS_FLAG[0] = " + intVar[0] + "\n", Preferences.DEBUG_FILEIO);
                                         marksFlag = -1;
                                 }
 
@@ -5312,7 +5328,7 @@ public class FileAfni extends FileBase {
                             if (countEntries >= 2) {
 
                                 if (intVar[1] != 1) { // value should always be 1
-                                    Preferences.debug("MARKS_FLAG[1] = " + intVar[1] + "\n");
+                                    Preferences.debug("MARKS_FLAG[1] = " + intVar[1] + "\n", Preferences.DEBUG_FILEIO);
                                 }
                             } // if (countEntries >= 2)
                         } // else if (nameString.equalsIgnoreCase("MARKS_FLAG"))
@@ -5320,7 +5336,7 @@ public class FileAfni extends FileBase {
 
                             if (countEntries < 2) {
                                 Preferences.debug("AFNI Read Header Error: MARKS_FLAGS has only " + countEntries +
-                                                  " instead of the needed 2\n");
+                                                  " instead of the needed 2\n", Preferences.DEBUG_FILEIO);
                             }
 
                             if (countEntries >= 1) {
@@ -5328,17 +5344,18 @@ public class FileAfni extends FileBase {
                                 switch (intVar[0]) {
 
                                     case MARKSET_ALIGN:
-                                        Preferences.debug("MARKS_FLAGS[0] = 1 for MARKSET_ALIGN\n");
+                                        Preferences.debug("MARKS_FLAGS[0] = 1 for MARKSET_ALIGN\n", Preferences.DEBUG_FILEIO);
                                         marksFlags = intVar[0];
                                         break;
 
                                     case MARKSET_BOUNDING:
-                                        Preferences.debug("MARKS_FLAGS[0] = 2 for MARKSET_BOUNDING\n");
+                                        Preferences.debug("MARKS_FLAGS[0] = 2 for MARKSET_BOUNDING\n",
+                                        		Preferences.DEBUG_FILEIO);
                                         marksFlags = intVar[0];
                                         break;
 
                                     default:
-                                        Preferences.debug("MARKS_FLAGS[0] = " + intVar[0] + "\n");
+                                        Preferences.debug("MARKS_FLAGS[0] = " + intVar[0] + "\n", Preferences.DEBUG_FILEIO);
                                         marksFlags = -1;
                                 }
 
@@ -5348,7 +5365,7 @@ public class FileAfni extends FileBase {
                             if (countEntries >= 2) {
 
                                 if (intVar[1] != 1) { // value should always be 1
-                                    Preferences.debug("MARKS_FLAGS[1] = " + intVar[1] + "\n");
+                                    Preferences.debug("MARKS_FLAGS[1] = " + intVar[1] + "\n", Preferences.DEBUG_FILEIO);
                                 }
                             } // if (countEntries >= 2)
                         } // else if (nameString.equalsIgnoreCase("MARKS_FLAGS"))
@@ -5367,7 +5384,8 @@ public class FileAfni extends FileBase {
                             }
 
                             subBrickNumber = intVar[1];
-                            Preferences.debug("DATASET_RANK[1](sub-bricks or nval) = " + intVar[1] + "\n");
+                            Preferences.debug("DATASET_RANK[1](sub-bricks or nval) = " + intVar[1] + "\n",
+                            		Preferences.DEBUG_FILEIO);
                         } // else if (nameString.equalsIgnoreCase("DATASET_RANK"))
                         else if (nameString.equalsIgnoreCase("DATASET_DIMENSIONS")) {
 
@@ -5385,7 +5403,7 @@ public class FileAfni extends FileBase {
                                 throw new IOException("AFNI Read Header Error: xDim illegally = " + xDim);
                             }
 
-                            Preferences.debug("xDim = " + xDim + "\n");
+                            Preferences.debug("xDim = " + xDim + "\n", Preferences.DEBUG_FILEIO);
                             yDim = intVar[1];
 
                             if (yDim < 2) {
@@ -5393,7 +5411,7 @@ public class FileAfni extends FileBase {
                                 throw new IOException("AFNI Read Header Error: yDim illegally = " + yDim);
                             }
 
-                            Preferences.debug("yDim = " + yDim + "\n");
+                            Preferences.debug("yDim = " + yDim + "\n", Preferences.DEBUG_FILEIO);
                             zDim = intVar[2];
 
                             if (zDim < 2) {
@@ -5401,7 +5419,7 @@ public class FileAfni extends FileBase {
                                 throw new IOException("AFNI Read Header Error: zDim illegally = " + zDim);
                             }
 
-                            Preferences.debug("zDim = " + zDim + "\n");
+                            Preferences.debug("zDim = " + zDim + "\n", Preferences.DEBUG_FILEIO);
 
                             if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                 dataExtents[0] = xDim;
@@ -5427,37 +5445,37 @@ public class FileAfni extends FileBase {
 
                                 case 0:
                                     fileInfo.setDataType(ModelStorageBase.UBYTE);
-                                    Preferences.debug("DataType = UBYTE\n");
+                                    Preferences.debug("DataType = UBYTE\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 case 1:
                                     fileInfo.setDataType(ModelStorageBase.SHORT);
-                                    Preferences.debug("DataType = SHORT\n");
+                                    Preferences.debug("DataType = SHORT\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 case 2:
                                     fileInfo.setDataType(ModelStorageBase.INTEGER);
-                                    Preferences.debug("DataType = INTEGER\n");
+                                    Preferences.debug("DataType = INTEGER\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 case 3:
                                     fileInfo.setDataType(ModelStorageBase.FLOAT);
-                                    Preferences.debug("DataType = FLOAT\n");
+                                    Preferences.debug("DataType = FLOAT\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 case 4:
                                     fileInfo.setDataType(ModelStorageBase.DOUBLE);
-                                    Preferences.debug("DataType = DOUBLE\n");
+                                    Preferences.debug("DataType = DOUBLE\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 case 5:
                                     fileInfo.setDataType(ModelStorageBase.COMPLEX);
-                                    Preferences.debug("DataType = COMPLEX\n");
+                                    Preferences.debug("DataType = COMPLEX\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 case 6:
                                     fileInfo.setDataType(ModelStorageBase.ARGB);
-                                    Preferences.debug("DataType = ARGB\n");
+                                    Preferences.debug("DataType = ARGB\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 default:
@@ -5468,7 +5486,7 @@ public class FileAfni extends FileBase {
                         } // else if (nameString.equalsIgnoreCase("BRICK_TYPES"))
                         else if (nameString.equalsIgnoreCase("NOTES_COUNT")) {
                             notesCount = intVar[0];
-                            Preferences.debug("NOTES_COUNT = " + notesCount + "\n");
+                            Preferences.debug("NOTES_COUNT = " + notesCount + "\n", Preferences.DEBUG_FILEIO);
                         } // else if (nameString.equalsIgnoreCase("NOTES_COUNT"))
                         else if (nameString.equalsIgnoreCase("WARP_TYPE")) {
                             warpType = intVar[0];
@@ -5481,11 +5499,11 @@ public class FileAfni extends FileBase {
                             switch (warpType) {
 
                                 case 0:
-                                    Preferences.debug("WARP_TYPE[0] = 0 for WARP_AFFINE_TYPE\n");
+                                    Preferences.debug("WARP_TYPE[0] = 0 for WARP_AFFINE_TYPE\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 case 1:
-                                    Preferences.debug("WARP_TYPE[0] = 1 for WARP_TALAIRACH_12_TYPE\n");
+                                    Preferences.debug("WARP_TYPE[0] = 1 for WARP_TALAIRACH_12_TYPE\n", Preferences.DEBUG_FILEIO);
                                     break;
                             }
                         } // else if (nameString.equalsIgnoreCase("WARP_TYPE"))
@@ -5504,9 +5522,10 @@ public class FileAfni extends FileBase {
                                 throw new IOException("AFNI Read Header Error:TAXIS_NUMS[0] illegally = " + tDim);
                             }
 
-                            Preferences.debug("tDim = " + tDim + "\n");
+                            Preferences.debug("tDim = " + tDim + "\n", Preferences.DEBUG_FILEIO);
                             slicesWithTimeOffsets = intVar[1];
-                            Preferences.debug("Slices with time offsets = " + slicesWithTimeOffsets + "\n");
+                            Preferences.debug("Slices with time offsets = " + slicesWithTimeOffsets + "\n",
+                            		Preferences.DEBUG_FILEIO);
                             fileInfo.setSlicesWithTimeOffsets(slicesWithTimeOffsets);
                             timeStepUnit = intVar[2];
 
@@ -5521,23 +5540,23 @@ public class FileAfni extends FileBase {
 
                                 case UNITS_MSEC_TYPE:
                                     fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 3);
-                                    Preferences.debug("TAXIS_NUMS[2] = 77001 for UNITS_MSEC_TYPE\n");
+                                    Preferences.debug("TAXIS_NUMS[2] = 77001 for UNITS_MSEC_TYPE\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 case UNITS_SEC_TYPE:
                                     fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 3);
-                                    Preferences.debug("TAXIS_NUMS[2] = 77002 for UNITS_SEC_TYPE\n");
+                                    Preferences.debug("TAXIS_NUMS[2] = 77002 for UNITS_SEC_TYPE\n", Preferences.DEBUG_FILEIO);
                                     break;
 
                                 case UNITS_HZ_TYPE:
                                     fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 3);
-                                    Preferences.debug("TAXIS_NUMS[2] = 77003 for UNITS_HZ_TYPE\n");
+                                    Preferences.debug("TAXIS_NUMS[2] = 77003 for UNITS_HZ_TYPE\n", Preferences.DEBUG_FILEIO);
                                     break;
                             }
                         } // else if (nameString.equalsIgnoreCase("TAXIS_NUMS"))
                         else if (nameString.equalsIgnoreCase("VOLREG_ROTCOM_NUM")) {
                             volregRotcomNum = intVar[0];
-                            Preferences.debug("VOLREG_ROTCOM_NUM = " + volregRotcomNum + "\n");
+                            Preferences.debug("VOLREG_ROTCOM_NUM = " + volregRotcomNum + "\n", Preferences.DEBUG_FILEIO);
                         } // else if (nameString.equalsIgnoreCase("VOLREG_ROTCOM_NUM"))
                         else if (nameString.equalsIgnoreCase("TO3D_ZPAD")) {
 
@@ -5552,7 +5571,7 @@ public class FileAfni extends FileBase {
                             zeroPad[1] = intVar[1];
                             zeroPad[2] = intVar[2];
                             Preferences.debug("Zero padding x = " + zeroPad[0] + " y = " + zeroPad[1] + " z = " +
-                                              zeroPad[2]);
+                                              zeroPad[2], Preferences.DEBUG_FILEIO);
                         } // else if (nameString.equalsIgnoreCase("TO3D_ZPAD"))
                         else if (nameString.equalsIgnoreCase("TAGSET_NUM")) {
 
@@ -5563,15 +5582,15 @@ public class FileAfni extends FileBase {
                             }
 
                             tagNumber = intVar[0];
-                            Preferences.debug("number of tags = " + tagNumber + "\n");
+                            Preferences.debug("number of tags = " + tagNumber + "\n", Preferences.DEBUG_FILEIO);
                             floatsPerTag = intVar[1];
-                            Preferences.debug("Floats per tag = " + floatsPerTag + "\n");
+                            Preferences.debug("Floats per tag = " + floatsPerTag + "\n", Preferences.DEBUG_FILEIO);
                         } // else if (nameString.equalsIgnoreCase("TAGSET_NUM"))
                         else {
-                            Preferences.debug(nameString + "\n");
+                            Preferences.debug(nameString + "\n", Preferences.DEBUG_FILEIO);
 
                             for (i = 0; i < countEntries; i++) {
-                                Preferences.debug("Entry number[" + i + "] = " + intVar[i] + "\n");
+                                Preferences.debug("Entry number[" + i + "] = " + intVar[i] + "\n", Preferences.DEBUG_FILEIO);
                             }
                         }
                     } // else if (typeAttribute == INTEGER_ATTRIBUTE)
@@ -5620,7 +5639,7 @@ public class FileAfni extends FileBase {
                             origin[1] = floatVar[1];
                             origin[2] = floatVar[2];
                             Preferences.debug("ORIGIN X = " + origin[0] + " Y = " + origin[1] + " Z = " + origin[2] +
-                                              "\n");
+                                              "\n", Preferences.DEBUG_FILEIO);
                         } // if (nameString.equalsIgnoreCase("ORIGIN"))
                         else if (nameString.equalsIgnoreCase("DELTA")) {
 
@@ -5633,7 +5652,8 @@ public class FileAfni extends FileBase {
                             delta[0] = floatVar[0];
                             delta[1] = floatVar[1];
                             delta[2] = floatVar[2];
-                            Preferences.debug("DELTA X = " + delta[0] + " Y = " + delta[1] + " Z = " + delta[2] + "\n");
+                            Preferences.debug("DELTA X = " + delta[0] + " Y = " + delta[1] + " Z = " + delta[2] + "\n",
+                            		Preferences.DEBUG_FILEIO);
                             imgResols[0] = Math.abs(delta[0]);
                             imgResols[1] = Math.abs(delta[1]);
                             imgResols[2] = Math.abs(delta[2]);
@@ -5648,7 +5668,7 @@ public class FileAfni extends FileBase {
 
                             for (i = 0; i < countEntries; i++) {
                                 skip[i] = floatVar[i];
-                                Preferences.debug("SKIP[" + i + "] = " + skip[i] + "\n");
+                                Preferences.debug("SKIP[" + i + "] = " + skip[i] + "\n", Preferences.DEBUG_FILEIO);
                             }
                         } // else if (nameString.equalsIgnoreCase("SKIP"))
                         else if (nameString.equalsIgnoreCase("MARKS_XYZ")) {
@@ -5671,13 +5691,13 @@ public class FileAfni extends FileBase {
 
                                 if (brickFloatFacs[i] > 0) {
                                     Preferences.debug("BRICKS_FLOAT_FACS[" + i + "] = " + brickFloatFacs[i] +
-                                                      " for scaling .BRIK values\n");
+                                                      " for scaling .BRIK values\n", Preferences.DEBUG_FILEIO);
                                 } else if (brickFloatFacs[i] == 0) {
                                     Preferences.debug("BRICK_FLOAT_FACS[" + i + "] = " + brickFloatFacs[i] +
-                                                      " indicates unscaled .BRIK values\n");
+                                                      " indicates unscaled .BRIK values\n", Preferences.DEBUG_FILEIO);
                                 } else {
                                     Preferences.debug("BRICK_FLOAT_FACS[" + i + "] = " + brickFloatFacs[i] +
-                                                      " is an unexplained negative value\n");
+                                                      " is an unexplained negative value\n", Preferences.DEBUG_FILEIO);
                                 }
                             }
                         } // else if (nameString.equalsIgnoreCase("BRICK_FLOAT_FACS"))
@@ -5697,7 +5717,7 @@ public class FileAfni extends FileBase {
 
                             for (i = 0; i < (countEntries / 2); i++) {
                                 Preferences.debug("Sub-brick[" + i + "] has minimum = " + brickStats[2 * i] +
-                                                  "  maximum = " + brickStats[(2 * i) + 1] + "\n");
+                                                  "  maximum = " + brickStats[(2 * i) + 1] + "\n", Preferences.DEBUG_FILEIO);
                             }
                         } // else if (nameString.equalsIgnoreCase("BRICK_STATS"))
                         else if (nameString.equalsIgnoreCase("WARP_DATA")) {
@@ -5727,12 +5747,12 @@ public class FileAfni extends FileBase {
                                 warpData[i] = floatVar[i];
                             }
 
-                            Preferences.debug("WARP_DATA = \n");
+                            Preferences.debug("WARP_DATA = \n", Preferences.DEBUG_FILEIO);
 
                             for (i = 0; i < (countEntries / 5); i++) {
                                 Preferences.debug(warpData[i * 5] + "\t" + warpData[(i * 5) + 1] + "\t" +
                                                   warpData[(i * 5) + 2] + "\t" + warpData[(i * 5) + 3] + "\t" +
-                                                  warpData[(i * 5) + 4] + "\n");
+                                                  warpData[(i * 5) + 4] + "\n", Preferences.DEBUG_FILEIO);
                             }
                         } // else if (nameString.equalsIgnoreCase("WARP_DATA"))
                         else if (nameString.equalsIgnoreCase("TAXIS_FLOATS")) {
@@ -5744,19 +5764,20 @@ public class FileAfni extends FileBase {
                             }
 
                             timeOrigin = floatVar[0];
-                            Preferences.debug("Time origin = " + timeOrigin + "\n");
+                            Preferences.debug("Time origin = " + timeOrigin + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setTimeOrigin(timeOrigin);
                             timeStep = floatVar[1];
-                            Preferences.debug("Time step = " + timeStep + "\n");
+                            Preferences.debug("Time step = " + timeStep + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setTimeStep(timeStep);
                             acquisitionDuration = floatVar[2];
-                            Preferences.debug("Acqusition duration = " + acquisitionDuration + "\n");
+                            Preferences.debug("Acqusition duration = " + acquisitionDuration + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setAcquisitionDuration(acquisitionDuration);
                             zAxisOffset = floatVar[3];
-                            Preferences.debug("z-axis offset for slice-dependent time offsets = " + zAxisOffset + "\n");
+                            Preferences.debug("z-axis offset for slice-dependent time offsets = " + zAxisOffset + "\n", 
+                            		Preferences.DEBUG_FILEIO);
                             fileInfo.setZAxisOffset(zAxisOffset);
                             zAxisStep = floatVar[4];
-                            Preferences.debug("z-axis step for slice-dependent time offsets = " + zAxisStep + "\n");
+                            Preferences.debug("z-axis step for slice-dependent time offsets = " + zAxisStep + "\n", Preferences.DEBUG_FILEIO);
                             fileInfo.setZAxisStep(zAxisStep);
                         } // else if (nameString.equalsIgnoreCase("TAXIS_FLOATS"))
                         else if (nameString.equalsIgnoreCase("TAXIS_OFFSETS")) {
@@ -5764,7 +5785,7 @@ public class FileAfni extends FileBase {
 
                             for (i = 0; i < countEntries; i++) {
                                 tAxisOffsets[i] = floatVar[i];
-                                Preferences.debug("TAXIS_OFFSETS[" + i + "] = " + tAxisOffsets[i] + "\n");
+                                Preferences.debug("TAXIS_OFFSETS[" + i + "] = " + tAxisOffsets[i] + "\n", Preferences.DEBUG_FILEIO);
                             }
 
                             fileInfo.setTAxisOffsets(tAxisOffsets);
@@ -5777,7 +5798,7 @@ public class FileAfni extends FileBase {
                                 subBrickIndex = (int) floatVar[i];
                                 brickStatAux[i] = floatVar[i];
                                 Preferences.debug("BRICK_STATAUX[" + i + "] = " + subBrickIndex +
-                                                  ", the sub-brick index\n");
+                                                  ", the sub-brick index\n", Preferences.DEBUG_FILEIO);
                                 i++;
                                 statCode = (int) floatVar[i];
                                 brickStatAux[i] = floatVar[i];
@@ -5786,7 +5807,7 @@ public class FileAfni extends FileBase {
 
                                     case FUNC_COR_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_COR_TYPE with Correlation coeff\n");
+                                                          " for FUNC_COR_TYPE with Correlation coeff\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -5798,28 +5819,28 @@ public class FileAfni extends FileBase {
                                         }
 
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         numSamples = (int) floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + numSamples +
-                                                          ", the number of samples\n");
+                                                          ", the number of samples\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         numFitParam = (int) floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + numFitParam +
-                                                          ", the number of fitting parameters\n");
+                                                          ", the number of fitting parameters\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         numNuisanceParam = (int) floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + numNuisanceParam +
-                                                          ", the number of nuisance parameters\n");
+                                                          ", the number of nuisance parameters\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         break;
 
                                     case FUNC_TT_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_TT_TYPE with Student t\n");
+                                                          " for FUNC_TT_TYPE with Student t\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -5831,18 +5852,18 @@ public class FileAfni extends FileBase {
                                         }
 
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         dof = (int) floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + dof +
-                                                          " for degrees of freedom\n");
+                                                          " for degrees of freedom\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         break;
 
                                     case FUNC_FT_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_FT_TYPE with F ratio\n");
+                                                          " for FUNC_FT_TYPE with F ratio\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -5854,23 +5875,23 @@ public class FileAfni extends FileBase {
                                         }
 
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         ndof = (int) floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + ndof +
-                                                          " for numerator degrees of freedom\n");
+                                                          " for numerator degrees of freedom\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         ddof = (int) floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + ddof +
-                                                          " for denominator degrees of freedom\n");
+                                                          " for denominator degrees of freedom\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         break;
 
                                     case FUNC_ZT_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_ZT_TYPE with Standard Normal\n");
+                                                          " for FUNC_ZT_TYPE with Standard Normal\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -5882,13 +5903,13 @@ public class FileAfni extends FileBase {
                                         }
 
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         break;
 
                                     case FUNC_CT_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_CT_TYPE with Chi-squared\n");
+                                                          " for FUNC_CT_TYPE with Chi-squared\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -5900,18 +5921,18 @@ public class FileAfni extends FileBase {
                                         }
 
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         dof = (int) floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + dof +
-                                                          " for degrees of freedom\n");
+                                                          " for degrees of freedom\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         break;
 
                                     case FUNC_BT_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_BT_TYPE with Inomplete Beta\n");
+                                                          " for FUNC_BT_TYPE with Inomplete Beta\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -5923,23 +5944,23 @@ public class FileAfni extends FileBase {
                                         }
 
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         //a = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
-                                                          " for parameter a\n");
+                                                          " for parameter a\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         //b = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
-                                                          " for parameter b\n");
+                                                          " for parameter b\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         break;
 
                                     case FUNC_BN_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_BN_TYPE with Binomial\n");
+                                                          " for FUNC_BN_TYPE with Binomial\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -5951,23 +5972,23 @@ public class FileAfni extends FileBase {
                                         }
 
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         numTrials = (int) floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + numTrials +
-                                                          " number of trials\n");
+                                                          " number of trials\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         //prob = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
-                                                          " for probability per trial\n");
+                                                          " for probability per trial\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         break;
 
                                     case FUNC_GT_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_GT_TYPE with Gamma\n");
+                                                          " for FUNC_GT_TYPE with Gamma\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -5979,23 +6000,23 @@ public class FileAfni extends FileBase {
                                         }
 
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         //shape = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
-                                                          " for shape\n");
+                                                          " for shape\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         //scale = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
-                                                          " for scale\n");
+                                                          " for scale\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         break;
 
                                     case FUNC_PT_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_PT_TYPE with Poisson\n");
+                                                          " for FUNC_PT_TYPE with Poisson\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -6007,27 +6028,27 @@ public class FileAfni extends FileBase {
                                         }
 
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         //mean = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
-                                                          " for mean\n");
+                                                          " for mean\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         break;
 
                                     default:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for unknown FUNC_TYPE\n");
+                                                          " for unknown FUNC_TYPE\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + followingParms +
-                                                          " for number of parameters that follow\n");
+                                                          " for number of parameters that follow\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         for (j = 0; j < followingParms; j++) {
                                             brickStatAux[i] = floatVar[i];
-                                            Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] + "\n");
+                                            Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] + "\n", Preferences.DEBUG_FILEIO);
                                             i++;
                                         } // for (j = 0; j < followingParms; j++)
 
@@ -6042,7 +6063,7 @@ public class FileAfni extends FileBase {
 
                             for (i = 0; i < countEntries; i++) {
                                 statAux[i] = floatVar[i];
-                                Preferences.debug("statAux[" + i + "] = " + statAux[i] + "\n");
+                                Preferences.debug("statAux[" + i + "] = " + statAux[i] + "\n", Preferences.DEBUG_FILEIO);
                             } // for (i = 0; i < countEntries; i++)
 
                             fileInfo.setStatAux(statAux);
@@ -6061,13 +6082,13 @@ public class FileAfni extends FileBase {
                                 tagAlignMatvec[i] = floatVar[i];
                             }
 
-                            Preferences.debug("TAGALIGN_MATVEC = \n");
+                            Preferences.debug("TAGALIGN_MATVEC = \n", Preferences.DEBUG_FILEIO);
                             Preferences.debug(tagAlignMatvec[0] + "\t" + tagAlignMatvec[1] + "\t" + tagAlignMatvec[2] +
                                               "\t" + tagAlignMatvec[3] + "\t" + tagAlignMatvec[4] + "\t" +
-                                              tagAlignMatvec[5] + "n");
+                                              tagAlignMatvec[5] + "n", Preferences.DEBUG_FILEIO);
                             Preferences.debug(tagAlignMatvec[6] + "\t" + tagAlignMatvec[7] + "\t" + tagAlignMatvec[8] +
                                               "\t" + tagAlignMatvec[9] + "\t" + tagAlignMatvec[10] + "\t" +
-                                              tagAlignMatvec[11] + "n");
+                                              tagAlignMatvec[11] + "n", Preferences.DEBUG_FILEIO);
                         } // else if (nameString.equalsIgnoreCase("TAGALIGN_MATVEC"))
                         else if (nameString.substring(0, nameString.length() - 6).equalsIgnoreCase("VOLREG_MATVEC_")) {
 
@@ -6150,11 +6171,11 @@ public class FileAfni extends FileBase {
                                 }
                             } // else if (tmpString.equals("000009"))
 
-                            Preferences.debug(nameString + " = \n");
+                            Preferences.debug(nameString + " = \n", Preferences.DEBUG_FILEIO);
                             Preferences.debug(floatVar[0] + "\t" + floatVar[1] + "\t" + floatVar[2] + "\t" +
-                                              floatVar[3] + "\t" + floatVar[4] + "\t" + floatVar[5] + "n");
+                                              floatVar[3] + "\t" + floatVar[4] + "\t" + floatVar[5] + "n", Preferences.DEBUG_FILEIO);
                             Preferences.debug(floatVar[6] + "\t" + floatVar[7] + "\t" + floatVar[8] + "\t" +
-                                              floatVar[9] + "\t" + floatVar[10] + "\t" + floatVar[11] + "n");
+                                              floatVar[9] + "\t" + floatVar[10] + "\t" + floatVar[11] + "n", Preferences.DEBUG_FILEIO);
                         } // else if (nameString.substring(0,nameString.length() - 6).equalsIgnoreCase
                           // ("VOLREG_MATVEC_"))
                         else if (nameString.equalsIgnoreCase("VOLREG_CENTER_OLD")) {
@@ -6172,7 +6193,7 @@ public class FileAfni extends FileBase {
                             }
 
                             Preferences.debug("VOLREG_CENTER_OLD X = " + volregCenterOld[0] + "  Y = " +
-                                              volregCenterOld[1] + "  Z = " + volregCenterOld[2] + "\n");
+                                              volregCenterOld[1] + "  Z = " + volregCenterOld[2] + "\n", Preferences.DEBUG_FILEIO);
                         } // else if (nameString.equalsIgnorecase("VOLREG_CENTER_OLD"))
                         else if (nameString.equalsIgnoreCase("VOLREG_CENTER_BASE")) {
 
@@ -6189,7 +6210,7 @@ public class FileAfni extends FileBase {
                             }
 
                             Preferences.debug("VOLREG_CENTER_BASE X = " + volregCenterBase[0] + "  Y = " +
-                                              volregCenterBase[1] + "  Z = " + volregCenterBase[2] + "\n");
+                                              volregCenterBase[1] + "  Z = " + volregCenterBase[2] + "\n", Preferences.DEBUG_FILEIO);
                         } // else if (nameString.equalsIgnorecase("VOLREG_CENTER_BASE"))
                         else if (nameString.equalsIgnoreCase("TAGSET_FLOATS")) {
 
@@ -6205,7 +6226,7 @@ public class FileAfni extends FileBase {
                                 tagsetFloats[i] = floatVar[i];
                             }
 
-                            Preferences.debug("TAGSET_FLOATS = \n");
+                            Preferences.debug("TAGSET_FLOATS = \n", Preferences.DEBUG_FILEIO);
 
                             for (i = 0; i < (countEntries / 5); i++) {
                                 tagnum = (int) tagsetFloats[(5 * i) + 3];
@@ -6215,20 +6236,21 @@ public class FileAfni extends FileBase {
                                     Preferences.debug("x = " + tagsetFloats[5 * i] + "  y = " +
                                                       tagsetFloats[(5 * i) + 1] + "  z = " + tagsetFloats[(5 * i) + 2] +
                                                       "  tag numerical value = " + tagnum +
-                                                      "  sub-brick index of tag = " + index + "\n");
+                                                      "  sub-brick index of tag = " + index + "\n", Preferences.DEBUG_FILEIO);
                                 } else { // index < 0
                                     Preferences.debug("x = " + tagsetFloats[5 * i] + "  y = " +
                                                       tagsetFloats[(5 * i) + 1] + "  z = " + tagsetFloats[(5 * i) + 2] +
                                                       "  tag numerical value = " + tagnum + "  not set flag = " +
-                                                      index + "\n");
+                                                      index + "\n", Preferences.DEBUG_FILEIO);
                                 }
                             }
                         } // else if (nameString.equalsIgnoreCase("TAGSET_FLOATS"))
                         else {
-                            Preferences.debug(nameString + " is an unknown float with arguments: \n");
+                            Preferences.debug(nameString + " is an unknown float with arguments: \n",
+                            		Preferences.DEBUG_FILEIO);
 
                             for (i = 0; i < countEntries; i++) {
-                                Preferences.debug(floatVar[i] + "\n");
+                                Preferences.debug(floatVar[i] + "\n", Preferences.DEBUG_FILEIO);
                             }
                         }
 
@@ -6277,15 +6299,15 @@ public class FileAfni extends FileBase {
             switch (viewType) {
 
                 case 0:
-                    Preferences.debug("SCENE_DATA[0] = 0 for +orig\n");
+                    Preferences.debug("SCENE_DATA[0] = 0 for +orig\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 1:
-                    Preferences.debug("SCENE_DATA[0] = 1 for +acpc\n");
+                    Preferences.debug("SCENE_DATA[0] = 1 for +acpc\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 2:
-                    Preferences.debug("SCENE_DATA[0] = 2 for +tlrc\n");
+                    Preferences.debug("SCENE_DATA[0] = 2 for +tlrc\n", Preferences.DEBUG_FILEIO);
                     break;
             }
 
@@ -6294,55 +6316,55 @@ public class FileAfni extends FileBase {
                 switch (funcType) {
 
                     case 0:
-                        Preferences.debug("SCENCE_DATA[1] = 0 for ANAT_SPGR_TYPE\n");
+                        Preferences.debug("SCENCE_DATA[1] = 0 for ANAT_SPGR_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 1:
-                        Preferences.debug("SCENCE_DATA[1] = 1 for ANAT_FSE_TYPE\n");
+                        Preferences.debug("SCENCE_DATA[1] = 1 for ANAT_FSE_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 2:
-                        Preferences.debug("SCENE_DATA[1] = 2 for ANAT_EPI_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 2 for ANAT_EPI_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 3:
-                        Preferences.debug("SCENE_DATA[1] = 3 for ANAT_MRAN_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 3 for ANAT_MRAN_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 4:
-                        Preferences.debug("SCENE_DATA[1] = 4 for ANAT_CT_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 4 for ANAT_CT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 5:
-                        Preferences.debug("SCENE_DATA[1] = 5 for ANAT_SPECT_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 5 for ANAT_SPECT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 6:
-                        Preferences.debug("SCENE_DATA[1] = 6 for ANAT_PET_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 6 for ANAT_PET_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 7:
-                        Preferences.debug("SCENE_DATA[1] = 7 for ANAT_MRA_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 7 for ANAT_MRA_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 8:
-                        Preferences.debug("SCENE_DATA[1] = 8 for ANAT_BMAP_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 8 for ANAT_BMAP_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 9:
-                        Preferences.debug("SCENE_DATA[1] = 9 for ANAT_DIFF_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 9 for ANAT_DIFF_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 10:
-                        Preferences.debug("SCENE_DATA[1] = 10 for ANAT_OMRI_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 10 for ANAT_OMRI_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 11:
-                        Preferences.debug("SCENE_DATA[1] = 11 for ANAT_BUCK_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 11 for ANAT_BUCK_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     default:
-                        Preferences.debug("SCENE_DATA[1] = " + funcType + " for unknown ANAT_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = " + funcType + " for unknown ANAT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
                 }
             } // if (anatType)
@@ -6351,55 +6373,56 @@ public class FileAfni extends FileBase {
                 switch (funcType) {
 
                     case 0:
-                        Preferences.debug("SCENCE_DATA[1] = 0 for 1 valued FUNC_FIM_TYPE\n");
+                        Preferences.debug("SCENCE_DATA[1] = 0 for 1 valued FUNC_FIM_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 1:
-                        Preferences.debug("SCENCE_DATA[1] = 1 for obsolete FUNC_THR_TYPE\n");
+                        Preferences.debug("SCENCE_DATA[1] = 1 for obsolete FUNC_THR_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 2:
-                        Preferences.debug("SCENCE_DATA[1] = 2 for correlation FUNC_COR_TYPE\n");
+                        Preferences.debug("SCENCE_DATA[1] = 2 for correlation FUNC_COR_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 3:
-                        Preferences.debug("SCENCE_DATA[1] = 3 for t-statistic FUNC_TT_TYPE\n");
+                        Preferences.debug("SCENCE_DATA[1] = 3 for t-statistic FUNC_TT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 4:
-                        Preferences.debug("SCENCE_DATA[1] = 4 for F-statistic FUNC_FT_TYPE\n");
+                        Preferences.debug("SCENCE_DATA[1] = 4 for F-statistic FUNC_FT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 5:
-                        Preferences.debug("SCENCE_DATA[1] = 5 for z-score FUNC_ZT_TYPE\n");
+                        Preferences.debug("SCENCE_DATA[1] = 5 for z-score FUNC_ZT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 6:
-                        Preferences.debug("SCENE_DATA[1] = 6 for Chi-squared FUNC_CT_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 6 for Chi-squared FUNC_CT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 7:
-                        Preferences.debug("SCENC_DATA[1] = 7 for Beta stat FUNC_BT_TYPE\n");
+                        Preferences.debug("SCENC_DATA[1] = 7 for Beta stat FUNC_BT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 8:
-                        Preferences.debug("SCENE_DATA[1] = 8 for Binomaial FUNC_BN_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 8 for Binomaial FUNC_BN_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 9:
-                        Preferences.debug("SCENE_DATA[1] = 9 for Gamma FUNC_GT_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 9 for Gamma FUNC_GT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 10:
-                        Preferences.debug("SCENE_DATA[1] = 10 for Poisson FUNC_PT_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 10 for Poisson FUNC_PT_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     case 11:
-                        Preferences.debug("SCENE_DATA[1] = 11 for bucket FUNC_BUCK_TYPE\n");
+                        Preferences.debug("SCENE_DATA[1] = 11 for bucket FUNC_BUCK_TYPE\n", Preferences.DEBUG_FILEIO);
                         break;
 
                     default:
-                        Preferences.debug("SCENCE_DATA[1] = " + funcType + " for unknown FUNC_TYPE\n");
+                        Preferences.debug("SCENCE_DATA[1] = " + funcType + " for unknown FUNC_TYPE\n", 
+                        		Preferences.DEBUG_FILEIO);
                         break;
                 }
             } // not anatType
@@ -6407,19 +6430,19 @@ public class FileAfni extends FileBase {
             switch (typeStringType) {
 
                 case 0:
-                    Preferences.debug("SCENCE_DATA[2] = 0 for FileInfoAfni.HEAD_ANAT_TYPE\n");
+                    Preferences.debug("SCENCE_DATA[2] = 0 for FileInfoAfni.HEAD_ANAT_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 1:
-                    Preferences.debug("SCENE_DATA[2] = 1 for FileInfoAfni.HEAD_FUNC_TYPE\n");
+                    Preferences.debug("SCENE_DATA[2] = 1 for FileInfoAfni.HEAD_FUNC_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 2:
-                    Preferences.debug("SCENE_DATA[2] = 2 for FileInfoAfni.GEN_ANAT_TYPE\n");
+                    Preferences.debug("SCENE_DATA[2] = 2 for FileInfoAfni.GEN_ANAT_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case 3:
-                    Preferences.debug("SCENE_DATA[2] = 3 for FileInfoAfni.GEN_FUNC_TYPE\n");
+                    Preferences.debug("SCENE_DATA[2] = 3 for FileInfoAfni.GEN_FUNC_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
             }
 
@@ -6456,9 +6479,9 @@ public class FileAfni extends FileBase {
                     lowestZ = origin[2] + ((zDim - 1.0f) * delta[2]);
                 }
 
-                Preferences.debug("lowestX = " + lowestX + " highestX = " + highestX + "\n");
-                Preferences.debug("lowestY = " + lowestY + " highestY = " + highestY + "\n");
-                Preferences.debug("lowestZ = " + lowestZ + " highestZ = " + highestZ + "\n");
+                Preferences.debug("lowestX = " + lowestX + " highestX = " + highestX + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("lowestY = " + lowestY + " highestY = " + highestY + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("lowestZ = " + lowestZ + " highestZ = " + highestZ + "\n", Preferences.DEBUG_FILEIO);
 
                 // Check to see which of the marksXYZ are within the bounded box of the dataset
                 // First obtain dicom ordered origin and delta
@@ -6762,7 +6785,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
 
                             if (doDicom) {
@@ -6781,7 +6805,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
 
                             if (doDicom) {
@@ -6800,7 +6825,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
 
                             if (doDicom) {
@@ -6819,7 +6845,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
 
                             if (doDicom) {
@@ -6836,7 +6863,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
 
                             if (doDicom) {
@@ -6855,7 +6883,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ACPC) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
                             fileInfo.setAnteriorPt(pointMarker);
 
@@ -6870,7 +6899,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ACPC) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
                             fileInfo.setPosteriorPt(pointMarker);
 
@@ -6885,7 +6915,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ACPC) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
                             fileInfo.setSuperiorPt(pointMarker);
 
@@ -6900,7 +6931,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ACPC) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
                             fileInfo.setInferiorPt(pointMarker);
 
@@ -6915,7 +6947,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ACPC) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
                             fileInfo.setLeftPt(pointMarker);
 
@@ -6930,7 +6963,8 @@ public class FileAfni extends FileBase {
 
                         if (presentViewType == FileInfoAfni.AFNI_ACPC) {
                             Preferences.debug(marksLabString[i] + " at X = " + marksXYZ[3 * i] + " Y = " +
-                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                              marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                              Preferences.DEBUG_FILEIO);
                             reposMarker(i);
                             fileInfo.setRightPt(pointMarker);
 
@@ -6943,7 +6977,8 @@ public class FileAfni extends FileBase {
                         }
                     } else {
                         Preferences.debug("Unrecognized marker " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                          Preferences.DEBUG_FILEIO);
                     }
                 } // marker within bounds
                 else if (marksLabString[i] != null) { // marker out of bounds
@@ -6951,43 +6986,54 @@ public class FileAfni extends FileBase {
                     // points for +orig to +acpc transformation
                     if ((marksLabString[i]).equalsIgnoreCase("AC superior edge")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     } else if ((marksLabString[i]).equalsIgnoreCase("AC posterior margin")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     } else if ((marksLabString[i]).equalsIgnoreCase("PC inferior edge")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n",
+                                          Preferences.DEBUG_FILEIO);
                     } else if ((marksLabString[i]).equalsIgnoreCase("First mid-sag pt")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     } else if ((marksLabString[i]).equalsIgnoreCase("Another mid-sag pt")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     }
                     // points for +acpc to +tlrc transformation
                     else if ((marksLabString[i]).equalsIgnoreCase("Most anterior point")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most posterior point")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most superior point")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most inferior point")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most left point")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most right point")) {
                         Preferences.debug("Out of bounds " + marksLabString[i] + " at X = " + marksXYZ[3 * i] +
-                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n");
+                                          " Y = " + marksXYZ[(3 * i) + 1] + " Z = " + marksXYZ[(3 * i) + 2] + "\n", 
+                                          Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug("Out of bounds unrecognized marker " + marksLabString[i] + " at X = " +
                                           marksXYZ[3 * i] + " Y = " + marksXYZ[(3 * i) + 1] + " Z = " +
-                                          marksXYZ[(3 * i) + 2] + "\n");
+                                          marksXYZ[(3 * i) + 2] + "\n", Preferences.DEBUG_FILEIO);
                     }
                 } // marker out of bounds
             } // for (i = 0; i < 10; i++)
