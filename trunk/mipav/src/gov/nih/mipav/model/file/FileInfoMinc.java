@@ -909,28 +909,28 @@ public class FileInfoMinc extends FileInfoBase {
         int ix = 0, iy = 0, iz = 0;
 
         final String firstDim = getDimElem(0).name;
-        Preferences.debug("firstDim = " + firstDim + "\n");
+        Preferences.debug("firstDim = " + firstDim + "\n", Preferences.DEBUG_FILEIO);
 
         final String secondDim = getDimElem(1).name;
-        Preferences.debug("secondDim = " + secondDim + "\n");
+        Preferences.debug("secondDim = " + secondDim + "\n", Preferences.DEBUG_FILEIO);
 
         final String thirdDim = getDimElem(2).name;
-        Preferences.debug("thirdDim = " + thirdDim + "\n");
+        Preferences.debug("thirdDim = " + thirdDim + "\n", Preferences.DEBUG_FILEIO);
 
         for (int i = 0; i < varArray.length; i++) {
 
             if (varArray[i].name.equals("image")) {
                 setOffset(varArray[i].begin);
-                Preferences.debug("Image offset = " + getOffset() + "\n");
+                Preferences.debug("Image offset = " + getOffset() + "\n", Preferences.DEBUG_FILEIO);
 
                 switch (varArray[i].nc_type) {
 
                     case NC_BYTE:
                         if (varArray[i].signtype.equals("unsigned")) {
-                            Preferences.debug("Data type = UBYTE\n");
+                            Preferences.debug("Data type = UBYTE\n", Preferences.DEBUG_FILEIO);
                             setDataType(ModelStorageBase.UBYTE);
                         } else {
-                            Preferences.debug("Data type = BYTE\n");
+                            Preferences.debug("Data type = BYTE\n", Preferences.DEBUG_FILEIO);
                             setDataType(ModelStorageBase.BYTE);
                         }
 
@@ -938,10 +938,10 @@ public class FileInfoMinc extends FileInfoBase {
 
                     case NC_SHORT:
                         if (varArray[i].signtype.equals("unsigned")) {
-                            Preferences.debug("Data type = USHORT\n");
+                            Preferences.debug("Data type = USHORT\n", Preferences.DEBUG_FILEIO);
                             setDataType(ModelStorageBase.USHORT);
                         } else {
-                            Preferences.debug("Data type = SHORT\n");
+                            Preferences.debug("Data type = SHORT\n", Preferences.DEBUG_FILEIO);
                             setDataType(ModelStorageBase.SHORT);
                         }
 
@@ -949,27 +949,28 @@ public class FileInfoMinc extends FileInfoBase {
 
                     case NC_INT:
                         if (varArray[i].signtype.equals("unsigned")) {
-                            Preferences.debug("Data type = UINTEGER\n");
+                            Preferences.debug("Data type = UINTEGER\n", Preferences.DEBUG_FILEIO);
                             setDataType(ModelStorageBase.UINTEGER);
                         } else {
-                            Preferences.debug("Data type = INTEGER\n");
+                            Preferences.debug("Data type = INTEGER\n", Preferences.DEBUG_FILEIO);
                             setDataType(ModelStorageBase.INTEGER);
                         }
 
                         break;
 
                     case NC_FLOAT:
-                        Preferences.debug("Data type = FLOAT\n");
+                        Preferences.debug("Data type = FLOAT\n", Preferences.DEBUG_FILEIO);
                         setDataType(ModelStorageBase.FLOAT);
                         break;
 
                     case NC_DOUBLE:
-                        Preferences.debug("Data type = DOUBLE\n");
+                        Preferences.debug("Data type = DOUBLE\n", Preferences.DEBUG_FILEIO);
                         setDataType(ModelStorageBase.DOUBLE);
                         break;
 
                     default:
-                        Preferences.debug("varArray[" + i + "].nc_type illegally = " + varArray[i].nc_type + "\n");
+                        Preferences.debug("varArray[" + i + "].nc_type illegally = " + varArray[i].nc_type + "\n", 
+                        		Preferences.DEBUG_FILEIO);
                         MipavUtil.displayError("Invalid type in FileInfoMinc");
                 }
 
@@ -1008,8 +1009,8 @@ public class FileInfoMinc extends FileInfoBase {
                                 vmax = ((Double) elem.values[1]).doubleValue();
                         }
 
-                        Preferences.debug("vmin = " + vmin + "\n");
-                        Preferences.debug("vmax = " + vmax + "\n");
+                        Preferences.debug("vmin = " + vmin + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("vmax = " + vmax + "\n", Preferences.DEBUG_FILEIO);
                     } else if (elem.name.equals("valid_max")) {
 
                         switch (elem.nc_type) {
@@ -1038,7 +1039,7 @@ public class FileInfoMinc extends FileInfoBase {
                                 vmax = ((Double) elem.values[0]).doubleValue();
                         }
 
-                        Preferences.debug("vmax = " + vmax + "\n");
+                        Preferences.debug("vmax = " + vmax + "\n", Preferences.DEBUG_FILEIO);
                     } else if (elem.name.equals("valid_min")) {
 
                         switch (elem.nc_type) {
@@ -1067,7 +1068,7 @@ public class FileInfoMinc extends FileInfoBase {
                                 vmin = ((Double) elem.values[0]).doubleValue();
                         }
 
-                        Preferences.debug("vmin = " + vmin + "\n");
+                        Preferences.debug("vmin = " + vmin + "\n", Preferences.DEBUG_FILEIO);
                     }
                 }
             } else if (varArray[i].name.equals(thirdDim)) {
@@ -1113,31 +1114,31 @@ public class FileInfoMinc extends FileInfoBase {
             switch (axisOrientation[i]) {
 
                 case ORI_UNKNOWN_TYPE:
-                    Preferences.debug("axisOrientation[" + i + "] = ORI_UNKNOWN_TYPE\n");
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_UNKNOWN_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ORI_R2L_TYPE:
-                    Preferences.debug("axisOrientation[" + i + "] = ORI_R2L_TYPE\n");
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_R2L_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ORI_L2R_TYPE:
-                    Preferences.debug("axisOrientation[" + i + "] = ORI_L2R_TYPE\n");
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_L2R_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ORI_P2A_TYPE:
-                    Preferences.debug("axisOrientation[" + i + "] = ORI_P2A_TYPE\n");
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_P2A_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ORI_A2P_TYPE:
-                    Preferences.debug("axisOrientation[" + i + "] = ORI_A2P_TYPE\n");
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_A2P_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ORI_I2S_TYPE:
-                    Preferences.debug("axisOrientation[" + i + "] = ORI_I2S_TYPE\n");
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_I2S_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ORI_S2I_TYPE:
-                    Preferences.debug("axisOrientation[" + i + "] = ORI_S2I_TYPE\n");
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_S2I_TYPE\n", Preferences.DEBUG_FILEIO);
                     break;
             }
         }
@@ -1249,7 +1250,7 @@ public class FileInfoMinc extends FileInfoBase {
     public final void setStartLocations(final double[] origin) {
 
         if (origin.length != 3) {
-            Preferences.debug("Start locations array must be of length 3.\n");
+            Preferences.debug("Start locations array must be of length 3.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -1912,7 +1913,7 @@ public class FileInfoMinc extends FileInfoBase {
         int index = 0;
 
         if ( (axis < 0) || (axis > 2)) {
-            Preferences.debug("Error: Axis must be 0, 1, or 2.\n");
+            Preferences.debug("Error: Axis must be 0, 1, or 2.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
