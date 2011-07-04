@@ -944,7 +944,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setPatientStatus("blank");
         }
         else {
-            Preferences.debug("Patient status = " + patientStatus + "\n");
+            Preferences.debug("Patient status = " + patientStatus + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 6*512 + 2*240
@@ -1022,7 +1022,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setSeriesType("composite");
         }
         else {
-            Preferences.debug("seriesType had an illegal value of " + seriesType + "\n");
+            Preferences.debug("seriesType had an illegal value of " + seriesType + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*113
@@ -1037,7 +1037,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setCoilType("surface");
         }
         else {
-            Preferences.debug("coilType had an illegal value of " + coilType + "\n");
+            Preferences.debug("coilType had an illegal value of " + coilType + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*114
@@ -1071,7 +1071,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setPlaneType("screen save");
         }
         else {
-            Preferences.debug("Plane type had an illegal value of " + planeType + "\n");
+            Preferences.debug("Plane type had an illegal value of " + planeType + "\n", Preferences.DEBUG_FILEIO);
             fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
         }
         
@@ -1097,7 +1097,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setImageMode("spectroscopy");
         }
         else {
-            Preferences.debug("imageMode had an illegal value of " + imageMode + "\n");
+            Preferences.debug("imageMode had an illegal value of " + imageMode + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*148
@@ -1186,7 +1186,7 @@ public class FileGESigna4X extends FileBase {
         }
         else {
             Preferences.debug("pulseSequence had an illegal value of " + 
-                               pulseSequence + "\n");
+                               pulseSequence + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*150
@@ -1196,7 +1196,7 @@ public class FileGESigna4X extends FileBase {
         }
         else {
             Preferences.debug("pulseSequenceSubtype had an illegal value of " +
-                               pulseSequenceSubtype + "\n");
+                               pulseSequenceSubtype + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*151
@@ -1235,7 +1235,7 @@ public class FileGESigna4X extends FileBase {
         }
         else {
             Preferences.debug("orientation had an illegal value of " +
-                               orientation + "\n");
+                               orientation + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*160
@@ -1248,7 +1248,7 @@ public class FileGESigna4X extends FileBase {
         }
         else {
             Preferences.debug("position had an illegal value of " +
-                               position + "\n");
+                               position + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*161
@@ -1359,7 +1359,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setPulseSequenceMode("RMGE");
         }
         else {
-            Preferences.debug("Pulse sequence mode = " + pulseSequenceMode + "\n");
+            Preferences.debug("Pulse sequence mode = " + pulseSequenceMode + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*205
@@ -1383,7 +1383,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setSurfaceCoilType("transmit/receive");
         }
         else {
-            Preferences.debug("Surface coil type = " + surfaceCoilType + "\n");
+            Preferences.debug("Surface coil type = " + surfaceCoilType + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*224
@@ -1398,7 +1398,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setSuppressionTechnique("water");
         }
         else {
-            Preferences.debug("Suppresion technique = " + suppressionTechnique + "\n");
+            Preferences.debug("Suppresion technique = " + suppressionTechnique + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*225
@@ -1455,7 +1455,8 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setSurfaceCoilIntensityCorrection("on");
         }
         else {
-            Preferences.debug("Surface coil intensity correction = " + surfaceCoilIntensityCorrection + "\n");
+            Preferences.debug("Surface coil intensity correction = " + surfaceCoilIntensityCorrection + "\n", 
+            		Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*227
@@ -1516,7 +1517,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setVasMode("PC");
         }
         else {
-            Preferences.debug("vasMode = " + vasMode + "\n");
+            Preferences.debug("vasMode = " + vasMode + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 8*512 + 2*237
@@ -1540,7 +1541,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setPhaseContrastFlowAxis("slice");
         }
         else {
-            Preferences.debug("Phase contrast flow axis = " + phaseContrastFlowAxis + "\n");
+            Preferences.debug("Phase contrast flow axis = " + phaseContrastFlowAxis + "\n", Preferences.DEBUG_FILEIO);
         }
         
         if (seriesRevisionSubnumber >= 7) {
@@ -1559,7 +1560,7 @@ public class FileGESigna4X extends FileBase {
                 fileInfo.setGatingType2("IR_DE");
             }
             else {
-                Preferences.debug("gatingType2 = " + gatingType2 + "\n");
+                Preferences.debug("gatingType2 = " + gatingType2 + "\n", Preferences.DEBUG_FILEIO);
             }
         } // if (seriesRevisionSubnumber >= 7)
         
@@ -1783,7 +1784,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setImageShape("ellipse");
         }
         else {
-            Preferences.debug("Image shape = " + imageShape + "\n");
+            Preferences.debug("Image shape = " + imageShape + "\n", Preferences.DEBUG_FILEIO);
         }
         
         raFile.seek(10*512 + 2*139);
@@ -1865,7 +1866,7 @@ public class FileGESigna4X extends FileBase {
                                         cardiacRepTime + " beats");
         }
         else {
-            Preferences.debug("cardiacRepTime = " + cardiacRepTime + "\n");
+            Preferences.debug("cardiacRepTime = " + cardiacRepTime + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 10*512 + 2*159
@@ -2105,7 +2106,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setSwapPF("Operator selects to swap phase and frequency");
         }
         else {
-            Preferences.debug("swapPF = " + swapPF + "\n");
+            Preferences.debug("swapPF = " + swapPF + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 10*512 + 2*233
@@ -2195,7 +2196,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setObliquePlane("Ocor");
         }
         else {
-            Preferences.debug("obliquePlane = " + obliquePlane + "\n");
+            Preferences.debug("obliquePlane = " + obliquePlane + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 10*512 + 2*258
@@ -2228,7 +2229,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setFileFormat("Post 3.0");
         }
         else {
-            Preferences.debug("fileFormat = " + fileFormat + "\n");
+            Preferences.debug("fileFormat = " + fileFormat + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 10*512 + 2*267
@@ -2252,7 +2253,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setAutoCenterFrequency("Centroid");
         }
         else {
-            Preferences.debug("autoCenterFrequency = " + autoCenterFrequency + "\n");
+            Preferences.debug("autoCenterFrequency = " + autoCenterFrequency + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 10*512 + 2*268
@@ -2354,7 +2355,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setAutoManualPrescan("Auto prescan succeeded.  Manual prescan done.");
         }
         else {
-            Preferences.debug("autoManualPrescan = " + autoManualPrescan + "\n");
+            Preferences.debug("autoManualPrescan = " + autoManualPrescan + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 10*512 + 2*288
@@ -2394,7 +2395,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setImageType("Imaginary");
         }
         else {
-            Preferences.debug("imageType = " + imageType + "\n");
+            Preferences.debug("imageType = " + imageType + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 10*512 + 2*290
@@ -2442,7 +2443,7 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setCollapseImage("OCOL");
         }
         else {
-            Preferences.debug("collapseImage = " + collapseImage + "\n");
+            Preferences.debug("collapseImage = " + collapseImage + "\n", Preferences.DEBUG_FILEIO);
         }
         
         // 10*512 + 2*291
@@ -2489,7 +2490,7 @@ public class FileGESigna4X extends FileBase {
                 fileInfo.setFractionalEffectiveEcho("Fractional/Effective Echo");
             }
             else {
-                Preferences.debug("fractionalEffectiveEcho = " + fractionalEffectiveEcho + "\n");
+                Preferences.debug("fractionalEffectiveEcho = " + fractionalEffectiveEcho + "\n", Preferences.DEBUG_FILEIO);
             }
             
             // 10*512 + 2*297
@@ -2524,7 +2525,7 @@ public class FileGESigna4X extends FileBase {
                 fileInfo.setVascularImagingFlags("Magweight");
             }
             else {
-                Preferences.debug("vascularImagingFlags = " + vascularImagingFlags + "\n");
+                Preferences.debug("vascularImagingFlags = " + vascularImagingFlags + "\n", Preferences.DEBUG_FILEIO);
             }
             
             // 10*512 + 2*303
@@ -2612,7 +2613,7 @@ public class FileGESigna4X extends FileBase {
             compression = (short)getSignedShort(endianess);
             if (compression != 0) {
                 Preferences.debug("compression = " + compression + 
-                                  " instead of the required 0 for uncompressed\n");
+                                  " instead of the required 0 for uncompressed\n", Preferences.DEBUG_FILEIO);
                 return - 1;
             }
             
@@ -2623,7 +2624,7 @@ public class FileGESigna4X extends FileBase {
             }
             if (bitsPerPixel != 16) {
                 Preferences.debug("Number of bits used to represent image = " +
-                                   bitsPerPixel + " instead of the required 16\n");
+                                   bitsPerPixel + " instead of the required 16\n", Preferences.DEBUG_FILEIO);
             }
             fileInfo.setBitsPerPixel(bitsPerPixel);
             
