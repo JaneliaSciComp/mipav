@@ -1883,7 +1883,7 @@ public class FileInfoNIFTI extends FileInfoBase {
             // setOrientation(((Byte)tcvalue.elementAt(0)).byteValue());
 
         } else {
-            Preferences.debug("tname: " + tname + ", not found.");
+            Preferences.debug("tname: " + tname + ", not found.", Preferences.DEBUG_FILEIO);
         }
     }
 
