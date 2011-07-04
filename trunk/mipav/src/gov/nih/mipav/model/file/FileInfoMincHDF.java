@@ -416,7 +416,7 @@ public class FileInfoMincHDF extends FileInfoBase {
     public final void setStartLocations(final double[] origin) {
 
         if (origin.length != 3) {
-            Preferences.debug("Start locations array must be of length 3.\n");
+            Preferences.debug("Start locations array must be of length 3.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
