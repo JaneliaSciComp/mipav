@@ -526,7 +526,7 @@ public class FileMinc extends FileBase {
         if ( (imageID != null) && (imageID.length < extents.length)) {
             final int newExtents[] = new int[imageID.length];
             Preferences.debug("Only keeping " + imageID.length + " of " + extents.length
-                    + " dimensions found in NC_DIMENSION\n");
+                    + " dimensions found in NC_DIMENSION\n", Preferences.DEBUG_FILEIO);
             int k = imageID.length - 1;
             for (int i = 0; i < extents.length; i++) {
                 boolean found = false;
