@@ -909,7 +909,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     public void setAxisOrientation(int[] axOrient) {
 
         if (axOrient.length != 3) {
-            Preferences.debug("Axis orientations array must be of length 3.\n");
+            Preferences.debug("Axis orientations array must be of length 3.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -929,7 +929,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     public void setAxisOrientation(int axOrient, int axis) {
 
         if ((axis < 0) || (axis > 2)) {
-            Preferences.debug("Error: Axis must be 0, 1, or 2.\n");
+            Preferences.debug("Error: Axis must be 0, 1, or 2.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -1293,7 +1293,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     public void setOrigin(float fun, int axis) {
 
         if ((axis < 0) || (axis > 3)) {
-            Preferences.debug("Error: Axis must be 0, 1, 2, or 3.\n");
+            Preferences.debug("Error: Axis must be 0, 1, 2, or 3.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -1574,7 +1574,7 @@ public class FileInfoAnalyze extends FileInfoBase {
             // setOrientation(((Byte)tcvalue.elementAt(0)).byteValue());
 
         } else {
-            Preferences.debug("tname: " + tname + ", not found.");
+            Preferences.debug("tname: " + tname + ", not found.", Preferences.DEBUG_FILEIO);
         }
     }
 
