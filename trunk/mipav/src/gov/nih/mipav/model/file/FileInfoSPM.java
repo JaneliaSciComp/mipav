@@ -866,7 +866,7 @@ public class FileInfoSPM extends FileInfoBase {
     public void setAxisOrientation(int[] axOrient) {
 
         if (axOrient.length != 3) {
-            Preferences.debug("Axis orientations array must be of length 3.\n");
+            Preferences.debug("Axis orientations array must be of length 3.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
@@ -1425,7 +1425,7 @@ public class FileInfoSPM extends FileInfoBase {
             // setOrientation(((Byte)tcvalue.elementAt(0)).byteValue());
 
         } else {
-            Preferences.debug("tname: " + tname + ", not found.");
+            Preferences.debug("tname: " + tname + ", not found.", Preferences.DEBUG_FILEIO);
         }
     }
 
