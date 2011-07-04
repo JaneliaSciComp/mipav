@@ -312,7 +312,7 @@ public class FileDM3 extends FileBase {
 
             raFile = new RandomAccessFile(file, "r");
             fileVersion = getInt(endianess);
-            Preferences.debug("DM3 file version = " + fileVersion + "\n");
+            Preferences.debug("DM3 file version = " + fileVersion + "\n", Preferences.DEBUG_FILEIO);
 
             if (fileVersion != 3) {
                 raFile.close();
@@ -323,7 +323,7 @@ public class FileDM3 extends FileBase {
 
             // Location contains number of file bytes - 16
             fileBytes = getInt(endianess) + 16;
-            Preferences.debug(fileName + " length = " + fileBytes + " bytes\n");
+            Preferences.debug(fileName + " length = " + fileBytes + " bytes\n", Preferences.DEBUG_FILEIO);
 
             // The next location contains the byte ordering of the tag data
             // Only the tag data is in this order.
@@ -331,13 +331,13 @@ public class FileDM3 extends FileBase {
             byteOrder = getInt(endianess);
 
             if (byteOrder == 0) {
-                Preferences.debug("Tag data is big endian\n");
+                Preferences.debug("Tag data is big endian\n", Preferences.DEBUG_FILEIO);
                 dataEndianess = FileBase.BIG_ENDIAN;
             } else if (byteOrder == 1) {
                 dataEndianess = FileBase.LITTLE_ENDIAN;
-                Preferences.debug("Tag data is little endian\n");
+                Preferences.debug("Tag data is little endian\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("byteOrder is an illegal = " + byteOrder + "\n");
+                Preferences.debug("byteOrder is an illegal = " + byteOrder + "\n", Preferences.DEBUG_FILEIO);
                 raFile.close();
 
                 MipavUtil.displayError("Byte order is an illegal = " + byteOrder);
@@ -348,7 +348,7 @@ public class FileDM3 extends FileBase {
 
             // Read tag group
             readTagGroup();
-            Preferences.debug("Have completed readTagGroup()\n");
+            Preferences.debug("Have completed readTagGroup()\n", Preferences.DEBUG_FILEIO);
 
             desiredImageNumber = 0;
             desiredArraySize = arraySizeArray[0];
@@ -369,7 +369,8 @@ public class FileDM3 extends FileBase {
                 }
             }
 
-            Preferences.debug("Number of arrays of largest size = " + identicalDesiredArraySize + "\n");
+            Preferences.debug("Number of arrays of largest size = " + identicalDesiredArraySize + "\n", 
+            		Preferences.DEBUG_FILEIO);
 
             nDimensions = numDimArray[desiredImageNumber];
             imgExtents = new int[nDimensions];
@@ -681,7 +682,7 @@ public class FileDM3 extends FileBase {
             }
 
             arraySize = getInt(endianess);
-            Preferences.debug("Array size = " + arraySize + "\n");
+            Preferences.debug("Array size = " + arraySize + "\n", Preferences.DEBUG_FILEIO);
 
             if (isData) {
                 arraySizeArray[imageNum] = arraySize;
@@ -714,9 +715,9 @@ public class FileDM3 extends FileBase {
                 } // switch(encodedType[i])
             } // for (i = 0; i < encodedType.length; i++)
 
-            Preferences.debug("elementBytes = " + elementBytes + "\n");
+            Preferences.debug("elementBytes = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
             bufferSize = arraySize * elementBytes;
-            Preferences.debug("bufferSize = " + bufferSize + "\n");
+            Preferences.debug("bufferSize = " + bufferSize + "\n", Preferences.DEBUG_FILEIO);
             arrayLocation = raFile.getFilePointer();
 
             if (isData) {
@@ -727,13 +728,13 @@ public class FileDM3 extends FileBase {
             if ( (isImageData) && (isCalibrations) && (isDimension) && (isUnits)) {
                 pixelUnitsArray[imageNum][unitsIndex] = getString(elementBytes);
                 Preferences.debug("pixelUnitsArray[" + imageNum + "][ " + unitsIndex + "] = "
-                        + pixelUnitsArray[imageNum][unitsIndex] + "\n");
+                        + pixelUnitsArray[imageNum][unitsIndex] + "\n", Preferences.DEBUG_FILEIO);
                 unitsIndex++;
                 pixelUnitsNumber[imageNum] = unitsIndex;
                 isUnits = false;
             }
 
-            Preferences.debug("Array location = " + arrayLocation + "\n");
+            Preferences.debug("Array location = " + arrayLocation + "\n", Preferences.DEBUG_FILEIO);
             raFile.seek(arrayLocation + bufferSize);
 
             return;
@@ -1266,43 +1267,43 @@ public class FileDM3 extends FileBase {
             switch (encodedType) {
 
                 case BOOLEAN:
-                    Preferences.debug("Data is 1 boolean = ");
+                    Preferences.debug("Data is 1 boolean = ", Preferences.DEBUG_FILEIO);
                     break;
 
                 case CHAR:
-                    Preferences.debug("Data is 1 char = ");
+                    Preferences.debug("Data is 1 char = ", Preferences.DEBUG_FILEIO);
                     break;
 
                 case OCTET:
-                    Preferences.debug("Data is 1 octet = ");
+                    Preferences.debug("Data is 1 octet = ", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SHORT:
-                    Preferences.debug("Data is 1 short = ");
+                    Preferences.debug("Data is 1 short = ", Preferences.DEBUG_FILEIO);
                     break;
 
                 case USHORT:
-                    Preferences.debug("Data is 1 USHORT = ");
+                    Preferences.debug("Data is 1 USHORT = ", Preferences.DEBUG_FILEIO);
                     break;
 
                 case LONG:
-                    Preferences.debug("Data is 1 long = ");
+                    Preferences.debug("Data is 1 long = ", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ULONG:
-                    Preferences.debug("Data is 1 ULONG = ");
+                    Preferences.debug("Data is 1 ULONG = ", Preferences.DEBUG_FILEIO);
                     break;
 
                 case FLOAT:
-                    Preferences.debug("Data is 1 FLOAT = ");
+                    Preferences.debug("Data is 1 FLOAT = ", Preferences.DEBUG_FILEIO);
                     break;
 
                 case DOUBLE:
-                    Preferences.debug("Data is 1 DOUBLE = ");
+                    Preferences.debug("Data is 1 DOUBLE = ", Preferences.DEBUG_FILEIO);
                     break;
 
                 default:
-                    Preferences.debug("Illegal encoded data type = " + encodedType + "\n");
+                    Preferences.debug("Illegal encoded data type = " + encodedType + "\n", Preferences.DEBUG_FILEIO);
                     MipavUtil.displayError("Illegal encoded data type");
                     throw new IOException();
             }
@@ -1312,20 +1313,20 @@ public class FileDM3 extends FileBase {
 
                 if (encodedType == FileDM3.CHAR) {
                     s = new String(dataByte);
-                    Preferences.debug(s + "\n");
+                    Preferences.debug(s + "\n", Preferences.DEBUG_FILEIO);
                 } else {
-                    Preferences.debug(dataByte[0] + "\n");
+                    Preferences.debug(dataByte[0] + "\n", Preferences.DEBUG_FILEIO);
                 }
             } // if ((encodedType == BOOLEAN) || (encodedType == CHAR) || (encodedType == OCTET))
             else if (encodedType == FileDM3.SHORT) {
                 dataShort = getSignedShort(dataEndianess);
-                Preferences.debug(dataShort + "\n");
+                Preferences.debug(dataShort + "\n", Preferences.DEBUG_FILEIO);
             } else if (encodedType == FileDM3.USHORT) {
                 dataShort = getSignedShort(dataEndianess);
-                Preferences.debug(dataShort + "\n");
+                Preferences.debug(dataShort + "\n", Preferences.DEBUG_FILEIO);
             } else if (encodedType == FileDM3.LONG) {
                 dataInt = getInt(dataEndianess);
-                Preferences.debug(dataInt + "\n");
+                Preferences.debug(dataInt + "\n", Preferences.DEBUG_FILEIO);
 
                 if ( (isImageData) && (isDimensions)) {
                     dimArray[imageNum][index] = dataInt;
@@ -1335,7 +1336,7 @@ public class FileDM3 extends FileBase {
                 }
             } else if (encodedType == FileDM3.ULONG) {
                 dataUInt = getUInt(dataEndianess);
-                Preferences.debug(dataUInt + "\n");
+                Preferences.debug(dataUInt + "\n", Preferences.DEBUG_FILEIO);
 
                 if ( (isImageData) && (isDimensions)) {
                     dimArray[imageNum][index] = (int) dataUInt;
@@ -1345,16 +1346,17 @@ public class FileDM3 extends FileBase {
                 }
             } else if (encodedType == FileDM3.FLOAT) {
                 dataFloat = getFloat(dataEndianess);
-                Preferences.debug(dataFloat + "\n");
+                Preferences.debug(dataFloat + "\n", Preferences.DEBUG_FILEIO);
 
                 if ( (isImageData) && (isCalibrations) && (isDimension) && (isScale)) {
-                    Preferences.debug("About to set pixelScaleArray[" + imageNum + "][" + scaleIndex + "]\n");
+                    Preferences.debug("About to set pixelScaleArray[" + imageNum + "][" + scaleIndex + "]\n", 
+                    		Preferences.DEBUG_FILEIO);
                     pixelScaleArray[imageNum][scaleIndex++] = dataFloat;
                     isScale = false;
                 }
             } else if (encodedType == FileDM3.DOUBLE) {
                 dataDouble = getDouble(dataEndianess);
-                Preferences.debug(dataDouble + "\n");
+                Preferences.debug(dataDouble + "\n", Preferences.DEBUG_FILEIO);
             }
 
         } catch (final Exception e) {
@@ -1393,7 +1395,7 @@ public class FileDM3 extends FileBase {
                 dataString = new String(buffer, "UTF-16LE");
             }
 
-            Preferences.debug(dataString + "\n");
+            Preferences.debug(dataString + "\n", Preferences.DEBUG_FILEIO);
         } catch (final Exception e) {
 
             if (image != null) {
@@ -1508,11 +1510,11 @@ public class FileDM3 extends FileBase {
             dataByte = raFile.readByte();
 
             if (dataByte == 21) {
-                Preferences.debug("Tag entry byte indicates data\n");
+                Preferences.debug("Tag entry byte indicates data\n", Preferences.DEBUG_FILEIO);
             } else if (dataByte == 20) {
-                Preferences.debug("Tag entry byte indicates another tag group\n");
+                Preferences.debug("Tag entry byte indicates another tag group\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("Tag entry byte is an illegal = " + isData + "\n");
+                Preferences.debug("Tag entry byte is an illegal = " + isData + "\n", Preferences.DEBUG_FILEIO);
                 MipavUtil.displayError("Tag entry byte is an illegal " + isData);
                 throw new IOException();
             }
@@ -1521,7 +1523,7 @@ public class FileDM3 extends FileBase {
 
             if (entryStringLength != 0) {
                 entryString = getString(entryStringLength);
-                Preferences.debug("Tag label = " + entryString + "\n");
+                Preferences.debug("Tag label = " + entryString + "\n", Preferences.DEBUG_FILEIO);
 
                 if (entryString.equalsIgnoreCase("ImageData")) {
                     isImageData = true;
@@ -1592,11 +1594,11 @@ public class FileDM3 extends FileBase {
 
         try {
             groupSorted = raFile.readByte();
-            Preferences.debug("Group sorted = " + groupSorted + "\n");
+            Preferences.debug("Group sorted = " + groupSorted + "\n", Preferences.DEBUG_FILEIO);
             groupOpen = raFile.readByte();
-            Preferences.debug("Group open = " + groupOpen + "\n");
+            Preferences.debug("Group open = " + groupOpen + "\n", Preferences.DEBUG_FILEIO);
             tagEntries = getInt(endianess);
-            Preferences.debug("Number of tag entries = " + tagEntries + "\n");
+            Preferences.debug("Number of tag entries = " + tagEntries + "\n", Preferences.DEBUG_FILEIO);
 
             if (isDimensions) {
                 dimensionsEntry = routineTagGroup;
@@ -1604,7 +1606,8 @@ public class FileDM3 extends FileBase {
             }
 
             for (i = 0; i < tagEntries; i++) {
-                Preferences.debug("Reading tag entry " + (i + 1) + " of " + tagEntries + " in this group\n");
+                Preferences.debug("Reading tag entry " + (i + 1) + " of " + tagEntries + " in this group\n", 
+                		Preferences.DEBUG_FILEIO);
                 readTagEntry(i);
             }
 
@@ -1642,7 +1645,7 @@ public class FileDM3 extends FileBase {
 
             // The first 4 bytes should always be %%%%
             if ( !delimString.equals("%%%%")) {
-                Preferences.debug("delimString is an illegal = " + delimString + "|n");
+                Preferences.debug("delimString is an illegal = " + delimString + "|n", Preferences.DEBUG_FILEIO);
                 MipavUtil.displayError("Illegal delimiter string");
                 throw new IOException();
             }
@@ -1660,22 +1663,22 @@ public class FileDM3 extends FileBase {
             switch (encodedType) {
 
                 case STRING:
-                    Preferences.debug("Data is STRING\n");
+                    Preferences.debug("Data is STRING\n", Preferences.DEBUG_FILEIO);
                     readString();
                     break;
 
                 case STRUCT:
-                    Preferences.debug("Data is STRUCT\n");
+                    Preferences.debug("Data is STRUCT\n", Preferences.DEBUG_FILEIO);
                     readStruct();
                     break;
 
                 case ARRAY:
-                    Preferences.debug("Data is ARRAY\n");
+                    Preferences.debug("Data is ARRAY\n", Preferences.DEBUG_FILEIO);
                     readArray();
                     break;
 
                 default:
-                    Preferences.debug("Illegal encoded data type = " + encodedType + "\n");
+                    Preferences.debug("Illegal encoded data type = " + encodedType + "\n", Preferences.DEBUG_FILEIO);
                     MipavUtil.displayError("Illegal encoded data type");
                     throw new IOException();
             }
