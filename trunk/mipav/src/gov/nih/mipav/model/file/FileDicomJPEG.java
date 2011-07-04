@@ -421,7 +421,7 @@ public class FileDicomJPEG {
                 break;
 
             default:
-                Preferences.debug("Unsupported SOF marker type " + image[index] + "\n");
+                Preferences.debug("Unsupported SOF marker type " + image[index] + "\n", Preferences.DEBUG_FILEIO);
                 break;
         }
 
@@ -444,7 +444,7 @@ public class FileDicomJPEG {
                 return null;
 
             default:
-                Preferences.debug("FileDicomJPEG: Unexpected marker " + image[index] + "\n");
+                Preferences.debug("FileDicomJPEG: Unexpected marker " + image[index] + "\n", Preferences.DEBUG_FILEIO);
                 break;
         }
 
@@ -700,7 +700,7 @@ public class FileDicomJPEG {
                                 break;
 
                             default:
-                                Preferences.debug("FileDicomJPEG: Warning: Undefined PSV\n");
+                                Preferences.debug("FileDicomJPEG: Warning: Undefined PSV\n", Preferences.DEBUG_FILEIO);
                                 predictor = 0;
                         }
                     }
@@ -891,7 +891,7 @@ public class FileDicomJPEG {
             length = length - 1 - 16 - count;
 
             if ( (num & 0x10) != 0) { // AC table definition
-                Preferences.debug("Huffman table for lossless JPEG is not defined.\n");
+                Preferences.debug("Huffman table for lossless JPEG is not defined.\n", Preferences.DEBUG_FILEIO);
             }
         }
 
@@ -909,7 +909,7 @@ public class FileDicomJPEG {
         final int length = (image[index++] << 8) | image[index++];
 
         if (length != 4) {
-            Preferences.debug("FileDicomJPEG: Bogus length in Dri.\n");
+            Preferences.debug("FileDicomJPEG: Bogus length in Dri.\n", Preferences.DEBUG_FILEIO);
 
             return -1;
         }
@@ -937,15 +937,16 @@ public class FileDicomJPEG {
         imageWidth = (image[index++] << 8) | image[index++];
         numComponents = image[index++];
 
-        Preferences.debug("Dicom JPEG Image height = " + imageHeight + " Image width = " + imageWidth + "\n");
+        Preferences.debug("Dicom JPEG Image height = " + imageHeight + " Image width = " + imageWidth + "\n", 
+        		Preferences.DEBUG_FILEIO);
 
         if (imageHeight <= 0) {
-            Preferences.debug("Setting imageHeight to " + dicomH + ".\n");
+            Preferences.debug("Setting imageHeight to " + dicomH + ".\n", Preferences.DEBUG_FILEIO);
             imageHeight = dicomH;
         }
 
         if (imageWidth <= 0) {
-            Preferences.debug("Setting imageWidth to " + dicomW + ".\n");
+            Preferences.debug("Setting imageWidth to " + dicomW + ".\n", Preferences.DEBUG_FILEIO);
             imageWidth = dicomW;
         }
 
@@ -1144,7 +1145,7 @@ public class FileDicomJPEG {
                 case M_RST6:
                 case M_RST7:
                 case M_TEM:
-                    Preferences.debug("FileDicomJPEG Warning: unexpected marker : " + image[index]);
+                    Preferences.debug("FileDicomJPEG Warning: unexpected marker : " + image[index], Preferences.DEBUG_FILEIO);
                     break;
 
                 default: // must be DNL, DHP, EXP, APPn, JPGn, COM, or RESn
@@ -1249,7 +1250,7 @@ public class FileDicomJPEG {
                     bitCount = 0;
 
                     if (marker == true) {
-                        Preferences.debug("returning -1\n");
+                        Preferences.debug("returning -1\n", Preferences.DEBUG_FILEIO);
 
                         return -1;
                     }
@@ -1297,7 +1298,7 @@ public class FileDicomJPEG {
                         bitCount = 0;
 
                         if (marker == true) {
-                            Preferences.debug("returning -1\n");
+                            Preferences.debug("returning -1\n", Preferences.DEBUG_FILEIO);
 
                             return -1;
                         }
@@ -1313,7 +1314,7 @@ public class FileDicomJPEG {
                 // With garbage input we may reach the sentinel value k = 17.
                 if (k > 16) {
                     MipavUtil.displayError("FileDicomJPEG: Corrupt JPEG data.  Bad Huffman code");
-                    Preferences.debug("Code was " + code + "\n");
+                    Preferences.debug("Code was " + code + "\n", Preferences.DEBUG_FILEIO);
                     s = 0; // fake a zero as the safest result
                 } else {
 
@@ -1347,7 +1348,7 @@ public class FileDicomJPEG {
                         bitCount = 0;
 
                         if (marker == true) {
-                            Preferences.debug("returning -1\n");
+                            Preferences.debug("returning -1\n", Preferences.DEBUG_FILEIO);
 
                             return -1;
                         }
