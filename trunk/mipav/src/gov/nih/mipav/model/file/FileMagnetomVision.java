@@ -408,7 +408,7 @@ public class FileMagnetomVision extends FileBase {
             } catch (NumberFormatException e) {
 
                 // MipavUtil.displayWarning("Instead of integer TextPatientAge has " + s);
-                Preferences.debug("Instead of integer TextPatientAge has " + s + "\n");
+                Preferences.debug("Instead of integer TextPatientAge has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextPatientAge(s);
@@ -422,7 +422,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(5);
 
             if (!s.equals("IMAGE")) {
-                Preferences.debug("Instead of IMAGE location 5541 has " + s + "\n");
+                Preferences.debug("Instead of IMAGE location 5541 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5546L);
@@ -431,7 +431,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextImageNumber has " + s + "\n");
+                Preferences.debug("Instead of integer TextImageNumber has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextImageNumber(s.trim());
@@ -441,7 +441,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextDateDD has " + s + "\n");
+                Preferences.debug("Instead of integer TextDateDD has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextDateDD(s);
@@ -454,7 +454,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextDateYYYY has " + s + "\n");
+                Preferences.debug("Instead of integer TextDateYYYY has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextDateYYYY(s);
@@ -464,7 +464,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextTimeHH has " + s + "\n");
+                Preferences.debug("Instead of integer TextTimeHH has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextTimeHH(s);
@@ -474,7 +474,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextTimeMM has " + s + "\n");
+                Preferences.debug("Instead of integer TextTimeMM has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextTimeMM(s);
@@ -482,7 +482,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(2);
 
             if (!s.equals("TA")) {
-                Preferences.debug("Instead of TA location 5577 has " + s + "\n");
+                Preferences.debug("Instead of TA location 5577 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5583L);
@@ -491,7 +491,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextAcquisitionTimeMM has " + s + "\n");
+                Preferences.debug("Instead of integer TextAcquisitionTimeMM has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextAcquisitionTimeMM(s.trim());
@@ -502,7 +502,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextAcquisitionTimeSS has " + s + "\n");
+                Preferences.debug("Instead of integer TextAcquisitionTimeSS has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextAcquisitionTimeSS(s.trim());
@@ -523,7 +523,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp2 = Float.parseFloat(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of float TextAcquisitionMatrixPhase has " + s + "\n");
+                Preferences.debug("Instead of float TextAcquisitionMatrixPhase has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextAcquisitionMatrixPhase(s.trim());
@@ -538,7 +538,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp2 = Float.parseFloat(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of float TextAcquisitionMatrixFreq has " + s + "\n");
+                Preferences.debug("Instead of float TextAcquisitionMatrixFreq has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextAcquisitionMatrixFreq(s.trim());
@@ -558,7 +558,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp2 = Float.parseFloat(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of float TextFlipAngle has " + s + "\n");
+                Preferences.debug("Instead of float TextFlipAngle has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextFlipAngle(s.trim());
@@ -567,7 +567,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(4);
 
             if (!s.equals("SCAN")) {
-                Preferences.debug("Instead of SCAN location 5718 has " + s + "\n");
+                Preferences.debug("Instead of SCAN location 5718 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5723L);
@@ -576,7 +576,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextScanNumberA has " + s + "\n");
+                Preferences.debug("Instead of integer TextScanNumberA has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextScanNumberA(s.trim());
@@ -589,7 +589,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(2);
 
             if (!s.equals("TR")) {
-                Preferences.debug("Instead of TR location 5730 has " + s + "\n");
+                Preferences.debug("Instead of TR location 5730 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5734L);
@@ -598,7 +598,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp2 = Float.parseFloat(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of float TextRepetitionTime has " + s + "\n");
+                Preferences.debug("Instead of float TextRepetitionTime has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextRepetitionTime(s.trim());
@@ -607,7 +607,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(2);
 
             if (!s.equals("TE")) {
-                Preferences.debug("Instead of TE location 5742 has " + s + "\n");
+                Preferences.debug("Instead of TE location 5742 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5746L);
@@ -616,7 +616,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp2 = Float.parseFloat(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of float TextEchoTime has " + s + "\n");
+                Preferences.debug("Instead of float TextEchoTime has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextEchoTime(s.trim());
@@ -627,7 +627,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s);
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextEchoNumber has " + s + "\n");
+                Preferences.debug("Instead of integer TextEchoNumber has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextEchoNumber(s.trim());
@@ -636,7 +636,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(2);
 
             if (!s.equals("SL")) {
-                Preferences.debug("Instead of SL location 5790 has " + s + "\n");
+                Preferences.debug("Instead of SL location 5790 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5794L);
@@ -645,7 +645,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp2 = Float.parseFloat(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of float TextSliceThickness has " + s + "\n");
+                Preferences.debug("Instead of float TextSliceThickness has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextSliceThickness(s.trim());
@@ -653,7 +653,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(2);
 
             if (!s.equals("SP")) {
-                Preferences.debug("Instead of SP location 5802 has " + s + "\n");
+                Preferences.debug("Instead of SP location 5802 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5806L);
@@ -662,7 +662,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp2 = Float.parseFloat(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of float TextSlicePosition has " + s + "\n");
+                Preferences.debug("Instead of float TextSlicePosition has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextSlicePosition(s.trim());
@@ -712,7 +712,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(3); // Look for TextFOVFLAG, FoV, the field of view flag
 
             if (!s.equals("FoV")) {
-                Preferences.debug("Instead of FoV location 5838 has " + s + "\n");
+                Preferences.debug("Instead of FoV location 5838 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5842L); // Look for TextFOVH, the horizontal distance of the field of view
@@ -721,7 +721,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextFOVH has " + s);
+                Preferences.debug("Instead of integer TextFOVH has " + s, Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextFOVH(s);
@@ -732,7 +732,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextFOVV has " + s + "\n");
+                Preferences.debug("Instead of integer TextFOVV has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextFOVV(s);
@@ -740,7 +740,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(2);
 
             if (!s.equals("TP")) {
-                Preferences.debug("Instead of TP location 5874 has " + s + "\n");
+                Preferences.debug("Instead of TP location 5874 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5878L);
@@ -749,7 +749,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp2 = Float.parseFloat(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of float TextTablePosition has " + s + "\n");
+                Preferences.debug("Instead of float TextTablePosition has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextTablePosition(s.trim());
@@ -757,7 +757,7 @@ public class FileMagnetomVision extends FileBase {
             s = getString(5);
 
             if (!s.equals("STUDY")) {
-                Preferences.debug("Instead of STUDY location 5938 has " + s + "\n");
+                Preferences.debug("Instead of STUDY location 5938 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5943L);
@@ -766,7 +766,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextStudyNumber has " + s + "\n");
+                Preferences.debug("Instead of integer TextStudyNumber has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextStudyNumber(s.trim());
@@ -776,7 +776,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextDOBDD has " + s + "\n");
+                Preferences.debug("Instead of integer TextDOBDD has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextDOBDD(s.trim());
@@ -789,7 +789,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextDOBYYYY has " + s + "\n");
+                Preferences.debug("Instead of integer TextDOBYYYY has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextDOBYYYY(s.trim());
@@ -797,14 +797,14 @@ public class FileMagnetomVision extends FileBase {
             s = getString(3);
 
             if (!s.equals("STU")) {
-                Preferences.debug("Instead of STU location 5992 has " + s + "\n");
+                Preferences.debug("Instead of STU location 5992 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5996L);
             s = getString(3);
 
             if (!s.equals("IMA")) {
-                Preferences.debug("Instead of IMA location 5996 has " + s + "\n");
+                Preferences.debug("Instead of IMA location 5996 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             raFile.seek(5999L);
@@ -813,7 +813,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextStudyNumber2 has " + s + "\n");
+                Preferences.debug("Instead of integer TextStudyNumber2 has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextStudyNumber2(s.trim());
@@ -835,7 +835,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextScanStartTimeHH has " + s + "\n");
+                Preferences.debug("Instead of integer TextScanStartTimeHH has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextScanStartTimeHH(s.trim());
@@ -845,7 +845,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextScanStartTimeMM has " + s + "\n");
+                Preferences.debug("Instead of integer TextScanStartTimeMM has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextScanStartTimeMM(s.trim());
@@ -855,7 +855,7 @@ public class FileMagnetomVision extends FileBase {
             try {
                 temp = Integer.parseInt(s.trim());
             } catch (NumberFormatException e) {
-                Preferences.debug("Instead of integer TextScanStartTimeSS has " + s + "\n");
+                Preferences.debug("Instead of integer TextScanStartTimeSS has " + s + "\n", Preferences.DEBUG_FILEIO);
             }
 
             fileInfo.setTextScanStartTimeSS(s.trim());
