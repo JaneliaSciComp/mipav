@@ -427,7 +427,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         } else {
             idealBins = (int) (((bufMax - bufMin) / idealWidth) + 0.5f);
         }
-        // Preferences.debug("idealBins = " + idealBins + "\n");
+        // Preferences.debug("idealBins = " + idealBins + "\n", Preferences.DEBUG_ALGORITHM);
 
         int type = srcImage.getType();
 
@@ -490,12 +490,12 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                     maxbin = brightnessLevel;
                 }
             } catch (ArrayIndexOutOfBoundsException aioobe) {
-                Preferences.debug("<HALT>\n");
+                Preferences.debug("<HALT>\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("kernel: " + kernel[i] + "; imageOffset: " + imageOffset + "; unitSize: " + unitSize +
-                                  "\n");
-                Preferences.debug("at histogram: " + (int) (brightnessLevel) + "\n");
-                Preferences.debug("totalbins: " + totalBins + "\n");
-                Preferences.debug("</HALT>\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("at histogram: " + (int) (brightnessLevel) + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("totalbins: " + totalBins + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("</HALT>\n", Preferences.DEBUG_ALGORITHM);
                 MipavUtil.displayError("Algorithm AHElocal reports: buildHistogram out of bounds");
                 setCompleted(false);
 
@@ -1293,8 +1293,8 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                     } catch (ArrayIndexOutOfBoundsException aioobe) {
                         Preferences.debug("kernlength: " + kernel.length + ";, count: " + count + "; " +
                                           "in dataset: " + Integer.toString(pixelLocation) + "; datalen: " +
-                                          data.length + "\n");
-                        Preferences.debug("\n");
+                                          data.length + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
                     }
                 }
             }
@@ -1349,8 +1349,8 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                     } catch (ArrayIndexOutOfBoundsException aioobe) {
                         Preferences.debug("kernlength: " + kernel.length + ";, count: " + count + "; " +
                                           "in dataset: " + Integer.toString(pixelLocation) + "; datalen: " +
-                                          data.length + "\n");
-                        Preferences.debug("\n");
+                                          data.length + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
                     }
                 }
             }
@@ -1502,7 +1502,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
     protected final void printhisto(int[] histo) {
 
         for (int i = 0; i < totalBins; i++) {
-            Preferences.debug("histogram[" + i + "] = " + histo[i] + "\n");
+            Preferences.debug("histogram[" + i + "] = " + histo[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
     }
 
