@@ -1866,7 +1866,7 @@ outer:
         isn = -1;
         fft();
         reals();
-        Preferences.debug("Fourier cosine and sine coefficients\n");
+        Preferences.debug("Fourier cosine and sine coefficients\n", Preferences.DEBUG_ALGORITHM);
 
         for (j = 0; j <= n; j++) {
             Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n", Preferences.DEBUG_ALGORITHM);
