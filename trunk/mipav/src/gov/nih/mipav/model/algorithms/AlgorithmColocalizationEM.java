@@ -2858,16 +2858,16 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                 prob[j] = denom / (double) count;
             }
 
-            Preferences.debug("Iteration = " + (iter + 1) + "\n");
+            Preferences.debug("Iteration = " + (iter + 1) + "\n", Preferences.DEBUG_ALGORITHM);
 
             for (j = 0; j < gaussians; j++) {
-                Preferences.debug("Gaussian = " + (j + 1) + "\n");
-                Preferences.debug("Probability = " + prob[j] + "\n");
-                Preferences.debug("rho = " + rho[j] + "\n");
+                Preferences.debug("Gaussian = " + (j + 1) + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Probability = " + prob[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("rho = " + rho[j] + "\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("Major half axis = " + halfMajor[j] + " " + " Minor half axis = " + halfMinor[j] +
-                                  "\n");
-                Preferences.debug("Roatation angle to major half axis = " + theta[j] + "\n");
-                Preferences.debug("Mean x = " + mean[j][0] + " Mean y = " + mean[j][1] + "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Rotation angle to major half axis = " + theta[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Mean x = " + mean[j][0] + " Mean y = " + mean[j][1] + "\n", Preferences.DEBUG_ALGORITHM);
             }
         } // for (iter = 0; iter < iterations; iter++)
 
