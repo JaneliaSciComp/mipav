@@ -135,10 +135,10 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         yc = y[0];
         y2 = y[1];
         
-        Preferences.debug("x center = " + xc + " y center = " + yc + "\n");
+        Preferences.debug("x center = " + xc + " y center = " + yc + "\n", Preferences.DEBUG_ALGORITHM);
         
         radius = Math.sqrt((x2-xc)*(x2-xc) + (y2-yc)*(y2-yc));
-        Preferences.debug("radius = " + radius + "\n");
+        Preferences.debug("radius = " + radius + "\n", Preferences.DEBUG_ALGORITHM);
 
         xDimSource = srcImage.getExtents()[0];
         yDimSource = srcImage.getExtents()[1];
@@ -378,10 +378,10 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         yc = y[0];
         y2 = y[1];
         
-        Preferences.debug("x center = " + xc + " y center = " + yc + "\n");
+        Preferences.debug("x center = " + xc + " y center = " + yc + "\n", Preferences.DEBUG_ALGORITHM);
         
         radius = Math.sqrt((x2-xc)*(x2-xc) + (y2-yc)*(y2-yc));
-        Preferences.debug("radius = " + radius + "\n");
+        Preferences.debug("radius = " + radius + "\n", Preferences.DEBUG_ALGORITHM);
         
         // Let n = the number of sides in a polygon
         // Let wk be evenly spaced points on a unit circle and zk be the corner points of a polygon
@@ -618,10 +618,10 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         yc = y[0];
         y2 = y[1];
         
-        Preferences.debug("x center = " + xc + " y center = " + yc + "\n");
+        Preferences.debug("x center = " + xc + " y center = " + yc + "\n", Preferences.DEBUG_ALGORITHM);
         
         radius = Math.sqrt((x2-xc)*(x2-xc) + (y2-yc)*(y2-yc));
-        Preferences.debug("radius = " + radius + "\n");
+        Preferences.debug("radius = " + radius + "\n", Preferences.DEBUG_ALGORITHM);
         
         // Let n = the number of sides in a polygon
         // Let wk be evenly spaced points on a unit circle and zk be the corner points of a polygon
