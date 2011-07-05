@@ -396,7 +396,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             // generateEllipsoidMesh(5);
             computeMedianIntensity(false);
 
-            Preferences.debug("New Center of Mass = " + m_kCenter + "\n");
+            Preferences.debug("New Center of Mass = " + m_kCenter + "\n", Preferences.DEBUG_ALGORITHM);
 
         }
 
@@ -676,8 +676,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             iReducedQuantity -= aiHistogram[j];
         }
 
-        Preferences.debug("Brain extractor: histogramAnalysis: m_iQuantity = " + m_iQuantity + "\n");
-        Preferences.debug("Brain extractor: histogramAnalysis: iReducedQuantity = " + iReducedQuantity + "\n");
+        Preferences.debug("Brain extractor: histogramAnalysis: m_iQuantity = " + m_iQuantity + "\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Brain extractor: histogramAnalysis: iReducedQuantity = " + iReducedQuantity + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
 
         // compute brightness thresholds
         iAccum = 0;
@@ -707,9 +709,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         }
 
         // m_iBrightThreshold *= 1.25f;
-        Preferences.debug("Brain extractor: histogramAnalysis: MinThreshold = " + m_iMinThreshold + "\n");
-        Preferences.debug("Brain extractor: histogramAnalysis: BackThreshold = " + m_iBackThreshold + "\n");
-        Preferences.debug("Brain extractor: histogramAnalysis: Brightness Threshold = " + m_iBrightThreshold + "\n");
+        Preferences.debug("Brain extractor: histogramAnalysis: MinThreshold = " + m_iMinThreshold + "\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Brain extractor: histogramAnalysis: BackThreshold = " + m_iBackThreshold + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Brain extractor: histogramAnalysis: Brightness Threshold = " + m_iBrightThreshold + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -1152,8 +1157,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         }
 
         m_iMedianIntensity = aiIntensity[iIQuantity / 2];
-        Preferences.debug("Brain extractor: computeMedianIntensity: m_iMedianIntensity = " + m_iMedianIntensity + "\n");
-        Preferences.debug("Brain extractor: computeMedianIntensity: iIQuantity = " + iIQuantity + "\n");
+        Preferences.debug("Brain extractor: computeMedianIntensity: m_iMedianIntensity = " + m_iMedianIntensity + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Brain extractor: computeMedianIntensity: iIQuantity = " + iIQuantity + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -1402,9 +1409,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_afLength[1] *= m_fReductionY;
         m_afLength[2] *= m_fReductionZ;
 
-        Preferences.debug("Brain extractor: extimateEllipsoid: ellipse length 1 = " + m_afLength[0] + "\n");
-        Preferences.debug("Brain extractor: extimateEllipsoid: ellipse length 2 = " + m_afLength[1] + "\n");
-        Preferences.debug("Brain extractor: extimateEllipsoid: ellipse length 3 = " + m_afLength[2] + "\n");
+        Preferences.debug("Brain extractor: extimateEllipsoid: ellipse length 1 = " + m_afLength[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Brain extractor: extimateEllipsoid: ellipse length 2 = " + m_afLength[1] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Brain extractor: extimateEllipsoid: ellipse length 3 = " + m_afLength[2] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
 
         if ( (m_afLength[0] > 0) && (m_afLength[1] > 0) && (m_afLength[2] > 0)) {
             return true;
@@ -1440,7 +1450,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         }
 
         final float radius = (float) Math.pow(0.75 * (1 / Math.PI) * count, 0.333333);
-        Preferences.debug("Brain extractor: extimateSphere: radius = " + radius + "\n");
+        Preferences.debug("Brain extractor: extimateSphere: radius = " + radius + "\n", Preferences.DEBUG_ALGORITHM);
 
         // Use a smaller version of the sphere for the initial mesh. The
         // default reduction is 0.75.
@@ -1451,9 +1461,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_afLength[1] = radius * 0.40f;
         m_afLength[2] = (radius * 0.25f) * (m_fXDelta / m_fZDelta);
 
-        Preferences.debug("Brain extractor: extimateSphere:  sphere length 1 = " + m_afLength[0] + "\n");
-        Preferences.debug("Brain extractor: extimateSphere:  sphere length 2 = " + m_afLength[1] + "\n");
-        Preferences.debug("Brain extractor: extimateSphere:  sphere length 3 = " + m_afLength[2] + "\n");
+        Preferences.debug("Brain extractor: extimateSphere:  sphere length 1 = " + m_afLength[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Brain extractor: extimateSphere:  sphere length 2 = " + m_afLength[1] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Brain extractor: extimateSphere:  sphere length 3 = " + m_afLength[2] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -2048,7 +2061,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             final float median = fMin + (m_iMedianIntensity * (fMax - fMin) / 1023);
             final float th = median * aboveMedian;
-            Preferences.debug("Brain extractor: getInsideVoxels: erode threshold = " + th + "\n");
+            Preferences.debug("Brain extractor: getInsideVoxels: erode threshold = " + th + "\n", Preferences.DEBUG_ALGORITHM);
 
             boolean[] chk;
             final int sliceSize = m_iXBound * m_iYBound;
@@ -2650,7 +2663,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         distCenter = Center.Distance(m_kCenter);
 
-        Preferences.debug("Distance between Centers = " + distCenter + "\n");
+        Preferences.debug("Distance between Centers = " + distCenter + "\n", Preferences.DEBUG_ALGORITHM);
 
         if (distCenter <= 0.05) {
             return false;
