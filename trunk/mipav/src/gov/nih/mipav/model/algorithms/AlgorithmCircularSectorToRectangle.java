@@ -223,12 +223,12 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         xc = xc / (((y4 - y1) / (x4 - x1)) - ((y3 - y2) / (x3 - x2)));
 
         yc = ((y4 - y1) / (x4 - x1) * xc) + (((x4 * y1) - (x1 * y4)) / (x4 - x1));
-        Preferences.debug("x center = " + xc + " y center = " + yc + "\n");
+        Preferences.debug("x center = " + xc + " y center = " + yc + "\n", Preferences.DEBUG_ALGORITHM);
 
         rmin = Math.sqrt(((x4 - xc) * (x4 - xc)) + ((y4 - yc) * (y4 - yc)));
 
         rmax = Math.sqrt(((x1 - xc) * (x1 - xc)) + ((y1 - yc) * (y1 - yc)));
-        Preferences.debug("rmin = " + rmin + " rmax = " + rmax + "\n");
+        Preferences.debug("rmin = " + rmin + " rmax = " + rmax + "\n", Preferences.DEBUG_ALGORITHM);
 
         // Calculate angle along line from center to z4 to z1 in -PI to PI radians
         theta1 = Math.atan2((y1 - y4), (x1 - x4));
@@ -247,7 +247,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         }
 
         alpha = theta / Math.PI;
-        Preferences.debug("alpha = " + alpha + "\n");
+        Preferences.debug("alpha = " + alpha + "\n", Preferences.DEBUG_ALGORITHM);
 
         xDimSource = srcImage.getExtents()[0];
         yDimSource = srcImage.getExtents()[1];
