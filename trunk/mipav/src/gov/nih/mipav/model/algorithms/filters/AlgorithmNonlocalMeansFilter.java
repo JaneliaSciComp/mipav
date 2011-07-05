@@ -321,7 +321,8 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         }
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
-        Preferences.debug("Seconds elapsed in AlgorithmNonlocalMeansFilter = " + (time/1000.0) + "\n");
+        Preferences.debug("Seconds elapsed in AlgorithmNonlocalMeansFilter = " + (time/1000.0) + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
         setCompleted(true);
         return;
     }
@@ -578,7 +579,8 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         }
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
-        Preferences.debug("Seconds elapsed in AlgorithmNonlocalMeansFilter = " + (time/1000.0) + "\n");
+        Preferences.debug("Seconds elapsed in AlgorithmNonlocalMeansFilter = " + (time/1000.0) + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
         setCompleted(true);
         return;
     }
@@ -908,7 +910,8 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
-        Preferences.debug("Seconds elapsed in AlgorithmNonlocalMeansFilter = " + (time/1000.0) + "\n");
+        Preferences.debug("Seconds elapsed in AlgorithmNonlocalMeansFilter = " + (time/1000.0) + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
         setCompleted(true);
         return;    
     }
@@ -1333,7 +1336,8 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
-        Preferences.debug("Seconds elapsed in AlgorithmNonlocalMeansFilter = " + (time/1000.0) + "\n");
+        Preferences.debug("Seconds elapsed in AlgorithmNonlocalMeansFilter = " + (time/1000.0) + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
         setCompleted(true);
         return;    
     }
