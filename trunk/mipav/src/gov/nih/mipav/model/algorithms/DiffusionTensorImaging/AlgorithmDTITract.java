@@ -213,7 +213,7 @@ public class AlgorithmDTITract extends AlgorithmBase
         try {
             kFileWriter.close();
         } catch ( IOException e2 ) {}
-        Preferences.debug( "\nNumber of tracts " + iCount +"\n");
+        Preferences.debug( "\nNumber of tracts " + iCount +"\n", Preferences.DEBUG_ALGORITHM);
     }
 
     /** Traces a single fiber bundle tract starting at the input
