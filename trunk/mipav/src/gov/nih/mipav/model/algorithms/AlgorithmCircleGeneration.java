@@ -410,11 +410,12 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         } // for (i = 1; i <= numRandomCircles; i++)
         circlesDrawn = i-1;
         if (circlesDrawn == 1) {
-            Preferences.debug("1 random circle drawn.  1 random circle requested.\n");
+            Preferences.debug("1 random circle drawn.  1 random circle requested.\n", Preferences.DEBUG_ALGORITHM);
             System.out.println("1 random circle drawn.  1 random circle requested.");    
         }
         else {
-            Preferences.debug(circlesDrawn + " random circles drawn.  " + numCircles + " random circles requested.\n");
+            Preferences.debug(circlesDrawn + " random circles drawn.  " + numCircles + " random circles requested.\n", 
+            		Preferences.DEBUG_ALGORITHM);
             System.out.println(circlesDrawn + " random circles drawn.  " + numCircles + " random circles requested.");
         }
         
@@ -467,7 +468,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                     }
                 } // for (i = initialRandomCircles+1; i <= numCircles; i++)
                 circlesDrawn = i-1; 
-                Preferences.debug(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.\n");
+                Preferences.debug(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 System.out.println(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.");
         } // if ((pattern == AGGREGATED) && (circlesDrawn == initialRandomCircles))
         
@@ -522,7 +524,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                     }
                 } // for (i = 2; i <= numCircles; i++)
                 circlesDrawn = i-1; 
-                Preferences.debug(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.\n");
+                Preferences.debug(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 System.out.println(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.");    
         } // if (pattern == REGULAR)
         
@@ -584,7 +587,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                     }
                 } // for (i = 2; i <= numCircles; i++)
                 circlesDrawn = i-1; 
-                Preferences.debug(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.\n");
+                Preferences.debug(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 System.out.println(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.");     
         } // if (pattern == CONSTRAINED)
         
@@ -616,7 +620,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
            }
        }
        Preferences.debug("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
-                         maximumNND + "\n");
+                         maximumNND + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
                maximumNND);
        boundaryDistance = (int)Math.ceil(maximumNND);
@@ -638,7 +642,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
            }
        }
        Preferences.debug("To avoid boundary effects only " + circlesLeft + " of the " + circlesDrawn + 
-            " circles drawn will be analyzed\n");
+            " circles drawn will be analyzed\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("To avoid boundary effects only " + circlesLeft + " of the " + circlesDrawn + 
        " circles drawn will be analyzed\n");
        nearestNeighborDistance = new double[circlesLeft];
@@ -691,21 +695,21 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
            // odd number
            median = nearestNeighborDistance[(circlesLeft - 1)/2];
        }
-       Preferences.debug("Nearest neighbor statistics:\n ");
+       Preferences.debug("Nearest neighbor statistics:\n ", Preferences.DEBUG_ALGORITHM);
        System.out.println("Nearest neighbor statistics: ");
-       Preferences.debug("Smallest distance = " + nearestNeighborDistance[0] + "\n");
+       Preferences.debug("Smallest distance = " + nearestNeighborDistance[0] + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Smallest distance = " + nearestNeighborDistance[0]);
-       Preferences.debug("Mean distance = " + mean + "\n");
+       Preferences.debug("Mean distance = " + mean + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Mean distance = " + mean);
-       Preferences.debug("Median distance = " + median + "\n");
+       Preferences.debug("Median distance = " + median + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Median distance = " + median);
-       Preferences.debug("Largest distance = " + nearestNeighborDistance[circlesLeft-1] + "\n");
+       Preferences.debug("Largest distance = " + nearestNeighborDistance[circlesLeft-1] + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Largest distance = " + nearestNeighborDistance[circlesLeft-1]);
-       Preferences.debug("Standard deviation = " + stdDev + "\n");
+       Preferences.debug("Standard deviation = " + stdDev + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Standard deviation = " + stdDev);
-       Preferences.debug("Skewness = " + skewness + "\n");
+       Preferences.debug("Skewness = " + skewness + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Skewness = " + skewness);
-       Preferences.debug("Kurtosis = " + kurtosis + "\n");
+       Preferences.debug("Kurtosis = " + kurtosis + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Kurtosis = " + kurtosis);
        
        // Test chi squared goodness of fit for a Gaussian with the calculated mean and standard deviation
@@ -751,7 +755,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
            chiSquaredOfFour += deviate * deviate / theoreticalFrequency[i];    
        }
        Preferences.debug("Chi squared for a gaussian fit on mean and standard deviation for 4 df = "
-                          + chiSquaredOfFour + "\n");
+                          + chiSquaredOfFour + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Chi squared for a gaussian fit on mean and standard deviation for 4 df = "
                           + chiSquaredOfFour);
        degreesOfFreedom = 4;
@@ -760,17 +764,18 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        stat.run();
        
        Preferences.debug("ChiSquared percentile for Gaussian fit on mean and standard deviation = " +
-                         chiSquaredPercentile[0]*100.0 + "\n");
+                         chiSquaredPercentile[0]*100.0 + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("chiSquared percentile for Gaussian fit on mean and standard deviation = " +
                           chiSquaredPercentile[0]*100.0);
        if (chiSquaredPercentile[0] >= 0.95) {
            Preferences.debug("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
-                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n");
+                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
                    (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance"); 
        }
        else {
-           Preferences.debug("chiSquared test does not reject Gaussian fit on mean and standard deviation\n");
+           Preferences.debug("chiSquared test does not reject Gaussian fit on mean and standard deviation\n", 
+           Preferences.DEBUG_ALGORITHM);
            System.out.println("chiSquared test does not reject Gaussian fit on mean and standard deviation");
        }
        
@@ -783,7 +788,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        // distribution.
        chiSquaredOfTwo = circlesLeft * (skewness * skewness/6.0 + (kurtosis - 3.0) * (kurtosis - 3.0)/24.0);
        Preferences.debug("Jarque-Bera test using skewness and kurtosis yields a chi squared for 2 df = " 
-                          + chiSquaredOfTwo + "\n");
+                          + chiSquaredOfTwo + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Jarque-Bera test using skewness and kurtosis yields a chi squared for 2 df = " 
                           + chiSquaredOfTwo);
        degreesOfFreedom = 2;
@@ -791,17 +796,18 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                chiSquaredOfTwo, degreesOfFreedom, chiSquaredPercentile);
        stat.run();
        Preferences.debug("chiSquared percentile for Jarque-Bera test using skewness and kurtosis = " +
-                         chiSquaredPercentile[0]*100.0 + "\n");
+                         chiSquaredPercentile[0]*100.0 + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("chiSquared percentile for Jarque-Bera test using skewness and kurtosis = " +
                           chiSquaredPercentile[0]*100.0);
        if (chiSquaredPercentile[0] >= 0.95) {
            Preferences.debug("chiSquared test rejects Gaussian fit based on skewness and kurtosis at a " +
-                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n");
+                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("chiSquared test rejects Gaussian fit based on skewness and kurtosis at a  " +
                    (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance"); 
        }
        else {
-           Preferences.debug("chiSquared test does not reject Gaussian fit based on skewness and kurtosis\n");
+           Preferences.debug("chiSquared test does not reject Gaussian fit based on skewness and kurtosis\n",
+            Preferences.DEBUG_ALGORITHM);
            System.out.println("chiSquared test does not reject Gaussian fit based on skewness and kurtosis");
        }*/
        
@@ -831,41 +837,44 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, circlesLeft-1, integral);
        stat.run();
        analyticalMean = diameter + Math.exp(density*Math.PI*diameter*diameter)*integral[0]/Math.sqrt(density);
-       Preferences.debug("Analytical mean = " + analyticalMean + "\n");
+       Preferences.debug("Analytical mean = " + analyticalMean + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Analytical mean = " + analyticalMean);
        change = ((analyticalMean - mean)/mean) * 100.0;
-       Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n");  
+       Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n", 
+    		   Preferences.DEBUG_ALGORITHM);  
        analyticalMeanSquared = diameter*diameter + 1.0/(density*Math.PI);
        analyticalVariance = circlesLeft*(analyticalMeanSquared - analyticalMean*analyticalMean)/(circlesLeft - 1);
        analyticalStandardDeviation = Math.sqrt(analyticalVariance);
        analyticalStandardError = analyticalStandardDeviation/Math.sqrt(circlesLeft);
        change = ((analyticalStandardError - standardError)/standardError) * 100.0;
-       Preferences.debug("Percentage increase of analytical standard error over observed standard error = " + change + "\n");  
+       Preferences.debug("Percentage increase of analytical standard error over observed standard error = " + change + "\n", 
+    		   Preferences.DEBUG_ALGORITHM);  
        z = (mean - analyticalMean)/analyticalStandardError;
        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, circlesLeft-1, percentile);
        stat.run();
        Preferences.debug("Percentile in Gaussian probability integral for measured mean around analytical mean = "
-                         + percentile[0]*100.0 + "\n");
+                         + percentile[0]*100.0 + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Percentile in Gaussian probability integral for measured mean around analytical mean = " +
                            percentile[0]*100.0);
        if (percentile[0] < 0.025) {
            // Measured mean signficantly less than analytical mean of random distribution
-           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Clumping or aggregation found in nearest neighbor distances");
        }
        else if (percentile[0] > 0.975) {
            // Measured mean significantly greater than analytical mean of random distribution
-           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n", 
+        		   Preferences.DEBUG_ALGORITHM);
            System.out.println("Uniform or regular distribution found in nearest neighbor distances");
        }
        else {
          // Measured mean not significantly different from analytical mean of random distribution
-           Preferences.debug("Measured mean consistent with random distribution\n");
+           Preferences.debug("Measured mean consistent with random distribution\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Measured mean consistent with random distribution");
        }
        chiSquared = 2.0 * density * Math.PI * (nearestNeighborDistanceSumOfSquares - circlesLeft * diameter * diameter);
        Preferences.debug("chiSquared for sum of squared NN distances of " + circlesLeft + " circles = " +
-                         chiSquared + "\n");
+                         chiSquared + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("chiSquared for sum of squared NN distances of " + circlesLeft + " circles = " +
                          chiSquared);
        degreesOfFreedom = 2 * circlesLeft;
@@ -873,22 +882,25 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
                chiSquared, degreesOfFreedom, chiSquaredPercentile);
        stat.run();
-       Preferences.debug("chiSquared percentile for sum of squared NN distances = " + chiSquaredPercentile[0]*100.0 + "\n");
+       Preferences.debug("chiSquared percentile for sum of squared NN distances = " + chiSquaredPercentile[0]*100.0 + "\n", 
+    		   Preferences.DEBUG_ALGORITHM);
        System.out.println("chiSquared percentile for sum of squared NN distances = " + chiSquaredPercentile[0]*100.0);
        if (chiSquaredPercentile[0] < 0.025) {
-           Preferences.debug("chiSquared test consistent with aggregated nearest neighbor distribution\n");
+           Preferences.debug("chiSquared test consistent with aggregated nearest neighbor distribution\n", 
+        		   Preferences.DEBUG_ALGORITHM);
            System.out.println("chiSquared test consistent with aggregated nearest neighbor distribution");
        }
        else if (chiSquaredPercentile[0] >= 0.975) {
-           Preferences.debug("chiSquared test consistent with uniform nearest neighbor distribution\n");
+           Preferences.debug("chiSquared test consistent with uniform nearest neighbor distribution\n", 
+        		   Preferences.DEBUG_ALGORITHM);
            System.out.println("chiSquared tests consistent with uniform nearest neighbor distribution"); 
        }
        else {
-           Preferences.debug("chiSquared test does not reject random circle distribution\n");
+           Preferences.debug("chiSquared test does not reject random circle distribution\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("chiSquared test does not reject random circle distribution");
        }
        
-       Preferences.debug("\nCalculations using 1990 Torquato, Lu, and Rubinstein model\n");
+       Preferences.debug("\nCalculations using 1990 Torquato, Lu, and Rubinstein model\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("\nCalculations using 1990 Torquato, Lu, and Rubinstein model");
        // Calculate analytical mean
        af2 = 1.0 - areaFraction;
@@ -901,7 +913,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        kIntegrator.setEps(eps);
        numInt = kIntegrator.integrate(bound, 1.0E30);       
        Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for erfc = " + 
-    		   numInt + "\n");
+    		   numInt + "\n", Preferences.DEBUG_ALGORITHM);
        
        erfc2 = new erfcModel2(bound, routine, inf, epsabs, epsrel, limit);
        erfc2.driver();
@@ -910,37 +922,38 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        absError = erfc2.getAbserr();
        neval = erfc2.getNeval();
        Preferences.debug("In Integration2.DQAGIE numerical Integral for erfc = " + numInt2 + " after " + neval +
-                         " integrand evaluations used\n");
+                         " integrand evaluations used\n", Preferences.DEBUG_ALGORITHM);
        Preferences.debug("Error status = " + errorStatus +
-                         " with absolute error = " + absError + "\n");
+                         " with absolute error = " + absError + "\n", Preferences.DEBUG_ALGORITHM);
        analyticalMean = diameter * (1.0 + 0.5*Math.sqrt(Math.PI/a2)*Math.exp(bound*bound)*numInt2);
-       Preferences.debug("Analytical mean from 1990 Torquato model = " + analyticalMean + "\n");
+       Preferences.debug("Analytical mean from 1990 Torquato model = " + analyticalMean + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Analytical mean from 1990 Torquato model = " + analyticalMean);
        t = (mean - analyticalMean)/standardError;
        stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
                              t, circlesLeft-1, percentile);
        stat.run();
        Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
-                         + percentile[0]*100.0 + "\n");
+                         + percentile[0]*100.0 + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
                            percentile[0]*100.0);
        if (percentile[0] < 0.025) {
            // Measured mean signficantly less than analytical mean of random distribution
-           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Clumping or aggregation found in nearest neighbor distances");
        }
        else if (percentile[0] > 0.975) {
            // Measured mean significantly greater than analytical mean of random distribution
-           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n", 
+        		   Preferences.DEBUG_ALGORITHM);
            System.out.println("Uniform or regular distribution found in nearest neighbor distances");
        }
        else {
          // Measured mean not significantly different from analytical mean of random distribution
-           Preferences.debug("Measured mean consistent with random distribution\n");
+           Preferences.debug("Measured mean consistent with random distribution\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Measured mean consistent with random distribution");
        }
        
-       Preferences.debug("\nCalculations using 1995 Torquato model\n");
+       Preferences.debug("\nCalculations using 1995 Torquato model\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("\nCalculations using 1995 Torquato model");
        // Calculate analytical mean
        meanTorquato95Model = new IntTorquato95ModelMean(areaFraction);             
@@ -948,7 +961,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        kIntegrator.setEps(eps);
        numInt = kIntegrator.integrate(1.0, 1.0E30);
        Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for Torquato95 model = " + 
-    		   numInt + "\n");
+    		   numInt + "\n", Preferences.DEBUG_ALGORITHM);
        
        
        
@@ -960,33 +973,34 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        absError = meanTorquato95Model2.getAbserr();
        neval = meanTorquato95Model2.getNeval();
        Preferences.debug("In Integration2.DQAGIE numerical Integral for Torquato95 model = " + numInt2 + " after " + neval +
-                         " integrand evaluations used\n");
+                         " integrand evaluations used\n", Preferences.DEBUG_ALGORITHM);
        Preferences.debug("Error status = " + errorStatus +
-                         " with absolute error = " + absError + "\n");
+                         " with absolute error = " + absError + "\n", Preferences.DEBUG_ALGORITHM);
        analyticalMean = diameter * (1.0 + numInt2);
-       Preferences.debug("Analytical mean from Torquato95 model = " + analyticalMean + "\n");
+       Preferences.debug("Analytical mean from Torquato95 model = " + analyticalMean + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Analytical mean from Torquato95 model = " + analyticalMean);
        t = (mean - analyticalMean)/standardError;
        stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
                              t, circlesLeft-1, percentile);
        stat.run();
        Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
-                         + percentile[0]*100.0 + "\n");
+                         + percentile[0]*100.0 + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
                            percentile[0]*100.0);
        if (percentile[0] < 0.025) {
            // Measured mean signficantly less than analytical mean of random distribution
-           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Clumping or aggregation found in nearest neighbor distances");
        }
        else if (percentile[0] > 0.975) {
            // Measured mean significantly greater than analytical mean of random distribution
-           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n", 
+        		   Preferences.DEBUG_ALGORITHM);
            System.out.println("Uniform or regular distribution found in nearest neighbor distances");
        }
        else {
          // Measured mean not significantly different from analytical mean of random distribution
-           Preferences.debug("Measured mean consistent with random distribution\n");
+           Preferences.debug("Measured mean consistent with random distribution\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Measured mean consistent with random distribution");
        }
        
