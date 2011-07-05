@@ -352,8 +352,8 @@ public class FFTUtility extends AlgorithmBase {
 
         if ((isn * ntot) == 0) {
             MipavUtil.displayError("Error! Zero in FFT parameters");
-            Preferences.debug("nseg = " + nseg + " n = " + n + "\n");
-            Preferences.debug("nspn = " + nspn + " isn = " + isn + "\n");
+            Preferences.debug("nseg = " + nseg + " n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("nspn = " + nspn + " isn = " + isn + "\n", Preferences.DEBUG_ALGORITHM);
             
             setCompleted(false);
 
@@ -1519,7 +1519,7 @@ outer8:
 
         if ((nf * isn) == 0) {
             MipavUtil.displayError("Error! Zero in REALS parameters");
-            Preferences.debug("n = " + n + " isn = " + isn + "\n");
+            Preferences.debug("n = " + n + " isn = " + isn + "\n", Preferences.DEBUG_ALGORITHM);
             
             setCompleted(false);
 
@@ -1680,8 +1680,8 @@ outer8:
 
         if ((isn * nt) == 0) {
             MipavUtil.displayError("Error! Zero in REALT parameters");
-            Preferences.debug("nseg = " + nseg + " n = " + n + "\n");
-            Preferences.debug("nspn = " + nspn + " isn = " + isn + "\n");
+            Preferences.debug("nseg = " + nseg + " n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("nspn = " + nspn + " isn = " + isn + "\n", Preferences.DEBUG_ALGORITHM);
             
             setCompleted(false);
 
@@ -1854,11 +1854,11 @@ outer:
             b[j] = d[j];
         } // for (j = 0; j < n; j++)
 
-        Preferences.debug("Test of FFT, REALS, and REALT for real values\n");
-        Preferences.debug("Real input sequence\n");
+        Preferences.debug("Test of FFT, REALS, and REALT for real values\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Real input sequence\n", Preferences.DEBUG_ALGORITHM);
 
         for (j = 0; j < n; j++) {
-            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n");
+            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n", Preferences.DEBUG_ALGORITHM);
         } // for (j = 0; j < n; j++)
 
         nseg = 1;
@@ -1869,7 +1869,7 @@ outer:
         Preferences.debug("Fourier cosine and sine coefficients\n");
 
         for (j = 0; j <= n; j++) {
-            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n");
+            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n", Preferences.DEBUG_ALGORITHM);
         } // for (j = 0; j <= n; j++)
 
         // The next call on realt does the same thing as reals(a,b,n,1);
@@ -1877,10 +1877,10 @@ outer:
         isn = 1;
         realt();
         fft();
-        Preferences.debug("Transform-inverse result\n");
+        Preferences.debug("Transform-inverse result\n", Preferences.DEBUG_ALGORITHM);
 
         for (j = 0; j < n; j++) {
-            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n");
+            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n", Preferences.DEBUG_ALGORITHM);
         } // for (j = 0; j < n; j++)
 
         for (j = 0; j < n; j++) {
@@ -1890,10 +1890,10 @@ outer:
 
         sortg(a, n, ra);
         sortg(b, n, rb);
-        Preferences.debug("Sorted error values\n");
+        Preferences.debug("Sorted error values\n", Preferences.DEBUG_ALGORITHM);
 
         for (j = 0; j < n; j++) {
-            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n");
+            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n", Preferences.DEBUG_ALGORITHM);
         } // for (j = 0; j < n; j++)
 
         for (j = 0; j < n; j++) {
@@ -1903,23 +1903,23 @@ outer:
             b[(2 * j) + 1] = 0.0;
         } // for (j = 0; j < n; j++)
 
-        Preferences.debug("Test of FFT for real values\n");
+        Preferences.debug("Test of FFT for real values\n", Preferences.DEBUG_ALGORITHM);
 
         n = n + n;
         isn = -1;
         fft();
-        Preferences.debug("Fourier cosine and sine coefficients\n");
+        Preferences.debug("Fourier cosine and sine coefficients\n", Preferences.DEBUG_ALGORITHM);
 
         for (j = 0; j < n; j++) {
-            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n");
+            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n", Preferences.DEBUG_ALGORITHM);
         } // for (j = 0; j < n; j++)
 
         isn = 1;
         fft();
-        Preferences.debug("Transform-inverse result\n");
+        Preferences.debug("Transform-inverse result\n", Preferences.DEBUG_ALGORITHM);
 
         for (j = 0; j < n; j++) {
-            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n");
+            Preferences.debug("a[" + j + "] = " + a[j] + " b[" + j + "] = " + b[j] + "\n", Preferences.DEBUG_ALGORITHM);
         } // for (j = 0; j < n; j++)
 
         // Generate test data for transform of maximum size 4096
@@ -1929,7 +1929,7 @@ outer:
             d[j] = output[1];
         } // for (j = 0; j < 4096; j++)
 
-        Preferences.debug("Single-variate tests of subroutines\n");
+        Preferences.debug("Single-variate tests of subroutines\n", Preferences.DEBUG_ALGORITHM);
 
         for (i = 0; i <= 16; i++) {
             n = nc[i];
@@ -1946,7 +1946,7 @@ outer:
             output = rms(a, b, c, d, n);
             ss1 = output[0];
             ss2 = output[1];
-            Preferences.debug("FFT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n");
+            Preferences.debug("FFT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
 
             for (j = 0; j < n; j++) {
                 a[j] = c[j];
@@ -1960,7 +1960,7 @@ outer:
             output = rms(a, b, c, d, n);
             ss1 = output[0];
             ss2 = output[1];
-            Preferences.debug("REALS n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n");
+            Preferences.debug("REALS n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
 
             for (j = 0; j < n; j++) {
                 a[j] = c[j];
@@ -1974,11 +1974,11 @@ outer:
             output = rms(a, b, c, d, n);
             ss1 = output[0];
             ss2 = output[1];
-            Preferences.debug("REALT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n");
+            Preferences.debug("REALT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
 
         } // for (i = 0; i <= 16; i++)
 
-        Preferences.debug("Multi-variate tests of subroutines\n");
+        Preferences.debug("Multi-variate tests of subroutines\n", Preferences.DEBUG_ALGORITHM);
         n1 = 4;
         n2 = 30;
         n3 = 9;
@@ -2019,7 +2019,7 @@ outer:
         output = rms(a, b, c, d, n);
         ss1 = output[0];
         ss2 = output[1];
-        Preferences.debug("FFT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n");
+        Preferences.debug("FFT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
 
         for (j = 0; j < n; j++) {
             a[j] = c[j];
@@ -2037,7 +2037,7 @@ outer:
         output = rms(a, b, c, d, n);
         ss1 = output[0];
         ss2 = output[1];
-        Preferences.debug("REALT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n");
+        Preferences.debug("REALT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
