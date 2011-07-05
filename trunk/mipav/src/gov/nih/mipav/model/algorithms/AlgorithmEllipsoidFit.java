@@ -333,7 +333,7 @@ public class AlgorithmEllipsoidFit {
 
         for (i = 0; i < 6; i++) {
             v1[i][0] = eigenvector[i][0];
-            Preferences.debug("Eigenvalue[" + (i + 1) + "] = " + eigenvalue[i] + "\n");
+            Preferences.debug("Eigenvalue[" + (i + 1) + "] = " + eigenvalue[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         Matrix matV1 = new Matrix(v1);
