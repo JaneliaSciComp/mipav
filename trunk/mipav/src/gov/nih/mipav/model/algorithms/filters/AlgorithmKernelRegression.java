@@ -704,7 +704,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             adaptiveSize = false; // do not adaptively change size of the kernel mask
             maximumSize = 0; // If adaptiveSize is true, the maximum size the kernel mask can be increased to.
             wholeImage = true; // Median filtering will be performed on the whole image
-            Preferences.debug("\nEntering AlgorithmMedian\n");
+            Preferences.debug("\nEntering AlgorithmMedian\n", Preferences.DEBUG_ALGORITHM);
             if (nDims == 2) {
                 algoMedian = new AlgorithmMedian(medianImage, srcImage, medianIters, kernelSize, kernelShape, stdDev,
                         adaptiveSize, maximumSize, wholeImage);
@@ -717,7 +717,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             algoMedian.finalize();
             algoMedian = null;
 
-            Preferences.debug("Entering ckr2allRegular\n");
+            Preferences.debug("Entering ckr2allRegular\n", Preferences.DEBUG_ALGORITHM);
             ckr2allRegular();
             medianImage.disposeLocal();
             medianImage = null;
@@ -725,7 +725,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             for (i = 0; i < output.length; i++) {
                 zInit[i] = output[i];
             }
-            Preferences.debug("Entering ckr2L1Regular\n");
+            Preferences.debug("Entering ckr2L1Regular\n", Preferences.DEBUG_ALGORITHM);
             ckr2L1Regular();
             fireProgressStateChanged(50);
             zInit = new float[output.length];
@@ -736,9 +736,9 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             for (i = 0; i < I.length; i++) {
                 I[i] = true;
             }
-            Preferences.debug("Entering steering\n");
+            Preferences.debug("Entering steering\n", Preferences.DEBUG_ALGORITHM);
             steering();
-            Preferences.debug("Entering skr2L1Regular\n");
+            Preferences.debug("Entering skr2L1Regular\n", Preferences.DEBUG_ALGORITHM);
             skr2L1Regular();
         } // else if (method == STEERING_KERNEL_SECOND_ORDER_L1_NORM)
 
@@ -812,7 +812,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
 
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
-        Preferences.debug("Seconds elapsed in AlgorithmKernelRegression = " + (time / 1000.0) + "\n");
+        Preferences.debug("Seconds elapsed in AlgorithmKernelRegression = " + (time / 1000.0) + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
         setCompleted(true);
         return;
 
