@@ -143,6 +143,9 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     /** The units printed to the logModel, set in createNewLogile */
     protected int xUnits = -1, yUnits = -1, zUnits = -1;
 
+    /** When running as a script, holds the pixel exclusion range. */
+    private RangeType scriptRange;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -331,7 +334,13 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             processList.add((VOI)selectedList.getModel().getElementAt(i));
         }
         
-        calculator = new AlgorithmVOIProps(image, processType, outputOptionsPanel.getExcluder().getRangeFlag(), processList);
+        RangeType r = RangeType.NO_RANGE;
+        if(isScriptRunning()) {
+            r = scriptRange;
+        } else {
+            r = outputOptionsPanel.getExcluder().getRangeFlag();
+        }
+        calculator = new AlgorithmVOIProps(image, processType, r, processList);
         calculator.setPrecisionDisplay(precision, doForce);
         calculator.setSelectedStatistics( checkList );
         calculator.addListener(this);
@@ -422,7 +431,9 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         String rangeFlag = scriptParameters.getParams().getString("do_use_exclusion_range");
 
-        if (RangeType.valueOf(rangeFlag) != RangeType.NO_RANGE) {
+        scriptRange = RangeType.valueOf(rangeFlag);
+        
+        if (scriptRange != RangeType.NO_RANGE) {
             rangeMinimum = scriptParameters.getParams().getFloat("exclusion_range_min");
             rangeMaximum = scriptParameters.getParams().getFloat("exclusion_range_max");
 
