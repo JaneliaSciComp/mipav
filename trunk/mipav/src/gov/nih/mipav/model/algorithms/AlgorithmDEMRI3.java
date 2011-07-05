@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
+
 import java.util.BitSet;
 import java.io.*;
 
@@ -423,13 +424,13 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         ertr_c0 = 1.0 - Math.exp(-rib * tr) * cos0;
         c0_ertr_c0 = (1.0 - Math.exp(-rib * tr)) * cos0;
         
-        Preferences.debug("tDim = " + tDim + "\n");
-        Preferences.debug("m0 = " + m0 + "\n");
-        Preferences.debug("rTR = " + rTR + "\n");
-        Preferences.debug("R_r1 = " + R_r1 + "\n");
-        Preferences.debug("ertr = " + ertr + "\n");
-        Preferences.debug("ertr_c0 = " + ertr_c0 + "\n");
-        Preferences.debug("c0_ertr_c0 = " + c0_ertr_c0 + "\n");
+        Preferences.debug("tDim = " + tDim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("m0 = " + m0 + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("rTR = " + rTR + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("R_r1 = " + R_r1 + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("ertr = " + ertr + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("ertr_c0 = " + ertr_c0 + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("c0_ertr_c0 = " + c0_ertr_c0 + "\n", Preferences.DEBUG_ALGORITHM);
         
         /* start with setting the first nFirst + 1 terms to 0 */
         for (c = 0; c <= nFirst; c++) {
@@ -453,11 +454,11 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             }
         }
         
-        Preferences.debug("Cp = " + "\n");
+        Preferences.debug("Cp = " + "\n", Preferences.DEBUG_ALGORITHM);
         for (c = 0; c < tDim; c++) {
-            Preferences.debug("mp[c] = " + mp[c] + "\n");
+            Preferences.debug("mp[c] = " + mp[c] + "\n", Preferences.DEBUG_ALGORITHM);
         }
-        Preferences.debug("\n");
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
         
         buf4D = new double[size4D];
         
@@ -561,12 +562,12 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
          * Display results of displaying DEMRI3 fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDEMRI3ConstrainedModel ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
+            Preferences.debug(" ******* FitDEMRI3ConstrainedModel ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -604,7 +605,8 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             		ve = a[1];
             		kep = K/ve;
             		if (kep > 10.0) {
-            			Preferences.debug("Warning: Voxel = " + i + " ve = " + ve + " K = " + K + " kep = " + kep + "\n");
+            			Preferences.debug("Warning: Voxel = " + i + " ve = " + ve + " K = " + K + " kep = " + kep + "\n", 
+            					Preferences.DEBUG_ALGORITHM);
             			return;
             		}
             	} // if (useVe)
@@ -618,7 +620,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             	if (r1i != null) {
             	    rit = r1i[i];
             	    if ((rit < 0.02) || (rit > 20.0)) {
-            	    	Preferences.debug("Warning: Voxel = " + i + " rit = " + rit + "\n");
+            	    	Preferences.debug("Warning: Voxel = " + i + " rit = " + rit + "\n", Preferences.DEBUG_ALGORITHM);
             	    	return;
             	    }
             	} // if (r1i != null)
@@ -747,7 +749,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
                     ctrlMat[0] = 0;
                 }
             } catch (Exception exc) {
-                Preferences.debug("function error: " + exc.getMessage() + "\n");
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -815,12 +817,12 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDoubleExponential ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
+            Preferences.debug(" ******* FitDoubleExponential ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -859,7 +861,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
                 /* else if (ctrl == 2) {
                  * ctrlMat[0] = 0; } */
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -927,12 +929,12 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDoubleExponential ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
+            Preferences.debug(" ******* FitDoubleExponential ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -973,7 +975,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
                 /* else if (ctrl == 2) {
                  * ctrlMat[0] = 0; } */
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
