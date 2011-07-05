@@ -208,7 +208,8 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                             try {
                                 sliceLocation[j] = Float.valueOf(s).floatValue();
                             } catch (NumberFormatException e) {
-                                Preferences.debug("Number format error: slice location " + (i + 1) + " = " + s);
+                                Preferences.debug("Number format error: slice location " + (i + 1) + " = " + s + "\n", 
+                                		Preferences.DEBUG_ALGORITHM);
                             }
                         } // if (obj != null)
                         else {
@@ -390,7 +391,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                         try {
                             sliceLocation[i] = Float.valueOf(s).floatValue();
                         } catch (NumberFormatException e) {
-                            Preferences.debug("Number format error: slice location 1 = " + s);
+                            Preferences.debug("Number format error: slice location 1 = " + s + "\n", Preferences.DEBUG_ALGORITHM);
                         }
                     } // if (obj != null)
                     else {
@@ -422,7 +423,8 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                             try {
                                 sliceLocation[i] = Float.valueOf(s).floatValue();
                             } catch (NumberFormatException e) {
-                                Preferences.debug("Number format error: slice location " + (i + 1) + " = " + s);
+                                Preferences.debug("Number format error: slice location " + (i + 1) + " = " + s + "\n", 
+                                		Preferences.DEBUG_ALGORITHM);
                             }
                         } else {
                             ignoreSliceLocation = true;
@@ -496,7 +498,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                             sliceLocation[i] = Float.valueOf(s).floatValue();
                         } catch (NumberFormatException e) {
                             Preferences.debug("Number format error: slice location " + (srcImage.getExtents()[2] - 1) +
-                                              " = " + s);
+                                              " = " + s + "\n", Preferences.DEBUG_ALGORITHM);
                         }
                     } // if (obj != null)
                     else {
