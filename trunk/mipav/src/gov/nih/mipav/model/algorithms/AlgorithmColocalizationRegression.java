@@ -825,7 +825,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         inputSliceMask = new BitSet(length);
 
         for (z = 0; z < zDim; z++) {
-            Preferences.debug("Slice = " + (z + 1) + "\n");
+            Preferences.debug("Slice = " + (z + 1) + "\n", Preferences.DEBUG_ALGORITHM);
             ip = -1;
             sliceBuffer = new float[length];
             secondSliceBuffer = new float[length];
@@ -867,7 +867,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             }
 
             if (voiSliceSize == 0) {
-                Preferences.debug("No VOI found");
+                Preferences.debug("No VOI found", Preferences.DEBUG_ALGORITHM);
                 dataLine1 = "slice #" + (z + 1) + " has no VOI\n";
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText("\n");
@@ -951,7 +951,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             sliceR = (float) (num / denom);
-            Preferences.debug("Linear corrleation coefficient = " + sliceR + "\n");
+            Preferences.debug("Linear corrleation coefficient = " + sliceR + "\n", Preferences.DEBUG_ALGORITHM);
 
             sumx = 0.0;
             sumy = 0.0;
@@ -988,10 +988,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             mse = (float) (varx + (2 * sliceA * covarxy) + (aa * vary)) / (1 + aa);
             // +-2 standard deviations on each side includes about 95%.
 
-            Preferences.debug("First iteration\n");
+            Preferences.debug("First iteration\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug(baseImage.getImageName() + " = " + sliceA + "*" + srcImage.getImageName() + " + " +
-                              sliceB + "\n");
-            Preferences.debug("Mean square error = " + mse + "\n");
+                              sliceB + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
             slLineMin1 = min1;
             slLineMin2 = (sliceA * min1) + sliceB;
@@ -1130,7 +1130,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         slRThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         slHaveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n",
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && slHaveThreshold[i - 1] && (slRThreshold[i] > 0.0f) &&
                                 (slRThreshold[i - 1] <= 0.0f)) {
@@ -1326,7 +1327,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         slRThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         slHaveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && slHaveThreshold[i - 1] && (slRThreshold[i] > 0.0f) &&
                                 (slRThreshold[i - 1] <= 0.0f)) {
@@ -1418,23 +1420,24 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             } // else ((lineMax1 - slLineMin1) < (lineMax2 - slLineMin2)
 
             if (firstUndefined1 >= 0) {
-                Preferences.debug("Cannot calculate linear correlation coefficient \n");
+                Preferences.debug("Cannot calculate linear correlation coefficient \n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstUndefined1 + " or " +
-                                  baseImage.getImageName() + " < " + firstUndefined2 + "\n");
+                                  baseImage.getImageName() + " < " + firstUndefined2 + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             if (nonPositiveThreshold <= 0) {
-                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstNonPositive1 + " or " +
-                                  baseImage.getImageName() + " < " + firstNonPositive2 + "\n");
+                                  baseImage.getImageName() + " < " + firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
+            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + lastPositive1 + " or " +
-                              baseImage.getImageName() + " < " + lastPositive2 + "\n");
+                              baseImage.getImageName() + " < " + lastPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
 
             if (minPositiveThreshold < 0) {
-                Preferences.debug("No positive threshold found");
+                Preferences.debug("No positive threshold found", Preferences.DEBUG_ALGORITHM);
                 dataLine1 = "slice #" + (z + 1) + " has no positive threshold\n";
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText("\n");
@@ -1443,7 +1446,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             }
 
             if (doSecondIteration) {
-                Preferences.debug("Second iteration excluding subthresholded region\n");
+                Preferences.debug("Second iteration excluding subthresholded region\n", Preferences.DEBUG_ALGORITHM);
                 fireProgressStateChanged("Second iteration excluding subthresholded region");
                 fireProgressStateChanged(80);
                 slt1 = lastPositive1;
@@ -1479,7 +1482,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 denom = Math.sqrt(denom1 * denom2);
                 r = (float) (num / denom);
-                Preferences.debug("Linear correlation coefficient = " + r + "\n");
+                Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
                 // Use linear least squares to calculate the best line fit
                 // for secondBuffer = a*firstBuffer + b.  Use an orthogonal
@@ -1534,8 +1537,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
 
                 Preferences.debug(baseImage.getImageName() + " = " + sliceA + "*" + srcImage.getImageName() + " + " +
-                                  sliceB + "\n");
-                Preferences.debug("Mean square error = " + mse + "\n");
+                                  sliceB + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 // secondSliceBuffer[i] = a*sliceBuffer[i] + b;
                 // sliceBuffer[i] = (secondSliceBuffer[i] - b)/a;
@@ -1674,7 +1677,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                             slRThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                             slHaveThreshold[i] = true;
-                            Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n");
+                            Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n", 
+                            		Preferences.DEBUG_ALGORITHM);
 
                             if ((i >= 1) && slHaveThreshold[i - 1] && (slRThreshold[i] > 0.0f) &&
                                     (slRThreshold[i - 1] <= 0.0f)) {
@@ -1864,7 +1868,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                             slRThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                             slHaveThreshold[i] = true;
-                            Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n");
+                            Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n", 
+                            		Preferences.DEBUG_ALGORITHM);
 
                             if ((i >= 1) && slHaveThreshold[i - 1] && (slRThreshold[i] > 0.0f) &&
                                     (slRThreshold[i - 1] <= 0.0f)) {
@@ -1956,23 +1961,26 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 } // else ((lineMax1 - slLineMin1) < (lineMax2 - slLineMin2)
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient \n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient \n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstUndefined1 + " or " +
-                                      baseImage.getImageName() + " < " + firstUndefined2 + "\n");
+                                      baseImage.getImageName() + " < " + firstUndefined2 + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstNonPositive1 +
-                                      " or " + baseImage.getImageName() + " < " + firstNonPositive2 + "\n");
+                                      " or " + baseImage.getImageName() + " < " + firstNonPositive2 + "\n", 
+                                      Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + lastPositive1 + " or " +
-                                  baseImage.getImageName() + " < " + lastPositive2 + "\n");
+                                  baseImage.getImageName() + " < " + lastPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if (minPositiveThreshold < 0) {
-                    Preferences.debug("No positive threshold found on second iteration");
+                    Preferences.debug("No positive threshold found on second iteration", Preferences.DEBUG_ALGORITHM);
                     dataLine1 = "slice #" + (z + 1) + " has no positive threshold on second iteration\n";
                     ViewUserInterface.getReference().setDataText(dataLine1);
                     ViewUserInterface.getReference().setDataText("\n");
@@ -2084,7 +2092,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         inputSliceMask = new BitSet(length);
 
         for (z = 0; z < zDim; z++) {
-            Preferences.debug("Slice = " + (z + 1) + "\n");
+            Preferences.debug("Slice = " + (z + 1) + "\n", Preferences.DEBUG_ALGORITHM);
             ip = -1;
             sliceBuffer = new float[length];
             secondSliceBuffer = new float[length];
@@ -2126,7 +2134,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             }
 
             if (voiSliceSize == 0) {
-                Preferences.debug("No VOI found");
+                Preferences.debug("No VOI found", Preferences.DEBUG_ALGORITHM);
                 dataLine1 = "slice #" + (z + 1) + " has no VOI\n";
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText("\n");
@@ -2210,7 +2218,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             sliceR = (float) (num / denom);
-            Preferences.debug("Linear corrleation coefficient = " + sliceR + "\n");
+            Preferences.debug("Linear corrleation coefficient = " + sliceR + "\n", Preferences.DEBUG_ALGORITHM);
 
             sumx = 0.0;
             sumy = 0.0;
@@ -2247,17 +2255,17 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             mse = (float) (varx + (2 * sliceA * covarxy) + (aa * vary)) / (1 + aa);
             // +-2 standard deviations on each side includes about 95%.
 
-            Preferences.debug("First iteration\n");
+            Preferences.debug("First iteration\n", Preferences.DEBUG_ALGORITHM);
 
             if ((useRed) && (useGreen)) {
-                Preferences.debug("green = " + sliceA + "*red" + " + " + sliceB + "\n");
+                Preferences.debug("green = " + sliceA + "*red" + " + " + sliceB + "\n", Preferences.DEBUG_ALGORITHM);
             } else if ((useRed) && (useBlue)) {
-                Preferences.debug("blue = " + sliceA + "*red" + " + " + sliceB + "\n");
+                Preferences.debug("blue = " + sliceA + "*red" + " + " + sliceB + "\n", Preferences.DEBUG_ALGORITHM);
             } else {
-                Preferences.debug("blue = " + sliceA + "*green" + " + " + sliceB + "\n");
+                Preferences.debug("blue = " + sliceA + "*green" + " + " + sliceB + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Mean square error = " + mse + "\n");
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
             slLineMin1 = min1;
             slLineMin2 = (sliceA * min1) + sliceB;
@@ -2396,7 +2404,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         slRThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         slHaveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && slHaveThreshold[i - 1] && (slRThreshold[i] > 0.0f) &&
                                 (slRThreshold[i - 1] <= 0.0f)) {
@@ -2592,7 +2601,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         slRThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         slHaveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && slHaveThreshold[i - 1] && (slRThreshold[i] > 0.0f) &&
                                 (slRThreshold[i - 1] <= 0.0f)) {
@@ -2686,58 +2696,68 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if ((useRed) && (useGreen)) {
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstUndefined1 + " or green < " + firstUndefined2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstNonPositive1 + " or green < " +
-                                      firstNonPositive2 + "\n");
+                                      firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
 
             } // if ((useRed) && (useGreen))
             else if ((useRed) && (useBlue)) {
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstUndefined1 + " or blue < " + firstUndefined2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstNonPositive1 + " or blue < " + firstNonPositive2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             } // else if ((useRed) && (useBlue))
             else {
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with green < " + firstUndefined1 + " or blue < " + firstUndefined2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with green < " + firstNonPositive1 + " or blue < " +
-                                      firstNonPositive2 + "\n");
+                                      firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
 
             if (minPositiveThreshold < 0) {
-                Preferences.debug("No positive threshold found");
+                Preferences.debug("No positive threshold found", Preferences.DEBUG_ALGORITHM);
                 dataLine1 = "slice #" + (z + 1) + " has no positive threshold\n";
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText("\n");
@@ -2746,7 +2766,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             }
 
             if (doSecondIteration) {
-                Preferences.debug("Second iteration excluding subthresholded region\n");
+                Preferences.debug("Second iteration excluding subthresholded region\n", Preferences.DEBUG_ALGORITHM);
                 fireProgressStateChanged("Second iteration excluding subthresholded region");
                 fireProgressStateChanged(80);
                 slt1 = lastPositive1;
@@ -2782,7 +2802,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 denom = Math.sqrt(denom1 * denom2);
                 r = (float) (num / denom);
-                Preferences.debug("Linear correlation coefficient = " + r + "\n");
+                Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
                 // Use linear least squares to calculate the best line fit
                 // for secondBuffer = a*firstBuffer + b.  Use an orthogonal
@@ -2837,14 +2857,14 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
 
                 if ((useRed) && (useGreen)) {
-                    Preferences.debug("green = " + sliceA + "*red" + " + " + sliceB + "\n");
+                    Preferences.debug("green = " + sliceA + "*red" + " + " + sliceB + "\n", Preferences.DEBUG_ALGORITHM);
                 } else if ((useRed) && (useBlue)) {
-                    Preferences.debug("blue = " + sliceA + "*red" + " + " + sliceB + "\n");
+                    Preferences.debug("blue = " + sliceA + "*red" + " + " + sliceB + "\n", Preferences.DEBUG_ALGORITHM);
                 } else {
-                    Preferences.debug("blue = " + sliceA + "*green" + " + " + sliceB + "\n");
+                    Preferences.debug("blue = " + sliceA + "*green" + " + " + sliceB + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Mean square error = " + mse + "\n");
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 // secondSliceBuffer[i] = a*sliceBuffer[i] + b;
                 // sliceBuffer[i] = (secondSliceBuffer[i] - b)/a;
@@ -2983,7 +3003,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                             slRThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                             slHaveThreshold[i] = true;
-                            Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n");
+                            Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n", 
+                            		Preferences.DEBUG_ALGORITHM);
 
                             if ((i >= 1) && slHaveThreshold[i - 1] && (slRThreshold[i] > 0.0f) &&
                                     (slRThreshold[i - 1] <= 0.0f)) {
@@ -3173,7 +3194,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                             slRThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                             slHaveThreshold[i] = true;
-                            Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n");
+                            Preferences.debug("i = " + i + " slRThreshold[i] = " + slRThreshold[i] + "\n", 
+                            		Preferences.DEBUG_ALGORITHM);
 
                             if ((i >= 1) && slHaveThreshold[i - 1] && (slRThreshold[i] > 0.0f) &&
                                     (slRThreshold[i - 1] <= 0.0f)) {
@@ -3267,62 +3289,67 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 if ((useRed) && (useGreen)) {
 
                     if (firstUndefined1 >= 0) {
-                        Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                        Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                         Preferences.debug("for pixels with red < " + firstUndefined1 + " or green < " +
-                                          firstUndefined2 + "\n");
+                                          firstUndefined2 + "\n", Preferences.DEBUG_ALGORITHM);
                     }
 
                     if (nonPositiveThreshold <= 0) {
                         Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold +
-                                          "\n");
+                                          "\n", Preferences.DEBUG_ALGORITHM);
                         Preferences.debug("for pixels with red < " + firstNonPositive1 + " or green < " +
-                                          firstNonPositive2 + "\n");
+                                          firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
                     }
 
-                    Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                    Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n");
+                    Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
 
                 } // if ((useRed) && (useGreen))
                 else if ((useRed) && (useBlue)) {
 
                     if (firstUndefined1 >= 0) {
-                        Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                        Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                         Preferences.debug("for pixels with red < " + firstUndefined1 + " or blue < " + firstUndefined2 +
-                                          "\n");
+                                          "\n", Preferences.DEBUG_ALGORITHM);
                     }
 
                     if (nonPositiveThreshold <= 0) {
                         Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold +
-                                          "\n");
+                                          "\n", Preferences.DEBUG_ALGORITHM);
                         Preferences.debug("for pixels with red < " + firstNonPositive1 + " or blue < " +
-                                          firstNonPositive2 + "\n");
+                                          firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
                     }
 
-                    Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                    Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+                    Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                 } // else if ((useRed) && (useBlue))
                 else {
 
                     if (firstUndefined1 >= 0) {
-                        Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                        Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                         Preferences.debug("for pixels with green < " + firstUndefined1 + " or blue < " +
-                                          firstUndefined2 + "\n");
+                                          firstUndefined2 + "\n", Preferences.DEBUG_ALGORITHM);
                     }
 
                     if (nonPositiveThreshold <= 0) {
                         Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold +
-                                          "\n");
+                                          "\n", Preferences.DEBUG_ALGORITHM);
                         Preferences.debug("for pixels with green < " + firstNonPositive1 + " or blue < " +
-                                          firstNonPositive2 + "\n");
+                                          firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
                     }
 
-                    Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
+                    Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (minPositiveThreshold < 0) {
-                    Preferences.debug("No positive threshold found on second iteration");
+                    Preferences.debug("No positive threshold found on second iteration", Preferences.DEBUG_ALGORITHM);
                     dataLine1 = "slice #" + (z + 1) + " has no positive threshold on second iteration\n";
                     ViewUserInterface.getReference().setDataText(dataLine1);
                     ViewUserInterface.getReference().setDataText("\n");
@@ -4287,7 +4314,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             r = (float) (num / denom);
-            Preferences.debug("Linear correlation coefficient = " + r + "\n");
+            Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
             if (doP) {
                 fireProgressStateChanged("Calculating autocovariance");
@@ -4307,12 +4334,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                                                                  " auto covariance full width at half maximum = " +
                                                                  fwhmS + "\n");
                     Preferences.debug(srcImage.getImageName() + " auto covariance full width at half maximum = " +
-                                      fwhmS + "\n");
+                                      fwhmS + "\n", Preferences.DEBUG_ALGORITHM);
                 } else {
                     ViewUserInterface.getReference().setDataText("Cannot determine " + srcImage.getImageName() +
                                                                  " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + srcImage.getImageName() +
-                                      " auto covariance full width at half maximum\n");
+                                      " auto covariance full width at half maximum\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 algoAutoCovariance.finalize();
@@ -4329,12 +4356,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                                                                  " auto covariance full width at half maximum = " +
                                                                  fwhmB + "\n");
                     Preferences.debug(baseImage.getImageName() + " auto covariance full width at half maximum = " +
-                                      fwhmB + "\n");
+                                      fwhmB + "\n", Preferences.DEBUG_ALGORITHM);
                 } else {
                     ViewUserInterface.getReference().setDataText("Cannot determine " + baseImage.getImageName() +
                                                                  " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + baseImage.getImageName() +
-                                      " auto covariance full width at half maximum\n");
+                                      " auto covariance full width at half maximum\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 algoAutoCovariance.finalize();
@@ -4557,11 +4584,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     }
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + r + "\n");
-                Preferences.debug("numBins = " + numBins + "\n");
-                Preferences.debug("rCum[0] = " + rCum[0] + "\n");
-                Preferences.debug("rCum[numBins-1] = " + rCum[numBins - 1] + "\n");
-                Preferences.debug("P-value = " + PValue + "\n");
+                Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("numBins = " + numBins + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("rCum[0] = " + rCum[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("rCum[numBins-1] = " + rCum[numBins - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("P-value = " + PValue + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if (threadStopped) {
                     finalize();
@@ -4668,10 +4695,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             // +-2 standard deviations on each side includes about 95%.
             halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-            Preferences.debug("First iteration\n");
-            Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b + "\n");
+            Preferences.debug("First iteration\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
 
-            Preferences.debug("Mean square error = " + mse + "\n");
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
             doAgain = false;
 
             for (iter = 0; (iter < 10) && doAgain; iter++) {
@@ -4723,11 +4751,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
                 halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-                Preferences.debug("Iteration = " + (iter + 2) + "\n");
+                Preferences.debug("Iteration = " + (iter + 2) + "\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
 
-                Preferences.debug("Mean square error = " + mse + "\n");
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((aLast != 0.0f) && ((Math.abs(a - aLast) / aLast) > 0.001)) {
                     doAgain = true;
@@ -4972,7 +5000,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                     haveThreshold[i] = true;
-                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                         transitionFound = true;
@@ -5166,7 +5194,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                     haveThreshold[i] = true;
-                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                         transitionFound = true;
@@ -5252,20 +5280,21 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         } // else ((lineMax1 - lineMin1) < (lineMax2 - lineMin2)
 
         if (firstUndefined1 >= 0) {
-            Preferences.debug("Cannot calculate linear correlation coefficient \n");
+            Preferences.debug("Cannot calculate linear correlation coefficient \n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstUndefined1 + " or " +
-                              baseImage.getImageName() + " < " + firstUndefined2 + "\n");
+                              baseImage.getImageName() + " < " + firstUndefined2 + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         if (nonPositiveThreshold <= 0) {
-            Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+            Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
             Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstNonPositive1 + " or " +
-                              baseImage.getImageName() + " < " + firstNonPositive2 + "\n");
+                              baseImage.getImageName() + " < " + firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
-        Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
+        Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + lastPositive1 + " or " +
-                          baseImage.getImageName() + " < " + lastPositive2 + "\n");
+                          baseImage.getImageName() + " < " + lastPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
 
         if (minPositiveThreshold < 0) {
             removeVOIUpdateListener();
@@ -5278,7 +5307,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         if (doSecondIteration) {
 
-            Preferences.debug("Second iteration excluding subthresholded region\n");
+            Preferences.debug("Second iteration excluding subthresholded region\n", Preferences.DEBUG_ALGORITHM);
             fireProgressStateChanged("Second iteration excluding subthresholded region");
             fireProgressStateChanged(80);
             t1 = lastPositive1;
@@ -5314,7 +5343,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             r = (float) (num / denom);
-            Preferences.debug("Linear correlation coefficient = " + r + "\n");
+            Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
             // Use linear least squares to calculate the best line fit
             // for secondBuffer = a*firstBuffer + b.  Use an orthogonal
@@ -5375,9 +5404,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             // +-2 standard deviations on each side includes about 95%.
             halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-            Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b + "\n");
+            Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
 
-            Preferences.debug("Mean square error = " + mse + "\n");
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
             doAgain = false;
 
             for (iter = 0; (iter < 10) && doAgain; iter++) {
@@ -5433,11 +5463,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
                 halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-                Preferences.debug("Iteration = " + (iter + 2) + "\n");
+                Preferences.debug("Iteration = " + (iter + 2) + "\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
 
-                Preferences.debug("Mean square error = " + mse + "\n");
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((aLast != 0.0f) && ((Math.abs(a - aLast) / aLast) > 0.001)) {
                     doAgain = true;
@@ -5626,7 +5656,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         haveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                             transitionFound = true;
@@ -5815,7 +5846,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         haveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                             transitionFound = true;
@@ -5901,20 +5933,21 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             } // else ((lineMax1 - lineMin1) < (lineMax2 - lineMin2)
 
             if (firstUndefined1 >= 0) {
-                Preferences.debug("Cannot calculate linear correlation coefficient \n");
+                Preferences.debug("Cannot calculate linear correlation coefficient \n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstUndefined1 + " or " +
-                                  baseImage.getImageName() + " < " + firstUndefined2 + "\n");
+                                  baseImage.getImageName() + " < " + firstUndefined2 + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             if (nonPositiveThreshold <= 0) {
-                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstNonPositive1 + " or " +
-                                  baseImage.getImageName() + " < " + firstNonPositive2 + "\n");
+                                  baseImage.getImageName() + " < " + firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
+            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + lastPositive1 + " or " +
-                              baseImage.getImageName() + " < " + lastPositive2 + "\n");
+                              baseImage.getImageName() + " < " + lastPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
 
             if (minPositiveThreshold < 0) {
                 removeVOIUpdateListener();
@@ -6578,7 +6611,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             r = (float) (num / denom);
-            Preferences.debug("Linear correlation coefficient = " + r + "\n");
+            Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
             if (doP) {
                 fireProgressStateChanged("Calculating autocovariance");
@@ -6597,12 +6630,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                                                                  " auto covariance full width at half maximum = " +
                                                                  fwhmS + "\n");
                     Preferences.debug(srcImage.getImageName() + " auto covariance full width at half maximum = " +
-                                      fwhmS + "\n");
+                                      fwhmS + "\n", Preferences.DEBUG_ALGORITHM);
                 } else {
                     ViewUserInterface.getReference().setDataText("Cannot determine " + srcImage.getImageName() +
                                                                  " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + srcImage.getImageName() +
-                                      " auto covariance full width at half maximum\n");
+                                      " auto covariance full width at half maximum\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 algoAutoCovariance.finalize();
@@ -6619,12 +6652,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                                                                  " auto covariance full width at half maximum = " +
                                                                  fwhmB + "\n");
                     Preferences.debug(baseImage.getImageName() + " auto covariance full width at half maximum = " +
-                                      fwhmB + "\n");
+                                      fwhmB + "\n", Preferences.DEBUG_ALGORITHM);
                 } else {
                     ViewUserInterface.getReference().setDataText("Cannot determine " + baseImage.getImageName() +
                                                                  " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + baseImage.getImageName() +
-                                      " auto covariance full width at half maximum\n");
+                                      " auto covariance full width at half maximum\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 algoAutoCovariance.finalize();
@@ -6912,11 +6945,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     }
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + r + "\n");
-                Preferences.debug("numBins = " + numBins + "\n");
-                Preferences.debug("rCum[0] = " + rCum[0] + "\n");
-                Preferences.debug("rCum[numBins-1] = " + rCum[numBins - 1] + "\n");
-                Preferences.debug("P-value = " + PValue + "\n");
+                Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("numBins = " + numBins + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("rCum[0] = " + rCum[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("rCum[numBins-1] = " + rCum[numBins - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("P-value = " + PValue + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if (threadStopped) {
                     finalize();
@@ -7017,10 +7050,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             // +-2 standard deviations on each side includes about 95%.
             halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-            Preferences.debug("First iteration\n");
-            Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b + "\n");
+            Preferences.debug("First iteration\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
 
-            Preferences.debug("Mean square error = " + mse + "\n");
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
             doAgain = false;
 
             for (iter = 0; (iter < 10) && doAgain; iter++) {
@@ -7070,11 +7104,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
                 halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-                Preferences.debug("Iteration = " + (iter + 2) + "\n");
+                Preferences.debug("Iteration = " + (iter + 2) + "\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
 
-                Preferences.debug("Mean square error = " + mse + "\n");
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((aLast != 0.0f) && ((Math.abs(a - aLast) / aLast) > 0.001)) {
                     doAgain = true;
@@ -7317,7 +7351,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                     haveThreshold[i] = true;
-                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                         transitionFound = true;
@@ -7511,7 +7545,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                     haveThreshold[i] = true;
-                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                         transitionFound = true;
@@ -7597,20 +7631,21 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         } // else ((lineMax1 - lineMin1) < (lineMax2 - lineMin2)
 
         if (firstUndefined1 >= 0) {
-            Preferences.debug("Cannot calculate linear correlation coefficient \n");
+            Preferences.debug("Cannot calculate linear correlation coefficient \n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstUndefined1 + " or " +
-                              baseImage.getImageName() + " < " + firstUndefined2 + "\n");
+                              baseImage.getImageName() + " < " + firstUndefined2 + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         if (nonPositiveThreshold <= 0) {
-            Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+            Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
             Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstNonPositive1 + " or " +
-                              baseImage.getImageName() + " < " + firstNonPositive2 + "\n");
+                              baseImage.getImageName() + " < " + firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
-        Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
+        Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + lastPositive1 + " or " +
-                          baseImage.getImageName() + " < " + lastPositive2 + "\n");
+                          baseImage.getImageName() + " < " + lastPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
 
         if (minPositiveThreshold < 0) {
             removeVOIUpdateListener();
@@ -7622,7 +7657,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         }
 
         if (doSecondIteration) {
-            Preferences.debug("Second iteration excluding subthresholded region\n");
+            Preferences.debug("Second iteration excluding subthresholded region\n", Preferences.DEBUG_ALGORITHM);
             fireProgressStateChanged("Second iteration excluding subthresholded region");
             fireProgressStateChanged(80);
             t1 = lastPositive1;
@@ -7658,7 +7693,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             r = (float) (num / denom);
-            Preferences.debug("Linear correlation coefficient = " + r + "\n");
+            Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
             // Use linear least squares to calculate the best line fit
             // for secondBuffer = a*firstBuffer + b.  Use an orthogonal
@@ -7713,9 +7748,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             // +-2 standard deviations on each side includes about 95%.
             halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-            Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b + "\n");
+            Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b + "\n",
+            		Preferences.DEBUG_ALGORITHM);
 
-            Preferences.debug("Mean square error = " + mse + "\n");
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
             doAgain = false;
 
             for (iter = 0; (iter < 10) && doAgain; iter++) {
@@ -7771,11 +7807,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
                 halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-                Preferences.debug("Iteration = " + (iter + 2) + "\n");
+                Preferences.debug("Iteration = " + (iter + 2) + "\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug(baseImage.getImageName() + " = " + a + "*" + srcImage.getImageName() + " + " + b +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
 
-                Preferences.debug("Mean square error = " + mse + "\n");
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((aLast != 0.0f) && ((Math.abs(a - aLast) / aLast) > 0.001)) {
                     doAgain = true;
@@ -7962,7 +7998,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         haveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                             transitionFound = true;
@@ -8151,7 +8188,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         haveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                             transitionFound = true;
@@ -8237,20 +8275,21 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             } // else ((lineMax1 - lineMin1) < (lineMax2 - lineMin2)
 
             if (firstUndefined1 >= 0) {
-                Preferences.debug("Cannot calculate linear correlation coefficient \n");
+                Preferences.debug("Cannot calculate linear correlation coefficient \n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstUndefined1 + " or " +
-                                  baseImage.getImageName() + " < " + firstUndefined2 + "\n");
+                                  baseImage.getImageName() + " < " + firstUndefined2 + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             if (nonPositiveThreshold <= 0) {
-                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + firstNonPositive1 + " or " +
-                                  baseImage.getImageName() + " < " + firstNonPositive2 + "\n");
+                                  baseImage.getImageName() + " < " + firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
+            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("for pixels with " + srcImage.getImageName() + " < " + lastPositive1 + " or " +
-                              baseImage.getImageName() + " < " + lastPositive2 + "\n");
+                              baseImage.getImageName() + " < " + lastPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
 
             if (minPositiveThreshold < 0) {
                 removeVOIUpdateListener();
@@ -8961,7 +9000,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             r = (float) (num / denom);
-            Preferences.debug("Linear correlation coefficient = " + r + "\n");
+            Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
             if (doP) {
                 fireProgressStateChanged("Calculating autocovariance");
@@ -8991,11 +9030,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     fwhm = fwhmR;
 
                     if (fwhmR != Integer.MAX_VALUE) {
-                        Preferences.debug("Red auto covariance full width at half maximum = " + fwhmR + "\n");
+                        Preferences.debug("Red auto covariance full width at half maximum = " + fwhmR + "\n", Preferences.DEBUG_ALGORITHM);
                     } else {
                         ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
                         ViewUserInterface.getReference().setDataText("Cannot determine red auto covariance full width at half maximum\n");
-                        Preferences.debug("Cannot determine red auto covariance full width at half maximum\n");
+                        Preferences.debug("Cannot determine red auto covariance full width at half maximum\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     }
                 }
 
@@ -9004,11 +9044,13 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     fwhm = Math.min(fwhm, fwhmG);
 
                     if (fwhmG != Integer.MAX_VALUE) {
-                        Preferences.debug("Green auto covariance full width at half maximum = " + fwhmG + "\n");
+                        Preferences.debug("Green auto covariance full width at half maximum = " + fwhmG + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     } else {
                         ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
                         ViewUserInterface.getReference().setDataText("Cannot determine green auto covariance full width at half maximum\n");
-                        Preferences.debug("Cannot determine green auto covariance full width at half maximum\n");
+                        Preferences.debug("Cannot determine green auto covariance full width at half maximum\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     }
                 }
 
@@ -9017,11 +9059,13 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     fwhm = Math.min(fwhm, fwhmB);
 
                     if (fwhmB != Integer.MAX_VALUE) {
-                        Preferences.debug("Blue auto covariance full width at half maximum = " + fwhmB + "\n");
+                        Preferences.debug("Blue auto covariance full width at half maximum = " + fwhmB + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     } else {
                         ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
                         ViewUserInterface.getReference().setDataText("Cannot determine blue auto covariance full width at half maximum\n");
-                        Preferences.debug("Cannot determine blue auto covariance full width at half maximum\n");
+                        Preferences.debug("Cannot determine blue auto covariance full width at half maximum\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     }
                 }
 
@@ -9266,11 +9310,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     }
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + r + "\n");
-                Preferences.debug("numBins = " + numBins + "\n");
-                Preferences.debug("rCum[0] = " + rCum[0] + "\n");
-                Preferences.debug("rCum[numBins-1] = " + rCum[numBins - 1] + "\n");
-                Preferences.debug("P-value = " + PValue + "\n");
+                Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("numBins = " + numBins + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("rCum[0] = " + rCum[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("rCum[numBins-1] = " + rCum[numBins - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("P-value = " + PValue + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if (threadStopped) {
                     finalize();
@@ -9367,17 +9411,17 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             // +-2 standard deviations on each side includes about 95%.
             halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-            Preferences.debug("First iteration\n");
+            Preferences.debug("First iteration\n", Preferences.DEBUG_ALGORITHM);
 
             if ((useRed) && (useGreen)) {
-                Preferences.debug("green = " + a + "*red" + " + " + b + "\n");
+                Preferences.debug("green = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             } else if ((useRed) && (useBlue)) {
-                Preferences.debug("blue = " + a + "*red" + " + " + b + "\n");
+                Preferences.debug("blue = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             } else {
-                Preferences.debug("blue = " + a + "*green" + " + " + b + "\n");
+                Preferences.debug("blue = " + a + "*green" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Mean square error = " + mse + "\n");
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
             doAgain = false;
 
             for (iter = 0; (iter < 10) && doAgain; iter++) {
@@ -9429,17 +9473,17 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
                 halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-                Preferences.debug("Iteration = " + (iter + 2) + "\n");
+                Preferences.debug("Iteration = " + (iter + 2) + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((useRed) && (useGreen)) {
-                    Preferences.debug("green = " + a + "*red" + " + " + b + "\n");
+                    Preferences.debug("green = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 } else if ((useRed) && (useBlue)) {
-                    Preferences.debug("blue = " + a + "*red" + " + " + b + "\n");
+                    Preferences.debug("blue = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 } else {
-                    Preferences.debug("blue = " + a + "*green" + " + " + b + "\n");
+                    Preferences.debug("blue = " + a + "*green" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Mean square error = " + mse + "\n");
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((aLast != 0.0f) && ((Math.abs(a - aLast) / aLast) > 0.001)) {
                     doAgain = true;
@@ -9684,7 +9728,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                     haveThreshold[i] = true;
-                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                         transitionFound = true;
@@ -9879,7 +9923,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                     haveThreshold[i] = true;
-                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                         transitionFound = true;
@@ -9967,52 +10011,60 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         if ((useRed) && (useGreen)) {
 
             if (firstUndefined1 >= 0) {
-                Preferences.debug("Cannot calculate linear correlation coefficient\n");
-                Preferences.debug("for pixels with red < " + firstUndefined1 + " or green < " + firstUndefined2 + "\n");
+                Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + firstUndefined1 + " or green < " + firstUndefined2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
 
             if (nonPositiveThreshold <= 0) {
-                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with red < " + firstNonPositive1 + " or green < " + firstNonPositive2 +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-            Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n");
+            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
 
         } // if ((useRed) && (useGreen))
         else if ((useRed) && (useBlue)) {
 
             if (firstUndefined1 >= 0) {
-                Preferences.debug("Cannot calculate linear correlation coefficient\n");
-                Preferences.debug("for pixels with red < " + firstUndefined1 + " or blue < " + firstUndefined2 + "\n");
+                Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + firstUndefined1 + " or blue < " + firstUndefined2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
 
             if (nonPositiveThreshold <= 0) {
-                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with red < " + firstNonPositive1 + " or blue < " + firstNonPositive2 +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-            Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
         } // else if ((useRed) && (useBlue))
         else {
 
             if (firstUndefined1 >= 0) {
-                Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with green < " + firstUndefined1 + " or blue < " + firstUndefined2 +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             if (nonPositiveThreshold <= 0) {
-                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with green < " + firstNonPositive1 + " or blue < " + firstNonPositive2 +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-            Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         if (minPositiveThreshold < 0) {
@@ -10027,7 +10079,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         }
 
         if (doSecondIteration) {
-            Preferences.debug("Second iteration excluding subthresholded region\n");
+            Preferences.debug("Second iteration excluding subthresholded region\n", Preferences.DEBUG_ALGORITHM);
             fireProgressStateChanged("Second iteration excluding subthresholded region");
             fireProgressStateChanged(80);
             t1 = lastPositive1;
@@ -10063,7 +10115,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             r = (float) (num / denom);
-            Preferences.debug("Linear correlation coefficient = " + r + "\n");
+            Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
             // Use linear least squares to calculate the best line fit
             // for secondBuffer = a*firstBuffer + b.  Use an orthogonal
@@ -10120,14 +10172,14 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             halfWidth = (float) (2.0 * Math.sqrt(mse));
 
             if ((useRed) && (useGreen)) {
-                Preferences.debug("green = " + a + "*red" + " + " + b + "\n");
+                Preferences.debug("green = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             } else if ((useRed) && (useBlue)) {
-                Preferences.debug("blue = " + a + "*red" + " + " + b + "\n");
+                Preferences.debug("blue = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             } else {
-                Preferences.debug("blue = " + a + "*green" + " + " + b + "\n");
+                Preferences.debug("blue = " + a + "*green" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Mean square error = " + mse + "\n");
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
             doAgain = false;
 
             for (iter = 0; (iter < 10) && doAgain; iter++) {
@@ -10183,17 +10235,17 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
                 halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-                Preferences.debug("Iteration = " + (iter + 2) + "\n");
+                Preferences.debug("Iteration = " + (iter + 2) + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((useRed) && (useGreen)) {
-                    Preferences.debug("green = " + a + "*red" + " + " + b + "\n");
+                    Preferences.debug("green = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 } else if ((useRed) && (useBlue)) {
-                    Preferences.debug("blue = " + a + "*red" + " + " + b + "\n");
+                    Preferences.debug("blue = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 } else {
-                    Preferences.debug("blue = " + a + "*green" + " + " + b + "\n");
+                    Preferences.debug("blue = " + a + "*green" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Mean square error = " + mse + "\n");
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((aLast != 0.0f) && ((Math.abs(a - aLast) / aLast) > 0.001)) {
                     doAgain = true;
@@ -10382,7 +10434,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         haveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                             transitionFound = true;
@@ -10571,7 +10624,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         haveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                             transitionFound = true;
@@ -10659,54 +10713,63 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if ((useRed) && (useGreen)) {
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstUndefined1 + " or green < " + firstUndefined2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstNonPositive1 + " or green < " +
-                                      firstNonPositive2 + "\n");
+                                      firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
 
             } // if ((useRed) && (useGreen))
             else if ((useRed) && (useBlue)) {
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstUndefined1 + " or blue < " + firstUndefined2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstNonPositive1 + " or blue < " + firstNonPositive2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             } // else if ((useRed) && (useBlue))
             else {
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with green < " + firstUndefined1 + " or blue < " + firstUndefined2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with green < " + firstNonPositive1 + " or blue < " +
-                                      firstNonPositive2 + "\n");
+                                      firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
 
             if (minPositiveThreshold < 0) {
@@ -11467,7 +11530,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             r = (float) (num / denom);
-            Preferences.debug("Linear correlation coefficient = " + r + "\n");
+            Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
             if (doP) {
                 fireProgressStateChanged("Calculating autocovariance");
@@ -11497,11 +11560,13 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     fwhm = fwhmR;
 
                     if (fwhmR != Integer.MAX_VALUE) {
-                        Preferences.debug("Red auto covariance full width at half maximum = " + fwhmR + "\n");
+                        Preferences.debug("Red auto covariance full width at half maximum = " + fwhmR + "\n",
+                        		Preferences.DEBUG_ALGORITHM);
                     } else {
                         ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
                         ViewUserInterface.getReference().setDataText("Cannot determine red auto covariance full width at half maximum");
-                        Preferences.debug("Cannot determine red auto covariance full width at half maximum\n");
+                        Preferences.debug("Cannot determine red auto covariance full width at half maximum\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     }
                 }
 
@@ -11510,11 +11575,13 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     fwhm = Math.min(fwhm, fwhmG);
 
                     if (fwhmG != Integer.MAX_VALUE) {
-                        Preferences.debug("Green auto covariance full width at half maximum = " + fwhmG + "\n");
+                        Preferences.debug("Green auto covariance full width at half maximum = " + fwhmG + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     } else {
                         ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
                         ViewUserInterface.getReference().setDataText("Cannot determine green auto covariance full width at half maximum");
-                        Preferences.debug("Cannot determine green auto covariance full width at half maximum\n");
+                        Preferences.debug("Cannot determine green auto covariance full width at half maximum\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     }
                 }
 
@@ -11523,11 +11590,13 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     fwhm = Math.min(fwhm, fwhmB);
 
                     if (fwhmB != Integer.MAX_VALUE) {
-                        Preferences.debug("Blue auto covariance full width at half maximum = " + fwhmB + "\n");
+                        Preferences.debug("Blue auto covariance full width at half maximum = " + fwhmB + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     } else {
                         ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
                         ViewUserInterface.getReference().setDataText("Cannot determine blue auto covariance full width at half maximum");
-                        Preferences.debug("Cannot determine blue auto covariance full width at half maximum\n");
+                        Preferences.debug("Cannot determine blue auto covariance full width at half maximum\n", 
+                        		Preferences.DEBUG_ALGORITHM);
                     }
                 }
 
@@ -11839,11 +11908,11 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     }
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + r + "\n");
-                Preferences.debug("numBins = " + numBins + "\n");
-                Preferences.debug("rCum[0] = " + rCum[0] + "\n");
-                Preferences.debug("rCum[numBins-1] = " + rCum[numBins - 1] + "\n");
-                Preferences.debug("P-value = " + PValue + "\n");
+                Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("numBins = " + numBins + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("rCum[0] = " + rCum[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("rCum[numBins-1] = " + rCum[numBins - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("P-value = " + PValue + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if (threadStopped) {
                     finalize();
@@ -11942,17 +12011,17 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             // +-2 standard deviations on each side includes about 95%.
             halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-            Preferences.debug("First iteration\n");
+            Preferences.debug("First iteration\n", Preferences.DEBUG_ALGORITHM);
 
             if ((useRed) && (useGreen)) {
-                Preferences.debug("green = " + a + "*red" + " + " + b + "\n");
+                Preferences.debug("green = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             } else if ((useRed) && (useBlue)) {
-                Preferences.debug("blue = " + a + "*red" + " + " + b + "\n");
+                Preferences.debug("blue = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             } else {
-                Preferences.debug("blue = " + a + "*green" + " + " + b + "\n");
+                Preferences.debug("blue = " + a + "*green" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Mean square error = " + mse + "\n");
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
             doAgain = false;
 
             for (iter = 0; (iter < 10) && doAgain; iter++) {
@@ -12004,17 +12073,17 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
                 halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-                Preferences.debug("Iteration = " + (iter + 2) + "\n");
+                Preferences.debug("Iteration = " + (iter + 2) + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((useRed) && (useGreen)) {
-                    Preferences.debug("green = " + a + "*red" + " + " + b + "\n");
+                    Preferences.debug("green = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 } else if ((useRed) && (useBlue)) {
-                    Preferences.debug("blue = " + a + "*red" + " + " + b + "\n");
+                    Preferences.debug("blue = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 } else {
-                    Preferences.debug("blue = " + a + "*green" + " + " + b + "\n");
+                    Preferences.debug("blue = " + a + "*green" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Mean square error = " + mse + "\n");
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((aLast != 0.0f) && ((Math.abs(a - aLast) / aLast) > 0.001)) {
                     doAgain = true;
@@ -12257,7 +12326,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                     haveThreshold[i] = true;
-                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                         transitionFound = true;
@@ -12451,7 +12520,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                     haveThreshold[i] = true;
-                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                    Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                         transitionFound = true;
@@ -12539,52 +12608,60 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         if ((useRed) && (useGreen)) {
 
             if (firstUndefined1 >= 0) {
-                Preferences.debug("Cannot calculate linear correlation coefficient\n");
-                Preferences.debug("for pixels with red < " + firstUndefined1 + " or green < " + firstUndefined2 + "\n");
+                Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + firstUndefined1 + " or green < " + firstUndefined2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
 
             if (nonPositiveThreshold <= 0) {
-                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with red < " + firstNonPositive1 + " or green < " + firstNonPositive2 +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-            Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n");
+            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
 
         } // if ((useRed) && (useGreen))
         else if ((useRed) && (useBlue)) {
 
             if (firstUndefined1 >= 0) {
-                Preferences.debug("Cannot calculate linear correlation coefficient\n");
-                Preferences.debug("for pixels with red < " + firstUndefined1 + " or blue < " + firstUndefined2 + "\n");
+                Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + firstUndefined1 + " or blue < " + firstUndefined2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
 
             if (nonPositiveThreshold <= 0) {
-                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with red < " + firstNonPositive1 + " or blue < " + firstNonPositive2 +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-            Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
         } // else if ((useRed) && (useBlue))
         else {
 
             if (firstUndefined1 >= 0) {
-                Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with green < " + firstUndefined1 + " or blue < " + firstUndefined2 +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             if (nonPositiveThreshold <= 0) {
-                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("for pixels with green < " + firstNonPositive1 + " or blue < " + firstNonPositive2 +
-                                  "\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-            Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+            Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         if (minPositiveThreshold < 0) {
@@ -12599,7 +12676,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         }
 
         if (doSecondIteration) {
-            Preferences.debug("Second iteration excluding subthresholded region\n");
+            Preferences.debug("Second iteration excluding subthresholded region\n", Preferences.DEBUG_ALGORITHM);
             fireProgressStateChanged("Second iteration excluding subthresholded region");
             fireProgressStateChanged(80);
             t1 = lastPositive1;
@@ -12635,7 +12712,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
             denom = Math.sqrt(denom1 * denom2);
             r = (float) (num / denom);
-            Preferences.debug("Linear correlation coefficient = " + r + "\n");
+            Preferences.debug("Linear correlation coefficient = " + r + "\n", Preferences.DEBUG_ALGORITHM);
 
             // Use linear least squares to calculate the best line fit
             // for secondBuffer = a*firstBuffer + b.  Use an orthogonal
@@ -12694,14 +12771,14 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             halfWidth = (float) (2.0 * Math.sqrt(mse));
 
             if ((useRed) && (useGreen)) {
-                Preferences.debug("green = " + a + "*red" + " + " + b + "\n");
+                Preferences.debug("green = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             } else if ((useRed) && (useBlue)) {
-                Preferences.debug("blue = " + a + "*red" + " + " + b + "\n");
+                Preferences.debug("blue = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             } else {
-                Preferences.debug("blue = " + a + "*green" + " + " + b + "\n");
+                Preferences.debug("blue = " + a + "*green" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
-            Preferences.debug("Mean square error = " + mse + "\n");
+            Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
             doAgain = false;
 
             for (iter = 0; (iter < 10) && doAgain; iter++) {
@@ -12759,17 +12836,17 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // +-2 standard deviations on each side includes about 95%.
                 halfWidth = (float) (2.0 * Math.sqrt(mse));
 
-                Preferences.debug("Iteration = " + (iter + 2) + "\n");
+                Preferences.debug("Iteration = " + (iter + 2) + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((useRed) && (useGreen)) {
-                    Preferences.debug("green = " + a + "*red" + " + " + b + "\n");
+                    Preferences.debug("green = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 } else if ((useRed) && (useBlue)) {
-                    Preferences.debug("blue = " + a + "*red" + " + " + b + "\n");
+                    Preferences.debug("blue = " + a + "*red" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 } else {
-                    Preferences.debug("blue = " + a + "*green" + " + " + b + "\n");
+                    Preferences.debug("blue = " + a + "*green" + " + " + b + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Mean square error = " + mse + "\n");
+                Preferences.debug("Mean square error = " + mse + "\n", Preferences.DEBUG_ALGORITHM);
 
                 if ((aLast != 0.0f) && ((Math.abs(a - aLast) / aLast) > 0.001)) {
                     doAgain = true;
@@ -12962,7 +13039,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         haveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                             transitionFound = true;
@@ -13147,7 +13225,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                         rThreshold[i] = (float) (num / Math.sqrt(denom1 * denom2));
                         haveThreshold[i] = true;
-                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n");
+                        Preferences.debug("i = " + i + " rThreshold[i] = " + rThreshold[i] + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
 
                         if ((i >= 1) && haveThreshold[i - 1] && (rThreshold[i] > 0.0f) && (rThreshold[i - 1] <= 0.0f)) {
                             transitionFound = true;
@@ -13235,54 +13314,63 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if ((useRed) && (useGreen)) {
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstUndefined1 + " or green < " + firstUndefined2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstNonPositive1 + " or green < " +
-                                      firstNonPositive2 + "\n");
+                                      firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
 
             } // if ((useRed) && (useGreen))
             else if ((useRed) && (useBlue)) {
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstUndefined1 + " or blue < " + firstUndefined2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with red < " + firstNonPositive1 + " or blue < " + firstNonPositive2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with red < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             } // else if ((useRed) && (useBlue))
             else {
 
                 if (firstUndefined1 >= 0) {
-                    Preferences.debug("Cannot calculate linear correlation coefficient\n");
+                    Preferences.debug("Cannot calculate linear correlation coefficient\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with green < " + firstUndefined1 + " or blue < " + firstUndefined2 +
-                                      "\n");
+                                      "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (nonPositiveThreshold <= 0) {
-                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
+                    Preferences.debug("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("for pixels with green < " + firstNonPositive1 + " or blue < " +
-                                      firstNonPositive2 + "\n");
+                                      firstNonPositive2 + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
-                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n");
-                Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n");
+                Preferences.debug("Linear correlation coefficient = " + minPositiveThreshold + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("for pixels with green < " + lastPositive1 + " or blue < " + lastPositive2 + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
 
             if (minPositiveThreshold < 0) {
