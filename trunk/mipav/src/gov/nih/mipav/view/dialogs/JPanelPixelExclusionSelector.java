@@ -55,7 +55,7 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
     private Float upperLimit;
 
     /** The range type that this pixel exclusion selector covers. */
-    private RangeType rangeFlag;
+    private RangeType rangeFlag = RangeType.NO_RANGE;
     
     /** A reference to the JDialogVOIStatistic or JDialogVOIStats check box panel. */
     private JPanelStatisticsList checkBoxPanel;
