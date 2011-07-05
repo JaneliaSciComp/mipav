@@ -458,7 +458,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 return;
             }
 
-            Preferences.debug("Doing red autocorrelation\n");
+            Preferences.debug("Doing red autocovariance\n", Preferences.DEBUG_ALGORITHM);
 
             for (i = 0; i < resultBuffer.length; i++) {
                 resultBuffer[i] = 0.0f;
@@ -606,11 +606,11 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmR = " + fwhmR);
-                Preferences.debug("Auto covariance full width red at half maximum = " + fwhmR + "\n");
+                Preferences.debug("Auto covariance full width red at half maximum = " + fwhmR + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Auto covariance full width red at half maximum = " +
                                                              fwhmR + "\n");
             } else {
-                Preferences.debug("Cannot find auto covariance full width red at half maximum\n");
+                Preferences.debug("Cannot find auto covariance full width red at half maximum\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width red at half maximum");
             }
 
@@ -628,7 +628,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 return;
             }
 
-            Preferences.debug("Doing green autocorrelation\n");
+            Preferences.debug("Doing green autocovariance\n", Preferences.DEBUG_ALGORITHM);
 
             for (i = 0; i < resultBuffer.length; i++) {
                 resultBuffer[i] = 0.0f;
@@ -777,11 +777,12 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmG = " + fwhmG);
-                Preferences.debug("Auto covariance full width green at half maximum = " + fwhmG + "\n");
+                Preferences.debug("Auto covariance full width green at half maximum = " + fwhmG + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Auto covariance full width green at half maximum = " +
                                                              fwhmG + "\n");
             } else {
-                Preferences.debug("Cannot find auto covariance full width green at half maximum\n");
+                Preferences.debug("Cannot find auto covariance full width green at half maximum\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width green at half maximum\n");
             }
 
@@ -799,7 +800,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 return;
             }
 
-            Preferences.debug("Doing blue autocorrelation\n");
+            Preferences.debug("Doing blue autocovariance\n", Preferences.DEBUG_ALGORITHM);
 
             for (i = 0; i < resultBuffer.length; i++) {
                 resultBuffer[i] = 0.0f;
@@ -945,11 +946,12 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmB = " + fwhmB);
-                Preferences.debug("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
+                Preferences.debug("Auto covariance full width blue at half maximum = " + fwhmB + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Auto covariance full width blue at half maximum = " +
                                                              fwhmB + "\n");
             } else {
-                Preferences.debug("Cannot find auto covariance full width blue at half maximum\n");
+                Preferences.debug("Cannot find auto covariance full width blue at half maximum\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width blue at half maximum\n");
             }
         } // if (destImageB != null)
@@ -1480,11 +1482,12 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmR = " + fwhmR);
-                Preferences.debug("Auto covariance full width red at half maximum = " + fwhmR + "\n");
+                Preferences.debug("Auto covariance full width red at half maximum = " + fwhmR + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Auto covariance full width red at half maximum = " +
                                                              fwhmR + "\n");
             } else {
-                Preferences.debug("Cannot find auto covariance full width red at half maximum\n");
+                Preferences.debug("Cannot find auto covariance full width red at half maximum\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width red at half maximum\n");
             }
         } // if (destImageR != null)
@@ -1686,11 +1689,13 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmG = " + fwhmG);
-                Preferences.debug("Auto covariance full width green at half maximum = " + fwhmG + "\n");
+                Preferences.debug("Auto covariance full width green at half maximum = " + fwhmG + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Auto covariance full width green at half maximum = " +
                                                              fwhmG + "\n");
             } else {
-                Preferences.debug("Cannot find auto covarinace full width green at half maximum\n");
+                Preferences.debug("Cannot find auto covarinace full width green at half maximum\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width green at half maximum\n");
             }
 
@@ -1888,14 +1893,14 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             if (c3 > 0.0) {
                 double c4 = Math.log(c3) / params[2]; // distSqr
                 fwhmB = (int) ((2.0 * Math.sqrt(c4)) + 0.5);
-                Preferences.debug("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
+                Preferences.debug("Auto covariance full width blue at half maximum = " + fwhmB + "\n", Preferences.DEBUG_ALGORITHM);
 
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmB = " + fwhmB);
                 ViewUserInterface.getReference().setDataText("Auto covariance full width blue at half maximum = " +
                                                              fwhmB + "\n");
             } else {
-                Preferences.debug("Cannot find auto covariance full width blue at half maximum\n");
+                Preferences.debug("Cannot find auto covariance full width blue at half maximum\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width blue at half maximum\n");
             }
 
@@ -2542,12 +2547,12 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitCovarianceModel ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
+            Preferences.debug(" ******* FitCovarianceModel ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         /** 
@@ -2562,14 +2567,15 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
             try {
                 ctrl = ctrlMat[0];
-                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
+                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n", 
+                // Preferences.DEBUG_ALGORITHM);
                 if ( (ctrl == -1) || (ctrl == 1)) {
                     
                     // evaluate the residuals[j] = ymod - yData[j]
                     for (j = 0; j < nPts; j++) {
                     	ymod = a[0] + (a[1] * Math.exp(a[2] * xData[j]));
                         residuals[j] = ymod - yData[j];
-                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
+                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
@@ -2585,7 +2591,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // ctrlMat[0] = 0;
                 // }
             } catch (final Exception exc) {
-                Preferences.debug("function error: " + exc.getMessage() + "\n");
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
