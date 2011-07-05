@@ -2266,11 +2266,11 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitCorrelationModel ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
+            Preferences.debug(" ******* FitCorrelationModel ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         /**
@@ -2287,14 +2287,15 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
 
             try {
                 ctrl = ctrlMat[0];
-                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + "\n");
+                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + "\n", 
+                // Preferences.DEBUG_ALGORITHM);
                 if ( (ctrl == -1) || (ctrl == 1)) {
                     
                     // evaluate the residuals[j] = ymod - yData[j]
                     for (j = 0; j < nPts; j++) {
                     	ymod = (1 - a[0]) + (a[0] * Math.exp(a[1] * xData[j]));
                         residuals[j] = ymod - yData[j];
-                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
+                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
@@ -2309,7 +2310,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 // ctrlMat[0] = 0;
                 // }
             } catch (final Exception exc) {
-                Preferences.debug("function error: " + exc.getMessage() + "\n");
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
