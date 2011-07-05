@@ -582,7 +582,7 @@ public class DicomDictionary {
         BufferedReader dictionaryReference = DicomDictionary.getFileReader(filename);
 
         if (dictionaryReference == null) {
-            Preferences.debug("Failed to read DICOM dictionary file from " + filename);
+            Preferences.debug("Failed to read DICOM dictionary file from " + filename, Preferences.DEBUG_FILEIO);
             MipavUtil.displayWarning("Failed to read DICOM dictionary file from " + filename);
 
             return;
@@ -702,7 +702,7 @@ public class DicomDictionary {
                 }
             }
         } catch (final FileNotFoundException fnfe) {
-            Preferences.debug("Dictionary file not found: " + filename);
+            Preferences.debug("Dictionary file not found: " + filename, Preferences.DEBUG_FILEIO);
             MipavUtil.displayWarning("Dictionary file not found: " + filename);
         } catch (final Exception e) {
             MipavUtil.displayError("Failed to parse DICOM dictionary file.");
