@@ -709,7 +709,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         }
 
         setCompleted(true);
-        Preferences.debug("DWI->DTI:" + (System.currentTimeMillis() - startTime) + "\n");
+        Preferences.debug("DWI->DTI:" + (System.currentTimeMillis() - startTime) + "\n", Preferences.DEBUG_ALGORITHM);
         return afTensorData;
     }
 
