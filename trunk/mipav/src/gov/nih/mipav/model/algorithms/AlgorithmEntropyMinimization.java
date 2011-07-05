@@ -436,7 +436,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
             gtop = (int) Math.ceil(gmax);
             histogramLength = gtop - gbottom + 1;
 
-            // Preferences.debug("gmin = " + gmin + " gmax = "+ gmax + "\n");
+            // Preferences.debug("gmin = " + gmin + " gmax = "+ gmax + "\n", Preferences.DEBUG_ALGORITHM);
             originalHistogram = new double[histogramLength];
 
             for (y = 0; y < yDim; y += pixelIncrement) {
@@ -641,7 +641,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
             gtop = (int) Math.ceil(gmax);
             histogramLength = gtop - gbottom + 1;
 
-            // Preferences.debug("gmin = " + gmin + " gmax = "+ gmax + "\n");
+            // Preferences.debug("gmin = " + gmin + " gmax = "+ gmax + "\n", Preferences.DEBUG_ALGORITHM);
             originalHistogram = new double[histogramLength];
 
             for (z = 0; z < zDim; z += zPixelIncrement) {
@@ -1035,45 +1035,45 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
                     if (srcImage.isColorImage()) {
 
                         if (c == 1) {
-                            Preferences.debug("Red\n");
+                            Preferences.debug("Red\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 2) {
-                            Preferences.debug("Green\n");
+                            Preferences.debug("Green\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 3) {
-                            Preferences.debug("Blue\n");
+                            Preferences.debug("Blue\n", Preferences.DEBUG_ALGORITHM);
                         }
                     } // if (srcImage.isColorImage())
 
-                    Preferences.debug("a1 = " + a1 + "\n");
-                    Preferences.debug("ac1 = " + ac1 + "\n");
-                    Preferences.debug("ad1 = " + ad1 + "\n");
-                    Preferences.debug("a2 = " + a2 + "\n");
-                    Preferences.debug("ac2 = " + ac2 + "\n");
-                    Preferences.debug("ad2 = " + ad2 + "\n");
-                    Preferences.debug("a3 = " + a3 + "\n");
-                    Preferences.debug("ac3 = " + ac3 + "\n");
-                    Preferences.debug("ad3 = " + ad3 + "\n");
-                    Preferences.debug("a4 = " + a4 + "\n");
-                    Preferences.debug("ac4 = " + ac4 + "\n");
-                    Preferences.debug("ad4 = " + ad4 + "\n");
-                    Preferences.debug("a5 = " + a5 + "\n");
-                    Preferences.debug("ac5 = " + ac5 + "\n");
-                    Preferences.debug("ad5 = " + ad5 + "\n");
-                    Preferences.debug("m1 = " + m1 + "\n");
-                    Preferences.debug("mc1 = " + mc1 + "\n");
-                    Preferences.debug("md1 = " + md1 + "\n");
-                    Preferences.debug("m2 = " + m2 + "\n");
-                    Preferences.debug("mc2 = " + mc2 + "\n");
-                    Preferences.debug("md2 = " + md2 + "\n");
-                    Preferences.debug("m3 = " + m3 + "\n");
-                    Preferences.debug("mc3 = " + mc3 + "\n");
-                    Preferences.debug("md3 = " + md3 + "\n");
-                    Preferences.debug("m4 = " + m4 + "\n");
-                    Preferences.debug("mc4 = " + mc4 + "\n");
-                    Preferences.debug("md4 = " + md4 + "\n");
-                    Preferences.debug("m5 = " + m5 + "\n");
-                    Preferences.debug("mc5 = " + mc5 + "\n");
-                    Preferences.debug("md5 = " + md5 + "\n");
-                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n");
+                    Preferences.debug("a1 = " + a1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac1 = " + ac1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad1 = " + ad1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a2 = " + a2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac2 = " + ac2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad2 = " + ad2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a3 = " + a3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac3 = " + ac3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad3 = " + ad3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a4 = " + a4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac4 = " + ac4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad4 = " + ad4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a5 = " + a5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac5 = " + ac5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad5 = " + ad5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m1 = " + m1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc1 = " + mc1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md1 = " + md1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m2 = " + m2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc2 = " + mc2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md2 = " + md2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m3 = " + m3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc3 = " + mc3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md3 = " + md3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m4 = " + m4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc4 = " + mc4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md4 = " + md4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m5 = " + m5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc5 = " + mc5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md5 = " + md5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if (destImage != null) {
                         imageType = destImage.getType();
@@ -1495,30 +1495,30 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
                     if (srcImage.isColorImage()) {
 
                         if (c == 1) {
-                            Preferences.debug("Red\n");
+                            Preferences.debug("Red\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 2) {
-                            Preferences.debug("Green\n");
+                            Preferences.debug("Green\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 3) {
-                            Preferences.debug("Blue\n");
+                            Preferences.debug("Blue\n", Preferences.DEBUG_ALGORITHM);
                         }
                     } // if (srcImage.isColorImage())
 
-                    Preferences.debug("m1 = " + m1 + "\n");
-                    Preferences.debug("mc1 = " + mc1 + "\n");
-                    Preferences.debug("md1 = " + md1 + "\n");
-                    Preferences.debug("m2 = " + m2 + "\n");
-                    Preferences.debug("mc2 = " + mc2 + "\n");
-                    Preferences.debug("md2 = " + md2 + "\n");
-                    Preferences.debug("m3 = " + m3 + "\n");
-                    Preferences.debug("mc3 = " + mc3 + "\n");
-                    Preferences.debug("md3 = " + md3 + "\n");
-                    Preferences.debug("m4 = " + m4 + "\n");
-                    Preferences.debug("mc4 = " + mc4 + "\n");
-                    Preferences.debug("md4 = " + md4 + "\n");
-                    Preferences.debug("m5 = " + m5 + "\n");
-                    Preferences.debug("mc5 = " + mc5 + "\n");
-                    Preferences.debug("md5 = " + md5 + "\n");
-                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n");
+                    Preferences.debug("m1 = " + m1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc1 = " + mc1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md1 = " + md1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m2 = " + m2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc2 = " + mc2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md2 = " + md2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m3 = " + m3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc3 = " + mc3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md3 = " + md3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m4 = " + m4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc4 = " + mc4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md4 = " + md4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m5 = " + m5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc5 = " + mc5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md5 = " + md5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if (destImage != null) {
                         imageType = destImage.getType();
@@ -1959,42 +1959,42 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
                     if (srcImage.isColorImage()) {
 
                         if (c == 1) {
-                            Preferences.debug("Red\n");
+                            Preferences.debug("Red\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 2) {
-                            Preferences.debug("Green\n");
+                            Preferences.debug("Green\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 3) {
-                            Preferences.debug("Blue\n");
+                            Preferences.debug("Blue\n", Preferences.DEBUG_ALGORITHM);
                         }
                     } // if (srcImage.isColorImage())
 
-                    Preferences.debug("m1 = " + m1 + "\n");
-                    Preferences.debug("mc1 = " + mc1 + "\n");
-                    Preferences.debug("md1 = " + md1 + "\n");
-                    Preferences.debug("m2 = " + m2 + "\n");
-                    Preferences.debug("mc2 = " + mc2 + "\n");
-                    Preferences.debug("md2 = " + md2 + "\n");
-                    Preferences.debug("m3 = " + m3 + "\n");
-                    Preferences.debug("mc3 = " + mc3 + "\n");
-                    Preferences.debug("md3 = " + md3 + "\n");
-                    Preferences.debug("m4 = " + m4 + "\n");
-                    Preferences.debug("mc4 = " + mc4 + "\n");
-                    Preferences.debug("md4 = " + md4 + "\n");
-                    Preferences.debug("m5 = " + m5 + "\n");
-                    Preferences.debug("mc5 = " + mc5 + "\n");
-                    Preferences.debug("md5 = " + md5 + "\n");
-                    Preferences.debug("m6 = " + m6 + "\n");
-                    Preferences.debug("mc6 = " + mc6 + "\n");
-                    Preferences.debug("md6 = " + md6 + "\n");
-                    Preferences.debug("m7 = " + m7 + "\n");
-                    Preferences.debug("mc7 = " + mc7 + "\n");
-                    Preferences.debug("md7 = " + md7 + "\n");
-                    Preferences.debug("m8 = " + m8 + "\n");
-                    Preferences.debug("mc8 = " + mc8 + "\n");
-                    Preferences.debug("md8 = " + md8 + "\n");
-                    Preferences.debug("m9 = " + m9 + "\n");
-                    Preferences.debug("mc9 = " + mc9 + "\n");
-                    Preferences.debug("md9 = " + md9 + "\n");
-                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n");
+                    Preferences.debug("m1 = " + m1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc1 = " + mc1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md1 = " + md1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m2 = " + m2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc2 = " + mc2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md2 = " + md2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m3 = " + m3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc3 = " + mc3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md3 = " + md3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m4 = " + m4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc4 = " + mc4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md4 = " + md4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m5 = " + m5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc5 = " + mc5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md5 = " + md5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m6 = " + m6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc6 = " + mc6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md6 = " + md6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m7 = " + m7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc7 = " + mc7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md7 = " + md7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m8 = " + m8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc8 = " + mc8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md8 = " + md8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m9 = " + m9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc9 = " + mc9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md9 = " + md9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if (destImage != null) {
                         imageType = destImage.getType();
@@ -2559,69 +2559,69 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
                     if (srcImage.isColorImage()) {
 
                         if (c == 1) {
-                            Preferences.debug("Red\n");
+                            Preferences.debug("Red\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 2) {
-                            Preferences.debug("Green\n");
+                            Preferences.debug("Green\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 3) {
-                            Preferences.debug("Blue\n");
+                            Preferences.debug("Blue\n", Preferences.DEBUG_ALGORITHM);
                         }
                     } // if (srcImage.isColorImage())
 
-                    Preferences.debug("a1 = " + a1 + "\n");
-                    Preferences.debug("ac1 = " + ac1 + "\n");
-                    Preferences.debug("ad1 = " + ad1 + "\n");
-                    Preferences.debug("a2 = " + a2 + "\n");
-                    Preferences.debug("ac2 = " + ac2 + "\n");
-                    Preferences.debug("ad2 = " + ad2 + "\n");
-                    Preferences.debug("a3 = " + a3 + "\n");
-                    Preferences.debug("ac3 = " + ac3 + "\n");
-                    Preferences.debug("ad3 = " + ad3 + "\n");
-                    Preferences.debug("a4 = " + a4 + "\n");
-                    Preferences.debug("ac4 = " + ac4 + "\n");
-                    Preferences.debug("ad4 = " + ad4 + "\n");
-                    Preferences.debug("a5 = " + a5 + "\n");
-                    Preferences.debug("ac5 = " + ac5 + "\n");
-                    Preferences.debug("ad5 = " + ad5 + "\n");
-                    Preferences.debug("a6 = " + a6 + "\n");
-                    Preferences.debug("ac6 = " + ac6 + "\n");
-                    Preferences.debug("ad6 = " + ad6 + "\n");
-                    Preferences.debug("a7 = " + a7 + "\n");
-                    Preferences.debug("ac7 = " + ac7 + "\n");
-                    Preferences.debug("ad7 = " + ad7 + "\n");
-                    Preferences.debug("a8 = " + a8 + "\n");
-                    Preferences.debug("ac8 = " + ac8 + "\n");
-                    Preferences.debug("ad8 = " + ad8 + "\n");
-                    Preferences.debug("a9 = " + a9 + "\n");
-                    Preferences.debug("ac9 = " + ac9 + "\n");
-                    Preferences.debug("ad9 = " + ad9 + "\n");
-                    Preferences.debug("m1 = " + m1 + "\n");
-                    Preferences.debug("mc1 = " + mc1 + "\n");
-                    Preferences.debug("md1 = " + md1 + "\n");
-                    Preferences.debug("m2 = " + m2 + "\n");
-                    Preferences.debug("mc2 = " + mc2 + "\n");
-                    Preferences.debug("md2 = " + md2 + "\n");
-                    Preferences.debug("m3 = " + m3 + "\n");
-                    Preferences.debug("mc3 = " + mc3 + "\n");
-                    Preferences.debug("md3 = " + md3 + "\n");
-                    Preferences.debug("m4 = " + m4 + "\n");
-                    Preferences.debug("mc4 = " + mc4 + "\n");
-                    Preferences.debug("md4 = " + md4 + "\n");
-                    Preferences.debug("m5 = " + m5 + "\n");
-                    Preferences.debug("mc5 = " + mc5 + "\n");
-                    Preferences.debug("md5 = " + md5 + "\n");
-                    Preferences.debug("m6 = " + m6 + "\n");
-                    Preferences.debug("mc6 = " + mc6 + "\n");
-                    Preferences.debug("md6 = " + md6 + "\n");
-                    Preferences.debug("m7 = " + m7 + "\n");
-                    Preferences.debug("mc7 = " + mc7 + "\n");
-                    Preferences.debug("md7 = " + md7 + "\n");
-                    Preferences.debug("m8 = " + m8 + "\n");
-                    Preferences.debug("mc8 = " + mc8 + "\n");
-                    Preferences.debug("md8 = " + md8 + "\n");
-                    Preferences.debug("m9 = " + m9 + "\n");
-                    Preferences.debug("mc9 = " + mc9 + "\n");
-                    Preferences.debug("md9 = " + md9 + "\n");
-                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n");
+                    Preferences.debug("a1 = " + a1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac1 = " + ac1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad1 = " + ad1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a2 = " + a2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac2 = " + ac2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad2 = " + ad2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a3 = " + a3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac3 = " + ac3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad3 = " + ad3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a4 = " + a4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac4 = " + ac4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad4 = " + ad4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a5 = " + a5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac5 = " + ac5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad5 = " + ad5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a6 = " + a6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac6 = " + ac6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad6 = " + ad6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a7 = " + a7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac7 = " + ac7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad7 = " + ad7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a8 = " + a8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac8 = " + ac8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad8 = " + ad8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("a9 = " + a9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ac9 = " + ac9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ad9 = " + ad9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m1 = " + m1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc1 = " + mc1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md1 = " + md1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m2 = " + m2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc2 = " + mc2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md2 = " + md2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m3 = " + m3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc3 = " + mc3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md3 = " + md3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m4 = " + m4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc4 = " + mc4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md4 = " + md4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m5 = " + m5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc5 = " + mc5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md5 = " + md5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m6 = " + m6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc6 = " + mc6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md6 = " + md6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m7 = " + m7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc7 = " + mc7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md7 = " + md7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m8 = " + m8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc8 = " + mc8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md8 = " + md8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m9 = " + m9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc9 = " + mc9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md9 = " + md9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if (destImage != null) {
                         imageType = destImage.getType();
@@ -3132,42 +3132,42 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
                     if (srcImage.isColorImage()) {
 
                         if (c == 1) {
-                            Preferences.debug("Red\n");
+                            Preferences.debug("Red\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 2) {
-                            Preferences.debug("Green\n");
+                            Preferences.debug("Green\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 3) {
-                            Preferences.debug("Blue\n");
+                            Preferences.debug("Blue\n", Preferences.DEBUG_ALGORITHM);
                         }
                     } // if (srcImage.isColorImage())
 
-                    Preferences.debug("m1 = " + m1 + "\n");
-                    Preferences.debug("mc1 = " + mc1 + "\n");
-                    Preferences.debug("md1 = " + md1 + "\n");
-                    Preferences.debug("m2 = " + m2 + "\n");
-                    Preferences.debug("mc2 = " + mc2 + "\n");
-                    Preferences.debug("md2 = " + md2 + "\n");
-                    Preferences.debug("m3 = " + m3 + "\n");
-                    Preferences.debug("mc3 = " + mc3 + "\n");
-                    Preferences.debug("md3 = " + md3 + "\n");
-                    Preferences.debug("m4 = " + m4 + "\n");
-                    Preferences.debug("mc4 = " + mc4 + "\n");
-                    Preferences.debug("md4 = " + md4 + "\n");
-                    Preferences.debug("m5 = " + m5 + "\n");
-                    Preferences.debug("mc5 = " + mc5 + "\n");
-                    Preferences.debug("md5 = " + md5 + "\n");
-                    Preferences.debug("m6 = " + m6 + "\n");
-                    Preferences.debug("mc6 = " + mc6 + "\n");
-                    Preferences.debug("md6 = " + md6 + "\n");
-                    Preferences.debug("m7 = " + m7 + "\n");
-                    Preferences.debug("mc7 = " + mc7 + "\n");
-                    Preferences.debug("md7 = " + md7 + "\n");
-                    Preferences.debug("m8 = " + m8 + "\n");
-                    Preferences.debug("mc8 = " + mc8 + "\n");
-                    Preferences.debug("md8 = " + md8 + "\n");
-                    Preferences.debug("m9 = " + m9 + "\n");
-                    Preferences.debug("mc9 = " + mc9 + "\n");
-                    Preferences.debug("md9 = " + md9 + "\n");
-                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n");
+                    Preferences.debug("m1 = " + m1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc1 = " + mc1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md1 = " + md1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m2 = " + m2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc2 = " + mc2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md2 = " + md2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m3 = " + m3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc3 = " + mc3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md3 = " + md3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m4 = " + m4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc4 = " + mc4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md4 = " + md4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m5 = " + m5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc5 = " + mc5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md5 = " + md5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m6 = " + m6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc6 = " + mc6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md6 = " + md6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m7 = " + m7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc7 = " + mc7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md7 = " + md7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m8 = " + m8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc8 = " + mc8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md8 = " + md8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m9 = " + m9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc9 = " + mc9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md9 = " + md9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if (destImage != null) {
                         imageType = destImage.getType();
@@ -3738,72 +3738,72 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
                     if (srcImage.isColorImage()) {
 
                         if (c == 1) {
-                            Preferences.debug("Red\n");
+                            Preferences.debug("Red\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 2) {
-                            Preferences.debug("Green\n");
+                            Preferences.debug("Green\n", Preferences.DEBUG_ALGORITHM);
                         } else if (c == 3) {
-                            Preferences.debug("Blue\n");
+                            Preferences.debug("Blue\n", Preferences.DEBUG_ALGORITHM);
                         }
                     } // if (srcImage.isColorImage())
 
-                    Preferences.debug("m1 = " + m1 + "\n");
-                    Preferences.debug("mc1 = " + mc1 + "\n");
-                    Preferences.debug("md1 = " + md1 + "\n");
-                    Preferences.debug("m2 = " + m2 + "\n");
-                    Preferences.debug("mc2 = " + mc2 + "\n");
-                    Preferences.debug("md2 = " + md2 + "\n");
-                    Preferences.debug("m3 = " + m3 + "\n");
-                    Preferences.debug("mc3 = " + mc3 + "\n");
-                    Preferences.debug("md3 = " + md3 + "\n");
-                    Preferences.debug("m4 = " + m4 + "\n");
-                    Preferences.debug("mc4 = " + mc4 + "\n");
-                    Preferences.debug("md4 = " + md4 + "\n");
-                    Preferences.debug("m5 = " + m5 + "\n");
-                    Preferences.debug("mc5 = " + mc5 + "\n");
-                    Preferences.debug("md5 = " + md5 + "\n");
-                    Preferences.debug("m6 = " + m6 + "\n");
-                    Preferences.debug("mc6 = " + mc6 + "\n");
-                    Preferences.debug("md6 = " + md6 + "\n");
-                    Preferences.debug("m7 = " + m7 + "\n");
-                    Preferences.debug("mc7 = " + mc7 + "\n");
-                    Preferences.debug("md7 = " + md7 + "\n");
-                    Preferences.debug("m8 = " + m8 + "\n");
-                    Preferences.debug("mc8 = " + mc8 + "\n");
-                    Preferences.debug("md8 = " + md8 + "\n");
-                    Preferences.debug("m9 = " + m9 + "\n");
-                    Preferences.debug("mc9 = " + mc9 + "\n");
-                    Preferences.debug("md9 = " + md9 + "\n");
-                    Preferences.debug("m10 = " + m10 + "\n");
-                    Preferences.debug("mc10 = " + mc10 + "\n");
-                    Preferences.debug("md10 = " + md10 + "\n");
-                    Preferences.debug("m11 = " + m11 + "\n");
-                    Preferences.debug("mc11 = " + mc11 + "\n");
-                    Preferences.debug("md11 = " + md11 + "\n");
-                    Preferences.debug("m12 = " + m12 + "\n");
-                    Preferences.debug("mc12 = " + mc12 + "\n");
-                    Preferences.debug("md12 = " + md12 + "\n");
-                    Preferences.debug("m13 = " + m13 + "\n");
-                    Preferences.debug("mc13 = " + mc13 + "\n");
-                    Preferences.debug("md13 = " + md13 + "\n");
-                    Preferences.debug("m14 = " + m14 + "\n");
-                    Preferences.debug("mc14 = " + mc14 + "\n");
-                    Preferences.debug("md14 = " + md14 + "\n");
-                    Preferences.debug("m15 = " + m15 + "\n");
-                    Preferences.debug("mc15 = " + mc15 + "\n");
-                    Preferences.debug("md15 = " + md15 + "\n");
-                    Preferences.debug("m16 = " + m16 + "\n");
-                    Preferences.debug("mc16 = " + mc16 + "\n");
-                    Preferences.debug("md16 = " + md16 + "\n");
-                    Preferences.debug("m17 = " + m17 + "\n");
-                    Preferences.debug("mc17 = " + mc17 + "\n");
-                    Preferences.debug("md17 = " + md17 + "\n");
-                    Preferences.debug("m18 = " + m18 + "\n");
-                    Preferences.debug("mc18 = " + mc18 + "\n");
-                    Preferences.debug("md18 = " + md18 + "\n");
-                    Preferences.debug("m19 = " + m19 + "\n");
-                    Preferences.debug("mc19 = " + mc19 + "\n");
-                    Preferences.debug("md19 = " + md19 + "\n");
-                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n");
+                    Preferences.debug("m1 = " + m1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc1 = " + mc1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md1 = " + md1 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m2 = " + m2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc2 = " + mc2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md2 = " + md2 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m3 = " + m3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc3 = " + mc3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md3 = " + md3 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m4 = " + m4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc4 = " + mc4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md4 = " + md4 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m5 = " + m5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc5 = " + mc5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md5 = " + md5 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m6 = " + m6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc6 = " + mc6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md6 = " + md6 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m7 = " + m7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc7 = " + mc7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md7 = " + md7 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m8 = " + m8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc8 = " + mc8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md8 = " + md8 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m9 = " + m9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc9 = " + mc9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md9 = " + md9 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m10 = " + m10 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc10 = " + mc10 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md10 = " + md10 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m11 = " + m11 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc11 = " + mc11 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md11 = " + md11 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m12 = " + m12 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc12 = " + mc12 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md12 = " + md12 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m13 = " + m13 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc13 = " + mc13 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md13 = " + md13 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m14 = " + m14 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc14 = " + mc14 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md14 = " + md14 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m15 = " + m15 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc15 = " + mc15 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md15 = " + md15 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m16 = " + m16 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc16 = " + mc16 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md16 = " + md16 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m17 = " + m17 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc17 = " + mc17 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md17 = " + md17 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m18 = " + m18 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc18 = " + mc18 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md18 = " + md18 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("m19 = " + m19 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("mc19 = " + mc19 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("md19 = " + md19 + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("Iterations of Powell's algorithm = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
 
                     if (destImage != null) {
                         imageType = destImage.getType();
