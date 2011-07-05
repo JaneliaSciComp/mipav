@@ -244,13 +244,13 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
      * @param  message  DOCUMENT ME!
      */
     protected void debugPoint(double[] point, String message) {
-        Preferences.debug(message + "\n");
+        Preferences.debug(message + "\n", Preferences.DEBUG_ALGORITHM);
 
         for (int i = 0; i < point.length; i++) {
-            Preferences.debug("point[" + i + "]: " + point[i] + "\n");
+            Preferences.debug("point[" + i + "]: " + point[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
-        Preferences.debug("\n");
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
     }
 
     @Override
