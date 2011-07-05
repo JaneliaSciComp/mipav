@@ -247,7 +247,8 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
 
         // if the algorithm failed:
         if (!unsharper.isCompleted()) {
-            Preferences.debug("AlgorithmLocalNormalization: " + "failure to complete unsharp mask");
+            Preferences.debug("AlgorithmLocalNormalization: " + "failure to complete unsharp mask", 
+            		Preferences.DEBUG_ALGORITHM);
             errorCleanUp(null, false);
             finalize();
 
@@ -272,7 +273,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
 
         // if the algorithm failed:
         if (!FFTer.isCompleted()) {
-            Preferences.debug("AlgorithmLocalNormalization: " + "failure to complete FFT");
+            Preferences.debug("AlgorithmLocalNormalization: " + "failure to complete FFT", Preferences.DEBUG_ALGORITHM);
             errorCleanUp(null, false);
             finalize();
 
@@ -397,7 +398,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
                 tempImage[1] = null;
             } catch (NullPointerException tempnull) {
                 Preferences.debug("AlgorithmLocalNormalization: " + "TempImages already null.  Nothing to do, " +
-                                  "so moving along.\n");
+                                  "so moving along.\n", Preferences.DEBUG_ALGORITHM);
             }
         }
     }
