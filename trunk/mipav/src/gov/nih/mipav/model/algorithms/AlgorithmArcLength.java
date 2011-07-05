@@ -178,7 +178,7 @@ public class AlgorithmArcLength extends AlgorithmBase {
             }
         }
 
-        Preferences.debug("exceeded maximum iterations in method 'invlen'\n");
+        Preferences.debug("exceeded maximum iterations in method 'invlen'\n", Preferences.DEBUG_ALGORITHM);
 
         return (-1);
     }
