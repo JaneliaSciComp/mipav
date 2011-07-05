@@ -1187,7 +1187,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
          *
          * // this is where I need to add simplex optimization algo stuff setPoints(xPoints, yPoints, tempGon);
          * runSnake(xPoints, yPoints, uVal, vVal, resultGon); slicesDone++; fireProgressStateChanged(slicesDone *
-         * 100/sliceNum); nPts   = resultGon.npoints; Preferences.debug(" Points = " + nPts);
+         * 100/sliceNum); nPts   = resultGon.npoints; Preferences.debug(" Points = " + nPts, Preferences.DEBUG_ALGORITHM);
          *
          * if (nPts < 8) { break; } else{ resultVOI.importPolygon(resultGon, slice);
          * ((VOIContour)(resultVOI.getCurves()[slice].lastElement())).trimPoints( Preferences.getTrim(),
@@ -1201,7 +1201,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
          *
          * slice = stSlice-1; tempGon    = baseGon; xPoints = new float[tempGon.npoints+5]; yPoints = new
          * float[tempGon.npoints+5]; resultGon = new Polygon(); slicesDone = sliceNum - stSlice;
-         * fireProgressStateChanged(slicesDone * 100/sliceNum); Preferences.debug("Going down"); if (slice >= 0) {
+         * fireProgressStateChanged(slicesDone * 100/sliceNum); Preferences.debug("Going down", Preferences.DEBUG_ALGORITHM); if (slice >= 0) {
          * while(!threadStopped) {
          *
          * try { srcImage.exportData(slice*length,length, imgBuffer); } catch (IOException error) { cleanup();
