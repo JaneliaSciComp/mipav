@@ -903,7 +903,7 @@ public class AlgorithmAHE extends AlgorithmBase {
             idealBins = (int) (((bufMax - bufMin) / idealWidth) + 0.5f);
         }
 
-        Preferences.debug("idealBins = " + idealBins + "\n");
+        Preferences.debug("idealBins = " + idealBins + "\n", Preferences.DEBUG_ALGORITHM);
 
         int type = srcImage.getType();
         totalBins = findTotalBins(type, idealBins);
@@ -959,15 +959,15 @@ public class AlgorithmAHE extends AlgorithmBase {
                                 maxScale = srcBuffer[x + (y * width)];
                             }
                         } catch (ArrayIndexOutOfBoundsException aioobe) {
-                            Preferences.debug("<HALT>\n");
+                            Preferences.debug("<HALT>\n", Preferences.DEBUG_ALGORITHM);
                             Preferences.debug("x:(x: " + x + ", y: " + y + ")-- at location: " + x + (y * width) +
-                                              "\n");
+                                              "\n", Preferences.DEBUG_ALGORITHM);
                             Preferences.debug("srcbuffer: " + srcBuffer[x + (y * width)] + " bufMin: " + bufMin +
-                                              " unitSize: " + unitSize + "\n");
+                                              " unitSize: " + unitSize + "\n", Preferences.DEBUG_ALGORITHM);
                             Preferences.debug("at hist: " + ((int) (srcBuffer[x + (y * width)] - bufMin) / unitSize) +
-                                              "\n");
-                            Preferences.debug("totalbins: " + totalBins + "\n");
-                            Preferences.debug("</HALT>\n");
+                                              "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("totalbins: " + totalBins + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("</HALT>\n", Preferences.DEBUG_ALGORITHM);
                             MipavUtil.displayError("Algorithm AHE reports: out of bounds");
                             setCompleted(false);
 
@@ -1051,14 +1051,15 @@ public class AlgorithmAHE extends AlgorithmBase {
                                                           (w3 * mapping[brightnessLevel][r + 1][c]) +
                                                           (w4 * mapping[brightnessLevel][r + 1][c + 1])) / w5;
                         } catch (ArrayIndexOutOfBoundsException aioobe) {
-                            Preferences.debug("<HALT>\nslice Width = " + width + "\n");
-                            Preferences.debug("src buffer size = " + srcBuffer.length + "\n");
-                            Preferences.debug("dst buffer size = " + destBuffer.length + "\n");
+                            Preferences.debug("<HALT>\nslice Width = " + width + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("src buffer size = " + srcBuffer.length + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("dst buffer size = " + destBuffer.length + "\n", Preferences.DEBUG_ALGORITHM);
                             Preferences.debug("y: " + y + ", x: " + x + ", r: " + r + ", c: " + c +
-                                              ", location in buffer: " + Integer.toString(x + (y * width)) + ".\n");
+                                              ", location in buffer: " + Integer.toString(x + (y * width)) + ".\n", 
+                                              Preferences.DEBUG_ALGORITHM);
                             Preferences.debug("Y: " + srcImage.getExtents()[1] + ", X: " +
-                                              Integer.toString(srcImage.getExtents()[0]) + "\n");
-                            Preferences.debug("</HALT>\n");
+                                              Integer.toString(srcImage.getExtents()[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("</HALT>\n", Preferences.DEBUG_ALGORITHM);
                             MipavUtil.displayError("Algorithm AHE reports: out of bounds in monoSliceFilter");
                             setCompleted(false);
 
@@ -1232,7 +1233,7 @@ public class AlgorithmAHE extends AlgorithmBase {
     private void printhisto(int[] histo) {
 
         for (int i = 0; i < histo.length; i++) {
-            Preferences.debug("hist[" + i + "] = " + histo[i] + "\n");
+            Preferences.debug("hist[" + i + "] = " + histo[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
     }
 
