@@ -198,11 +198,9 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                     xDim = srcImage.getExtents()[0];
                     yDim = srcImage.getExtents()[1];
                     zDim= srcImage.getExtents()[2];
-                    System.err.println( "ok" );
                     
                     length = cFactor * xDim * yDim * zDim;
                     buffer = new double[length];
-                    System.err.println( "ok" );
                     
                     try {
                         srcImage.exportData(0, length, buffer);
@@ -215,7 +213,6 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
 
                         return;
                     } 
-                    System.err.println( "ok" );
                    
                     subXDim = destImage.getExtents()[0];
                     subYDim = destImage.getExtents()[1];
