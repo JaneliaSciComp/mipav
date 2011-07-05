@@ -179,7 +179,8 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
         if (allowDataWindow) {
             UI.setDataText(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
         }
-        Preferences.debug(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
+        Preferences.debug(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
 
         setCompleted(true);
     }
@@ -274,7 +275,8 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
         if (allowDataWindow) {
             UI.setDataText(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
         }
-        Preferences.debug(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
+        Preferences.debug(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
 
         setCompleted(true);
 
