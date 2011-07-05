@@ -80,7 +80,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
         addFilesToVector(dirPath, fileVector);
 
         int size = fileVector.size();
-        Preferences.debug("Number of DICOM images to be compressed: " + size + "\n");
+        Preferences.debug("Number of DICOM images to be compressed: " + size + "\n", Preferences.DEBUG_FILEIO);
         System.err.println("Number of DICOM images to be compressed: " + size);
 
         if (size > 0) {
@@ -99,7 +99,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
             fireProgressStateChanged(100);
         } else {
             fireProgressStateChanged(100);
-            Preferences.debug("No DICOM files to convert" + "\n");
+            Preferences.debug("No DICOM files to convert" + "\n", Preferences.DEBUG_FILEIO);
         }
 
         fileIO = null;
@@ -153,7 +153,8 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
         String newDirectory = outputPath + directory.substring(dirPath.length(), directory.length());
         String name = "";
 
-        Preferences.debug("New directory is: " + newDirectory + ", new file name is: " + name + "\n");
+        Preferences.debug("New directory is: " + newDirectory + ", new file name is: " + name + "\n", 
+        		Preferences.DEBUG_FILEIO);
 
         ModelLUT lutA = null;
 
@@ -170,7 +171,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
             if (dicomImage == null) {
 
                 // System.err.println("Name of file is: " + fileName);
-                Preferences.debug(fileName + ": DICOM image is null... skipping" + "\n");
+                Preferences.debug(fileName + ": DICOM image is null... skipping" + "\n", Preferences.DEBUG_FILEIO);
 
                 return;
             } else if (dicomImage.getNDims() == 2) {
@@ -205,7 +206,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                     opts.setPackBitEnabled(false);
                     opts.setOptionsSet(true);
                     fileIO.writeImage(dicomImage, opts);
-                    Preferences.debug("Successfully saved Dicom as Tiff" + "\n");
+                    Preferences.debug("Successfully saved Dicom as Tiff" + "\n", Preferences.DEBUG_FILEIO);
                 }
 
                 dicomFile = null;
@@ -320,9 +321,9 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
 
                     if (aviFile.writeImage(dicomImage, null, lutA, null, null, null, 0, 0, 0, 0, 0,
                                            dicomImage.getMask(), compression)) {
-                        Preferences.debug("Successfully transcoded " + " to compressed AVI" + "\n");
+                        Preferences.debug("Successfully transcoded " + " to compressed AVI" + "\n", Preferences.DEBUG_FILEIO);
                     } else {
-                        Preferences.debug("Error transcoding " + " to compressed AVI" + "\n");
+                        Preferences.debug("Error transcoding " + " to compressed AVI" + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     aviFile.finalize();
