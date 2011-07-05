@@ -100,7 +100,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
             } // else black and white
             
             if (blank) {
-                Preferences.debug("Slice " + (z+1) + " was blank\n");
+                Preferences.debug("Slice " + (z+1) + " was blank\n", Preferences.DEBUG_ALGORITHM);
                 consecutiveBlank++;
                 if (z == (zDim - 1)) {
                     try {
