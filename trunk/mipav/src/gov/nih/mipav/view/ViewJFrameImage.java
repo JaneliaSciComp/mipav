@@ -1411,6 +1411,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("MosaicTo3D")) {
             new JDialogMosaicToSlices(this, getActiveImage());
+        } else if (command.equals("MosaicTo4D")) {
+            new JDialog3DMosaicTo4DSlices(this, getActiveImage());
         } else if (command.equals("NLNR")) {
 
             if (getActiveImage().getType() == ModelStorageBase.BOOLEAN) {
