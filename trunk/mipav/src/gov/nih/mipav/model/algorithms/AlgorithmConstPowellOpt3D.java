@@ -638,7 +638,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
                 }
 
                 Preferences.debug("3D optimization.  For direction " + i + ", the minimum is: " + trLimits[0][i] +
-                        " and the maximum is " + trLimits[1][i] + " pixels.\n");
+                        " and the maximum is " + trLimits[1][i] + " pixels.\n", Preferences.DEBUG_ALGORITHM);
             }
         } else if (nDims == 4) {
             trLimits = new float[2][4];
@@ -661,7 +661,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
                 }
 
                 Preferences.debug("6D optimization.  For direction " + i + ", minimum is: " + trLimits[0][i] +
-                        ", maximum is " + trLimits[1][i] + ".\n");
+                        ", maximum is " + trLimits[1][i] + ".\n", Preferences.DEBUG_ALGORITHM);
             }
 
             for (int i = limits[0].length; i < nDims; i++) {
