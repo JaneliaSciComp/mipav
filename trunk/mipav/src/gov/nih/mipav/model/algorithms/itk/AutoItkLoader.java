@@ -341,7 +341,7 @@ public class AutoItkLoader implements ActionListener {
             for (final String fn : class_path.split(";")) {
                 if (fn.endsWith("InsightToolkit.jar")) {
                     jar_filename = fn;
-                    Preferences.debug("\nFound itk jar: " + jar_filename + "\n");
+                    Preferences.debug("\nFound itk jar: " + jar_filename + "\n", Preferences.DEBUG_FILEIO);
                     break;
                 }
             }
@@ -352,9 +352,10 @@ public class AutoItkLoader implements ActionListener {
             }
 
         } catch (final FileNotFoundException fnfe) {
-            Preferences.debug("AutoITK: listFromJar can't find jar on class path\n");
+            Preferences.debug("AutoITK: listFromJar can't find jar on class path\n", Preferences.DEBUG_FILEIO);
         } catch (final IOException io_exception) {
-            Preferences.debug("AutoITK: listFromJar can't read jar: " + io_exception.toString() + "\n");
+            Preferences.debug("AutoITK: listFromJar can't read jar: " + io_exception.toString() + "\n",
+            		Preferences.DEBUG_FILEIO);
         }
 
         if (jf_manifest == null || jf == null) {
@@ -429,7 +430,7 @@ public class AutoItkLoader implements ActionListener {
                 cls = Class.forName("InsightToolkit.itk" + short_jef_name + "Filter" + type_str);
                 // System.out.println("Found " + cls.getName());
             } catch (final ClassNotFoundException cnfe) {
-                Preferences.debug("AutoITK: Jar No luck, " + jef_name + "\n");
+                Preferences.debug("AutoITK: Jar No luck, " + jef_name + "\n", Preferences.DEBUG_FILEIO);
                 continue;
             }
 
@@ -476,7 +477,7 @@ public class AutoItkLoader implements ActionListener {
         } catch (final FileNotFoundException fnfe) {
             // nothing, ok for file not to exist yet.
         } catch (final IOException io_exception) {
-            Preferences.debug("AutoITK: listFromFile " + io_exception.toString() + "\n");
+            Preferences.debug("AutoITK: listFromFile " + io_exception.toString() + "\n", Preferences.DEBUG_FILEIO);
 
         } catch (final ClassNotFoundException cnfe) {
             System.out.println("AutoITK: listFromFile " + cnfe.toString() + "\n");
@@ -527,7 +528,7 @@ public class AutoItkLoader implements ActionListener {
 
             out.writeObject(m_FilterList);
         } catch (final IOException io_exception) {
-            Preferences.debug("AutoITK: writeListToFile " + io_exception.toString() + "\n");
+            Preferences.debug("AutoITK: writeListToFile " + io_exception.toString() + "\n", Preferences.DEBUG_FILEIO);
             ret = false;
         } finally {
             try {
@@ -650,7 +651,7 @@ public class AutoItkLoader implements ActionListener {
             // Expect some GetElement calls to fail, because of int/long as arg.
             // Expect some GetX calls for finding default values to fail.
             if ( !method_name.startsWith("Get")) {
-                Preferences.debug("AutoITK: No luck, " + nsme.toString() + "\n");
+                Preferences.debug("AutoITK: No luck, " + nsme.toString() + "\n", Preferences.DEBUG_FILEIO);
             }
             return null;
         }
@@ -673,13 +674,14 @@ public class AutoItkLoader implements ActionListener {
             ret_obj = m.invoke(obj, obj_arg);
         } catch (final IllegalAccessException iae) {
             // If this happens, call m.setAccessible(true);, then it won't
-            Preferences.debug("AutoITK: Method invoke access problem, " + m.getName() + "\n");
+            Preferences.debug("AutoITK: Method invoke access problem, " + m.getName() + "\n", Preferences.DEBUG_FILEIO);
             return null;
         } catch (final InvocationTargetException ite) {
-            Preferences.debug("AutoITK: Method invoke " + m.getName() + ", threw an exception." + "\n");
+            Preferences.debug("AutoITK: Method invoke " + m.getName() + ", threw an exception." + "\n",
+            		Preferences.DEBUG_FILEIO);
             return null;
         } catch (final IllegalArgumentException iae) {
-            Preferences.debug("AutoITK: Method invoke " + m.getName() + ", " + iae + "\n");
+            Preferences.debug("AutoITK: Method invoke " + m.getName() + ", " + iae + "\n", Preferences.DEBUG_FILEIO);
         }
         // System.out.println("Method " + m.getName() + " return " + ret_obj);
         return ret_obj;
