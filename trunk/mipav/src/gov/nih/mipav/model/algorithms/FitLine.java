@@ -85,12 +85,14 @@ public class FitLine extends NLFittedFunction {
      * Display results of displaying linear fitting parameters.
      */
     public void displayResults() {
-        Preferences.debug(" ******* Dump FitLine ********* \n");
+        Preferences.debug(" ******* Dump FitLine ********* \n", Preferences.DEBUG_ALGORITHM);
 
-        Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-        Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-        Preferences.debug("a0 " + String.valueOf(a[0]) + " +/- " + String.valueOf(Math.sqrt(covarMat[0][0])) + "\n");
-        Preferences.debug("a1 " + String.valueOf(a[1]) + " +/- " + String.valueOf(Math.sqrt(covarMat[1][1])) + "\n\n");
+        Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("a0 " + String.valueOf(a[0]) + " +/- " + String.valueOf(Math.sqrt(covarMat[0][0])) + "\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("a1 " + String.valueOf(a[1]) + " +/- " + String.valueOf(Math.sqrt(covarMat[1][1])) + "\n\n", 
+        		Preferences.DEBUG_ALGORITHM);
 
     }
     
@@ -107,14 +109,14 @@ public class FitLine extends NLFittedFunction {
 
         try {
             ctrl = ctrlMat[0];
-            // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + "\n");
+            // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + "\n", Preferences.DEBUG_ALGORITHM);
             if ( (ctrl == -1) || (ctrl == 1)) {
                 
                 // evaluate the residuals[j] = ymod - yData[j]
                 for (j = 0; j < nPts; j++) {
                 	ymod = a[1] * xSeries[j] + a[0];
                     residuals[j] = ymod - ySeries[j];
-                    // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
+                    // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
                 }
             } // if ((ctrl == -1) || (ctrl == 1))
             else if (ctrl == 2) {
@@ -129,7 +131,7 @@ public class FitLine extends NLFittedFunction {
             // ctrlMat[0] = 0;
             // }
         } catch (final Exception exc) {
-            Preferences.debug("function error: " + exc.getMessage() + "\n");
+            Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         return;
