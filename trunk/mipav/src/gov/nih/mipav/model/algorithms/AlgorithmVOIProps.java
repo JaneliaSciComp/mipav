@@ -2800,9 +2800,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         for(int i=0; i<activeGroup.length; i++) {
             if(activeGroup[i] != null && activeGroup[i].isAlive()) {
                 try {
-                    Preferences.debug("Waiting for "+activeGroup[i].getName()+" to finish.\n");
+                    Preferences.debug("Waiting for "+activeGroup[i].getName()+" to finish.\n", Preferences.DEBUG_ALGORITHM);
                     activeGroup[i].join();
-                    Preferences.debug("Still waiting for "+activeGroup[i].getName()+" to finish.\n");
+                    Preferences.debug("Still waiting for "+activeGroup[i].getName()+" to finish.\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                 } catch(InterruptedException e) {
                     System.err.println("Thread waiting process did not complete normally.");
                     System.err.println("Please restart calculation process.");
