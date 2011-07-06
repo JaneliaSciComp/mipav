@@ -299,7 +299,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
                         sequenceNumber, realResult, imagResult, nz, errorFlag);
                 bes.run();
                 Preferences.debug("x = " + x + " realResult[0] = " + realResult[0] + " nz = " + nz[0] + " errorFlag = "
-                        + errorFlag[0] + "\n");
+                        + errorFlag[0] + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             /*
@@ -309,10 +309,11 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
              * cf.run(); //result[0] = gamConstant * Math.sqrt(-x) * (1.0 + (-0.5)*(0.5-numReceivers)/(-x) +
              * //(-0.25)*(0.5-numReceivers)*(1.5-numReceivers)/(2.0*x*x)); Preferences.debug("realZ = " + realZ + "
              * imagZ = " + imagZ + " realResult[0] = " + realResult[0] + " imagResult[0] = " + imagResult[0] + "
-             * realResult2[0] = " + realResult2[0] + " imagResult2[0] = " + imagResult2[0] + "\n"); if
+             * realResult2[0] = " + realResult2[0] + " imagResult2[0] = " + imagResult2[0] + "\n",
+             *  Preferences.DEBUG_ALGORITHM); if
              * ((Math.abs((realResult[0] - realResult2[0])/realResult[0]) > 1.0E-5) || (Math.abs((imagResult[0] -
              * imagResult2[0])/imagResult[0]) > 1.0E-5)){ Preferences.debug("Mismatch at realZ = " + realZ + " imagZ = " +
-             * imagZ + "\n"); } } }
+             * imagZ + "\n", Preferences.DEBUG_ALGORITHM); } } }
              */
             setCompleted(true);
 
@@ -395,13 +396,13 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
 
         backgroundVariance = backgroundVariance / (2.0f * backgroundCount * numReceivers);
         backgroundStdDev = Math.sqrt(backgroundVariance);
-        Preferences.debug("Noise standard deviation = " + nf.format(backgroundStdDev) + "\n");
+        Preferences.debug("Noise standard deviation = " + nf.format(backgroundStdDev) + "\n", Preferences.DEBUG_ALGORITHM);
         mean = mean / meanCount;
-        Preferences.debug("Mean for signal 1 VOI = " + nf.format(mean) + "\n");
+        Preferences.debug("Mean for signal 1 VOI = " + nf.format(mean) + "\n", Preferences.DEBUG_ALGORITHM);
         meanDivStdDev = mean / backgroundStdDev;
 
         snr = funcC(meanDivStdDev, true);
-        Preferences.debug("First moment SNR for signal 1 VOI = " + nf.format(snr) + "\n");
+        Preferences.debug("First moment SNR for signal 1 VOI = " + nf.format(snr) + "\n", Preferences.DEBUG_ALGORITHM);
         UI.setDataText("First moment SNR for signal 1 VOI = " + nf.format(snr) + "\n");
 
         signalBuffer = new float[meanCount];
@@ -420,16 +421,17 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
 
         if (useMaxLikelihood) {
             snrML = maxLikelihoodSignal[0] / backgroundStdDev;
-            Preferences.debug("Maximum likelihood SNR for signal 1 VOI = " + nf.format(snrML) + "\n");
+            Preferences.debug("Maximum likelihood SNR for signal 1 VOI = " + nf.format(snrML) + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
             UI.setDataText("Maximum likelihood SNR for signal 1 VOI = " + nf.format(snrML) + "\n");
         }
 
         if (signal2Index >= 0) {
             mean2 = mean2 / mean2Count;
-            Preferences.debug("Mean for signal 2 VOI = " + nf.format(mean2) + "\n");
+            Preferences.debug("Mean for signal 2 VOI = " + nf.format(mean2) + "\n", Preferences.DEBUG_ALGORITHM);
             mean2DivStdDev = mean2 / backgroundStdDev;
             snr2 = funcC(mean2DivStdDev, false);
-            Preferences.debug("First moment SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
+            Preferences.debug("First moment SNR for signal 2 VOI = " + nf.format(snr2) + "\n", Preferences.DEBUG_ALGORITHM);
             UI.setDataText("First moment SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
 
             if (useMaxLikelihood) {
@@ -449,18 +451,21 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
 
                 if (useMaxLikelihood) {
                     snrML2 = maxLikelihoodSignal[0] / backgroundStdDev;
-                    Preferences.debug("Maximum likelihood SNR for signal 2 VOI = " + nf.format(snrML2) + "\n");
+                    Preferences.debug("Maximum likelihood SNR for signal 2 VOI = " + nf.format(snrML2) + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     UI.setDataText("Maximum likelihood SNR for signal 2 VOI = " + nf.format(snrML2) + "\n");
                 } // if (useMaxLikelihood)
             } // if (useMaxLikelihood)
 
             cnr = snr - snr2;
-            Preferences.debug("First moment contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            Preferences.debug("First moment contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
             UI.setDataText("First moment contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
 
             if (useMaxLikelihood) {
                 cnrML = snrML - snrML2;
-                Preferences.debug("Maximum likelihood contrast to noise ratio for 1 - 2 = " + nf.format(cnrML) + "\n");
+                Preferences.debug("Maximum likelihood contrast to noise ratio for 1 - 2 = " + nf.format(cnrML) + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 UI.setDataText("Maximum likelihood contrast to noise ratio for 1 - 2 = " + nf.format(cnrML) + "\n");
             } // if (useMaxLikelihood)
         } // if (signal2Index >= 0)
@@ -539,19 +544,19 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
                 cf = new ConfluentHypergeometric( -0.5, 0.0, (double) numReceivers, 0.0, -square, 0.0, Lnchf, ip,
                         realResult, imagResult);
                 cf.run();
-                // Preferences.debug("realResult cf run = " + realResult[0] + "\n");
+                // Preferences.debug("realResult cf run = " + realResult[0] + "\n"), Preferences.DEBUG_ALGORITHM;
             } else {
                 realResult[0] = gamConstant
                         * snr
                         * (1.0 + ( ( -0.5) * (0.5 - numReceivers) / square) + ( ( -0.25) * (0.5 - numReceivers)
                                 * (1.5 - numReceivers) / (2.0 * square * square)));
-                // Preferences.debug("realResult snr = " + realResult[0] + "\n");
+                // Preferences.debug("realResult snr = " + realResult[0] + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             calculatedMeanDivStdDev = constant * realResult[0];
             error = Math.abs(calculatedMeanDivStdDev - meanDivStdDev) / meanDivStdDev;
 
-            // Preferences.debug("error = " + error + "\n");
+            // Preferences.debug("error = " + error + "\n", Preferences.DEBUG_ALGORITHM);
             if (error < 0.001) {
                 break;
             }
@@ -567,10 +572,10 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
 
         if (signal) {
             Preferences.debug("Error for signal 1 VOI SNR after " + i + " iterations  = " + nf.format(100 * error)
-                    + "%\n");
+                    + "%\n", Preferences.DEBUG_ALGORITHM);
         } else {
             Preferences.debug("Error for signal 2 VOI SNR after " + i + " iterations  = " + nf.format(100 * error)
-                    + "%\n");
+                    + "%\n", Preferences.DEBUG_ALGORITHM);
         }
 
         return snr;
@@ -609,7 +614,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
             likelihood += (Math.log(realResult[0]) + realArg);
 
             if (errorFlag[0] != 0) {
-                Preferences.debug("Bessel_I error for realArg = " + realArg + "\n");
+                Preferences.debug("Bessel_I error for realArg = " + realArg + "\n", Preferences.DEBUG_ALGORITHM);
                 useMaxLikelihood = false;
 
                 return Double.NEGATIVE_INFINITY;
@@ -617,7 +622,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
         } // for (i = 0; i < n; i++)
 
         likelihood -= ( (n * (numReceivers - 1) * Math.log(signal)) + (n * signalDivVar * signal / 2.0));
-        Preferences.debug("signal = " + signal + " likelihood = " + likelihood + "\n");
+        Preferences.debug("signal = " + signal + " likelihood = " + likelihood + "\n", Preferences.DEBUG_ALGORITHM);
 
         return likelihood;
     }
@@ -662,7 +667,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
 
         backgroundVariance = backgroundVariance / (2.0f * backgroundCount * numReceivers);
         backgroundStdDev = Math.sqrt(backgroundVariance);
-        Preferences.debug("Noise standard deviation = " + nf.format(backgroundStdDev) + "\n");
+        Preferences.debug("Noise standard deviation = " + nf.format(backgroundStdDev) + "\n", Preferences.DEBUG_ALGORITHM);
 
         signalBuffer = new float[signalCount];
 
@@ -679,11 +684,11 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
         }
 
         mean = mean / signalCount;
-        Preferences.debug("Mean = " + nf.format(mean) + "\n");
+        Preferences.debug("Mean = " + nf.format(mean) + "\n", Preferences.DEBUG_ALGORITHM);
         meanDivStdDev = mean / backgroundStdDev;
 
         snr = funcC(meanDivStdDev, true);
-        Preferences.debug("SNR = " + nf.format(snr) + "\n");
+        Preferences.debug("SNR = " + nf.format(snr) + "\n", Preferences.DEBUG_ALGORITHM);
 
         centralSignal = snr * backgroundStdDev;
         minimumSignal = 0.5 * centralSignal;
@@ -691,7 +696,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
         double[] maxLikelihoodSignal = new double[2];
         Brent.search(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, this, tol );
         snr = maxLikelihoodSignal[0] / backgroundStdDev;
-        Preferences.debug("Maximum likelihood snr for signal 1 VOI = " + nf.format(snr) + "\n");
+        Preferences.debug("Maximum likelihood snr for signal 1 VOI = " + nf.format(snr) + "\n", Preferences.DEBUG_ALGORITHM);
 
         return;
     } // testAlgorithm
@@ -717,11 +722,15 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
      * (Math.abs(calculatedMeanDivStdDev - meanDivStdDev)/meanDivStdDev < 0.001) { break; } if (calculatedMeanDivStdDev >
      * meanDivStdDev) { upperBound = snr; snr = (snr + lowerBound)/2.0; } else { lowerBound = snr; snr = (snr +
      * upperBound)/2.0; } } // for (i = 0; i < maxIters; i++) if (signal) { if (i == maxIters) {
-     * Preferences.debug("Failure to converge for signal 1 VOI SNR after " + maxIters + " iterations\n");
+     * Preferences.debug("Failure to converge for signal 1 VOI SNR after " + maxIters + " iterations\n", 
+     * Preferences.DEBUG_ALGORITHM);
      * UI.setDataText("Failure to converge for signal 1 VOI SNR after " + maxIters + " iterations\n"); } else {
-     * Preferences.debug("Signal 1 VOI SNR converged after " + i + " iterations\n"); } } else { if (i == maxIters) {
-     * Preferences.debug("Failure to converge for signal 2 VOI SNR after " + maxIters + " iterations\n");
+     * Preferences.debug("Signal 1 VOI SNR converged after " + i + " iterations\n", 
+     * Preferences.DEBUG_ALGORITHM); } } else { if (i == maxIters) {
+     * Preferences.debug("Failure to converge for signal 2 VOI SNR after " + maxIters + " iterations\n", 
+     * Preferences.DEBUG_ALGORITHM);
      * UI.setDataText("Failure to converge for signal 2 VOI SNR after " + maxIters + " iterations\n"); } else {
-     * Preferences.debug("Signal 2 VOI SNR converged after " + i + " iterations\n"); } } return snr; }
+     * Preferences.debug("Signal 2 VOI SNR converged after " + i + " iterations\n", 
+     * Preferences.DEBUG_ALGORITHM); } } return snr; }
      */
 }
