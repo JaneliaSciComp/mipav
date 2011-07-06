@@ -228,6 +228,34 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
         return tag;
     }
+    
+    /**
+     * Calculates the number of bytes that the data (the object value) takes to be stored. This method returns the
+     * number of data items times the sizeof the data type. This method will be so much simpler when (if) the tags are
+     * separated out as individual classes.
+     *
+     * @return  size of the value in bytes
+     */
+    public int getDataLength() {
+        //TODO: this should not return an odd number, allow for appending      
+        Iterator<FileDicomTag> tagsItr = tagTable.values().iterator();
+        int datasize = 0;
+        
+        while(tagsItr.hasNext()) {
+            datasize += tagsItr.next().getLength();
+        }
+
+        return datasize;
+    }
+    
+    /**
+     * Gets the number of elements in the data set (# of tags in item).
+     *
+     * @return  the number of elements
+     */
+    public final int getNumberOfElements() {
+        return tagTable.size();
+    }
 
     /**
      * Returns a new copy of all of the tags in this table, including tags from the reference tag table.

@@ -1,5 +1,4 @@
 import gov.nih.mipav.model.file.DicomDictionary;
-import gov.nih.mipav.model.file.FileDicomItem;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomSQ;
 import gov.nih.mipav.model.file.FileDicomTag;
@@ -429,17 +428,17 @@ public class TagEditorDialog extends JDialogBase implements ListSelectionListene
 			}
 		}
 		
-		private void buildSeqGroupElementMap(TreeMap<String, FileDicomTag> tagHash) {
+		private void buildSeqGroupElementMap(Hashtable<FileDicomKey, FileDicomTag> tagHash) {
 			
 			//these data structures are filled in only by an open sequence
 			this.groupToElementSeq = new TreeMap<String, ArrayList<String>>();
 			this.keyToNameSeq = new TreeMap<String, String>();
 			this.keyToValueSeq = new TreeMap<String, String>();
 			
-			Iterator<String> e = tagHash.keySet().iterator();
+			Iterator<FileDicomKey> e = tagHash.keySet().iterator();
 			
 			while(e.hasNext()) {
-				FileDicomKey key = new FileDicomKey(e.next());
+				FileDicomKey key = e.next();
 				ArrayList<String> allElements = groupToElementSeq.get(key.getGroup());
 				if(allElements == null) {
 					allElements = new ArrayList<String>(); 
@@ -521,8 +520,8 @@ public class TagEditorDialog extends JDialogBase implements ListSelectionListene
 				if(keyToValue.get(tagName).equals(SEQUENCE)) {
 					add(sequenceInformationPanel, BorderLayout.SOUTH);
 					FileDicomSQ sq = (FileDicomSQ)tagTable.getValue(tagName);
-					FileDicomItem item = sq.getItem(0);
-					buildSeqGroupElementMap(item.getDataSet());
+					FileDicomTagTable item = sq.getItem(0);
+					buildSeqGroupElementMap(item.getTagList());
 					Vector<String> vGroup;
 			        Collections.sort(vGroup = new Vector<String>(groupToElementSeq.keySet()), new NumberComparator());
 					groupCombo.setModel(new DefaultComboBoxModel(vGroup));
