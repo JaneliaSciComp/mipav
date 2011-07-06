@@ -438,7 +438,7 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
                         if (fmts[j].matches(jpegFmt)) {
                             qc = (QualityControl) cs[i];
                             qc.setQuality(val);
-                            Preferences.debug("- Set quality to " + val + " on " + qc + "\n");
+                            Preferences.debug("- Set quality to " + val + " on " + qc + "\n", Preferences.DEBUG_ALGORITHM);
 
                             break;
                         }
