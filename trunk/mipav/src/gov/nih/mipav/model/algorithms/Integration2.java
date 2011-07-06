@@ -401,10 +401,10 @@ public abstract class Integration2 {
                 neweps = neweps / 2.0;
             }
         }
-        Preferences.debug("epmach = " + epmach + "\n");
+        Preferences.debug("epmach = " + epmach + "\n", Preferences.DEBUG_ALGORITHM);
 
         tol = Math.max(50.0 * epmach, 5.0E-29);
-        Preferences.debug("tol = " + tol + "\n");
+        Preferences.debug("tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 1;
         // dqage is an adaptive automatic integrator using a Gauss-Kronod rule.
@@ -428,9 +428,9 @@ public abstract class Integration2 {
                 sequenceNumber, realResult, imagResult, nz, errorFlag);
         bes.run();
         if (errorFlag[0] != 0) {
-            Preferences.debug("Bessel_J error for realArg = " + realArg + "\n");
+            Preferences.debug("Bessel_J error for realArg = " + realArg + "\n", Preferences.DEBUG_ALGORITHM);
         }
-        Preferences.debug("j0(100.0) = " + realResult[0] + "\n");
+        Preferences.debug("j0(100.0) = " + realResult[0] + "\n", Preferences.DEBUG_ALGORITHM);
 
         lower = 0.0;
         upper = Math.PI;
@@ -464,14 +464,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 1 testing dqage\n");
-        Preferences.debug("Integrand is cos(100.0*sin(x))\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = PI\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("Test 1 testing dqage\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is cos(100.0*sin(x))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = PI\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 2;
         // Test2 tests dqagie.
@@ -510,14 +512,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 2 testing dqagie\n");
-        Preferences.debug("Integrand is log(x)/(1 + 100*x*x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = infinity\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("Test 2 testing dqagie\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is log(x)/(1 + 100*x*x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = infinity\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 3;
         // Test3 tests dqagpe
@@ -589,14 +593,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 3 testing dqagpe\n");
-        Preferences.debug("Integrand is x**3 * log(abs((x*x-1)*(x*x-2)))\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 3.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("Test 3 testing dqagpe\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is x**3 * log(abs((x*x-1)*(x*x-2)))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 3.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 4;
         // Test4 tests dqagse
@@ -638,14 +644,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 4 testing dqagse\n");
-        Preferences.debug("Integrand is log(x)/sqrt(x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("Test 4 testing dqagse\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is log(x)/sqrt(x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 5;
         // Test5 tests dqawce
@@ -697,15 +705,17 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 5 testing dqawce\n");
-        Preferences.debug("Integrand is 1/(x*(5*x*x*x+6))\n");
-        Preferences.debug("Integrand lower endpoint = -1.0\n");
-        Preferences.debug("Integrand upper endpoint = 5.0\n");
-        Preferences.debug("Point of singularity c = 0.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("Test 5 testing dqawce\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is 1/(x*(5*x*x*x+6))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = -1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 5.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Point of singularity c = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 6;
         // Test 6 tests dqawfe
@@ -766,14 +776,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 6 testing dqawfe\n");
-        Preferences.debug("Integrand is cos(pi*x/2)/sqrt(x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = infinity\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("Test 6 testing dqawfe\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is cos(pi*x/2)/sqrt(x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = infinity\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 7;
         // Test7 tests dqawoe
@@ -851,15 +863,17 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 7 testing dqawoe\n");
-        Preferences.debug("Integrand is log(x)*sin(10*pi*x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("ci(10.0*pi) = " + ci + "\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("Test 7 testing dqawoe\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is log(x)*sin(10*pi*x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("ci(10.0*pi) = " + ci + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 8;
         // test8 tests dqawse
@@ -932,14 +946,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 8 testing dqawse\n");
-        Preferences.debug("Integrand is log(x)/(1 + (log(x))**2)**2\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("Test 8 testing dqawse\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is log(x)/(1 + (log(x))**2)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 9;
         // test9 tests dqk15
@@ -964,16 +980,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 9 testing dqk15\n");
-        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + "\n");
-        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
-        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
-        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        Preferences.debug("Test 9 testing dqk15\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 10;
         // test10 tests dqk21
@@ -998,16 +1014,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 10 testing dqk21\n");
-        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + "\n");
-        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
-        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
-        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        Preferences.debug("Test 10 testing dqk21\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 11;
         // test11 tests dqk31
@@ -1032,16 +1048,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 11 testing dqk31\n");
-        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + "\n");
-        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
-        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
-        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        Preferences.debug("Test 11 testing dqk31\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 12;
         // test12 tests dqk41
@@ -1066,16 +1082,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 12 testing dqk41\n");
-        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + "\n");
-        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
-        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
-        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        Preferences.debug("Test 12 testing dqk41\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 13;
         // test13 tests dqk51
@@ -1100,16 +1116,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 13 testing dqk51\n");
-        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + "\n");
-        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
-        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
-        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        Preferences.debug("Test 13 testing dqk51\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 14;
         // test14 tests dqk61
@@ -1134,16 +1150,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 14 testing dqk61\n");
-        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + "\n");
-        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
-        Preferences.debug("resabs[0] = " + resabs[0] + "\n");
-        Preferences.debug("resasc[0] = " + resasc[0] + "\n");
+        Preferences.debug("Test 14 testing dqk61\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Estimated absolute error = " + abserr[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resabs[0] = " + resabs[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("resasc[0] = " + resasc[0] + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 15;
         // Test15 tests dqng
@@ -1178,14 +1194,16 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 15 testing dqng\n");
-        Preferences.debug("Integrand is sqrt(x) * log(x)\n");
-        Preferences.debug("Integrand lower endpoint = 0.0\n");
-        Preferences.debug("Integrand upper endpoint = 1.0\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n");
-        Preferences.debug("Actual answer = " + actualAnswer + "\n");
-        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n");
+        Preferences.debug("Test 15 testing dqng\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand is sqrt(x) * log(x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand lower endpoint = 0.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Integrand upper endpoint = 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with estimated absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Actual answer = " + actualAnswer + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Exact error = " + (result[0] - actualAnswer) + "\n", Preferences.DEBUG_ALGORITHM);
 
         testCase = 101;
         lower = 0.0;
@@ -1248,9 +1266,11 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 101\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Test 101\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with absolute error = " + abserr[0] + "\n",
+        		Preferences.DEBUG_ALGORITHM);
 
         testCase = 102;
         bound = 0.0;
@@ -1283,9 +1303,11 @@ public abstract class Integration2 {
 
         driver();
 
-        Preferences.debug("Test 102\n");
-        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + ier[0] + " with absolute error = " + abserr[0] + "\n");
+        Preferences.debug("Test 102\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Numerical Integral = " + result[0] + " after " + neval[0] + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + ier[0] + " with absolute error = " + abserr[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -2719,7 +2741,7 @@ public abstract class Integration2 {
 
         } // try
         catch (final Exception err) {
-            Preferences.debug("dqagie error: " + err.getMessage());
+            Preferences.debug("dqagie error: " + err.getMessage(), Preferences.DEBUG_ALGORITHM);
         }
 
     } // dqagie
@@ -3336,7 +3358,7 @@ public abstract class Integration2 {
 
         } // try
         catch (final Exception err) {
-            Preferences.debug("dqagpe error: " + err.getMessage());
+            Preferences.debug("dqagpe error: " + err.getMessage(), Preferences.DEBUG_ALGORITHM);
         }
     } // dqagpe
 
@@ -3735,7 +3757,7 @@ public abstract class Integration2 {
             return;
         } // try
         catch (final Exception err) {
-            Preferences.debug("dqage error: " + err.getMessage());
+            Preferences.debug("dqage error: " + err.getMessage(), Preferences.DEBUG_ALGORITHM);
         }
 
     }
@@ -4253,7 +4275,7 @@ public abstract class Integration2 {
             return;
         } // try
         catch (final Exception err) {
-            Preferences.debug("dqagse error: " + err.getMessage());
+            Preferences.debug("dqagse error: " + err.getMessage(), Preferences.DEBUG_ALGORITHM);
         }
 
     }
@@ -4469,7 +4491,7 @@ public abstract class Integration2 {
             return;
         } // try
         catch (final Exception err) {
-            Preferences.debug("dqawce error: " + err.getMessage());
+            Preferences.debug("dqawce error: " + err.getMessage(), Preferences.DEBUG_ALGORITHM);
         }
     } // dqawce
 
@@ -4744,7 +4766,7 @@ public abstract class Integration2 {
             }
             return;
         } catch (final Exception err) {
-            Preferences.debug("dqawfe error: " + err.getMessage());
+            Preferences.debug("dqawfe error: " + err.getMessage(), Preferences.DEBUG_ALGORITHM);
         }
     } // dqawfe
 
@@ -5273,7 +5295,7 @@ public abstract class Integration2 {
             return;
         } // try
         catch (final Exception err) {
-            Preferences.debug("dqawoe error: " + err.getMessage());
+            Preferences.debug("dqawoe error: " + err.getMessage(), Preferences.DEBUG_ALGORITHM);
         }
     } // dqawoe
 
@@ -5543,7 +5565,7 @@ public abstract class Integration2 {
             return;
         } // try
         catch (final Exception err) {
-            Preferences.debug("dqawse error: " + err.getMessage());
+            Preferences.debug("dqawse error: " + err.getMessage(), Preferences.DEBUG_ALGORITHM);
         }
     } // dqawse()
 
@@ -8734,7 +8756,7 @@ public abstract class Integration2 {
             return;
         } // if (ier[0] == 0)
 
-        Preferences.debug("Abnormal return from dqng\n");
+        Preferences.debug("Abnormal return from dqng\n", Preferences.DEBUG_ALGORITHM);
 
         return;
     }
