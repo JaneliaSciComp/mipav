@@ -726,30 +726,30 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         /* Perform adaptive fuzzy clustering           */
 
         /************************************************/
-        Preferences.debug("Before first ComputeMemberships2D centroids are:\n");
+        Preferences.debug("Before first ComputeMemberships2D centroids are:\n", Preferences.DEBUG_ALGORITHM);
         for (i = 0; i < centroids.length; i++) {
-            Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n");
+            Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
         ComputeMemberships2D(buffer, centroids, mems, exponent);
-        Preferences.debug("Afer first ComputeMemberships2D centroids are:\n");
+        Preferences.debug("Afer first ComputeMemberships2D centroids are:\n", Preferences.DEBUG_ALGORITHM);
         for (i = 0; i < centroids.length; i++) {
-            Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n");
+            Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         while ((iterations <= maxIter) && (maxChange > tolerance)) {
             fireProgressStateChanged("Iteration = " + iterations + " maxChange = " + maxChange);
 
-            Preferences.debug("iterations = " + iterations + "\n");
+            Preferences.debug("iterations = " + iterations + "\n", Preferences.DEBUG_ALGORITHM);
             ComputeCentroids2D(buffer, centroids, mems, qVal);
-            Preferences.debug("After ComputeCentroids2D\n");
+            Preferences.debug("After ComputeCentroids2D\n", Preferences.DEBUG_ALGORITHM);
             for (i = 0; i < centroids.length; i++) {
-                Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n");
+                Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             ComputeMemberships2D(buffer, centroids, mems, exponent);
-            Preferences.debug("Afer ComputeMemberships2D:\n");
+            Preferences.debug("Afer ComputeMemberships2D:\n", Preferences.DEBUG_ALGORITHM);
             for (i = 0; i < centroids.length; i++) {
-                Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n");
+                Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             iterations += 1;
