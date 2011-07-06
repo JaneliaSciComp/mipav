@@ -451,7 +451,7 @@ public class ConfluentHypergeometric {
             term1 = term2;
         } // while (true)
         bit = bits();
-        // Preferences.debug("bit = " + bit + "\n");
+        // Preferences.debug("bit = " + bit + "\n", Preferences.DEBUG_ALGORITHM);
         max = max * 2.0 / (bit * 0.693147181);
         L = (int) (max * ang) + 7;
         if (L < 5) {
@@ -460,7 +460,7 @@ public class ConfluentHypergeometric {
         if (ip > L) {
             L = ip;
         } // if (ip > L)
-        // Preferences.debug("L = " + L + "\n");
+        // Preferences.debug("L = " + L + "\n", Preferences.DEBUG_ALGORITHM);
 
         // Sum the Kummer series and return the solution of the confluent hypergeometric
         // function
@@ -490,22 +490,22 @@ public class ConfluentHypergeometric {
         // Warn the user that the input value was so close to zero that it
         // was set equal to zero.
         if ( (realA != 0.0) && (ar == 0.0) && (ar2 == 0.0)) {
-            Preferences.debug("Warning! Real part of A was set to zero\n");
+            Preferences.debug("Warning! Real part of A was set to zero\n", Preferences.DEBUG_ALGORITHM);
         }
         if ( (imagA != 0.0) && (ai == 0.0) && (ai2 == 0.0)) {
-            Preferences.debug("Warning! Imaginary part of A was set to zero\n");
+            Preferences.debug("Warning! Imaginary part of A was set to zero\n", Preferences.DEBUG_ALGORITHM);
         }
         if ( (realB != 0.0) && (cr == 0.0) && (cr2 == 0.0)) {
-            Preferences.debug("Warning! Real part of B was set to zero\n");
+            Preferences.debug("Warning! Real part of B was set to zero\n", Preferences.DEBUG_ALGORITHM);
         }
         if ( (imagB != 0.0) && (ci == 0.0) && (ci2 == 0.0)) {
-            Preferences.debug("Warning! Imaginary part of B was set to zero\n");
+            Preferences.debug("Warning! Imaginary part of B was set to zero\n", Preferences.DEBUG_ALGORITHM);
         }
         if ( (realZ != 0.0) && (xr == 0.0) && (xr2 == 0.0)) {
-            Preferences.debug("Warning! Real part of Z was set to zero\n");
+            Preferences.debug("Warning! Real part of Z was set to zero\n", Preferences.DEBUG_ALGORITHM);
         }
         if ( (imagZ != 0.0) && (xi == 0.0) && (xi2 == 0.0)) {
-            Preferences.debug("Warning! Imaginary part of Z was set to zero\n");
+            Preferences.debug("Warning! Imaginary part of Z was set to zero\n", Preferences.DEBUG_ALGORITHM);
         }
 
         // Screening of the case when B is zero or A negative integer
@@ -1884,7 +1884,8 @@ public class ConfluentHypergeometric {
             }
         } // else a < 0.0
         if (id[0] < 6) {
-            Preferences.debug("No accurate result obtained for confluent hypergeometric function" + "\n");
+            Preferences.debug("No accurate result obtained for confluent hypergeometric function" + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
             MipavUtil.displayError("No accurate result obtained");
         }
         return;
