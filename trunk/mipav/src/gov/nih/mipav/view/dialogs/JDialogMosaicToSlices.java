@@ -607,7 +607,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
 
             return false;
         } else if (numberOfImagesInMosaic > (subXDim*subYDim)) {
-            MipavUtil.displayError("New YDIM cannot exceed (newXDim) * (newYDim)");
+            MipavUtil.displayError("New numberOfImagesInMosaic cannot exceed (newXDim) * (newYDim)");
             textNumberImages.requestFocus();
             textNumberImages.selectAll();
 
