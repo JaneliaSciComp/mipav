@@ -317,7 +317,7 @@ public class FitLorentz extends NLFittedFunction {
 	    			Math.abs(Math.abs(oldXInit - xInit) / ((oldXInit + xInit) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldSigma - gamma) / ((oldSigma + gamma) / 2)) < EPSILON && iters > MIN_ITR) {
 	    		converged = true;    		
-	    		Preferences.debug("Converged after "+iters+" iterations.");
+	    		Preferences.debug("Converged after "+iters+" iterations.", Preferences.DEBUG_ALGORITHM);
 	    		System.out.println("Converged after "+iters+" iterations.");
 	    	} else {
 	    		oldAmp = amp;
@@ -328,7 +328,7 @@ public class FitLorentz extends NLFittedFunction {
     	}
     	
     	if(!converged) {
-    		Preferences.debug("Did not converge after "+iters+" iterations.");
+    		Preferences.debug("Did not converge after "+iters+" iterations.", Preferences.DEBUG_ALGORITHM);
     		System.out.println("Did not converge after "+iters+" iterations.");
     	} else {
     		calculateFittedY();
