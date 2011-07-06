@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -562,7 +563,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
         try {
             String str = new String();
 
-            Preferences.debug("\n Morphology3D - structuring element. \n");
+            Preferences.debug("\n Morphology3D - structuring element. \n", Preferences.DEBUG_ALGORITHM);
 
             for (z = 0; z < kDimZ; z++) {
 
@@ -577,11 +578,11 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                         }
                     }
 
-                    Preferences.debug(str + "\n");
+                    Preferences.debug(str + "\n", Preferences.DEBUG_ALGORITHM);
                     str = new String();
                 }
 
-                Preferences.debug("\n");
+                Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
             }
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
@@ -1068,7 +1069,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
             kDimXY = 3;
         }
 
-        Preferences.debug("# Morph3d.makeSphericalKernel: kernel size = " + kDimXY + "\n");
+        Preferences.debug("# Morph3d.makeSphericalKernel: kernel size = " + kDimXY + "\n", Preferences.DEBUG_ALGORITHM);
 
         thickness = resolutions[2] / resolutions[0];
         kDimZ = (int) Math.round((sphereDiameter / thickness) + 1);
