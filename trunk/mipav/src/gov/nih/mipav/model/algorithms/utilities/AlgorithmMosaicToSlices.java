@@ -135,7 +135,6 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
             yDim = srcImage.getExtents()[1];
             length = cFactor * xDim * yDim;
             buffer = new double[length];
-            System.err.println( "xDim:" +xDim );
             
             try {
                 srcImage.exportData(0, length, buffer);
@@ -151,7 +150,6 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
             
             subXDim = destImage.getExtents()[0];
             subYDim = destImage.getExtents()[1];
-            System.err.println( "subXDim :" +subXDim );
             numberOfImagesInMosaic = destImage.getExtents()[2];
             subLength = cFactor * subXDim * subYDim;
             subBuffer = new double[subLength];
@@ -162,14 +160,8 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                     for (ys = 0; ys < subYDim; ys++) {
                         for (xs = 0; xs <  subXDim; xs++) {
                             for (c = 0; c < cFactor; c++) {
-                                System.err.println( "y :" +y );
-                                System.err.println( "x :" +x );
-                                System.err.println( "ys :" +ys );
-                                System.err.println( "xs :" +xs );
                                 subIndex = c + cFactor*(xs + ys*subXDim);
-                                System.err.println( "subIndex :" +subIndex );
                                 orgIndex = c + cFactor*(x + xs + (y + ys)*xDim);
-                                System.err.println( "orgIndex :" +orgIndex );
                                 subBuffer[subIndex] = buffer[orgIndex];
                             } // for (c = 0; c < cFactor; c++)
                         } // for (xs = 0; xs <  subXDim; xs++)
@@ -220,8 +212,6 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                     subTDim = destImage.getExtents()[3];
                     subLength = cFactor * subXDim * subYDim * subZDim;
                     subBuffer = new double[subLength/subZDim]; 
-                    System.err.println("tdim:" +subTDim );
-                    //int volumeNum = 0;
                     sliceNum = 0;
                     zs = 0;
                     bufferSliceCount = -1;
