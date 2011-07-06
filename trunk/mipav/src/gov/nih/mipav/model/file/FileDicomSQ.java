@@ -40,7 +40,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Sequences are composed of items (DICOM items) and store in a vector object. */
-    private Vector<FileDicomItem> sequence;
+    private Vector<FileDicomTagTable> sequence;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -48,7 +48,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      * Creates a new DicomSQ object with initial length.
      */
     public FileDicomSQ() {
-        sequence = new Vector<FileDicomItem>(5, 2);
+        sequence = new Vector<FileDicomTagTable>(5, 2);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      *
      * @param  item  item to add
      */
-    public final void addItem(FileDicomItem item) {
+    public final void addItem(FileDicomTagTable item) {
         sequence.addElement(item);
     }
 
@@ -95,7 +95,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
 
             // call the item's version of this method for each item:
             for (int j = 0; j < sequence.size(); j++) {
-                datasize += sequence.get(j).getLength();
+                datasize += sequence.get(j).getDataLength();
             }
 
             // item end delimiter: FE FF 0D E0 00 00 00 00 (item end)
@@ -113,7 +113,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      *
      * @return  The specified item from the sequence.
      */
-    public final FileDicomItem getItem(int index) {
+    public final FileDicomTagTable getItem(int index) {
         return sequence.elementAt(index);
     }
 
@@ -138,11 +138,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
         for (int i = 0; i < sequence.size(); i++) {
 
             // call the item's version of this method.
-            Vector<String> itemDisplay = getItem(i).getItemDisplay();
-
-            for (Enumeration<String> e = itemDisplay.elements(); e.hasMoreElements();) {
-                display.addElement(e.nextElement());
-            }
+            String itemDisplay = getItem(i).toString();
         }
 
         return display;
@@ -166,7 +162,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
         return "Sequence";
     }
 
-	public Vector<FileDicomItem> getSequence() {
+	public Vector<FileDicomTagTable> getSequence() {
 		return sequence;
 	}
     

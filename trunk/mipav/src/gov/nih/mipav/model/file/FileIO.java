@@ -11740,13 +11740,13 @@ public class FileIO {
                 if(table.getValue("0020,9057") == null) {
                     table.setValue("0020,9057", z);
                 }
-                FileDicomItem item = new FileDicomItem();
+                FileDicomTagTable item = new FileDicomTagTable(null);
                 Enumeration<FileDicomTag> tags = table.getTagList().elements();
                 Object tagValue = null;
                 while(tags.hasMoreElements()) {
                     FileDicomTag tag = tags.nextElement();
                     if((tagValue = myFileInfo.getTagTable().getValue(tag.getKey())) == null || !tag.getValue(true).equals(tagValue)) {
-                        item.putTag(tag.getKey().toString(), tag);
+                        item.setValue(tag.getKey().toString(), tag);
                         System.out.println("Inserting unique value from key: "+tag.getKey());
                     }
                 }
