@@ -665,10 +665,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         // Print out the first 10 eigenvalues or all that are present if less than 10.
         nPresent = Math.min(10, nPlanes);
-        Preferences.debug("The first " + nPresent + " eigenvalues for the principal components are:\n");
+        Preferences.debug("The first " + nPresent + " eigenvalues for the principal components are:\n", 
+        		Preferences.DEBUG_ALGORITHM);
 
         for (i = 0; i < nPresent; i++) {
-            Preferences.debug(eigenvalue[i] + "\n");
+            Preferences.debug(eigenvalue[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         fireProgressStateChanged(40);
